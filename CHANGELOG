@@ -1,3 +1,28 @@
+Version 1.13, 2010-12-04
+------------------------
+
+ - Fixed a typo in code for reading a "\b" escape character in strings.
+
+ - Improved __repr__ in FloatObject.
+
+ - Fixed a bug in reading octal escape sequences in strings.
+
+ - Added getWidth and getHeight methods to the RectangleObject class.
+
+ - Fixed compatibility warnings with Python 2.4 and 2.5.
+
+ - Added addBlankPage and insertBlankPage methods on PdfFileWriter class.
+
+ - Fixed a bug with circular references in page's object trees (typically
+   annotations) that prevented correctly writing out a copy of those pages.
+
+ - New merge page functions allow application of a transformation matrix.
+
+ - To all patch contributors: I did a poor job of keeping this ChangeLog
+   up-to-date for this release, so I an missing attributions here for any
+   changes you submitted.  Sorry!  I'll do better in the future.
+
+
 Version 1.12, 2008-09-02
 ------------------------
 
