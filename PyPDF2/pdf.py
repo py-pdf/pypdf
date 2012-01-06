@@ -31,7 +31,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-
 """
 A pure-Python PDF library with very minimal capabilities.  It was designed to
 be able to split and merge PDF files by page, and that's about all it can do.
@@ -39,6 +38,7 @@ It may be a solid base for future PDF file work in Python.
 """
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
+
 
 import math
 import struct
@@ -62,8 +62,6 @@ if version_info < ( 2, 5 ):
 else:
     from hashlib import md5
 
-class InternalObjectException(Exception):
-    pass
 ##
 # This class supports writing PDF files out, given pages produced by another
 # class (typically {@link #PdfFileReader PdfFileReader}).
@@ -95,7 +93,6 @@ class PdfFileWriter(object):
             NameObject("/Pages"): self._pages,
             })
         self._root = self._addObject(root)
-        self._swept_cache = {}  # cache of objects that have already been swept for references
 
     def _addObject(self, obj):
         self._objects.append(obj)
@@ -105,12 +102,6 @@ class PdfFileWriter(object):
         if ido.pdf != self:
             raise ValueError("pdf must be self")
         return self._objects[ido.idnum - 1]
-        
-    def getReference(self, obj):
-        idnum = self._objects.index(obj) + 1
-        ref = IndirectObject(idnum, 0, self)
-        assert ref.getObject() == obj
-        return ref
 
     ##
     # Common method for inserting or adding a page to this PDF file.
@@ -250,16 +241,33 @@ class PdfFileWriter(object):
         import struct
 
         externalReferenceMap = {}
+
+        # PDF objects sometimes have circular references to their /Page objects
+        # inside their object tree (for example, annotations).  Those will be
+        # indirect references to objects that we've recreated in this PDF.  To
+        # address this problem, PageObject's store their original object
+        # reference number, and we add it to the external reference map before
+        # we sweep for indirect references.  This forces self-page-referencing
+        # trees to reference the correct new object location, rather than
+        # copying in a new copy of the page object.
+        for objIndex in xrange(len(self._objects)):
+            obj = self._objects[objIndex]
+            if isinstance(obj, PageObject) and obj.indirectRef != None:
+                data = obj.indirectRef
+                if not externalReferenceMap.has_key(data.pdf):
+                    externalReferenceMap[data.pdf] = {}
+                if not externalReferenceMap[data.pdf].has_key(data.generation):
+                    externalReferenceMap[data.pdf][data.generation] = {}
+                externalReferenceMap[data.pdf][data.generation][data.idnum] = IndirectObject(objIndex + 1, 0, self)
+
         self.stack = []
-        self._swept_cache = {}
         self._sweepIndirectReferences(externalReferenceMap, self._root)
-        self._swept_cache = {}
         del self.stack
 
         # Begin writing:
         object_positions = []
         stream.write(self._header + "\n")
-        for i in xrange(len(self._objects)):
+        for i in range(len(self._objects)):
             idnum = (i + 1)
             obj = self._objects[i]
             object_positions.append(stream.tell())
@@ -300,244 +308,56 @@ class PdfFileWriter(object):
         # eof
         stream.write("\nstartxref\n%s\n%%%%EOF\n" % (xref_location))
 
-    # Implementation using a stack along with other performance enhancements.
-    # Uses a stack to trace through the PDF object tree, instead of recursion.
-    # Also includes various other optimizations.
-    def _sweepIndirectReferences(self, externMap, rootdata):
-        tstack = []
-        tstack.append((rootdata, None, None))
-
-        def handle_dictionary(data):
-            """
-            Handles the case where data is a DictionaryObject.
-            """
+    def _sweepIndirectReferences(self, externMap, data):
+        if isinstance(data, DictionaryObject):
             for key, value in data.items():
-                if not value.sweep_required:
-                    continue
-
+                origvalue = value
+                value = self._sweepIndirectReferences(externMap, value)
                 if isinstance(value, StreamObject):
                     # a dictionary value is a stream.  streams must be indirect
                     # objects, so we need to change this value.
                     value = self._addObject(value)
-
                 data[key] = value
-                tstack.append((value, data, key))
             return data
-
-        def handle_array(data):
-            """
-            Handles the case where data is an ArrayObject.
-            """
-            for i in xrange(len(data)):
-                if not data[i].sweep_required:
-                    continue
-
-                value=data[i]
+        elif isinstance(data, ArrayObject):
+            for i in range(len(data)):
+                value = self._sweepIndirectReferences(externMap, data[i])
                 if isinstance(value, StreamObject):
                     # an array value is a stream.  streams must be indirect
                     # objects, so we need to change this value
                     value = self._addObject(value)
-
                 data[i] = value
-                tstack.append((value, data, i))
             return data
-
-        def handle_indirect_refs(data):
-            """
-            Handles the case where data is an IndirectObject.
-            """
-            # Checking whether data is an internal refernce.
-            if data.pdf is self:
-                if not data.idnum in self.stack:
-                    # Reference not resolved yet so we resolve it and keep
-                    # going.
+        elif isinstance(data, IndirectObject):
+            # internal indirect references are fine
+            if data.pdf == self:
+                if data.idnum in self.stack:
+                    return data
+                else:
                     self.stack.append(data.idnum)
                     realdata = self.getObject(data)
-                    tstack.append((realdata, None, None))
-                return data
-
-            newobj = externMap.get(data.pdf, {}).get(data.generation, {}).get(data.idnum, None)
-            if newobj is None:
-                newobj = data.pdf.getObject(data)
-                self._objects.append(None) # placeholder
-                idnum = len(self._objects)
-                newobj_ido = IndirectObject(idnum, 0, self)
-                if not externMap.has_key(data.pdf):
-                    externMap[data.pdf] = {}
-                if not externMap[data.pdf].has_key(data.generation):
-                    externMap[data.pdf][data.generation] = {}
-                externMap[data.pdf][data.generation][data.idnum] = newobj_ido
-                tstack.append((newobj, self._objects, idnum-1))
-                return newobj_ido
-            return newobj
-
-        while tstack:
-            data, parent_data, parent_key = tstack.pop()
-
-            if isinstance(data, DictionaryObject):
-                out_val = handle_dictionary(data)
-            elif isinstance(data, ArrayObject):
-                out_val = handle_array(data)
-            elif isinstance(data, IndirectObject):
-                out_val = handle_indirect_refs(data)
+                    self._sweepIndirectReferences(externMap, realdata)
+                    self.stack.pop()
+                    return data
             else:
-                "ahall's patch used the following line:"
-                #out_val = None
-                "this does not seem to work in all cases, so I changed it to this:"
-                out_val = data
-
-
-            if parent_data:
-                parent_data[parent_key] = out_val
-    
-    def getOutlineRoot(self):
-        root = self.getObject(self._root)
-
-        if root.has_key('/Outlines'):
-            outline = root['/Outlines']
-            idnum = self._objects.index(outline) + 1
-            outlineRef = IndirectObject(idnum, 0, self)
-            assert outlineRef.getObject() == outline 
+                newobj = externMap.get(data.pdf, {}).get(data.generation, {}).get(data.idnum, None)
+                if newobj == None:
+                    newobj = data.pdf.getObject(data)
+                    self._objects.append(None) # placeholder
+                    idnum = len(self._objects)
+                    newobj_ido = IndirectObject(idnum, 0, self)
+                    if not externMap.has_key(data.pdf):
+                        externMap[data.pdf] = {}
+                    if not externMap[data.pdf].has_key(data.generation):
+                        externMap[data.pdf][data.generation] = {}
+                    externMap[data.pdf][data.generation][data.idnum] = newobj_ido
+                    newobj = self._sweepIndirectReferences(externMap, newobj)
+                    self._objects[idnum-1] = newobj
+                    return newobj_ido
+                return newobj
         else:
-            outline = TreeObject() 
-            outline.update({ })
-            outlineRef = self._addObject(outline)
-            root[NameObject('/Outlines')] = outlineRef
-            
-        return outline
- 
-    def getNamedDestRoot(self):
-        root = self.getObject(self._root)
+            return data
 
-        if root.has_key('/Names') and isinstance(root['/Names'], DictionaryObject):
-            names = root['/Names']
-            idnum = self._objects.index(names) + 1
-            namesRef = IndirectObject(idnum, 0, self)
-            assert namesRef.getObject() == names 
-            if names.has_key('/Dests') and isinstance(names['/Dests'], DictionaryObject):
-                dests = names['/Dests']
-                idnum = self._objects.index(dests) + 1
-                destsRef = IndirectObject(idnum, 0, self)
-                assert destsRef.getObject() == dests 
-                if dests.has_key('/Names'):
-                    nd = dests['/Names']
-                else:
-                    nd = ArrayObject()
-                    dests[NameObject('/Names')] = nd
-            else:
-                dests = DictionaryObject()
-                destsRef = self._addObject(dests)
-                names[NameObject('/Dests')] = destsRef
-                nd = ArrayObject()
-                dests[NameObject('/Names')] = nd
-                
-        else:
-            names = DictionaryObject()
-            namesRef = self._addObject(names)
-            root[NameObject('/Names')] = namesRef
-            dests = DictionaryObject()
-            destsRef = self._addObject(dests)
-            names[NameObject('/Dests')] = destsRef
-            nd = ArrayObject()
-            dests[NameObject('/Names')] = nd
-            
-        return nd
-    
-    def addBookmarkDestination(self, dest, parent=None):
-        destRef = self._addObject(dest)
-
-        outlineRef = self.getOutlineRoot()
-        
-        if parent == None:
-            parent = outlineRef
-
-        parent = parent.getObject()
-        parent.addChild(destRef, self)
-        
-        return destRef
-    
-    def addBookmarkDict(self, bookmark, parent=None):
-        bookmarkObj = TreeObject()
-        for k, v in bookmark.items():
-            bookmarkObj[NameObject(str(k))] = v
-        bookmarkObj.update(bookmark)
-        
-        if bookmark.has_key('/A'):
-            action = DictionaryObject()
-            for k, v in bookmark['/A'].items():
-                action[NameObject(str(k))] = v
-            actionRef = self._addObject(action)
-            bookmarkObj['/A'] = actionRef
-            
-        bookmarkRef = self._addObject(bookmarkObj)
-
-        outlineRef = self.getOutlineRoot()
-        
-        if parent == None:
-            parent = outlineRef
-            
-        parent = parent.getObject()
-        parent.addChild(bookmarkRef, self)
-        
-        return bookmarkRef       
-    
-            
-    def addBookmark(self, title, pagenum, parent=None):
-        """
-        Add a bookmark to the pdf, using the specified title and pointing at 
-        the specified page number. A parent can be specified to make this a
-        nested bookmark below the parent.
-        """
-        pageRef = self.getObject(self._pages)['/Kids'][pagenum]
-        action = DictionaryObject()
-        action.update({
-            NameObject('/D') : ArrayObject([pageRef, NameObject('/FitH'), NumberObject(826)]),
-            NameObject('/S') : NameObject('/GoTo')
-        })
-        actionRef = self._addObject(action)
-
-        outlineRef = self.getOutlineRoot()
-        
-        if parent == None:
-            parent = outlineRef
-            
-
-        bookmark = TreeObject()
-
-        bookmark.update({
-            NameObject('/A') : actionRef,
-            NameObject('/Title') : createStringObject(title),
-        })
-
-        bookmarkRef = self._addObject(bookmark)
-        
-        parent = parent.getObject()
-        parent.addChild(bookmarkRef, self)
-        
-        return bookmarkRef
-
-    def addNamedDestinationObject(self, dest):
-        destRef = self._addObject(dest)
-
-        nd = self.getNamedDestRoot()
-        nd.extend([dest['/Title'], destRef])
-        
-        return destRef      
-
-    def addNamedDestination(self, title, pagenum):
-        pageRef = self.getObject(self._pages)['/Kids'][pagenum]
-        dest = DictionaryObject()
-        dest.update({
-            NameObject('/D') : ArrayObject([pageRef, NameObject('/FitH'), NumberObject(826)]),
-            NameObject('/S') : NameObject('/GoTo')
-        })
-        
-        destRef = self._addObject(dest)
-        nd = self.getNamedDestRoot()
-
-        nd.extend([title, destRef])
-        
-        return destRef
 
 ##
 # Initializes a PdfFileReader object.  This operation can take some time, as
@@ -548,7 +368,6 @@ class PdfFileWriter(object):
 # @param stream An object that supports the standard read and seek methods
 #               similar to a file object.
 class PdfFileReader(object):
-        
     def __init__(self, stream):
         self.flattenedPages = None
         self.resolvedObjects = {}
@@ -656,10 +475,10 @@ class PdfFileReader(object):
                 tree = catalog["/Dests"]
             elif catalog.has_key("/Names"):
                 names = catalog['/Names']
-                if isinstance(names, DictionaryObject) and names.has_key("/Dests"):
+                if names.has_key("/Dests"):
                     tree = names['/Dests']
         
-        if tree == None or not isinstance(tree, DictionaryObject):
+        if tree == None:
             return retval
 
         if tree.has_key("/Kids"):
@@ -669,7 +488,7 @@ class PdfFileReader(object):
 
         if tree.has_key("/Names"):
             names = tree["/Names"]
-            for i in xrange(0, len(names), 2):
+            for i in range(0, len(names), 2):
                 key = names[i].getObject()
                 val = names[i+1].getObject()
                 if isinstance(val, DictionaryObject) and val.has_key('/D'):
@@ -678,13 +497,6 @@ class PdfFileReader(object):
                 if dest != None:
                     retval[key] = dest
 
-        if not tree.has_key("/Names") and not tree.has_key("/Kids"):
-            for key in tree.keys():
-                if isinstance(tree[key], ArrayObject) and isinstance(tree[key][0], PdfObject):
-                    dest = self._buildDestination(key, tree[key])
-                    if dest != None:
-                        retval[key] = dest
-                    
         return retval
 
     ##
@@ -707,7 +519,7 @@ class PdfFileReader(object):
             # get the outline dictionary and named destinations
             if catalog.has_key("/Outlines"):
                 lines = catalog["/Outlines"]
-                if isinstance(lines, DictionaryObject) and lines.has_key("/First"):
+                if lines.has_key("/First"):
                     node = lines["/First"]
             self._namedDests = self.getNamedDestinations()
             
@@ -733,17 +545,11 @@ class PdfFileReader(object):
 
         return outlines
 
-    def _buildDestination(self, title, array, classname=Destination):
+    def _buildDestination(self, title, array):
         page, typ = array[0:2]
         array = array[2:]
-        try:
-            rv = classname(title, page, typ, *array)
-        except utils.PdfReadError:
-            rv = None
-            warnings.warn("""Destination "%s" has unknown type: %r""" % (title, typ), utils.PdfReadWarning)
-        return rv
-
-        
+        return Destination(title, page, typ, *array)
+          
     def _buildOutline(self, node):
         dest, title, outline = None, None, None
         
@@ -761,14 +567,12 @@ class PdfFileReader(object):
         # if destination found, then create outline
         if dest:
             if isinstance(dest, ArrayObject):
-                outline = self._buildDestination(title, dest, Bookmark)
-            elif isinstance(dest, (unicode, NameObject)) and self._namedDests.has_key(dest):
+                outline = self._buildDestination(title, dest)
+            elif isinstance(dest, unicode) and self._namedDests.has_key(dest):
                 outline = self._namedDests[dest]
                 outline[NameObject("/Title")] = title
             else:
-                #raise utils.PdfReadError()
-                warnings.warn("Unexpected destination %r" % dest, utils.PdfReadWarning)
-                return None
+                raise utils.PdfReadError("Unexpected destination %r" % dest)
         return outline
 
     ##
@@ -780,7 +584,7 @@ class PdfFileReader(object):
     pages = property(lambda self: ConvertFunctionsToVirtualList(self.getNumPages, self.getPage),
             None, None)
 
-    def _flatten(self, pages=None, inherit=None):
+    def _flatten(self, pages=None, inherit=None, indirectRef=None):
         inheritablePageAttributes = (
             NameObject("/Resources"), NameObject("/MediaBox"),
             NameObject("/CropBox"), NameObject("/Rotate")
@@ -797,14 +601,17 @@ class PdfFileReader(object):
                 if pages.has_key(attr):
                     inherit[attr] = pages[attr]
             for page in pages["/Kids"]:
-                self._flatten(page.getObject(), inherit)
+                addt = {}
+                if isinstance(page, IndirectObject):
+                    addt["indirectRef"] = page
+                self._flatten(page.getObject(), inherit, **addt)
         elif t == "/Page":
             for attr,value in inherit.items():
                 # if the page has it's own value, it does not inherit the
                 # parent's value:
                 if not pages.has_key(attr):
                     pages[attr] = value
-            pageObj = PageObject(self)
+            pageObj = PageObject(self, indirectRef)
             pageObj.update(pages)
             self.flattenedPages.append(pageObj)
 
@@ -821,7 +628,7 @@ class PdfFileReader(object):
             assert objStm['/Type'] == '/ObjStm'
             assert idx < objStm['/N']
             streamData = StringIO(objStm.getData())
-            for i in xrange(objStm['/N']):
+            for i in range(objStm['/N']):
                 objnum = NumberObject.readFromStream(streamData)
                 readNonWhitespace(streamData)
                 streamData.seek(-1, 1)
@@ -836,18 +643,10 @@ class PdfFileReader(object):
             return self.resolvedObjects[0][indirectReference.idnum]
         start = self.xref[indirectReference.generation][indirectReference.idnum]
         self.stream.seek(start, 0)
-        idnum = indirectReference.idnum
-        generation = indirectReference.generation
-        try:
-            idnum, generation = self.readObjectHeader(self.stream)
-            assert idnum == indirectReference.idnum
-            assert generation == indirectReference.generation
-        except InternalObjectException:
-            retval = NullObject()
-        except AssertionError:
-            retval = NullObject()
-        else:
-            retval = readObject(self.stream, self)
+        idnum, generation = self.readObjectHeader(self.stream)
+        assert idnum == indirectReference.idnum
+        assert generation == indirectReference.generation
+        retval = readObject(self.stream, self)
 
         # override encryption is used for the /Encrypt dictionary
         if not self._override_encryption and self.isEncrypted:
@@ -876,7 +675,7 @@ class PdfFileReader(object):
             for dictkey, value in obj.items():
                 obj[dictkey] = self._decryptObject(value, key)
         elif isinstance(obj, ArrayObject):
-            for i in xrange(len(obj)):
+            for i in range(len(obj)):
                 obj[i] = self._decryptObject(obj[i], key)
         return obj
 
@@ -891,16 +690,7 @@ class PdfFileReader(object):
         obj = stream.read(3)
         readNonWhitespace(stream)
         stream.seek(-1, 1)
-        try:
-            idnum = int(idnum)
-            generation = int(generation)
-            assert idnum >= 1
-            assert generation >= 0
-        except ValueError:
-            raise InternalObjectException("Non-numeric object id, xref table is probably incorrect")
-        except AssertionError:
-            raise InternalObjectException("Invalid object id, xref table is possibly incorrect")
-        return idnum, generation
+        return int(idnum), int(generation)
 
     def cacheIndirectObject(self, generation, idnum, obj):
         if not self.resolvedObjects.has_key(generation):
@@ -908,11 +698,15 @@ class PdfFileReader(object):
         self.resolvedObjects[generation][idnum] = obj
 
     def read(self, stream):
+        debug = False
+        if debug: print ">>read", stream
         # start at the end:
         stream.seek(-1, 2)
         line = ''
+        if debug: print "  line:",line
         while not line:
             line = self.readNextEndLine(stream)
+        if debug: print "  line:",line
         if line[:5] != "%%EOF":
             raise utils.PdfReadError, "EOF marker not found"
 
@@ -1003,7 +797,7 @@ class PdfFileReader(object):
                 for num, size in self._pairs(idx_pairs):
                     cnt = 0
                     while cnt < size:
-                        for i in xrange(len(entrySizes)):
+                        for i in range(len(entrySizes)):
                             d = streamData.read(entrySizes[i])
                             di = convertToInt(d, entrySizes[i])
                             if i == 0:
@@ -1066,18 +860,31 @@ class PdfFileReader(object):
                 break
 
     def readNextEndLine(self, stream):
+        debug = False
+        if debug: print ">>readNextEndLine"
         line = ""
         while True:
             x = stream.read(1)
+            if debug: print "  x:",x,"%x"%ord(x)
             stream.seek(-2, 1)
-            if x == '\n' or x == '\r':
+            if x == '\n' or x == '\r': ## \n = LF; \r = CR
+                crlf = False
                 while x == '\n' or x == '\r':
+                    if debug:
+                        if ord(x) == 0x0D: print "  x is CR 0D"
+                        elif ord(x) == 0x0A: print "  x is LF 0A"
                     x = stream.read(1)
+                    if x == '\n' or x == '\r': # account for CR+LF
+                        stream.seek(-1, 1)
+                        crlf = True
                     stream.seek(-2, 1)
-                stream.seek(1, 1)
+                stream.seek(2 if crlf else 1, 1) #if using CR+LF, go back 2 bytes, else 1
                 break
             else:
+                if debug: print "  x is neither"
                 line = x + line
+                if debug: print "  RNEL line:",line
+        if debug: print "leaving RNEL"
         return line
 
     ##
@@ -1127,9 +934,9 @@ class PdfFileReader(object):
                 userpass = utils.RC4_encrypt(key, real_O)
             else:
                 val = real_O
-                for i in xrange(19, -1, -1):
+                for i in range(19, -1, -1):
                     new_key = ''
-                    for l in xrange(len(key)):
+                    for l in range(len(key)):
                         new_key += chr(ord(key[l]) ^ i)
                     val = utils.RC4_encrypt(new_key, val)
                 userpass = val
@@ -1205,9 +1012,11 @@ def createRectangleAccessor(name, fallback):
 # method.
 # @param pdf PDF file the page belongs to (optional, defaults to None).
 class PageObject(DictionaryObject):
-    def __init__(self, pdf=None):
+    def __init__(self, pdf=None, indirectRef=None):
         DictionaryObject.__init__(self)
         self.pdf = pdf
+        # Stores the original indirect reference to this object in its source PDF
+        self.indirectRef = indirectRef
 
     ##
     # Returns a new blank page.
@@ -1283,7 +1092,7 @@ class PageObject(DictionaryObject):
             return stream
         stream = ContentStream(stream, pdf)
         for operands,operator in stream.operations:
-            for i in xrange(len(operands)):
+            for i in range(len(operands)):
                 op = operands[i]
                 if isinstance(op, NameObject):
                     operands[i] = rename.get(op, op)
@@ -1833,6 +1642,72 @@ class DocumentInformation(DictionaryObject):
     producer_raw = property(lambda self: self.get("/Producer"))
 
 
+##
+# A class representing a destination within a PDF file.
+# See section 8.2.1 of the PDF 1.6 reference.
+# Stability: Added in v1.10, will exist for all v1.x releases.
+class Destination(DictionaryObject):
+    def __init__(self, title, page, typ, *args):
+        DictionaryObject.__init__(self)
+        self[NameObject("/Title")] = title
+        self[NameObject("/Page")] = page
+        self[NameObject("/Type")] = typ
+        
+        # from table 8.2 of the PDF 1.6 reference.
+        if typ == "/XYZ":
+            (self[NameObject("/Left")], self[NameObject("/Top")],
+                self[NameObject("/Zoom")]) = args
+        elif typ == "/FitR":
+            (self[NameObject("/Left")], self[NameObject("/Bottom")],
+                self[NameObject("/Right")], self[NameObject("/Top")]) = args
+        elif typ in ["/FitH", "FitBH"]:
+            self[NameObject("/Top")], = args
+        elif typ in ["/FitV", "FitBV"]:
+            self[NameObject("/Left")], = args
+        elif typ in ["/Fit", "FitB"]:
+            pass
+        else:
+            raise utils.PdfReadError("Unknown Destination Type: %r" % typ)
+          
+    ##
+    # Read-only property accessing the destination title.
+    # @return A string.
+    title = property(lambda self: self.get("/Title"))
+
+    ##
+    # Read-only property accessing the destination page.
+    # @return An integer.
+    page = property(lambda self: self.get("/Page"))
+
+    ##
+    # Read-only property accessing the destination type.
+    # @return A string.
+    typ = property(lambda self: self.get("/Type"))
+
+    ##
+    # Read-only property accessing the zoom factor.
+    # @return A number, or None if not available.
+    zoom = property(lambda self: self.get("/Zoom", None))
+
+    ##
+    # Read-only property accessing the left horizontal coordinate.
+    # @return A number, or None if not available.
+    left = property(lambda self: self.get("/Left", None))
+
+    ##
+    # Read-only property accessing the right horizontal coordinate.
+    # @return A number, or None if not available.
+    right = property(lambda self: self.get("/Right", None))
+
+    ##
+    # Read-only property accessing the top vertical coordinate.
+    # @return A number, or None if not available.
+    top = property(lambda self: self.get("/Top", None))
+
+    ##
+    # Read-only property accessing the bottom vertical coordinate.
+    # @return A number, or None if not available.
+    bottom = property(lambda self: self.get("/Bottom", None))
 
 def convertToInt(d, size):
     if size > 8:
@@ -1881,7 +1756,7 @@ def _alg32(password, rev, keylen, owner_entry, p_entry, id1_entry, metadata_encr
     # encryption key as defined by the value of the encryption dictionary's
     # /Length entry.
     if rev >= 3:
-        for i in xrange(50):
+        for i in range(50):
             md5_hash = md5(md5_hash[:keylen]).digest()
     # 9. Set the encryption key to the first n bytes of the output from the
     # final MD5 hash, where n is always 5 for revision 2 but, for revision 3 or
@@ -1907,9 +1782,9 @@ def _alg33(owner_pwd, user_pwd, rev, keylen):
     # an XOR operation between that byte and the single-byte value of the
     # iteration counter (from 1 to 19).
     if rev >= 3:
-        for i in xrange(1, 20):
+        for i in range(1, 20):
             new_key = ''
-            for l in xrange(len(key)):
+            for l in range(len(key)):
                 new_key += chr(ord(key[l]) ^ i)
             val = utils.RC4_encrypt(new_key, val)
     # 8. Store the output from the final invocation of the RC4 as the value of
@@ -1929,7 +1804,7 @@ def _alg33_1(password, rev, keylen):
     # from the previous MD5 hash and pass it as input into a new MD5 hash.
     md5_hash = m.digest()
     if rev >= 3:
-        for i in xrange(50):
+        for i in range(50):
             md5_hash = md5(md5_hash).digest()
     # 4. Create an RC4 encryption key using the first n bytes of the output
     # from the final MD5 hash, where n is always 5 for revision 2 but, for
@@ -1977,9 +1852,9 @@ def _alg35(password, rev, keylen, owner_entry, p_entry, id1_entry, metadata_encr
     # the original encryption key (obtained in step 2) and performing an XOR
     # operation between that byte and the single-byte value of the iteration
     # counter (from 1 to 19). 
-    for i in xrange(1, 20):
+    for i in range(1, 20):
         new_key = ''
-        for l in xrange(len(key)):
+        for l in range(len(key)):
             new_key += chr(ord(key[l]) ^ i)
         val = utils.RC4_encrypt(new_key, val)
     # 6. Append 16 bytes of arbitrary padding to the output from the final
