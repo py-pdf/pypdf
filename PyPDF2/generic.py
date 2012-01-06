@@ -87,8 +87,6 @@ def readObject(stream, pdf):
             return NumberObject.readFromStream(stream)
 
 class PdfObject(object):
-    sweep_required = False
-
     def getObject(self):
         """Resolves indirect references."""
         return self
@@ -128,8 +126,6 @@ class BooleanObject(PdfObject):
 
 
 class ArrayObject(list, PdfObject):
-    sweep_required = True
-
     def writeToStream(self, stream, encryption_key):
         stream.write("[")
         for data in self:
@@ -160,8 +156,6 @@ class ArrayObject(list, PdfObject):
 
 
 class IndirectObject(PdfObject):
-    sweep_required = True
-
     def __init__(self, idnum, generation, pdf):
         self.idnum = idnum
         self.generation = generation
@@ -443,7 +437,6 @@ class NameObject(str, PdfObject):
 
 
 class DictionaryObject(dict, PdfObject):
-    sweep_required = True
 
     def __init__(self, *args, **kwargs):
         if len(args) == 0:
@@ -588,137 +581,6 @@ class DictionaryObject(dict, PdfObject):
             return retval
     readFromStream = staticmethod(readFromStream)
 
-class TreeObject(DictionaryObject):
-    def __init__(self):
-        DictionaryObject.__init__(self)
-        
-    def hasChildren(self):
-        return self.has_key('/First')
-    
-    def __iter__(self):
-        return self.children()
-        
-    def children(self):
-        if not self.hasChildren():
-            raise StopIteration
-            
-        child = self['/First']
-        while True:
-            yield child
-            if child == self['/Last']:
-                raise StopIteration
-            child = child['/Next']
-        
-    def addChild(self, child, pdf):
-        childObj = child.getObject()
-        child = pdf.getReference(childObj)
-        assert isinstance(child, IndirectObject)
-        
-        if not self.has_key('/First'):
-            self[NameObject('/First')] = child
-            self[NameObject('/Count')] = NumberObject(0)
-            prev = None
-        else:
-            prev = self['/Last']
-
-        self[NameObject('/Last')] = child
-        self[NameObject('/Count')] = NumberObject(self[NameObject('/Count')] + 1)
-
-        if prev:
-            prevRef = pdf.getReference(prev)
-            assert isinstance(prevRef, IndirectObject)
-            childObj[NameObject('/Prev')] = prevRef
-            prev[NameObject('/Next')] = child
-
-        parentRef = pdf.getReference(self)
-        assert isinstance(parentRef, IndirectObject)
-        childObj[NameObject('/Parent')] = parentRef
-        
-    def removeChild(self, child):
-        childObj = child.getObject()
-        
-        if not childObj.has_key(NameObject('/Parent')):
-            raise ValueError, "Removed child does not appear to be a tree item"
-        elif childObj[NameObject('/Parent')] != self:
-            raise ValueError, "Removed child is not a member of this tree"
-        
-        found = False
-        prevRef = None
-        prev = None
-        curRef = self[NameObject('/First')]
-        cur = curRef.getObject()
-        lastRef = self[NameObject('/Last')]
-        last = lastRef.getObject() 
-        while cur != None:
-            if cur == childObj:
-                if prev == None:
-                    if cur.has_key(NameObject('/Next')):
-                        # Removing first tree node
-                        nextRef = cur[NameObject('/Next')]
-                        next = nextRef.getObject()
-                        del next[NameObject('/Prev')]
-                        self[NameObject('/First')] = nextRef
-                        self[NameObject('/Count')] = self[NameObject('/Count')] - 1
-                        
-                    else:
-                        # Removing only tree node
-                        assert self[NameObject('/Count')] == 1
-                        del self[NameObject('/Count')]
-                        del self[NameObject('/First')]
-                        if self.has_key(NameObject('/Last')):
-                            del self[NameObject('/Last')]
-                else:
-                    if cur.has_key(NameObject('/Next')):
-                        # Removing middle tree node
-                        nextRef = cur[NameObject('/Next')]
-                        next = nextRef.getObject()
-                        next[NameObject('/Prev')] = prevRef
-                        prev[NameObject('/Next')] = nextRef
-                        self[NameObject('/Count')] = self[NameObject('/Count')] - 1
-                    else:
-                        # Removing last tree node
-                        assert cur == last
-                        del prev[NameObject('/Next')]
-                        self[NameObject('/Last')] = prevRef
-                        self[NameObject('/Count')] = self[NameObject('/Count')] - 1
-                found = True
-                break        
-                    
-            
-            prevRef = curRef
-            prev = cur
-            if cur.has_key(NameObject('/Next')):
-                curRef = cur[NameObject('/Next')]
-                cur = curRef.getObject()
-            else:
-                curRef = None
-                cur = None
-       
-        if not found:
-            raise ValueError, "Removal couldn't find item in tree"
-       
-        del childObj[NameObject('/Parent')]
-        if childObj.has_key(NameObject('/Next')):
-            del childObj[NameObject('/Next')]
-        if childObj.has_key(NameObject('/Prev')):
-            del childObj[NameObject('/Prev')]
-
-    def emptyTree(self):
-        for child in self:
-            childObj = child.getObject()
-            del childObj[NameObject('/Parent')]
-            if childObj.has_key(NameObject('/Next')):
-                del childObj[NameObject('/Next')]
-            if childObj.has_key(NameObject('/Prev')):
-                del childObj[NameObject('/Prev')]
-
-        if self.has_key(NameObject('/Count')):
-            del self[NameObject('/Count')]
-        if self.has_key(NameObject('/First')):
-            del self[NameObject('/First')]
-        if self.has_key(NameObject('/Last')):
-            del self[NameObject('/Last')]
-            
 
 class StreamObject(DictionaryObject):
     def __init__(self):
@@ -870,115 +732,6 @@ class RectangleObject(ArrayObject):
     upperLeft = property(getUpperLeft, setUpperLeft, None, None)
     upperRight = property(getUpperRight, setUpperRight, None, None)
 
-
-
-##
-# A class representing a destination within a PDF file.
-# See section 8.2.1 of the PDF 1.6 reference.
-# Stability: Added in v1.10, will exist for all v1.x releases.
-class Destination(TreeObject):
-    def __init__(self, title, page, typ, *args):
-        DictionaryObject.__init__(self)
-        self[NameObject("/Title")] = title
-        self[NameObject("/Page")] = page
-        self[NameObject("/Type")] = typ
-        
-        # from table 8.2 of the PDF 1.6 reference.
-        if typ == "/XYZ":
-            (self[NameObject("/Left")], self[NameObject("/Top")],
-                self[NameObject("/Zoom")]) = args
-        elif typ == "/FitR":
-            (self[NameObject("/Left")], self[NameObject("/Bottom")],
-                self[NameObject("/Right")], self[NameObject("/Top")]) = args
-        elif typ in ["/FitH", "FitBH"]:
-            self[NameObject("/Top")], = args
-        elif typ in ["/FitV", "FitBV"]:
-            self[NameObject("/Left")], = args
-        elif typ in ["/Fit", "FitB"]:
-            pass
-        else:
-            raise utils.PdfReadError("Unknown Destination Type: %r" % typ)
-            
-    def getDestArray(self):
-        return ArrayObject([self.raw_get('/Page'), self['/Type']] + [self[x] for x in ['/Left','/Bottom','/Right','/Top','/Zoom'] if self.has_key(x)])
-        
-    def writeToStream(self, stream, encryption_key):
-        stream.write("<<\n")
-        
-        key = NameObject('/D')
-        key.writeToStream(stream, encryption_key)
-        stream.write(" ")
-        value = self.getDestArray()
-        value.writeToStream(stream, encryption_key)
-
-        key = NameObject("/S")
-        key.writeToStream(stream, encryption_key)
-        stream.write(" ")
-        value = NameObject("/GoTo")
-        value.writeToStream(stream, encryption_key)
-        
-        stream.write("\n")
-        stream.write(">>")
-         
-    ##
-    # Read-only property accessing the destination title.
-    # @return A string.
-    title = property(lambda self: self.get("/Title"))
-
-    ##
-    # Read-only property accessing the destination page.
-    # @return An integer.
-    page = property(lambda self: self.get("/Page"))
-
-    ##
-    # Read-only property accessing the destination type.
-    # @return A string.
-    typ = property(lambda self: self.get("/Type"))
-
-    ##
-    # Read-only property accessing the zoom factor.
-    # @return A number, or None if not available.
-    zoom = property(lambda self: self.get("/Zoom", None))
-
-    ##
-    # Read-only property accessing the left horizontal coordinate.
-    # @return A number, or None if not available.
-    left = property(lambda self: self.get("/Left", None))
-
-    ##
-    # Read-only property accessing the right horizontal coordinate.
-    # @return A number, or None if not available.
-    right = property(lambda self: self.get("/Right", None))
-
-    ##
-    # Read-only property accessing the top vertical coordinate.
-    # @return A number, or None if not available.
-    top = property(lambda self: self.get("/Top", None))
-
-    ##
-    # Read-only property accessing the bottom vertical coordinate.
-    # @return A number, or None if not available.
-    bottom = property(lambda self: self.get("/Bottom", None))
-        
-
-class Bookmark(Destination):
-    def writeToStream(self, stream, encryption_key):
-        stream.write("<<\n")
-        for key in [NameObject(x) for x in ['/Title', '/Parent', '/First', '/Last', '/Next', '/Prev'] if self.has_key(x)]:
-            key.writeToStream(stream, encryption_key)
-            stream.write(" ")
-            value = self.raw_get(key)
-            value.writeToStream(stream, encryption_key)
-            stream.write("\n")
-        key = NameObject('/Dest')
-        key.writeToStream(stream, encryption_key)
-        stream.write(" ")
-        value = self.getDestArray()
-        value.writeToStream(stream, encryption_key)
-        stream.write("\n")
-        stream.write(">>")
-        
- 
 
 def encode_pdfdocencoding(unicode_string):
     retval = ''
