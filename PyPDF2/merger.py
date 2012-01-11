@@ -83,7 +83,6 @@ class PdfFileMerger(object):
         if type(fileobj) in (str, unicode):
             fileobj = file(fileobj, 'rb')
             my_file = True
-            
         if type(fileobj) == PdfFileReader:
             pdfr = fileobj
             fileobj = pdfr.file
@@ -97,7 +96,6 @@ class PdfFileMerger(object):
             raise TypeError('"pages" must be a tuple of (start, end)')
         
         srcpages = []
-        
         if bookmark:
             bookmark = Bookmark(TextStringObject(bookmark), NumberObject(self.id_count), NameObject('/Fit'))
         
@@ -162,10 +160,12 @@ class PdfFileMerger(object):
 
 
         # Add pages to the PdfFileWriter
+        # The commented out line below was replaced with the two lines below it to allow PdfFileMerger to work with PyPdf 1.13
         for page in self.pages:
             self.output.addPage(page.pagedata)
-            page.out_pagedata = self.output.getReference(self.output._pages.getObject()["/Kids"][-1].getObject())
-
+            #page.out_pagedata = self.output.getReference(self.output._pages.getObject()["/Kids"][-1].getObject())
+            idnum = self.output._objects.index(self.output._pages.getObject()["/Kids"][-1].getObject()) + 1
+            page.out_pagedata = IndirectObject(idnum, 0, self.output)
 
         # Once all pages are added, create bookmarks to point at those pages
         self._write_dests()
