@@ -810,7 +810,10 @@ class PdfFileReader(object):
         if debug: print indirectReference.idnum,indirectReference.generation, ":", start
         self.stream.seek(start, 0)
         idnum, generation = self.readObjectHeader(self.stream)
-        assert idnum == indirectReference.idnum
+        try:
+            assert idnum == indirectReference.idnum
+        except AssertionError:
+            raise utils.PdfReadError("Expected object ID does not match actual. XRef table likely not zero-indexed.")
         assert generation == indirectReference.generation
         retval = readObject(self.stream, self)
 
@@ -901,12 +904,12 @@ class PdfFileReader(object):
                     raise utils.PdfReadError, "xref table read error"
                 readNonWhitespace(stream)
                 stream.seek(-1, 1)
-                firsttime = True; # check if the first time looking at the xref table
+               # firsttime = True; # check if the first time looking at the xref table
                 while 1:
                     num = readObject(stream, self)
-                    if firsttime and num != 0:
-                         pass#raise utils.PdfReadError, "Cross-reference table is not zero-indexed."
-                    firsttime = False
+                    #if firsttime and num != 0:
+                    #     raise utils.PdfReadError, "Cross-reference table is not zero-indexed."
+                    #firsttime = False
                     readNonWhitespace(stream)
                     stream.seek(-1, 1)
                     size = readObject(stream, self)
