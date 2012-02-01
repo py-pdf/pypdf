@@ -238,6 +238,7 @@ class PdfFileWriter(object):
     # @param stream An object to write the file to.  The object must support
     # the write method, and the tell method, similar to a file object.
     def write(self, stream):
+        debug = False
         import struct
 
         externalReferenceMap = {}
@@ -261,6 +262,7 @@ class PdfFileWriter(object):
                 externalReferenceMap[data.pdf][data.generation][data.idnum] = IndirectObject(objIndex + 1, 0, self)
 
         self.stack = []
+        if debug: print "ERM:",externalReferenceMap,"root:",self._root
         self._sweepIndirectReferences(externalReferenceMap, self._root)
         del self.stack
 
@@ -309,6 +311,8 @@ class PdfFileWriter(object):
         stream.write("\nstartxref\n%s\n%%%%EOF\n" % (xref_location))
 
     def _sweepIndirectReferences(self, externMap, data):
+        debug = False
+        if debug: print data,"TYPE",data.__class__.__name__
         if isinstance(data, DictionaryObject):
             for key, value in data.items():
                 origvalue = value
@@ -357,6 +361,163 @@ class PdfFileWriter(object):
                 return newobj
         else:
             return data
+    
+    def getReference(self, obj):
+        idnum = self._objects.index(obj) + 1
+        ref = IndirectObject(idnum, 0, self)
+        assert ref.getObject() == obj
+        return ref
+    
+    def getOutlineRoot(self):
+        root = self.getObject(self._root)
+
+        if root.has_key('/Outlines'):
+            outline = root['/Outlines']
+            idnum = self._objects.index(outline) + 1
+            outlineRef = IndirectObject(idnum, 0, self)
+            assert outlineRef.getObject() == outline 
+        else:
+            outline = TreeObject() 
+            outline.update({ })
+            outlineRef = self._addObject(outline)
+            root[NameObject('/Outlines')] = outlineRef
+            
+        return outline
+ 
+    def getNamedDestRoot(self):
+        root = self.getObject(self._root)
+
+        if root.has_key('/Names') and isinstance(root['/Names'], DictionaryObject):
+            names = root['/Names']
+            idnum = self._objects.index(names) + 1
+            namesRef = IndirectObject(idnum, 0, self)
+            assert namesRef.getObject() == names 
+            if names.has_key('/Dests') and isinstance(names['/Dests'], DictionaryObject):
+                dests = names['/Dests']
+                idnum = self._objects.index(dests) + 1
+                destsRef = IndirectObject(idnum, 0, self)
+                assert destsRef.getObject() == dests 
+                if dests.has_key('/Names'):
+                    nd = dests['/Names']
+                else:
+                    nd = ArrayObject()
+                    dests[NameObject('/Names')] = nd
+            else:
+                dests = DictionaryObject()
+                destsRef = self._addObject(dests)
+                names[NameObject('/Dests')] = destsRef
+                nd = ArrayObject()
+                dests[NameObject('/Names')] = nd
+                
+        else:
+            names = DictionaryObject()
+            namesRef = self._addObject(names)
+            root[NameObject('/Names')] = namesRef
+            dests = DictionaryObject()
+            destsRef = self._addObject(dests)
+            names[NameObject('/Dests')] = destsRef
+            nd = ArrayObject()
+            dests[NameObject('/Names')] = nd
+            
+        return nd
+    
+    def addBookmarkDestination(self, dest, parent=None):
+        destRef = self._addObject(dest)
+
+        outlineRef = self.getOutlineRoot()
+        
+        if parent == None:
+            parent = outlineRef
+
+        parent = parent.getObject()
+        print parent.__class__.__name__
+        parent.addChild(destRef, self)
+        
+        return destRef
+    
+    def addBookmarkDict(self, bookmark, parent=None):
+        bookmarkObj = TreeObject()
+        for k, v in bookmark.items():
+            bookmarkObj[NameObject(str(k))] = v
+        bookmarkObj.update(bookmark)
+        
+        if bookmark.has_key('/A'):
+            action = DictionaryObject()
+            for k, v in bookmark['/A'].items():
+                action[NameObject(str(k))] = v
+            actionRef = self._addObject(action)
+            bookmarkObj['/A'] = actionRef
+            
+        bookmarkRef = self._addObject(bookmarkObj)
+
+        outlineRef = self.getOutlineRoot()
+        
+        if parent == None:
+            parent = outlineRef
+        
+        parent = parent.getObject()
+        parent.addChild(bookmarkRef, self)
+        
+        return bookmarkRef       
+    
+            
+    def addBookmark(self, title, pagenum, parent=None):
+        """
+        Add a bookmark to the pdf, using the specified title and pointing at 
+        the specified page number. A parent can be specified to make this a
+        nested bookmark below the parent.
+        """
+        pageRef = self.getObject(self._pages)['/Kids'][pagenum]
+        action = DictionaryObject()
+        action.update({
+            NameObject('/D') : ArrayObject([pageRef, NameObject('/FitH'), NumberObject(826)]),
+            NameObject('/S') : NameObject('/GoTo')
+        })
+        actionRef = self._addObject(action)
+
+        outlineRef = self.getOutlineRoot()
+        
+        if parent == None:
+            parent = outlineRef
+            
+
+        bookmark = TreeObject()
+
+        bookmark.update({
+            NameObject('/A') : actionRef,
+            NameObject('/Title') : createStringObject(title),
+        })
+
+        bookmarkRef = self._addObject(bookmark)
+        
+        parent = parent.getObject()
+        parent.addChild(bookmarkRef, self)
+        
+        return bookmarkRef
+
+    def addNamedDestinationObject(self, dest):
+        destRef = self._addObject(dest)
+
+        nd = self.getNamedDestRoot()
+        nd.extend([dest['/Title'], destRef])
+        
+        return destRef      
+
+    def addNamedDestination(self, title, pagenum):
+        pageRef = self.getObject(self._pages)['/Kids'][pagenum]
+        dest = DictionaryObject()
+        dest.update({
+            NameObject('/D') : ArrayObject([pageRef, NameObject('/FitH'), NumberObject(826)]),
+            NameObject('/S') : NameObject('/GoTo')
+        })
+        
+        destRef = self._addObject(dest)
+        nd = self.getNamedDestRoot()
+
+        nd.extend([title, destRef])
+        
+        return destRef
+
 
 
 ##
@@ -616,9 +777,11 @@ class PdfFileReader(object):
             self.flattenedPages.append(pageObj)
 
     def getObject(self, indirectReference):
+        debug = False
         retval = self.resolvedObjects.get(indirectReference.generation, {}).get(indirectReference.idnum, None)
         if retval != None:
             return retval
+        if debug: print self.xref_objStm
         if indirectReference.generation == 0 and \
            self.xref_objStm.has_key(indirectReference.idnum):
             # indirect reference to object in object stream
@@ -641,7 +804,10 @@ class PdfFileReader(object):
                 self.resolvedObjects[0][objnum] = obj
                 streamData.seek(t, 0)
             return self.resolvedObjects[0][indirectReference.idnum]
+        if debug: print self.xref_objStm
+        if debug: print self.xref
         start = self.xref[indirectReference.generation][indirectReference.idnum]
+        if debug: print indirectReference.idnum,indirectReference.generation, ":", start
         self.stream.seek(start, 0)
         idnum, generation = self.readObjectHeader(self.stream)
         assert idnum == indirectReference.idnum
@@ -684,12 +850,15 @@ class PdfFileReader(object):
         # cross-reference table should put us in the right spot to read the
         # object header.  In reality... some files have stupid cross reference
         # tables that are off by whitespace bytes.
-        readNonWhitespace(stream); stream.seek(-1, 1)
+        extra = False
+        extra |= utils.skipOverWhitespace(stream); stream.seek(-1, 1)
         idnum = readUntilWhitespace(stream)
+        extra |= utils.skipOverWhitespace(stream); stream.seek(-1, 1)
         generation = readUntilWhitespace(stream)
         obj = stream.read(3)
         readNonWhitespace(stream)
         stream.seek(-1, 1)
+        if (extra): print "WARNING: superfluous whitespace found in object header %s %s" % (idnum, generation)
         return int(idnum), int(generation)
 
     def cacheIndirectObject(self, generation, idnum, obj):
@@ -732,8 +901,12 @@ class PdfFileReader(object):
                     raise utils.PdfReadError, "xref table read error"
                 readNonWhitespace(stream)
                 stream.seek(-1, 1)
+                firsttime = True; # check if the first time looking at the xref table
                 while 1:
                     num = readObject(stream, self)
+                    if firsttime and num != 0:
+                         pass#raise utils.PdfReadError, "Cross-reference table is not zero-indexed."
+                    firsttime = False
                     readNonWhitespace(stream)
                     stream.seek(-1, 1)
                     size = readObject(stream, self)
@@ -1578,6 +1751,7 @@ class ContentStream(DecodedStreamObject):
     _data = property(_getData, _setData)
 
 
+
 ##
 # A class representing the basic document metadata provided in a PDF File.
 # <p>
@@ -1640,6 +1814,7 @@ class DocumentInformation(DictionaryObject):
     # @return A unicode string, or None if the producer is not provided.
     producer = property(lambda self: self.getText("/Producer"))
     producer_raw = property(lambda self: self.get("/Producer"))
+
 
 
 ##
