@@ -64,6 +64,14 @@ def readNonWhitespace(stream):
         tok = stream.read(1)
     return tok
 
+def skipOverWhitespace(stream):
+    tok = ' '
+    cnt = 0;
+    while tok == '\n' or tok == '\r' or tok == ' ' or tok == '\t':
+        tok = stream.read(1)
+        cnt+=1
+    return (cnt > 1)
+
 class ConvertFunctionsToVirtualList(object):
     def __init__(self, lengthFunction, getFunction):
         self.lengthFunction = lengthFunction
