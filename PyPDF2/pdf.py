@@ -778,16 +778,21 @@ class PdfFileReader(object):
 
     def getObject(self, indirectReference):
         debug = False
+        if debug: print "looking at:",indirectReference.idnum,indirectReference.generation
         retval = self.resolvedObjects.get(indirectReference.generation, {}).get(indirectReference.idnum, None)
         if retval != None:
             return retval
         if debug: print self.xref_objStm
+        if not indirectReference.idnum in self.xref[indirectReference.generation]:
+            print "WARNING: Object %d %d not defined." % (indirectReference.idnum,indirectReference.generation)
         if indirectReference.generation == 0 and \
            self.xref_objStm.has_key(indirectReference.idnum):
             # indirect reference to object in object stream
             # read the entire object stream into memory
             stmnum,idx = self.xref_objStm[indirectReference.idnum]
+            if debug: print "Here1"
             objStm = IndirectObject(stmnum, 0, self).getObject()
+            if debug: print "Here2"
             assert objStm['/Type'] == '/ObjStm'
             assert idx < objStm['/N']
             streamData = StringIO(objStm.getData())
@@ -800,11 +805,17 @@ class PdfFileReader(object):
                 streamData.seek(-1, 1)
                 t = streamData.tell()
                 streamData.seek(objStm['/First']+offset, 0)
+                if debug: 
+                    pos = streamData.tell()
+                    streamData.seek(0,0)
+                    lines = streamData.readlines()
+                    for i in range(0,len(lines)):
+                        print lines[i]
+                    streamData.seek(pos,0)
                 obj = readObject(streamData, self)
                 self.resolvedObjects[0][objnum] = obj
                 streamData.seek(t, 0)
             return self.resolvedObjects[0][indirectReference.idnum]
-        if debug: print self.xref_objStm
         if debug: print self.xref
         start = self.xref[indirectReference.generation][indirectReference.idnum]
         if debug: print indirectReference.idnum,indirectReference.generation, ":", start
