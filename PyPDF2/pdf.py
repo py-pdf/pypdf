@@ -529,12 +529,15 @@ class PdfFileWriter(object):
 # @param stream An object that supports the standard read and seek methods
 #               similar to a file object.
 class PdfFileReader(object):
-    def __init__(self, stream):
+    def __init__(self, stream, strict=False):
+        self.strict = strict
         self.flattenedPages = None
         self.resolvedObjects = {}
         self.read(stream)
         self.stream = stream
         self._override_encryption = False
+        
+        
 
     ##
     # Retrieves the PDF file's document information dictionary, if it exists.
@@ -784,6 +787,7 @@ class PdfFileReader(object):
             return retval
         if debug: print self.xref_objStm
         if not indirectReference.idnum in self.xref[indirectReference.generation]:
+            #TODO: how to avoid problems if bad object is never actually used?
             print "WARNING: Object %d %d not defined." % (indirectReference.idnum,indirectReference.generation)
         if indirectReference.generation == 0 and \
            self.xref_objStm.has_key(indirectReference.idnum):
@@ -824,6 +828,7 @@ class PdfFileReader(object):
         try:
             assert idnum == indirectReference.idnum
         except AssertionError:
+            #TODO: when strict==False, ignore the xreftable starting index and make it 0-indexed. do this HERE since otherwise it's unnecessary
             raise utils.PdfReadError("Expected object ID does not match actual. XRef table likely not zero-indexed.")
         assert generation == indirectReference.generation
         retval = readObject(self.stream, self)
@@ -872,7 +877,7 @@ class PdfFileReader(object):
         obj = stream.read(3)
         readNonWhitespace(stream)
         stream.seek(-1, 1)
-        if (extra): print "WARNING: superfluous whitespace found in object header %s %s" % (idnum, generation)
+        if (extra and strict): print "WARNING: superfluous whitespace found in object header %s %s" % (idnum, generation)
         return int(idnum), int(generation)
 
     def cacheIndirectObject(self, generation, idnum, obj):
