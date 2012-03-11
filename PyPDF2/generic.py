@@ -40,6 +40,7 @@ import filters
 import utils
 import decimal
 import codecs
+#import debugging
 
 def readObject(stream, pdf):
     tok = stream.read(1)
@@ -197,7 +198,7 @@ class IndirectObject(PdfObject):
             generation += tok
         r = stream.read(1)
         if r != "R":
-            raise utils.PdfReadError("error reading indirect object reference")
+            raise utils.PdfReadError("Error reading indirect object reference at byte %s" % utils.hexStr(stream.tell()))
         return IndirectObject(int(idnum), int(generation), pdf)
     readFromStream = staticmethod(readFromStream)
 
@@ -424,6 +425,7 @@ class NameObject(str, PdfObject):
 
     def readFromStream(stream):
         debug = False
+        if debug: print stream.tell()
         name = stream.read(1)
         if name != "/":
             raise utils.PdfReadError, "name read error"
@@ -433,7 +435,7 @@ class NameObject(str, PdfObject):
                 stream.seek(-1, 1)
                 break
             name += tok
-            if debug: print name
+        if debug: print name
         return NameObject(name)
     readFromStream = staticmethod(readFromStream)
 
@@ -517,12 +519,15 @@ class DictionaryObject(dict, PdfObject):
         stream.write(">>")
 
     def readFromStream(stream, pdf):
+        debug = False
         tmp = stream.read(2)
         if tmp != "<<":
-            raise utils.PdfReadError, "dictionary read error"
+            raise utils.PdfReadError, \
+                ("Dictionary read error at byte %s: stream must begin with '<<'" % utils.hexStr(stream.tell()))
         data = {}
         while True:
             tok = readNonWhitespace(stream)
+            if debug: print "Tok:",tok
             if tok == ">":
                 stream.read(1)
                 break
@@ -533,7 +538,8 @@ class DictionaryObject(dict, PdfObject):
             value = readObject(stream, pdf)
             if data.has_key(key):
                 # multiple definitions of key not permitted
-                raise utils.PdfReadError, "multiple definitions in dictionary"
+                raise utils.PdfReadError, ("Multiple definitions in dictionary at byte %s for key %s" \
+                                           % (utils.hexStr(stream.tell()), key))
             data[key] = value
         pos = stream.tell()
         s = readNonWhitespace(stream)
@@ -550,11 +556,14 @@ class DictionaryObject(dict, PdfObject):
             # this is a stream object, not a dictionary
             assert data.has_key("/Length")
             length = data["/Length"]
+            if debug: print data
             if isinstance(length, IndirectObject):
                 t = stream.tell()
                 length = pdf.getObject(length)
                 stream.seek(t, 0)
             data["__streamdata__"] = stream.read(length)
+            if debug: print "here"
+            #if debug: print debugging.printAsHex(data["__streamdata__"])
             e = readNonWhitespace(stream)
             ndstream = stream.read(8)
             if (e + ndstream) != "endstream":
@@ -571,8 +580,10 @@ class DictionaryObject(dict, PdfObject):
                     # we found it by looking back one character further.
                     data["__streamdata__"] = data["__streamdata__"][:-1]
                 else:
+                   # if debug: print "E", e, ndstream, debugging.toHex(end)
                     stream.seek(pos, 0)
-                    raise utils.PdfReadError, "Unable to find 'endstream' marker after stream."
+                    raise utils.PdfReadError, \
+                        ("Unable to find 'endstream' marker after stream at byte %s." % utils.hexStr(stream.tell()))
         else:
             stream.seek(pos, 0)
         if data.has_key("__streamdata__"):
