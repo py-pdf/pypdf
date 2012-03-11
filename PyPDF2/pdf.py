@@ -30,6 +30,7 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+import string
 
 """
 A pure-Python PDF library with very minimal capabilities.  It was designed to
@@ -61,6 +62,8 @@ if version_info < ( 2, 5 ):
     from md5 import md5
 else:
     from hashlib import md5
+
+warnings.formatwarning = utils.customwarning
 
 ##
 # This class supports writing PDF files out, given pages produced by another
@@ -536,7 +539,11 @@ class PdfFileReader(object):
         self.read(stream)
         self.stream = stream
         self._override_encryption = False
-        
+        #self.problem = warnings.warn if not strict else utils.error
+        ## ^^^
+        #TODO: make it to where, whenever there's a problem that could be handled strictly or loosely,
+        #just call self.problem(ErrorType, message). if strict, it will throw error of type ErrorType
+        #and terminate; if loose, it will print a warning wtih type ErrorType
         
 
     ##
@@ -788,7 +795,7 @@ class PdfFileReader(object):
         if debug: print self.xref_objStm
         if not indirectReference.idnum in self.xref[indirectReference.generation]:
             #TODO: how to avoid problems if bad object is never actually used?
-            print "WARNING: Object %d %d not defined." % (indirectReference.idnum,indirectReference.generation)
+            warnings.warn("WARNING: Object %d %d not defined." % (indirectReference.idnum,indirectReference.generation))
         if indirectReference.generation == 0 and \
            self.xref_objStm.has_key(indirectReference.idnum):
             # indirect reference to object in object stream
@@ -877,7 +884,7 @@ class PdfFileReader(object):
         obj = stream.read(3)
         readNonWhitespace(stream)
         stream.seek(-1, 1)
-        if (extra and strict): print "WARNING: superfluous whitespace found in object header %s %s" % (idnum, generation)
+        if (extra and strict): warnings.warn("WARNING: superfluous whitespace found in object header %s %s" % (idnum, generation))
         return int(idnum), int(generation)
 
     def cacheIndirectObject(self, generation, idnum, obj):

@@ -27,7 +27,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-
 """
 Utility functions for PDF library.
 """
@@ -46,6 +45,11 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 #        def proxy(func):
 #            return func
 #        proxy = staticmethod(proxy)
+
+#custom implementation of warnings.formatwarning 
+def customwarning(message, category, filename, lineno, line=None):
+    file = filename.replace("/","\\").rsplit("\\",1)[1] # find the file name
+    return "%s: %s [%s:%s]\n" % (category.__name__, message, file, lineno)
 
 def readUntilWhitespace(stream, maxchars=None):
     txt = ""
@@ -125,6 +129,8 @@ class PageSizeNotDefinedError(PyPdfError):
 class PdfReadWarning(UserWarning):
     pass
 
+def hexStr(num):
+    return hex(num).replace('L','')
 if __name__ == "__main__":
     # test RC4
     out = RC4_encrypt("Key", "Plaintext")
