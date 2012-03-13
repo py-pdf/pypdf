@@ -36,10 +36,6 @@
 <p>[Compare PyPdf and PyPDF2.  Spelling.  Technical details:
     read; new functionality.]</p>
 
-<p>[Explain documentation of PyPDF2.]</p>
-
-<p>[Explain retrieval for the git-unaware.]</p>
-
 <p>Plans for PyPDF2 include:
    <ul>
    <li>Web applications including an <a href = "#online">online PDF diagnostic tool</a>;</li>
@@ -48,16 +44,37 @@
    <li>PyPackaging [emphasize use with Zope/Plone [more references]];</li>
    <li>[... other ...].</li>
    </ul>
+   Current plans for PyPDF2 do <i>not</i> include the ability to:
+   <ul>
+   <li>merge annotations;
+   <li>...
+   </ul>
+   Let us know if you think these targets should change.
 </p>
 
 <p>[Licensing [update], README, ...]
+
+<p>The Reddit /r/python crowd <a href = "http://www.reddit.com/r/Python/comments/qsvfm/pypdf2_updates_pypdf_pypdf2_is_an_opensource/"
+                                 target = "Reddit">chatted</a> obliquely and briefly about
+   PyPDF2 in March 2012.
 
 <h2><a id = "online">Online demonstrations of PyPDF2</a></h2>
 <p>Phaseit supports a couple of online PyPDF2 tools, including
      this live Web application which diagnoses ...
 
 <h2><a id = "documentation">Documentation</a></h2>
-[Placeholder for references to PyPDF2 documentation.]
+<p><a href = "http://pybrary.net/pyPdf/pythondoc-pyPdf.pdf.html">PyPdf's
+   documentation</a> applies; that is, PyPDF2 aims to be a strict superset
+   of PyPdf, doing everything that PyPdf's documentation claims for 
+   PyPdf, but also a bit more.
+
+<p>What are the differences between the two libraries?  There are
+   several cases where PyPdf tosses an (undocumented) exception,
+   and PyPDF2 either provides a more descriptive exception, or 
+   simply returns a correct result.
+
+<p>PyPDF2 also extends PyPdf's application programming interface
+   in quite a few regards [none of which we've yet documented ...].
 
 <h2><a id = "GitHub">Remarks on GitHub</a></h2>
 
@@ -83,6 +100,15 @@
    Announcements about
    PyPDF2 occasionally appear by way of 
    <a href = "http://twitter.com/Phaseit/">Twitter</a>.
+
+<p>Behind the scenes, PyPDF2 has an extensive collection of test
+   scripts.  These are "behind the scenes" because many of the
+   test instances are PDF files supplied by correspondents.  If
+   PyPDF2 fails you in some way, please understand that you can
+   send us all artifacts--files, scripts, and so on--necessary
+   to reproduce the symptom, with confidence that we'll maintain
+   your privacy.  That's how we are.
+
    
 
 
