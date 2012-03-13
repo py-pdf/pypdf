@@ -542,10 +542,10 @@ class PdfFileReader(object):
         self.strict = strict
         self.flattenedPages = None
         self.resolvedObjects = {}
+        self.xrefIndex = 0
         self.read(stream)
         self.stream = stream
         self._override_encryption = False
-        
 
     ##
     # Retrieves the PDF file's document information dictionary, if it exists.
@@ -798,7 +798,7 @@ class PdfFileReader(object):
             #TODO: how to avoid problems if bad object is never actually used?
             warnings.warn("Object %d %d not defined." % \
                           (indirectReference.idnum,indirectReference.generation), utils.PdfReadWarning)
-            if self.strict: raise utils.PdfReadError("This is a fatal error in strict mode.")
+            #if self.strict: raise utils.PdfReadError("This is a fatal error in strict mode.") # maybe?
         if indirectReference.generation == 0 and \
            self.xref_objStm.has_key(indirectReference.idnum):
             # indirect reference to object in object stream
@@ -838,8 +838,16 @@ class PdfFileReader(object):
         try:
             assert idnum == indirectReference.idnum
         except AssertionError:
-            #TODO: when strict==False, ignore the xreftable starting index and make it 0-indexed. do this HERE since otherwise it's unnecessary
-            raise utils.PdfReadError("Expected object ID does not match actual. XRef table likely not zero-indexed.")
+            if self.xrefIndex: #Xref table probably had bad indexes due to not being zero-indexed
+                if self.strict: 
+                    #fix means that the calling method is trying to determine whether being non-zero-indexed is a problem
+                    #thus, it should raise the error even if strict is turned off.
+                    raise utils.PdfReadError("Expected object ID (%d %d) does not match actual (%d %d); xref table not zero-indexed." \
+                                     % (indirectReference.idnum, indirectReference.generation, idnum, generation))
+                else: pass #should not happen since the xref table is corrected in non-strict mode
+            else: #some other problem
+                raise utils.PdfReadError("Expected object ID (%d %d) does not match actual (%d %d)." \
+                                     % (indirectReference.idnum, indirectReference.generation, idnum, generation))
         assert generation == indirectReference.generation
         retval = readObject(self.stream, self)
 
@@ -933,12 +941,16 @@ class PdfFileReader(object):
                     raise utils.PdfReadError, "xref table read error"
                 readNonWhitespace(stream)
                 stream.seek(-1, 1)
-               # firsttime = True; # check if the first time looking at the xref table
+                firsttime = True; # check if the first time looking at the xref table
                 while 1:
                     num = readObject(stream, self)
-                    #if firsttime and num != 0:
-                    #     raise utils.PdfReadError, "Cross-reference table is not zero-indexed."
-                    #firsttime = False
+                    if firsttime and num != 0:
+                         self.xrefIndex = num
+                         warnings.warn("Xref table not zero-indexed. ID numbers for objects will %sbe corrected." % \
+                                       ("" if not self.strict else "not "), utils.PdfReadWarning)
+                         #if table not zero indexed, could be due to error from when PDF was created
+                         #which will lead to mismatched indices later on
+                    firsttime = False
                     readNonWhitespace(stream)
                     stream.seek(-1, 1)
                     size = readObject(stream, self)
@@ -1055,7 +1067,22 @@ class PdfFileReader(object):
                     # no xref table found at specified location
                     assert False
                     break
+        #if not zero-indexed, verify that the table is correct; change it if necessary
+        if self.xrefIndex and not self.strict:
+            loc = stream.tell()
+            for gen in self.xref:
+                if gen == 65535: continue
+                for id in self.xref[gen]:
+                    stream.seek(self.xref[gen][id], 0)
+                    pid, pgen = self.readObjectHeader(stream)
+                    if pid == id - self.xrefIndex:
+                        self.zeroXref(gen)
+                        break
+            stream.seek(loc, 0) #return to where it was
 
+    def zeroXref(self, generation):
+        self.xref[generation] = dict( (k-self.xrefIndex,v) for (k,v) in self.xref[generation].iteritems() )
+            
     def _pairs(self, array):
         i = 0
         while True:
