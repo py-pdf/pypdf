@@ -538,7 +538,7 @@ class PdfFileWriter(object):
 #               also causes some correctable problems to be fatal. Defaults
 #               to False. 
 class PdfFileReader(object):
-    def __init__(self, stream, strict=False):
+    def __init__(self, stream, strict=True):
         self.strict = strict
         self.flattenedPages = None
         self.resolvedObjects = {}
@@ -1076,6 +1076,7 @@ class PdfFileReader(object):
                     if pid == id - self.xrefIndex:
                         self.zeroXref(gen)
                         break
+                    #if not, then either it's just plain wrong, or the non-zero-index is actually correct
             stream.seek(loc, 0) #return to where it was
 
     def zeroXref(self, generation):
