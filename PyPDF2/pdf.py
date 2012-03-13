@@ -65,6 +65,9 @@ else:
 
 warnings.formatwarning = utils.customwarning
 
+import __builtin__
+
+__builtin__.UserWarning
 ##
 # This class supports writing PDF files out, given pages produced by another
 # class (typically {@link #PdfFileReader PdfFileReader}).
@@ -531,6 +534,9 @@ class PdfFileWriter(object):
 #
 # @param stream An object that supports the standard read and seek methods
 #               similar to a file object.
+# @param strict Determines whether user should be warned of all problems and
+#               also causes some correctable problems to be fatal. Defaults
+#               to False. 
 class PdfFileReader(object):
     def __init__(self, stream, strict=False):
         self.strict = strict
@@ -539,11 +545,6 @@ class PdfFileReader(object):
         self.read(stream)
         self.stream = stream
         self._override_encryption = False
-        #self.problem = warnings.warn if not strict else utils.error
-        ## ^^^
-        #TODO: make it to where, whenever there's a problem that could be handled strictly or loosely,
-        #just call self.problem(ErrorType, message). if strict, it will throw error of type ErrorType
-        #and terminate; if loose, it will print a warning wtih type ErrorType
         
 
     ##
@@ -795,7 +796,9 @@ class PdfFileReader(object):
         if debug: print self.xref_objStm
         if not indirectReference.idnum in self.xref[indirectReference.generation]:
             #TODO: how to avoid problems if bad object is never actually used?
-            warnings.warn("WARNING: Object %d %d not defined." % (indirectReference.idnum,indirectReference.generation))
+            warnings.warn("Object %d %d not defined." % \
+                          (indirectReference.idnum,indirectReference.generation), utils.PdfReadWarning)
+            if self.strict: raise utils.PdfReadError("This is a fatal error in strict mode.")
         if indirectReference.generation == 0 and \
            self.xref_objStm.has_key(indirectReference.idnum):
             # indirect reference to object in object stream
@@ -884,7 +887,10 @@ class PdfFileReader(object):
         obj = stream.read(3)
         readNonWhitespace(stream)
         stream.seek(-1, 1)
-        if (extra and strict): warnings.warn("WARNING: superfluous whitespace found in object header %s %s" % (idnum, generation))
+        if (extra and self.strict): 
+            #not a fatal error
+            warnings.warn("Superfluous whitespace found in object header %s %s" % \
+                          (idnum, generation), utils.PdfReadWarning)
         return int(idnum), int(generation)
 
     def cacheIndirectObject(self, generation, idnum, obj):
