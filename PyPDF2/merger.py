@@ -49,7 +49,7 @@ class PdfFileMerger(object):
     usage information.
     """
     
-    def __init__(self):
+    def __init__(self, strict=True):
         """
         >>> PdfFileMerger()
         
@@ -61,6 +61,7 @@ class PdfFileMerger(object):
         self.bookmarks = []
         self.named_dests = []
         self.id_count = 0
+        self.strict = strict
         
     def merge(self, position, fileobj, bookmark=None, pages=None, import_bookmarks=True):
         """
@@ -87,7 +88,7 @@ class PdfFileMerger(object):
             pdfr = fileobj
             fileobj = pdfr.file
         else:
-            pdfr = PdfFileReader(fileobj)
+            pdfr = PdfFileReader(fileobj, strict=self.strict)
         
         # Find the range of pages to merge
         if pages == None:
