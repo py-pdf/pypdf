@@ -9,7 +9,7 @@
 <p>In 2005, <a href = "http://mathieu.fenniak.net/">Mathieu Fenniak</a>
     launched
    <a href = "http://pybrary.net/pyPdf/"
-      target = "pybrary">PyPdf</a> "as a PDF toolkit ..." focused on 
+      target = "pybrary">pyPdf</a> "as a PDF toolkit ..." focused on 
 <ul>
 <li>document manipulation:  by-page splitting, concatenation,
      and merging;</li>
@@ -21,19 +21,19 @@
    At the end of 2011, after consultation with Mathieu and others,
    <a href = "http://phaseit.net">Phaseit</a>
     sponsored <a href = "https://github.com/knowah/PyPDF2/">PyPDF2</a>
-    as a fork of PyPdf on
+    as a fork of pyPdf on
     <a href = "#GitHub">GitHub</a>.  The initial impetus was to
     handle a wider range of input PDF instances; Phaseit's commercial
     work often encounters PDF instances "in the wild" that it needs to
     manage (mostly concatenate and paginate), but that deviate so much
-    from PDF standards that PyPdf can't read them.   PyPDF2 reads a
+    from PDF standards that pyPdf can't read them.   PyPDF2 reads a
     considerably wider range of real-world PDF instances. </p>
 
-<p>Neither PyPdf nor PyPDF2 aims to be universal; 
+<p>Neither pyPdf nor PyPDF2 aims to be universal; 
    <a href = "http://phaseit.net/claird/comp.text.pdf/PDF_toolkits.html">here</a>
    are descriptions of other PDF libraries, including Python-based ones.
 
-<p>[Compare PyPdf and PyPDF2.  Spelling.  Technical details:
+<p>[Compare pyPdf and PyPDF2.  Spelling.  Technical details:
     read; new functionality.]</p>
 
 <p>Plans for PyPDF2 include:
@@ -64,17 +64,17 @@
      this live Web application which diagnoses ...
 
 <h2><a id = "documentation">Documentation</a></h2>
-<p><a href = "http://pybrary.net/pyPdf/pythondoc-pyPdf.pdf.html">PyPdf's
+<p><a href = "http://pybrary.net/pyPdf/pythondoc-pyPdf.pdf.html">pyPdf's
    documentation</a> applies; that is, PyPDF2 aims to be a strict superset
-   of PyPdf, doing everything that PyPdf's documentation claims for 
-   PyPdf, but also a bit more.
+   of pyPdf, doing everything that pyPdf's documentation claims for 
+   pyPdf, but also a bit more.
 
 <p>What are the differences between the two libraries?  There are
-   several cases where PyPdf tosses an (undocumented) exception,
+   several cases where pyPdf tosses an (undocumented) exception,
    and PyPDF2 either provides a more descriptive exception, or 
    simply returns a correct result.
 
-<p>PyPDF2 also extends PyPdf's application programming interface
+<p>PyPDF2 also extends pyPdf's application programming interface
    in quite a few regards [none of which we've yet documented ...].
 
 <h2><a id = "GitHub">Remarks on GitHub</a></h2>
@@ -103,7 +103,7 @@
    <a href = "http://twitter.com/Phaseit/">Twitter</a>.
 
 <p>Behind the scenes, one of PyPDF2's strengths is its extensive
-   collection of test scripts (initiated by Mathieu with PyPdf).
+   collection of test scripts (initiated by Mathieu with pyPdf).
     These are "behind the scenes" because many of the
    test instances are PDF files supplied by correspondents.  If
    PyPDF2 fails you in some way, please understand that you can
