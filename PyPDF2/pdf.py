@@ -840,8 +840,6 @@ class PdfFileReader(object):
         except AssertionError:
             if self.xrefIndex: #Xref table probably had bad indexes due to not being zero-indexed
                 if self.strict: 
-                    #fix means that the calling method is trying to determine whether being non-zero-indexed is a problem
-                    #thus, it should raise the error even if strict is turned off.
                     raise utils.PdfReadError("Expected object ID (%d %d) does not match actual (%d %d); xref table not zero-indexed." \
                                      % (indirectReference.idnum, indirectReference.generation, idnum, generation))
                 else: pass #should not happen since the xref table is corrected in non-strict mode
