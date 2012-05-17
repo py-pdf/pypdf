@@ -43,6 +43,7 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import math
 import struct
+import sys
 from sys import version_info
 try:
     from cStringIO import StringIO
@@ -537,8 +538,10 @@ class PdfFileWriter(object):
 # @param strict Determines whether user should be warned of all problems and
 #               also causes some correctable problems to be fatal. Defaults
 #               to False. 
+# @param errout Allows redirection of stderr to any open file. Defauls to
+#               sys.stderr
 class PdfFileReader(object):
-    def __init__(self, stream, strict=True):
+    def __init__(self, stream, strict=True, errout=sys.stderr):
         self.strict = strict
         self.flattenedPages = None
         self.resolvedObjects = {}
@@ -546,7 +549,7 @@ class PdfFileReader(object):
         self.read(stream)
         self.stream = stream
         self._override_encryption = False
-
+        sys.stderr = errout
     ##
     # Retrieves the PDF file's document information dictionary, if it exists.
     # Note that some PDF files use metadata streams instead of docinfo
