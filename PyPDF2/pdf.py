@@ -64,7 +64,7 @@ if version_info < ( 2, 5 ):
 else:
     from hashlib import md5
 
-warnings.formatwarning = utils.customwarning
+warnings.formatwarning = utils._formatwarning
 
 import __builtin__
 
@@ -538,11 +538,20 @@ class PdfFileWriter(object):
 # @param strict Determines whether user should be warned of all problems and
 #               also causes some correctable problems to be fatal. Defaults
 #               to False. 
-# @param errout Allows redirection of stderr to any open file. Defauls to
-#               sys.stderr
+# @param warndest Allows redirection of warnings to any open file/stream. Defauls to
+#                 the warnings default (sys.stderr)
 class PdfFileReader(object):
-    def __init__(self, stream, strict=True, errout=sys.stderr):
-        sys.stderr = errout
+    def __init__(self, stream, strict=True, warndest=None):
+        # have to dynamically override the default showwarning since there are no
+        # public methods that specify the 'file' parameter
+        def _showwarning(message, category, filename, lineno, file=warndest, line=None):
+            if file is None:
+                file = sys.stderr
+            try:
+                file.write(warnings.formatwarning(message, category, filename, lineno, line))
+            except IOError:
+                pass
+        warnings.showwarning = _showwarning
         self.strict = strict
         self.flattenedPages = None
         self.resolvedObjects = {}
@@ -1077,12 +1086,13 @@ class PdfFileReader(object):
                     stream.seek(self.xref[gen][id], 0)
                     pid, pgen = self.readObjectHeader(stream)
                     if pid == id - self.xrefIndex:
-                        self.zeroXref(gen)
+                        self._zeroXref(gen)
                         break
                     #if not, then either it's just plain wrong, or the non-zero-index is actually correct
             stream.seek(loc, 0) #return to where it was
 
-    def zeroXref(self, generation):
+    
+    def _zeroXref(self, generation):
         self.xref[generation] = dict( (k-self.xrefIndex,v) for (k,v) in self.xref[generation].iteritems() )
             
     def _pairs(self, array):
