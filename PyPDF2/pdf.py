@@ -542,6 +542,7 @@ class PdfFileWriter(object):
 #               sys.stderr
 class PdfFileReader(object):
     def __init__(self, stream, strict=True, errout=sys.stderr):
+        sys.stderr = errout
         self.strict = strict
         self.flattenedPages = None
         self.resolvedObjects = {}
@@ -549,7 +550,6 @@ class PdfFileReader(object):
         self.read(stream)
         self.stream = stream
         self._override_encryption = False
-        sys.stderr = errout
     ##
     # Retrieves the PDF file's document information dictionary, if it exists.
     # Note that some PDF files use metadata streams instead of docinfo
