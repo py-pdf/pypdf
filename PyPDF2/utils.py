@@ -131,6 +131,7 @@ class PdfReadWarning(UserWarning):
 
 def hexStr(num):
     return hex(num).replace('L','')
+
 if __name__ == "__main__":
     # test RC4
     out = RC4_encrypt("Key", "Plaintext")
