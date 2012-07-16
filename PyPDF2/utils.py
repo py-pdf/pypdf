@@ -52,7 +52,7 @@ def _formatwarning(message, category, filename, lineno, line=None):
     return "%s: %s [%s:%s]\n" % (category.__name__, message, file, lineno)
 
 def readUntilWhitespace(stream, maxchars=None):
-    txt = ""
+    txt = b_("")
     while True:
         tok = stream.read(1)
         if tok.isspace() or not tok:
@@ -63,8 +63,8 @@ def readUntilWhitespace(stream, maxchars=None):
     return txt
 
 def readNonWhitespace(stream):
-    tok = ' '
-    while tok == '\n' or tok == '\r' or tok == ' ' or tok == '\t':
+    tok = b_(' ')
+    while tok == b_('\n') or tok == b_('\r') or tok == b_(' ') or tok == b_('\t'):
         tok = stream.read(1)
     return tok
 
@@ -99,16 +99,16 @@ def RC4_encrypt(key, plaintext):
     S = [i for i in range(256)]
     j = 0
     for i in range(256):
-        j = (j + S[i] + ord(key[i % len(key)])) % 256
+        j = (j + S[i] + ord_(key[i % len(key)])) % 256
         S[i], S[j] = S[j], S[i]
     i, j = 0, 0
-    retval = ""
+    retval = b_("")
     for x in range(len(plaintext)):
         i = (i + 1) % 256
         j = (j + S[i]) % 256
         S[i], S[j] = S[j], S[i]
         t = S[(S[i] + S[j]) % 256]
-        retval += chr(ord(plaintext[x]) ^ t)
+        retval += b_(chr(ord_(plaintext[x]) ^ t))
     return retval
 
 def matrixMultiply(a, b):
@@ -131,6 +131,38 @@ class PdfReadWarning(UserWarning):
 
 def hexStr(num):
     return hex(num).replace('L','')
+
+import sys
+if sys.version_info[0] < 3:
+    def b_(s):
+        return s
+
+    def u_(s):
+        return unicode(s, 'unicode_escape')
+
+    def ord_(b):
+        return ord(b)
+
+    def barray(b):
+        return b
+
+    string_type = unicode
+    bytes_type = str
+else:
+    def b_(s):
+        return s.encode('latin-1')
+
+    def u_(s):
+        return s
+
+    def ord_(b):
+        return b
+
+    def barray(b):
+        return bytearray(b)
+
+    string_type = str
+    bytes_type = bytes
 
 if __name__ == "__main__":
     # test RC4

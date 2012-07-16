@@ -55,6 +55,7 @@ import utils
 import warnings
 from generic import *
 from utils import readNonWhitespace, readUntilWhitespace, ConvertFunctionsToVirtualList
+from utils import b_
 
 if version_info < ( 2, 4 ):
    from sets import ImmutableSet as frozenset
@@ -921,19 +922,19 @@ class PdfFileReader(object):
         if debug: print ">>read", stream
         # start at the end:
         stream.seek(-1, 2)
-        line = ''
+        line = b_('')
         if debug: print "  line:",line
         while not line:
             line = self.readNextEndLine(stream)
         if debug: print "  line:",line
-        if line[:5] != "%%EOF":
+        if line[:5] != b_("%%EOF"):
             raise utils.PdfReadError, "EOF marker not found"
 
         # find startxref entry - the location of the xref table
         line = self.readNextEndLine(stream)
         startxref = int(line)
         line = self.readNextEndLine(stream)
-        if line[:9] != "startxref":
+        if line[:9] != b_("startxref"):
             raise utils.PdfReadError, "startxref not found"
 
         # read all cross reference tables and their trailers
@@ -944,10 +945,10 @@ class PdfFileReader(object):
             # load the xref table
             stream.seek(startxref, 0)
             x = stream.read(1)
-            if x == "x":
+            if x == b_("x"):
                 # standard cross-reference table
                 ref = stream.read(4)
-                if ref[:3] != "ref":
+                if ref[:3] != b_("ref"):
                     raise utils.PdfReadError, "xref table read error"
                 readNonWhitespace(stream)
                 stream.seek(-1, 1)
@@ -977,9 +978,9 @@ class PdfFileReader(object):
                         # back one character.  (0-9 means we've bled into
                         # the next xref entry, t means we've bled into the
                         # text "trailer"):
-                        if line[-1] in "0123456789t":
+                        if line[-1] in b_("0123456789t"):
                             stream.seek(-1, 1)
-                        offset, generation = line[:16].split(" ")
+                        offset, generation = line[:16].split(b_(" "))
                         offset, generation = int(offset), int(generation)
                         if not self.xref.has_key(generation):
                             self.xref[generation] = {}
@@ -996,7 +997,7 @@ class PdfFileReader(object):
                     readNonWhitespace(stream)
                     stream.seek(-1, 1)
                     trailertag = stream.read(7)
-                    if trailertag != "trailer":
+                    if trailertag != b_("trailer"):
                         # more xrefs!
                         stream.seek(-7, 1)
                     else:
@@ -1069,7 +1070,7 @@ class PdfFileReader(object):
                 # off-by-one before.
                 stream.seek(-11, 1)
                 tmp = stream.read(20)
-                xref_loc = tmp.find("xref")
+                xref_loc = tmp.find(b_("xref"))
                 if xref_loc != -1:
                     startxref -= (10 - xref_loc)
                     continue
@@ -1106,19 +1107,19 @@ class PdfFileReader(object):
     def readNextEndLine(self, stream):
         debug = False
         if debug: print ">>readNextEndLine"
-        line = ""
+        line = b_("")
         while True:
             x = stream.read(1)
             if debug: print "  x:",x,"%x"%ord(x)
             stream.seek(-2, 1)
-            if x == '\n' or x == '\r': ## \n = LF; \r = CR
+            if x == b_('\n') or x == b_('\r'): ## \n = LF; \r = CR
                 crlf = False
-                while x == '\n' or x == '\r':
+                while x == b_('\n') or x == b_('\r'):
                     if debug:
                         if ord(x) == 0x0D: print "  x is CR 0D"
                         elif ord(x) == 0x0A: print "  x is LF 0A"
                     x = stream.read(1)
-                    if x == '\n' or x == '\r': # account for CR+LF
+                    if x == b_('\n') or x == b_('\r'): # account for CR+LF
                         stream.seek(-1, 1)
                         crlf = True
                     stream.seek(-2, 1)
@@ -1171,7 +1172,7 @@ class PdfFileReader(object):
             if rev == 2:
                 keylen = 5
             else:
-                keylen = encrypt['/Length'].getObject() / 8
+                keylen = encrypt['/Length'].getObject() // 8
             key = _alg33_1(password, rev, keylen)
             real_O = encrypt["/O"].getObject()
             if rev == 2:
@@ -1179,9 +1180,9 @@ class PdfFileReader(object):
             else:
                 val = real_O
                 for i in range(19, -1, -1):
-                    new_key = ''
+                    new_key = b_('')
                     for l in range(len(key)):
-                        new_key += chr(ord(key[l]) ^ i)
+                        new_key += b_(chr(utils.ord_(key[l]) ^ i))
                     val = utils.RC4_encrypt(new_key, val)
                 userpass = val
             owner_password, key = self._authenticateUserPassword(userpass)
@@ -1201,11 +1202,11 @@ class PdfFileReader(object):
             U, key = _alg34(password, owner_entry, p_entry, id1_entry)
         elif rev >= 3:
             U, key = _alg35(password, rev,
-                    encrypt["/Length"].getObject() / 8, owner_entry,
+                    encrypt["/Length"].getObject() // 8, owner_entry,
                     p_entry, id1_entry,
                     encrypt.get("/EncryptMetadata", BooleanObject(False)).getObject())
         real_U = encrypt['/U'].getObject().original_bytes
-        return U == real_U, key
+        return U[:16] == real_U[:16], key
 
     def getIsEncrypted(self):
         return self.trailer.has_key("/Encrypt")
@@ -1963,9 +1964,9 @@ def convertToInt(d, size):
     return struct.unpack(">q", d)[0]
 
 # ref: pdf1.8 spec section 3.5.2 algorithm 3.2
-_encryption_padding = '\x28\xbf\x4e\x5e\x4e\x75\x8a\x41\x64\x00\x4e\x56' + \
-        '\xff\xfa\x01\x08\x2e\x2e\x00\xb6\xd0\x68\x3e\x80\x2f\x0c' + \
-        '\xa9\xfe\x64\x53\x69\x7a'
+_encryption_padding = b_('\x28\xbf\x4e\x5e\x4e\x75\x8a\x41\x64\x00\x4e\x56') + \
+        b_('\xff\xfa\x01\x08\x2e\x2e\x00\xb6\xd0\x68\x3e\x80\x2f\x0c') + \
+        b_('\xa9\xfe\x64\x53\x69\x7a')
 
 # Implementation of algorithm 3.2 of the PDF standard security handler,
 # section 3.5.2 of the PDF 1.6 reference.
@@ -1982,18 +1983,18 @@ def _alg32(password, rev, keylen, owner_entry, p_entry, id1_entry, metadata_encr
     m = md5(password)
     # 3. Pass the value of the encryption dictionary's /O entry to the MD5 hash
     # function.
-    m.update(owner_entry)
+    m.update(owner_entry.original_bytes)
     # 4. Treat the value of the /P entry as an unsigned 4-byte integer and pass
     # these bytes to the MD5 hash function, low-order byte first.
     p_entry = struct.pack('<i', p_entry)
     m.update(p_entry)
     # 5. Pass the first element of the file's file identifier array to the MD5
     # hash function.
-    m.update(id1_entry)
+    m.update(id1_entry.original_bytes)
     # 6. (Revision 3 or greater) If document metadata is not being encrypted,
     # pass 4 bytes with the value 0xFFFFFFFF to the MD5 hash function.
     if rev >= 3 and not metadata_encrypt:
-        m.update("\xff\xff\xff\xff")
+        m.update(b_("\xff\xff\xff\xff"))
     # 7. Finish the hash.
     md5_hash = m.digest()
     # 8. (Revision 3 or greater) Do the following 50 times: Take the output
@@ -2087,7 +2088,7 @@ def _alg35(password, rev, keylen, owner_entry, p_entry, id1_entry, metadata_encr
     # of the ID entry in the document's trailer dictionary; see Table 3.13 on
     # page 73) to the hash function and finish the hash.  (See implementation
     # note 25 in Appendix H.) 
-    m.update(id1_entry)
+    m.update(id1_entry.original_bytes)
     md5_hash = m.digest()
     # 4. Encrypt the 16-byte result of the hash, using an RC4 encryption
     # function with the encryption key from step 1. 
@@ -2099,9 +2100,9 @@ def _alg35(password, rev, keylen, owner_entry, p_entry, id1_entry, metadata_encr
     # operation between that byte and the single-byte value of the iteration
     # counter (from 1 to 19). 
     for i in range(1, 20):
-        new_key = ''
+        new_key = b_('')
         for l in range(len(key)):
-            new_key += chr(ord(key[l]) ^ i)
+            new_key += b_(chr(utils.ord_(key[l]) ^ i))
         val = utils.RC4_encrypt(new_key, val)
     # 6. Append 16 bytes of arbitrary padding to the output from the final
     # invocation of the RC4 function and store the 32-byte result as the value
@@ -2109,7 +2110,7 @@ def _alg35(password, rev, keylen, owner_entry, p_entry, id1_entry, metadata_encr
     # (implementator note: I don't know what "arbitrary padding" is supposed to
     # mean, so I have used null bytes.  This seems to match a few other
     # people's implementations)
-    return val + ('\x00' * 16), key
+    return val + (b_('\x00') * 16), key
 
 #if __name__ == "__main__":
 #    output = PdfFileWriter()
