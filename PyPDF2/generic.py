@@ -96,11 +96,11 @@ class PdfObject(object):
 
 class NullObject(PdfObject):
     def writeToStream(self, stream, encryption_key):
-        stream.write("null")
+        stream.write(b_("null"))
 
     def readFromStream(stream):
         nulltxt = stream.read(4)
-        if nulltxt != "null":
+        if nulltxt != b_("null"):
             raise utils.PdfReadError, "error reading null object"
         return NullObject()
     readFromStream = staticmethod(readFromStream)
@@ -908,22 +908,22 @@ class Destination(TreeObject):
         return ArrayObject([self.raw_get('/Page'), self['/Type']] + [self[x] for x in ['/Left','/Bottom','/Right','/Top','/Zoom'] if self.has_key(x)])
         
     def writeToStream(self, stream, encryption_key):
-        stream.write("<<\n")
+        stream.write(b_("<<\n"))
         
         key = NameObject('/D')
         key.writeToStream(stream, encryption_key)
-        stream.write(" ")
+        stream.write(b_(" "))
         value = self.getDestArray()
         value.writeToStream(stream, encryption_key)
 
         key = NameObject("/S")
         key.writeToStream(stream, encryption_key)
-        stream.write(" ")
+        stream.write(b_(" "))
         value = NameObject("/GoTo")
         value.writeToStream(stream, encryption_key)
         
-        stream.write("\n")
-        stream.write(">>")
+        stream.write(b_("\n"))
+        stream.write(b_(">>"))
          
     ##
     # Read-only property accessing the destination title.
@@ -968,20 +968,20 @@ class Destination(TreeObject):
 
 class Bookmark(Destination):
     def writeToStream(self, stream, encryption_key):
-        stream.write("<<\n")
+        stream.write(b_("<<\n"))
         for key in [NameObject(x) for x in ['/Title', '/Parent', '/First', '/Last', '/Next', '/Prev'] if self.has_key(x)]:
             key.writeToStream(stream, encryption_key)
-            stream.write(" ")
+            stream.write(b_(" "))
             value = self.raw_get(key)
             value.writeToStream(stream, encryption_key)
-            stream.write("\n")
+            stream.write(b_("\n"))
         key = NameObject('/Dest')
         key.writeToStream(stream, encryption_key)
-        stream.write(" ")
+        stream.write(b_(" "))
         value = self.getDestArray()
         value.writeToStream(stream, encryption_key)
-        stream.write("\n")
-        stream.write(">>")
+        stream.write(b_("\n"))
+        stream.write(b_(">>"))
         
  
 def encode_pdfdocencoding(unicode_string):
