@@ -69,12 +69,19 @@ def readNonWhitespace(stream):
     return tok
 
 def skipOverWhitespace(stream):
-    tok = ' '
+    tok = b_(' ')
     cnt = 0;
-    while tok == '\n' or tok == '\r' or tok == ' ' or tok == '\t':
+    while tok == b_('\n') or tok == b_('\r') or tok == b_(' ') or tok == b_('\t'):
         tok = stream.read(1)
         cnt+=1
     return (cnt > 1)
+
+def skipOverComment(stream):
+    tok = stream.read(1)
+    stream.seek(-1, 1)
+    if tok == b_('%'):
+        while tok not in (b_('\n'), b_('\r')):
+            tok = stream.read(1)
 
 class ConvertFunctionsToVirtualList(object):
     def __init__(self, lengthFunction, getFunction):
@@ -140,11 +147,20 @@ if sys.version_info[0] < 3:
     def u_(s):
         return unicode(s, 'unicode_escape')
 
+    def str_(b):
+        return b
+
     def ord_(b):
         return ord(b)
 
+    def chr_(c):
+        return c
+
     def barray(b):
         return b
+
+    def hexencode(b):
+        return b.encode('hex')
 
     string_type = unicode
     bytes_type = str
@@ -155,11 +171,22 @@ else:
     def u_(s):
         return s
 
+    def str_(b):
+        return b.decode('latin-1')
+
     def ord_(b):
         return b
 
+    def chr_(c):
+        return chr(c)
+
     def barray(b):
         return bytearray(b)
+
+    def hexencode(b):
+        import codecs
+        coder = codecs.getencoder('hex_codec')
+        return coder(b)[0]
 
     string_type = str
     bytes_type = bytes

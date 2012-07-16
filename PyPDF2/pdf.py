@@ -75,7 +75,7 @@ __builtin__.UserWarning
 # class (typically {@link #PdfFileReader PdfFileReader}).
 class PdfFileWriter(object):
     def __init__(self):
-        self._header = "%PDF-1.3"
+        self._header = b_("%PDF-1.3")
         self._objects = []  # array of indirect objects
 
         # The root of our page tree node.
@@ -276,12 +276,12 @@ class PdfFileWriter(object):
 
         # Begin writing:
         object_positions = []
-        stream.write(self._header + "\n")
+        stream.write(self._header + b_("\n"))
         for i in range(len(self._objects)):
             idnum = (i + 1)
             obj = self._objects[i]
             object_positions.append(stream.tell())
-            stream.write(str(idnum) + " 0 obj\n")
+            stream.write(b_(str(idnum) + " 0 obj\n"))
             key = None
             if hasattr(self, "_encrypt") and idnum != self._encrypt.idnum:
                 pack1 = struct.pack("<i", i + 1)[:3]
@@ -291,18 +291,18 @@ class PdfFileWriter(object):
                 md5_hash = md5(key).digest()
                 key = md5_hash[:min(16, len(self._encrypt_key) + 5)]
             obj.writeToStream(stream, key)
-            stream.write("\nendobj\n")
+            stream.write(b_("\nendobj\n"))
 
         # xref table
         xref_location = stream.tell()
-        stream.write("xref\n")
-        stream.write("0 %s\n" % (len(self._objects) + 1))
-        stream.write("%010d %05d f \n" % (0, 65535))
+        stream.write(b_("xref\n"))
+        stream.write(b_("0 %s\n" % (len(self._objects) + 1)))
+        stream.write(b_("%010d %05d f \n" % (0, 65535)))
         for offset in object_positions:
-            stream.write("%010d %05d n \n" % (offset, 0))
+            stream.write(b_("%010d %05d n \n" % (offset, 0)))
 
         # trailer
-        stream.write("trailer\n")
+        stream.write(b_("trailer\n"))
         trailer = DictionaryObject()
         trailer.update({
                 NameObject("/Size"): NumberObject(len(self._objects) + 1),
@@ -316,7 +316,7 @@ class PdfFileWriter(object):
         trailer.writeToStream(stream, None)
         
         # eof
-        stream.write("\nstartxref\n%s\n%%%%EOF\n" % (xref_location))
+        stream.write(b_("\nstartxref\n%s\n%%%%EOF\n" % (xref_location)))
 
     def _sweepIndirectReferences(self, externMap, data):
         debug = False
@@ -899,6 +899,7 @@ class PdfFileReader(object):
         # object header.  In reality... some files have stupid cross reference
         # tables that are off by whitespace bytes.
         extra = False
+        utils.skipOverComment(stream)
         extra |= utils.skipOverWhitespace(stream); stream.seek(-1, 1)
         idnum = readUntilWhitespace(stream)
         extra |= utils.skipOverWhitespace(stream); stream.seek(-1, 1)

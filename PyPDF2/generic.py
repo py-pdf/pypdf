@@ -36,7 +36,7 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import re
 from utils import readNonWhitespace, RC4_encrypt
-from utils import b_, u_
+from utils import b_, u_, chr_, ord_
 import filters
 import utils
 import decimal
@@ -112,15 +112,15 @@ class BooleanObject(PdfObject):
 
     def writeToStream(self, stream, encryption_key):
         if self.value:
-            stream.write("true")
+            stream.write(b_("true"))
         else:
-            stream.write("false")
+            stream.write(b_("false"))
 
     def readFromStream(stream):
         word = stream.read(4)
-        if word == "true":
+        if word == b_("true"):
             return BooleanObject(True)
-        elif word == "fals":
+        elif word == b_("fals"):
             stream.read(1)
             return BooleanObject(False)
         assert False
@@ -129,11 +129,11 @@ class BooleanObject(PdfObject):
 
 class ArrayObject(list, PdfObject):
     def writeToStream(self, stream, encryption_key):
-        stream.write("[")
+        stream.write(b_("["))
         for data in self:
-            stream.write(" ")
+            stream.write(b_(" "))
             data.writeToStream(stream, encryption_key)
-        stream.write(" ]")
+        stream.write(b_(" ]"))
 
     def readFromStream(stream, pdf):
         arr = ArrayObject()
@@ -182,7 +182,7 @@ class IndirectObject(PdfObject):
         return not self.__eq__(other)
 
     def writeToStream(self, stream, encryption_key):
-        stream.write("%s %s R" % (self.idnum, self.generation))
+        stream.write(b_("%s %s R" % (self.idnum, self.generation)))
 
     def readFromStream(stream, pdf):
         idnum = b_("")
@@ -206,7 +206,7 @@ class IndirectObject(PdfObject):
 
 class FloatObject(decimal.Decimal, PdfObject):
     def __new__(cls, value="0", context=None):
-        return decimal.Decimal.__new__(cls, str(value), context)
+        return decimal.Decimal.__new__(cls, utils.str_(value), context)
     def __repr__(self):
         if self == self.to_integral():
             return str(self.quantize(decimal.Decimal(1)))
@@ -214,7 +214,7 @@ class FloatObject(decimal.Decimal, PdfObject):
             # XXX: this adds useless extraneous zeros.
             return "%.5f" % self
     def writeToStream(self, stream, encryption_key):
-        stream.write(repr(self))
+        stream.write(b_(repr(self)))
 
 
 class NumberObject(int, PdfObject):
@@ -222,7 +222,7 @@ class NumberObject(int, PdfObject):
         int.__init__(value)
 
     def writeToStream(self, stream, encryption_key):
-        stream.write(repr(self))
+        stream.write(b_(repr(self)))
 
     def readFromStream(stream):
         name = b_("")
@@ -359,9 +359,9 @@ class ByteStringObject(utils.bytes_type, PdfObject):
         bytearr = self
         if encryption_key:
             bytearr = RC4_encrypt(encryption_key, bytearr)
-        stream.write("<")
-        stream.write(bytearr.encode("hex"))
-        stream.write(">")
+        stream.write(b_("<"))
+        stream.write(utils.hexencode(bytearr))
+        stream.write(b_(">"))
 
 
 ##
@@ -406,13 +406,13 @@ class TextStringObject(utils.string_type, PdfObject):
             obj = ByteStringObject(bytearr)
             obj.writeToStream(stream, None)
         else:
-            stream.write("(")
+            stream.write(b_("("))
             for c in bytearr:
-                if not c.isalnum() and c != ' ':
-                    stream.write("\\%03o" % ord(c))
+                if not chr_(c).isalnum() and c != b_(' '):
+                    stream.write(b_("\\%03o" % ord_(c)))
                 else:
-                    stream.write(c)
-            stream.write(")")
+                    stream.write(b_(chr_(c)))
+            stream.write(b_(")"))
 
 
 class NameObject(str, PdfObject):
@@ -422,7 +422,7 @@ class NameObject(str, PdfObject):
         str.__init__(data)
 
     def writeToStream(self, stream, encryption_key):
-        stream.write(self)
+        stream.write(b_(self))
 
     def readFromStream(stream):
         debug = False
@@ -511,13 +511,13 @@ class DictionaryObject(dict, PdfObject):
     xmpMetadata = property(lambda self: self.getXmpMetadata(), None, None)
 
     def writeToStream(self, stream, encryption_key):
-        stream.write("<<\n")
+        stream.write(b_("<<\n"))
         for key, value in self.items():
             key.writeToStream(stream, encryption_key)
-            stream.write(" ")
+            stream.write(b_(" "))
             value.writeToStream(stream, encryption_key)
-            stream.write("\n")
-        stream.write(">>")
+            stream.write(b_("\n"))
+        stream.write(b_(">>"))
 
     def readFromStream(stream, pdf):
         debug = False
@@ -736,12 +736,12 @@ class StreamObject(DictionaryObject):
         self[NameObject("/Length")] = NumberObject(len(self._data))
         DictionaryObject.writeToStream(self, stream, encryption_key)
         del self["/Length"]
-        stream.write("\nstream\n")
+        stream.write(b_("\nstream\n"))
         data = self._data
         if encryption_key:
             data = RC4_encrypt(encryption_key, data)
         stream.write(data)
-        stream.write("\nendstream")
+        stream.write(b_("\nendstream"))
 
     def initializeFromDictionary(data):
         if data.has_key("/Filter"):
@@ -997,7 +997,7 @@ def encode_pdfdocencoding(unicode_string):
 def decode_pdfdocencoding(byte_array):
     retval = u_('')
     for b in byte_array:
-        c = _pdfDocEncoding[utils.ord_(b)]
+        c = _pdfDocEncoding[ord_(b)]
         if c == u_('\u0000'):
             raise UnicodeDecodeError("pdfdocencoding", utils.barray(b), -1, -1,
                     "does not exist in translation table")
