@@ -1199,6 +1199,7 @@ class PdfFileReader(object):
         p_entry = encrypt['/P'].getObject()
         id_entry = self.trailer['/ID'].getObject()
         id1_entry = id_entry[0].getObject()
+        real_U = encrypt['/U'].getObject().original_bytes
         if rev == 2:
             U, key = _alg34(password, owner_entry, p_entry, id1_entry)
         elif rev >= 3:
@@ -1206,8 +1207,8 @@ class PdfFileReader(object):
                     encrypt["/Length"].getObject() // 8, owner_entry,
                     p_entry, id1_entry,
                     encrypt.get("/EncryptMetadata", BooleanObject(False)).getObject())
-        real_U = encrypt['/U'].getObject().original_bytes
-        return U[:16] == real_U[:16], key
+            U, real_U = U[:16], real_U[:16]
+        return U == real_U, key
 
     def getIsEncrypted(self):
         return self.trailer.has_key("/Encrypt")
