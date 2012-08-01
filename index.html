@@ -37,12 +37,14 @@
 <p>[Compare pyPdf and PyPDF2.  Spelling.  Technical details:
     read; new functionality.]</p>
 
+
 <p>Plans for PyPDF2 include:
    <ul>
-   <li>Web applications beyond the <a href = "#online">online PDF diagnostic tool</a>;</li>
+   <li>inclusion in PyPI
+   <li>Web applications including an <a href = "#online">online
+       PDF diagnostic tool</a>;</li>
    <li>more complete <a href = '#documentation'>documentation</a>;</li>
    <li>[explain status of port to Python3;]</li>
-   <li>[ToC for this page];</li>
    <li>PyPackaging [emphasize use with Zope/Plone [more references]];</li>
    <li>[licensing [update]];</li>
    <li>[re-do donation button for JS-less contexts]
@@ -66,10 +68,13 @@
 
 <h2><a id = "online">Online demonstrations of PyPDF2</a></h2>
 <p>Phaseit supports a couple of online PyPDF2 tools, including
-     <a href="http://host02.phaseit.net:8086/PyPDF2/validate.py">this live Web validator</a>
-     which diagnoses PDFs using PyPDF2 and can be used to isolate problems with PyPDF2 implementation. 
-     Details about the validator appear in
-     <a href="http://host02.phaseit.net:8086/PyPDF2/validator_FAQ">the latter's FAQ</a>.
+     a
+    <a href = "http://host02.phaseit.net:8086/PyPdf2/validate.py"
+       target = "validator">live Web application which
+                  diagnoses PDF instances</a>.
+   <a target = "validator"
+      href = "http://host02.phaseit.net:8086/PyPDF2/validator_FAQ">The
+                  FAQ</a> for the latter explains more.</p>
 
 <h2><a id = "documentation">Documentation</a></h2>
 <p><a href = "http://pybrary.net/pyPdf/pythondoc-pyPdf.pdf.html">pyPdf's
@@ -83,7 +88,7 @@
    simply returns a correct result.
 
 <p>PyPDF2 also extends pyPdf's application programming interface
-   in quite a few regards [none of which we've yet documented ...] [strict/non-strict].
+   in quite a few regards [strict/non-strict] [none of which we've yet documented ...].
 
 <h2><a id = "GitHub">Remarks on GitHub</a></h2>
 
@@ -144,3 +149,35 @@
 
 </body>
 </html>
+
+
+
+
+<!--
+39a40
+> 
+42c43,44
+<    <li>Web applications beyond the <a href = "#online">online PDF diagnostic tool</a>;</li>
+@@@
+>    <li>Web applications including an <a href = "#online">online
+>        PDF diagnostic tool</a>;</li>
+45d46
+<    <li>[ToC for this page];</li>
+69,72c70,76
+<      <a href="http://host02.phaseit.net:8086/PyPDF2/validate.py">this live Web validator</a>
+<      which diagnoses PDFs using PyPDF2 and can be used to isolate problems with PyPDF2 implementation. 
+<      Details about the validator appear in
+<      <a href="http://host02.phaseit.net:8086/PyPDF2/validator_FAQ">the latter's FAQ</a>.
+@@@
+>      a
+>     <a href = "http://host02.phaseit.net:8086/PyPdf2/validate.py"
+>        target = "validator">live Web application which
+>                   diagnoses PDF instances</a>.
+>    <a target = "validator"
+>       href = "http://host02.phaseit.net:8086/PyPDF2/validator_FAQ">The
+>                   FAQ</a> for the latter explains more.</p>
+86c90
+<    in quite a few regards [none of which we've yet documented ...] [strict/non-strict].
+@@@
+>    in quite a few regards [strict/non-strict] [none of which we've yet documented ...].
+-->
