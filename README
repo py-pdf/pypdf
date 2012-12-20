@@ -1,6 +1,6 @@
 Example:
 
-    from pyPdf import PdfFileWriter, PdfFileReader
+    from PyPDF2 import PdfFileWriter, PdfFileReader
 
     output = PdfFileWriter()
     input1 = PdfFileReader(file("document1.pdf", "rb"))
@@ -29,7 +29,7 @@ Example:
     output.addPage(page5)
 
     # print how many pages input1 has:
-    print "document1.pdf has %s pages." % input1.getNumPages())
+    print "document1.pdf has %s pages." % input1.getNumPages()
 
     # finally, write "output" to document-output.pdf
     outputStream = file("document-output.pdf", "wb")
