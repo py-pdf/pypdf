@@ -1398,7 +1398,7 @@ class PageObject(DictionaryObject):
     #
     # @param page2 An instance of {@link #PageObject PageObject} to be merged
     #              into this one.
-    # @param page2transformation A fuction which applies a transformation to
+    # @param page2transformation A function which applies a transformation to
     #                            the content stream of page2. Takes: page2
     #                            contents stream. Must return: new contents
     #                            stream. If omitted, the content stream will
