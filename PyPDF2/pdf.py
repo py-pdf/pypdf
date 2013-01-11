@@ -973,9 +973,18 @@ class PdfFileReader(object):
                     cnt = 0
                     while cnt < size:
                         line = stream.read(20)
+                        
                         # It's very clear in section 3.4.3 of the PDF spec
                         # that all cross-reference table lines are a fixed
-                        # 20 bytes.  However... some malformed PDF files
+                        # 20 bytes (as of PDF 1.7). However, some files have
+                        # 21-byte entries (or more) due to the use of \r\n
+                        # (CRLF) EOL's. Detect that case, and adjust the line 
+                        # until it does not begin with a \r (CR) or \n (LF).
+                        while line[0] in b_("\x0D\x0A"):
+                            stream.seek(-20 + 1, 1)
+                            line = stream.read(20)
+                        
+                        # On the other hand, some malformed PDF files
                         # use a single character EOL without a preceeding
                         # space.  Detect that case, and seek the stream
                         # back one character.  (0-9 means we've bled into
@@ -983,6 +992,7 @@ class PdfFileReader(object):
                         # text "trailer"):
                         if line[-1] in b_("0123456789t"):
                             stream.seek(-1, 1)
+                            
                         offset, generation = line[:16].split(b_(" "))
                         offset, generation = int(offset), int(generation)
                         if not self.xref.has_key(generation):
