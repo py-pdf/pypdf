@@ -614,9 +614,20 @@ class PdfFileReader(object):
     # Stability: Added in v1.0, will exist for all v1.x releases.
     # @return Returns an integer.
     def getNumPages(self):
-        if self.flattenedPages == None:
-            self._flatten()
-        return len(self.flattenedPages)
+    
+        # Flattened pages will not work on an Encrypted PDF; 
+        # the PDF file's page count is used in this case. Otherwise,
+        # the original method (flattened page count) is used.
+        if self.isEncrypted:
+            try:
+                self._override_encryption = True
+                return self.trailer["/Root"]["/Pages"]["/Count"]
+            finally:
+                self._override_encryption = False
+        else:
+            if self.flattenedPages == None:
+                self._flatten()
+            return len(self.flattenedPages)
 
     ##
     # Read-only property that accesses the {@link #PdfFileReader.getNumPages
