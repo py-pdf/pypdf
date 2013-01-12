@@ -1426,7 +1426,13 @@ class PageObject(DictionaryObject):
     #                            contents stream. Must return: new contents
     #                            stream. If omitted, the content stream will
     #                            not be modified.
-    def _mergePage(self, page2, page2transformation=None):
+    # @param ctm A 6-item list containing the content transformation matrix. 
+    #            Although this list could be pulled from the closure of the
+    #            page2transformation function, it is simpler and more 
+    #            extensible to have it as a separate parameter.
+    # @param expand Whether the page should be expanded to fit the dimensions
+    #               of the page to be merged
+    def _mergePage(self, page2, page2transformation=None, ctm=None, expand=False):
         # First we work on merging the resource dictionaries.  This allows us
         # to find out what symbols in the content streams we might need to
         # rename.
@@ -1464,6 +1470,28 @@ class PageObject(DictionaryObject):
                 page2Content, rename, self.pdf)
             page2Content = PageObject._pushPopGS(page2Content, self.pdf)
             newContentArray.append(page2Content)
+        
+        # if expanding the page to fit a new page, calculate the new media box size
+        if expand:
+            corners1 = [self.mediaBox.getLowerLeft_x().as_numeric(), self.mediaBox.getLowerLeft_y().as_numeric(), 
+                        self.mediaBox.getUpperRight_x().as_numeric(), self.mediaBox.getUpperRight_y().as_numeric()]
+            corners2 = [page2.mediaBox.getLowerLeft_x().as_numeric(), page2.mediaBox.getLowerLeft_y().as_numeric(), 
+                        page2.mediaBox.getUpperLeft_x().as_numeric(), page2.mediaBox.getUpperLeft_y().as_numeric(),
+                        page2.mediaBox.getUpperRight_x().as_numeric(), page2.mediaBox.getUpperRight_y().as_numeric(),
+                        page2.mediaBox.getLowerRight_x().as_numeric(), page2.mediaBox.getLowerRight_y().as_numeric()]
+            if ctm is not None:
+                new_x = map(lambda i: ctm[0]*corners2[i] + ctm[2]*corners2[i+1] + ctm[4], range(0,8,2))
+                new_y = map(lambda i: ctm[1]*corners2[i] + ctm[3]*corners2[i+1] + ctm[5], range(0,8,2))
+            else:
+                new_x = corners2[0:8:2]
+                new_y = corners2[1:8:2]
+            lowerleft = [min(new_x),min(new_y)]
+            upperright = [max(new_x),max(new_y)]
+            lowerleft = [min(corners1[0], lowerleft[0]), min(corners1[1], lowerleft[1])]
+            upperright = [max(corners1[2], upperright[0]), max(corners1[3], upperright[1])]
+
+            self.mediaBox.setLowerLeft(lowerleft)
+            self.mediaBox.setUpperRight(upperright)
 
         self[NameObject('/Contents')] = ContentStream(newContentArray, self.pdf)
         self[NameObject('/Resources')] = newResources
@@ -1477,7 +1505,7 @@ class PageObject(DictionaryObject):
     #              transformation matrix
     def mergeTransformedPage(self, page2, ctm):
         self._mergePage(page2, lambda page2Content:
-            PageObject._addTransformationMatrix(page2Content, page2.pdf, ctm))
+            PageObject._addTransformationMatrix(page2Content, page2.pdf, ctm), ctm)
 
     ##
     # This is similar to mergePage, but the stream to be merged is scaled
