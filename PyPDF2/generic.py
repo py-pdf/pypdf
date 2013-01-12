@@ -213,6 +213,10 @@ class FloatObject(decimal.Decimal, PdfObject):
         else:
             # XXX: this adds useless extraneous zeros.
             return "%.5f" % self
+            
+    def as_numeric(self):
+        return float(b_(repr(self)))
+        
     def writeToStream(self, stream, encryption_key):
         stream.write(b_(repr(self)))
 
@@ -220,6 +224,9 @@ class FloatObject(decimal.Decimal, PdfObject):
 class NumberObject(int, PdfObject):
     def __init__(self, value):
         int.__init__(value)
+        
+    def as_numeric(self):
+        return int(b_(repr(self)))
 
     def writeToStream(self, stream, encryption_key):
         stream.write(b_(repr(self)))
