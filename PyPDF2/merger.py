@@ -29,7 +29,10 @@
 
 from generic import *
 from pdf import PdfFileReader, PdfFileWriter, Destination
-from StringIO import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 class _MergedPage(object):
     """
@@ -307,7 +310,7 @@ class PdfFileMerger(object):
             if pageno != None:
                 nd[NameObject('/Page')] = NumberObject(pageno)
             else:
-                raise ValueError, "Unresolved named destination '%s'" % (nd['/Title'],)
+                raise ValueError("Unresolved named destination '%s'" % (nd['/Title'],))
     
     def _associate_bookmarks_to_pages(self, pages, bookmarks=None):
         if bookmarks == None:
@@ -331,7 +334,7 @@ class PdfFileMerger(object):
             if pageno != None:
                 b[NameObject('/Page')] = NumberObject(pageno)
             else:
-                raise ValueError, "Unresolved bookmark '%s'" % (b['/Title'],)
+                raise ValueError("Unresolved bookmark '%s'" % (b['/Title'],))
                 
     def findBookmark(self, bookmark, root=None):
     	if root == None:
