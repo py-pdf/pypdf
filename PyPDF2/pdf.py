@@ -53,12 +53,21 @@ except ImportError:
     except ImportError:
         from io import StringIO
 
-import filters
-import utils
+try:
+    import filters
+    import utils
+    import generic
+except ImportError:
+    import importlib
+    filters = importlib.import_module(".filters",package=__package__)
+    utils = importlib.import_module(".utils",package=__package__)
+    generic = importlib.import_module(".generic",package=__package__)
+
+from .generic import DictionaryObject, DecodedStreamObject
+#utils = __import__(__package__,fromlist=['utils'])
 import warnings
-from generic import *
-from utils import readNonWhitespace, readUntilWhitespace, ConvertFunctionsToVirtualList
-from utils import b_
+from .utils import readNonWhitespace, readUntilWhitespace, ConvertFunctionsToVirtualList
+from .utils import b_
 
 if version_info < ( 2, 4 ):
    from sets import ImmutableSet as frozenset

@@ -35,10 +35,14 @@ __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import re
-from utils import readNonWhitespace, RC4_encrypt
-from utils import b_, u_, chr_, ord_
-import filters
-import utils
+from .utils import readNonWhitespace, RC4_encrypt
+from .utils import b_, u_, chr_, ord_
+from .filters import *
+try:
+    import utils
+except:
+    import importlib
+    utils = importlib.import_module(".utils",__package__) 
 import decimal
 import codecs
 #import debugging

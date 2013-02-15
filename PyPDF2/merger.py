@@ -27,8 +27,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from generic import *
-from pdf import PdfFileReader, PdfFileWriter, Destination
+from .generic import *
+from .pdf import PdfFileReader, PdfFileWriter, Destination
 try:
     from StringIO import StringIO
 except ImportError:
