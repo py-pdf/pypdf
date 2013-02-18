@@ -348,8 +348,14 @@ def readStringFromStream(stream):
                 # Then don't add anything to the actual string, since this
                 # line break was escaped:
                 tok = b_('')
+            elif tok == b_(" "):
+                # Came across an escaped space: TODO: find out more about
+                # this case.
+                tok = b_(" ")
             else:
-                raise utils.PdfReadError("Unexpected escaped string")
+                import ipdb
+                ipdb.set_trace()
+                raise utils.PdfReadError("PdfReadError: Unexpected escaped char")
         txt += tok
     return createStringObject(txt)
 
@@ -472,8 +478,13 @@ class DictionaryObject(dict, PdfObject):
     def update(self, arr):
         # note, a ValueError halfway through copying values
         # will leave half the values in this dict.
-        for k, v in arr.iteritems():
-            self.__setitem__(k, v)
+        try:
+            for k, v in arr.iteritems():
+                self.__setitem__(k, v)
+        except AttributeError:
+            for k, v in arr.items():
+                self.__setitem__(k, v)
+
 
     def raw_get(self, key):
         return dict.__getitem__(self, key)
@@ -548,7 +559,7 @@ class DictionaryObject(dict, PdfObject):
             tok = readNonWhitespace(stream)
             stream.seek(-1, 1)
             value = readObject(stream, pdf)
-            if data.has_key(key):
+            if key in data:
                 # multiple definitions of key not permitted
                 raise utils.PdfReadError(("Multiple definitions in dictionary at byte %s for key %s" \
                                            % (utils.hexStr(stream.tell()), key)))
@@ -566,7 +577,7 @@ class DictionaryObject(dict, PdfObject):
                 # read \n after
                 stream.read(1)
             # this is a stream object, not a dictionary
-            assert data.has_key("/Length")
+            assert "/Length" in data
             length = data["/Length"]
             if debug: print(data)
             if isinstance(length, IndirectObject):
@@ -598,7 +609,7 @@ class DictionaryObject(dict, PdfObject):
                         ("Unable to find 'endstream' marker after stream at byte %s." % utils.hexStr(stream.tell())))
         else:
             stream.seek(pos, 0)
-        if data.has_key("__streamdata__"):
+        if "__streamdata__" in  data:
             return StreamObject.initializeFromDictionary(data)
         else:
             retval = DictionaryObject()
@@ -611,7 +622,7 @@ class TreeObject(DictionaryObject):
         DictionaryObject.__init__(self)
         
     def hasChildren(self):
-        return self.has_key('/First')
+        return '/First' in self
     
     def __iter__(self):
         return self.children()
@@ -632,7 +643,7 @@ class TreeObject(DictionaryObject):
         child = pdf.getReference(childObj)
         assert isinstance(child, IndirectObject)
         
-        if not self.has_key('/First'):
+        if not '/First' in self:
             self[NameObject('/First')] = child
             self[NameObject('/Count')] = NumberObject(0)
             prev = None
@@ -655,7 +666,7 @@ class TreeObject(DictionaryObject):
     def removeChild(self, child):
         childObj = child.getObject()
         
-        if not childObj.has_key(NameObject('/Parent')):
+        if not NameObject('/Parent') in childObj:
             raise ValueError("Removed child does not appear to be a tree item")
         elif childObj[NameObject('/Parent')] != self:
             raise ValueError("Removed child is not a member of this tree")
@@ -670,7 +681,7 @@ class TreeObject(DictionaryObject):
         while cur != None:
             if cur == childObj:
                 if prev == None:
-                    if cur.has_key(NameObject('/Next')):
+                    if NameObject('/Next') in cur:
                         # Removing first tree node
                         nextRef = cur[NameObject('/Next')]
                         next = nextRef.getObject()
@@ -683,10 +694,10 @@ class TreeObject(DictionaryObject):
                         assert self[NameObject('/Count')] == 1
                         del self[NameObject('/Count')]
                         del self[NameObject('/First')]
-                        if self.has_key(NameObject('/Last')):
+                        if NameObject('/Last') in self:
                             del self[NameObject('/Last')]
                 else:
-                    if cur.has_key(NameObject('/Next')):
+                    if NameObject('/Next') in cur:
                         # Removing middle tree node
                         nextRef = cur[NameObject('/Next')]
                         next = nextRef.getObject()
@@ -705,7 +716,7 @@ class TreeObject(DictionaryObject):
             
             prevRef = curRef
             prev = cur
-            if cur.has_key(NameObject('/Next')):
+            if NameObject('/Next') in  cur:
                 curRef = cur[NameObject('/Next')]
                 cur = curRef.getObject()
             else:
@@ -716,25 +727,25 @@ class TreeObject(DictionaryObject):
             raise ValueError("Removal couldn't find item in tree")
        
         del childObj[NameObject('/Parent')]
-        if childObj.has_key(NameObject('/Next')):
+        if NameObject('/Next') in childObj:
             del childObj[NameObject('/Next')]
-        if childObj.has_key(NameObject('/Prev')):
+        if NameObject('/Prev') in childObj:
             del childObj[NameObject('/Prev')]
 
     def emptyTree(self):
         for child in self:
             childObj = child.getObject()
             del childObj[NameObject('/Parent')]
-            if childObj.has_key(NameObject('/Next')):
+            if NameObject('/Next') in childObj:
                 del childObj[NameObject('/Next')]
-            if childObj.has_key(NameObject('/Prev')):
+            if NameObject('/Prev') in childObj:
                 del childObj[NameObject('/Prev')]
 
-        if self.has_key(NameObject('/Count')):
+        if NameObject('/Count') in self:
             del self[NameObject('/Count')]
-        if self.has_key(NameObject('/First')):
+        if NameObject('/First') in self:
             del self[NameObject('/First')]
-        if self.has_key(NameObject('/Last')):
+        if NameObject('/Last') in self:
             del self[NameObject('/Last')]
 
 
@@ -755,7 +766,7 @@ class StreamObject(DictionaryObject):
         stream.write(b_("\nendstream"))
 
     def initializeFromDictionary(data):
-        if data.has_key("/Filter"):
+        if "/Filter" in data:
             retval = EncodedStreamObject()
         else:
             retval = DecodedStreamObject()
@@ -767,7 +778,7 @@ class StreamObject(DictionaryObject):
     initializeFromDictionary = staticmethod(initializeFromDictionary)
 
     def flateEncode(self):
-        if self.has_key("/Filter"):
+        if "/Filter" in self:
             f = self["/Filter"]
             if isinstance(f, ArrayObject):
                 f.insert(0, NameObject("/FlateDecode"))
@@ -916,7 +927,7 @@ class Destination(TreeObject):
             raise utils.PdfReadError("Unknown Destination Type: %r" % typ)
             
     def getDestArray(self):
-        return ArrayObject([self.raw_get('/Page'), self['/Type']] + [self[x] for x in ['/Left','/Bottom','/Right','/Top','/Zoom'] if self.has_key(x)])
+        return ArrayObject([self.raw_get('/Page'), self['/Type']] + [self[x] for x in ['/Left','/Bottom','/Right','/Top','/Zoom'] if x in self])
         
     def writeToStream(self, stream, encryption_key):
         stream.write(b_("<<\n"))
@@ -980,7 +991,7 @@ class Destination(TreeObject):
 class Bookmark(Destination):
     def writeToStream(self, stream, encryption_key):
         stream.write(b_("<<\n"))
-        for key in [NameObject(x) for x in ['/Title', '/Parent', '/First', '/Last', '/Next', '/Prev'] if self.has_key(x)]:
+        for key in [NameObject(x) for x in ['/Title', '/Parent', '/First', '/Last', '/Next', '/Prev'] if x in self]:
             key.writeToStream(stream, encryption_key)
             stream.write(b_(" "))
             value = self.raw_get(key)
