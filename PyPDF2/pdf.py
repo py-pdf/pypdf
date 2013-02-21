@@ -219,9 +219,9 @@ class PdfFileWriter(object):
         # permit everything:
         P = -1
         O = ByteStringObject(_alg33(owner_pwd, user_pwd, rev, keylen))
-        ID_1 = md5(repr(time.time())).digest()
-        ID_2 = md5(repr(random.random())).digest()
-        self._ID = ArrayObject((ByteStringObject(ID_1), ByteStringObject(ID_2)))
+        ID_1 = ByteStringObject(md5(repr(time.time())).digest())
+        ID_2 = ByteStringObject(md5(repr(random.random())).digest())
+        self._ID = ArrayObject((ID_1, ID_2))
         if rev == 2:
             U, key = _alg34(user_pwd, O, P, ID_1)
         else:
