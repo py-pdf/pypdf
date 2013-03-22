@@ -559,8 +559,13 @@ class PdfFileReader(object):
         self.xrefIndex = 0
         if hasattr(stream, 'mode') and 'b' not in stream.mode:
             warnings.warn("PdfFileReader stream/file object is not in binary mode. It may not be read correctly.", utils.PdfReadWarning)
+        if type(stream) in (str, unicode):
+            fileobj = open(stream,'rb')
+            stream = StringIO(fileobj.read())
+            fileobj.close()
         self.read(stream)
         self.stream = stream
+
         self._override_encryption = False
     ##
     # Retrieves the PDF file's document information dictionary, if it exists.
