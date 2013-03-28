@@ -253,21 +253,21 @@ def createStringObject(string):
     if isinstance(string, utils.string_type):
         return TextStringObject(string)
     elif isinstance(string, utils.bytes_type):
-        if string.startswith(codecs.BOM_UTF16_BE):
-            retval = TextStringObject(string.decode("utf-16"))
-            retval.autodetect_utf16 = True
-            return retval
-        else:
-            # This is probably a big performance hit here, but we need to
-            # convert string objects into the text/unicode-aware version if
-            # possible... and the only way to check if that's possible is
-            # to try.  Some strings are strings, some are just byte arrays.
-            try:
+        try:
+            if string.startswith(codecs.BOM_UTF16_BE):
+                retval = TextStringObject(string.decode("utf-16"))
+                retval.autodetect_utf16 = True
+                return retval
+            else:
+                # This is probably a big performance hit here, but we need to
+                # convert string objects into the text/unicode-aware version if
+                # possible... and the only way to check if that's possible is
+                # to try.  Some strings are strings, some are just byte arrays.
                 retval = TextStringObject(decode_pdfdocencoding(string))
                 retval.autodetect_pdfdocencoding = True
                 return retval
-            except UnicodeDecodeError:
-                return ByteStringObject(string)
+        except UnicodeDecodeError:
+            return ByteStringObject(string)
     else:
         raise TypeError("createStringObject should have str or unicode arg")
 
