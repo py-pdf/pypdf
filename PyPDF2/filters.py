@@ -160,6 +160,87 @@ class ASCIIHexDecode(object):
         return retval
     decode = staticmethod(decode)
 
+class LZWDecode(object):
+    """Taken from:
+    http://www.java2s.com/Open-Source/Java-Document/PDF/PDF-Renderer/com/sun/pdfview/decode/LZWDecode.java.htm
+    """
+    class decoder(object):
+        def __init__(self,data):
+            self.STOP=257
+            self.CLEARDICT=256
+            self.data=data
+            self.bytepos=0
+            self.bitpos=0
+            self.dict=[""]*4096
+            for i in range(256):
+                self.dict[i]=chr(i)
+            self.resetDict()
+
+        def resetDict(self):
+            self.dictlen=258
+            self.bitspercode=9
+                
+
+        def nextCode(self):
+            fillbits=self.bitspercode
+            value=0
+            while fillbits>0 :
+                if self.bytepos >= len(self.data):
+                    return -1
+                nextbits=ord(self.data[self.bytepos])
+                bitsfromhere=8-self.bitpos
+                if bitsfromhere>fillbits:
+                    bitsfromhere=fillbits
+                value |= (((nextbits >> (8-self.bitpos-bitsfromhere)) & 
+                           (0xff >> (8-bitsfromhere))) << 
+                          (fillbits-bitsfromhere))
+                fillbits -= bitsfromhere
+                self.bitpos += bitsfromhere
+                if self.bitpos >=8:
+                    self.bitpos=0
+                    self.bytepos = self.bytepos+1
+            return value
+
+        def decode(self):
+            """ algorithm derived from:
+            http://www.rasip.fer.hr/research/compress/algorithms/fund/lz/lzw.html
+            and the PDFReference
+            """
+            cW = self.CLEARDICT;
+            baos=""
+            while True:
+                pW = cW;
+                cW = self.nextCode();
+                if cW == -1:
+                    raise PdfReadError("Missed the stop code in LZWDecode!")
+                if cW == self.STOP:
+                    break;
+                elif cW == self.CLEARDICT:
+                    self.resetDict();
+                elif pW == self.CLEARDICT:
+                    baos+=self.dict[cW]
+                else:
+                    if cW < self.dictlen:
+                        baos += self.dict[cW]
+                        p=self.dict[pW]+self.dict[cW][0]
+                        self.dict[self.dictlen]=p
+                        self.dictlen+=1
+                    else:
+                        p=self.dict[pW]+self.dict[pW][0]
+                        baos+=p
+                        self.dict[self.dictlen] = p;
+                        self.dictlen+=1
+                    if (self.dictlen >= (1 << self.bitspercode) - 1 and 
+                        self.bitspercode < 12):
+                        self.bitspercode+=1
+            return baos
+
+
+    
+    @staticmethod
+    def decode(data,decodeParams=None):
+        return LZWDecode.decoder(data).decode()
+
 class ASCII85Decode(object):
     def decode(data, decodeParms=None):
         retval = ""
@@ -224,6 +305,8 @@ def decodeStreamData(stream):
             data = FlateDecode.decode(data, stream.get("/DecodeParms"))
         elif filterType == "/ASCIIHexDecode":
             data = ASCIIHexDecode.decode(data)
+        elif filterType == "/LZWDecode":
+            data = LZWDecode.decode(data, stream.get("/DecodeParms"))
         elif filterType == "/ASCII85Decode":
             data = ASCII85Decode.decode(data)
         elif filterType == "/Crypt":
@@ -248,5 +331,8 @@ if __name__ == "__main__":
      >uD.RTpAKYo'+CT/5+Cei#DII?(E,9)oF*2M7/c~>
     """
     ascii85_originalText="Man is distinguished, not only by his reason, but by this singular passion from other animals, which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure."
+
+
     assert ASCII85Decode.decode(ascii85Test) == ascii85_originalText
+
 
