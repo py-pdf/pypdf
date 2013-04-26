@@ -136,6 +136,9 @@ class PageSizeNotDefinedError(PyPdfError):
 class PdfReadWarning(UserWarning):
     pass
 
+class PdfStreamError(PdfReadError):
+    pass
+
 def hexStr(num):
     return hex(num).replace('L','')
 
