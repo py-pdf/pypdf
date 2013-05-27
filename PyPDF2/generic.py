@@ -37,6 +37,7 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 import re
 from utils import readNonWhitespace, RC4_encrypt
 from utils import b_, u_, chr_, ord_
+from utils import PdfStreamError
 import filters
 import utils
 import decimal
@@ -188,12 +189,18 @@ class IndirectObject(PdfObject):
         idnum = b_("")
         while True:
             tok = stream.read(1)
+            if not tok:
+                # stream has truncated prematurely
+                raise PdfStreamError("Stream has ended unexpectedly")
             if tok.isspace():
                 break
             idnum += tok
         generation = b_("")
         while True:
             tok = stream.read(1)
+            if not tok:
+                # stream has truncated prematurely
+                raise PdfStreamError("Stream has ended unexpectedly")
             if tok.isspace():
                 break
             generation += tok
@@ -278,6 +285,9 @@ def readHexStringFromStream(stream):
     x = b_("")
     while True:
         tok = readNonWhitespace(stream)
+        if not tok:
+            # stream has truncated prematurely
+            raise PdfStreamError("Stream has ended unexpectedly")
         if tok == b_(">"):
             break
         x += tok
@@ -297,6 +307,9 @@ def readStringFromStream(stream):
     txt = b_("")
     while True:
         tok = stream.read(1)
+        if not tok:
+            # stream has truncated prematurely
+            raise PdfStreamError("Stream has ended unexpectedly")
         if tok == b_("("):
             parens += 1
         elif tok == b_(")"):
@@ -439,6 +452,9 @@ class NameObject(str, PdfObject):
             raise utils.PdfReadError, "name read error"
         while True:
             tok = stream.read(1)
+            if not tok:
+                # stream has truncated prematurely
+                raise PdfStreamError("Stream has ended unexpectedly")
             if tok.isspace() or tok in NameObject.delimiterCharacters:
                 stream.seek(-1, 1)
                 break
@@ -535,6 +551,10 @@ class DictionaryObject(dict, PdfObject):
         data = {}
         while True:
             tok = readNonWhitespace(stream)
+            if not tok:
+                # stream has truncated prematurely
+                raise PdfStreamError("Stream has ended unexpectedly")
+
             if debug: print "Tok:",tok
             if tok == b_(">"):
                 stream.read(1)

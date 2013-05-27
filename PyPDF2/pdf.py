@@ -857,7 +857,24 @@ class PdfFileReader(object):
                     for i in range(0,len(lines)):
                         print lines[i]
                     streamData.seek(pos,0)
-                obj = readObject(streamData, self)
+                try:
+                    obj = readObject(streamData, self)
+                except utils.PdfStreamError:
+                    # This stream object cannot be read.
+                    # This should be a critical error, but Adobe Reader doesn't complain
+                    # so we will continue as best we can even in strict mode?
+                    e = sys.exc_info()[1]
+                    
+                    warnings.warn("Invalid stream (index %d) within object %d %d: %s" % \
+                          (i, indirectReference.idnum,indirectReference.generation, e.message), utils.PdfReadWarning)
+
+                    #if self.strict: raise utils.PdfReadError("This is a fatal error in strict mode.") # maybe?
+
+                    # As a workaround, we can replace this stream object with a Null
+                    # Hopefully it was nothing important.
+                    obj = NullObject()
+
+                    
                 self.resolvedObjects[0][objnum] = obj
                 streamData.seek(t, 0)
             return self.resolvedObjects[0][indirectReference.idnum]
