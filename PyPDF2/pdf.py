@@ -290,8 +290,9 @@ class PdfFileWriter(object):
                 assert len(key) == (len(self._encrypt_key) + 5)
                 md5_hash = md5(key).digest()
                 key = md5_hash[:min(16, len(self._encrypt_key) + 5)]
-            obj.writeToStream(stream, key)
-            stream.write(b_("\nendobj\n"))
+            if obj:
+                obj.writeToStream(stream, key)
+                stream.write(b_("\nendobj\n"))
 
         # xref table
         xref_location = stream.tell()
@@ -830,6 +831,7 @@ class PdfFileReader(object):
             warnings.warn("Object %d %d not defined." % \
                           (indirectReference.idnum,indirectReference.generation), utils.PdfReadWarning)
             #if self.strict: raise utils.PdfReadError("This is a fatal error in strict mode.") # maybe?
+            return None
         if indirectReference.generation == 0 and \
            self.xref_objStm.has_key(indirectReference.idnum):
             # indirect reference to object in object stream
