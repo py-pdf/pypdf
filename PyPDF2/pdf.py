@@ -826,12 +826,6 @@ class PdfFileReader(object):
         if retval != None:
             return retval
         if debug: print self.xref_objStm
-        if not indirectReference.idnum in self.xref[indirectReference.generation]:
-            #TODO: how to avoid problems if bad object is never actually used?
-            warnings.warn("Object %d %d not defined." % \
-                          (indirectReference.idnum,indirectReference.generation), utils.PdfReadWarning)
-            #if self.strict: raise utils.PdfReadError("This is a fatal error in strict mode.") # maybe?
-            return None
         if indirectReference.generation == 0 and \
            self.xref_objStm.has_key(indirectReference.idnum):
             # indirect reference to object in object stream
@@ -863,6 +857,11 @@ class PdfFileReader(object):
                 self.resolvedObjects[0][objnum] = obj
                 streamData.seek(t, 0)
             return self.resolvedObjects[0][indirectReference.idnum]
+        if not indirectReference.idnum in self.xref[indirectReference.generation]:
+            #TODO: how to avoid problems if bad object is never actually used?
+            warnings.warn("Object %d %d not defined." % \
+                          (indirectReference.idnum,indirectReference.generation), utils.PdfReadWarning)
+            return None
         if debug: print self.xref
         start = self.xref[indirectReference.generation][indirectReference.idnum]
         if debug: print indirectReference.idnum,indirectReference.generation, ":", start
