@@ -1,9 +1,9 @@
 Example:
 
-    from pyPdf import PdfFileWriter, PdfFileReader
+    from PyPDF2 import PdfFileWriter, PdfFileReader
 
     output = PdfFileWriter()
-    input1 = PdfFileReader(file("document1.pdf", "rb"))
+    input1 = PdfFileReader(open("document1.pdf", "rb"))
 
     # add page 1 from input1 to output document, unchanged
     output.addPage(input1.getPage(0))
@@ -17,7 +17,7 @@ Example:
 
     # add page 4 from input1, but first add a watermark from another pdf:
     page4 = input1.getPage(3)
-    watermark = PdfFileReader(file("watermark.pdf", "rb"))
+    watermark = PdfFileReader(open("watermark.pdf", "rb"))
     page4.mergePage(watermark.getPage(0))
 
     # add page 5 from input1, but crop it to half size:
@@ -29,7 +29,7 @@ Example:
     output.addPage(page5)
 
     # print how many pages input1 has:
-    print "document1.pdf has %s pages." % input1.getNumPages())
+    print "document1.pdf has %s pages." % input1.getNumPages()
 
     # finally, write "output" to document-output.pdf
     outputStream = file("document-output.pdf", "wb")

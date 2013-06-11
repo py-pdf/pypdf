@@ -557,8 +557,15 @@ class PdfFileReader(object):
         self.flattenedPages = None
         self.resolvedObjects = {}
         self.xrefIndex = 0
+        if hasattr(stream, 'mode') and 'b' not in stream.mode:
+            warnings.warn("PdfFileReader stream/file object is not in binary mode. It may not be read correctly.", utils.PdfReadWarning)
+        if type(stream) in (str, unicode):
+            fileobj = open(stream,'rb')
+            stream = StringIO(fileobj.read())
+            fileobj.close()
         self.read(stream)
         self.stream = stream
+
         self._override_encryption = False
     ##
     # Retrieves the PDF file's document information dictionary, if it exists.
@@ -612,9 +619,20 @@ class PdfFileReader(object):
     # Stability: Added in v1.0, will exist for all v1.x releases.
     # @return Returns an integer.
     def getNumPages(self):
-        if self.flattenedPages == None:
-            self._flatten()
-        return len(self.flattenedPages)
+    
+        # Flattened pages will not work on an Encrypted PDF; 
+        # the PDF file's page count is used in this case. Otherwise,
+        # the original method (flattened page count) is used.
+        if self.isEncrypted:
+            try:
+                self._override_encryption = True
+                return self.trailer["/Root"]["/Pages"]["/Count"]
+            finally:
+                self._override_encryption = False
+        else:
+            if self.flattenedPages == None:
+                self._flatten()
+            return len(self.flattenedPages)
 
     ##
     # Read-only property that accesses the {@link #PdfFileReader.getNumPages
@@ -971,9 +989,18 @@ class PdfFileReader(object):
                     cnt = 0
                     while cnt < size:
                         line = stream.read(20)
+                        
                         # It's very clear in section 3.4.3 of the PDF spec
                         # that all cross-reference table lines are a fixed
-                        # 20 bytes.  However... some malformed PDF files
+                        # 20 bytes (as of PDF 1.7). However, some files have
+                        # 21-byte entries (or more) due to the use of \r\n
+                        # (CRLF) EOL's. Detect that case, and adjust the line 
+                        # until it does not begin with a \r (CR) or \n (LF).
+                        while line[0] in b_("\x0D\x0A"):
+                            stream.seek(-20 + 1, 1)
+                            line = stream.read(20)
+                        
+                        # On the other hand, some malformed PDF files
                         # use a single character EOL without a preceeding
                         # space.  Detect that case, and seek the stream
                         # back one character.  (0-9 means we've bled into
@@ -981,6 +1008,7 @@ class PdfFileReader(object):
                         # text "trailer"):
                         if line[-1] in b_("0123456789t"):
                             stream.seek(-1, 1)
+                            
                         offset, generation = line[:16].split(b_(" "))
                         offset, generation = int(offset), int(generation)
                         if not self.xref.has_key(generation):
@@ -1398,12 +1426,18 @@ class PageObject(DictionaryObject):
     #
     # @param page2 An instance of {@link #PageObject PageObject} to be merged
     #              into this one.
-    # @param page2transformation A fuction which applies a transformation to
+    # @param page2transformation A function which applies a transformation to
     #                            the content stream of page2. Takes: page2
     #                            contents stream. Must return: new contents
     #                            stream. If omitted, the content stream will
     #                            not be modified.
-    def _mergePage(self, page2, page2transformation=None):
+    # @param ctm A 6-item list containing the content transformation matrix. 
+    #            Although this list could be pulled from the closure of the
+    #            page2transformation function, it is simpler and more 
+    #            extensible to have it as a separate parameter.
+    # @param expand Whether the page should be expanded to fit the dimensions
+    #               of the page to be merged
+    def _mergePage(self, page2, page2transformation=None, ctm=None, expand=False):
         # First we work on merging the resource dictionaries.  This allows us
         # to find out what symbols in the content streams we might need to
         # rename.
@@ -1441,6 +1475,28 @@ class PageObject(DictionaryObject):
                 page2Content, rename, self.pdf)
             page2Content = PageObject._pushPopGS(page2Content, self.pdf)
             newContentArray.append(page2Content)
+        
+        # if expanding the page to fit a new page, calculate the new media box size
+        if expand:
+            corners1 = [self.mediaBox.getLowerLeft_x().as_numeric(), self.mediaBox.getLowerLeft_y().as_numeric(), 
+                        self.mediaBox.getUpperRight_x().as_numeric(), self.mediaBox.getUpperRight_y().as_numeric()]
+            corners2 = [page2.mediaBox.getLowerLeft_x().as_numeric(), page2.mediaBox.getLowerLeft_y().as_numeric(), 
+                        page2.mediaBox.getUpperLeft_x().as_numeric(), page2.mediaBox.getUpperLeft_y().as_numeric(),
+                        page2.mediaBox.getUpperRight_x().as_numeric(), page2.mediaBox.getUpperRight_y().as_numeric(),
+                        page2.mediaBox.getLowerRight_x().as_numeric(), page2.mediaBox.getLowerRight_y().as_numeric()]
+            if ctm is not None:
+                new_x = map(lambda i: ctm[0]*corners2[i] + ctm[2]*corners2[i+1] + ctm[4], range(0,8,2))
+                new_y = map(lambda i: ctm[1]*corners2[i] + ctm[3]*corners2[i+1] + ctm[5], range(0,8,2))
+            else:
+                new_x = corners2[0:8:2]
+                new_y = corners2[1:8:2]
+            lowerleft = [min(new_x),min(new_y)]
+            upperright = [max(new_x),max(new_y)]
+            lowerleft = [min(corners1[0], lowerleft[0]), min(corners1[1], lowerleft[1])]
+            upperright = [max(corners1[2], upperright[0]), max(corners1[3], upperright[1])]
+
+            self.mediaBox.setLowerLeft(lowerleft)
+            self.mediaBox.setUpperRight(upperright)
 
         self[NameObject('/Contents')] = ContentStream(newContentArray, self.pdf)
         self[NameObject('/Resources')] = newResources
@@ -1454,7 +1510,7 @@ class PageObject(DictionaryObject):
     #              transformation matrix
     def mergeTransformedPage(self, page2, ctm):
         self._mergePage(page2, lambda page2Content:
-            PageObject._addTransformationMatrix(page2Content, page2.pdf, ctm))
+            PageObject._addTransformationMatrix(page2Content, page2.pdf, ctm), ctm)
 
     ##
     # This is similar to mergePage, but the stream to be merged is scaled

@@ -29,6 +29,7 @@
 
 from generic import *
 from pdf import PdfFileReader, PdfFileWriter, Destination
+from StringIO import StringIO
 
 class _MergedPage(object):
     """
@@ -80,15 +81,35 @@ class PdfFileMerger(object):
         pages from the source document into the output document.
         """
         
+        # This parameter is passed to self.inputs.append and means
+        # that the stream used was created in this method.
         my_file = False
+        
+        # If the fileobj parameter is a string, assume it is a path
+        # and create a file object at that location. If it is a file,
+        # copy the file's contents into a StringIO stream object; if 
+        # it is a PdfFileReader, copy that reader's stream into a 
+        # StringIO stream.
+        # If fileobj is none of the above types, it is not modified
         if type(fileobj) in (str, unicode):
             fileobj = file(fileobj, 'rb')
             my_file = True
-        if type(fileobj) == PdfFileReader:
-            pdfr = fileobj
-            fileobj = pdfr.file
-        else:
-            pdfr = PdfFileReader(fileobj, strict=self.strict)
+        elif type(fileobj) == file:
+            fileobj.seek(0)
+            filecontent = fileobj.read()
+            fileobj = StringIO(filecontent)
+            my_file = True
+        elif type(fileobj) == PdfFileReader:
+            orig_tell = fileobj.stream.tell()   
+            fileobj.stream.seek(0)
+            filecontent = StringIO(fileobj.stream.read())
+            fileobj.stream.seek(orig_tell) # reset the stream to its original location
+            fileobj = filecontent
+            my_file = True
+            
+        # Create a new PdfFileReader instance using the stream
+        # (either file or StringIO) created above
+        pdfr = PdfFileReader(fileobj, strict=self.strict)
         
         # Find the range of pages to merge
         if pages == None:

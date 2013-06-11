@@ -216,6 +216,10 @@ class FloatObject(decimal.Decimal, PdfObject):
         else:
             # XXX: this adds useless extraneous zeros.
             return "%.5f" % self
+            
+    def as_numeric(self):
+        return float(b_(repr(self)))
+        
     def writeToStream(self, stream, encryption_key):
         stream.write(b_(repr(self)))
 
@@ -223,6 +227,9 @@ class FloatObject(decimal.Decimal, PdfObject):
 class NumberObject(int, PdfObject):
     def __init__(self, value):
         int.__init__(value)
+        
+    def as_numeric(self):
+        return int(b_(repr(self)))
 
     def writeToStream(self, stream, encryption_key):
         stream.write(b_(repr(self)))
@@ -556,7 +563,8 @@ class DictionaryObject(dict, PdfObject):
             assert eol in (b_("\n"), b_("\r"))
             if eol == b_("\r"):
                 # read \n after
-                stream.read(1)
+                if stream.read(1)  != '\n':
+                    stream.seek(-1, 1)
             # this is a stream object, not a dictionary
             assert data.has_key("/Length")
             length = data["/Length"]
