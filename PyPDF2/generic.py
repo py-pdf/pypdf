@@ -206,7 +206,10 @@ class IndirectObject(PdfObject):
 
 class FloatObject(decimal.Decimal, PdfObject):
     def __new__(cls, value="0", context=None):
-        return decimal.Decimal.__new__(cls, utils.str_(value), context)
+        try:
+            return decimal.Decimal.__new__(cls, utils.str_(value), context)
+        except:
+            return decimal.Decimal.__new__(cls, utils.str_(value))
     def __repr__(self):
         if self == self.to_integral():
             return str(self.quantize(decimal.Decimal(1)))
