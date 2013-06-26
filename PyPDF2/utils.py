@@ -167,6 +167,7 @@ if sys.version_info[0] < 3:
 
     string_type = unicode
     bytes_type = str
+
 else:
     def b_(s):
         return s.encode('latin-1')

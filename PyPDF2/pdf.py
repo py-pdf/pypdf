@@ -868,7 +868,7 @@ class PdfFileReader(object):
                     warnings.warn("Invalid stream (index %d) within object %d %d: %s" % \
                           (i, indirectReference.idnum,indirectReference.generation, e.message), utils.PdfReadWarning)
 
-                    #if self.strict: raise utils.PdfReadError("This is a fatal error in strict mode.") # maybe?
+                    if self.strict: raise utils.PdfReadError("This is a fatal error in strict mode.")
 
                     # As a workaround, we can replace this stream object with a Null
                     # Hopefully it was nothing important.
