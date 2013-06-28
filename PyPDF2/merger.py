@@ -265,6 +265,7 @@ class PdfFileMerger(object):
                         v[NameObject('/Page')] = p.out_pagedata
                         pageno = i
                         pdf = p.src
+                        break
             if pageno != None:
                 self.output.addNamedDestinationObject(v)
  
@@ -285,12 +286,36 @@ class PdfFileMerger(object):
             if b.has_key('/Page'):
                 for i, p in enumerate(self.pages):
                     if p.id == b['/Page']:
-                        b[NameObject('/Page')] = p.out_pagedata
+                        #b[NameObject('/Page')] = p.out_pagedata
+                        args = [NumberObject(p.id), NameObject(b['/Type'])]
+                        #nothing more to add
+                        #if b['/Type'] == '/Fit' or b['/Type'] == '/FitB'
+                        if b['/Type'] == '/FitH' or b['/Type'] == '/FitBH':
+                            args.append(FloatObject(b['/Top']))
+                            del b['/Top']
+                        elif b['/Type'] == '/FitV' or b['/Type'] == '/FitBV':
+                            args.append(FloatObject(b['/Left']))
+                            del b['/Left']
+                        elif b['/Type'] == '/XYZ':
+                            args.append(FloatObject(b['/Left']))
+                            args.append(FloatObject(b['/Top']))
+                            args.append(FloatObject(b['/Zoom']))
+                            del b['/Top'], b['/Zoom'], b['/Left']
+                        elif b['/Type'] == '/FitR':
+                            args.append(FloatObject(b['/Left']))
+                            args.append(FloatObject(b['/Bottom']))
+                            args.append(FloatObject(b['/Right']))
+                            args.append(FloatObject(b['/Top']))
+                            del b['/Left'], b['/Right'], b['/Bottom'], b['/Top']
+
+                        b[NameObject('/A')] = DictionaryObject({NameObject('/S'): NameObject('/GoTo'), NameObject('/D'): ArrayObject(args)})
+                        
                         pageno = i
                         pdf = p.src
+                        break
             if pageno != None:
-                last_added = self.output.addBookmarkDestination(b, parent)
-    
+                del b['/Page'], b['/Type']
+                last_added = self.output.addBookmarkDict(b, parent)    
 
     def _associate_dests_to_pages(self, pages):
         for nd in self.named_dests:

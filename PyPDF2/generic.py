@@ -908,6 +908,7 @@ class RectangleObject(ArrayObject):
     upperLeft = property(getUpperLeft, setUpperLeft, None, None)
     upperRight = property(getUpperRight, setUpperRight, None, None)
 
+
 ##
 # A class representing a destination within a PDF file.
 # See section 8.2.1 of the PDF 1.6 reference.
