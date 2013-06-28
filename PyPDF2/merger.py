@@ -262,13 +262,11 @@ class PdfFileMerger(object):
             if v.has_key('/Page'):
                 for i, p in enumerate(self.pages):
                     if p.id == v['/Page']:
-                        #v[NameObject('/Page')] = p.out_pagedata
-                        b[NameObject('/Dest')] = RawText('[{0} 0 R {1} {2:f} {3:f} {4}]'.format(self.output._pages.getObject()["/Kids"][p.id].idnum, b['/Type'], b['/Left'], b['/Top'], b['/Zoom']))
+                        v[NameObject('/Page')] = p.out_pagedata
                         pageno = i
                         pdf = p.src
-                        break;
+                        break
             if pageno != None:
-                del b['/Page'], b['/Type'], b['/Top'], b['/Zoom'], b['/Left']
                 self.output.addNamedDestinationObject(v)
  
     def _write_bookmarks(self, bookmarks=None, parent=None):
@@ -288,12 +286,43 @@ class PdfFileMerger(object):
             if b.has_key('/Page'):
                 for i, p in enumerate(self.pages):
                     if p.id == b['/Page']:
-                        b[NameObject('/Page')] = p.out_pagedata
+                        #b[NameObject('/Page')] = p.out_pagedata
+                        string = '[{0} 0 R {1}'
+                        args = [self.output._pages.getObject()["/Kids"][p.id].idnum,
+                                b['/Type']]
+
+                        #nothing more to add
+                        #if b['/Type'] == '/Fit' or b['/Type'] == '/FitB'
+                        if b['/Type'] == '/FitH' or b['/Type'] == '/FitBH':
+                            string += ' {2:f}'
+                            args.append(b['/Top'])
+                            del b['/Top']
+                        elif b['/Type'] == '/FitV' or b['/Type'] == '/FitBV':
+                            string += ' {2:f}'
+                            args.append(b['/Left'])
+                            del b['/Left']
+                        elif b['/Type'] == '/XYZ':
+                            string += ' {2:f} {3:f} {4}'
+                            args.append(b['/Left'])
+                            args.append(b['/Top'])
+                            args.append(b['/Zoom'])
+                            del b['/Top'], b['/Zoom'], b['/Left']
+                        elif b['/Type'] == '/FitR':
+                            string += ' {2:f} {3:f} {4:f} {5:}'
+                            args.append(b['/Left'])
+                            args.append(b['/Bottom'])
+                            args.append(b['/Right'])
+                            args.append(b['/Top'])
+                            del b['/Left'], b['/Right'], b['/Bottom'], b['/Top']
+                        string += ']'
+
+                        b[NameObject('/Dest')] = RawText(string.format(*args))
                         pageno = i
                         pdf = p.src
+                        break
             if pageno != None:
-                last_added = self.output.addBookmarkDestination(b, parent)
-    
+                del b['/Page'], b['/Type']
+                last_added = self.output.addBookmarkDestination(b, parent)    
 
     def _associate_dests_to_pages(self, pages):
         for nd in self.named_dests:
