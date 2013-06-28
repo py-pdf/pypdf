@@ -262,10 +262,13 @@ class PdfFileMerger(object):
             if v.has_key('/Page'):
                 for i, p in enumerate(self.pages):
                     if p.id == v['/Page']:
-                        v[NameObject('/Page')] = p.out_pagedata
+                        #v[NameObject('/Page')] = p.out_pagedata
+                        b[NameObject('/Dest')] = RawText('[{0} 0 R {1} {2:f} {3:f} {4}]'.format(self.output._pages.getObject()["/Kids"][p.id].idnum, b['/Type'], b['/Left'], b['/Top'], b['/Zoom']))
                         pageno = i
                         pdf = p.src
+                        break;
             if pageno != None:
+                del b['/Page'], b['/Type'], b['/Top'], b['/Zoom'], b['/Left']
                 self.output.addNamedDestinationObject(v)
  
     def _write_bookmarks(self, bookmarks=None, parent=None):
