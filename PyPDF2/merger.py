@@ -322,7 +322,7 @@ class PdfFileMerger(object):
                         break
             if pageno != None:
                 del b['/Page'], b['/Type']
-                last_added = self.output.addBookmarkDestination(b, parent)    
+                last_added = self.output.addBookmarkDict(b, parent)    
 
     def _associate_dests_to_pages(self, pages):
         for nd in self.named_dests:
