@@ -908,9 +908,6 @@ class RectangleObject(ArrayObject):
     upperLeft = property(getUpperLeft, setUpperLeft, None, None)
     upperRight = property(getUpperRight, setUpperRight, None, None)
 
-class RawText(utils.string_type, PdfObject):
-    def writeToStream(self, stream, encryption_key):
-        stream.write(b_(self))
 
 ##
 # A class representing a destination within a PDF file.

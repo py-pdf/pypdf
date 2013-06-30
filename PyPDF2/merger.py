@@ -287,36 +287,29 @@ class PdfFileMerger(object):
                 for i, p in enumerate(self.pages):
                     if p.id == b['/Page']:
                         #b[NameObject('/Page')] = p.out_pagedata
-                        string = '[{0} 0 R {1}'
-                        args = [self.output._pages.getObject()["/Kids"][p.id].idnum,
-                                b['/Type']]
-
+                        args = [NumberObject(p.id), NameObject(b['/Type'])]
                         #nothing more to add
                         #if b['/Type'] == '/Fit' or b['/Type'] == '/FitB'
                         if b['/Type'] == '/FitH' or b['/Type'] == '/FitBH':
-                            string += ' {2:f}'
-                            args.append(b['/Top'])
+                            args.append(FloatObject(b['/Top']))
                             del b['/Top']
                         elif b['/Type'] == '/FitV' or b['/Type'] == '/FitBV':
-                            string += ' {2:f}'
-                            args.append(b['/Left'])
+                            args.append(FloatObject(b['/Left']))
                             del b['/Left']
                         elif b['/Type'] == '/XYZ':
-                            string += ' {2:f} {3:f} {4}'
-                            args.append(b['/Left'])
-                            args.append(b['/Top'])
-                            args.append(b['/Zoom'])
+                            args.append(FloatObject(b['/Left']))
+                            args.append(FloatObject(b['/Top']))
+                            args.append(FloatObject(b['/Zoom']))
                             del b['/Top'], b['/Zoom'], b['/Left']
                         elif b['/Type'] == '/FitR':
-                            string += ' {2:f} {3:f} {4:f} {5:}'
-                            args.append(b['/Left'])
-                            args.append(b['/Bottom'])
-                            args.append(b['/Right'])
-                            args.append(b['/Top'])
+                            args.append(FloatObject(b['/Left']))
+                            args.append(FloatObject(b['/Bottom']))
+                            args.append(FloatObject(b['/Right']))
+                            args.append(FloatObject(b['/Top']))
                             del b['/Left'], b['/Right'], b['/Bottom'], b['/Top']
-                        string += ']'
 
-                        b[NameObject('/Dest')] = RawText(string.format(*args))
+                        b[NameObject('/A')] = DictionaryObject({NameObject('/S'): NameObject('/GoTo'), NameObject('/D'): ArrayObject(args)})
+                        
                         pageno = i
                         pdf = p.src
                         break
