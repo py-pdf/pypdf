@@ -28,7 +28,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from generic import *
-from pdf import PdfFileReader, PdfFileWriter, Destination
+from pdf import PdfFileReader, PdfFileWriter
 from StringIO import StringIO
 
 class _MergedPage(object):
