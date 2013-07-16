@@ -291,25 +291,53 @@ class PdfFileMerger(object):
                         #nothing more to add
                         #if b['/Type'] == '/Fit' or b['/Type'] == '/FitB'
                         if b['/Type'] == '/FitH' or b['/Type'] == '/FitBH':
-                            args.append(FloatObject(b['/Top']))
+                            if b.has_key('/Top') and not isinstance(b['/Top'], NullObject):
+                                args.append(FloatObject(b['/Top']))
+                            else:
+                                args.append(FloatObject(0))
                             del b['/Top']
                         elif b['/Type'] == '/FitV' or b['/Type'] == '/FitBV':
-                            args.append(FloatObject(b['/Left']))
+                            if b.has_key('/Left') and not isinstance(b['/Left'], NullObject):
+                                args.append(FloatObject(b['/Left']))
+                            else:
+                                args.append(FloatObject(0))
                             del b['/Left']
                         elif b['/Type'] == '/XYZ':
-                            args.append(FloatObject(b['/Left']))
-                            args.append(FloatObject(b['/Top']))
-                            args.append(FloatObject(b['/Zoom']))
+                            if b.has_key('/Left') and not isinstance(b['/Left'], NullObject):
+                                args.append(FloatObject(b['/Left']))
+                            else:
+                                args.append(FloatObject(0))
+                            if b.has_key('/Top') and not isinstance(b['/Top'], NullObject):
+                                args.append(FloatObject(b['/Top']))
+                            else:
+                                args.append(FloatObject(0))
+                            if b.has_key('/Zoom') and not isinstance(b['/Zoom'], NullObject):
+                                print '*************', b, '******************'
+                                args.append(FloatObject(b['/Zoom']))
+                            else:
+                                args.append(FloatObject(0))
                             del b['/Top'], b['/Zoom'], b['/Left']
                         elif b['/Type'] == '/FitR':
-                            args.append(FloatObject(b['/Left']))
-                            args.append(FloatObject(b['/Bottom']))
-                            args.append(FloatObject(b['/Right']))
-                            args.append(FloatObject(b['/Top']))
+                            if b.has_key('/Left') and not isinstance(b['/Left'], NullObject):
+                                args.append(FloatObject(b['/Left']))
+                            else:
+                                args.append(FloatObject(0))
+                            if b.has_key('/Bottom') and not isinstance(b['/Bottom'], NullObject):
+                                args.append(FloatObject(b['/Bottom']))
+                            else:
+                                args.append(FloatObject(0))
+                            if b.has_key('/Right') and not isinstance(b['/Right'], NullObject):
+                                args.append(FloatObject(b['/Right']))
+                            else:
+                                args.append(FloatObject(0))
+                            if b.has_key('/Top') and not isinstance(b['/Top'], NullObject):
+                                args.append(FloatObject(b['/Top']))
+                            else:
+                                args.append(FloatObject(0))
                             del b['/Left'], b['/Right'], b['/Bottom'], b['/Top']
 
                         b[NameObject('/A')] = DictionaryObject({NameObject('/S'): NameObject('/GoTo'), NameObject('/D'): ArrayObject(args)})
-                        
+                       
                         pageno = i
                         pdf = p.src
                         break
