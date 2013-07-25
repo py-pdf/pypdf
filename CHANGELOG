@@ -1,3 +1,50 @@
+Version 1.17, 2013-07-25
+------------------------
+
+ - Removed one (from pdf.py) of the two Destination classes. Both 
+   classes had the same name, but were slightly different in content, 
+   causing some errors. (from Janne Vanhala)
+
+ - Corrected and Expanded README file to demonstrate PdfFileMerger
+
+ - Added filter for LZW encoded PDF files (from Michal Horejsek)
+
+ - PyPDF2 issue tracker enabled (or soon to be) on Github to allow community
+   discussion and collaboration
+
+
+Versions -1.16, -2013-06-30
+---------------------------
+
+ - Note: This ChangeLog has not been kept up-to-date for a while.
+   Hopefully we can keep better track of it from now on. Some of the
+   changes listed here come from previous versions 1.14 and 1.15; they
+   were only vaguely defined. With the new _version.py file we should 
+   have more structured and better documented versioning from now on.
+ 
+ - Defined PyPDF2.__version__
+
+ - Fixed encrypt() method (from Martijn The)
+
+ - Improved error handling on PDFs with truncated streams (from cecilkorik)
+
+ - Python 3 support (from kushal-kumaran)
+
+ - Fixed example code in README (from Jeremy Bethmont)
+
+ - Fixed an bug caused by DecimalError Exception (from Adam Morris)
+
+ - Many other bug fixes and features by: 
+	
+	jeansch
+	Anton Vlasenko
+	Joseph Walton
+	Jan Oliver Oelerich
+	Fabian Henze
+	And any others I missed. 
+	Thanks for contributing!
+
+
 Version 1.13, 2010-12-04
 ------------------------
 
@@ -19,7 +66,7 @@ Version 1.13, 2010-12-04
  - New merge page functions allow application of a transformation matrix.
 
  - To all patch contributors: I did a poor job of keeping this ChangeLog
-   up-to-date for this release, so I an missing attributions here for any
+   up-to-date for this release, so I am missing attributions here for any
    changes you submitted.  Sorry!  I'll do better in the future.
 
 
