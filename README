@@ -1,9 +1,12 @@
-Example:
+Example 1:
 
     from PyPDF2 import PdfFileWriter, PdfFileReader
 
     output = PdfFileWriter()
     input1 = PdfFileReader(open("document1.pdf", "rb"))
+    
+    # print how many pages input1 has:
+    print "document1.pdf has %d pages." % input1.getNumPages()
 
     # add page 1 from input1 to output document, unchanged
     output.addPage(input1.getPage(0))
@@ -15,10 +18,12 @@ Example:
     output.addPage(input1.getPage(2).rotateCounterClockwise(90))
     # alt: output.addPage(input1.getPage(2).rotateClockwise(270))
 
-    # add page 4 from input1, but first add a watermark from another pdf:
+    # add page 4 from input1, but first add a watermark from another PDF:
     page4 = input1.getPage(3)
     watermark = PdfFileReader(open("watermark.pdf", "rb"))
     page4.mergePage(watermark.getPage(0))
+    output.addPage(page4)
+    
 
     # add page 5 from input1, but crop it to half size:
     page5 = input1.getPage(4)
@@ -28,11 +33,35 @@ Example:
     )
     output.addPage(page5)
 
-    # print how many pages input1 has:
-    print "document1.pdf has %s pages." % input1.getNumPages()
+    # encrypt your new PDF and add a password
+    password = "secret"
+    output.encrypt(password)
 
     # finally, write "output" to document-output.pdf
     outputStream = file("document-output.pdf", "wb")
     output.write(outputStream)
 
+
+Example 2:
+
+    from PyPDF2 import PdfFileReader, PdfFileMerger
+
+    merger = PdfFileMerger()
+     
+    input1 = PdfFileReader(open("document1.pdf", "rb"))
+    input2 = PdfFileReader(open("document2.pdf", "rb"))
+    input3 = PdfFileReader(open("document3.pdf", "rb"))
+
+    # add the first 3 pages of input1 document to output
+    merger.append(input1, pages = (0,3))
+
+    # insert the first page of input2 into the output beginning after the second page
+    merger.merge(2, input2, pages = (0,1))
+
+    # append entire input3 document to the end of the output document
+    merger.append(input3)
+
+    # Write to an output PDF document
+    output = open("document-output.pdf", "wb")
+    merger.write(output)
 
