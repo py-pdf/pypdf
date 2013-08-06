@@ -818,101 +818,108 @@ class PdfFileReader(object):
             pageObj.update(pages)
             self.flattenedPages.append(pageObj)
 
+    def _getObjectFromStream(self, indirectReference):
+        # indirect reference to object in object stream
+        # read the entire object stream into memory
+        debug = False
+        stmnum,idx = self.xref_objStm[indirectReference.idnum]
+        if debug: print "Here1: %s %s"%(stmnum, idx)
+        objStm = IndirectObject(stmnum, 0, self).getObject()
+        if debug: print "Here2: objStm=%s.. stmnum=%s data=%s"%(objStm, stmnum, objStm.getData())
+        # This is an xref to a stream, so its type better be a stream
+        assert objStm['/Type'] == '/ObjStm'
+        # /N is the number of indirect objects in the stream
+        assert idx < objStm['/N']
+        streamData = StringIO(objStm.getData())
+        for i in range(objStm['/N']):
+            objnum = NumberObject.readFromStream(streamData)
+            readNonWhitespace(streamData)
+            streamData.seek(-1, 1)
+            offset = NumberObject.readFromStream(streamData)
+            readNonWhitespace(streamData)
+            streamData.seek(-1, 1)
+            if objnum != indirectReference.idnum:
+                # We're only interested in one object
+                continue
+            if self.strict and idx != i:
+                raise utils.PdfReadError("Object is in wrong index.")
+            streamData.seek(objStm['/First']+offset, 0)
+            if debug:
+                pos = streamData.tell()
+                streamData.seek(0,0)
+                lines = streamData.readlines()
+                for i in range(0,len(lines)):
+                    print lines[i]
+                streamData.seek(pos,0)
+            try:
+                obj = readObject(streamData, self)
+            except utils.PdfStreamError as e:
+                # Stream object cannot be read. Normally, a critical error, but
+                # Adobe Reader doesn't complain, so continue (in strict mode?)
+                e = sys.exc_info()[1]
+                warnings.warn("Invalid stream (index %d) within object %d %d: %s" % \
+                      (i, indirectReference.idnum,indirectReference.generation, e.message), utils.PdfReadWarning)
+
+                if self.strict: 
+                    raise utils.PdfReadError("Can't read object stream: %s"%e)
+                # Replace with null. Hopefully it's nothing important.
+                obj = NullObject()
+            return obj
+        
+        if self.strict: raise utils.PdfReadError("This is a fatal error in strict mode.")
+        return NullObject()
+        
+        
     def getObject(self, indirectReference):
         debug = False
         if debug: print "looking at:",indirectReference.idnum,indirectReference.generation
-        retval = self.resolvedObjects.get(indirectReference.generation, {}).get(indirectReference.idnum, None)
+        retval = self.cacheGetIndirectObject(indirectReference.generation, 
+                                                indirectReference.idnum)
         if retval != None:
             return retval
-        if debug: print self.xref_objStm
-        if not indirectReference.idnum in self.xref[indirectReference.generation]:
-            #TODO: how to avoid problems if bad object is never actually used?
-            warnings.warn("Object %d %d not defined." % \
-                          (indirectReference.idnum,indirectReference.generation), utils.PdfReadWarning)
-            #if self.strict: raise utils.PdfReadError("This is a fatal error in strict mode.") # maybe?
         if indirectReference.generation == 0 and \
-           self.xref_objStm.has_key(indirectReference.idnum):
-            # indirect reference to object in object stream
-            # read the entire object stream into memory
-            stmnum,idx = self.xref_objStm[indirectReference.idnum]
-            if debug: print "Here1"
-            objStm = IndirectObject(stmnum, 0, self).getObject()
-            if debug: print "Here2"
-            assert objStm['/Type'] == '/ObjStm'
-            assert idx < objStm['/N']
-            streamData = StringIO(objStm.getData())
-            for i in range(objStm['/N']):
-                objnum = NumberObject.readFromStream(streamData)
-                readNonWhitespace(streamData)
-                streamData.seek(-1, 1)
-                offset = NumberObject.readFromStream(streamData)
-                readNonWhitespace(streamData)
-                streamData.seek(-1, 1)
-                t = streamData.tell()
-                streamData.seek(objStm['/First']+offset, 0)
-                if debug: 
-                    pos = streamData.tell()
-                    streamData.seek(0,0)
-                    lines = streamData.readlines()
-                    for i in range(0,len(lines)):
-                        print lines[i]
-                    streamData.seek(pos,0)
-                try:
-                    obj = readObject(streamData, self)
-                except utils.PdfStreamError:
-                    # This stream object cannot be read.
-                    # This should be a critical error, but Adobe Reader doesn't complain
-                    # so we will continue as best we can even in strict mode?
-                    e = sys.exc_info()[1]
-                    
-                    warnings.warn("Invalid stream (index %d) within object %d %d: %s" % \
-                          (i, indirectReference.idnum,indirectReference.generation, e.message), utils.PdfReadWarning)
-
-                    if self.strict: raise utils.PdfReadError("This is a fatal error in strict mode.")
-
-                    # As a workaround, we can replace this stream object with a Null
-                    # Hopefully it was nothing important.
-                    obj = NullObject()
-
-                    
-                self.resolvedObjects[0][objnum] = obj
-                streamData.seek(t, 0)
-            return self.resolvedObjects[0][indirectReference.idnum]
-        if debug: print self.xref
-        start = self.xref[indirectReference.generation][indirectReference.idnum]
-        if debug: print indirectReference.idnum,indirectReference.generation, ":", start
-        self.stream.seek(start, 0)
-        idnum, generation = self.readObjectHeader(self.stream)
-        try:
-            assert idnum == indirectReference.idnum
-        except AssertionError:
-            if self.xrefIndex: #Xref table probably had bad indexes due to not being zero-indexed
+                        indirectReference.idnum in self.xref_objStm:
+            retval = self._getObjectFromStream(indirectReference)
+        elif indirectReference.generation in self.xref and \
+                indirectReference.idnum in self.xref[indirectReference.generation]:
+            start = self.xref[indirectReference.generation][indirectReference.idnum]
+            if debug: print "  Uncompressed Object", indirectReference.idnum,indirectReference.generation, ":", start
+            self.stream.seek(start, 0)
+            idnum, generation = self.readObjectHeader(self.stream)
+            if idnum != indirectReference.idnum and self.xrefIndex:
+                # Xref table probably had bad indexes due to not being zero-indexed
                 if self.strict: 
                     raise utils.PdfReadError("Expected object ID (%d %d) does not match actual (%d %d); xref table not zero-indexed." \
                                      % (indirectReference.idnum, indirectReference.generation, idnum, generation))
-                else: pass #should not happen since the xref table is corrected in non-strict mode
-            else: #some other problem
+                else: pass # xref table is corrected in non-strict mode
+            elif idnum != indirectReference.idnum: 
+                # some other problem
                 raise utils.PdfReadError("Expected object ID (%d %d) does not match actual (%d %d)." \
-                                     % (indirectReference.idnum, indirectReference.generation, idnum, generation))
-        assert generation == indirectReference.generation
-        retval = readObject(self.stream, self)
+                                         % (indirectReference.idnum, indirectReference.generation, idnum, generation))
+            assert generation == indirectReference.generation
+            retval = readObject(self.stream, self)
 
-        # override encryption is used for the /Encrypt dictionary
-        if not self._override_encryption and self.isEncrypted:
-            # if we don't have the encryption key:
-            if not hasattr(self, '_decryption_key'):
-                raise Exception, "file has not been decrypted"
-            # otherwise, decrypt here...
-            import struct
-            pack1 = struct.pack("<i", indirectReference.idnum)[:3]
-            pack2 = struct.pack("<i", indirectReference.generation)[:2]
-            key = self._decryption_key + pack1 + pack2
-            assert len(key) == (len(self._decryption_key) + 5)
-            md5_hash = md5(key).digest()
-            key = md5_hash[:min(16, len(self._decryption_key) + 5)]
-            retval = self._decryptObject(retval, key)
-
-        self.cacheIndirectObject(generation, idnum, retval)
+            # override encryption is used for the /Encrypt dictionary
+            if not self._override_encryption and self.isEncrypted:
+                # if we don't have the encryption key:
+                if not hasattr(self, '_decryption_key'):
+                    raise Exception, "file has not been decrypted"
+                # otherwise, decrypt here...
+                import struct
+                pack1 = struct.pack("<i", indirectReference.idnum)[:3]
+                pack2 = struct.pack("<i", indirectReference.generation)[:2]
+                key = self._decryption_key + pack1 + pack2
+                assert len(key) == (len(self._decryption_key) + 5)
+                md5_hash = md5(key).digest()
+                key = md5_hash[:min(16, len(self._decryption_key) + 5)]
+                retval = self._decryptObject(retval, key)
+        else:
+            warnings.warn("Object %d %d not defined."%(indirectReference.idnum,
+                        indirectReference.generation), utils.PdfReadWarning)
+            #if self.strict: 
+            raise utils.PdfReadError("Could not find object.")
+        self.cacheIndirectObject(indirectReference.generation, 
+                    indirectReference.idnum, retval)
         return retval
 
     def _decryptObject(self, obj, key):
@@ -948,10 +955,21 @@ class PdfFileReader(object):
                           (idnum, generation), utils.PdfReadWarning)
         return int(idnum), int(generation)
 
+    def cacheGetIndirectObject(self, generation, idnum):
+        debug = False
+        out = self.resolvedObjects.get((generation, idnum))
+        if debug and out: print "cache hit: %d %d"%(idnum, generation)
+        elif debug: print "cache miss: %d %d"%(idnum, generation)
+        return out
+    
     def cacheIndirectObject(self, generation, idnum, obj):
-        if not self.resolvedObjects.has_key(generation):
-            self.resolvedObjects[generation] = {}
-        self.resolvedObjects[generation][idnum] = obj
+        # return None # Sometimes we want to turn off cache for debugging.
+        if (generation, idnum) in self.resolvedObjects:
+            msg = "Overwriting cache for %s %s"%(generation, idnum)
+            if self.strict: raise utils.PdfReadError(msg)
+            else:           warnings.warn(msg)
+        self.resolvedObjects[(generation, idnum)] = obj
+        return obj
 
     def read(self, stream):
         debug = False
@@ -1066,42 +1084,68 @@ class PdfFileReader(object):
                 assert xrefstream["/Type"] == "/XRef"
                 self.cacheIndirectObject(generation, idnum, xrefstream)
                 streamData = StringIO(xrefstream.getData())
+                # Index pairs specify the subsections in the dictionary. If 
+                # none create one subsection that spans everything.
                 idx_pairs = xrefstream.get("/Index", [0, xrefstream.get("/Size")])
+                if debug: print "read idx_pairs=%s"%list(self._pairs(idx_pairs))
                 entrySizes = xrefstream.get("/W")
-                for num, size in self._pairs(idx_pairs):
-                    cnt = 0
-                    while cnt < size:
-                        for i in range(len(entrySizes)):
-                            d = streamData.read(entrySizes[i])
-                            di = convertToInt(d, entrySizes[i])
-                            if i == 0:
-                                xref_type = di
-                            elif i == 1:
-                                if xref_type == 0:
-                                    next_free_object = di
-                                elif xref_type == 1:
-                                    byte_offset = di
-                                elif xref_type == 2:
-                                    objstr_num = di
-                            elif i == 2:
-                                if xref_type == 0:
-                                    next_generation = di
-                                elif xref_type == 1:
-                                    generation = di
-                                elif xref_type == 2:
-                                    obstr_idx = di
+                assert len(entrySizes) >= 3
+                if self.strict and len(entrySizes) > 3:
+                    raise utils.PdfReadError("Too many entry sizes: %s" %entrySizes)
+                def getEntry(i):
+                    # Reads the correct number of bytes for each entry. See the
+                    # discussion of the W parameter in PDF spec table 17.
+                    if entrySizes[i] > 0:
+                        d = streamData.read(entrySizes[i])
+                        return convertToInt(d, entrySizes[i])
+                    
+                    # PDF Spec Table 17: A value of zero for an element in the 
+                    # W array indicates...the default value shall be used
+                    if i == 0:  return 1 # First value defaults to 1
+                    else:       return 0
+                
+                def used_before(num, generation):
+                    # We move backwards through the xrefs, don't replace any.
+                    return num in self.xref.get(generation, []) or \
+                            num in self.xref_objStm
+                    
+                # Iterate through each subsection
+                last_end = 0
+                for start, size in self._pairs(idx_pairs):
+                    # The subsections must increase
+                    assert start >= last_end
+                    last_end = start + size
+                    for num in xrange(start, start+size):
+                        # The first entry is the type
+                        xref_type = getEntry(0)
+                        # The rest of the elements depend on the xref_type
                         if xref_type == 0:
-                            pass
+                            # linked list of free objects
+                            next_free_object = getEntry(1)
+                            next_generation = getEntry(2)
                         elif xref_type == 1:
+                            # objects that are in use but are not compressed
+                            byte_offset = getEntry(1)
+                            generation = getEntry(2)
                             if not self.xref.has_key(generation):
                                 self.xref[generation] = {}
-                            if not num in self.xref[generation]:
+                            if not used_before(num, generation):
                                 self.xref[generation][num] = byte_offset
+                                if debug: print "XREF Uncompressed: %s %s"%(
+                                                num, generation)
                         elif xref_type == 2:
-                            if not num in self.xref_objStm:
-                                self.xref_objStm[num] = [objstr_num, obstr_idx]
-                        cnt += 1
-                        num += 1
+                            # compressed objects
+                            objstr_num = getEntry(1)
+                            obstr_idx = getEntry(2)
+                            generation = 0 # PDF spec table 18, generation is 0
+                            if not used_before(num, generation):
+                                if debug: print "XREF Compressed: %s %s %s"%(
+                                        num, objstr_num, obstr_idx)
+                                self.xref_objStm[num] = (objstr_num, obstr_idx)
+                        elif self.strict:
+                            raise utils.PdfReadError("Unknown xref type: %s"%
+                                                        xref_type)
+                            
                 trailerKeys = "/Root", "/Encrypt", "/Info", "/ID"
                 for key in trailerKeys:
                     if xrefstream.has_key(key) and not self.trailer.has_key(key):
@@ -1565,6 +1609,33 @@ class PageObject(DictionaryObject):
         return self.mergeTransformedPage(page2, [1,  0,
                                                  0,  1,
                                                  tx, ty])
+
+    ##
+    # This is similar to mergePage, but the stream to be merged is translated,
+    # rotated and scaled by appling a transformation matrix.
+    #
+    # @param page2 An instance of {@link #PageObject PageObject} to be merged.
+    # @param tx    The translation on X axis
+    # @param ty    The translation on Y axis
+    # @param rotation The angle of the rotation, in degrees
+    # @param scale The scaling factor
+    def mergeRotateAroundPointPage(self, page2, rotation, tx, ty):
+        translation = [[1, 0, 0],
+                       [0, 1, 0],
+                       [-tx,-ty,1]]
+        rotation = math.radians(rotation)
+        rotating = [[math.cos(rotation), math.sin(rotation),0],
+                    [-math.sin(rotation),math.cos(rotation), 0],
+                    [0,                  0,                  1]]
+        rtranslation = [[1, 0, 0],
+                       [0, 1, 0],
+                       [tx,ty,1]]
+        ctm = utils.matrixMultiply(translation, rotating)
+        ctm = utils.matrixMultiply(ctm, rtranslation)
+
+        return self.mergeTransformedPage(page2, [ctm[0][0], ctm[0][1],
+                                                 ctm[1][0], ctm[1][1],
+                                                 ctm[2][0], ctm[2][1]])
 
     ##
     # This is similar to mergePage, but the stream to be merged is rotated
