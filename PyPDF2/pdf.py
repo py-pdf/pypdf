@@ -438,7 +438,7 @@ class PdfFileWriter(object):
             parent = outlineRef
 
         parent = parent.getObject()
-        print parent.__class__.__name__
+        #print parent.__class__.__name__
         parent.addChild(destRef, self)
         
         return destRef
@@ -454,7 +454,7 @@ class PdfFileWriter(object):
             for k, v in bookmark['/A'].items():
                 action[NameObject(str(k))] = v
             actionRef = self._addObject(action)
-            bookmarkObj['/A'] = actionRef
+            bookmarkObj[NameObject('/A')] = actionRef
             
         bookmarkRef = self._addObject(bookmarkObj)
 
