@@ -853,7 +853,7 @@ class PdfFileReader(object):
                 streamData.seek(pos,0)
             try:
                 obj = readObject(streamData, self)
-            except utils.PdfStreamError as e:
+            except utils.PdfStreamError, e:
                 # Stream object cannot be read. Normally, a critical error, but
                 # Adobe Reader doesn't complain, so continue (in strict mode?)
                 e = sys.exc_info()[1]
