@@ -1611,14 +1611,13 @@ class PageObject(DictionaryObject):
                                                  tx, ty])
 
     ##
-    # This is similar to mergePage, but the stream to be merged is translated,
-    # rotated and scaled by appling a transformation matrix.
+    # This is similar to mergePage, but the stream to be merged is translated
+    # and rotated by appling a transformation matrix.
     #
     # @param page2 An instance of {@link #PageObject PageObject} to be merged.
     # @param tx    The translation on X axis
     # @param ty    The translation on Y axis
     # @param rotation The angle of the rotation, in degrees
-    # @param scale The scaling factor
     def mergeRotateAroundPointPage(self, page2, rotation, tx, ty):
         translation = [[1, 0, 0],
                        [0, 1, 0],
