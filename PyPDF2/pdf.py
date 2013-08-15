@@ -1618,7 +1618,7 @@ class PageObject(DictionaryObject):
     # @param tx    The translation on X axis
     # @param ty    The translation on Y axis
     # @param rotation The angle of the rotation, in degrees
-    def mergeRotateAroundPointPage(self, page2, rotation, tx, ty):
+    def mergeRotatedAroundPointPage(self, page2, rotation, tx, ty):
         translation = [[1, 0, 0],
                        [0, 1, 0],
                        [-tx,-ty,1]]
