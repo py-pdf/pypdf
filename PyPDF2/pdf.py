@@ -958,6 +958,9 @@ class PdfFileReader(object):
         if debug: print ">>read", stream
         # start at the end:
         stream.seek(-1, 2)
+        if not stream.tell():
+            raise utils.PdfReadError, "File is empty"
+
         line = b_('')
         if debug: print "  line:",line
         while not line:
