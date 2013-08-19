@@ -1,3 +1,30 @@
+Version 1.18, 2013-08-19
+---------------------------
+
+- Fixed a bug where older verions of objects were incorrectly added to the 
+  cache, resulting in outdated or missing pages, images, and other objects
+  (from speedplane)
+
+- Fixed a bug in parsing the xref table where new xref values were 
+  overwritten; also cleaned up code (from speedplane)
+
+- New method mergeRotatedAroundPointPage which merges a page while rotating
+  it around a point (from speedplane)
+
+- Updated Destination syntax to respect PDF 1.6 specifications (from
+  jamma313)
+
+- Prevented infinite loop when a PdfFileReader object was instantiated
+  with an empty file (from Jerome Nexedi)
+
+Other Changes:
+
+- Downloads now available via PyPI
+  https://pypi.python.org/pypi?:action=display&name=PyPDF2
+
+- Installation through pip library is fixed
+
+
 Version 1.17, 2013-07-25
 ------------------------
 
@@ -7,9 +34,9 @@ Version 1.17, 2013-07-25
 
  - Corrected and Expanded README file to demonstrate PdfFileMerger
 
- - Added filter for LZW encoded PDF files (from Michal Horejsek)
+ - Added filter for LZW encoded streams (from Michal Horejsek)
 
- - PyPDF2 issue tracker enabled (or soon to be) on Github to allow community
+ - PyPDF2 issue tracker enabled on Github to allow community
    discussion and collaboration
 
 
