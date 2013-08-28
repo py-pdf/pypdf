@@ -337,6 +337,8 @@ def readStringFromStream(stream):
                 tok = b_(")")
             elif tok == b_("\\"):
                 tok = b_("\\")
+            elif tok == b_(" "):
+                tok = b_(" ")
             elif tok.isdigit():
                 # "The number ddd may consist of one, two, or three
                 # octal digits; high-order overflow shall be ignored.
