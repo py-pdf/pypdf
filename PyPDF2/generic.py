@@ -567,6 +567,8 @@ class DictionaryObject(dict, PdfObject):
 
             if debug: print "Tok:",tok
             if tok == b_(">"):
+                stream.read(1)
+                break
             stream.seek(-1, 1)
             key = readObject(stream, pdf)
             tok = readNonWhitespace(stream)
