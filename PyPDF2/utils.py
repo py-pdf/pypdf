@@ -33,25 +33,16 @@ Utility functions for PDF library.
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
-#ENABLE_PSYCO = False
-#if ENABLE_PSYCO:
-#    try:
-#        import psyco
-#    except ImportError:
-#        ENABLE_PSYCO = False
-#
-#if not ENABLE_PSYCO:
-#    class psyco:
-#        def proxy(func):
-#            return func
-#        proxy = staticmethod(proxy)
-
 #custom implementation of warnings.formatwarning 
 def _formatwarning(message, category, filename, lineno, line=None):
     file = filename.replace("/","\\").rsplit("\\",1)[1] # find the file name
     return "%s: %s [%s:%s]\n" % (category.__name__, message, file, lineno)
 
 def readUntilWhitespace(stream, maxchars=None):
+    """
+    Reads non-whitespace characters and returns them.
+    Stops upon encountering whitespace or when maxchars is reached.
+    """
     txt = b_("")
     while True:
         tok = stream.read(1)
@@ -63,12 +54,19 @@ def readUntilWhitespace(stream, maxchars=None):
     return txt
 
 def readNonWhitespace(stream):
+    """
+    Finds and reads the next non-whitespace character (ignores whitespace).
+    """
     tok = b_(' ')
     while tok == b_('\n') or tok == b_('\r') or tok == b_(' ') or tok == b_('\t'):
         tok = stream.read(1)
     return tok
 
 def skipOverWhitespace(stream):
+    """
+    Similar to readNonWhitespace, but returns a Boolean if more than
+    one whitespace character was read.
+    """
     tok = b_(' ')
     cnt = 0;
     while tok == b_('\n') or tok == b_('\r') or tok == b_(' ') or tok == b_('\t'):
@@ -123,6 +121,18 @@ def matrixMultiply(a, b):
                   for i, j in zip(row, col)]
                 ) for col in zip(*b)]
             for row in a]
+
+def markLocation(stream):
+    """Creates text file showing current location in context."""
+    # Mainly for debugging
+    RADIUS = 5000
+    stream.seek(-RADIUS, 1)
+    outputDoc = open('PyPDF2_pdfLocation.txt', 'w')
+    outputDoc.write(stream.read(RADIUS))
+    outputDoc.write('HERE')
+    outputDoc.write(stream.read(RADIUS))
+    outputDoc.close()
+    stream.seek(-RADIUS, 1)
 
 class PyPdfError(Exception):
     pass
@@ -194,10 +204,3 @@ else:
 
     string_type = str
     bytes_type = bytes
-
-if __name__ == "__main__":
-    # test RC4
-    out = RC4_encrypt("Key", "Plaintext")
-    print repr(out)
-    pt = RC4_encrypt("Key", out)
-    print repr(pt)

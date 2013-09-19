@@ -312,7 +312,6 @@ class PdfFileMerger(object):
                             else:
                                 args.append(FloatObject(0))
                             if b.has_key('/Zoom') and not isinstance(b['/Zoom'], NullObject):
-                                print '*************', b, '******************'
                                 args.append(FloatObject(b['/Zoom']))
                             else:
                                 args.append(FloatObject(0))

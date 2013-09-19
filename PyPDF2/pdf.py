@@ -246,6 +246,8 @@ class PdfFileWriter(object):
     # @param stream An object to write the file to.  The object must support
     # the write method, and the tell method, similar to a file object.
     def write(self, stream):
+        if hasattr(stream, 'mode') and 'b' not in stream.mode:
+            warnings.warn("File <%s> to write to is not in binary mode. It may not be written to correctly." % stream.name)
         debug = False
         import struct
 
@@ -538,7 +540,7 @@ class PdfFileWriter(object):
 #               similar to a file object.
 # @param strict Determines whether user should be warned of all problems and
 #               also causes some correctable problems to be fatal. Defaults
-#               to False. 
+#               to True. 
 # @param warndest Allows redirection of warnings to any open file/stream. Defauls to
 #                 the warnings default (sys.stderr)
 class PdfFileReader(object):
@@ -2190,25 +2192,3 @@ def _alg35(password, rev, keylen, owner_entry, p_entry, id1_entry, metadata_encr
     # mean, so I have used null bytes.  This seems to match a few other
     # people's implementations)
     return val + (b_('\x00') * 16), key
-
-#if __name__ == "__main__":
-#    output = PdfFileWriter()
-#
-#    input1 = PdfFileReader(file("test\\5000-s1-05e.pdf", "rb"))
-#    page1 = input1.getPage(0)
-#
-#    input2 = PdfFileReader(file("test\\PDFReference16.pdf", "rb"))
-#    page2 = input2.getPage(0)
-#    page3 = input2.getPage(1)
-#    page1.mergePage(page2)
-#    page1.mergePage(page3)
-#
-#    input3 = PdfFileReader(file("test\\cc-cc.pdf", "rb"))
-#    page1.mergePage(input3.getPage(0))
-#
-#    page1.compressContentStreams()
-#
-#    output.addPage(page1)
-#    output.write(file("test\\merge-test.pdf", "wb"))
-
-
