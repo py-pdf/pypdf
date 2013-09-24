@@ -214,6 +214,12 @@ class PdfFileMerger(object):
         
         self.inputs = []
         self.output = None
+
+    def add_infos(self, infos):
+        args = {}
+        for key, value in infos.items():
+            args[NameObject(key)] = createStringObject(value)
+        self.output.getObject(self.output._info).update(args)
     
     def _trim_dests(self, pdf, dests, pages):
         """
