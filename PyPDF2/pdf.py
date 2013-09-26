@@ -525,8 +525,79 @@ class PdfFileWriter(object):
         nd.extend([title, destRef])
         
         return destRef
+    
+    _valid_layouts = set(['/NoLayout', '/SinglePage', '/OneColumn', '/TwoColumnLeft', '/TwoColumnRight', '/TwoPageLeft', '/TwoPageRight'])
+    
+    def getPageLayout(self):
+        '''
+        Get the page layout
+        
+        See PdfFileWriter.setPageMode for a description of valid layouts.
+                
+        Returns None if the layout has not been set.
+        '''
+        try:
+            return self.getObject(self._root)['/PageLayout']
+        except KeyError:
+            return None
+        
+    def setPageLayout(self, layout):
+        '''
+        Set the page layout
+        
+        Valid layouts are:
+             /NoLayout        Layout explicitly not specified
+             /SinglePage      Show one page at a time
+             /OneColumn       Show one column at a time
+             /TwoColumnLeft   Show pages in two columns, odd-numbered pages on the left
+             /TwoColumnRight  Show pages in two columns, odd-numbered pages on the right
+             /TwoPageLeft     Show two pages at a time, odd-numbered pages on the left
+             /TwoPageRight    Show two pages at a time, odd-numbered pages on the right
+        '''
+        if not isinstance(layout, NameObject):
+            if layout not in self._valid_layouts:
+                warnings.warn("Layout should be one of: {}".format(', '.join(self._valid_layouts)))
+            layout = NameObject(layout)
+        root = self.getObject(self._root)
+        root.update({NameObject('/PageLayout'): layout})
+    
+    pageLayout = property(getPageLayout, setPageLayout)
 
+    _valid_modes = set(['/UseNone', '/UseOutlines', '/UseThumbs', '/UseFullscreen', '/UseOC', '/UseAttach'])
 
+    def getPageMode(self):
+        ''''
+        Get the page mode
+        
+        See PdfFileWriter.setPageMode for a description of valid modes.
+        
+        Returns None if the mode has not been set.
+        '''
+        try:
+            return self.getObject(self._root)['/PageMode']
+        except KeyError:
+            return None
+
+    def setPageMode(self, mode):
+        '''
+        Set the page mode
+        
+        Valid modes are:
+            /UseNone        Do not show outlines or thumbnails panels
+            /UseOutlines    Show outlines (aka bookmarks) panel
+            /UseThumbs      Show page thumbnails panel
+            /UseFullscreen  Fullscreen view
+            /UseOC          Show Optional Content Group (OCG) panel
+            /UseAttach      Show attachments panel
+        '''
+        if not isinstance(mode, NameObject):
+            if mode not in self._valid_modes:
+                warnings.warn("Mode should be one of: {}".format(', '.join(self._valid_modes)))
+            mode = NameObject(mode)
+        root = self.getObject(self._root)
+        root.update({NameObject('/PageMode'): mode})
+    
+    pageMode = property(getPageMode, setPageMode)
 
 ##
 # Initializes a PdfFileReader object.  This operation can take some time, as
@@ -786,6 +857,36 @@ class PdfFileReader(object):
     # Stability: Added in v1.7, and will exist for all future v1.x releases.
     pages = property(lambda self: ConvertFunctionsToVirtualList(self.getNumPages, self.getPage),
             None, None)
+
+    def getPageLayout(self):
+        '''
+        Get the page layout
+        
+        See PdfFileWriter.setPageMode for a description of valid layouts.
+                
+        Returns None if the layout has not been set.
+        '''
+        try:
+            return self.trailer['/Root']['/PageLayout']
+        except KeyError:
+            return None
+    
+    pageLayout = property(getPageLayout)
+
+    def getPageMode(self):
+        ''''
+        Get the page mode
+        
+        See PdfFileWriter.setPageMode for a description of valid modes.
+        
+        Returns None if the mode has not been set.
+        '''
+        try:
+            return self.trailer['/Root']['/PageMode']
+        except KeyError:
+            return None
+    
+    pageMode = property(getPageMode)
 
     def _flatten(self, pages=None, inherit=None, indirectRef=None):
         inheritablePageAttributes = (
