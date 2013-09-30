@@ -320,6 +320,17 @@ class PdfFileWriter(object):
         # eof
         stream.write(b_("\nstartxref\n%s\n%%%%EOF\n" % (xref_location)))
 
+    def addMetadata(self, infos):
+        """
+        'infos' argument is a python dictionary where each key is a field
+        and each value is your new metadata.
+        Example: {u'/Title': u'My title'}
+        """
+        args = {}
+        for key, value in infos.items():
+            args[NameObject(key)] = createStringObject(value)
+        self.getObject(self._info).update(args)
+
     def _sweepIndirectReferences(self, externMap, data):
         debug = False
         if debug: print data,"TYPE",data.__class__.__name__

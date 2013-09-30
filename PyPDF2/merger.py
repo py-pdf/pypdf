@@ -215,7 +215,12 @@ class PdfFileMerger(object):
         self.inputs = []
         self.output = None
 
-    def add_infos(self, infos):
+    def addMetadata(self, infos):
+        """
+        'infos' argument is a python dictionary where each key is a field
+        and each value is your new metadata.
+        Example: {u'/Title': u'My title'}
+        """
         args = {}
         for key, value in infos.items():
             args[NameObject(key)] = createStringObject(value)
