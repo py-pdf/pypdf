@@ -216,16 +216,17 @@ class PdfFileMerger(object):
         self.output = None
 
     def addMetadata(self, infos):
-        """
-        'infos' argument is a python dictionary where each key is a field
-        and each value is your new metadata.
-        Example: {u'/Title': u'My title'}
-        """
-        args = {}
-        for key, value in infos.items():
-            args[NameObject(key)] = createStringObject(value)
-        self.output.getObject(self.output._info).update(args)
+        """See addMetadata method in PdfFileWriter class"""
+        self.output.addMetadata(infos)
     
+    def setPageLayout(self, layout):
+        """See setPageLayout() methods in pdf.py"""
+        self.output.setPageLayout(layout)
+
+    def setPageMode(self, mode):
+        """See setPageMode() methods in pdf.py"""
+        self.output.setPageMode(mode)
+
     def _trim_dests(self, pdf, dests, pages):
         """
         Removes any named destinations that are not a part of the specified page set

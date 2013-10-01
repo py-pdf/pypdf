@@ -545,7 +545,7 @@ class PdfFileWriter(object):
         '''
         Get the page layout
         
-        See PdfFileWriter.setPageMode for a description of valid layouts.
+        See PdfFileWriter.setPageLayout for a description of valid layouts.
                 
         Returns None if the layout has not been set.
         '''
@@ -579,7 +579,7 @@ class PdfFileWriter(object):
     _valid_modes = set(['/UseNone', '/UseOutlines', '/UseThumbs', '/UseFullscreen', '/UseOC', '/UseAttach'])
 
     def getPageMode(self):
-        ''''
+        '''
         Get the page mode
         
         See PdfFileWriter.setPageMode for a description of valid modes.
@@ -874,9 +874,9 @@ class PdfFileReader(object):
     def getPageLayout(self):
         '''
         Get the page layout
-        
-        See PdfFileWriter.setPageMode for a description of valid layouts.
-                
+
+        See PdfFileWriter.setPageLayout for a description of valid layouts.     
+
         Returns None if the layout has not been set.
         '''
         try:
@@ -887,7 +887,7 @@ class PdfFileReader(object):
     pageLayout = property(getPageLayout)
 
     def getPageMode(self):
-        ''''
+        '''
         Get the page mode
         
         See PdfFileWriter.setPageMode for a description of valid modes.
