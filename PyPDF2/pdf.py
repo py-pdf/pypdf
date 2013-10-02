@@ -362,7 +362,6 @@ class PdfFileWriter(object):
                     self.stack.append(data.idnum)
                     realdata = self.getObject(data)
                     self._sweepIndirectReferences(externMap, realdata)
-                    self.stack.pop()
                     return data
             else:
                 newobj = externMap.get(data.pdf, {}).get(data.generation, {}).get(data.idnum, None)
