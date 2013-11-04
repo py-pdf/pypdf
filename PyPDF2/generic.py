@@ -38,6 +38,7 @@ import re
 from utils import readNonWhitespace, RC4_encrypt
 from utils import b_, u_, chr_, ord_
 from utils import PdfStreamError
+import warnings
 import filters
 import utils
 import decimal
@@ -338,10 +339,9 @@ def readStringFromStream(stream):
                 tok = b_(")")
             elif tok == b_("\\"):
                 tok = b_("\\")
-            elif tok == b_(" "):
-                tok = b_(" ")
-            elif tok == b_("/"):
-                tok = b_("/")
+            elif tok in (b_(" "), b_("/"), b_("%")):
+                # odd escape sequences
+                tok = b_(tok)
             elif tok.isdigit():
                 # "The number ddd may consist of one, two, or three
                 # octal digits; high-order overflow shall be ignored.
@@ -619,10 +619,14 @@ class DictionaryObject(dict, PdfObject):
                     # we found it by looking back one character further.
                     data["__streamdata__"] = data["__streamdata__"][:-1]
                 else:
-                   # if debug: print "E", e, ndstream, debugging.toHex(end)
-                    stream.seek(pos, 0)
-                    raise utils.PdfReadError, \
-                        ("Unable to find 'endstream' marker after stream at byte %s." % utils.hexStr(stream.tell()))
+                    if pdf.strict == False:
+                        warnings.warn("Ignoring missing endstream. This could affect PDF output.")
+                        pass
+                    else:
+                        if debug: print "E", e, ndstream, debugging.toHex(end)
+                        stream.seek(pos, 0)
+                        raise utils.PdfReadError, \
+                            ("Unable to find 'endstream' marker after stream at byte %s." % utils.hexStr(stream.tell()))
         else:
             stream.seek(pos, 0)
         if data.has_key("__streamdata__"):
