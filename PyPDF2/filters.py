@@ -101,7 +101,11 @@ class FlateDecode(object):
         data = decompress(data)
         predictor = 1
         if decodeParms:
-            predictor = decodeParms.get("/Predictor", 1)
+            try:
+                predictor = decodeParms.get("/Predictor", 1)
+            except AttributeError:
+                pass    # usually an array with a null object was read
+            
         # predictor 1 == no predictor
         if predictor != 1:
             columns = decodeParms["/Columns"]

@@ -339,8 +339,8 @@ def readStringFromStream(stream):
                 tok = b_(")")
             elif tok == b_("\\"):
                 tok = b_("\\")
-            elif tok in (b_(" "), b_("/"), b_("%")):
-                # odd escape sequences
+            elif tok in (b_(" "), b_("/"), b_("%"), b_("<"), b_(">")):
+                # odd escape sequences we have encountered
                 tok = b_(tok)
             elif tok.isdigit():
                 # "The number ddd may consist of one, two, or three
@@ -834,6 +834,7 @@ class EncodedStreamObject(StreamObject):
         else:
             # create decoded object
             decoded = DecodedStreamObject()
+            
             decoded._data = filters.decodeStreamData(self)
             for key, value in self.items():
                 if not key in ("/Length", "/Filter", "/DecodeParms"):

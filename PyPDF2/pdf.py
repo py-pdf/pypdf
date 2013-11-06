@@ -1573,7 +1573,7 @@ class PageObject(DictionaryObject):
 
     ##
     # Returns the /Contents object, or None if it doesn't exist.
-    # /Contents is optionnal, as described in PDF Reference  7.7.3.3
+    # /Contents is optional, as described in PDF Reference  7.7.3.3
     def getContents(self):
       if self.has_key("/Contents"):
         return self["/Contents"].getObject()
@@ -2046,9 +2046,16 @@ class ContentStream(DecodedStreamObject):
         while True:
             tok = stream.read(1)
             if tok == "E":
-                next = stream.read(1)
-                if next == "I":
-                    break
+                # Check for End Image
+                next1 = stream.read(1)
+                if next1 == "I":
+                    next2 = readNonWhitespace(stream)
+                    if next2 == 'Q':
+                        stream.seek(-1, 1)
+                        break
+                    else:
+                        stream.seek(-2,1)
+                        data += tok
                 else:
                     stream.seek(-1, 1)
                     data += tok
