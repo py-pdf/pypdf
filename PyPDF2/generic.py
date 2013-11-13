@@ -339,8 +339,8 @@ def readStringFromStream(stream):
                 tok = b_(")")
             elif tok == b_("\\"):
                 tok = b_("\\")
-            elif tok in (b_(" "), b_("/"), b_("%"), b_("<"), b_(">")):
-                # odd escape sequences we have encountered
+            elif tok in (b_(" "), b_("/"), b_("%"), b_("<"), b_(">"), b_("["), b_("]")):
+                # odd/unnessecary escape sequences we have encountered
                 tok = b_(tok)
             elif tok.isdigit():
                 # "The number ddd may consist of one, two, or three
