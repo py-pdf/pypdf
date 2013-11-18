@@ -939,11 +939,11 @@ class Destination(TreeObject):
         elif typ == "/FitR":
             (self[NameObject("/Left")], self[NameObject("/Bottom")],
                 self[NameObject("/Right")], self[NameObject("/Top")]) = args
-        elif typ in ["/FitH", "FitBH"]:
+        elif typ in ["/FitH", "/FitBH"]:
             self[NameObject("/Top")], = args
-        elif typ in ["/FitV", "FitBV"]:
+        elif typ in ["/FitV", "/FitBV"]:
             self[NameObject("/Left")], = args
-        elif typ in ["/Fit", "FitB"]:
+        elif typ in ["/Fit", "/FitB"]:
             pass
         else:
             raise utils.PdfReadError("Unknown Destination Type: %r" % typ)
