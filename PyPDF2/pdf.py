@@ -1865,9 +1865,9 @@ class PageObject(DictionaryObject):
     # @param width The new width
     # @param height The new heigth
     def scaleTo(self, width, height):
-        sx = width / (self.mediaBox.getUpperRight_x() -
+        sx = width / float(self.mediaBox.getUpperRight_x() -
                       self.mediaBox.getLowerLeft_x ())
-        sy = height / (self.mediaBox.getUpperRight_y() -
+        sy = height / float(self.mediaBox.getUpperRight_y() -
                        self.mediaBox.getLowerLeft_x ())
         self.scale(sx, sy)
 
