@@ -438,6 +438,7 @@ class PdfFileMerger(object):
         		bmparent[npos].append(dest)
         	else:
         		bmparent.insert(npos, [dest])
+        return dest
         		
         
     def addNamedDestination(self, title, pagenum):
