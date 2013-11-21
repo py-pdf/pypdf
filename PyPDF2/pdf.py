@@ -90,7 +90,7 @@ class PdfFileWriter(object):
         # info object
         info = DictionaryObject()
         info.update({
-                NameObject("/Producer"): createStringObject(u"PyPDF2")
+                NameObject("/Producer"): createStringObject(u"Python PDF Library - http://pybrary.net/pyPdf/")
                 })
         self._info = self._addObject(info)
 
@@ -1684,9 +1684,9 @@ class PageObject(DictionaryObject):
     # @param page2 An instance of {@link #PageObject PageObject} to be merged.
     # @param ctm   A 6 elements tuple containing the operands of the
     #              transformation matrix
-    def mergeTransformedPage(self, page2, ctm):
+    def mergeTransformedPage(self, page2, ctm, expand=False):
         self._mergePage(page2, lambda page2Content:
-            PageObject._addTransformationMatrix(page2Content, page2.pdf, ctm), ctm)
+            PageObject._addTransformationMatrix(page2Content, page2.pdf, ctm), ctm, expand)
 
     ##
     # This is similar to mergePage, but the stream to be merged is scaled
@@ -1720,10 +1720,10 @@ class PageObject(DictionaryObject):
     # @param page2 An instance of {@link #PageObject PageObject} to be merged.
     # @param tx    The translation on X axis
     # @param tx    The translation on Y axis
-    def mergeTranslatedPage(self, page2, tx, ty):
+    def mergeTranslatedPage(self, page2, tx, ty, expand=False):
         return self.mergeTransformedPage(page2, [1,  0,
                                                  0,  1,
-                                                 tx, ty])
+                                                 tx, ty], expand)
 
     ##
     # This is similar to mergePage, but the stream to be merged is translated
@@ -1865,9 +1865,9 @@ class PageObject(DictionaryObject):
     # @param width The new width
     # @param height The new heigth
     def scaleTo(self, width, height):
-        sx = width / float(self.mediaBox.getUpperRight_x() -
+        sx = width / (self.mediaBox.getUpperRight_x() -
                       self.mediaBox.getLowerLeft_x ())
-        sy = height / float(self.mediaBox.getUpperRight_y() -
+        sy = height / (self.mediaBox.getUpperRight_y() -
                        self.mediaBox.getLowerLeft_x ())
         self.scale(sx, sy)
 
