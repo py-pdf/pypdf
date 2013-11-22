@@ -90,7 +90,7 @@ class PdfFileWriter(object):
         # info object
         info = DictionaryObject()
         info.update({
-                NameObject("/Producer"): createStringObject(u"PyPDF2")
+                NameObject("/Producer"): createStringObject(u"PyPDF2".encode('utf-16'))
                 })
         self._info = self._addObject(info)
 
