@@ -53,6 +53,7 @@ except ImportError:
 import filters
 import utils
 import warnings
+import codecs
 from generic import *
 from utils import readNonWhitespace, readUntilWhitespace, ConvertFunctionsToVirtualList
 from utils import b_
@@ -90,7 +91,7 @@ class PdfFileWriter(object):
         # info object
         info = DictionaryObject()
         info.update({
-                NameObject("/Producer"): createStringObject(u"PyPDF2".encode('utf-16be'))
+                NameObject("/Producer"): createStringObject(codecs.BOM_UTF16_BE + u"PyPDF2".encode('utf-16be'))
                 })
         self._info = self._addObject(info)
 
