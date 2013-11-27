@@ -538,6 +538,38 @@ class PdfFileWriter(object):
         nd.extend([title, destRef])
         
         return destRef
+
+    def ignoreLinks(self):
+        pages = self.getObject(self._pages)['/Kids']
+        for page in pages:
+            pageRef = self.getObject(page)
+            if pageRef.has_key("/Annots"):
+                del pageRef['/Annots']
+
+    def addLink(self, pagenum, pagedest, rect, zoom='/FitV'):
+        """
+        Add a internal link in pdf, from a rectangular area and pointing at
+        the specified page number.
+        """
+        pageLink = self.getObject(self._pages)['/Kids'][pagenum]
+        pageDest = self.getObject(self._pages)['/Kids'][pagedest] #TODO: switch for external link
+        pageRef = self.getObject(pageLink)
+
+        lnk = DictionaryObject()
+        lnk.update({
+            NameObject('/Rect') : NameObject(rect), # link pposition
+            NameObject('/Dest') : ArrayObject([pageDest, NameObject(zoom), NumberObject(826)]), 
+            NameObject('/P') : NameObject(pageLink), # 1pt border
+            NameObject('/Border') : NameObject('[ 0 0 0 ]'), # [0 0 1] 1pt border
+            NameObject('/Type') : NameObject('/Annot'),
+            NameObject('/Subtype') : NameObject('/Link'),
+        })
+        lnkRef = self._addObject(lnk)
+
+        if pageRef.has_key("/Annots"):
+            pageRef['/Annots'].append(lnkRef)
+        else:
+            pageRef[NameObject('/Annots')] = ArrayObject([lnkRef])
     
     _valid_layouts = set(['/NoLayout', '/SinglePage', '/OneColumn', '/TwoColumnLeft', '/TwoColumnRight', '/TwoPageLeft', '/TwoPageRight'])
     
