@@ -35,7 +35,7 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 
 #custom implementation of warnings.formatwarning 
 def _formatwarning(message, category, filename, lineno, line=None):
-    file = filename.replace("/","\\").rsplit("\\",1)[1] # find the file name
+    file = filename.replace("/", "\\").rsplit("\\", 1)[1] # find the file name
     return "%s: %s [%s:%s]\n" % (category.__name__, message, file, lineno)
 
 def readUntilWhitespace(stream, maxchars=None):
@@ -91,13 +91,13 @@ class ConvertFunctionsToVirtualList(object):
 
     def __getitem__(self, index):
         if not isinstance(index, int):
-            raise TypeError, "sequence indices must be integers"
+            raise TypeError("sequence indices must be integers")
         len_self = len(self)
         if index < 0:
             # support negative indexes
             index = len_self + index
         if index < 0 or index >= len_self:
-            raise IndexError, "sequence index out of range"
+            raise IndexError("sequence index out of range")
         return self.getFunction(index)
 
 def RC4_encrypt(key, plaintext):
@@ -150,7 +150,7 @@ class PdfStreamError(PdfReadError):
     pass
 
 def hexStr(num):
-    return hex(num).replace('L','')
+    return hex(num).replace('L', '')
 
 import sys
 if sys.version_info[0] < 3:
@@ -158,7 +158,7 @@ if sys.version_info[0] < 3:
         return s
 
     def u_(s):
-        return unicode(s, 'unicode_escape')
+        return str(s, 'unicode_escape')
 
     def str_(b):
         return b
@@ -175,7 +175,7 @@ if sys.version_info[0] < 3:
     def hexencode(b):
         return b.encode('hex')
 
-    string_type = unicode
+    string_type = str
     bytes_type = str
 
 else:
