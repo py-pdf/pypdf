@@ -2011,7 +2011,7 @@ class ContentStream(DecodedStreamObject):
         # multiple StreamObjects to be cat'd together.
         stream = stream.getObject()
         if isinstance(stream, ArrayObject):
-            data = ""
+            data = b_("")
             for s in stream:
                 data += s.getObject().getData()
             stream = BytesIO(data)
