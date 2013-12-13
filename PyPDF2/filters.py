@@ -35,9 +35,10 @@ __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
 from .utils import PdfReadError
-try:
-    from io import StringIO
-except ImportError:
+from sys import version_info
+if version_info < ( 3, 0 ):
+    from cStringIO import StringIO
+else:
     from io import StringIO
 
 try:

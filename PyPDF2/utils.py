@@ -158,7 +158,7 @@ if sys.version_info[0] < 3:
         return s
 
     def u_(s):
-        return str(s, 'unicode_escape')
+        return unicode(s, 'unicode_escape')
 
     def str_(b):
         return b
@@ -175,7 +175,7 @@ if sys.version_info[0] < 3:
     def hexencode(b):
         return b.encode('hex')
 
-    string_type = str
+    string_type = unicode
     bytes_type = str
 
 else:
