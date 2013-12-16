@@ -29,7 +29,11 @@
 
 from .generic import *
 from .pdf import PdfFileReader, PdfFileWriter
-from io import StringIO
+from sys import version_info
+if version_info < ( 3, 0 ):
+    from cStringIO import StringIO
+else:
+    from io import StringIO
 
 class _MergedPage(object):
     """

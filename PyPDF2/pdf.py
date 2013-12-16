@@ -45,10 +45,15 @@ import math
 import struct
 import sys
 from sys import version_info
-try:
+if version_info < ( 3, 0 ):
+    from cStringIO import StringIO
+else:
     from io import StringIO
-except ImportError:
-    from io import StringIO
+
+if version_info < ( 3, 0 ):
+    BytesIO = StringIO
+else:
+    from io import BytesIO
 
 from . import filters
 from . import utils
@@ -56,7 +61,7 @@ import warnings
 import codecs
 from .generic import *
 from .utils import readNonWhitespace, readUntilWhitespace, ConvertFunctionsToVirtualList
-from .utils import b_
+from .utils import b_, u_
 
 if version_info < ( 2, 4 ):
    from sets import ImmutableSet as frozenset
@@ -68,9 +73,6 @@ else:
 
 warnings.formatwarning = utils._formatwarning
 
-import builtins
-
-builtins.UserWarning
 ##
 # This class supports writing PDF files out, given pages produced by another
 # class (typically {@link #PdfFileReader PdfFileReader}).
@@ -91,7 +93,7 @@ class PdfFileWriter(object):
         # info object
         info = DictionaryObject()
         info.update({
-                NameObject("/Producer"): createStringObject(codecs.BOM_UTF16_BE + "PyPDF2".encode('utf-16be'))
+                NameObject("/Producer"): createStringObject(codecs.BOM_UTF16_BE + u_("PyPDF2").encode('utf-16be'))
                 })
         self._info = self._addObject(info)
 
@@ -1929,7 +1931,7 @@ class PageObject(DictionaryObject):
     # be overhauled to provide more ordered text in the future.
     # @return a unicode string object
     def extractText(self):
-        text = ""
+        text = u_("")
         content = self["/Contents"].getObject()
         if not isinstance(content, ContentStream):
             content = ContentStream(content, self.pdf)
@@ -1937,23 +1939,23 @@ class PageObject(DictionaryObject):
         # are strings where the byte->string encoding was unknown, so adding
         # them to the text here would be gibberish.
         for operands, operator in content.operations:
-            if operator == "Tj":
+            if operator == b_("Tj"):
                 _text = operands[0]
                 if isinstance(_text, TextStringObject):
                     text += _text
-            elif operator == "T*":
+            elif operator == b_("T*"):
                 text += "\n"
-            elif operator == "'":
+            elif operator == b_("'"):
                 text += "\n"
                 _text = operands[0]
                 if isinstance(_text, TextStringObject):
                     text += operands[0]
-            elif operator == '"':
+            elif operator == b_('"'):
                 _text = operands[2]
                 if isinstance(_text, TextStringObject):
                     text += "\n"
                     text += _text
-            elif operator == "TJ":
+            elif operator == b_("TJ"):
                 for i in operands[0]:
                     if isinstance(i, TextStringObject):
                         text += i
@@ -2009,12 +2011,12 @@ class ContentStream(DecodedStreamObject):
         # multiple StreamObjects to be cat'd together.
         stream = stream.getObject()
         if isinstance(stream, ArrayObject):
-            data = ""
+            data = b_("")
             for s in stream:
                 data += s.getObject().getData()
-            stream = StringIO(data)
+            stream = BytesIO(data)
         else:
-            stream = StringIO(stream.getData())
+            stream = BytesIO(stream.getData())
         self.__parseContentStream(stream)
 
     def __parseContentStream(self, stream):
@@ -2023,11 +2025,11 @@ class ContentStream(DecodedStreamObject):
         operands = []
         while True:
             peek = readNonWhitespace(stream)
-            if peek == '':
+            if peek == b_(''):
                 break
             stream.seek(-1, 1)
             if peek.isalpha() or peek == "'" or peek == '"':
-                operator = ""
+                operator = b_("")
                 while True:
                     tok = stream.read(1)
                     if tok.isspace() or tok in NameObject.delimiterCharacters:
