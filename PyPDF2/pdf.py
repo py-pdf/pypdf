@@ -679,7 +679,7 @@ class PdfFileReader(object):
             warnings.warn("PdfFileReader stream/file object is not in binary mode. It may not be read correctly.", utils.PdfReadWarning)
         if type(stream) in (str, str):
             fileobj = open(stream, 'rb')
-            stream = StringIO(fileobj.read())
+            stream = BytesIO(b_(fileobj.read()))
             fileobj.close()
         self.read(stream)
         self.stream = stream
@@ -978,7 +978,7 @@ class PdfFileReader(object):
         assert objStm['/Type'] == '/ObjStm'
         # /N is the number of indirect objects in the stream
         assert idx < objStm['/N']
-        streamData = StringIO(objStm.getData())
+        streamData = BytesIO(objStm.getData())
         for i in range(objStm['/N']):
             objnum = NumberObject.readFromStream(streamData)
             readNonWhitespace(streamData)
@@ -1233,7 +1233,7 @@ class PdfFileReader(object):
                 xrefstream = readObject(stream, self)
                 assert xrefstream["/Type"] == "/XRef"
                 self.cacheIndirectObject(generation, idnum, xrefstream)
-                streamData = StringIO(xrefstream.getData())
+                streamData = BytesIO(xrefstream.getData())
                 # Index pairs specify the subsections in the dictionary. If 
                 # none create one subsection that spans everything.
                 idx_pairs = xrefstream.get("/Index", [0, xrefstream.get("/Size")])
@@ -1578,9 +1578,10 @@ class PageObject(DictionaryObject):
             return stream
         stream = ContentStream(stream, pdf)
         for operands, operator in stream.operations:
-            for op in operands:
+            for i in range(len(operands)):
+                op = operands[i]
                 if isinstance(op, NameObject):
-                    op = rename.get(op, op)
+                    operands[i] = rename.get(op,op)
         return stream
     _contentStreamRename = staticmethod(_contentStreamRename)
 
@@ -2100,11 +2101,11 @@ class ContentStream(DecodedStreamObject):
         return {"settings": settings, "data": data}
 
     def _getData(self):
-        newdata = StringIO()
+        newdata = BytesIO()
         for operands, operator in self.operations:
             if operator == "INLINE IMAGE":
                 newdata.write("BI")
-                dicttext = StringIO()
+                dicttext = BytesIO()
                 operands["settings"].writeToStream(dicttext, None)
                 newdata.write(dicttext.getvalue()[2:-2])
                 newdata.write("ID ")
@@ -2113,13 +2114,13 @@ class ContentStream(DecodedStreamObject):
             else:
                 for op in operands:
                     op.writeToStream(newdata, None)
-                    newdata.write(" ")
-                newdata.write(operator)
-            newdata.write("\n")
+                    newdata.write(b_(" "))
+                newdata.write(b_(operator))
+            newdata.write(b_("\n"))
         return newdata.getvalue()
 
     def _setData(self, value):
-        self.__parseContentStream(StringIO(value))
+        self.__parseContentStream(BytesIO(value))
 
     _data = property(_getData, _setData)
 

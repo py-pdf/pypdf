@@ -153,54 +153,57 @@ def hexStr(num):
     return hex(num).replace('L', '')
 
 import sys
-if sys.version_info[0] < 3:
-    def b_(s):
-        return s
 
-    def u_(s):
+def b_(s):
+    if sys.version_info[0] < 3:
+        return s
+    else:
+        if type(s) == bytes:
+            return s
+        else:
+            return s.encode('latin-1')
+
+def u_(s):
+    if sys.version_info[0] < 3:
         return unicode(s, 'unicode_escape')
-
-    def str_(b):
-        return b
-
-    def ord_(b):
-        return ord(b)
-
-    def chr_(c):
-        return c
-
-    def barray(b):
-        return b
-
-    def hexencode(b):
-        return b.encode('hex')
-
-    string_type = unicode
-    bytes_type = str
-
-else:
-    def b_(s):
-        return s.encode('latin-1')
-
-    def u_(s):
+    else:
         return s
 
-    def str_(b):
+def str_(b):
+    if sys.version_info[0] < 3:
+        return b
+    else:
         return b.decode('latin-1')
 
-    def ord_(b):
+def ord_(b):
+    if sys.version_info[0] < 3:
+        return ord(b)
+    else:
         return b
 
-    def chr_(c):
+def chr_(c):
+    if sys.version_info[0] < 3:
+        return c
+    else:
         return chr(c)
 
-    def barray(b):
+def barray(b):
+    if sys.version_info[0] < 3:
+        return b
+    else:
         return bytearray(b)
 
-    def hexencode(b):
+def hexencode(b):
+    if sys.version_info[0] < 3:
+        return b.encode('hex')
+    else:
         import codecs
         coder = codecs.getencoder('hex_codec')
         return coder(b)[0]
 
+if sys.version_info[0] < 3:
+    string_type = unicode
+    bytes_type = str
+else:
     string_type = str
     bytes_type = bytes
