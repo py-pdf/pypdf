@@ -2105,7 +2105,7 @@ class ContentStream(DecodedStreamObject):
         for operands, operator in self.operations:
             if operator == "INLINE IMAGE":
                 newdata.write("BI")
-                dicttext = BytesIO()
+                dicttext = StringIO()
                 operands["settings"].writeToStream(dicttext, None)
                 newdata.write(dicttext.getvalue()[2:-2])
                 newdata.write("ID ")
