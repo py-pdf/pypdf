@@ -161,7 +161,7 @@ if sys.version_info[0] < 3:
         return unicode(s, 'unicode_escape')
 
     def str_(b):
-        return b
+        return str(b)
 
     def ord_(b):
         return ord(b)
