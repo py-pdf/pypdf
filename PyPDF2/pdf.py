@@ -53,6 +53,7 @@ except ImportError:
 import filters
 import utils
 import warnings
+import codecs
 from generic import *
 from utils import readNonWhitespace, readUntilWhitespace, ConvertFunctionsToVirtualList
 from utils import b_
@@ -90,7 +91,7 @@ class PdfFileWriter(object):
         # info object
         info = DictionaryObject()
         info.update({
-                NameObject("/Producer"): createStringObject(u"Python PDF Library - http://pybrary.net/pyPdf/")
+                NameObject("/Producer"): createStringObject(codecs.BOM_UTF16_BE + u"PyPDF2".encode('utf-16be'))
                 })
         self._info = self._addObject(info)
 
@@ -537,6 +538,38 @@ class PdfFileWriter(object):
         nd.extend([title, destRef])
         
         return destRef
+
+    def ignoreLinks(self):
+        pages = self.getObject(self._pages)['/Kids']
+        for page in pages:
+            pageRef = self.getObject(page)
+            if pageRef.has_key("/Annots"):
+                del pageRef['/Annots']
+
+    def addLink(self, pagenum, pagedest, rect, zoom='/FitV'):
+        """
+        Add a internal link in pdf, from a rectangular area and pointing at
+        the specified page number.
+        """
+        pageLink = self.getObject(self._pages)['/Kids'][pagenum]
+        pageDest = self.getObject(self._pages)['/Kids'][pagedest] #TODO: switch for external link
+        pageRef = self.getObject(pageLink)
+
+        lnk = DictionaryObject()
+        lnk.update({
+            NameObject('/Rect') : NameObject(rect), # link pposition
+            NameObject('/Dest') : ArrayObject([pageDest, NameObject(zoom), NumberObject(826)]), 
+            NameObject('/P') : NameObject(pageLink), # 1pt border
+            NameObject('/Border') : NameObject('[ 0 0 0 ]'), # [0 0 1] 1pt border
+            NameObject('/Type') : NameObject('/Annot'),
+            NameObject('/Subtype') : NameObject('/Link'),
+        })
+        lnkRef = self._addObject(lnk)
+
+        if pageRef.has_key("/Annots"):
+            pageRef['/Annots'].append(lnkRef)
+        else:
+            pageRef[NameObject('/Annots')] = ArrayObject([lnkRef])
     
     _valid_layouts = set(['/NoLayout', '/SinglePage', '/OneColumn', '/TwoColumnLeft', '/TwoColumnRight', '/TwoPageLeft', '/TwoPageRight'])
     
@@ -1091,13 +1124,14 @@ class PdfFileReader(object):
         stream.seek(-1, 2)
         if not stream.tell():
             raise utils.PdfReadError('Cannot read an empty file')
+        last1K = stream.tell() - 1024 + 1 # offset of last 1024 bytes of stream
         line = b_('')
         if debug: print "  line:",line
-        while not line:
+        while line[:5] != "%%EOF":
             line = self.readNextEndLine(stream)
         if debug: print "  line:",line
-        if line[:5] != b_("%%EOF"):
-            raise utils.PdfReadError, "EOF marker not found"
+        if stream.tell() < last1K:
+            raise utils.PdfReadError("EOF marker not found")
 
         # find startxref entry - the location of the xref table
         line = self.readNextEndLine(stream)
@@ -1543,10 +1577,9 @@ class PageObject(DictionaryObject):
             return stream
         stream = ContentStream(stream, pdf)
         for operands,operator in stream.operations:
-            for i in range(len(operands)):
-                op = operands[i]
+            for op in operands:
                 if isinstance(op, NameObject):
-                    operands[i] = rename.get(op, op)
+                    op = rename.get(op, op)
         return stream
     _contentStreamRename = staticmethod(_contentStreamRename)
 
@@ -1865,9 +1898,9 @@ class PageObject(DictionaryObject):
     # @param width The new width
     # @param height The new heigth
     def scaleTo(self, width, height):
-        sx = width / (self.mediaBox.getUpperRight_x() -
+        sx = width / float(self.mediaBox.getUpperRight_x() -
                       self.mediaBox.getLowerLeft_x ())
-        sy = height / (self.mediaBox.getUpperRight_y() -
+        sy = height / float(self.mediaBox.getUpperRight_y() -
                        self.mediaBox.getLowerLeft_x ())
         self.scale(sx, sy)
 
