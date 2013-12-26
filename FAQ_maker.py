@@ -8,7 +8,10 @@ q_and_as = [('license', 'How is PyPDF2 licensed?',
            """),
             ('relation-to-PyPdf', "How is PyPDF2 related to PyPdf?", """
 [refer to home page]
-          """)]
+          """),
+            ('more', 'Where do I learn more about PyPDF2?',
+              """<p>The <a href = 'index.html'>PyPDF2 home page</a>
+            is a good place to look for more information.""")]
 
 
 title = "'Frequently-Asked Questions' for the PyPDF2 project"
