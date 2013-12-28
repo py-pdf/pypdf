@@ -11,7 +11,14 @@ q_and_as = [('license', 'How is PyPDF2 licensed?',
           """),
             ('more', 'Where do I learn more about PyPDF2?',
               """<p>The <a href = 'index.html'>PyPDF2 home page</a>
-            is a good place to look for more information.""")]
+            is a good place to look for more information."""),
+            ('mailing', 'Is there a mailing list?', """
+             """),
+            ('now', 'What development is underway now?', """
+             """),
+            ('versions', 'With what versions of Python does PyPDF2 work?', """
+                """),
+]
 
 
 title = "'Frequently-Asked Questions' for the PyPDF2 project"
