@@ -4,7 +4,10 @@ q_and_as = [('license', 'How is PyPDF2 licensed?',
 
 <p>Longer version:  ..."""),
            ('why', "Why PyPDF2?  Why doesn't everyone everywhere just use libraries coded in Java or C?", """
-               ...
+<p>Why does PyPDF2 interest <i>you</i>?  The same or a similar reason
+likely applies to other PyPDF2 users.  
+<a href = 'mailto:PyPDF2@phaseit.net'>E-mail us</a> with a few words
+about how <i>you</i> use PyPDF2.
            """),
             ('relation-to-PyPdf', "How is PyPDF2 related to PyPdf?", """
 [refer to home page]
