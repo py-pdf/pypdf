@@ -9,8 +9,10 @@ likely applies to other PyPDF2 users.
 <a href = 'mailto:PyPDF2@phaseit.net'>E-mail us</a> with a few words
 about how <i>you</i> use PyPDF2.
            """),
-            ('relation-to-PyPdf', "How is PyPDF2 related to PyPdf?", """
-[refer to home page]
+            ('relation-to-pyPdf', "How is PyPDF2 related to pyPdf?", """
+<p>As the <a href = 'http://mstamy2.github.io/PyPDF2/index.html#origin'>PyPDF2
+   home page</a> explains, PyPDF2 is a fork from the no-longer-maintained pyPdf
+   approved by the latter's founder.
           """),
             ('more', 'Where do I learn more about PyPDF2?',
               """<p>The <a href = 'index.html'>PyPDF2 home page</a>
