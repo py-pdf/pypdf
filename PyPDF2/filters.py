@@ -34,11 +34,12 @@ Implementation of stream filters for PDF.
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
-from utils import PdfReadError
-try:
+from .utils import PdfReadError
+from sys import version_info
+if version_info < ( 3, 0 ):
     from cStringIO import StringIO
-except ImportError:
-    from StringIO import StringIO
+else:
+    from io import StringIO
 
 try:
     import zlib
@@ -116,7 +117,7 @@ class FlateDecode(object):
                 rowlength = columns + 1
                 assert len(data) % rowlength == 0
                 prev_rowdata = (0,) * rowlength
-                for row in xrange(len(data) / rowlength):
+                for row in range(len(data) / rowlength):
                     rowdata = [ord(x) for x in data[(row*rowlength):((row+1)*rowlength)]]
                     filterByte = rowdata[0]
                     if filterByte == 0:
@@ -169,7 +170,7 @@ class LZWDecode(object):
     http://www.java2s.com/Open-Source/Java-Document/PDF/PDF-Renderer/com/sun/pdfview/decode/LZWDecode.java.htm
     """
     class decoder(object):
-        def __init__(self,data):
+        def __init__(self, data):
             self.STOP=257
             self.CLEARDICT=256
             self.data=data
@@ -298,7 +299,7 @@ class ASCII85Decode(object):
     decode = staticmethod(decode)
 
 def decodeStreamData(stream):
-    from generic import NameObject
+    from .generic import NameObject
     filters = stream.get("/Filter", ())
     if len(filters) and not isinstance(filters[0], NameObject):
         # we have a single filter instance

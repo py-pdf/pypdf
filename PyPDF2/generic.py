@@ -35,12 +35,12 @@ __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import re
-from utils import readNonWhitespace, RC4_encrypt
-from utils import b_, u_, chr_, ord_
-from utils import PdfStreamError
+from .utils import readNonWhitespace, RC4_encrypt
+from .utils import b_, u_, chr_, ord_
+from .utils import PdfStreamError
 import warnings
-import filters
-import utils
+from . import filters
+from . import utils
 import decimal
 import codecs
 #import debugging
@@ -454,10 +454,10 @@ class NameObject(str, PdfObject):
 
     def readFromStream(stream):
         debug = False
-        if debug: print stream.tell()
+        if debug: print((stream.tell()))
         name = stream.read(1)
         if name != b_("/"):
-            raise utils.PdfReadError, "name read error"
+            raise utils.PdfReadError("name read error")
         while True:
             tok = stream.read(1)
             if not tok:
@@ -467,7 +467,7 @@ class NameObject(str, PdfObject):
                 stream.seek(-1, 1)
                 break
             name += tok
-        if debug: print name
+        if debug: print(name)
         return NameObject(name.decode('utf-8'))
     readFromStream = staticmethod(readFromStream)
 
@@ -492,7 +492,7 @@ class DictionaryObject(dict, PdfObject):
     def update(self, arr):
         # note, a ValueError halfway through copying values
         # will leave half the values in this dict.
-        for k, v in arr.iteritems():
+        for k, v in list(arr.items()):
             self.__setitem__(k, v)
 
     def raw_get(self, key):
@@ -528,7 +528,7 @@ class DictionaryObject(dict, PdfObject):
         if metadata == None:
             return None
         metadata = metadata.getObject()
-        import xmp
+        from . import xmp
         if not isinstance(metadata, xmp.XmpInformation):
             metadata = xmp.XmpInformation(metadata)
             self[NameObject("/Metadata")] = metadata
@@ -543,7 +543,7 @@ class DictionaryObject(dict, PdfObject):
 
     def writeToStream(self, stream, encryption_key):
         stream.write(b_("<<\n"))
-        for key, value in self.items():
+        for key, value in list(self.items()):
             key.writeToStream(stream, encryption_key)
             stream.write(b_(" "))
             value.writeToStream(stream, encryption_key)
@@ -551,11 +551,12 @@ class DictionaryObject(dict, PdfObject):
         stream.write(b_(">>"))
 
     def readFromStream(stream, pdf):
+        # This method is broken in Python 3+ and needs work,
+        # especially when finding endstream marker
         debug = False
         tmp = stream.read(2)
         if tmp != b_("<<"):
-            raise utils.PdfReadError, \
-                ("Dictionary read error at byte %s: stream must begin with '<<'" % utils.hexStr(stream.tell()))
+            raise utils.PdfReadError("Dictionary read error at byte %s: stream must begin with '<<'" % utils.hexStr(stream.tell()))
         data = {}
         while True:
             tok = readNonWhitespace(stream)
@@ -565,7 +566,7 @@ class DictionaryObject(dict, PdfObject):
                 # stream has truncated prematurely
                 raise PdfStreamError("Stream has ended unexpectedly")
 
-            if debug: print "Tok:",tok
+            if debug: print(("Tok:", tok))
             if tok == b_(">"):
                 stream.read(1)
                 break
@@ -574,9 +575,9 @@ class DictionaryObject(dict, PdfObject):
             tok = readNonWhitespace(stream)
             stream.seek(-1, 1)
             value = readObject(stream, pdf)
-            if data.has_key(key):
+            if key in data:
                 # multiple definitions of key not permitted
-                raise utils.PdfReadError, ("Multiple definitions in dictionary at byte %s for key %s" \
+                raise utils.PdfReadError("Multiple definitions in dictionary at byte %s for key %s" \
                                            % (utils.hexStr(stream.tell()), key))
             data[key] = value
         pos = stream.tell()
@@ -590,19 +591,19 @@ class DictionaryObject(dict, PdfObject):
             assert eol in (b_("\n"), b_("\r"))
             if eol == b_("\r"):
                 # read \n after
-                if stream.read(1)  != '\n':
+                if stream.read(1)  != b_('\n'):
                     stream.seek(-1, 1)
             # this is a stream object, not a dictionary
-            assert data.has_key("/Length")
+            assert "/Length" in data
             length = data["/Length"]
-            if debug: print data
+            if debug: print(data)
             if isinstance(length, IndirectObject):
                 t = stream.tell()
                 length = pdf.getObject(length)
                 stream.seek(t, 0)
             data["__streamdata__"] = stream.read(length)
-            if debug: print "here"
-            #if debug: print debugging.printAsHex(data["__streamdata__"])
+            if debug: print("here")
+            #if debug: print(binascii.hexlify(data["__streamdata__"]))
             e = readNonWhitespace(stream)
             ndstream = stream.read(8)
             if (e + ndstream) != b_("endstream"):
@@ -619,17 +620,12 @@ class DictionaryObject(dict, PdfObject):
                     # we found it by looking back one character further.
                     data["__streamdata__"] = data["__streamdata__"][:-1]
                 else:
-                    if pdf.strict == False:
-                        warnings.warn("Ignoring missing endstream. This could affect PDF output.")
-                        pass
-                    else:
-                        if debug: print "E", e, ndstream, debugging.toHex(end)
-                        stream.seek(pos, 0)
-                        raise utils.PdfReadError, \
-                            ("Unable to find 'endstream' marker after stream at byte %s." % utils.hexStr(stream.tell()))
+                    if debug: print(("E", e, ndstream, debugging.toHex(end)))
+                    stream.seek(pos, 0)
+                    raise utils.PdfReadError("Unable to find 'endstream' marker after stream at byte %s." % utils.hexStr(stream.tell()))
         else:
             stream.seek(pos, 0)
-        if data.has_key("__streamdata__"):
+        if "__streamdata__" in data:
             return StreamObject.initializeFromDictionary(data)
         else:
             retval = DictionaryObject()
@@ -642,7 +638,7 @@ class TreeObject(DictionaryObject):
         DictionaryObject.__init__(self)
         
     def hasChildren(self):
-        return self.has_key('/First')
+        return '/First' in self
     
     def __iter__(self):
         return self.children()
@@ -663,7 +659,7 @@ class TreeObject(DictionaryObject):
         child = pdf.getReference(childObj)
         assert isinstance(child, IndirectObject)
         
-        if not self.has_key('/First'):
+        if '/First' not in self:
             self[NameObject('/First')] = child
             self[NameObject('/Count')] = NumberObject(0)
             prev = None
@@ -686,10 +682,10 @@ class TreeObject(DictionaryObject):
     def removeChild(self, child):
         childObj = child.getObject()
         
-        if not childObj.has_key(NameObject('/Parent')):
-            raise ValueError, "Removed child does not appear to be a tree item"
+        if NameObject('/Parent') not in childObj:
+            raise ValueError("Removed child does not appear to be a tree item")
         elif childObj[NameObject('/Parent')] != self:
-            raise ValueError, "Removed child is not a member of this tree"
+            raise ValueError("Removed child is not a member of this tree")
         
         found = False
         prevRef = None
@@ -701,7 +697,7 @@ class TreeObject(DictionaryObject):
         while cur != None:
             if cur == childObj:
                 if prev == None:
-                    if cur.has_key(NameObject('/Next')):
+                    if NameObject('/Next') in cur:
                         # Removing first tree node
                         nextRef = cur[NameObject('/Next')]
                         next = nextRef.getObject()
@@ -714,10 +710,10 @@ class TreeObject(DictionaryObject):
                         assert self[NameObject('/Count')] == 1
                         del self[NameObject('/Count')]
                         del self[NameObject('/First')]
-                        if self.has_key(NameObject('/Last')):
+                        if NameObject('/Last') in self:
                             del self[NameObject('/Last')]
                 else:
-                    if cur.has_key(NameObject('/Next')):
+                    if NameObject('/Next') in cur:
                         # Removing middle tree node
                         nextRef = cur[NameObject('/Next')]
                         next = nextRef.getObject()
@@ -736,7 +732,7 @@ class TreeObject(DictionaryObject):
             
             prevRef = curRef
             prev = cur
-            if cur.has_key(NameObject('/Next')):
+            if NameObject('/Next') in cur:
                 curRef = cur[NameObject('/Next')]
                 cur = curRef.getObject()
             else:
@@ -744,28 +740,28 @@ class TreeObject(DictionaryObject):
                 cur = None
        
         if not found:
-            raise ValueError, "Removal couldn't find item in tree"
+            raise ValueError("Removal couldn't find item in tree")
        
         del childObj[NameObject('/Parent')]
-        if childObj.has_key(NameObject('/Next')):
+        if NameObject('/Next') in childObj:
             del childObj[NameObject('/Next')]
-        if childObj.has_key(NameObject('/Prev')):
+        if NameObject('/Prev') in childObj:
             del childObj[NameObject('/Prev')]
 
     def emptyTree(self):
         for child in self:
             childObj = child.getObject()
             del childObj[NameObject('/Parent')]
-            if childObj.has_key(NameObject('/Next')):
+            if NameObject('/Next') in childObj:
                 del childObj[NameObject('/Next')]
-            if childObj.has_key(NameObject('/Prev')):
+            if NameObject('/Prev') in childObj:
                 del childObj[NameObject('/Prev')]
 
-        if self.has_key(NameObject('/Count')):
+        if NameObject('/Count') in self:
             del self[NameObject('/Count')]
-        if self.has_key(NameObject('/First')):
+        if NameObject('/First') in self:
             del self[NameObject('/First')]
-        if self.has_key(NameObject('/Last')):
+        if NameObject('/Last') in self:
             del self[NameObject('/Last')]
 
 
@@ -786,7 +782,7 @@ class StreamObject(DictionaryObject):
         stream.write(b_("\nendstream"))
 
     def initializeFromDictionary(data):
-        if data.has_key("/Filter"):
+        if "/Filter" in data:
             retval = EncodedStreamObject()
         else:
             retval = DecodedStreamObject()
@@ -798,7 +794,7 @@ class StreamObject(DictionaryObject):
     initializeFromDictionary = staticmethod(initializeFromDictionary)
 
     def flateEncode(self):
-        if self.has_key("/Filter"):
+        if "/Filter" in self:
             f = self["/Filter"]
             if isinstance(f, ArrayObject):
                 f.insert(0, NameObject("/FlateDecode"))
@@ -836,14 +832,14 @@ class EncodedStreamObject(StreamObject):
             decoded = DecodedStreamObject()
             
             decoded._data = filters.decodeStreamData(self)
-            for key, value in self.items():
+            for key, value in list(self.items()):
                 if not key in ("/Length", "/Filter", "/DecodeParms"):
                     decoded[key] = value
             self.decodedSelf = decoded
             return decoded._data
 
     def setData(self, data):
-        raise utils.PdfReadError, "Creating EncodedStreamObject is not currently supported"
+        raise utils.PdfReadError("Creating EncodedStreamObject is not currently supported")
 
 
 class RectangleObject(ArrayObject):
@@ -949,7 +945,7 @@ class Destination(TreeObject):
             raise utils.PdfReadError("Unknown Destination Type: %r" % typ)
             
     def getDestArray(self):
-        return ArrayObject([self.raw_get('/Page'), self['/Type']] + [self[x] for x in ['/Left','/Bottom','/Right','/Top','/Zoom'] if self.has_key(x)])
+        return ArrayObject([self.raw_get('/Page'), self['/Type']] + [self[x] for x in ['/Left', '/Bottom', '/Right', '/Top', '/Zoom'] if x in self])
         
     def writeToStream(self, stream, encryption_key):
         stream.write(b_("<<\n"))
@@ -1012,7 +1008,7 @@ class Destination(TreeObject):
 class Bookmark(Destination):
     def writeToStream(self, stream, encryption_key):
         stream.write(b_("<<\n"))
-        for key in [NameObject(x) for x in ['/Title', '/Parent', '/First', '/Last', '/Next', '/Prev'] if self.has_key(x)]:
+        for key in [NameObject(x) for x in ['/Title', '/Parent', '/First', '/Last', '/Next', '/Prev'] if x in self]:
             key.writeToStream(stream, encryption_key)
             stream.write(b_(" "))
             value = self.raw_get(key)
@@ -1085,7 +1081,7 @@ _pdfDocEncoding = (
 assert len(_pdfDocEncoding) == 256
 
 _pdfDocEncoding_rev = {}
-for i in xrange(256):
+for i in range(256):
     char = _pdfDocEncoding[i]
     if char == u_("\u0000"):
         continue
