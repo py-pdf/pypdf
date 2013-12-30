@@ -22,6 +22,11 @@ about how <i>you</i> use PyPDF2.
             ('now', 'What development is underway now?', """
              """),
             ('versions', 'With what versions of Python does PyPDF2 work?', """
+<p>The main branch [provide hyperlink] [what PyPI provides] as of
+year-end 2013 works with 2.6-2.7
+[and maybe 2.5?].  The 2-3 branch [] seems to do fine with 3.1-3.3 [?].
+We're working to consolidate these, of course [although likely (?) at the
+expense of 2.5?].
                 """),
 ]
 
