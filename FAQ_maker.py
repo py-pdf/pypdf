@@ -25,10 +25,23 @@ about how <i>you</i> use PyPDF2.
 <p>The main branch [provide hyperlink] [what PyPI provides] as of
 year-end 2013 works with 2.6-2.7
 [and maybe 2.5?].  The 2-3 branch [] seems to do fine with 3.1-3.3 [?].
-We're working to consolidate these, of course [although likely (?) at the
+we're working to consolidate these, of course [although likely (?) at the
 expense of 2.5?].
                 """),
 ]
+
+"""
+ALSO, document that it works with Py2.5 (?) (not 2.4?).
+
+Explain two forks; #plans; link to tutorial.
+
+Promote PyPDF2 at SO
+
+Tweet about PyPDF2 dominance of pdftk.
+
+PyPDF2 line-up.
+"""
+
 
 
 title = "'Frequently-Asked Questions' for the PyPDF2 project"
