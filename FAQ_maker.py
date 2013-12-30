@@ -28,6 +28,34 @@ year-end 2013 works with 2.6-2.7
 we're working to consolidate these, of course [although likely (?) at the
 expense of 2.5?].
                 """),
+            ('characteristic-problems', '''
+I often merge [concatenate] various PDF instances, and my
+application 'craters' with certain files produced by
+{AutoCAD, my departmental scanner, ...}, even though the
+original files display OK.  What do I do now?
+      ''',  """
+<p>Crucial ideas we want you to know:  <ul>
+    <li><i>All</i> of us contend with 
+    <a href = 'https://github.com/mstamy2/PyPDF2/issues/24'>this
+    sort of thing</a>.  Vendors often produce PDF with questionable
+    syntax, or at least syntax that isn't what PyPDF2 expects.
+    <li>We're committed to resolving all these problems, so 
+     that your applications (and ours) can handle any PDF 
+     instances that come their way.  
+     <a href = "mailto:PyPDF2@Phaseit.net">Write us</a> whenever you
+     have a problem [describe the not-yet-working on-line
+     submission system].
+    <li>In the meantime, while you're waiting on us, you have 
+        at least a couple of choices:  you can
+        <ul>
+        <li>debug PyPDF2 yourself; or
+        <li>use Acrobat or Preview or a similar 
+            consumer-grade PDF tool to 'mollify' your
+            PDF instances so you get the results you
+            are after.
+        </ul>
+    </ul>
+              """),
 ]
 
 """
