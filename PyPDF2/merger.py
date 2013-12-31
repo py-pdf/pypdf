@@ -34,6 +34,7 @@ if version_info < ( 3, 0 ):
     from cStringIO import StringIO
 else:
     from io import StringIO
+    from io import FileIO as file
 
 class _MergedPage(object):
     """
