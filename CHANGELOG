@@ -1,3 +1,31 @@
+Version 1.20, 2014-01-??
+------------------------
+
+ - Many Python 3 support changes (with contributions from TWAC and cgammans)
+
+ - Updated FAQ; link included in README
+
+ - Allow more (unnecessary) escape sequences
+
+ - Prevent exception when reading a null object in decoding parameters
+
+ - Corrected error in reading destination types (added a slash since they
+   are name objects)
+
+ - Corrected TypeError in scaleTo() method
+
+ - addBookmark() method in PdfFileMerger now returns bookmark (so nested
+   bookmarks can be created)
+
+ - Additions to Sample Code and Sample PDFs
+
+ - changes to allow 2up script to work (by Dylan McNamee)
+
+ - changes to metadata encoding (by Chris Hiestand)
+
+ - New methods for links: addLink() (by Enrico Lambertini) and ignoreLinks()
+
+
 Version 1.19, 2013-10-08
 ------------------------
 
