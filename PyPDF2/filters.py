@@ -117,7 +117,7 @@ class FlateDecode(object):
                 rowlength = columns + 1
                 assert len(data) % rowlength == 0
                 prev_rowdata = (0,) * rowlength
-                for row in range(len(data) / rowlength):
+                for row in range(len(data) // rowlength):
                     rowdata = [ord(x) for x in data[(row*rowlength):((row+1)*rowlength)]]
                     filterByte = rowdata[0]
                     if filterByte == 0:

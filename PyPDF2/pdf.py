@@ -2209,7 +2209,7 @@ class DocumentInformation(DictionaryObject):
 def convertToInt(d, size):
     if size > 8:
         raise utils.PdfReadError("invalid size in convertToInt")
-    d = "\x00\x00\x00\x00\x00\x00\x00\x00" + d
+    d = b_("\x00\x00\x00\x00\x00\x00\x00\x00") + d
     d = d[-8:]
     return struct.unpack(">q", d)[0]
 
