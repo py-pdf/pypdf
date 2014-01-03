@@ -14,6 +14,14 @@ about how <i>you</i> use PyPDF2.
    home page</a> explains, PyPDF2 is a fork from the no-longer-maintained pyPdf
    approved by the latter's founder.
           """),
+           ('migration-from-pyPdf', """I'm a long-time pyPdf user.
+How hard is migration to PyPDF2?""", """
+<p>Migration to PyPDF2 from pyPdf should be utterly transparent.
+   If <i>anything</i> gets in your way, we want to know.  Your
+   Python code needn't change <i>at all</i>, unless you choose
+   to program in a customized location for the PyPDF2 module.
+   In particular, ...
+          """),
             ('more', 'Where do I learn more about PyPDF2?',
               """<p>The <a href = 'index.html'>PyPDF2 home page</a>
             is a good place to look for more information."""),
@@ -50,7 +58,7 @@ original files display OK.  What do I do now?
         <ul>
         <li>debug PyPDF2 yourself; or
         <li>use Acrobat or Preview or a similar 
-            consumer-grade PDF tool to 'mollify' your
+            consumer-grade PDF tool to 'mollify' [explain] your
             PDF instances so you get the results you
             are after.
         </ul>
