@@ -27,7 +27,24 @@ How hard is migration to PyPDF2?""", """
             is a good place to look for more information."""),
             ('mailing', 'Is there a mailing list?', """
              """),
+           ('comparisons', '''How does PyPDF2 compare to [various competitors,
+    complements, and so on]?''', """<p>As
+    <a href = '#relation-to-pyPdf'>mention already</a>, PyPDF2 aims to
+    be a strict successor of pyPdf:  it does everything pyPdf does,
+    but it also does more.
+
+    <p>Where ... deal with construction of PDF pages, PyPDF2 is largely
+    about metadata:  PyPDF2 manages metadata, merges PDF instances,
+    and so on.
+
+    <p>[various libraries]
+  
+    <p>...
+             """),
             ('now', 'What development is underway now?', """
+   <p>[Consolidation of Py2 and Py3 sources.]
+
+   <p>[Bates-stamper, Plone/Zope, ...]
              """),
             ('versions', 'With what versions of Python does PyPDF2 work?', """
 <p>The main branch [provide hyperlink] [what PyPI provides] as of
