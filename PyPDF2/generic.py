@@ -468,7 +468,11 @@ class NameObject(str, PdfObject):
                 break
             name += tok
         if debug: print(name)
-        return NameObject(name.decode('utf-8'))
+        try:
+            return NameObject(name.decode('utf-8'))
+        except Exception, e:
+            print e
+            return NameObject(name)
     readFromStream = staticmethod(readFromStream)
 
 
