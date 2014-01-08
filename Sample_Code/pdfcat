@@ -1,0 +1,56 @@
+#!/usr/bin/env python
+"""
+pdfcat -- Concatenate (pages from) pdf files into a single pdf file.
+Each argument on the command line is either the name of a pdf file, or
+a page range (see below).  
+Redirect stdout to a file that supports "tell", e.g. a regular file.
+
+Page ranges refer to the previously-named file.
+A file not followed by a page range means all the pages of the file.
+
+PAGE RANGES are like Python slices.
+        {page_range_help}
+EXAMPLE
+    pdfcat headtail.pdf 0 content.pdf :6 7: headtail.pdf -2: >output.pdf
+    Concatenate the first page of headtail.pdf, all but page seven of
+    content.pdf, and the last two pages of headtail.pdf,
+    producing output.pdf.
+
+Copyright (c) 2014, Steve Witham <switham_github@mac-guyver.com>.
+All rights reserved. This software is available under a BSD license, see
+    https://github.com/mstamy2/PyPDF2/LICENSE
+"""
+
+from sys import argv, stderr, stdout, exit
+import re
+import traceback
+from PyPDF2 import PdfFileMerger, parse_filename_page_ranges
+
+
+class Options(object):  # stand-in for argparse
+    pass
+
+options = Options()
+
+
+if __name__ == "__main__":
+    if len(argv) > 1 and argv[1].startswith("-"):
+        print >>stderr, __doc__.format(page_range_help=PAGE_RANGE_HELP)
+        exit(1)
+
+    options.verbose = True    
+
+    filename_page_ranges = parse_filename_page_ranges(argv[1:])
+    merger = PdfFileMerger()
+    input_files = {}
+    for (filename, page_range) in filename_page_ranges:
+        if options.verbose:
+            print >>stderr, filename, page_range
+        if filename not in input_files:
+            input_files[filename] = open(filename, "rb")
+        merger.append(input_files[filename], pages=page_range)
+    merger.write(stdout)
+    for f in input_files.values():
+        f.close()
+
+

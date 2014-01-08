@@ -1,0 +1,173 @@
+#!/usr/bin/env python
+"""
+Representation and utils for ranges of PDF file pages.
+
+Copyright (c) 2014, Steve Witham <switham_github@mac-guyver.com>.
+All rights reserved. This software is available under a BSD license, see
+    https://github.com/mstamy2/PyPDF2/LICENSE
+"""
+
+import re
+from sys import stderr
+from PyPDF2 import PdfFileReader
+
+
+_INT_RE = r"(0|-?[1-9]\d*)"  # A decimal int, don't allow "-0".
+PAGE_RANGE_RE = "^({int}|({int}?(:{int}?(:{int}?)?)))$".format(int=_INT_RE)
+# groups:         12     34     5 6     7 8
+
+
+class ParseError(Exception):
+    def __init__(self, input):
+        super(self, ParseError).__init__(repr(input))
+
+
+PAGE_RANGE_HELP = """Remember, page indices start with zero.
+        Page range expression examples:
+            :     means all the pages.
+            22    means just the 23rd page.
+            0:3   means the first three pages.
+            :3    also means the first three pages.
+            5:    means from the sixth page onward.
+            -1    last page.
+            :-1   all but the last page.
+            -2    second-to-last page.
+            -2:   last two pages.
+            -3:-1 third-to-last and second-to-last, not the last.
+        The third, "stride" or "step" number is also recognized.
+            ::2           same as 0 2 4 ... to the end.
+            1:10:2        is the same as 1 3 5 7 9
+            ::-1          all pages in reverse order.
+            3:0:-1        3 2 1 but not 0.
+            2::-1         2 1 0.
+"""
+
+        
+class PageRange(object):
+    """ 
+    A slice-like representation of a range of page indices,
+        i.e. page numbers, only starting at zero. 
+    The syntax is like what you would put between brackets [ ].
+    The slice is one of the few Python types that can't be subclassed,
+    but this class converts to and from slices, and allows similar use.
+      o  PageRange(str) parses a string representing a page range.
+      o  PageRange(slice) directly "imports" a slice.
+      o  to_slice() gives the equivalent slice.
+      o  str() and repr() allow printing.
+      o  indices(n) is like slice.indices(n).
+      o  choose(list) and iterchoose(list) choose pages from a list.
+    """
+    
+    def __init__(self, arg):
+        """
+        Initialize with either a slice -- giving the equivalent page range,
+        or a PageRange object -- making a copy,
+        or a string like
+            "int", "[int]:[int]" or "[int]:[int]:[int]",
+            where the brackets indicate optional ints.
+        {page_range_help}
+        Note the difference between this notation and arguments to slice():
+            slice(3) means the first three pages;
+            PageRange("3") means the range of only the fourth page.
+            However PageRange(slice(3)) means the first three pages.
+        """
+        if isinstance(arg, slice):
+            self._slice = arg
+            return
+
+        if isinstance(arg, PageRange):
+            self._slice = arg.to_slice()
+            return
+        
+        m = re.match(PAGE_RANGE_RE, arg)
+        if not m:
+            raise ParseError(arg)
+        elif m.group(2):
+            # Special case: just an int means a range of one page.
+            start = int(m.group(2))
+            stop = start + 1 if start != -1 else None
+            self._slice = slice(start, stop)
+        else:
+            self._slice = slice(*[int(g) if g else None 
+                                  for g in m.group(4, 6, 8)])
+
+    __init__.__doc__ = __init__.__doc__.format(page_range_help=PAGE_RANGE_HELP)
+        
+    @staticmethod
+    def valid(input):
+        """ True if input is a valid initializer for a PageRange. """
+        return isinstance(input, slice)  or \
+               isinstance(input, PageRange) or \
+               (isinstance(input, basestring)
+                and bool(re.match(PAGE_RANGE_RE, input)))
+
+    def to_slice(self):
+        """ Return the slice equivalent of this page range. """
+        return self._slice
+        
+    def __str__(self):
+        """ A string like "1:2:3". """
+        s = self._slice
+        if s.step == None:
+            if s.start != None  and  s.stop == s.start + 1:
+                return str(s.start)
+
+            indices = s.start, s.stop
+        else:
+            indices = s.start, s.stop, s.step
+        return ':'.join("" if i == None else str(i) for i in indices)
+
+    def __repr__(self):
+        """ A string like "PageRange('1:2:3')". """
+        return "PageRange(" + repr(str(self)) + ")"
+
+    def indices(self, n):
+        """
+        n is the length of the list of pages to choose from.
+        Returns arguments for range().  See help(slice.indices).
+        """
+        return self._slice.indices(n)
+
+    def iterchoose(self, pages):
+        """
+        pages must be a list (it must have a len()).
+        Return an iterator over the pages chosen by this page range. 
+        """
+        return (pages[i] for i in xrange(*self.indices(len(pages))))
+
+    def choose(self, pages):
+        """
+        pages must be a list (it must have a len()).
+        Return a list of the pages chosen by this page range. 
+        """
+        return [self.iterchoose(pages)]
+
+
+PAGE_RANGE_ALL = PageRange(":")  # The range of all pages.
+
+
+def parse_filename_page_ranges(args):
+    """ 
+    Generate a sequence of (filename, page_range) pairs from a list
+    of filenames and page ranges.
+    First arg must be a filename; other ags are filenames, page-range 
+    expressions, slice objects, or PageRange objects.
+    A filename not followed by page range indicates all pages of the file.
+    Yields tuples like (pdf_filename, page_range).
+    """
+    pdf_filename = None
+    did_some = False
+    for arg in args + [None]:
+        if PageRange.valid(arg):
+            if not pdf_filename:
+                raise Error("First argument should be a filename.")
+
+            yield (pdf_filename, PageRange(arg))
+            did_some = True
+        else:
+            # New filename or end of list--do all of the previous file?
+            if pdf_filename and not did_some:
+                yield (pdf_filename, PAGE_RANGE_ALL)
+                    
+            pdf_filename = arg
+            did_some = False
