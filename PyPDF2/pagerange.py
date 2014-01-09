@@ -45,7 +45,6 @@ class PageRange(object):
       o  to_slice() gives the equivalent slice.
       o  str() and repr() allow printing.
       o  indices(n) is like slice.indices(n).
-      o  choose(list) and iterchoose(list) choose pages from a list.
     """
     
     def __init__(self, arg):
@@ -117,20 +116,6 @@ class PageRange(object):
         Returns arguments for range().  See help(slice.indices).
         """
         return self._slice.indices(n)
-
-    def iterchoose(self, pages):
-        """
-        pages must be a list (it must have a len()).
-        Return an iterator over the pages chosen by this page range. 
-        """
-        return (pages[i] for i in xrange(*self.indices(len(pages))))
-
-    def choose(self, pages):
-        """
-        pages must be a list (it must have a len()).
-        Return a list of the pages chosen by this page range. 
-        """
-        return [self.iterchoose(pages)]
 
 
 PAGE_RANGE_ALL = PageRange(":")  # The range of all pages.
