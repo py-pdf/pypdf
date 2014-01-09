@@ -8,10 +8,9 @@ A file not followed by a page range means all the pages of the file.
 PAGE RANGES are like Python slices.
         {page_range_help}
 EXAMPLE
-    pdfcat -o output.pdf headtail.pdf 0 content.pdf :6 7: headtail.pdf -2:
-    Concatenate the first page of headtail.pdf, all but page seven of
-    content.pdf, and the last two pages of headtail.pdf,
-    producing output.pdf.
+    pdfcat -o output.pdf head.pdf content.pdf :6 7: tail.pdf -1
+    Concatenate all of head.pdf, all but page seven of content.pdf, 
+    and the last page of tail.pdf, producing output.pdf.
 """
 # Copyright (c) 2014, Steve Witham <switham_github@mac-guyver.com>.
 # All rights reserved. This software is available under a BSD license;
