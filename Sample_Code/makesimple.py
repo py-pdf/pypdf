@@ -10,7 +10,7 @@ inch = 72
 TEXT = """%s    page %d of %d
 
 a wonderful file
-created with Sample_Code/makepages.py"""
+created with Sample_Code/makesimple.py"""
 
 def make_pdf_file(output_filename, np):
     title = output_filename
@@ -30,6 +30,6 @@ if __name__ == "__main__":
     nps = [None, 5, 11, 17]
     for i, np in enumerate(nps):
         if np:
-            filename = "simplest_%d.pdf" % i
+            filename = "simple%d.pdf" % i
             make_pdf_file(filename, np)
             print "Wrote", filename
