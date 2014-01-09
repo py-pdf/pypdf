@@ -3,14 +3,11 @@
 Representation and utils for ranges of PDF file pages.
 
 Copyright (c) 2014, Steve Witham <switham_github@mac-guyver.com>.
-All rights reserved. This software is available under a BSD license, see
-    https://github.com/mstamy2/PyPDF2/LICENSE
+All rights reserved. This software is available under a BSD license;
+see https://github.com/mstamy2/PyPDF2/LICENSE
 """
 
 import re
-from sys import stderr
-from PyPDF2 import PdfFileReader
-
 
 _INT_RE = r"(0|-?[1-9]\d*)"  # A decimal int, don't allow "-0".
 PAGE_RANGE_RE = "^({int}|({int}?(:{int}?(:{int}?)?)))$".format(int=_INT_RE)
@@ -18,28 +15,21 @@ PAGE_RANGE_RE = "^({int}|({int}?(:{int}?(:{int}?)?)))$".format(int=_INT_RE)
 
 
 class ParseError(Exception):
-    def __init__(self, input):
-        super(self, ParseError).__init__(repr(input))
+    def __init__(self, message):
+        super(self, ParseError).__init__(repr(message))
 
 
 PAGE_RANGE_HELP = """Remember, page indices start with zero.
         Page range expression examples:
-            :     means all the pages.
-            22    means just the 23rd page.
-            0:3   means the first three pages.
-            :3    also means the first three pages.
-            5:    means from the sixth page onward.
-            -1    last page.
-            :-1   all but the last page.
-            -2    second-to-last page.
-            -2:   last two pages.
-            -3:-1 third-to-last and second-to-last, not the last.
+            :     all pages.                   -1    last page.
+            22    just the 23rd page.          :-1   all but the last page.
+            0:3   the first three pages.       -2    second-to-last page.
+            :3    the first three pages.       -2:   last two pages.
+            5:    from the sixth page onward.  -3:-1 third & second to last.
         The third, "stride" or "step" number is also recognized.
-            ::2           same as 0 2 4 ... to the end.
-            1:10:2        is the same as 1 3 5 7 9
-            ::-1          all pages in reverse order.
-            3:0:-1        3 2 1 but not 0.
-            2::-1         2 1 0.
+            ::2       0 2 4 ... to the end.    3:0:-1    3 2 1 but not 0.
+            1:10:2    1 3 5 7 9                2::-1     2 1 0.
+            ::-1      all pages in reverse order.
 """
 
         
