@@ -122,27 +122,29 @@ PAGE_RANGE_ALL = PageRange(":")  # The range of all pages.
 
 
 def parse_filename_page_ranges(args):
-    """ 
-    Generate a sequence of (filename, page_range) pairs from a list
-    of filenames and page ranges.
+    """
+    Given a list of filenames and page ranges, return a list of
+    (filename, page_range) pairs.
     First arg must be a filename; other ags are filenames, page-range 
     expressions, slice objects, or PageRange objects.
-    A filename not followed by page range indicates all pages of the file.
-    Yields tuples like (pdf_filename, page_range).
+    A filename not followed by a page range indicates all pages of the file.
     """
+    pairs = []
     pdf_filename = None
-    did_some = False
+    did_page_range = False
     for arg in args + [None]:
         if PageRange.valid(arg):
             if not pdf_filename:
-                raise Error("First argument should be a filename.")
+                raise ValueError("The first argument must be a filename, " \
+                                 "not a page range.")
 
-            yield (pdf_filename, PageRange(arg))
-            did_some = True
+            pairs.append( (pdf_filename, PageRange(arg)) )
+            did_page_range = True
         else:
             # New filename or end of list--do all of the previous file?
-            if pdf_filename and not did_some:
-                yield (pdf_filename, PAGE_RANGE_ALL)
+            if pdf_filename and not did_page_range:
+                pairs.append( (pdf_filename, PAGE_RANGE_ALL) )
                     
             pdf_filename = arg
-            did_some = False
+            did_page_range = False
+    return pairs
