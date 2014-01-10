@@ -22,6 +22,7 @@ EXAMPLES
 # All rights reserved. This software is available under a BSD license;
 # see https://github.com/mstamy2/PyPDF2/LICENSE
 
+from __future__ import print_function
 import argparse
 from PyPDF2.pagerange import PAGE_RANGE_HELP
 
@@ -40,27 +41,34 @@ def parse_args():
 from sys import stderr, stdout, exit
 import os
 import traceback
+from collections import defaultdict
+
 from PyPDF2 import PdfFileMerger, parse_filename_page_ranges
 
 
 if __name__ == "__main__":
     args = parse_args()
     filename_page_ranges = parse_filename_page_ranges(args.args)
-
-    merger = PdfFileMerger()
-    try:
-        for (filename, page_range) in filename_page_ranges:
-            if args.verbose:
-                print >>stderr, filename, page_range
-            with open(filename, "rb") as f:
-                merger.append(f, pages=page_range)
-    except:
-        print >>stderr, traceback.format_exc()
-        print >>stderr, "Error while reading " + filename
-        exit(1)
     if args.output:
         output = open(args.output, "wb")
     else:
         stdout.flush()
         output = os.fdopen(stdout.fileno(), "wb")
+
+    merger = PdfFileMerger()
+    in_fs = dict()
+    try:
+        for (filename, page_range) in filename_page_ranges:
+            if args.verbose:
+                print(filename, page_range, file=stderr)
+            if filename not in in_fs:
+                in_fs[filename] = open(filename, "rb")
+            merger.append(in_fs[filename], pages=page_range)
+    except:
+        print(traceback.format_exc(), file=stderr)
+        print("Error while reading " + filename, file=stderr)
+        exit(1)
     merger.write(output)
+    # In 3.0, input files must stay open until output is written.
+    # Not closing the in_fs because this script exits now.
+
