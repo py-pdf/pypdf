@@ -29,6 +29,7 @@
 
 from .generic import *
 from .pdf import PdfFileReader, PdfFileWriter
+from .pagerange import PageRange
 from sys import version_info
 if version_info < ( 3, 0 ):
     from cStringIO import StringIO
@@ -82,8 +83,9 @@ class PdfFileMerger(object):
         You may prevent the source document's bookmarks from being imported by
         specifying "import_bookmarks" as False.
         
-        You may also use the "pages" parameter to merge only the specified range of 
-        pages from the source document into the output document.
+        The optional "pages" parameter can be a PageRange or a 
+        (start, stop[, step]) tuple to merge only the specified range of pages
+        from the source document into the output document.
         """
         
         # This parameter is passed to self.inputs.append and means
@@ -116,11 +118,13 @@ class PdfFileMerger(object):
         # (either file or StringIO) created above
         pdfr = PdfFileReader(fileobj, strict=self.strict)
         
-        # Find the range of pages to merge
+        # Find the range of pages to merge.
         if pages == None:
             pages = (0, pdfr.getNumPages())
-        elif type(pages) in (int, float, str, str):
-            raise TypeError('"pages" must be a tuple of (start, end)')
+        elif isinstance(pages, PageRange):
+            pages = pages.indices(pdfr.getNumPages())
+        elif not isinstance(pages, tuple):
+            raise TypeError('"pages" must be a tuple of (start, stop[, step])')
         
         srcpages = []
         if bookmark:
@@ -234,7 +238,8 @@ class PdfFileMerger(object):
 
     def _trim_dests(self, pdf, dests, pages):
         """
-        Removes any named destinations that are not a part of the specified page set
+        Removes any named destinations that are not a part of the specified 
+        page set.
         """
         new_dests = []
         prev_header_added = True
@@ -249,7 +254,8 @@ class PdfFileMerger(object):
     
     def _trim_outline(self, pdf, outline, pages):
         """
-        Removes any outline/bookmark entries that are not a part of the specified page set
+        Removes any outline/bookmark entries that are not a part of the 
+        specified page set.
         """
         new_outline = []
         prev_header_added = True
