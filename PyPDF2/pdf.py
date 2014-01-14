@@ -61,7 +61,7 @@ import warnings
 import codecs
 from .generic import *
 from .utils import readNonWhitespace, readUntilWhitespace, ConvertFunctionsToVirtualList
-from .utils import b_, u_
+from .utils import b_, u_, ord_, chr_, str_
 
 if version_info < ( 2, 4 ):
    from sets import ImmutableSet as frozenset
@@ -1233,7 +1233,7 @@ class PdfFileReader(object):
                 xrefstream = readObject(stream, self)
                 assert xrefstream["/Type"] == "/XRef"
                 self.cacheIndirectObject(generation, idnum, xrefstream)
-                streamData = BytesIO(xrefstream.getData())
+                streamData = StringIO(xrefstream.getData())
                 # Index pairs specify the subsections in the dictionary. If 
                 # none create one subsection that spans everything.
                 idx_pairs = xrefstream.get("/Index", [0, xrefstream.get("/Size")])
@@ -2209,7 +2209,7 @@ class DocumentInformation(DictionaryObject):
 def convertToInt(d, size):
     if size > 8:
         raise utils.PdfReadError("invalid size in convertToInt")
-    d = b_("\x00\x00\x00\x00\x00\x00\x00\x00") + d
+    d = b_("\x00\x00\x00\x00\x00\x00\x00\x00") + b_(d)
     d = d[-8:]
     return struct.unpack(">q", d)[0]
 
@@ -2268,7 +2268,7 @@ def _alg33(owner_pwd, user_pwd, rev, keylen):
     key = _alg33_1(owner_pwd, rev, keylen)
     # 5. Pad or truncate the user password string as described in step 1 of
     # algorithm 3.2.
-    user_pwd = (user_pwd + _encryption_padding)[:32]
+    user_pwd = b_((user_pwd + str_(_encryption_padding))[:32])
     # 6. Encrypt the result of step 5, using an RC4 encryption function with
     # the encryption key obtained in step 4.
     val = utils.RC4_encrypt(key, user_pwd)
@@ -2282,7 +2282,7 @@ def _alg33(owner_pwd, user_pwd, rev, keylen):
         for i in range(1, 20):
             new_key = ''
             for l in range(len(key)):
-                new_key += chr(ord(key[l]) ^ i)
+                new_key += chr(ord_(key[l]) ^ i)
             val = utils.RC4_encrypt(new_key, val)
     # 8. Store the output from the final invocation of the RC4 as the value of
     # the /O entry in the encryption dictionary.
@@ -2293,7 +2293,7 @@ def _alg33_1(password, rev, keylen):
     # 1. Pad or truncate the owner password string as described in step 1 of
     # algorithm 3.2.  If there is no owner password, use the user password
     # instead.
-    password = (password + _encryption_padding)[:32]
+    password = b_((password + str_(_encryption_padding))[:32])
     # 2. Initialize the MD5 hash function and pass the result of step 1 as
     # input to this function.
     m = md5(password)
@@ -2307,7 +2307,7 @@ def _alg33_1(password, rev, keylen):
     # from the final MD5 hash, where n is always 5 for revision 2 but, for
     # revision 3 or greater, depends on the value of the encryption
     # dictionary's /Length entry.
-    key = md5_hash[:keylen]
+    key = md5_hash[:int(keylen)]
     return key
 
 # Implementation of algorithm 3.4 of the PDF standard security handler,
@@ -2352,7 +2352,7 @@ def _alg35(password, rev, keylen, owner_entry, p_entry, id1_entry, metadata_encr
     for i in range(1, 20):
         new_key = b_('')
         for l in range(len(key)):
-            new_key += b_(chr(utils.ord_(key[l]) ^ i))
+            new_key += b_(chr(ord_(key[l]) ^ i))
         val = utils.RC4_encrypt(new_key, val)
     # 6. Append 16 bytes of arbitrary padding to the output from the final
     # invocation of the RC4 function and store the 32-byte result as the value
