@@ -29,7 +29,7 @@ How hard is migration to PyPDF2?""", """
              """),
            ('comparisons', '''How does PyPDF2 compare to [various competitors,
     complements, and so on]?''', """<p>As
-    <a href = '#relation-to-pyPdf'>mention already</a>, PyPDF2 aims to
+    <a href = '#relation-to-pyPdf'>mentioned already</a>, PyPDF2 aims to
     be a strict successor of pyPdf:  it does everything pyPdf does,
     but it also does more.
 
