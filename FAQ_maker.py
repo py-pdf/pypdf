@@ -47,11 +47,17 @@ How hard is migration to PyPDF2?""", """
    <p>[Bates-stamper, Plone/Zope, ...]
              """),
             ('versions', 'With what versions of Python does PyPDF2 work?', """
-<p>The main branch [provide hyperlink] [what PyPI provides] as of
-year-end 2013 works with 2.6-2.7
-[and maybe 2.5?].  The 2-3 branch [] seems to do fine with 3.1-3.3 [?].
-we're working to consolidate these, of course [although likely (?) at the
-expense of 2.5?].
+<p>As <a href = 'https://github.com/mstamy2'>Matthew</a> writes, 
+    "<a href = 'https://github.com/mstamy2/PyPDF2/commit/24b270d876518d15773224b5d0d6c2206db29f64#commitcomment-5038317'>... the intention is for PyPDF2 to work with Python 2 as well as Python 3.</a>"
+
+<p>In January 2014, the
+  <a href = 'https://github.com/mstamy2/PyPDF2/tree/master'>main branch</a>
+   works with 2.6-2.7 and 3.1-3.3 [and maybe 2.5?].  
+   Notice that
+   <a href = 'https://pypi.python.org/pypi/PyPDF2/1.19'>1.19</a>--the
+   <a href = 'https://pypi.python.org/pypi/PyPDF2'>latest in PyPI</a>
+    as of this writing--(mostly)
+   did <i>not</i> work with 3.x.
                 """),
             ('characteristic-problems', '''
 I often merge [concatenate] various PDF instances, and my
