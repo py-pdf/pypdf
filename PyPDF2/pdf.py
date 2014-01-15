@@ -978,7 +978,7 @@ class PdfFileReader(object):
         assert objStm['/Type'] == '/ObjStm'
         # /N is the number of indirect objects in the stream
         assert idx < objStm['/N']
-        streamData = BytesIO(objStm.getData())
+        streamData = BytesIO(b_(objStm.getData()))
         for i in range(objStm['/N']):
             objnum = NumberObject.readFromStream(streamData)
             readNonWhitespace(streamData)
@@ -1233,7 +1233,7 @@ class PdfFileReader(object):
                 xrefstream = readObject(stream, self)
                 assert xrefstream["/Type"] == "/XRef"
                 self.cacheIndirectObject(generation, idnum, xrefstream)
-                streamData = StringIO(xrefstream.getData())
+                streamData = BytesIO(b_(xrefstream.getData()))
                 # Index pairs specify the subsections in the dictionary. If 
                 # none create one subsection that spans everything.
                 idx_pairs = xrefstream.get("/Index", [0, xrefstream.get("/Size")])
@@ -2031,9 +2031,9 @@ class ContentStream(DecodedStreamObject):
             data = b_("")
             for s in stream:
                 data += s.getObject().getData()
-            stream = BytesIO(data)
+            stream = BytesIO(b_(data))
         else:
-            stream = BytesIO(stream.getData())
+            stream = BytesIO(b_(stream.getData()))
         self.__parseContentStream(stream)
 
     def __parseContentStream(self, stream):
@@ -2136,7 +2136,7 @@ class ContentStream(DecodedStreamObject):
         return newdata.getvalue()
 
     def _setData(self, value):
-        self.__parseContentStream(BytesIO(value))
+        self.__parseContentStream(BytesIO(b_(value)))
 
     _data = property(_getData, _setData)
 
