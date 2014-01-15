@@ -572,8 +572,8 @@ class PdfFileWriter(object):
             pageRef['/Annots'].append(lnkRef)
         else:
             pageRef[NameObject('/Annots')] = ArrayObject([lnkRef])
-    
-    _valid_layouts = {'/NoLayout', '/SinglePage', '/OneColumn', '/TwoColumnLeft', '/TwoColumnRight', '/TwoPageLeft', '/TwoPageRight'}
+
+    _valid_layouts = ['/NoLayout', '/SinglePage', '/OneColumn', '/TwoColumnLeft', '/TwoColumnRight', '/TwoPageLeft', '/TwoPageRight']
     
     def getPageLayout(self):
         '''
@@ -610,7 +610,7 @@ class PdfFileWriter(object):
     
     pageLayout = property(getPageLayout, setPageLayout)
 
-    _valid_modes = {'/UseNone', '/UseOutlines', '/UseThumbs', '/UseFullscreen', '/UseOC', '/UseAttach'}
+    _valid_modes = ['/UseNone', '/UseOutlines', '/UseThumbs', '/UseFullscreen', '/UseOC', '/UseAttach']
 
     def getPageMode(self):
         '''
