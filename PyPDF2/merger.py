@@ -417,7 +417,7 @@ class PdfFileMerger(object):
     			res = self.findBookmark(bookmark, b)
     			if res:
     				return [i] + res
-    		if b == bookmark or b['/Title'] == bookmark:
+    		elif b == bookmark or b['/Title'] == bookmark:
     			return [i]
     
     	return None
