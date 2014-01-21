@@ -541,12 +541,130 @@ class PdfFileWriter(object):
         
         return destRef
 
-    def ignoreLinks(self):
+    def removeLinks(self):
+        '''
+        Removes links and annotations.
+        '''
         pages = self.getObject(self._pages)['/Kids']
         for page in pages:
             pageRef = self.getObject(page)
             if "/Annots" in pageRef:
                 del pageRef['/Annots']
+
+    def removeImages(self, ignoreByteStringObject=False):
+        '''
+        Removes images.
+
+        in Python2 operator is type str.
+        in Python3 operator is type bytes.
+
+        @param ignoreByteStringObject (Bool) : for ByteStringObject.
+        '''
+        pages = self.getObject(self._pages)['/Kids']
+        for j in range(len(pages)):
+            page = pages[j]
+            pageRef = self.getObject(page)
+            content = pageRef['/Contents'].getObject()
+            if not isinstance(content, ContentStream):
+                content = ContentStream(content, pageRef)
+
+            _operations = []
+            seq_graphics = False
+            for operands, operator in content.operations:
+                if operator == 'Tj' or operator == b'Tj':
+                    text = operands[0]
+                    if ignoreByteStringObject:
+                        if not isinstance(text, TextStringObject):
+                            operands[0] = TextStringObject()
+                elif operator == "'" or operator == b"'":
+                    text = operands[0]
+                    if ignoreByteStringObject:
+                        if not isinstance(text, TextStringObject):
+                            operands[0] = TextStringObject()
+                elif operator == '"' or operator == b'"':
+                    text = operands[2]
+                    if ignoreByteStringObject:
+                        if not isinstance(text, TextStringObject):
+                            operands[2] = TextStringObject()
+                elif operator == "TJ" or operator == b'TJ':
+                    for i in range(len(operands[0])):
+                        if ignoreByteStringObject:
+                            if not isinstance(operands[0][i], TextStringObject):
+                                operands[0][i] = TextStringObject()
+
+                if operator == 'q' or operator == b'q':
+                    seq_graphics = True
+                if operator == 'Q' or operator == b'Q':
+                    seq_graphics = False
+                if seq_graphics:
+                    if operator in ['cm', 'w', 'J', 'j', 'M', 'd', 'ri', 'i', 'gs',
+                            'W','n', 'f', 'm', 'l', 'cm', 'Do', 'sh', 'S'] or \
+                            operator in [b'cm', b'w', b'J', b'j', b'M', b'd', b'ri',
+                            b'i', b'gs', b'W', b'n', b'f', b'm', b'l', b'cm', b'Do',
+                            b'sh', b'S']:
+                        continue
+                if operator == 're':
+                    continue
+                _operations.append((operands, operator))
+
+            content.operations = _operations
+            pageRef.__setitem__(NameObject('/Contents'), content)
+
+    def removeText(self, ignoreByteStringObject=False):
+        '''
+        Removes text.
+
+        in Python2 operator is type str.
+        in Python3 operator is type bytes.
+
+        @param ignoreByteStringObject (Bool) : for ByteStringObject.
+        '''
+        pages = self.getObject(self._pages)['/Kids']
+        for j in range(len(pages)):
+            page = pages[j]
+            pageRef = self.getObject(page)
+            content = pageRef['/Contents'].getObject()
+            if not isinstance(content, ContentStream):
+                content = ContentStream(content, pageRef)
+            for operands,operator in content.operations:
+                if operator == 'Tj' or operator == b'Tj':
+                    text = operands[0]
+                    if not ignoreByteStringObject:
+                        if isinstance(text, TextStringObject):
+                            operands[0] = TextStringObject()
+                    else:
+                        if isinstance(text, TextStringObject) or \
+                                isinstance(text, ByteStringObject):
+                            operands[0] = TextStringObject()
+                elif operator == "'" or operator == b"'":
+                    text = operands[0]
+                    if not ignoreByteStringObject:
+                        if isinstance(text, TextStringObject):
+                            operands[0] = TextStringObject()
+                    else:
+                        if isinstance(text, TextStringObject) or \
+                                isinstance(text, ByteStringObject):
+                            operands[0] = TextStringObject()
+                elif operator == '"' or operator == b'"':
+                    text = operands[2]
+                    if not ignoreByteStringObject:
+                        if isinstance(text, TextStringObject):
+                            operands[2] = TextStringObject()
+                    else:
+                        if isinstance(text, TextStringObject) or \
+                                isinstance(text, ByteStringObject):
+                            operands[2] = TextStringObject()
+                elif operator == "TJ" or operator == b'TJ':
+                    for i in range(len(operands[0])):
+                        if not ignoreByteStringObject:
+                            if isinstance(operands[0][i], TextStringObject):
+                                operands[0][i] = TextStringObject()
+                        else:
+                            if isinstance(operands[0][i], TextStringObject) or \
+                                    isinstance(operands[0][i], ByteStringObject):
+                                operands[0][i] = TextStringObject()
+
+            pageRef.__setitem__(NameObject('/Contents'), content)
 
     def addLink(self, pagenum, pagedest, rect, zoom='/FitV'):
         """
