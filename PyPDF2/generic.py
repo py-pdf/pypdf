@@ -470,9 +470,10 @@ class NameObject(str, PdfObject):
         if debug: print(name)
         try:
             return NameObject(name.decode('utf-8'))
-        except Exception, e:
-            print e
+        except UnicodeDecodeError as e:
+            print("error decoding string", e)
             return NameObject(name)
+        
     readFromStream = staticmethod(readFromStream)
 
 
