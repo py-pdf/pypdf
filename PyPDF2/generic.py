@@ -56,7 +56,7 @@ def readObject(stream, pdf):
         return readStringFromStream(stream)
     elif tok == b_('/'):
         # name object
-        return NameObject.readFromStream(stream)
+        return NameObject.readFromStream(stream, pdf)
     elif tok == b_('['):
         # array object
         return ArrayObject.readFromStream(stream, pdf)
@@ -452,7 +452,7 @@ class NameObject(str, PdfObject):
     def writeToStream(self, stream, encryption_key):
         stream.write(b_(self))
 
-    def readFromStream(stream):
+    def readFromStream(stream, pdf):
         debug = False
         if debug: print((stream.tell()))
         name = stream.read(1)
@@ -471,8 +471,13 @@ class NameObject(str, PdfObject):
         try:
             return NameObject(name.decode('utf-8'))
         except UnicodeDecodeError as e:
-            print("error decoding string", e)
-            return NameObject(name)
+            # Name objects should represent irregular characters
+            # with a '#' followed by the symbol's hex number
+            if not pdf.strict:
+                warnings.warn("Illegal character in Name Object", utils.PdfReadWarning)
+                return NameObject(name)
+            else:
+                raise utils.PdfReadError("Illegal character in Name Object")
         
     readFromStream = staticmethod(readFromStream)
 
