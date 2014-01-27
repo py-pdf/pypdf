@@ -214,16 +214,16 @@ class PdfFileWriter(object):
         if use_128bit:
             V = 2
             rev = 3
-            keylen = 128 / 8
+            keylen = int(128 / 8)
         else:
             V = 1
             rev = 2
-            keylen = 40 / 8
+            keylen = int(40 / 8)
         # permit everything:
         P = -1
         O = ByteStringObject(_alg33(owner_pwd, user_pwd, rev, keylen))
-        ID_1 = ByteStringObject(md5(repr(time.time())).digest())
-        ID_2 = ByteStringObject(md5(repr(random.random())).digest())
+        ID_1 = ByteStringObject(md5(b_(repr(time.time()))).digest())
+        ID_2 = ByteStringObject(md5(b_(repr(random.random()))).digest())
         self._ID = ArrayObject((ID_1, ID_2))
         if rev == 2:
             U, key = _alg34(user_pwd, O, P, ID_1)
@@ -2342,7 +2342,7 @@ def _alg32(password, rev, keylen, owner_entry, p_entry, id1_entry, metadata_encr
     # if it is less than 32 bytes long, pad it by appending the required number
     # of additional bytes from the beginning of the padding string
     # (_encryption_padding).
-    password = (password + _encryption_padding)[:32]
+    password = b_((password + str_(_encryption_padding))[:32])
     # 2. Initialize the MD5 hash function and pass the result of step 1 as
     # input to this function.
     import struct
@@ -2423,7 +2423,7 @@ def _alg33_1(password, rev, keylen):
     # from the final MD5 hash, where n is always 5 for revision 2 but, for
     # revision 3 or greater, depends on the value of the encryption
     # dictionary's /Length entry.
-    key = md5_hash[:int(keylen)]
+    key = md5_hash[:keylen]
     return key
 
 # Implementation of algorithm 3.4 of the PDF standard security handler,

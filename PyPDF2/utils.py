@@ -180,7 +180,7 @@ def str_(b):
             return b
 
 def ord_(b):
-    if sys.version_info[0] < 3:
+    if sys.version_info[0] < 3 or type(b) == str:
         return ord(b)
     else:
         return b
