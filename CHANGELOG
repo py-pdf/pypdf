@@ -1,11 +1,14 @@
-Version 1.20, 2014-01-??
+Version 1.20, 2014-01-28
 ------------------------
 
- - Many Python 3 support changes (with contributions from TWAC and cgammans)
+ - Official Python 3+ support (with contributions from TWAC and cgammans)
+   Support for Python versions 2.6 and 2.7 will be maintained
 
- - Updated FAQ; link included in README
+ - Command line concatenation (see pdfcat in sample code) (by Steve Witham)
 
- - Allow more (unnecessary) escape sequences
+ - New FAQ; link included in README
+
+ - Allow more (although unnecessary) escape sequences
 
  - Prevent exception when reading a null object in decoding parameters
 
@@ -19,11 +22,18 @@ Version 1.20, 2014-01-??
 
  - Additions to Sample Code and Sample PDFs
 
- - changes to allow 2up script to work (by Dylan McNamee)
+ - changes to allow 2up script to work (see sample code) (by Dylan McNamee)
 
  - changes to metadata encoding (by Chris Hiestand)
 
- - New methods for links: addLink() (by Enrico Lambertini) and ignoreLinks()
+ - New methods for links: addLink() (by Enrico Lambertini) and removeLinks()
+
+ - Bugfix to handle nested bookmarks correctly (by Jamie Lentin)
+
+ - New methods removeImages() and removeText() available for PdfFileWriter
+   (by Tien Haï)
+
+ - Exception handling for illegal characters in Name Objects
 
 
 Version 1.19, 2013-10-08
