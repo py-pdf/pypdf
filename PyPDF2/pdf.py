@@ -1062,7 +1062,11 @@ class PdfFileReader(object):
             self.flattenedPages = []
             catalog = self.trailer["/Root"].getObject()
             pages = catalog["/Pages"].getObject()
-        t = pages["/Type"]
+
+        t = "/Pages"
+        if "/Type" in pages:
+            t = pages["/Type"]
+
         if t == "/Pages":
             for attr in inheritablePageAttributes:
                 if attr in pages:
