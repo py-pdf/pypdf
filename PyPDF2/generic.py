@@ -85,7 +85,7 @@ def readObject(stream, pdf):
             return NumberObject.readFromStream(stream)
         peek = stream.read(20)
         stream.seek(-len(peek), 1) # reset to start
-        if re.match(b_(r"(\d+)\s(\d+)\sR[^a-zA-Z]"), peek) != None:
+        if re.match(b_(r"(\d+)\s+(\d+)\s+R[^a-zA-Z]"), peek) != None:
             return IndirectObject.readFromStream(stream, pdf)
         else:
             return NumberObject.readFromStream(stream)
@@ -204,9 +204,11 @@ class IndirectObject(PdfObject):
                 # stream has truncated prematurely
                 raise PdfStreamError("Stream has ended unexpectedly")
             if tok.isspace():
+                if not generation:
+                    continue
                 break
             generation += tok
-        r = stream.read(1)
+        r = utils.readNonWhitespace(stream)
         if r != b_("R"):
             raise utils.PdfReadError("Error reading indirect object reference at byte %s" % utils.hexStr(stream.tell()))
         return IndirectObject(int(idnum), int(generation), pdf)
