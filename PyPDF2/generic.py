@@ -921,7 +921,7 @@ class RectangleObject(ArrayObject):
         return self.getUpperRight_x() - self.getLowerLeft_x()
 
     def getHeight(self):
-        return self.getUpperRight_y() - self.getLowerLeft_x()
+        return self.getUpperRight_y() - self.getLowerLeft_y()
 
     lowerLeft = property(getLowerLeft, setLowerLeft, None, None)
     lowerRight = property(getLowerRight, setLowerRight, None, None)

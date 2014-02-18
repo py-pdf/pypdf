@@ -71,8 +71,6 @@ if version_info < ( 2, 5 ):
 else:
     from hashlib import md5
 
-warnings.formatwarning = utils._formatwarning
-
 ##
 # This class supports writing PDF files out, given pages produced by another
 # class (typically {@link #PdfFileReader PdfFileReader}).
@@ -773,20 +771,8 @@ class PdfFileWriter(object):
 # @param strict Determines whether user should be warned of all problems and
 #               also causes some correctable problems to be fatal. Defaults
 #               to True. 
-# @param warndest Allows redirection of warnings to any open file/stream. Defauls to
-#                 the warnings default (sys.stderr)
 class PdfFileReader(object):
-    def __init__(self, stream, strict=True, warndest=None):
-        # have to dynamically override the default showwarning since there are no
-        # public methods that specify the 'file' parameter
-        def _showwarning(message, category, filename, lineno, file=warndest, line=None):
-            if file is None:
-                file = sys.stderr
-            try:
-                file.write(warnings.formatwarning(message, category, filename, lineno, line))
-            except IOError:
-                pass
-        warnings.showwarning = _showwarning
+    def __init__(self, stream, strict=True):
         self.strict = strict
         self.flattenedPages = None
         self.resolvedObjects = {}
@@ -861,6 +847,8 @@ class PdfFileReader(object):
             try:
                 self._override_encryption = True
                 return self.trailer["/Root"]["/Pages"]["/Count"]
+            except:
+                raise utils.PdfReadError("File has not been decrypted")
             finally:
                 self._override_encryption = False
         else:
@@ -1171,7 +1159,7 @@ class PdfFileReader(object):
             if not self._override_encryption and self.isEncrypted:
                 # if we don't have the encryption key:
                 if not hasattr(self, '_decryption_key'):
-                    raise Exception("file has not been decrypted")
+                    raise utils.PdfReadError("file has not been decrypted")
                 # otherwise, decrypt here...
                 import struct
                 pack1 = struct.pack("<i", indirectReference.idnum)[:3]
