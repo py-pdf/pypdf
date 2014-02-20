@@ -208,7 +208,7 @@ class IndirectObject(PdfObject):
                     continue
                 break
             generation += tok
-        r = utils.readNonWhitespace(stream)
+        r = readNonWhitespace(stream)
         if r != b_("R"):
             raise utils.PdfReadError("Error reading indirect object reference at byte %s" % utils.hexStr(stream.tell()))
         return IndirectObject(int(idnum), int(generation), pdf)

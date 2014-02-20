@@ -61,7 +61,7 @@ import warnings
 import codecs
 from .generic import *
 from .utils import readNonWhitespace, readUntilWhitespace, ConvertFunctionsToVirtualList
-from .utils import b_, u_, ord_, chr_, str_
+from .utils import b_, u_, ord_, chr_, str_, string_type
 
 if version_info < ( 2, 4 ):
    from sets import ImmutableSet as frozenset
@@ -772,14 +772,14 @@ class PdfFileWriter(object):
 #               also causes some correctable problems to be fatal. Defaults
 #               to True. 
 class PdfFileReader(object):
-    def __init__(self, stream, strict=True):
+    def __init__(self, stream, strict=True, warndest = None):
         self.strict = strict
         self.flattenedPages = None
         self.resolvedObjects = {}
         self.xrefIndex = 0
         if hasattr(stream, 'mode') and 'b' not in stream.mode:
             warnings.warn("PdfFileReader stream/file object is not in binary mode. It may not be read correctly.", utils.PdfReadWarning)
-        if type(stream) in (str, str):
+        if type(stream) == string_type:
             fileobj = open(stream, 'rb')
             stream = BytesIO(b_(fileobj.read()))
             fileobj.close()
