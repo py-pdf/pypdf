@@ -563,8 +563,6 @@ class DictionaryObject(dict, PdfObject):
         stream.write(b_(">>"))
 
     def readFromStream(stream, pdf):
-        # This method is broken in Python 3+ and needs work,
-        # especially when finding endstream marker
         debug = False
         tmp = stream.read(2)
         if tmp != b_("<<"):
@@ -589,6 +587,14 @@ class DictionaryObject(dict, PdfObject):
             value = readObject(stream, pdf)
             if not data.get(key):
                 data[key] = value
+            elif pdf.strict:
+                # multiple definitions of key not permitted
+                raise utils.PdfReadError("Multiple definitions in dictionary at byte %s for key %s" \
+                                           % (utils.hexStr(stream.tell()), key))
+            else:
+                warnings.warn("Multiple definitions in dictionary at byte %s for key %s" \
+                                           % (utils.hexStr(stream.tell()), key), utils.PdfReadWarning)
+
         pos = stream.tell()
         s = readNonWhitespace(stream)
         if s == b_('s') and stream.read(5) == b_('tream'):

@@ -1433,7 +1433,10 @@ class PdfFileReader(object):
                 if gen == 65535: continue
                 for id in self.xref[gen]:
                     stream.seek(self.xref[gen][id], 0)
-                    pid, pgen = self.readObjectHeader(stream)
+                    try:
+                        pid, pgen = self.readObjectHeader(stream)
+                    except ValueError:
+                        break
                     if pid == id - self.xrefIndex:
                         self._zeroXref(gen)
                         break
