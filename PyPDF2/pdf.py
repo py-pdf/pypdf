@@ -61,7 +61,7 @@ import warnings
 import codecs
 from .generic import *
 from .utils import readNonWhitespace, readUntilWhitespace, ConvertFunctionsToVirtualList
-from .utils import b_, u_
+from .utils import b_, u_, ord_, chr_, str_, string_type
 
 if version_info < ( 2, 4 ):
    from sets import ImmutableSet as frozenset
@@ -70,8 +70,6 @@ if version_info < ( 2, 5 ):
     from md5 import md5
 else:
     from hashlib import md5
-
-warnings.formatwarning = utils._formatwarning
 
 ##
 # This class supports writing PDF files out, given pages produced by another
@@ -214,16 +212,16 @@ class PdfFileWriter(object):
         if use_128bit:
             V = 2
             rev = 3
-            keylen = 128 / 8
+            keylen = int(128 / 8)
         else:
             V = 1
             rev = 2
-            keylen = 40 / 8
+            keylen = int(40 / 8)
         # permit everything:
         P = -1
         O = ByteStringObject(_alg33(owner_pwd, user_pwd, rev, keylen))
-        ID_1 = ByteStringObject(md5(repr(time.time())).digest())
-        ID_2 = ByteStringObject(md5(repr(random.random())).digest())
+        ID_1 = ByteStringObject(md5(b_(repr(time.time()))).digest())
+        ID_2 = ByteStringObject(md5(b_(repr(random.random()))).digest())
         self._ID = ArrayObject((ID_1, ID_2))
         if rev == 2:
             U, key = _alg34(user_pwd, O, P, ID_1)
@@ -541,12 +539,128 @@ class PdfFileWriter(object):
         
         return destRef
 
-    def ignoreLinks(self):
+    def removeLinks(self):
+        '''
+        Removes links and annotations.
+        '''
         pages = self.getObject(self._pages)['/Kids']
         for page in pages:
             pageRef = self.getObject(page)
             if "/Annots" in pageRef:
                 del pageRef['/Annots']
+
+    def removeImages(self, ignoreByteStringObject=False):
+        '''
+        Removes images.
+
+        in Python2 operator is type str.
+        in Python3 operator is type bytes.
+
+        @param ignoreByteStringObject (Bool) : for ByteStringObject.
+        '''
+        pages = self.getObject(self._pages)['/Kids']
+        for j in range(len(pages)):
+            page = pages[j]
+            pageRef = self.getObject(page)
+            content = pageRef['/Contents'].getObject()
+            if not isinstance(content, ContentStream):
+                content = ContentStream(content, pageRef)
+
+            _operations = []
+            seq_graphics = False
+            for operands, operator in content.operations:
+                if operator == b_('Tj'):
+                    text = operands[0]
+                    if ignoreByteStringObject:
+                        if not isinstance(text, TextStringObject):
+                            operands[0] = TextStringObject()
+                elif operator == b_("'"):
+                    text = operands[0]
+                    if ignoreByteStringObject:
+                        if not isinstance(text, TextStringObject):
+                            operands[0] = TextStringObject()
+                elif operator == b_('"'):
+                    text = operands[2]
+                    if ignoreByteStringObject:
+                        if not isinstance(text, TextStringObject):
+                            operands[2] = TextStringObject()
+                elif operator == b_("TJ"):
+                    for i in range(len(operands[0])):
+                        if ignoreByteStringObject:
+                            if not isinstance(operands[0][i], TextStringObject):
+                                operands[0][i] = TextStringObject()
+
+                if operator == b_('q'):
+                    seq_graphics = True
+                if operator == b_('Q'):
+                    seq_graphics = False
+                if seq_graphics:
+                    if operator in [b_('cm'), b_('w'), b_('J'), b_('j'), b_('M'), b_('d'), b_('ri'), b_('i'),
+                            b_('gs'), b_('W'), b_('b'), b_('s'), b_('S'), b_('f'), b_('F'), b_('n'), b_('m'), b_('l'),
+                            b_('c'), b_('v'), b_('y'), b_('h'), b_('B'), b_('Do'), b_('sh')]:
+                        continue
+                if operator == b_('re'):
+                    continue
+                _operations.append((operands, operator))
+
+            content.operations = _operations
+            pageRef.__setitem__(NameObject('/Contents'), content)
+
+    def removeText(self, ignoreByteStringObject=False):
+        '''
+        Removes text.
+
+        in Python2 operator is type str.
+        in Python3 operator is type bytes.
+
+        @param ignoreByteStringObject (Bool) : for ByteStringObject.
+        '''
+        pages = self.getObject(self._pages)['/Kids']
+        for j in range(len(pages)):
+            page = pages[j]
+            pageRef = self.getObject(page)
+            content = pageRef['/Contents'].getObject()
+            if not isinstance(content, ContentStream):
+                content = ContentStream(content, pageRef)
+            for operands,operator in content.operations:
+                if operator == b_('Tj'):
+                    text = operands[0]
+                    if not ignoreByteStringObject:
+                        if isinstance(text, TextStringObject):
+                            operands[0] = TextStringObject()
+                    else:
+                        if isinstance(text, TextStringObject) or \
+                                isinstance(text, ByteStringObject):
+                            operands[0] = TextStringObject()
+                elif operator == b_("'"):
+                    text = operands[0]
+                    if not ignoreByteStringObject:
+                        if isinstance(text, TextStringObject):
+                            operands[0] = TextStringObject()
+                    else:
+                        if isinstance(text, TextStringObject) or \
+                                isinstance(text, ByteStringObject):
+                            operands[0] = TextStringObject()
+                elif operator == b_('"'):
+                    text = operands[2]
+                    if not ignoreByteStringObject:
+                        if isinstance(text, TextStringObject):
+                            operands[2] = TextStringObject()
+                    else:
+                        if isinstance(text, TextStringObject) or \
+                                isinstance(text, ByteStringObject):
+                            operands[2] = TextStringObject()
+                elif operator == b_("TJ"):
+                    for i in range(len(operands[0])):
+                        if not ignoreByteStringObject:
+                            if isinstance(operands[0][i], TextStringObject):
+                                operands[0][i] = TextStringObject()
+                        else:
+                            if isinstance(operands[0][i], TextStringObject) or \
+                                    isinstance(operands[0][i], ByteStringObject):
+                                operands[0][i] = TextStringObject()
+
+            pageRef.__setitem__(NameObject('/Contents'), content)
 
     def addLink(self, pagenum, pagedest, rect, zoom='/FitV'):
         """
@@ -572,8 +686,8 @@ class PdfFileWriter(object):
             pageRef['/Annots'].append(lnkRef)
         else:
             pageRef[NameObject('/Annots')] = ArrayObject([lnkRef])
-    
-    _valid_layouts = {'/NoLayout', '/SinglePage', '/OneColumn', '/TwoColumnLeft', '/TwoColumnRight', '/TwoPageLeft', '/TwoPageRight'}
+
+    _valid_layouts = ['/NoLayout', '/SinglePage', '/OneColumn', '/TwoColumnLeft', '/TwoColumnRight', '/TwoPageLeft', '/TwoPageRight']
     
     def getPageLayout(self):
         '''
@@ -610,7 +724,7 @@ class PdfFileWriter(object):
     
     pageLayout = property(getPageLayout, setPageLayout)
 
-    _valid_modes = {'/UseNone', '/UseOutlines', '/UseThumbs', '/UseFullscreen', '/UseOC', '/UseAttach'}
+    _valid_modes = ['/UseNone', '/UseOutlines', '/UseThumbs', '/UseFullscreen', '/UseOC', '/UseAttach']
 
     def getPageMode(self):
         '''
@@ -657,27 +771,15 @@ class PdfFileWriter(object):
 # @param strict Determines whether user should be warned of all problems and
 #               also causes some correctable problems to be fatal. Defaults
 #               to True. 
-# @param warndest Allows redirection of warnings to any open file/stream. Defauls to
-#                 the warnings default (sys.stderr)
 class PdfFileReader(object):
-    def __init__(self, stream, strict=True, warndest=None):
-        # have to dynamically override the default showwarning since there are no
-        # public methods that specify the 'file' parameter
-        def _showwarning(message, category, filename, lineno, file=warndest, line=None):
-            if file is None:
-                file = sys.stderr
-            try:
-                file.write(warnings.formatwarning(message, category, filename, lineno, line))
-            except IOError:
-                pass
-        warnings.showwarning = _showwarning
+    def __init__(self, stream, strict=True, warndest = None):
         self.strict = strict
         self.flattenedPages = None
         self.resolvedObjects = {}
         self.xrefIndex = 0
         if hasattr(stream, 'mode') and 'b' not in stream.mode:
             warnings.warn("PdfFileReader stream/file object is not in binary mode. It may not be read correctly.", utils.PdfReadWarning)
-        if type(stream) in (str, str):
+        if type(stream) == string_type:
             fileobj = open(stream, 'rb')
             stream = BytesIO(b_(fileobj.read()))
             fileobj.close()
@@ -745,6 +847,8 @@ class PdfFileReader(object):
             try:
                 self._override_encryption = True
                 return self.trailer["/Root"]["/Pages"]["/Count"]
+            except:
+                raise utils.PdfReadError("File has not been decrypted")
             finally:
                 self._override_encryption = False
         else:
@@ -946,7 +1050,11 @@ class PdfFileReader(object):
             self.flattenedPages = []
             catalog = self.trailer["/Root"].getObject()
             pages = catalog["/Pages"].getObject()
-        t = pages["/Type"]
+
+        t = "/Pages"
+        if "/Type" in pages:
+            t = pages["/Type"]
+
         if t == "/Pages":
             for attr in inheritablePageAttributes:
                 if attr in pages:
@@ -978,7 +1086,7 @@ class PdfFileReader(object):
         assert objStm['/Type'] == '/ObjStm'
         # /N is the number of indirect objects in the stream
         assert idx < objStm['/N']
-        streamData = BytesIO(objStm.getData())
+        streamData = BytesIO(b_(objStm.getData()))
         for i in range(objStm['/N']):
             objnum = NumberObject.readFromStream(streamData)
             readNonWhitespace(streamData)
@@ -1051,7 +1159,7 @@ class PdfFileReader(object):
             if not self._override_encryption and self.isEncrypted:
                 # if we don't have the encryption key:
                 if not hasattr(self, '_decryption_key'):
-                    raise Exception("file has not been decrypted")
+                    raise utils.PdfReadError("file has not been decrypted")
                 # otherwise, decrypt here...
                 import struct
                 pack1 = struct.pack("<i", indirectReference.idnum)[:3]
@@ -1233,7 +1341,7 @@ class PdfFileReader(object):
                 xrefstream = readObject(stream, self)
                 assert xrefstream["/Type"] == "/XRef"
                 self.cacheIndirectObject(generation, idnum, xrefstream)
-                streamData = BytesIO(xrefstream.getData())
+                streamData = BytesIO(b_(xrefstream.getData()))
                 # Index pairs specify the subsections in the dictionary. If 
                 # none create one subsection that spans everything.
                 idx_pairs = xrefstream.get("/Index", [0, xrefstream.get("/Size")])
@@ -2031,9 +2139,9 @@ class ContentStream(DecodedStreamObject):
             data = b_("")
             for s in stream:
                 data += s.getObject().getData()
-            stream = BytesIO(data)
+            stream = BytesIO(b_(data))
         else:
-            stream = BytesIO(stream.getData())
+            stream = BytesIO(b_(stream.getData()))
         self.__parseContentStream(stream)
 
     def __parseContentStream(self, stream):
@@ -2136,7 +2244,7 @@ class ContentStream(DecodedStreamObject):
         return newdata.getvalue()
 
     def _setData(self, value):
-        self.__parseContentStream(BytesIO(value))
+        self.__parseContentStream(BytesIO(b_(value)))
 
     _data = property(_getData, _setData)
 
@@ -2209,7 +2317,7 @@ class DocumentInformation(DictionaryObject):
 def convertToInt(d, size):
     if size > 8:
         raise utils.PdfReadError("invalid size in convertToInt")
-    d = b_("\x00\x00\x00\x00\x00\x00\x00\x00") + d
+    d = b_("\x00\x00\x00\x00\x00\x00\x00\x00") + b_(d)
     d = d[-8:]
     return struct.unpack(">q", d)[0]
 
@@ -2226,7 +2334,7 @@ def _alg32(password, rev, keylen, owner_entry, p_entry, id1_entry, metadata_encr
     # if it is less than 32 bytes long, pad it by appending the required number
     # of additional bytes from the beginning of the padding string
     # (_encryption_padding).
-    password = (password + _encryption_padding)[:32]
+    password = b_((password + str_(_encryption_padding))[:32])
     # 2. Initialize the MD5 hash function and pass the result of step 1 as
     # input to this function.
     import struct
@@ -2268,7 +2376,7 @@ def _alg33(owner_pwd, user_pwd, rev, keylen):
     key = _alg33_1(owner_pwd, rev, keylen)
     # 5. Pad or truncate the user password string as described in step 1 of
     # algorithm 3.2.
-    user_pwd = (user_pwd + _encryption_padding)[:32]
+    user_pwd = b_((user_pwd + str_(_encryption_padding))[:32])
     # 6. Encrypt the result of step 5, using an RC4 encryption function with
     # the encryption key obtained in step 4.
     val = utils.RC4_encrypt(key, user_pwd)
@@ -2282,7 +2390,7 @@ def _alg33(owner_pwd, user_pwd, rev, keylen):
         for i in range(1, 20):
             new_key = ''
             for l in range(len(key)):
-                new_key += chr(ord(key[l]) ^ i)
+                new_key += chr(ord_(key[l]) ^ i)
             val = utils.RC4_encrypt(new_key, val)
     # 8. Store the output from the final invocation of the RC4 as the value of
     # the /O entry in the encryption dictionary.
@@ -2293,7 +2401,7 @@ def _alg33_1(password, rev, keylen):
     # 1. Pad or truncate the owner password string as described in step 1 of
     # algorithm 3.2.  If there is no owner password, use the user password
     # instead.
-    password = (password + _encryption_padding)[:32]
+    password = b_((password + str_(_encryption_padding))[:32])
     # 2. Initialize the MD5 hash function and pass the result of step 1 as
     # input to this function.
     m = md5(password)
@@ -2352,7 +2460,7 @@ def _alg35(password, rev, keylen, owner_entry, p_entry, id1_entry, metadata_encr
     for i in range(1, 20):
         new_key = b_('')
         for l in range(len(key)):
-            new_key += b_(chr(utils.ord_(key[l]) ^ i))
+            new_key += b_(chr(ord_(key[l]) ^ i))
         val = utils.RC4_encrypt(new_key, val)
     # 6. Append 16 bytes of arbitrary padding to the output from the final
     # invocation of the RC4 function and store the 32-byte result as the value

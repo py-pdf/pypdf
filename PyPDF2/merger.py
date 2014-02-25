@@ -28,6 +28,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from .generic import *
+from .utils import string_type
 from .pdf import PdfFileReader, PdfFileWriter
 from .pagerange import PageRange
 from sys import version_info
@@ -98,7 +99,7 @@ class PdfFileMerger(object):
         # it is a PdfFileReader, copy that reader's stream into a 
         # StringIO stream.
         # If fileobj is none of the above types, it is not modified
-        if type(fileobj) in (str, str):
+        if type(fileobj) == string_type:
             fileobj = file(fileobj, 'rb')
             my_file = True
         elif isinstance(fileobj, file):
@@ -417,7 +418,7 @@ class PdfFileMerger(object):
     			res = self.findBookmark(bookmark, b)
     			if res:
     				return [i] + res
-    		if b == bookmark or b['/Title'] == bookmark:
+    		elif b == bookmark or b['/Title'] == bookmark:
     			return [i]
     
     	return None

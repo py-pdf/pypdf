@@ -34,7 +34,7 @@ Implementation of stream filters for PDF.
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
-from .utils import PdfReadError
+from .utils import PdfReadError, ord_, chr_
 from sys import version_info
 if version_info < ( 3, 0 ):
     from cStringIO import StringIO
@@ -118,7 +118,7 @@ class FlateDecode(object):
                 assert len(data) % rowlength == 0
                 prev_rowdata = (0,) * rowlength
                 for row in range(len(data) // rowlength):
-                    rowdata = [ord(x) for x in data[(row*rowlength):((row+1)*rowlength)]]
+                    rowdata = [ord_(x) for x in data[(row*rowlength):((row+1)*rowlength)]]
                     filterByte = rowdata[0]
                     if filterByte == 0:
                         pass
