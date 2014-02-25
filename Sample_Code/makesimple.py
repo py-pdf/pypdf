@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 "Make some simple multipage pdf files."
 
-from reportlab.pdfgen import canvas
+from __future__ import print_function
 from sys import argv
+
+from reportlab.pdfgen import canvas
 
 point = 1
 inch = 72
@@ -32,4 +34,4 @@ if __name__ == "__main__":
         if np:
             filename = "simple%d.pdf" % i
             make_pdf_file(filename, np)
-            print "Wrote", filename
+            print ("Wrote", filename)

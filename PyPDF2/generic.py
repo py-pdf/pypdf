@@ -56,7 +56,7 @@ def readObject(stream, pdf):
         return readStringFromStream(stream)
     elif tok == b_('/'):
         # name object
-        return NameObject.readFromStream(stream)
+        return NameObject.readFromStream(stream, pdf)
     elif tok == b_('['):
         # array object
         return ArrayObject.readFromStream(stream, pdf)
@@ -85,7 +85,7 @@ def readObject(stream, pdf):
             return NumberObject.readFromStream(stream)
         peek = stream.read(20)
         stream.seek(-len(peek), 1) # reset to start
-        if re.match(b_(r"(\d+)\s(\d+)\sR[^a-zA-Z]"), peek) != None:
+        if re.match(b_(r"(\d+)\s+(\d+)\s+R[^a-zA-Z]"), peek) != None:
             return IndirectObject.readFromStream(stream, pdf)
         else:
             return NumberObject.readFromStream(stream)
@@ -204,9 +204,11 @@ class IndirectObject(PdfObject):
                 # stream has truncated prematurely
                 raise PdfStreamError("Stream has ended unexpectedly")
             if tok.isspace():
+                if not generation:
+                    continue
                 break
             generation += tok
-        r = stream.read(1)
+        r = readNonWhitespace(stream)
         if r != b_("R"):
             raise utils.PdfReadError("Error reading indirect object reference at byte %s" % utils.hexStr(stream.tell()))
         return IndirectObject(int(idnum), int(generation), pdf)
@@ -218,7 +220,7 @@ class FloatObject(decimal.Decimal, PdfObject):
         try:
             return decimal.Decimal.__new__(cls, utils.str_(value), context)
         except:
-            return decimal.Decimal.__new__(cls, utils.str_(value))
+            return decimal.Decimal.__new__(cls, str(value))
     def __repr__(self):
         if self == self.to_integral():
             return str(self.quantize(decimal.Decimal(1)))
@@ -452,7 +454,7 @@ class NameObject(str, PdfObject):
     def writeToStream(self, stream, encryption_key):
         stream.write(b_(self))
 
-    def readFromStream(stream):
+    def readFromStream(stream, pdf):
         debug = False
         if debug: print((stream.tell()))
         name = stream.read(1)
@@ -468,7 +470,17 @@ class NameObject(str, PdfObject):
                 break
             name += tok
         if debug: print(name)
-        return NameObject(name.decode('utf-8'))
+        try:
+            return NameObject(name.decode('utf-8'))
+        except UnicodeDecodeError as e:
+            # Name objects should represent irregular characters
+            # with a '#' followed by the symbol's hex number
+            if not pdf.strict:
+                warnings.warn("Illegal character in Name Object", utils.PdfReadWarning)
+                return NameObject(name)
+            else:
+                raise utils.PdfReadError("Illegal character in Name Object")
+        
     readFromStream = staticmethod(readFromStream)
 
 
@@ -909,7 +921,7 @@ class RectangleObject(ArrayObject):
         return self.getUpperRight_x() - self.getLowerLeft_x()
 
     def getHeight(self):
-        return self.getUpperRight_y() - self.getLowerLeft_x()
+        return self.getUpperRight_y() - self.getLowerLeft_y()
 
     lowerLeft = property(getLowerLeft, setLowerLeft, None, None)
     lowerRight = property(getLowerRight, setLowerRight, None, None)

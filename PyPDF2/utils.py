@@ -33,11 +33,6 @@ Utility functions for PDF library.
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
-#custom implementation of warnings.formatwarning 
-def _formatwarning(message, category, filename, lineno, line=None):
-    file = filename.replace("/", "\\").rsplit("\\", 1)[1] # find the file name
-    return "%s: %s [%s:%s]\n" % (category.__name__, message, file, lineno)
-
 def readUntilWhitespace(stream, maxchars=None):
     """
     Reads non-whitespace characters and returns them.
@@ -180,7 +175,7 @@ def str_(b):
             return b
 
 def ord_(b):
-    if sys.version_info[0] < 3:
+    if sys.version_info[0] < 3 or type(b) == str:
         return ord(b)
     else:
         return b

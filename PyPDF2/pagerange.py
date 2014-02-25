@@ -9,14 +9,17 @@ see https://github.com/mstamy2/PyPDF2/LICENSE
 
 import re
 
+# "Str" maintains compatibility with Python 2.x.
+# The next line is obfuscated like this so 2to3 won't change it.
+Str = getattr(__builtins__, "basestring", str)
+
 _INT_RE = r"(0|-?[1-9]\d*)"  # A decimal int, don't allow "-0".
 PAGE_RANGE_RE = "^({int}|({int}?(:{int}?(:{int}?)?)))$".format(int=_INT_RE)
 # groups:         12     34     5 6     7 8
 
 
 class ParseError(Exception):
-    def __init__(self, message):
-        super(self, ParseError).__init__(repr(message))
+    pass
 
 
 PAGE_RANGE_HELP = """Remember, page indices start with zero.
@@ -68,7 +71,7 @@ class PageRange(object):
             self._slice = arg.to_slice()
             return
         
-        m = re.match(PAGE_RANGE_RE, arg)
+        m = isinstance(arg, Str) and re.match(PAGE_RANGE_RE, arg)
         if not m:
             raise ParseError(arg)
         elif m.group(2):
@@ -87,7 +90,7 @@ class PageRange(object):
         """ True if input is a valid initializer for a PageRange. """
         return isinstance(input, slice)  or \
                isinstance(input, PageRange) or \
-               (isinstance(input, basestring)
+               (isinstance(input, Str)
                 and bool(re.match(PAGE_RANGE_RE, input)))
 
     def to_slice(self):
