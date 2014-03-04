@@ -1245,13 +1245,13 @@ class PdfFileReader(object):
         stream.seek(-1, 2)
         if not stream.tell():
             raise utils.PdfReadError('Cannot read an empty file')
+        last1K = stream.tell() - 1024 + 1 # offset of last 1024 bytes of stream
         line = b_('')
-        if debug: print("  line:",line)
-        while not line:
+        while line[:5] != b_("%%EOF"):
+            if stream.tell() < last1K:
+                raise utils.PdfReadError("EOF marker not found")
             line = self.readNextEndLine(stream)
-        if debug: print("  line:",line)
-        if line[:5] != b_("%%EOF"):
-            raise utils.PdfReadError("EOF marker not found")
+            if debug: print("  line:",line)
 
         # find startxref entry - the location of the xref table
         line = self.readNextEndLine(stream)
