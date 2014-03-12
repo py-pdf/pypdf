@@ -1,5 +1,3 @@
-# vim: sw=4:expandtab:foldmethod=marker
-#
 # Copyright (c) 2006, Mathieu Fenniak
 # All rights reserved.
 #
@@ -32,6 +30,12 @@ Utility functions for PDF library.
 """
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
+
+
+# "Str" maintains compatibility with Python 2.x.
+# The next line is obfuscated like this so 2to3 won't change it.
+Str = getattr(__builtins__, "basestring", str)
+
 
 #custom implementation of warnings.formatwarning
 def formatWarning(message, category, filename, lineno, line=None):
