@@ -236,9 +236,10 @@ class FloatObject(decimal.Decimal, PdfObject):
 
 
 class NumberObject(int, PdfObject):
-    def __init__(self, value):
-        int.__init__(self, value)
-        
+    
+    def __new__(cls, value):
+        return int.__new__(cls, value)
+            
     def as_numeric(self):
         return int(b_(repr(self)))
 
