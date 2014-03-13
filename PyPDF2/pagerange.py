@@ -8,10 +8,7 @@ see https://github.com/mstamy2/PyPDF2/LICENSE
 """
 
 import re
-
-# "Str" maintains compatibility with Python 2.x.
-# The next line is obfuscated like this so 2to3 won't change it.
-Str = getattr(__builtins__, "basestring", str)
+from .utils import Str
 
 _INT_RE = r"(0|-?[1-9]\d*)"  # A decimal int, don't allow "-0".
 PAGE_RANGE_RE = "^({int}|({int}?(:{int}?(:{int}?)?)))$".format(int=_INT_RE)
