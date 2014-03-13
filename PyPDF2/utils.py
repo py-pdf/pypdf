@@ -35,10 +35,10 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 # "Str" maintains compatibility with Python 2.x.
 # The next line is obfuscated like this so 2to3 won't change it.
 try: 
-    import __builtin__ as builtin
+    import __builtin__ as builtins
 except ImportError:  # Py3
-    import builtin
-Str = getattr(builtin, "basestring", str)
+    import builtins
+Str = getattr(builtins, "basestring", str)
 
 
 #custom implementation of warnings.formatwarning
