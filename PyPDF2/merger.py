@@ -34,9 +34,11 @@ from .pagerange import PageRange
 from sys import version_info
 if version_info < ( 3, 0 ):
     from cStringIO import StringIO
+    StreamIO = StringIO
 else:
-    from io import StringIO
+    from io import BytesIO
     from io import FileIO as file
+    StreamIO = BytesIO
 
 class _MergedPage(object):
     """
@@ -95,9 +97,9 @@ class PdfFileMerger(object):
         
         # If the fileobj parameter is a string, assume it is a path
         # and create a file object at that location. If it is a file,
-        # copy the file's contents into a StringIO stream object; if 
+        # copy the file's contents into a BytesIO (or StreamIO) stream object; if 
         # it is a PdfFileReader, copy that reader's stream into a 
-        # StringIO stream.
+        # BytesIO (or StreamIO) stream.
         # If fileobj is none of the above types, it is not modified
         if type(fileobj) == string_type:
             fileobj = file(fileobj, 'rb')
@@ -105,18 +107,18 @@ class PdfFileMerger(object):
         elif isinstance(fileobj, file):
             fileobj.seek(0)
             filecontent = fileobj.read()
-            fileobj = StringIO(filecontent)
+            fileobj = StreamIO(filecontent)
             my_file = True
         elif isinstance(fileobj, PdfFileReader):
             orig_tell = fileobj.stream.tell()   
             fileobj.stream.seek(0)
-            filecontent = StringIO(fileobj.stream.read())
+            filecontent = StreamIO(fileobj.stream.read())
             fileobj.stream.seek(orig_tell) # reset the stream to its original location
             fileobj = filecontent
             my_file = True
             
         # Create a new PdfFileReader instance using the stream
-        # (either file or StringIO) created above
+        # (either file or BytesIO or StringIO) created above
         pdfr = PdfFileReader(fileobj, strict=self.strict)
         
         # Find the range of pages to merge.
