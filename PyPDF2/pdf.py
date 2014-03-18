@@ -61,7 +61,7 @@ import warnings
 import codecs
 from .generic import *
 from .utils import readNonWhitespace, readUntilWhitespace, ConvertFunctionsToVirtualList
-from .utils import b_, u_, ord_, chr_, str_, string_type, formatWarning
+from .utils import Str, b_, u_, ord_, chr_, str_, string_type, formatWarning
 
 if version_info < ( 2, 4 ):
    from sets import ImmutableSet as frozenset
@@ -1004,7 +1004,7 @@ class PdfFileReader(object):
         if dest:
             if isinstance(dest, ArrayObject):
                 outline = self._buildDestination(title, dest)
-            elif isinstance(dest, str) and dest in self._namedDests:
+            elif isinstance(dest, Str) and dest in self._namedDests:
                 outline = self._namedDests[dest]
                 outline[NameObject("/Title")] = title
             else:
