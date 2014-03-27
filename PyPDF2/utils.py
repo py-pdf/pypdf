@@ -32,12 +32,22 @@ __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
 
+import sys
 # "Str" maintains compatibility with Python 2.x.
 # The next line is obfuscated like this so 2to3 won't change it.
-try: 
+try:
     import __builtin__ as builtins
 except ImportError:  # Py3
     import builtins
+
+
+if sys.version_info[0] < 3:
+    string_type = unicode
+    bytes_type = str
+else:
+    string_type = str
+    bytes_type = bytes
+
 Str = getattr(builtins, "basestring", str)
 
 
@@ -66,7 +76,7 @@ def readNonWhitespace(stream):
     Finds and reads the next non-whitespace character (ignores whitespace).
     """
     tok = b_(' ')
-    while tok == b_('\n') or tok == b_('\r') or tok == b_(' ') or tok == b_('\t'):
+    while tok in WHITESPACES:
         tok = stream.read(1)
     return tok
 
@@ -77,7 +87,7 @@ def skipOverWhitespace(stream):
     """
     tok = b_(' ')
     cnt = 0;
-    while tok == b_('\n') or tok == b_('\r') or tok == b_(' ') or tok == b_('\t'):
+    while tok in WHITESPACES:
         tok = stream.read(1)
         cnt+=1
     return (cnt > 1)
@@ -150,17 +160,13 @@ class PdfReadError(PyPdfError):
 
 class PageSizeNotDefinedError(PyPdfError):
     pass
-    
+
 class PdfReadWarning(UserWarning):
     pass
 
 class PdfStreamError(PdfReadError):
     pass
 
-def hexStr(num):
-    return hex(num).replace('L', '')
-
-import sys
 
 def b_(s):
     if sys.version_info[0] < 3:
@@ -213,9 +219,8 @@ def hexencode(b):
         coder = codecs.getencoder('hex_codec')
         return coder(b)[0]
 
-if sys.version_info[0] < 3:
-    string_type = unicode
-    bytes_type = str
-else:
-    string_type = str
-    bytes_type = bytes
+def hexStr(num):
+    return hex(num).replace('L', '')
+
+
+WHITESPACES = [b_(x) for x in [' ', '\n', '\r', '\t', '\x00']]
