@@ -35,7 +35,7 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 import sys
 # "Str" maintains compatibility with Python 2.x.
 # The next line is obfuscated like this so 2to3 won't change it.
-try: 
+try:
     import __builtin__ as builtins
 except ImportError:  # Py3
     import builtins
@@ -160,7 +160,7 @@ class PdfReadError(PyPdfError):
 
 class PageSizeNotDefinedError(PyPdfError):
     pass
-    
+
 class PdfReadWarning(UserWarning):
     pass
 
@@ -223,4 +223,4 @@ def hexStr(num):
     return hex(num).replace('L', '')
 
 
-WHITESPACES = map(b_, [' ', '\n', '\r', '\t', '\x00'])
+WHITESPACES = [b_(x) for x in [' ', '\n', '\r', '\t', '\x00']]
