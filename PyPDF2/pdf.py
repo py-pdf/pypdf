@@ -70,7 +70,7 @@ if version_info < ( 2, 5 ):
     from md5 import md5
 else:
     from hashlib import md5
-
+import uuid
 ##
 # This class supports writing PDF files out, given pages produced by another
 # class (typically {@link #PdfFileReader PdfFileReader}).
@@ -1687,7 +1687,7 @@ class PageObject(DictionaryObject):
         renameRes = {}
         for key in list(page2Res.keys()):
             if key in newRes and newRes[key] != page2Res[key]:
-                newname = NameObject(key + "renamed")
+                newname = NameObject(key + str(uuid.uuid4()))
                 renameRes[key] = newname
                 newRes[newname] = page2Res[key]
             elif key not in newRes:
