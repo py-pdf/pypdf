@@ -1255,10 +1255,18 @@ class PdfFileReader(object):
 
         # find startxref entry - the location of the xref table
         line = self.readNextEndLine(stream)
-        startxref = int(line)
-        line = self.readNextEndLine(stream)
-        if line[:9] != b_("startxref"):
-            raise utils.PdfReadError("startxref not found")
+        try:
+            startxref = int(line)
+        except ValueError:
+            # 'startxref' may be on the same line as the location
+            if not line.startswith("startxref"):
+                raise utils.PdfReadError("startxref not found")
+            startxref = int(line[9:].strip())
+            warnings.warn("startxref on same line as offset")
+        else:
+            line = self.readNextEndLine(stream)
+            if line[:9] != b_("startxref"):
+                raise utils.PdfReadError("startxref not found")
 
         # read all cross reference tables and their trailers
         self.xref = {}
@@ -1433,10 +1441,20 @@ class PdfFileReader(object):
                 if xref_loc != -1:
                     startxref -= (10 - xref_loc)
                     continue
-                else:
-                    # no xref table found at specified location
-                    assert False
-                    break
+                # No explicit xref table, try finding a cross-reference stream.
+                stream.seek(startxref, 0)
+                found = False
+                for look in range(5):
+                    if stream.read(1).isdigit():
+                        # This is not a standard PDF, consider adding a warning
+                        startxref += look
+                        found = True
+                        break
+                if found:
+                    continue
+                # no xref table found at specified location
+                assert False
+                break
         #if not zero-indexed, verify that the table is correct; change it if necessary
         if self.xrefIndex and not self.strict:
             loc = stream.tell()
