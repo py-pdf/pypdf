@@ -450,7 +450,7 @@ class NameObject(str, PdfObject):
     delimiterCharacters = b_("("), b_(")"), b_("<"), b_(">"), b_("["), b_("]"), b_("{"), b_("}"), b_("/"), b_("%")
 
     def __init__(self, data):
-        str.__init__(data)
+        super(NameObject, self).__init__(data)
 
     def writeToStream(self, stream, encryption_key):
         stream.write(b_(self))
