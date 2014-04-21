@@ -1,3 +1,46 @@
+Version 1.21, 2014-04-21
+------------------------
+
+ - Fix for when /Type isn't present in the Pages dictionary (by Rob1080)
+
+ - More tolerance for extra whitespace in Indirect Objects
+
+ - Improved Exception handling
+
+ - Fixed error in getHeight() method (by Simon Kaempflein)
+
+ - implement use of utils.string_type to resolve Py2-3 compatibility issues
+
+ - Prevent exception for multiple definitions in a dictionary (with carlosfunk)
+   (only when strict = False)
+
+ - Fixed errors when parsing a slice using pdfcat on command line (by
+   Steve Witham)
+
+ - Tolerance for EOF markers within 1024 bytes of the actual end of the
+   file (with David Wolever)
+
+ - Added overwriteWarnings parameter to PdfFileReader constructor, if False
+   PyPDF2 will NOT overwrite methods from Python's warnings.py module with
+   a custom implementation.
+
+ - Fix NumberObject and NameObject constructors for compatibility with PyPy
+   (Rüdiger Jungbeck, Xavier Dupré, shezadkhan137, Steven Witham)
+
+ - Utilize  utils.Str in pdf.py and pagerange.py to resolve type issues (by
+   egbutter)
+
+ - Improvements in implementing StringIO for Python 2 and BytesIO for
+   Python 3 (by Xavier Dupré)
+
+ - Added /x00 to Whitespaces, defined utils.WHITESPACES to clarify code (by
+   Maxim Kamenkov)
+
+ - Bugfix for merging 3 or more resources with the same name (by lucky-user)
+
+ - Improvements to Xref parsing algorithm (by speedplane)
+
+
 Version 1.20, 2014-01-27
 ------------------------
 
