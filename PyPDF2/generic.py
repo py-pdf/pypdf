@@ -447,10 +447,13 @@ class TextStringObject(utils.string_type, PdfObject):
 
 
 class NameObject(str, PdfObject):
-    delimiterCharacters = b_("("), b_(")"), b_("<"), b_(">"), b_("["), b_("]"), b_("{"), b_("}"), b_("/"), b_("%")
+    delimiterCharacters = tuple(b_(c) for c in "()<>[]{}/%")
 
+    # Because of how subclassing str works, x = NameObject("sometext") sets the 
+    # str value before __init__ is called.  An __init__ method isn't needed.
+    # This __init__ is here to add to if more initialization becomes necessary.
     def __init__(self, data):
-        str.__init__(super(NameObject, self).__new__(str, data))
+        pass
 
     def writeToStream(self, stream, encryption_key):
         stream.write(b_(self))
