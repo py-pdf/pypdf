@@ -2059,7 +2059,7 @@ class PageObject(DictionaryObject):
         sx = width / float(self.mediaBox.getUpperRight_x() -
                       self.mediaBox.getLowerLeft_x ())
         sy = height / float(self.mediaBox.getUpperRight_y() -
-                       self.mediaBox.getLowerLeft_x ())
+                       self.mediaBox.getLowerLeft_y ())
         self.scale(sx, sy)
 
     ##
