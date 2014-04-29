@@ -2192,7 +2192,7 @@ class ContentStream(DecodedStreamObject):
                     if tok.isspace() or tok in NameObject.delimiterCharacters:
                         stream.seek(-1, 1)
                         break
-                    elif tok == '':
+                    elif tok == b_(''):
                         break
                     operator += tok
                 if operator == "BI":
