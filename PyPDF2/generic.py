@@ -483,28 +483,6 @@ class NameObject(str, PdfObject):
 
 
 class DictionaryObject(dict, PdfObject):
-
-    def __init__(self, *args, **kwargs):
-        if len(args) == 0:
-            self.update(kwargs)
-        elif len(args) == 1:
-            arr = args[0]
-            # If we're passed a list/tuple, make a dict out of it
-            if not hasattr(arr, "iteritems"):
-                newarr = {}
-                for k, v in arr:
-                    newarr[k] = v
-                arr = newarr
-            self.update(arr)
-        else:
-            raise TypeError("dict expected at most 1 argument, got 3")
-
-    def update(self, arr):
-        # note, a ValueError halfway through copying values
-        # will leave half the values in this dict.
-        for k, v in list(arr.items()):
-            self.__setitem__(k, v)
-
     def raw_get(self, key):
         return dict.__getitem__(self, key)
 
