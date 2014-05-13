@@ -2182,7 +2182,7 @@ class ContentStream(DecodedStreamObject):
         operands = []
         while True:
             peek = readNonWhitespace(stream)
-            if peek == b_(''):
+            if peek == b_('') or ord(peek) == 0:
                 break
             stream.seek(-1, 1)
             if peek.isalpha() or peek == "'" or peek == '"':
