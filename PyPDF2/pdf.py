@@ -698,7 +698,7 @@ class PdfFileWriter(object):
         else:
             borderArr = [NumberObject(0)] * 3
             
-        if isinstance(rect, str if version_info >= (3, 0) else (str, unicode)):
+        if isinstance(rect, Str):
             rect = NameObject(rect)
         elif isinstance(rect, RectangleObject):
             pass
