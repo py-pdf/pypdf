@@ -1125,7 +1125,7 @@ class PdfFileReader(object):
                 # Adobe Reader doesn't complain, so continue (in strict mode?)
                 e = sys.exc_info()[1]
                 warnings.warn("Invalid stream (index %d) within object %d %d: %s" % \
-                      (i, indirectReference.idnum, indirectReference.generation, e.message), utils.PdfReadWarning)
+                      (i, indirectReference.idnum, indirectReference.generation, e), utils.PdfReadWarning)
 
                 if self.strict: 
                     raise utils.PdfReadError("Can't read object stream: %s"%e)
