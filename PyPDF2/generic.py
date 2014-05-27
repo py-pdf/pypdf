@@ -35,7 +35,7 @@ __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import re
-from .utils import readNonWhitespace, RC4_encrypt
+from .utils import readNonWhitespace, RC4_encrypt, skipOverComment
 from .utils import b_, u_, chr_, ord_
 from .utils import PdfStreamError
 import warnings
@@ -547,6 +547,10 @@ class DictionaryObject(dict, PdfObject):
         while True:
             tok = readNonWhitespace(stream)
             if tok == b_('\x00'):
+                continue
+            else if tok == b_('%'):
+                stream.seek(-1, 1)
+                skipOverComment(stream)
                 continue
             if not tok:
                 # stream has truncated prematurely
