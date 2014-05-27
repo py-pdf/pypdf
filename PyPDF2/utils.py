@@ -110,7 +110,7 @@ class ConvertFunctionsToVirtualList(object):
     def __len__(self):
         return self.lengthFunction()
 
-   def __getitem__(self, index):
+    def __getitem__(self, index):
         if isinstance(index, slice):
             indices = Xrange(*index.indices(len(self)))
             cls = type(self)
