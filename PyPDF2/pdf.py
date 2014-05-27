@@ -693,7 +693,7 @@ class PdfFileWriter(object):
         if border is not None:
             borderArr = [NameObject(n) for n in border[:3]]
             if len(border) == 4:
-                dashPattern = ArrayObject(border[3])
+                dashPattern = ArrayObject([NameObject(n) for n in border[3]])
                 borderArr.append(dashPattern)
         else:
             borderArr = [NumberObject(0)] * 3
