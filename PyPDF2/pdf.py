@@ -662,23 +662,57 @@ class PdfFileWriter(object):
 
             pageRef.__setitem__(NameObject('/Contents'), content)
 
-    def addLink(self, pagenum, pagedest, rect, zoom='/FitV'):
+    def addLink(self, pagenum, pagedest, rect, zoom='/FitV', border=None):
+        """Add an internal link from a rectangular area to the specified page.
+
+        pagenum: integer index of the page on which to place the link.
+        pagedest: integer index of the page to which the link should go.
+        rect: RectangleObject or array of four integers specifying the clickable
+            rectangular area [xLL, yLL, xUR, yUR], or string in the form 
+            "[ xLL yLL xUR yUR ]".
+        zoom: string representation of a zoom option.
+        border: if provided, an array describing border-drawing properties. See 
+            the PDF spec for details. No border will be drawn if this argument 
+            is omitted.
+
+        Valid zoom arguments (see PDF spec for details):
+            /Fit
+            /XYZ [left] [top] [zoomFactor]
+            /FitH [top]
+            /FitV [left]
+            /FitR left bottom right top
+            /FitB
+            /FitBH [top]
+            /FitBV [left]
         """
-        Add a internal link in pdf, from a rectangular area and pointing at
-        the specified page number.
-        """
+
         pageLink = self.getObject(self._pages)['/Kids'][pagenum]
         pageDest = self.getObject(self._pages)['/Kids'][pagedest] #TODO: switch for external link
         pageRef = self.getObject(pageLink)
 
+        if border is not None:
+            borderArr = [NameObject(n) for n in border[:3]]
+            if len(border) == 4:
+                dashPattern = ArrayObject([NameObject(n) for n in border[3]])
+                borderArr.append(dashPattern)
+        else:
+            borderArr = [NumberObject(0)] * 3
+            
+        if isinstance(rect, Str):
+            rect = NameObject(rect)
+        elif isinstance(rect, RectangleObject):
+            pass
+        else:
+            rect = RectangleObject(rect)
+
         lnk = DictionaryObject()
         lnk.update({
-            NameObject('/Rect'): NameObject(rect), # link pposition
-            NameObject('/Dest'): ArrayObject([pageDest, NameObject(zoom), NumberObject(826)]), 
-            NameObject('/P'): NameObject(pageLink), # 1pt border
-            NameObject('/Border'): NameObject('[ 0 0 0 ]'), # [0 0 1] 1pt border
             NameObject('/Type'): NameObject('/Annot'),
             NameObject('/Subtype'): NameObject('/Link'),
+            NameObject('/P'): pageLink,
+            NameObject('/Rect'): rect,
+            NameObject('/Border'): ArrayObject(borderArr),
+            NameObject('/Dest'): ArrayObject([pageDest, NameObject(zoom)])
         })
         lnkRef = self._addObject(lnk)
 
