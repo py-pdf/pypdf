@@ -548,7 +548,7 @@ class DictionaryObject(dict, PdfObject):
             tok = readNonWhitespace(stream)
             if tok == b_('\x00'):
                 continue
-            else if tok == b_('%'):
+            elif tok == b_('%'):
                 stream.seek(-1, 1)
                 skipOverComment(stream)
                 continue
