@@ -6,12 +6,13 @@ import re
 long_description = """
 A Pure-Python library built as a PDF toolkit.  It is capable of:
     
-- extracting document information (title, author, ...),
-- splitting documents page by page,
-- merging documents page by page,
-- cropping pages,
-- merging multiple pages into a single page,
-- encrypting and decrypting PDF files.
+- extracting document information (title, author, ...)
+- splitting documents page by page
+- merging documents page by page
+- cropping pages
+- merging multiple pages into a single page
+- encrypting and decrypting PDF files
+- and more!
 
 By being Pure-Python, it should run on any Python platform without any
 dependencies on external libraries.  It can also work entirely on StringIO
@@ -38,7 +39,6 @@ setup(
         maintainer="Phaseit, Inc.",
         maintainer_email="PyPDF2@phaseit.net",
         url="http://mstamy2.github.com/PyPDF2",
-        download_url="http://github.com/mstamy2/PyPDF2/tarball/master",
         classifiers = [
             "Development Status :: 5 - Production/Stable",
             "Intended Audience :: Developers",

@@ -1,3 +1,34 @@
+Version 1.22, 2014-05-29
+------------------------
+
+ - Added .DS_Store to .gitignore (for Mac users) (by Steve Witham)
+
+ - Removed __init__() implementation in NameObject (by Steve Witham)
+
+ - Fixed bug (inf. loop) when merging pages in Python 3 (by commx)
+
+ - Corrected error when calculating height in scaleTo()
+
+ - Removed unnecessary code from DictionaryObject (by Georges Dubus)
+
+ - Fixed bug where an exception was thrown upon reading a NULL string
+   (by speedplane)
+
+ - Allow string literals (non-unicode strings in Python 2) to be passed 
+   to PdfFileReader
+
+ - Allow ConvertFunctionsToVirtualList to be indexed with slices and
+   longs (in Python 2) (by Matt Gilson)
+
+ - Major improvements and bugfixes to addLink() method (see documentation
+   in source code) (by Henry Keiter)
+
+ - General code clean-up and improvements (with Steve Witham and Henry Keiter)
+
+ - Fixed bug that caused crash when comments are present at end of 
+   dictionary
+
+
 Version 1.21, 2014-04-21
 ------------------------
 
