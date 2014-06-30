@@ -838,6 +838,15 @@ class EncodedStreamObject(StreamObject):
 
 
 class RectangleObject(ArrayObject):
+    """
+    This class is used to represent *page boxes* in PyPDF2. These boxes include:
+
+        * :attr:`artBox <PyPDF2.pdf.PageObject.artBox>`
+        * :attr:`bleedBox <PyPDF2.pdf.PageObject.bleedBox>`
+        * :attr:`cropBox <PyPDF2.pdf.PageObject.cropBox>`
+        * :attr:`mediaBox <PyPDF2.pdf.PageObject.mediaBox>`
+        * :attr:`trimBox <PyPDF2.pdf.PageObject.trimBox>`
+    """
     def __init__(self, arr):
         # must have four points
         assert len(arr) == 4
@@ -907,16 +916,48 @@ class RectangleObject(ArrayObject):
         return self.getUpperRight_y() - self.getLowerLeft_y()
 
     lowerLeft = property(getLowerLeft, setLowerLeft, None, None)
+    """
+    Property to read and modify the lower left coordinate of this box
+    in (x,y) form.
+    """
     lowerRight = property(getLowerRight, setLowerRight, None, None)
+    """
+    Property to read and modify the lower right coordinate of this box
+    in (x,y) form.
+    """
     upperLeft = property(getUpperLeft, setUpperLeft, None, None)
+    """
+    Property to read and modify the upper left coordinate of this box
+    in (x,y) form.
+    """
     upperRight = property(getUpperRight, setUpperRight, None, None)
+    """
+    Property to read and modify the upper right coordinate of this box
+    in (x,y) form.
+    """
 
 
-##
-# A class representing a destination within a PDF file.
-# See section 8.2.1 of the PDF 1.6 reference.
-# Stability: Added in v1.10, will exist for all v1.x releases.
 class Destination(TreeObject):
+    """
+    A class representing a destination within a PDF file.
+    See section 8.2.1 of the PDF 1.6 reference.
+
+    :param str title: Title of this destination.
+    :param int page: Page number of this destination.
+    :param str typ: How the destination is displayed.
+    :param args: Additional arguments may be necessary depending on the type.
+    :raises PdfReadError: If destination type is invalid.
+
+    Valid ``typ`` arguments (see PDF spec for details):
+             /Fit       No additional arguments
+             /XYZ       [left] [top] [zoomFactor]
+             /FitH      [top]
+             /FitV      [left]
+             /FitR      [left] [bottom] [right] [top]
+             /FitB      No additional arguments
+             /FitBH     [top]
+             /FitBV     [left]
+    """
     def __init__(self, title, page, typ, *args):
         DictionaryObject.__init__(self)
         self[NameObject("/Title")] = title
@@ -959,45 +1000,61 @@ class Destination(TreeObject):
         stream.write(b_("\n"))
         stream.write(b_(">>"))
          
-    ##
-    # Read-only property accessing the destination title.
-    # @return A string.
     title = property(lambda self: self.get("/Title"))
+    """
+    Read-only property accessing the destination title.
 
-    ##
-    # Read-only property accessing the destination page.
-    # @return An integer.
+    :rtype: str
+    """
+
     page = property(lambda self: self.get("/Page"))
+    """
+    Read-only property accessing the destination page number.
 
-    ##
-    # Read-only property accessing the destination type.
-    # @return A string.
+    :rtype: int
+    """
+
     typ = property(lambda self: self.get("/Type"))
+    """
+    Read-only property accessing the destination type.
 
-    ##
-    # Read-only property accessing the zoom factor.
-    # @return A number, or None if not available.
+    :rtype: str
+    """
+
     zoom = property(lambda self: self.get("/Zoom", None))
+    """
+    Read-only property accessing the zoom factor.
 
-    ##
-    # Read-only property accessing the left horizontal coordinate.
-    # @return A number, or None if not available.
+    :rtype: int, or ``None`` if not available.
+    """
+
     left = property(lambda self: self.get("/Left", None))
+    """
+    Read-only property accessing the left horizontal coordinate.
 
-    ##
-    # Read-only property accessing the right horizontal coordinate.
-    # @return A number, or None if not available.
+    :rtype: int, or ``None`` if not available.
+    """
+
     right = property(lambda self: self.get("/Right", None))
+    """
+    Read-only property accessing the right horizontal coordinate.
 
-    ##
-    # Read-only property accessing the top vertical coordinate.
-    # @return A number, or None if not available.
+    :rtype: int, or ``None`` if not available.
+    """
+
     top = property(lambda self: self.get("/Top", None))
+    """
+    Read-only property accessing the top vertical coordinate.
 
-    ##
-    # Read-only property accessing the bottom vertical coordinate.
-    # @return A number, or None if not available.
+    :rtype: int, or ``None`` if not available.
+    """
+
     bottom = property(lambda self: self.get("/Bottom", None))
+    """
+    Read-only property accessing the bottom vertical coordinate.
+
+    :rtype: int, or ``None`` if not available.
+    """
         
 
 class Bookmark(Destination):

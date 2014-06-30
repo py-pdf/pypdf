@@ -30,17 +30,20 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-import string
 
 """
-A pure-Python PDF library with very minimal capabilities.  It was designed to
-be able to split and merge PDF files by page, and that's about all it can do.
-It may be a solid base for future PDF file work in Python.
+A pure-Python PDF library with an increasing number of capabilities.
+See README for links to FAQ, documentation, homepage, etc.
 """
+
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
+__maintainer__ = "Phaseit, Inc."
+__maintainer_email = "PyPDF2@phaseit.net"
 
+
+import string
 import math
 import struct
 import sys
@@ -71,10 +74,12 @@ if version_info < ( 2, 5 ):
 else:
     from hashlib import md5
 import uuid
-##
-# This class supports writing PDF files out, given pages produced by another
-# class (typically {@link #PdfFileReader PdfFileReader}).
+
 class PdfFileWriter(object):
+    """
+    This class supports writing PDF files out, given pages produced by another
+    class (typically :class:`PdfFileReader<PdfFileReader>`).
+    """
     def __init__(self):
         self._header = b_("%PDF-1.3")
         self._objects = []  # array of indirect objects
@@ -112,13 +117,6 @@ class PdfFileWriter(object):
             raise ValueError("pdf must be self")
         return self._objects[ido.idnum - 1]
 
-    ##
-    # Common method for inserting or adding a page to this PDF file.
-    #
-    # @param page The page to add to the document.  This argument should be
-    #             an instance of {@link #PageObject PageObject}.
-    # @param action The function which will insert the page in the dictionnary.
-    #               Takes: page list, page to add.
     def _addPage(self, page, action):
         assert page["/Type"] == "/Page"
         page[NameObject("/Parent")] = self._pages
@@ -127,65 +125,81 @@ class PdfFileWriter(object):
         action(pages["/Kids"], page)
         pages[NameObject("/Count")] = NumberObject(pages["/Count"] + 1)
 
-    ##
-    # Adds a page to this PDF file.  The page is usually acquired from a
-    # {@link #PdfFileReader PdfFileReader} instance.
-    # <p>
-    # Stability: Added in v1.0, will exist for all v1.x releases.
-    #
-    # @param page The page to add to the document.  This argument should be
-    #             an instance of {@link #PageObject PageObject}.
     def addPage(self, page):
+        """
+        Adds a page to this PDF file.  The page is usually acquired from a
+        :class:`PdfFileReader<PdfFileReader>` instance.
+
+        :param PageObject page: The page to add to the document. Should be
+            an instance of :class:`PageObject<PyPDF2.pdf.PageObject>`
+        """
         self._addPage(page, list.append)
 
-    ##
-    # Insert a page in this PDF file.  The page is usually acquired from a
-    # {@link #PdfFileReader PdfFileReader} instance.
-    #
-    # @param page The page to add to the document.  This argument should be
-    #             an instance of {@link #PageObject PageObject}.
-    # @param index Position at which the page will be inserted.
     def insertPage(self, page, index=0):
+        """
+        Insert a page in this PDF file. The page is usually acquired from a
+        :class:`PdfFileReader<PdfFileReader>` instance.
+
+        :param PageObject page: The page to add to the document.  This
+            argument should be an instance of :class:`PageObject<pdf.PageObject>`.
+        :param int index: Position at which the page will be inserted.
+        """
         self._addPage(page, lambda l, p: l.insert(index, p))
 
-    ##
-    # Retrieves a page by number from this PDF file.
-    # @return Returns a {@link #PageObject PageObject} instance.
     def getPage(self, pageNumber):
+        """
+        Retrieves a page by number from this PDF file.
+
+        :param int pageNumber: The page number to retrieve
+            (pages begin at zero)
+        :return: the page at the index given by *pageNumber*
+        :rtype: :class:`PageObject<pdf.PageObject>`
+        """
         pages = self.getObject(self._pages)
         # XXX: crude hack
         return pages["/Kids"][pageNumber].getObject()
 
-    ##
-    # Return the number of pages.
-    # @return The number of pages.
     def getNumPages(self):
+        """
+        :return: the number of pages.
+        :rtype: int
+        """
         pages = self.getObject(self._pages)
         return int(pages[NameObject("/Count")])
 
-    ##
-    # Append a blank page to this PDF file and returns it. If no page size
-    # is specified, use the size of the last page; throw
-    # PageSizeNotDefinedError if it doesn't exist.
-    # @param width The width of the new page expressed in default user
-    # space units.
-    # @param height The height of the new page expressed in default user
-    # space units.
     def addBlankPage(self, width=None, height=None):
+        """
+        Appends a blank page to this PDF file and returns it. If no page size
+        is specified, use the size of the last page.
+
+        :param float width: The width of the new page expressed in default user
+            space units.
+        :param float height: The height of the new page expressed in default
+            user space units.
+        :return: the newly appended page
+        :rtype: :class:`PageObject<PyPDF2.pdf.PageObject>`
+        :raises PageSizeNotDefinedError: if width and height are not defined
+            and previous page does not exist.
+        """
         page = PageObject.createBlankPage(self, width, height)
         self.addPage(page)
         return page
 
-    ##
-    # Insert a blank page to this PDF file and returns it. If no page size
-    # is specified, use the size of the page in the given index; throw
-    # PageSizeNotDefinedError if it doesn't exist.
-    # @param width  The width of the new page expressed in default user
-    #               space units.
-    # @param height The height of the new page expressed in default user
-    #               space units.
-    # @param index  Position to add the page.
     def insertBlankPage(self, width=None, height=None, index=0):
+        """
+        Inserts a blank page to this PDF file and returns it. If no page size
+        is specified, use the size of the last page.
+
+        :param float width: The width of the new page expressed in default user
+            space units.
+        :param float height: The height of the new page expressed in default
+            user space units.
+        :param int index: Position to add the page.
+        :return: the newly appended page
+        :rtype: :class:`PageObject<PyPDF2.pdf.PageObject>`
+        :raises PageSizeNotDefinedError: if width and height are not defined
+            and previous page does not exist.
+        """
         if width is None or height is None and \
                 (self.getNumPages() - 1) >= index:
             oldpage = self.getPage(index)
@@ -195,17 +209,19 @@ class PdfFileWriter(object):
         self.insertPage(page, index)
         return page
 
-    ##
-    # Encrypt this PDF file with the PDF Standard encryption handler.
-    # @param user_pwd The "user password", which allows for opening and reading
-    # the PDF file with the restrictions provided.
-    # @param owner_pwd The "owner password", which allows for opening the PDF
-    # files without any restrictions.  By default, the owner password is the
-    # same as the user password.
-    # @param use_128bit Boolean argument as to whether to use 128bit
-    # encryption.  When false, 40bit encryption will be used.  By default, this
-    # flag is on.
     def encrypt(self, user_pwd, owner_pwd = None, use_128bit = True):
+        """
+        Encrypt this PDF file with the PDF Standard encryption handler.
+
+        :param str user_pwd: The "user password", which allows for opening
+            and reading the PDF file with the restrictions provided.
+        :param str owner_pwd: The "owner password", which allows for
+            opening the PDF files without any restrictions.  By default,
+            the owner password is the same as the user password.
+        :param bool use_128bit: flag as to whether to use 128bit
+            encryption.  When false, 40bit encryption will be used.  By default,
+            this flag is on.
+        """
         import time, random
         if owner_pwd == None:
             owner_pwd = user_pwd
@@ -240,13 +256,13 @@ class PdfFileWriter(object):
         self._encrypt = self._addObject(encrypt)
         self._encrypt_key = key
 
-    ##
-    # Writes the collection of pages added to this object out as a PDF file.
-    # <p>
-    # Stability: Added in v1.0, will exist for all v1.x releases.
-    # @param stream An object to write the file to.  The object must support
-    # the write method, and the tell method, similar to a file object.
     def write(self, stream):
+        """
+        Writes the collection of pages added to this object out as a PDF file.
+
+        :param stream: An object to write the file to.  The object must support
+            the write method and the tell method, similar to a file object.
+        """
         if hasattr(stream, 'mode') and 'b' not in stream.mode:
             warnings.warn("File <%s> to write to is not in binary mode. It may not be written to correctly." % stream.name)
         debug = False
@@ -323,9 +339,10 @@ class PdfFileWriter(object):
 
     def addMetadata(self, infos):
         """
-        'infos' argument is a python dictionary where each key is a field
-        and each value is your new metadata.
-        Example: {u'/Title': u'My title'}
+        Add custom metadata to the output.
+
+        :param dict infos: a Python dictionary where each key is a field
+            and each value is your new metadata.
         """
         args = {}
         for key, value in list(infos.items()):
@@ -484,9 +501,12 @@ class PdfFileWriter(object):
             
     def addBookmark(self, title, pagenum, parent=None):
         """
-        Add a bookmark to the pdf, using the specified title and pointing at 
-        the specified page number. A parent can be specified to make this a
-        nested bookmark below the parent.
+        Add a bookmark to this PDF file.
+
+        :param str title: Title to use for this bookmark.
+        :param int pagenum: Page number this bookmark will point to.
+        :param parent: A reference to a parent bookmark to create nested
+            bookmarks.
         """
         pageRef = self.getObject(self._pages)['/Kids'][pagenum]
         action = DictionaryObject()
@@ -540,9 +560,9 @@ class PdfFileWriter(object):
         return destRef
 
     def removeLinks(self):
-        '''
-        Removes links and annotations.
-        '''
+        """
+        Removes links and annotations from this output.
+        """
         pages = self.getObject(self._pages)['/Kids']
         for page in pages:
             pageRef = self.getObject(page)
@@ -550,14 +570,12 @@ class PdfFileWriter(object):
                 del pageRef['/Annots']
 
     def removeImages(self, ignoreByteStringObject=False):
-        '''
-        Removes images.
+        """
+        Removes images from this output.
 
-        in Python2 operator is type str.
-        in Python3 operator is type bytes.
-
-        @param ignoreByteStringObject (Bool) : for ByteStringObject.
-        '''
+        :param bool ignoreByteStringObject: optional parameter
+            to ignore ByteString Objects.
+        """
         pages = self.getObject(self._pages)['/Kids']
         for j in range(len(pages)):
             page = pages[j]
@@ -607,14 +625,12 @@ class PdfFileWriter(object):
             pageRef.__setitem__(NameObject('/Contents'), content)
 
     def removeText(self, ignoreByteStringObject=False):
-        '''
-        Removes text.
+        """
+        Removes images from this output.
 
-        in Python2 operator is type str.
-        in Python3 operator is type bytes.
-
-        @param ignoreByteStringObject (Bool) : for ByteStringObject.
-        '''
+        :param bool ignoreByteStringObject: optional parameter
+            to ignore ByteString Objects.
+        """
         pages = self.getObject(self._pages)['/Kids']
         for j in range(len(pages)):
             page = pages[j]
@@ -663,27 +679,28 @@ class PdfFileWriter(object):
             pageRef.__setitem__(NameObject('/Contents'), content)
 
     def addLink(self, pagenum, pagedest, rect, zoom='/FitV', border=None):
-        """Add an internal link from a rectangular area to the specified page.
+        """
+        Add an internal link from a rectangular area to the specified page.
 
-        pagenum: integer index of the page on which to place the link.
-        pagedest: integer index of the page to which the link should go.
-        rect: RectangleObject or array of four integers specifying the clickable
-            rectangular area [xLL, yLL, xUR, yUR], or string in the form 
-            "[ xLL yLL xUR yUR ]".
-        zoom: string representation of a zoom option.
-        border: if provided, an array describing border-drawing properties. See 
-            the PDF spec for details. No border will be drawn if this argument 
-            is omitted.
+        :param int pagenum: index of the page on which to place the link.
+        :param int pagedest: index of the page to which the link should go.
+        :param rect: :class:`RectangleObject<PyPDF2.generic.RectangleObject>` or array of four
+            integers specifying the clickable rectangular area
+            ``[xLL, yLL, xUR, yUR]``, or string in the form ``"[ xLL yLL xUR yUR ]"``.
+        :param str zoom: zoom option (see below)
+        :param border: if provided, an array describing border-drawing
+            properties. See the PDF spec for details. No border will be
+            drawn if this argument is omitted.
 
         Valid zoom arguments (see PDF spec for details):
-            /Fit
-            /XYZ [left] [top] [zoomFactor]
-            /FitH [top]
-            /FitV [left]
-            /FitR left bottom right top
-            /FitB
-            /FitBH [top]
-            /FitBV [left]
+             /Fit       No additional arguments
+             /XYZ       [left] [top] [zoomFactor]
+             /FitH      [top]
+             /FitV      [left]
+             /FitR      [left] [bottom] [right] [top]
+             /FitB      No additional arguments
+             /FitBH     [top]
+             /FitBV     [left]
         """
 
         pageLink = self.getObject(self._pages)['/Kids'][pagenum]
@@ -724,21 +741,23 @@ class PdfFileWriter(object):
     _valid_layouts = ['/NoLayout', '/SinglePage', '/OneColumn', '/TwoColumnLeft', '/TwoColumnRight', '/TwoPageLeft', '/TwoPageRight']
     
     def getPageLayout(self):
-        '''
-        Get the page layout
+        """
+        Get the page layout.
+        See :meth:`setPageLayout()<PdfFileWriter.setPageLayout>` for a description of valid layouts.
         
-        See PdfFileWriter.setPageLayout for a description of valid layouts.
-                
-        Returns None if the layout has not been set.
-        '''
+        :return: Page layout currently being used.
+        :rtype: str, None if not specified
+        """
         try:
             return self.getObject(self._root)['/PageLayout']
         except KeyError:
             return None
         
     def setPageLayout(self, layout):
-        '''
+        """
         Set the page layout
+
+        :param str layout: The page layout to be used
         
         Valid layouts are:
              /NoLayout        Layout explicitly not specified
@@ -748,7 +767,7 @@ class PdfFileWriter(object):
              /TwoColumnRight  Show pages in two columns, odd-numbered pages on the right
              /TwoPageLeft     Show two pages at a time, odd-numbered pages on the left
              /TwoPageRight    Show two pages at a time, odd-numbered pages on the right
-        '''
+        """
         if not isinstance(layout, NameObject):
             if layout not in self._valid_layouts:
                 warnings.warn("Layout should be one of: {}".format(', '.join(self._valid_layouts)))
@@ -757,25 +776,30 @@ class PdfFileWriter(object):
         root.update({NameObject('/PageLayout'): layout})
     
     pageLayout = property(getPageLayout, setPageLayout)
+    """Read and write property accessing the :meth:`getPageLayout()<PdfFileWriter.getPageLayout>`
+    and :meth:`setPageLayout()<PdfFileWriter.setPageLayout>` methods."""
 
     _valid_modes = ['/UseNone', '/UseOutlines', '/UseThumbs', '/UseFullscreen', '/UseOC', '/UseAttach']
 
     def getPageMode(self):
-        '''
-        Get the page mode
+        """
+        Get the page mode.
+        See :meth:`setPageMode()<PdfFileWriter.setPageMode>` for a description
+        of valid modes.
         
-        See PdfFileWriter.setPageMode for a description of valid modes.
-        
-        Returns None if the mode has not been set.
-        '''
+        :return: Page mode currently being used.
+        :rtype: str, None if not specified
+        """
         try:
             return self.getObject(self._root)['/PageMode']
         except KeyError:
             return None
 
     def setPageMode(self, mode):
-        '''
-        Set the page mode
+        """
+        Set the page mode.
+
+        :param str mode: The page mode to use.
         
         Valid modes are:
             /UseNone        Do not show outlines or thumbnails panels
@@ -784,7 +808,7 @@ class PdfFileWriter(object):
             /UseFullscreen  Fullscreen view
             /UseOC          Show Optional Content Group (OCG) panel
             /UseAttach      Show attachments panel
-        '''
+        """
         if not isinstance(mode, NameObject):
             if mode not in self._valid_modes:
                 warnings.warn("Mode should be one of: {}".format(', '.join(self._valid_modes)))
@@ -793,19 +817,26 @@ class PdfFileWriter(object):
         root.update({NameObject('/PageMode'): mode})
     
     pageMode = property(getPageMode, setPageMode)
+    """Read and write property accessing the :meth:`getPageMode()<PdfFileWriter.getPageMode>`
+    and :meth:`setPageMode()<PdfFileWriter.setPageMode>` methods."""
 
-##
-# Initializes a PdfFileReader object.  This operation can take some time, as
-# the PDF stream's cross-reference tables are read into memory.
-# <p>
-# Stability: Added in v1.0, will exist for all v1.x releases.
-#
-# @param stream An object that supports the standard read and seek methods
-#               similar to a file object.
-# @param strict Determines whether user should be warned of all problems and
-#               also causes some correctable problems to be fatal. Defaults
-#               to True. 
 class PdfFileReader(object):
+    """
+    Initializes a PdfFileReader object.  This operation can take some time, as
+    the PDF stream's cross-reference tables are read into memory.
+
+    :param stream: A File object or an object that supports the standard read
+        and seek methods similar to a File object. Could also be a
+        string representing a path to a PDF file.
+    :param bool strict: Determines whether user should be warned of all
+        problems and also causes some correctable problems to be fatal.
+        Defaults to ``True``.
+    :param warndest: Destination for logging warnings (defaults to
+        ``sys.stderr``).
+    :param bool overwriteWarnings: Determines whether to override Python's
+        ``warnings.py`` module with a custom implementation (defaults to
+        ``True``).
+    """
     def __init__(self, stream, strict=True, warndest = None, overwriteWarnings = True):
         if overwriteWarnings:
             # have to dynamically override the default showwarning since there are no
@@ -832,16 +863,17 @@ class PdfFileReader(object):
         self.stream = stream
 
         self._override_encryption = False
-    ##
-    # Retrieves the PDF file's document information dictionary, if it exists.
-    # Note that some PDF files use metadata streams instead of docinfo
-    # dictionaries, and these metadata streams will not be accessed by this
-    # function.
-    # <p>
-    # Stability: Added in v1.6, will exist for all future v1.x releases.
-    # @return Returns a {@link #DocumentInformation DocumentInformation}
-    #         instance, or None if none exists.
+
     def getDocumentInfo(self):
+        """
+        Retrieves the PDF file's document information dictionary, if it exists.
+        Note that some PDF files use metadata streams instead of docinfo
+        dictionaries, and these metadata streams will not be accessed by this
+        function.
+
+        :return: the document information of this PDF file
+        :rtype: :class:`DocumentInformation<pdf.DocumentInformation>` or ``None`` if none exists.
+        """
         if "/Info" not in self.trailer:
             return None
         obj = self.trailer['/Info']
@@ -849,41 +881,40 @@ class PdfFileReader(object):
         retval.update(obj)
         return retval
 
-    ##
-    # Read-only property that accesses the {@link
-    # #PdfFileReader.getDocumentInfo getDocumentInfo} function.
-    # <p>
-    # Stability: Added in v1.7, will exist for all future v1.x releases.
     documentInfo = property(lambda self: self.getDocumentInfo(), None, None)
+    """Read-only property that accesses the :meth:`getDocumentInfo()<PdfFileReader.getDocumentInfo>` function."""
 
-    ##
-    # Retrieves XMP (Extensible Metadata Platform) data from the PDF document
-    # root.
-    # <p>
-    # Stability: Added in v1.12, will exist for all future v1.x releases.
-    # @return Returns a {@link #generic.XmpInformation XmlInformation}
-    # instance that can be used to access XMP metadata from the document.
-    # Can also return None if no metadata was found on the document root.
     def getXmpMetadata(self):
+        """
+        Retrieves XMP (Extensible Metadata Platform) data from the PDF document
+        root.
+
+        :return: a :class:`XmpInformation<xmp.XmpInformation>`
+            instance that can be used to access XMP metadata from the document.
+        :rtype: :class:`XmpInformation<xmp.XmpInformation>` or
+            ``None`` if no metadata was found on the document root.
+        """
         try:
             self._override_encryption = True
             return self.trailer["/Root"].getXmpMetadata()
         finally:
             self._override_encryption = False
 
-    ##
-    # Read-only property that accesses the {@link #PdfFileReader.getXmpData
-    # getXmpData} function.
-    # <p>
-    # Stability: Added in v1.12, will exist for all future v1.x releases.
     xmpMetadata = property(lambda self: self.getXmpMetadata(), None, None)
+    """
+    Read-only property that accesses the
+    :meth:`getXmpMetadata()<PdfFileReader.getXmpMetadata>` function.
+    """
 
-    ##
-    # Calculates the number of pages in this PDF file.
-    # <p>
-    # Stability: Added in v1.0, will exist for all v1.x releases.
-    # @return Returns an integer.
     def getNumPages(self):
+        """
+        Calculates the number of pages in this PDF file.
+
+        :return: number of pages
+        :rtype: int
+        :raises PdfReadError: if file is encrypted and restrictions prevent
+            this action.
+        """
     
         # Flattened pages will not work on an Encrypted PDF; 
         # the PDF file's page count is used in this case. Otherwise,
@@ -901,41 +932,42 @@ class PdfFileReader(object):
                 self._flatten()
             return len(self.flattenedPages)
 
-    ##
-    # Read-only property that accesses the {@link #PdfFileReader.getNumPages
-    # getNumPages} function.
-    # <p>
-    # Stability: Added in v1.7, will exist for all future v1.x releases.
     numPages = property(lambda self: self.getNumPages(), None, None)
+    """
+    Read-only property that accesses the
+    :meth:`getNumPages()<PdfFileReader.getNumPages>` function.
+    """
 
-    ##
-    # Retrieves a page by number from this PDF file.
-    # <p>
-    # Stability: Added in v1.0, will exist for all v1.x releases.
-    # @return Returns a {@link #PageObject PageObject} instance.
     def getPage(self, pageNumber):
+        """
+        Retrieves a page by number from this PDF file.
+
+        :param int pageNumber: The page number to retrieve
+            (pages begin at zero)
+        :return: a :class:`PageObject<pdf.PageObject>` instance.
+        :rtype: :class:`PageObject<pdf.PageObject>`
+        """
         ## ensure that we're not trying to access an encrypted PDF
         #assert not self.trailer.has_key("/Encrypt")
         if self.flattenedPages == None:
             self._flatten()
         return self.flattenedPages[pageNumber]
 
-    ##
-    # Read-only property that accesses the 
-    # {@link #PdfFileReader.getNamedDestinations 
-    # getNamedDestinations} function.
-    # <p>
-    # Stability: Added in v1.10, will exist for all future v1.x releases.
     namedDestinations = property(lambda self:
                                   self.getNamedDestinations(), None, None)
+    """
+    Read-only property that accesses the
+    :meth:`getNamedDestinations()<PdfFileReader.getNamedDestinations>` function.
+    """
 
-    ##
-    # Retrieves the named destinations present in the document.
-    # <p>
-    # Stability: Added in v1.10, will exist for all future v1.x releases.
-    # @return Returns a dict which maps names to {@link #Destination
-    # destinations}.
     def getNamedDestinations(self, tree=None, retval=None):
+        """
+        Retrieves the named destinations present in the document.
+
+        :return: a dictionary which maps names to
+            :class:`Destinations<PyPDF2.generic.Destination>`.
+        :rtype: dict
+        """
         if retval == None:
             retval = {}
             catalog = self.trailer["/Root"]
@@ -969,19 +1001,18 @@ class PdfFileReader(object):
 
         return retval
 
-    ##
-    # Read-only property that accesses the {@link #PdfFileReader.getOutlines
-    # getOutlines} function.
-    # <p>
-    # Stability: Added in v1.10, will exist for all future v1.x releases.
     outlines = property(lambda self: self.getOutlines(), None, None)
+    """
+    Read-only property that accesses the
+        :meth:`getOutlines()<PdfFileReader.getOutlines>` function.
+    """
 
-    ##
-    # Retrieves the document outline present in the document.
-    # <p>
-    # Stability: Added in v1.10, will exist for all future v1.x releases.
-    # @return Returns a nested list of {@link #Destination destinations}.
     def getOutlines(self, node=None, outlines=None):
+        """
+        Retrieves the document outline present in the document.
+
+        :return: a nested list of :class:`Destinations<PyPDF2.generic.Destination>`.
+        """
         if outlines == None:
             outlines = []
             catalog = self.trailer["/Root"]
@@ -1045,44 +1076,49 @@ class PdfFileReader(object):
                 raise utils.PdfReadError("Unexpected destination %r" % dest)
         return outline
 
-    ##
-    # Read-only property that emulates a list based upon the {@link
-    # #PdfFileReader.getNumPages getNumPages} and {@link #PdfFileReader.getPage
-    # getPage} functions.
-    # <p>
-    # Stability: Added in v1.7, and will exist for all future v1.x releases.
     pages = property(lambda self: ConvertFunctionsToVirtualList(self.getNumPages, self.getPage),
-            None, None)
+        None, None)
+    """
+    Read-only property that emulates a list based upon the
+    :meth:`getNumPages()<PdfFileReader.getNumPages>` and
+    :meth:`getPage()<PdfFileReader.getPage>` methods.
+    """
 
     def getPageLayout(self):
-        '''
-        Get the page layout
+        """
+        Get the page layout.
+        See :meth:`setPageLayout()<PdfFileWriter.setPageLayout>`
+        for a description of valid layouts.
 
-        See PdfFileWriter.setPageLayout for a description of valid layouts.     
-
-        Returns None if the layout has not been set.
-        '''
+        :return: Page layout currently being used.
+        :rtype: ``str``, ``None`` if not specified
+        """
         try:
             return self.trailer['/Root']['/PageLayout']
         except KeyError:
             return None
     
     pageLayout = property(getPageLayout)
+    """Read-only property accessing the
+    :meth:`getPageLayout()<PdfFileReader.getPageLayout>` method."""
 
     def getPageMode(self):
-        '''
-        Get the page mode
+        """
+        Get the page mode.
+        See :meth:`setPageMode()<PdfFileWriter.setPageMode>`
+        for a description of valid modes.
         
-        See PdfFileWriter.setPageMode for a description of valid modes.
-        
-        Returns None if the mode has not been set.
-        '''
+        :return: Page mode currently being used.
+        :rtype: ``str``, ``None`` if not specified
+        """
         try:
             return self.trailer['/Root']['/PageMode']
         except KeyError:
             return None
-    
+
     pageMode = property(getPageMode)
+    """Read-only property accessing the
+    :meth:`getPageMode()<PdfFileReader.getPageMode>` method."""
 
     def _flatten(self, pages=None, inherit=None, indirectRef=None):
         inheritablePageAttributes = (
@@ -1546,25 +1582,26 @@ class PdfFileReader(object):
         if debug: print("leaving RNEL")
         return line
 
-    ##
-    # When using an encrypted / secured PDF file with the PDF Standard
-    # encryption handler, this function will allow the file to be decrypted.
-    # It checks the given password against the document's user password and
-    # owner password, and then stores the resulting decryption key if either
-    # password is correct.
-    # <p>
-    # It does not matter which password was matched.  Both passwords provide
-    # the correct decryption key that will allow the document to be used with
-    # this library.
-    # <p>
-    # Stability: Added in v1.8, will exist for all future v1.x releases.
-    #
-    # @return 0 if the password failed, 1 if the password matched the user
-    # password, and 2 if the password matched the owner password.
-    #
-    # @exception NotImplementedError Document uses an unsupported encryption
-    # method.
     def decrypt(self, password):
+        """
+        When using an encrypted / secured PDF file with the PDF Standard
+        encryption handler, this function will allow the file to be decrypted.
+        It checks the given password against the document's user password and
+        owner password, and then stores the resulting decryption key if either
+        password is correct.
+
+        It does not matter which password was matched.  Both passwords provide
+        the correct decryption key that will allow the document to be used with
+        this library.
+
+        :param str password: The password to match.
+        :return: ``0`` if the password failed, ``1`` if the password matched the user
+            password, and ``2`` if the password matched the owner password.
+        :rtype: int
+        :raises NotImplementedError: if document uses an unsupported encryption
+            method.
+        """
+
         self._override_encryption = True
         try:
             return self._decrypt(password)
@@ -1626,11 +1663,12 @@ class PdfFileReader(object):
     def getIsEncrypted(self):
         return "/Encrypt" in self.trailer
 
-    ##
-    # Read-only boolean property showing whether this PDF file is encrypted.
-    # Note that this property, if true, will remain true even after the {@link
-    # #PdfFileReader.decrypt decrypt} function is called.
     isEncrypted = property(lambda self: self.getIsEncrypted(), None, None)
+    """
+    Read-only boolean property showing whether this PDF file is encrypted.
+    Note that this property, if true, will remain true even after the
+    :meth:`decrypt()<PdfFileReader.decrypt>` method is called.
+    """
 
 
 def getRectangle(self, name, defaults):
@@ -1664,31 +1702,40 @@ def createRectangleAccessor(name, fallback):
             lambda self: deleteRectangle(self, name)
             )
 
-##
-# This class represents a single page within a PDF file.  Typically this object
-# will be created by accessing the {@link #PdfFileReader.getPage getPage}
-# function of the {@link #PdfFileReader PdfFileReader} class, but it is
-# also possible to create an empty page with the createBlankPage static
-# method.
-# @param pdf PDF file the page belongs to (optional, defaults to None).
 class PageObject(DictionaryObject):
+    """
+    This class represents a single page within a PDF file.  Typically this
+    object will be created by accessing the
+    :meth:`getPage()<PyPDF2.PdfFileReader.getPage>` method of the
+    :class:`PdfFileReader<PyPDF2.PdfFileReader>` class, but it is
+    also possible to create an empty page with the
+    :meth:`createBlankPage()<PageObject.createBlankPage>` static method.
+
+    :param pdf: PDF file the page belongs to.
+    :param indirectRef: Stores the original indirect reference to
+        this object in its source PDF
+    """
     def __init__(self, pdf=None, indirectRef=None):
         DictionaryObject.__init__(self)
         self.pdf = pdf
-        # Stores the original indirect reference to this object in its source PDF
         self.indirectRef = indirectRef
 
-    ##
-    # Returns a new blank page.
-    # If width or height is None, try to get the page size from the
-    # last page of pdf. If pdf is None or contains no page, a
-    # PageSizeNotDefinedError is raised.
-    # @param pdf    PDF file the page belongs to
-    # @param width  The width of the new page expressed in default user
-    #               space units.
-    # @param height The height of the new page expressed in default user
-    #               space units.
     def createBlankPage(pdf=None, width=None, height=None):
+        """
+        Returns a new blank page.
+        If ``width`` or ``height`` is ``None``, try to get the page size
+        from the last page of *pdf*.
+
+        :param pdf: PDF file the page belongs to
+        :param float width: The width of the new page expressed in default user
+            space units.
+        :param float height: The height of the new page expressed in default user
+            space units.
+        :return: the new blank page:
+        :rtype: :class:`PageObject<PageObject>`
+        :raises PageSizeNotDefinedError: if ``pdf`` is ``None`` or contains
+            no page
+        """
         page = PageObject(pdf)
 
         # Creates a new page (cf PDF Reference  7.7.3.3)
@@ -1708,22 +1755,24 @@ class PageObject(DictionaryObject):
         return page
     createBlankPage = staticmethod(createBlankPage)
 
-    ##
-    # Rotates a page clockwise by increments of 90 degrees.
-    # <p>
-    # Stability: Added in v1.1, will exist for all future v1.x releases.
-    # @param angle Angle to rotate the page.  Must be an increment of 90 deg.
     def rotateClockwise(self, angle):
+        """
+        Rotates a page clockwise by increments of 90 degrees.
+
+        :param int angle: Angle to rotate the page.  Must be an increment
+            of 90 deg.
+        """
         assert angle % 90 == 0
         self._rotate(angle)
         return self
 
-    ##
-    # Rotates a page counter-clockwise by increments of 90 degrees.
-    # <p>
-    # Stability: Added in v1.1, will exist for all future v1.x releases.
-    # @param angle Angle to rotate the page.  Must be an increment of 90 deg.
     def rotateCounterClockwise(self, angle):
+        """
+        Rotates a page counter-clockwise by increments of 90 degrees.
+
+        :param int angle: Angle to rotate the page.  Must be an increment
+            of 90 deg.
+        """
         assert angle % 90 == 0
         self._rotate(-angle)
         return self
@@ -1780,48 +1829,31 @@ class PageObject(DictionaryObject):
         return contents
     _addTransformationMatrix = staticmethod(_addTransformationMatrix)
 
-    ##
-    # Returns the /Contents object, or None if it doesn't exist.
-    # /Contents is optional, as described in PDF Reference  7.7.3.3
     def getContents(self):
-      if "/Contents" in self:
-        return self["/Contents"].getObject()
-      else:
-        return None
+        """
+        Accesses the page contents.
 
-    ##
-    # Merges the content streams of two pages into one.  Resource references
-    # (i.e. fonts) are maintained from both pages.  The mediabox/cropbox/etc
-    # of this page are not altered.  The parameter page's content stream will
-    # be added to the end of this page's content stream, meaning that it will
-    # be drawn after, or "on top" of this page.
-    # <p>
-    # Stability: Added in v1.4, will exist for all future 1.x releases.
-    # @param page2 An instance of {@link #PageObject PageObject} to be merged
-    #              into this one.
+        :return: the ``/Contents`` object, or ``None`` if it doesn't exist.
+            ``/Contents`` is optional, as described in PDF Reference  7.7.3.3
+        """
+        if "/Contents" in self:
+            return self["/Contents"].getObject()
+        else:
+            return None
+
     def mergePage(self, page2):
+        """
+        Merges the content streams of two pages into one.  Resource references
+        (i.e. fonts) are maintained from both pages.  The mediabox/cropbox/etc
+        of this page are not altered.  The parameter page's content stream will
+        be added to the end of this page's content stream, meaning that it will
+        be drawn after, or "on top" of this page.
+
+        :param PageObject page2: The page to be merged into this one. Should be
+            an instance of :class:`PageObject<PageObject>`.
+        """
         self._mergePage(page2)
 
-    ##
-    # Actually merges the content streams of two pages into one. Resource
-    # references (i.e. fonts) are maintained from both pages. The
-    # mediabox/cropbox/etc of this page are not altered. The parameter page's
-    # content stream will be added to the end of this page's content stream,
-    # meaning that it will be drawn after, or "on top" of this page.
-    #
-    # @param page2 An instance of {@link #PageObject PageObject} to be merged
-    #              into this one.
-    # @param page2transformation A function which applies a transformation to
-    #                            the content stream of page2. Takes: page2
-    #                            contents stream. Must return: new contents
-    #                            stream. If omitted, the content stream will
-    #                            not be modified.
-    # @param ctm A 6-item list containing the content transformation matrix. 
-    #            Although this list could be pulled from the closure of the
-    #            page2transformation function, it is simpler and more 
-    #            extensible to have it as a separate parameter.
-    # @param expand Whether the page should be expanded to fit the dimensions
-    #               of the page to be merged
     def _mergePage(self, page2, page2transformation=None, ctm=None, expand=False):
         # First we work on merging the resource dictionaries.  This allows us
         # to find out what symbols in the content streams we might need to
@@ -1886,73 +1918,84 @@ class PageObject(DictionaryObject):
         self[NameObject('/Contents')] = ContentStream(newContentArray, self.pdf)
         self[NameObject('/Resources')] = newResources
 
-    ##
-    # This is similar to mergePage, but a transformation matrix is
-    # applied to the merged stream.
-    #
-    # @param page2 An instance of {@link #PageObject PageObject} to be merged.
-    # @param ctm   A 6 elements tuple containing the operands of the
-    #              transformation matrix
-    # @param expand Whether the page should be expanded to fit the dimensions
-    #               of the page to be merged
     def mergeTransformedPage(self, page2, ctm, expand=False):
+        """
+        This is similar to mergePage, but a transformation matrix is
+        applied to the merged stream.
+
+        :param PageObject page2: The page to be merged into this one. Should be
+            an instance of :class:`PageObject<PageObject>`.
+        :param tuple ctm: a 6-element tuple containing the operands of the
+            transformation matrix
+        :param bool expand: Whether the page should be expanded to fit the dimensions
+            of the page to be merged.
+        """
         self._mergePage(page2, lambda page2Content:
             PageObject._addTransformationMatrix(page2Content, page2.pdf, ctm), ctm, expand)
 
-    ##
-    # This is similar to mergePage, but the stream to be merged is scaled
-    # by appling a transformation matrix.
-    #
-    # @param page2 An instance of {@link #PageObject PageObject} to be merged.
-    # @param factor The scaling factor
-    # @param expand Whether the page should be expanded to fit the dimensions
-    #               of the page to be merged
-    def mergeScaledPage(self, page2, factor, expand=False):
+    def mergeScaledPage(self, page2, scale, expand=False):
+        """
+        This is similar to mergePage, but the stream to be merged is scaled
+        by appling a transformation matrix.
+
+        :param PageObject page2: The page to be merged into this one. Should be
+            an instance of :class:`PageObject<PageObject>`.
+        :param float scale: The scaling factor
+        :param bool expand: Whether the page should be expanded to fit the
+            dimensions of the page to be merged.
+        """
         # CTM to scale : [ sx 0 0 sy 0 0 ]
-        return self.mergeTransformedPage(page2, [factor, 0,
-                                                 0,      factor,
+        return self.mergeTransformedPage(page2, [scale, 0,
+                                                 0,      scale,
                                                  0,      0], expand)
 
-    ##
-    # This is similar to mergePage, but the stream to be merged is rotated
-    # by appling a transformation matrix.
-    #
-    # @param page2 An instance of {@link #PageObject PageObject} to be merged.
-    # @param rotation The angle of the rotation, in degrees
-    # @param expand Whether the page should be expanded to fit the dimensions
-    #               of the page to be merged
     def mergeRotatedPage(self, page2, rotation, expand=False):
+        """
+        This is similar to mergePage, but the stream to be merged is rotated
+        by appling a transformation matrix.
+
+        :param PageObject page2: the page to be merged into this one. Should be
+            an instance of :class:`PageObject<PageObject>`.
+        :param float rotation: The angle of the rotation, in degrees
+        :param bool expand: Whether the page should be expanded to fit the
+            dimensions of the page to be merged.
+        """
         rotation = math.radians(rotation)
         return self.mergeTransformedPage(page2,
             [math.cos(rotation),  math.sin(rotation),
              -math.sin(rotation), math.cos(rotation),
              0,                   0], expand)
 
-    ##
-    # This is similar to mergePage, but the stream to be merged is translated
-    # by appling a transformation matrix.
-    #
-    # @param page2 An instance of {@link #PageObject PageObject} to be merged.
-    # @param tx    The translation on X axis
-    # @param tx    The translation on Y axis
-    # @param expand Whether the page should be expanded to fit the dimensions
-    #               of the page to be merged
     def mergeTranslatedPage(self, page2, tx, ty, expand=False):
+        """
+        This is similar to mergePage, but the stream to be merged is translated
+        by appling a transformation matrix.
+
+        :param PageObject page2: the page to be merged into this one. Should be
+            an instance of :class:`PageObject<PageObject>`.
+        :param float tx: The translation on X axis
+        :param float ty: The translation on Y axis
+        :param bool expand: Whether the page should be expanded to fit the
+            dimensions of the page to be merged.
+        """
         return self.mergeTransformedPage(page2, [1,  0,
                                                  0,  1,
                                                  tx, ty], expand)
 
-    ##
-    # This is similar to mergePage, but the stream to be merged is translated
-    # and rotated by appling a transformation matrix.
-    #
-    # @param page2 An instance of {@link #PageObject PageObject} to be merged.
-    # @param tx    The translation on X axis
-    # @param ty    The translation on Y axis
-    # @param rotation The angle of the rotation, in degrees
-    # @param expand Whether the page should be expanded to fit the dimensions
-    #               of the page to be merged
-    def mergeRotatedAroundPointPage(self, page2, rotation, tx, ty, expand=False):
+    def mergeRotatedTranslatedPage(self, page2, rotation, tx, ty, expand=False):
+        """
+        This is similar to mergePage, but the stream to be merged is rotated
+        and translated by appling a transformation matrix.
+
+        :param PageObject page2: the page to be merged into this one. Should be
+            an instance of :class:`PageObject<PageObject>`.
+        :param float tx: The translation on X axis
+        :param float ty: The translation on Y axis
+        :param float rotation: The angle of the rotation, in degrees
+        :param bool expand: Whether the page should be expanded to fit the
+            dimensions of the page to be merged.
+        """
+
         translation = [[1, 0, 0],
                        [0, 1, 0],
                        [-tx, -ty, 1]]
@@ -1970,16 +2013,18 @@ class PageObject(DictionaryObject):
                                                  ctm[1][0], ctm[1][1],
                                                  ctm[2][0], ctm[2][1]], expand)
 
-    ##
-    # This is similar to mergePage, but the stream to be merged is rotated
-    # and scaled by appling a transformation matrix.
-    #
-    # @param page2 An instance of {@link #PageObject PageObject} to be merged.
-    # @param rotation The angle of the rotation, in degrees
-    # @param factor The scaling factor
-    # @param expand Whether the page should be expanded to fit the dimensions
-    #               of the page to be merged
     def mergeRotatedScaledPage(self, page2, rotation, scale, expand=False):
+        """
+        This is similar to mergePage, but the stream to be merged is rotated
+        and scaled by appling a transformation matrix.
+
+        :param PageObject page2: the page to be merged into this one. Should be
+            an instance of :class:`PageObject<PageObject>`.
+        :param float rotation: The angle of the rotation, in degrees
+        :param float scale: The scaling factor
+        :param bool expand: Whether the page should be expanded to fit the
+            dimensions of the page to be merged.
+        """
         rotation = math.radians(rotation)
         rotating = [[math.cos(rotation), math.sin(rotation), 0],
                     [-math.sin(rotation), math.cos(rotation), 0],
@@ -1994,17 +2039,20 @@ class PageObject(DictionaryObject):
                                           ctm[1][0], ctm[1][1],
                                           ctm[2][0], ctm[2][1]], expand)
 
-    ##
-    # This is similar to mergePage, but the stream to be merged is translated
-    # and scaled by appling a transformation matrix.
-    #
-    # @param page2 An instance of {@link #PageObject PageObject} to be merged.
-    # @param scale The scaling factor
-    # @param tx    The translation on X axis
-    # @param tx    The translation on Y axis
-    # @param expand Whether the page should be expanded to fit the dimensions
-    #               of the page to be merged
     def mergeScaledTranslatedPage(self, page2, scale, tx, ty, expand=False):
+        """
+        This is similar to mergePage, but the stream to be merged is translated
+        and scaled by appling a transformation matrix.
+
+        :param PageObject page2: the page to be merged into this one. Should be
+            an instance of :class:`PageObject<PageObject>`.
+        :param float scale: The scaling factor
+        :param float tx: The translation on X axis
+        :param float ty: The translation on Y axis
+        :param bool expand: Whether the page should be expanded to fit the
+            dimensions of the page to be merged.
+        """
+
         translation = [[1, 0, 0],
                        [0, 1, 0],
                        [tx, ty, 1]]
@@ -2017,18 +2065,20 @@ class PageObject(DictionaryObject):
                                                  ctm[1][0], ctm[1][1],
                                                  ctm[2][0], ctm[2][1]], expand)
 
-    ##
-    # This is similar to mergePage, but the stream to be merged is translated,
-    # rotated and scaled by appling a transformation matrix.
-    #
-    # @param page2 An instance of {@link #PageObject PageObject} to be merged.
-    # @param tx    The translation on X axis
-    # @param ty    The translation on Y axis
-    # @param rotation The angle of the rotation, in degrees
-    # @param scale The scaling factor
-    # @param expand Whether the page should be expanded to fit the dimensions
-    #               of the page to be merged
     def mergeRotatedScaledTranslatedPage(self, page2, rotation, scale, tx, ty, expand=False):
+        """
+        This is similar to mergePage, but the stream to be merged is translated,
+        rotated and scaled by appling a transformation matrix.
+
+        :param PageObject page2: the page to be merged into this one. Should be
+            an instance of :class:`PageObject<PageObject>`.
+        :param float tx: The translation on X axis
+        :param float ty: The translation on Y axis
+        :param float rotation: The angle of the rotation, in degrees
+        :param float scale: The scaling factor
+        :param bool expand: Whether the page should be expanded to fit the
+            dimensions of the page to be merged.
+        """
         translation = [[1, 0, 0],
                        [0, 1, 0],
                        [tx, ty, 1]]
@@ -2052,6 +2102,12 @@ class PageObject(DictionaryObject):
     # @param ctm   A 6 elements tuple containing the operands of the
     #              transformation matrix
     def addTransformation(self, ctm):
+        """
+        Applies a transformation matrix to the page.
+
+        :param tuple ctm: A 6-element tuple containing the operands of the
+            transformation matrix.
+        """
         originalContent = self.getContents()
         if originalContent is not None:
             newContent = PageObject._addTransformationMatrix(
@@ -2059,13 +2115,14 @@ class PageObject(DictionaryObject):
             newContent = PageObject._pushPopGS(newContent, self.pdf)
             self[NameObject('/Contents')] = newContent
 
-    ##
-    # Scales a page by the given factors by appling a transformation
-    # matrix to its content and updating the page size.
-    #
-    # @param sx The scaling factor on horizontal axis
-    # @param sy The scaling factor on vertical axis
     def scale(self, sx, sy):
+        """
+        Scales a page by the given factors by appling a transformation
+        matrix to its content and updating the page size.
+
+        :param float sx: The scaling factor on horizontal axis.
+        :param float sy: The scaling factor on vertical axis.
+        """
         self.addTransformation([sx, 0,
                                 0,  sy,
                                 0,  0])
@@ -2075,53 +2132,54 @@ class PageObject(DictionaryObject):
             float(self.mediaBox.getUpperRight_x()) * sx,
             float(self.mediaBox.getUpperRight_y()) * sy])
 
-    ##
-    # Scales a page by the given factor by appling a transformation
-    # matrix to its content and updating the page size.
-    #
-    # @param factor The scaling factor
     def scaleBy(self, factor):
+        """
+        Scales a page by the given factor by appling a transformation
+        matrix to its content and updating the page size.
+
+        :param float factor: The scaling factor (for both X and Y axis).
+        """
         self.scale(factor, factor)
 
-    ##
-    # Scales a page to the specified dimentions by appling a
-    # transformation matrix to its content and updating the page size.
-    #
-    # @param width The new width
-    # @param height The new heigth
     def scaleTo(self, width, height):
+        """
+        Scales a page to the specified dimentions by appling a
+        transformation matrix to its content and updating the page size.
+
+        :param float width: The new width.
+        :param float height: The new heigth.
+        """
         sx = width / float(self.mediaBox.getUpperRight_x() -
                       self.mediaBox.getLowerLeft_x ())
         sy = height / float(self.mediaBox.getUpperRight_y() -
                        self.mediaBox.getLowerLeft_y ())
         self.scale(sx, sy)
 
-    ##
-    # Compresses the size of this page by joining all content streams and
-    # applying a FlateDecode filter.
-    # <p>
-    # Stability: Added in v1.6, will exist for all future v1.x releases.
-    # However, it is possible that this function will perform no action if
-    # content stream compression becomes "automatic" for some reason.
     def compressContentStreams(self):
+        """
+        Compresses the size of this page by joining all content streams and
+        applying a FlateDecode filter.
+
+        However, it is possible that this function will perform no action if
+        content stream compression becomes "automatic" for some reason.
+        """
         content = self.getContents()
         if content is not None:
             if not isinstance(content, ContentStream):
                 content = ContentStream(content, self.pdf)
             self[NameObject("/Contents")] = content.flateEncode()
 
-    ##
-    # Locate all text drawing commands, in the order they are provided in the
-    # content stream, and extract the text.  This works well for some PDF
-    # files, but poorly for others, depending on the generator used.  This will
-    # be refined in the future.  Do not rely on the order of text coming out of
-    # this function, as it will change if this function is made more
-    # sophisticated.
-    # <p>
-    # Stability: Added in v1.7, will exist for all future v1.x releases.  May
-    # be overhauled to provide more ordered text in the future.
-    # @return a unicode string object
     def extractText(self):
+        """
+        Locate all text drawing commands, in the order they are provided in the
+        content stream, and extract the text.  This works well for some PDF
+        files, but poorly for others, depending on the generator used.  This will
+        be refined in the future.  Do not rely on the order of text coming out of
+        this function, as it will change if this function is made more
+        sophisticated.
+
+        :return: a unicode string object.
+        """
         text = u_("")
         content = self["/Contents"].getObject()
         if not isinstance(content, ContentStream):
@@ -2152,47 +2210,41 @@ class PageObject(DictionaryObject):
                         text += i
         return text
 
-    ##
-    # A rectangle (RectangleObject), expressed in default user space units,
-    # defining the boundaries of the physical medium on which the page is
-    # intended to be displayed or printed.
-    # <p>
-    # Stability: Added in v1.4, will exist for all future v1.x releases.
     mediaBox = createRectangleAccessor("/MediaBox", ())
+    """
+    A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
+    defining the boundaries of the physical medium on which the page is
+    intended to be displayed or printed.
+    """
 
-    ##
-    # A rectangle (RectangleObject), expressed in default user space units,
-    # defining the visible region of default user space.  When the page is
-    # displayed or printed, its contents are to be clipped (cropped) to this
-    # rectangle and then imposed on the output medium in some
-    # implementation-defined manner.  Default value: same as MediaBox.
-    # <p>
-    # Stability: Added in v1.4, will exist for all future v1.x releases.
     cropBox = createRectangleAccessor("/CropBox", ("/MediaBox",))
+    """
+    A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
+    defining the visible region of default user space.  When the page is
+    displayed or printed, its contents are to be clipped (cropped) to this
+    rectangle and then imposed on the output medium in some
+    implementation-defined manner.  Default value: same as :attr:`mediaBox<mediaBox>`.
+    """
 
-    ##
-    # A rectangle (RectangleObject), expressed in default user space units,
-    # defining the region to which the contents of the page should be clipped
-    # when output in a production enviroment.
-    # <p>
-    # Stability: Added in v1.4, will exist for all future v1.x releases.
     bleedBox = createRectangleAccessor("/BleedBox", ("/CropBox", "/MediaBox"))
+    """
+    A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
+    defining the region to which the contents of the page should be clipped
+    when output in a production enviroment.
+    """
 
-    ##
-    # A rectangle (RectangleObject), expressed in default user space units,
-    # defining the intended dimensions of the finished page after trimming.
-    # <p>
-    # Stability: Added in v1.4, will exist for all future v1.x releases.
     trimBox = createRectangleAccessor("/TrimBox", ("/CropBox", "/MediaBox"))
+    """
+    A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
+    defining the intended dimensions of the finished page after trimming.
+    """
 
-    ##
-    # A rectangle (RectangleObject), expressed in default user space units,
-    # defining the extent of the page's meaningful content as intended by the
-    # page's creator.
-    # <p>
-    # Stability: Added in v1.4, will exist for all future v1.x releases.
     artBox = createRectangleAccessor("/ArtBox", ("/CropBox", "/MediaBox"))
-
+    """
+    A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
+    defining the extent of the page's meaningful content as intended by the
+    page's creator.
+    """
 
 class ContentStream(DecodedStreamObject):
     def __init__(self, stream, pdf):
@@ -2314,18 +2366,21 @@ class ContentStream(DecodedStreamObject):
 
     _data = property(_getData, _setData)
 
-
-
-##
-# A class representing the basic document metadata provided in a PDF File.
-# <p>
-# As of pyPdf v1.10, all text properties of the document metadata have two
-# properties, eg. author and author_raw.  The non-raw property will always
-# return a TextStringObject, making it ideal for a case where the metadata is
-# being displayed.  The raw property can sometimes return a ByteStringObject,
-# if pyPdf was unable to decode the string's text encoding; this requires
-# additional safety in the caller and therefore is not as commonly accessed.
 class DocumentInformation(DictionaryObject):
+    """
+    A class representing the basic document metadata provided in a PDF File.
+    This class is accessible through
+    :meth:`getDocumentInfo()<PyPDF2.PdfFileReader.getDocumentInfo()>`
+
+    All text properties of the document metadata have
+    *two* properties, eg. author and author_raw. The non-raw property will
+    always return a ``TextStringObject``, making it ideal for a case where
+    the metadata is being displayed. The raw property can sometimes return
+    a ``ByteStringObject``, if PyPDF2 was unable to decode the string's
+    text encoding; this requires additional safety in the caller and
+    therefore is not as commonly accessed.
+    """
+
     def __init__(self):
         DictionaryObject.__init__(self)
 
@@ -2335,50 +2390,44 @@ class DocumentInformation(DictionaryObject):
             return retval
         return None
 
-    ##
-    # Read-only property accessing the document's title.  Added in v1.6, will
-    # exist for all future v1.x releases.  Modified in v1.10 to always return a
-    # unicode string (TextStringObject).
-    # @return A unicode string, or None if the title is not provided.
     title = property(lambda self: self.getText("/Title"))
+    """Read-only property accessing the document's **title**.
+    Returns a unicode string (``TextStringObject``) or ``None``
+    if the title is not specified."""
     title_raw = property(lambda self: self.get("/Title"))
+    """The "raw" version of title; can return a ``ByteStringObject``."""
 
-    ##
-    # Read-only property accessing the document's author.  Added in v1.6, will
-    # exist for all future v1.x releases.  Modified in v1.10 to always return a
-    # unicode string (TextStringObject).
-    # @return A unicode string, or None if the author is not provided.
     author = property(lambda self: self.getText("/Author"))
+    """Read-only property accessing the document's **author**.
+    Returns a unicode string (``TextStringObject``) or ``None``
+    if the author is not specified."""
     author_raw = property(lambda self: self.get("/Author"))
+    """The "raw" version of author; can return a ``ByteStringObject``."""
 
-    ##
-    # Read-only property accessing the subject of the document.  Added in v1.6,
-    # will exist for all future v1.x releases.  Modified in v1.10 to always
-    # return a unicode string (TextStringObject).
-    # @return A unicode string, or None if the subject is not provided.
     subject = property(lambda self: self.getText("/Subject"))
+    """Read-only property accessing the document's **subject**.
+    Returns a unicode string (``TextStringObject``) or ``None``
+    if the subject is not specified."""
     subject_raw = property(lambda self: self.get("/Subject"))
+    """The "raw" version of subject; can return a ``ByteStringObject``."""
 
-    ##
-    # Read-only property accessing the document's creator.  If the document was
-    # converted to PDF from another format, the name of the application (for
-    # example, OpenOffice) that created the original document from which it was
-    # converted.  Added in v1.6, will exist for all future v1.x releases.
-    # Modified in v1.10 to always return a unicode string (TextStringObject).
-    # @return A unicode string, or None if the creator is not provided.
     creator = property(lambda self: self.getText("/Creator"))
+    """Read-only property accessing the document's **creator**. If the
+    document was converted to PDF from another format, this is the name of the
+    application (e.g. OpenOffice) that created the original document from
+    which it was converted. Returns a unicode string (``TextStringObject``)
+    or ``None`` if the creator is not specified."""
     creator_raw = property(lambda self: self.get("/Creator"))
+    """The "raw" version of creator; can return a ``ByteStringObject``."""
 
-    ##
-    # Read-only property accessing the document's producer.  If the document
-    # was converted to PDF from another format, the name of the application
-    # (for example, OSX Quartz) that converted it to PDF.  Added in v1.6, will
-    # exist for all future v1.x releases.  Modified in v1.10 to always return a
-    # unicode string (TextStringObject).
-    # @return A unicode string, or None if the producer is not provided.
     producer = property(lambda self: self.getText("/Producer"))
+    """Read-only property accessing the document's **producer**.
+    If the document was converted to PDF from another format, this is
+    the name of the application (for example, OSX Quartz) that converted
+    it to PDF. Returns a unicode string (``TextStringObject``)
+    or ``None`` if the producer is not specified."""
     producer_raw = property(lambda self: self.get("/Producer"))
-
+    """The "raw" version of producer; can return a ``ByteStringObject``."""
 
 def convertToInt(d, size):
     if size > 8:

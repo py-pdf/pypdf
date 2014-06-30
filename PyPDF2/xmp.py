@@ -50,9 +50,11 @@ iso8601 = re.compile("""
         )?
         """, re.VERBOSE)
 
-##
-# An object that represents Adobe XMP metadata.
 class XmpInformation(PdfObject):
+    """
+    An object that represents Adobe XMP metadata.
+    Usually accessed by :meth:`getXmpMetadata()<PyPDF2.PdfFileReader.getXmpMetadata>`
+    """
 
     def __init__(self, stream):
         self.stream = stream
@@ -195,137 +197,137 @@ class XmpInformation(PdfObject):
             return value
         return get
 
-    ##
-    # Contributors to the resource (other than the authors).  An unsorted
-    # array of names.
-    # <p>Stability: Added in v1.12, will exist for all future v1.x releases.
     dc_contributor = property(_getter_bag(DC_NAMESPACE, "contributor", _converter_string))
+    """
+    Contributors to the resource (other than the authors). An unsorted
+    array of names.
+    """
 
-    ##
-    # Text describing the extent or scope of the resource.
-    # <p>Stability: Added in v1.12, will exist for all future v1.x releases.
     dc_coverage = property(_getter_single(DC_NAMESPACE, "coverage", _converter_string))
+    """
+    Text describing the extent or scope of the resource.
+    """
 
-    ##
-    # A sorted array of names of the authors of the resource, listed in order
-    # of precedence.
-    # <p>Stability: Added in v1.12, will exist for all future v1.x releases.
     dc_creator = property(_getter_seq(DC_NAMESPACE, "creator", _converter_string))
+    """
+    A sorted array of names of the authors of the resource, listed in order
+    of precedence.
+    """
 
-    ##
-    # A sorted array of dates (datetime.datetime instances) of signifigance to
-    # the resource.  The dates and times are in UTC.
-    # <p>Stability: Added in v1.12, will exist for all future v1.x releases.
     dc_date = property(_getter_seq(DC_NAMESPACE, "date", _converter_date))
+    """
+    A sorted array of dates (datetime.datetime instances) of signifigance to
+    the resource.  The dates and times are in UTC.
+    """
 
-    ##
-    # A language-keyed dictionary of textual descriptions of the content of the
-    # resource.
-    # <p>Stability: Added in v1.12, will exist for all future v1.x releases.
     dc_description = property(_getter_langalt(DC_NAMESPACE, "description", _converter_string))
+    """
+    A language-keyed dictionary of textual descriptions of the content of the
+    resource.
+    """
 
-    ##
-    # The mime-type of the resource.
-    # <p>Stability: Added in v1.12, will exist for all future v1.x releases.
     dc_format = property(_getter_single(DC_NAMESPACE, "format", _converter_string))
+    """
+    The mime-type of the resource.
+    """
 
-    ##
-    # Unique identifier of the resource.
-    # <p>Stability: Added in v1.12, will exist for all future v1.x releases.
     dc_identifier = property(_getter_single(DC_NAMESPACE, "identifier", _converter_string))
+    """
+    Unique identifier of the resource.
+    """
 
-    ##
-    # An unordered array specifying the languages used in the resource.
-    # <p>Stability: Added in v1.12, will exist for all future v1.x releases.
     dc_language = property(_getter_bag(DC_NAMESPACE, "language", _converter_string))
+    """
+    An unordered array specifying the languages used in the resource.
+    """
 
-    ##
-    # An unordered array of publisher names.
-    # <p>Stability: Added in v1.12, will exist for all future v1.x releases.
     dc_publisher = property(_getter_bag(DC_NAMESPACE, "publisher", _converter_string))
+    """
+    An unordered array of publisher names.
+    """
 
-    ##
-    # An unordered array of text descriptions of relationships to other
-    # documents.
-    # <p>Stability: Added in v1.12, will exist for all future v1.x releases.
     dc_relation = property(_getter_bag(DC_NAMESPACE, "relation", _converter_string))
+    """
+    An unordered array of text descriptions of relationships to other
+    documents.
+    """
 
-    ##
-    # A language-keyed dictionary of textual descriptions of the rights the
-    # user has to this resource.
-    # <p>Stability: Added in v1.12, will exist for all future v1.x releases.
     dc_rights = property(_getter_langalt(DC_NAMESPACE, "rights", _converter_string))
+    """
+    A language-keyed dictionary of textual descriptions of the rights the
+    user has to this resource.
+    """
 
-    ##
-    # Unique identifier of the work from which this resource was derived.
-    # <p>Stability: Added in v1.12, will exist for all future v1.x releases.
     dc_source = property(_getter_single(DC_NAMESPACE, "source", _converter_string))
+    """
+    Unique identifier of the work from which this resource was derived.
+    """
 
-    ##
-    # An unordered array of descriptive phrases or keywrods that specify the
-    # topic of the content of the resource.
-    # <p>Stability: Added in v1.12, will exist for all future v1.x releases.
     dc_subject = property(_getter_bag(DC_NAMESPACE, "subject", _converter_string))
+    """
+    An unordered array of descriptive phrases or keywrods that specify the
+    topic of the content of the resource.
+    """
 
-    ##
-    # A language-keyed dictionary of the title of the resource.
-    # <p>Stability: Added in v1.12, will exist for all future v1.x releases.
     dc_title = property(_getter_langalt(DC_NAMESPACE, "title", _converter_string))
+    """
+    A language-keyed dictionary of the title of the resource.
+    """
 
-    ##
-    # An unordered array of textual descriptions of the document type.
-    # <p>Stability: Added in v1.12, will exist for all future v1.x releases.
     dc_type = property(_getter_bag(DC_NAMESPACE, "type", _converter_string))
+    """
+    An unordered array of textual descriptions of the document type.
+    """
 
-    ##
-    # An unformatted text string representing document keywords.
-    # <p>Stability: Added in v1.12, will exist for all future v1.x releases.
     pdf_keywords = property(_getter_single(PDF_NAMESPACE, "Keywords", _converter_string))
+    """
+    An unformatted text string representing document keywords.
+    """
 
-    ##
-    # The PDF file version, for example 1.0, 1.3.
-    # <p>Stability: Added in v1.12, will exist for all future v1.x releases.
     pdf_pdfversion = property(_getter_single(PDF_NAMESPACE, "PDFVersion", _converter_string))
+    """
+    The PDF file version, for example 1.0, 1.3.
+    """
 
-    ##
-    # The name of the tool that created the PDF document.
-    # <p>Stability: Added in v1.12, will exist for all future v1.x releases.
     pdf_producer = property(_getter_single(PDF_NAMESPACE, "Producer", _converter_string))
+    """
+    The name of the tool that created the PDF document.
+    """
 
-    ##
-    # The date and time the resource was originally created.  The date and
-    # time are returned as a UTC datetime.datetime object.
-    # <p>Stability: Added in v1.12, will exist for all future v1.x releases.
     xmp_createDate = property(_getter_single(XMP_NAMESPACE, "CreateDate", _converter_date))
-    
-    ##
-    # The date and time the resource was last modified.  The date and time
-    # are returned as a UTC datetime.datetime object.
-    # <p>Stability: Added in v1.12, will exist for all future v1.x releases.
+    """
+    The date and time the resource was originally created.  The date and
+    time are returned as a UTC datetime.datetime object.
+    """
+
     xmp_modifyDate = property(_getter_single(XMP_NAMESPACE, "ModifyDate", _converter_date))
+    """
+    The date and time the resource was last modified.  The date and time
+    are returned as a UTC datetime.datetime object.
+    """
 
-    ##
-    # The date and time that any metadata for this resource was last
-    # changed.  The date and time are returned as a UTC datetime.datetime
-    # object.
-    # <p>Stability: Added in v1.12, will exist for all future v1.x releases.
     xmp_metadataDate = property(_getter_single(XMP_NAMESPACE, "MetadataDate", _converter_date))
+    """
+    The date and time that any metadata for this resource was last
+    changed.  The date and time are returned as a UTC datetime.datetime
+    object.
+    """
 
-    ##
-    # The name of the first known tool used to create the resource.
-    # <p>Stability: Added in v1.12, will exist for all future v1.x releases.
     xmp_creatorTool = property(_getter_single(XMP_NAMESPACE, "CreatorTool", _converter_string))
+    """
+    The name of the first known tool used to create the resource.
+    """
 
-    ##
-    # The common identifier for all versions and renditions of this resource.
-    # <p>Stability: Added in v1.12, will exist for all future v1.x releases.
     xmpmm_documentId = property(_getter_single(XMPMM_NAMESPACE, "DocumentID", _converter_string))
+    """
+    The common identifier for all versions and renditions of this resource.
+    """
 
-    ##
-    # An identifier for a specific incarnation of a document, updated each
-    # time a file is saved.
-    # <p>Stability: Added in v1.12, will exist for all future v1.x releases.
     xmpmm_instanceId = property(_getter_single(XMPMM_NAMESPACE, "InstanceID", _converter_string))
+    """
+    An identifier for a specific incarnation of a document, updated each
+    time a file is saved.
+    """
 
     def custom_properties(self):
         if not hasattr(self, "_custom_properties"):
@@ -345,12 +347,13 @@ class XmpInformation(PdfObject):
                 self._custom_properties[key] = value
         return self._custom_properties
 
-    ##
-    # Retrieves custom metadata properties defined in the undocumented pdfx
-    # metadata schema.
-    # <p>Stability: Added in v1.12, will exist for all future v1.x releases.
-    # @return Returns a dictionary of key/value items for custom metadata
-    # properties.
     custom_properties = property(custom_properties)
+    """
+    Retrieves custom metadata properties defined in the undocumented pdfx
+    metadata schema.
+
+    :return: a dictionary of key/value items for custom metadata properties.
+    :rtype: dict
+    """
 
 
