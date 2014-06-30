@@ -79,8 +79,10 @@ class PageRange(object):
         else:
             self._slice = slice(*[int(g) if g else None 
                                   for g in m.group(4, 6, 8)])
-
-    __init__.__doc__ = __init__.__doc__.format(page_range_help=PAGE_RANGE_HELP)
+    
+    # Just formatting this when there is __doc__ for __init__
+    if __init__.__doc__:
+        __init__.__doc__ = __init__.__doc__.format(page_range_help=PAGE_RANGE_HELP)
         
     @staticmethod
     def valid(input):
