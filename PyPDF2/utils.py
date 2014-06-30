@@ -115,7 +115,6 @@ class ConvertFunctionsToVirtualList(object):
             indices = Xrange(*index.indices(len(self)))
             cls = type(self)
             return cls(indices.__len__, lambda idx: self[indices[idx]])
-
         if not isinstance(index, int_types):
             raise TypeError("sequence indices must be integers")
         len_self = len(self)
@@ -124,6 +123,7 @@ class ConvertFunctionsToVirtualList(object):
             index = len_self + index
         if index < 0 or index >= len_self:
             raise IndexError("sequence index out of range")
+        return self.getFunction(index)
 
 def RC4_encrypt(key, plaintext):
     S = [i for i in range(256)]
