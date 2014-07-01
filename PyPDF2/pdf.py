@@ -779,7 +779,7 @@ class PdfFileWriter(object):
     """Read and write property accessing the :meth:`getPageLayout()<PdfFileWriter.getPageLayout>`
     and :meth:`setPageLayout()<PdfFileWriter.setPageLayout>` methods."""
 
-    _valid_modes = ['/UseNone', '/UseOutlines', '/UseThumbs', '/UseFullscreen', '/UseOC', '/UseAttach']
+    _valid_modes = ['/UseNone', '/UseOutlines', '/UseThumbs', '/FullScreen', '/UseOC', '/UseAttachments']
 
     def getPageMode(self):
         """
@@ -802,12 +802,12 @@ class PdfFileWriter(object):
         :param str mode: The page mode to use.
         
         Valid modes are:
-            /UseNone        Do not show outlines or thumbnails panels
-            /UseOutlines    Show outlines (aka bookmarks) panel
-            /UseThumbs      Show page thumbnails panel
-            /UseFullscreen  Fullscreen view
-            /UseOC          Show Optional Content Group (OCG) panel
-            /UseAttach      Show attachments panel
+            /UseNone         Do not show outlines or thumbnails panels
+            /UseOutlines     Show outlines (aka bookmarks) panel
+            /UseThumbs       Show page thumbnails panel
+            /FullScreen      Fullscreen view
+            /UseOC           Show Optional Content Group (OCG) panel
+            /UseAttachments  Show attachments panel
         """
         if not isinstance(mode, NameObject):
             if mode not in self._valid_modes:
