@@ -278,12 +278,12 @@ class PdfFileMerger(object):
         :param str mode: The page mode to use.
 
         Valid modes are:
-            /UseNone        Do not show outlines or thumbnails panels
-            /UseOutlines    Show outlines (aka bookmarks) panel
-            /UseThumbs      Show page thumbnails panel
-            /UseFullscreen  Fullscreen view
-            /UseOC          Show Optional Content Group (OCG) panel
-            /UseAttach      Show attachments panel
+            /UseNone         Do not show outlines or thumbnails panels
+            /UseOutlines     Show outlines (aka bookmarks) panel
+            /UseThumbs       Show page thumbnails panel
+            /FullScreen      Fullscreen view
+            /UseOC           Show Optional Content Group (OCG) panel
+            /UseAttachments  Show attachments panel
         """
         self.output.setPageMode(mode)
 
