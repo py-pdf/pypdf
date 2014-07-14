@@ -422,10 +422,8 @@ class PdfFileWriter(object):
         return ref
 
     def getOutlineRoot(self):
-        root = self.getObject(self._root)
-
-        if '/Outlines' in root:
-            outline = root['/Outlines']
+        if '/Outlines' in self.root:
+            outline = self.root['/Outlines']
             idnum = self._objects.index(outline) + 1
             outlineRef = IndirectObject(idnum, 0, self)
             assert outlineRef.getObject() == outline
@@ -433,15 +431,13 @@ class PdfFileWriter(object):
             outline = TreeObject()
             outline.update({ })
             outlineRef = self._addObject(outline)
-            root[NameObject('/Outlines')] = outlineRef
+            self.root[NameObject('/Outlines')] = outlineRef
 
         return outline
 
     def getNamedDestRoot(self):
-        root = self.getObject(self._root)
-
-        if '/Names' in root and isinstance(root['/Names'], DictionaryObject):
-            names = root['/Names']
+        if '/Names' in self.root and isinstance(self.root['/Names'], DictionaryObject):
+            names = self.root['/Names']
             idnum = self._objects.index(names) + 1
             namesRef = IndirectObject(idnum, 0, self)
             assert namesRef.getObject() == names
@@ -465,7 +461,7 @@ class PdfFileWriter(object):
         else:
             names = DictionaryObject()
             namesRef = self._addObject(names)
-            root[NameObject('/Names')] = namesRef
+            self.root[NameObject('/Names')] = namesRef
             dests = DictionaryObject()
             destsRef = self._addObject(dests)
             names[NameObject('/Dests')] = destsRef
@@ -764,7 +760,7 @@ class PdfFileWriter(object):
         :rtype: str, None if not specified
         """
         try:
-            return self.getObject(self._root)['/PageLayout']
+            return self.root['/PageLayout']
         except KeyError:
             return None
 
@@ -787,8 +783,7 @@ class PdfFileWriter(object):
             if layout not in self._valid_layouts:
                 warnings.warn("Layout should be one of: {}".format(', '.join(self._valid_layouts)))
             layout = NameObject(layout)
-        root = self.getObject(self._root)
-        root.update({NameObject('/PageLayout'): layout})
+        self.root.update({NameObject('/PageLayout'): layout})
 
     pageLayout = property(getPageLayout, setPageLayout)
     """Read and write property accessing the :meth:`getPageLayout()<PdfFileWriter.getPageLayout>`
@@ -806,7 +801,7 @@ class PdfFileWriter(object):
         :rtype: str, None if not specified
         """
         try:
-            return self.getObject(self._root)['/PageMode']
+            return self.root['/PageMode']
         except KeyError:
             return None
 
@@ -828,8 +823,7 @@ class PdfFileWriter(object):
             if mode not in self._valid_modes:
                 warnings.warn("Mode should be one of: {}".format(', '.join(self._valid_modes)))
             mode = NameObject(mode)
-        root = self.getObject(self._root)
-        root.update({NameObject('/PageMode'): mode})
+        self.root.update({NameObject('/PageMode'): mode})
 
     pageMode = property(getPageMode, setPageMode)
     """Read and write property accessing the :meth:`getPageMode()<PdfFileWriter.getPageMode>`
