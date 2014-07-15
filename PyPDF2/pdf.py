@@ -107,7 +107,7 @@ class PdfFileWriter(object):
             NameObject("/Pages"): self._pages,
             })
         self._root = None
-        self.root = root
+        self._root_object = root
 
     def _addObject(self, obj):
         self._objects.append(obj)
@@ -217,7 +217,7 @@ class PdfFileWriter(object):
                 NameObject("/S"): NameObject("/JavaScript"),
                 NameObject("/JS"): NameObject("(%s)" % javascript)
                 })
-        self.root.update({
+        self._root_object.update({
                 NameObject("/OpenAction"): self._addObject(js)
                 })
 
@@ -280,8 +280,8 @@ class PdfFileWriter(object):
         debug = False
         import struct
 
-        if(not self._root):
-            self._root = self._addObject(self.root)
+        if not self._root:
+            self._root = self._addObject(self._root_object)
 
         externalReferenceMap = {}
 
