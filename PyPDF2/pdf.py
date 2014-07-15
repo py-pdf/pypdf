@@ -42,7 +42,6 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 __maintainer__ = "Phaseit, Inc."
 __maintainer_email = "PyPDF2@phaseit.net"
 
-
 import string
 import math
 import struct
@@ -959,6 +958,92 @@ class PdfFileReader(object):
     Read-only property that accesses the
     :meth:`getNamedDestinations()<PdfFileReader.getNamedDestinations>` function.
     """
+
+    # A select group of relevant field attributes. For the complete list,
+    # see section 8.6.2 of the PDF 1.7 reference.
+
+    def getFields(self, tree = None, retval = None, fileobj = None):
+        """
+        Extract form field data
+        """
+        fieldAttributes = {"/FT" : "Field Type", "/Parent" : "Parent",
+                       "/T" : "Field Name", "/TU" : "Alternate Field Name",
+                       "/TM" : "Mapping Name", "/Ff" : "Field Flags",
+                       "/V" : "Value", "/DV" : "Default Value"}
+
+        if retval == None:
+            retval = {}
+            catalog = self.trailer["/Root"]
+            # get the AcroForm tree
+            if "/AcroForm" in catalog:
+                tree = catalog["/AcroForm"]
+            else:
+                raise utils.PdfReadError("Could not locate interactive form data.")
+
+        if tree == None:
+            return retval
+
+        self._checkKids(tree, retval, fileobj)
+
+        for attr in fieldAttributes:
+            if attr in tree:
+                # Tree is a field
+                self._buildField(tree, retval, fileobj, fieldAttributes)
+                break
+
+        if "/Fields" in tree:
+            fields = tree["/Fields"]
+            for f in fields:
+                field = f.getObject()
+                self._buildField(field, retval, fileobj, fieldAttributes)
+
+        return retval
+
+    def _buildField(self, field, retval, fileobj, fieldAttributes):
+        self._checkKids(field, retval, fileobj)
+        try:
+            key = field["/TM"]
+        except KeyError:
+            try:
+                key = field["/T"]
+            except KeyError:
+                # Ignore no-name field for now
+                return
+        if fileobj:
+            self._writeField(fileobj, field, fieldAttributes)
+            fileobj.write("\n")
+
+        retval[key] = Field(field)
+
+    def _checkKids(self, tree, retval, fileobj):
+        if "/Kids" in tree:
+            # recurse down the tree
+            for kid in tree["/Kids"]:
+                self.getFields(kid.getObject(), retval, fileobj)
+
+    def _writeField(self, fileobj, field, fieldAttributes):
+        for attr in fieldAttributes:
+            self._writeFieldAttribute(fileobj, field, fieldAttributes[attr],
+                                      attr)
+
+    def _writeFieldAttribute(self, fileobj, field, attrName, attr):
+        try:
+            if attr == "/FT":
+                # Make the field type value more clear
+                types = {"/Btn":"Button", "/Tx":"Text", "/Ch": "Choice",
+                         "/Sig":"Signature"}
+                if field[attr] in types:
+                    fileobj.write(attrName + ": " + types[field[attr]] + "\n")
+            elif attr == "/Parent":
+                # Let's just write the name of the parent instead of
+                # a potentially long list of kids.
+                name = field[attr]["/T"]
+                fileobj.write(attrName + ": " + name + "\n")
+            else:
+                fileobj.write(attrName + ": " + str(field[attr]) + "\n")
+        except KeyError:
+            # Field attribute is N/A or unknown, so don't write anything
+            pass
 
     def getNamedDestinations(self, tree=None, retval=None):
         """

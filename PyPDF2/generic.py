@@ -936,6 +936,36 @@ class RectangleObject(ArrayObject):
     in (x,y) form.
     """
 
+class Field(TreeObject):
+    def __init__(self, data):
+        DictionaryObject.__init__(self)
+        attributes = ("/FT", "/Parent", "/Kids", "/T", "/TU", "/TM", "/Ff",
+                      "/V", "/DV", "/AA")
+        for attr in attributes:
+            try:
+                self[NameObject(attr)] = data[attr]
+            except KeyError:
+                pass
+
+    fieldType = property(lambda self: self.get("/FT"))
+
+    parent = property(lambda self: self.get("/Parent"))
+
+    kids = property(lambda self: self.get("/Kids"))
+
+    name = property(lambda self: self.get("/T"))
+
+    altName = property(lambda self: self.get("/TU"))
+
+    mappingName = property(lambda self: self.get("/TM"))
+
+    flags = property(lambda self: self.get("/Ff"))
+
+    value = property(lambda self: self.get("/V"))
+
+    defaultValue = property(lambda self: self.get("/DV"))
+
+    additionalActions = property(lambda self: self.get("/AA"))
 
 class Destination(TreeObject):
     """
