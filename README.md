@@ -10,6 +10,14 @@ as merge entire files together.
 Homepage  
 http://mstamy2.github.io/PyPDF2/
 
+##Installation
+
+To install the latest development version  
+
+	git clone git@github.com:mstamy2/PyPDF2.git
+	cd PyPDF2
+	sudo pip install .
+
 ##Examples
 
 Please see the `examples` folder
@@ -19,7 +27,7 @@ Please see the `examples` folder
 Documentation is available at  
 https://pythonhosted.org/PyPDF2/
 
-
 ##FAQ
+
 Please see  
 http://mstamy2.github.io/PyPDF2/FAQ.html
