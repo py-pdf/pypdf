@@ -1,4 +1,4 @@
-#PyPDF2 Sample Code Folder
+#PyPDF2 Examples
 
 This will contain demonstrations of the many features PyPDF2 is capable of. Example code should make it easy for users to know how to use all aspects of PyPDF2.  
 
