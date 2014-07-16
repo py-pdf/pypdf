@@ -12,7 +12,7 @@ http://mstamy2.github.io/PyPDF2/
 
 ##Examples
 
-Please see `sample code` folder
+Please see the `examples` folder
 
 ##Documentation
 
