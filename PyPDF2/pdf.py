@@ -510,7 +510,7 @@ class PdfFileWriter(object):
         return bookmarkRef
 
 
-    def addBookmark(self, title, pagenum, parent=None):
+    def addBookmark(self, title, pagenum, parent=None, color=None, bold=False, italic=False, fit='FitH'):
         """
         Add a bookmark to this PDF file.
 
@@ -518,11 +518,17 @@ class PdfFileWriter(object):
         :param int pagenum: Page number this bookmark will point to.
         :param parent: A reference to a parent bookmark to create nested
             bookmarks.
+        :param tuple color: Color of the bookmark as a red, green, blue tuple
+            from 0.0 to 1.0
+        :param bool bold: Bookmark is bold
+        :param bool italic: Bookmark is italic
+        :param str fit: The fit of the page, e.g. 'Fit' (whole page) or FitH
+            (fit horizontal)
         """
         pageRef = self.getObject(self._pages)['/Kids'][pagenum]
         action = DictionaryObject()
         action.update({
-            NameObject('/D') : ArrayObject([pageRef, NameObject('/FitH'), NumberObject(826)]),
+            NameObject('/D') : ArrayObject([pageRef, NameObject('/'+fit), NumberObject(826)]),
             NameObject('/S') : NameObject('/GoTo')
         })
         actionRef = self._addObject(action)
@@ -539,6 +545,17 @@ class PdfFileWriter(object):
             NameObject('/A'): actionRef,
             NameObject('/Title'): createStringObject(title),
         })
+
+        if color is not None:
+            bookmark.update({NameObject('/C'): ArrayObject([FloatObject(c) for c in color])})
+
+        format = 0
+        if italic:
+            format += 1
+        if bold:
+            format += 2
+        if format:
+            bookmark.update({NameObject('/F'): NumberObject(format)})
 
         bookmarkRef = self._addObject(bookmark)
 
