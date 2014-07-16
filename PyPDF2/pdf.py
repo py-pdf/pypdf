@@ -868,6 +868,7 @@ class PdfFileReader(object):
         self.flattenedPages = None
         self.resolvedObjects = {}
         self.xrefIndex = 0
+        self._pageId2Num = None # map page IndirectRef number to Page Number
         if hasattr(stream, 'mode') and 'b' not in stream.mode:
             warnings.warn("PdfFileReader stream/file object is not in binary mode. It may not be read correctly.", utils.PdfReadWarning)
         if type(stream) in (string_type, str):
@@ -1060,6 +1061,49 @@ class PdfFileReader(object):
             node = node["/Next"]
 
         return outlines
+
+    def getPageNumberByIndirect(self, indirectRef):
+        """Generate _pageId2Num"""
+        if self._pageId2Num is None:
+            id2num = {}
+            for i, x in enumerate(self.pages):
+                id2num[x.indirectRef.idnum] = i
+            self._pageId2Num = id2num
+
+        if isinstance(indirectRef, int):
+            idnum = indirectRef
+        else:
+            idnum = indirectRef.idnum
+
+        ret = self._pageId2Num.get(idnum, -1)
+        return ret
+
+    def getPageNumber(self, page):
+        """
+        Retrieve page number of a given PageObject
+
+        :param PageObject page: The page to get page number. Should be
+            an instance of :class:`PageObject<PyPDF2.pdf.PageObject>`
+        :return: the page number or -1 if page not found
+        :rtype: int
+        """
+        indirectRef = page.indirectRef
+        ret = self.getPageNumberByIndirect(indirectRef)
+        return ret
+
+    def getDestinationPageNumber(self, destination):
+        """
+        Retrieve page number of a given Destination object
+
+        :param Destination destination: The destination to get page number.
+             Should be an instance of
+             :class:`Destination<PyPDF2.pdf.Destination>`
+        :return: the page number or -1 if page not found
+        :rtype: int
+        """
+        indirectRef = destination.page
+        ret = self.getPageNumberByIndirect(indirectRef)
+        return ret
 
     def _buildDestination(self, title, array):
         page, typ = array[0:2]
