@@ -1,14 +1,13 @@
 #PyPDF2
 
-PyPDF2 is a pure-python PDF library capable of
-splitting, merging together, cropping, and transforming
-the pages of PDF files. It can also add custom
-data, viewing options, and passwords to PDF files.
-It can retrieve text and metadata from PDFs as well
-as merge entire files together.
+PyPDF2 is a PDF manipulation library written entirely in Python that allows you to:
 
-Homepage  
-http://mstamy2.github.io/PyPDF2/
+* Crop pages of pdf files
+* Extract meta data from a file
+* Extract text from a file
+* Merge multiple files into one file
+* Programmatically generate pdf files
+* Add password protection to a pdf file
 
 ##Installation
 
@@ -22,12 +21,14 @@ To install the latest development version
 
 Please see the `examples` folder
 
+##Website
+
+http://mstamy2.github.io/PyPDF2/
+
 ##Documentation
 
-Documentation is available at  
 https://pythonhosted.org/PyPDF2/
 
 ##FAQ
 
-Please see  
 http://mstamy2.github.io/PyPDF2/FAQ.html
