@@ -48,21 +48,9 @@ import codecs
 def readObject(stream, pdf):
     tok = stream.read(1)
     stream.seek(-1, 1) # reset to start
-    if tok == b_('t') or tok == b_('f'):
-        # boolean object
-        return BooleanObject.readFromStream(stream)
-    elif tok == b_('('):
-        # string object
-        return readStringFromStream(stream)
-    elif tok == b_('/'):
+    if tok == b_('/'):
         # name object
         return NameObject.readFromStream(stream, pdf)
-    elif tok == b_('['):
-        # array object
-        return ArrayObject.readFromStream(stream, pdf)
-    elif tok == b_('n'):
-        # null object
-        return NullObject.readFromStream(stream)
     elif tok == b_('<'):
         # hexadecimal string OR dictionary
         peek = stream.read(2)
@@ -71,6 +59,18 @@ def readObject(stream, pdf):
             return DictionaryObject.readFromStream(stream, pdf)
         else:
             return readHexStringFromStream(stream)
+    elif tok == b_('['):
+        # array object
+        return ArrayObject.readFromStream(stream, pdf)
+    elif tok == b_('t') or tok == b_('f'):
+        # boolean object
+        return BooleanObject.readFromStream(stream)
+    elif tok == b_('('):
+        # string object
+        return readStringFromStream(stream)
+    elif tok == b_('n'):
+        # null object
+        return NullObject.readFromStream(stream)
     elif tok == b_('%'):
         # comment
         while tok not in (b_('\r'), b_('\n')):
