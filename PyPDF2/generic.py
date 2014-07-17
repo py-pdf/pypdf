@@ -240,6 +240,8 @@ class FloatObject(decimal.Decimal, PdfObject):
 
 
 class NumberObject(int, PdfObject):
+    NumberPattern = re.compile(b_('[^+-.0-9]'))
+    ByteDot = b_(".")
 
     def __new__(cls, value):
         return int.__new__(cls, value)
@@ -253,12 +255,15 @@ class NumberObject(int, PdfObject):
     def readFromStream(stream):
         num = b_("")
         while True:
-            tok = stream.read(1)
-            if tok != b_('+') and tok != b_('-') and tok != b_('.') and not tok.isdigit():
-                stream.seek(-1, 1)
+            tok = stream.read(16)
+            m = NumberObject.NumberPattern.search(tok)
+            if m is not None:
+                stream.seek(m.start() - len(tok), 1)
+                num += tok[:m.start()]
                 break
+
             num += tok
-        if num.find(b_(".")) != -1:
+        if num.find(NumberObject.ByteDot) != -1:
             return FloatObject(num)
         else:
             return NumberObject(num)
