@@ -45,13 +45,17 @@ import decimal
 import codecs
 #import debugging
 
+ObjectPrefix = b_('/<[tf(n%')
+NumberSigns = b_('+-')
+IndirectPattern = re.compile(b_(r"(\d+)\s+(\d+)\s+R[^a-zA-Z]"))
 def readObject(stream, pdf):
     tok = stream.read(1)
     stream.seek(-1, 1) # reset to start
-    if tok == b_('/'):
+    idx = ObjectPrefix.find(tok)
+    if idx == 0:
         # name object
         return NameObject.readFromStream(stream, pdf)
-    elif tok == b_('<'):
+    elif idx == 1:
         # hexadecimal string OR dictionary
         peek = stream.read(2)
         stream.seek(-2, 1) # reset to start
@@ -59,19 +63,19 @@ def readObject(stream, pdf):
             return DictionaryObject.readFromStream(stream, pdf)
         else:
             return readHexStringFromStream(stream)
-    elif tok == b_('['):
+    elif idx == 2:
         # array object
         return ArrayObject.readFromStream(stream, pdf)
-    elif tok == b_('t') or tok == b_('f'):
+    elif idx == 3 or idx == 4:
         # boolean object
         return BooleanObject.readFromStream(stream)
-    elif tok == b_('('):
+    elif idx == 5:
         # string object
         return readStringFromStream(stream)
-    elif tok == b_('n'):
+    elif idx == 6:
         # null object
         return NullObject.readFromStream(stream)
-    elif tok == b_('%'):
+    elif idx == 7:
         # comment
         while tok not in (b_('\r'), b_('\n')):
             tok = stream.read(1)
@@ -80,12 +84,12 @@ def readObject(stream, pdf):
         return readObject(stream, pdf)
     else:
         # number object OR indirect reference
-        if tok == b_('+') or tok == b_('-'):
+        if tok in NumberSigns:
             # number
             return NumberObject.readFromStream(stream)
         peek = stream.read(20)
         stream.seek(-len(peek), 1) # reset to start
-        if re.match(b_(r"(\d+)\s+(\d+)\s+R[^a-zA-Z]"), peek) != None:
+        if IndirectPattern.match(peek) != None:
             return IndirectObject.readFromStream(stream, pdf)
         else:
             return NumberObject.readFromStream(stream)
