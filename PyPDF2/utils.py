@@ -78,7 +78,7 @@ def readNonWhitespace(stream):
     """
     Finds and reads the next non-whitespace character (ignores whitespace).
     """
-    tok = b_(' ')
+    tok = WHITESPACES[0]
     while tok in WHITESPACES:
         tok = stream.read(1)
     return tok
@@ -88,7 +88,7 @@ def skipOverWhitespace(stream):
     Similar to readNonWhitespace, but returns a Boolean if more than
     one whitespace character was read.
     """
-    tok = b_(' ')
+    tok = WHITESPACES[0]
     cnt = 0;
     while tok in WHITESPACES:
         tok = stream.read(1)
