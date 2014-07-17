@@ -175,15 +175,22 @@ class PdfStreamError(PdfReadError):
     pass
 
 
-def b_(s):
-    if sys.version_info[0] < 3:
+if sys.version_info[0] < 3:
+    def b_(s):
         return s
-    else:
+else:
+    B_CACHE = {}
+    def b_(s):
+        bc = B_CACHE
+        if s in bc:
+            return bc[s]
         if type(s) == bytes:
             return s
         else:
-            return s.encode('latin-1')
-
+            r = s.encode('latin-1')
+            if len(s) < 2:
+                bc[s] = r
+            return r
 def u_(s):
     if sys.version_info[0] < 3:
         return unicode(s, 'unicode_escape')
