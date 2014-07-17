@@ -227,19 +227,19 @@ class FloatObject(decimal.Decimal, PdfObject):
         else:
             # XXX: this adds useless extraneous zeros.
             return "%.5f" % self
-            
+
     def as_numeric(self):
         return float(b_(repr(self)))
-        
+
     def writeToStream(self, stream, encryption_key):
         stream.write(b_(repr(self)))
 
 
 class NumberObject(int, PdfObject):
-    
+
     def __new__(cls, value):
         return int.__new__(cls, value)
-            
+
     def as_numeric(self):
         return int(b_(repr(self)))
 
@@ -447,7 +447,8 @@ class TextStringObject(utils.string_type, PdfObject):
 
 
 class NameObject(str, PdfObject):
-    delimiterCharacters = tuple(b_(c) for c in "()<>[]{}/%")
+    delimiterPattern = re.compile(b_("\s+|[()<>[\]{}/%]"))
+    surfix = b_("/")
 
     def writeToStream(self, stream, encryption_key):
         stream.write(b_(self))
@@ -456,15 +457,17 @@ class NameObject(str, PdfObject):
         debug = False
         if debug: print((stream.tell()))
         name = stream.read(1)
-        if name != b_("/"):
+        if name != NameObject.surfix:
             raise utils.PdfReadError("name read error")
         while True:
-            tok = stream.read(1)
+            tok = stream.read(16)
             if not tok:
                 # stream has truncated prematurely
                 raise PdfStreamError("Stream has ended unexpectedly")
-            if tok.isspace() or tok in NameObject.delimiterCharacters:
-                stream.seek(-1, 1)
+            m = NameObject.delimiterPattern.search(tok)
+            if m is not None:
+                name += tok[:m.start()]
+                stream.seek(m.start()-len(tok), 1)
                 break
             name += tok
         if debug: print(name)
@@ -478,7 +481,7 @@ class NameObject(str, PdfObject):
                 return NameObject(name)
             else:
                 raise utils.PdfReadError("Illegal character in Name Object")
-        
+
     readFromStream = staticmethod(readFromStream)
 
 
@@ -631,29 +634,29 @@ class DictionaryObject(dict, PdfObject):
 class TreeObject(DictionaryObject):
     def __init__(self):
         DictionaryObject.__init__(self)
-        
+
     def hasChildren(self):
         return '/First' in self
-    
+
     def __iter__(self):
         return self.children()
-        
+
     def children(self):
         if not self.hasChildren():
             raise StopIteration
-            
+
         child = self['/First']
         while True:
             yield child
             if child == self['/Last']:
                 raise StopIteration
             child = child['/Next']
-        
+
     def addChild(self, child, pdf):
         childObj = child.getObject()
         child = pdf.getReference(childObj)
         assert isinstance(child, IndirectObject)
-        
+
         if '/First' not in self:
             self[NameObject('/First')] = child
             self[NameObject('/Count')] = NumberObject(0)
@@ -673,22 +676,22 @@ class TreeObject(DictionaryObject):
         parentRef = pdf.getReference(self)
         assert isinstance(parentRef, IndirectObject)
         childObj[NameObject('/Parent')] = parentRef
-        
+
     def removeChild(self, child):
         childObj = child.getObject()
-        
+
         if NameObject('/Parent') not in childObj:
             raise ValueError("Removed child does not appear to be a tree item")
         elif childObj[NameObject('/Parent')] != self:
             raise ValueError("Removed child is not a member of this tree")
-        
+
         found = False
         prevRef = None
         prev = None
         curRef = self[NameObject('/First')]
         cur = curRef.getObject()
         lastRef = self[NameObject('/Last')]
-        last = lastRef.getObject() 
+        last = lastRef.getObject()
         while cur != None:
             if cur == childObj:
                 if prev == None:
@@ -699,7 +702,7 @@ class TreeObject(DictionaryObject):
                         del next[NameObject('/Prev')]
                         self[NameObject('/First')] = nextRef
                         self[NameObject('/Count')] = self[NameObject('/Count')] - 1
-                        
+
                     else:
                         # Removing only tree node
                         assert self[NameObject('/Count')] == 1
@@ -722,9 +725,9 @@ class TreeObject(DictionaryObject):
                         self[NameObject('/Last')] = prevRef
                         self[NameObject('/Count')] = self[NameObject('/Count')] - 1
                 found = True
-                break        
-                    
-            
+                break
+
+
             prevRef = curRef
             prev = cur
             if NameObject('/Next') in cur:
@@ -733,10 +736,10 @@ class TreeObject(DictionaryObject):
             else:
                 curRef = None
                 cur = None
-       
+
         if not found:
             raise ValueError("Removal couldn't find item in tree")
-       
+
         del childObj[NameObject('/Parent')]
         if NameObject('/Next') in childObj:
             del childObj[NameObject('/Next')]
@@ -825,7 +828,7 @@ class EncodedStreamObject(StreamObject):
         else:
             # create decoded object
             decoded = DecodedStreamObject()
-            
+
             decoded._data = filters.decodeStreamData(self)
             for key, value in list(self.items()):
                 if not key in ("/Length", "/Filter", "/DecodeParms"):
@@ -875,7 +878,7 @@ class RectangleObject(ArrayObject):
 
     def getUpperLeft_x(self):
         return self.getLowerLeft_x()
-    
+
     def getUpperLeft_y(self):
         return self.getUpperRight_y()
 
@@ -963,7 +966,7 @@ class Destination(TreeObject):
         self[NameObject("/Title")] = title
         self[NameObject("/Page")] = page
         self[NameObject("/Type")] = typ
-        
+
         # from table 8.2 of the PDF 1.6 reference.
         if typ == "/XYZ":
             (self[NameObject("/Left")], self[NameObject("/Top")],
@@ -979,10 +982,10 @@ class Destination(TreeObject):
             pass
         else:
             raise utils.PdfReadError("Unknown Destination Type: %r" % typ)
-            
+
     def getDestArray(self):
         return ArrayObject([self.raw_get('/Page'), self['/Type']] + [self[x] for x in ['/Left', '/Bottom', '/Right', '/Top', '/Zoom'] if x in self])
-        
+
     def writeToStream(self, stream, encryption_key):
         stream.write(b_("<<\n"))
         key = NameObject('/D')
@@ -996,10 +999,10 @@ class Destination(TreeObject):
         stream.write(b_(" "))
         value = NameObject("/GoTo")
         value.writeToStream(stream, encryption_key)
-        
+
         stream.write(b_("\n"))
         stream.write(b_(">>"))
-         
+
     title = property(lambda self: self.get("/Title"))
     """
     Read-only property accessing the destination title.
@@ -1055,7 +1058,7 @@ class Destination(TreeObject):
 
     :rtype: int, or ``None`` if not available.
     """
-        
+
 
 class Bookmark(Destination):
     def writeToStream(self, stream, encryption_key):
@@ -1073,8 +1076,8 @@ class Bookmark(Destination):
         value.writeToStream(stream, encryption_key)
         stream.write(b_("\n"))
         stream.write(b_(">>"))
-        
- 
+
+
 def encode_pdfdocencoding(unicode_string):
     retval = b_('')
     for c in unicode_string:
