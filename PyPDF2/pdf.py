@@ -990,13 +990,21 @@ class PdfFileReader(object):
 
     def getFields(self, tree = None, retval = None, fileobj = None):
         """
-        Extract form field data
+        Extracts field data if this PDF contains interactive form fields.
+        The *tree* and *retval* parameters are for recursive use.
+
+        :param fileobj: A file object (usually a text file) to write
+            a report to on all interactive form fields found.
+        :return: A dictionary where each key is a field name, and each
+            value is a :class:`Field<PyPDF2.generic.Field>` object. By
+            default, the mapping name is used for keys.
+        :rtype: dict
+        :raises PdfReadError: if failed to find form data.
         """
         fieldAttributes = {"/FT" : "Field Type", "/Parent" : "Parent",
                        "/T" : "Field Name", "/TU" : "Alternate Field Name",
                        "/TM" : "Mapping Name", "/Ff" : "Field Flags",
                        "/V" : "Value", "/DV" : "Default Value"}
-
         if retval == None:
             retval = {}
             catalog = self.trailer["/Root"]
@@ -1005,12 +1013,10 @@ class PdfFileReader(object):
                 tree = catalog["/AcroForm"]
             else:
                 raise utils.PdfReadError("Could not locate interactive form data.")
-
         if tree == None:
             return retval
 
         self._checkKids(tree, retval, fileobj)
-
         for attr in fieldAttributes:
             if attr in tree:
                 # Tree is a field
@@ -1038,7 +1044,6 @@ class PdfFileReader(object):
         if fileobj:
             self._writeField(fileobj, field, fieldAttributes)
             fileobj.write("\n")
-
         retval[key] = Field(field)
 
     def _checkKids(self, tree, retval, fileobj):
@@ -1048,28 +1053,28 @@ class PdfFileReader(object):
                 self.getFields(kid.getObject(), retval, fileobj)
 
     def _writeField(self, fileobj, field, fieldAttributes):
-        for attr in fieldAttributes:
-            self._writeFieldAttribute(fileobj, field, fieldAttributes[attr],
-                                      attr)
-
-    def _writeFieldAttribute(self, fileobj, field, attrName, attr):
-        try:
-            if attr == "/FT":
-                # Make the field type value more clear
-                types = {"/Btn":"Button", "/Tx":"Text", "/Ch": "Choice",
-                         "/Sig":"Signature"}
-                if field[attr] in types:
-                    fileobj.write(attrName + ": " + types[field[attr]] + "\n")
-            elif attr == "/Parent":
-                # Let's just write the name of the parent instead of
-                # a potentially long list of kids.
-                name = field[attr]["/T"]
-                fileobj.write(attrName + ": " + name + "\n")
-            else:
-                fileobj.write(attrName + ": " + str(field[attr]) + "\n")
-        except KeyError:
-            # Field attribute is N/A or unknown, so don't write anything
-            pass
+        order = ["/TM", "/T", "/FT", "/Parent", "/TU", "/Ff", "/V", "/DV"]
+        for attr in order:
+            attrName = fieldAttributes[attr]
+            try:
+                if attr == "/FT":
+                    # Make the field type value more clear
+                    types = {"/Btn":"Button", "/Tx":"Text", "/Ch": "Choice",
+                             "/Sig":"Signature"}
+                    if field[attr] in types:
+                        fileobj.write(attrName + ": " + types[field[attr]] + "\n")
+                elif attr == "/Parent":
+                    # Let's just write the name of the parent
+                    try:
+                        name = field["/Parent"]["/TM"]
+                    except KeyError:
+                        name = field["/Parent"]["/T"]
+                    fileobj.write(attrName + ": " + name + "\n")
+                else:
+                    fileobj.write(attrName + ": " + str(field[attr]) + "\n")
+            except KeyError:
+                # Field attribute is N/A or unknown, so don't write anything
+                pass
 
     def getNamedDestinations(self, tree=None, retval=None):
         """

@@ -937,6 +937,10 @@ class RectangleObject(ArrayObject):
     """
 
 class Field(TreeObject):
+    """
+    A class representing a field dictionary. This class is accessed through
+    :meth:`getFields()<PyPDF2.PdfFileReader.getFields>`
+    """
     def __init__(self, data):
         DictionaryObject.__init__(self)
         attributes = ("/FT", "/Parent", "/Kids", "/T", "/TU", "/TM", "/Ff",
@@ -948,24 +952,60 @@ class Field(TreeObject):
                 pass
 
     fieldType = property(lambda self: self.get("/FT"))
+    """
+    Read-only property accessing the type of this field.
+    """
 
     parent = property(lambda self: self.get("/Parent"))
+    """
+    Read-only property accessing the parent of this field.
+    """
 
     kids = property(lambda self: self.get("/Kids"))
+    """
+    Read-only property accessing the kids of this field.
+    """
 
     name = property(lambda self: self.get("/T"))
+    """
+    Read-only property accessing the name of this field.
+    """
 
     altName = property(lambda self: self.get("/TU"))
+    """
+    Read-only property accessing the alternate name of this field.
+    """
 
     mappingName = property(lambda self: self.get("/TM"))
+    """
+    Read-only property accessing the mapping name of this field. This
+    name is used by PyPDF2 as a key in the dictionary returned by
+    :meth:`getFields()<PyPDF2.PdfFileReader.getFields>`
+    """
 
     flags = property(lambda self: self.get("/Ff"))
+    """
+    Read-only property accessing the field flags, specifying various
+    characteristics of the field (see Table 8.70 of the PDF 1.7 reference).
+    """
 
     value = property(lambda self: self.get("/V"))
+    """
+    Read-only property accessing the value of this field. Format
+    varies based on field type.
+    """
 
     defaultValue = property(lambda self: self.get("/DV"))
+    """
+    Read-only property accessing the default value of this field.
+    """
 
     additionalActions = property(lambda self: self.get("/AA"))
+    """
+    Read-only property accessing the additional actions dictionary.
+    This dictionary defines the field's behavior in response to trigger events.
+    See Section 8.5.2 of the PDF 1.7 reference.
+    """
 
 class Destination(TreeObject):
     """
