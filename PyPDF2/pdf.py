@@ -2247,7 +2247,22 @@ class PageObject(DictionaryObject):
             float(self.mediaBox.getLowerLeft_y()) * sy,
             float(self.mediaBox.getUpperRight_x()) * sx,
             float(self.mediaBox.getUpperRight_y()) * sy])
-
+        if "/VP" in self:
+            viewport = self["/VP"]
+            if isinstance(viewport, ArrayObject):
+                bbox = viewport[0]["/BBox"]
+            else:
+                bbox = viewport["/BBox"]
+            scaled_bbox = RectangleObject([
+                float(bbox[0]) * sx,
+                float(bbox[1]) * sy,
+                float(bbox[2]) * sx,
+                float(bbox[3]) * sy])
+            if isinstance(viewport, ArrayObject):
+                self[NameObject("/VP")][NumberObject(0)][NameObject("/BBox")] = scaled_bbox
+            else:
+                self[NameObject("/VP")][NameObject("/BBox")] = scaled_bbox
+ 
     def scaleBy(self, factor):
         """
         Scales a page by the given factor by appling a transformation
