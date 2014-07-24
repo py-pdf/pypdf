@@ -1761,7 +1761,7 @@ class PdfFileReader(object):
     def _authenticateUserPassword(self, password):
         encrypt = self.trailer['/Encrypt'].getObject()
         rev = encrypt['/R'].getObject()
-        owner_entry = encrypt['/O'].getObject().original_bytes
+        owner_entry = encrypt['/O'].getObject()
         p_entry = encrypt['/P'].getObject()
         id_entry = self.trailer['/ID'].getObject()
         id1_entry = id_entry[0].getObject()
