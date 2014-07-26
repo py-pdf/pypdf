@@ -2262,7 +2262,7 @@ class PageObject(DictionaryObject):
                 self[NameObject("/VP")][NumberObject(0)][NameObject("/BBox")] = scaled_bbox
             else:
                 self[NameObject("/VP")][NameObject("/BBox")] = scaled_bbox
- 
+
     def scaleBy(self, factor):
         """
         Scales a page by the given factor by appling a transformation
@@ -2405,11 +2405,14 @@ class ContentStream(DecodedStreamObject):
             if peek.isalpha() or peek == "'" or peek == '"':
                 operator = b_("")
                 while True:
-                    tok = stream.read(1)
-                    if tok.isspace() or tok in NameObject.delimiterCharacters:
-                        stream.seek(-1, 1)
-                        break
-                    elif tok == b_(''):
+                    tok = stream.read(16)
+                    if not tok:
+                        # stream has truncated prematurely
+                        raise PdfStreamError("Stream has ended unexpectedly")
+                    m = NameObject.delimiterPattern.search(tok)
+                    if m is not None:
+                        operator += tok[:m.start()]
+                        stream.seek(m.start()-len(tok), 1)
                         break
                     operator += tok
                 if operator == "BI":
