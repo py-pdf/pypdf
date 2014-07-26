@@ -468,17 +468,7 @@ class NameObject(str, PdfObject):
         name = stream.read(1)
         if name != NameObject.surfix:
             raise utils.PdfReadError("name read error")
-        while True:
-            tok = stream.read(16)
-            if not tok:
-                # stream has truncated prematurely
-                raise PdfStreamError("Stream has ended unexpectedly")
-            m = NameObject.delimiterPattern.search(tok)
-            if m is not None:
-                name += tok[:m.start()]
-                stream.seek(m.start()-len(tok), 1)
-                break
-            name += tok
+        name += utils.readUntilRegex(stream, NameObject.delimiterPattern)
         if debug: print(name)
         try:
             return NameObject(name.decode('utf-8'))

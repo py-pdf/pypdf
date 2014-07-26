@@ -102,6 +102,24 @@ def skipOverComment(stream):
         while tok not in (b_('\n'), b_('\r')):
             tok = stream.read(1)
 
+def readUntilRegex(stream, regex):
+    """
+    Reads until the regular expression pattern matched (ignore the match)
+    """
+    name = b_('')
+    while True:
+        tok = stream.read(16)
+        if not tok:
+            # stream has truncated prematurely
+            raise PdfStreamError("Stream has ended unexpectedly")
+        m = regex.search(tok)
+        if m is not None:
+            name += tok[:m.start()]
+            stream.seek(m.start()-len(tok), 1)
+            break
+        name += tok
+    return name
+
 class ConvertFunctionsToVirtualList(object):
     def __init__(self, lengthFunction, getFunction):
         self.lengthFunction = lengthFunction
