@@ -42,7 +42,6 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 __maintainer__ = "Phaseit, Inc."
 __maintainer_email = "PyPDF2@phaseit.net"
 
-
 import string
 import math
 import struct
@@ -107,7 +106,7 @@ class PdfFileWriter(object):
             NameObject("/Pages"): self._pages,
             })
         self._root = None
-        self.root = root
+        self._root_object = root
 
     def _addObject(self, obj):
         self._objects.append(obj)
@@ -217,7 +216,7 @@ class PdfFileWriter(object):
                 NameObject("/S"): NameObject("/JavaScript"),
                 NameObject("/JS"): NameObject("(%s)" % javascript)
                 })
-        self.root.update({
+        self._root_object.update({
                 NameObject("/OpenAction"): self._addObject(js)
                 })
 
@@ -280,8 +279,8 @@ class PdfFileWriter(object):
         debug = False
         import struct
 
-        if(not self._root):
-            self._root = self._addObject(self.root)
+        if not self._root:
+            self._root = self._addObject(self._root_object)
 
         externalReferenceMap = {}
 
@@ -422,10 +421,8 @@ class PdfFileWriter(object):
         return ref
 
     def getOutlineRoot(self):
-        root = self.getObject(self._root)
-
-        if '/Outlines' in root:
-            outline = root['/Outlines']
+        if '/Outlines' in self._root_object:
+            outline = self._root_object['/Outlines']
             idnum = self._objects.index(outline) + 1
             outlineRef = IndirectObject(idnum, 0, self)
             assert outlineRef.getObject() == outline
@@ -433,15 +430,13 @@ class PdfFileWriter(object):
             outline = TreeObject()
             outline.update({ })
             outlineRef = self._addObject(outline)
-            root[NameObject('/Outlines')] = outlineRef
+            self._root_object[NameObject('/Outlines')] = outlineRef
 
         return outline
 
     def getNamedDestRoot(self):
-        root = self.getObject(self._root)
-
-        if '/Names' in root and isinstance(root['/Names'], DictionaryObject):
-            names = root['/Names']
+        if '/Names' in self._root_object and isinstance(self._root_object['/Names'], DictionaryObject):
+            names = self._root_object['/Names']
             idnum = self._objects.index(names) + 1
             namesRef = IndirectObject(idnum, 0, self)
             assert namesRef.getObject() == names
@@ -465,7 +460,7 @@ class PdfFileWriter(object):
         else:
             names = DictionaryObject()
             namesRef = self._addObject(names)
-            root[NameObject('/Names')] = namesRef
+            self._root_object[NameObject('/Names')] = namesRef
             dests = DictionaryObject()
             destsRef = self._addObject(dests)
             names[NameObject('/Dests')] = destsRef
@@ -514,7 +509,7 @@ class PdfFileWriter(object):
         return bookmarkRef
 
 
-    def addBookmark(self, title, pagenum, parent=None):
+    def addBookmark(self, title, pagenum, parent=None, color=None, bold=False, italic=False, fit='FitH'):
         """
         Add a bookmark to this PDF file.
 
@@ -522,11 +517,17 @@ class PdfFileWriter(object):
         :param int pagenum: Page number this bookmark will point to.
         :param parent: A reference to a parent bookmark to create nested
             bookmarks.
+        :param tuple color: Color of the bookmark as a red, green, blue tuple
+            from 0.0 to 1.0
+        :param bool bold: Bookmark is bold
+        :param bool italic: Bookmark is italic
+        :param str fit: The fit of the page, e.g. 'Fit' (whole page) or FitH
+            (fit horizontal)
         """
         pageRef = self.getObject(self._pages)['/Kids'][pagenum]
         action = DictionaryObject()
         action.update({
-            NameObject('/D') : ArrayObject([pageRef, NameObject('/FitH'), NumberObject(826)]),
+            NameObject('/D') : ArrayObject([pageRef, NameObject('/'+fit), NumberObject(826)]),
             NameObject('/S') : NameObject('/GoTo')
         })
         actionRef = self._addObject(action)
@@ -543,6 +544,17 @@ class PdfFileWriter(object):
             NameObject('/A'): actionRef,
             NameObject('/Title'): createStringObject(title),
         })
+
+        if color is not None:
+            bookmark.update({NameObject('/C'): ArrayObject([FloatObject(c) for c in color])})
+
+        format = 0
+        if italic:
+            format += 1
+        if bold:
+            format += 2
+        if format:
+            bookmark.update({NameObject('/F'): NumberObject(format)})
 
         bookmarkRef = self._addObject(bookmark)
 
@@ -764,7 +776,7 @@ class PdfFileWriter(object):
         :rtype: str, None if not specified
         """
         try:
-            return self.getObject(self._root)['/PageLayout']
+            return self._root_object['/PageLayout']
         except KeyError:
             return None
 
@@ -787,8 +799,7 @@ class PdfFileWriter(object):
             if layout not in self._valid_layouts:
                 warnings.warn("Layout should be one of: {}".format(', '.join(self._valid_layouts)))
             layout = NameObject(layout)
-        root = self.getObject(self._root)
-        root.update({NameObject('/PageLayout'): layout})
+        self._root_object.update({NameObject('/PageLayout'): layout})
 
     pageLayout = property(getPageLayout, setPageLayout)
     """Read and write property accessing the :meth:`getPageLayout()<PdfFileWriter.getPageLayout>`
@@ -806,7 +817,7 @@ class PdfFileWriter(object):
         :rtype: str, None if not specified
         """
         try:
-            return self.getObject(self._root)['/PageMode']
+            return self._root_object['/PageMode']
         except KeyError:
             return None
 
@@ -828,8 +839,7 @@ class PdfFileWriter(object):
             if mode not in self._valid_modes:
                 warnings.warn("Mode should be one of: {}".format(', '.join(self._valid_modes)))
             mode = NameObject(mode)
-        root = self.getObject(self._root)
-        root.update({NameObject('/PageMode'): mode})
+        self._root_object.update({NameObject('/PageMode'): mode})
 
     pageMode = property(getPageMode, setPageMode)
     """Read and write property accessing the :meth:`getPageMode()<PdfFileWriter.getPageMode>`
@@ -974,6 +984,97 @@ class PdfFileReader(object):
     Read-only property that accesses the
     :meth:`getNamedDestinations()<PdfFileReader.getNamedDestinations>` function.
     """
+
+    # A select group of relevant field attributes. For the complete list,
+    # see section 8.6.2 of the PDF 1.7 reference.
+
+    def getFields(self, tree = None, retval = None, fileobj = None):
+        """
+        Extracts field data if this PDF contains interactive form fields.
+        The *tree* and *retval* parameters are for recursive use.
+
+        :param fileobj: A file object (usually a text file) to write
+            a report to on all interactive form fields found.
+        :return: A dictionary where each key is a field name, and each
+            value is a :class:`Field<PyPDF2.generic.Field>` object. By
+            default, the mapping name is used for keys.
+        :rtype: dict
+        :raises PdfReadError: if failed to find form data.
+        """
+        fieldAttributes = {"/FT" : "Field Type", "/Parent" : "Parent",
+                       "/T" : "Field Name", "/TU" : "Alternate Field Name",
+                       "/TM" : "Mapping Name", "/Ff" : "Field Flags",
+                       "/V" : "Value", "/DV" : "Default Value"}
+        if retval == None:
+            retval = {}
+            catalog = self.trailer["/Root"]
+            # get the AcroForm tree
+            if "/AcroForm" in catalog:
+                tree = catalog["/AcroForm"]
+            else:
+                raise utils.PdfReadError("Could not locate interactive form data.")
+        if tree == None:
+            return retval
+
+        self._checkKids(tree, retval, fileobj)
+        for attr in fieldAttributes:
+            if attr in tree:
+                # Tree is a field
+                self._buildField(tree, retval, fileobj, fieldAttributes)
+                break
+
+        if "/Fields" in tree:
+            fields = tree["/Fields"]
+            for f in fields:
+                field = f.getObject()
+                self._buildField(field, retval, fileobj, fieldAttributes)
+
+        return retval
+
+    def _buildField(self, field, retval, fileobj, fieldAttributes):
+        self._checkKids(field, retval, fileobj)
+        try:
+            key = field["/TM"]
+        except KeyError:
+            try:
+                key = field["/T"]
+            except KeyError:
+                # Ignore no-name field for now
+                return
+        if fileobj:
+            self._writeField(fileobj, field, fieldAttributes)
+            fileobj.write("\n")
+        retval[key] = Field(field)
+
+    def _checkKids(self, tree, retval, fileobj):
+        if "/Kids" in tree:
+            # recurse down the tree
+            for kid in tree["/Kids"]:
+                self.getFields(kid.getObject(), retval, fileobj)
+
+    def _writeField(self, fileobj, field, fieldAttributes):
+        order = ["/TM", "/T", "/FT", "/Parent", "/TU", "/Ff", "/V", "/DV"]
+        for attr in order:
+            attrName = fieldAttributes[attr]
+            try:
+                if attr == "/FT":
+                    # Make the field type value more clear
+                    types = {"/Btn":"Button", "/Tx":"Text", "/Ch": "Choice",
+                             "/Sig":"Signature"}
+                    if field[attr] in types:
+                        fileobj.write(attrName + ": " + types[field[attr]] + "\n")
+                elif attr == "/Parent":
+                    # Let's just write the name of the parent
+                    try:
+                        name = field["/Parent"]["/TM"]
+                    except KeyError:
+                        name = field["/Parent"]["/T"]
+                    fileobj.write(attrName + ": " + name + "\n")
+                else:
+                    fileobj.write(attrName + ": " + str(field[attr]) + "\n")
+            except KeyError:
+                # Field attribute is N/A or unknown, so don't write anything
+                pass
 
     def getNamedDestinations(self, tree=None, retval=None):
         """
@@ -1660,7 +1761,7 @@ class PdfFileReader(object):
     def _authenticateUserPassword(self, password):
         encrypt = self.trailer['/Encrypt'].getObject()
         rev = encrypt['/R'].getObject()
-        owner_entry = encrypt['/O'].getObject().original_bytes
+        owner_entry = encrypt['/O'].getObject()
         p_entry = encrypt['/P'].getObject()
         id_entry = self.trailer['/ID'].getObject()
         id1_entry = id_entry[0].getObject()
@@ -2146,7 +2247,22 @@ class PageObject(DictionaryObject):
             float(self.mediaBox.getLowerLeft_y()) * sy,
             float(self.mediaBox.getUpperRight_x()) * sx,
             float(self.mediaBox.getUpperRight_y()) * sy])
-
+        if "/VP" in self:
+            viewport = self["/VP"]
+            if isinstance(viewport, ArrayObject):
+                bbox = viewport[0]["/BBox"]
+            else:
+                bbox = viewport["/BBox"]
+            scaled_bbox = RectangleObject([
+                float(bbox[0]) * sx,
+                float(bbox[1]) * sy,
+                float(bbox[2]) * sx,
+                float(bbox[3]) * sy])
+            if isinstance(viewport, ArrayObject):
+                self[NameObject("/VP")][NumberObject(0)][NameObject("/BBox")] = scaled_bbox
+            else:
+                self[NameObject("/VP")][NameObject("/BBox")] = scaled_bbox
+ 
     def scaleBy(self, factor):
         """
         Scales a page by the given factor by appling a transformation
