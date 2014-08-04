@@ -2018,6 +2018,7 @@ class PageObject(DictionaryObject):
                         page2.mediaBox.getUpperRight_x().as_numeric(), page2.mediaBox.getUpperRight_y().as_numeric(),
                         page2.mediaBox.getLowerRight_x().as_numeric(), page2.mediaBox.getLowerRight_y().as_numeric()]
             if ctm is not None:
+                ctm = [float(x) for x in ctm]
                 new_x = [ctm[0]*corners2[i] + ctm[2]*corners2[i+1] + ctm[4] for i in range(0, 8, 2)]
                 new_y = [ctm[1]*corners2[i] + ctm[3]*corners2[i+1] + ctm[5] for i in range(0, 8, 2)]
             else:
@@ -2262,7 +2263,7 @@ class PageObject(DictionaryObject):
                 self[NameObject("/VP")][NumberObject(0)][NameObject("/BBox")] = scaled_bbox
             else:
                 self[NameObject("/VP")][NameObject("/BBox")] = scaled_bbox
- 
+
     def scaleBy(self, factor):
         """
         Scales a page by the given factor by appling a transformation
@@ -2403,15 +2404,8 @@ class ContentStream(DecodedStreamObject):
                 break
             stream.seek(-1, 1)
             if peek.isalpha() or peek == "'" or peek == '"':
-                operator = b_("")
-                while True:
-                    tok = stream.read(1)
-                    if tok.isspace() or tok in NameObject.delimiterCharacters:
-                        stream.seek(-1, 1)
-                        break
-                    elif tok == b_(''):
-                        break
-                    operator += tok
+                operator = utils.readUntilRegex(stream,
+                        NameObject.delimiterPattern)
                 if operator == "BI":
                     # begin inline image - a completely different parsing
                     # mechanism is required, of course... thanks buddy...

@@ -78,7 +78,7 @@ def readNonWhitespace(stream):
     """
     Finds and reads the next non-whitespace character (ignores whitespace).
     """
-    tok = b_(' ')
+    tok = WHITESPACES[0]
     while tok in WHITESPACES:
         tok = stream.read(1)
     return tok
@@ -88,7 +88,7 @@ def skipOverWhitespace(stream):
     Similar to readNonWhitespace, but returns a Boolean if more than
     one whitespace character was read.
     """
-    tok = b_(' ')
+    tok = WHITESPACES[0]
     cnt = 0;
     while tok in WHITESPACES:
         tok = stream.read(1)
@@ -101,6 +101,24 @@ def skipOverComment(stream):
     if tok == b_('%'):
         while tok not in (b_('\n'), b_('\r')):
             tok = stream.read(1)
+
+def readUntilRegex(stream, regex):
+    """
+    Reads until the regular expression pattern matched (ignore the match)
+    """
+    name = b_('')
+    while True:
+        tok = stream.read(16)
+        if not tok:
+            # stream has truncated prematurely
+            raise PdfStreamError("Stream has ended unexpectedly")
+        m = regex.search(tok)
+        if m is not None:
+            name += tok[:m.start()]
+            stream.seek(m.start()-len(tok), 1)
+            break
+        name += tok
+    return name
 
 class ConvertFunctionsToVirtualList(object):
     def __init__(self, lengthFunction, getFunction):
@@ -175,15 +193,22 @@ class PdfStreamError(PdfReadError):
     pass
 
 
-def b_(s):
-    if sys.version_info[0] < 3:
+if sys.version_info[0] < 3:
+    def b_(s):
         return s
-    else:
+else:
+    B_CACHE = {}
+    def b_(s):
+        bc = B_CACHE
+        if s in bc:
+            return bc[s]
         if type(s) == bytes:
             return s
         else:
-            return s.encode('latin-1')
-
+            r = s.encode('latin-1')
+            if len(s) < 2:
+                bc[s] = r
+            return r
 def u_(s):
     if sys.version_info[0] < 3:
         return unicode(s, 'unicode_escape')
