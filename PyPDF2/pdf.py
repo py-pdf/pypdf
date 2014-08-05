@@ -1979,6 +1979,14 @@ class PageObject(DictionaryObject):
         rename = {}
         originalResources = self["/Resources"].getObject()
         page2Resources = page2["/Resources"].getObject()
+        newAnnots = ArrayObject()
+
+        for page in (self, page2):
+            if "/Annots" in page:
+                annots = page["/Annots"]
+                if isinstance(annots, ArrayObject):
+                    for ref in annots:
+                        newAnnots.append(ref)
 
         for res in "/ExtGState", "/Font", "/XObject", "/ColorSpace", "/Pattern", "/Shading", "/Properties":
             new, newrename = PageObject._mergeResources(originalResources, page2Resources, res)
@@ -2034,6 +2042,7 @@ class PageObject(DictionaryObject):
 
         self[NameObject('/Contents')] = ContentStream(newContentArray, self.pdf)
         self[NameObject('/Resources')] = newResources
+        self[NameObject('/Annots')] = newAnnots
 
     def mergeTransformedPage(self, page2, ctm, expand=False):
         """
