@@ -2574,7 +2574,7 @@ def _alg32(password, rev, keylen, owner_entry, p_entry, id1_entry, metadata_encr
     # if it is less than 32 bytes long, pad it by appending the required number
     # of additional bytes from the beginning of the padding string
     # (_encryption_padding).
-    password = b_((password + str_(_encryption_padding))[:32])
+    password = b_((str_(password) + str_(_encryption_padding))[:32])
     # 2. Initialize the MD5 hash function and pass the result of step 1 as
     # input to this function.
     import struct
