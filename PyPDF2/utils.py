@@ -102,16 +102,21 @@ def skipOverComment(stream):
         while tok not in (b_('\n'), b_('\r')):
             tok = stream.read(1)
 
-def readUntilRegex(stream, regex):
+def readUntilRegex(stream, regex, ignore_eof=False):
     """
     Reads until the regular expression pattern matched (ignore the match)
+    Raise PdfStreamError on premature end-of-file.
+    :param bool ignore_eof: If true, ignore end-of-line and return immediately
     """
     name = b_('')
     while True:
         tok = stream.read(16)
         if not tok:
             # stream has truncated prematurely
-            raise PdfStreamError("Stream has ended unexpectedly")
+            if ignore_eof == True:
+                return name
+            else:
+                raise PdfStreamError("Stream has ended unexpectedly")
         m = regex.search(tok)
         if m is not None:
             name += tok[:m.start()]
