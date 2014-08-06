@@ -2414,7 +2414,7 @@ class ContentStream(DecodedStreamObject):
             stream.seek(-1, 1)
             if peek.isalpha() or peek == "'" or peek == '"':
                 operator = utils.readUntilRegex(stream,
-                        NameObject.delimiterPattern)
+                        NameObject.delimiterPattern, True)
                 if operator == "BI":
                     # begin inline image - a completely different parsing
                     # mechanism is required, of course... thanks buddy...
