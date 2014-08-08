@@ -210,6 +210,14 @@ class PdfFileWriter(object):
         return page
 
     def addJS(self, javascript):
+        """
+        Add Javascript which will launch upon opening this PDF.
+
+        :param str javascript: Your Javascript.
+
+        >>> output.addJS("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
+        # Example: This will launch the print window when the PDF is opened.
+        """
         js = DictionaryObject()
         js.update({
                 NameObject("/Type"): NameObject("/Action"),
@@ -509,7 +517,7 @@ class PdfFileWriter(object):
         return bookmarkRef
 
 
-    def addBookmark(self, title, pagenum, parent=None, color=None, bold=False, italic=False, fit='FitH'):
+    def addBookmark(self, title, pagenum, parent=None, color=None, bold=False, italic=False, fit='/Fit', *args):
         """
         Add a bookmark to this PDF file.
 
@@ -521,13 +529,21 @@ class PdfFileWriter(object):
             from 0.0 to 1.0
         :param bool bold: Bookmark is bold
         :param bool italic: Bookmark is italic
-        :param str fit: The fit of the page, e.g. 'Fit' (whole page) or FitH
-            (fit horizontal)
+        :param str fit: The fit of the destination page. See
+            :meth:`addLink()<addLink>` for details.
         """
         pageRef = self.getObject(self._pages)['/Kids'][pagenum]
         action = DictionaryObject()
+        zoomArgs = []
+        for a in args:
+            if a is not None:
+                zoomArgs.append(NumberObject(a))
+            else:
+                zoomArgs.append(NullObject())
+        dest = Destination(NameObject("/"+title + " bookmark"), pageRef, NameObject(fit), *zoomArgs)
+        destArray = dest.getDestArray()
         action.update({
-            NameObject('/D') : ArrayObject([pageRef, NameObject('/'+fit), NumberObject(826)]),
+            NameObject('/D') : destArray,
             NameObject('/S') : NameObject('/GoTo')
         })
         actionRef = self._addObject(action)
@@ -705,7 +721,7 @@ class PdfFileWriter(object):
 
             pageRef.__setitem__(NameObject('/Contents'), content)
 
-    def addLink(self, pagenum, pagedest, rect, zoom='/FitV', border=None):
+    def addLink(self, pagenum, pagedest, rect, border=None, zoom='/Fit', *args):
         """
         Add an internal link from a rectangular area to the specified page.
 
@@ -714,12 +730,13 @@ class PdfFileWriter(object):
         :param rect: :class:`RectangleObject<PyPDF2.generic.RectangleObject>` or array of four
             integers specifying the clickable rectangular area
             ``[xLL, yLL, xUR, yUR]``, or string in the form ``"[ xLL yLL xUR yUR ]"``.
-        :param str zoom: zoom option (see below)
         :param border: if provided, an array describing border-drawing
             properties. See the PDF spec for details. No border will be
             drawn if this argument is omitted.
+        :param str zoom: Page fit or 'zoom' option (see below). Additional arguments may need
+            to be supplied. Passing ``None`` will be read as a null value for that coordinate.
 
-        Valid zoom arguments (see PDF spec for details):
+        Valid zoom arguments (see Table 8.2 of the PDF 1.7 reference for details):
              /Fit       No additional arguments
              /XYZ       [left] [top] [zoomFactor]
              /FitH      [top]
@@ -749,6 +766,15 @@ class PdfFileWriter(object):
         else:
             rect = RectangleObject(rect)
 
+        zoomArgs = []
+        for a in args:
+            if a is not None:
+                zoomArgs.append(NumberObject(a))
+            else:
+                zoomArgs.append(NullObject())
+        dest = Destination(NameObject("/LinkName"), pageDest, NameObject(zoom), *zoomArgs) #TODO: create a better name for the link
+        destArray = dest.getDestArray()
+
         lnk = DictionaryObject()
         lnk.update({
             NameObject('/Type'): NameObject('/Annot'),
@@ -756,7 +782,7 @@ class PdfFileWriter(object):
             NameObject('/P'): pageLink,
             NameObject('/Rect'): rect,
             NameObject('/Border'): ArrayObject(borderArr),
-            NameObject('/Dest'): ArrayObject([pageDest, NameObject(zoom)])
+            NameObject('/Dest'): destArray
         })
         lnkRef = self._addObject(lnk)
 
@@ -998,8 +1024,7 @@ class PdfFileReader(object):
         :return: A dictionary where each key is a field name, and each
             value is a :class:`Field<PyPDF2.generic.Field>` object. By
             default, the mapping name is used for keys.
-        :rtype: dict
-        :raises PdfReadError: if failed to find form data.
+        :rtype: dict, or ``None`` if form data could not be located.
         """
         fieldAttributes = {"/FT" : "Field Type", "/Parent" : "Parent",
                        "/T" : "Field Name", "/TU" : "Alternate Field Name",
@@ -1012,7 +1037,7 @@ class PdfFileReader(object):
             if "/AcroForm" in catalog:
                 tree = catalog["/AcroForm"]
             else:
-                raise utils.PdfReadError("Could not locate interactive form data.")
+                return None
         if tree == None:
             return retval
 

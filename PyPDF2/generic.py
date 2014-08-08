@@ -1036,7 +1036,7 @@ class Destination(TreeObject):
         self[NameObject("/Page")] = page
         self[NameObject("/Type")] = typ
 
-        # from table 8.2 of the PDF 1.6 reference.
+        # from table 8.2 of the PDF 1.7 reference.
         if typ == "/XYZ":
             (self[NameObject("/Left")], self[NameObject("/Top")],
                 self[NameObject("/Zoom")]) = args
