@@ -721,7 +721,7 @@ class PdfFileWriter(object):
 
             pageRef.__setitem__(NameObject('/Contents'), content)
 
-    def addLink(self, pagenum, pagedest, rect, border=None, zoom='/Fit', *args):
+    def addLink(self, pagenum, pagedest, rect, border=None, fit='/Fit', *args):
         """
         Add an internal link from a rectangular area to the specified page.
 
@@ -733,7 +733,7 @@ class PdfFileWriter(object):
         :param border: if provided, an array describing border-drawing
             properties. See the PDF spec for details. No border will be
             drawn if this argument is omitted.
-        :param str zoom: Page fit or 'zoom' option (see below). Additional arguments may need
+        :param str fit: Page fit or 'zoom' option (see below). Additional arguments may need
             to be supplied. Passing ``None`` will be read as a null value for that coordinate.
 
         Valid zoom arguments (see Table 8.2 of the PDF 1.7 reference for details):

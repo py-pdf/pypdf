@@ -1,3 +1,47 @@
+Version 1.23, 2014-08-11
+------------------------
+
+ - Documentation now available at http://pythonhosted.org//PyPDF2
+
+ - Bugfix in pagerange.py for when __init__.__doc__ has no value (by
+   Vladir Cruz)
+
+ - Fix typos in OutlinesObject().add() (by shilluc)
+
+ - Re-added a missing return statement in a utils.py method
+
+ - Corrected viewing mode names (by Jason Scheirer)
+
+ - New PdfFileWriter method: addJS() (by vfigueiro)
+
+ - New bookmark features: color, boldness, italics, and page fit
+   (by Joshua Arnott)
+
+ - New PdfFileReader method: getFields(). Used to extract field
+   information from PDFs with interactive forms. See documentation
+   for details
+
+ - Converted README file to markdown format (by Stephen Bussard)
+
+ - Several improvements to overall performance and efficiency
+   (by mozbugbox)
+
+ - Fixed a bug where geospatial information was not scaling along with
+   its page
+
+ - Fixed a type issue and a Python 3 issue in the decryption algorithms
+   (with Francisco Vieira and koba-ninkigumi)
+
+ - Fixed a bug causing an infinite loop in the ASCII 85 decoding
+   algorithm (by madmaardigan)
+
+ - Annotations (links, comment windows, etc.) are now preserved when
+   pages are merged together
+
+ - Used the Destination class in addLink() and addBookmark() so that 
+   the page fit option could be properly customized
+
+
 Version 1.22, 2014-05-29
 ------------------------
 
