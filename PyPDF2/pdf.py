@@ -772,7 +772,7 @@ class PdfFileWriter(object):
                 zoomArgs.append(NumberObject(a))
             else:
                 zoomArgs.append(NullObject())
-        dest = Destination(NameObject("/LinkName"), pageDest, NameObject(zoom), *zoomArgs) #TODO: create a better name for the link
+        dest = Destination(NameObject("/LinkName"), pageDest, NameObject(fit), *zoomArgs) #TODO: create a better name for the link
         destArray = dest.getDestArray()
 
         lnk = DictionaryObject()
