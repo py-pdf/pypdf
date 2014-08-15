@@ -2437,7 +2437,7 @@ class ContentStream(DecodedStreamObject):
             if peek == b_('') or ord_(peek) == 0:
                 break
             stream.seek(-1, 1)
-            if peek.isalpha() or peek == "'" or peek == '"':
+            if peek.isalpha() or peek == b_("'") or peek == b_('"'):
                 operator = utils.readUntilRegex(stream,
                         NameObject.delimiterPattern, True)
                 if operator == "BI":
