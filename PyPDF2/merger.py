@@ -298,7 +298,7 @@ class PdfFileMerger(object):
             for j in range(*pages):
                 if pdf.getPage(j).getObject() == o['/Page'].getObject():
                     o[NameObject('/Page')] = o['/Page'].getObject()
-                    assert str(k) == str(o['/Title'])
+                    assert unicode(k) == unicode(o['/Title'])
                     new_dests.append(o)
                     break
         return new_dests
