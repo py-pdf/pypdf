@@ -1702,6 +1702,8 @@ class PdfFileReader(object):
         while True:
             x = stream.read(1)
             if debug: print(("  x:", x, "%x"%ord(x)))
+            if stream.tell() < 2:
+                raise utils.PdfReadError("EOL marker not found")
             stream.seek(-2, 1)
             if x == b_('\n') or x == b_('\r'): ## \n = LF; \r = CR
                 crlf = False
@@ -1713,6 +1715,8 @@ class PdfFileReader(object):
                     if x == b_('\n') or x == b_('\r'): # account for CR+LF
                         stream.seek(-1, 1)
                         crlf = True
+                    if stream.tell() < 2:
+                        raise utils.PdfReadError("EOL marker not found")
                     stream.seek(-2, 1)
                 stream.seek(2 if crlf else 1, 1) #if using CR+LF, go back 2 bytes, else 1
                 break
