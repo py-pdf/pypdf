@@ -1470,7 +1470,7 @@ class PdfFileReader(object):
             startxref = int(line)
         except ValueError:
             # 'startxref' may be on the same line as the location
-            if not line.startswith("startxref"):
+            if not line.startswith(b_("startxref")):
                 raise utils.PdfReadError("startxref not found")
             startxref = int(line[9:].strip())
             warnings.warn("startxref on same line as offset")
