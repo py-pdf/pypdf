@@ -255,6 +255,8 @@ class NumberObject(int, PdfObject):
     def readFromStream(stream):
         num = b_("")
         while True:
+            if readNonWhitespace(stream):
+                stream.seek(-1, 1)
             tok = stream.read(16)
             m = NumberObject.NumberPattern.search(tok)
             if m is not None:
