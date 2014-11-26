@@ -2440,22 +2440,22 @@ class ContentStream(DecodedStreamObject):
             if peek.isalpha() or peek == b_("'") or peek == b_('"'):
                 operator = utils.readUntilRegex(stream,
                         NameObject.delimiterPattern, True)
-                if operator == "BI":
+                if operator == b_("BI"):
                     # begin inline image - a completely different parsing
                     # mechanism is required, of course... thanks buddy...
                     assert operands == []
                     ii = self._readInlineImage(stream)
-                    self.operations.append((ii, "INLINE IMAGE"))
+                    self.operations.append((ii, b_("INLINE IMAGE")))
                 else:
                     self.operations.append((operands, operator))
                     operands = []
-            elif peek == '%':
+            elif peek == b_('%'):
                 # If we encounter a comment in the content stream, we have to
                 # handle it here.  Typically, readObject will handle
                 # encountering a comment -- but readObject assumes that
                 # following the comment must be the object we're trying to
                 # read.  In this case, it could be an operator instead.
-                while peek not in ('\r', '\n'):
+                while peek not in (b_('\r'), b_('\n')):
                     peek = stream.read(1)
             else:
                 operands.append(readObject(stream, None))
@@ -2467,7 +2467,7 @@ class ContentStream(DecodedStreamObject):
         while True:
             tok = readNonWhitespace(stream)
             stream.seek(-1, 1)
-            if tok == "I":
+            if tok == b_("I"):
                 # "ID" - begin of image data
                 break
             key = readObject(stream, self.pdf)
@@ -2477,16 +2477,16 @@ class ContentStream(DecodedStreamObject):
             settings[key] = value
         # left at beginning of ID
         tmp = stream.read(3)
-        assert tmp[:2] == "ID"
-        data = ""
+        assert tmp[:2] == b_("ID")
+        data = b_("")
         while True:
             tok = stream.read(1)
-            if tok == "E":
+            if tok == b_("E"):
                 # Check for End Image
                 next1 = stream.read(1)
-                if next1 == "I":
+                if next1 == b_("I"):
                     next2 = readNonWhitespace(stream)
-                    if next2 == 'Q':
+                    if next2 == b_('Q'):
                         stream.seek(-1, 1)
                         break
                     else:
@@ -2497,7 +2497,7 @@ class ContentStream(DecodedStreamObject):
                     data += tok
             else:
                 data += tok
-        x = readNonWhitespace(stream)
+        readNonWhitespace(stream)
         stream.seek(-1, 1)
         return {"settings": settings, "data": data}
 
