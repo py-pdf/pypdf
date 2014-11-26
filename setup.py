@@ -5,7 +5,7 @@ import re
 
 long_description = """
 A Pure-Python library built as a PDF toolkit.  It is capable of:
-    
+
 - extracting document information (title, author, ...)
 - splitting documents page by page
 - merging documents page by page
@@ -25,9 +25,9 @@ verstrline = open(VERSIONFILE, "rt").read()
 VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
 mo = re.search(VSRE, verstrline, re.M)
 if mo:
-   verstr = mo.group(1)
+    verstr = mo.group(1)
 else:
-   raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE))
+    raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE))
 
 setup(
         name="PyPDF2",
@@ -50,4 +50,3 @@ setup(
             ],
         packages=["PyPDF2"],
     )
-

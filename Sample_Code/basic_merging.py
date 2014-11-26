@@ -1,7 +1,7 @@
 from PyPDF2 import PdfFileMerger
 
 merger = PdfFileMerger()
-     
+
 input1 = open("document1.pdf", "rb")
 input2 = open("document2.pdf", "rb")
 input3 = open("document3.pdf", "rb")

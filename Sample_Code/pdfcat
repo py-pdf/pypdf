@@ -9,7 +9,7 @@ PAGE RANGES are like Python slices.
         {page_range_help}
 EXAMPLES
     pdfcat -o output.pdf head.pdf content.pdf :6 7: tail.pdf -1
-        Concatenate all of head.pdf, all but page seven of content.pdf, 
+        Concatenate all of head.pdf, all but page seven of content.pdf,
         and the last page of tail.pdf, producing output.pdf.
 
     pdfcat chapter*.pdf >book.pdf
@@ -25,6 +25,7 @@ EXAMPLES
 from __future__ import print_function
 import argparse
 from PyPDF2.pagerange import PAGE_RANGE_HELP
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -77,4 +78,3 @@ if __name__ == "__main__":
     merger.write(output)
     # In 3.0, input files must stay open until output is written.
     # Not closing the in_fs because this script exits now.
-

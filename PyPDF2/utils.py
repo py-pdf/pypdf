@@ -59,6 +59,7 @@ def formatWarning(message, category, filename, lineno, line=None):
     file = filename.replace("/", "\\").rsplit("\\", 1)[1] # find the file name
     return "%s: %s [%s:%s]\n" % (category.__name__, message, file, lineno)
 
+
 def readUntilWhitespace(stream, maxchars=None):
     """
     Reads non-whitespace characters and returns them.
@@ -74,6 +75,7 @@ def readUntilWhitespace(stream, maxchars=None):
             break
     return txt
 
+
 def readNonWhitespace(stream):
     """
     Finds and reads the next non-whitespace character (ignores whitespace).
@@ -82,6 +84,7 @@ def readNonWhitespace(stream):
     while tok in WHITESPACES:
         tok = stream.read(1)
     return tok
+
 
 def skipOverWhitespace(stream):
     """
@@ -95,12 +98,14 @@ def skipOverWhitespace(stream):
         cnt+=1
     return (cnt > 1)
 
+
 def skipOverComment(stream):
     tok = stream.read(1)
     stream.seek(-1, 1)
     if tok == b_('%'):
         while tok not in (b_('\n'), b_('\r')):
             tok = stream.read(1)
+
 
 def readUntilRegex(stream, regex, ignore_eof=False):
     """
@@ -125,6 +130,7 @@ def readUntilRegex(stream, regex, ignore_eof=False):
         name += tok
     return name
 
+
 class ConvertFunctionsToVirtualList(object):
     def __init__(self, lengthFunction, getFunction):
         self.lengthFunction = lengthFunction
@@ -148,6 +154,7 @@ class ConvertFunctionsToVirtualList(object):
             raise IndexError("sequence index out of range")
         return self.getFunction(index)
 
+
 def RC4_encrypt(key, plaintext):
     S = [i for i in range(256)]
     j = 0
@@ -164,11 +171,13 @@ def RC4_encrypt(key, plaintext):
         retval += b_(chr(ord_(plaintext[x]) ^ t))
     return retval
 
+
 def matrixMultiply(a, b):
     return [[sum([float(i)*float(j)
                   for i, j in zip(row, col)]
                 ) for col in zip(*b)]
             for row in a]
+
 
 def markLocation(stream):
     """Creates text file showing current location in context."""
@@ -182,17 +191,22 @@ def markLocation(stream):
     outputDoc.close()
     stream.seek(-RADIUS, 1)
 
+
 class PyPdfError(Exception):
     pass
+
 
 class PdfReadError(PyPdfError):
     pass
 
+
 class PageSizeNotDefinedError(PyPdfError):
     pass
 
+
 class PdfReadWarning(UserWarning):
     pass
+
 
 class PdfStreamError(PdfReadError):
     pass
@@ -203,6 +217,7 @@ if sys.version_info[0] < 3:
         return s
 else:
     B_CACHE = {}
+
     def b_(s):
         bc = B_CACHE
         if s in bc:
@@ -214,6 +229,8 @@ else:
             if len(s) < 2:
                 bc[s] = r
             return r
+
+
 def u_(s):
     if sys.version_info[0] < 3:
         return unicode(s, 'unicode_escape')
@@ -230,11 +247,13 @@ def str_(b):
         else:
             return b
 
+
 def ord_(b):
     if sys.version_info[0] < 3 or type(b) == str:
         return ord(b)
     else:
         return b
+
 
 def chr_(c):
     if sys.version_info[0] < 3:
@@ -242,11 +261,13 @@ def chr_(c):
     else:
         return chr(c)
 
+
 def barray(b):
     if sys.version_info[0] < 3:
         return b
     else:
         return bytearray(b)
+
 
 def hexencode(b):
     if sys.version_info[0] < 3:
@@ -255,6 +276,7 @@ def hexencode(b):
         import codecs
         coder = codecs.getencoder('hex_codec')
         return coder(b)[0]
+
 
 def hexStr(num):
     return hex(num).replace('L', '')

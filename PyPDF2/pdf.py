@@ -74,6 +74,7 @@ else:
     from hashlib import md5
 import uuid
 
+
 class PdfFileWriter(object):
     """
     This class supports writing PDF files out, given pages produced by another
@@ -516,7 +517,6 @@ class PdfFileWriter(object):
 
         return bookmarkRef
 
-
     def addBookmark(self, title, pagenum, parent=None, color=None, bold=False, italic=False, fit='/Fit', *args):
         """
         Add a bookmark to this PDF file.
@@ -552,7 +552,6 @@ class PdfFileWriter(object):
 
         if parent == None:
             parent = outlineRef
-
 
         bookmark = TreeObject()
 
@@ -870,6 +869,7 @@ class PdfFileWriter(object):
     pageMode = property(getPageMode, setPageMode)
     """Read and write property accessing the :meth:`getPageMode()<PdfFileWriter.getPageMode>`
     and :meth:`setPageMode()<PdfFileWriter.setPageMode>` methods."""
+
 
 class PdfFileReader(object):
     """
@@ -1347,7 +1347,6 @@ class PdfFileReader(object):
         if self.strict: raise utils.PdfReadError("This is a fatal error in strict mode.")
         return NullObject()
 
-
     def getObject(self, indirectReference):
         debug = False
         if debug: print(("looking at:", indirectReference.idnum, indirectReference.generation))
@@ -1580,6 +1579,7 @@ class PdfFileReader(object):
                 assert len(entrySizes) >= 3
                 if self.strict and len(entrySizes) > 3:
                     raise utils.PdfReadError("Too many entry sizes: %s" %entrySizes)
+
                 def getEntry(i):
                     # Reads the correct number of bytes for each entry. See the
                     # discussion of the W parameter in PDF spec table 17.
@@ -1682,7 +1682,6 @@ class PdfFileReader(object):
                         break
                     #if not, then either it's just plain wrong, or the non-zero-index is actually correct
             stream.seek(loc, 0) #return to where it was
-
 
     def _zeroXref(self, generation):
         self.xref[generation] = dict( (k-self.xrefIndex, v) for (k, v) in list(self.xref[generation].items()) )
@@ -1827,13 +1826,16 @@ def getRectangle(self, name, defaults):
     setRectangle(self, name, retval)
     return retval
 
+
 def setRectangle(self, name, value):
     if not isinstance(name, NameObject):
         name = NameObject(name)
     self[name] = value
 
+
 def deleteRectangle(self, name):
     del self[name]
+
 
 def createRectangleAccessor(name, fallback):
     return \
@@ -1842,6 +1844,7 @@ def createRectangleAccessor(name, fallback):
             lambda self, value: setRectangle(self, name, value),
             lambda self: deleteRectangle(self, name)
             )
+
 
 class PageObject(DictionaryObject):
     """
@@ -2412,6 +2415,7 @@ class PageObject(DictionaryObject):
     page's creator.
     """
 
+
 class ContentStream(DecodedStreamObject):
     def __init__(self, stream, pdf):
         self.pdf = pdf
@@ -2525,6 +2529,7 @@ class ContentStream(DecodedStreamObject):
 
     _data = property(_getData, _setData)
 
+
 class DocumentInformation(DictionaryObject):
     """
     A class representing the basic document metadata provided in a PDF File.
@@ -2588,6 +2593,7 @@ class DocumentInformation(DictionaryObject):
     producer_raw = property(lambda self: self.get("/Producer"))
     """The "raw" version of producer; can return a ``ByteStringObject``."""
 
+
 def convertToInt(d, size):
     if size > 8:
         raise utils.PdfReadError("invalid size in convertToInt")
@@ -2599,6 +2605,7 @@ def convertToInt(d, size):
 _encryption_padding = b_('\x28\xbf\x4e\x5e\x4e\x75\x8a\x41\x64\x00\x4e\x56') + \
         b_('\xff\xfa\x01\x08\x2e\x2e\x00\xb6\xd0\x68\x3e\x80\x2f\x0c') + \
         b_('\xa9\xfe\x64\x53\x69\x7a')
+
 
 # Implementation of algorithm 3.2 of the PDF standard security handler,
 # section 3.5.2 of the PDF 1.6 reference.
@@ -2643,6 +2650,7 @@ def _alg32(password, rev, keylen, owner_entry, p_entry, id1_entry, metadata_encr
     # entry.
     return md5_hash[:keylen]
 
+
 # Implementation of algorithm 3.3 of the PDF standard security handler,
 # section 3.5.2 of the PDF 1.6 reference.
 def _alg33(owner_pwd, user_pwd, rev, keylen):
@@ -2670,6 +2678,7 @@ def _alg33(owner_pwd, user_pwd, rev, keylen):
     # the /O entry in the encryption dictionary.
     return val
 
+
 # Steps 1-4 of algorithm 3.3
 def _alg33_1(password, rev, keylen):
     # 1. Pad or truncate the owner password string as described in step 1 of
@@ -2692,6 +2701,7 @@ def _alg33_1(password, rev, keylen):
     key = md5_hash[:keylen]
     return key
 
+
 # Implementation of algorithm 3.4 of the PDF standard security handler,
 # section 3.5.2 of the PDF 1.6 reference.
 def _alg34(password, owner_entry, p_entry, id1_entry):
@@ -2705,6 +2715,7 @@ def _alg34(password, owner_entry, p_entry, id1_entry):
     # 3. Store the result of step 2 as the value of the /U entry in the
     # encryption dictionary.
     return U, key
+
 
 # Implementation of algorithm 3.4 of the PDF standard security handler,
 # section 3.5.2 of the PDF 1.6 reference.

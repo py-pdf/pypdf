@@ -2,6 +2,7 @@ from PyPDF2 import PdfFileWriter, PdfFileReader
 import sys
 import math
 
+
 def main():
     if (len(sys.argv) != 3):
         print("usage: python 2-up.py input_file output_file")

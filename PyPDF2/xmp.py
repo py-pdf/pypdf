@@ -50,6 +50,7 @@ iso8601 = re.compile("""
         )?
         """, re.VERBOSE)
 
+
 class XmpInformation(PdfObject):
     """
     An object that represents Adobe XMP metadata.
@@ -355,5 +356,3 @@ class XmpInformation(PdfObject):
     :return: a dictionary of key/value items for custom metadata properties.
     :rtype: dict
     """
-
-
