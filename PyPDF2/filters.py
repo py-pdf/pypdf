@@ -43,25 +43,31 @@ else:
 
 try:
     import zlib
+
     def decompress(data):
         return zlib.decompress(data)
+
     def compress(data):
         return zlib.compress(data)
+
 except ImportError:
     # Unable to import zlib.  Attempt to use the System.IO.Compression
     # library from the .NET framework. (IronPython only)
     import System
     from System import IO, Collections, Array
+
     def _string_to_bytearr(buf):
         retval = Array.CreateInstance(System.Byte, len(buf))
         for i in range(len(buf)):
             retval[i] = ord(buf[i])
         return retval
+
     def _bytearr_to_string(bytes):
         retval = ""
         for i in range(bytes.Length):
             retval += chr(bytes[i])
         return retval
+
     def _read_bytes(stream):
         ms = IO.MemoryStream()
         buf = Array.CreateInstance(System.Byte, 2048)
@@ -74,6 +80,7 @@ except ImportError:
         retval = ms.ToArray()
         ms.Close()
         return retval
+
     def decompress(data):
         bytes = _string_to_bytearr(data)
         ms = IO.MemoryStream()
@@ -84,6 +91,7 @@ except ImportError:
         retval = _bytearr_to_string(bytes)
         gz.Close()
         return retval
+
     def compress(data):
         bytes = _string_to_bytearr(data)
         ms = IO.MemoryStream()
@@ -106,7 +114,7 @@ class FlateDecode(object):
                 predictor = decodeParms.get("/Predictor", 1)
             except AttributeError:
                 pass    # usually an array with a null object was read
-            
+
         # predictor 1 == no predictor
         if predictor != 1:
             columns = decodeParms["/Columns"]
@@ -144,6 +152,7 @@ class FlateDecode(object):
         return compress(data)
     encode = staticmethod(encode)
 
+
 class ASCIIHexDecode(object):
     def decode(data, decodeParms=None):
         retval = ""
@@ -165,6 +174,7 @@ class ASCIIHexDecode(object):
         return retval
     decode = staticmethod(decode)
 
+
 class LZWDecode(object):
     """Taken from:
     http://www.java2s.com/Open-Source/Java-Document/PDF/PDF-Renderer/com/sun/pdfview/decode/LZWDecode.java.htm
@@ -184,7 +194,6 @@ class LZWDecode(object):
         def resetDict(self):
             self.dictlen=258
             self.bitspercode=9
-                
 
         def nextCode(self):
             fillbits=self.bitspercode
@@ -196,8 +205,8 @@ class LZWDecode(object):
                 bitsfromhere=8-self.bitpos
                 if bitsfromhere>fillbits:
                     bitsfromhere=fillbits
-                value |= (((nextbits >> (8-self.bitpos-bitsfromhere)) & 
-                           (0xff >> (8-bitsfromhere))) << 
+                value |= (((nextbits >> (8-self.bitpos-bitsfromhere)) &
+                           (0xff >> (8-bitsfromhere))) <<
                           (fillbits-bitsfromhere))
                 fillbits -= bitsfromhere
                 self.bitpos += bitsfromhere
@@ -235,16 +244,15 @@ class LZWDecode(object):
                         baos+=p
                         self.dict[self.dictlen] = p;
                         self.dictlen+=1
-                    if (self.dictlen >= (1 << self.bitspercode) - 1 and 
+                    if (self.dictlen >= (1 << self.bitspercode) - 1 and
                         self.bitspercode < 12):
                         self.bitspercode+=1
             return baos
 
-
-    
     @staticmethod
     def decode(data,decodeParams=None):
         return LZWDecode.decoder(data).decode()
+
 
 class ASCII85Decode(object):
     def decode(data, decodeParms=None):
@@ -298,6 +306,7 @@ class ASCII85Decode(object):
             x += 1
         return retval
     decode = staticmethod(decode)
+
 
 def decodeStreamData(stream):
     from .generic import NameObject
