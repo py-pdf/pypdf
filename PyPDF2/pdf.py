@@ -1700,11 +1700,9 @@ class PdfFileReader(object):
         if debug: print(">>readNextEndLine")
         line = b_("")
         while True:
-
             # Prevent infinite loops in malformed PDFs
             if stream.tell() == 0:
-                raise ValueError
-
+                raise utils.PdfReadError("Could not read malformed PDF file")
             x = stream.read(1)
             if debug: print(("  x:", x, "%x"%ord(x)))
             if stream.tell() < 2:
