@@ -1160,7 +1160,14 @@ class PdfFileReader(object):
 
             # get the outline dictionary and named destinations
             if "/Outlines" in catalog:
-                lines = catalog["/Outlines"]
+                try:
+                    lines = catalog["/Outlines"]
+                except utils.PdfReadError:
+                    # this occurs if the /Outlines object reference is incorrect
+                    # for an example of such a file, see https://unglueit-files.s3.amazonaws.com/ebf/7552c42e9280b4476e59e77acc0bc812.pdf
+                    # so continue to load the file without the Bookmarks
+                    return outlines
+                    
                 if "/First" in lines:
                     node = lines["/First"]
             self._namedDests = self.getNamedDestinations()
