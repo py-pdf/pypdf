@@ -257,18 +257,7 @@ class NumberObject(int, PdfObject):
         stream.write(b_(repr(self)))
 
     def readFromStream(stream):
-        num = b_("")
-        while True:
-            if readNonWhitespace(stream):
-                stream.seek(-1, 1)
-            tok = stream.read(16)
-            m = NumberObject.NumberPattern.search(tok)
-            if m is not None:
-                stream.seek(m.start() - len(tok), 1)
-                num += tok[:m.start()]
-                break
-
-            num += tok
+        num = utils.readUntilRegex(stream, NumberObject.NumberPattern)
         if num.find(NumberObject.ByteDot) != -1:
             return FloatObject(num)
         else:
