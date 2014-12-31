@@ -1,3 +1,29 @@
+ï»¿Version 1.24, 2014-12-31
+------------------------
+
+ - Bugfixes for reading files in Python 3 (by Anthony Tuininga and
+   pqqp)
+
+ - Appropriate errors are now raised instead of infinite loops (by
+   naure and Cyrus Vafadari)
+
+ - Bugfix for parsing number tokens with leading spaces (by Maxim
+   Kamenkov)
+
+ - Don't crash on bad /Outlines reference (by eshellman)
+
+ - Conform tabs/spaces and blank lines to PEP 8 standards
+
+ - Utilize the readUntilRegex method when reading Number Objects
+   (by Brendan Jurd)
+
+ - More bugfixes for Python 3 and clearer exception handling
+
+ - Fixed encoding issue in merger (with eshellman)
+
+ - Created separate folder for scripts
+
+
 Version 1.23, 2014-08-11
 ------------------------
 
@@ -100,13 +126,13 @@ Version 1.21, 2014-04-21
    a custom implementation.
 
  - Fix NumberObject and NameObject constructors for compatibility with PyPy
-   (Rüdiger Jungbeck, Xavier Dupré, shezadkhan137, Steven Witham)
+   (RÃ¼diger Jungbeck, Xavier DuprÃ©, shezadkhan137, Steven Witham)
 
  - Utilize  utils.Str in pdf.py and pagerange.py to resolve type issues (by
    egbutter)
 
  - Improvements in implementing StringIO for Python 2 and BytesIO for
-   Python 3 (by Xavier Dupré)
+   Python 3 (by Xavier DuprÃ©)
 
  - Added /x00 to Whitespaces, defined utils.WHITESPACES to clarify code (by
    Maxim Kamenkov)
@@ -149,7 +175,7 @@ Version 1.20, 2014-01-27
  - Bugfix to handle nested bookmarks correctly (by Jamie Lentin)
 
  - New methods removeImages() and removeText() available for PdfFileWriter
-   (by Tien Haï)
+   (by Tien HaÃ¯)
 
  - Exception handling for illegal characters in Name Objects
 
