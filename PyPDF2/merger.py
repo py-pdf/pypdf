@@ -28,7 +28,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from .generic import *
-from .utils import string_type
+from .utils import string_type, str_
 from .pdf import PdfFileReader, PdfFileWriter
 from .pagerange import PageRange
 from sys import version_info
@@ -294,7 +294,7 @@ class PdfFileMerger(object):
             for j in range(*pages):
                 if pdf.getPage(j).getObject() == o['/Page'].getObject():
                     o[NameObject('/Page')] = o['/Page'].getObject()
-                    assert str(k) == str(o['/Title'])
+                    assert str_(k) == str_(o['/Title'])
                     new_dests.append(o)
                     break
         return new_dests
