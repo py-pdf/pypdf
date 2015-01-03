@@ -376,7 +376,7 @@ class PdfFileWriter(object):
         debug = False
         if debug: print((data, "TYPE", data.__class__.__name__))
         if isinstance(data, DictionaryObject):
-            for key, value in list(data.items()):
+            for key, value in sorted(list(data.items())):
                 origvalue = value
                 value = self._sweepIndirectReferences(externMap, value)
                 if isinstance(value, StreamObject):
