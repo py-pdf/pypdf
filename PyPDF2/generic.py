@@ -467,7 +467,7 @@ class NameObject(str, PdfObject):
         if debug: print(name)
         try:
             return NameObject(name.decode('utf-8'))
-        except UnicodeDecodeError as e:
+        except (UnicodeEncodeError, UnicodeDecodeError) as e:
             # Name objects should represent irregular characters
             # with a '#' followed by the symbol's hex number
             if not pdf.strict:
