@@ -8,7 +8,7 @@ see https://github.com/mstamy2/PyPDF2/blob/master/LICENSE
 """
 
 import re
-from .utils import Str
+from .utils import isString
 
 _INT_RE = r"(0|-?[1-9]\d*)"  # A decimal int, don't allow "-0".
 PAGE_RANGE_RE = "^({int}|({int}?(:{int}?(:{int}?)?)))$".format(int=_INT_RE)
@@ -68,7 +68,7 @@ class PageRange(object):
             self._slice = arg.to_slice()
             return
 
-        m = isinstance(arg, Str) and re.match(PAGE_RANGE_RE, arg)
+        m = isString(arg) and re.match(PAGE_RANGE_RE, arg)
         if not m:
             raise ParseError(arg)
         elif m.group(2):
@@ -89,7 +89,7 @@ class PageRange(object):
         """ True if input is a valid initializer for a PageRange. """
         return isinstance(input, slice)  or \
                isinstance(input, PageRange) or \
-               (isinstance(input, Str)
+               (isString(input)
                 and bool(re.match(PAGE_RANGE_RE, input)))
 
     def to_slice(self):
