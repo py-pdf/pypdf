@@ -346,7 +346,7 @@ def readStringFromStream(stream):
                 tok = b_(")")
             elif tok == b_("\\"):
                 tok = b_("\\")
-            elif tok in (b_(" "), b_("/"), b_("%"), b_("<"), b_(">"), b_("["), b_("]")):
+            elif tok in (b_(" "), b_("/"), b_("%"), b_("<"), b_(">"), b_("["), b_("]"), b_("#")):
                 # odd/unnessecary escape sequences we have encountered
                 tok = b_(tok)
             elif tok.isdigit():
