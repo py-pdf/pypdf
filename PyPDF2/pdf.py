@@ -303,7 +303,7 @@ class PdfFileWriter(object):
         # copying in a new copy of the page object.
         for objIndex in range(len(self._objects)):
             obj = self._objects[objIndex]
-            if isinstance(obj, PageObject) and obj.indirectRef != None:
+            if isinstance(obj, PageObject) and obj.indirectRef is not None:
                 data = obj.indirectRef
                 if data.pdf not in externalReferenceMap:
                     externalReferenceMap[data.pdf] = {}
@@ -320,20 +320,22 @@ class PdfFileWriter(object):
         object_positions = []
         stream.write(self._header + b_("\n"))
         for i in range(len(self._objects)):
-            idnum = (i + 1)
             obj = self._objects[i]
-            object_positions.append(stream.tell())
-            stream.write(b_(str(idnum) + " 0 obj\n"))
-            key = None
-            if hasattr(self, "_encrypt") and idnum != self._encrypt.idnum:
-                pack1 = struct.pack("<i", i + 1)[:3]
-                pack2 = struct.pack("<i", 0)[:2]
-                key = self._encrypt_key + pack1 + pack2
-                assert len(key) == (len(self._encrypt_key) + 5)
-                md5_hash = md5(key).digest()
-                key = md5_hash[:min(16, len(self._encrypt_key) + 5)]
-            obj.writeToStream(stream, key)
-            stream.write(b_("\nendobj\n"))
+            # If the obj is None we can't write anything
+            if obj is not None:
+                idnum = (i + 1)
+                object_positions.append(stream.tell())
+                stream.write(b_(str(idnum) + " 0 obj\n"))
+                key = None
+                if hasattr(self, "_encrypt") and idnum != self._encrypt.idnum:
+                    pack1 = struct.pack("<i", i + 1)[:3]
+                    pack2 = struct.pack("<i", 0)[:2]
+                    key = self._encrypt_key + pack1 + pack2
+                    assert len(key) == (len(self._encrypt_key) + 5)
+                    md5_hash = md5(key).digest()
+                    key = md5_hash[:min(16, len(self._encrypt_key) + 5)]
+                obj.writeToStream(stream, key)
+                stream.write(b_("\nendobj\n"))
 
         # xref table
         xref_location = stream.tell()
@@ -1400,8 +1402,8 @@ class PdfFileReader(object):
         else:
             warnings.warn("Object %d %d not defined."%(indirectReference.idnum,
                         indirectReference.generation), utils.PdfReadWarning)
-            #if self.strict:
-            raise utils.PdfReadError("Could not find object.")
+            if self.strict:
+                raise utils.PdfReadError("Could not find object.")
         self.cacheIndirectObject(indirectReference.generation,
                     indirectReference.idnum, retval)
         return retval
