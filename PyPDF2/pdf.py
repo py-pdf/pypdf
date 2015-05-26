@@ -973,6 +973,7 @@ class PdfFileReader(object):
         if self.isEncrypted:
             try:
                 self._override_encryption = True
+                self.decrypt('')
                 return self.trailer["/Root"]["/Pages"]["/Count"]
             except:
                 raise utils.PdfReadError("File has not been decrypted")
