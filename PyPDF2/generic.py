@@ -231,7 +231,7 @@ class FloatObject(decimal.Decimal, PdfObject):
 
     def __repr__(self):
         if self == self.to_integral():
-            return str(self.quantize(decimal.Decimal(1)))
+            return str(self.quantize(decimal.Decimal(1), context=decimal.ExtendedContext))
         else:
             # XXX: this adds useless extraneous zeros.
             return "%.5f" % self
