@@ -1172,6 +1172,16 @@ class PdfFileReader(object):
                 # Field attribute is N/A or unknown, so don't write anything
                 pass
 
+    def getFormTextFields(self):
+        ''' Retrieves form fields from the document with textual data (inputs, dropdowns)
+        '''
+        # Retrieve document form fields
+        formfields = self.getFields()
+        return dict(
+            (formfields[field]['/T'], formfields[field].get('/V')) for field in formfields \
+                if formfields[field].get('/FT') == '/Tx'
+        )
+
     def getNamedDestinations(self, tree=None, retval=None):
         """
         Retrieves the named destinations present in the document.
