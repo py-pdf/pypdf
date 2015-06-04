@@ -229,6 +229,76 @@ class PdfFileWriter(object):
                 NameObject("/OpenAction"): self._addObject(js)
                 })
 
+    def appendPagesFromReader(self, reader, after_page_append=None):
+        """
+        Copy pages from reader to writer. Includes an optional callback parameter
+        which is invoked after pages are appended to the writer.
+        
+        :param reader: a PdfFileReader object from which to copy page
+            annotations to this writer object.  The writer's annots
+        will then be updated
+        :callback after_page_append (function): Callback function that is invoked after
+            each page is appended to the writer. Callback signature:
+
+            :param writer_pageref (PDF page reference): Reference to the page
+                appended to the writer.
+        """
+        # Get page count from writer and reader
+        reader_num_pages = reader.getNumPages()
+        writer_num_pages = self.getNumPages()
+
+        # Copy pages from reader to writer
+        for rpagenum in range(0, reader_num_pages):
+            reader_page = reader.getPage(rpagenum)
+            self.addPage(reader_page)
+            writer_page = self.getPage(writer_num_pages+rpagenum)
+            # Trigger callback, pass writer page as parameter
+            if callable(after_page_append): after_page_append(writer_page)
+
+    def updatePageFormFieldValues(self, page, fields):
+        '''
+        Update the form field values for a given page from a fields dictionary.
+        Copy field texts and values from fields to page.
+
+        :param page: Page reference from PDF writer where the annotations
+            and field data will be updated.
+        :param fields: a Python dictionary of field names (/T) and text
+            values (/V)
+        '''
+        # Iterate through pages, update field values
+        for j in range(0, len(page['/Annots'])):
+            writer_annot = page['/Annots'][j].getObject()
+            for field in fields:
+                if writer_annot.get('/T') == field:
+                    writer_annot.update({
+                        NameObject("/V"): TextStringObject(fields[field])
+                    })
+
+    def cloneReaderDocumentRoot(self, reader):
+        '''
+        Copy the reader document root to the writer.
+        
+        :param reader:  PdfFileReader from the document root should be copied.
+        :callback after_page_append
+        '''
+        self._root_object = reader.trailer['/Root']
+
+    def cloneDocumentFromReader(self, reader, after_page_append=None):
+        '''
+        Create a copy (clone) of a document from a PDF file reader
+
+        :param reader: PDF file reader instance from which the clone
+            should be created.
+        :callback after_page_append (function): Callback function that is invoked after
+            each page is appended to the writer. Signature includes a reference to the
+            appended page (delegates to appendPagesFromReader). Callback signature:
+
+            :param writer_pageref (PDF page reference): Reference to the page just
+                appended to the document.
+        '''
+        self.cloneReaderDocumentRoot(reader)
+        self.appendPagesFromReader(reader, after_page_append)
+
     def encrypt(self, user_pwd, owner_pwd = None, use_128bit = True):
         """
         Encrypt this PDF file with the PDF Standard encryption handler.
