@@ -315,22 +315,24 @@ def decodeStreamData(stream):
         # we have a single filter instance
         filters = (filters,)
     data = stream._data
-    for filterType in filters:
-        if filterType == "/FlateDecode":
-            data = FlateDecode.decode(data, stream.get("/DecodeParms"))
-        elif filterType == "/ASCIIHexDecode":
-            data = ASCIIHexDecode.decode(data)
-        elif filterType == "/LZWDecode":
-            data = LZWDecode.decode(data, stream.get("/DecodeParms"))
-        elif filterType == "/ASCII85Decode":
-            data = ASCII85Decode.decode(data)
-        elif filterType == "/Crypt":
-            decodeParams = stream.get("/DecodeParams", {})
-            if "/Name" not in decodeParams and "/Type" not in decodeParams:
-                pass
+    # If there is not data to decode we should not try to decode the data.
+    if data:
+        for filterType in filters:
+            if filterType == "/FlateDecode":
+                data = FlateDecode.decode(data, stream.get("/DecodeParms"))
+            elif filterType == "/ASCIIHexDecode":
+                data = ASCIIHexDecode.decode(data)
+            elif filterType == "/LZWDecode":
+                data = LZWDecode.decode(data, stream.get("/DecodeParms"))
+            elif filterType == "/ASCII85Decode":
+                data = ASCII85Decode.decode(data)
+            elif filterType == "/Crypt":
+                decodeParams = stream.get("/DecodeParams", {})
+                if "/Name" not in decodeParams and "/Type" not in decodeParams:
+                    pass
+                else:
+                    raise NotImplementedError("/Crypt filter with /Name or /Type not supported yet")
             else:
-                raise NotImplementedError("/Crypt filter with /Name or /Type not supported yet")
-        else:
-            # unsupported filter
-            raise NotImplementedError("unsupported filter %s" % filterType)
+                # unsupported filter
+                raise NotImplementedError("unsupported filter %s" % filterType)
     return data
