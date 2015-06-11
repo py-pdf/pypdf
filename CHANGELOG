@@ -1,4 +1,8 @@
-﻿Version 1.24, 2014-12-31
+﻿Version 1.24, 2015-3-13
+------------------------
+ - Overflow error in generic.py (by Raja Jamwal)
+ 
+Version 1.24, 2014-12-31
 ------------------------
 
  - Bugfixes for reading files in Python 3 (by Anthony Tuininga and

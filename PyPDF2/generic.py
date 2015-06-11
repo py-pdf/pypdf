@@ -43,6 +43,7 @@ from . import filters
 from . import utils
 import decimal
 import codecs
+import sys
 #import debugging
 
 ObjectPrefix = b_('/<[tf(n%')
@@ -248,7 +249,8 @@ class NumberObject(int, PdfObject):
     ByteDot = b_(".")
 
     def __new__(cls, value):
-        return int.__new__(cls, value)
+        val = int (0) if int(value)>int(sys.maxint) else int(value)
+        return int.__new__(cls, val)
 
     def as_numeric(self):
         return int(b_(repr(self)))
