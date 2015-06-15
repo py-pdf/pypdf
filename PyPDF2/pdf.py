@@ -840,7 +840,7 @@ class PdfFileWriter(object):
         else:
             borderArr = [NumberObject(0)] * 3
 
-        if isinstance(rect, Str):
+        if isString(rect):
             rect = NameObject(rect)
         elif isinstance(rect, RectangleObject):
             pass
