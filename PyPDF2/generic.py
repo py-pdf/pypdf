@@ -249,8 +249,11 @@ class NumberObject(int, PdfObject):
     ByteDot = b_(".")
 
     def __new__(cls, value):
-        val = int (0) if int(value)>int(sys.maxint) else int(value)
-        return int.__new__(cls, val)
+        val = int(value)
+        try:
+            return int.__new__(cls, val)
+        except OverflowError:
+            return int.__new__(cls, 0)
 
     def as_numeric(self):
         return int(b_(repr(self)))
