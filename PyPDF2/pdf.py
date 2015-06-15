@@ -229,6 +229,88 @@ class PdfFileWriter(object):
                 NameObject("/OpenAction"): self._addObject(js)
                 })
 
+    def addAttachment(self, fname, fdata):
+        """
+        Embed a file inside the PDF.
+
+        :param str fname: The filename to display.
+        :param str fdata: The data in the file.
+      
+        Reference:
+        https://www.adobe.com/content/dam/Adobe/en/devnet/acrobat/pdfs/PDF32000_2008.pdf
+        Section 7.11.3
+        """
+        
+        # We need 3 entries:
+        # * The file's data
+        # * The /Filespec entry
+        # * The file's name, which goes in the Catalog
+        
+
+        # The entry for the file
+        """ Sample:
+        8 0 obj
+        <<
+         /Length 12
+         /Type /EmbeddedFile
+        >>
+        stream
+        Hello world!
+        endstream
+        endobj        
+        """
+        file_entry = DecodedStreamObject()
+        file_entry.setData(fdata)
+        file_entry.update({
+                NameObject("/Type"): NameObject("/EmbeddedFile")
+                })
+
+        # The Filespec entry
+        """ Sample:
+        7 0 obj
+        <<
+         /Type /Filespec
+         /F (hello.txt)
+         /EF << /F 8 0 R >>
+        >>
+        """
+        efEntry = DictionaryObject()
+        efEntry.update({ NameObject("/F"):file_entry })
+        
+        filespec = DictionaryObject()
+        filespec.update({
+                NameObject("/Type"): NameObject("/Filespec"),
+                NameObject("/F"): createStringObject(fname),  # Perhaps also try TextStringObject
+                NameObject("/EF"): efEntry
+                })
+                
+        # Then create the entry for the root, as it needs a reference to the Filespec
+        """ Sample:
+        1 0 obj
+        <<
+         /Type /Catalog
+         /Outlines 2 0 R
+         /Pages 3 0 R
+         /Names << /EmbeddedFiles << /Names [(hello.txt) 7 0 R] >> >>
+        >>
+        endobj
+        
+        """
+        embeddedFilesNamesDictionary = DictionaryObject()
+        embeddedFilesNamesDictionary.update({
+                NameObject("/Names"): ArrayObject([createStringObject(fname), filespec])
+                })
+        
+        embeddedFilesDictionary = DictionaryObject()
+        embeddedFilesDictionary.update({
+                NameObject("/EmbeddedFiles"): embeddedFilesNamesDictionary
+                })
+        # Update the root
+        self._root_object.update({
+                NameObject("/Names"): embeddedFilesDictionary
+                })            
+                
+                
     def encrypt(self, user_pwd, owner_pwd = None, use_128bit = True):
         """
         Encrypt this PDF file with the PDF Standard encryption handler.
