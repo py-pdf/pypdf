@@ -23,3 +23,12 @@ https://pythonhosted.org/PyPDF2/
 ##FAQ
 Please see  
 http://mstamy2.github.io/PyPDF2/FAQ.html
+
+
+##Tests
+PyPDF2 includes a test suite built on the unittest framework. All tests are located in the "Tests" folder.
+Tests can be run from the command line by:
+
+```bash
+python -m unittest Tests.tests
+```

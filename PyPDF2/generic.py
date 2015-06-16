@@ -345,13 +345,18 @@ def readStringFromStream(stream):
                 tok = b_("\b")
             elif tok == b_("f"):
                 tok = b_("\f")
+            elif tok == b_("c"):
+                tok = b_("\c")
             elif tok == b_("("):
                 tok = b_("(")
             elif tok == b_(")"):
                 tok = b_(")")
+            elif tok == b_("/"):
+                tok = b_("/")
             elif tok == b_("\\"):
                 tok = b_("\\")
-            elif tok in (b_(" "), b_("/"), b_("%"), b_("<"), b_(">"), b_("["), b_("]"), b_("#")):
+            elif tok in (b_(" "), b_("/"), b_("%"), b_("<"), b_(">"), b_("["), 
+                    b_("]"), b_("#"),  b_("_"), b_("&"), b_('$')):
                 # odd/unnessecary escape sequences we have encountered
                 tok = b_(tok)
             elif tok.isdigit():
@@ -378,7 +383,7 @@ def readStringFromStream(stream):
                 # line break was escaped:
                 tok = b_('')
             else:
-                raise utils.PdfReadError("Unexpected escaped string")
+                raise utils.PdfReadError(r"Unexpected escaped string: %s" % tok)
         txt += tok
     return createStringObject(txt)
 
