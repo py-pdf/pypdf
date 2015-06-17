@@ -1469,6 +1469,8 @@ class PdfFileReader(object):
         assert idx < objStm['/N']
         streamData = BytesIO(b_(objStm.getData()))
         for i in range(objStm['/N']):
+            readNonWhitespace(streamData)
+            streamData.seek(-1, 1)
             objnum = NumberObject.readFromStream(streamData)
             readNonWhitespace(streamData)
             streamData.seek(-1, 1)
