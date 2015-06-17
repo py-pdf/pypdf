@@ -45,6 +45,12 @@ import decimal
 import codecs
 import sys
 #import debugging
+from sys import version_info
+
+if version_info < ( 2, 5 ):
+    from md5 import md5
+else:
+    from hashlib import md5
 
 ObjectPrefix = b_('/<[tf(n%')
 NumberSigns = b_('+-')
@@ -144,7 +150,6 @@ class BooleanObject(PdfObject):
 
 class ArrayObject(list, PdfObject):
     def hashValue(self):
-        from hashlib import md5
         md5Hash = md5()
 
         for value in self:
@@ -567,7 +572,6 @@ class DictionaryObject(dict, PdfObject):
         stream.write(b_(">>"))
 
     def hashValue(self):
-        from hashlib import md5
         md5Hash = md5()
 
         for key, value in self.items():
@@ -851,7 +855,6 @@ class StreamObject(DictionaryObject):
 
     def hashValue(self):
         if self._hashValue is None:
-            from hashlib import md5
             self._hashValue = "StreamObject:" + md5(self._data).hexdigest()
         return self._hashValue
 
