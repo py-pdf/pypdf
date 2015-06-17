@@ -83,6 +83,7 @@ class PdfFileWriter(object):
     def __init__(self):
         self._header = b_("%PDF-1.3")
         self._objects = []  # array of indirect objects
+        self._idnum_hash = {} # hash of idnum
 
         # The root of our page tree node.
         pages = DictionaryObject()
@@ -559,8 +560,14 @@ class PdfFileWriter(object):
                 newobj = externMap.get(data.pdf, {}).get(data.generation, {}).get(data.idnum, None)
                 if newobj == None:
                     newobj = data.pdf.getObject(data)
+                    hashValue = newobj.hashValue()
+                    # Check if object is already added to pdf.
+                    if hashValue is not None and hashValue in self._idnum_hash:
+                        return IndirectObject(self._idnum_hash[hashValue], 0, self)
                     self._objects.append(None) # placeholder
                     idnum = len(self._objects)
+                    if hashValue is not None:
+                        self._idnum_hash[hashValue] = idnum
                     newobj_ido = IndirectObject(idnum, 0, self)
                     if data.pdf not in externMap:
                         externMap[data.pdf] = {}

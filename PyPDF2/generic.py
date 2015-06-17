@@ -103,6 +103,10 @@ class PdfObject(object):
         """Resolves indirect references."""
         return self
 
+    def hashValue(self):
+        """Return hash for deduplication or None"""
+        return None
+
 
 class NullObject(PdfObject):
     def writeToStream(self, stream, encryption_key):
@@ -176,6 +180,9 @@ class IndirectObject(PdfObject):
 
     def getObject(self):
         return self.pdf.getObject(self).getObject()
+
+    def hashValue(self):
+        return self.getObject().hashValue()
 
     def __repr__(self):
         return "IndirectObject(%r, %r)" % (self.idnum, self.generation)
@@ -545,6 +552,21 @@ class DictionaryObject(dict, PdfObject):
             stream.write(b_("\n"))
         stream.write(b_(">>"))
 
+    def hashValue(self):
+        from hashlib import md5
+        md5Hash = md5()
+
+        for key, value in self.items():
+            md5Hash.update(key)
+            if isinstance(value, PdfObject):
+                subHash = value.hashValue()
+                if subHash is not None:
+                    md5Hash.update(subHash)
+            else:
+                md5Hash.update(value)
+
+        return "DictionaryObject:" + md5Hash.hexdigest()
+
     def readFromStream(stream, pdf):
         debug = False
         tmp = stream.read(2)
@@ -811,6 +833,10 @@ class StreamObject(DictionaryObject):
         retval[NameObject("/Filter")] = f
         retval._data = filters.FlateDecode.encode(self._data)
         return retval
+
+    def hashValue(self):
+        from hashlib import md5
+        return "StreamObject:" + md5(self._data).hexdigest()
 
 
 class DecodedStreamObject(StreamObject):
