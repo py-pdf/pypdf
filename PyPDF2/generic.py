@@ -143,6 +143,20 @@ class BooleanObject(PdfObject):
 
 
 class ArrayObject(list, PdfObject):
+    def hashValue(self):
+        from hashlib import md5
+        md5Hash = md5()
+
+        for value in self:
+            if isinstance(value, PdfObject):
+                subHash = value.hashValue()
+                if subHash is not None:
+                    md5Hash.update(subHash)
+            else:
+                md5Hash.update(value)
+
+        return "ArrayObject:" + md5Hash.hexdigest()
+
     def writeToStream(self, stream, encryption_key):
         stream.write(b_("["))
         for data in self:
@@ -182,7 +196,7 @@ class IndirectObject(PdfObject):
         return self.pdf.getObject(self).getObject()
 
     def hashValue(self):
-        return self.getObject().hashValue()
+        return "IndirectObject:(%r,%r)" % (self.idnum, self.generation)
 
     def __repr__(self):
         return "IndirectObject(%r, %r)" % (self.idnum, self.generation)
@@ -793,6 +807,7 @@ class StreamObject(DictionaryObject):
     def __init__(self):
         self._data = None
         self.decodedSelf = None
+        self._hashValue = None
 
     def writeToStream(self, stream, encryption_key):
         self[NameObject("/Length")] = NumberObject(len(self._data))
@@ -835,8 +850,10 @@ class StreamObject(DictionaryObject):
         return retval
 
     def hashValue(self):
-        from hashlib import md5
-        return "StreamObject:" + md5(self._data).hexdigest()
+        if self._hashValue is None:
+            from hashlib import md5
+            self._hashValue = "StreamObject:" + md5(self._data).hexdigest()
+        return self._hashValue
 
 
 class DecodedStreamObject(StreamObject):
@@ -844,12 +861,14 @@ class DecodedStreamObject(StreamObject):
         return self._data
 
     def setData(self, data):
+        self._hashValue = None
         self._data = data
 
 
 class EncodedStreamObject(StreamObject):
     def __init__(self):
         self.decodedSelf = None
+        self._hashValue = None
 
     def getData(self):
         if self.decodedSelf:
