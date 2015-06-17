@@ -2543,6 +2543,7 @@ class PageObject(DictionaryObject):
                 for i in operands[0]:
                     if isinstance(i, TextStringObject):
                         text += i
+                text += "\n"
         return text
 
     mediaBox = createRectangleAccessor("/MediaBox", ())
