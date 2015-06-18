@@ -1869,8 +1869,7 @@ class PdfFileReader(object):
                 if found:
                     continue
                 # no xref table found at specified location
-                assert False
-                break
+                raise utils.PdfReadError("Could not find xref table at specified location")
         #if not zero-indexed, verify that the table is correct; change it if necessary
         if self.xrefIndex and not self.strict:
             loc = stream.tell()
