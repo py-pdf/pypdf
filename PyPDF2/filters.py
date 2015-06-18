@@ -318,13 +318,13 @@ def decodeStreamData(stream):
     # If there is not data to decode we should not try to decode the data.
     if data:
         for filterType in filters:
-            if filterType == "/FlateDecode":
+            if filterType == "/FlateDecode" or filterType == "/Fl":
                 data = FlateDecode.decode(data, stream.get("/DecodeParms"))
-            elif filterType == "/ASCIIHexDecode":
+            elif filterType == "/ASCIIHexDecode" or filterType == "/AHx":
                 data = ASCIIHexDecode.decode(data)
-            elif filterType == "/LZWDecode":
+            elif filterType == "/LZWDecode" or filterType == "/LZW":
                 data = LZWDecode.decode(data, stream.get("/DecodeParms"))
-            elif filterType == "/ASCII85Decode":
+            elif filterType == "/ASCII85Decode" or filterType == "/A85":
                 data = ASCII85Decode.decode(data)
             elif filterType == "/Crypt":
                 decodeParams = stream.get("/DecodeParams", {})
