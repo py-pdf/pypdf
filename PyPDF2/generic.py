@@ -461,7 +461,7 @@ class TextStringObject(utils.string_type, PdfObject):
 
 
 class NameObject(str, PdfObject):
-    delimiterPattern = re.compile(b_("\s+|[()<>[\]{}/%]"))
+    delimiterPattern = re.compile(b_(r"\s+|[\(\)<>\[\]{}/%]"))
     surfix = b_("/")
 
     def writeToStream(self, stream, encryption_key):
@@ -473,7 +473,8 @@ class NameObject(str, PdfObject):
         name = stream.read(1)
         if name != NameObject.surfix:
             raise utils.PdfReadError("name read error")
-        name += utils.readUntilRegex(stream, NameObject.delimiterPattern)
+        name += utils.readUntilRegex(stream, NameObject.delimiterPattern, 
+            ignore_eof=True)
         if debug: print(name)
         try:
             return NameObject(name.decode('utf-8'))
