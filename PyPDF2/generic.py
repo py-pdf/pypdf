@@ -461,7 +461,7 @@ class TextStringObject(utils.string_type, PdfObject):
 
 
 class NameObject(str, PdfObject):
-    delimiterPattern = re.compile(b_(r"\s+|[()<>[\]{}/%]"))
+    delimiterPattern = re.compile(b_(r"\s+|[\(\)<>\[\]{}/%]"))
     surfix = b_("/")
 
     def writeToStream(self, stream, encryption_key):
