@@ -1347,7 +1347,7 @@ class PdfFileReader(object):
 
         return outlines
 
-    def getPageNumberByIndirect(self, indirectRef):
+    def _getPageNumberByIndirect(self, indirectRef):
         """Generate _pageId2Num"""
         if self._pageId2Num is None:
             id2num = {}
@@ -1373,7 +1373,7 @@ class PdfFileReader(object):
         :rtype: int
         """
         indirectRef = page.indirectRef
-        ret = self.getPageNumberByIndirect(indirectRef)
+        ret = self._getPageNumberByIndirect(indirectRef)
         return ret
 
     def getDestinationPageNumber(self, destination):
@@ -1387,7 +1387,7 @@ class PdfFileReader(object):
         :rtype: int
         """
         indirectRef = destination.page
-        ret = self.getPageNumberByIndirect(indirectRef)
+        ret = self._getPageNumberByIndirect(indirectRef)
         return ret
 
     def _buildDestination(self, title, array):
