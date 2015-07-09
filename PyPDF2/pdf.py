@@ -1413,7 +1413,7 @@ class PdfFileReader(object):
         if dest:
             if isinstance(dest, ArrayObject):
                 outline = self._buildDestination(title, dest)
-            elif isinstance(dest, Str) and dest in self._namedDests:
+            elif isString(dest) and dest in self._namedDests:
                 outline = self._namedDests[dest]
                 outline[NameObject("/Title")] = title
             else:
