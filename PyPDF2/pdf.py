@@ -2696,25 +2696,29 @@ class ContentStream(DecodedStreamObject):
         assert tmp[:2] == b_("ID")
         data = b_("")
         while True:
+            # Read the inline image, while checking for EI (End Image) operator.
             tok = stream.read(1)
             if tok == b_("E"):
                 # Check for End Image
-                next1 = stream.read(1)
-                if next1 == b_("I"):
-                    next2 = readNonWhitespace(stream)
-                    if next2 == b_('Q'):
+                tok2 = stream.read(1)
+                if tok2 == b_("I"):
+                    # Sometimes that data will contain EI, so check for the Q operator.
+                    tok3 = stream.read(1)
+                    info = tok + tok2
+                    while tok3 in utils.WHITESPACES:
+                        info += tok3
+                        tok3 = stream.read(1)
+                    if tok3 == b_("Q"):
                         stream.seek(-1, 1)
                         break
                     else:
-                        stream.seek(-2, 1)
-                        data += tok
+                        stream.seek(-1,1)
+                        data += info
                 else:
                     stream.seek(-1, 1)
                     data += tok
             else:
                 data += tok
-        readNonWhitespace(stream)
-        stream.seek(-1, 1)
         return {"settings": settings, "data": data}
 
     def _getData(self):
