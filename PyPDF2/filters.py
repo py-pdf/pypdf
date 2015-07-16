@@ -40,6 +40,7 @@ if version_info < ( 3, 0 ):
     from cStringIO import StringIO
 else:
     from io import StringIO
+    import struct
 
 try:
     import zlib
@@ -256,55 +257,78 @@ class LZWDecode(object):
 
 class ASCII85Decode(object):
     def decode(data, decodeParms=None):
-        retval = ""
-        group = []
-        x = 0
-        hitEod = False
-        # remove all whitespace from data
-        data = [y for y in data if not (y in ' \n\r\t')]
-        while not hitEod:
-            c = data[x]
-            if len(retval) == 0 and c == "<" and data[x+1] == "~":
-                x += 2
-                continue
-            #elif c.isspace():
-            #    x += 1
-            #    continue
-            elif c == 'z':
-                assert len(group) == 0
-                retval += '\x00\x00\x00\x00'
-                x += 1
-                continue
-            elif c == "~" and data[x+1] == ">":
-                if len(group) != 0:
-                    # cannot have a final group of just 1 char
-                    assert len(group) > 1
-                    cnt = len(group) - 1
-                    group += [ 85, 85, 85 ]
-                    hitEod = cnt
+        if version_info < ( 3, 0 ):
+            retval = ""
+            group = []
+            x = 0
+            hitEod = False
+            # remove all whitespace from data
+            data = [y for y in data if not (y in ' \n\r\t')]
+            while not hitEod:
+                c = data[x]
+                if len(retval) == 0 and c == "<" and data[x+1] == "~":
+                    x += 2
+                    continue
+                #elif c.isspace():
+                #    x += 1
+                #    continue
+                elif c == 'z':
+                    assert len(group) == 0
+                    retval += '\x00\x00\x00\x00'
+                    x += 1
+                    continue
+                elif c == "~" and data[x+1] == ">":
+                    if len(group) != 0:
+                        # cannot have a final group of just 1 char
+                        assert len(group) > 1
+                        cnt = len(group) - 1
+                        group += [ 85, 85, 85 ]
+                        hitEod = cnt
+                    else:
+                        break
                 else:
+                    c = ord(c) - 33
+                    assert c >= 0 and c < 85
+                    group += [ c ]
+                if len(group) >= 5:
+                    b = group[0] * (85**4) + \
+                        group[1] * (85**3) + \
+                        group[2] * (85**2) + \
+                        group[3] * 85 + \
+                        group[4]
+                    assert b < (2**32 - 1)
+                    c4 = chr((b >> 0) % 256)
+                    c3 = chr((b >> 8) % 256)
+                    c2 = chr((b >> 16) % 256)
+                    c1 = chr(b >> 24)
+                    retval += (c1 + c2 + c3 + c4)
+                    if hitEod:
+                        retval = retval[:-4+hitEod]
+                    group = []
+                x += 1
+            return retval
+        else:
+            if isinstance(data, str):
+                data = data.encode('ascii')
+            n = b = 0
+            out = bytearray()
+            for c in data:
+                if ord('!') <= c and c <= ord('u'):
+                    n += 1
+                    b = b*85+(c-33)
+                    if n == 5:
+                        out += struct.pack(b'>L',b)
+                        n = b = 0
+                elif c == ord('z'):
+                    assert n == 0
+                    out += b'\0\0\0\0'
+                elif c == ord('~'):
+                    if n:
+                        for _ in range(5-n):
+                            b = b*85+84
+                        out += struct.pack(b'>L',b)[:n-1]
                     break
-            else:
-                c = ord(c) - 33
-                assert c >= 0 and c < 85
-                group += [ c ]
-            if len(group) >= 5:
-                b = group[0] * (85**4) + \
-                    group[1] * (85**3) + \
-                    group[2] * (85**2) + \
-                    group[3] * 85 + \
-                    group[4]
-                assert b < (2**32 - 1)
-                c4 = chr((b >> 0) % 256)
-                c3 = chr((b >> 8) % 256)
-                c2 = chr((b >> 16) % 256)
-                c1 = chr(b >> 24)
-                retval += (c1 + c2 + c3 + c4)
-                if hitEod:
-                    retval = retval[:-4+hitEod]
-                group = []
-            x += 1
-        return retval
+            return bytes(out)
     decode = staticmethod(decode)
 
 
@@ -315,22 +339,24 @@ def decodeStreamData(stream):
         # we have a single filter instance
         filters = (filters,)
     data = stream._data
-    for filterType in filters:
-        if filterType == "/FlateDecode":
-            data = FlateDecode.decode(data, stream.get("/DecodeParms"))
-        elif filterType == "/ASCIIHexDecode":
-            data = ASCIIHexDecode.decode(data)
-        elif filterType == "/LZWDecode":
-            data = LZWDecode.decode(data, stream.get("/DecodeParms"))
-        elif filterType == "/ASCII85Decode":
-            data = ASCII85Decode.decode(data)
-        elif filterType == "/Crypt":
-            decodeParams = stream.get("/DecodeParams", {})
-            if "/Name" not in decodeParams and "/Type" not in decodeParams:
-                pass
+    # If there is not data to decode we should not try to decode the data.
+    if data:
+        for filterType in filters:
+            if filterType == "/FlateDecode" or filterType == "/Fl":
+                data = FlateDecode.decode(data, stream.get("/DecodeParms"))
+            elif filterType == "/ASCIIHexDecode" or filterType == "/AHx":
+                data = ASCIIHexDecode.decode(data)
+            elif filterType == "/LZWDecode" or filterType == "/LZW":
+                data = LZWDecode.decode(data, stream.get("/DecodeParms"))
+            elif filterType == "/ASCII85Decode" or filterType == "/A85":
+                data = ASCII85Decode.decode(data)
+            elif filterType == "/Crypt":
+                decodeParams = stream.get("/DecodeParams", {})
+                if "/Name" not in decodeParams and "/Type" not in decodeParams:
+                    pass
+                else:
+                    raise NotImplementedError("/Crypt filter with /Name or /Type not supported yet")
             else:
-                raise NotImplementedError("/Crypt filter with /Name or /Type not supported yet")
-        else:
-            # unsupported filter
-            raise NotImplementedError("unsupported filter %s" % filterType)
+                # unsupported filter
+                raise NotImplementedError("unsupported filter %s" % filterType)
     return data

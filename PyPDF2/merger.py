@@ -28,7 +28,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from .generic import *
-from .utils import string_type, str_
+from .utils import isString, str_
 from .pdf import PdfFileReader, PdfFileWriter
 from .pagerange import PageRange
 from sys import version_info
@@ -109,7 +109,8 @@ class PdfFileMerger(object):
         # it is a PdfFileReader, copy that reader's stream into a
         # BytesIO (or StreamIO) stream.
         # If fileobj is none of the above types, it is not modified
-        if type(fileobj) == string_type:
+        decryption_key = None
+        if isString(fileobj):
             fileobj = file(fileobj, 'rb')
             my_file = True
         elif isinstance(fileobj, file):
@@ -123,11 +124,15 @@ class PdfFileMerger(object):
             filecontent = StreamIO(fileobj.stream.read())
             fileobj.stream.seek(orig_tell) # reset the stream to its original location
             fileobj = filecontent
+            if hasattr(fileobj, '_decryption_key'):
+                decryption_key = fileobj._decryption_key
             my_file = True
 
         # Create a new PdfFileReader instance using the stream
         # (either file or BytesIO or StringIO) created above
         pdfr = PdfFileReader(fileobj, strict=self.strict)
+        if decryption_key is not None:
+            pdfr._decryption_key = decryption_key
 
         # Find the range of pages to merge.
         if pages == None:
@@ -205,7 +210,7 @@ class PdfFileMerger(object):
             file-like object.
         """
         my_file = False
-        if type(fileobj) in (str, str):
+        if isString(fileobj):
             fileobj = file(fileobj, 'wb')
             my_file = True
 

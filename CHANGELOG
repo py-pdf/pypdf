@@ -1,4 +1,73 @@
-﻿Version 1.24, 2014-12-31
+﻿Version 1.25, 2015-07-07
+------------------------
+
+BUGFIXES:
+
+ - Added Python 3 algorithm for ASCII85Decode. Fixes issue when
+   reading reportlab-generated files with Py 3 (jerickbixly)
+
+ - Recognize more escape sequence which would otherwise throw an
+   exception (manuelzs, robertsoakes)
+
+ - Fixed overflow error in generic.py. Occurred
+   when reading a too-large int in Python 2 (by Raja Jamwal)
+
+ - Allow access to files which were encrypted with an empty
+   password. Previously threw a "File has not been decrypted"
+   exception (Elena Williams)
+
+ - Do not attempt to decode an empty data stream. Previously
+   would cause an error in decode algorithms (vladir)
+
+ - Fixed some type issues specific to Py 2 or Py 3
+
+ - Fix issue when stream data begins with whitespace (soloma83)
+
+ - Recognize abbreviated filter names (AlmightyOatmeal and
+   Matthew Weiss)
+
+ - Copy decryption key from PdfFileReader to PdfFileMerger.
+   Allows usage of PdfFileMerger with encrypted files (twolfson)
+
+ - Fixed bug which occurred when a NameObject is present at end
+   of a file stream. Threw a "Stream has ended unexpectedly"
+   exception (speedplane)
+
+FEATURES:
+
+ - Initial work on a test suite; to be expanded in future.
+   Tests and Resources directory added, README updated (robertsoakes)
+
+ - Added document cloning methods to PdfFileWriter:
+   appendPagesFromReader, cloneReaderDocumentRoot, and
+   cloneDocumentFromReader. See official documentation (robertsoakes)
+
+ - Added method for writing to form fields: updatePageFormFieldValues.
+   This will be enhanced in the future. See official documentation
+   (robertsoakes)
+
+ - New addAttachment method. See documentation. Support for adding
+   and extracting embedded files to be enhanced in the future
+   (moshekaplan)
+
+ - Added methods to get page number of given PageObject or
+   Destination: getPageNumber and getDestinationPageNumber.
+   See documentation (mozbugbox)
+
+OTHER ENHANCEMENTS:
+
+ - Enhanced type handling (Brent Amrhein)
+
+ - Enhanced exception handling in NameObject (sbywater)
+
+ - Enhanced extractText method output (peircej)
+
+ - Better exception handling
+
+ - Enhanced regex usage in NameObject class (speedplane)
+
+
+Version 1.24, 2014-12-31
 ------------------------
 
  - Bugfixes for reading files in Python 3 (by Anthony Tuininga and
