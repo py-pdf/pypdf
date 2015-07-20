@@ -1,4 +1,12 @@
-﻿Version 1.25, 2015-07-07
+﻿Patch 1.25.1, 2015-07-20
+
+ - Fix bug when parsing inline images. Occurred when merging
+   certain pages with inline images
+
+ - Fixed type error when creating outlines by utilizing the
+   isString() test
+
+Version 1.25, 2015-07-07
 ------------------------
 
 BUGFIXES:
