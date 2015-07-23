@@ -2142,7 +2142,7 @@ class PageObject(DictionaryObject):
         page2Res = res2.get(resource, DictionaryObject()).getObject()
         renameRes = {}
         for key in list(page2Res.keys()):
-            if key in newRes and newRes[key] != page2Res[key]:
+            if key in newRes and newRes.raw_get(key) != page2Res.raw_get(key):
                 newname = NameObject(key + str(uuid.uuid4()))
                 renameRes[key] = newname
                 newRes[newname] = page2Res[key]
