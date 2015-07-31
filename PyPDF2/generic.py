@@ -201,7 +201,7 @@ class IndirectObject(PdfObject):
         return self.pdf.getObject(self).getObject()
 
     def hashValue(self):
-        return "IndirectObject:(%r,%r)" % (self.idnum, self.generation)
+        return "IndirectObject<%s>:(%r,%r)" % (hex(id(self.pdf)), self.idnum, self.generation)
 
     def __repr__(self):
         return "IndirectObject(%r, %r)" % (self.idnum, self.generation)
