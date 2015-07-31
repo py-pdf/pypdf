@@ -1062,6 +1062,7 @@ class PdfFileReader(object):
         self.flattenedPages = None
         self.resolvedObjects = {}
         self.xrefIndex = 0
+        self._pageId2Num = None # map page IndirectRef number to Page Number
         if hasattr(stream, 'mode') and 'b' not in stream.mode:
             warnings.warn("PdfFileReader stream/file object is not in binary mode. It may not be read correctly.", utils.PdfReadWarning)
         if isString(stream):
@@ -1353,6 +1354,49 @@ class PdfFileReader(object):
 
         return outlines
 
+    def _getPageNumberByIndirect(self, indirectRef):
+        """Generate _pageId2Num"""
+        if self._pageId2Num is None:
+            id2num = {}
+            for i, x in enumerate(self.pages):
+                id2num[x.indirectRef.idnum] = i
+            self._pageId2Num = id2num
+
+        if isinstance(indirectRef, int):
+            idnum = indirectRef
+        else:
+            idnum = indirectRef.idnum
+
+        ret = self._pageId2Num.get(idnum, -1)
+        return ret
+
+    def getPageNumber(self, page):
+        """
+        Retrieve page number of a given PageObject
+
+        :param PageObject page: The page to get page number. Should be
+            an instance of :class:`PageObject<PyPDF2.pdf.PageObject>`
+        :return: the page number or -1 if page not found
+        :rtype: int
+        """
+        indirectRef = page.indirectRef
+        ret = self._getPageNumberByIndirect(indirectRef)
+        return ret
+
+    def getDestinationPageNumber(self, destination):
+        """
+        Retrieve page number of a given Destination object
+
+        :param Destination destination: The destination to get page number.
+             Should be an instance of
+             :class:`Destination<PyPDF2.pdf.Destination>`
+        :return: the page number or -1 if page not found
+        :rtype: int
+        """
+        indirectRef = destination.page
+        ret = self._getPageNumberByIndirect(indirectRef)
+        return ret
+
     def _buildDestination(self, title, array):
         page, typ = array[0:2]
         array = array[2:]
@@ -1376,7 +1420,7 @@ class PdfFileReader(object):
         if dest:
             if isinstance(dest, ArrayObject):
                 outline = self._buildDestination(title, dest)
-            elif isinstance(dest, Str) and dest in self._namedDests:
+            elif isString(dest) and dest in self._namedDests:
                 outline = self._namedDests[dest]
                 outline[NameObject("/Title")] = title
             else:
@@ -1476,6 +1520,8 @@ class PdfFileReader(object):
         assert idx < objStm['/N']
         streamData = BytesIO(b_(objStm.getData()))
         for i in range(objStm['/N']):
+            readNonWhitespace(streamData)
+            streamData.seek(-1, 1)
             objnum = NumberObject.readFromStream(streamData)
             readNonWhitespace(streamData)
             streamData.seek(-1, 1)
@@ -1830,8 +1876,7 @@ class PdfFileReader(object):
                 if found:
                     continue
                 # no xref table found at specified location
-                assert False
-                break
+                raise utils.PdfReadError("Could not find xref table at specified location")
         #if not zero-indexed, verify that the table is correct; change it if necessary
         if self.xrefIndex and not self.strict:
             loc = stream.tell()
@@ -2104,7 +2149,7 @@ class PageObject(DictionaryObject):
         page2Res = res2.get(resource, DictionaryObject()).getObject()
         renameRes = {}
         for key in list(page2Res.keys()):
-            if key in newRes and newRes[key] != page2Res[key]:
+            if key in newRes and newRes.raw_get(key) != page2Res.raw_get(key):
                 newname = NameObject(key + str(uuid.uuid4()))
                 renameRes[key] = newname
                 newRes[newname] = page2Res[key]
@@ -2550,6 +2595,7 @@ class PageObject(DictionaryObject):
                 for i in operands[0]:
                     if isinstance(i, TextStringObject):
                         text += i
+                text += "\n"
         return text
 
     mediaBox = createRectangleAccessor("/MediaBox", ())
@@ -2657,25 +2703,29 @@ class ContentStream(DecodedStreamObject):
         assert tmp[:2] == b_("ID")
         data = b_("")
         while True:
+            # Read the inline image, while checking for EI (End Image) operator.
             tok = stream.read(1)
             if tok == b_("E"):
                 # Check for End Image
-                next1 = stream.read(1)
-                if next1 == b_("I"):
-                    next2 = readNonWhitespace(stream)
-                    if next2 == b_('Q'):
+                tok2 = stream.read(1)
+                if tok2 == b_("I"):
+                    # Sometimes that data will contain EI, so check for the Q operator.
+                    tok3 = stream.read(1)
+                    info = tok + tok2
+                    while tok3 in utils.WHITESPACES:
+                        info += tok3
+                        tok3 = stream.read(1)
+                    if tok3 == b_("Q"):
                         stream.seek(-1, 1)
                         break
                     else:
-                        stream.seek(-2, 1)
-                        data += tok
+                        stream.seek(-1,1)
+                        data += info
                 else:
                     stream.seek(-1, 1)
                     data += tok
             else:
                 data += tok
-        readNonWhitespace(stream)
-        stream.seek(-1, 1)
         return {"settings": settings, "data": data}
 
     def _getData(self):
