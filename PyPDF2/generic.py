@@ -490,6 +490,11 @@ class NameObject(str, PdfObject):
     delimiterPattern = re.compile(b_("\s+|[()<>[\]{}/%]"))
     surfix = b_("/")
 
+    def hashValue(self):
+        md5Hash = md5()
+        md5Hash.update(b_(self))
+        return "NameObject:" + md5Hash.hexdigest()
+
     def writeToStream(self, stream, encryption_key):
         stream.write(b_(self))
 
