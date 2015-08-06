@@ -74,8 +74,16 @@ else:
     from hashlib import md5
 import uuid
 
+PERM_NONE = 0
+PERM_PRINT = 2
+PERM_MODIFY = 4
+PERM_COPY_TEXT = 8
+PERM_ANNOTATE = 16
+PERM_ALL = PERM_PRINT | PERM_MODIFY | PERM_COPY_TEXT | PERM_ANNOTATE
+
 
 class PdfFileWriter(object):
+
     """
     This class supports writing PDF files out, given pages produced by another
     class (typically :class:`PdfFileReader<PdfFileReader>`).
@@ -235,17 +243,17 @@ class PdfFileWriter(object):
 
         :param str fname: The filename to display.
         :param str fdata: The data in the file.
-      
+
         Reference:
         https://www.adobe.com/content/dam/Adobe/en/devnet/acrobat/pdfs/PDF32000_2008.pdf
         Section 7.11.3
         """
-        
+
         # We need 3 entries:
         # * The file's data
         # * The /Filespec entry
         # * The file's name, which goes in the Catalog
-        
+
 
         # The entry for the file
         """ Sample:
@@ -257,7 +265,7 @@ class PdfFileWriter(object):
         stream
         Hello world!
         endstream
-        endobj        
+        endobj
         """
         file_entry = DecodedStreamObject()
         file_entry.setData(fdata)
@@ -276,14 +284,14 @@ class PdfFileWriter(object):
         """
         efEntry = DictionaryObject()
         efEntry.update({ NameObject("/F"):file_entry })
-        
+
         filespec = DictionaryObject()
         filespec.update({
                 NameObject("/Type"): NameObject("/Filespec"),
                 NameObject("/F"): createStringObject(fname),  # Perhaps also try TextStringObject
                 NameObject("/EF"): efEntry
                 })
-                
+
         # Then create the entry for the root, as it needs a reference to the Filespec
         """ Sample:
         1 0 obj
@@ -294,13 +302,13 @@ class PdfFileWriter(object):
          /Names << /EmbeddedFiles << /Names [(hello.txt) 7 0 R] >> >>
         >>
         endobj
-        
+
         """
         embeddedFilesNamesDictionary = DictionaryObject()
         embeddedFilesNamesDictionary.update({
                 NameObject("/Names"): ArrayObject([createStringObject(fname), filespec])
                 })
-        
+
         embeddedFilesDictionary = DictionaryObject()
         embeddedFilesDictionary.update({
                 NameObject("/EmbeddedFiles"): embeddedFilesNamesDictionary
@@ -314,7 +322,7 @@ class PdfFileWriter(object):
         """
         Copy pages from reader to writer. Includes an optional callback parameter
         which is invoked after pages are appended to the writer.
-        
+
         :param reader: a PdfFileReader object from which to copy page
             annotations to this writer object.  The writer's annots
         will then be updated
@@ -358,7 +366,7 @@ class PdfFileWriter(object):
     def cloneReaderDocumentRoot(self, reader):
         '''
         Copy the reader document root to the writer.
-        
+
         :param reader:  PdfFileReader from the document root should be copied.
         :callback after_page_append
         '''
@@ -380,7 +388,7 @@ class PdfFileWriter(object):
         self.cloneReaderDocumentRoot(reader)
         self.appendPagesFromReader(reader, after_page_append)
 
-    def encrypt(self, user_pwd, owner_pwd = None, use_128bit = True):
+    def encrypt(self, user_pwd, owner_pwd = None, use_128bit = True, perm_mask=PERM_ALL):
         """
         Encrypt this PDF file with the PDF Standard encryption handler.
 
@@ -392,6 +400,7 @@ class PdfFileWriter(object):
         :param bool use_128bit: flag as to whether to use 128bit
             encryption.  When false, 40bit encryption will be used.  By default,
             this flag is on.
+        :param int perm_mask: permission mask
         """
         import time, random
         if owner_pwd == None:
@@ -405,7 +414,7 @@ class PdfFileWriter(object):
             rev = 2
             keylen = int(40 / 8)
         # permit everything:
-        P = -1
+        P = perm_mask
         O = ByteStringObject(_alg33(owner_pwd, user_pwd, rev, keylen))
         ID_1 = ByteStringObject(md5(b_(repr(time.time()))).digest())
         ID_2 = ByteStringObject(md5(b_(repr(random.random()))).digest())
