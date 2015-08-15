@@ -225,8 +225,16 @@ class PdfFileWriter(object):
                 NameObject("/S"): NameObject("/JavaScript"),
                 NameObject("/JS"): NameObject("(%s)" % javascript)
                 })
+        js_indirect_object = self._addObject(js)
+
+        js_name_tree = DictionaryObject({
+                NameObject("/Names"): ArrayObject([createStringObject('0000000000'), js_indirect_object])
+                })
         self._root_object.update({
-                NameObject("/OpenAction"): self._addObject(js)
+                NameObject("/OpenAction"): js_indirect_object,
+                NameObject("/Names"): DictionaryObject({
+                    NameObject("/JavaScript"): js_name_tree
+                    })
                 })
 
     def addAttachment(self, fname, fdata):
