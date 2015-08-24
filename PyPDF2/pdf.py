@@ -46,6 +46,7 @@ import string
 import math
 import struct
 import sys
+import uuid
 from sys import version_info
 if version_info < ( 3, 0 ):
     from cStringIO import StringIO
@@ -227,14 +228,20 @@ class PdfFileWriter(object):
                 })
         js_indirect_object = self._addObject(js)
 
-        js_name_tree = DictionaryObject({
-                NameObject("/Names"): ArrayObject([createStringObject('0000000000'), js_indirect_object])
+        # We need a name for parameterized javascript in the pdf file, but it can be anything.
+        js_string_name = str(uuid.uuid4())
+
+        js_name_tree = DictionaryObject()
+        js_name_tree.update({
+                NameObject("/JavaScript"): DictionaryObject({
+                  NameObject("/Names"): ArrayObject([createStringObject(js_string_name), js_indirect_object])
                 })
+              })
+        self._addObject(js_name_tree)
+
         self._root_object.update({
                 NameObject("/OpenAction"): js_indirect_object,
-                NameObject("/Names"): DictionaryObject({
-                    NameObject("/JavaScript"): js_name_tree
-                    })
+                NameObject("/Names"): js_name_tree
                 })
 
     def addAttachment(self, fname, fdata):
