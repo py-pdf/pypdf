@@ -63,7 +63,7 @@ import warnings
 import codecs
 from .generic import *
 from .utils import readNonWhitespace, readUntilWhitespace, ConvertFunctionsToVirtualList
-from .utils import isString, b_, u_, ord_, chr_, str_, formatWarning
+from .utils import isString, b_, u_, ord_, chr_, str_
 
 if version_info < ( 2, 4 ):
    from sets import ImmutableSet as frozenset
@@ -1039,18 +1039,7 @@ class PdfFileReader(object):
         ``warnings.py`` module with a custom implementation (defaults to
         ``True``).
     """
-    def __init__(self, stream, strict=True, warndest = None, overwriteWarnings = True):
-        if overwriteWarnings:
-            # have to dynamically override the default showwarning since there are no
-            # public methods that specify the 'file' parameter
-            def _showwarning(message, category, filename, lineno, file=warndest, line=None):
-                if file is None:
-                    file = sys.stderr
-                try:
-                    file.write(formatWarning(message, category, filename, lineno, line))
-                except IOError:
-                    pass
-            warnings.showwarning = _showwarning
+    def __init__(self, stream, strict=True):
         self.strict = strict
         self.flattenedPages = None
         self.resolvedObjects = {}
