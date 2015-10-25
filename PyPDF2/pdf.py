@@ -370,6 +370,19 @@ class PdfFileWriter(object):
                         NameObject("/V"): TextStringObject(fields[field])
                     })
 
+    def updateFormValues(self, fields):
+        '''
+        Update an entire pdfs form field values from a fields dictionary.
+        Copy field texts and values from fields to page.
+
+        :param fields: a Python dictionary of field names (/T) and text
+            values (/V)
+        '''
+        num_pages = self.getNumPages()
+        for i in range(num_pages):
+            page = self.getPage(i)
+            self.updatePageFormFieldValues(page, fields)
+
     def cloneReaderDocumentRoot(self, reader):
         '''
         Copy the reader document root to the writer.
