@@ -365,10 +365,18 @@ class PdfFileWriter(object):
         for j in range(0, len(page['/Annots'])):
             writer_annot = page['/Annots'][j].getObject()
             for field in fields:
-                if writer_annot.get('/T') == field:
-                    writer_annot.update({
-                        NameObject("/V"): TextStringObject(fields[field])
-                    })
+                has_parent = writer_annot.get('/T') is None and writer_annot.get('/Parent')
+                if not has_parent:
+                    if writer_annot.get('/T') == field:
+                        writer_annot.update({
+                            NameObject("/V"): TextStringObject(fields[field])
+                        })
+                else:
+                    form_field = writer_annot.get('/Parent').getObject()
+                    if form_field.get('/T') == field:
+                        form_field.update({
+                            NameObject("/V"): TextStringObject(fields[field])
+                        })
 
     def updateFormValues(self, fields):
         '''
