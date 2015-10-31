@@ -372,11 +372,13 @@ class PdfFileWriter(object):
                             NameObject("/V"): TextStringObject(fields[field])
                         })
                 else:
-                    form_field = writer_annot.get('/Parent').getObject()
+                    parent = writer_annot.get('/Parent')
+                    form_field = parent.getObject()
                     if form_field.get('/T') == field:
                         form_field.update({
-                            NameObject("/V"): TextStringObject(fields[field])
+                            NameObject("/V"): NameObject(fields[field])
                         })
+                    writer_annot[NameObject('/Parent')] = parent
 
     def updateFormValues(self, fields):
         '''
