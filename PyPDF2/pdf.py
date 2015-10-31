@@ -490,20 +490,22 @@ class PdfFileWriter(object):
         # we sweep for indirect references.  This forces self-page-referencing
         # trees to reference the correct new object location, rather than
         # copying in a new copy of the page object.
-        for objIndex in range(len(self._objects)):
-            obj = self._objects[objIndex]
-            if isinstance(obj, PageObject) and obj.indirectRef != None:
-                data = obj.indirectRef
-                if data.pdf not in externalReferenceMap:
-                    externalReferenceMap[data.pdf] = {}
-                if data.generation not in externalReferenceMap[data.pdf]:
-                    externalReferenceMap[data.pdf][data.generation] = {}
-                externalReferenceMap[data.pdf][data.generation][data.idnum] = IndirectObject(objIndex + 1, 0, self)
+        # TODO: There's a bug in the section of code below, but running it twice addresses all circular reference issues.
+        for j in range(2):
+            for objIndex in range(len(self._objects)):
+                obj = self._objects[objIndex]
+                if isinstance(obj, PageObject) and obj.indirectRef != None:
+                    data = obj.indirectRef
+                    if data.pdf not in externalReferenceMap:
+                        externalReferenceMap[data.pdf] = {}
+                    if data.generation not in externalReferenceMap[data.pdf]:
+                        externalReferenceMap[data.pdf][data.generation] = {}
+                    externalReferenceMap[data.pdf][data.generation][data.idnum] = IndirectObject(objIndex + 1, 0, self)
 
-        self.stack = []
-        if debug: print(("ERM:", externalReferenceMap, "root:", self._root))
-        self._sweepIndirectReferences(externalReferenceMap, self._root)
-        del self.stack
+            self.stack = []
+            if debug: print(("ERM:", externalReferenceMap, "root:", self._root))
+            self._sweepIndirectReferences(externalReferenceMap, self._root)
+            del self.stack
 
         # Begin writing:
         object_positions = []
