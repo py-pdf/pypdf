@@ -479,13 +479,16 @@ class NameObject(str, PdfObject):
         try:
             return NameObject(name.decode('utf-8'))
         except (UnicodeEncodeError, UnicodeDecodeError) as e:
-            # Name objects should represent irregular characters
-            # with a '#' followed by the symbol's hex number
-            if not pdf.strict:
-                warnings.warn("Illegal character in Name Object", utils.PdfReadWarning)
-                return NameObject(name)
-            else:
-                raise utils.PdfReadError("Illegal character in Name Object")
+            try:
+                return NameObject(decode_pdfdocencoding(name))
+            except UnicodeDecodeError:
+                # Name objects should represent irregular characters
+                # with a '#' followed by the symbol's hex number
+                if not pdf.strict:
+                    warnings.warn("Illegal character in Name Object", utils.PdfReadWarning)
+                    return NameObject(name)
+                else:
+                    raise utils.PdfReadError("Illegal character in Name Object")
 
     readFromStream = staticmethod(readFromStream)
 
