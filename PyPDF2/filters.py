@@ -350,8 +350,8 @@ def decodeStreamData(stream):
                 data = LZWDecode.decode(data, stream.get("/DecodeParms"))
             elif filterType == "/ASCII85Decode" or filterType == "/A85":
                 data = ASCII85Decode.decode(data)
-            elif filterType == "/DCTDecode":
-                #return raw data for jpg image
+            elif filterType == "/DCTDecode" or filterType == "/JPXDecode":
+                #return raw data for jpg or jpeg2000 image
                 pass
             elif filterType == "/Crypt":
                 decodeParams = stream.get("/DecodeParams", {})
