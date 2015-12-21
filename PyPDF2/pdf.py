@@ -371,12 +371,12 @@ class PdfFileWriter(object):
                         writer_annot.update({
                             NameObject("/V"): TextStringObject(fields[field])
                         })
-                else:
+                else:   # Handles radio button groups
                     parent = writer_annot.get('/Parent')
                     form_field = parent.getObject()
                     if form_field.get('/T') == field:
                         form_field.update({
-                            NameObject("/V"): NameObject(fields[field])
+                            NameObject("/V"): NameObject('/' + fields[field])   # Value is /<value>
                         })
                     writer_annot[NameObject('/Parent')] = parent
 
