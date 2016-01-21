@@ -57,9 +57,9 @@ class PdfReaderTestCases(unittest.TestCase):
             data = xObject['/Im4'].getData()
     
             # Compare the text of the PDF to a known source
-            self.assertEqual(binascii.hexlify(data), imagetext, 
+            self.assertEqual(binascii.hexlify(data).decode(), imagetext, 
                              msg='PDF extracted image differs from expected value.\n\nExpected:\n\n%r\n\nExtracted:\n\n%r\n\n' 
-                             % (imagetext, binascii.hexlify(data)))
+                             % (imagetext, binascii.hexlify(data).decode()))
 
 class AddJsTestCase(unittest.TestCase):
 
