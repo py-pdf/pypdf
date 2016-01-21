@@ -17,14 +17,12 @@ pdf = sys.argv[1]
 
 if __name__ == '__main__':
     input1 = PyPDF2.PdfFileReader(open(pdf, "rb"))
-    page0 = input1.getPage(2)
+    page0 = input1.getPage(30)
 
     if '/XObject' in page0['/Resources']:
         xObject = page0['/Resources']['/XObject'].getObject()
 
-        print(xObject)
         for obj in xObject:
-            print(xObject[obj])
             if xObject[obj]['/Subtype'] == '/Image':
                 size = (xObject[obj]['/Width'], xObject[obj]['/Height'])
                 data = xObject[obj].getData()
@@ -43,6 +41,10 @@ if __name__ == '__main__':
                         img.close()
                     elif xObject[obj]['/Filter'] == '/JPXDecode':
                         img = open(obj[1:] + ".jp2", "wb")
+                        img.write(data)
+                        img.close()
+                    elif xObject[obj]['/Filter'] == '/CCITTFaxDecode':
+                        img = open(obj[1:] + ".tiff", "wb")
                         img.write(data)
                         img.close()
                 else:
