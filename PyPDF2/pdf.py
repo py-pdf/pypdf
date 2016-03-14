@@ -2739,14 +2739,14 @@ class ContentStream(DecodedStreamObject):
     def _getData(self):
         newdata = BytesIO()
         for operands, operator in self.operations:
-            if operator == "INLINE IMAGE":
-                newdata.write("BI")
-                dicttext = StringIO()
+            if operator == b_("INLINE IMAGE"):
+                newdata.write(b_("BI"))
+                dicttext = BytesIO()
                 operands["settings"].writeToStream(dicttext, None)
                 newdata.write(dicttext.getvalue()[2:-2])
-                newdata.write("ID ")
+                newdata.write(b_("ID "))
                 newdata.write(operands["data"])
-                newdata.write("EI")
+                newdata.write(b_("EI"))
             else:
                 for op in operands:
                     op.writeToStream(newdata, None)
