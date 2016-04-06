@@ -46,6 +46,7 @@ import string
 import math
 import struct
 import sys
+import uuid
 from sys import version_info
 if version_info < ( 3, 0 ):
     from cStringIO import StringIO
@@ -225,8 +226,22 @@ class PdfFileWriter(object):
                 NameObject("/S"): NameObject("/JavaScript"),
                 NameObject("/JS"): NameObject("(%s)" % javascript)
                 })
+        js_indirect_object = self._addObject(js)
+
+        # We need a name for parameterized javascript in the pdf file, but it can be anything.
+        js_string_name = str(uuid.uuid4())
+
+        js_name_tree = DictionaryObject()
+        js_name_tree.update({
+                NameObject("/JavaScript"): DictionaryObject({
+                  NameObject("/Names"): ArrayObject([createStringObject(js_string_name), js_indirect_object])
+                })
+              })
+        self._addObject(js_name_tree)
+
         self._root_object.update({
-                NameObject("/OpenAction"): self._addObject(js)
+                NameObject("/OpenAction"): js_indirect_object,
+                NameObject("/Names"): js_name_tree
                 })
 
     def addAttachment(self, fname, fdata):
@@ -2156,7 +2171,7 @@ class PageObject(DictionaryObject):
         page2Res = res2.get(resource, DictionaryObject()).getObject()
         renameRes = {}
         for key in list(page2Res.keys()):
-            if key in newRes and newRes[key] != page2Res[key]:
+            if key in newRes and newRes.raw_get(key) != page2Res.raw_get(key):
                 newname = NameObject(key + str(uuid.uuid4()))
                 renameRes[key] = newname
                 newRes[newname] = page2Res[key]
