@@ -1732,10 +1732,10 @@ class PdfFileReader(object):
                     num = readObject(stream, self)
                     if firsttime and num != 0:
                          self.xrefIndex = num
-                         warnings.warn("Xref table not zero-indexed. ID numbers for objects will %sbe corrected." % \
-                                       ("" if not self.strict else "not "), utils.PdfReadWarning)
-                         #if table not zero indexed, could be due to error from when PDF was created
-                         #which will lead to mismatched indices later on
+                         if self.strict:
+                            warnings.warn("Xref table not zero-indexed. ID numbers for objects will be corrected.", utils.PdfReadWarning)
+                            #if table not zero indexed, could be due to error from when PDF was created
+                            #which will lead to mismatched indices later on, only warned and corrected if self.strict=True
                     firsttime = False
                     readNonWhitespace(stream)
                     stream.seek(-1, 1)
