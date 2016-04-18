@@ -573,18 +573,22 @@ class PdfFileWriter(object):
             else:
                 newobj = externMap.get(data.pdf, {}).get(data.generation, {}).get(data.idnum, None)
                 if newobj == None:
-                    newobj = data.pdf.getObject(data)
-                    self._objects.append(None) # placeholder
-                    idnum = len(self._objects)
-                    newobj_ido = IndirectObject(idnum, 0, self)
-                    if data.pdf not in externMap:
-                        externMap[data.pdf] = {}
-                    if data.generation not in externMap[data.pdf]:
-                        externMap[data.pdf][data.generation] = {}
-                    externMap[data.pdf][data.generation][data.idnum] = newobj_ido
-                    newobj = self._sweepIndirectReferences(externMap, newobj)
-                    self._objects[idnum-1] = newobj
-                    return newobj_ido
+                    try:
+                        newobj = data.pdf.getObject(data)
+                        self._objects.append(None) # placeholder
+                        idnum = len(self._objects)
+                        newobj_ido = IndirectObject(idnum, 0, self)
+                        if data.pdf not in externMap:
+                            externMap[data.pdf] = {}
+                        if data.generation not in externMap[data.pdf]:
+                            externMap[data.pdf][data.generation] = {}
+                        externMap[data.pdf][data.generation][data.idnum] = newobj_ido
+                        newobj = self._sweepIndirectReferences(externMap, newobj)
+                        self._objects[idnum-1] = newobj
+                        return newobj_ido
+                    except ValueError:
+                        # Unable to resolve the Object, returning NullObject instead.
+                        return NullObject()
                 return newobj
         else:
             return data
@@ -1268,6 +1272,16 @@ class PdfFileReader(object):
             except KeyError:
                 # Field attribute is N/A or unknown, so don't write anything
                 pass
+
+    def getFormTextFields(self):
+        ''' Retrieves form fields from the document with textual data (inputs, dropdowns)
+        '''
+        # Retrieve document form fields
+        formfields = self.getFields()
+        return dict(
+            (formfields[field]['/T'], formfields[field].get('/V')) for field in formfields \
+                if formfields[field].get('/FT') == '/Tx'
+        )
 
     def getNamedDestinations(self, tree=None, retval=None):
         """
