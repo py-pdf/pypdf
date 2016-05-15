@@ -234,8 +234,12 @@ class FloatObject(decimal.Decimal, PdfObject):
         if self == self.to_integral():
             return str(self.quantize(decimal.Decimal(1)))
         else:
-            # XXX: this adds useless extraneous zeros.
-            return "%.5f" % self
+            # Standard formatting adds useless extraneous zeros.
+            o = "%.5f" % self
+            # Remove the zeros.
+            while o and o[-1] == '0':
+                o = o[:-1]
+            return o
 
     def as_numeric(self):
         return float(b_(repr(self)))
