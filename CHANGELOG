@@ -1,4 +1,31 @@
-﻿Patch 1.25.1, 2015-07-20
+﻿Version 1.26.0, 2016-05-18
+--------------------------
+
+ - NOTE: Active maintenance on PyPDF2 is resuming after a hiatus
+
+ - Fixed a bug where image resources where incorrectly
+   overwritten when merging pages
+
+ - Added dictionary for JavaScript actions to the root (louib)
+
+ - Added unit tests for the JS functionality (louib)
+
+ - Add more Python 3 compatibility when reading inline images (im2703
+   and (VyacheslavHashov)
+
+ - Return NullObject instead of raising error when failing to resolve
+   object (ctate)
+
+ - Don't output warning for non-zeroed xref table when strict=False
+   (BenRussert)
+
+ - Remove extraneous zeroes from output formatting (speedplane)
+
+ - Fix bug where reading an inline image would cut off prematurely
+   in certain cases (speedplane)
+
+
+Patch 1.25.1, 2015-07-20
 
  - Fix bug when parsing inline images. Occurred when merging
    certain pages with inline images
