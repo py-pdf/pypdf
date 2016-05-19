@@ -48,7 +48,7 @@ import sys
 
 ObjectPrefix = b_('/<[tf(n%')
 NumberSigns = b_('+-')
-IndirectPattern = re.compile(b_(r"(\d+)\s+(\d+)\s+R[^a-zA-Z]"))
+IndirectPattern = re.compile(b_(r"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]"))
 
 
 def readObject(stream, pdf):
@@ -87,9 +87,6 @@ def readObject(stream, pdf):
         return readObject(stream, pdf)
     else:
         # number object OR indirect reference
-        if tok in NumberSigns:
-            # number
-            return NumberObject.readFromStream(stream)
         peek = stream.read(20)
         stream.seek(-len(peek), 1) # reset to start
         if IndirectPattern.match(peek) != None:
