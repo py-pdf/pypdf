@@ -571,6 +571,8 @@ class PdfFileWriter(object):
                     self._sweepIndirectReferences(externMap, realdata)
                     return data
             else:
+                if data.pdf.stream.closed:
+                    raise ValueError("I/O operation on closed file: {}".format(data.pdf.stream.name))
                 newobj = externMap.get(data.pdf, {}).get(data.generation, {}).get(data.idnum, None)
                 if newobj == None:
                     try:
@@ -588,6 +590,9 @@ class PdfFileWriter(object):
                         return newobj_ido
                     except ValueError:
                         # Unable to resolve the Object, returning NullObject instead.
+                        warnings.warn("Unable to resolve [{}: {}], returning NullObject instead".format(
+                            data.__class__.__name__, data
+                        ))
                         return NullObject()
                 return newobj
         else:
