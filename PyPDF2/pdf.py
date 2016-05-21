@@ -365,10 +365,33 @@ class PdfFileWriter(object):
         for j in range(0, len(page['/Annots'])):
             writer_annot = page['/Annots'][j].getObject()
             for field in fields:
-                if writer_annot.get('/T') == field:
-                    writer_annot.update({
-                        NameObject("/V"): TextStringObject(fields[field])
-                    })
+                has_parent = writer_annot.get('/T') is None and writer_annot.get('/Parent')
+                if not has_parent:
+                    if writer_annot.get('/T') == field:
+                        writer_annot.update({
+                            NameObject("/V"): TextStringObject(fields[field])
+                        })
+                else:   # Handles radio button groups
+                    parent = writer_annot.get('/Parent')
+                    form_field = parent.getObject()
+                    if form_field.get('/T') == field:
+                        form_field.update({
+                            NameObject("/V"): NameObject('/' + fields[field])   # Value is /<value>
+                        })
+                    writer_annot[NameObject('/Parent')] = parent
+
+    def updateFormValues(self, fields):
+        '''
+        Update an entire pdfs form field values from a fields dictionary.
+        Copy field texts and values from fields to page.
+
+        :param fields: a Python dictionary of field names (/T) and text
+            values (/V)
+        '''
+        num_pages = self.getNumPages()
+        for i in range(num_pages):
+            page = self.getPage(i)
+            self.updatePageFormFieldValues(page, fields)
 
     def cloneReaderDocumentRoot(self, reader):
         '''
@@ -467,20 +490,22 @@ class PdfFileWriter(object):
         # we sweep for indirect references.  This forces self-page-referencing
         # trees to reference the correct new object location, rather than
         # copying in a new copy of the page object.
-        for objIndex in range(len(self._objects)):
-            obj = self._objects[objIndex]
-            if isinstance(obj, PageObject) and obj.indirectRef != None:
-                data = obj.indirectRef
-                if data.pdf not in externalReferenceMap:
-                    externalReferenceMap[data.pdf] = {}
-                if data.generation not in externalReferenceMap[data.pdf]:
-                    externalReferenceMap[data.pdf][data.generation] = {}
-                externalReferenceMap[data.pdf][data.generation][data.idnum] = IndirectObject(objIndex + 1, 0, self)
+        # TODO: There's a bug in the section of code below, but running it twice addresses all circular reference issues.
+        for j in range(2):
+            for objIndex in range(len(self._objects)):
+                obj = self._objects[objIndex]
+                if isinstance(obj, PageObject) and obj.indirectRef != None:
+                    data = obj.indirectRef
+                    if data.pdf not in externalReferenceMap:
+                        externalReferenceMap[data.pdf] = {}
+                    if data.generation not in externalReferenceMap[data.pdf]:
+                        externalReferenceMap[data.pdf][data.generation] = {}
+                    externalReferenceMap[data.pdf][data.generation][data.idnum] = IndirectObject(objIndex + 1, 0, self)
 
-        self.stack = []
-        if debug: print(("ERM:", externalReferenceMap, "root:", self._root))
-        self._sweepIndirectReferences(externalReferenceMap, self._root)
-        del self.stack
+            self.stack = []
+            if debug: print(("ERM:", externalReferenceMap, "root:", self._root))
+            self._sweepIndirectReferences(externalReferenceMap, self._root)
+            del self.stack
 
         # Begin writing:
         object_positions = []
