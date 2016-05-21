@@ -33,6 +33,12 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 
 
 import sys
+#try importing pyCrypto for RC4_encrypt function [https://pypi.python.org/pypi/pycrypto]
+try:
+    from Crypto.Cipher import ARC4
+    PYCRYPTO_AVAILABLE = True
+except ImportError:
+    PYCRYPTO_AVAILABLE = False
 
 try:
     import __builtin__ as builtins
@@ -166,6 +172,11 @@ class ConvertFunctionsToVirtualList(object):
 
 
 def RC4_encrypt(key, plaintext):
+    #if pyCrypto is installed use lib
+    if PYCRYPTO_AVAILABLE:
+        cipher = ARC4.new(key)
+        return cipher.encrypt(plaintext)
+    #otherwise use pure python
     S = [i for i in range(256)]
     j = 0
     for i in range(256):
