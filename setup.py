@@ -30,7 +30,7 @@ else:
     raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE))
 
 setup(
-        name="PyPDF2-foxyutils",
+        name="PyPDF2",
         version=verstr,
         description="PDF toolkit",
         long_description=long_description,
