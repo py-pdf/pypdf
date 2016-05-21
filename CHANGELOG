@@ -1,4 +1,36 @@
-﻿Version 1.26.0, 2016-05-18
+Version 1.26.1, 2016-05-21
+--------------------------
+ - Added pdf-filter-type-3 (Pekka Pöyry, quantus)
+
+ - Try to handle pdf files with invalid stream length (untested eof?) (Pekka Pöyry, quantus)
+
+ - NameObject could be encoded with PDFDocEncoding (pavelbrych)
+
+ - Support for radio buttons (Shane McQuillan, shanemcquillan)
+
+ - Add JPX/DCT & CCITTFax Decode (Sylvain Pelissier, sylvainpelissier)
+
+ - Added support for preserving newlines in extractText (JCSchiavone) 
+ 
+ - Improved embedded file handling (Rüdiger Jungbeck, rjungbeck)
+	Allow attachment of more than 1 file with PdfFileWriter.addAttachment()
+	Allow listing of attachments in PdfFileReader.listAttachments()
+	Allow retrival of attachment PdfFileReader.getAttachment()
+
+ - When merging pages together, clip by trimBox, which would otherwise be ignored (Forrest Voight, forrestv)
+ 
+ - Use pyCrypto library for faster decryption if available (MarcMann)
+
+ - sorted dictionary items before appending to lists (dsk7)
+ 
+ - Allow passing doc permissions (Alfred Hall, ahall)
+
+ - MD5 Hash & Bug Fixes (Harry Karvonen, Hatell)
+
+ - Prevent infinite loop in readObject() function (Henri Salo, fgeek)
+
+
+Version 1.26.0, 2016-05-18
 --------------------------
 
  - NOTE: Active maintenance on PyPDF2 is resuming after a hiatus
