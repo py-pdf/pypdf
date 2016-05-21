@@ -81,7 +81,7 @@ class PdfFileWriter(object):
     This class supports writing PDF files out, given pages produced by another
     class (typically :class:`PdfFileReader<PdfFileReader>`).
     """
-    def __init__(self):
+    def __init__(self, producer="PyPDF2"):
         self._header = b_("%PDF-1.3")
         self._objects = []  # array of indirect objects
         self._idnum_hash = {} # hash of idnum
@@ -98,7 +98,7 @@ class PdfFileWriter(object):
         # info object
         info = DictionaryObject()
         info.update({
-                NameObject("/Producer"): createStringObject(codecs.BOM_UTF16_BE + u_("PyPDF2").encode('utf-16be'))
+                NameObject("/Producer"): createStringObject(codecs.BOM_UTF16_BE + u_(producer).encode('utf-16be'))
                 })
         self._info = self._addObject(info)
 
@@ -312,17 +312,27 @@ class PdfFileWriter(object):
         endobj
 
         """
-        embeddedFilesNamesDictionary = DictionaryObject()
-        embeddedFilesNamesDictionary.update({
+        try:
+            embeddedFilesDictionary=self._root_object["/Names"]["/EmbeddedFiles"]
+        except:
+            embeddedFilesDictionary=DictionaryObject()
+
+        try:
+            embeddedFilesNamesDictionary=embeddedFilesDictionary["/Names"]
+            embeddedFilesNamesDictionary.append(createStringObject(fname))
+            embeddedFilesNamesDictionary.append(filespec)
+
+        except:
+            embeddedFilesNamesDictionary = DictionaryObject()
+            embeddedFilesNamesDictionary.update({
                 NameObject("/Names"): ArrayObject([createStringObject(fname), filespec])
                 })
-
-        embeddedFilesDictionary = DictionaryObject()
-        embeddedFilesDictionary.update({
-                NameObject("/EmbeddedFiles"): embeddedFilesNamesDictionary
+				
+		    embeddedFilesDictionary.update({
+				NameObject("/EmbeddedFiles"): embeddedFilesNamesDictionary
                 })
-        # Update the root
-        self._root_object.update({
+        	# Update the root
+        	self._root_object.update({
                 NameObject("/Names"): embeddedFilesDictionary
                 })
 
@@ -1263,6 +1273,17 @@ class PdfFileReader(object):
                 self._buildField(field, retval, fileobj, fieldAttributes)
 
         return retval
+        
+    def getAttachment(self, name):
+        for i in range (0, len(self.trailer["/Root"]["/Names"]["/EmbeddedFiles"]["/Names"]), 2):
+            if self.trailer["/Root"]["/Names"]["/EmbeddedFiles"]["/Names"][i+1].getObject()["/F"]==name:
+                return self.trailer["/Root"]["/Names"]["/EmbeddedFiles"]["/Names"][i+1].getObject()["/EF"]["/F"].getObject().getData()
+
+    def listAttachments(self):
+
+        for i in range (0, len(self.trailer["/Root"]["/Names"]["/EmbeddedFiles"]["/Names"]), 2):
+            yield self.trailer["/Root"]["/Names"]["/EmbeddedFiles"]["/Names"][i+1].getObject()["/F"]
+
 
     def _buildField(self, field, retval, fileobj, fieldAttributes):
         self._checkKids(field, retval, fileobj)
