@@ -137,6 +137,9 @@ class FlateDecode(object):
                     elif filterByte == 2:
                         for i in range(1, rowlength):
                             rowdata[i] = (rowdata[i] + prev_rowdata[i]) % 256
+                    elif filterByte == 3:
+                        for i in range(2, rowlength):
+                            rowdata[i] = (rowdata[i] + int((rowdata[i-1] + prev_rowdata[i]) / 2)) % 256
                     else:
                         # unsupported PNG filter
                         raise PdfReadError("Unsupported PNG filter %r" % filterByte)
