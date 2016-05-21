@@ -2308,6 +2308,10 @@ class PageObject(DictionaryObject):
 
         page2Content = page2.getContents()
         if page2Content is not None:
+            page2Content = ContentStream(page2Content, self.pdf)
+            page2Content.operations.insert(0, [map(FloatObject, [page2.trimBox.getLowerLeft_x(), page2.trimBox.getLowerLeft_y(), page2.trimBox.getWidth(), page2.trimBox.getHeight()]), "re"])
+            page2Content.operations.insert(1, [[], "W"])
+            page2Content.operations.insert(2, [[], "n"])
             if page2transformation is not None:
                 page2Content = page2transformation(page2Content)
             page2Content = PageObject._contentStreamRename(
