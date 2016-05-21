@@ -84,6 +84,7 @@ class PdfFileWriter(object):
     def __init__(self):
         self._header = b_("%PDF-1.3")
         self._objects = []  # array of indirect objects
+        self._idnum_hash = {} # hash of idnum
 
         # The root of our page tree node.
         pages = DictionaryObject()
