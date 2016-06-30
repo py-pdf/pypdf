@@ -485,6 +485,7 @@ class PdfFileWriter(object):
         # Begin writing:
         object_positions = []
         stream.write(self._header + b_("\n"))
+        stream.write(b_("%\xE2\xE3\xCF\xD3\n"))
         for i in range(len(self._objects)):
             idnum = (i + 1)
             obj = self._objects[i]
