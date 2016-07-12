@@ -589,6 +589,9 @@ class PdfFileWriter(object):
                     except ValueError:
                         # Unable to resolve the Object, returning NullObject instead.
                         return NullObject()
+                    except utils.PdfReadError:
+                        # Unable to resolve the indirectReference Object, returning NullObject instead.
+                        return NullObject()
                 return newobj
         else:
             return data
