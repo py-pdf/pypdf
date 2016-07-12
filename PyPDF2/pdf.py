@@ -485,6 +485,7 @@ class PdfFileWriter(object):
         # Begin writing:
         object_positions = []
         stream.write(self._header + b_("\n"))
+        stream.write(b_("%\xE2\xE3\xCF\xD3\n"))
         for i in range(len(self._objects)):
             idnum = (i + 1)
             obj = self._objects[i]
@@ -571,6 +572,8 @@ class PdfFileWriter(object):
                     self._sweepIndirectReferences(externMap, realdata)
                     return data
             else:
+                if data.pdf.stream.closed:
+                    raise ValueError("I/O operation on closed file: {}".format(data.pdf.stream.name))
                 newobj = externMap.get(data.pdf, {}).get(data.generation, {}).get(data.idnum, None)
                 if newobj == None:
                     try:
@@ -588,6 +591,9 @@ class PdfFileWriter(object):
                         return newobj_ido
                     except ValueError:
                         # Unable to resolve the Object, returning NullObject instead.
+                        warnings.warn("Unable to resolve [{}: {}], returning NullObject instead".format(
+                            data.__class__.__name__, data
+                        ))
                         return NullObject()
                     except utils.PdfReadError:
                         # Unable to resolve the indirectReference Object, returning NullObject instead.
@@ -1735,10 +1741,10 @@ class PdfFileReader(object):
                     num = readObject(stream, self)
                     if firsttime and num != 0:
                          self.xrefIndex = num
-                         warnings.warn("Xref table not zero-indexed. ID numbers for objects will %sbe corrected." % \
-                                       ("" if not self.strict else "not "), utils.PdfReadWarning)
-                         #if table not zero indexed, could be due to error from when PDF was created
-                         #which will lead to mismatched indices later on
+                         if self.strict:
+                            warnings.warn("Xref table not zero-indexed. ID numbers for objects will be corrected.", utils.PdfReadWarning)
+                            #if table not zero indexed, could be due to error from when PDF was created
+                            #which will lead to mismatched indices later on, only warned and corrected if self.strict=True
                     firsttime = False
                     readNonWhitespace(stream)
                     stream.seek(-1, 1)
@@ -2670,7 +2676,7 @@ class ContentStream(DecodedStreamObject):
         if isinstance(stream, ArrayObject):
             data = b_("")
             for s in stream:
-                data += s.getObject().getData()
+                data += b_(s.getObject().getData())
             stream = BytesIO(b_(data))
         else:
             stream = BytesIO(b_(stream.getData()))
@@ -2734,13 +2740,16 @@ class ContentStream(DecodedStreamObject):
                 # Check for End Image
                 tok2 = stream.read(1)
                 if tok2 == b_("I"):
-                    # Sometimes that data will contain EI, so check for the Q operator.
+                    # Data can contain EI, so check for the Q operator.
                     tok3 = stream.read(1)
                     info = tok + tok2
+                    # We need to find whitespace between EI and Q.
+                    has_q_whitespace = False
                     while tok3 in utils.WHITESPACES:
+                        has_q_whitespace = True
                         info += tok3
                         tok3 = stream.read(1)
-                    if tok3 == b_("Q"):
+                    if tok3 == b_("Q") and has_q_whitespace:
                         stream.seek(-1, 1)
                         break
                     else:
@@ -2756,14 +2765,14 @@ class ContentStream(DecodedStreamObject):
     def _getData(self):
         newdata = BytesIO()
         for operands, operator in self.operations:
-            if operator == "INLINE IMAGE":
-                newdata.write("BI")
-                dicttext = StringIO()
+            if operator == b_("INLINE IMAGE"):
+                newdata.write(b_("BI"))
+                dicttext = BytesIO()
                 operands["settings"].writeToStream(dicttext, None)
                 newdata.write(dicttext.getvalue()[2:-2])
-                newdata.write("ID ")
+                newdata.write(b_("ID "))
                 newdata.write(operands["data"])
-                newdata.write("EI")
+                newdata.write(b_("EI"))
             else:
                 for op in operands:
                     op.writeToStream(newdata, None)
