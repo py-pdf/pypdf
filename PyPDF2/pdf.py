@@ -78,6 +78,10 @@ else:
 import uuid
 
 PERM_UNDEFINED = -1
+
+# These permissions can be used with the encrypt method.
+# Found these values here (page 123): http://www.adobe.com/content/dam/Adobe/en/devnet/acrobat/pdfs/pdf_reference_1-7.pdf
+
 PERM_NONE = 0
 PERM_PRINT = 2
 PERM_MODIFY = 4
