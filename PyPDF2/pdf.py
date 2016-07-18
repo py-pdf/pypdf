@@ -637,6 +637,9 @@ class PdfFileWriter(object):
                             data.__class__.__name__, data
                         ))
                         return NullObject()
+                    except utils.PdfReadError:
+                        # Unable to resolve the indirectReference Object, returning NullObject instead.
+                        return NullObject()
                 return newobj
         else:
             return data
