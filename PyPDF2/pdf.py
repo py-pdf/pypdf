@@ -77,6 +77,7 @@ else:
     from hashlib import md5
 import uuid
 
+PERM_UNDEFINED = -1
 PERM_NONE = 0
 PERM_PRINT = 2
 PERM_MODIFY = 4
@@ -442,7 +443,7 @@ class PdfFileWriter(object):
         self.appendPagesFromReader(reader, after_page_append)
 
 
-    def encrypt(self, user_pwd, owner_pwd = None, use_128bit = True, P=PERM_ALL):
+    def encrypt(self, user_pwd, owner_pwd = None, use_128bit = True, perm_mask=PERM_UNDEFINED):
         """
         Encrypt this PDF file with the PDF Standard encryption handler.
 
@@ -472,10 +473,10 @@ class PdfFileWriter(object):
         ID_2 = ByteStringObject(md5(b_(repr(random.random()))).digest())
         self._ID = ArrayObject((ID_1, ID_2))
         if rev == 2:
-            U, key = _alg34(user_pwd, O, P, ID_1)
+            U, key = _alg34(user_pwd, O, perm_mask, ID_1)
         else:
             assert rev == 3
-            U, key = _alg35(user_pwd, rev, keylen, O, P, ID_1, False)
+            U, key = _alg35(user_pwd, rev, keylen, O, perm_mask, ID_1, False)
         encrypt = DictionaryObject()
         encrypt[NameObject("/Filter")] = NameObject("/Standard")
         encrypt[NameObject("/V")] = NumberObject(V)
@@ -484,7 +485,7 @@ class PdfFileWriter(object):
         encrypt[NameObject("/R")] = NumberObject(rev)
         encrypt[NameObject("/O")] = ByteStringObject(O)
         encrypt[NameObject("/U")] = ByteStringObject(U)
-        encrypt[NameObject("/P")] = NumberObject(P)
+        encrypt[NameObject("/P")] = NumberObject(perm_mask)
         self._encrypt = self._addObject(encrypt)
         self._encrypt_key = key
 
