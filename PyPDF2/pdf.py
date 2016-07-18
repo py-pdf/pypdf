@@ -2588,6 +2588,7 @@ class PageObject(DictionaryObject):
             float(self.mediaBox.getLowerLeft_y()) * sy,
             float(self.mediaBox.getUpperRight_x()) * sx,
             float(self.mediaBox.getUpperRight_y()) * sy])
+        self.cropBox = self.mediaBox
         if "/VP" in self:
             viewport = self["/VP"]
             if isinstance(viewport, ArrayObject):
