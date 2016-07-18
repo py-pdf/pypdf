@@ -205,7 +205,7 @@ class LZWDecode(object):
             while fillbits>0 :
                 if self.bytepos >= len(self.data):
                     return -1
-                nextbits=ord(self.data[self.bytepos])
+                nextbits=ord_(self.data[self.bytepos])
                 bitsfromhere=8-self.bitpos
                 if bitsfromhere>fillbits:
                     bitsfromhere=fillbits

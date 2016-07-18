@@ -521,6 +521,7 @@ class PdfFileWriter(object):
         # Begin writing:
         object_positions = []
         stream.write(self._header + b_("\n"))
+        stream.write(b_("%\xE2\xE3\xCF\xD3\n"))
         for i in range(len(self._objects)):
             idnum = (i + 1)
             obj = self._objects[i]
@@ -2731,7 +2732,7 @@ class ContentStream(DecodedStreamObject):
         if isinstance(stream, ArrayObject):
             data = b_("")
             for s in stream:
-                data += s.getObject().getData()
+                data += b_(s.getObject().getData())
             stream = BytesIO(b_(data))
         else:
             stream = BytesIO(b_(stream.getData()))
