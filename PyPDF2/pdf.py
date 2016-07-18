@@ -77,8 +77,16 @@ else:
     from hashlib import md5
 import uuid
 
+PERM_NONE = 0
+PERM_PRINT = 2
+PERM_MODIFY = 4
+PERM_COPY_TEXT = 8
+PERM_ANNOTATE = 16
+PERM_ALL = PERM_PRINT | PERM_MODIFY | PERM_COPY_TEXT | PERM_ANNOTATE
+
 
 class PdfFileWriter(object):
+
     """
     This class supports writing PDF files out, given pages produced by another
     class (typically :class:`PdfFileReader<PdfFileReader>`).
@@ -333,6 +341,7 @@ class PdfFileWriter(object):
 				
             embeddedFilesDictionary.update({
 				NameObject("/EmbeddedFiles"): embeddedFilesNamesDictionary
+
                 })
         	# Update the root
             self._root_object.update({
@@ -432,7 +441,8 @@ class PdfFileWriter(object):
         self.cloneReaderDocumentRoot(reader)
         self.appendPagesFromReader(reader, after_page_append)
 
-    def encrypt(self, user_pwd, owner_pwd = None, use_128bit = True, P = -1):
+
+    def encrypt(self, user_pwd, owner_pwd = None, use_128bit = True, P=PERM_ALL):
         """
         Encrypt this PDF file with the PDF Standard encryption handler.
 
@@ -444,6 +454,7 @@ class PdfFileWriter(object):
         :param bool use_128bit: flag as to whether to use 128bit
             encryption.  When false, 40bit encryption will be used.  By default,
             this flag is on.
+        :param int perm_mask: permission mask
         """
         import time, random
         if owner_pwd == None:
@@ -456,7 +467,6 @@ class PdfFileWriter(object):
             V = 1
             rev = 2
             keylen = int(40 / 8)
-
         O = ByteStringObject(_alg33(owner_pwd, user_pwd, rev, keylen))
         ID_1 = ByteStringObject(md5(b_(repr(time.time()))).digest())
         ID_2 = ByteStringObject(md5(b_(repr(random.random()))).digest())
