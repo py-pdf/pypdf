@@ -280,8 +280,15 @@ def createStringObject(string):
     elif isinstance(string, utils.bytes_type):
         try:
             if string.startswith(codecs.BOM_UTF16_BE):
+                if string.endswith('\0') and (len(string) % 2) != 0:
+                    string = string[:-1]
+                    trailing_nul_byte = True
+                else:
+                    trailing_nul_byte = False
+
                 retval = TextStringObject(string.decode("utf-16"))
                 retval.autodetect_utf16 = True
+                retval.trailing_nul_byte = trailing_nul_byte
                 return retval
             else:
                 # This is probably a big performance hit here, but we need to
@@ -418,6 +425,7 @@ class ByteStringObject(utils.bytes_type, PdfObject):
 class TextStringObject(utils.string_type, PdfObject):
     autodetect_pdfdocencoding = False
     autodetect_utf16 = False
+    trailing_nul_byte = False
 
     ##
     # It is occasionally possible that a text string object gets created where
@@ -433,11 +441,16 @@ class TextStringObject(utils.string_type, PdfObject):
         # would have been used to create this object, based upon the autodetect
         # method.
         if self.autodetect_utf16:
-            return codecs.BOM_UTF16_BE + self.encode("utf-16be")
+            ret = codecs.BOM_UTF16_BE + self.encode("utf-16be")
         elif self.autodetect_pdfdocencoding:
-            return encode_pdfdocencoding(self)
+            ret = encode_pdfdocencoding(self)
         else:
             raise Exception("no information about original bytes")
+
+        if self.trailing_nul_byte:
+            ret += '\0'
+
+        return ret
 
     def writeToStream(self, stream, encryption_key):
         # Try to write the string out as a PDFDocEncoding encoded string.  It's
