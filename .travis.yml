@@ -1,0 +1,12 @@
+language: python
+sudo: false
+python:
+  - "2.7"
+  - "3.4"
+  - "3.5"
+install:
+  - pip install pytest pytest-cov
+script:
+  - py.test Tests/*.py
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
