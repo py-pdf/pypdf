@@ -1,0 +1,21 @@
+language: python
+python: "2.7"
+sudo: false
+
+env:
+  - TOX_ENV=py27
+  - TOX_ENV=py33
+  - TOX_ENV=py34
+  - TOX_ENV=py35
+
+install:
+  - pip install tox --use-mirrors
+
+script:
+  - tox -e $TOX_ENV
+
+matrix:
+  # Python 3.5 not yet available on travis, watch this to see when it is.
+  fast_finish: true
+  allow_failures:
+    - env: TOX_ENV=py35
