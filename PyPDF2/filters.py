@@ -139,14 +139,15 @@ class FlateDecode(object):
                         for i in range(1, rowlength):
                             rowdata[i] = (rowdata[i] + prev_rowdata[i]) % 256
                     elif filterByte == 3:
-                        for i in range(2, rowlength):
-                            floor = math.floor(rowdata[i-1] + prev_rowdata[i])/2
+                        for i in range(1, rowlength):
+                            left = rowdata[i-1] if i > 1 else 0
+                            floor = math.floor(left + prev_rowdata[i])/2
                             rowdata[i] = (rowdata[i] + int(floor)) % 256
                     elif filterByte == 4:
-                        for i in range(2, rowlength):
-                            left = rowdata[i - 1]
+                        for i in range(1, rowlength):
+                            left = rowdata[i - 1] if i > 1 else 0
                             up = prev_rowdata[i]
-                            up_left = prev_rowdata[i - 1]
+                            up_left = prev_rowdata[i - 1] if i > 1 else 0
                             paeth = paethPredictor(left, up, up_left)
                             rowdata[i] = (rowdata[i] + paeth) % 256
                     else:
