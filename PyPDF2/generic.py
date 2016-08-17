@@ -82,6 +82,10 @@ def readObject(stream, pdf):
         # comment
         while tok not in (b_('\r'), b_('\n')):
             tok = stream.read(1)
+            # Prevents an infinite loop by raising an error if the stream is at
+            # the EOF
+            if len(tok) <= 0:
+                raise PdfStreamError("File ended unexpectedly.")
         tok = readNonWhitespace(stream)
         stream.seek(-1, 1)
         return readObject(stream, pdf)
