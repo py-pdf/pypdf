@@ -1758,11 +1758,11 @@ class PdfFileReader(object):
         while line[:5] != b_("%%EOF"):
             if stream.tell() < last1K:
                 raise utils.PdfReadError("EOF marker not found")
-            line = self.readNextEndLine(stream)
+            line = self.readNextEndLine(stream, maxLineLength=1024)
             if debug: print("  line:",line)
 
         # find startxref entry - the location of the xref table
-        line = self.readNextEndLine(stream)
+        line = self.readNextEndLine(stream, maxLineLength=1024)
         try:
             startxref = int(line)
         except ValueError:
@@ -1772,7 +1772,7 @@ class PdfFileReader(object):
             startxref = int(line[9:].strip())
             warnings.warn("startxref on same line as offset")
         else:
-            line = self.readNextEndLine(stream)
+            line = self.readNextEndLine(stream, maxLineLength=1024)
             if line[:9] != b_("startxref"):
                 raise utils.PdfReadError("startxref not found")
 
@@ -1991,7 +1991,10 @@ class PdfFileReader(object):
             if (i+1) >= len(array):
                 break
 
-    def readNextEndLine(self, stream):
+    def readNextEndLine(self, stream, maxLineLength=None):
+        '''
+        if maxLineLength is set, an PdfReadError will be raised if the line candidate is longer than this value
+        '''
         debug = False
         if debug: print(">>readNextEndLine")
         line = b_("")
@@ -2023,6 +2026,8 @@ class PdfFileReader(object):
                 if debug: print("  x is neither")
                 line = x + line
                 if debug: print(("  RNEL line:", line))
+                if maxLineLength is not None and len(line) > maxLineLength:
+                    raise utils.PdfReadError("EOL marker not found")
         if debug: print("leaving RNEL")
         return line
 

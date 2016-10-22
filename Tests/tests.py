@@ -1,8 +1,9 @@
 import os
 import sys
 import unittest
+import StringIO
 
-from PyPDF2 import PdfFileReader, PdfFileWriter
+from PyPDF2 import PdfFileReader, PdfFileWriter, utils
 
 
 # Configure path environment
@@ -35,6 +36,15 @@ class PdfReaderTestCases(unittest.TestCase):
             self.assertEqual(ipdf_p1_text.encode('utf-8', errors='ignore'), pdftext,
                 msg='PDF extracted text differs from expected value.\n\nExpected:\n\n%r\n\nExtracted:\n\n%r\n\n'
                     % (pdftext, ipdf_p1_text.encode('utf-8', errors='ignore')))
+
+
+    def test_PdfReaderDoesNotGetStuckOnLargeFilesWithoutStartxref(self):
+        '''Tests the absence of a "DOS"-kind of bug, where a large file without an startxref
+        will cause the library to hang'''
+        broken_stream = StringIO.StringIO(chr(0) * 10 * 1000 * 1000)
+
+        with self.assertRaises(utils.PdfReadError):
+            PdfFileReader(broken_stream)
 
 
 class AddJsTestCase(unittest.TestCase):
