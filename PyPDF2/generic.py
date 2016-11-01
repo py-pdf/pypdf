@@ -363,7 +363,7 @@ def readStringFromStream(stream):
                            b_('$') : b_('$'),
                            }
             try:
-                tok = escape_dict[tok]
+                tok = ESCAPE_DICT[tok]
             except KeyError:
                 if tok.isdigit():
                     # "The number ddd may consist of one, two, or three
