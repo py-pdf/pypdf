@@ -340,55 +340,56 @@ def readStringFromStream(stream):
                 break
         elif tok == b_("\\"):
             tok = stream.read(1)
-            if tok == b_("n"):
-                tok = b_("\n")
-            elif tok == b_("r"):
-                tok = b_("\r")
-            elif tok == b_("t"):
-                tok = b_("\t")
-            elif tok == b_("b"):
-                tok = b_("\b")
-            elif tok == b_("f"):
-                tok = b_("\f")
-            elif tok == b_("c"):
-                tok = b_("\c")
-            elif tok == b_("("):
-                tok = b_("(")
-            elif tok == b_(")"):
-                tok = b_(")")
-            elif tok == b_("/"):
-                tok = b_("/")
-            elif tok == b_("\\"):
-                tok = b_("\\")
-            elif tok in (b_(" "), b_("/"), b_("%"), b_("<"), b_(">"), b_("["), 
-                    b_("]"), b_("#"),  b_("_"), b_("&"), b_('$')):
-                # odd/unnessecary escape sequences we have encountered
-                tok = b_(tok)
-            elif tok.isdigit():
-                # "The number ddd may consist of one, two, or three
-                # octal digits; high-order overflow shall be ignored.
-                # Three octal digits shall be used, with leading zeros
-                # as needed, if the next character of the string is also
-                # a digit." (PDF reference 7.3.4.2, p 16)
-                for i in range(2):
-                    ntok = stream.read(1)
-                    if ntok.isdigit():
-                        tok += ntok
-                    else:
-                        break
-                tok = b_(chr(int(tok, base=8)))
-            elif tok in b_("\n\r"):
-                # This case is  hit when a backslash followed by a line
-                # break occurs.  If it's a multi-char EOL, consume the
-                # second character:
-                tok = stream.read(1)
-                if not tok in b_("\n\r"):
-                    stream.seek(-1, 1)
-                # Then don't add anything to the actual string, since this
-                # line break was escaped:
-                tok = b_('')
-            else:
-                raise utils.PdfReadError(r"Unexpected escaped string: %s" % tok)
+            ESCAPE_DICT = {b_("n") : b_("\n"),
+                           b_("r") : b_("\r"),
+                           b_("t") : b_("\t"),
+                           b_("b") : b_("\b"),
+                           b_("f") : b_("\f"),
+                           b_("c") : b_("\c"),
+                           b_("(") : b_("("),
+                           b_(")") : b_(")"),
+                           b_("/") : b_("/"),
+                           b_("\\") : b_("\\"),
+                           b_(" ") : b_(" "),
+                           b_("/") : b_("/"),
+                           b_("%") : b_("%"),
+                           b_("<") : b_("<"),
+                           b_(">") : b_(">"),
+                           b_("[") : b_("["), 
+                           b_("]") : b_("]"),
+                           b_("#") : b_("#"),
+                           b_("_") : b_("_"),
+                           b_("&") : b_("&"),
+                           b_('$') : b_('$'),
+                           }
+            try:
+                tok = ESCAPE_DICT[tok]
+            except KeyError:
+                if tok.isdigit():
+                    # "The number ddd may consist of one, two, or three
+                    # octal digits; high-order overflow shall be ignored.
+                    # Three octal digits shall be used, with leading zeros
+                    # as needed, if the next character of the string is also
+                    # a digit." (PDF reference 7.3.4.2, p 16)
+                    for i in range(2):
+                        ntok = stream.read(1)
+                        if ntok.isdigit():
+                            tok += ntok
+                        else:
+                            break
+                    tok = b_(chr(int(tok, base=8)))
+                elif tok in b_("\n\r"):
+                    # This case is  hit when a backslash followed by a line
+                    # break occurs.  If it's a multi-char EOL, consume the
+                    # second character:
+                    tok = stream.read(1)
+                    if not tok in b_("\n\r"):
+                        stream.seek(-1, 1)
+                    # Then don't add anything to the actual string, since this
+                    # line break was escaped:
+                    tok = b_('')
+                else:
+                    raise utils.PdfReadError(r"Unexpected escaped string: %s" % tok)
         txt += tok
     return createStringObject(txt)
 
