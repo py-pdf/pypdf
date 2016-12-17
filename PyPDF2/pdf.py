@@ -2440,15 +2440,15 @@ class PageObject(DictionaryObject):
                                                  0,  1,
                                                  tx, ty], expand)
 
-    def mergeRotatedTranslatedPage(self, page2, rotation, tx, ty, expand=False):
+    def mergeRotatedAroundPointPage(self, page2, rotation, tx, ty, expand=False):
         """
         This is similar to mergePage, but the stream to be merged is rotated
-        and translated by appling a transformation matrix.
+        about a specific point by applying a transformation matrix.
 
         :param PageObject page2: the page to be merged into this one. Should be
             an instance of :class:`PageObject<PageObject>`.
-        :param float tx: The translation on X axis
-        :param float ty: The translation on Y axis
+        :param float tx: The X coordinate of the center of rotation.
+        :param float ty: The Y coordinate of the centor of rotation.
         :param float rotation: The angle of the rotation, in degrees
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
@@ -2466,6 +2466,32 @@ class PageObject(DictionaryObject):
                        [tx, ty, 1]]
         ctm = utils.matrixMultiply(translation, rotating)
         ctm = utils.matrixMultiply(ctm, rtranslation)
+
+        return self.mergeTransformedPage(page2, [ctm[0][0], ctm[0][1],
+                                                 ctm[1][0], ctm[1][1],
+                                                 ctm[2][0], ctm[2][1]], expand)
+
+    def mergeRotatedTranslatedPage(self, page2, rotation, tx, ty, expand=False):
+        """
+        This is similar to mergePage, but the stream to be merged is rotated
+        and translated by applying a transformation matrix.
+
+        :param PageObject page2: The page to be merged into this one. Should be
+            an instance of :class:`PageObject<PageObject>`.
+        :param float rotation: The angle of the rotation, in degrees.
+        :param float tx: The translation on X axis.
+        :param float ty: The translation on Y axis.
+        :param bool expand: Whether the page should be expanded to fit the
+            dimensions of the page to be merged.
+        """
+        rotation = math.radians(rotation)
+        rotating = [[math.cos(rotation),  math.sin(rotation), 0],
+                    [-math.sin(rotation), math.cos(rotation), 0],
+                    [0,                   0,                  1]]
+        translation = [[1, 0, 0],
+                       [0, 1, 0],
+                       [tx, ty, 1]]
+        ctm = utils.matrixMultiply(rotating, translation)
 
         return self.mergeTransformedPage(page2, [ctm[0][0], ctm[0][1],
                                                  ctm[1][0], ctm[1][1],
