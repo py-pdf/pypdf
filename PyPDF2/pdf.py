@@ -993,9 +993,9 @@ class PdfFileWriter(object):
         :return: Page mode currently being used.
         :rtype: str, None if not specified
         """
-        try:
+        if '/PageMode' in self._root_object:
             return self._root_object['/PageMode']
-        except KeyError:
+        else:
             return None
 
     def setPageMode(self, mode):
