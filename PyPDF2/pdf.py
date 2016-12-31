@@ -2589,7 +2589,11 @@ class PageObject(DictionaryObject):
                 for i in operands[0]:
                     if isinstance(i, TextStringObject):
                         text += i
+                    if isinstance(i, int):  # the amount of spacing between the chars?
+                        if i < -340:
+                            text += ' '
                 text += "\n"
+
         return text
 
     mediaBox = createRectangleAccessor("/MediaBox", ())
