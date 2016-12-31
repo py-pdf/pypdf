@@ -346,7 +346,7 @@ class PdfFileWriter(object):
         :param fields: a Python dictionary of field names (/T) and text
             values (/V)
         '''
-        try:
+        if '/Annots' in page:
             # Iterate through pages, update field values
             for j in range(0, len(page['/Annots'])):
                 writer_annot = page['/Annots'][j].getObject()
@@ -355,8 +355,6 @@ class PdfFileWriter(object):
                         writer_annot.update({
                             NameObject("/V"): TextStringObject(fields[field])
                         })
-        except KeyError as e:
-            print "KeyError '%s' not found in: %s" % (e.message, page)
 
     def cloneReaderDocumentRoot(self, reader):
         '''
