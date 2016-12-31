@@ -952,9 +952,9 @@ class PdfFileWriter(object):
         :return: Page layout currently being used.
         :rtype: str, None if not specified
         """
-        try:
+        if '/PageLayout' in self._root_object:
             return self._root_object['/PageLayout']
-        except KeyError:
+        else:
             return None
 
     def setPageLayout(self, layout):
