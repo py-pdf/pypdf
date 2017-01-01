@@ -32,3 +32,7 @@ Tests can be run from the command line by:
 ```bash
 python -m unittest Tests.tests
 ```
+
+```bash
+docker-compose up --build
+```

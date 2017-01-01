@@ -1,0 +1,11 @@
+version: '2'
+
+services:
+  pypdf_python2:
+    build:
+      dockerfile: Dockerfile.python2
+      context: ./
+  pypdf_python3:
+    build:
+      dockerfile: Dockerfile.python3
+      context: ./
