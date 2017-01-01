@@ -1,0 +1,4 @@
+- type: parallel
+  steps:
+    - service: pypdf_unittest
+      command: python -m unittest Tests.tests
