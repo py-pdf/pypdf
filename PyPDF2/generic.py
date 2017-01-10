@@ -629,9 +629,18 @@ class DictionaryObject(dict, PdfObject):
                     # we found it by looking back one character further.
                     data["__streamdata__"] = data["__streamdata__"][:-1]
                 else:
-                    if debug: print(("E", e, ndstream, debugging.toHex(end)))
-                    stream.seek(pos, 0)
-                    raise utils.PdfReadError("Unable to find 'endstream' marker after stream at byte %s." % utils.hexStr(stream.tell()))
+                    # Handle pdf files with bit too short stream length
+                    stream.seek(t + length, 0)
+                    extra = stream.read(50)
+                    p = extra.find(b_("endstream"))
+                    if p >= 0:
+                        stream.seek(t + length + p + 9, 0)
+                        extra = extra[:p].rstrip(b_('\r\n '))
+                        data["__streamdata__"] = data["__streamdata__"] + extra
+                    else:
+                        if debug: print(("E", e, ndstream, debugging.toHex(end)))
+                        stream.seek(pos, 0)
+                        raise utils.PdfReadError("Unable to find 'endstream' marker after stream at byte %s." % utils.hexStr(stream.tell()))
         else:
             stream.seek(pos, 0)
         if "__streamdata__" in data:
