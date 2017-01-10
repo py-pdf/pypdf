@@ -2059,7 +2059,7 @@ class PdfFileReader(object):
         if not (encrypt['/V'] in (1, 2)):
             raise NotImplementedError("only algorithm code 1 and 2 are supported. This PDF uses code %s" % encrypt['/V'])
         user_password, key = self._authenticateUserPassword(password)
-        if user_password:
+        if user_password is not None:
             self._decryption_key = key
             return 1
         else:
