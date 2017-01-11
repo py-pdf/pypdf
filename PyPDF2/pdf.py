@@ -2058,7 +2058,7 @@ class PdfFileReader(object):
         if encrypt['/Filter'] != '/Standard':
             raise NotImplementedError("only Standard PDF encryption handler is available")
         if not (encrypt['/V'] in (1, 2)):
-            raise NotImplementedError("only algorithm code 1 and 2 are supported")
+            raise NotImplementedError("only algorithm code 1 and 2 are supported. This PDF uses code %s" % encrypt['/V'])
         user_password, key = self._authenticateUserPassword(password)
         if user_password:
             self._decryption_key = key

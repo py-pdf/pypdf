@@ -12,7 +12,7 @@ http://mstamy2.github.io/PyPDF2/
 
 ##Examples
 
-Please see `sample code` folder
+Please see the `Sample_Code` folder.
 
 ##Documentation
 
@@ -32,6 +32,7 @@ Tests can be run from the command line by:
 ```bash
 python -m unittest Tests.tests
 ```
+
 
 ```bash
 docker-compose up --build
