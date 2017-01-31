@@ -2052,8 +2052,34 @@ class PdfFileReader(object):
         finally:
             self._override_encryption = False
 
+    def decode_permissions(self, permissions_code):
+        # Takes the permissions as an integer, returns the allowed access
+        permissions = {}
+        permissions['print'] = permissions_code & (1 << 3-1) != 0  # bit 3
+        permissions['modify'] = permissions_code & (1 << 4-1) != 0  # bit 4
+        permissions['copy'] = permissions_code & (1 << 5-1) != 0  # bit 5
+        permissions['annotations'] = permissions_code & (1 << 6-1) != 0  # bit 6
+        permissions['forms'] = permissions_code & (1 << 9-1) != 0  # bit 9
+        permissions['accessability'] = permissions_code & (1 << 10-1) != 0  # bit 10
+        permissions['assemble'] = permissions_code & (1 << 11-1) != 0  # bit 11
+        permissions['print_high_quality'] = permissions_code & (1 << 12-1) != 0  # bit 12
+        return permissions            
+            
     def _decrypt(self, password):
+        # Decrypts data as per Section 3.5 (page 117) of PDF spec v1.7
+        # "The security handler defines the use of encryption and decryption in
+        # the document, using the rules specified by the CF, StmF, and StrF entries"
         encrypt = self.trailer['/Encrypt'].getObject()
+        # /Encrypt Keys:
+        # Filter (name)   : "name of the preferred security handler "
+        # V (number)      : Algorithm Code
+        # Length (integer): Length of encryption key, in bits
+        # CF (dictionary) : Crypt filter
+        # StmF (name)     : Name of the crypt filter that is used by default when decrypting streams
+        # StrF (name)     : The name of the crypt filter that is used when decrypting all strings in the document
+        # R (number)      : Standard security handler revision number
+        # U (string)      : A 32-byte string, based on the user password
+        # P (integer)     : Permissions allowed with user access
         if encrypt['/Filter'] != '/Standard':
             raise NotImplementedError("only Standard PDF encryption handler is available")
         if not (encrypt['/V'] in (1, 2)):
