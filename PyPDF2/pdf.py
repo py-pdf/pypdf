@@ -1753,10 +1753,10 @@ class PdfFileReader(object):
         stream.seek(-1, 2)
         if not stream.tell():
             raise utils.PdfReadError('Cannot read an empty file')
-        last1K = stream.tell() - 1024 + 1 # offset of last 1024 bytes of stream
+        last1M = stream.tell() - 1024 * 1024 + 1 # offset of last MB of stream
         line = b_('')
         while line[:5] != b_("%%EOF"):
-            if stream.tell() < last1K:
+            if stream.tell() < last1M:
                 raise utils.PdfReadError("EOF marker not found")
             line = self.readNextEndLine(stream)
             if debug: print("  line:",line)
