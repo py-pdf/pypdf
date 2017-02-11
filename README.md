@@ -19,6 +19,11 @@ Please see the `Sample_Code` folder.
 Documentation is available at  
 https://pythonhosted.org/PyPDF2/
 
+##Installation
+
+To install via pip:
+
+`pip install PyPDF2`
 
 ##FAQ
 Please see  
