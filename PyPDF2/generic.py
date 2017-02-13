@@ -104,8 +104,15 @@ class PdfObject(object):
         """Resolves indirect references."""
         return self
 
+    def isNull(self):
+        """Check if this object refers to the null object."""
+        return False
+
 
 class NullObject(PdfObject):
+    def isNull(self):
+        return True
+
     def writeToStream(self, stream, encryption_key):
         stream.write(b_("null"))
 
@@ -177,6 +184,9 @@ class IndirectObject(PdfObject):
 
     def getObject(self):
         return self.pdf.getObject(self).getObject()
+
+    def isNull(self):
+        return not self.pdf.objectExists(self)
 
     def __repr__(self):
         return "IndirectObject(%r, %r)" % (self.idnum, self.generation)

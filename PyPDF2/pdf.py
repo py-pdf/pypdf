@@ -114,6 +114,11 @@ class PdfFileWriter(object):
         self._objects.append(obj)
         return IndirectObject(len(self._objects), 0, self)
 
+    def objectExists(self, ido):
+        if ido.pdf != self:
+            raise ValueError("pdf must be self")
+        return ido.idnum - 1 < len(self._objects)
+
     def getObject(self, ido):
         if ido.pdf != self:
             raise ValueError("pdf must be self")
@@ -1644,6 +1649,24 @@ class PdfFileReader(object):
 
         if self.strict: raise utils.PdfReadError("This is a fatal error in strict mode.")
         return NullObject()
+
+    def objectExists(self, indirectReference):
+        retval = self.cacheGetIndirectObject(indirectReference.generation,
+                                                indirectReference.idnum)
+        if retval != None:
+            # Object is cached. It probably exists.
+            return True
+        elif indirectReference.generation == 0 and \
+                        indirectReference.idnum in self.xref_objStm:
+            # Object is inside an object stream.
+            # Just assume the object exists. The PDF is errorneous otherwise.
+            return True
+        elif indirectReference.generation in self.xref and \
+                indirectReference.idnum in self.xref[indirectReference.generation]:
+            # Object is present in the xref table.
+            return True
+        else:
+            return False
 
     def getObject(self, indirectReference):
         debug = False
