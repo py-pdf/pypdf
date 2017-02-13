@@ -1888,7 +1888,9 @@ class PdfFileReader(object):
                 # PDF 1.5+ Cross-Reference Stream
                 stream.seek(-1, 1)
                 idnum, generation = self.readObjectHeader(stream)
-                xrefstream = readObject(stream, self)
+                # Disable checking values of the stream dict because indirect
+                # references cannot be checked before the xref stream is parsed.
+                xrefstream = readObject(stream, self, check_dict_values=False)
                 assert xrefstream["/Type"] == "/XRef"
                 self.cacheIndirectObject(generation, idnum, xrefstream)
                 streamData = BytesIO(b_(xrefstream.getData()))

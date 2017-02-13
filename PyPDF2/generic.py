@@ -51,7 +51,7 @@ NumberSigns = b_('+-')
 IndirectPattern = re.compile(b_(r"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]"))
 
 
-def readObject(stream, pdf):
+def readObject(stream, pdf, check_dict_values=True):
     tok = stream.read(1)
     stream.seek(-1, 1) # reset to start
     idx = ObjectPrefix.find(tok)
@@ -63,7 +63,7 @@ def readObject(stream, pdf):
         peek = stream.read(2)
         stream.seek(-2, 1) # reset to start
         if peek == b_('<<'):
-            return DictionaryObject.readFromStream(stream, pdf)
+            return DictionaryObject.readFromStream(stream, pdf, check_dict_values)
         else:
             return readHexStringFromStream(stream)
     elif idx == 2:
@@ -562,7 +562,7 @@ class DictionaryObject(dict, PdfObject):
             stream.write(b_("\n"))
         stream.write(b_(">>"))
 
-    def readFromStream(stream, pdf):
+    def readFromStream(stream, pdf, check_dict_values=True):
         debug = False
         tmp = stream.read(2)
         if tmp != b_("<<"):
@@ -589,17 +589,35 @@ class DictionaryObject(dict, PdfObject):
             tok = readNonWhitespace(stream)
             stream.seek(-1, 1)
             value = readObject(stream, pdf)
-            if not data.get(key):
-                data[key] = value
-            elif pdf.strict:
-                # multiple definitions of key not permitted
-                raise utils.PdfReadError("Multiple definitions in dictionary at byte %s for key %s" \
-                                           % (utils.hexStr(stream.tell()), key))
-            else:
-                warnings.warn("Multiple definitions in dictionary at byte %s for key %s" \
-                                           % (utils.hexStr(stream.tell()), key), utils.PdfReadWarning)
+            data.setdefault(key, []).append((value, stream.tell()))
 
         pos = stream.tell()
+
+        data_cleaned = {}
+        for key in data:
+            final_value = None
+            for value, offset in data[key]:
+                # Keys with null values (or indirect references to undefined objects)
+                # are treated as if they do not exist.
+                if check_dict_values and value.isNull():
+                    if debug: print("Cleaning value {0} of key {1}.".format(value, key))
+                    continue
+
+                if final_value is not None:
+                    if pdf.strict:
+                        # multiple definitions of key not permitted
+                        raise utils.PdfReadError("Multiple definitions in dictionary at byte %s for key %s" \
+                                                    % (utils.hexStr(offset), key))
+                    else:
+                        warnings.warn("Multiple definitions in dictionary at byte %s for key %s" \
+                                                    % (utils.hexStr(offset), key), utils.PdfReadWarning)
+                else:
+                    final_value = value
+
+            if final_value is not None:
+                data_cleaned[key] = final_value
+        data = data_cleaned
+
         s = readNonWhitespace(stream)
         if s == b_('s') and stream.read(5) == b_('tream'):
             eol = stream.read(1)
