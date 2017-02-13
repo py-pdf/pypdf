@@ -36,6 +36,12 @@ class PdfReaderTestCases(unittest.TestCase):
                 msg='PDF extracted text differs from expected value.\n\nExpected:\n\n%r\n\nExtracted:\n\n%r\n\n'
                     % (pdftext, ipdf_p1_text.encode('utf-8', errors='ignore')))
 
+    def test_PdfReaderMultipleDefinitions(self):
+        with open(os.path.join(RESOURCE_ROOT, 'multipledefs.pdf'), 'rb') as inputfile:
+            # Load PDF file from file
+            ipdf = PdfFileReader(inputfile)
+            ipdf_p1 = ipdf.getPage(0)
+
 
 class AddJsTestCase(unittest.TestCase):
 
