@@ -2787,11 +2787,27 @@ class ContentStream(DecodedStreamObject):
         # left at beginning of ID
         tmp = stream.read(3)
         assert tmp[:2] == b_("ID")
-        data = b_("")
+        data = BytesIO()
+        # Read the inline image, while checking for EI (End Image) operator.
         while True:
-            # Read the inline image, while checking for EI (End Image) operator.
-            tok = stream.read(1)
-            if tok == b_("E"):
+            # Read 8 kB at a time and check if the chunk contains the E operator.
+            buf = stream.read(8192)
+            
+            # We have reached the end of the stream, but haven't found the EI operator.
+            if not buf:
+                raise utils.PdfReadError("Unexpected end of stream")
+            
+            loc = buf.find(b_("E"))
+
+            if loc == -1:
+                data.write(buf)
+            else:
+                # Write out everything before the E.
+                data.write(buf[0:loc])
+
+                # Seek back in the stream to read the E next.
+                stream.seek(loc - len(buf), 1)
+                tok = stream.read(1)
                 # Check for End Image
                 tok2 = stream.read(1)
                 if tok2 == b_("I"):
@@ -2808,14 +2824,12 @@ class ContentStream(DecodedStreamObject):
                         stream.seek(-1, 1)
                         break
                     else:
-                        stream.seek(-1,1)
-                        data += info
+                        stream.seek(-1, 1)
+                        data.write(info)
                 else:
                     stream.seek(-1, 1)
-                    data += tok
-            else:
-                data += tok
-        return {"settings": settings, "data": data}
+                    data.write(tok)
+        return {"settings": settings, "data": data.getvalue()}
 
     def _getData(self):
         newdata = BytesIO()
