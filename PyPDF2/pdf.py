@@ -2727,11 +2727,21 @@ class ContentStream(DecodedStreamObject):
         while True:
             # Read the inline image, while checking for EI (End Image) operator.
             tok = stream.read(1)
+            if not tok:
+                if self.strict:
+                    raise utils.PdfReadError("No end to inline image.")
+                # Even though we're not raising, this is almost certainly bad.
+                break
             if tok == b_("E"):
                 # Check for End Image
                 tok2 = stream.read(1)
                 if tok2 == b_("I"):
-                    # Data can contain EI, so check for the Q operator.
+                    # Data can contain EI, so check for whitespace before
+                    if not data or data[-1] not in utils.WHITESPACES:
+                        # No whitespace, add the E and I and keep moving.
+                        data += tok + tok2
+                        continue
+                    # Now try to find the Q operator.
                     tok3 = stream.read(1)
                     info = tok + tok2
                     # We need to find whitespace between EI and Q.
