@@ -57,6 +57,7 @@ else:
     from io import BytesIO
 
 import sys
+from collections import OrderedDict
 
 from .generic import *
 from .utils import readNonWhitespace, readUntilWhitespace, ConvertFunctionsToVirtualList
@@ -1264,7 +1265,7 @@ class PdfFileReader(object):
                            "/TM": "Mapping Name", "/Ff": "Field Flags",
                            "/V": "Value", "/DV": "Default Value"}
         if retval is None:
-            retval = {}
+            retval = OrderedDict()
             catalog = self.trailer["/Root"]
             # get the AcroForm tree
             if "/AcroForm" in catalog:
@@ -1282,8 +1283,7 @@ class PdfFileReader(object):
                 break
 
         if "/Fields" in tree:
-            fields = tree["/Fields"]
-            for f in fields:
+            for f in tree["/Fields"]:
                 field = f.getObject()
                 self._buildField(field, retval, fileobj, fieldAttributes)
 
