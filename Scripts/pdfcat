@@ -23,7 +23,9 @@ EXAMPLES
 # see https://github.com/mstamy2/PyPDF2/LICENSE
 
 from __future__ import print_function
+
 import argparse
+
 from PyPDF2.pagerange import PAGE_RANGE_HELP
 
 
@@ -48,10 +50,8 @@ def parse_args():
 from sys import stderr, stdout, exit
 import os
 import traceback
-from collections import defaultdict
 
 from PyPDF2 import PdfFileMerger, parse_filename_page_ranges
-
 
 if __name__ == "__main__":
     args = parse_args()

@@ -4,7 +4,6 @@ import unittest
 
 from PyPDF2 import PdfFileReader, PdfFileWriter
 
-
 # Configure path environment
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -14,12 +13,11 @@ sys.path.append(PROJECT_ROOT)
 
 
 class PdfReaderTestCases(unittest.TestCase):
-
     def test_PdfReaderFileLoad(self):
-        '''
+        """
         Test loading and parsing of a file. Extract text of the file and compare to expected
         textual output. Expected outcome: file loads, text matches expected.
-        '''
+        """
 
         with open(os.path.join(RESOURCE_ROOT, 'crazyones.pdf'), 'rb') as inputfile:
             # Load PDF file from file
@@ -33,19 +31,17 @@ class PdfReaderTestCases(unittest.TestCase):
 
             # Compare the text of the PDF to a known source
             self.assertEqual(ipdf_p1_text.encode('utf-8', errors='ignore'), pdftext,
-                msg='PDF extracted text differs from expected value.\n\nExpected:\n\n%r\n\nExtracted:\n\n%r\n\n'
-                    % (pdftext, ipdf_p1_text.encode('utf-8', errors='ignore')))
+                             msg='PDF extracted text differs from expected value.\n\nExpected:\n\n%r\n\nExtracted:\n\n%r\n\n'
+                                 % (pdftext, ipdf_p1_text.encode('utf-8', errors='ignore')))
 
 
 class AddJsTestCase(unittest.TestCase):
-
     def setUp(self):
         ipdf = PdfFileReader(os.path.join(RESOURCE_ROOT, 'crazyones.pdf'))
         self.pdf_file_writer = PdfFileWriter()
         self.pdf_file_writer.appendPagesFromReader(ipdf)
 
     def test_add(self):
-
         self.pdf_file_writer.addJS("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
 
         self.assertIn('/Names', self.pdf_file_writer._root_object, "addJS should add a name catalog in the root object.")
@@ -53,7 +49,6 @@ class AddJsTestCase(unittest.TestCase):
         self.assertIn('/OpenAction', self.pdf_file_writer._root_object, "addJS should add an OpenAction to the catalog.")
 
     def test_overwrite(self):
-
         self.pdf_file_writer.addJS("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
         first_js = self.get_javascript_name()
 

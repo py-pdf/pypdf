@@ -8,10 +8,13 @@ see https://github.com/mstamy2/PyPDF2/blob/master/LICENSE
 """
 
 import re
+
 from .utils import isString
 
 _INT_RE = r"(0|-?[1-9]\d*)"  # A decimal int, don't allow "-0".
 PAGE_RANGE_RE = "^({int}|({int}?(:{int}?(:{int}?)?)))$".format(int=_INT_RE)
+
+
 # groups:         12     34     5 6     7 8
 
 
@@ -87,7 +90,7 @@ class PageRange(object):
     @staticmethod
     def valid(input):
         """ True if input is a valid initializer for a PageRange. """
-        return isinstance(input, slice)  or \
+        return isinstance(input, slice) or \
                isinstance(input, PageRange) or \
                (isString(input)
                 and bool(re.match(PAGE_RANGE_RE, input)))
@@ -99,14 +102,14 @@ class PageRange(object):
     def __str__(self):
         """ A string like "1:2:3". """
         s = self._slice
-        if s.step == None:
-            if s.start != None  and  s.stop == s.start + 1:
+        if s.step is None:
+            if s.start is not None and s.stop == s.start + 1:
                 return str(s.start)
 
             indices = s.start, s.stop
         else:
             indices = s.start, s.stop, s.step
-        return ':'.join("" if i == None else str(i) for i in indices)
+        return ':'.join("" if i is None else str(i) for i in indices)
 
     def __repr__(self):
         """ A string like "PageRange('1:2:3')". """
@@ -137,15 +140,15 @@ def parse_filename_page_ranges(args):
     for arg in args + [None]:
         if PageRange.valid(arg):
             if not pdf_filename:
-                raise ValueError("The first argument must be a filename, " \
+                raise ValueError("The first argument must be a filename, "
                                  "not a page range.")
 
-            pairs.append( (pdf_filename, PageRange(arg)) )
+            pairs.append((pdf_filename, PageRange(arg)))
             did_page_range = True
         else:
             # New filename or end of list--do all of the previous file?
             if pdf_filename and not did_page_range:
-                pairs.append( (pdf_filename, PAGE_RANGE_ALL) )
+                pairs.append((pdf_filename, PAGE_RANGE_ALL))
 
             pdf_filename = arg
             did_page_range = False

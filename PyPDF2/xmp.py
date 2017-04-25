@@ -1,9 +1,9 @@
-import re
 import datetime
 import decimal
-from .generic import PdfObject
-from xml.dom import getDOMImplementation
+import re
 from xml.dom.minidom import parseString
+
+from .generic import PdfObject
 from .utils import u_
 
 RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
@@ -70,7 +70,7 @@ class XmpInformation(PdfObject):
         for desc in self.rdfRoot.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):
             if desc.getAttributeNS(RDF_NAMESPACE, "about") == aboutUri:
                 attr = desc.getAttributeNodeNS(namespace, name)
-                if attr != None:
+                if attr is not None:
                     yield attr
                 for element in desc.getElementsByTagNameNS(namespace, name):
                     yield element
@@ -86,16 +86,19 @@ class XmpInformation(PdfObject):
                     if child.namespaceURI == namespace:
                         yield child
 
-    def _getText(self, element):
+    @staticmethod
+    def _getText(element):
         text = ""
         for child in element.childNodes:
             if child.nodeType == child.TEXT_NODE:
                 text += child.data
         return text
 
+    @staticmethod
     def _converter_string(value):
         return value
 
+    @staticmethod
     def _converter_date(value):
         m = iso8601.match(value)
         year = int(m.group("year"))
@@ -115,8 +118,10 @@ class XmpInformation(PdfObject):
                 tzd_minutes *= -1
             dt = dt + datetime.timedelta(hours=tzd_hours, minutes=tzd_minutes)
         return dt
+
     _test_converter_date = staticmethod(_converter_date)
 
+    @staticmethod
     def _getter_bag(namespace, name, converter):
         def get(self):
             cached = self.cache.get(namespace, {}).get(name)
@@ -134,8 +139,10 @@ class XmpInformation(PdfObject):
             ns_cache = self.cache.setdefault(namespace, {})
             ns_cache[name] = retval
             return retval
+
         return get
 
+    @staticmethod
     def _getter_seq(namespace, name, converter):
         def get(self):
             cached = self.cache.get(namespace, {}).get(name)
@@ -156,8 +163,10 @@ class XmpInformation(PdfObject):
             ns_cache = self.cache.setdefault(namespace, {})
             ns_cache[name] = retval
             return retval
+
         return get
 
+    @staticmethod
     def _getter_langalt(namespace, name, converter):
         def get(self):
             cached = self.cache.get(namespace, {}).get(name)
@@ -177,8 +186,10 @@ class XmpInformation(PdfObject):
             ns_cache = self.cache.setdefault(namespace, {})
             ns_cache[name] = retval
             return retval
+
         return get
 
+    @staticmethod
     def _getter_single(namespace, name, converter):
         def get(self):
             cached = self.cache.get(namespace, {}).get(name)
@@ -191,11 +202,12 @@ class XmpInformation(PdfObject):
                 else:
                     value = self._getText(element)
                 break
-            if value != None:
+            if value is not None:
                 value = converter(value)
             ns_cache = self.cache.setdefault(namespace, {})
             ns_cache[name] = value
             return value
+
         return get
 
     dc_contributor = property(_getter_bag(DC_NAMESPACE, "contributor", _converter_string))
@@ -340,7 +352,7 @@ class XmpInformation(PdfObject):
                     idx = key.find(u_("\u2182"))
                     if idx == -1:
                         break
-                    key = key[:idx] + chr(int(key[idx+1:idx+5], base=16)) + key[idx+5:]
+                    key = key[:idx] + chr(int(key[idx + 1:idx + 5], base=16)) + key[idx + 5:]
                 if node.nodeType == node.ATTRIBUTE_NODE:
                     value = node.nodeValue
                 else:

@@ -31,7 +31,6 @@ Utility functions for PDF library.
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
-
 import sys
 
 try:
@@ -39,11 +38,10 @@ try:
 except ImportError:  # Py3
     import builtins
 
-
 xrange_fn = getattr(builtins, "xrange", range)
 _basestring = getattr(builtins, "basestring", str)
 
-bytes_type = type(bytes()) # Works the same in Python 2.X and 3.X
+bytes_type = type(bytes())  # Works the same in Python 2.X and 3.X
 string_type = getattr(builtins, "unicode", str)
 int_types = (int, long) if sys.version_info[0] < 3 else (int,)
 
@@ -64,9 +62,9 @@ def isBytes(b):
     return isinstance(b, bytes_type)
 
 
-#custom implementation of warnings.formatwarning
-def formatWarning(message, category, filename, lineno, line=None):
-    file = filename.replace("/", "\\").rsplit("\\", 1)[1] # find the file name
+# custom implementation of warnings.formatwarning
+def formatWarning(message, category, filename, lineno):
+    file = filename.replace("/", "\\").rsplit("\\", 1)[1]  # find the file name
     return "%s: %s [%s:%s]\n" % (category.__name__, message, file, lineno)
 
 
@@ -102,11 +100,11 @@ def skipOverWhitespace(stream):
     one whitespace character was read.
     """
     tok = WHITESPACES[0]
-    cnt = 0;
+    cnt = 0
     while tok in WHITESPACES:
         tok = stream.read(1)
-        cnt+=1
-    return (cnt > 1)
+        cnt += 1
+    return cnt > 1
 
 
 def skipOverComment(stream):
@@ -128,14 +126,14 @@ def readUntilRegex(stream, regex, ignore_eof=False):
         tok = stream.read(16)
         if not tok:
             # stream has truncated prematurely
-            if ignore_eof == True:
+            if ignore_eof:
                 return name
             else:
                 raise PdfStreamError("Stream has ended unexpectedly")
         m = regex.search(tok)
         if m is not None:
             name += tok[:m.start()]
-            stream.seek(m.start()-len(tok), 1)
+            stream.seek(m.start() - len(tok), 1)
             break
         name += tok
     return name
@@ -183,9 +181,9 @@ def RC4_encrypt(key, plaintext):
 
 
 def matrixMultiply(a, b):
-    return [[sum([float(i)*float(j)
+    return [[sum([float(i) * float(j)
                   for i, j in zip(row, col)]
-                ) for col in zip(*b)]
+                 ) for col in zip(*b)]
             for row in a]
 
 
@@ -227,6 +225,7 @@ if sys.version_info[0] < 3:
         return s
 else:
     B_CACHE = {}
+
 
     def b_(s):
         bc = B_CACHE
