@@ -67,3 +67,30 @@ class DirectIdentity(WriterFixture, unittest.TestCase):
         """Asserts the returned object is the same as the original."""
         ret = self.writer._sweepIndirectReferences({}, obj)
         self.assertIs(ret, obj)
+
+
+class ContainerDirectContentEquality(WriterFixture, unittest.TestCase):
+    """Tests to confirm direct objects within containers are unmodified."""
+    def test_array(self):
+        """Confirm direct objects within an array are retained."""
+        l = [
+            PyPDF2.generic.NullObject(),
+            PyPDF2.generic.BooleanObject(True)
+            ]
+        ar = PyPDF2.generic.ArrayObject(l)
+        self.writer._sweepIndirectReferences({}, ar)
+        for i in range(len(l)):
+            self.assertIs(l[i], ar[i])
+        self.assertEqual(l, ar)
+
+    def test_dictionary(self):
+        """Confirm direct objects within a dictionary are retained."""
+        d = {
+            PyPDF2.generic.NameObject('/spam'):PyPDF2.generic.NullObject(),
+            PyPDF2.generic.NameObject('/eggs'):PyPDF2.generic.NumberObject('0')
+            }
+        obj = PyPDF2.generic.DictionaryObject(d)
+        self.writer._sweepIndirectReferences({}, obj)
+        for key in d:
+            self.assertIs(d[key], obj[key])
+        self.assertEqual(d, obj)
