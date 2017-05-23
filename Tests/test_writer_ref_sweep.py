@@ -94,3 +94,30 @@ class ContainerDirectContentEquality(WriterFixture, unittest.TestCase):
         for key in d:
             self.assertIs(d[key], obj[key])
         self.assertEqual(d, obj)
+
+
+class StreamInContainerReplacement(WriterFixture, unittest.TestCase):
+    """Ensure streams in containers are replaced with indirect objects."""
+    def test_array(self):
+        """Confirm a stream in an array is replaced with an indirect object."""
+        stream = PyPDF2.generic.StreamObject()
+        ar = PyPDF2.generic.ArrayObject([stream])
+        self.writer._sweepIndirectReferences({}, ar)
+        self.assert_replacement(stream, ar[0])
+
+    def test_dictionary(self):
+        """Confirm a stream in a dictionary is replaced with an indirect object."""
+        stream = PyPDF2.generic.StreamObject()
+        key = PyPDF2.generic.NameObject('/foo')
+        d = PyPDF2.generic.DictionaryObject({key:stream})
+        self.writer._sweepIndirectReferences({}, d)
+        repl = d.raw_get(key) # Bypass indirect object resolution.
+        self.assert_replacement(stream, repl)
+
+    def assert_replacement(self, orig, repl):
+        """
+        Verifies the original object was added to the PDF's object list,
+        and the replacement is indeed an indirect object.
+        """
+        self.assertIs(orig, self.writer._objects[-1])
+        self.assertIsInstance(repl, PyPDF2.generic.IndirectObject)
