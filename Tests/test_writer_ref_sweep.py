@@ -6,10 +6,34 @@ import unittest
 import PyPDF2
 
 
+class SweepLogger(PyPDF2.PdfFileWriter):
+    """Subclass adding test instrumentation to sweep method calls."""
+    def __init__(self):
+        super(SweepLogger, self).__init__()
+        self.depth = 0
+        self.max_depth = 0
+        self.visited_items = []
+
+    def _sweepIndirectReferences(self, externMap, data):
+        """
+        Wrapper of the original method call, recording recursion depth
+        and which data items have been swept.
+        """
+        self.depth += 1
+        if self.depth > self.max_depth:
+            self.max_depth = self.depth
+        self.visited_items.append(data)
+
+        ret = super(SweepLogger, self)._sweepIndirectReferences(externMap, data)
+
+        self.depth -= 1
+        return ret
+
+
 class WriterFixture(object):
     """Superclass creating a dummy writer object."""
     def setUp(self):
-        self.writer = PyPDF2.PdfFileWriter()
+        self.writer = SweepLogger()
 
 
 class DirectIdentity(WriterFixture, unittest.TestCase):
