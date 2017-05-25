@@ -2,6 +2,7 @@
 Unit tests for _sweepIndirectReference() of the PdfFileWriter object.
 """
 
+import io
 import unittest
 import PyPDF2
 
@@ -34,6 +35,7 @@ class WriterFixture(object):
     """Superclass creating a dummy writer object."""
     def setUp(self):
         self.writer = SweepLogger()
+        self.buffer = io.BytesIO()
 
 
 class DirectIdentity(WriterFixture, unittest.TestCase):
@@ -145,3 +147,24 @@ class StreamInContainerReplacement(WriterFixture, unittest.TestCase):
         """
         self.assertIs(orig, self.writer._objects[-1])
         self.assertIsInstance(repl, PyPDF2.generic.IndirectObject)
+
+
+class InternalIndirectObjects(WriterFixture, unittest.TestCase):
+    """Tests for indirect objects originating within the output document."""
+    def test_visit_target(self):
+        """Confirm the target of an indirect object is swept."""
+        target = PyPDF2.generic.NullObject()
+        ido = self.writer._addObject(target)
+        self.writer._root_object[PyPDF2.generic.NameObject('/foo')] = ido
+        self.writer.write(self.buffer)
+        self.assertIn(target, self.writer.visited_items)
+
+    def test_visit_target_once(self):
+        """Confirm the target of an indirect object is swept only once."""
+        target = PyPDF2.generic.NullObject()
+        ido = self.writer._addObject(target)
+        self.writer._root_object[PyPDF2.generic.NameObject('/first')] = ido
+        self.writer._root_object[PyPDF2.generic.NameObject('/second')] = ido
+        self.writer.write(self.buffer)
+        hits = [obj for obj in self.writer.visited_items if obj is target]
+        self.assertEqual(len(hits), 1)
