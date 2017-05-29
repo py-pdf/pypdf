@@ -168,3 +168,77 @@ class InternalIndirectObjects(WriterFixture, unittest.TestCase):
         self.writer.write(self.buffer)
         hits = [obj for obj in self.writer.visited_items if obj is target]
         self.assertEqual(len(hits), 1)
+
+
+class ExternalIndirectObjects(WriterFixture, unittest.TestCase):
+    """Tests for sweeping indirect objects from a separate document."""
+    def test_replacement(self):
+        """Ensure a new indirect object is created to replace an external one."""
+        ext_ido = self._create_external_indirect_objects()[0]
+        new_ido = self.writer._sweepIndirectReferences({}, ext_ido)
+        self.assertIsInstance(new_ido, PyPDF2.generic.IndirectObject)
+        self.assertIs(new_ido.pdf, self.writer)
+
+    def test_target_inclusion(self):
+        """Ensure the target of the replacement indirect object is correctly added to the internal object list."""
+        ext_ido = self._create_external_indirect_objects()[0]
+        new_ido = self.writer._sweepIndirectReferences({}, ext_ido)
+        new_obj = new_ido.getObject()
+        self.assertIs(self.writer._objects[new_ido.idnum - 1], new_obj)
+
+    def test_target_swept(self):
+        """Ensure the target of the replacement indirect object is swept."""
+        ext_ido = self._create_external_indirect_objects()[0]
+        target = ext_ido.getObject()
+        key = PyPDF2.generic.NameObject('/foo')
+        self.writer._root_object[key] = ext_ido
+        self.writer.write(self.buffer)
+        self.assertIn(target, self.writer.visited_items)
+
+    def test_single_inclusion(self):
+        """Ensure a direct object targeted by multiple indirect objects is added to the internal object list once."""
+        num = 3
+        ext_idos = self._create_external_indirect_objects(num)
+        target = ext_idos[0].getObject()
+
+        # Add the indirect entries to the root dictionary.
+        keys = [PyPDF2.generic.NameObject("/ido{0}".format(x))
+                for x in range(num)]
+        pairs = [(keys[x], ext_idos[x]) for x in range(num)]
+        self.writer._root_object.update(pairs)
+
+        self.writer.write(self.buffer)
+        hits = [obj for obj in self.writer._objects if obj is target]
+        self.assertEqual(len(hits), 1)
+
+    def _create_external_indirect_objects(self, num=1):
+        """Generates indirect objects originating from a separate PDF.
+
+        To simulate objects from a different document a dummy PDF is
+        created with mock indirect objects inserted into its root dictionary.
+        The document is written to a buffer then read back into a
+        PdfFileReader instance. The original indirect objects from the
+        reader's root dictionary are then returned to the caller, which
+        can now be treated as if they are external.
+        """
+        keys = [PyPDF2.generic.NameObject("/ido{0}".format(x))
+                for x in range(num)]
+
+        # Generate the dummy document with a direct object and a single
+        # indirect object pointing to it.
+        doc = PyPDF2.PdfFileWriter()
+        obj = PyPDF2.generic.NullObject()
+        ido = doc._addObject(obj)
+
+        # Create the requested number of entries in the root dictionary.
+        pairs = [(k, ido) for k in keys]
+        doc._root_object.update(pairs)
+
+        # Dump the dummy document out to a buffer and bring it back into
+        # a PdfFileReader.
+        buf = io.BytesIO()
+        doc.write(buf)
+        reader = PyPDF2.PdfFileReader(buf)
+
+        root = reader.trailer[PyPDF2.generic.NameObject('/Root')]
+        return [root.raw_get(k) for k in keys]
