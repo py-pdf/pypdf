@@ -542,25 +542,8 @@ class PdfFileWriter(object):
     def _sweepIndirectReferences(self, externMap, data):
         debug = False
         if debug: print((data, "TYPE", data.__class__.__name__))
-        if isinstance(data, DictionaryObject):
-            for key, value in list(data.items()):
-                origvalue = value
-                value = self._sweepIndirectReferences(externMap, value)
-                if isinstance(value, StreamObject):
-                    # a dictionary value is a stream.  streams must be indirect
-                    # objects, so we need to change this value.
-                    value = self._addObject(value)
-                data[key] = value
-            return data
-        elif isinstance(data, ArrayObject):
-            for i in range(len(data)):
-                value = self._sweepIndirectReferences(externMap, data[i])
-                if isinstance(value, StreamObject):
-                    # an array value is a stream.  streams must be indirect
-                    # objects, so we need to change this value
-                    value = self._addObject(value)
-                data[i] = value
-            return data
+        if isinstance(data, DictionaryObject) or isinstance(data, ArrayObject):
+            return self._sweepContainer(externMap, data)
         elif isinstance(data, IndirectObject):
             # internal indirect references are fine
             if data.pdf == self:
@@ -598,6 +581,41 @@ class PdfFileWriter(object):
                 return newobj
         else:
             return data
+
+    def _sweepContainer(self, externMap, data):
+        """Sweeps a container object for indirect references.
+
+        Iterates through all items within an array or dictionary,
+        calling _sweepIndirectReferences() for each, possibly replacing
+        items with indirect objects as necessary.
+        """
+        # Create a list of keys/indices to iterate over based on the type
+        # of container.
+        try:
+            it = data.keys()
+        except AttributeError:
+            it = range(len(data))
+
+        for x in it:
+            # Retrieve the original value, bypassing the usual dictionary
+            # syntax to ensure any indirect objects are returned as-is
+            # instead of being automatically resolved to their targets.
+            try:
+                orig_value = data.raw_get(x)
+            except AttributeError:
+                orig_value = data[x] # Arrays use normal index.
+
+            value = self._sweepIndirectReferences(externMap, orig_value)
+
+            # PyPDF2 will add stream objects as direct members of various
+            # containers. Each stream object needs to be converted to an
+            # indirect object because stream objects must always be indirect.
+            if isinstance(value, StreamObject):
+                value = self._addObject(value)
+
+            data[x] = value
+
+        return data
 
     def getReference(self, obj):
         idnum = self._objects.index(obj) + 1
