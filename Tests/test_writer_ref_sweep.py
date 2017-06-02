@@ -2,6 +2,7 @@
 Unit tests for _sweepIndirectReference() of the PdfFileWriter object.
 """
 
+import collections
 import io
 import unittest
 import PyPDF2
@@ -14,8 +15,9 @@ class SweepLogger(PyPDF2.PdfFileWriter):
         self.depth = 0
         self.max_depth = 0
         self.visited_items = []
+        self.sweepQ = collections.deque()
 
-    def _sweepIndirectReferences(self, externMap, data):
+    def _sweepIndirectReferences(self, externMap, data, iterItems=True):
         """
         Wrapper of the original method call, recording recursion depth
         and which data items have been swept.
@@ -25,7 +27,8 @@ class SweepLogger(PyPDF2.PdfFileWriter):
             self.max_depth = self.depth
         self.visited_items.append(data)
 
-        ret = super(SweepLogger, self)._sweepIndirectReferences(externMap, data)
+        ret = super(SweepLogger, self)._sweepIndirectReferences(externMap,
+                                                                data, iterItems)
 
         self.depth -= 1
         return ret

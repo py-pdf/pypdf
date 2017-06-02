@@ -42,6 +42,7 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 __maintainer__ = "Phaseit, Inc."
 __maintainer_email = "PyPDF2@phaseit.net"
 
+import collections
 import string
 import math
 import struct
@@ -479,7 +480,21 @@ class PdfFileWriter(object):
 
         self.stack = []
         if debug: print(("ERM:", externalReferenceMap, "root:", self._root))
-        self._sweepIndirectReferences(externalReferenceMap, self._root)
+
+        # Recursion of _sweepIndirectReferences() into nested structures
+        # is limited to avoid hitting Python's recursion depth when sweeping
+        # heavily nested data. This queue holds container objects, arrays
+        # or dictionaries, which have been visited initially, yet must not
+        # generate a recursive call to iterate through their content until
+        # execution returns to the top-level call.
+        self.sweepQ = collections.deque([self._root])
+
+        # Continue to call _sweepIndirectReferences() until the queue is
+        # exhausted, meaning all objects have been swept.
+        while len(self.sweepQ):
+            obj = self.sweepQ.pop()
+            self._sweepIndirectReferences(externalReferenceMap, obj, True)
+
         del self.stack
 
         # Begin writing:
@@ -539,11 +554,16 @@ class PdfFileWriter(object):
             args[NameObject(key)] = createStringObject(value)
         self.getObject(self._info).update(args)
 
-    def _sweepIndirectReferences(self, externMap, data):
+    def _sweepIndirectReferences(self, externMap, data, iterItems=False):
         debug = False
         if debug: print((data, "TYPE", data.__class__.__name__))
         if isinstance(data, DictionaryObject) or isinstance(data, ArrayObject):
-            return self._sweepContainer(externMap, data)
+            if iterItems:
+                self._sweepContainer(externMap, data)
+            else:
+                self.sweepQ.append(data)
+            return data
+
         elif isinstance(data, IndirectObject):
             # internal indirect references are fine
             if data.pdf == self:
@@ -614,8 +634,6 @@ class PdfFileWriter(object):
                 value = self._addObject(value)
 
             data[x] = value
-
-        return data
 
     def getReference(self, obj):
         idnum = self._objects.index(obj) + 1
