@@ -17,7 +17,7 @@ class SweepLogger(PyPDF2.PdfFileWriter):
         self.visited_items = []
         self.sweepQ = collections.deque()
 
-    def _sweepIndirectReferences(self, externMap, data, iterItems=True):
+    def _sweepIndirectReferences(self, externMap, data, iterItems=False):
         """
         Wrapper of the original method call, recording recursion depth
         and which data items have been swept.
@@ -107,7 +107,7 @@ class ContainerDirectContentEquality(WriterFixture, unittest.TestCase):
             PyPDF2.generic.BooleanObject(True)
             ]
         ar = PyPDF2.generic.ArrayObject(l)
-        self.writer._sweepIndirectReferences({}, ar)
+        self.writer._sweepIndirectReferences({}, ar, True)
         for i in range(len(l)):
             self.assertIs(l[i], ar[i])
         self.assertEqual(l, ar)
@@ -119,7 +119,7 @@ class ContainerDirectContentEquality(WriterFixture, unittest.TestCase):
             PyPDF2.generic.NameObject('/eggs'):PyPDF2.generic.NumberObject('0')
             }
         obj = PyPDF2.generic.DictionaryObject(d)
-        self.writer._sweepIndirectReferences({}, obj)
+        self.writer._sweepIndirectReferences({}, obj, True)
         for key in d:
             self.assertIs(d[key], obj[key])
         self.assertEqual(d, obj)
@@ -131,7 +131,7 @@ class StreamInContainerReplacement(WriterFixture, unittest.TestCase):
         """Confirm a stream in an array is replaced with an indirect object."""
         stream = PyPDF2.generic.StreamObject()
         ar = PyPDF2.generic.ArrayObject([stream])
-        self.writer._sweepIndirectReferences({}, ar)
+        self.writer._sweepIndirectReferences({}, ar, True)
         self.assert_replacement(stream, ar[0])
 
     def test_dictionary(self):
@@ -139,7 +139,7 @@ class StreamInContainerReplacement(WriterFixture, unittest.TestCase):
         stream = PyPDF2.generic.StreamObject()
         key = PyPDF2.generic.NameObject('/foo')
         d = PyPDF2.generic.DictionaryObject({key:stream})
-        self.writer._sweepIndirectReferences({}, d)
+        self.writer._sweepIndirectReferences({}, d, True)
         repl = d.raw_get(key) # Bypass indirect object resolution.
         self.assert_replacement(stream, repl)
 
