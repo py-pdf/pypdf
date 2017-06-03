@@ -245,3 +245,58 @@ class ExternalIndirectObjects(WriterFixture, unittest.TestCase):
 
         root = reader.trailer[PyPDF2.generic.NameObject('/Root')]
         return [root.raw_get(k) for k in keys]
+
+
+class Recursion(WriterFixture, unittest.TestCase):
+    """Tests for recursive calls into nested data structures."""
+    def test_depth_limit(self):
+        """Ensure recursion depth is limited when sweeping nested data.
+
+        Recursion should never exceed 3 per the following series of data items:
+        1. Top-level call with a container(array/dictionary) as the data.
+        2. Indirect object within in the top-level container.
+        3. Indirect object target.
+        """
+        self._make_nested_data()
+        self.writer.write(self.buffer)
+        self.assertEqual(self.writer.max_depth, 3)
+
+    def test_visit(self):
+        """Ensure all items within nested data structures are swept."""
+        self._make_nested_data()
+        self.writer.write(self.buffer)
+
+        visited = set()
+        for o in self.writer.visited_items:
+            try:
+                visited.add(o)
+            except TypeError:
+                pass
+        self.assertTrue(self.nested_objects.issubset(visited))
+
+    def _make_nested_data(self):
+        """
+        Creates a dummy nested data structure under the root dictionary.
+        Each level consists of a dictionary with an object key associated with
+        a direct object, and a nest key storing the next nested dictionary.
+        """
+        # This set stores the direct objects from the nested dictionaries
+        # at all levels.
+        self.nested_objects = set()
+
+        self.obj_key = PyPDF2.generic.NameObject('/obj')
+        self.nest_key = PyPDF2.generic.NameObject('/nest')
+
+        # Create a top-level container in the root dictionary.
+        d = PyPDF2.generic.DictionaryObject()
+        self.writer._root_object[self.nest_key] = d
+
+        # Add a nested set of dictionaries under the top-level item.
+        for i in range(10):
+            obj = PyPDF2.generic.NullObject()
+            d[self.obj_key] = obj
+            self.nested_objects.add(obj)
+
+            nest = PyPDF2.generic.DictionaryObject()
+            d[self.nest_key] = nest
+            d = nest
