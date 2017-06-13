@@ -576,25 +576,18 @@ class PdfFileWriter(object):
                     raise ValueError("I/O operation on closed file: {}".format(data.pdf.stream.name))
                 newobj = externMap.get(data.pdf, {}).get(data.generation, {}).get(data.idnum, None)
                 if newobj == None:
-                    try:
-                        newobj = data.pdf.getObject(data)
-                        self._objects.append(None) # placeholder
-                        idnum = len(self._objects)
-                        newobj_ido = IndirectObject(idnum, 0, self)
-                        if data.pdf not in externMap:
-                            externMap[data.pdf] = {}
-                        if data.generation not in externMap[data.pdf]:
-                            externMap[data.pdf][data.generation] = {}
-                        externMap[data.pdf][data.generation][data.idnum] = newobj_ido
-                        newobj = self._sweepIndirectReferences(externMap, newobj)
-                        self._objects[idnum-1] = newobj
-                        return newobj_ido
-                    except ValueError:
-                        # Unable to resolve the Object, returning NullObject instead.
-                        warnings.warn("Unable to resolve [{}: {}], returning NullObject instead".format(
-                            data.__class__.__name__, data
-                        ))
-                        return NullObject()
+                    newobj = data.pdf.getObject(data)
+                    self._objects.append(None) # placeholder
+                    idnum = len(self._objects)
+                    newobj_ido = IndirectObject(idnum, 0, self)
+                    if data.pdf not in externMap:
+                        externMap[data.pdf] = {}
+                    if data.generation not in externMap[data.pdf]:
+                        externMap[data.pdf][data.generation] = {}
+                    externMap[data.pdf][data.generation][data.idnum] = newobj_ido
+                    newobj = self._sweepIndirectReferences(externMap, newobj)
+                    self._objects[idnum-1] = newobj
+                    return newobj_ido
                 return newobj
         else:
             return data
@@ -1688,11 +1681,12 @@ class PdfFileReader(object):
                 md5_hash = md5(key).digest()
                 key = md5_hash[:min(16, len(self._decryption_key) + 5)]
                 retval = self._decryptObject(retval, key)
+
+        # Indirect references to undefined objects are not an error, but
+        # yield a null object. Ref: PDF Reference, v1.7, 3.2.9.
         else:
-            warnings.warn("Object %d %d not defined."%(indirectReference.idnum,
-                        indirectReference.generation), utils.PdfReadWarning)
-            #if self.strict:
-            raise utils.PdfReadError("Could not find object.")
+            retval = NullObject()
+
         self.cacheIndirectObject(indirectReference.generation,
                     indirectReference.idnum, retval)
         return retval
