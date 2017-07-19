@@ -1565,6 +1565,8 @@ class PdfFileReader(object):
         if inherit == None:
             inherit = dict()
         if pages == None:
+            # Fix issue 327: set flattenedPages attribute only for
+            # decrypted file
             catalog = self.trailer["/Root"].getObject()
             pages = catalog["/Pages"].getObject()
             self.flattenedPages = []
