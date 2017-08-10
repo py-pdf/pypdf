@@ -489,7 +489,7 @@ class NameObject(str, PdfObject):
             # with a '#' followed by the symbol's hex number
             if not pdf.strict:
                 warnings.warn("Illegal character in Name Object", utils.PdfReadWarning)
-                return NameObject(name)
+                return NameObject(name.decode('latin-1'))
             else:
                 raise utils.PdfReadError("Illegal character in Name Object")
 
