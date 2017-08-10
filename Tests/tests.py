@@ -13,6 +13,14 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, 'Resources')
 sys.path.append(PROJECT_ROOT)
 
 
+if sys.version_info[0] < 3:
+    def u_(s):
+        return s.decode("utf-8")
+else:
+    def u_(s):
+        return s
+
+
 class PdfReaderTestCases(unittest.TestCase):
 
     def test_PdfReaderFileLoad(self):
@@ -27,14 +35,15 @@ class PdfReaderTestCases(unittest.TestCase):
             ipdf_p1 = ipdf.getPage(0)
 
             # Retrieve the text of the PDF
-            pdftext_file = open(os.path.join(RESOURCE_ROOT, 'crazyones.txt'), 'r')
-            pdftext = pdftext_file.read()
+            with open(os.path.join(RESOURCE_ROOT, 'crazyones.txt'), 'r') as pdftext_file:
+                pdftext = pdftext_file.read()
+            pdftext = u_(pdftext)
             ipdf_p1_text = ipdf_p1.extractText().replace('\n', '')
 
             # Compare the text of the PDF to a known source
-            self.assertEqual(ipdf_p1_text.encode('utf-8', errors='ignore'), pdftext,
+            self.assertEqual(ipdf_p1_text, pdftext,
                 msg='PDF extracted text differs from expected value.\n\nExpected:\n\n%r\n\nExtracted:\n\n%r\n\n'
-                    % (pdftext, ipdf_p1_text.encode('utf-8', errors='ignore')))
+                    % (pdftext, ipdf_p1_text))
 
 
 class AddJsTestCase(unittest.TestCase):
