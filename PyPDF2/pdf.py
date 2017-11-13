@@ -2684,6 +2684,46 @@ class PageObject(DictionaryObject):
                 text += "\n"
         return text
 
+    def extractTextIter(self):
+        """
+        Locate all text drawing commands, in the order they are provided in the
+        content stream, and extract the text.  This works well for some PDF
+        files, but poorly for others, depending on the generator used.  This will
+        be refined in the future.  Do not rely on the order of text coming out of
+        this function, as it will change if this function is made more
+        sophisticated.
+
+        :return: yield the unicode string from each object
+        """
+        content = self["/Contents"].getObject()
+        if not isinstance(content, ContentStream):
+            content = ContentStream(content, self.pdf)
+        # Note: we check all strings are TextStringObjects.  ByteStringObjects
+        # are strings where the byte->string encoding was unknown, so adding
+        # them to the text here would be gibberish.
+        for operands, operator in content.operations:
+            if operator == b_("Tj"):
+                _text = operands[0]
+                if isinstance(_text, TextStringObject):
+                    yield _text
+            elif operator == b_("T*"):
+                yield "\n"
+            elif operator == b_("'"):
+                yield "\n"
+                _text = operands[0]
+                if isinstance(_text, TextStringObject):
+                    yield operands[0]
+            elif operator == b_('"'):
+                _text = operands[2]
+                if isinstance(_text, TextStringObject):
+                    yield "\n"
+                    yield _text
+            elif operator == b_("TJ"):
+                for i in operands[0]:
+                    if isinstance(i, TextStringObject):
+                        yield i
+                yield "\n"
+
     mediaBox = createRectangleAccessor("/MediaBox", ())
     """
     A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
