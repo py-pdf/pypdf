@@ -2226,7 +2226,8 @@ class PageObject(DictionaryObject):
         return self
 
     def _rotate(self, angle):
-        currentAngle = self.get("/Rotate", 0)
+        rotateObj = self.get("/Rotate", 0)
+        currentAngle = rotateObj if isinstance(rotateObj, int) else rotateObj.getObject()
         self[NameObject("/Rotate")] = NumberObject(currentAngle + angle)
 
     def _mergeResources(res1, res2, resource):
