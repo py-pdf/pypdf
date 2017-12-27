@@ -2665,6 +2665,7 @@ class PageObject(DictionaryObject):
                 _text = operands[0]
                 if isinstance(_text, TextStringObject):
                     text += _text
+                    text += "\n"
             elif operator == b_("T*"):
                 text += "\n"
             elif operator == b_("'"):
