@@ -229,7 +229,13 @@ class FloatObject(decimal.Decimal, PdfObject):
         try:
             return decimal.Decimal.__new__(cls, utils.str_(value), context)
         except:
-            return decimal.Decimal.__new__(cls, str(value))
+            try:
+                return decimal.Decimal.__new__(cls, str(value))
+            except decimal.InvalidOperation:
+                # If this isn't a valid decimal (happens in malformed PDFs)
+                # fallback to 0
+                #
+                return decimal.Decimal.__new__(cls, "0")
 
     def __repr__(self):
         if self == self.to_integral():
