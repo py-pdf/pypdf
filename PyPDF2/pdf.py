@@ -1142,13 +1142,21 @@ class PdfFileReader(object):
         if hasattr(stream, 'mode') and 'b' not in stream.mode:
             warnings.warn("PdfFileReader stream/file object is not in binary mode. It may not be read correctly.", utils.PdfReadWarning)
         if isString(stream):
-            fileobj = open(stream, 'rb')
-            stream = BytesIO(b_(fileobj.read()))
-            fileobj.close()
+            stream = open(stream, 'rb')
+
         self.read(stream)
         self.stream = stream
 
         self._override_encryption = False
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.close()
+
+    def close():
+        self.stream.close()
 
     def getDocumentInfo(self):
         """
