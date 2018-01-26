@@ -2789,35 +2789,32 @@ class ContentStream(DecodedStreamObject):
         # left at beginning of ID
         tmp = stream.read(3)
         assert tmp[:2] == b_("ID")
-        data = b_("")
-        while True:
-            # Read the inline image, while checking for EI (End Image) operator.
-            tok = stream.read(1)
-            if tok == b_("E"):
-                # Check for End Image
-                tok2 = stream.read(1)
-                if tok2 == b_("I"):
-                    # Data can contain EI, so check for the Q operator.
-                    tok3 = stream.read(1)
-                    info = tok + tok2
-                    # We need to find whitespace between EI and Q.
-                    has_q_whitespace = False
-                    while tok3 in utils.WHITESPACES:
-                        has_q_whitespace = True
-                        info += tok3
-                        tok3 = stream.read(1)
-                    if tok3 == b_("Q") and has_q_whitespace:
-                        stream.seek(-1, 1)
-                        break
-                    else:
-                        stream.seek(-1,1)
-                        data += info
-                else:
-                    stream.seek(-1, 1)
-                    data += tok
-            else:
-                data += tok
+        #data = self._readImageData(stream)
+        data = self._readImagaDataFast(stream)
         return {"settings": settings, "data": data}
+
+    def _readImagaDataFast(self, stream):
+        # We keep more than buffersize bytes in the buffer because the
+        # end of image sequence might overlap. So we search some data twice,
+        # but this is still far more effective than the old algorithm
+        buffersize = 1024 * 1024 # Extracting in megabyte chunks
+        buffertail = 256
+        regex = re.compile(b_("(.*?)(EI\\s+)Q\\s+"), re.DOTALL)
+        data = b_("")
+       
+        buffer = stream.read(buffersize+buffertail)
+       
+        while True:
+            match = regex.match(buffer)
+            if match:
+                data += buffer[:len(match.group(1))]
+                stream.seek(-1 * (len(buffer) - len(match.group(1)) - len(match.group(2))), 1)
+                return data
+            
+            if len(buffer) < buffersize + buffertail: # We already have exhausted the stream
+                raise utils.PdfReadError("Didn't find end of image marker!")
+            data += buffer[:buffersize]
+            buffer = buffer[buffersize:] + stream.read(buffersize)
 
     def _getData(self):
         newdata = BytesIO()
