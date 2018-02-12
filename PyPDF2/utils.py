@@ -172,14 +172,14 @@ def RC4_encrypt(key, plaintext):
         j = (j + S[i] + ord_(key[i % len(key)])) % 256
         S[i], S[j] = S[j], S[i]
     i, j = 0, 0
-    retval = b_("")
+    retval = []
     for x in range(len(plaintext)):
         i = (i + 1) % 256
         j = (j + S[i]) % 256
         S[i], S[j] = S[j], S[i]
         t = S[(S[i] + S[j]) % 256]
-        retval += b_(chr(ord_(plaintext[x]) ^ t))
-    return retval
+        retval.append(b_(chr(ord_(plaintext[x]) ^ t)))
+    return b_("").join(retval)
 
 
 def matrixMultiply(a, b):
