@@ -2661,12 +2661,14 @@ class PageObject(DictionaryObject):
         # Note: we check all strings are TextStringObjects.  ByteStringObjects
         # are strings where the byte->string encoding was unknown, so adding
         # them to the text here would be gibberish.
+		# 
         for operands, operator in content.operations:
+            if not operands:          # Empty operands list contributes no text
+                operands = [""]
             if operator == b_("Tj"):
                 _text = operands[0]
                 if isinstance(_text, TextStringObject):
                     text += _text
-                    text += "\n"
             elif operator == b_("T*"):
                 text += "\n"
             elif operator == b_("'"):
@@ -2683,7 +2685,13 @@ class PageObject(DictionaryObject):
                 for i in operands[0]:
                     if isinstance(i, TextStringObject):
                         text += i
-                text += "\n"
+                    elif isinstance(i, FloatObject) or isinstance(i, NumberObject):
+                        if text and (not text[-1] in " \n"):
+                            text += " " * int(i / -600)
+                text += "\n"	
+            elif operator == b_("TD") or operator == b_("Tm"):
+                if text and (not text[-1] in " \n"):
+                    text += " "
         return text
 
     mediaBox = createRectangleAccessor("/MediaBox", ())
