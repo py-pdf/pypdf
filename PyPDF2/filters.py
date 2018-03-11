@@ -346,6 +346,12 @@ class ASCII85Decode(object):
     decode = staticmethod(decode)
 
 
+class DCTDecode(object):
+    def decode(data, decodeParms=None):
+        return data
+    decode = staticmethod(decode)
+
+
 def decodeStreamData(stream):
     from .generic import NameObject
     filters = stream.get("/Filter", ())
@@ -364,6 +370,8 @@ def decodeStreamData(stream):
                 data = LZWDecode.decode(data, stream.get("/DecodeParms"))
             elif filterType == "/ASCII85Decode" or filterType == "/A85":
                 data = ASCII85Decode.decode(data)
+            elif filterType == "/DCTDecode":
+                data = DCTDecode.decode(data)
             elif filterType == "/Crypt":
                 decodeParams = stream.get("/DecodeParams", {})
                 if "/Name" not in decodeParams and "/Type" not in decodeParams:
