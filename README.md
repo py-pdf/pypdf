@@ -1,4 +1,4 @@
-#PyPDF2 [![Build Status](https://travis-ci.org/sylvainpelissier/PyPDF2.svg)](https://travis-ci.org/sylvainpelissier/PyPDF2)
+#PyPDF2
 
 PyPDF2 is a pure-python PDF library capable of
 splitting, merging together, cropping, and transforming
