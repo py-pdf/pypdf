@@ -1,4 +1,4 @@
-#PyPDF2
+# PyPDF2
 
 PyPDF2 is a pure-python PDF library capable of
 splitting, merging together, cropping, and transforming
@@ -10,22 +10,22 @@ as merge entire files together.
 Homepage  
 http://mstamy2.github.io/PyPDF2/
 
-##Examples
+## Examples
 
-Please see `sample code` folder
+Please see the `Sample_Code` folder.
 
-##Documentation
+## Documentation
 
 Documentation is available at  
 https://pythonhosted.org/PyPDF2/
 
 
-##FAQ
+## FAQ
 Please see  
 http://mstamy2.github.io/PyPDF2/FAQ.html
 
 
-##Tests
+## Tests
 PyPDF2 includes a test suite built on the unittest framework. All tests are located in the "Tests" folder.
 Tests can be run from the command line by:
 
