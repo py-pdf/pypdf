@@ -267,7 +267,7 @@ class LZWDecode(object):
             return baos
 
     @staticmethod
-    def decode(data,decodeParams=None):
+    def decode(data,decodeParms=None):
         return LZWDecode.decoder(data).decode()
 
 
@@ -361,7 +361,7 @@ class CCITTFaxDecode(object):
     def decode(data, decodeParms=None, height=0):
         k = 1
         width = 0
-        if decodeParams:
+        if decodeParms:
             try:
                 k = decodeParms.get('/K', 1)
                 width = decodeParms.get('/Columns', 0)
@@ -426,8 +426,8 @@ def decodeStreamData(stream):
                 height = stream.get("/Height", ())
                 data = CCITTFaxDecode.decode(data, stream.get("/DecodeParms"), height)
             elif filterType == "/Crypt":
-                decodeParams = stream.get("/DecodeParams", {})
-                if "/Name" not in decodeParams and "/Type" not in decodeParams:
+                decodeParms = stream.get("/DecodeParms", {})
+                if "/Name" not in decodeParms and "/Type" not in decodeParms:
                     pass
                 else:
                     raise NotImplementedError("/Crypt filter with /Name or /Type not supported yet")
