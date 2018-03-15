@@ -368,7 +368,7 @@ class CCITTFaxDecode(object):
             except AttributeError:  # ArrayObject
                 for decodeParm in decodeParms:
                     if '/Columns' in decodeParm:
-                        width = decodeParms['/Columns']
+                        width = decodeParm['/Columns']
                     if '/K' in decodeParm:
                         k = decodeParm['/K']
                         break
