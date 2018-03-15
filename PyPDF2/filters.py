@@ -115,9 +115,11 @@ class FlateDecode(object):
         if decodeParms:
             try:
                 predictor = decodeParms.get("/Predictor", 1)
-            except AttributeError:
-                pass    # usually an array with a null object was read
-
+            except AttributeError:  # decodeParms is an ArrayObject
+                for decodeParm in decodeParms:
+                    if '/Predictor' in decodeParm:
+                        predictor = decodeParm['/Predictor']
+ 
         # predictor 1 == no predictor
         if predictor != 1:
             columns = decodeParms["/Columns"]
@@ -357,13 +359,24 @@ class JPXDecode(object):
     
 class CCITTFaxDecode(object):   
     def decode(data, decodeParms=None, height=0):
-        if decodeParms:
-            if decodeParms.get("/K", 1) == -1:
-                CCITTgroup = 4
-            else:
-                CCITTgroup = 3
-        
-        width = decodeParms["/Columns"]
+        k = 1
+        width = 0
+        if decodeParams:
+            try:
+                k = decodeParms.get('/K', 1)
+                width = decodeParms.get('/Columns', 0)
+            except AttributeError:  # ArrayObject
+                for decodeParm in decodeParms:
+                    if '/Columns' in decodeParm:
+                        width = decodeParms['/Columns']
+                    if '/K' in decodeParm:
+                        k = decodeParm['/K']
+                        break
+        if k == -1:
+            CCITTgroup = 4
+        else:
+            CCITTgroup = 3
+
         imgSize = len(data)
         tiff_header_struct = '<' + '2s' + 'h' + 'l' + 'h' + 'hhll' * 8 + 'h'
         tiffHeader = struct.pack(tiff_header_struct,
