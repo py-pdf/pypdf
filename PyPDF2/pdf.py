@@ -1262,10 +1262,11 @@ class PdfFileReader(object):
             default, the mapping name is used for keys.
         :rtype: dict, or ``None`` if form data could not be located.
         """
+        import zlib
         fieldAttributes = {"/FT" : "Field Type", "/Parent" : "Parent",
                        "/T" : "Field Name", "/TU" : "Alternate Field Name",
                        "/TM" : "Mapping Name", "/Ff" : "Field Flags",
-                       "/V" : "Value", "/DV" : "Default Value"}
+                       "/V" : "Value", "/DV" : "Default Value",  "/XFA" : "XML form"}
         if retval == None:
             retval = {}
             catalog = self.trailer["/Root"]
@@ -1284,12 +1285,22 @@ class PdfFileReader(object):
                 self._buildField(tree, retval, fileobj, fieldAttributes)
                 break
 
-        if "/Fields" in tree:
-            fields = tree["/Fields"]
-            for f in fields:
-                field = f.getObject()
-                self._buildField(field, retval, fileobj, fieldAttributes)
-
+        if "/XFA" in tree:
+            ''' From sample data, XML data is included as a sequence of labels and IndirectObjects
+                'xdp:xdp', IndirectObject, 'config', IndirectObject, etc. Typically one might want to extract
+                the datasets, as is shown here.
+            '''
+            fields = tree["/XFA"]
+            i = iter(fields)
+            for f in i:
+                tag = f
+                f = next(i)
+                if (isinstance(f,IndirectObject)):
+                    field = f.getObject()
+                    if (field):
+                        es = zlib.decompress(field._data)
+                        if(fileobj and tag=='datasets'): # here we're only taking the dataset info
+                            fileobj.write(es)
         return retval
 
     def _buildField(self, field, retval, fileobj, fieldAttributes):
