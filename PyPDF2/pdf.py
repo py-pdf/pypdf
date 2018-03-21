@@ -34,6 +34,8 @@
 """
 A pure-Python PDF library with an increasing number of capabilities.
 See README for links to FAQ, documentation, homepage, etc.
+
+Patched by H. von Bargen to support the background argument in the various mergePage methods.
 """
 
 __author__ = "Mathieu Fenniak"
@@ -76,6 +78,16 @@ else:
 import uuid
 
 
+def getDim(rect):
+    return (rect.getUpperRight_x() - rect.getLowerLeft_x(),
+            rect.getUpperRight_y() - rect.getLowerLeft_y()
+           )
+
+def isLandscape(rect):
+    dimX, dimY = getDim(rect)
+    return dimX > dimY
+
+            
 class PdfFileWriter(object):
     """
     This class supports writing PDF files out, given pages produced by another
@@ -2290,20 +2302,20 @@ class PageObject(DictionaryObject):
         else:
             return None
 
-    def mergePage(self, page2):
+    def mergePage(self, page2, background=False):
         """
         Merges the content streams of two pages into one.  Resource references
         (i.e. fonts) are maintained from both pages.  The mediabox/cropbox/etc
         of this page are not altered.  The parameter page's content stream will
         be added to the end of this page's content stream, meaning that it will
-        be drawn after, or "on top" of this page.
+        be drawn after, or "on top" of this page, unless :background is set.
 
         :param PageObject page2: The page to be merged into this one. Should be
             an instance of :class:`PageObject<PageObject>`.
         """
-        self._mergePage(page2)
+        self._mergePage(page2, background=background)
 
-    def _mergePage(self, page2, page2transformation=None, ctm=None, expand=False):
+    def _mergePage(self, page2, page2transformation=None, ctm=None, expand=False, background=False):
         # First we work on merging the resource dictionaries.  This allows us
         # to find out what symbols in the content streams we might need to
         # rename.
@@ -2348,7 +2360,10 @@ class PageObject(DictionaryObject):
             page2Content = PageObject._contentStreamRename(
                 page2Content, rename, self.pdf)
             page2Content = PageObject._pushPopGS(page2Content, self.pdf)
-            newContentArray.append(page2Content)
+            if background:
+                newContentArray.insert(0, page2Content)
+            else:
+                newContentArray.append(page2Content)
 
         # if expanding the page to fit a new page, calculate the new media box size
         if expand:
@@ -2377,7 +2392,7 @@ class PageObject(DictionaryObject):
         self[NameObject('/Resources')] = newResources
         self[NameObject('/Annots')] = newAnnots
 
-    def mergeTransformedPage(self, page2, ctm, expand=False):
+    def mergeTransformedPage(self, page2, ctm, expand=False, background=False):
         """
         This is similar to mergePage, but a transformation matrix is
         applied to the merged stream.
@@ -2390,9 +2405,9 @@ class PageObject(DictionaryObject):
             of the page to be merged.
         """
         self._mergePage(page2, lambda page2Content:
-            PageObject._addTransformationMatrix(page2Content, page2.pdf, ctm), ctm, expand)
+            PageObject._addTransformationMatrix(page2Content, page2.pdf, ctm), ctm, expand, background=background)
 
-    def mergeScaledPage(self, page2, scale, expand=False):
+    def mergeScaledPage(self, page2, scale, expand=False, background=False):
         """
         This is similar to mergePage, but the stream to be merged is scaled
         by appling a transformation matrix.
@@ -2406,9 +2421,9 @@ class PageObject(DictionaryObject):
         # CTM to scale : [ sx 0 0 sy 0 0 ]
         return self.mergeTransformedPage(page2, [scale, 0,
                                                  0,      scale,
-                                                 0,      0], expand)
+                                                 0,      0], expand, background=background)
 
-    def mergeRotatedPage(self, page2, rotation, expand=False):
+    def mergeRotatedPage(self, page2, rotation, expand=False, background=False):
         """
         This is similar to mergePage, but the stream to be merged is rotated
         by appling a transformation matrix.
@@ -2419,13 +2434,30 @@ class PageObject(DictionaryObject):
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
+        
+        auto_rotation = rotation == "AUTO"
+        if auto_rotation:
+            p1landscape = isLandscape(self.mediaBox)
+            p2landscape = isLandscape(page2.mediaBox)
+            if not p1landscape and p2landscape:
+                rotation = -90    # What is right: 90 or -90?
+            elif p1landscape and not p2landscape:
+                rotation = -90    # What is right: 90 or -90?
+            else:
+                rotation = 0
+        print(f"auto_rotation={auto_rotation} rotation={rotation}")
+        if auto_rotation and rotation:
+            return self.mergeRotatedTranslatedPage(page2, rotation, 
+                                                   page2.mediaBox.getWidth()/2, page2.mediaBox.getHeight()/2,
+                                                   expand, background=background)
+        
         rotation = math.radians(rotation)
         return self.mergeTransformedPage(page2,
             [math.cos(rotation),  math.sin(rotation),
              -math.sin(rotation), math.cos(rotation),
-             0,                   0], expand)
+             0,                   0], expand, background=background)
 
-    def mergeTranslatedPage(self, page2, tx, ty, expand=False):
+    def mergeTranslatedPage(self, page2, tx, ty, expand=False, background=False):
         """
         This is similar to mergePage, but the stream to be merged is translated
         by appling a transformation matrix.
@@ -2439,9 +2471,9 @@ class PageObject(DictionaryObject):
         """
         return self.mergeTransformedPage(page2, [1,  0,
                                                  0,  1,
-                                                 tx, ty], expand)
+                                                 tx, ty], expand, background=background)
 
-    def mergeRotatedTranslatedPage(self, page2, rotation, tx, ty, expand=False):
+    def mergeRotatedTranslatedPage(self, page2, rotation, tx, ty, expand=False, background=False):
         """
         This is similar to mergePage, but the stream to be merged is rotated
         and translated by appling a transformation matrix.
@@ -2470,9 +2502,9 @@ class PageObject(DictionaryObject):
 
         return self.mergeTransformedPage(page2, [ctm[0][0], ctm[0][1],
                                                  ctm[1][0], ctm[1][1],
-                                                 ctm[2][0], ctm[2][1]], expand)
+                                                 ctm[2][0], ctm[2][1]], expand, background=background)
 
-    def mergeRotatedScaledPage(self, page2, rotation, scale, expand=False):
+    def mergeRotatedScaledPage(self, page2, rotation, scale, expand=False, background=False):
         """
         This is similar to mergePage, but the stream to be merged is rotated
         and scaled by appling a transformation matrix.
@@ -2496,9 +2528,9 @@ class PageObject(DictionaryObject):
         return self.mergeTransformedPage(page2,
                                          [ctm[0][0], ctm[0][1],
                                           ctm[1][0], ctm[1][1],
-                                          ctm[2][0], ctm[2][1]], expand)
+                                          ctm[2][0], ctm[2][1]], expand, background=background)
 
-    def mergeScaledTranslatedPage(self, page2, scale, tx, ty, expand=False):
+    def mergeScaledTranslatedPage(self, page2, scale, tx, ty, expand=False, background=False):
         """
         This is similar to mergePage, but the stream to be merged is translated
         and scaled by appling a transformation matrix.
@@ -2522,9 +2554,9 @@ class PageObject(DictionaryObject):
 
         return self.mergeTransformedPage(page2, [ctm[0][0], ctm[0][1],
                                                  ctm[1][0], ctm[1][1],
-                                                 ctm[2][0], ctm[2][1]], expand)
+                                                 ctm[2][0], ctm[2][1]], expand, background=background)
 
-    def mergeRotatedScaledTranslatedPage(self, page2, rotation, scale, tx, ty, expand=False):
+    def mergeRotatedScaledTranslatedPage(self, page2, rotation, scale, tx, ty, expand=False, background=False):
         """
         This is similar to mergePage, but the stream to be merged is translated,
         rotated and scaled by appling a transformation matrix.
@@ -2553,7 +2585,7 @@ class PageObject(DictionaryObject):
 
         return self.mergeTransformedPage(page2, [ctm[0][0], ctm[0][1],
                                                  ctm[1][0], ctm[1][1],
-                                                 ctm[2][0], ctm[2][1]], expand)
+                                                 ctm[2][0], ctm[2][1]], expand, background=background)
 
     ##
     # Applys a transformation matrix the page.
