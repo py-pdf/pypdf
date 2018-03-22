@@ -589,7 +589,7 @@ class PdfFileWriter(object):
                         newobj = self._sweepIndirectReferences(externMap, newobj)
                         self._objects[idnum-1] = newobj
                         return newobj_ido
-                    except ValueError:
+                    except (ValueError, utils.PdfReadError):
                         # Unable to resolve the Object, returning NullObject instead.
                         warnings.warn("Unable to resolve [{}: {}], returning NullObject instead".format(
                             data.__class__.__name__, data
