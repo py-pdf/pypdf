@@ -2434,28 +2434,43 @@ class PageObject(DictionaryObject):
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
-        
-        auto_rotation = rotation == "AUTO"
-        if auto_rotation:
-            p1landscape = isLandscape(self.mediaBox)
-            p2landscape = isLandscape(page2.mediaBox)
-            if not p1landscape and p2landscape:
-                rotation = -90    # What is right: 90 or -90?
-            elif p1landscape and not p2landscape:
-                rotation = -90    # What is right: 90 or -90?
-            else:
-                rotation = 0
-        print(f"auto_rotation={auto_rotation} rotation={rotation}")
-        if auto_rotation and rotation:
-            return self.mergeRotatedTranslatedPage(page2, rotation, 
-                                                   page2.mediaBox.getWidth()/2, page2.mediaBox.getHeight()/2,
-                                                   expand, background=background)
-        
         rotation = math.radians(rotation)
         return self.mergeTransformedPage(page2,
             [math.cos(rotation),  math.sin(rotation),
              -math.sin(rotation), math.cos(rotation),
              0,                   0], expand, background=background)
+
+    def mergeAutoRotatedPage(self, page2, expand=False, background=False):
+        """
+        This is similar to mergePage, but the stream to be merged is rotated
+        by appling a transformation matrix.
+
+        :param PageObject page2: the page to be merged into this one. Should be
+            an instance of :class:`PageObject<PageObject>`.
+        :param float rotation: The angle of the rotation, in degrees
+        :param bool expand: Whether the page should be expanded to fit the
+            dimensions of the page to be merged.
+        """
+        
+        p1landscape = isLandscape(self.mediaBox)
+        p2landscape = isLandscape(page2.mediaBox)
+        if not p1landscape and p2landscape:
+            rotation = 90
+            rot_center_x = page2.mediaBox.getHeigth()/2
+            rot_center_y = page2.mediaBox.getHeigth()/2
+        elif p1landscape and not p2landscape:
+            rotation = -90
+            rot_center_x = page2.mediaBox.getWidth()/2
+            rot_center_y = page2.mediaBox.getWidth()/2
+        else:
+            rotation = 0
+        if rotation:
+            return self.mergeRotatedTranslatedPage(page2, rotation, 
+                                                   rot_center_x, rot_center_y,
+                                                   expand, background=background)
+        
+        else:
+            return self.mergePage(page2, expand, background=background)
 
     def mergeTranslatedPage(self, page2, tx, ty, expand=False, background=False):
         """
