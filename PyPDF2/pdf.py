@@ -385,7 +385,7 @@ class PdfFileWriter(object):
             for field in fields:
                 if writer_annot.get('/T') == field:
                     writer_annot.update({
-                        NameObject("/V"): TextStringObject(fields[field]),
+                        NameObject("/V"): TextStringObject(fields[field])
                         })
 
     def cloneReaderDocumentRoot(self, reader):
