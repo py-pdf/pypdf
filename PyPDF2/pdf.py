@@ -355,6 +355,7 @@ class PdfFileWriter(object):
         '''
         Update the form field values for a given page from a fields dictionary.
         Copy field texts and values from fields to page.
+        If the field links to a parent object, add the information to the parent.
 
         :param page: Page reference from PDF writer where the annotations
             and field data will be updated.
@@ -364,9 +365,16 @@ class PdfFileWriter(object):
         # Iterate through pages, update field values
         for j in range(0, len(page['/Annots'])):
             writer_annot = page['/Annots'][j].getObject()
+            # retrieve parent field values, if present
+            if '/Parent' in writer_annot:
+                writer_parent_annot = page['/Annots'][j].getObject()['/Parent']
             for field in fields:
                 if writer_annot.get('/T') == field:
                     writer_annot.update({
+                        NameObject("/V"): TextStringObject(fields[field])
+                    })
+                elif writer_parent_annot.get('/T') == field:
+                    writer_parent_annot.update({
                         NameObject("/V"): TextStringObject(fields[field])
                     })
 
