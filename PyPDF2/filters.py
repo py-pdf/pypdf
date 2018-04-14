@@ -167,12 +167,12 @@ class FlateDecode(object):
         return compress(data)
     encode = staticmethod(encode)
 
-
 class ASCIIHexDecode(object):
     def decode(data, decodeParms=None):
         retval = ""
         char = ""
         x = 0
+        data = data.decode()
         while True:
             c = data[x]
             if c == ">":

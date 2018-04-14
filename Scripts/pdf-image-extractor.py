@@ -9,36 +9,70 @@ import sys
 import PyPDF2
 from PIL import Image
 
-if (len(sys.argv) != 2):
-    print("\nUsage: python {} input_file\n".format(sys.argv[0]))
-    sys.exit(1)
-
-pdf = sys.argv[1]
+def getColorSpace(obj):
+    if '/ColorSpace' not in obj:
+        mode = None
+    elif obj['/ColorSpace'] == '/DeviceRGB':
+            mode = "RGB"
+    elif obj['/ColorSpace'] == '/DeviceCMYK':
+        mode = "CMYK"
+    elif obj['/ColorSpace'] == '/DeviceGray':
+        mode = "P"
+    else:
+        if type(obj['/ColorSpace']) == PyPDF2.generic.ArrayObject:
+            if obj['/ColorSpace'][0] == '/ICCBased':
+                colorMap = obj['/ColorSpace'][1].getObject()['/N']
+                if colorMap == 1:
+                    mode = "P"
+                elif colorMap == 3:
+                    mode = "RGB"
+                elif colorMap == 4:
+                    mode = "CMYK"
+                else:
+                    mode = None
+            else:
+                mode = None
+        else:
+            mode = None
+    return mode
 
 if __name__ == '__main__':
-    input1 = PyPDF2.PdfFileReader(open(pdf, "rb"))
-    page0 = input1.getPage(30)
+    if (len(sys.argv) != 3):
+        print("\nUsage: python {} input_file page_number\n".format(sys.argv[0]))
+        sys.exit(1)
 
-    if '/XObject' in page0['/Resources']:
-        xObject = page0['/Resources']['/XObject'].getObject()
+    pdf = sys.argv[1]
+    input1 = PyPDF2.PdfFileReader(open(pdf, "rb"))
+    pageNumber = int(sys.argv[2], 10)
+
+    if pageNumber < 0 or pageNumber >= input1.getNumPages():
+        print("Page number must be between 0 and {:d}\n".format(input1.getNumPages()-1))
+        sys.exit(1)
+
+    page = input1.getPage(pageNumber)
+
+    if '/XObject' in page['/Resources']:
+        xObject = page['/Resources']['/XObject'].getObject()
 
         for obj in xObject:
             if xObject[obj]['/Subtype'] == '/Image':
+                print(xObject[obj])
                 size = (xObject[obj]['/Width'], xObject[obj]['/Height'])
                 data = xObject[obj].getData()
-                if xObject[obj]['/ColorSpace'] == '/DeviceRGB':
-                    mode = "RGB"
-                else:
-                    mode = "P"
                 
                 if '/Filter' in xObject[obj]:
-                    if xObject[obj]['/Filter'] == '/FlateDecode':
-                        img = Image.frombytes(mode, size, data)
-                        img.save(obj[1:] + ".png")
-                    elif xObject[obj]['/Filter'] == '/DCTDecode':
+                    if xObject[obj]['/Filter'] == '/DCTDecode' or '/DCTDecode' in xObject[obj]['/Filter']:
                         img = open(obj[1:] + ".jpg", "wb")
                         img.write(data)
-                        img.close()
+                    elif xObject[obj]['/Filter'] == '/FlateDecode' or '/FlateDecode' in xObject[obj]['/Filter']:
+                        mode = getColorSpace(xObject[obj])
+                        if mode != None:
+                            img = Image.frombytes(mode, size, data)
+                            if mode == "CMYK":
+                                img = img.convert("RGB")
+                            img.save(obj[1:] + ".png")
+                        else:
+                            print("Color map nor supported for Image " + str(obj[1:]))
                     elif xObject[obj]['/Filter'] == '/JPXDecode':
                         img = open(obj[1:] + ".jp2", "wb")
                         img.write(data)
