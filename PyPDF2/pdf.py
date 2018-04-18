@@ -535,7 +535,7 @@ class PdfFileWriter(object):
             and each value is your new metadata.
         """
         args = {}
-        for key, value in list(infos.items()):
+        for key, value in sorted(infos.items(), key=lambda t: t[0]):
             args[NameObject(key)] = createStringObject(value)
         self.getObject(self._info).update(args)
 
@@ -543,7 +543,7 @@ class PdfFileWriter(object):
         debug = False
         if debug: print((data, "TYPE", data.__class__.__name__))
         if isinstance(data, DictionaryObject):
-            for key, value in list(data.items()):
+            for key, value in sorted(data.items(), key=lambda t: t[0]):
                 origvalue = value
                 value = self._sweepIndirectReferences(externMap, value)
                 if isinstance(value, StreamObject):
@@ -670,13 +670,13 @@ class PdfFileWriter(object):
 
     def addBookmarkDict(self, bookmark, parent=None):
         bookmarkObj = TreeObject()
-        for k, v in list(bookmark.items()):
+        for k, v in sorted(bookmark.items(), key=lambda t: t[0]):
             bookmarkObj[NameObject(str(k))] = v
         bookmarkObj.update(bookmark)
 
         if '/A' in bookmark:
             action = DictionaryObject()
-            for k, v in list(bookmark['/A'].items()):
+            for k, v in sorted(bookmark['/A'].items(), key=lambda t: t[0]):
                 action[NameObject(str(k))] = v
             actionRef = self._addObject(action)
             bookmarkObj[NameObject('/A')] = actionRef
@@ -1583,7 +1583,7 @@ class PdfFileReader(object):
                     addt["indirectRef"] = page
                 self._flatten(page.getObject(), inherit, **addt)
         elif t == "/Page":
-            for attr, value in list(inherit.items()):
+            for attr, value in sorted(inherit.items(), key=lambda t: t[0]):
                 # if the page has it's own value, it does not inherit the
                 # parent's value:
                 if attr not in pages:
@@ -1703,7 +1703,7 @@ class PdfFileReader(object):
         elif isinstance(obj, StreamObject):
             obj._data = utils.RC4_encrypt(key, obj._data)
         elif isinstance(obj, DictionaryObject):
-            for dictkey, value in list(obj.items()):
+            for dictkey, value in sorted(obj.items(), key=lambda t: t[0]):
                 obj[dictkey] = self._decryptObject(value, key)
         elif isinstance(obj, ArrayObject):
             for i in range(len(obj)):
@@ -1854,7 +1854,7 @@ class PdfFileReader(object):
                 readNonWhitespace(stream)
                 stream.seek(-1, 1)
                 newTrailer = readObject(stream, self)
-                for key, value in list(newTrailer.items()):
+                for key, value in sorted(newTrailer.items(), key=lambda t: t[0]):
                     if key not in self.trailer:
                         self.trailer[key] = value
                 if "/Prev" in newTrailer:
@@ -1981,7 +1981,8 @@ class PdfFileReader(object):
             stream.seek(loc, 0) #return to where it was
 
     def _zeroXref(self, generation):
-        self.xref[generation] = dict( (k-self.xrefIndex, v) for (k, v) in list(self.xref[generation].items()) )
+        self.xref[generation] = dict( (k-self.xrefIndex, v) for (k, v) in sorted(self.xref[generation].items(),
+                                                                               key=lambda t: t[0]) )
 
     def _pairs(self, array):
         i = 0

@@ -545,7 +545,7 @@ class DictionaryObject(dict, PdfObject):
 
     def writeToStream(self, stream, encryption_key):
         stream.write(b_("<<\n"))
-        for key, value in list(self.items()):
+        for key, value in sorted(self.items(), key=lambda t: t[0]):
             key.writeToStream(stream, encryption_key)
             stream.write(b_(" "))
             value.writeToStream(stream, encryption_key)
@@ -841,7 +841,7 @@ class EncodedStreamObject(StreamObject):
             decoded = DecodedStreamObject()
 
             decoded._data = filters.decodeStreamData(self)
-            for key, value in list(self.items()):
+            for key, value in sorted(self.items(), key=lambda t: t[0]):
                 if not key in ("/Length", "/Filter", "/DecodeParms"):
                     decoded[key] = value
             self.decodedSelf = decoded
