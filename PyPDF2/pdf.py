@@ -395,7 +395,7 @@ class PdfFileWriter(object):
         self.cloneReaderDocumentRoot(reader)
         self.appendPagesFromReader(reader, after_page_append)
 
-    def encrypt(self, user_pwd, owner_pwd = None, use_128bit = True):
+    def encrypt(self, user_pwd, owner_pwd=None, use_128bit=True, access_permission = -1):
         """
         Encrypt this PDF file with the PDF Standard encryption handler.
 
@@ -407,6 +407,9 @@ class PdfFileWriter(object):
         :param bool use_128bit: flag as to whether to use 128bit
             encryption.  When false, 40bit encryption will be used.  By default,
             this flag is on.
+        :param int access_permission: User access permission flag. By default,
+            access_permission=-1 means permit everything. (E.g. -3904 means
+            disable all options, -1852 means allow print only, etc)
         """
         import time, random
         if owner_pwd == None:
@@ -419,17 +422,16 @@ class PdfFileWriter(object):
             V = 1
             rev = 2
             keylen = int(40 / 8)
-        # permit everything:
-        P = -1
+
         O = ByteStringObject(_alg33(owner_pwd, user_pwd, rev, keylen))
         ID_1 = ByteStringObject(md5(b_(repr(time.time()))).digest())
         ID_2 = ByteStringObject(md5(b_(repr(random.random()))).digest())
         self._ID = ArrayObject((ID_1, ID_2))
         if rev == 2:
-            U, key = _alg34(user_pwd, O, P, ID_1)
+            U, key = _alg34(user_pwd, O, access_permission, ID_1)
         else:
             assert rev == 3
-            U, key = _alg35(user_pwd, rev, keylen, O, P, ID_1, False)
+            U, key = _alg35(user_pwd, rev, keylen, O, access_permission, ID_1, False)
         encrypt = DictionaryObject()
         encrypt[NameObject("/Filter")] = NameObject("/Standard")
         encrypt[NameObject("/V")] = NumberObject(V)
@@ -438,7 +440,7 @@ class PdfFileWriter(object):
         encrypt[NameObject("/R")] = NumberObject(rev)
         encrypt[NameObject("/O")] = ByteStringObject(O)
         encrypt[NameObject("/U")] = ByteStringObject(U)
-        encrypt[NameObject("/P")] = NumberObject(P)
+        encrypt[NameObject("/P")] = NumberObject(access_permission)
         self._encrypt = self._addObject(encrypt)
         self._encrypt_key = key
 
