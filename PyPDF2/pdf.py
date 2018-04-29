@@ -2703,7 +2703,7 @@ class PageObject(DictionaryObject):
                     if isinstance(i, TextStringObject):
                         text += i
                 text += "\n"
-            elif operator == b_("Td"):
+            elif operator == b_("Td") or operator == b_("TD"):
 
                 # print("Td: x = " + str(operands[0]) + " y = " + str(operands[1]))
                 lastPosition = (operands[0], operands[1])
