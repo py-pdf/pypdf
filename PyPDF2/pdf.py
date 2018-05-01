@@ -65,6 +65,7 @@ import codecs
 from .generic import *
 from .utils import readNonWhitespace, readUntilWhitespace, ConvertFunctionsToVirtualList
 from .utils import isString, b_, u_, ord_, chr_, str_, formatWarning
+from .perms import get_perm_value_as_int
 
 if version_info < ( 2, 4 ):
    from sets import ImmutableSet as frozenset
@@ -419,8 +420,10 @@ class PdfFileWriter(object):
             V = 1
             rev = 2
             keylen = int(40 / 8)
-        # permit everything:
+        # Permission accordint to the mask
         P = perm_mask
+        if P >= 0:
+            P = get_perm_value_as_int(perm_mask)
         O = ByteStringObject(_alg33(owner_pwd, user_pwd, rev, keylen))
         ID_1 = ByteStringObject(md5(b_(repr(time.time()))).digest())
         ID_2 = ByteStringObject(md5(b_(repr(random.random()))).digest())
