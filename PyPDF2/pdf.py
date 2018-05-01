@@ -255,17 +255,17 @@ class PdfFileWriter(object):
 
         :param str fname: The filename to display.
         :param str fdata: The data in the file.
-      
+
         Reference:
         https://www.adobe.com/content/dam/Adobe/en/devnet/acrobat/pdfs/PDF32000_2008.pdf
         Section 7.11.3
         """
-        
+
         # We need 3 entries:
         # * The file's data
         # * The /Filespec entry
         # * The file's name, which goes in the Catalog
-        
+
 
         # The entry for the file
         """ Sample:
@@ -277,7 +277,7 @@ class PdfFileWriter(object):
         stream
         Hello world!
         endstream
-        endobj        
+        endobj
         """
         file_entry = DecodedStreamObject()
         file_entry.setData(fdata)
@@ -296,14 +296,14 @@ class PdfFileWriter(object):
         """
         efEntry = DictionaryObject()
         efEntry.update({ NameObject("/F"):file_entry })
-        
+
         filespec = DictionaryObject()
         filespec.update({
                 NameObject("/Type"): NameObject("/Filespec"),
                 NameObject("/F"): createStringObject(fname),  # Perhaps also try TextStringObject
                 NameObject("/EF"): efEntry
                 })
-                
+
         # Then create the entry for the root, as it needs a reference to the Filespec
         """ Sample:
         1 0 obj
@@ -314,13 +314,13 @@ class PdfFileWriter(object):
          /Names << /EmbeddedFiles << /Names [(hello.txt) 7 0 R] >> >>
         >>
         endobj
-        
+
         """
         embeddedFilesNamesDictionary = DictionaryObject()
         embeddedFilesNamesDictionary.update({
                 NameObject("/Names"): ArrayObject([createStringObject(fname), filespec])
                 })
-        
+
         embeddedFilesDictionary = DictionaryObject()
         embeddedFilesDictionary.update({
                 NameObject("/EmbeddedFiles"): embeddedFilesNamesDictionary
@@ -334,7 +334,7 @@ class PdfFileWriter(object):
         """
         Copy pages from reader to writer. Includes an optional callback parameter
         which is invoked after pages are appended to the writer.
-        
+
         :param reader: a PdfFileReader object from which to copy page
             annotations to this writer object.  The writer's annots
         will then be updated
@@ -378,7 +378,7 @@ class PdfFileWriter(object):
     def cloneReaderDocumentRoot(self, reader):
         '''
         Copy the reader document root to the writer.
-        
+
         :param reader:  PdfFileReader from the document root should be copied.
         :callback after_page_append
         '''
@@ -2664,7 +2664,8 @@ class PageObject(DictionaryObject):
         content = self["/Contents"].getObject()
         if not isinstance(content, ContentStream):
             content = ContentStream(content, self.pdf)
-        lastPosition = (0, 0)
+        prevPosition = (0, 0)
+        currentPosition = (0, 0)
         lineElements = []
         # Note: we check all strings are TextStringObjects.  ByteStringObjects
         # are strings where the byte->string encoding was unknown, so adding
@@ -2675,13 +2676,14 @@ class PageObject(DictionaryObject):
                 if isinstance(_text, TextStringObject):
                     text += _text
                     text += "|"
-                    # print("TD = " + str(lastPosition) + " Tj Text Element:" +_text)
-                    if (lastPosition[1] != 0):
+                    # print("Tj = " + str(currentPosition) + " Tj Text Element")
+                    if (prevPosition[1] != currentPosition[1]):
                         text += "\n"
                         if (lineCallback != None):
                             lineCallback(lineElements)
                         lineElements = []
-                    lineElements.append({ 'text':_text, 'x': lastPosition[0], 'y': lastPosition[1]})
+                    lineElements.append({ 'text':_text, 'x': currentPosition[0], 'y': currentPosition[1]})
+                    prevPosition = currentPosition
             elif operator == b_("T*"):
                 dbg(2, "T*T*T*T*T*T*T*T*T")
                 text += "\n"
@@ -2698,17 +2700,26 @@ class PageObject(DictionaryObject):
                     text += "\n"
                     text += _text
             elif operator == b_("TJ"):
+		#TODO: do the same as for Tj
                 dbg(2, "TJTJTJTJTJTJTJTJTJTJTJ")
                 for i in operands[0]:
                     if isinstance(i, TextStringObject):
                         text += i
                 text += "\n"
             elif operator == b_("Td") or operator == b_("TD"):
-
-                # print("Td: x = " + str(operands[0]) + " y = " + str(operands[1]))
-                lastPosition = (operands[0], operands[1])
+                print(operator + ": x = " + str(operands[0]) + " y = " + str(operands[1]))
+                positionOffset = (operands[0], operands[1])
+                currentPosition = (currentPosition[0] + positionOffset[0], currentPosition[1] + positionOffset[1])
+            # elif operator == b_("m"):
+            #     print(operator + ": x = " + str(operands[0]) + " y = " + str(operands[1]))
+            elif operator == b_("BT"):
+                #TODO: to really sort by lines, need to create a dictionary with buckets by y location or something
+                currentPosition = (0, 0)
+            #     print(operator)
+            # elif operator == b_("ET"):
+            #     print(operator)
             # else:
-                #print ("operator: " + operator)
+            #     print ("operator: " + operator + " ops: " + str(operands))
         return text
 
     mediaBox = createRectangleAccessor("/MediaBox", ())
