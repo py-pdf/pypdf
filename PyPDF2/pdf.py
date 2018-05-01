@@ -408,6 +408,8 @@ class PdfFileWriter(object):
         :param bool use_128bit: flag as to whether to use 128bit
             encryption.  When false, 40bit encryption will be used.  By default,
             this flag is on.
+        :param int perm_mask: Bitwise OR of permissions. For example PyPDF2.PERM_MODIFY_TEXT | PyPDF2.PERM_PRINT
+            for print and modify permissions
         """
         import time, random
         if owner_pwd == None:
@@ -420,7 +422,7 @@ class PdfFileWriter(object):
             V = 1
             rev = 2
             keylen = int(40 / 8)
-        # Permission accordint to the mask
+        # Permission according to the mask
         P = perm_mask
         if P >= 0:
             P = get_perm_value_as_int(perm_mask)
