@@ -80,6 +80,25 @@ def dbg(level, msg):
     if debugLevel < level:
         return
     print "DBG: " + msg
+import re
+
+#Code adapted from: https://github.com/mstamy2/PyPDF2/pull/201/commits
+def parseCMap(cstr):
+    #Works for chars??
+    # rr = re.search("\nbegincmap\n(?:.*?\n)?[0-9]* beginbfchar\n(.*?)\nendbfchar\n(?:.*?\n)?endcmap\n", cstr, re.DOTALL)
+    rr = re.search("\nbegincmap\n(?:.*?\n)?[0-9]* beginbfrange\n(.*?)\nendbfrange\n(?:.*?\n)?endcmap\n", cstr, re.DOTALL)
+    if rr == None: return None
+    result = {}
+    cstr = rr.group(1)
+    for entry in cstr.split("\n"):
+        #Works for chars??
+        #rr = re.match("\\s*<([0-9a-fA-F]+)>\\s+<([0-9a-fA-F]+)>\\s*", entry)
+        rr = re.search("<([0-9a-fA-F]+)><([0-9a-fA-F]+)><([0-9a-fA-F]+)>", entry)
+        if rr == None: continue
+        for ch in range(int(rr.groups()[0], base=16), 1 + int(rr.groups()[1], base=16)):
+            unicodeVal = int(rr.groups()[2], base=16)
+            result[ch] = unichr(unicodeVal)
+    return result
 
 class PdfFileWriter(object):
     """
@@ -2661,6 +2680,36 @@ class PageObject(DictionaryObject):
         :return: a unicode string object.
         """
         text = u_("")
+
+        cmap = None
+        cmaps = {}
+        firstParagraph = True
+        # Concatenate TextStringObjects and try to translate ByteStringObjects
+        # when we have a CMap, when we don't, then byte->string encoding is unknown,
+        # so adding them to the text here would be gibberish.
+        def translate(text):
+            if isinstance(text, TextStringObject):
+                return text
+            if isinstance(text, ByteStringObject) and cmap != None:
+                newText = ""
+                for c in text:
+                    newText += cmap.get(ord_(c),'')
+                return newText
+            return ""
+
+        resources = self["/Resources"].getObject()
+        print("resources: " + str(resources.viewitems()))
+        fonts = resources['/Font']
+        for font in fonts.viewitems():
+            print('Font Name:' + str(font[0]) + "fontObj: " + str(font[1]))
+            fontObj = self.pdf.getObject(font[1])
+            print('fontObj:' + str(fontObj))
+            if (fontObj['/Encoding'] == '/Identity-H'):
+                toUnicodeIndirect = fontObj.raw_get('/ToUnicode')
+                toUnicode = self.pdf.getObject(toUnicodeIndirect)
+                print("ToUnicode: " + str(toUnicode.getData()))
+
+
         content = self["/Contents"].getObject()
         if not isinstance(content, ContentStream):
             content = ContentStream(content, self.pdf)
@@ -2672,30 +2721,26 @@ class PageObject(DictionaryObject):
         # them to the text here would be gibberish.
         for operands, operator in content.operations:
             if operator == b_("Tj"):
-                _text = operands[0]
-                if isinstance(_text, TextStringObject):
-                    text += _text
-                    text += "|"
-                    # print("Tj = " + str(currentPosition) + " Tj Text Element")
-                    if (prevPosition[1] != currentPosition[1]):
-                        text += "\n"
-                        if (lineCallback != None):
-                            lineCallback(lineElements)
-                        lineElements = []
-                    lineElements.append({ 'text':_text, 'x': currentPosition[0], 'y': currentPosition[1]})
-                    prevPosition = currentPosition
+                _text = translate(operands[0])
+                text += _text
+                text += "|"
+                # print("Tj = " + str(currentPosition) + " Tj Text Element")
+                if (prevPosition[1] != currentPosition[1]):
+                    text += "\n"
+                    if (lineCallback != None):
+                        lineCallback(lineElements)
+                    lineElements = []
+                lineElements.append({ 'text':_text, 'x': currentPosition[0], 'y': currentPosition[1]})
+                prevPosition = currentPosition
             elif operator == b_("T*"):
                 dbg(2, "T*T*T*T*T*T*T*T*T")
                 text += "\n"
             elif operator == b_("'"):
                 dbg(2, "'''''''''''''''''''''''''''''")
-                text += "\n"
-                _text = operands[0]
-                if isinstance(_text, TextStringObject):
-                    text += operands[0]
+                text += "\n" + translate(operands[0])
             elif operator == b_('"'):
                 dbg(2, '""""""""""""""""""""""""""""')
-                _text = operands[2]
+                _text = translate(operands[2])
                 if isinstance(_text, TextStringObject):
                     text += "\n"
                     text += _text
@@ -2704,7 +2749,7 @@ class PageObject(DictionaryObject):
                 dbg(2, "TJTJTJTJTJTJTJTJTJTJTJ")
                 for i in operands[0]:
                     if isinstance(i, TextStringObject):
-                        text += i
+                        text += translate(i)
                 text += "\n"
             elif operator == b_("Td") or operator == b_("TD"):
                 print(operator + ": x = " + str(operands[0]) + " y = " + str(operands[1]))
@@ -2715,6 +2760,15 @@ class PageObject(DictionaryObject):
             elif operator == b_("BT"):
                 #TODO: to really sort by lines, need to create a dictionary with buckets by y location or something
                 currentPosition = (0, 0)
+            elif operator == b_("Tf"):
+                try:
+                    font = operands[0]
+                    cmap = cmaps.get(font)
+                    if (cmap == None):
+                        cmap = parseCMap(str_(self["/Resources"]["/Font"][font]["/ToUnicode"].getData()))
+                        cmaps[font] = cmap
+                except KeyError:
+                    cmap = None
             #     print(operator)
             # elif operator == b_("ET"):
             #     print(operator)
@@ -2805,7 +2859,9 @@ class ContentStream(DecodedStreamObject):
                 while peek not in (b_('\r'), b_('\n')):
                     peek = stream.read(1)
             else:
-                operands.append(readObject(stream, None))
+                obj = readObject(stream, None)
+                # print("OBJ: " + str(type(obj)) + str(obj))
+                operands.append(obj)
 
     def _readInlineImage(self, stream):
         # begin reading just after the "BI" - begin image
