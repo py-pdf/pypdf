@@ -2759,8 +2759,13 @@ class PageObject(DictionaryObject):
                 print(operator + ": x = " + str(operands[0]) + " y = " + str(operands[1]))
                 positionOffset = (operands[0], operands[1])
                 currentPosition = (currentPosition[0] + positionOffset[0], currentPosition[1] + positionOffset[1])
-            # elif operator == b_("m"):
-            #     print(operator + ": x = " + str(operands[0]) + " y = " + str(operands[1]))
+            elif operator == b_('Tm'):
+                if (operands[0] == 1 and operands[1] == 0 and operands[2] == 0 and operands[3] == 1):
+                    dbg(2, operator + ": x = " + str(operands[4]) + " y = " + str(operands[5]))
+                    positionOffset = (operands[4], operands[5])
+                    currentPosition = (currentPosition[0] + positionOffset[0], currentPosition[1] + positionOffset[1])
+                else:
+                    dbg(1, "operator: " + operator + " ops: " + str(operands))
             elif operator == b_("BT"):
                 #TODO: to really sort by lines, need to create a dictionary with buckets by y location or something
                 currentPosition = (0, 0)
