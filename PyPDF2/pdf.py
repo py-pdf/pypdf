@@ -75,6 +75,11 @@ else:
     from hashlib import md5
 import uuid
 
+def dbg(level, msg):
+    debugLevel = 0
+    if debugLevel < level:
+        return
+    print "DBG: " + msg
 
 class PdfFileWriter(object):
     """
