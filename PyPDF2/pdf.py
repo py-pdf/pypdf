@@ -2692,22 +2692,26 @@ class PageObject(DictionaryObject):
                 return text
             if isinstance(text, ByteStringObject) and cmap != None:
                 newText = ""
-                for c in text:
-                    newText += cmap.get(ord_(c),'')
+                for pos in range(len(text)):
+                    if (pos % 2 != 0):
+                        continue
+                    #Assume the characters are 2 bytes each and convert them to hex
+                    c = (ord(text[pos]) << 8) + ord(text[pos+1])
+                    newText += cmap.get(c,'')
                 return newText
             return ""
 
         resources = self["/Resources"].getObject()
-        print("resources: " + str(resources.viewitems()))
+        dbg(10, "resources: " + str(resources.viewitems()))
         fonts = resources['/Font']
         for font in fonts.viewitems():
-            print('Font Name:' + str(font[0]) + "fontObj: " + str(font[1]))
+            dbg(10, 'Font Name:' + str(font[0]) + "fontObj: " + str(font[1]))
             fontObj = self.pdf.getObject(font[1])
-            print('fontObj:' + str(fontObj))
+            dbg(10, 'fontObj:' + str(fontObj))
             if (fontObj['/Encoding'] == '/Identity-H'):
                 toUnicodeIndirect = fontObj.raw_get('/ToUnicode')
                 toUnicode = self.pdf.getObject(toUnicodeIndirect)
-                print("ToUnicode: " + str(toUnicode.getData()))
+                dbg(10, "ToUnicode: " + str(toUnicode.getData()))
 
 
         content = self["/Contents"].getObject()
