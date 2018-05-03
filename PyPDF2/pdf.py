@@ -65,6 +65,7 @@ import codecs
 from .generic import *
 from .utils import readNonWhitespace, readUntilWhitespace, ConvertFunctionsToVirtualList
 from .utils import isString, b_, u_, ord_, chr_, str_, formatWarning
+from glyphNamesToUnicode import glyphNameToUnicode
 
 if version_info < ( 2, 4 ):
    from sets import ImmutableSet as frozenset
@@ -92,8 +93,7 @@ class TextState:
 
 #Code adapted from: https://github.com/mstamy2/PyPDF2/pull/201/commits
 def parseCMap(cstr):
-    if (type(cstr) != 'str'):
-        print(str(type(cstr)))
+    result = {}
     cmapType = 'UNKNOWN'
     #Char based CMap
     rr = re.findall("begincmap\n(?:.*?\n)?[0-9]* beginbfchar\n(.*?)\nendbfchar\n", cstr, re.DOTALL)
@@ -106,7 +106,6 @@ def parseCMap(cstr):
     else:
         cmapType = "BFCHAR"
 
-    result = {}
     for group in rr:
         cstr = group
         for entry in cstr.split("\n"):
@@ -124,6 +123,22 @@ def parseCMap(cstr):
             for ch in range(int(rr.groups()[0], base=16), 1 + int(rr.groups()[endRange], base=16)):
                 unicodeVal = int(rr.groups()[target], base=16)
                 result[ch] = unichr(unicodeVal)
+    return result
+
+def parseEncodingDifferences(arr):
+    result = {}
+    for pos in range(len(arr)):
+        if pos % 2 != 0:
+            continue
+        glyph = arr[pos+1][1:]
+        uni = glyphNameToUnicode(glyph)
+        if uni == None:
+            glyph += ':hb'#TODO: this is Hebrew specific, may need user hint to choose the most likely language
+            uni = glyphNameToUnicode(glyph)
+            if uni == None:
+                uni = ord('?')
+        result[arr[pos]] = unichr(uni)
+        dbg(10, "GlyphName: " + glyph + " char: " + result[arr[pos]])
     return result
 
 class PdfFileWriter(object):
@@ -2714,18 +2729,19 @@ class PageObject(DictionaryObject):
         # when we have a CMap, when we don't, then byte->string encoding is unknown,
         # so adding them to the text here would be gibberish.
         def translate(text):
+            newText = ""
             if isinstance(text, TextStringObject):
-                return text
+                for c in text:
+                    newText += cmap.get(ord(c), unichr(ord(c)))
             if isinstance(text, ByteStringObject) and cmap != None:
-                newText = ""
+
                 for pos in range(len(text)):
                     if (pos % 2 != 0):
                         continue
                     #Assume the characters are 2 bytes each and convert them to hex
                     c = (ord(text[pos]) << 8) + ord(text[pos+1])
-                    newText += cmap.get(c,'')
-                return newText
-            return ""
+                    newText += cmap.get(c, unichr(ord(c)))
+            return newText
 
         def handleTextElement(textState, _text):
             textState.text += _text
@@ -2786,9 +2802,16 @@ class PageObject(DictionaryObject):
             elif operator == b_("Tf"):
                 try:
                     font = operands[0]
+                    fontObj = self["/Resources"]["/Font"][font]
                     cmap = cmaps.get(font)
                     if (cmap == None):
-                        cmap = parseCMap(str_(self["/Resources"]["/Font"][font]["/ToUnicode"].getData()))
+                        if "/ToUnicode" in fontObj:
+                            cmap = parseCMap(str_(fontObj["/ToUnicode"].getData()))
+                        elif '/Encoding' in fontObj:
+                            fontType = fontObj['/FontDescriptor']['/FontFile3']['/Subtype']
+                            if (fontType == '/Type1C'):
+                                fontData = fontObj['/FontDescriptor']['/FontFile3'].getData()
+                                cmap = parseEncodingDifferences(fontObj["/Encoding"]['/Differences'])
                         cmaps[font] = cmap
                 except KeyError:
                     cmap = None
