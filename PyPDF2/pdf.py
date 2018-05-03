@@ -82,6 +82,14 @@ def dbg(level, msg):
     print "DBG: " + msg
 import re
 
+class TextState:
+    def __init__(self, lineCallback):
+        self.text = u_("")
+        self.lineCallback = lineCallback
+        self.prevPosition = (0, 0)
+        self.currentPosition = (0, 0)
+        self.lineElements = []
+
 #Code adapted from: https://github.com/mstamy2/PyPDF2/pull/201/commits
 def parseCMap(cstr):
     #Works for chars??
@@ -2679,8 +2687,7 @@ class PageObject(DictionaryObject):
 
         :return: a unicode string object.
         """
-        text = u_("")
-
+        textState = TextState(lineCallback)
         cmap = None
         cmaps = {}
         firstParagraph = True
@@ -2701,41 +2708,28 @@ class PageObject(DictionaryObject):
                 return newText
             return ""
 
-        resources = self["/Resources"].getObject()
-        dbg(10, "resources: " + str(resources.viewitems()))
-        fonts = resources['/Font']
-        for font in fonts.viewitems():
-            dbg(10, 'Font Name:' + str(font[0]) + "fontObj: " + str(font[1]))
-            fontObj = self.pdf.getObject(font[1])
-            dbg(10, 'fontObj:' + str(fontObj))
-            if (fontObj['/Encoding'] == '/Identity-H'):
-                toUnicodeIndirect = fontObj.raw_get('/ToUnicode')
-                toUnicode = self.pdf.getObject(toUnicodeIndirect)
-                dbg(10, "ToUnicode: " + str(toUnicode.getData()))
-
+        def handleTextElement(textState, _text):
+            textState.text += _text
+            dbg(10, "Tj = " + str(textState.currentPosition) + " Tj Text Element")
+            if (textState.prevPosition[1] != textState.currentPosition[1]):
+                textState.text += "\n"
+                if (textState.lineCallback != None):
+                    textState.lineCallback(textState.lineElements)
+                textState.lineElements = []
+            textState.lineElements.append({ 'text':_text, 'x': textState.currentPosition[0], 'y': textState.currentPosition[1]})
+            textState.prevPosition = textState.currentPosition
 
         content = self["/Contents"].getObject()
         if not isinstance(content, ContentStream):
             content = ContentStream(content, self.pdf)
-        prevPosition = (0, 0)
-        currentPosition = (0, 0)
-        lineElements = []
+
         # Note: we check all strings are TextStringObjects.  ByteStringObjects
         # are strings where the byte->string encoding was unknown, so adding
         # them to the text here would be gibberish.
         for operands, operator in content.operations:
             if operator == b_("Tj"):
                 _text = translate(operands[0])
-                text += _text
-                text += "|"
-                # print("Tj = " + str(currentPosition) + " Tj Text Element")
-                if (prevPosition[1] != currentPosition[1]):
-                    text += "\n"
-                    if (lineCallback != None):
-                        lineCallback(lineElements)
-                    lineElements = []
-                lineElements.append({ 'text':_text, 'x': currentPosition[0], 'y': currentPosition[1]})
-                prevPosition = currentPosition
+                handleTextElement(textState, _text)
             elif operator == b_("T*"):
                 dbg(2, "T*T*T*T*T*T*T*T*T")
                 text += "\n"
@@ -2751,24 +2745,26 @@ class PageObject(DictionaryObject):
             elif operator == b_("TJ"):
 		#TODO: do the same as for Tj
                 dbg(2, "TJTJTJTJTJTJTJTJTJTJTJ")
+                _text = ''
                 for i in operands[0]:
                     if isinstance(i, TextStringObject):
-                        text += translate(i)
-                text += "\n"
+                        _text += translate(i)
+                handleTextElement(textState, _text)
             elif operator == b_("Td") or operator == b_("TD"):
-                print(operator + ": x = " + str(operands[0]) + " y = " + str(operands[1]))
+                dbg(2, operator + ": x = " + str(operands[0]) + " y = " + str(operands[1]))
                 positionOffset = (operands[0], operands[1])
-                currentPosition = (currentPosition[0] + positionOffset[0], currentPosition[1] + positionOffset[1])
+                textState.currentPosition = (textState.currentPosition[0] + positionOffset[0], textState.currentPosition[1] + positionOffset[1])
             elif operator == b_('Tm'):
                 if (operands[0] == 1 and operands[1] == 0 and operands[2] == 0 and operands[3] == 1):
                     dbg(2, operator + ": x = " + str(operands[4]) + " y = " + str(operands[5]))
                     positionOffset = (operands[4], operands[5])
-                    currentPosition = (currentPosition[0] + positionOffset[0], currentPosition[1] + positionOffset[1])
+                    textState.currentPosition = (textState.currentPosition[0] + positionOffset[0], textState.currentPosition[1] + positionOffset[1])
                 else:
                     dbg(1, "operator: " + operator + " ops: " + str(operands))
             elif operator == b_("BT"):
+                dbg(2, operator)
                 #TODO: to really sort by lines, need to create a dictionary with buckets by y location or something
-                currentPosition = (0, 0)
+                textState.currentPosition = (0, 0)
             elif operator == b_("Tf"):
                 try:
                     font = operands[0]
@@ -2778,12 +2774,12 @@ class PageObject(DictionaryObject):
                         cmaps[font] = cmap
                 except KeyError:
                     cmap = None
-            #     print(operator)
-            # elif operator == b_("ET"):
-            #     print(operator)
-            # else:
-            #     print ("operator: " + operator + " ops: " + str(operands))
-        return text
+                dbg(2, operator)
+            elif operator == b_("ET"):
+                dbg(3, operator)
+            else:
+                dbg(1, "operator: " + operator + " ops: " + str(operands))
+        return textState.text
 
     mediaBox = createRectangleAccessor("/MediaBox", ())
     """
