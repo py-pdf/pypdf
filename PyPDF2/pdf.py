@@ -92,19 +92,35 @@ class TextState:
 
 #Code adapted from: https://github.com/mstamy2/PyPDF2/pull/201/commits
 def parseCMap(cstr):
-    #Works for chars??
-    # rr = re.search("\nbegincmap\n(?:.*?\n)?[0-9]* beginbfchar\n(.*?)\nendbfchar\n(?:.*?\n)?endcmap\n", cstr, re.DOTALL)
-    rr = re.search("\nbegincmap\n(?:.*?\n)?[0-9]* beginbfrange\n(.*?)\nendbfrange\n(?:.*?\n)?endcmap\n", cstr, re.DOTALL)
-    if rr == None: return None
+    if (type(cstr) != 'str'):
+        print(str(type(cstr)))
+    cmapType = 'UNKNOWN'
+    #Char based CMap
+    rr = re.search("\nbegincmap\n(?:.*?\n)?[0-9]* beginbfchar\n(.*?)\nendbfchar\n(?:.*?\n)?endcmap", cstr, re.DOTALL)
+    if (rr == None):
+        rr = re.search("\nbegincmap\n(?:.*?\n)?[0-9]* beginbfrange\n(.*?)\nendbfrange\n(?:.*?\n)?endcmap", cstr, re.DOTALL)
+        if (rr != None):
+            cmapType = "BFRANGE"
+    else:
+        cmapType = "BFCHAR"
+    if rr == None:
+        return None
     result = {}
     cstr = rr.group(1)
     for entry in cstr.split("\n"):
-        #Works for chars??
-        #rr = re.match("\\s*<([0-9a-fA-F]+)>\\s+<([0-9a-fA-F]+)>\\s*", entry)
-        rr = re.search("<([0-9a-fA-F]+)><([0-9a-fA-F]+)><([0-9a-fA-F]+)>", entry)
+        endRange = 0
+        target = 1
+        #Works for chars
+        if cmapType == "BFRANGE":
+            rr = re.search("<([0-9a-fA-F]+)><([0-9a-fA-F]+)><([0-9a-fA-F]+)>", entry)
+            endRange = 1
+            target = 2
+        else:
+            rr = re.match("\\s*<([0-9a-fA-F]+)>\\s+<([0-9a-fA-F]+)>\\s*", entry)
         if rr == None: continue
-        for ch in range(int(rr.groups()[0], base=16), 1 + int(rr.groups()[1], base=16)):
-            unicodeVal = int(rr.groups()[2], base=16)
+
+        for ch in range(int(rr.groups()[0], base=16), 1 + int(rr.groups()[endRange], base=16)):
+            unicodeVal = int(rr.groups()[target], base=16)
             result[ch] = unichr(unicodeVal)
     return result
 
@@ -2747,15 +2763,14 @@ class PageObject(DictionaryObject):
                 dbg(2, "TJTJTJTJTJTJTJTJTJTJTJ")
                 _text = ''
                 for i in operands[0]:
-                    if isinstance(i, TextStringObject):
-                        _text += translate(i)
+                    _text += translate(i)
                 handleTextElement(textState, _text)
             elif operator == b_("Td") or operator == b_("TD"):
                 dbg(2, operator + ": x = " + str(operands[0]) + " y = " + str(operands[1]))
                 positionOffset = (operands[0], operands[1])
                 textState.currentPosition = (textState.currentPosition[0] + positionOffset[0], textState.currentPosition[1] + positionOffset[1])
             elif operator == b_('Tm'):
-                if (operands[0] == 1 and operands[1] == 0 and operands[2] == 0 and operands[3] == 1):
+                if (operands[0] == operands[3] and operands[1] == 0 and operands[2] == 0):
                     dbg(2, operator + ": x = " + str(operands[4]) + " y = " + str(operands[5]))
                     positionOffset = (operands[4], operands[5])
                     textState.currentPosition = (textState.currentPosition[0] + positionOffset[0], textState.currentPosition[1] + positionOffset[1])
