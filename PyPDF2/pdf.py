@@ -96,32 +96,34 @@ def parseCMap(cstr):
         print(str(type(cstr)))
     cmapType = 'UNKNOWN'
     #Char based CMap
-    rr = re.search("\nbegincmap\n(?:.*?\n)?[0-9]* beginbfchar\n(.*?)\nendbfchar\n(?:.*?\n)?endcmap", cstr, re.DOTALL)
-    if (rr == None):
-        rr = re.search("\nbegincmap\n(?:.*?\n)?[0-9]* beginbfrange\n(.*?)\nendbfrange\n(?:.*?\n)?endcmap", cstr, re.DOTALL)
-        if (rr != None):
+    rr = re.findall("begincmap\n(?:.*?\n)?[0-9]* beginbfchar\n(.*?)\nendbfchar\n", cstr, re.DOTALL)
+    if (rr == None or len(rr) == 0):
+        rr = re.findall("beginbfrange\n(.*?)\nendbfrange\n", cstr, re.DOTALL)
+        if (rr != None and len(rr) != 0):
             cmapType = "BFRANGE"
+        else:
+            return None
     else:
         cmapType = "BFCHAR"
-    if rr == None:
-        return None
-    result = {}
-    cstr = rr.group(1)
-    for entry in cstr.split("\n"):
-        endRange = 0
-        target = 1
-        #Works for chars
-        if cmapType == "BFRANGE":
-            rr = re.search("<([0-9a-fA-F]+)><([0-9a-fA-F]+)><([0-9a-fA-F]+)>", entry)
-            endRange = 1
-            target = 2
-        else:
-            rr = re.match("\\s*<([0-9a-fA-F]+)>\\s+<([0-9a-fA-F]+)>\\s*", entry)
-        if rr == None: continue
 
-        for ch in range(int(rr.groups()[0], base=16), 1 + int(rr.groups()[endRange], base=16)):
-            unicodeVal = int(rr.groups()[target], base=16)
-            result[ch] = unichr(unicodeVal)
+    result = {}
+    for group in rr:
+        cstr = group
+        for entry in cstr.split("\n"):
+            endRange = 0
+            target = 1
+            #Works for chars
+            if cmapType == "BFRANGE":
+                rr = re.search("<([0-9a-fA-F]+)><([0-9a-fA-F]+)><([0-9a-fA-F]+)>", entry)
+                endRange = 1
+                target = 2
+            else:
+                rr = re.match("\\s*<([0-9a-fA-F]+)>\\s+<([0-9a-fA-F]+)>\\s*", entry)
+            if rr == None: continue
+
+            for ch in range(int(rr.groups()[0], base=16), 1 + int(rr.groups()[endRange], base=16)):
+                unicodeVal = int(rr.groups()[target], base=16)
+                result[ch] = unichr(unicodeVal)
     return result
 
 class PdfFileWriter(object):
