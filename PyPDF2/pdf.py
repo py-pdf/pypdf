@@ -1804,7 +1804,8 @@ class PdfFileReader(object):
         stream.seek(-1, 2)
         if not stream.tell():
             raise utils.PdfReadError('Cannot read an empty file')
-        last1K = stream.tell() - 1024 + 1 # offset of last 1024 bytes of stream
+        #Assi: increased tolerance for garbage after EOF. Not sure why it's limited at all
+        last1K = stream.tell() - 4* 1024 + 1 # offset of last 1024 bytes of stream
         line = b_('')
         while line[:5] != b_("%%EOF"):
             if stream.tell() < last1K:
