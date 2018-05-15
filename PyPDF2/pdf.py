@@ -2181,6 +2181,38 @@ class PdfFileReader(object):
     :meth:`decrypt()<PdfFileReader.decrypt>` method is called.
     """
 
+    """
+    Return a dictionary of images used in the PDF (currently only XObject images)
+    TODO: add inline images?
+    """
+    def extractImages(self):
+        images = {}
+        for page in self.pages:
+            if not '/XObject' in page["/Resources"]:
+                return images
+            for xobjName in page["/Resources"]['/XObject']:
+                xobj = page["/Resources"]['/XObject'][xobjName]
+                if xobj['/Subtype'] != '/Image':
+                    continue
+                images[xobjName] = xobj
+
+        return images
+
+    """
+    Return a sorted set of font names used in the PDF
+    """
+    def extractFonts(self):
+        uniqueFonts = []
+        for page in self.pages:
+            if not "/Font" in page["/Resources"]:
+                continue
+            for font in page["/Resources"]["/Font"]:
+                fontObj = page["/Resources"]["/Font"][font]
+                baseFont = str(fontObj['/BaseFont'])
+                if not baseFont in uniqueFonts:
+                    uniqueFonts.append(baseFont)
+        return sorted(uniqueFonts)
+
 
 def getRectangle(self, name, defaults):
     retval = self.get(name)
