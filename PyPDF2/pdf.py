@@ -127,18 +127,32 @@ def parseCMap(cstr):
 
 def parseEncodingDifferences(arr):
     result = {}
+    ordinal = 0
     for pos in range(len(arr)):
-        if pos % 2 != 0:
+        if isinstance(arr[pos], NumberObject):
+            ordinal = arr[pos] - 1
             continue
-        glyph = arr[pos+1][1:]
+        ordinal += 1
+        glyph = arr[pos][1:]
         uni = glyphNameToUnicode(glyph)
         if uni == None:
             glyph += ':hb'#TODO: this is Hebrew specific, may need user hint to choose the most likely language
             uni = glyphNameToUnicode(glyph)
             if uni == None:
                 uni = ord('?')
-        result[arr[pos]] = unichr(uni)
-        dbg(10, "GlyphName: " + glyph + " char: " + result[arr[pos]])
+        result[ordinal] = unichr(uni)
+        dbg(10, "GlyphName: " + glyph + " char: " + result[ordinal])
+    return result
+
+def mergeCmap(cmap1, cmap2):
+    result = cmap1
+    result['__firstChar'] = min(cmap1['__firstChar'], cmap2['__firstChar'])
+    result['__lastChar'] = max(cmap1['__lastChar'], cmap2['__lastChar'])
+    result['__type'] = cmap1['__type'] + '+' + cmap2['__type']
+    for c in cmap2:
+        if ( str(c)[0] == '_'):
+            continue
+        cmap1[c] = cmap2[c]
     return result
 
 class PdfFileWriter(object):
@@ -2841,11 +2855,12 @@ class PageObject(DictionaryObject):
                     if (cmap == None):
                         if "/ToUnicode" in fontObj:
                             cmap = parseCMap(str_(fontObj["/ToUnicode"].getData()))
-                        elif '/Encoding' in fontObj:
-                            fontType = fontObj['/FontDescriptor']['/FontFile3']['/Subtype']
-                            if (fontType == '/Type1C'):
-                                fontData = fontObj['/FontDescriptor']['/FontFile3'].getData()
-                                cmap = parseEncodingDifferences(fontObj["/Encoding"]['/Differences'])
+                        if '/Encoding' in fontObj:
+                            cmap_differences = parseEncodingDifferences(fontObj["/Encoding"]['/Differences'])
+                            if (cmap != None):
+                                cmap = mergeCmap(cmap_differences, cmap)
+                            else:
+                                cmap = cmap_differences
                         cmaps[font] = cmap
                 except KeyError:
                     cmap = None
