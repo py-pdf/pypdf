@@ -2763,6 +2763,8 @@ class PageObject(DictionaryObject):
         def translate(text):
             newText = ""
             if isinstance(text, TextStringObject):
+                if cmap == None:
+                    return text
                 for c in text:
                     newText += cmap.get(ord(c), unichr(ord(c)))
             if isinstance(text, ByteStringObject) and cmap != None:
