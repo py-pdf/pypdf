@@ -1237,10 +1237,10 @@ class PdfFileReader(object):
         function.
 
         :return: the document information of this PDF file
-        :rtype: :class:`DocumentInformation<pdf.DocumentInformation>` or ``None`` if none exists.
+        :rtype: :class:`DocumentInformation<pdf.DocumentInformation>` or ``[]`` if none exists.
         """
         if "/Info" not in self.trailer:
-            return None
+            return []
         obj = self.trailer['/Info']
         retval = DocumentInformation()
         retval.update(obj)
