@@ -110,6 +110,17 @@ class PdfFileWriter(object):
         self._root = None
         self._root_object = root
 
+        if "/AcroForm" in self._root_object:
+            self._root_object["/AcroForm"].update({
+                NameObject("/NeedAppearances"): BooleanObject(True)
+            })
+        else:
+            self._root_object.update({
+                NameObject("/AcroForm"): IndirectObject(len(self._objects), 0, self)
+            })
+            need_appearances = NameObject("/NeedAppearances")
+            self._root_object["/AcroForm"][need_appearances] = BooleanObject(True)
+
     def _addObject(self, obj):
         self._objects.append(obj)
         return IndirectObject(len(self._objects), 0, self)
@@ -366,9 +377,15 @@ class PdfFileWriter(object):
             writer_annot = page['/Annots'][j].getObject()
             for field in fields:
                 if writer_annot.get('/T') == field:
-                    writer_annot.update({
-                        NameObject("/V"): TextStringObject(fields[field])
-                    })
+                    if writer_annot.get('/FT') == '/Btn':
+                        writer_annot.update({
+                            NameObject("/V"): NameObject(fields[field]),
+                            NameObject("/AS"): NameObject(fields[field])
+                        })
+                    else:
+                        writer_annot.update({
+                            NameObject("/V"): TextStringObject(fields[field])
+                        })
 
     def cloneReaderDocumentRoot(self, reader):
         '''
@@ -1149,6 +1166,11 @@ class PdfFileReader(object):
         self.stream = stream
 
         self._override_encryption = False
+
+        if "/AcroForm" in self.trailer["/Root"]:
+            self.trailer["/Root"]["/AcroForm"].update({
+                NameObject("/NeedAppearances"): BooleanObject(True)
+            })
 
     def getDocumentInfo(self):
         """
