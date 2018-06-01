@@ -98,7 +98,7 @@ def parseCMap(cstr):
     #Char based CMap
     rr = re.findall("begincmap\n(?:.*?\n)?[0-9]* beginbfchar\n(.*?)\nendbfchar\n", cstr, re.DOTALL)
     if (rr == None or len(rr) == 0):
-        rr = re.findall("beginbfrange\n(.*?)\nendbfrange\n", cstr, re.DOTALL)
+        rr = re.findall("beginbfrange\n(.*?)\n[ \t]*endbfrange\n", cstr, re.DOTALL)
         if (rr != None and len(rr) != 0):
             cmapType = "BFRANGE"
         else:
@@ -107,13 +107,13 @@ def parseCMap(cstr):
         cmapType = "BFCHAR"
 
     for group in rr:
-        cstr = group
+        cstr = group.strip()
         for entry in cstr.split("\n"):
             endRange = 0
             target = 1
             #Works for chars
             if cmapType == "BFRANGE":
-                rr = re.search("<([0-9a-fA-F]+)><([0-9a-fA-F]+)><([0-9a-fA-F]+)>", entry)
+                rr = re.search("<([0-9a-fA-F]+)>[ \t]*<([0-9a-fA-F]+)>[ \t]*<([0-9a-fA-F]+)>", entry)
                 endRange = 1
                 target = 2
             else:
@@ -2854,7 +2854,11 @@ class PageObject(DictionaryObject):
                     cmap = cmaps.get(font)
                     if (cmap == None):
                         if "/ToUnicode" in fontObj:
-                            cmap = parseCMap(str_(fontObj["/ToUnicode"].getData()))
+                            try:
+                                cmapData = fontObj["/ToUnicode"].getData()
+                                cmap = parseCMap(str_(cmapData))
+                            except utils.PdfReadError:
+                                print("Error reading CMAP (font = " + str(font) + ')')
                         if '/Encoding' in fontObj:
                             cmap_differences = parseEncodingDifferences(fontObj["/Encoding"]['/Differences'])
                             if (cmap != None):
