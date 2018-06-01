@@ -92,8 +92,11 @@ class TextState:
         self.lineElements = []
 
 #Code adapted from: https://github.com/mstamy2/PyPDF2/pull/201/commits
-def parseCMap(cstr):
-    result = {}
+def parseCMap(cstr, firstChar, lastChar):
+    result = {
+        '__firstChar': firstChar,
+        '__lastChar': lastChar,
+    }
     cmapType = 'UNKNOWN'
     #Char based CMap
     rr = re.findall("begincmap\n(?:.*?\n)?[0-9]* beginbfchar\n(.*?)\nendbfchar\n", cstr, re.DOTALL)
@@ -125,8 +128,11 @@ def parseCMap(cstr):
                 result[ch] = unichr(unicodeVal)
     return result
 
-def parseEncodingDifferences(arr):
-    result = {}
+def parseEncodingDifferences(arr, firstChar, lastChar):
+    result = {
+        '__firstChar': firstChar,
+        '__lastChar': lastChar,
+    }
     ordinal = 0
     for pos in range(len(arr)):
         if isinstance(arr[pos], NumberObject):
@@ -2222,9 +2228,12 @@ class PdfFileReader(object):
                 continue
             for font in page["/Resources"]["/Font"]:
                 fontObj = page["/Resources"]["/Font"][font]
-                baseFont = str(fontObj['/BaseFont'])
-                if not baseFont in uniqueFonts:
-                    uniqueFonts.append(baseFont)
+                if '/BaseFont' in fontObj:
+                    baseFont = str(fontObj['/BaseFont'])
+                    if not baseFont in uniqueFonts:
+                        uniqueFonts.append(baseFont)
+                else:
+                    uniqueFonts.append(fontObj['/Subtype'])
         return sorted(uniqueFonts)
 
 
@@ -2782,18 +2791,21 @@ class PageObject(DictionaryObject):
                 for c in text:
                     newText += cmap.get(ord(c), unichr(ord(c)))
             if isinstance(text, ByteStringObject) and cmap != None:
-
+                singleByte = cmap['__lastChar'] < 256
                 for pos in range(len(text)):
-                    if (pos % 2 != 0):
+                    if (not singleByte and pos % 2 != 0):
                         continue
                     #Assume the characters are 2 bytes each and convert them to hex
-                    c = (ord(text[pos]) << 8) + ord(text[pos+1])
+                    if (singleByte):
+                        c = ord(text[pos])
+                    else:
+                        c = (ord(text[pos]) << 8) + ord(text[pos+1])
                     newText += cmap.get(c, unichr(ord(c)))
             return newText
 
-        def handleTextElement(textState, _text):
+        def handleTextElement(operator, textState, _text):
             textState.text += _text
-            dbg(10, "Tj = " + str(textState.currentPosition) + " Tj Text Element")
+            dbg(10, "Operator: " + operator + ": " + str(textState.currentPosition) + " Tj Text Element (Text: " + _text + ')')
             if (textState.prevPosition[1] != textState.currentPosition[1]):
                 textState.text += "\n"
                 if (textState.lineCallback != None):
@@ -2812,7 +2824,7 @@ class PageObject(DictionaryObject):
         for operands, operator in content.operations:
             if operator == b_("Tj"):
                 _text = translate(operands[0])
-                handleTextElement(textState, _text)
+                handleTextElement(operator, textState, _text)
             elif operator == b_("T*"):
                 dbg(2, "T*T*T*T*T*T*T*T*T")
                 text += "\n"
@@ -2826,12 +2838,11 @@ class PageObject(DictionaryObject):
                     text += "\n"
                     text += _text
             elif operator == b_("TJ"):
-		#TODO: do the same as for Tj
                 dbg(2, "TJTJTJTJTJTJTJTJTJTJTJ")
-                _text = ''
+                _text = u''
                 for i in operands[0]:
                     _text += translate(i)
-                handleTextElement(textState, _text)
+                handleTextElement(operator, textState, _text)
             elif operator == b_("Td") or operator == b_("TD"):
                 dbg(2, operator + ": x = " + str(operands[0]) + " y = " + str(operands[1]))
                 positionOffset = (operands[0], operands[1])
@@ -2839,8 +2850,7 @@ class PageObject(DictionaryObject):
             elif operator == b_('Tm'):
                 if (operands[0] == operands[3] and operands[1] == 0 and operands[2] == 0):
                     dbg(2, operator + ": x = " + str(operands[4]) + " y = " + str(operands[5]))
-                    positionOffset = (operands[4], operands[5])
-                    textState.currentPosition = (textState.currentPosition[0] + positionOffset[0], textState.currentPosition[1] + positionOffset[1])
+                    textState.currentPosition = (operands[4], operands[5])
                 else:
                     dbg(1, "operator: " + operator + " ops: " + str(operands))
             elif operator == b_("BT"):
@@ -2856,15 +2866,30 @@ class PageObject(DictionaryObject):
                         if "/ToUnicode" in fontObj:
                             try:
                                 cmapData = fontObj["/ToUnicode"].getData()
-                                cmap = parseCMap(str_(cmapData))
+                                firstChar = 0xffff
+                                lastChar = 0xffff
+                                if '/FirstChar' in fontObj:
+                                    firstChar = fontObj['/FirstChar']
+                                if '/LastChar' in fontObj:
+                                    lastChar = fontObj['/LastChar']
+                                cmap = parseCMap(str_(cmapData), firstChar, lastChar)
                             except utils.PdfReadError:
                                 print("Error reading CMAP (font = " + str(font) + ')')
                         if '/Encoding' in fontObj:
-                            cmap_differences = parseEncodingDifferences(fontObj["/Encoding"]['/Differences'])
-                            if (cmap != None):
-                                cmap = mergeCmap(cmap_differences, cmap)
-                            else:
-                                cmap = cmap_differences
+                            encoding =  fontObj["/Encoding"]
+                            if '/Differences' in encoding:
+                                firstChar = 0xffff
+                                lastChar = 0xffff
+                                if '/FirstChar' in fontObj:
+                                    firstChar = fontObj['/FirstChar']
+                                if '/LastChar' in fontObj:
+                                    lastChar = fontObj['/LastChar']
+                                cmap_differences = parseEncodingDifferences(fontObj["/Encoding"]['/Differences'],
+                                    firstChar, lastChar)
+                                if (cmap != None):
+                                    cmap = mergeCmap(cmap_differences, cmap)
+                                else:
+                                    cmap = cmap_differences
                         cmaps[font] = cmap
                 except KeyError:
                     cmap = None
