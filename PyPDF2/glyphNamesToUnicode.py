@@ -12560,6 +12560,7 @@ glyphNamesToUnicode['hungarumlaut'] = 0x02DD
 glyphNamesToUnicode['hungarumlautcmb'] = 0x030B
 glyphNamesToUnicode['hv'] = 0x0195
 glyphNamesToUnicode['hyphen'] = 0x002D
+glyphNamesToUnicode['hyphenminus'] = 0x002D
 glyphNamesToUnicode['hypheninferior'] = 0xF6E5
 glyphNamesToUnicode['hyphenmonospace'] = 0xFF0D
 glyphNamesToUnicode['hyphensmall'] = 0xFE63

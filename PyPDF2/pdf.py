@@ -142,10 +142,15 @@ def parseEncodingDifferences(arr, firstChar, lastChar):
         glyph = arr[pos][1:]
         uni = glyphNameToUnicode(glyph)
         if uni == None:
-            glyph += ':hb'#TODO: this is Hebrew specific, may need user hint to choose the most likely language
-            uni = glyphNameToUnicode(glyph)
-            if uni == None:
-                uni = ord('?')
+            if (glyph.lower()[0:4] == 'unic'):
+                #Handle UNICxxxx glyph names, where xxxx is a Hex unicode value
+                uni = int(glyph[5:], 16)
+            else:
+                glyph += ':hb'#TODO: this is Hebrew specific, may need user hint to choose the most likely language
+                uni = glyphNameToUnicode(glyph)
+                if uni == None:
+                    print("Unicode char name not found: " + glyph)
+                    uni = ord('?')
         result[ordinal] = unichr(uni)
         dbg(10, "GlyphName: " + glyph + " char: " + result[ordinal])
     return result
