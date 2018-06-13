@@ -2770,16 +2770,15 @@ class PageObject(DictionaryObject):
                 content = ContentStream(content, self.pdf)
             self[NameObject("/Contents")] = content.flateEncode()
 
-    def extractText(self, lineCallback=None):
+    def extractText(self, lineCallback = None, lineMargin = 0.01):
         """
         Locate all text drawing commands, in the order they are provided in the
-        content stream, and extract the text.  This works well for some PDF
-        files, but poorly for others, depending on the generator used.  This will
-        be refined in the future.  Do not rely on the order of text coming out of
-        this function, as it will change if this function is made more
-        sophisticated.
+        content stream, and extract the text line by line.
+        For each line, the lineCallback function is called with all the text elements in the line.
+        Each element has x and y position properties so the caller can decide on the sort oder.
+        Line detection is done by comparing the y position to the line margin argument.
 
-        :return: a unicode string object.
+        :return: a unicode string object
         """
         textState = TextState(lineCallback)
         cmap = None
@@ -2811,7 +2810,7 @@ class PageObject(DictionaryObject):
         def handleTextElement(operator, textState, _text):
             textState.text += _text
             dbg(10, "Operator: " + operator + ": " + str(textState.currentPosition) + " Tj Text Element (Text: " + _text + ')')
-            if (textState.prevPosition[1] != textState.currentPosition[1]):
+            if (abs(textState.prevPosition[1] - textState.currentPosition[1]) > lineMargin):
                 textState.text += "\n"
                 if (textState.lineCallback != None):
                     textState.lineCallback(textState.lineElements)
@@ -2857,7 +2856,7 @@ class PageObject(DictionaryObject):
                     dbg(2, operator + ": x = " + str(operands[4]) + " y = " + str(operands[5]))
                     textState.currentPosition = (operands[4], operands[5])
                 else:
-                    dbg(1, "operator: " + operator + " ops: " + str(operands))
+                    dbg(1, "Could not handle Tm operator properly: " + operator + " ops: " + str(operands))
             elif operator == b_("BT"):
                 dbg(2, operator)
                 #TODO: to really sort by lines, need to create a dictionary with buckets by y location or something
