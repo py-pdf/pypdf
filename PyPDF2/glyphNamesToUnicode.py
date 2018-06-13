@@ -8,6 +8,7 @@
 #Then removed the redundant space
 # Basic Latin
 glyphNamesToUnicode = {}
+glyphNamesToUnicode['.notdef'] = 0x0000
 glyphNamesToUnicode['space'] = 0x0020
 glyphNamesToUnicode['exclam'] = 0x0021
 glyphNamesToUnicode['quotedbl'] = 0x0022
