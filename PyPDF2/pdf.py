@@ -76,12 +76,13 @@ else:
     from hashlib import md5
 import uuid
 
+import re
+
 def dbg(level, msg):
     debugLevel = 0
     if debugLevel < level:
         return
     print "DBG: " + msg
-import re
 
 class TextState:
     def __init__(self, lineCallback):
@@ -2813,7 +2814,9 @@ class PageObject(DictionaryObject):
         def handleTextElement(operator, textState, _text):
             textState.text += _text
             dbg(10, "Operator: " + operator + ": " + str(textState.currentPosition) + " Tj Text Element (Text: " + _text + ')')
-            if (abs(textState.prevPosition[1] - textState.currentPosition[1]) > lineMargin):
+            newLine = (operator == 'T*' or operator == "'" or operator == '"')
+            if (newLine or
+                abs(textState.prevPosition[1] - textState.currentPosition[1]) > lineMargin):
                 textState.text += "\n"
                 if (textState.lineCallback != None):
                     textState.lineCallback(textState.lineElements)
@@ -2834,16 +2837,13 @@ class PageObject(DictionaryObject):
                 handleTextElement(operator, textState, _text)
             elif operator == b_("T*"):
                 dbg(2, "T*T*T*T*T*T*T*T*T")
-                text += "\n"
+                handleTextElement(operator, textState, '')
             elif operator == b_("'"):
                 dbg(2, "'''''''''''''''''''''''''''''")
-                text += "\n" + translate(operands[0])
+                handleTextElement(operator, textState, translate(operands[0]))
             elif operator == b_('"'):
                 dbg(2, '""""""""""""""""""""""""""""')
-                _text = translate(operands[2])
-                if isinstance(_text, TextStringObject):
-                    text += "\n"
-                    text += _text
+                handleTextElement(operator, textState, translate(operands[2]))
             elif operator == b_("TJ"):
                 dbg(2, "TJTJTJTJTJTJTJTJTJTJTJ")
                 _text = u''
