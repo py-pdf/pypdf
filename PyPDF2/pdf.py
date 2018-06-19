@@ -125,7 +125,10 @@ def parseCMap(cstr, firstChar, lastChar):
 
             for ch in range(int(rr.groups()[0], base=16), 1 + int(rr.groups()[endRange], base=16)):
                 unicodeVal = int(rr.groups()[target], base=16)
-                result[ch] = unichr(unicodeVal)
+                try:
+                    result[ch] = unichr(unicodeVal)
+                except ValueError:
+                    result[ch] = unichr(0)
     return result
 
 def parseEncodingDifferences(arr, firstChar, lastChar):
