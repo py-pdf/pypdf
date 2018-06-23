@@ -235,10 +235,17 @@ else:
         if type(s) == bytes:
             return s
         else:
-            r = s.encode('latin-1')
-            if len(s) < 2:
-                bc[s] = r
-            return r
+            try:
+                r = s.encode('latin-1')
+                if len(s) < 2:
+                    bc[s] = r
+                return r
+            except Exception as e:
+                print(s)
+                r = s.encode('utf-8')
+                if len(s) < 2:
+                    bc[s] = r
+                return r
 
 
 def u_(s):
