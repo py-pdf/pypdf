@@ -91,6 +91,8 @@ class TextState:
         self.prevPosition = (0, 0)
         self.currentPosition = (0, 0)
         self.lineElements = []
+        self.cmap = None
+        self.cmaps = {}
 
 #Code adapted from: https://github.com/mstamy2/PyPDF2/pull/201/commits
 def parseCMap(cstr, firstChar, lastChar):
@@ -114,18 +116,31 @@ def parseCMap(cstr, firstChar, lastChar):
         cstr = group.strip()
         for entry in cstr.split("\n"):
             endRange = 0
-            target = 1
             #Works for chars
             if cmapType == "BFRANGE":
-                rr = re.search("<([0-9a-fA-F]+)>[ \t]*<([0-9a-fA-F]+)>[ \t]*<([0-9a-fA-F]+)>", entry)
+                ws = '[ \t]*'
+                entry = re.sub(ws, "", entry)
+                #This is the starting and end of the range
+                bfrangeRegex = "<([0-9a-fA-F]+)><([0-9a-fA-F]+)>"
+                #This is the target of the range. It could be a simple value or it could be a list in []
+                bfrangeRegex +='(?:' +"\[([^\]]*)" + '|' "<([0-9a-fA-F]+)>+" + ')'
+                rr = re.search(bfrangeRegex, entry)
                 endRange = 1
-                target = 2
+                if (rr != None and rr.groups()[2] == None):
+                    targetChars = [rr.groups()[3]]
+                else:
+                    #The target is a list
+                    targetChars = re.findall('<([0-9a-fA-F]+)>', rr.groups()[2])
             else:
                 rr = re.match("\\s*<([0-9a-fA-F]+)>\\s+<([0-9a-fA-F]+)>\\s*", entry)
-            if rr == None: continue
+                targetChars = [rr.groups()[1]]
 
+            if rr == None: continue
+            curTargetChar = targetChars[0]
             for ch in range(int(rr.groups()[0], base=16), 1 + int(rr.groups()[endRange], base=16)):
-                unicodeVal = int(rr.groups()[target], base=16)
+                if len(targetChars) > 1:
+                    curTargetChar = targetChars.pop(0)
+                unicodeVal = int(curTargetChar, base=16)
                 try:
                     result[ch] = unichr(unicodeVal)
                 except ValueError:
@@ -2785,13 +2800,11 @@ class PageObject(DictionaryObject):
         :return: a unicode string object
         """
         textState = TextState(lineCallback)
-        cmap = None
-        cmaps = {}
         firstParagraph = True
         # Concatenate TextStringObjects and try to translate ByteStringObjects
         # when we have a CMap, when we don't, then byte->string encoding is unknown,
         # so adding them to the text here would be gibberish.
-        def translate(text):
+        def translate(text, cmap):
             newText = ""
             if isinstance(text, TextStringObject):
                 if cmap == None:
@@ -2824,88 +2837,108 @@ class PageObject(DictionaryObject):
             textState.lineElements.append({ 'text':_text, 'x': textState.currentPosition[0], 'y': textState.currentPosition[1]})
             textState.prevPosition = textState.currentPosition
 
+        def processOperations(content, obj):
+            cmap = textState.cmap
+            cmaps = textState.cmaps
+            # Note: we check all strings are TextStringObjects.  ByteStringObjects
+            # are strings where the byte->string encoding was unknown, so adding
+            # them to the text here would be gibberish.
+            for operands, operator in content.operations:
+                if operator == b_("Tj"):
+                    _text = translate(operands[0], cmap)
+                    handleTextElement(operator, textState, _text)
+                elif operator == b_("T*"):
+                    dbg(1, "T*T*T*T*T*T*T*T*T")
+                    handleTextElement(operator, textState, '')
+                elif operator == b_("'"):
+                    dbg(1, "'''''''''''''''''''''''''''''")
+                    handleTextElement(operator, textState, translate(operands[0]), cmap)
+                elif operator == b_('"'):
+                    dbg(1, '""""""""""""""""""""""""""""')
+                    handleTextElement(operator, textState, translate(operands[2]), cmap)
+                elif operator == b_("TJ"):
+                    dbg(1, "TJTJTJTJTJTJTJTJTJTJTJ")
+                    _text = u''
+                    for i in operands[0]:
+                        _text += translate(i, cmap)
+                    handleTextElement(operator, textState, _text)
+                elif operator == b_("Td") or operator == b_("TD"):
+                    dbg(2, operator + ": x = " + str(operands[0]) + " y = " + str(operands[1]))
+                    positionOffset = (operands[0], operands[1])
+                    textState.currentPosition = (textState.currentPosition[0] + positionOffset[0], textState.currentPosition[1] + positionOffset[1])
+                elif operator == b_('Tm'):
+                    if (operands[0] == operands[3] and operands[1] == 0 and operands[2] == 0):
+                        dbg(2, operator + ": x = " + str(operands[4]) + " y = " + str(operands[5]))
+                        textState.currentPosition = (operands[4], operands[5])
+                    else:
+                        dbg(1, "Could not handle Tm operator properly: " + operator + " ops: " + str(operands))
+                elif operator == b_("BT"):
+                    dbg(2, operator)
+                    #TODO: to really sort by lines, need to create a dictionary with buckets by y location or something
+                    textState.currentPosition = (0, 0)
+                elif operator == b_("Tf"):
+                    try:
+                        font = operands[0]
+                        if '/Resources' in obj and '/Font' in obj["/Resources"]:
+                            fontObj = obj["/Resources"]["/Font"][font]
+                        elif '/Font' in self["/Resources"] and '/Font' in self["/Resources"]:
+                            fontObj = self["/Resources"]["/Font"][font]
+                        cmap = cmaps.get(font)
+                        if (cmap == None):
+                            if "/ToUnicode" in fontObj:
+                                try:
+                                    cmapData = fontObj["/ToUnicode"].getData()
+                                    firstChar = 0xffff
+                                    lastChar = 0xffff
+                                    if '/FirstChar' in fontObj:
+                                        firstChar = fontObj['/FirstChar']
+                                    if '/LastChar' in fontObj:
+                                        lastChar = fontObj['/LastChar']
+                                    cmap = parseCMap(str_(cmapData), firstChar, lastChar)
+                                except utils.PdfReadError:
+                                    print("Error reading CMAP (font = " + str(font) + ')')
+                            elif '/Encoding' in fontObj:
+                                encoding =  fontObj["/Encoding"]
+                                if '/Differences' in encoding:
+                                    firstChar = 0xffff
+                                    lastChar = 0xffff
+                                    if '/FirstChar' in fontObj:
+                                        firstChar = fontObj['/FirstChar']
+                                    if '/LastChar' in fontObj:
+                                        lastChar = fontObj['/LastChar']
+                                    cmap_differences = parseEncodingDifferences(fontObj["/Encoding"]['/Differences'],
+                                    firstChar, lastChar)
+                                    if (cmap != None):
+                                        cmap = mergeCmap(cmap_differences, cmap)
+                                    else:
+                                        cmap = cmap_differences
+                            cmaps[font] = cmap
+                            textState.cmap = cmap
+                    except KeyError:
+                        cmap = None
+                        textState.cmap = None
+                    dbg(2, operator)
+                elif operator == b_("Do"):
+                    dbg(2, "Do " + str(operands[0]))
+                    xObjName = operands[0]
+                    if not xObjName in obj['/Resources']['/XObject']:
+                        continue
+                    xObj = obj['/Resources']['/XObject'][xObjName].getObject()
+                    if (xObj['/Subtype'] == '/Form'):
+                        dbg(2, "Processing Form named: " + xObjName)
+                        xobjContent = ContentStream(xObj, self.pdf)
+                        dbg(3, "xObj operations: " + str(xobjContent.operations))
+                        processOperations(xobjContent, xObj)
+                elif operator == b_("ET"):
+                    dbg(3, operator)
+                else:
+                    dbg(1, "operator: " + operator + " ops: " + str(operands))
+            handleTextElement('T*', textState, '')
+
         content = self["/Contents"].getObject()
         if not isinstance(content, ContentStream):
             content = ContentStream(content, self.pdf)
-
-        # Note: we check all strings are TextStringObjects.  ByteStringObjects
-        # are strings where the byte->string encoding was unknown, so adding
-        # them to the text here would be gibberish.
-        for operands, operator in content.operations:
-            if operator == b_("Tj"):
-                _text = translate(operands[0])
-                handleTextElement(operator, textState, _text)
-            elif operator == b_("T*"):
-                dbg(2, "T*T*T*T*T*T*T*T*T")
-                handleTextElement(operator, textState, '')
-            elif operator == b_("'"):
-                dbg(2, "'''''''''''''''''''''''''''''")
-                handleTextElement(operator, textState, translate(operands[0]))
-            elif operator == b_('"'):
-                dbg(2, '""""""""""""""""""""""""""""')
-                handleTextElement(operator, textState, translate(operands[2]))
-            elif operator == b_("TJ"):
-                dbg(2, "TJTJTJTJTJTJTJTJTJTJTJ")
-                _text = u''
-                for i in operands[0]:
-                    _text += translate(i)
-                handleTextElement(operator, textState, _text)
-            elif operator == b_("Td") or operator == b_("TD"):
-                dbg(2, operator + ": x = " + str(operands[0]) + " y = " + str(operands[1]))
-                positionOffset = (operands[0], operands[1])
-                textState.currentPosition = (textState.currentPosition[0] + positionOffset[0], textState.currentPosition[1] + positionOffset[1])
-            elif operator == b_('Tm'):
-                if (operands[0] == operands[3] and operands[1] == 0 and operands[2] == 0):
-                    dbg(2, operator + ": x = " + str(operands[4]) + " y = " + str(operands[5]))
-                    textState.currentPosition = (operands[4], operands[5])
-                else:
-                    dbg(1, "Could not handle Tm operator properly: " + operator + " ops: " + str(operands))
-            elif operator == b_("BT"):
-                dbg(2, operator)
-                #TODO: to really sort by lines, need to create a dictionary with buckets by y location or something
-                textState.currentPosition = (0, 0)
-            elif operator == b_("Tf"):
-                try:
-                    font = operands[0]
-                    fontObj = self["/Resources"]["/Font"][font]
-                    cmap = cmaps.get(font)
-                    if (cmap == None):
-                        if "/ToUnicode" in fontObj:
-                            try:
-                                cmapData = fontObj["/ToUnicode"].getData()
-                                firstChar = 0xffff
-                                lastChar = 0xffff
-                                if '/FirstChar' in fontObj:
-                                    firstChar = fontObj['/FirstChar']
-                                if '/LastChar' in fontObj:
-                                    lastChar = fontObj['/LastChar']
-                                cmap = parseCMap(str_(cmapData), firstChar, lastChar)
-                            except utils.PdfReadError:
-                                print("Error reading CMAP (font = " + str(font) + ')')
-                        if '/Encoding' in fontObj:
-                            encoding =  fontObj["/Encoding"]
-                            if '/Differences' in encoding:
-                                firstChar = 0xffff
-                                lastChar = 0xffff
-                                if '/FirstChar' in fontObj:
-                                    firstChar = fontObj['/FirstChar']
-                                if '/LastChar' in fontObj:
-                                    lastChar = fontObj['/LastChar']
-                                cmap_differences = parseEncodingDifferences(fontObj["/Encoding"]['/Differences'],
-                                    firstChar, lastChar)
-                                if (cmap != None):
-                                    cmap = mergeCmap(cmap_differences, cmap)
-                                else:
-                                    cmap = cmap_differences
-                        cmaps[font] = cmap
-                except KeyError:
-                    cmap = None
-                dbg(2, operator)
-            elif operator == b_("ET"):
-                dbg(3, operator)
-            else:
-                dbg(1, "operator: " + operator + " ops: " + str(operands))
-        handleTextElement('T*', textState, '')
+        processOperations(content, self)
         return textState.text
 
     mediaBox = createRectangleAccessor("/MediaBox", ())
