@@ -2905,6 +2905,7 @@ class PageObject(DictionaryObject):
                 dbg(3, operator)
             else:
                 dbg(1, "operator: " + operator + " ops: " + str(operands))
+        handleTextElement('T*', textState, '')
         return textState.text
 
     mediaBox = createRectangleAccessor("/MediaBox", ())
