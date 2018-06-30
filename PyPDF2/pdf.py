@@ -1758,11 +1758,11 @@ class PdfFileReader(object):
         while line[:5] != b_("%%EOF"):
             if stream.tell() < last1K:
                 raise utils.PdfReadError("EOF marker not found")
-            line = self.readNextEndLine(stream)
+            line = self.readNextEndLine(stream, last1K)
             if debug: print("  line:",line)
 
         # find startxref entry - the location of the xref table
-        line = self.readNextEndLine(stream)
+        line = self.readNextEndLine(stream, last1K)
         try:
             startxref = int(line)
         except ValueError:
@@ -1772,7 +1772,7 @@ class PdfFileReader(object):
             startxref = int(line[9:].strip())
             warnings.warn("startxref on same line as offset")
         else:
-            line = self.readNextEndLine(stream)
+            line = self.readNextEndLine(stream, last1K)
             if line[:9] != b_("startxref"):
                 raise utils.PdfReadError("startxref not found")
 
@@ -1991,13 +1991,13 @@ class PdfFileReader(object):
             if (i+1) >= len(array):
                 break
 
-    def readNextEndLine(self, stream):
+    def readNextEndLine(self, stream, last1K):
         debug = False
         if debug: print(">>readNextEndLine")
         line = b_("")
         while True:
             # Prevent infinite loops in malformed PDFs
-            if stream.tell() == 0:
+            if stream.tell() == last1K:
                 raise utils.PdfReadError("Could not read malformed PDF file")
             x = stream.read(1)
             if debug: print(("  x:", x, "%x"%ord(x)))
