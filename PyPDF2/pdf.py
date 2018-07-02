@@ -2829,7 +2829,8 @@ class PageObject(DictionaryObject):
         def handleTextElement(operator, textState, _text):
             textState.text += _text
             dbg(10, "Operator: " + operator + ": " + str(textState.currentPosition) + " Tj Text Element (Text: " + _text + ')')
-            newLine = (operator == 'T*' or operator == "'" or operator == '"')
+            newLine = (operator == 'FAKENL' or operator == 'T*' or
+                       operator == "'" or operator == '"')
             if (newLine or
                 abs(textState.prevPosition[1] - textState.currentPosition[1]) > lineMargin):
                 textState.text += "\n"
@@ -2935,7 +2936,7 @@ class PageObject(DictionaryObject):
                     dbg(3, operator)
                 else:
                     dbg(1, "operator: " + operator + " ops: " + str(operands))
-            handleTextElement('T*', textState, '')
+            handleTextElement('FAKENL', textState, '')
 
         content = self["/Contents"].getObject()
         if not isinstance(content, ContentStream):
