@@ -102,9 +102,9 @@ def parseCMap(cstr, firstChar, lastChar):
     }
     cmapType = 'UNKNOWN'
     #Char based CMap
-    rr = re.findall("begincmap\n(?:.*?\n)?[0-9]* beginbfchar\n(.*?)\nendbfchar\n", cstr, re.DOTALL)
+    rr = re.findall("begincmap\r?\n(?:.*?\r?\n)?[0-9]* beginbfchar\r?\n(.*?)\r?\nendbfchar\r?\n", cstr, re.DOTALL)
     if (rr == None or len(rr) == 0):
-        rr = re.findall("beginbfrange\n(.*?)\n[ \t]*endbfrange\n", cstr, re.DOTALL)
+        rr = re.findall("beginbfrange\r?\n(.*?)\n[ \t]*endbfrange\r?\n", cstr, re.DOTALL)
         if (rr != None and len(rr) != 0):
             cmapType = "BFRANGE"
         else:
@@ -135,7 +135,8 @@ def parseCMap(cstr, firstChar, lastChar):
                 rr = re.match("\\s*<([0-9a-fA-F]+)>\\s+<([0-9a-fA-F]+)>\\s*", entry)
                 targetChars = [rr.groups()[1]]
 
-            if rr == None: continue
+            if rr == None:
+                continue
             curTargetChar = targetChars[0]
             for ch in range(int(rr.groups()[0], base=16), 1 + int(rr.groups()[endRange], base=16)):
                 if len(targetChars) > 1:
@@ -145,6 +146,7 @@ def parseCMap(cstr, firstChar, lastChar):
                     result[ch] = unichr(unicodeVal)
                 except ValueError:
                     result[ch] = unichr(0)
+    result['__lastChar'] = ch
     return result
 
 def parseEncodingDifferences(arr, firstChar, lastChar):
