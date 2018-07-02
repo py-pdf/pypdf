@@ -2823,6 +2823,8 @@ class PageObject(DictionaryObject):
                         c = ord(text[pos])
                     else:
                         c = (ord(text[pos]) << 8) + ord(text[pos+1])
+                    if c == 0:#This is a hack for cases where singlebyte is written in two bytes
+                        continue
                     newText += cmap.get(c, unichr(ord(c)))
             return newText
 
