@@ -90,7 +90,9 @@ class TextState:
         self.lineCallback = lineCallback
         self.prevPosition = (0, 0)
         self.currentPosition = (0, 0)
-        self.lineElements = []
+        #Every element in the lines dictionary is a list of line elements
+        #The key is the Y bucket of the line
+        self.lines = {}
         self.cmap = None
         self.cmaps = {}
 
@@ -2791,7 +2793,7 @@ class PageObject(DictionaryObject):
                 content = ContentStream(content, self.pdf)
             self[NameObject("/Contents")] = content.flateEncode()
 
-    def extractText(self, lineCallback = None, lineMargin = 0.01):
+    def extractText(self, lineCallback = None, lineMargin = 1):
         """
         Locate all text drawing commands, in the order they are provided in the
         content stream, and extract the text line by line.
@@ -2830,16 +2832,19 @@ class PageObject(DictionaryObject):
 
         def handleTextElement(operator, textState, _text):
             textState.text += _text
-            dbg(10, "Operator: " + operator + ": " + str(textState.currentPosition) + " Tj Text Element (Text: " + _text + ')')
+            dbg(9, "Operator: " + operator + ": " + str(textState.currentPosition) + " Text Element (Text: " + _text + ')')
             newLine = (operator == 'FAKENL' or operator == 'T*' or
                        operator == "'" or operator == '"')
             if (newLine or
                 abs(textState.prevPosition[1] - textState.currentPosition[1]) > lineMargin):
                 textState.text += "\n"
-                if (textState.lineCallback != None):
-                    textState.lineCallback(textState.lineElements)
-                textState.lineElements = []
-            textState.lineElements.append({ 'text':_text, 'x': textState.currentPosition[0], 'y': textState.currentPosition[1]})
+            thisLineElements = []
+            y = int(round(float(textState.currentPosition[1]) / lineMargin))
+            if (y in textState.lines):
+                thisLineElements = textState.lines[y]
+            else:
+                textState.lines[y] = thisLineElements
+            thisLineElements.append({ 'text':_text, 'x': textState.currentPosition[0], 'y': y})
             textState.prevPosition = textState.currentPosition
 
         def processOperations(content, obj):
@@ -2872,11 +2877,12 @@ class PageObject(DictionaryObject):
                     positionOffset = (operands[0], operands[1])
                     textState.currentPosition = (textState.currentPosition[0] + positionOffset[0], textState.currentPosition[1] + positionOffset[1])
                 elif operator == b_('Tm'):
-                    if (operands[0] == operands[3] and operands[1] == 0 and operands[2] == 0):
-                        dbg(2, operator + ": x = " + str(operands[4]) + " y = " + str(operands[5]))
-                        textState.currentPosition = (operands[4], operands[5])
-                    else:
-                        dbg(1, "Could not handle Tm operator properly: " + operator + " ops: " + str(operands))
+                    newX = operands[4] if operands[0] > 0 else -1 * operands[4]
+                    newY = operands[5] if operands[3] > 0 else -1 * operands[5]
+                    dbg(2, operator + ": x = " + str(newX) + " y = " + str(newY))
+                    textState.currentPosition = (newX, newY)
+                    if (operands[0] != operands[3] or operands[1] != 0 or operands[2] != 0):
+                        dbg(1, "Unsafe handling of Tm operator: " + operator + " ops: " + str(operands))
                 elif operator == b_("BT"):
                     dbg(2, operator)
                     #TODO: to really sort by lines, need to create a dictionary with buckets by y location or something
@@ -2937,13 +2943,17 @@ class PageObject(DictionaryObject):
                 elif operator == b_("ET"):
                     dbg(3, operator)
                 else:
-                    dbg(1, "operator: " + operator + " ops: " + str(operands))
+                    dbg(10, "operator: " + operator + " ops: " + str(operands))
             handleTextElement('FAKENL', textState, '')
 
         content = self["/Contents"].getObject()
         if not isinstance(content, ContentStream):
             content = ContentStream(content, self.pdf)
         processOperations(content, self)
+        #Eventually call the line handler for all the lines, in increasing Y order
+        if textState.lineCallback:
+            for y in sorted(textState.lines.keys(), reverse=True):
+                textState.lineCallback(textState.lines[y])
         return textState.text
 
     mediaBox = createRectangleAccessor("/MediaBox", ())
