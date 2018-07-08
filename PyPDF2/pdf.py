@@ -250,17 +250,17 @@ class PdfFileWriter(object):
 
         :param str fname: The filename to display.
         :param str fdata: The data in the file.
-      
+
         Reference:
         https://www.adobe.com/content/dam/Adobe/en/devnet/acrobat/pdfs/PDF32000_2008.pdf
         Section 7.11.3
         """
-        
+
         # We need 3 entries:
         # * The file's data
         # * The /Filespec entry
         # * The file's name, which goes in the Catalog
-        
+
 
         # The entry for the file
         """ Sample:
@@ -272,7 +272,7 @@ class PdfFileWriter(object):
         stream
         Hello world!
         endstream
-        endobj        
+        endobj
         """
         file_entry = DecodedStreamObject()
         file_entry.setData(fdata)
@@ -291,14 +291,14 @@ class PdfFileWriter(object):
         """
         efEntry = DictionaryObject()
         efEntry.update({ NameObject("/F"):file_entry })
-        
+
         filespec = DictionaryObject()
         filespec.update({
                 NameObject("/Type"): NameObject("/Filespec"),
                 NameObject("/F"): createStringObject(fname),  # Perhaps also try TextStringObject
                 NameObject("/EF"): efEntry
                 })
-                
+
         # Then create the entry for the root, as it needs a reference to the Filespec
         """ Sample:
         1 0 obj
@@ -309,13 +309,13 @@ class PdfFileWriter(object):
          /Names << /EmbeddedFiles << /Names [(hello.txt) 7 0 R] >> >>
         >>
         endobj
-        
+
         """
         embeddedFilesNamesDictionary = DictionaryObject()
         embeddedFilesNamesDictionary.update({
                 NameObject("/Names"): ArrayObject([createStringObject(fname), filespec])
                 })
-        
+
         embeddedFilesDictionary = DictionaryObject()
         embeddedFilesDictionary.update({
                 NameObject("/EmbeddedFiles"): embeddedFilesNamesDictionary
@@ -329,7 +329,7 @@ class PdfFileWriter(object):
         """
         Copy pages from reader to writer. Includes an optional callback parameter
         which is invoked after pages are appended to the writer.
-        
+
         :param reader: a PdfFileReader object from which to copy page
             annotations to this writer object.  The writer's annots
         will then be updated
@@ -373,7 +373,7 @@ class PdfFileWriter(object):
     def cloneReaderDocumentRoot(self, reader):
         '''
         Copy the reader document root to the writer.
-        
+
         :param reader:  PdfFileReader from the document root should be copied.
         :callback after_page_append
         '''
@@ -2114,6 +2114,27 @@ class PdfFileReader(object):
     Note that this property, if true, will remain true even after the
     :meth:`decrypt()<PdfFileReader.decrypt>` method is called.
     """
+
+    def getAttachments(self):
+          """
+          Retrieves the file attachments of the PDF as a dictionary of file names
+          and the file data as a bytestring.
+
+          :return: dictionary of filenames and bytestrings
+          """
+          catalog = self.trailer["/Root"]
+          # From the catalog get the embedded file names
+          fileNames = catalog['/Names']['/EmbeddedFiles']['/Names']
+          attachments = {}
+          # Loop through attachments
+          for f in fileNames:
+              if isinstance(f, str):
+                  name = f
+                  dataIndex = fileNames.index(f) + 1
+                  fDict = fileNames[dataIndex].getObject()
+                  fData = fDict['/EF']['/F'].getData()
+                  attachments[name] = fData
+          return attachments
 
 
 def getRectangle(self, name, defaults):
