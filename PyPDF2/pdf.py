@@ -116,6 +116,7 @@ def parseCMap(cstr, firstChar, lastChar):
         cmapType = "BFCHAR"
 
     for group in rr:
+        maxCh = 0
         cstr = group.strip()
         for entry in cstr.split("\n"):
             endRange = 0
@@ -141,15 +142,18 @@ def parseCMap(cstr, firstChar, lastChar):
             if rr == None:
                 continue
             curTargetChar = targetChars[0]
+            targetOffset = 0
             for ch in range(int(rr.groups()[0], base=16), 1 + int(rr.groups()[endRange], base=16)):
                 if len(targetChars) > 1:
                     curTargetChar = targetChars.pop(0)
-                unicodeVal = int(curTargetChar, base=16)
+                unicodeVal = int(curTargetChar, base=16) + targetOffset
                 try:
                     result[ch] = unichr(unicodeVal)
                 except ValueError:
                     result[ch] = unichr(0)
-    result['__lastChar'] = ch
+                targetOffset += 1
+                maxCh = max(ch, maxCh)
+    result['__lastChar'] = maxCh
     return result
 
 def parseEncodingDifferences(arr, firstChar, lastChar):
@@ -161,6 +165,7 @@ def parseEncodingDifferences(arr, firstChar, lastChar):
     for pos in range(len(arr)):
         if isinstance(arr[pos], NumberObject):
             ordinal = arr[pos] - 1
+            #TODO: Complete the cmap from the base encoding...
             continue
         ordinal += 1
         glyph = arr[pos][1:]
