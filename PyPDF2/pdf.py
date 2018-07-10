@@ -118,33 +118,28 @@ def parseCMap(cstr, firstChar, lastChar):
 
     for group in rr:
         maxCh = 0
-        cstr = group.strip()
-        for entry in cstr.split("\n"):
-            endRange = 0
+        ws = '[ \t]*'
+        group = re.sub(ws, "", group)
+        entries = re.findall('([0-9a-fA-F]+)><([0-9a-fA-F]+)>(?:(\[[^\]]*\])|<([0-9a-fA-F]+)>)', group)
+        #This is the target of the range. It could be a simple value or it could be a list in []
+
+        for entry in entries:
             #Works for chars
             if cmapType == "BFRANGE":
-                ws = '[ \t]*'
-                entry = re.sub(ws, "", entry)
-                #This is the starting and end of the range
-                bfrangeRegex = "<([0-9a-fA-F]+)><([0-9a-fA-F]+)>"
-                #This is the target of the range. It could be a simple value or it could be a list in []
-                bfrangeRegex +='(?:' +"\[([^\]]*)" + '|' "<([0-9a-fA-F]+)>+" + ')'
-                rr = re.search(bfrangeRegex, entry)
-                endRange = 1
-                if (rr != None and rr.groups()[2] == None):
-                    targetChars = [rr.groups()[3]]
+                if entry[3] != '':
+                    targetChars = [entry[3]]
                 else:
                     #The target is a list
-                    targetChars = re.findall('<([0-9a-fA-F]+)>', rr.groups()[2])
+                    targetChars = re.findall('<([0-9a-fA-F]+)>', entry[2])
             else:
-                rr = re.match("\\s*<([0-9a-fA-F]+)>\\s+<([0-9a-fA-F]+)>\\s*", entry)
-                targetChars = [rr.groups()[1]]
+                charMatch = re.match("\\s*<([0-9a-fA-F]+)>\\s+<([0-9a-fA-F]+)>\\s*", entry)
+                targetChars = [charMatch.groups()[1]]
 
-            if rr == None:
+            if targetChars == None:
                 continue
             curTargetChar = targetChars[0]
             targetOffset = 0
-            for ch in range(int(rr.groups()[0], base=16), 1 + int(rr.groups()[endRange], base=16)):
+            for ch in range(int(entry[0], base=16), 1 + int(entry[1], base=16)):
                 if len(targetChars) > 1:
                     curTargetChar = targetChars.pop(0)
                 unicodeVal = int(curTargetChar, base=16) + targetOffset
