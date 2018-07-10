@@ -1302,6 +1302,8 @@ class PdfFileReader(object):
         try:
             self._override_encryption = True
             return self.trailer["/Root"].getXmpMetadata()
+        except:
+            return None
         finally:
             self._override_encryption = False
 
