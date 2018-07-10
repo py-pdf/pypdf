@@ -4,6 +4,7 @@
 #
 # Copyright (c) 2006, Mathieu Fenniak
 # Copyright (c) 2007, Ashish Kulkarni <kulkarni.ashish@gmail.com>
+# Copyright (c) 2018, Assi Abramovitz <assiabramovitz@gmail.com>
 #
 # All rights reserved.
 #
@@ -106,49 +107,53 @@ def parseCMap(cstr, firstChar, lastChar):
     }
     cmapType = 'UNKNOWN'
     #Char based CMap
-    rr = re.findall("begincmap\r?\n(?:.*?\r?\n)?[0-9]* beginbfchar\r?\n(.*?)\r?\nendbfchar\r?\n", cstr, re.DOTALL)
-    if (rr == None or len(rr) == 0):
-        rr = re.findall("beginbfrange\r?\n(.*?)\n[ \t]*endbfrange\r?\n", cstr, re.DOTALL)
-        if (rr != None and len(rr) != 0):
-            cmapType = "BFRANGE"
-        else:
-            return None
-    else:
-        cmapType = "BFCHAR"
-
-    for group in rr:
-        maxCh = 0
-        ws = '[ \t]*'
-        group = re.sub(ws, "", group)
-        entries = re.findall('([0-9a-fA-F]+)><([0-9a-fA-F]+)>(?:(\[[^\]]*\])|<([0-9a-fA-F]+)>)', group)
-        #This is the target of the range. It could be a simple value or it could be a list in []
-
-        for entry in entries:
-            #Works for chars
-            if cmapType == "BFRANGE":
-                if entry[3] != '':
-                    targetChars = [entry[3]]
-                else:
-                    #The target is a list
-                    targetChars = re.findall('<([0-9a-fA-F]+)>', entry[2])
+    submaps = re.findall('((?:beginbfchar.*endbfchar)|(?:beginbfrange.*endbfrange))', cstr, re.DOTALL)
+    for submap in submaps:
+        rr = re.findall("beginbfchar\r?\n(.*?)\r?\nendbfchar", submap, re.DOTALL)
+        if (rr == None or len(rr) == 0):
+            rr = re.findall("beginbfrange\r?\n(.*?)\n[ \t]*endbfrange", submap, re.DOTALL)
+            if (rr != None and len(rr) != 0):
+                cmapType = "BFRANGE"
             else:
-                charMatch = re.match("\\s*<([0-9a-fA-F]+)>\\s+<([0-9a-fA-F]+)>\\s*", entry)
-                targetChars = [charMatch.groups()[1]]
+                return None
+        else:
+            cmapType = "BFCHAR"
 
-            if targetChars == None:
-                continue
-            curTargetChar = targetChars[0]
-            targetOffset = 0
-            for ch in range(int(entry[0], base=16), 1 + int(entry[1], base=16)):
-                if len(targetChars) > 1:
-                    curTargetChar = targetChars.pop(0)
-                unicodeVal = int(curTargetChar, base=16) + targetOffset
-                try:
-                    result[ch] = unichr(unicodeVal)
-                except ValueError:
-                    result[ch] = unichr(0)
-                targetOffset += 1
-                maxCh = max(ch, maxCh)
+        for group in rr:
+            maxCh = 0
+            ws = '[ \t]*'
+            group = re.sub(ws, "", group)
+            entries = re.findall('([0-9a-fA-F]+)><([0-9a-fA-F]+)>(?:(\[[^\]]*\])|<([0-9a-fA-F]+)>)?', group)
+            #This is the target of the range. It could be a simple value or it could be a list in []
+
+            for entry in entries:
+                targetIncrement = 1
+                sourceFirst = int(entry[0], base=16)
+                sourceLast = sourceFirst
+                if cmapType == "BFRANGE":
+                    sourceLast = int(entry[1], base=16)
+                    if entry[3] != '':
+                        targetChars = [entry[3]]
+                    else:
+                        #The target is a list
+                        targetChars = re.findall('<([0-9a-fA-F]+)>', entry[2])
+                        targetIncrement = 0
+                        sourceFirst = int(entry[0], base=16)
+                else:#BFCHAR
+                    targetChars = [entry[1]]
+
+                curTargetChar = targetChars[0]
+                targetOffset = 0
+                for ch in range(sourceFirst, 1 + sourceLast):
+                    if len(targetChars) > 1:
+                        curTargetChar = targetChars.pop(0)
+                    unicodeVal = int(curTargetChar, base=16) + targetOffset
+                    try:
+                        result[ch] = unichr(unicodeVal)
+                    except ValueError:
+                        result[ch] = unichr(0)
+                    targetOffset += targetIncrement
+                    maxCh = max(ch, maxCh)
     result['__lastChar'] = maxCh
     return result
 
