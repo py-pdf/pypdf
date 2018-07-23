@@ -91,7 +91,9 @@ class TextState:
         self.lineCallback = lineCallback
         self.prevPosition = (0, 0)
         self.currentPosition = (0, 0)
-        self.graphicsStack = [(1,1)]
+        #The semantics is (xMult, yMult, yShift)
+        #So Y = y*yMult + yShift
+        self.graphicsStack = [(1, 1, 0)]
         #Every element in the lines dictionary is a list of line elements
         #The key is the Y bucket of the line
         self.lines = {}
@@ -2852,7 +2854,8 @@ class PageObject(DictionaryObject):
             thisLineElements = []
             #The Y component of the Top of stack
             yMult = textState.graphicsStack[0][1]
-            y = int(round(float(textState.currentPosition[1] * yMult) / lineMargin))
+            yShift = float(textState.graphicsStack[0][2])
+            y = int(round(float(textState.currentPosition[1] * yMult) / lineMargin) + yShift)
             if (y in textState.lines):
                 thisLineElements = textState.lines[y]
             else:
@@ -2906,7 +2909,7 @@ class PageObject(DictionaryObject):
                 elif operator == b_('cm'):
                     dbg(10, "cm operator: " + operator + " ops: " + str(operands))
                     #Update the top of stack
-                    textState.graphicsStack[0] = (operands[0], operands[3])
+                    textState.graphicsStack[0] = (operands[0], operands[3], operands[5])
                 elif operator == b_("BT"):
                     dbg(2, operator)
                     #TODO: to really sort by lines, need to create a dictionary with buckets by y location or something
@@ -2969,13 +2972,13 @@ class PageObject(DictionaryObject):
                 elif operator == b_("q"):
                     dbg(10, "Save grahics state: " + operator + " ops: " + str(operands))
                     #Insert a default state to the top of stack
-                    textState.graphicsStack.insert(0, (1,1))
+                    textState.graphicsStack.insert(0, (1, 1, 0))
                 elif operator == b_("Q"):
                     dbg(10, "Restore graphics state: " + operator + " ops: " + str(operands))
                     #Remove the top of stack
                     textState.graphicsStack.pop(0)
                     if len(textState.graphicsStack) == 0:
-                        textState.graphicsStack = [(1,1)]
+                        textState.graphicsStack = [(1, 1, 0)]
                 else:
                     dbg(10, "operator: " + operator + " ops: " + str(operands))
             handleTextElement('FAKENL', textState, '')
