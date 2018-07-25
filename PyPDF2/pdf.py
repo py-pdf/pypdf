@@ -85,15 +85,24 @@ def dbg(level, msg):
         return
     print "DBG: " + msg
 
+class GraphicsMatrix:
+    """
+    Y = y*yMult + yShift
+    X = x*xMult + xShift
+    """
+    def __init__(self, xMult = 1, yMult = 1, xShift = 0, yShift = 0):
+        self.xMult = xMult
+        self.yMult = yMult
+        self.xShift = xShift
+        self.yShift = yShift
+
 class TextState:
     def __init__(self, lineCallback):
         self.text = u_("")
         self.lineCallback = lineCallback
         self.prevPosition = (0, 0)
         self.currentPosition = (0, 0)
-        #The semantics is (xMult, yMult, yShift)
-        #So Y = y*yMult + yShift
-        self.graphicsStack = [(1, 1, 0)]
+        self.graphicsStack = [GraphicsMatrix()]
         #Every element in the lines dictionary is a list of line elements
         #The key is the Y bucket of the line
         self.lines = {}
@@ -2853,15 +2862,32 @@ class PageObject(DictionaryObject):
                 abs(textState.prevPosition[1] - textState.currentPosition[1]) > lineMargin):
                 textState.text += "\n"
             thisLineElements = []
+            thisColumnElements = []
             #The Y component of the Top of stack
-            yMult = textState.graphicsStack[0][1]
-            yShift = float(textState.graphicsStack[0][2])
-            y = int(round(float(textState.currentPosition[1] * yMult) / lineMargin) + yShift)
-            if (y in textState.lines):
-                thisLineElements = textState.lines[y]
+            yMult = float(textState.graphicsStack[0].yMult)
+            yShift = float(textState.graphicsStack[0].yShift)
+            xMult = float(textState.graphicsStack[0].xMult)
+            xShift = float(textState.graphicsStack[0].xShift)
+
+            x = float(textState.currentPosition[0]* xMult + xShift)
+            y = float(textState.currentPosition[1])
+            firstWordXPosition = float(textState.currentPosition[0])
+            rtlElement = True
+            if rtlElement:
+                #TODO: what's the real width of a character? What's the width of a word space?
+                #lineMargin is used just as a placeholder for that...
+                firstWordXPosition = float(textState.currentPosition[0]) + len(_text) * lineMargin
+            #TODO: calcualte the real width of this text element
+            rightMostX = float(textState.currentPosition[0] * xMult + xShift) + len(_text) * 5
+
+            line   = int(round((float(textState.currentPosition[1]) * yMult + yShift) / lineMargin))
+            if (line in textState.lines):
+                thisLineElements = textState.lines[line]
             else:
-                textState.lines[y] = thisLineElements
-            thisLineElements.append({ 'text':_text, 'x': textState.currentPosition[0], 'y': y})
+                textState.lines[line] = thisLineElements
+
+            element = { 'text':_text, 'x': x, 'y': y, 'rightMostX': rightMostX, 'line': line}
+            thisLineElements.append(element)
             textState.prevPosition = textState.currentPosition
 
         def processOperations(content, obj):
@@ -2891,18 +2917,18 @@ class PageObject(DictionaryObject):
                     _text = u''
                     for i in operands[0]:
                         if isinstance(i, decimal.Decimal) or isinstance(i, NumberObject):
-                            #TODO: per char positioning
-                            textState.currentPosition = textState.currentPosition#(textState.currentPosition[0] - (i / 1000), textState.currentPosition[1])
+                            #per char position micro-adjustment
+                            textState.currentPosition = (float(textState.currentPosition[0]) - (float(i) / 1000), textState.currentPosition[1])
                         else:
                             _text += translate(i, cmap)
                     handleTextElement(operator, textState, _text)
                 elif operator == b_("Td") or operator == b_("TD"):
                     dbg(2, operator + ": x = " + str(operands[0]) + " y = " + str(operands[1]))
-                    positionOffset = (operands[0], operands[1])
+                    positionOffset = (float(operands[0]), float(operands[1]))
                     textState.currentPosition = (textState.currentPosition[0] + positionOffset[0], textState.currentPosition[1] + positionOffset[1])
                 elif operator == b_('Tm'):
-                    newX = operands[4] if operands[0] > 0 else -1 * operands[4]
-                    newY = operands[5] if operands[3] > 0 else -1 * operands[5]
+                    newX = float(operands[4] if operands[0] > 0 else -1 * operands[4])
+                    newY = float(operands[5] if operands[3] > 0 else -1 * operands[5])
                     dbg(2, operator + ": x = " + str(newX) + " y = " + str(newY))
                     textState.currentPosition = (newX, newY)
                     if (operands[0] != operands[3] or operands[1] != 0 or operands[2] != 0):
@@ -2910,7 +2936,7 @@ class PageObject(DictionaryObject):
                 elif operator == b_('cm'):
                     dbg(10, "cm operator: " + operator + " ops: " + str(operands))
                     #Update the top of stack
-                    textState.graphicsStack[0] = (operands[0], operands[3], operands[5])
+                    textState.graphicsStack[0] = GraphicsMatrix(operands[0], operands[3], operands[4], operands[5])
                 elif operator == b_("BT"):
                     dbg(2, operator)
                     #TODO: to really sort by lines, need to create a dictionary with buckets by y location or something
@@ -2973,13 +2999,13 @@ class PageObject(DictionaryObject):
                 elif operator == b_("q"):
                     dbg(10, "Save grahics state: " + operator + " ops: " + str(operands))
                     #Insert a default state to the top of stack
-                    textState.graphicsStack.insert(0, (1, 1, 0))
+                    textState.graphicsStack.insert(0, GraphicsMatrix())
                 elif operator == b_("Q"):
                     dbg(10, "Restore graphics state: " + operator + " ops: " + str(operands))
                     #Remove the top of stack
                     textState.graphicsStack.pop(0)
                     if len(textState.graphicsStack) == 0:
-                        textState.graphicsStack = [(1, 1, 0)]
+                        textState.graphicsStack = [GraphicsMatrix()]
                 else:
                     dbg(10, "operator: " + operator + " ops: " + str(operands))
             handleTextElement('FAKENL', textState, '')
@@ -2991,7 +3017,7 @@ class PageObject(DictionaryObject):
         #Eventually call the line handler for all the lines, in increasing Y order
         if textState.lineCallback:
             for y in sorted(textState.lines.keys(), reverse=True):
-                textState.lineCallback(textState.lines[y])
+                textState.lineCallback(textState.lines[y], textState)
         return textState.text
 
     mediaBox = createRectangleAccessor("/MediaBox", ())
