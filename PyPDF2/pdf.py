@@ -109,7 +109,8 @@ def parseCMap(cstr, firstChar, lastChar):
     }
     cmapType = 'UNKNOWN'
     #Char based CMap
-    submaps = re.findall('((?:beginbfchar.*endbfchar)|(?:beginbfrange.*endbfrange))', cstr, re.DOTALL)
+    #.*? -> non greedy match, to catch the closest closing marker, not the furthest
+    submaps = re.findall('((?:beginbfchar.*?endbfchar)|(?:beginbfrange.*?endbfrange))', cstr, re.DOTALL)
     for submap in submaps:
         rr = re.findall("beginbfchar\r?\n(.*?)\r?\nendbfchar", submap, re.DOTALL)
         if (rr == None or len(rr) == 0):
@@ -2839,7 +2840,7 @@ class PageObject(DictionaryObject):
                         c = (ord(text[pos]) << 8) + ord(text[pos+1])
                     if c == 0:#This is a hack for cases where singlebyte is written in two bytes
                         continue
-                    newChar = cmap.get(c,unichr(c))
+                    newChar = cmap.get(c, unichr(c))
                     newText += newChar
             return newText
 
