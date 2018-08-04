@@ -40,8 +40,12 @@ def parse_args():
     # argparse chokes on page ranges like "-2:" unless caught like this:
     parser.add_argument("fn_pgrgs", nargs=argparse.REMAINDER,
                         metavar="filenames and/or page ranges")
+    parser.add_argument("-T", "--toc", action="store_true",
+                        help="stores an auto-generated Table of Contents to "
+                        "output file")
     args = parser.parse_args()
     args.fn_pgrgs.insert(0, args.first_filename[0])
+
     return args
 
 
@@ -49,13 +53,15 @@ from sys import stderr, stdout, exit
 import os
 import traceback
 from collections import defaultdict
+from os.path import basename
 
-from PyPDF2 import PdfFileMerger, parse_filename_page_ranges
+from PyPDF2 import PdfFileMerger, PdfFileReader, parse_filename_page_ranges
 
 
 if __name__ == "__main__":
     args = parse_args()
     filename_page_ranges = parse_filename_page_ranges(args.fn_pgrgs)
+
     if args.output:
         output = open(args.output, "wb")
     else:
@@ -64,17 +70,37 @@ if __name__ == "__main__":
 
     merger = PdfFileMerger()
     in_fs = dict()
+    curr_page = 0
+
     try:
         for (filename, page_range) in filename_page_ranges:
             if args.verbose:
                 print(filename, page_range, file=stderr)
             if filename not in in_fs:
                 in_fs[filename] = open(filename, "rb")
+
             merger.append(in_fs[filename], pages=page_range)
+
+            if args.toc:
+                r = PdfFileReader(filename)
+                # fallback_name equals 'a' if filename == 'a.pdf',
+                # or 'b' if filename == 'b.x',or 'c' if
+                # filename == '/u/v/w/c.x' ...
+                fallback_name = basename(filename)
+                fallback_name = fallback_name[:fallback_name.rfind(".")]
+
+                merger.addBookmark(
+                    getattr(r.getDocumentInfo(), "title", fallback_name) or\
+                        fallback_name,
+                    curr_page
+                )
+
+                curr_page += r.numPages
     except:
         print(traceback.format_exc(), file=stderr)
         print("Error while reading " + filename, file=stderr)
         exit(1)
+
     merger.write(output)
     # In 3.0, input files must stay open until output is written.
     # Not closing the in_fs because this script exits now.
