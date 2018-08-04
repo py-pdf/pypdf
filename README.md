@@ -7,7 +7,16 @@ data, viewing options, and passwords to PDF files.
 It can retrieve text and metadata from PDFs as well
 as merge entire files together.
 
-Homepage  
+What happened to PyPDF2?  Nothing; it's still available
+at https://github.com/mstamy2/PyPDF2 .  For various reasons
+claird will eventually explain, I've simply decided to mark
+a new "business model" with a slightly-renamed project name.
+PyPDF4 will continue to be available at no charge, but,
+starting in August 2018, I have strong plans for better 
+ongoing support.
+
+
+Homepage (available soon) 
 http://claird.github.io/PyPDF4/
 
 ## Examples
@@ -21,8 +30,9 @@ https://pythonhosted.org/PyPDF4/
 
 
 ## FAQ
-Please see  
+Please see
 http://claird.github.io/PyPDF4/FAQ.html
+(available in early August)
 
 
 ## Tests
