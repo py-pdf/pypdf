@@ -11,9 +11,8 @@ What happened to PyPDF2?  Nothing; it's still available
 at https://github.com/mstamy2/PyPDF2 .  For various reasons
 claird will eventually explain, I've simply decided to mark
 a new "business model" with a slightly-renamed project name.
-PyPDF4 will continue to be available at no charge, but,
-starting in August 2018, I have strong plans for better 
-ongoing support.
+While PyPDF4 will continue to be available at no charge, I
+have strong plans for better ongoing support to start in August 2018.
 
 
 Homepage (available soon) 
@@ -25,7 +24,7 @@ Please see the `Sample_Code` folder.
 
 ## Documentation
 
-Documentation soon will be available at  
+Documentation soon will be available, although probably not at  
 https://pythonhosted.org/PyPDF4/
 
 
@@ -36,7 +35,7 @@ http://claird.github.io/PyPDF4/FAQ.html
 
 
 ## Tests
-PyPDF4 includes a test suite built on the unittest framework. All tests are located in the "Tests" folder.
+PyPDF4 includes a modest (but growing!) test suite built on the unittest framework. All tests are located in the "Tests" folder.
 Tests can be run from the command line by:
 
 ```bash
