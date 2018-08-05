@@ -6,7 +6,7 @@ http://stackoverflow.com/questions/2693820/extract-images-from-pdf-without-resam
 '''
 
 import sys
-import PyPDF2
+import PyPDF4
 from PIL import Image
 
 if (len(sys.argv) != 2):
@@ -16,7 +16,7 @@ if (len(sys.argv) != 2):
 pdf = sys.argv[1]
 
 if __name__ == '__main__':
-    input1 = PyPDF2.PdfFileReader(open(pdf, "rb"))
+    input1 = PyPDF4.PdfFileReader(open(pdf, "rb"))
     page0 = input1.getPage(30)
 
     if '/XObject' in page0['/Resources']:

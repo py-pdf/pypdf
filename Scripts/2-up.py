@@ -1,4 +1,4 @@
-from PyPDF2 import PdfFileWriter, PdfFileReader
+from PyPDF4 import PdfFileWriter, PdfFileReader
 import sys
 import math
 
@@ -25,7 +25,7 @@ def main():
 
 if __name__ == "__main__":
     main()
-from PyPDF2 import PdfFileWriter, PdfFileReader
+from PyPDF4 import PdfFileWriter, PdfFileReader
 import sys
 import math
 
