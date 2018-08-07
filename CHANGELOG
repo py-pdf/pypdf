@@ -1,4 +1,11 @@
-﻿Version 1.26.0, 2016-05-18
+Version 1.27.0, 2018-08-07
+--------------------------
+- NOTE:  Active maintenance shifts to PyPDF4
+
+- No functional changes:  just migration to PyPDF4
+
+
+Version 1.26.0, 2016-05-18
 --------------------------
 
  - NOTE: Active maintenance on PyPDF2 is resuming after a hiatus
