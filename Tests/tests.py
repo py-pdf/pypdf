@@ -3,7 +3,7 @@ import sys
 import unittest
 import binascii
 
-from PyPDF2 import PdfFileReader, PdfFileWriter
+from PyPDF3 import PdfFileReader, PdfFileWriter
 
 
 # Configure path environment

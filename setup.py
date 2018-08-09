@@ -20,7 +20,7 @@ objects rather than file streams, allowing for PDF manipulation in memory.
 It is therefore a useful tool for websites that manage or manipulate PDFs.
 """
 
-VERSIONFILE="PyPDF2/_version.py"
+VERSIONFILE="PyPDF3/_version.py"
 verstrline = open(VERSIONFILE, "rt").read()
 VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
 mo = re.search(VSRE, verstrline, re.M)
@@ -30,15 +30,13 @@ else:
     raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE))
 
 setup(
-        name="PyPDF2",
+        name="PyPDF3",
         version=verstr,
-        description="PDF toolkit",
+        description="Pure Python PDF toolkit",
         long_description=long_description,
-        author="Mathieu Fenniak",
-        author_email="biziqe@mathieu.fenniak.net",
-        maintainer="Phaseit, Inc.",
-        maintainer_email="PyPDF2@phaseit.net",
-        url="http://mstamy2.github.com/PyPDF2",
+        author="Stephen Neal",
+        author_email="stephen@stephenneal.net",
+        url="https://github.com/mrstephenneal/PyPDF3",
         classifiers = [
             "Development Status :: 5 - Production/Stable",
             "Intended Audience :: Developers",
@@ -48,5 +46,5 @@ setup(
             "Operating System :: OS Independent",
             "Topic :: Software Development :: Libraries :: Python Modules",
             ],
-        packages=["PyPDF2"],
+        packages=["PyPDF3"],
     )

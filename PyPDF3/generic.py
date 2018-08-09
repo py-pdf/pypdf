@@ -853,13 +853,13 @@ class EncodedStreamObject(StreamObject):
 
 class RectangleObject(ArrayObject):
     """
-    This class is used to represent *page boxes* in PyPDF2. These boxes include:
+    This class is used to represent *page boxes* in PyPDF3. These boxes include:
 
-        * :attr:`artBox <PyPDF2.pdf.PageObject.artBox>`
-        * :attr:`bleedBox <PyPDF2.pdf.PageObject.bleedBox>`
-        * :attr:`cropBox <PyPDF2.pdf.PageObject.cropBox>`
-        * :attr:`mediaBox <PyPDF2.pdf.PageObject.mediaBox>`
-        * :attr:`trimBox <PyPDF2.pdf.PageObject.trimBox>`
+        * :attr:`artBox <PyPDF3.pdf.PageObject.artBox>`
+        * :attr:`bleedBox <PyPDF3.pdf.PageObject.bleedBox>`
+        * :attr:`cropBox <PyPDF3.pdf.PageObject.cropBox>`
+        * :attr:`mediaBox <PyPDF3.pdf.PageObject.mediaBox>`
+        * :attr:`trimBox <PyPDF3.pdf.PageObject.trimBox>`
     """
     def __init__(self, arr):
         # must have four points
@@ -954,7 +954,7 @@ class RectangleObject(ArrayObject):
 class Field(TreeObject):
     """
     A class representing a field dictionary. This class is accessed through
-    :meth:`getFields()<PyPDF2.PdfFileReader.getFields>`
+    :meth:`getFields()<PyPDF3.PdfFileReader.getFields>`
     """
     def __init__(self, data):
         DictionaryObject.__init__(self)
@@ -994,8 +994,8 @@ class Field(TreeObject):
     mappingName = property(lambda self: self.get("/TM"))
     """
     Read-only property accessing the mapping name of this field. This
-    name is used by PyPDF2 as a key in the dictionary returned by
-    :meth:`getFields()<PyPDF2.PdfFileReader.getFields>`
+    name is used by PyPDF3 as a key in the dictionary returned by
+    :meth:`getFields()<PyPDF3.PdfFileReader.getFields>`
     """
 
     flags = property(lambda self: self.get("/Ff"))
