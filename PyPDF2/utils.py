@@ -33,11 +33,7 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 
 
 import sys
-
-try:
-    import __builtin__ as builtins
-except ImportError:  # Py3
-    import builtins
+import builtins
 
 
 xrange_fn = getattr(builtins, "xrange", range)
