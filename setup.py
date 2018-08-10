@@ -37,7 +37,7 @@ setup(
         author="Stephen Neal",
         author_email="stephen@stephenneal.net",
         url="https://github.com/mrstephenneal/PyPDF3",
-        classifiers = [
+        classifiers=[
             "Development Status :: 5 - Production/Stable",
             "Intended Audience :: Developers",
             "License :: OSI Approved :: BSD License",
