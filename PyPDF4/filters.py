@@ -38,7 +38,7 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 import math
 from sys import version_info
 
-from .utils import PdfReadError, ord_, paethPredictor
+from .utils import PdfReadError, ord_, paethPredictor, PdfStreamError
 
 if version_info < (3, 0):
     from cStringIO import StringIO
@@ -205,30 +205,52 @@ class FlateDecode(object):
 
 
 class ASCIIHexDecode(object):
+    """
+        The ASCIIHexDecode filter decodes data that has been encoded in ASCII
+        hexadecimal form into a base-7 ASCII format.
+    """
     def decode(data, decodeParms=None):
+        """
+        :param data: a str sequence of hexadecimal-encoded values to be
+            converted into a base-7 ASCII string
+        :param decodeParms:
+        :return: a string conversion in base-7 ASCII, where each of its values
+            v is such that 0 <= ord(v) <= 127.
+        """
         retval = ""
-        char = ""
-        x = 0
+        hex_pair = ""
+        eod_found = False
 
-        while True:
-            c = data[x]
-
+        for c in data:
             if c == ">":
+                # If the filter encounters the EOD marker after reading an odd
+                # number of hexadecimal digits, it shall behave as if a 0
+                # (zero) followed the last digit - from ISO 32000 specification
+                if len(hex_pair) == 1:
+                    hex_pair += "0"
+                    retval += chr(int(hex_pair, base=16))
+                    hex_pair = ""
+
+                eod_found = True
                 break
             elif c.isspace():
-                x += 1
                 continue
 
-            char += c
+            hex_pair += c
 
-            if len(char) == 2:
-                retval += chr(int(char, base=16))
-                char = ""
+            if len(hex_pair) == 2:
+                retval += chr(int(hex_pair, base=16))
+                hex_pair = ""
 
-            x += 1
+        if not eod_found:
+            raise PdfStreamError("Ending character '>' not found in stream")
 
-        assert char == ""
+        assert hex_pair == ""
+
         return retval
+
+    def encode(data):
+        pass
 
     decode = staticmethod(decode)
 

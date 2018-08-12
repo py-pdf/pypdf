@@ -8,9 +8,10 @@ import sys
 import unittest
 
 from itertools import product as cartesian_product
+from unittest import skip
 
-from PyPDF4.filters import FlateDecode
-from PyPDF4.utils import PdfReadError
+from PyPDF4.filters import FlateDecode, ASCIIHexDecode
+from PyPDF4.utils import PdfReadError, PdfStreamError
 
 
 class FlateDecodeTestCase(unittest.TestCase):
@@ -20,7 +21,7 @@ class FlateDecodeTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.filter_inputs = (
-            # "", '', """""",
+            "", '', """""",
             string.ascii_lowercase, string.ascii_uppercase,
             string.ascii_letters, string.digits, string.hexdigits,
             string.punctuation, string.whitespace,  # Add more...
@@ -61,6 +62,62 @@ class FlateDecodeTestCase(unittest.TestCase):
                     msg="(predictor, input) = (%d, %s)" % (predictor, s),
             ):
                 codec.decode(codec.encode(s), {"/Predictor": predictor})
+
+
+class ASCIIHexDecodeTestCase(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.filter_inputs = (
+            "", '', """""",
+            ">", ">>", ">>>",
+            string.ascii_lowercase, string.ascii_uppercase,
+            string.ascii_letters, string.digits, string.hexdigits,
+            string.punctuation, string.whitespace,  # Add more...
+        )
+
+    def test_expected_results(self):
+        """
+        Feeds a bunch of values to ASCIIHexDecode.decode() and ensures the
+        correct output is returned.
+
+        TO-DO What is decode() supposed to do for such inputs as ">>", ">>>" or
+        any other not terminated by ">"? (For the latter case, an exception
+        is currently raised.)
+        """
+        inputs = (
+            ">", "6162636465666768696a6b6c6d6e6f707172737475767778797a>",
+            "4142434445464748494a4b4c4d4e4f505152535455565758595a>",
+            "6162636465666768696a6b6c6d6e6f707172737475767778797a4142434445464"
+            "748494a4b4c4d4e4f505152535455565758595a>",
+            "30313233343536373839>",
+            "3  031323334353637   3839>",  # Same as previous, but whitespaced
+            "30313233343536373839616263646566414243444546>", "20090a0d0b0c>",
+        )
+        expected_outputs = (
+            "", string.ascii_lowercase, string.ascii_uppercase,
+            string.ascii_letters, string.digits, string.digits,
+            string.hexdigits, string.whitespace
+        )
+
+        for i, o in zip(inputs, expected_outputs):
+            self.assertEqual(
+                ASCIIHexDecode.decode(i), o,
+                msg="i = %s" % i
+            )
+            # print(
+            #     "ASCIIHexDecode.decode(%s) == %s" % (i, ASCIIHexDecode.decode(i))
+            # )
+
+
+    def test_no_eod(self):
+        """
+        Tests when no EOD character is present, ensuring an exception is raised
+        """
+        inputs = ("", '', """""", '''''')
+
+        for i in inputs:
+            with self.assertRaises(PdfStreamError):
+                ASCIIHexDecode.decode(i)
 
 
 if __name__ == "__main__":

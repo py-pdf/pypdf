@@ -1234,10 +1234,11 @@ class PdfFileReader(object):
         :return: a :class:`PageObject<pdf.PageObject>` instance.
         :rtype: :class:`PageObject<pdf.PageObject>`
         """
-        ## ensure that we're not trying to access an encrypted PDF
-        #assert not self.trailer.has_key("/Encrypt")
-        if self.flattenedPages == None:
+        # Ensure that we're not trying to access an encrypted PDF
+        # assert not self.trailer.has_key("/Encrypt")
+        if self.flattenedPages is None:
             self._flatten()
+
         return self.flattenedPages[pageNumber]
 
     namedDestinations = property(lambda self:

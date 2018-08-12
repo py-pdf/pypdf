@@ -416,7 +416,7 @@ class ByteStringObject(utils.bytes_type, PdfObject):
         if encryption_key:
             bytearr = RC4_encrypt(encryption_key, bytearr)
         stream.write(b_("<"))
-        stream.write(utils.hexencode(bytearr))
+        stream.write(b_(utils.hexencode(bytearr)))
         stream.write(b_(">"))
 
 
