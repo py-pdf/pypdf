@@ -1,3 +1,5 @@
+# TO-DO Rename and swap `tests.py` to a more specific test environment (
+# e.g. only the `pdf.py` or `utils.py` file)
 import binascii
 import os
 import sys
@@ -14,7 +16,6 @@ sys.path.append(PROJECT_ROOT)
 
 
 class PdfReaderTestCases(unittest.TestCase):
-
     def test_PdfReaderFileLoad(self):
         '''
         Test loading and parsing of a file. Extract text of the file and

@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 # vim: sw=4:expandtab:foldmethod=marker
 #
 # Copyright (c) 2006, Mathieu Fenniak
@@ -113,7 +114,7 @@ except ImportError:
         )
         gz.Write(bytes, 0, bytes.Length)
         gz.Close()
-        ms.Position = 0 # fseek 0
+        ms.Position = 0  # fseek 0
         bytes = ms.ToArray()
         retval = _bytearr_to_string(bytes)
         ms.Close()
@@ -122,67 +123,84 @@ except ImportError:
 
 class FlateDecode(object):
     def decode(data, decodeParms):
+        """
+
+        :param data: flate-encoded data.
+        :param decodeParms: a dictionary of values, understanding the
+            "/Predictor":<int> key only
+        :return: the flate-decoded data.
+        """
         data = decompress(data)
         predictor = 1
+
         if decodeParms:
             try:
                 predictor = decodeParms.get("/Predictor", 1)
             except AttributeError:
-                pass    # usually an array with a null object was read
+                pass    # Usually an array with a null object was read
 
         # predictor 1 == no predictor
         if predictor != 1:
-            columns = decodeParms["/Columns"]
+            # The /Columns param. has 1 as the default value; see ISO 32000,
+            # §7.4.4.3 LZWDecode and FlateDecode Parameters, Table 8
+            columns = decodeParms.get("/Columns", 1)
+
             # PNG prediction:
             if 10 <= predictor <= 15:
                 output = StringIO()
                 # PNG prediction can vary from row to row
-                rowlength = columns + 1
-                assert len(data) % rowlength == 0
-                prev_rowdata = (0,) * rowlength
-                for row in range(len(data) // rowlength):
+                row_length = columns + 1
+                assert len(data) % row_length == 0
+                prev_rowdata = (0, ) * row_length
+
+                for row in range(len(data) // row_length):
                     rowdata = [
-                        ord_(x) for x in data[(row*rowlength):((row+1)*rowlength)]
+                        ord_(x) for x in
+                            data[(row*row_length):((row+1)*row_length)]
                     ]
                     filterByte = rowdata[0]
+
                     if filterByte == 0:
                         pass
                     elif filterByte == 1:
-                        for i in range(2, rowlength):
+                        for i in range(2, row_length):
                             rowdata[i] = (rowdata[i] + rowdata[i-1]) % 256
                     elif filterByte == 2:
-                        for i in range(1, rowlength):
+                        for i in range(1, row_length):
                             rowdata[i] = (rowdata[i] + prev_rowdata[i]) % 256
                     elif filterByte == 3:
-                        for i in range(1, rowlength):
-                            left = rowdata[i-1] if i > 1 else 0
+                        for i in range(1, row_length):
+                            left = rowdata[i - 1] if i > 1 else 0
                             floor = math.floor(left + prev_rowdata[i])/2
                             rowdata[i] = (rowdata[i] + int(floor)) % 256
                     elif filterByte == 4:
-                        for i in range(1, rowlength):
+                        for i in range(1, row_length):
                             left = rowdata[i - 1] if i > 1 else 0
                             up = prev_rowdata[i]
                             up_left = prev_rowdata[i - 1] if i > 1 else 0
                             paeth = paethPredictor(left, up, up_left)
                             rowdata[i] = (rowdata[i] + paeth) % 256
                     else:
-                        # unsupported PNG filter
+                        # Unsupported PNG filter
                         raise PdfReadError(
                             "Unsupported PNG filter %r" % filterByte
                         )
                     prev_rowdata = rowdata
                     output.write(''.join([chr(x) for x in rowdata[1:]]))
+
                 data = output.getvalue()
             else:
                 # unsupported predictor
                 raise PdfReadError(
                     "Unsupported flatedecode predictor %r" % predictor
                 )
+
         return data
-    decode = staticmethod(decode)
 
     def encode(data):
         return compress(data)
+
+    decode = staticmethod(decode)
     encode = staticmethod(encode)
 
 
@@ -239,6 +257,7 @@ class LZWDecode(object):
         def nextCode(self):
             fillbits = self.bitspercode
             value = 0
+
             while fillbits > 0:
                 if self.bytepos >= len(self.data):
                     return -1
@@ -258,6 +277,7 @@ class LZWDecode(object):
                 if self.bitpos >=8:
                     self.bitpos=0
                     self.bytepos = self.bytepos+1
+
             return value
 
         def decode(self):
@@ -266,34 +286,36 @@ class LZWDecode(object):
             http://www.rasip.fer.hr/research/compress/algorithms/fund/lz/lzw.html
             and the PDFReference
             """
-            cW = self.CLEARDICT;
+            cW = self.CLEARDICT
             baos=""
 
             while True:
-                pW = cW;
-                cW = self.nextCode();
+                pW = cW
+                cW = self.nextCode()
+
                 if cW == -1:
                     raise PdfReadError("Missed the stop code in LZWDecode!")
                 if cW == self.STOP:
-                    break;
+                    break
                 elif cW == self.CLEARDICT:
-                    self.resetDict();
+                    self.resetDict()
                 elif pW == self.CLEARDICT:
-                    baos+=self.dict[cW]
+                    baos += self.dict[cW]
                 else:
                     if cW < self.dictlen:
                         baos += self.dict[cW]
-                        p=self.dict[pW]+self.dict[cW][0]
-                        self.dict[self.dictlen]=p
-                        self.dictlen+=1
+                        p = self.dict[pW] + self.dict[cW][0]
+                        self.dict[self.dictlen] = p
+                        self.dictlen += 1
                     else:
-                        p=self.dict[pW]+self.dict[pW][0]
-                        baos+=p
-                        self.dict[self.dictlen] = p;
-                        self.dictlen+=1
+                        p = self.dict[pW] + self.dict[pW][0]
+                        baos += p
+                        self.dict[self.dictlen] = p
+                        self.dictlen += 1
                     if (self.dictlen >= (1 << self.bitspercode) - 1 and
-                        self.bitspercode < 12):
-                        self.bitspercode+=1
+                            self.bitspercode < 12):
+                        self.bitspercode += 1
+
             return baos
 
     @staticmethod
@@ -329,14 +351,14 @@ class ASCII85Decode(object):
                         # cannot have a final group of just 1 char
                         assert len(group) > 1
                         cnt = len(group) - 1
-                        group += [ 85, 85, 85 ]
+                        group += [85, 85, 85]
                         hitEod = cnt
                     else:
                         break
                 else:
                     c = ord(c) - 33
-                    assert c >= 0 and c < 85
-                    group += [ c ]
+                    assert 0 <= c < 85
+                    group += [c]
                 if len(group) >= 5:
                     b = group[0] * (85**4) + \
                         group[1] * (85**3) + \
@@ -360,11 +382,11 @@ class ASCII85Decode(object):
             n = b = 0
             out = bytearray()
             for c in data:
-                if ord('!') <= c and c <= ord('u'):
+                if ord('!') <= c <= ord('u'):
                     n += 1
                     b = b*85+(c-33)
                     if n == 5:
-                        out += struct.pack(b'>L',b)
+                        out += struct.pack(b'>L', b)
                         n = b = 0
                 elif c == ord('z'):
                     assert n == 0
