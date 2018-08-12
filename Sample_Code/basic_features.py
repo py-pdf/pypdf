@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from PyPDF4.pdf import PdfFileWriter, PdfFileReader
 
 
@@ -5,7 +7,7 @@ output = PdfFileWriter()
 input1 = PdfFileReader(open("document1.pdf", "rb"))
 
 # print how many pages input1 has:
-print "document1.pdf has %d pages." % input1.getNumPages()
+print("document1.pdf has %d pages." % input1.getNumPages())
 
 # add page 1 from input1 to output document, unchanged
 output.addPage(input1.getPage(0))
@@ -42,5 +44,5 @@ password = "secret"
 output.encrypt(password)
 
 # finally, write "output" to document-output.pdf
-outputStream = file("PyPDF2-output.pdf", "wb")
+outputStream = open("PyPDF4-output.pdf", "wb")
 output.write(outputStream)

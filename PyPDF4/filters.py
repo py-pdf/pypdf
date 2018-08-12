@@ -58,21 +58,21 @@ except ImportError:
     # Unable to import zlib.  Attempt to use the System.IO.Compression
     # library from the .NET framework. (IronPython only)
     import System
-    from System import IO, Collections, Array
+    from System import IO, Array
 
     def _string_to_bytearr(buf):
         retval = Array.CreateInstance(System.Byte, len(buf))
 
-        for i in range(len(buf)):
+        for i in range(len(buf)):    # pylint: disable=consider-using-enumerate
             retval[i] = ord(buf[i])
 
         return retval
 
-    def _bytearr_to_string(bytes):
+    def _bytearr_to_string(these_bytes):
         retval = ""
 
-        for i in range(bytes.Length):
-            retval += chr(bytes[i])
+        for i in range(these_bytes.Length):
+            retval += chr(these_bytes[i])
 
         return retval
 
@@ -81,12 +81,12 @@ except ImportError:
         buf = Array.CreateInstance(System.Byte, 2048)
 
         while True:
-            bytes = stream.Read(buf, 0, buf.Length)
+            these_bytes = stream.Read(buf, 0, buf.Length)
 
-            if bytes == 0:
+            if these_bytes == 0:
                 break
             else:
-                ms.Write(buf, 0, bytes)
+                ms.Write(buf, 0, these_bytes)
 
         retval = ms.ToArray()
         ms.Close()
@@ -94,35 +94,35 @@ except ImportError:
         return retval
 
     def decompress(data):
-        bytes = _string_to_bytearr(data)
+        these_bytes = _string_to_bytearr(data)
         ms = IO.MemoryStream()
-        ms.Write(bytes, 0, bytes.Length)
+        ms.Write(bytes, 0, these_bytes.Length)
         ms.Position = 0  # fseek 0
         gz = IO.Compression.DeflateStream(
             ms, IO.Compression.CompressionMode.Decompress
         )
-        bytes = _read_bytes(gz)
-        retval = _bytearr_to_string(bytes)
+        these_bytes = _read_bytes(gz)
+        retval = _bytearr_to_string(these_bytes)
         gz.Close()
         return retval
 
     def compress(data):
-        bytes = _string_to_bytearr(data)
+        these_bytes = _string_to_bytearr(data)
         ms = IO.MemoryStream()
         gz = IO.Compression.DeflateStream(
             ms, IO.Compression.CompressionMode.Compress, True
         )
-        gz.Write(bytes, 0, bytes.Length)
+        gz.Write(these_bytes, 0, these_bytes.Length)
         gz.Close()
         ms.Position = 0  # fseek 0
-        bytes = ms.ToArray()
-        retval = _bytearr_to_string(bytes)
+        these_bytes = ms.ToArray()
+        retval = _bytearr_to_string(these_bytes)
         ms.Close()
         return retval
 
 
 class FlateDecode(object):
-    def decode(data, decodeParms):
+    def decode(data, decodeParms):    # pylint: disable=too-many-locals, too-many-branches
         """
 
         :param data: flate-encoded data.
@@ -156,7 +156,7 @@ class FlateDecode(object):
                 for row in range(len(data) // row_length):
                     rowdata = [
                         ord_(x) for x in
-                            data[(row*row_length):((row+1)*row_length)]
+                        data[(row*row_length):((row+1)*row_length)]
                     ]
                     filterByte = rowdata[0]
 
@@ -209,7 +209,7 @@ class ASCIIHexDecode(object):
         The ASCIIHexDecode filter decodes data that has been encoded in ASCII
         hexadecimal form into a base-7 ASCII format.
     """
-    def decode(data, decodeParms=None):
+    def decode(data, _decodeParms=None):
         """
         :param data: a str sequence of hexadecimal-encoded values to be
             converted into a base-7 ASCII string
@@ -249,18 +249,18 @@ class ASCIIHexDecode(object):
 
         return retval
 
-    def encode(data):
+    def encode(self):
         pass
 
     decode = staticmethod(decode)
 
 
-class LZWDecode(object):
+class LZWDecode(object):    # pylint: disable=too-few-public-methods
     """
     Taken from:
     http://www.java2s.com/Open-Source/Java-Document/PDF/PDF-Renderer/com/sun/pdfview/decode/LZWDecode.java.htm
     """
-    class decoder(object):
+    class decoder(object):    # pylint: disable=too-many-instance-attributes
         def __init__(self, data):
             self.STOP = 257
             self.CLEARDICT = 256
@@ -284,8 +284,8 @@ class LZWDecode(object):
                 if self.bytepos >= len(self.data):
                     return -1
 
-                nextbits=ord_(self.data[self.bytepos])
-                bitsfromhere=8-self.bitpos
+                nextbits = ord_(self.data[self.bytepos])
+                bitsfromhere = 8-self.bitpos
 
                 if bitsfromhere > fillbits:
                     bitsfromhere = fillbits
@@ -296,8 +296,8 @@ class LZWDecode(object):
                 fillbits -= bitsfromhere
                 self.bitpos += bitsfromhere
 
-                if self.bitpos >=8:
-                    self.bitpos=0
+                if self.bitpos >= 8:
+                    self.bitpos = 0
                     self.bytepos = self.bytepos+1
 
             return value
@@ -309,7 +309,7 @@ class LZWDecode(object):
             and the PDFReference
             """
             cW = self.CLEARDICT
-            baos=""
+            baos = ""
 
             while True:
                 pW = cW
@@ -341,35 +341,35 @@ class LZWDecode(object):
             return baos
 
     @staticmethod
-    def decode(data, decodeParams=None):
+    def decode(data, _decodeParams=None):
         return LZWDecode.decoder(data).decode()
 
 
-class ASCII85Decode(object):
-    def decode(data, decodeParms=None):
-        if version_info < ( 3, 0 ):
+class ASCII85Decode(object):    # pylint: disable=too-few-public-methods
+    def decode(data, _decodeParms=None):    # pylint: disable=too-many-branches, too-many-statements, too-many-locals
+        if version_info < (3, 0):
             retval = ""
             group = []
             x = 0
             hitEod = False
             # remove all whitespace from data
-            data = [y for y in data if not (y in ' \n\r\t')]
+            data = [y for y in data if not y in ' \n\r\t']
 
             while not hitEod:
                 c = data[x]
-                if len(retval) == 0 and c == "<" and data[x+1] == "~":
+                if not retval and c == "<" and data[x+1] == "~":
                     x += 2
                     continue
                 #elif c.isspace():
                 #    x += 1
                 #    continue
                 elif c == 'z':
-                    assert len(group) == 0
+                    assert not group
                     retval += '\x00\x00\x00\x00'
                     x += 1
                     continue
                 elif c == "~" and data[x+1] == ">":
-                    if len(group) != 0:
+                    if group:
                         # cannot have a final group of just 1 char
                         assert len(group) > 1
                         cnt = len(group) - 1
@@ -398,51 +398,50 @@ class ASCII85Decode(object):
                     group = []
                 x += 1
             return retval
-        else:
-            if isinstance(data, str):
-                data = data.encode('ascii')
-            n = b = 0
-            out = bytearray()
-            for c in data:
-                if ord('!') <= c <= ord('u'):
-                    n += 1
-                    b = b*85+(c-33)
-                    if n == 5:
-                        out += struct.pack(b'>L', b)
-                        n = b = 0
-                elif c == ord('z'):
-                    assert n == 0
-                    out += b'\0\0\0\0'
-                elif c == ord('~'):
-                    if n:
-                        for _ in range(5-n):
-                            b = b*85+84
-                        out += struct.pack(b'>L',b)[:n-1]
-                    break
-            return bytes(out)
+        if isinstance(data, str):
+            data = data.encode('ascii')
+        n = b = 0
+        out = bytearray()
+        for c in data:
+            if ord('!') <= c <= ord('u'):
+                n += 1
+                b = b*85+(c-33)
+                if n == 5:
+                    out += struct.pack(b'>L', b)
+                    n = b = 0
+            elif c == ord('z'):
+                assert n == 0
+                out += b'\0\0\0\0'
+            elif c == ord('~'):
+                if n:
+                    for _ in range(5-n):
+                        b = b*85+84
+                    out += struct.pack(b'>L', b)[:n-1]
+                break
+        return bytes(out)
     decode = staticmethod(decode)
 
 
-class DCTDecode(object):
-    def decode(data, decodeParms=None):
+class DCTDecode(object):    # pylint: disable=too-few-public-methods
+    def decode(data, _decodeParms=None):
         return data
     decode = staticmethod(decode)
 
 
-class JPXDecode(object):
-    def decode(data, decodeParms=None):
+class JPXDecode(object):    # pylint: disable=too-few-public-methods
+    def decode(data, _decodeParms=None):
         return data
     decode = staticmethod(decode)
 
 
-class CCITTFaxDecode(object):   
+class CCITTFaxDecode(object):    # pylint: disable=too-few-public-methods
     def decode(data, decodeParms=None, height=0):
         if decodeParms:
             if decodeParms.get("/K", 1) == -1:
                 CCITTgroup = 4
             else:
                 CCITTgroup = 3
-        
+
         width = decodeParms["/Columns"]
         imgSize = len(data)
         tiff_header_struct = '<' + '2s' + 'h' + 'l' + 'h' + 'hhll' * 8 + 'h'
@@ -464,17 +463,17 @@ class CCITTFaxDecode(object):
             279, 4, 1, imgSize,  # StripByteCounts, LONG, 1, size of image
             0  # last IFD
         )
-        
+
         return tiffHeader + data
-    
+
     decode = staticmethod(decode)
 
 
-def decodeStreamData(stream):
+def decodeStreamData(stream):    # pylint: disable=too-many-branches
     from .generic import NameObject
     filters = stream.get("/Filter", ())
 
-    if len(filters) and not isinstance(filters[0], NameObject):
+    if filters and not isinstance(filters[0], NameObject):
         # we have a single filter instance
         filters = (filters,)
 
@@ -483,13 +482,13 @@ def decodeStreamData(stream):
     # If there is not data to decode we should not try to decode the data.
     if data:
         for filterType in filters:
-            if filterType == "/FlateDecode" or filterType == "/Fl":
+            if filterType in ["/FlateDecode", "/Fl"]:
                 data = FlateDecode.decode(data, stream.get("/DecodeParms"))
-            elif filterType == "/ASCIIHexDecode" or filterType == "/AHx":
+            elif filterType in ["/ASCIIHexDecode", "/AHx"]:
                 data = ASCIIHexDecode.decode(data)
-            elif filterType == "/LZWDecode" or filterType == "/LZW":
+            elif filterType in ["/LZWDecode", "/LZW"]:
                 data = LZWDecode.decode(data, stream.get("/DecodeParms"))
-            elif filterType == "/ASCII85Decode" or filterType == "/A85":
+            elif filterType in ["/ASCII85Decode", "/A85"]:
                 data = ASCII85Decode.decode(data)
             elif filterType == "/DCTDecode":
                 data = DCTDecode.decode(data)
