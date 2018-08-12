@@ -35,10 +35,11 @@ __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import math
-
-from .utils import PdfReadError, ord_, chr_, paethPredictor
 from sys import version_info
-if version_info < ( 3, 0 ):
+
+from .utils import PdfReadError, ord_, paethPredictor
+
+if version_info < (3, 0):
     from cStringIO import StringIO
 else:
     from io import StringIO
@@ -52,7 +53,6 @@ try:
 
     def compress(data):
         return zlib.compress(data)
-
 except ImportError:
     # Unable to import zlib.  Attempt to use the System.IO.Compression
     # library from the .NET framework. (IronPython only)
@@ -61,27 +61,35 @@ except ImportError:
 
     def _string_to_bytearr(buf):
         retval = Array.CreateInstance(System.Byte, len(buf))
+
         for i in range(len(buf)):
             retval[i] = ord(buf[i])
+
         return retval
 
     def _bytearr_to_string(bytes):
         retval = ""
+
         for i in range(bytes.Length):
             retval += chr(bytes[i])
+
         return retval
 
     def _read_bytes(stream):
         ms = IO.MemoryStream()
         buf = Array.CreateInstance(System.Byte, 2048)
+
         while True:
             bytes = stream.Read(buf, 0, buf.Length)
+
             if bytes == 0:
                 break
             else:
                 ms.Write(buf, 0, bytes)
+
         retval = ms.ToArray()
         ms.Close()
+
         return retval
 
     def decompress(data):
@@ -89,7 +97,9 @@ except ImportError:
         ms = IO.MemoryStream()
         ms.Write(bytes, 0, bytes.Length)
         ms.Position = 0  # fseek 0
-        gz = IO.Compression.DeflateStream(ms, IO.Compression.CompressionMode.Decompress)
+        gz = IO.Compression.DeflateStream(
+            ms, IO.Compression.CompressionMode.Decompress
+        )
         bytes = _read_bytes(gz)
         retval = _bytearr_to_string(bytes)
         gz.Close()
@@ -98,7 +108,9 @@ except ImportError:
     def compress(data):
         bytes = _string_to_bytearr(data)
         ms = IO.MemoryStream()
-        gz = IO.Compression.DeflateStream(ms, IO.Compression.CompressionMode.Compress, True)
+        gz = IO.Compression.DeflateStream(
+            ms, IO.Compression.CompressionMode.Compress, True
+        )
         gz.Write(bytes, 0, bytes.Length)
         gz.Close()
         ms.Position = 0 # fseek 0
@@ -122,14 +134,16 @@ class FlateDecode(object):
         if predictor != 1:
             columns = decodeParms["/Columns"]
             # PNG prediction:
-            if predictor >= 10 and predictor <= 15:
+            if 10 <= predictor <= 15:
                 output = StringIO()
                 # PNG prediction can vary from row to row
                 rowlength = columns + 1
                 assert len(data) % rowlength == 0
                 prev_rowdata = (0,) * rowlength
                 for row in range(len(data) // rowlength):
-                    rowdata = [ord_(x) for x in data[(row*rowlength):((row+1)*rowlength)]]
+                    rowdata = [
+                        ord_(x) for x in data[(row*rowlength):((row+1)*rowlength)]
+                    ]
                     filterByte = rowdata[0]
                     if filterByte == 0:
                         pass
@@ -153,13 +167,17 @@ class FlateDecode(object):
                             rowdata[i] = (rowdata[i] + paeth) % 256
                     else:
                         # unsupported PNG filter
-                        raise PdfReadError("Unsupported PNG filter %r" % filterByte)
+                        raise PdfReadError(
+                            "Unsupported PNG filter %r" % filterByte
+                        )
                     prev_rowdata = rowdata
                     output.write(''.join([chr(x) for x in rowdata[1:]]))
                 data = output.getvalue()
             else:
                 # unsupported predictor
-                raise PdfReadError("Unsupported flatedecode predictor %r" % predictor)
+                raise PdfReadError(
+                    "Unsupported flatedecode predictor %r" % predictor
+                )
         return data
     decode = staticmethod(decode)
 
@@ -173,70 +191,84 @@ class ASCIIHexDecode(object):
         retval = ""
         char = ""
         x = 0
+
         while True:
             c = data[x]
+
             if c == ">":
                 break
             elif c.isspace():
                 x += 1
                 continue
+
             char += c
+
             if len(char) == 2:
                 retval += chr(int(char, base=16))
                 char = ""
+
             x += 1
+
         assert char == ""
         return retval
+
     decode = staticmethod(decode)
 
 
 class LZWDecode(object):
-    """Taken from:
+    """
+    Taken from:
     http://www.java2s.com/Open-Source/Java-Document/PDF/PDF-Renderer/com/sun/pdfview/decode/LZWDecode.java.htm
     """
     class decoder(object):
         def __init__(self, data):
-            self.STOP=257
-            self.CLEARDICT=256
-            self.data=data
-            self.bytepos=0
-            self.bitpos=0
-            self.dict=[""]*4096
+            self.STOP = 257
+            self.CLEARDICT = 256
+            self.data = data
+            self.bytepos = 0
+            self.bitpos = 0
+            self.dict = [""]*4096
             for i in range(256):
-                self.dict[i]=chr(i)
+                self.dict[i] = chr(i)
             self.resetDict()
 
         def resetDict(self):
-            self.dictlen=258
-            self.bitspercode=9
+            self.dictlen = 258
+            self.bitspercode = 9
 
         def nextCode(self):
-            fillbits=self.bitspercode
-            value=0
-            while fillbits>0 :
+            fillbits = self.bitspercode
+            value = 0
+            while fillbits > 0:
                 if self.bytepos >= len(self.data):
                     return -1
+
                 nextbits=ord_(self.data[self.bytepos])
                 bitsfromhere=8-self.bitpos
-                if bitsfromhere>fillbits:
-                    bitsfromhere=fillbits
+
+                if bitsfromhere > fillbits:
+                    bitsfromhere = fillbits
+
                 value |= (((nextbits >> (8-self.bitpos-bitsfromhere)) &
                            (0xff >> (8-bitsfromhere))) <<
                           (fillbits-bitsfromhere))
                 fillbits -= bitsfromhere
                 self.bitpos += bitsfromhere
+
                 if self.bitpos >=8:
                     self.bitpos=0
                     self.bytepos = self.bytepos+1
             return value
 
         def decode(self):
-            """ algorithm derived from:
+            """
+            Algorithm derived from:
             http://www.rasip.fer.hr/research/compress/algorithms/fund/lz/lzw.html
             and the PDFReference
             """
             cW = self.CLEARDICT;
             baos=""
+
             while True:
                 pW = cW;
                 cW = self.nextCode();
@@ -265,7 +297,7 @@ class LZWDecode(object):
             return baos
 
     @staticmethod
-    def decode(data,decodeParams=None):
+    def decode(data, decodeParams=None):
         return LZWDecode.decoder(data).decode()
 
 
@@ -278,6 +310,7 @@ class ASCII85Decode(object):
             hitEod = False
             # remove all whitespace from data
             data = [y for y in data if not (y in ' \n\r\t')]
+
             while not hitEod:
                 c = data[x]
                 if len(retval) == 0 and c == "<" and data[x+1] == "~":
@@ -345,16 +378,19 @@ class ASCII85Decode(object):
             return bytes(out)
     decode = staticmethod(decode)
 
+
 class DCTDecode(object):
     def decode(data, decodeParms=None):
         return data
     decode = staticmethod(decode)
-    
+
+
 class JPXDecode(object):
     def decode(data, decodeParms=None):
         return data
     decode = staticmethod(decode)
-    
+
+
 class CCITTFaxDecode(object):   
     def decode(data, decodeParms=None, height=0):
         if decodeParms:
@@ -366,26 +402,30 @@ class CCITTFaxDecode(object):
         width = decodeParms["/Columns"]
         imgSize = len(data)
         tiff_header_struct = '<' + '2s' + 'h' + 'l' + 'h' + 'hhll' * 8 + 'h'
-        tiffHeader = struct.pack(tiff_header_struct,
-                           b'II',  # Byte order indication: Little endian
-                           42,  # Version number (always 42)
-                           8,  # Offset to first IFD
-                           8,  # Number of tags in IFD
-                           256, 4, 1, width,  # ImageWidth, LONG, 1, width
-                           257, 4, 1, height,  # ImageLength, LONG, 1, length
-                           258, 3, 1, 1,  # BitsPerSample, SHORT, 1, 1
-                           259, 3, 1, CCITTgroup,  # Compression, SHORT, 1, 4 = CCITT Group 4 fax encoding
-                           262, 3, 1, 0,  # Thresholding, SHORT, 1, 0 = WhiteIsZero
-                           273, 4, 1, struct.calcsize(tiff_header_struct),  # StripOffsets, LONG, 1, length of header
-                           278, 4, 1, height,  # RowsPerStrip, LONG, 1, length
-                           279, 4, 1, imgSize,  # StripByteCounts, LONG, 1, size of image
-                           0  # last IFD
-                           )
+        tiffHeader = struct.pack(
+            tiff_header_struct,
+            b'II',  # Byte order indication: Little endian
+            42,  # Version number (always 42)
+            8,  # Offset to first IFD
+            8,  # Number of tags in IFD
+            256, 4, 1, width,  # ImageWidth, LONG, 1, width
+            257, 4, 1, height,  # ImageLength, LONG, 1, length
+            258, 3, 1, 1,  # BitsPerSample, SHORT, 1, 1
+            # Compression, SHORT, 1, 4 = CCITT Group 4 fax encoding
+            259, 3, 1, CCITTgroup,
+            262, 3, 1, 0,  # Thresholding, SHORT, 1, 0 = WhiteIsZero
+            # StripOffsets, LONG, 1, length of header
+            273, 4, 1, struct.calcsize(tiff_header_struct),
+            278, 4, 1, height,  # RowsPerStrip, LONG, 1, length
+            279, 4, 1, imgSize,  # StripByteCounts, LONG, 1, size of image
+            0  # last IFD
+        )
         
         return tiffHeader + data
     
     decode = staticmethod(decode)
-    
+
+
 def decodeStreamData(stream):
     from .generic import NameObject
     filters = stream.get("/Filter", ())
@@ -393,7 +433,9 @@ def decodeStreamData(stream):
     if len(filters) and not isinstance(filters[0], NameObject):
         # we have a single filter instance
         filters = (filters,)
+
     data = stream._data
+
     # If there is not data to decode we should not try to decode the data.
     if data:
         for filterType in filters:
@@ -411,14 +453,19 @@ def decodeStreamData(stream):
                 data = JPXDecode.decode(data)
             elif filterType == "/CCITTFaxDecode":
                 height = stream.get("/Height", ())
-                data = CCITTFaxDecode.decode(data, stream.get("/DecodeParms"), height)
+                data = CCITTFaxDecode.decode(
+                    data, stream.get("/DecodeParms"), height
+                )
             elif filterType == "/Crypt":
                 decodeParams = stream.get("/DecodeParams", {})
                 if "/Name" not in decodeParams and "/Type" not in decodeParams:
                     pass
                 else:
-                    raise NotImplementedError("/Crypt filter with /Name or /Type not supported yet")
+                    raise NotImplementedError(
+                        "/Crypt filter with /Name or /Type not supported yet"
+                    )
             else:
                 # unsupported filter
                 raise NotImplementedError("unsupported filter %s" % filterType)
+
     return data

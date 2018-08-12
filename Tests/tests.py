@@ -77,7 +77,6 @@ class PdfReaderTestCases(unittest.TestCase):
 
 
 class AddJsTestCase(unittest.TestCase):
-
     def setUp(self):
         ipdf = PdfFileReader(os.path.join(RESOURCE_ROOT, 'crazyones.pdf'))
         self.pdf_file_writer = PdfFileWriter()

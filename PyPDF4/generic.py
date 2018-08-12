@@ -34,17 +34,18 @@ Implementation of generic PDF objects (dictionary, number, string, and so on)
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
+import codecs
+import decimal
 import re
-from .utils import readNonWhitespace, RC4_encrypt, skipOverComment
-from .utils import b_, u_, chr_, ord_
-from .utils import PdfStreamError
 import warnings
+
 from . import filters
 from . import utils
-import decimal
-import codecs
-import sys
-#import debugging
+from .utils import PdfStreamError
+from .utils import b_, u_, chr_, ord_
+from .utils import readNonWhitespace, RC4_encrypt, skipOverComment
+
+# import debugging
 
 ObjectPrefix = b_('/<[tf(n%')
 NumberSigns = b_('+-')
