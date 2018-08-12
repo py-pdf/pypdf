@@ -279,13 +279,21 @@ def barray(b):
         return bytearray(b)
 
 
-def hexencode(b):
+def hexencode(s):
+    """
+    Converts a string s to an hexadecimal string representation.
+
+    :param s: a string to convert from UTF-8 characters to a hexadecimal string
+        representation.
+    :return: a hex-encoded string, e.g. hexencode("AA") == "4141".
+    """
     if sys.version_info[0] < 3:
-        return b.encode('hex')
+        return s.encode('hex')
     else:
         import codecs
-        coder = codecs.getencoder('hex_codec')
-        return coder(b)[0]
+        e = codecs.getencoder('hex_codec')
+
+        return e(s.encode("utf-8"))[0].decode("utf-8")
 
 
 def hexStr(num):

@@ -1,7 +1,6 @@
 *.pyc
-*.swp
+*.sw[op]
 .DS_Store
 .tox
 build
 .idea/*
-

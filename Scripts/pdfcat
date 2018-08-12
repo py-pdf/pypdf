@@ -24,7 +24,7 @@ EXAMPLES
 
 from __future__ import print_function
 import argparse
-from PyPDF2.pagerange import PAGE_RANGE_HELP
+from PyPDF4.pagerange import PAGE_RANGE_HELP
 
 
 def parse_args():
@@ -50,7 +50,7 @@ import os
 import traceback
 from collections import defaultdict
 
-from PyPDF2 import PdfFileMerger, parse_filename_page_ranges
+from PyPDF4 import PdfFileMerger, parse_filename_page_ranges
 
 
 if __name__ == "__main__":

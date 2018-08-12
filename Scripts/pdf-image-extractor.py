@@ -1,15 +1,15 @@
-'''
+"""
 Extract images from PDF without resampling or altering.
 
 Adapted from work by Sylvain Pelissier
 http://stackoverflow.com/questions/2693820/extract-images-from-pdf-without-resampling-in-python
-'''
+"""
 
 import sys
 import PyPDF4
 from PIL import Image
 
-if (len(sys.argv) != 2):
+if len(sys.argv) != 2:
     print("\nUsage: python {} input_file\n".format(sys.argv[0]))
     sys.exit(1)
 

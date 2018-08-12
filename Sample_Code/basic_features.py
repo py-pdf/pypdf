@@ -1,4 +1,5 @@
-from PyPDF2 import PdfFileWriter, PdfFileReader
+from PyPDF4.pdf import PdfFileWriter, PdfFileReader
+
 
 output = PdfFileWriter()
 input1 = PdfFileReader(open("document1.pdf", "rb"))
