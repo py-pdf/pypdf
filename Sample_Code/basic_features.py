@@ -1,32 +1,34 @@
+#!/usr/bin/env python
 from __future__ import print_function
 
 from PyPDF4.pdf import PdfFileWriter, PdfFileReader
 
 
 output = PdfFileWriter()
-input1 = PdfFileReader(open("document1.pdf", "rb"))
+input1 = PdfFileReader(
+    open("../PDF_Samples/Seige_of_Vicksburg_Sample_OCR.pdf", "rb")
+)
 
-# print how many pages input1 has:
+# Print how many pages input1 has:
 print("document1.pdf has %d pages." % input1.getNumPages())
 
-# add page 1 from input1 to output document, unchanged
+# Add page 1 from input1 to output document, unchanged
 output.addPage(input1.getPage(0))
 
-# add page 2 from input1, but rotated clockwise 90 degrees
+# Add page 2 from input1, but rotated clockwise 90 degrees
 output.addPage(input1.getPage(1).rotateClockwise(90))
 
-# add page 3 from input1, rotated the other way:
+# Add page 3 from input1, rotated the other way:
 output.addPage(input1.getPage(2).rotateCounterClockwise(90))
-# alt: output.addPage(input1.getPage(2).rotateClockwise(270))
+# Alt.: output.addPage(input1.getPage(2).rotateClockwise(270))
 
-# add page 4 from input1, but first add a watermark from another PDF:
+# Add page 4 from input1, but first add a watermark from another PDF:
 page4 = input1.getPage(3)
-watermark = PdfFileReader(open("watermark.pdf", "rb"))
+watermark = PdfFileReader(open("../PDF_Samples/AutoCad_Diagram.pdf", "rb"))
 page4.mergePage(watermark.getPage(0))
 output.addPage(page4)
 
-
-# add page 5 from input1, but crop it to half size:
+# Add page 5 from input1, but crop it to half size:
 page5 = input1.getPage(4)
 page5.mediaBox.upperRight = (
     page5.mediaBox.getUpperRight_x() / 2,
@@ -34,15 +36,15 @@ page5.mediaBox.upperRight = (
 )
 output.addPage(page5)
 
-# add some Javascript to launch the print window on opening this PDF.
-# the password dialog may prevent the print dialog from being shown,
-# comment the the encription lines, if that's the case, to try this out
+# Add some Javascript to launch the print window on opening this PDF.
+# The password dialog may prevent the print dialog from being shown,
+# Comment the encrypted lines, if that's the case, to try this out
 output.addJS("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
 
-# encrypt your new PDF and add a password
+# Encrypt your new PDF and add a password
 password = "secret"
 output.encrypt(password)
 
-# finally, write "output" to document-output.pdf
+# Finally, write "output" to document-output.pdf
 outputStream = open("PyPDF4-output.pdf", "wb")
 output.write(outputStream)

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-"Make some simple multipage pdf files."
+"""
+Make some simple multi-page PDF files.
+"""
 
 from __future__ import print_function
 
