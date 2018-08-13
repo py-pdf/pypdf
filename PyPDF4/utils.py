@@ -230,8 +230,10 @@ else:
 
     def b_(s):
         bc = B_CACHE
+
         if s in bc:
             return bc[s]
+
         if type(s) == bytes:
             return s
         else:

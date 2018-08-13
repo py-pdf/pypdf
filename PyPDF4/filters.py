@@ -124,7 +124,6 @@ except ImportError:
 class FlateDecode(object):
     def decode(data, decodeParms):    # pylint: disable=too-many-locals, too-many-branches
         """
-
         :param data: flate-encoded data.
         :param decodeParms: a dictionary of values, understanding the
             "/Predictor":<int> key only
@@ -209,11 +208,10 @@ class ASCIIHexDecode(object):
         The ASCIIHexDecode filter decodes data that has been encoded in ASCII
         hexadecimal form into a base-7 ASCII format.
     """
-    def decode(data, _decodeParms=None):
+    def decode(data, decode_parms=None):
         """
         :param data: a str sequence of hexadecimal-encoded values to be
             converted into a base-7 ASCII string
-        :param decodeParms:
         :return: a string conversion in base-7 ASCII, where each of its values
             v is such that 0 <= ord(v) <= 127.
         """
@@ -255,21 +253,25 @@ class ASCIIHexDecode(object):
     decode = staticmethod(decode)
 
 
-class LZWDecode(object):    # pylint: disable=too-few-public-methods
+# pylint: disable=too-few-public-methods
+class LZWDecode(object):
     """
     Taken from:
     http://www.java2s.com/Open-Source/Java-Document/PDF/PDF-Renderer/com/sun/pdfview/decode/LZWDecode.java.htm
     """
-    class decoder(object):    # pylint: disable=too-many-instance-attributes
+    # pylint: disable=too-many-instance-attributes
+    class Decoder(object):
         def __init__(self, data):
             self.STOP = 257
             self.CLEARDICT = 256
             self.data = data
             self.bytepos = 0
             self.bitpos = 0
-            self.dict = [""]*4096
+            self.dict = [""] * 4096
+
             for i in range(256):
                 self.dict[i] = chr(i)
+
             self.resetDict()
 
         def resetDict(self):
@@ -285,20 +287,22 @@ class LZWDecode(object):    # pylint: disable=too-few-public-methods
                     return -1
 
                 nextbits = ord_(self.data[self.bytepos])
-                bitsfromhere = 8-self.bitpos
+                bitsfromhere = 8 - self.bitpos
 
                 if bitsfromhere > fillbits:
                     bitsfromhere = fillbits
 
-                value |= (((nextbits >> (8-self.bitpos-bitsfromhere)) &
-                           (0xff >> (8-bitsfromhere))) <<
-                          (fillbits-bitsfromhere))
+                value |= (
+                        ((nextbits >> (8 - self.bitpos - bitsfromhere)) &
+                         (0xff >> (8 - bitsfromhere))) <<
+                        (fillbits - bitsfromhere)
+                )
                 fillbits -= bitsfromhere
                 self.bitpos += bitsfromhere
 
                 if self.bitpos >= 8:
                     self.bitpos = 0
-                    self.bytepos = self.bytepos+1
+                    self.bytepos = self.bytepos + 1
 
             return value
 
@@ -316,7 +320,7 @@ class LZWDecode(object):    # pylint: disable=too-few-public-methods
                 cW = self.nextCode()
 
                 if cW == -1:
-                    raise PdfReadError("Missed the stop code in LZWDecode!")
+                    raise PdfReadError("Missed the stop code in LZWDecode")
                 if cW == self.STOP:
                     break
                 elif cW == self.CLEARDICT:
@@ -341,90 +345,126 @@ class LZWDecode(object):    # pylint: disable=too-few-public-methods
             return baos
 
     @staticmethod
-    def decode(data, _decodeParams=None):
-        return LZWDecode.decoder(data).decode()
+    def decode(data, decode_params=None):
+        return LZWDecode.Decoder(data).decode()
 
 
-class ASCII85Decode(object):    # pylint: disable=too-few-public-methods
-    def decode(data, _decodeParms=None):    # pylint: disable=too-many-branches, too-many-statements, too-many-locals
+# pylint: disable=too-few-public-methods
+class ASCII85Decode(object):
+    """
+    Decodes string ASCII85-encoded data into a byte format.
+    """
+    # pylint: disable=too-many-branches, too-many-statements, too-many-locals
+    def decode(data, decode_parms=None):
+        """
+        :param data: a str sequence of ASCII85-encoded characters.
+        :return: bytes for Python 3, str for Python 2.
+        """
         if version_info < (3, 0):
             retval = ""
-            group = []
-            x = 0
-            hitEod = False
-            # remove all whitespace from data
-            data = [y for y in data if not y in ' \n\r\t']
+            group = list()
+            index = 0
+            hit_eod = False
 
-            while not hitEod:
-                c = data[x]
-                if not retval and c == "<" and data[x+1] == "~":
-                    x += 2
+            if data[0:2] == "<~":
+                data = data[2:]
+
+            for index, c in enumerate(data):
+                if c.isspace():
                     continue
-                #elif c.isspace():
-                #    x += 1
-                #    continue
                 elif c == 'z':
                     assert not group
+                    # TO-DO Ensure the number of bytes here must be FOUR
                     retval += '\x00\x00\x00\x00'
-                    x += 1
                     continue
-                elif c == "~" and data[x+1] == ">":
-                    if group:
-                        # cannot have a final group of just 1 char
-                        assert len(group) > 1
+                elif c == "~" and data[index + 1] == ">":
+                    if len(group) != 0:
+                        # assert len(group) > 1
+                        if len(group) > 1:
+                            raise ValueError(
+                                "Cannot have a final group of just 1 char"
+                            )
+
                         cnt = len(group) - 1
                         group += [85, 85, 85]
-                        hitEod = cnt
+                        hit_eod = cnt
                     else:
                         break
+                elif not(33 <= ord(c) <= 117):
+                    raise ValueError(
+                        "A ASCII85-encoded character c must be '!' <= c <= 'u'"
+                    )
                 else:
-                    c = ord(c) - 33
-                    assert 0 <= c < 85
-                    group += [c]
+                    byte_c = ord(c) - 33
+
+                    group.append(byte_c)
+
                 if len(group) >= 5:
-                    b = group[0] * (85**4) + \
-                        group[1] * (85**3) + \
-                        group[2] * (85**2) + \
+                    b = group[0] * (85 ** 4) + \
+                        group[1] * (85 ** 3) + \
+                        group[2] * (85 ** 2) + \
                         group[3] * 85 + \
                         group[4]
-                    assert b < (2**32 - 1)
+
+                    # assert b < (2**32 - 1)
+                    if b >= (2 ** 32) - 1:
+                        raise OverflowError(
+                            "The sum of a ASCII85-encoded 4-byte group shall"
+                            "not exceed 2 ^ 32 - 1. See ISO 32000, 2008, 7.4.3"
+                        )
+
                     c4 = chr((b >> 0) % 256)
                     c3 = chr((b >> 8) % 256)
                     c2 = chr((b >> 16) % 256)
                     c1 = chr(b >> 24)
+
                     retval += (c1 + c2 + c3 + c4)
-                    if hitEod:
-                        retval = retval[:-4+hitEod]
+
+                    if hit_eod:
+                        retval = retval[:-4 + hit_eod]
+
                     group = []
-                x += 1
+
             return retval
-        if isinstance(data, str):
-            data = data.encode('ascii')
-        n = b = 0
-        out = bytearray()
-        for c in data:
-            if ord('!') <= c <= ord('u'):
-                n += 1
-                b = b*85+(c-33)
-                if n == 5:
-                    out += struct.pack(b'>L', b)
-                    n = b = 0
-            elif c == ord('z'):
-                assert n == 0
-                out += b'\0\0\0\0'
-            elif c == ord('~'):
-                if n:
-                    for _ in range(5-n):
-                        b = b*85+84
-                    out += struct.pack(b'>L', b)[:n-1]
-                break
-        return bytes(out)
+        else:
+            if isinstance(data, str):
+                data = data.encode('ascii')
+
+            group_index = b = 0
+            out = bytearray()
+
+            for index, c in enumerate(data):
+                if ord('!') <= c <= ord('u'):
+                    group_index += 1
+                    b = b * 85 + (c - 33)
+
+                    if group_index == 5:
+                        out += struct.pack(b'>L', b)
+                        group_index = b = 0
+                elif c == ord('z'):
+                    assert group_index == 0
+                    # TO-DO Ensure the number of bytes here must be FOUR
+                    out += b'\0\0\0\0'
+                elif c == ord('~') and data[index + 1] == ord('>'):
+                    if group_index:
+                        for _ in range(5 - group_index):
+                            b = b * 85 + 84
+                        out += struct.pack(b'>L', b)[:group_index - 1]
+
+                    break
+                else:
+                    raise ValueError("Value '%c' not recognized" % c)
+
+            return bytes(out)
+
     decode = staticmethod(decode)
 
 
-class DCTDecode(object):    # pylint: disable=too-few-public-methods
-    def decode(data, _decodeParms=None):
+# pylint: disable=too-few-public-methods
+class DCTDecode(object):
+    def decode(data, decode_params=None):
         return data
+    
     decode = staticmethod(decode)
 
 
@@ -469,7 +509,8 @@ class CCITTFaxDecode(object):    # pylint: disable=too-few-public-methods
     decode = staticmethod(decode)
 
 
-def decodeStreamData(stream):    # pylint: disable=too-many-branches
+# pylint: disable=too-many-branches
+def decodeStreamData(stream):
     from .generic import NameObject
     filters = stream.get("/Filter", ())
 

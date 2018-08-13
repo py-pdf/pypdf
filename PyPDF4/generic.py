@@ -372,7 +372,7 @@ def readStringFromStream(stream):
                 break
         elif tok == b_("\\"):
             tok = stream.read(1)
-            escape_dict = {
+            ESCAPE_DICT = {
                 b_("n"): b_("\n"), b_("r"): b_("\r"),
                 b_("t"): b_("\t"), b_("b"): b_("\b"),
                 b_("f"): b_("\f"), b_("c"): b_("\c"),

@@ -33,7 +33,7 @@
 
 """
 A pure-Python PDF library with an increasing number of capabilities.
-See README for links to FAQ, documentation, homepage, etc.
+See README.md for links to FAQ, documentation, homepage, etc.
 """
 
 __author__ = "Mathieu Fenniak"
