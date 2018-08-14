@@ -1,11 +1,12 @@
-# TO-DO Rename and swap `tests.py` to a more specific test environment (
-# e.g. only the `pdf.py` or `utils.py` file)
+"""
+Tests PDF primitives from PyPDF4.pdf.
+"""
 import binascii
 import os
 import sys
 import unittest
 
-from PyPDF4 import PdfFileReader, PdfFileWriter
+from PyPDF4.pdf import PdfFileReader, PdfFileWriter
 
 # Configure path environment
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -16,12 +17,12 @@ sys.path.append(PROJECT_ROOT)
 
 
 class PdfReaderTestCases(unittest.TestCase):
-    def test_PdfReaderFileLoad(self):
-        '''
+    def test_file_load(self):
+        """
         Test loading and parsing of a file. Extract text of the file and
         compare to expected textual output. Expected outcome: file loads, text
         matches expected.
-        '''
+        """
 
         with open(
                 os.path.join(RESOURCE_ROOT, 'crazyones.pdf'), 'rb'
@@ -47,7 +48,7 @@ class PdfReaderTestCases(unittest.TestCase):
                     % (pdftext, ipdf_p1_text)
             )
 
-    def test_PdfReaderJpegImage(self):
+    def test_jpeg_image(self):
         '''
         Test loading and parsing of a file. Extract the image of the file and
         compare to expected textual output. Expected outcome: file loads, image
