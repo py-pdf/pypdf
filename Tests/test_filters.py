@@ -1,5 +1,5 @@
 """
-Adds unit tests for filters.py.
+Performs unit tests for filters.py.
 
 TO-DO Add license notice, if any.
 """

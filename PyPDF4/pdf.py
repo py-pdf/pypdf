@@ -42,11 +42,9 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 __maintainer__ = "Phaseit, Inc."
 __maintainer_email = "PyPDF4@phaseit.net"
 
-import string
 import math
 import struct
 import sys
-import uuid
 from sys import version_info
 if version_info < ( 3, 0 ):
     from cStringIO import StringIO
@@ -58,18 +56,14 @@ if version_info < ( 3, 0 ):
 else:
     from io import BytesIO
 
-from . import filters
-from . import utils
-import warnings
-import codecs
 from .generic import *
 from .utils import readNonWhitespace, readUntilWhitespace, ConvertFunctionsToVirtualList
-from .utils import isString, b_, u_, ord_, chr_, str_, formatWarning
+from .utils import isString, b_, u_, ord_, str_, formatWarning
 
-if version_info < ( 2, 4 ):
+if version_info < (2, 4):
    from sets import ImmutableSet as frozenset
 
-if version_info < ( 2, 5 ):
+if version_info < (2, 5):
     from md5 import md5
 else:
     from hashlib import md5

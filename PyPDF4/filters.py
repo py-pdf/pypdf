@@ -429,7 +429,7 @@ class DCTDecode(object):    # pylint: disable=too-few-public-methods
 
 
 class JPXDecode(object):    # pylint: disable=too-few-public-methods
-    def decode(data, _decodeParms=None):
+    def decode(data, decode_parms=None):
         return data
     decode = staticmethod(decode)
 

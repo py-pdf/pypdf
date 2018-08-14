@@ -8,6 +8,7 @@ see https://github.com/claird/PyPDF4/blob/master/LICENSE.md
 """
 
 import re
+
 from .utils import isString
 
 _INT_RE = r"(0|-?[1-9]\d*)"  # A decimal int, don't allow "-0".
@@ -69,6 +70,7 @@ class PageRange(object):
             return
 
         m = isString(arg) and re.match(PAGE_RANGE_RE, arg)
+
         if not m:
             raise ParseError(arg)
         elif m.group(2):
@@ -82,12 +84,13 @@ class PageRange(object):
 
     # Just formatting this when there is __doc__ for __init__
     if __init__.__doc__:
-        __init__.__doc__ = __init__.__doc__.format(page_range_help=PAGE_RANGE_HELP)
+        __init__.__doc__ =\
+            __init__.__doc__.format(page_range_help=PAGE_RANGE_HELP)
 
     @staticmethod
     def valid(input_value):
         """ True if input is a valid initializer for a PageRange. """
-        return isinstance(input_value, slice)  or \
+        return isinstance(input_value, slice) or \
                isinstance(input_value, PageRange) or \
                (isString(input_value)
                 and bool(re.match(PAGE_RANGE_RE, input_value)))
@@ -134,6 +137,7 @@ def parse_filename_page_ranges(args):
     pairs = []
     pdf_filename = None
     did_page_range = False
+
     for arg in args + [None]:
         if PageRange.valid(arg):
             if not pdf_filename:
@@ -149,4 +153,5 @@ def parse_filename_page_ranges(args):
 
             pdf_filename = arg
             did_page_range = False
+
     return pairs
