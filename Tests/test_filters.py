@@ -7,11 +7,10 @@ TO-DO Add license notice, if any.
 import string
 import sys
 import unittest
-
 from itertools import product as cartesian_product
-from unittest import skip
 
-from PyPDF4.filters import FlateDecode, ASCIIHexDecode, ASCII85Decode
+from PyPDF4.filters import FlateDecode, ASCIIHexDecode, ASCII85Decode, \
+    LZWDecode
 from PyPDF4.utils import PdfReadError, PdfStreamError, hexencode
 
 
@@ -155,6 +154,26 @@ class ASCII85DecodeTestCase(unittest.TestCase):
         for o, i in zip(exp_outputs, inputs):
             self.assertEqual(
                 o, ASCII85Decode.decode(i)
+            )
+
+
+class LZWDecodeTestCase(unittest.TestCase):
+    def test_decode(self):
+        inputs = (
+            "\x80\x0B\x60\x50\x22\x0C\x0C\x85\x01",
+            "\x54\x68\x69\x73\x20\x82\x20\x61\x20\x73\x61\x6d\x70\x6c\x65\x20"
+            "\x74\x65\x78\x74\x88\x74\x72\x69\x6e\x67\x20\x49\x27\x64\x20\x6c"
+            "\x69\x6b\x8e\x74\x6f\x20\x65\x6e\x63\x6f\x64\x65\x85\x01",
+        )
+        exp_outputs = (
+            "-----A---B",
+            "This is a sample text string I'd like to encode",
+        )
+
+        for o, i in zip(exp_outputs, inputs):
+            self.assertEqual(
+                o, LZWDecode.decode(i),
+                "Input = %s\tExp. output = %s"
             )
 
 
