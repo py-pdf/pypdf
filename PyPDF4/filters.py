@@ -38,7 +38,7 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 import math
 from sys import version_info
 
-from .utils import PdfReadError, ord_, paethPredictor, PdfStreamError
+from .utils import PdfReadError, pypdfOrd, paethPredictor, PdfStreamError
 
 if version_info < (3, 0):
     from cStringIO import StringIO
@@ -154,7 +154,7 @@ class FlateDecode(object):
 
                 for row in range(len(data) // row_length):
                     rowdata = [
-                        ord_(x) for x in
+                        pypdfOrd(x) for x in
                         data[(row*row_length):((row+1)*row_length)]
                     ]
                     filterByte = rowdata[0]
@@ -286,7 +286,7 @@ class LZWDecode(object):
                 if self.bytepos >= len(self.data):
                     return -1
 
-                nextbits = ord_(self.data[self.bytepos])
+                nextbits = pypdfOrd(self.data[self.bytepos])
                 bitsfromhere = 8 - self.bitpos
 
                 if bitsfromhere > fillbits:

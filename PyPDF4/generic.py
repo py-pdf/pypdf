@@ -42,9 +42,8 @@ import warnings
 from . import filters
 from . import utils
 from .utils import PdfStreamError
-from .utils import b_, u_, chr_, ord_
-from .utils import readNonWhitespace, RC4_encrypt, skipOverComment
-
+from .utils import pypdfBytes as b_, pypdfUnicode as u_, pypdfChr, pypdfOrd
+from .utils import readNonWhitespace, RC4Encrypt, skipOverComment
 
 ObjectPrefix = b_('/<[tf(n%')
 NumberSigns = b_('+-')
@@ -249,7 +248,9 @@ class IndirectObject(PdfObject):
 class FloatObject(decimal.Decimal, PdfObject):
     def __new__(cls, value="0", context=None):
         try:
-            return decimal.Decimal.__new__(cls, utils.str_(value), context)
+            return decimal.Decimal.__new__(
+                cls, utils.pypdfStr(value), context
+            )
         except:
             return decimal.Decimal.__new__(cls, str(value))
 
@@ -438,10 +439,10 @@ class ByteStringObject(utils.bytes_type, PdfObject):
         bytearr = self
 
         if encryption_key:
-            bytearr = RC4_encrypt(encryption_key, bytearr)
+            bytearr = RC4Encrypt(encryption_key, bytearr)
 
         stream.write(b_("<"))
-        stream.write(b_(utils.hexencode(bytearr)))
+        stream.write(b_(utils.hexEncode(bytearr)))
         stream.write(b_(">"))
 
 
@@ -484,17 +485,17 @@ class TextStringObject(utils.string_type, PdfObject):
             bytearr = codecs.BOM_UTF16_BE + self.encode("utf-16be")
 
         if encryption_key:
-            bytearr = RC4_encrypt(encryption_key, bytearr)
+            bytearr = RC4Encrypt(encryption_key, bytearr)
             obj = ByteStringObject(bytearr)
             obj.writeToStream(stream, None)
         else:
             stream.write(b_("("))
 
             for c in bytearr:
-                if not chr_(c).isalnum() and c != b_(' '):
-                    stream.write(b_("\\%03o" % ord_(c)))
+                if not pypdfChr(c).isalnum() and c != b_(' '):
+                    stream.write(b_("\\%03o" % pypdfOrd(c)))
                 else:
-                    stream.write(b_(chr_(c)))
+                    stream.write(b_(pypdfChr(c)))
 
             stream.write(b_(")"))
 
@@ -678,6 +679,7 @@ class DictionaryObject(dict, PdfObject):
             #if debug: print(binascii.hexlify(data["__streamdata__"]))
             e = readNonWhitespace(stream)
             ndstream = stream.read(8)
+
             if (e + ndstream) != b_("endstream"):
                 # (sigh) - the odd PDF file has a length that is too long, so
                 # we need to read backwards to find the "endstream" ending.
@@ -688,12 +690,16 @@ class DictionaryObject(dict, PdfObject):
                 pos = stream.tell()
                 stream.seek(-10, 1)
                 end = stream.read(9)
+
                 if end == b_("endstream"):
                     # we found it by looking back one character further.
                     data["__streamdata__"] = data["__streamdata__"][:-1]
                 else:
-                    if debug: print(("E", e, ndstream, debugging.toHex(end)))
+                    if debug:
+                        print(("E", e, ndstream, debugging.toHex(end)))
+
                     stream.seek(pos, 0)
+
                     raise utils.PdfReadError(
                         "Unable to find 'endstream' marker after stream at"
                         "byte %s." % utils.hexStr(stream.tell())
@@ -858,7 +864,7 @@ class StreamObject(DictionaryObject):
         stream.write(b_("\nstream\n"))
         data = self._data
         if encryption_key:
-            data = RC4_encrypt(encryption_key, data)
+            data = RC4Encrypt(encryption_key, data)
         stream.write(data)
         stream.write(b_("\nendstream"))
 
@@ -1266,11 +1272,11 @@ def decode_pdfdocencoding(byte_array):
     retval = u_('')
 
     for b in byte_array:
-        c = _pdfDocEncoding[ord_(b)]
+        c = _pdfDocEncoding[pypdfOrd(b)]
 
         if c == u_('\u0000'):
             raise UnicodeDecodeError(
-                "pdfdocencoding", utils.barray(b), -1, -1,
+                "pdfdocencoding", utils.pypdfBytearray(b), -1, -1,
                 "does not exist in translation table"
             )
 

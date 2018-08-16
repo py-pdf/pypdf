@@ -4,7 +4,7 @@ import decimal
 from .generic import PdfObject
 from xml.dom import getDOMImplementation
 from xml.dom.minidom import parseString
-from .utils import u_
+from .utils import pypdfUnicode
 
 RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 DC_NAMESPACE = "http://purl.org/dc/elements/1.1/"
@@ -337,7 +337,7 @@ class XmpInformation(PdfObject):
                 key = node.localName
                 while True:
                     # see documentation about PDFX_NAMESPACE earlier in file
-                    idx = key.find(u_("\u2182"))
+                    idx = key.find(pypdfUnicode("\u2182"))
                     if idx == -1:
                         break
                     key = key[:idx] + chr(int(key[idx+1:idx+5], base=16)) + key[idx+5:]

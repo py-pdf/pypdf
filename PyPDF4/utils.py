@@ -43,7 +43,7 @@ except ImportError:  # Py3
 xrange_fn = getattr(builtins, "xrange", range)
 _basestring = getattr(builtins, "basestring", str)
 
-bytes_type = type(bytes()) # Works the same in Python 2.X and 3.X
+bytes_type = type(bytes())  # Works the same in Python 2.X and 3.X
 string_type = getattr(builtins, "unicode", str)
 int_types = (int, long) if sys.version_info[0] < 3 else (int,)
 
@@ -75,7 +75,7 @@ def readUntilWhitespace(stream, maxchars=None):
     Reads non-whitespace characters and returns them.
     Stops upon encountering whitespace or when maxchars is reached.
     """
-    txt = b_("")
+    txt = pypdfBytes("")
     while True:
         tok = stream.read(1)
         if tok.isspace() or not tok:
@@ -112,8 +112,8 @@ def skipOverWhitespace(stream):
 def skipOverComment(stream):
     tok = stream.read(1)
     stream.seek(-1, 1)
-    if tok == b_('%'):
-        while tok not in (b_('\n'), b_('\r')):
+    if tok == pypdfBytes('%'):
+        while tok not in (pypdfBytes('\n'), pypdfBytes('\r')):
             tok = stream.read(1)
 
 
@@ -123,7 +123,7 @@ def readUntilRegex(stream, regex, ignore_eof=False):
     Raise PdfStreamError on premature end-of-file.
     :param bool ignore_eof: If true, ignore end-of-line and return immediately
     """
-    name = b_('')
+    name = pypdfBytes('')
     while True:
         tok = stream.read(16)
         if not tok:
@@ -165,11 +165,11 @@ class ConvertFunctionsToVirtualList(object):
         return self.getFunction(index)
 
 
-def RC4_encrypt(key, plaintext):
+def RC4Encrypt(key, plaintext):
     S = [i for i in range(256)]
     j = 0
     for i in range(256):
-        j = (j + S[i] + ord_(key[i % len(key)])) % 256
+        j = (j + S[i] + pypdfOrd(key[i % len(key)])) % 256
         S[i], S[j] = S[j], S[i]
     i, j = 0, 0
     retval = []
@@ -178,8 +178,8 @@ def RC4_encrypt(key, plaintext):
         j = (j + S[i]) % 256
         S[i], S[j] = S[j], S[i]
         t = S[(S[i] + S[j]) % 256]
-        retval.append(b_(chr(ord_(plaintext[x]) ^ t)))
-    return b_("").join(retval)
+        retval.append(pypdfBytes(chr(pypdfOrd(plaintext[x]) ^ t)))
+    return pypdfBytes("").join(retval)
 
 
 def matrixMultiply(a, b):
@@ -223,12 +223,12 @@ class PdfStreamError(PdfReadError):
 
 
 if sys.version_info[0] < 3:
-    def b_(s):
+    def pypdfBytes(s):
         return s
 else:
     B_CACHE = {}
 
-    def b_(s):
+    def pypdfBytes(s):
         bc = B_CACHE
 
         if s in bc:
@@ -238,19 +238,25 @@ else:
             return s
         else:
             r = s.encode('latin-1')
+
             if len(s) < 2:
                 bc[s] = r
+
             return r
 
 
-def u_(s):
+def pypdfUnicode(s):
     if sys.version_info[0] < 3:
         return unicode(s, 'unicode_escape')
     else:
         return s
 
 
-def str_(b):
+def pypdfStr(b):
+    """
+    Abstracts the conversion from bytes to string over the two major versions
+    of Python.
+    """
     if sys.version_info[0] < 3:
         return b
     else:
@@ -260,34 +266,47 @@ def str_(b):
             return b
 
 
-def ord_(b):
+def pypdfOrd(b):
+    """
+    Abstracts the conversion from a single-character string to the
+    corresponding integer value over the two major versions of Python.
+    """
     if sys.version_info[0] < 3 or type(b) == str:
         return ord(b)
     else:
         return b
 
 
-def chr_(c):
+def pypdfChr(c):
+    """
+    Abstracts the conversion from a single byte to the corresponding ASCII
+    character over the two major versions of Python.
+    """
     if sys.version_info[0] < 3:
         return c
     else:
         return chr(c)
 
 
-def barray(b):
+def pypdfBytearray(b):
+    """
+    Abstracts the conversion from a byte variable to a bytearray value over the
+    two major versions of Python.
+    """
     if sys.version_info[0] < 3:
         return b
     else:
         return bytearray(b)
 
 
-def hexencode(s):
+def hexEncode(s):
     """
-    Converts a string s to an hexadecimal string representation.
+    Abstracts the conversion from an ASCII string to an hex-valued string
+    representation of the former over the two major versions of Python.
 
     :param s: a string to convert from UTF-8 characters to a hexadecimal string
         representation.
-    :return: a hex-encoded string, e.g. hexencode("AA") == "4141".
+    :return: a hex-valued string, e.g. hexEncode("$A'") == "244127".
     """
     if sys.version_info[0] < 3:
         return s.encode('hex')
@@ -302,7 +321,7 @@ def hexStr(num):
     return hex(num).replace('L', '')
 
 
-WHITESPACES = [b_(x) for x in [' ', '\n', '\r', '\t', '\x00']]
+WHITESPACES = [pypdfBytes(x) for x in [' ', '\n', '\r', '\t', '\x00']]
 
 
 def paethPredictor(left, up, up_left):

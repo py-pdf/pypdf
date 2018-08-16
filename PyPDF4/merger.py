@@ -32,7 +32,7 @@ from sys import version_info
 from .generic import *
 from .pagerange import PageRange
 from .pdf import PdfFileReader, PdfFileWriter
-from .utils import isString, str_
+from .utils import isString, pypdfStr
 
 if version_info < (3, 0):
     from cStringIO import StringIO
@@ -301,7 +301,7 @@ class PdfFileMerger(object):
             for j in range(*pages):
                 if pdf.getPage(j).getObject() == o['/Page'].getObject():
                     o[NameObject('/Page')] = o['/Page'].getObject()
-                    assert str_(k) == str_(o['/Title'])
+                    assert pypdfStr(k) == pypdfStr(o['/Title'])
                     new_dests.append(o)
                     break
         return new_dests
