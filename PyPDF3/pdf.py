@@ -396,7 +396,7 @@ class PdfFileWriter(object):
         self.cloneReaderDocumentRoot(reader)
         self.appendPagesFromReader(reader, after_page_append)
 
-    def encrypt(self, user_pwd, owner_pwd=None, use_128bit=True, restrict_permission=True):
+    def encrypt(self, user_pwd, owner_pwd=None, use_128bit=True, allow_printing=True, allow_commenting=False):
         """
         Encrypt this PDF file with the PDF Standard encryption handler.
 
@@ -408,18 +408,20 @@ class PdfFileWriter(object):
         :param bool use_128bit: flag as to whether to use 128bit
             encryption.  When false, 40bit encryption will be used.  By default,
             this flag is on.
-        :param bool restrict_permission: flag as to whether to restrict
-            permissions to print only.  By default, this flag is on.
+        :param bool allow_printing: flag as to whether to restrict
+            permissions to allow printing.  By default, this flag is on.
+        :param bool allow_commenting: flag as to whether to restrict
+            permissions to allow commenting.  By default, this flag is on.
         """
-
-        def set_permissions(permission):
-            if type(permission) is int:
-                return permission
+        def set_permissions(printing, commenting):
+            if printing and not commenting:
+                return -1852
+            elif printing and commenting:
+                return -1500
+            elif not printing and commenting:
+                return -800
             else:
-                if permission:
-                    return -1852
-                else:
-                    return -1
+                return 0
 
         import time, random
         if owner_pwd == None:
@@ -433,7 +435,7 @@ class PdfFileWriter(object):
             rev = 2
             keylen = int(40 / 8)
         # permit everything:
-        P = set_permissions(restrict_permission)
+        P = set_permissions(allow_printing, allow_commenting)
         O = ByteStringObject(_alg33(owner_pwd, user_pwd, rev, keylen))
         ID_1 = ByteStringObject(md5(b_(repr(time.time()))).digest())
         ID_2 = ByteStringObject(md5(b_(repr(random.random()))).digest())
