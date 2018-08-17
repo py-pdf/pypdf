@@ -396,7 +396,8 @@ class PdfFileWriter(object):
         self.cloneReaderDocumentRoot(reader)
         self.appendPagesFromReader(reader, after_page_append)
 
-    def encrypt(self, user_pwd, owner_pwd=None, use_128bit=True, allow_printing=True, allow_commenting=False):
+    def encrypt(self, user_pwd, owner_pwd=None, use_128bit=True, allow_printing=True, allow_commenting=False,
+                overwrite_permission=None):
         """
         Encrypt this PDF file with the PDF Standard encryption handler.
 
@@ -412,9 +413,13 @@ class PdfFileWriter(object):
             permissions to allow printing.  By default, this flag is on.
         :param bool allow_commenting: flag as to whether to restrict
             permissions to allow commenting.  By default, this flag is on.
+        :param int overwrite_permission: Manually set value of PDF document's
+            /P flag
         """
-        def set_permissions(printing, commenting):
-            if printing and not commenting:
+        def set_permissions(printing, commenting, permission):
+            if permission is not None and type(permission) is int:
+                return int(permission)
+            elif printing and not commenting:
                 return -1852
             elif printing and commenting:
                 return -1500
@@ -435,7 +440,7 @@ class PdfFileWriter(object):
             rev = 2
             keylen = int(40 / 8)
         # permit everything:
-        P = set_permissions(allow_printing, allow_commenting)
+        P = set_permissions(allow_printing, allow_commenting, overwrite_permission)
         O = ByteStringObject(_alg33(owner_pwd, user_pwd, rev, keylen))
         ID_1 = ByteStringObject(md5(b_(repr(time.time()))).digest())
         ID_2 = ByteStringObject(md5(b_(repr(random.random()))).digest())
