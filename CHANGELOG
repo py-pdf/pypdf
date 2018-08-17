@@ -1,4 +1,19 @@
-﻿Version 1.26.0, 2016-05-18
+﻿Version 0.0.5, 2018-08-17
+--------------------------
+ - Added overwrite_permissions parameter to encrypt module to manually
+   specify PDF /P value
+
+
+Version 0.0.4, 2018-08-16
+--------------------------
+ - Added allow_printing and allow_commenting parameters to encrypt module
+
+
+PyPDF3 Initial Release
+**********************************************************************************************************************
+
+
+Version 1.26.0, 2016-05-18
 --------------------------
 
  - NOTE: Active maintenance on PyPDF2 is resuming after a hiatus
