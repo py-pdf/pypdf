@@ -1,4 +1,9 @@
-﻿Version 0.0.5, 2018-08-17
+﻿Version 0.0.6, 2018-08-21
+--------------------------
+ - Added progress bar to PdfFileWriter write method
+
+
+Version 0.0.5, 2018-08-17
 --------------------------
  - Added overwrite_permissions parameter to encrypt module to manually
    specify PDF /P value
