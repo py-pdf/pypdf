@@ -462,8 +462,8 @@ class PdfFileWriter(object):
         self._encrypt = self._addObject(encrypt)
         self._encrypt_key = key
 
-    def write(self, stream):
-        """q
+    def write(self, stream, progress_bar_enabled=False, progress_bar='tqdm'):
+        """
         Writes the collection of pages added to this object out as a PDF file.
 
         :param stream: An object to write the file to.  The object must support
@@ -497,7 +497,6 @@ class PdfFileWriter(object):
                 if data.generation not in externalReferenceMap[data.pdf]:
                     externalReferenceMap[data.pdf][data.generation] = {}
                 externalReferenceMap[data.pdf][data.generation][data.idnum] = IndirectObject(objIndex + 1, 0, self)
-
         self.stack = []
         if debug: print(("ERM:", externalReferenceMap, "root:", self._root))
         self._sweepIndirectReferences(externalReferenceMap, self._root)
@@ -507,21 +506,49 @@ class PdfFileWriter(object):
         object_positions = []
         stream.write(self._header + b_("\n"))
         stream.write(b_("%\xE2\xE3\xCF\xD3\n"))
-        for i in range(len(self._objects)):
-            idnum = (i + 1)
-            obj = self._objects[i]
-            object_positions.append(stream.tell())
-            stream.write(b_(str(idnum) + " 0 obj\n"))
-            key = None
-            if hasattr(self, "_encrypt") and idnum != self._encrypt.idnum:
-                pack1 = struct.pack("<i", i + 1)[:3]
-                pack2 = struct.pack("<i", 0)[:2]
-                key = self._encrypt_key + pack1 + pack2
-                assert len(key) == (len(self._encrypt_key) + 5)
-                md5_hash = md5(key).digest()
-                key = md5_hash[:min(16, len(self._encrypt_key) + 5)]
-            obj.writeToStream(stream, key)
-            stream.write(b_("\nendobj\n"))
+
+        # Progress Bar
+        if len(self._objects) > 25 and progress_bar_enabled and progress_bar is 'gui':
+            import PySimpleGUI as gui
+            for i in range(len(self._objects)):
+                if not gui.EasyProgressMeter('Writing PDF', i + 1, len(self._objects), orientation='h'):
+                    break
+                idnum = (i + 1)
+                obj = self._objects[i]
+                object_positions.append(stream.tell())
+                stream.write(b_(str(idnum) + " 0 obj\n"))
+                key = None
+                if hasattr(self, "_encrypt") and idnum != self._encrypt.idnum:
+                    pack1 = struct.pack("<i", i + 1)[:3]
+                    pack2 = struct.pack("<i", 0)[:2]
+                    key = self._encrypt_key + pack1 + pack2
+                    assert len(key) == (len(self._encrypt_key) + 5)
+                    md5_hash = md5(key).digest()
+                    key = md5_hash[:min(16, len(self._encrypt_key) + 5)]
+                obj.writeToStream(stream, key)
+                stream.write(b_("\nendobj\n"))
+        else:
+            if len(self._objects) > 25 and progress_bar_enabled and progress_bar is 'tqdm':
+                from tqdm import tqdm
+                loop = tqdm(range(len(self._objects)), desc='Writing PDF', total=len(self._objects), unit='objects')
+            else:
+                loop = range(len(self._objects))
+
+            for i in loop:
+                idnum = (i + 1)
+                obj = self._objects[i]
+                object_positions.append(stream.tell())
+                stream.write(b_(str(idnum) + " 0 obj\n"))
+                key = None
+                if hasattr(self, "_encrypt") and idnum != self._encrypt.idnum:
+                    pack1 = struct.pack("<i", i + 1)[:3]
+                    pack2 = struct.pack("<i", 0)[:2]
+                    key = self._encrypt_key + pack1 + pack2
+                    assert len(key) == (len(self._encrypt_key) + 5)
+                    md5_hash = md5(key).digest()
+                    key = md5_hash[:min(16, len(self._encrypt_key) + 5)]
+                obj.writeToStream(stream, key)
+                stream.write(b_("\nendobj\n"))
 
         # xref table
         xref_location = stream.tell()
