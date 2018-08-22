@@ -8,11 +8,14 @@ import string
 import sys
 import unittest
 from itertools import product as cartesian_product
+from math import ceil, floor, log
+from os.path import join
 from unittest import skip
 
 from PyPDF4.filters import FlateDecode, ASCIIHexDecode, ASCII85Decode, \
     LZWDecode
 from PyPDF4.utils import PdfReadError, PdfStreamError, hexEncode
+from Tests.utils import intToBitstring, bitstringToInt
 
 
 class FlateDecodeTestCase(unittest.TestCase):
@@ -159,25 +162,51 @@ class ASCII85DecodeTestCase(unittest.TestCase):
 
 
 class LZWDecodeTestCase(unittest.TestCase):
-    @skip
-    def test_decode(self):
-        inputs = (
-            "\x80\x0B\x60\x50\x22\x0C\x0C\x85\x01",
-            "\x54\x68\x69\x73\x20\x82\x20\x61\x20\x73\x61\x6d\x70\x6c\x65\x20"
-            "\x74\x65\x78\x74\x88\x74\x72\x69\x6e\x67\x20\x49\x27\x64\x20\x6c"
-            "\x69\x6b\x8e\x74\x6f\x20\x65\x6e\x63\x6f\x64\x65\x85\x01",
-        )
-        exp_outputs = (
-            "-----A---B",
-            "This is a sample text string I'd like to encode",
+    def test_encode(self):
+        """
+        Tests that the memorization of byte values performed by _writeCode()
+        as a contiguous bit-stream works as intended.
+        """
+        self.maxDiff = None
+        e = LZWDecode.Encoder(None)
+        e.result = list()
+
+        inputs = range(2 ** 8, 2 ** 12 - 1)
+        e.bitspercode = int(floor(log(inputs[0], 2))) + 1
+        exp_output = "".join(
+            intToBitstring(n, floor(log(n, 2))) for n in inputs
         )
 
-        for o, i in zip(exp_outputs, inputs):
+        for i in inputs:
+            if floor(log(i, 2)) + 1 > e.bitspercode:
+                e.bitspercode += 1
+
+            e._writeCode(i)
+
+        self.assertEqual(
+            exp_output,
+            "".join(intToBitstring(n) for n in e.result)[:e.bitpos]
+        )
+
+    def test_encode_decode(self):
+        """
+        Ensures that a concatenation of the like decode(encode(data)) equals
+        data, where data can be an arbitrary byte stream.
+        """
+        testDataDir = "./Tests/TestData/"
+        inputs = [
+            string.ascii_lowercase, string.ascii_uppercase, string.whitespace,
+            string.ascii_letters, "AABBCCDDEEFFGGHHIIJJKKLLMMNNOOPPQQRRSSTTT",
+        ]
+        for f in ("TheHappyPrince.txt", ):
+            with open(join(testDataDir, f)) as infile:
+                inputs.append(infile.read())
+
+        for t in inputs:
             self.assertEqual(
-                o, LZWDecode.decode(i),
-                "Input = %s\tExp. output = %s"
+                t, LZWDecode.decode(LZWDecode.encode(t))
             )
 
 
 if __name__ == "__main__":
-    unittest.main(FlateDecodeTestCase)
+    unittest.main()

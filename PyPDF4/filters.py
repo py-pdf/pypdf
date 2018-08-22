@@ -254,9 +254,89 @@ class ASCIIHexDecode(object):
 # pylint: disable=too-few-public-methods
 class LZWDecode(object):
     """
-    Taken from:
-    http://www.java2s.com/Open-Source/Java-Document/PDF/PDF-Renderer/com/sun/pdfview/decode/LZWDecode.java.htm
+    For a reference of the LZW algorithm consult ISO 32000, section 7.4.4 or
+    Section 13 of "TIFF 6.0 Specification" for a slightly more detailed
+    discussion.
     """
+    class Encoder(object):
+        MAX_ENTRIES = 2 ** 12
+        def __init__(self, data):
+            """
+            :param data: a str or byte string to encode with LZW.
+            """
+            self.data = data
+            self.bitspercode = None
+            # table maps concat. values to their progressive indices
+            self.table = None
+            # result stores the contiguous stream of bits
+            self.result = None
+            # The location of the next bit we are going to write to
+            self.bitpos = 0
+
+            self.resetTable()
+
+        def resetTable(self):
+            self.bitspercode = 9
+
+            self.table = {
+                chr(n): n for n in range(256)
+            }
+            self.table[256] = len(self.table)
+            self.table[257] = len(self.table)
+
+        def encode(self):
+            self.result = list()
+            buffer = str()
+            self._writeCode(self.table[256])
+
+            for c in self.data:
+                if buffer + c in self.table.keys():
+                    buffer += c
+                else:
+                    # Write the code of buffer to the codetext
+                    self._writeCode(self.table[buffer])
+                    self._addCodeToTable(buffer + c)
+
+                    buffer = c
+
+            self._writeCode(self.table[buffer])
+            self._writeCode(self.table[257])
+
+            # This results in an automatic assertion of the values of
+            # self.result, since for each v one of them, 0 <= v <= 255
+            return bytearray(self.result)
+
+        def _writeCode(self, code):
+            bytesAlloc = int(
+                math.ceil(float(self.bitpos + self.bitspercode) / 8)
+            ) - len(self.result)
+            self.result.extend([0] * bytesAlloc)
+            bitsWritten = 0
+            relbitpos = self.bitpos % 8
+            bytepos = int(math.floor(self.bitpos / 8))
+
+            while (self.bitspercode - bitsWritten) > 0:
+                self.result[bytepos] |= (
+                    ((code << bitsWritten) >> (self.bitspercode - 8)) & 0xFF
+                ) >> relbitpos
+
+                bitsWritten += min(
+                    8 - relbitpos, self.bitspercode - bitsWritten
+                )
+                relbitpos = (self.bitpos + bitsWritten) % 8
+                bytepos = int(math.floor((self.bitpos + bitsWritten) / 8))
+
+            self.bitpos += self.bitspercode
+
+        def _addCodeToTable(self, value):
+            if len(self.table) > (2 ** self.bitspercode) - 1:
+                self.bitspercode += 1
+            elif len(self.table) > LZWDecode.Encoder.MAX_ENTRIES:
+                self.resetTable()
+                self._writeCode(256)
+
+            self.table[value] = len(self.table)
+
     # pylint: disable=too-many-instance-attributes
     class Decoder(object):
         def __init__(self, data):
@@ -474,23 +554,26 @@ class DCTDecode(object):
 class JPXDecode(object):    # pylint: disable=too-few-public-methods
     @staticmethod
     def decode(data, decode_parms=None):
+        """
+        TO-DO Implement this filter.
+        """
         return data
 
 
 class CCITTFaxDecode(object):    # pylint: disable=too-few-public-methods
     @staticmethod
-    def decode(data, decodeParms=None, height=0):
-        if decodeParms:
-            if decodeParms.get("/K", 1) == -1:
+    def decode(data, decode_parms=None, height=0):
+        if decode_parms:
+            if decode_parms.get("/K", 1) == -1:
                 CCITTgroup = 4
             else:
                 CCITTgroup = 3
 
-        width = decodeParms["/Columns"]
+        width = decode_parms["/Columns"]
         imgSize = len(data)
-        tiff_header_struct = '<' + '2s' + 'h' + 'l' + 'h' + 'hhll' * 8 + 'h'
+        tiffHeaderStruct = '<' + '2s' + 'h' + 'l' + 'h' + 'hhll' * 8 + 'h'
         tiffHeader = struct.pack(
-            tiff_header_struct,
+            tiffHeaderStruct,
             b'II',  # Byte order indication: Little endian
             42,  # Version number (always 42)
             8,  # Offset to first IFD
@@ -502,15 +585,15 @@ class CCITTFaxDecode(object):    # pylint: disable=too-few-public-methods
             259, 3, 1, CCITTgroup,
             262, 3, 1, 0,  # Thresholding, SHORT, 1, 0 = WhiteIsZero
             # StripOffsets, LONG, 1, length of header
-            273, 4, 1, struct.calcsize(tiff_header_struct),
+            273, 4, 1, struct.calcsize(tiffHeaderStruct),
             278, 4, 1, height,  # RowsPerStrip, LONG, 1, length
             279, 4, 1, imgSize,  # StripByteCounts, LONG, 1, size of image
             0  # last IFD
         )
 
-        return tiffHeader + data
+        # TO-DO Finish implementing (the code above only adds header infos.)
 
-    decode = staticmethod(decode)
+        return tiffHeader + data
 
 
 # pylint: disable=too-many-branches
@@ -546,6 +629,7 @@ def decodeStreamData(stream):
                 )
             elif filterType == "/Crypt":
                 decodeParams = stream.get("/DecodeParams", {})
+
                 if "/Name" not in decodeParams and "/Type" not in decodeParams:
                     pass
                 else:
