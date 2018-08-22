@@ -271,7 +271,10 @@ def pypdfOrd(b):
     Abstracts the conversion from a single-character string to the
     corresponding integer value over the two major versions of Python.
     """
-    if sys.version_info[0] < 3 or type(b) == str:
+    # In case of bugs, try to look here! Should the condition be brought like
+    # it used to be in the comment below?
+    # if sys.version_info[0] < 3 or type(b) == str:
+    if type(b) == str:
         return ord(b)
     else:
         return b
