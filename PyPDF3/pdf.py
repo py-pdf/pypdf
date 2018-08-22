@@ -508,7 +508,7 @@ class PdfFileWriter(object):
         stream.write(b_("%\xE2\xE3\xCF\xD3\n"))
 
         # Progress Bar
-        if len(self._objects) > 25 and progress_bar_enabled and progress_bar is 'gui':
+        if len(self._objects) > 25 and progress_bar_enabled and progress_bar is 'gui' and 'PySimpleGUI' in sys.modules:
             import PySimpleGUI as gui
             for i in range(len(self._objects)):
                 if not gui.EasyProgressMeter('Writing PDF', i + 1, len(self._objects), orientation='h'):
@@ -528,7 +528,7 @@ class PdfFileWriter(object):
                 obj.writeToStream(stream, key)
                 stream.write(b_("\nendobj\n"))
         else:
-            if len(self._objects) > 25 and progress_bar_enabled and progress_bar is 'tqdm':
+            if len(self._objects) > 25 and progress_bar_enabled and progress_bar is 'tqdm' and 'tqdm' in sys.modules:
                 from tqdm import tqdm
                 loop = tqdm(range(len(self._objects)), desc='Writing PDF', total=len(self._objects), unit='objects')
             else:
