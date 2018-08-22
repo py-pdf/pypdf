@@ -2167,6 +2167,7 @@ class PageObject(DictionaryObject):
         self.pdf = pdf
         self.indirectRef = indirectRef
 
+    @staticmethod
     def createBlankPage(pdf=None, width=None, height=None):
         """
         Returns a new blank page.
@@ -2200,7 +2201,6 @@ class PageObject(DictionaryObject):
             RectangleObject([0, 0, width, height]))
 
         return page
-    createBlankPage = staticmethod(createBlankPage)
 
     def rotateClockwise(self, angle):
         """
@@ -2229,6 +2229,7 @@ class PageObject(DictionaryObject):
         currentAngle = rotateObj if isinstance(rotateObj, int) else rotateObj.getObject()
         self[NameObject("/Rotate")] = NumberObject(currentAngle + angle)
 
+    @staticmethod
     def _mergeResources(res1, res2, resource):
         newRes = DictionaryObject()
         newRes.update(res1.get(resource, DictionaryObject()).getObject())
@@ -2242,8 +2243,8 @@ class PageObject(DictionaryObject):
             elif key not in newRes:
                 newRes[key] = page2Res.raw_get(key)
         return newRes, renameRes
-    _mergeResources = staticmethod(_mergeResources)
 
+    @staticmethod
     def _contentStreamRename(stream, rename, pdf):
         if not rename:
             return stream
@@ -2254,8 +2255,8 @@ class PageObject(DictionaryObject):
                 if isinstance(op, NameObject):
                     operands[i] = rename.get(op,op)
         return stream
-    _contentStreamRename = staticmethod(_contentStreamRename)
 
+    @staticmethod
     def _pushPopGS(contents, pdf):
         # adds a graphics state "push" and "pop" to the beginning and end
         # of a content stream.  This isolates it from changes such as
@@ -2264,8 +2265,8 @@ class PageObject(DictionaryObject):
         stream.operations.insert(0, [[], "q"])
         stream.operations.append([[], "Q"])
         return stream
-    _pushPopGS = staticmethod(_pushPopGS)
 
+    @staticmethod
     def _addTransformationMatrix(contents, pdf, ctm):
         # adds transformation matrix at the beginning of the given
         # contents stream.
@@ -2275,7 +2276,6 @@ class PageObject(DictionaryObject):
             FloatObject(c), FloatObject(d), FloatObject(e),
             FloatObject(f)], " cm"])
         return contents
-    _addTransformationMatrix = staticmethod(_addTransformationMatrix)
 
     def getContents(self):
         """

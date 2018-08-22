@@ -103,6 +103,7 @@ class NullObject(PdfObject):
     def writeToStream(self, stream, encryption_key):
         stream.write(b_("null"))
 
+    @staticmethod
     def readFromStream(stream):
         null_text = stream.read(4)
 
@@ -110,8 +111,6 @@ class NullObject(PdfObject):
             raise utils.PdfReadError("Could not read Null object")
 
         return NullObject()
-
-    readFromStream = staticmethod(readFromStream)
 
 
 class BooleanObject(PdfObject):
@@ -124,6 +123,7 @@ class BooleanObject(PdfObject):
         else:
             stream.write(b_("false"))
 
+    @staticmethod
     def readFromStream(stream):
         word = stream.read(4)
 
@@ -136,8 +136,6 @@ class BooleanObject(PdfObject):
         else:
             raise utils.PdfReadError('Could not read Boolean object')
 
-    readFromStream = staticmethod(readFromStream)
-
 
 class ArrayObject(list, PdfObject):
     def writeToStream(self, stream, encryption_key):
@@ -149,6 +147,7 @@ class ArrayObject(list, PdfObject):
 
         stream.write(b_(" ]"))
 
+    @staticmethod
     def readFromStream(stream, pdf):
         arr = ArrayObject()
         tmp = stream.read(1)
@@ -174,8 +173,6 @@ class ArrayObject(list, PdfObject):
             arr.append(readObject(stream, pdf))
 
         return arr
-
-    readFromStream = staticmethod(readFromStream)
 
 
 class IndirectObject(PdfObject):
@@ -205,6 +202,7 @@ class IndirectObject(PdfObject):
     def writeToStream(self, stream, encryption_key):
         stream.write(b_("%s %s R" % (self.idnum, self.generation)))
 
+    @staticmethod
     def readFromStream(stream, pdf):
         idnum = b_("")
 
@@ -241,8 +239,6 @@ class IndirectObject(PdfObject):
             )
 
         return IndirectObject(int(idnum), int(generation), pdf)
-
-    readFromStream = staticmethod(readFromStream)
 
 
 class FloatObject(decimal.Decimal, PdfObject):
@@ -289,6 +285,7 @@ class NumberObject(int, PdfObject):
     def writeToStream(self, stream, encryption_key):
         stream.write(b_(repr(self)))
 
+    @staticmethod
     def readFromStream(stream):
         num = utils.readUntilRegex(stream, NumberObject.NumberPattern)
 
@@ -296,8 +293,6 @@ class NumberObject(int, PdfObject):
             return FloatObject(num)
         else:
             return NumberObject(num)
-
-    readFromStream = staticmethod(readFromStream)
 
 
 # Given a string (either a "str" or "unicode"), create a ByteStringObject or a
@@ -507,6 +502,7 @@ class NameObject(str, PdfObject):
     def writeToStream(self, stream, encryption_key):
         stream.write(b_(self))
 
+    @staticmethod
     def readFromStream(stream, pdf):
         debug = False
 
@@ -536,8 +532,6 @@ class NameObject(str, PdfObject):
                 return NameObject(name)
             else:
                 raise utils.PdfReadError("Illegal character in Name Object")
-
-    readFromStream = staticmethod(readFromStream)
 
 
 class DictionaryObject(dict, PdfObject):
@@ -602,6 +596,7 @@ class DictionaryObject(dict, PdfObject):
             stream.write(b_("\n"))
         stream.write(b_(">>"))
 
+    @staticmethod
     def readFromStream(stream, pdf):
         debug = False
         tmp = stream.read(2)
@@ -712,7 +707,6 @@ class DictionaryObject(dict, PdfObject):
             retval = DictionaryObject()
             retval.update(data)
             return retval
-    readFromStream = staticmethod(readFromStream)
 
 
 class TreeObject(DictionaryObject):
@@ -868,6 +862,7 @@ class StreamObject(DictionaryObject):
         stream.write(data)
         stream.write(b_("\nendstream"))
 
+    @staticmethod
     def initializeFromDictionary(data):
         if "/Filter" in data:
             retval = EncodedStreamObject()
@@ -878,8 +873,6 @@ class StreamObject(DictionaryObject):
         del data["/Length"]
         retval.update(data)
         return retval
-
-    initializeFromDictionary = staticmethod(initializeFromDictionary)
 
     def flateEncode(self):
         if "/Filter" in self:

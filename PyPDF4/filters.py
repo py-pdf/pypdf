@@ -122,6 +122,7 @@ except ImportError:
 
 
 class FlateDecode(object):
+    @staticmethod
     def decode(data, decodeParms):    # pylint: disable=too-many-locals, too-many-branches
         """
         :param data: flate-encoded data.
@@ -196,11 +197,9 @@ class FlateDecode(object):
 
         return data
 
+    @staticmethod
     def encode(data):
         return compress(data)
-
-    decode = staticmethod(decode)
-    encode = staticmethod(encode)
 
 
 class ASCIIHexDecode(object):
@@ -208,6 +207,7 @@ class ASCIIHexDecode(object):
         The ASCIIHexDecode filter decodes data that has been encoded in ASCII
         hexadecimal form into a base-7 ASCII format.
     """
+    @staticmethod
     def decode(data, decode_parms=None):
         """
         :param data: a str sequence of hexadecimal-encoded values to be
@@ -249,8 +249,6 @@ class ASCIIHexDecode(object):
 
     def encode(self):
         pass
-
-    decode = staticmethod(decode)
 
 
 # pylint: disable=too-few-public-methods
@@ -345,6 +343,10 @@ class LZWDecode(object):
             return baos
 
     @staticmethod
+    def encode(data, decodeParms=None):
+        return LZWDecode.Encoder(data).encode()
+
+    @staticmethod
     def decode(data, decode_params=None):
         return LZWDecode.Decoder(data).decode()
 
@@ -355,6 +357,7 @@ class ASCII85Decode(object):
     Decodes string ASCII85-encoded data into a byte format.
     """
     # pylint: disable=too-many-branches, too-many-statements, too-many-locals
+    @staticmethod
     def decode(data, decode_parms=None):
         """
         :param data: a str sequence of ASCII85-encoded characters.
@@ -457,24 +460,25 @@ class ASCII85Decode(object):
 
             return bytes(out)
 
-    decode = staticmethod(decode)
-
 
 # pylint: disable=too-few-public-methods
 class DCTDecode(object):
+    @staticmethod
     def decode(data, decode_params=None):
+        """
+        TO-DO Implement this filter.
+        """
         return data
-    
-    decode = staticmethod(decode)
 
 
 class JPXDecode(object):    # pylint: disable=too-few-public-methods
+    @staticmethod
     def decode(data, decode_parms=None):
         return data
-    decode = staticmethod(decode)
 
 
 class CCITTFaxDecode(object):    # pylint: disable=too-few-public-methods
+    @staticmethod
     def decode(data, decodeParms=None, height=0):
         if decodeParms:
             if decodeParms.get("/K", 1) == -1:
