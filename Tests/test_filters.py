@@ -18,29 +18,34 @@ from PyPDF4.utils import PdfReadError, PdfStreamError, hexEncode
 from Tests.utils import intToBitstring, bitstringToInt
 
 
+TEST_DATA_DIR = join("Tests", "TestData")
+
+
 class FlateDecodeTestCase(unittest.TestCase):
     """
     Tests expected results and edge cases of FlateDecode.
     """
     @classmethod
     def setUpClass(cls):
-        cls.filter_inputs = (
+        cls.filter_inputs = [
             "", '', """""",
             string.ascii_lowercase, string.ascii_uppercase,
             string.ascii_letters, string.digits, string.hexdigits,
             string.punctuation, string.whitespace,  # Add more...
-        )
+        ]
+        for f in ("TheHappyPrince.txt", ):
+            with open(join(TEST_DATA_DIR, f)) as infile:
+                cls.filter_inputs.append(infile.read())
 
-        # TO-DO Is this check, with specific regard to sys.version_info, OK?
-        # Note: bytes() is not supported in Python 2
-        if sys.version_info > (3, 0):
-            cls.filter_inputs = tuple(
-                bytes(s, "ASCII") for s in cls.filter_inputs
-            )
+        cls.filter_inputs = tuple(
+            s.encode("latin1") for s in cls.filter_inputs
+        )
 
     def test_expected_results(self):
         """
         Tests FlateDecode decode() and encode() methods.
+
+        TO-DO Test the result with the omitted predictor values.
         """
         codec = FlateDecode()
         predictors = [1]  # , 10, 11, 12, 13, 14, 15]
@@ -207,14 +212,13 @@ class LZWDecodeTestCase(unittest.TestCase):
         Ensures that the decode(encode(data)) concatenation equals data, where
         data can be an arbitrary byte stream.
         """
-        testDataDir = "./Tests/TestData/"
         inputs = [
             string.ascii_lowercase, string.ascii_uppercase, string.whitespace,
             string.ascii_letters, "AABBCCDDEEFFGGHHIIJJKKLLMMNNOOPPQQRRSSTTT",
         ]
 
         for f in ("TheHappyPrince.txt", ):
-            with open(join(testDataDir, f)) as infile:
+            with open(join(TEST_DATA_DIR, f)) as infile:
                 inputs.append(infile.read())
 
         for t in inputs:
