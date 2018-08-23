@@ -23,7 +23,6 @@ class PdfReaderTestCases(unittest.TestCase):
         compare to expected textual output. Expected outcome: file loads, text
         matches expected.
         """
-
         with open(
                 os.path.join(RESOURCE_ROOT, 'crazyones.pdf'), 'rb'
         ) as inputfile:

@@ -255,20 +255,25 @@ class ASCIIHexDecode(object):
 class LZWDecode(object):
     """
     For a reference of the LZW algorithm consult ISO 32000, section 7.4.4 or
-    Section 13 of "TIFF 6.0 Specification" for a slightly more detailed
-    discussion.
+    Section 13 of "TIFF 6.0 Specification" for a more detailed discussion.
     """
     class Encoder(object):
+        """
+        LZWDecode.Encoder is primarily employed for testing purposes and its
+        implementation doesn't (yet) cover all the little facets present in
+        the ISO standard.
+        """
         MAX_ENTRIES = 2 ** 12
+
         def __init__(self, data):
             """
             :param data: a str or byte string to encode with LZW.
             """
             self.data = data
             self.bitspercode = None
-            # table maps concat. values to their progressive indices
+            # self.table maps buffer values to their progressive indices
             self.table = None
-            # result stores the contiguous stream of bits
+            # self.result stores the contiguous stream of bits in form of ints
             self.result = None
             # The location of the next bit we are going to write to
             self.bitpos = 0
@@ -276,6 +281,9 @@ class LZWDecode(object):
             self.resetTable()
 
         def resetTable(self):
+            """
+            Brings the pattern-to-code-value table to default values.
+            """
             self.bitspercode = 9
 
             self.table = {
@@ -285,6 +293,10 @@ class LZWDecode(object):
             self.table[257] = len(self.table)
 
         def encode(self):
+            """
+            Encodes the data passed in to __init__() according to the LZW
+            specification.
+            """
             self.result = list()
             buffer = str()
             self._writeCode(self.table[256])
@@ -307,6 +319,15 @@ class LZWDecode(object):
             return bytearray(self.result)
 
         def _writeCode(self, code):
+            """
+            Tricky implementation method that serves in the conversion from
+            usually higher-than-eight-bit values (input in code as
+            integers) to a stream of bits. The serialization is performed by
+            writing into a list of integer values.
+
+            :param code: an integer value whose bit stream will be serialized
+                inside self.result.
+            """
             bytesAlloc = int(
                 math.ceil(float(self.bitpos + self.bitspercode) / 8)
             ) - len(self.result)
@@ -339,7 +360,13 @@ class LZWDecode(object):
 
     # pylint: disable=too-many-instance-attributes
     class Decoder(object):
+        """
+        Decodes a stream of data encoded according to LZW.
+        """
         def __init__(self, data):
+            """
+            :param data: a string or byte string.
+            """
             self.STOP = 257
             self.CLEARDICT = 256
             self.data = data

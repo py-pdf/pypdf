@@ -12,14 +12,21 @@ class TestUtilsTestCase(unittest.TestCase):
     project-wide ones.
     """
     def testIntToBitstringToInt(self):
-        exp_outputs = inputs = range(2 ** 12 + 1)
+        """
+        Ensures that bitstringToInt(intToBitsring(input)) == input.
+        """
+        inputs = range(2 ** 12 + 1)
 
-        for o, i in zip(exp_outputs, inputs):
+        for i in inputs:
             self.assertEqual(
-                o, bitstringToInt(intToBitstring(i))
+                i, bitstringToInt(intToBitstring(i))
             )
 
     def testBitstringToInt(self):
+        """
+        Ensures that bitstringToInt() produces the expected result from some
+        of its possible inputs.
+        """
         inputs = (
             "00000000", "",
             "00000001", "1",

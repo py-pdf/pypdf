@@ -1,6 +1,12 @@
+"""
+File containing utils intended to be used in unit testing rather than the
+internal project codebase.
+"""
+
+
 def intToBitstring(n, fill=8):
     """
-    Turns an integer n into its corresponding bit representation.
+    Turns an integer n into its corresponding textual bit representation.
 
     :param fill: number of zeros to pad the bit representation with.
     :raises TypeError: if n is not an integer.

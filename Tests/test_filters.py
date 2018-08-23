@@ -69,6 +69,9 @@ class FlateDecodeTestCase(unittest.TestCase):
 
 
 class ASCIIHexDecodeTestCase(unittest.TestCase):
+    """
+    Tests primarily the decode() method of ASCIIHexDecode.
+    """
     @classmethod
     def setUpClass(cls):
         cls.filter_inputs = (
@@ -113,7 +116,8 @@ class ASCIIHexDecodeTestCase(unittest.TestCase):
 
     def test_no_eod(self):
         """
-        Tests when no EOD character is present, ensuring an exception is raised
+        Tests when no EOD character is present, ensuring an exception is
+        raised.
         """
         inputs = ("", '', """""", '''''')
 
@@ -123,6 +127,12 @@ class ASCIIHexDecodeTestCase(unittest.TestCase):
 
 
 class ASCII85DecodeTestCase(unittest.TestCase):
+    """
+    Tests the decode() method of ASCII85Decode.
+
+    TO-DO A proper input-expected output test case is missing and should be
+    added.
+    """
     def test_with_overflow(self):
         inputs = (
             v + "~>" for v in '\x00\x01\x02\x03\x04\x05\x06\x07\x08\x0e\x0f'
@@ -140,7 +150,7 @@ class ASCII85DecodeTestCase(unittest.TestCase):
 
     def test_five_zero_bytes(self):
         """
-        From ISO 32000 (2008) §7.4.3:
+        From ISO 32000 (2008) sect. 7.4.3:
         «As a special case, if all five bytes are 0, they shall be represented
         by the character with code 122 (z) instead of by five exclamation
         points (!!!!!).»
@@ -162,7 +172,11 @@ class ASCII85DecodeTestCase(unittest.TestCase):
 
 
 class LZWDecodeTestCase(unittest.TestCase):
-    def test_encode(self):
+    """
+    Tests the LZWDecode.decode() method by means of a LZW Encoder built
+    specifically for testing it.
+    """
+    def test_write_code(self):
         """
         Tests that the memorization of byte values performed by _writeCode()
         as a contiguous bit-stream works as intended.
@@ -190,14 +204,15 @@ class LZWDecodeTestCase(unittest.TestCase):
 
     def test_encode_decode(self):
         """
-        Ensures that a concatenation of the like decode(encode(data)) equals
-        data, where data can be an arbitrary byte stream.
+        Ensures that the decode(encode(data)) concatenation equals data, where
+        data can be an arbitrary byte stream.
         """
         testDataDir = "./Tests/TestData/"
         inputs = [
             string.ascii_lowercase, string.ascii_uppercase, string.whitespace,
             string.ascii_letters, "AABBCCDDEEFFGGHHIIJJKKLLMMNNOOPPQQRRSSTTT",
         ]
+
         for f in ("TheHappyPrince.txt", ):
             with open(join(testDataDir, f)) as infile:
                 inputs.append(infile.read())
