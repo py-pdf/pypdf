@@ -269,7 +269,8 @@ def pypdfStr(b):
 def pypdfOrd(b):
     """
     Abstracts the conversion from a single-character string to the
-    corresponding integer value over the two major versions of Python.
+    corresponding integer value over the two major versions of Python and
+    the two data types str and bytes.
     """
     # In case of bugs, try to look here! Should the condition be brought like
     # it used to be in the comment below?

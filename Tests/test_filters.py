@@ -8,15 +8,14 @@ import string
 import sys
 import unittest
 from itertools import product as cartesian_product
-from math import ceil, floor, log
+from math import floor, log
+
 from os.path import join
-from unittest import skip
 
 from PyPDF4.filters import FlateDecode, ASCIIHexDecode, ASCII85Decode, \
     LZWDecode
 from PyPDF4.utils import PdfReadError, PdfStreamError, hexEncode
-from Tests.utils import intToBitstring, bitstringToInt
-
+from Tests.utils import intToBitstring
 
 TEST_DATA_DIR = join("Tests", "TestData")
 
@@ -140,6 +139,7 @@ class ASCII85DecodeTestCase(unittest.TestCase):
         Verifies that decode(encode(data)) == data, with encode() and decode()
         from ASCII85Decode.
         """
+        e, d = ASCII85Decode.encode, ASCII85Decode.decode
         inputs = [
             string.ascii_lowercase, string.ascii_uppercase,
             string.ascii_letters, string.whitespace,
@@ -151,15 +151,15 @@ class ASCII85DecodeTestCase(unittest.TestCase):
                 inputs.append(infile.read())
 
         for i in inputs:
-            if sys.version_info > (3, 0):
+            if sys.version_info > (3, 0) and isinstance(i, str):
                 # The Python 3 version of decode() returns a bytes instance
                 exp = i.encode("LATIN1")
             else:
                 exp = i
 
-            self.assertEqual(
-                exp, ASCII85Decode.decode(ASCII85Decode.encode(i))
-            )
+            self.assertEqual(exp, d(e(i)))
+            # Tests with input in bytes form
+            self.assertEqual(exp, d(e(i.encode("LATIN1"))))
 
     def test_with_overflow(self):
         inputs = (

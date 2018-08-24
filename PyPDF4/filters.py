@@ -36,6 +36,7 @@ __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import math
+import struct
 from sys import version_info
 
 from .utils import PdfReadError, pypdfOrd, paethPredictor, PdfStreamError
@@ -44,7 +45,6 @@ if version_info < (3, 0):
     from cStringIO import StringIO
 else:
     from io import StringIO
-    import struct
 
 try:
     import zlib
@@ -413,9 +413,8 @@ class LZWDecode(object):
 
         def decode(self):
             """
-            Algorithm derived from:
-            http://www.rasip.fer.hr/research/compress/algorithms/fund/lz/lzw.html
-            and the PDFReference
+            TIFF 6.0 specification explains in sufficient details the steps
+            to implement the LZW encode() and decode() algorithms.
             """
             cW = self.CLEARDICT
             baos = ""
@@ -466,6 +465,14 @@ class ASCII85Decode(object):
     # pylint: disable=too-many-branches, too-many-statements, too-many-locals
     @staticmethod
     def encode(data, decode_parms=None):
+        """
+        Encodes chunks of 4-byte sequences of textual or bytes data according
+        to the base-85 ASCII encoding algorithm.
+
+        :param data: a str or byte sequence of values.
+        :return: ASCII85-encoded data in bytes format (equal to str in Python
+            2).
+        """
         result = str()
         filler = "\x00" if type(data) is str else b"\x00"
 
@@ -485,7 +492,7 @@ class ASCII85Decode(object):
 
             for byte in range(4):
                 decimalRepr +=\
-                    ord(data[4 * group + byte]) << 8 * (4 - byte - 1)
+                    pypdfOrd(data[4 * group + byte]) << 8 * (4 - byte - 1)
 
             # If all bytes are 0, we turn them into a single 'z' character
             if decimalRepr == 0 and groupWidth == 4:
@@ -505,105 +512,38 @@ class ASCII85Decode(object):
     @staticmethod
     def decode(data, decode_parms=None):
         """
+        Decodes binary (bytes or str) data previously encoded in ASCII85.
+
         :param data: a str sequence of ASCII85-encoded characters.
         :return: bytes for Python 3, str for Python 2.
+
+        TO-DO Add check for missing '~>' EOD marker.
         """
-        if version_info < (3, 0):
-            retval = ""
-            group = list()
-            index = 0
-            hit_eod = False
+        group_index = b = 0
+        out = bytearray()
 
-            if data[0:2] == "<~":
-                data = data[2:]
+        for index, c in enumerate(data):
+            if '!' <= c <= 'u':
+                group_index += 1
+                b = b * 85 + (ord(c) - 33)
 
-            for index, c in enumerate(data):
-                if c.isspace():
-                    continue
-                elif c == 'z':
-                    assert not group
-                    # TO-DO Ensure the number of bytes here must be FOUR
-                    retval += '\x00\x00\x00\x00'
-                    continue
-                elif c == "~" and data[index + 1] == ">":
-                    if len(group) != 0:
-                        # assert len(group) > 1
-                        if len(group) > 1:
-                            raise ValueError(
-                                "Cannot have a final group of just 1 char"
-                            )
+                if group_index == 5:
+                    out += struct.pack(b'>L', b)
+                    group_index = b = 0
+            elif c == 'z':
+                assert group_index == 0
+                out.extend(b"\x00\x00\x00\x00")
+            elif c == '~' and data[index + 1] == '>':
+                if group_index:
+                    for _ in range(5 - group_index):
+                        b = b * 85 + 84
+                    out += struct.pack(b'>L', b)[:group_index - 1]
 
-                        cnt = len(group) - 1
-                        group += [85, 85, 85]
-                        hit_eod = cnt
-                    else:
-                        break
-                elif not(33 <= ord(c) <= 117):
-                    raise ValueError(
-                        "A ASCII85-encoded character c must be '!' <= c <= 'u'"
-                    )
-                else:
-                    byte_c = ord(c) - 33
+                break
+            else:
+                raise ValueError("Value '%c' not recognized" % c)
 
-                    group.append(byte_c)
-
-                if len(group) >= 5:
-                    b = group[0] * (85 ** 4) + \
-                        group[1] * (85 ** 3) + \
-                        group[2] * (85 ** 2) + \
-                        group[3] * 85 + \
-                        group[4]
-
-                    # assert b < (2**32 - 1)
-                    if b >= (2 ** 32) - 1:
-                        raise OverflowError(
-                            "The sum of a ASCII85-encoded 4-byte group shall"
-                            "not exceed 2 ^ 32 - 1. See ISO 32000, 2008, 7.4.3"
-                        )
-
-                    c4 = chr((b >> 0) % 256)
-                    c3 = chr((b >> 8) % 256)
-                    c2 = chr((b >> 16) % 256)
-                    c1 = chr(b >> 24)
-
-                    retval += (c1 + c2 + c3 + c4)
-
-                    if hit_eod:
-                        retval = retval[:-4 + hit_eod]
-
-                    group = []
-
-            return retval
-        else:
-            if isinstance(data, str):
-                data = data.encode('ascii')
-
-            group_index = b = 0
-            out = bytearray()
-
-            for index, c in enumerate(data):
-                if ord('!') <= c <= ord('u'):
-                    group_index += 1
-                    b = b * 85 + (c - 33)
-
-                    if group_index == 5:
-                        out += struct.pack(b'>L', b)
-                        group_index = b = 0
-                elif c == ord('z'):
-                    assert group_index == 0
-                    # TO-DO Ensure the number of bytes here must be FOUR
-                    out += b'\0\0\0\0'
-                elif c == ord('~') and data[index + 1] == ord('>'):
-                    if group_index:
-                        for _ in range(5 - group_index):
-                            b = b * 85 + 84
-                        out += struct.pack(b'>L', b)[:group_index - 1]
-
-                    break
-                else:
-                    raise ValueError("Value '%c' not recognized" % c)
-
-            return bytes(out)
+        return bytes(out)
 
 
 # pylint: disable=too-few-public-methods
