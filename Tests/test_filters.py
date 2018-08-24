@@ -134,10 +134,33 @@ class ASCIIHexDecodeTestCase(unittest.TestCase):
 class ASCII85DecodeTestCase(unittest.TestCase):
     """
     Tests the decode() method of ASCII85Decode.
-
-    TO-DO A proper input-expected output test case is missing and should be
-    added.
     """
+    def test_encode_decode(self):
+        """
+        Verifies that decode(encode(data)) == data, with encode() and decode()
+        from ASCII85Decode.
+        """
+        inputs = [
+            string.ascii_lowercase, string.ascii_uppercase,
+            string.ascii_letters, string.whitespace,
+            "\x00\x00\x00\x00", 2 * "\x00\x00\x00\x00",
+        ]
+
+        for filename in ("TheHappyPrince.txt", ):
+            with open(join(TEST_DATA_DIR, filename)) as infile:
+                inputs.append(infile.read())
+
+        for i in inputs:
+            if sys.version_info > (3, 0):
+                # The Python 3 version of decode() returns a bytes instance
+                exp = i.encode("LATIN1")
+            else:
+                exp = i
+
+            self.assertEqual(
+                exp, ASCII85Decode.decode(ASCII85Decode.encode(i))
+            )
+
     def test_with_overflow(self):
         inputs = (
             v + "~>" for v in '\x00\x01\x02\x03\x04\x05\x06\x07\x08\x0e\x0f'
@@ -172,7 +195,7 @@ class ASCII85DecodeTestCase(unittest.TestCase):
 
         for o, i in zip(exp_outputs, inputs):
             self.assertEqual(
-                o, ASCII85Decode.decode(i)
+                o, ASCII85Decode.decode(i + "~>")
             )
 
 

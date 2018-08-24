@@ -465,6 +465,44 @@ class ASCII85Decode(object):
     """
     # pylint: disable=too-many-branches, too-many-statements, too-many-locals
     @staticmethod
+    def encode(data, decode_parms=None):
+        result = str()
+        filler = "\x00" if type(data) is str else b"\x00"
+
+        if type(data) not in (str, bytes):
+            raise TypeError(
+                "Expected str or bytes type for data, got %s instead" %
+                type(data)
+            )
+
+        for group in range(int(math.ceil(len(data) / 4.0))):
+            decimalRepr = 0
+            ascii85 = str()
+            groupWidth = min(4, len(data) - 4 * group)
+
+            if groupWidth < 4:
+                data = data + (4 - groupWidth) * filler
+
+            for byte in range(4):
+                decimalRepr +=\
+                    ord(data[4 * group + byte]) << 8 * (4 - byte - 1)
+
+            # If all bytes are 0, we turn them into a single 'z' character
+            if decimalRepr == 0 and groupWidth == 4:
+                ascii85 = "z"
+            else:
+                for i in range(5):
+                    ascii85 = chr(decimalRepr % 85 + 33) + ascii85
+                    decimalRepr = int(decimalRepr / 85.0)
+
+            # In case of a partial group of four bytes, the standard says:
+            # «Finally, it shall write only the first n + 1 characters of the
+            # resulting group of 5.» - ISO 32000 (2008), sec. 7.4.3
+            result += ascii85[:min(5, groupWidth + 1)]
+
+        return result + "~>"
+
+    @staticmethod
     def decode(data, decode_parms=None):
         """
         :param data: a str sequence of ASCII85-encoded characters.
