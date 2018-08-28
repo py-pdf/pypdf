@@ -20,7 +20,7 @@ objects rather than file streams, allowing for PDF manipulation in memory.
 It is therefore a useful tool for websites that manage or manipulate PDFs.
 """
 
-VERSIONFILE="PyPDF3/_version.py"
+VERSIONFILE = "PyPDF3/_version.py"
 verstrline = open(VERSIONFILE, "rt").read()
 VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
 mo = re.search(VSRE, verstrline, re.M)
