@@ -511,7 +511,7 @@ class PdfFileWriter(object):
         if len(self._objects) > 25 and progress_bar_enabled and progress_bar is 'gui' and 'PySimpleGUI' in sys.modules:
             import PySimpleGUI as gui
             for i in range(len(self._objects)):
-                if not gui.EasyProgressMeter('Writing PDF', i + 1, len(self._objects), orientation='h'):
+                if not gui.EasyProgressMeter('Encrypting PDF', i + 1, len(self._objects), orientation='h'):
                     break
                 idnum = (i + 1)
                 obj = self._objects[i]
@@ -530,7 +530,7 @@ class PdfFileWriter(object):
         else:
             if len(self._objects) > 25 and progress_bar_enabled and progress_bar is 'tqdm' and 'tqdm' in sys.modules:
                 from tqdm import tqdm
-                loop = tqdm(range(len(self._objects)), desc='Writing PDF', total=len(self._objects), unit='objects')
+                loop = tqdm(range(len(self._objects)), desc='Encrypting PDF', total=len(self._objects), unit='objects')
             else:
                 loop = range(len(self._objects))
 
