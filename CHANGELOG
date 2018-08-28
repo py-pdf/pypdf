@@ -1,4 +1,10 @@
-﻿Version 0.0.6, 2018-08-21
+﻿Version 1.0.0, 2018-08-28
+--------------------------
+ - Added tqdm to setup.py install_requires
+ - Modified progress bar message for pdf.py write method
+
+
+Version 0.0.6, 2018-08-21
 --------------------------
  - Added progress bar to PdfFileWriter write method
 
