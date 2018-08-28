@@ -32,6 +32,7 @@ else:
 setup(
         name="PyPDF3",
         version=verstr,
+        install_requires=['tqdm'],
         description="Pure Python PDF toolkit",
         long_description=long_description,
         author="Stephen Neal",
