@@ -507,14 +507,14 @@ class ASCII85Decode(object):
             # resulting group of 5.» - ISO 32000 (2008), sec. 7.4.3
             result += ascii85[:min(5, groupWidth + 1)]
 
-        return result + "~>"
+        return (result + "~>").encode("LATIN1")
 
     @staticmethod
     def decode(data, decode_parms=None):
         """
         Decodes binary (bytes or str) data previously encoded in ASCII85.
 
-        :param data: a str sequence of ASCII85-encoded characters.
+        :param data: a str or bytes sequence of ASCII85-encoded characters.
         :return: bytes for Python 3, str for Python 2.
 
         TO-DO Add check for missing '~>' EOD marker.
@@ -522,18 +522,31 @@ class ASCII85Decode(object):
         group_index = b = 0
         out = bytearray()
 
+        if isinstance(data, bytes):
+            data = data.decode("LATIN1")
+        elif not isinstance(data, str):
+            raise TypeError(
+                "data is of %s type, expected str or bytes" %
+                data.__class__.__name__
+            )
+
         for index, c in enumerate(data):
-            if '!' <= c <= 'u':
+            byte = ord(c)
+
+            # 33 == ord('!') and 117 == ord('u')
+            if 33 <= byte <= 117:
                 group_index += 1
-                b = b * 85 + (ord(c) - 33)
+                b = b * 85 + (byte - 33)
 
                 if group_index == 5:
                     out += struct.pack(b'>L', b)
                     group_index = b = 0
-            elif c == 'z':
+            # 122 == ord('z')
+            elif byte == 122:
                 assert group_index == 0
                 out.extend(b"\x00\x00\x00\x00")
-            elif c == '~' and data[index + 1] == '>':
+            # 126 == ord('~') and 62 == ord('>')
+            elif byte == 126 and data[index + 1] == '>':
                 if group_index:
                     for _ in range(5 - group_index):
                         b = b * 85 + 84
