@@ -1107,9 +1107,8 @@ class PdfFileReader(object):
     Initializes a PdfFileReader object.  This operation can take some time, as
     the PDF stream's cross-reference tables are read into memory.
 
-    :param stream: A File object or an object that supports the standard read
-        and seek methods similar to a File object. Could also be a
-        string representing a path to a PDF file.
+    :param stream: A file-like object with read() and seek() methods. Could
+        also be a string representing a path to a PDF file.
     :param bool strict: Determines whether user should be warned of all
         problems and also causes some correctable problems to be fatal.
         Defaults to ``True``.
@@ -1119,32 +1118,46 @@ class PdfFileReader(object):
         ``warnings.py`` module with a custom implementation (defaults to
         ``True``).
     """
-    def __init__(self, stream, strict=True, warndest = None, overwriteWarnings = True):
+    def __init__(
+            self, stream, strict=True, warndest=None, overwriteWarnings=True
+    ):
         if overwriteWarnings:
-            # have to dynamically override the default showwarning since there are no
-            # public methods that specify the 'file' parameter
-            def _showwarning(message, category, filename, lineno, file=warndest, line=None):
+            # Have to dynamically override the default showwarning since there
+            # are no public methods that specify the 'file' parameter
+            def _showwarning(
+                    message, category, filename, lineno, file=warndest,
+                    line=None
+            ):
                 if file is None:
                     file = sys.stderr
                 try:
-                    file.write(formatWarning(message, category, filename, lineno, line))
+                    file.write(
+                        formatWarning(message, category, filename, lineno,
+                                      line)
+                    )
                 except IOError:
                     pass
+
             warnings.showwarning = _showwarning
+
         self.strict = strict
         self.flattenedPages = None
         self.resolvedObjects = {}
         self.xrefIndex = 0
-        self._pageId2Num = None # map page IndirectRef number to Page Number
+        self._pageId2Num = None  # Map page IndirectRef number to Page Number
+
         if hasattr(stream, 'mode') and 'b' not in stream.mode:
-            warnings.warn("PdfFileReader stream/file object is not in binary mode. It may not be read correctly.", utils.PdfReadWarning)
+            warnings.warn(
+                "PdfFileReader stream/file object is not in binary mode. It"
+                "may not be read correctly.", utils.PdfReadWarning
+            )
         if isString(stream):
             fileobj = open(stream, 'rb')
             stream = BytesIO(b_(fileobj.read()))
             fileobj.close()
+
         self.read(stream)
         self.stream = stream
-
         self._override_encryption = False
 
     def getDocumentInfo(self):
@@ -1154,18 +1167,24 @@ class PdfFileReader(object):
         dictionaries, and these metadata streams will not be accessed by this
         function.
 
-        :return: the document information of this PDF file
-        :rtype: :class:`DocumentInformation<pdf.DocumentInformation>` or ``None`` if none exists.
+        :return: the document information of this PDF file.
+        :rtype: :class:`DocumentInformation<pdf.DocumentInformation>` or
+            ``None`` if none exists.
         """
         if "/Info" not in self.trailer:
             return None
+
         obj = self.trailer['/Info']
         retval = DocumentInformation()
         retval.update(obj)
+
         return retval
 
-    documentInfo = property(lambda self: self.getDocumentInfo(), None, None)
-    """Read-only property that accesses the :meth:`getDocumentInfo()<PdfFileReader.getDocumentInfo>` function."""
+    documentInfo = property(getDocumentInfo)
+    """
+    Read-only property that accesses the
+    :meth:`getDocumentInfo()<PdfFileReader.getDocumentInfo>` function.
+    """
 
     def getXmpMetadata(self):
         """
@@ -1183,7 +1202,7 @@ class PdfFileReader(object):
         finally:
             self._override_encryption = False
 
-    xmpMetadata = property(lambda self: self.getXmpMetadata(), None, None)
+    xmpMetadata = property(getXmpMetadata)
     """
     Read-only property that accesses the
     :meth:`getXmpMetadata()<PdfFileReader.getXmpMetadata>` function.
@@ -1198,7 +1217,6 @@ class PdfFileReader(object):
         :raises PdfReadError: if file is encrypted and restrictions prevent
             this action.
         """
-
         # Flattened pages will not work on an Encrypted PDF;
         # the PDF file's page count is used in this case. Otherwise,
         # the original method (flattened page count) is used.
@@ -1212,11 +1230,12 @@ class PdfFileReader(object):
             finally:
                 self._override_encryption = False
         else:
-            if self.flattenedPages == None:
+            if self.flattenedPages is None:
                 self._flatten()
+
             return len(self.flattenedPages)
 
-    numPages = property(lambda self: self.getNumPages(), None, None)
+    numPages = property(getNumPages)
     """
     Read-only property that accesses the
     :meth:`getNumPages()<PdfFileReader.getNumPages>` function.
@@ -1238,17 +1257,7 @@ class PdfFileReader(object):
 
         return self.flattenedPages[pageNumber]
 
-    namedDestinations = property(lambda self:
-                                  self.getNamedDestinations(), None, None)
-    """
-    Read-only property that accesses the
-    :meth:`getNamedDestinations()<PdfFileReader.getNamedDestinations>` function.
-    """
-
-    # A select group of relevant field attributes. For the complete list,
-    # see section 8.6.2 of the PDF 1.7 reference.
-
-    def getFields(self, tree = None, retval = None, fileobj = None):
+    def getFields(self, tree=None, retval=None, fileobj=None):
         """
         Extracts field data if this PDF contains interactive form fields.
         The *tree* and *retval* parameters are for recursive use.
@@ -1260,19 +1269,22 @@ class PdfFileReader(object):
             default, the mapping name is used for keys.
         :rtype: dict, or ``None`` if form data could not be located.
         """
-        fieldAttributes = {"/FT" : "Field Type", "/Parent" : "Parent",
-                       "/T" : "Field Name", "/TU" : "Alternate Field Name",
-                       "/TM" : "Mapping Name", "/Ff" : "Field Flags",
-                       "/V" : "Value", "/DV" : "Default Value"}
-        if retval == None:
+        fieldAttributes = {
+            "/FT": "Field Type", "/Parent": "Parent", "/T": "Field Name",
+            "/TU": "Alternate Field Name", "/TM": "Mapping Name",
+            "/Ff": "Field Flags", "/V": "Value", "/DV": "Default Value"
+        }
+
+        if retval is None:
             retval = {}
             catalog = self.trailer["/Root"]
-            # get the AcroForm tree
+
+            # Get the AcroForm tree
             if "/AcroForm" in catalog:
                 tree = catalog["/AcroForm"]
             else:
                 return None
-        if tree == None:
+        if tree is None:
             return retval
 
         self._checkKids(tree, retval, fileobj)
@@ -1307,21 +1319,25 @@ class PdfFileReader(object):
 
     def _checkKids(self, tree, retval, fileobj):
         if "/Kids" in tree:
-            # recurse down the tree
+            # Recurse down the tree
             for kid in tree["/Kids"]:
                 self.getFields(kid.getObject(), retval, fileobj)
 
     def _writeField(self, fileobj, field, fieldAttributes):
         order = ["/TM", "/T", "/FT", "/Parent", "/TU", "/Ff", "/V", "/DV"]
+
         for attr in order:
             attrName = fieldAttributes[attr]
+
             try:
                 if attr == "/FT":
                     # Make the field type value more clear
                     types = {"/Btn":"Button", "/Tx":"Text", "/Ch": "Choice",
                              "/Sig":"Signature"}
                     if field[attr] in types:
-                        fileobj.write(attrName + ": " + types[field[attr]] + "\n")
+                        fileobj.write(
+                            attrName + ": " + types[field[attr]] + "\n"
+                        )
                 elif attr == "/Parent":
                     # Let's just write the name of the parent
                     try:
@@ -1336,13 +1352,15 @@ class PdfFileReader(object):
                 pass
 
     def getFormTextFields(self):
-        ''' Retrieves form fields from the document with textual data (inputs, dropdowns)
-        '''
-        # Retrieve document form fields
+        """
+        Retrieves form fields from the document with textual data (inputs,
+        dropdowns).
+        """
         formfields = self.getFields()
+
         return dict(
-            (formfields[field]['/T'], formfields[field].get('/V')) for field in formfields \
-                if formfields[field].get('/FT') == '/Tx'
+            (formfields[field]['/T'], formfields[field].get('/V'))
+            for field in formfields if formfields[field].get('/FT') == '/Tx'
         )
 
     def getNamedDestinations(self, tree=None, retval=None):
@@ -1365,7 +1383,7 @@ class PdfFileReader(object):
                 if "/Dests" in names:
                     tree = names['/Dests']
 
-        if tree == None:
+        if tree is None:
             return retval
 
         if "/Kids" in tree:
@@ -1378,27 +1396,31 @@ class PdfFileReader(object):
             for i in range(0, len(names), 2):
                 key = names[i].getObject()
                 val = names[i+1].getObject()
+
                 if isinstance(val, DictionaryObject) and '/D' in val:
                     val = val['/D']
+
                 dest = self._buildDestination(key, val)
-                if dest != None:
+                if dest is not None:
                     retval[key] = dest
 
         return retval
 
-    outlines = property(lambda self: self.getOutlines(), None, None)
+    namedDestinations = property(getNamedDestinations)
     """
     Read-only property that accesses the
-        :meth:`getOutlines()<PdfFileReader.getOutlines>` function.
+    :meth:`getNamedDestinations()<PdfFileReader.getNamedDestinations>`
+    function.
     """
 
     def getOutlines(self, node=None, outlines=None):
         """
         Retrieves the document outline present in the document.
 
-        :return: a nested list of :class:`Destinations<PyPDF4.generic.Destination>`.
+        :return: a nested list of
+            :class:`Destinations<PyPDF4.generic.Destination>`.
         """
-        if outlines == None:
+        if outlines is None:
             outlines = []
             catalog = self.trailer["/Root"]
 
@@ -1407,17 +1429,19 @@ class PdfFileReader(object):
                 try:
                     lines = catalog["/Outlines"]
                 except utils.PdfReadError:
-                    # this occurs if the /Outlines object reference is incorrect
-                    # for an example of such a file, see https://unglueit-files.s3.amazonaws.com/ebf/7552c42e9280b4476e59e77acc0bc812.pdf
+                    # This occurs if the /Outlines object reference is
+                    # incorrect for an example of such a file, see
+                    # https://unglueit-files.s3.amazonaws.com/ebf/7552c42e9280b4476e59e77acc0bc812.pdf
                     # so continue to load the file without the Bookmarks
                     return outlines
 
                 if "/First" in lines:
                     node = lines["/First"]
+
             self._namedDests = self.getNamedDestinations()
 
-        if node == None:
-          return outlines
+        if node is None:
+            return outlines
 
         # see if there are any more outlines
         while True:
@@ -1438,12 +1462,20 @@ class PdfFileReader(object):
 
         return outlines
 
+    outlines = property(getOutlines)
+    """
+    Read-only property that accesses the
+    :meth:`getOutlines()<PdfFileReader.getOutlines>` function.
+    """
+
     def _getPageNumberByIndirect(self, indirectRef):
         """Generate _pageId2Num"""
         if self._pageId2Num is None:
             id2num = {}
+
             for i, x in enumerate(self.pages):
                 id2num[x.indirectRef.idnum] = i
+
             self._pageId2Num = id2num
 
         if isinstance(indirectRef, int):
@@ -1511,8 +1543,11 @@ class PdfFileReader(object):
                 raise utils.PdfReadError("Unexpected destination %r" % dest)
         return outline
 
-    pages = property(lambda self: ConvertFunctionsToVirtualList(self.getNumPages, self.getPage),
-        None, None)
+    pages = property(
+        lambda self: ConvertFunctionsToVirtualList(
+            self.getNumPages, self.getPage
+        )
+    )
     """
     Read-only property that emulates a list based upon the
     :meth:`getNumPages()<PdfFileReader.getNumPages>` and
@@ -1534,8 +1569,10 @@ class PdfFileReader(object):
             return None
 
     pageLayout = property(getPageLayout)
-    """Read-only property accessing the
-    :meth:`getPageLayout()<PdfFileReader.getPageLayout>` method."""
+    """
+    Read-only property accessing the
+    :meth:`getPageLayout()<PdfFileReader.getPageLayout>` method.
+    """
 
     def getPageMode(self):
         """
@@ -1552,17 +1589,19 @@ class PdfFileReader(object):
             return None
 
     pageMode = property(getPageMode)
-    """Read-only property accessing the
-    :meth:`getPageMode()<PdfFileReader.getPageMode>` method."""
+    """
+    Read-only property accessing the
+    :meth:`getPageMode()<PdfFileReader.getPageMode>` method.
+    """
 
     def _flatten(self, pages=None, inherit=None, indirectRef=None):
         inheritablePageAttributes = (
             NameObject("/Resources"), NameObject("/MediaBox"),
             NameObject("/CropBox"), NameObject("/Rotate")
-            )
-        if inherit == None:
+        )
+        if inherit is None:
             inherit = dict()
-        if pages == None:
+        if pages is None:
             self.flattenedPages = []
             catalog = self.trailer["/Root"].getObject()
             pages = catalog["/Pages"].getObject()
@@ -1582,27 +1621,37 @@ class PdfFileReader(object):
                 self._flatten(page.getObject(), inherit, **addt)
         elif t == "/Page":
             for attr, value in list(inherit.items()):
-                # if the page has it's own value, it does not inherit the
+                # If the page has its own value, it does not inherit the
                 # parent's value:
                 if attr not in pages:
                     pages[attr] = value
+
             pageObj = PageObject(self, indirectRef)
             pageObj.update(pages)
             self.flattenedPages.append(pageObj)
 
     def _getObjectFromStream(self, indirectReference):
-        # indirect reference to object in object stream
-        # read the entire object stream into memory
+        # Indirect reference to object in object stream
+        # Read the entire object stream into memory
         debug = False
         stmnum, idx = self.xref_objStm[indirectReference.idnum]
-        if debug: print(("Here1: %s %s"%(stmnum, idx)))
+
+        if debug:
+            print("Here1: %s %s" % (stmnum, idx))
+
         objStm = IndirectObject(stmnum, 0, self).getObject()
-        if debug: print(("Here2: objStm=%s.. stmnum=%s data=%s"%(objStm, stmnum, objStm.getData())))
+        if debug:
+            print(
+                "Here2: objStm=%s.. stmnum=%s data=%s" %
+                (objStm, stmnum, objStm.getData())
+            )
+
         # This is an xref to a stream, so its type better be a stream
         assert objStm['/Type'] == '/ObjStm'
         # /N is the number of indirect objects in the stream
         assert idx < objStm['/N']
         streamData = BytesIO(b_(objStm.getData()))
+
         for i in range(objStm['/N']):
             readNonWhitespace(streamData)
             streamData.seek(-1, 1)
@@ -1612,12 +1661,15 @@ class PdfFileReader(object):
             offset = NumberObject.readFromStream(streamData)
             readNonWhitespace(streamData)
             streamData.seek(-1, 1)
+
             if objnum != indirectReference.idnum:
                 # We're only interested in one object
                 continue
             if self.strict and idx != i:
                 raise utils.PdfReadError("Object is in wrong index.")
+
             streamData.seek(objStm['/First']+offset, 0)
+
             if debug:
                 pos = streamData.tell()
                 streamData.seek(0, 0)
@@ -1631,8 +1683,11 @@ class PdfFileReader(object):
                 # Stream object cannot be read. Normally, a critical error, but
                 # Adobe Reader doesn't complain, so continue (in strict mode?)
                 e = sys.exc_info()[1]
-                warnings.warn("Invalid stream (index %d) within object %d %d: %s" % \
-                      (i, indirectReference.idnum, indirectReference.generation, e), utils.PdfReadWarning)
+                warnings.warn(
+                    "Invalid stream (index %d) within object %d %d: %s" %
+                    (i, indirectReference.idnum, indirectReference.generation,
+                     e), utils.PdfReadWarning
+                )
 
                 if self.strict:
                     raise utils.PdfReadError("Can't read object stream: %s"%e)
@@ -1640,44 +1695,72 @@ class PdfFileReader(object):
                 obj = NullObject()
             return obj
 
-        if self.strict: raise utils.PdfReadError("This is a fatal error in strict mode.")
+        if self.strict:
+            raise utils.PdfReadError("This is a fatal error in strict mode.")
+
         return NullObject()
 
     def getObject(self, indirectReference):
         debug = False
-        if debug: print(("looking at:", indirectReference.idnum, indirectReference.generation))
-        retval = self.cacheGetIndirectObject(indirectReference.generation,
-                                                indirectReference.idnum)
-        if retval != None:
+
+        if debug:
+            print("looking at:", indirectReference.idnum,
+                indirectReference.generation
+            )
+
+        retval = self.cacheGetIndirectObject(
+            indirectReference.generation, indirectReference.idnum
+        )
+
+        if retval is not None:
             return retval
         if indirectReference.generation == 0 and \
                         indirectReference.idnum in self.xref_objStm:
             retval = self._getObjectFromStream(indirectReference)
         elif indirectReference.generation in self.xref and \
                 indirectReference.idnum in self.xref[indirectReference.generation]:
-            start = self.xref[indirectReference.generation][indirectReference.idnum]
-            if debug: print(("  Uncompressed Object", indirectReference.idnum, indirectReference.generation, ":", start))
+            start = self.xref[
+                indirectReference.generation][indirectReference.idnum]
+
+            if debug:
+                print(
+                    "  Uncompressed Object",indirectReference.idnum,
+                    indirectReference.generation, ":", start
+                )
+
             self.stream.seek(start, 0)
             idnum, generation = self.readObjectHeader(self.stream)
+
             if idnum != indirectReference.idnum and self.xrefIndex:
-                # Xref table probably had bad indexes due to not being zero-indexed
+                # Xref table probably had bad indexes due to not being
+                # zero-indexed
                 if self.strict:
-                    raise utils.PdfReadError("Expected object ID (%d %d) does not match actual (%d %d); xref table not zero-indexed." \
-                                     % (indirectReference.idnum, indirectReference.generation, idnum, generation))
-                else: pass # xref table is corrected in non-strict mode
+                    raise utils.PdfReadError(
+                        "Expected object ID (%d %d) does not match actual"
+                        "(%d %d); xref table not zero-indexed."
+                        % (indirectReference.idnum,
+                           indirectReference.generation, idnum, generation)
+                    )
+                else:
+                    # xref table is corrected in non-strict mode
+                    pass
             elif idnum != indirectReference.idnum and self.strict:
                 # some other problem
-                raise utils.PdfReadError("Expected object ID (%d %d) does not match actual (%d %d)." \
-                                         % (indirectReference.idnum, indirectReference.generation, idnum, generation))
+                raise utils.PdfReadError(
+                    "Expected object ID (%d %d) does not match actual (%d %d)."
+                    % (indirectReference.idnum, indirectReference.generation,
+                       idnum, generation)
+                )
             if self.strict:
                 assert generation == indirectReference.generation
             retval = readObject(self.stream, self)
 
-            # override encryption is used for the /Encrypt dictionary
+            # Override encryption is used for the /Encrypt dictionary
             if not self._override_encryption and self.isEncrypted:
-                # if we don't have the encryption key:
+                # If we don't have the encryption key:
                 if not hasattr(self, '_decryption_key'):
                     raise utils.PdfReadError("file has not been decrypted")
+
                 # otherwise, decrypt here...
                 import struct
                 pack1 = struct.pack("<i", indirectReference.idnum)[:3]
@@ -1688,16 +1771,21 @@ class PdfFileReader(object):
                 key = md5_hash[:min(16, len(self._decryption_key) + 5)]
                 retval = self._decryptObject(retval, key)
         else:
-            warnings.warn("Object %d %d not defined."%(indirectReference.idnum,
-                        indirectReference.generation), utils.PdfReadWarning)
-            #if self.strict:
+            warnings.warn(
+                "Object %d %d not defined." % (indirectReference.idnum,
+                        indirectReference.generation), utils.PdfReadWarning
+            )
+            # if self.strict:
             raise utils.PdfReadError("Could not find object.")
-        self.cacheIndirectObject(indirectReference.generation,
-                    indirectReference.idnum, retval)
+
+        self.cacheIndirectObject(
+            indirectReference.generation, indirectReference.idnum, retval
+        )
         return retval
 
     def _decryptObject(self, obj, key):
-        if isinstance(obj, ByteStringObject) or isinstance(obj, TextStringObject):
+        if isinstance(obj, ByteStringObject)\
+                or isinstance(obj, TextStringObject):
             obj = createStringObject(utils.RC4Encrypt(key, obj.original_bytes))
         elif isinstance(obj, StreamObject):
             obj._data = utils.RC4Encrypt(key, obj._data)
@@ -1707,6 +1795,7 @@ class PdfFileReader(object):
         elif isinstance(obj, ArrayObject):
             for i in range(len(obj)):
                 obj[i] = self._decryptObject(obj[i], key)
+
         return obj
 
     def readObjectHeader(self, stream):
@@ -1723,51 +1812,70 @@ class PdfFileReader(object):
         obj = stream.read(3)
         readNonWhitespace(stream)
         stream.seek(-1, 1)
-        if (extra and self.strict):
-            #not a fatal error
-            warnings.warn("Superfluous whitespace found in object header %s %s" % \
-                          (idnum, generation), utils.PdfReadWarning)
+
+        if extra and self.strict:
+            # Not a fatal error
+            warnings.warn(
+                "Superfluous whitespace found in object header %s %s" %
+                (idnum, generation), utils.PdfReadWarning
+            )
+
         return int(idnum), int(generation)
 
     def cacheGetIndirectObject(self, generation, idnum):
         debug = False
         out = self.resolvedObjects.get((generation, idnum))
-        if debug and out: print(("cache hit: %d %d"%(idnum, generation)))
-        elif debug: print(("cache miss: %d %d"%(idnum, generation)))
+
+        if debug and out:
+            print("cache hit: %d %d" % (idnum, generation))
+        elif debug:
+            print("cache miss: %d %d" % (idnum, generation))
+
         return out
 
     def cacheIndirectObject(self, generation, idnum, obj):
-        # return None # Sometimes we want to turn off cache for debugging.
+        # Sometimes we want to turn off cache for debugging.
         if (generation, idnum) in self.resolvedObjects:
-            msg = "Overwriting cache for %s %s"%(generation, idnum)
-            if self.strict: raise utils.PdfReadError(msg)
-            else:           warnings.warn(msg)
+            msg = "Overwriting cache for %s %s" % (generation, idnum)
+            if self.strict:
+                raise utils.PdfReadError(msg)
+            else:
+                warnings.warn(msg)
+
         self.resolvedObjects[(generation, idnum)] = obj
         return obj
 
     def read(self, stream):
         debug = False
-        if debug: print(">>read", stream)
-        # start at the end:
-        stream.seek(-1, 2)
+
+        if debug:
+            print(">>read", stream)
+
+        stream.seek(-1, 2)  # Start at the end:
         if not stream.tell():
             raise utils.PdfReadError('Cannot read an empty file')
-        last1K = stream.tell() - 1024 + 1 # offset of last 1024 bytes of stream
+
+        # Offset of last 1024 bytes of stream
+        last1K = stream.tell() - 1024 + 1
         line = b_('')
+
         while line[:5] != b_("%%EOF"):
             if stream.tell() < last1K:
                 raise utils.PdfReadError("EOF marker not found")
             line = self.readNextEndLine(stream)
-            if debug: print("  line:",line)
 
-        # find startxref entry - the location of the xref table
+            if debug:
+                print("  line:",line)
+
+        # Find startxref entry - the location of the xref table
         line = self.readNextEndLine(stream)
         try:
             startxref = int(line)
         except ValueError:
-            # 'startxref' may be on the same line as the location
+            # startxref may be on the same line as the location
             if not line.startswith(b_("startxref")):
                 raise utils.PdfReadError("startxref not found")
+
             startxref = int(line[9:].strip())
             warnings.warn("startxref on same line as offset")
         else:
@@ -1775,12 +1883,13 @@ class PdfFileReader(object):
             if line[:9] != b_("startxref"):
                 raise utils.PdfReadError("startxref not found")
 
-        # read all cross reference tables and their trailers
+        # Read all cross reference tables and their trailers
         self.xref = {}
         self.xref_objStm = {}
         self.trailer = DictionaryObject()
+
         while True:
-            # load the xref table
+            # Load the xref table
             stream.seek(startxref, 0)
             x = stream.read(1)
             if x == b_("x"):
@@ -1790,15 +1899,25 @@ class PdfFileReader(object):
                     raise utils.PdfReadError("xref table read error")
                 readNonWhitespace(stream)
                 stream.seek(-1, 1)
-                firsttime = True; # check if the first time looking at the xref table
+                # Check if the first time looking at the xref table
+                firsttime = True
+
                 while True:
                     num = readObject(stream, self)
                     if firsttime and num != 0:
                          self.xrefIndex = num
+
                          if self.strict:
-                            warnings.warn("Xref table not zero-indexed. ID numbers for objects will be corrected.", utils.PdfReadWarning)
-                            #if table not zero indexed, could be due to error from when PDF was created
-                            #which will lead to mismatched indices later on, only warned and corrected if self.strict=True
+                            warnings.warn(
+                                "Xref table not zero-indexed. ID numbers for"
+                                "objects will be corrected.",
+                                utils.PdfReadWarning
+                            )
+                            # If table not zero indexed, could be due to error
+                            # from when PDF was created #which will lead to
+                            # mismatched indices later on, only warned and
+                            #  corrected if self.strict=True
+
                     firsttime = False
                     readNonWhitespace(stream)
                     stream.seek(-1, 1)
@@ -1806,9 +1925,9 @@ class PdfFileReader(object):
                     readNonWhitespace(stream)
                     stream.seek(-1, 1)
                     cnt = 0
+
                     while cnt < size:
                         line = stream.read(20)
-
                         # It's very clear in section 3.4.3 of the PDF spec
                         # that all cross-reference table lines are a fixed
                         # 20 bytes (as of PDF 1.7). However, some files have
@@ -1830,6 +1949,7 @@ class PdfFileReader(object):
 
                         offset, generation = line[:16].split(b_(" "))
                         offset, generation = int(offset), int(generation)
+
                         if generation not in self.xref:
                             self.xref[generation] = {}
                         if num in self.xref[generation]:
@@ -1842,17 +1962,21 @@ class PdfFileReader(object):
                             self.xref[generation][num] = offset
                         cnt += 1
                         num += 1
+
                     readNonWhitespace(stream)
                     stream.seek(-1, 1)
                     trailertag = stream.read(7)
+
                     if trailertag != b_("trailer"):
                         # more xrefs!
                         stream.seek(-7, 1)
                     else:
                         break
+
                 readNonWhitespace(stream)
                 stream.seek(-1, 1)
                 newTrailer = readObject(stream, self)
+
                 for key, value in list(newTrailer.items()):
                     if key not in self.trailer:
                         self.trailer[key] = value
@@ -1865,17 +1989,29 @@ class PdfFileReader(object):
                 stream.seek(-1, 1)
                 idnum, generation = self.readObjectHeader(stream)
                 xrefstream = readObject(stream, self)
+
                 assert xrefstream["/Type"] == "/XRef"
+
                 self.cacheIndirectObject(generation, idnum, xrefstream)
                 streamData = BytesIO(b_(xrefstream.getData()))
                 # Index pairs specify the subsections in the dictionary. If
                 # none create one subsection that spans everything.
-                idx_pairs = xrefstream.get("/Index", [0, xrefstream.get("/Size")])
-                if debug: print(("read idx_pairs=%s"%list(self._pairs(idx_pairs))))
+                idx_pairs = xrefstream.get(
+                    "/Index", [0, xrefstream.get("/Size")]
+                )
+
+                if debug:
+                    print(
+                        "read idx_pairs=%s" % list(self._pairs(idx_pairs))
+                    )
+
                 entrySizes = xrefstream.get("/W")
                 assert len(entrySizes) >= 3
+
                 if self.strict and len(entrySizes) > 3:
-                    raise utils.PdfReadError("Too many entry sizes: %s" %entrySizes)
+                    raise utils.PdfReadError(
+                        "Too many entry sizes: %s" % entrySizes
+                    )
 
                 def getEntry(i):
                     # Reads the correct number of bytes for each entry. See the
@@ -1886,8 +2022,11 @@ class PdfFileReader(object):
 
                     # PDF Spec Table 17: A value of zero for an element in the
                     # W array indicates...the default value shall be used
-                    if i == 0:  return 1 # First value defaults to 1
-                    else:       return 0
+                    if i == 0:
+                        # First value defaults to 1
+                        return 1
+                    else:
+                        return 0
 
                 def used_before(num, generation):
                     # We move backwards through the xrefs, don't replace any.
@@ -1940,7 +2079,7 @@ class PdfFileReader(object):
                 else:
                     break
             else:
-                # bad xref character at startxref.  Let's see if we can find
+                # Bad xref character at startxref.  Let's see if we can find
                 # the xref table nearby, as we've observed this error with an
                 # off-by-one before.
                 stream.seek(-11, 1)
@@ -1961,8 +2100,11 @@ class PdfFileReader(object):
                 if found:
                     continue
                 # no xref table found at specified location
-                raise utils.PdfReadError("Could not find xref table at specified location")
-        #if not zero-indexed, verify that the table is correct; change it if necessary
+                raise utils.PdfReadError(
+                    "Could not find xref table at specified location"
+                )
+        # If not zero-indexed, verify that the table is correct; change it if
+        # necessary
         if self.xrefIndex and not self.strict:
             loc = stream.tell()
             for gen in self.xref:
@@ -1976,14 +2118,21 @@ class PdfFileReader(object):
                     if pid == id - self.xrefIndex:
                         self._zeroXref(gen)
                         break
-                    #if not, then either it's just plain wrong, or the non-zero-index is actually correct
-            stream.seek(loc, 0) #return to where it was
+                    # If not, then either it's just plain wrong, or the
+                    # non-zero-index is actually correct
+
+            #return to where it was
+            stream.seek(loc, 0)
 
     def _zeroXref(self, generation):
-        self.xref[generation] = dict( (k-self.xrefIndex, v) for (k, v) in list(self.xref[generation].items()) )
+        self.xref[generation] = dict(
+            (k - self.xrefIndex, v) for (k, v)
+            in list(self.xref[generation].items())
+        )
 
     def _pairs(self, array):
         i = 0
+
         while True:
             yield array[i], array[i+1]
             i += 2
@@ -1992,19 +2141,27 @@ class PdfFileReader(object):
 
     def readNextEndLine(self, stream):
         debug = False
-        if debug: print(">>readNextEndLine")
+        if debug:
+            print(">>readNextEndLine")
+
         line = b_("")
+
         while True:
             # Prevent infinite loops in malformed PDFs
             if stream.tell() == 0:
                 raise utils.PdfReadError("Could not read malformed PDF file")
             x = stream.read(1)
-            if debug: print(("  x:", x, "%x"%ord(x)))
+
+            if debug:
+                print(("  x:", x, "%x"%ord(x)))
             if stream.tell() < 2:
                 raise utils.PdfReadError("EOL marker not found")
+
             stream.seek(-2, 1)
+
             if x == b_('\n') or x == b_('\r'): ## \n = LF; \r = CR
                 crlf = False
+
                 while x == b_('\n') or x == b_('\r'):
                     if debug:
                         if ord(x) == 0x0D: print("  x is CR 0D")
@@ -2016,13 +2173,20 @@ class PdfFileReader(object):
                     if stream.tell() < 2:
                         raise utils.PdfReadError("EOL marker not found")
                     stream.seek(-2, 1)
-                stream.seek(2 if crlf else 1, 1) #if using CR+LF, go back 2 bytes, else 1
+
+                # If using CR+LF, go back 2 bytes, else 1
+                stream.seek(2 if crlf else 1, 1)
                 break
             else:
                 if debug: print("  x is neither")
                 line = x + line
-                if debug: print(("  RNEL line:", line))
-        if debug: print("leaving RNEL")
+
+                if debug:
+                    print("  %s line:" % self.readNextEndLine.__name__, line)
+
+        if debug:
+            print("leaving %s" % self.readNextEndLine.__name__)
+
         return line
 
     def decrypt(self, password):
@@ -2044,8 +2208,8 @@ class PdfFileReader(object):
         :raises NotImplementedError: if document uses an unsupported encryption
             method.
         """
-
         self._override_encryption = True
+
         try:
             return self._decrypt(password)
         finally:
@@ -2053,36 +2217,51 @@ class PdfFileReader(object):
 
     def _decrypt(self, password):
         encrypt = self.trailer['/Encrypt'].getObject()
+
         if encrypt['/Filter'] != '/Standard':
-            raise NotImplementedError("only Standard PDF encryption handler is available")
+            raise NotImplementedError(
+                "only Standard PDF encryption handler is available"
+            )
         if not (encrypt['/V'] in (1, 2)):
-            raise NotImplementedError("only algorithm code 1 and 2 are supported. This PDF uses code %s" % encrypt['/V'])
+            raise NotImplementedError(
+                "only algorithm code 1 and 2 are supported. This PDF uses code"
+                "%s" % encrypt['/V']
+            )
         user_password, key = self._authenticateUserPassword(password)
+
         if user_password:
             self._decryption_key = key
             return 1
         else:
             rev = encrypt['/R'].getObject()
+
             if rev == 2:
                 keylen = 5
             else:
                 keylen = encrypt['/Length'].getObject() // 8
+
             key = _alg33_1(password, rev, keylen)
             real_O = encrypt["/O"].getObject()
+
             if rev == 2:
                 userpass = utils.RC4Encrypt(key, real_O)
             else:
                 val = real_O
+
                 for i in range(19, -1, -1):
                     new_key = b_('')
+
                     for l in range(len(key)):
                         new_key += b_(chr(utils.pypdfOrd(key[l]) ^ i))
+
                     val = utils.RC4Encrypt(new_key, val)
                 userpass = val
             owner_password, key = self._authenticateUserPassword(userpass)
+
             if owner_password:
                 self._decryption_key = key
                 return 2
+
         return 0
 
     def _authenticateUserPassword(self, password):
@@ -2093,6 +2272,7 @@ class PdfFileReader(object):
         id_entry = self.trailer['/ID'].getObject()
         id1_entry = id_entry[0].getObject()
         real_U = encrypt['/U'].getObject().original_bytes
+
         if rev == 2:
             U, key = _alg34(password, owner_entry, p_entry, id1_entry)
         elif rev >= 3:
@@ -2101,15 +2281,16 @@ class PdfFileReader(object):
                     p_entry, id1_entry,
                     encrypt.get("/EncryptMetadata", BooleanObject(False)).getObject())
             U, real_U = U[:16], real_U[:16]
+
         return U == real_U, key
 
     def getIsEncrypted(self):
         return "/Encrypt" in self.trailer
 
-    isEncrypted = property(lambda self: self.getIsEncrypted(), None, None)
+    isEncrypted = property(getIsEncrypted)
     """
     Read-only boolean property showing whether this PDF file is encrypted.
-    Note that this property, if true, will remain true even after the
+    Note that this property, if True, will remain True even after the
     :meth:`decrypt()<PdfFileReader.decrypt>` method is called.
     """
 
