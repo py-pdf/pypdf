@@ -77,10 +77,14 @@ class PdfFileWriter(object):
     """
     This class supports writing PDF files out, given pages produced by another
     class (typically :class:`PdfFileReader<PdfFileReader>`).
+
+    :param bool debug: Whether this class should emit debug informations
+        (recommended for development). Defaults to False.
     """
-    def __init__(self):
+    def __init__(self, debug=False):
         self._header = b_("%PDF-1.3")
         self._objects = []  # array of indirect objects
+        self.debug = debug
 
         # The root of our page tree node.
         pages = DictionaryObject()
@@ -448,7 +452,6 @@ class PdfFileWriter(object):
         """
         if hasattr(stream, 'mode') and 'b' not in stream.mode:
             warnings.warn("File <%s> to write to is not in binary mode. It may not be written to correctly." % stream.name)
-        debug = False
         import struct
 
         if not self._root:
@@ -475,7 +478,8 @@ class PdfFileWriter(object):
                 externalReferenceMap[data.pdf][data.generation][data.idnum] = IndirectObject(objIndex + 1, 0, self)
 
         self.stack = []
-        if debug: print(("ERM:", externalReferenceMap, "root:", self._root))
+        if self.debug:
+            print(("ERM:", externalReferenceMap, "root:", self._root))
         self._sweepIndirectReferences(externalReferenceMap, self._root)
         del self.stack
 
@@ -537,8 +541,8 @@ class PdfFileWriter(object):
         self.getObject(self._info).update(args)
 
     def _sweepIndirectReferences(self, externMap, data):
-        debug = False
-        if debug: print((data, "TYPE", data.__class__.__name__))
+        if self.debug:
+            print((data, "TYPE", data.__class__.__name__))
         if isinstance(data, DictionaryObject):
             for key, value in list(data.items()):
                 origvalue = value
@@ -1117,9 +1121,12 @@ class PdfFileReader(object):
     :param bool overwriteWarnings: Determines whether to override Python's
         ``warnings.py`` module with a custom implementation (defaults to
         ``True``).
+    :param bool debug: Whether this class should emit debug informations
+        (recommended for development). Defaults to False.
     """
     def __init__(
-            self, stream, strict=True, warndest=None, overwriteWarnings=True
+            self, stream, strict=True, warndest=None, overwriteWarnings=True,
+            debug=False
     ):
         if overwriteWarnings:
             # Have to dynamically override the default showwarning since there
@@ -1144,6 +1151,7 @@ class PdfFileReader(object):
         self.flattenedPages = None
         self.resolvedObjects = {}
         self.xrefIndex = 0
+        self.debug = debug
         self._pageId2Num = None  # Map page IndirectRef number to Page Number
 
         if hasattr(stream, 'mode') and 'b' not in stream.mode:
@@ -1633,14 +1641,13 @@ class PdfFileReader(object):
     def _getObjectFromStream(self, indirectReference):
         # Indirect reference to object in object stream
         # Read the entire object stream into memory
-        debug = False
         stmnum, idx = self.xref_objStm[indirectReference.idnum]
 
-        if debug:
+        if self.debug:
             print("Here1: %s %s" % (stmnum, idx))
 
         objStm = IndirectObject(stmnum, 0, self).getObject()
-        if debug:
+        if self.debug:
             print(
                 "Here2: objStm=%s.. stmnum=%s data=%s" %
                 (objStm, stmnum, objStm.getData())
@@ -1670,7 +1677,7 @@ class PdfFileReader(object):
 
             streamData.seek(objStm['/First']+offset, 0)
 
-            if debug:
+            if self.debug:
                 pos = streamData.tell()
                 streamData.seek(0, 0)
                 lines = streamData.readlines()
@@ -1701,9 +1708,7 @@ class PdfFileReader(object):
         return NullObject()
 
     def getObject(self, indirectReference):
-        debug = False
-
-        if debug:
+        if self.debug:
             print("looking at:", indirectReference.idnum,
                 indirectReference.generation
             )
@@ -1722,7 +1727,7 @@ class PdfFileReader(object):
             start = self.xref[
                 indirectReference.generation][indirectReference.idnum]
 
-            if debug:
+            if self.debug:
                 print(
                     "  Uncompressed Object",indirectReference.idnum,
                     indirectReference.generation, ":", start
@@ -1823,12 +1828,11 @@ class PdfFileReader(object):
         return int(idnum), int(generation)
 
     def cacheGetIndirectObject(self, generation, idnum):
-        debug = False
         out = self.resolvedObjects.get((generation, idnum))
 
-        if debug and out:
+        if self.debug and out:
             print("cache hit: %d %d" % (idnum, generation))
-        elif debug:
+        elif self.debug:
             print("cache miss: %d %d" % (idnum, generation))
 
         return out
@@ -1846,9 +1850,7 @@ class PdfFileReader(object):
         return obj
 
     def read(self, stream):
-        debug = False
-
-        if debug:
+        if self.debug:
             print(">>read", stream)
 
         stream.seek(-1, 2)  # Start at the end:
@@ -1864,7 +1866,7 @@ class PdfFileReader(object):
                 raise utils.PdfReadError("EOF marker not found")
             line = self.readNextEndLine(stream)
 
-            if debug:
+            if self.debug:
                 print("  line:",line)
 
         # Find startxref entry - the location of the xref table
@@ -2000,7 +2002,7 @@ class PdfFileReader(object):
                     "/Index", [0, xrefstream.get("/Size")]
                 )
 
-                if debug:
+                if self.debug:
                     print(
                         "read idx_pairs=%s" % list(self._pairs(idx_pairs))
                     )
@@ -2055,7 +2057,7 @@ class PdfFileReader(object):
                                 self.xref[generation] = {}
                             if not used_before(num, generation):
                                 self.xref[generation][num] = byte_offset
-                                if debug: print(("XREF Uncompressed: %s %s"%(
+                                if self.debug: print(("XREF Uncompressed: %s %s"%(
                                                 num, generation)))
                         elif xref_type == 2:
                             # compressed objects
@@ -2063,7 +2065,7 @@ class PdfFileReader(object):
                             obstr_idx = getEntry(2)
                             generation = 0 # PDF spec table 18, generation is 0
                             if not used_before(num, generation):
-                                if debug: print(("XREF Compressed: %s %s %s"%(
+                                if self.debug: print(("XREF Compressed: %s %s %s"%(
                                         num, objstr_num, obstr_idx)))
                                 self.xref_objStm[num] = (objstr_num, obstr_idx)
                         elif self.strict:
@@ -2140,8 +2142,7 @@ class PdfFileReader(object):
                 break
 
     def readNextEndLine(self, stream):
-        debug = False
-        if debug:
+        if self.debug:
             print(">>readNextEndLine")
 
         line = b_("")
@@ -2152,7 +2153,7 @@ class PdfFileReader(object):
                 raise utils.PdfReadError("Could not read malformed PDF file")
             x = stream.read(1)
 
-            if debug:
+            if self.debug:
                 print(("  x:", x, "%x"%ord(x)))
             if stream.tell() < 2:
                 raise utils.PdfReadError("EOL marker not found")
@@ -2163,7 +2164,7 @@ class PdfFileReader(object):
                 crlf = False
 
                 while x == b_('\n') or x == b_('\r'):
-                    if debug:
+                    if self.debug:
                         if ord(x) == 0x0D: print("  x is CR 0D")
                         elif ord(x) == 0x0A: print("  x is LF 0A")
                     x = stream.read(1)
@@ -2178,13 +2179,13 @@ class PdfFileReader(object):
                 stream.seek(2 if crlf else 1, 1)
                 break
             else:
-                if debug: print("  x is neither")
+                if self.debug: print("  x is neither")
                 line = x + line
 
-                if debug:
+                if self.debug:
                     print("  %s line:" % self.readNextEndLine.__name__, line)
 
-        if debug:
+        if self.debug:
             print("leaving %s" % self.readNextEndLine.__name__)
 
         return line
