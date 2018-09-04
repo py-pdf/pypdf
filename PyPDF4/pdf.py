@@ -1720,56 +1720,47 @@ class PdfFileReader(object):
         :raises PdfReadError: if ``indirectReference`` did not relate to any
             object.
         """
+        r = indirectReference
         if self.debug:
-            print("looking at:", indirectReference.idnum,
-                indirectReference.generation
-            )
+            print("looking at:", r.idnum, r.generation)
 
-        retval = self.cacheGetIndirectObject(
-            indirectReference.generation, indirectReference.idnum
-        )
-
-        if retval is not None:
-            return retval
-        if indirectReference.generation == 0 and \
-                        indirectReference.idnum in self.xref_objStm:
-            retval = self._getObjectFromStream(indirectReference)
-        elif indirectReference.generation in self.xref and \
-                indirectReference.idnum in self.xref[indirectReference.generation]:
+        if (r.generation, r.idnum) in self.resolvedObjects:
+            return self.resolvedObjects[(r.generation, r.idnum)]
+        if r.generation == 0 and r.idnum in self.xref_objStm:
+            retval = self._getObjectFromStream(r)
+        elif r.generation in self.xref and \
+                r.idnum in self.xref[r.generation]:
             start = self.xref[
-                indirectReference.generation][indirectReference.idnum]
+                r.generation][r.idnum]
 
             if self.debug:
                 print(
-                    "  Uncompressed Object",indirectReference.idnum,
-                    indirectReference.generation, ":", start
+                    "  Uncompressed Object", r.idnum, r.generation, ":", start
                 )
 
             self.stream.seek(start, 0)
             idnum, generation = self.readObjectHeader(self.stream)
 
-            if idnum != indirectReference.idnum and self.xrefIndex:
+            if idnum != r.idnum and self.xrefIndex:
                 # Xref table probably had bad indexes due to not being
                 # zero-indexed
                 if self.strict:
                     raise utils.PdfReadError(
                         "Expected object ID (%d %d) does not match actual"
                         "(%d %d); xref table not zero-indexed."
-                        % (indirectReference.idnum,
-                           indirectReference.generation, idnum, generation)
+                        % (r.idnum, r.generation, idnum, generation)
                     )
                 else:
                     # xref table is corrected in non-strict mode
                     pass
-            elif idnum != indirectReference.idnum and self.strict:
+            elif idnum != r.idnum and self.strict:
                 # some other problem
                 raise utils.PdfReadError(
                     "Expected object ID (%d %d) does not match actual (%d %d)."
-                    % (indirectReference.idnum, indirectReference.generation,
-                       idnum, generation)
+                    % (r.idnum, r.generation, idnum, generation)
                 )
             if self.strict:
-                assert generation == indirectReference.generation
+                assert generation == r.generation
             retval = readObject(self.stream, self)
 
             # Override encryption is used for the /Encrypt dictionary
@@ -1780,8 +1771,8 @@ class PdfFileReader(object):
 
                 # otherwise, decrypt here...
                 import struct
-                pack1 = struct.pack("<i", indirectReference.idnum)[:3]
-                pack2 = struct.pack("<i", indirectReference.generation)[:2]
+                pack1 = struct.pack("<i", r.idnum)[:3]
+                pack2 = struct.pack("<i", r.generation)[:2]
                 key = self._decryption_key + pack1 + pack2
                 assert len(key) == (len(self._decryption_key) + 5)
                 md5_hash = md5(key).digest()
@@ -1789,15 +1780,13 @@ class PdfFileReader(object):
                 retval = self._decryptObject(retval, key)
         else:
             warnings.warn(
-                "Object %d %d not defined." % (indirectReference.idnum,
-                        indirectReference.generation), utils.PdfReadWarning
+                "Object %d %d not defined." %
+                (r.idnum, r.generation), utils.PdfReadWarning
             )
-            # if self.strict:
             raise utils.PdfReadError("Could not find object.")
 
-        self.cacheIndirectObject(
-            indirectReference.generation, indirectReference.idnum, retval
-        )
+        self.cacheIndirectObject(r.generation, r.idnum, retval)
+
         return retval
 
     def _decryptObject(self, obj, key):
@@ -1838,16 +1827,6 @@ class PdfFileReader(object):
             )
 
         return int(idnum), int(generation)
-
-    def cacheGetIndirectObject(self, generation, idnum):
-        out = self.resolvedObjects.get((generation, idnum))
-
-        if self.debug and out:
-            print("cache hit: %d %d" % (idnum, generation))
-        elif self.debug:
-            print("cache miss: %d %d" % (idnum, generation))
-
-        return out
 
     def cacheIndirectObject(self, generation, idnum, obj):
         # Sometimes we want to turn off cache for debugging.
