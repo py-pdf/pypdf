@@ -177,6 +177,20 @@ class ArrayObject(list, PdfObject):
 
 class IndirectObject(PdfObject):
     def __init__(self, idnum, generation, pdf):
+        """
+        Represents an indirect generic object whose declaration in the File
+        Body is something like
+
+        123 0 obj\n
+        ...\n
+        endobj\n
+
+        :param idnum: identifying number of this indirect reference.
+        :param generation: generation number, used for marking batch updates.
+        :param pdf: the :class:`PdfFileReader<pdf.PdfFileReader>` or
+            :class:`PdfFileWriter<pdf.PdfFileWriter>` instance associated with
+            this object.
+        """
         self.idnum = idnum
         self.generation = generation
         self.pdf = pdf

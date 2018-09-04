@@ -1107,27 +1107,27 @@ class PdfFileWriter(object):
 
 
 class PdfFileReader(object):
-    """
-    Initializes a PdfFileReader object.  This operation can take some time, as
-    the PDF stream's cross-reference tables are read into memory.
-
-    :param stream: A file-like object with read() and seek() methods. Could
-        also be a string representing a path to a PDF file.
-    :param bool strict: Determines whether user should be warned of all
-        problems and also causes some correctable problems to be fatal.
-        Defaults to ``True``.
-    :param warndest: Destination for logging warnings (defaults to
-        ``sys.stderr``).
-    :param bool overwriteWarnings: Determines whether to override Python's
-        ``warnings.py`` module with a custom implementation (defaults to
-        ``True``).
-    :param bool debug: Whether this class should emit debug informations
-        (recommended for development). Defaults to False.
-    """
     def __init__(
             self, stream, strict=True, warndest=None, overwriteWarnings=True,
             debug=False
     ):
+        """
+        Initializes a PdfFileReader object.  This operation can take some time,
+        as the PDF stream's cross-reference tables are read into memory.
+
+        :param stream: A file-like object with read() and seek() methods. Could
+            also be a string representing a path to a PDF file.
+        :param bool strict: Determines whether user should be warned of all
+            problems and also causes some correctable problems to be fatal.
+            Defaults to ``True``.
+        :param warndest: Destination for logging warnings (defaults to
+            ``sys.stderr``).
+        :param bool overwriteWarnings: Determines whether to override Python's
+            ``warnings.py`` module with a custom implementation (defaults to
+            ``True``).
+        :param bool debug: Whether this class should emit debug informations
+            (recommended for development). Defaults to False.
+        """
         if overwriteWarnings:
             # Have to dynamically override the default showwarning since there
             # are no public methods that specify the 'file' parameter
@@ -1509,12 +1509,12 @@ class PdfFileReader(object):
 
     def getDestinationPageNumber(self, destination):
         """
-        Retrieve page number of a given Destination object
+        Retrieves the page number of a given Destination object
 
         :param Destination destination: The destination to get page number.
              Should be an instance of
              :class:`Destination<PyPDF4.pdf.Destination>`
-        :return: the page number or -1 if page not found
+        :return: the page number or ``-1`` if the page was not found.
         :rtype: int
         """
         indirectRef = destination.page
@@ -1708,6 +1708,18 @@ class PdfFileReader(object):
         return NullObject()
 
     def getObject(self, indirectReference):
+        """
+        Retrieves an indirect reference object, caching it appropriately, from
+        the File Body of the associated PDF file.
+
+        :param indirectReference: an
+            :class:`IndirectObject<generic.IndirectObject>` instance
+            identifying the indirect object properties (id. and gen. number).
+        :return: the :class:`PdfObject<generic.PdfObject` queried for, if
+            found.
+        :raises PdfReadError: if ``indirectReference`` did not relate to any
+            object.
+        """
         if self.debug:
             print("looking at:", indirectReference.idnum,
                 indirectReference.generation
@@ -2192,7 +2204,7 @@ class PdfFileReader(object):
 
     def decrypt(self, password):
         """
-        When using an encrypted / secured PDF file with the PDF Standard
+        When using an encrypted/secured PDF file with the PDF Standard
         encryption handler, this function will allow the file to be decrypted.
         It checks the given password against the document's user password and
         owner password, and then stores the resulting decryption key if either
