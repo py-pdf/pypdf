@@ -259,8 +259,8 @@ class LZWDecode(object):
     """
     class Encoder(object):
         """
-        LZWDecode.Encoder is primarily employed for testing purposes and its
-        implementation doesn't (yet) cover all the little facets present in
+        ``LZWDecode.Encoder`` is primarily employed for testing purposes and
+        its implementation doesn't (yet) cover all the little facets present in
         the ISO standard.
         """
         MAX_ENTRIES = 2 ** 12
@@ -278,28 +278,16 @@ class LZWDecode(object):
             # The location of the next bit we are going to write to
             self.bitpos = 0
 
-            self.resetTable()
-
-        def resetTable(self):
-            """
-            Brings the pattern-to-code-value table to default values.
-            """
-            self.bitspercode = 9
-
-            self.table = {
-                chr(n): n for n in range(256)
-            }
-            self.table[256] = len(self.table)
-            self.table[257] = len(self.table)
+            self._resetTable()
 
         def encode(self):
             """
-            Encodes the data passed in to __init__() according to the LZW
+            Encodes the data passed in to ``__init__()`` according to the LZW
             specification.
             """
             self.result = list()
             buffer = str()
-            self._writeCode(self.table[256])
+            self._writeCode(256)
 
             for c in self.data:
                 if buffer + c in self.table.keys():
@@ -312,21 +300,33 @@ class LZWDecode(object):
                     buffer = c
 
             self._writeCode(self.table[buffer])
-            self._writeCode(self.table[257])
+            self._writeCode(257)
 
             # This results in an automatic assertion of the values of
             # self.result, since for each v one of them, 0 <= v <= 255
             return bytearray(self.result)
 
+        def _resetTable(self):
+            """
+            Brings the pattern-to-code-value table to default values.
+            """
+            self.bitspercode = 9
+
+            self.table = {
+                chr(n): n for n in range(256)
+            }
+            self.table[256] = len(self.table)
+            self.table[257] = len(self.table)
+
         def _writeCode(self, code):
             """
             Tricky implementation method that serves in the conversion from
-            usually higher-than-eight-bit values (input in code as
+            usually higher-than-eight-bit values (input in ``code`` as
             integers) to a stream of bits. The serialization is performed by
             writing into a list of integer values.
 
             :param code: an integer value whose bit stream will be serialized
-                inside self.result.
+                inside ``self.result``.
             """
             bytesAlloc = int(
                 math.ceil(float(self.bitpos + self.bitspercode) / 8)
@@ -353,7 +353,7 @@ class LZWDecode(object):
             if len(self.table) > (2 ** self.bitspercode) - 1:
                 self.bitspercode += 1
             elif len(self.table) > LZWDecode.Encoder.MAX_ENTRIES:
-                self.resetTable()
+                self._resetTable()
                 self._writeCode(256)
 
             self.table[value] = len(self.table)
@@ -377,13 +377,59 @@ class LZWDecode(object):
             for i in range(256):
                 self.dict[i] = chr(i)
 
-            self.resetDict()
+            self._resetDict()
 
-        def resetDict(self):
+        def decode(self):
+            """
+            TIFF 6.0 specification explains in sufficient details the steps
+            to implement the LZW encode() and decode() algorithms.
+            """
+            cW = self.CLEARDICT
+            baos = ""
+
+            while True:
+                pW = cW
+                cW = self._nextCode()
+
+                if cW == -1:
+                    raise PdfReadError("Missed the stop code in LZWDecode")
+                if cW == self.STOP:
+                    break
+                elif cW == self.CLEARDICT:
+                    self._resetDict()
+                elif pW == self.CLEARDICT:
+                    baos += self.dict[cW]
+                else:
+                    if cW < self.dictlen:
+                        baos += self.dict[cW]
+
+                        if self.dict[cW]:
+                            p = self.dict[pW] + self.dict[cW][0]
+                        else:
+                            p = self.dict[pW]
+
+                        self.dict[self.dictlen] = p
+                        self.dictlen += 1
+                    else:
+                        if self.dict[pW]:
+                            p = self.dict[pW] + self.dict[pW][0]
+                        else:
+                            p = self.dict[pW]
+
+                        baos += p
+                        self.dict[self.dictlen] = p
+                        self.dictlen += 1
+                    if (self.dictlen >= (1 << self.bitspercode) - 1 and
+                            self.bitspercode < 12):
+                        self.bitspercode += 1
+
+            return baos
+
+        def _resetDict(self):
             self.dictlen = 258
             self.bitspercode = 9
 
-        def nextCode(self):
+        def _nextCode(self):
             fillbits = self.bitspercode
             value = 0
 
@@ -398,10 +444,9 @@ class LZWDecode(object):
                     bitsfromhere = fillbits
 
                 value |= (
-                        ((nextbits >> (8 - self.bitpos - bitsfromhere)) &
-                         (0xff >> (8 - bitsfromhere))) <<
-                        (fillbits - bitsfromhere)
-                )
+                                 (nextbits >> (8 - self.bitpos - bitsfromhere)) &
+                                 (0xff >> (8 - bitsfromhere))
+                         ) << (fillbits - bitsfromhere)
                 fillbits -= bitsfromhere
                 self.bitpos += bitsfromhere
 
@@ -410,43 +455,6 @@ class LZWDecode(object):
                     self.bytepos = self.bytepos + 1
 
             return value
-
-        def decode(self):
-            """
-            TIFF 6.0 specification explains in sufficient details the steps
-            to implement the LZW encode() and decode() algorithms.
-            """
-            cW = self.CLEARDICT
-            baos = ""
-
-            while True:
-                pW = cW
-                cW = self.nextCode()
-
-                if cW == -1:
-                    raise PdfReadError("Missed the stop code in LZWDecode")
-                if cW == self.STOP:
-                    break
-                elif cW == self.CLEARDICT:
-                    self.resetDict()
-                elif pW == self.CLEARDICT:
-                    baos += self.dict[cW]
-                else:
-                    if cW < self.dictlen:
-                        baos += self.dict[cW]
-                        p = self.dict[pW] + self.dict[cW][0]
-                        self.dict[self.dictlen] = p
-                        self.dictlen += 1
-                    else:
-                        p = self.dict[pW] + self.dict[pW][0]
-                        baos += p
-                        self.dict[self.dictlen] = p
-                        self.dictlen += 1
-                    if (self.dictlen >= (1 << self.bitspercode) - 1 and
-                            self.bitspercode < 12):
-                        self.bitspercode += 1
-
-            return baos
 
     @staticmethod
     def encode(data, decodeParms=None):
