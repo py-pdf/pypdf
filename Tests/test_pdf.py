@@ -1,11 +1,12 @@
-# TO-DO Rename and swap `tests.py` to a more specific test environment (
-# e.g. only the `pdf.py` or `utils.py` file)
+"""
+Tests PDF primitives from PyPDF4.pdf.
+"""
 import binascii
 import os
 import sys
 import unittest
 
-from PyPDF4 import PdfFileReader, PdfFileWriter
+from PyPDF4.pdf import PdfFileReader, PdfFileWriter
 
 # Configure path environment
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -16,13 +17,12 @@ sys.path.append(PROJECT_ROOT)
 
 
 class PdfReaderTestCases(unittest.TestCase):
-    def test_PdfReaderFileLoad(self):
-        '''
+    def test_file_load(self):
+        """
         Test loading and parsing of a file. Extract text of the file and
         compare to expected textual output. Expected outcome: file loads, text
         matches expected.
-        '''
-
+        """
         with open(
                 os.path.join(RESOURCE_ROOT, 'crazyones.pdf'), 'rb'
         ) as inputfile:
@@ -47,7 +47,7 @@ class PdfReaderTestCases(unittest.TestCase):
                     % (pdftext, ipdf_p1_text)
             )
 
-    def test_PdfReaderJpegImage(self):
+    def test_jpeg_image(self):
         '''
         Test loading and parsing of a file. Extract the image of the file and
         compare to expected textual output. Expected outcome: file loads, image
@@ -75,6 +75,22 @@ class PdfReaderTestCases(unittest.TestCase):
                     '\n\nExpected:\n\n%r\n\nExtracted:\n\n%r\n\n'
                     % (imagetext, binascii.hexlify(data).decode())
             )
+
+    def test_properties(self):
+        """
+        The switch from PyPDF2 to PyPDF4 sees many stylistic changes, including
+        the use of the @property decorator (where possible) and pruning out
+        of unnecessary arguments to property() as a function.
+        This test ensures that the two styles, the older and the newer, are
+        functionally equivalent.
+        """
+        properties = (
+            "documentInfo", "xmpMetadata", "numPages", "namedDestinations",
+            "outlines", "pages", "pageLayout", "pageMode", "isEncrypted"
+        )
+
+        for p in properties:
+            self.assertIsInstance(getattr(PdfFileReader, p), property)
 
 
 class AddJsTestCase(unittest.TestCase):

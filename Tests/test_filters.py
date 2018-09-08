@@ -1,17 +1,23 @@
+# -*- coding: utf-8 -*-
 """
-Adds unit tests for filters.py.
+Performs unit tests for filters.py.
 
 TO-DO Add license notice, if any.
 """
 import string
 import sys
 import unittest
-
 from itertools import product as cartesian_product
-from unittest import skip
+from math import floor, log
 
-from PyPDF4.filters import FlateDecode, ASCIIHexDecode
-from PyPDF4.utils import PdfReadError, PdfStreamError
+from os.path import join
+
+from PyPDF4.filters import FlateDecode, ASCIIHexDecode, ASCII85Decode, \
+    LZWDecode
+from PyPDF4.utils import PdfReadError, PdfStreamError, hexEncode
+from Tests.utils import intToBitstring
+
+TEST_DATA_DIR = join("Tests", "TestData")
 
 
 class FlateDecodeTestCase(unittest.TestCase):
@@ -20,23 +26,25 @@ class FlateDecodeTestCase(unittest.TestCase):
     """
     @classmethod
     def setUpClass(cls):
-        cls.filter_inputs = (
+        cls.filter_inputs = [
             "", '', """""",
             string.ascii_lowercase, string.ascii_uppercase,
             string.ascii_letters, string.digits, string.hexdigits,
             string.punctuation, string.whitespace,  # Add more...
-        )
+        ]
+        for f in ("TheHappyPrince.txt", ):
+            with open(join(TEST_DATA_DIR, f)) as infile:
+                cls.filter_inputs.append(infile.read())
 
-        # TO-DO Is this check, with specific regard to sys.version_info, OK?
-        # Note: bytes() is not supported in Python 2
-        if sys.version_info > (3, 0):
-            cls.filter_inputs = tuple(
-                bytes(s, "ASCII") for s in cls.filter_inputs
-            )
+        cls.filter_inputs = tuple(
+            s.encode("latin1") for s in cls.filter_inputs
+        )
 
     def test_expected_results(self):
         """
         Tests FlateDecode decode() and encode() methods.
+
+        TO-DO Test the result with the omitted predictor values.
         """
         codec = FlateDecode()
         predictors = [1]  # , 10, 11, 12, 13, 14, 15]
@@ -65,6 +73,9 @@ class FlateDecodeTestCase(unittest.TestCase):
 
 
 class ASCIIHexDecodeTestCase(unittest.TestCase):
+    """
+    Tests primarily the decode() method of ASCIIHexDecode.
+    """
     @classmethod
     def setUpClass(cls):
         cls.filter_inputs = (
@@ -91,7 +102,8 @@ class ASCIIHexDecodeTestCase(unittest.TestCase):
             "748494a4b4c4d4e4f505152535455565758595a>",
             "30313233343536373839>",
             "3  031323334353637   3839>",  # Same as previous, but whitespaced
-            "30313233343536373839616263646566414243444546>", "20090a0d0b0c>",
+            "30313233343536373839616263646566414243444546>",
+            hexEncode(string.whitespace) + ">",
         )
         expected_outputs = (
             "", string.ascii_lowercase, string.ascii_uppercase,
@@ -99,19 +111,17 @@ class ASCIIHexDecodeTestCase(unittest.TestCase):
             string.hexdigits, string.whitespace
         )
 
-        for i, o in zip(inputs, expected_outputs):
+        for o, i in zip(expected_outputs, inputs):
             self.assertEqual(
-                ASCIIHexDecode.decode(i), o,
-                msg="i = %s" % i
+                o, ASCIIHexDecode.decode(i),
+                "Expected = %s\tReceived = %s" %
+                (repr(o), repr(ASCIIHexDecode.decode(i)))
             )
-            # print(
-            #     "ASCIIHexDecode.decode(%s) == %s" % (i, ASCIIHexDecode.decode(i))
-            # )
-
 
     def test_no_eod(self):
         """
-        Tests when no EOD character is present, ensuring an exception is raised
+        Tests when no EOD character is present, ensuring an exception is
+        raised.
         """
         inputs = ("", '', """""", '''''')
 
@@ -120,5 +130,125 @@ class ASCIIHexDecodeTestCase(unittest.TestCase):
                 ASCIIHexDecode.decode(i)
 
 
+class ASCII85DecodeTestCase(unittest.TestCase):
+    """
+    Tests the decode() method of ASCII85Decode.
+    """
+    def test_encode_decode(self):
+        """
+        Verifies that decode(encode(data)) == data, with encode() and decode()
+        from ASCII85Decode.
+        """
+        e, d = ASCII85Decode.encode, ASCII85Decode.decode
+        inputs = [
+            string.ascii_lowercase, string.ascii_uppercase,
+            string.ascii_letters, string.whitespace,
+            "\x00\x00\x00\x00", 2 * "\x00\x00\x00\x00",
+        ]
+
+        for filename in ("TheHappyPrince.txt", ):
+            with open(join(TEST_DATA_DIR, filename)) as infile:
+                inputs.append(infile.read())
+
+        for i in inputs:
+            if sys.version_info > (3, 0) and isinstance(i, str):
+                # The Python 3 version of decode() returns a bytes instance
+                exp = i.encode("LATIN1")
+            else:
+                exp = i
+
+            self.assertEqual(exp, d(e(i)))
+            # Tests with input in bytes form
+            self.assertEqual(exp, d(e(i.encode("LATIN1"))))
+
+    def test_with_overflow(self):
+        inputs = (
+            v + "~>" for v in '\x00\x01\x02\x03\x04\x05\x06\x07\x08\x0e\x0f'
+                              '\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a'
+                              '\x1b\x1c\x1d\x1e\x1fvwxy{|}~\x7f\x80\x81\x82'
+                              '\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d'
+                              '\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98'
+                              '\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0¡¢£¤¥¦§¨©ª«¬'
+                              '\xad®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇ'
+        )
+
+        for i in inputs:
+            with self.assertRaises(ValueError, msg="char = " + repr(i)):
+                ASCII85Decode.decode(i)
+
+    def test_five_zero_bytes(self):
+        """
+        From ISO 32000 (2008) sect. 7.4.3:
+        «As a special case, if all five bytes are 0, they shall be represented
+        by the character with code 122 (z) instead of by five exclamation
+        points (!!!!!).»
+        """
+        inputs = ("z", "zz", "zzz")
+        exp_outputs = (
+            b"\x00\x00\x00\x00", b"\x00\x00\x00\x00" * 2,
+            b"\x00\x00\x00\x00" * 3,
+        )
+
+        self.assertEqual(
+            ASCII85Decode.decode("!!!!!"), ASCII85Decode.decode("z")
+        )
+
+        for o, i in zip(exp_outputs, inputs):
+            self.assertEqual(
+                o, ASCII85Decode.decode(i + "~>")
+            )
+
+
+class LZWDecodeTestCase(unittest.TestCase):
+    """
+    Tests the LZWDecode.decode() method by means of a LZW Encoder built
+    specifically for testing it.
+    """
+    def test_write_code(self):
+        """
+        Tests that the memorization of byte values performed by _writeCode()
+        as a contiguous bit-stream works as intended.
+        """
+        self.maxDiff = None
+        e = LZWDecode.Encoder(None)
+        e.result = list()
+
+        inputs = range(2 ** 8, 2 ** 12 - 1)
+        e.bitspercode = int(floor(log(inputs[0], 2))) + 1
+        exp_output = "".join(
+            intToBitstring(n, floor(log(n, 2))) for n in inputs
+        )
+
+        for i in inputs:
+            if floor(log(i, 2)) + 1 > e.bitspercode:
+                e.bitspercode += 1
+
+            e._writeCode(i)
+
+        self.assertEqual(
+            exp_output,
+            "".join(intToBitstring(n) for n in e.result)[:e.bitpos]
+        )
+
+    def test_encode_decode(self):
+        """
+        Ensures that the decode(encode(data)) concatenation equals data, where
+        data can be an arbitrary byte stream.
+        """
+        inputs = [
+            string.ascii_lowercase, string.ascii_uppercase, string.whitespace,
+            string.ascii_letters, "AABBCCDDEEFFGGHHIIJJKKLLMMNNOOPPQQRRSSTTT",
+        ]
+
+        for f in ("TheHappyPrince.txt", ):
+            with open(join(TEST_DATA_DIR, f)) as infile:
+                inputs.append(infile.read())
+
+        for t in inputs:
+            self.assertEqual(
+                t, LZWDecode.decode(LZWDecode.encode(t))
+            )
+
+
 if __name__ == "__main__":
-    unittest.main(FlateDecodeTestCase)
+    unittest.main()
