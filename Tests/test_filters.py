@@ -206,12 +206,12 @@ class LZWDecodeTestCase(unittest.TestCase):
     """
     def test_write_code(self):
         """
-        Tests that the memorization of byte values performed by _writeCode()
+        Tests that the memorization of bit values performed by ``_writeCode()``
         as a contiguous bit-stream works as intended.
         """
         self.maxDiff = None
-        e = LZWDecode.Encoder(None)
-        e.result = list()
+        e = LZWDecode.Encoder("")
+        e.output = list()
 
         inputs = range(2 ** 8, 2 ** 12 - 1)
         e.bitspercode = int(floor(log(inputs[0], 2))) + 1
@@ -227,13 +227,41 @@ class LZWDecodeTestCase(unittest.TestCase):
 
         self.assertEqual(
             exp_output,
-            "".join(intToBitstring(n) for n in e.result)[:e.bitpos]
+            "".join(intToBitstring(n) for n in e.output)[:e.bitpos]
         )
+
+    def test_read_code(self):
+        """
+        Tests that the interpretation of bit values performed by
+        ``_readCode()`` as a contiguous bit-stream works as intended.
+        """
+        inputs = bytearray(range(256))
+        d = LZWDecode.Decoder(inputs)
+        output_stream = "".join(
+            intToBitstring(b) for b in inputs
+        )
+        curr = 0
+        code = d._readCode()
+
+        while code != -1:
+            if curr + d.bitspercode >= len(output_stream):
+                exp_output = output_stream[curr:]\
+                      + "0" * ((curr + d.bitspercode) - len(output_stream))
+            else:
+                exp_output = output_stream[curr:curr + d.bitspercode]
+
+            self.assertEqual(
+                exp_output, intToBitstring(code, d.bitspercode),
+                msg="(curr, code) = (%d, %d)" % (curr, code)
+            )
+
+            curr += d.bitspercode
+            code = d._readCode()
 
     def test_encode_decode(self):
         """
-        Ensures that the decode(encode(data)) concatenation equals data, where
-        data can be an arbitrary byte stream.
+        Ensures that the ``decode(encode(data))`` concatenation equals data,
+        where data can be an arbitrary byte stream.
         """
         inputs = [
             string.ascii_lowercase, string.ascii_uppercase, string.whitespace,

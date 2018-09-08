@@ -27,19 +27,17 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-
-
 """
 Implementation of stream filters for PDF.
 """
-__author__ = "Mathieu Fenniak"
-__author_email__ = "biziqe@mathieu.fenniak.net"
 
 import math
 import struct
+import sys
 from sys import version_info
 
-from .utils import PdfReadError, pypdfOrd, paethPredictor, PdfStreamError
+from .utils import PdfReadError, pypdfOrd, paethPredictor, PdfStreamError,\
+    pypdfBytes
 
 if version_info < (3, 0):
     from cStringIO import StringIO
@@ -63,7 +61,8 @@ except ImportError:
     def _string_to_bytearr(buf):
         retval = Array.CreateInstance(System.Byte, len(buf))
 
-        for i in range(len(buf)):    # pylint: disable=consider-using-enumerate
+        # pylint: disable=consider-using-enumerate
+        for i in range(len(buf)):
             retval[i] = ord(buf[i])
 
         return retval
@@ -104,6 +103,7 @@ except ImportError:
         these_bytes = _read_bytes(gz)
         retval = _bytearr_to_string(these_bytes)
         gz.Close()
+
         return retval
 
     def compress(data):
@@ -118,7 +118,12 @@ except ImportError:
         these_bytes = ms.ToArray()
         retval = _bytearr_to_string(these_bytes)
         ms.Close()
+
         return retval
+
+
+__author__ = "Mathieu Fenniak"
+__author_email__ = "biziqe@mathieu.fenniak.net"
 
 
 class FlateDecode(object):
@@ -429,25 +434,24 @@ class LZWDecode(object):
             self.dictlen = 258
             self.bitspercode = 9
 
-        def _nextCode(self):
-            fillbits = self.bitspercode
+        def _readCode(self):
+            toread = self.bitspercode
             value = 0
 
-            while fillbits > 0:
+            while toread > 0:
                 if self.bytepos >= len(self.data):
                     return -1
 
                 nextbits = pypdfOrd(self.data[self.bytepos])
                 bitsfromhere = 8 - self.bitpos
 
-                if bitsfromhere > fillbits:
-                    bitsfromhere = fillbits
+                if bitsfromhere > toread:
+                    bitsfromhere = toread
 
-                value |= (
-                                 (nextbits >> (8 - self.bitpos - bitsfromhere)) &
-                                 (0xff >> (8 - bitsfromhere))
-                         ) << (fillbits - bitsfromhere)
-                fillbits -= bitsfromhere
+                value |= ((nextbits >> (8 - self.bitpos - bitsfromhere)) &
+                          (0xFF >> (8 - bitsfromhere))
+                          ) << (toread - bitsfromhere)
+                toread -= bitsfromhere
                 self.bitpos += bitsfromhere
 
                 if self.bitpos >= 8:
