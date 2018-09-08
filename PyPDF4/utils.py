@@ -223,29 +223,27 @@ class PdfStreamError(PdfReadError):
 
 
 if sys.version_info[0] < 3:
-    def pypdfBytes(s):
-        return s
+    pypdfBytes = lambda s: s
 else:
-    B_CACHE = {}
-
     def pypdfBytes(s):
-        bc = B_CACHE
-
-        if s in bc:
-            return bc[s]
-
-        if type(s) == bytes:
+        if isinstance(s, bytes):
             return s
         else:
-            r = s.encode('latin-1')
+            return s.encode('LATIN-1')
 
-            if len(s) < 2:
-                bc[s] = r
-
-            return r
+pypdfBytes.__doc__ = """
+Abstracts the conversion from ``str`` to ``bytes`` over versions 2.7.x and
+3 of Python.
+"""
 
 
 def pypdfUnicode(s):
+    """
+    Encodes a string ``s`` according to the Unicode character set (default for
+    Python 3).
+    :param s: a ``str`` instance.
+    :rtype: ``unicode`` for Python 2, ``str`` for Python 3.
+    """
     if sys.version_info[0] < 3:
         return unicode(s, 'unicode_escape')
     else:
@@ -254,8 +252,8 @@ def pypdfUnicode(s):
 
 def pypdfStr(b):
     """
-    Abstracts the conversion from bytes to string over the two major versions
-    of Python.
+    Abstracts the conversion from bytes to string over versions 2.7.x and
+    3 of Python.
     """
     if sys.version_info[0] < 3:
         return b
@@ -269,14 +267,19 @@ def pypdfStr(b):
 def pypdfOrd(b):
     """
     Abstracts the conversion from a single-character string to the
-    corresponding integer value over the two major versions of Python and
-    the two data types str and bytes.
+    corresponding integer value over versions 2.7.x and 3 of Python.
     """
     # In case of bugs, try to look here! Should the condition be brought like
     # it used to be in the comment below?
     # if sys.version_info[0] < 3 or type(b) == str:
-    if type(b) == str:
+    # (``str is bytes == True`` in Python 2)
+    if isinstance(b, str):
         return ord(b)
+    elif sys.version_info < (3, 0) and isinstance(b, unicode):
+        return ord(b)
+    # TO-DO The code below should be changed (b could be ANYTHING!) but I have
+    # no idea of what (and how much) previous code could be depending on this
+    # behavior
     else:
         return b
 
@@ -284,7 +287,7 @@ def pypdfOrd(b):
 def pypdfChr(c):
     """
     Abstracts the conversion from a single byte to the corresponding ASCII
-    character over the two major versions of Python.
+    character over versions 2.7.x and 3 of Python.
     """
     if sys.version_info[0] < 3:
         return c
@@ -294,8 +297,8 @@ def pypdfChr(c):
 
 def pypdfBytearray(b):
     """
-    Abstracts the conversion from a byte variable to a bytearray value over the
-    two major versions of Python.
+    Abstracts the conversion from a ``bytes`` variable to a ``bytearray`` value
+    over versions 2.7.x and 3 of Python.
     """
     if sys.version_info[0] < 3:
         return b
@@ -306,11 +309,11 @@ def pypdfBytearray(b):
 def hexEncode(s):
     """
     Abstracts the conversion from an ASCII string to an hex-valued string
-    representation of the former over the two major versions of Python.
+    representation of the former over versions 2.7.x and 3 of Python.
 
-    :param s: a string to convert from UTF-8 characters to a hexadecimal string
-        representation.
-    :return: a hex-valued string, e.g. hexEncode("$A'") == "244127".
+    :param s: a ``str'` to convert from UTF-8 characters to a hexadecimal
+        string representation.
+    :return: a hex-valued string, e.g. ``hexEncode("$A'") == "244127"``.
     """
     if sys.version_info[0] < 3:
         return s.encode('hex')
