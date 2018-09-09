@@ -272,14 +272,21 @@ class LZWDecode(object):
 
         def __init__(self, data):
             """
-            :param data: a str or byte string to encode with LZW.
+            :param data: a ``str`` or ``bytes`` string to encode with LZW.
             """
-            self.data = data
+            if isinstance(data, str) and sys.version_info > (3, 0):
+                self.data = data.encode("UTF-8")
+            elif isinstance(data, bytes):  # bytes is str in Python 2
+                self.data = data
+            else:
+                raise TypeError(
+                    "data must be of type {str, bytes}, found %s" % type(data)
+                )
             self.bitspercode = None
             # self.table maps buffer values to their progressive indices
             self.table = None
             # self.result stores the contiguous stream of bits in form of ints
-            self.result = None
+            self.output = None
             # The location of the next bit we are going to write to
             self.bitpos = 0
 
@@ -290,26 +297,31 @@ class LZWDecode(object):
             Encodes the data passed in to ``__init__()`` according to the LZW
             specification.
             """
-            self.result = list()
-            buffer = str()
+            self.output = list()
+            buffer = bytes()
             self._writeCode(256)
 
-            for c in self.data:
-                if buffer + c in self.table.keys():
-                    buffer += c
+            for b in self.data:
+                # If we iterate on a bytes instance under Python 3, we get int
+                # rather than bytes values, which we need to convert
+                if sys.version_info > (3, 0):
+                    b = bytes([b])
+
+                if buffer + b in self.table:
+                    buffer += b
                 else:
                     # Write the code of buffer to the codetext
                     self._writeCode(self.table[buffer])
-                    self._addCodeToTable(buffer + c)
+                    self._addCodeToTable(buffer + b)
 
-                    buffer = c
+                    buffer = b
 
             self._writeCode(self.table[buffer])
             self._writeCode(257)
 
             # This results in an automatic assertion of the values of
             # self.result, since for each v one of them, 0 <= v <= 255
-            return bytearray(self.result)
+            return bytearray(self.output).decode("LATIN1")
 
         def _resetTable(self):
             """
@@ -317,9 +329,16 @@ class LZWDecode(object):
             """
             self.bitspercode = 9
 
-            self.table = {
-                chr(n): n for n in range(256)
-            }
+            if sys.version_info < (3, 0):
+                self.table = {
+                    chr(b): b for b in range(256)
+                }
+            else:
+                self.table = {
+                    bytes([b]): b for b in range(256)
+                }
+            # self.table is actually a bytes-to-integers mapping, but we are
+            # doing a little inoffensive misuse here!
             self.table[256] = len(self.table)
             self.table[257] = len(self.table)
 
@@ -335,14 +354,14 @@ class LZWDecode(object):
             """
             bytesAlloc = int(
                 math.ceil(float(self.bitpos + self.bitspercode) / 8)
-            ) - len(self.result)
-            self.result.extend([0] * bytesAlloc)
+            ) - len(self.output)
+            self.output.extend([0] * bytesAlloc)
             bitsWritten = 0
             relbitpos = self.bitpos % 8
             bytepos = int(math.floor(self.bitpos / 8))
 
             while (self.bitspercode - bitsWritten) > 0:
-                self.result[bytepos] |= (
+                self.output[bytepos] |= (
                     ((code << bitsWritten) >> (self.bitspercode - 8)) & 0xFF
                 ) >> relbitpos
 
@@ -355,46 +374,53 @@ class LZWDecode(object):
             self.bitpos += self.bitspercode
 
         def _addCodeToTable(self, value):
-            if len(self.table) > (2 ** self.bitspercode) - 1:
-                self.bitspercode += 1
-            elif len(self.table) > LZWDecode.Encoder.MAX_ENTRIES:
-                self._resetTable()
+            if len(self.table) >= self.MAX_ENTRIES:
                 self._writeCode(256)
+                self._resetTable()
+            elif len(self.table) >= 2 ** self.bitspercode:
+                self.bitspercode += 1
 
             self.table[value] = len(self.table)
 
     # pylint: disable=too-many-instance-attributes
     class Decoder(object):
-        """
-        Decodes a stream of data encoded according to LZW.
-        """
+        MAX_ENTRIES = 2 ** 12
+
+        CLEARDICT = 256
+        STOP = 257
+
         def __init__(self, data):
             """
+            Decodes a stream of data encoded according to LZW.
+
             :param data: a string or byte string.
             """
-            self.STOP = 257
-            self.CLEARDICT = 256
             self.data = data
             self.bytepos = 0
             self.bitpos = 0
-            self.dict = [""] * 4096
+            self.dict = [u""] * self.MAX_ENTRIES
+            self.dictindex = None
+            self.bitspercode = None
 
             for i in range(256):
-                self.dict[i] = chr(i)
+                if sys.version_info < (3, 0):
+                    self.dict[i] = chr(i).decode("LATIN1")
+                else:
+                    self.dict[i] = chr(i)
 
             self._resetDict()
 
         def decode(self):
             """
-            TIFF 6.0 specification explains in sufficient details the steps
-            to implement the LZW encode() and decode() algorithms.
+            TIFF 6.0 specification explains in sufficient details the steps to
+            implement the LZW encode() and decode() algorithms.
             """
             cW = self.CLEARDICT
-            baos = ""
+            output = u""
 
             while True:
                 pW = cW
-                cW = self._nextCode()
+                cW = self._readCode()
 
                 if cW == -1:
                     raise PdfReadError("Missed the stop code in LZWDecode")
@@ -403,35 +429,22 @@ class LZWDecode(object):
                 elif cW == self.CLEARDICT:
                     self._resetDict()
                 elif pW == self.CLEARDICT:
-                    baos += self.dict[cW]
+                    output += self.dict[cW]
                 else:
-                    if cW < self.dictlen:
-                        baos += self.dict[cW]
+                    if cW < self.dictindex:
+                        output += self.dict[cW]
+                        p = self.dict[pW] + self.dict[cW][0]
 
-                        if self.dict[cW]:
-                            p = self.dict[pW] + self.dict[cW][0]
-                        else:
-                            p = self.dict[pW]
-
-                        self.dict[self.dictlen] = p
-                        self.dictlen += 1
+                        self._addCodeToTable(p)
                     else:
-                        if self.dict[pW]:
-                            p = self.dict[pW] + self.dict[pW][0]
-                        else:
-                            p = self.dict[pW]
+                        p = self.dict[pW] + self.dict[pW][0]
+                        output += p
+                        self._addCodeToTable(p)
 
-                        baos += p
-                        self.dict[self.dictlen] = p
-                        self.dictlen += 1
-                    if (self.dictlen >= (1 << self.bitspercode) - 1 and
-                            self.bitspercode < 12):
-                        self.bitspercode += 1
-
-            return baos
+            return output
 
         def _resetDict(self):
-            self.dictlen = 258
+            self.dictindex = 258
             self.bitspercode = 9
 
         def _readCode(self):
@@ -459,6 +472,14 @@ class LZWDecode(object):
                     self.bytepos = self.bytepos + 1
 
             return value
+
+        def _addCodeToTable(self, data):
+            self.dict[self.dictindex] = data
+            self.dictindex += 1
+
+            if self.dictindex >= (2 ** self.bitspercode)\
+                    and self.bitspercode < 12:
+                self.bitspercode += 1
 
     @staticmethod
     def encode(data, decodeParms=None):
