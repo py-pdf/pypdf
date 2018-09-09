@@ -54,7 +54,7 @@ else:
 from .generic import *
 from .utils import readNonWhitespace, readUntilWhitespace,\
     ConvertFunctionsToVirtualList
-from .utils import isString, pypdfUnicode, pypdfOrd, pypdfStr, formatWarning,
+from .utils import isString, pypdfUnicode, pypdfOrd, pypdfStr, formatWarning,\
     pypdfBytes as b_
 import uuid
 
@@ -335,25 +335,28 @@ class PdfFileWriter(object):
 
     def appendPagesFromReader(self, reader, afterPageAppend=None):
         """
-        Copy pages from reader to writer. Includes an optional callback
-        parameter which is invoked after pages are appended to the writer.
-        
-        :param reader: a PdfFileReader object from which to copy page
-            annotations to this writer object.  The writer's annots will then
-            be updated.
-        :param afterPageAppend: Callback function that is invoked after each
-            page is appended to the writer. Takes a ``writer_pageref`` argument
-            that references to the page appended to the writer.
-                appended to the writer.
-        """
-        for rpagenum in range(0, reader.getNumPages):
-            reader_page = reader.getPage(rpagenum)
-            self.addPage(reader_page)
-            writer_page = self.getPage(self.getNumPages + rpagenum)
+         Copy pages from reader to writer. Includes an optional callback
+         parameter which is invoked after pages are appended to the writer.
+
+         :param reader: a PdfFileReader object from which to copy page
+             annotations to this writer object.  The writer's annots will then
+             be updated.
+         :param afterPageAppend: Callback function that is invoked after each
+             page is appended to the writer. Takes a ``writerPageref`` argument
+             that references to the page appended to the writer.
+         """
+        # Get page count from writer and reader
+        readerNumPages = reader.getNumPages()
+        writerNumPages = self.getNumPages()
+
+        # Copy pages from reader to writer
+        for rpagenum in range(readerNumPages):
+            self.addPage(reader.getPage(rpagenum))
+            writerPage = self.getPage(writerNumPages + rpagenum)
 
             # Trigger callback, pass writer page as parameter
             if callable(afterPageAppend):
-                afterPageAppend(writer_page)
+                afterPageAppend(writerPage)
 
     def updatePageFormFieldValues(self, page, fields):
         """
@@ -2489,7 +2492,7 @@ class PageObject(DictionaryObject):
 
     def _rotate(self, angle):
         rotateObj = self.get("/Rotate", 0)
-        currentAngle = rotateObj if isinstance(rotateObj, int) else
+        currentAngle = rotateObj if isinstance(rotateObj, int) else\
             rotateObj.getObject()
         self[NameObject("/Rotate")] = NumberObject(currentAngle + angle)
 
