@@ -309,9 +309,12 @@ class NumberObject(int, PdfObject):
             return NumberObject(num)
 
 
-# Given a string (either a "str" or "unicode"), create a ByteStringObject or a
-# TextStringObject to represent the string.
 def createStringObject(string):
+    """
+    Given a string (either a ``str`` or ``unicode``), create a
+    :class:`ByteStringObject<ByteStringObject>` or a
+    :class:`TextStringObject<TextStringObject>` to represent the string.
+    """
     if isinstance(string, utils.string_type):
         return TextStringObject(string)
     elif isinstance(string, utils.bytes_type):
@@ -433,13 +436,13 @@ def readStringFromStream(stream):
     return createStringObject(txt)
 
 
-##
-# Represents a string object where the text encoding could not be determined.
-# This occurs quite often, as the PDF spec doesn't provide an alternate way to
-# represent strings -- for example, the encryption data stored in files (like
-# /O) is clearly not text, but is still stored in a "String" object.
 class ByteStringObject(utils.bytes_type, PdfObject):
-    ##
+    """
+    Represents a string object where the text encoding could not be determined.
+    This occurs quite often, as the PDF spec doesn't provide an alternate way
+    to represent strings -- for example, the encryption data stored in files
+    (like /O) is clearly not text, but is still stored in a ``String`` object).
+    """
     # For compatibility with TextStringObject.original_bytes.  This method
     # returns self.
     original_bytes = property(lambda self: self)
@@ -455,16 +458,16 @@ class ByteStringObject(utils.bytes_type, PdfObject):
         stream.write(b_(">"))
 
 
-##
-# Represents a string object that has been decoded into a real unicode string.
-# If read from a PDF document, this string appeared to match the
-# PDFDocEncoding, or contained a UTF-16BE BOM mark to cause UTF-16 decoding to
-# occur.
 class TextStringObject(utils.string_type, PdfObject):
+    """
+    Represents a ``str`` object that has been decoded into a real ``unicode``
+    string. If read from a PDF document, this string appeared to match the
+    PDFDocEncoding, or contained a UTF-16BE BOM mark to cause UTF-16 decoding
+    to occur.
+    """
     autodetect_pdfdocencoding = False
     autodetect_utf16 = False
 
-    ##
     # It is occasionally possible that a text string object gets created where
     # a byte string object was expected due to the autodetection mechanism --
     # if that occurs, this "original_bytes" property can be used to
@@ -571,15 +574,17 @@ class DictionaryObject(dict, PdfObject):
     def __getitem__(self, key):
         return dict.__getitem__(self, key).getObject()
 
-    ##
-    # Retrieves XMP (Extensible Metadata Platform) data relevant to the
-    # this object, if available.
-    # <p>
-    # Stability: Added in v1.12, will exist for all future v1.x releases.
-    # @return Returns a {@link #xmp.XmpInformation XmlInformation} instance
-    # that can be used to access XMP metadata from the document.  Can also
-    # return None if no metadata was found on the document root.
     def getXmpMetadata(self):
+        """
+        Retrieves XMP (Extensible Metadata Platform) data relevant to this
+        object, if available.
+
+        Added in v1.12, will exist for all future v1.x releases.
+
+        :return: a :class:`XmpInformation<xmp.XmpInformation>` instance that
+        can be used to access XMP metadata from the document.  Can also return
+        ``None`` if no metadata was found on the document root.
+        """
         metadata = self.get("/Metadata", None)
 
         if metadata == None:
@@ -594,12 +599,13 @@ class DictionaryObject(dict, PdfObject):
 
         return metadata
 
-    ##
-    # Read-only property that accesses the {@link
-    # #DictionaryObject.getXmpData getXmpData} function.
-    # <p>
-    # Stability: Added in v1.12, will exist for all future v1.x releases.
-    xmpMetadata = property(lambda self: self.getXmpMetadata(), None, None)
+    xmpMetadata = property(getXmpMetadata)
+    """
+    Read-only property that accesses the
+    :meth:`getXmpData<DictionaryObject.getxmpData>` function.
+
+    Added in v1.12, will exist for all future v1.x releases.
+    """
 
     def writeToStream(self, stream, encryption_key):
         stream.write(b_("<<\n"))
