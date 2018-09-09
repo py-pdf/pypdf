@@ -226,7 +226,7 @@ if sys.version_info[0] < 3:
     pypdfBytes = lambda s: s
 else:
     def pypdfBytes(s):
-        if isinstance(s, bytes):
+        if isinstance(s, bytes):  # In Python 2, bytes is str
             return s
         else:
             return s.encode('LATIN-1')

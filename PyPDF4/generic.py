@@ -26,13 +26,9 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-
-
 """
-Implementation of generic PDF objects (dictionary, number, string, and so on)
+Implementation of generic PDF objects (dictionary, number, string, and so on).
 """
-__author__ = "Mathieu Fenniak"
-__author_email__ = "biziqe@mathieu.fenniak.net"
 
 import codecs
 import decimal
@@ -44,6 +40,11 @@ from . import utils
 from .utils import PdfStreamError
 from .utils import pypdfBytes as b_, pypdfUnicode as u_, pypdfChr, pypdfOrd
 from .utils import readNonWhitespace, RC4Encrypt, skipOverComment
+
+
+__author__ = "Mathieu Fenniak"
+__author_email__ = "biziqe@mathieu.fenniak.net"
+
 
 ObjectPrefix = b_('/<[tf(n%')
 NumberSigns = b_('+-')
@@ -60,6 +61,7 @@ def readObject(stream, pdf):
     elif idx == 1:  # hexadecimal string OR dictionary
         peek = stream.read(2)
         stream.seek(-2, 1)  # reset to start
+
         if peek == b_('<<'):
             return DictionaryObject.readFromStream(stream, pdf)
         else:
@@ -181,9 +183,9 @@ class IndirectObject(PdfObject):
         Represents an indirect generic object whose declaration in the File
         Body is something like
 
-        123 0 obj\n
-        ...\n
-        endobj\n
+        ``123 0 obj``\n
+        ``...``\n
+        ``endobj``
 
         :param idnum: identifying number of this indirect reference.
         :param generation: generation number, used for marking batch updates.
@@ -336,7 +338,7 @@ def createStringObject(string):
         except UnicodeDecodeError:
             return ByteStringObject(string)
     else:
-        raise TypeError("createStringObject should have str or unicode arg")
+        raise TypeError("createStringObject() should have str or unicode arg")
 
 
 def readHexStringFromStream(stream):
@@ -386,17 +388,13 @@ def readStringFromStream(stream):
         elif tok == b_("\\"):
             tok = stream.read(1)
             escape_dict = {
-                b_("n"): b_("\n"), b_("r"): b_("\r"),
-                b_("t"): b_("\t"), b_("b"): b_("\b"),
-                b_("f"): b_("\f"), b_("c"): b_("\c"),
-                b_("("): b_("("), b_(")"): b_(")"),
-                b_("/"): b_("/"), b_("\\"): b_("\\"),
-                b_(" "): b_(" "), b_("/"): b_("/"),
-                b_("%"): b_("%"), b_("<"): b_("<"),
-                b_(">"): b_(">"), b_("["): b_("["), 
-                b_("]"): b_("]"), b_("#"): b_("#"),
-                b_("_"): b_("_"), b_("&"): b_("&"),
-                b_('$'): b_('$'),
+                b_("n"): b_("\n"), b_("r"): b_("\r"), b_("t"): b_("\t"),
+                b_("b"): b_("\b"), b_("f"): b_("\f"), b_("c"): b_("\c"),
+                b_("("): b_("("), b_(")"): b_(")"), b_("/"): b_("/"),
+                b_("\\"): b_("\\"), b_(" "): b_(" "), b_("/"): b_("/"),
+                b_("%"): b_("%"), b_("<"): b_("<"), b_(">"): b_(">"),
+                b_("["): b_("["), b_("]"): b_("]"), b_("#"): b_("#"),
+                b_("_"): b_("_"), b_("&"): b_("&"), b_('$'): b_('$'),
             }
 
             try:
@@ -587,7 +585,7 @@ class DictionaryObject(dict, PdfObject):
         """
         metadata = self.get("/Metadata", None)
 
-        if metadata == None:
+        if metadata is None:
             return None
 
         metadata = metadata.getObject()
@@ -609,24 +607,26 @@ class DictionaryObject(dict, PdfObject):
 
     def writeToStream(self, stream, encryption_key):
         stream.write(b_("<<\n"))
+
         for key, value in list(self.items()):
             key.writeToStream(stream, encryption_key)
             stream.write(b_(" "))
             value.writeToStream(stream, encryption_key)
             stream.write(b_("\n"))
+
         stream.write(b_(">>"))
 
     @staticmethod
     def readFromStream(stream, pdf):
         debug = False
-        tmp = stream.read(2)
+        data = {}
+        buff = stream.read(2)
 
-        if tmp != b_("<<"):
+        if buff != b_("<<"):
             raise utils.PdfReadError(
                 "Dictionary read error at byte %s: stream must begin with '<<'"
                 % utils.hexStr(stream.tell())
             )
-        data = {}
 
         while True:
             tok = readNonWhitespace(stream)
@@ -641,15 +641,19 @@ class DictionaryObject(dict, PdfObject):
                 # stream has truncated prematurely
                 raise PdfStreamError("Stream has ended unexpectedly")
 
-            if debug: print(("Tok:", tok))
+            if debug:
+                print("Tok:", tok)
+
             if tok == b_(">"):
                 stream.read(1)
                 break
+
             stream.seek(-1, 1)
             key = readObject(stream, pdf)
             tok = readNonWhitespace(stream)
             stream.seek(-1, 1)
             value = readObject(stream, pdf)
+
             if not data.get(key):
                 data[key] = value
             elif pdf.strict:
@@ -674,13 +678,16 @@ class DictionaryObject(dict, PdfObject):
             while eol == b_(' '):
                 eol = stream.read(1)
             assert eol in (b_("\n"), b_("\r"))
+
             if eol == b_("\r"):
                 # read \n after
                 if stream.read(1)  != b_('\n'):
                     stream.seek(-1, 1)
+
             # this is a stream object, not a dictionary
             assert "/Length" in data
             length = data["/Length"]
+
             if debug:
                 print(data)
             if isinstance(length, IndirectObject):
@@ -691,7 +698,6 @@ class DictionaryObject(dict, PdfObject):
 
             if debug:
                 print("here")
-            #if debug: print(binascii.hexlify(data["__streamdata__"]))
             e = readNonWhitespace(stream)
             ndstream = stream.read(8)
 
@@ -716,7 +722,7 @@ class DictionaryObject(dict, PdfObject):
                     stream.seek(pos, 0)
 
                     raise utils.PdfReadError(
-                        "Unable to find 'endstream' marker after stream at"
+                        "Unable to find 'endstream' marker after stream at "
                         "byte %s." % utils.hexStr(stream.tell())
                     )
         else:
@@ -726,6 +732,7 @@ class DictionaryObject(dict, PdfObject):
         else:
             retval = DictionaryObject()
             retval.update(data)
+
             return retval
 
 
@@ -877,8 +884,10 @@ class StreamObject(DictionaryObject):
         del self["/Length"]
         stream.write(b_("\nstream\n"))
         data = self._data
+
         if encryption_key:
             data = RC4Encrypt(encryption_key, data)
+
         stream.write(data)
         stream.write(b_("\nendstream"))
 
@@ -888,15 +897,18 @@ class StreamObject(DictionaryObject):
             retval = EncodedStreamObject()
         else:
             retval = DecodedStreamObject()
+
         retval._data = data["__streamdata__"]
         del data["__streamdata__"]
         del data["/Length"]
         retval.update(data)
+
         return retval
 
     def flateEncode(self):
         if "/Filter" in self:
             f = self["/Filter"]
+
             if isinstance(f, ArrayObject):
                 f.insert(0, NameObject("/FlateDecode"))
             else:
@@ -906,9 +918,11 @@ class StreamObject(DictionaryObject):
                 f = newf
         else:
             f = NameObject("/FlateDecode")
+
         retval = EncodedStreamObject()
         retval[NameObject("/Filter")] = f
         retval._data = filters.FlateDecode.encode(self._data)
+
         return retval
 
 
@@ -926,16 +940,17 @@ class EncodedStreamObject(StreamObject):
 
     def getData(self):
         if self.decodedSelf:
-            # cached version of decoded object
+            # Cached version of decoded object
             return self.decodedSelf.getData()
         else:
-            # create decoded object
+            # Create decoded object
             decoded = DecodedStreamObject()
 
             decoded._data = filters.decodeStreamData(self)
             for key, value in list(self.items()):
                 if not key in ("/Length", "/Filter", "/DecodeParms"):
                     decoded[key] = value
+
             self.decodedSelf = decoded
             return decoded._data
 
@@ -950,16 +965,16 @@ class RectangleObject(ArrayObject):
     This class is used to represent *page boxes* in PyPDF4. These boxes
     include:
 
-        * :attr:`artBox <PyPDF4.pdf.PageObject.artBox>`
-        * :attr:`bleedBox <PyPDF4.pdf.PageObject.bleedBox>`
-        * :attr:`cropBox <PyPDF4.pdf.PageObject.cropBox>`
-        * :attr:`mediaBox <PyPDF4.pdf.PageObject.mediaBox>`
-        * :attr:`trimBox <PyPDF4.pdf.PageObject.trimBox>`
+        * :attr:`artBox<PyPDF4.pdf.PageObject.artBox>`
+        * :attr:`bleedBox<PyPDF4.pdf.PageObject.bleedBox>`
+        * :attr:`cropBox<PyPDF4.pdf.PageObject.cropBox>`
+        * :attr:`mediaBox<PyPDF4.pdf.PageObject.mediaBox>`
+        * :attr:`trimBox<PyPDF4.pdf.PageObject.trimBox>`
     """
     def __init__(self, arr):
-        # must have four points
+        # Must have four points
         assert len(arr) == 4
-        # automatically convert arr[x] into NumberObject(arr[x]) if necessary
+        # Automatically convert arr[x] into NumberObject(arr[x]) if necessary
         ArrayObject.__init__(self, [self.ensureIsNumber(x) for x in arr])
 
     def ensureIsNumber(self, value):
@@ -1024,22 +1039,25 @@ class RectangleObject(ArrayObject):
     def getHeight(self):
         return self.getUpperRight_y() - self.getLowerLeft_y()
 
-    lowerLeft = property(getLowerLeft, setLowerLeft, None, None)
+    lowerLeft = property(getLowerLeft, setLowerLeft)
     """
     Property to read and modify the lower left coordinate of this box
     in (x,y) form.
     """
-    lowerRight = property(getLowerRight, setLowerRight, None, None)
+
+    lowerRight = property(getLowerRight, setLowerRight)
     """
     Property to read and modify the lower right coordinate of this box
     in (x,y) form.
     """
-    upperLeft = property(getUpperLeft, setUpperLeft, None, None)
+
+    upperLeft = property(getUpperLeft, setUpperLeft)
     """
     Property to read and modify the upper left coordinate of this box
     in (x,y) form.
     """
-    upperRight = property(getUpperRight, setUpperRight, None, None)
+
+    upperRight = property(getUpperRight, setUpperRight)
     """
     Property to read and modify the upper right coordinate of this box
     in (x,y) form.
@@ -1090,7 +1108,7 @@ class Field(TreeObject):
     """
     Read-only property accessing the mapping name of this field. This
     name is used by PyPDF4 as a key in the dictionary returned by
-    :meth:`getFields()<PyPDF4.PdfFileReader.getFields>`
+    :meth:`getFields<PyPDF4.PdfFileReader.getFields>`.
     """
 
     flags = property(lambda self: self.get("/Ff"))
@@ -1191,56 +1209,56 @@ class Destination(TreeObject):
     """
     Read-only property accessing the destination title.
 
-    :rtype: str
+    :rtype: ``str``
     """
 
     page = property(lambda self: self.get("/Page"))
     """
     Read-only property accessing the destination page number.
 
-    :rtype: int
+    :rtype: ``int``
     """
 
     typ = property(lambda self: self.get("/Type"))
     """
     Read-only property accessing the destination type.
 
-    :rtype: str
+    :rtype: ``str``
     """
 
     zoom = property(lambda self: self.get("/Zoom", None))
     """
     Read-only property accessing the zoom factor.
 
-    :rtype: int, or ``None`` if not available.
+    :rtype: ``int``, or ``None`` if not available.
     """
 
     left = property(lambda self: self.get("/Left", None))
     """
     Read-only property accessing the left horizontal coordinate.
 
-    :rtype: int, or ``None`` if not available.
+    :rtype: ``int``, or ``None`` if not available.
     """
 
     right = property(lambda self: self.get("/Right", None))
     """
     Read-only property accessing the right horizontal coordinate.
 
-    :rtype: int, or ``None`` if not available.
+    :rtype: ``int``, or ``None`` if not available.
     """
 
     top = property(lambda self: self.get("/Top", None))
     """
     Read-only property accessing the top vertical coordinate.
 
-    :rtype: int, or ``None`` if not available.
+    :rtype: ``int``, or ``None`` if not available.
     """
 
     bottom = property(lambda self: self.get("/Bottom", None))
     """
     Read-only property accessing the bottom vertical coordinate.
 
-    :rtype: int, or ``None`` if not available.
+    :rtype: ``int``, or ``None`` if not available.
     """
 
 

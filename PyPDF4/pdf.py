@@ -1348,14 +1348,14 @@ class PdfFileReader(object):
     def getFields(self, tree=None, retval=None, fileobj=None):
         """
         Extracts field data if this PDF contains interactive form fields.
-        The *tree* and *retval* parameters are for recursive use.
+        The ``tree`` and ``retval`` parameters are for recursive use.
 
         :param fileobj: A file object (usually a text file) to write
             a report to on all interactive form fields found.
         :return: A dictionary where each key is a field name, and each
             value is a :class:`Field<PyPDF4.generic.Field>` object. By
             default, the mapping name is used for keys.
-        :rtype: dict, or ``None`` if form data could not be located.
+        :rtype: ``dict``, or ``None`` if form data could not be located.
         """
         fieldAttributes = {
             "/FT": "Field Type", "/Parent": "Parent", "/T": "Field Name",
@@ -1810,8 +1810,7 @@ class PdfFileReader(object):
             retval = self._getObjectFromStream(r)
         elif r.generation in self.xref and \
                 r.idnum in self.xref[r.generation]:
-            start = self.xref[
-                r.generation][r.idnum]
+            start = self.xref[r.generation][r.idnum]
 
             if self.debug:
                 print(
@@ -1831,10 +1830,10 @@ class PdfFileReader(object):
                         % (r.idnum, r.generation, idnum, generation)
                     )
                 else:
-                    # xref table is corrected in non-strict mode
+                    # Xref table is corrected in non-strict mode
                     pass
             elif idnum != r.idnum and self.strict:
-                # some other problem
+                # Some other problem
                 raise utils.PdfReadError(
                     "Expected object ID (%d %d) does not match actual (%d %d)."
                     % (r.idnum, r.generation, idnum, generation)
@@ -1862,7 +1861,7 @@ class PdfFileReader(object):
                 "Object %d %d not defined." %
                 (r.idnum, r.generation), utils.PdfReadWarning
             )
-            raise utils.PdfReadError("Could not find object.")
+            raise utils.PdfReadError("Could not find object")
 
         self.cacheIndirectObject(r.generation, r.idnum, retval)
 
@@ -2178,7 +2177,7 @@ class PdfFileReader(object):
                         break
                 if found:
                     continue
-                # no xref table found at specified location
+                # No xref table found at specified location
                 raise utils.PdfReadError(
                     "Could not find xref table at specified location"
                 )
