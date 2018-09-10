@@ -668,7 +668,7 @@ def decodeStreamData(stream):
             elif filterType in ["/LZWDecode", "/LZW"]:
                 data = LZWDecode.decode(data, stream.get("/DecodeParms"))
             elif filterType in ["/ASCII85Decode", "/A85"]:
-                data = ASCII85Decode.decode(data)
+                data = ASCII85Decode.decode(data, stream.get("/DecodeParms"))
             elif filterType == "/DCTDecode":
                 data = DCTDecode.decode(data)
             elif filterType == "/JPXDecode":

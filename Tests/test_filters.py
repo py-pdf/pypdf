@@ -13,7 +13,10 @@ from math import floor, log
 from os.path import join
 
 from PyPDF4.filters import FlateDecode, ASCIIHexDecode, ASCII85Decode, \
-    LZWDecode
+    LZWDecode, DCTDecode, CCITTFaxDecode, decodeStreamData
+from PyPDF4.generic import EncodedStreamObject, DictionaryObject,\
+    IndirectObject
+from PyPDF4.pdf import PdfFileReader
 from PyPDF4.utils import PdfReadError, PdfStreamError, hexEncode
 from Tests.utils import intToBitstring
 
@@ -283,6 +286,62 @@ class LZWDecodeTestCase(unittest.TestCase):
                 self.assertEqual(t, d.decode().encode("LATIN1"))
             else:
                 self.assertEqual(t, d.decode())
+
+
+class DecodeStreamDataTestCase(unittest.TestCase):
+    """
+    Test case intended to test the
+    :meth:`decodeStreamData<filters.decodeStreamData>` method. If functions by
+    querying known object references, asking ``decodeStreamData()`` to decode
+    their stream content and check the decoded value against what would be
+    produced by the filter that is known to be used.
+    """
+    def test_decode_stream_data(self):
+        DIR = join("Tests", "TestData", "Filters")
+        # Stores PDF files infos and the coordinates of stream objects. We
+        # don't care if we need to open a new file stream for each obj.
+        # reference -- unit tests don't have to be efficient
+        filters = (
+            # (filter type, filename, id, gen. number)
+            (FlateDecode, "FlateDecode.pdf", 4, 0),
+            (FlateDecode, "FlateDecode.pdf", 8, 0),
+            (FlateDecode, "FlateDecode.pdf", 9, 0),
+            # TO-DO No PDF files found with this type of encoding, get them.
+            # (ASCIIHexDecode, "ASCIIHexDecode.pdf", ?, ?)
+            (LZWDecode, "LZWDecode.pdf", 209, 0),
+            (LZWDecode, "LZWDecode.pdf", 210, 0),
+            (LZWDecode, "LZWDecode.pdf", 211, 0),
+            (ASCII85Decode, "ASCII85Decode.pdf", 5, 0),
+            (ASCII85Decode, "ASCII85Decode.pdf", 6, 0),
+            (DCTDecode, "DCTDecode.pdf", 4, 0),
+            # TO-DO No PDF files found with this type of encoding, get them.
+            # (JPXDecode, "JPXDecode.pdf", ?, ?)
+            (CCITTFaxDecode, "CCITTFaxDecode.pdf", 46, 0),
+        )
+
+        for f in filters:
+            with open(join(DIR, f[1]), "rb") as infile:
+                reader = PdfFileReader(infile)
+                ref = IndirectObject(f[2], f[3], reader)
+                stream = reader.getObject(ref)
+
+                # Ensures that the PdfFileReader reads a stream object
+                self.assertEqual(EncodedStreamObject, type(stream))
+
+                # print("Running with %s!" % f[0].__name__)
+                if f[0] is CCITTFaxDecode:
+                    self.assertEqual(
+                        f[0].decode(
+                            stream._data, stream.get("/DecodeParms"),
+                            stream.get("/Height")
+                        ), decodeStreamData(stream)
+                    )
+                else:
+                    self.assertEqual(
+                        f[0].decode(
+                            stream._data, stream.get("/DecodeParms")
+                        ), decodeStreamData(stream)
+                    )
 
 
 if __name__ == "__main__":
