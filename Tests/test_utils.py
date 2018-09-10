@@ -36,7 +36,7 @@ class TestUtilsTestCase(unittest.TestCase):
             "100000000", "0100000000", "00100000000", "000100000000",
             "100000001", "0100000001", "00100000001", "000100000001",
         )
-        exp_outputs = (
+        expOutputs = (
             0, 0,
             1, 1,
             85, 85,
@@ -46,7 +46,7 @@ class TestUtilsTestCase(unittest.TestCase):
             257, 257, 257, 257,
         )
 
-        for o, b in zip(exp_outputs, inputs):
+        for o, b in zip(expOutputs, inputs):
             self.assertEqual(
                 o, bitstringToInt(b)
             )

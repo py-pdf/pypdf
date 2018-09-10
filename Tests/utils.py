@@ -6,7 +6,7 @@ internal project codebase.
 
 def intToBitstring(n, fill=8):
     """
-    Turns an integer n into its corresponding textual bit representation.
+    Turns an integer ``n`` into its corresponding textual bit representation.
 
     :param fill: number of zeros to pad the bit representation with.
     :raises TypeError: if n is not an integer.
@@ -18,7 +18,7 @@ def intToBitstring(n, fill=8):
 
 
 def bitstringToInt(b):
-    """Performs the reverse of intToBitstring()."""
+    """Performs the reverse of ``intToBitstring()``."""
     if not isinstance(b, str):
         raise TypeError("Expected str, got %s" % b.__class__)
     if not set(b).issubset({"0", "1"}):
