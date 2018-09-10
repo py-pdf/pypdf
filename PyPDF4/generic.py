@@ -921,7 +921,7 @@ class StreamObject(DictionaryObject):
 
         retval = EncodedStreamObject()
         retval[NameObject("/Filter")] = f
-        retval._data = filters.FlateDecode.encode(self._data)
+        retval._data = filters.FlateCodec.encode(self._data)
 
         return retval
 

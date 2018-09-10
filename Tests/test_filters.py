@@ -12,8 +12,8 @@ from math import floor, log
 
 from os.path import join
 
-from PyPDF4.filters import FlateDecode, ASCIIHexDecode, ASCII85Decode, \
-    LZWDecode, DCTDecode, CCITTFaxDecode, decodeStreamData
+from PyPDF4.filters import FlateCodec, ASCIIHexCodec, ASCII85Codec, \
+    LZWCodec, DCTCodec, CCITTFaxCodec, decodeStreamData
 from PyPDF4.generic import EncodedStreamObject, DictionaryObject,\
     IndirectObject
 from PyPDF4.pdf import PdfFileReader
@@ -25,7 +25,7 @@ TEST_DATA_DIR = join("Tests", "TestData")
 
 class FlateDecodeTestCase(unittest.TestCase):
     """
-    Tests expected results and edge cases of FlateDecode.
+    Tests expected results and edge cases of FlateCodec.
     """
     @classmethod
     def setUpClass(cls):
@@ -45,11 +45,11 @@ class FlateDecodeTestCase(unittest.TestCase):
 
     def test_expected_results(self):
         """
-        Tests FlateDecode decode() and encode() methods.
+        Tests FlateCodec decode() and encode() methods.
 
         TO-DO Test the result with the omitted predictor values.
         """
-        codec = FlateDecode()
+        codec = FlateCodec()
         predictors = [1]  # , 10, 11, 12, 13, 14, 15]
 
         for predictor, s in cartesian_product(predictors, self.filter_inputs):
@@ -64,7 +64,7 @@ class FlateDecodeTestCase(unittest.TestCase):
         that PdfReadError() is raised. Once this predictor support is updated
         in the future, this test case may be removed.
         """
-        codec = FlateDecode()
+        codec = FlateCodec()
         predictors = (-10, -1, 0, 9, 16, 20, 100)
 
         for predictor, s in cartesian_product(predictors, self.filter_inputs):
@@ -77,7 +77,7 @@ class FlateDecodeTestCase(unittest.TestCase):
 
 class ASCIIHexDecodeTestCase(unittest.TestCase):
     """
-    Tests primarily the decode() method of ASCIIHexDecode.
+    Tests primarily the decode() method of ASCIIHexCodec.
     """
     @classmethod
     def setUpClass(cls):
@@ -91,7 +91,7 @@ class ASCIIHexDecodeTestCase(unittest.TestCase):
 
     def test_expected_results(self):
         """
-        Feeds a bunch of values to ASCIIHexDecode.decode() and ensures the
+        Feeds a bunch of values to ASCIIHexCodec.decode() and ensures the
         correct output is returned.
 
         TO-DO What is decode() supposed to do for such inputs as ">>", ">>>" or
@@ -116,9 +116,9 @@ class ASCIIHexDecodeTestCase(unittest.TestCase):
 
         for o, i in zip(expected_outputs, inputs):
             self.assertEqual(
-                o, ASCIIHexDecode.decode(i),
+                o, ASCIIHexCodec.decode(i),
                 "Expected = %s\tReceived = %s" %
-                (repr(o), repr(ASCIIHexDecode.decode(i)))
+                (repr(o), repr(ASCIIHexCodec.decode(i)))
             )
 
     def test_no_eod(self):
@@ -130,19 +130,19 @@ class ASCIIHexDecodeTestCase(unittest.TestCase):
 
         for i in inputs:
             with self.assertRaises(PdfStreamError):
-                ASCIIHexDecode.decode(i)
+                ASCIIHexCodec.decode(i)
 
 
 class ASCII85DecodeTestCase(unittest.TestCase):
     """
-    Tests the decode() method of ASCII85Decode.
+    Tests the decode() method of ASCII85Codec.
     """
     def test_encode_decode(self):
         """
         Verifies that decode(encode(data)) == data, with encode() and decode()
-        from ASCII85Decode.
+        from ASCII85Codec.
         """
-        e, d = ASCII85Decode.encode, ASCII85Decode.decode
+        e, d = ASCII85Codec.encode, ASCII85Codec.decode
         inputs = [
             string.ascii_lowercase, string.ascii_uppercase,
             string.ascii_letters, string.whitespace,
@@ -177,7 +177,7 @@ class ASCII85DecodeTestCase(unittest.TestCase):
 
         for i in inputs:
             with self.assertRaises(ValueError, msg="char = " + repr(i)):
-                ASCII85Decode.decode(i)
+                ASCII85Codec.decode(i)
 
     def test_five_zero_bytes(self):
         """
@@ -193,18 +193,18 @@ class ASCII85DecodeTestCase(unittest.TestCase):
         )
 
         self.assertEqual(
-            ASCII85Decode.decode("!!!!!"), ASCII85Decode.decode("z")
+            ASCII85Codec.decode("!!!!!"), ASCII85Codec.decode("z")
         )
 
         for o, i in zip(exp_outputs, inputs):
             self.assertEqual(
-                o, ASCII85Decode.decode(i + "~>")
+                o, ASCII85Codec.decode(i + "~>")
             )
 
 
 class LZWDecodeTestCase(unittest.TestCase):
     """
-    Tests the LZWDecode.decode() method by means of a LZW Encoder built
+    Tests the LZWCodec.decode() method by means of a LZW Encoder built
     specifically for testing it.
     """
     def test_write_code(self):
@@ -213,7 +213,7 @@ class LZWDecodeTestCase(unittest.TestCase):
         as a contiguous bit-stream works as intended.
         """
         self.maxDiff = None
-        e = LZWDecode.Encoder("")
+        e = LZWCodec.Encoder("")
         e.output = list()
 
         inputs = range(2 ** 8, 2 ** 12 - 1)
@@ -239,7 +239,7 @@ class LZWDecodeTestCase(unittest.TestCase):
         ``_readCode()`` as a contiguous bit-stream works as intended.
         """
         inputs = bytearray(range(256))
-        d = LZWDecode.Decoder(inputs)
+        d = LZWCodec.Decoder(inputs)
         expOutputStream = "".join(
             intToBitstring(b) for b in inputs
         )
@@ -279,8 +279,8 @@ class LZWDecodeTestCase(unittest.TestCase):
                 inputs.append(infile.read(9500))
 
         for t in inputs:
-            e = LZWDecode.Encoder(t)
-            d = LZWDecode.Decoder(e.encode())
+            e = LZWCodec.Encoder(t)
+            d = LZWCodec.Decoder(e.encode())
 
             if isinstance(t, bytes) and sys.version_info > (3, 0):
                 self.assertEqual(t, d.decode().encode("LATIN1"))
@@ -303,20 +303,20 @@ class DecodeStreamDataTestCase(unittest.TestCase):
         # reference -- unit tests don't have to be efficient
         filters = (
             # (filter type, filename, id, gen. number)
-            (FlateDecode, "FlateDecode.pdf", 4, 0),
-            (FlateDecode, "FlateDecode.pdf", 8, 0),
-            (FlateDecode, "FlateDecode.pdf", 9, 0),
+            (FlateCodec, "FlateDecode.pdf", 4, 0),
+            (FlateCodec, "FlateDecode.pdf", 8, 0),
+            (FlateCodec, "FlateDecode.pdf", 9, 0),
             # TO-DO No PDF files found with this type of encoding, get them.
-            # (ASCIIHexDecode, "ASCIIHexDecode.pdf", ?, ?)
-            (LZWDecode, "LZWDecode.pdf", 209, 0),
-            (LZWDecode, "LZWDecode.pdf", 210, 0),
-            (LZWDecode, "LZWDecode.pdf", 211, 0),
-            (ASCII85Decode, "ASCII85Decode.pdf", 5, 0),
-            (ASCII85Decode, "ASCII85Decode.pdf", 6, 0),
-            (DCTDecode, "DCTDecode.pdf", 4, 0),
+            # (ASCIIHexCodec, "ASCIIHexDecode.pdf", ?, ?)
+            (LZWCodec, "LZWDecode.pdf", 209, 0),
+            (LZWCodec, "LZWDecode.pdf", 210, 0),
+            (LZWCodec, "LZWDecode.pdf", 211, 0),
+            (ASCII85Codec, "ASCII85Decode.pdf", 5, 0),
+            (ASCII85Codec, "ASCII85Decode.pdf", 6, 0),
+            (DCTCodec, "DCTDecode.pdf", 4, 0),
             # TO-DO No PDF files found with this type of encoding, get them.
-            # (JPXDecode, "JPXDecode.pdf", ?, ?)
-            (CCITTFaxDecode, "CCITTFaxDecode.pdf", 46, 0),
+            # (JPXCodec, "JPXDecode.pdf", ?, ?)
+            (CCITTFaxCodec, "CCITTFaxDecode.pdf", 46, 0),
         )
 
         for f in filters:
@@ -329,7 +329,7 @@ class DecodeStreamDataTestCase(unittest.TestCase):
                 self.assertEqual(EncodedStreamObject, type(stream))
 
                 # print("Running with %s!" % f[0].__name__)
-                if f[0] is CCITTFaxDecode:
+                if f[0] is CCITTFaxCodec:
                     self.assertEqual(
                         f[0].decode(
                             stream._data, stream.get("/DecodeParms"),

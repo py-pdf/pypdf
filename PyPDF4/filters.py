@@ -126,7 +126,11 @@ __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
 
-class FlateDecode(object):
+class FlateCodec(object):
+    @staticmethod
+    def encode(data, decodeParms=None):
+        return compress(data)
+
     @staticmethod
     def decode(data, decodeParms):    # pylint: disable=too-many-locals, too-many-branches
         """
@@ -202,18 +206,18 @@ class FlateDecode(object):
 
         return data
 
-    @staticmethod
-    def encode(data):
-        return compress(data)
 
-
-class ASCIIHexDecode(object):
+class ASCIIHexCodec(object):
     """
-        The ASCIIHexDecode filter decodes data that has been encoded in ASCII
+        The ASCIIHexCodec filter decodes data that has been encoded in ASCII
         hexadecimal form into a base-7 ASCII format.
     """
     @staticmethod
-    def decode(data, decode_parms=None):
+    def encode(data, decodeParms=None):
+        raise NotImplementedError()
+
+    @staticmethod
+    def decode(data, decodeParms=None):
         """
         :param data: a str sequence of hexadecimal-encoded values to be
             converted into a base-7 ASCII string
@@ -252,19 +256,16 @@ class ASCIIHexDecode(object):
 
         return retval
 
-    def encode(self):
-        pass
-
 
 # pylint: disable=too-few-public-methods
-class LZWDecode(object):
+class LZWCodec(object):
     """
     For a reference of the LZW algorithm consult ISO 32000, section 7.4.4 or
     Section 13 of "TIFF 6.0 Specification" for a more detailed discussion.
     """
     class Encoder(object):
         """
-        ``LZWDecode.Encoder`` is primarily employed for testing purposes and
+        ``LZWCodec.Encoder`` is primarily employed for testing purposes and
         its implementation doesn't (yet) cover all the little facets present in
         the ISO standard.
         """
@@ -423,7 +424,9 @@ class LZWDecode(object):
                 cW = self._readCode()
 
                 if cW == -1:
-                    raise PdfReadError("Missed the stop code in LZWDecode")
+                    raise PdfReadError(
+                        "Missed the stop code in during LZW decoding"
+                    )
                 if cW == self.STOP:
                     break
                 elif cW == self.CLEARDICT:
@@ -483,21 +486,21 @@ class LZWDecode(object):
 
     @staticmethod
     def encode(data, decodeParms=None):
-        return LZWDecode.Encoder(data).encode()
+        return LZWCodec.Encoder(data).encode()
 
     @staticmethod
     def decode(data, decode_params=None):
-        return LZWDecode.Decoder(data).decode()
+        return LZWCodec.Decoder(data).decode()
 
 
 # pylint: disable=too-few-public-methods
-class ASCII85Decode(object):
+class ASCII85Codec(object):
     """
     Decodes string ASCII85-encoded data into a byte format.
     """
     # pylint: disable=too-many-branches, too-many-statements, too-many-locals
     @staticmethod
-    def encode(data, decode_parms=None):
+    def encode(data, decodeParms=None):
         """
         Encodes chunks of 4-byte sequences of textual or bytes data according
         to the base-85 ASCII encoding algorithm.
@@ -543,7 +546,7 @@ class ASCII85Decode(object):
         return (result + "~>").encode("LATIN1")
 
     @staticmethod
-    def decode(data, decode_parms=None):
+    def decode(data, decodeParms=None):
         """
         Decodes binary (bytes or str) data previously encoded in ASCII85.
 
@@ -593,7 +596,11 @@ class ASCII85Decode(object):
 
 
 # pylint: disable=too-few-public-methods
-class DCTDecode(object):
+class DCTCodec(object):
+    @staticmethod
+    def encode(data, decodeParms=None):
+        raise NotImplementedError()
+
     @staticmethod
     def decode(data, decode_params=None):
         """
@@ -602,25 +609,33 @@ class DCTDecode(object):
         return data
 
 
-class JPXDecode(object):    # pylint: disable=too-few-public-methods
+class JPXCodec(object):    # pylint: disable=too-few-public-methods
     @staticmethod
-    def decode(data, decode_parms=None):
+    def encode(data, decodeParms=None):
+        raise NotImplementedError()
+
+    @staticmethod
+    def decode(data, decodeParms=None):
         """
         TO-DO Implement this filter.
         """
         return data
 
 
-class CCITTFaxDecode(object):    # pylint: disable=too-few-public-methods
+class CCITTFaxCodec(object):    # pylint: disable=too-few-public-methods
     @staticmethod
-    def decode(data, decode_parms=None, height=0):
-        if decode_parms:
-            if decode_parms.get("/K", 1) == -1:
+    def encode(data, decodeParms=None):
+        raise NotImplementedError()
+
+    @staticmethod
+    def decode(data, decodeParms=None, height=0):
+        if decodeParms:
+            if decodeParms.get("/K", 1) == -1:
                 CCITTgroup = 4
             else:
                 CCITTgroup = 3
 
-        width = decode_parms["/Columns"]
+        width = decodeParms["/Columns"]
         imgSize = len(data)
         tiffHeaderStruct = '<' + '2s' + 'h' + 'l' + 'h' + 'hhll' * 8 + 'h'
         tiffHeader = struct.pack(
@@ -662,20 +677,20 @@ def decodeStreamData(stream):
     if data:
         for filterType in filters:
             if filterType in ["/FlateDecode", "/Fl"]:
-                data = FlateDecode.decode(data, stream.get("/DecodeParms"))
+                data = FlateCodec.decode(data, stream.get("/DecodeParms"))
             elif filterType in ["/ASCIIHexDecode", "/AHx"]:
-                data = ASCIIHexDecode.decode(data)
+                data = ASCIIHexCodec.decode(data)
             elif filterType in ["/LZWDecode", "/LZW"]:
-                data = LZWDecode.decode(data, stream.get("/DecodeParms"))
+                data = LZWCodec.decode(data, stream.get("/DecodeParms"))
             elif filterType in ["/ASCII85Decode", "/A85"]:
-                data = ASCII85Decode.decode(data, stream.get("/DecodeParms"))
+                data = ASCII85Codec.decode(data, stream.get("/DecodeParms"))
             elif filterType == "/DCTDecode":
-                data = DCTDecode.decode(data)
+                data = DCTCodec.decode(data)
             elif filterType == "/JPXDecode":
-                data = JPXDecode.decode(data)
+                data = JPXCodec.decode(data)
             elif filterType == "/CCITTFaxDecode":
                 height = stream.get("/Height", ())
-                data = CCITTFaxDecode.decode(
+                data = CCITTFaxCodec.decode(
                     data, stream.get("/DecodeParms"), height
                 )
             elif filterType == "/Crypt":
@@ -688,7 +703,7 @@ def decodeStreamData(stream):
                         "/Crypt filter with /Name or /Type not supported yet"
                     )
             else:
-                # unsupported filter
+                # Unsupported filter
                 raise NotImplementedError("unsupported filter %s" % filterType)
 
     return data
