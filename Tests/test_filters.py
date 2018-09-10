@@ -29,7 +29,7 @@ class FlateDecodeTestCase(unittest.TestCase):
     """
     @classmethod
     def setUpClass(cls):
-        cls.filter_inputs = [
+        cls.filterInputs = [
             "", '', """""",
             string.ascii_lowercase, string.ascii_uppercase,
             string.ascii_letters, string.digits, string.hexdigits,
@@ -37,13 +37,13 @@ class FlateDecodeTestCase(unittest.TestCase):
         ]
         for f in ("TheHappyPrince.txt", ):
             with open(join(TEST_DATA_DIR, f)) as infile:
-                cls.filter_inputs.append(infile.read())
+                cls.filterInputs.append(infile.read())
 
-        cls.filter_inputs = tuple(
-            s.encode("latin1") for s in cls.filter_inputs
+        cls.filterInputs = tuple(
+            s.encode("latin1") for s in cls.filterInputs
         )
 
-    def test_expected_results(self):
+    def testExpectedResults(self):
         """
         Tests FlateCodec decode() and encode() methods.
 
@@ -52,22 +52,23 @@ class FlateDecodeTestCase(unittest.TestCase):
         codec = FlateCodec()
         predictors = [1]  # , 10, 11, 12, 13, 14, 15]
 
-        for predictor, s in cartesian_product(predictors, self.filter_inputs):
+        for predictor, s in cartesian_product(predictors, self.filterInputs):
             self.assertEqual(
                 s, codec.decode(codec.encode(s), {"/Predictor": predictor}),
                 "(predictor, s) = (%d, %s)" % (predictor, s)
             )
 
-    def test_unsupported_predictor(self):
+    def testInvalidPredictors(self):
         """
-        Inputs an unsupported predictor (outside the [10, 15] range) checking
-        that PdfReadError() is raised. Once this predictor support is updated
-        in the future, this test case may be removed.
+        Inputs a series of invalid predictor values (outside the
+        {1, 2} U [10, 15] range) checking that ``PdfReadError`` is raised.
         """
         codec = FlateCodec()
-        predictors = (-10, -1, 0, 9, 16, 20, 100)
+        predictors = tuple(
+            set(range(-20, 21)) - {1, 2, 10, 11, 12, 13, 14, 15}
+        )
 
-        for predictor, s in cartesian_product(predictors, self.filter_inputs):
+        for predictor, s in cartesian_product(predictors, self.filterInputs):
             with self.assertRaises(
                     PdfReadError,
                     msg="(predictor, input) = (%d, %s)" % (predictor, s),
@@ -81,7 +82,7 @@ class ASCIIHexDecodeTestCase(unittest.TestCase):
     """
     @classmethod
     def setUpClass(cls):
-        cls.filter_inputs = (
+        cls.filterInputs = (
             "", '', """""",
             ">", ">>", ">>>",
             string.ascii_lowercase, string.ascii_uppercase,
@@ -89,10 +90,10 @@ class ASCIIHexDecodeTestCase(unittest.TestCase):
             string.punctuation, string.whitespace,  # Add more...
         )
 
-    def test_expected_results(self):
+    def testExpectedResults(self):
         """
-        Feeds a bunch of values to ASCIIHexCodec.decode() and ensures the
-        correct output is returned.
+        Feeds a bunch of values to ``ASCIIHexCodec.decode()`` and ensures that
+        the correct output is returned.
 
         TO-DO What is decode() supposed to do for such inputs as ">>", ">>>" or
         any other not terminated by ">"? (For the latter case, an exception
@@ -108,20 +109,20 @@ class ASCIIHexDecodeTestCase(unittest.TestCase):
             "30313233343536373839616263646566414243444546>",
             hexEncode(string.whitespace) + ">",
         )
-        expected_outputs = (
+        expectedOutputs = (
             "", string.ascii_lowercase, string.ascii_uppercase,
             string.ascii_letters, string.digits, string.digits,
             string.hexdigits, string.whitespace
         )
 
-        for o, i in zip(expected_outputs, inputs):
+        for o, i in zip(expectedOutputs, inputs):
             self.assertEqual(
                 o, ASCIIHexCodec.decode(i),
                 "Expected = %s\tReceived = %s" %
                 (repr(o), repr(ASCIIHexCodec.decode(i)))
             )
 
-    def test_no_eod(self):
+    def testNoEod(self):
         """
         Tests when no EOD character is present, ensuring an exception is
         raised.
@@ -135,9 +136,9 @@ class ASCIIHexDecodeTestCase(unittest.TestCase):
 
 class ASCII85DecodeTestCase(unittest.TestCase):
     """
-    Tests the decode() method of ASCII85Codec.
+    Tests the ``decode()`` method of ``ASCII85Codec``.
     """
-    def test_encode_decode(self):
+    def testEncodeDecode(self):
         """
         Verifies that decode(encode(data)) == data, with encode() and decode()
         from ASCII85Codec.
@@ -164,7 +165,7 @@ class ASCII85DecodeTestCase(unittest.TestCase):
             # Tests with input in bytes form
             self.assertEqual(exp, d(e(i.encode("LATIN1"))))
 
-    def test_with_overflow(self):
+    def testWithOverflow(self):
         inputs = (
             v + "~>" for v in '\x00\x01\x02\x03\x04\x05\x06\x07\x08\x0e\x0f'
                               '\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a'
@@ -179,7 +180,7 @@ class ASCII85DecodeTestCase(unittest.TestCase):
             with self.assertRaises(ValueError, msg="char = " + repr(i)):
                 ASCII85Codec.decode(i)
 
-    def test_five_zero_bytes(self):
+    def testFiveZeroBytes(self):
         """
         From ISO 32000 (2008) sect. 7.4.3:
         «As a special case, if all five bytes are 0, they shall be represented
@@ -187,7 +188,7 @@ class ASCII85DecodeTestCase(unittest.TestCase):
         points (!!!!!).»
         """
         inputs = ("z", "zz", "zzz")
-        exp_outputs = (
+        expOutputs = (
             b"\x00\x00\x00\x00", b"\x00\x00\x00\x00" * 2,
             b"\x00\x00\x00\x00" * 3,
         )
@@ -196,7 +197,7 @@ class ASCII85DecodeTestCase(unittest.TestCase):
             ASCII85Codec.decode("!!!!!"), ASCII85Codec.decode("z")
         )
 
-        for o, i in zip(exp_outputs, inputs):
+        for o, i in zip(expOutputs, inputs):
             self.assertEqual(
                 o, ASCII85Codec.decode(i + "~>")
             )
@@ -204,10 +205,10 @@ class ASCII85DecodeTestCase(unittest.TestCase):
 
 class LZWDecodeTestCase(unittest.TestCase):
     """
-    Tests the LZWCodec.decode() method by means of a LZW Encoder built
+    Tests the ``LZWCodec.decode()`` method by means of a LZW Encoder built
     specifically for testing it.
     """
-    def test_write_code(self):
+    def testWriteCode(self):
         """
         Tests that the memorization of bit values performed by ``_writeCode()``
         as a contiguous bit-stream works as intended.
@@ -218,7 +219,7 @@ class LZWDecodeTestCase(unittest.TestCase):
 
         inputs = range(2 ** 8, 2 ** 12 - 1)
         e.bitspercode = int(floor(log(inputs[0], 2))) + 1
-        exp_output = "".join(
+        expOutput = "".join(
             intToBitstring(n, floor(log(n, 2))) for n in inputs
         )
 
@@ -229,11 +230,11 @@ class LZWDecodeTestCase(unittest.TestCase):
             e._writeCode(i)
 
         self.assertEqual(
-            exp_output,
+            expOutput,
             "".join(intToBitstring(n) for n in e.output)[:e.bitpos]
         )
 
-    def test_read_code(self):
+    def testReadCode(self):
         """
         Tests that the interpretation of bit values performed by
         ``_readCode()`` as a contiguous bit-stream works as intended.
@@ -248,20 +249,20 @@ class LZWDecodeTestCase(unittest.TestCase):
 
         while code != -1:
             if curr + d.bitspercode >= len(expOutputStream):
-                exp_output = expOutputStream[curr:]\
+                expOutput = expOutputStream[curr:]\
                       + "0" * ((curr + d.bitspercode) - len(expOutputStream))
             else:
-                exp_output = expOutputStream[curr:curr + d.bitspercode]
+                expOutput = expOutputStream[curr:curr + d.bitspercode]
 
             self.assertEqual(
-                exp_output, intToBitstring(code, d.bitspercode),
+                expOutput, intToBitstring(code, d.bitspercode),
                 msg="(curr, code) = (%d, %d)" % (curr, code)
             )
 
             curr += d.bitspercode
             code = d._readCode()
 
-    def test_encode_decode(self):
+    def testEncodeDecode(self):
         """
         Ensures that the ``decode(encode(data))`` concatenation equals data,
         where data can be an arbitrary byte stream.
@@ -296,7 +297,7 @@ class DecodeStreamDataTestCase(unittest.TestCase):
     their stream content and check the decoded value against what would be
     produced by the filter that is known to be used.
     """
-    def test_decode_stream_data(self):
+    def testDecodeStreamData(self):
         DIR = join("Tests", "TestData", "Filters")
         # Stores PDF files infos and the coordinates of stream objects. We
         # don't care if we need to open a new file stream for each obj.

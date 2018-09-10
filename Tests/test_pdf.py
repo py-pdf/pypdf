@@ -17,7 +17,7 @@ sys.path.append(PROJECT_ROOT)
 
 
 class PdfReaderTestCases(unittest.TestCase):
-    def test_file_load(self):
+    def testFileLoad(self):
         """
         Test loading and parsing of a file. Extract text of the file and
         compare to expected textual output. Expected outcome: file loads, text
@@ -28,7 +28,7 @@ class PdfReaderTestCases(unittest.TestCase):
         ) as inputfile:
             # Load PDF file from file
             ipdf = PdfFileReader(inputfile)
-            ipdf_p1 = ipdf.getPage(0)
+            ipdfP1 = ipdf.getPage(0)
 
             # Retrieve the text of the PDF
             with open(
@@ -36,7 +36,7 @@ class PdfReaderTestCases(unittest.TestCase):
             ) as pdftext_file:
                 pdftext = pdftext_file.read()
 
-            ipdf_p1_text = ipdf_p1.extractText(). \
+            ipdf_p1_text = ipdfP1.extractText(). \
                 replace('\n', '').encode('utf-8')
 
             # Compare the text of the PDF to a known source
@@ -47,7 +47,7 @@ class PdfReaderTestCases(unittest.TestCase):
                     % (pdftext, ipdf_p1_text)
             )
 
-    def test_jpeg_image(self):
+    def testJpegImage(self):
         '''
         Test loading and parsing of a file. Extract the image of the file and
         compare to expected textual output. Expected outcome: file loads, image
@@ -64,8 +64,8 @@ class PdfReaderTestCases(unittest.TestCase):
             ) as pdftext_file:
                 imagetext = pdftext_file.read()
 
-            ipdf_p0 = ipdf.getPage(0)
-            xObject = ipdf_p0['/Resources']['/XObject'].getObject()
+            ipdfP0 = ipdf.getPage(0)
+            xObject = ipdfP0['/Resources']['/XObject'].getObject()
             data = xObject['/Im4'].getData()
 
             # Compare the text of the PDF to a known source
@@ -76,7 +76,7 @@ class PdfReaderTestCases(unittest.TestCase):
                     % (imagetext, binascii.hexlify(data).decode())
             )
 
-    def test_properties(self):
+    def testProperties(self):
         """
         The switch from PyPDF2 to PyPDF4 sees many stylistic changes, including
         the use of the @property decorator (where possible) and pruning out
@@ -96,51 +96,51 @@ class PdfReaderTestCases(unittest.TestCase):
 class AddJsTestCase(unittest.TestCase):
     def setUp(self):
         ipdf = PdfFileReader(os.path.join(RESOURCE_ROOT, 'crazyones.pdf'))
-        self.pdf_file_writer = PdfFileWriter()
-        self.pdf_file_writer.appendPagesFromReader(ipdf)
+        self.pdfFileWriter = PdfFileWriter()
+        self.pdfFileWriter.appendPagesFromReader(ipdf)
 
-    def test_add(self):
-        self.pdf_file_writer.addJS(
+    def testAdd(self):
+        self.pdfFileWriter.addJS(
             "this.print({bUI:true,bSilent:false,bShrinkToFit:true});"
         )
 
         self.assertIn(
-            '/Names', self.pdf_file_writer._root_object,
+            '/Names', self.pdfFileWriter._root_object,
             "addJS should add a name catalog in the root object."
         )
         self.assertIn(
-            '/JavaScript', self.pdf_file_writer._root_object['/Names'],
+            '/JavaScript', self.pdfFileWriter._root_object['/Names'],
             "addJS should add a JavaScript name tree under the name catalog."
         )
         self.assertIn(
-            '/OpenAction', self.pdf_file_writer._root_object,
+            '/OpenAction', self.pdfFileWriter._root_object,
             "addJS should add an OpenAction to the catalog."
         )
 
-    def test_overwrite(self):
-        self.pdf_file_writer.addJS(
+    def testOverwrite(self):
+        self.pdfFileWriter.addJS(
             "this.print({bUI:true,bSilent:false,bShrinkToFit:true});"
         )
-        first_js = self.get_javascript_name()
+        first_js = self._getJavascriptName()
 
-        self.pdf_file_writer.addJS(
+        self.pdfFileWriter.addJS(
             "this.print({bUI:true,bSilent:false,bShrinkToFit:true});"
         )
-        second_js = self.get_javascript_name()
+        second_js = self._getJavascriptName()
 
         self.assertNotEqual(
             first_js, second_js,
             "addJS should overwrite the previous script in the catalog."
         )
 
-    def get_javascript_name(self):
-        self.assertIn('/Names', self.pdf_file_writer._root_object)
+    def _getJavascriptName(self):
+        self.assertIn('/Names', self.pdfFileWriter._root_object)
         self.assertIn(
-            '/JavaScript', self.pdf_file_writer._root_object['/Names']
+            '/JavaScript', self.pdfFileWriter._root_object['/Names']
         )
         self.assertIn(
             '/Names',
-            self.pdf_file_writer._root_object['/Names']['/JavaScript']
+            self.pdfFileWriter._root_object['/Names']['/JavaScript']
         )
-        return self.pdf_file_writer. \
+        return self.pdfFileWriter. \
             _root_object['/Names']['/JavaScript']['/Names'][0]
