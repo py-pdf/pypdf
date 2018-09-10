@@ -330,7 +330,15 @@ class XmpInformation(PdfObject):
     time a file is saved.
     """
 
+    @property
     def custom_properties(self):
+        """
+        Retrieves custom metadata properties defined in the undocumented pdfx
+        metadata schema.
+
+        :return: a dictionary of key/value items for custom metadata properties.
+        :rtype: dict
+        """
         if not hasattr(self, "_custom_properties"):
             self._custom_properties = {}
             for node in self.getNodesInNamespace("", PDFX_NAMESPACE):
@@ -348,11 +356,3 @@ class XmpInformation(PdfObject):
                 self._custom_properties[key] = value
         return self._custom_properties
 
-    custom_properties = property(custom_properties)
-    """
-    Retrieves custom metadata properties defined in the undocumented pdfx
-    metadata schema.
-
-    :return: a dictionary of key/value items for custom metadata properties.
-    :rtype: dict
-    """

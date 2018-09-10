@@ -2099,7 +2099,7 @@ class PdfFileReader(object):
                     else:
                         return 0
 
-                def used_before(num, generation):
+                def usedBefore(num, generation):
                     # We move backwards through the xrefs, don't replace any.
                     return num in self.xref.get(generation, []) or \
                             num in self.xref_objStm
@@ -2125,7 +2125,7 @@ class PdfFileReader(object):
                             generation = getEntry(2)
                             if generation not in self.xref:
                                 self.xref[generation] = {}
-                            if not used_before(num, generation):
+                            if not usedBefore(num, generation):
                                 self.xref[generation][num] = byte_offset
                                 if self.debug:
                                     print("XREF Uncompressed: %s %s" %
@@ -2135,7 +2135,7 @@ class PdfFileReader(object):
                             objstr_num = getEntry(1)
                             obstr_idx = getEntry(2)
                             generation = 0 # PDF spec table 18, generation is 0
-                            if not used_before(num, generation):
+                            if not usedBefore(num, generation):
                                 if self.debug:
                                     print("XREF Compressed: %s %s %s" % (
                                             num, objstr_num, obstr_idx)
@@ -2150,7 +2150,7 @@ class PdfFileReader(object):
 
                 for key in trailerKeys:
                     if key in xrefstream and key not in self.trailer:
-                        self.trailer[NameObject(key)] = xrefstream.raw_get(key)
+                        self.trailer[NameObject(key)] = xrefstream.rawGet(key)
                 if "/Prev" in xrefstream:
                     startxref = xrefstream["/Prev"]
                 else:
@@ -2503,12 +2503,12 @@ class PageObject(DictionaryObject):
         renameRes = {}
 
         for key in list(page2Res.keys()):
-            if key in newRes and newRes.raw_get(key) != page2Res.raw_get(key):
+            if key in newRes and newRes.rawGet(key) != page2Res.rawGet(key):
                 newname = NameObject(key + str(uuid.uuid4()))
                 renameRes[key] = newname
                 newRes[newname] = page2Res[key]
             elif key not in newRes:
-                newRes[key] = page2Res.raw_get(key)
+                newRes[key] = page2Res.rawGet(key)
 
         return newRes, renameRes
 
@@ -2634,18 +2634,18 @@ class PageObject(DictionaryObject):
 
         # If expanding the page to fit a new page, calculate the new media box size
         if expand:
-            corners1 = [self.mediaBox.getLowerLeft_x().as_numeric(),
-                self.mediaBox.getLowerLeft_y().as_numeric(),
-                self.mediaBox.getUpperRight_x().as_numeric(),
-                self.mediaBox.getUpperRight_y().as_numeric()]
-            corners2 = [page2.mediaBox.getLowerLeft_x().as_numeric(),
-                        page2.mediaBox.getLowerLeft_y().as_numeric(),
-                        page2.mediaBox.getUpperLeft_x().as_numeric(),
-                        page2.mediaBox.getUpperLeft_y().as_numeric(),
-                        page2.mediaBox.getUpperRight_x().as_numeric(),
-                        page2.mediaBox.getUpperRight_y().as_numeric(),
-                        page2.mediaBox.getLowerRight_x().as_numeric(),
-                        page2.mediaBox.getLowerRight_y().as_numeric()]
+            corners1 = [self.mediaBox.getLowerLeft_x().asNumeric(),
+                        self.mediaBox.getLowerLeft_y().asNumeric(),
+                        self.mediaBox.getUpperRight_x().asNumeric(),
+                        self.mediaBox.getUpperRight_y().asNumeric()]
+            corners2 = [page2.mediaBox.getLowerLeft_x().asNumeric(),
+                        page2.mediaBox.getLowerLeft_y().asNumeric(),
+                        page2.mediaBox.getUpperLeft_x().asNumeric(),
+                        page2.mediaBox.getUpperLeft_y().asNumeric(),
+                        page2.mediaBox.getUpperRight_x().asNumeric(),
+                        page2.mediaBox.getUpperRight_y().asNumeric(),
+                        page2.mediaBox.getLowerRight_x().asNumeric(),
+                        page2.mediaBox.getLowerRight_y().asNumeric()]
             if ctm is not None:
                 ctm = [float(x) for x in ctm]
                 new_x = [ctm[0]*corners2[i] + ctm[2]*corners2[i+1] + ctm[4]

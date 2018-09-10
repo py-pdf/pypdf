@@ -41,11 +41,12 @@ class PageRange(object):
     The syntax is like what you would put between brackets [ ].
     The slice is one of the few Python types that can't be subclassed,
     but this class converts to and from slices, and allows similar use.
-      o  PageRange(str) parses a string representing a page range.
-      o  PageRange(slice) directly "imports" a slice.
-      o  to_slice() gives the equivalent slice.
-      o  str() and repr() allow printing.
-      o  indices(n) is like slice.indices(n).
+
+    *  PageRange(str) parses a string representing a page range.
+    *  PageRange(slice) directly "imports" a slice.
+    *  toSlice() gives the equivalent slice.
+    *  str() and repr() allow printing.
+    *  indices(n) is like slice.indices(n).
     """
 
     def __init__(self, arg):
@@ -66,7 +67,7 @@ class PageRange(object):
             return
 
         if isinstance(arg, PageRange):
-            self._slice = arg.to_slice()
+            self._slice = arg.toSlice()
             return
 
         m = isString(arg) and re.match(PAGE_RANGE_RE, arg)
@@ -95,7 +96,7 @@ class PageRange(object):
                (isString(input_value)
                 and bool(re.match(PAGE_RANGE_RE, input_value)))
 
-    def to_slice(self):
+    def toSlice(self):
         """ Return the slice equivalent of this page range. """
         return self._slice
 
@@ -126,7 +127,7 @@ class PageRange(object):
 PAGE_RANGE_ALL = PageRange(":")  # The range of all pages.
 
 
-def parse_filename_page_ranges(args):
+def parseFilenamePageRanges(args):
     """
     Given a list of filenames and page ranges, return a list of
     (filename, page_range) pairs.

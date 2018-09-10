@@ -16,7 +16,7 @@ a wonderful file
 created with Sample_Code/makesimple.py"""
 
 
-def make_pdf_file(output_filename, np):
+def makePdfFile(output_filename, np):
     _title = output_filename
     c = canvas.Canvas(output_filename, pagesize=(8.5 * inch, 11 * inch))
     c.setStrokeColorRGB(0, 0, 0)
@@ -40,5 +40,5 @@ if __name__ == "__main__":
     for i, NP in enumerate(NPS):
         if NP:
             filename = "simple%d.pdf" % i
-            make_pdf_file(filename, NP)
+            makePdfFile(filename, NP)
             print("Wrote", filename)

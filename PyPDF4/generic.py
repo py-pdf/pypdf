@@ -277,7 +277,7 @@ class FloatObject(decimal.Decimal, PdfObject):
                 o = o[:-1]
             return o
 
-    def as_numeric(self):
+    def asNumeric(self):
         return float(b_(repr(self)))
 
     def writeToStream(self, stream, encryption_key):
@@ -295,7 +295,7 @@ class NumberObject(int, PdfObject):
         except OverflowError:
             return int.__new__(cls, 0)
 
-    def as_numeric(self):
+    def asNumeric(self):
         return int(b_(repr(self)))
 
     def writeToStream(self, stream, encryption_key):
@@ -331,7 +331,7 @@ def createStringObject(string):
                 # convert string objects into the text/unicode-aware version if
                 # possible... and the only way to check if that's possible is
                 # to try.  Some strings are strings, some are just byte arrays.
-                retval = TextStringObject(decode_pdfdocencoding(string))
+                retval = TextStringObject(decodePdfDocEncoding(string))
                 retval.autodetect_pdfdocencoding = True
 
                 return retval
@@ -470,9 +470,9 @@ class TextStringObject(utils.string_type, PdfObject):
     # a byte string object was expected due to the autodetection mechanism --
     # if that occurs, this "original_bytes" property can be used to
     # back-calculate what the original encoded bytes were.
-    original_bytes = property(lambda self: self.get_original_bytes())
+    original_bytes = property(lambda self: self.getOriginalBytes())
 
-    def get_original_bytes(self):
+    def getOriginalBytes(self):
         # We're a text string object, but the library is trying to get our raw
         # bytes.  This can happen if we auto-detected this string as text, but
         # we were wrong.  It's pretty common.  Return the original bytes that
@@ -481,7 +481,7 @@ class TextStringObject(utils.string_type, PdfObject):
         if self.autodetect_utf16:
             return codecs.BOM_UTF16_BE + self.encode("utf-16be")
         elif self.autodetect_pdfdocencoding:
-            return encode_pdfdocencoding(self)
+            return encodePdfDocEncoding(self)
         else:
             raise Exception("no information about original bytes")
 
@@ -490,7 +490,7 @@ class TextStringObject(utils.string_type, PdfObject):
         # nicer to look at in the PDF file.  Sadly, we take a performance hit
         # here for trying...
         try:
-            bytearr = encode_pdfdocencoding(self)
+            bytearr = encodePdfDocEncoding(self)
         except UnicodeEncodeError:
             bytearr = codecs.BOM_UTF16_BE + self.encode("utf-16be")
 
@@ -550,7 +550,7 @@ class NameObject(str, PdfObject):
 
 
 class DictionaryObject(dict, PdfObject):
-    def raw_get(self, key):
+    def rawGet(self, key):
         return dict.__getitem__(self, key)
 
     def __setitem__(self, key, value):
@@ -1181,7 +1181,7 @@ class Destination(TreeObject):
 
     def getDestArray(self):
         return ArrayObject(
-            [self.raw_get('/Page'), self['/Type']] +
+            [self.rawGet('/Page'), self['/Type']] +
             [
                 self[x] for x in ['/Left', '/Bottom', '/Right', '/Top', '/Zoom']
                 if x in self
@@ -1271,7 +1271,7 @@ class Bookmark(Destination):
         ] if x in self]:
             key.writeToStream(stream, encryption_key)
             stream.write(b_(" "))
-            value = self.raw_get(key)
+            value = self.rawGet(key)
             value.writeToStream(stream, encryption_key)
             stream.write(b_("\n"))
 
@@ -1284,10 +1284,10 @@ class Bookmark(Destination):
         stream.write(b_(">>"))
 
 
-def encode_pdfdocencoding(unicode_string):
+def encodePdfDocEncoding(unicodeStr):
     retval = b_('')
 
-    for c in unicode_string:
+    for c in unicodeStr:
         try:
             retval += b_(chr(_pdfDocEncoding_rev[c]))
         except KeyError:
@@ -1299,10 +1299,10 @@ def encode_pdfdocencoding(unicode_string):
     return retval
 
 
-def decode_pdfdocencoding(byte_array):
+def decodePdfDocEncoding(byteArray):
     retval = u_('')
 
-    for b in byte_array:
+    for b in byteArray:
         c = _pdfDocEncoding[pypdfOrd(b)]
 
         if c == u_('\u0000'):

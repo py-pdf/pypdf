@@ -27,7 +27,7 @@ import argparse
 from PyPDF4.pagerange import PAGE_RANGE_HELP
 
 
-def parse_args():
+def parseArgs():
     parser = argparse.ArgumentParser(
         description=__doc__.format(page_range_help=PAGE_RANGE_HELP),
         formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -50,12 +50,12 @@ import os
 import traceback
 from collections import defaultdict
 
-from PyPDF4 import PdfFileMerger, parse_filename_page_ranges
+from PyPDF4 import PdfFileMerger, parseFilenamePageRanges
 
 
 if __name__ == "__main__":
-    args = parse_args()
-    filename_page_ranges = parse_filename_page_ranges(args.fn_pgrgs)
+    args = parseArgs()
+    filename_page_ranges = parseFilenamePageRanges(args.fn_pgrgs)
     if args.output:
         output = open(args.output, "wb")
     else:
