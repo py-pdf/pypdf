@@ -23,16 +23,27 @@ EXAMPLES
 # see https://github.com/mstamy2/PyPDF2/LICENSE
 
 from __future__ import print_function
+
 import argparse
+import os
+import sys
+import traceback
+
+from sys import stderr, stdout, exit
+from os.path import dirname as d, abspath as a
+
+sys.path.append(a(os.path.join(d(__file__), os.pardir)))
+
+from PyPDF4 import PdfFileMerger, parseFilenamePageRanges, PdfFileReader
 from PyPDF4.pagerange import PAGE_RANGE_HELP
 
 
 def parseArgs():
     parser = argparse.ArgumentParser(
         description=__doc__.format(page_range_help=PAGE_RANGE_HELP),
-        formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("-o", "--output",
-                        metavar="output_file")
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument("-o", "--output", metavar="output_file")
     parser.add_argument("-v", "--verbose", action="store_true",
                         help="show page ranges as they are being read")
     parser.add_argument("first_filename", nargs=1,
@@ -42,20 +53,11 @@ def parseArgs():
                         metavar="filenames and/or page ranges")
     parser.add_argument("-T", "--toc", action="store_true",
                         help="stores an auto-generated Table of Contents to "
-                        "output file")
+                             "output file")
     args = parser.parse_args()
     args.fn_pgrgs.insert(0, args.first_filename[0])
 
     return args
-
-
-from sys import stderr, stdout, exit
-import os
-import traceback
-from collections import defaultdict
-from os.path import basename
-
-from PyPDF4 import PdfFileMerger, parseFilenamePageRanges
 
 
 if __name__ == "__main__":
@@ -83,20 +85,18 @@ if __name__ == "__main__":
 
             if args.toc:
                 r = PdfFileReader(filename)
-                # fallback_name equals 'a' if filename == 'a.pdf',
-                # or 'b' if filename == 'b.x',or 'c' if
-                # filename == '/u/v/w/c.x' ...
-                fallback_name = basename(filename)
-                fallback_name = fallback_name[:fallback_name.rfind(".")]
+                # fallbackName equals 'a' if filename == 'a.pdf', # or 'b'
+                # if filename == 'b.x', or 'c' if filename == '/u/v/w/c.x' ...
+                fallbackName = basename(filename)
+                fallbackName = fallbackName[:fallbackName.rfind(".")]
 
                 merger.addBookmark(
-                    getattr(r.getDocumentInfo(), "title", fallback_name) or\
-                        fallback_name,
-                    curr_page
+                    getattr(r.getDocumentInfo(), "title", fallbackName)
+                    or fallbackName, curr_page
                 )
 
                 curr_page += r.numPages
-    except:
+    except Exception:
         print(traceback.format_exc(), file=stderr)
         print("Error while reading " + filename, file=stderr)
         exit(1)
