@@ -36,8 +36,7 @@ import struct
 import sys
 from sys import version_info
 
-from .utils import PdfReadError, pypdfOrd, paethPredictor, PdfStreamError,\
-    pypdfBytes
+from .utils import PdfReadError, pypdfOrd, paethPredictor, PdfStreamError
 
 if version_info < (3, 0):
     from cStringIO import StringIO

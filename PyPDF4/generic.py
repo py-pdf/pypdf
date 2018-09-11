@@ -45,7 +45,6 @@ from .utils import readNonWhitespace, RC4Encrypt, skipOverComment
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
-
 ObjectPrefix = b_('/<[tf(n%')
 NumberSigns = b_('+-')
 IndirectPattern = re.compile(b_(r"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]"))

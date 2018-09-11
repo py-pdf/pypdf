@@ -23,16 +23,27 @@ EXAMPLES
 # see https://github.com/mstamy2/PyPDF2/LICENSE
 
 from __future__ import print_function
+
 import argparse
+import os
+import sys
+import traceback
+
+from sys import stderr, stdout, exit
+from os.path import dirname as d, abspath as a
+
+sys.path.append(a(os.path.join(d(__file__), os.pardir)))
+
+from PyPDF4 import PdfFileMerger, parseFilenamePageRanges, PdfFileReader
 from PyPDF4.pagerange import PAGE_RANGE_HELP
 
 
 def parseArgs():
     parser = argparse.ArgumentParser(
         description=__doc__.format(page_range_help=PAGE_RANGE_HELP),
-        formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("-o", "--output",
-                        metavar="output_file")
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument("-o", "--output", metavar="output_file")
     parser.add_argument("-v", "--verbose", action="store_true",
                         help="show page ranges as they are being read")
     parser.add_argument("first_filename", nargs=1,
@@ -40,22 +51,19 @@ def parseArgs():
     # argparse chokes on page ranges like "-2:" unless caught like this:
     parser.add_argument("fn_pgrgs", nargs=argparse.REMAINDER,
                         metavar="filenames and/or page ranges")
+    parser.add_argument("-T", "--toc", action="store_true",
+                        help="stores an auto-generated Table of Contents to "
+                             "output file")
     args = parser.parse_args()
     args.fn_pgrgs.insert(0, args.first_filename[0])
+
     return args
-
-
-from sys import stderr, stdout, exit
-import os
-import traceback
-from collections import defaultdict
-
-from PyPDF4 import PdfFileMerger, parseFilenamePageRanges
 
 
 if __name__ == "__main__":
     args = parseArgs()
     filename_page_ranges = parseFilenamePageRanges(args.fn_pgrgs)
+
     if args.output:
         output = open(args.output, "wb")
     else:
@@ -64,17 +72,35 @@ if __name__ == "__main__":
 
     merger = PdfFileMerger()
     in_fs = dict()
+    curr_page = 0
+
     try:
         for (filename, page_range) in filename_page_ranges:
             if args.verbose:
                 print(filename, page_range, file=stderr)
             if filename not in in_fs:
                 in_fs[filename] = open(filename, "rb")
+
             merger.append(in_fs[filename], pages=page_range)
-    except:
+
+            if args.toc:
+                r = PdfFileReader(filename)
+                # fallbackName equals 'a' if filename == 'a.pdf', # or 'b'
+                # if filename == 'b.x', or 'c' if filename == '/u/v/w/c.x' ...
+                fallbackName = basename(filename)
+                fallbackName = fallbackName[:fallbackName.rfind(".")]
+
+                merger.addBookmark(
+                    getattr(r.getDocumentInfo(), "title", fallbackName)
+                    or fallbackName, curr_page
+                )
+
+                curr_page += r.numPages
+    except Exception:
         print(traceback.format_exc(), file=stderr)
         print("Error while reading " + filename, file=stderr)
         exit(1)
+
     merger.write(output)
     # In 3.0, input files must stay open until output is written.
     # Not closing the in_fs because this script exits now.
