@@ -40,9 +40,13 @@ list will be soon compiled, or may never be so, but for now you should:
 
 * Develop for Python 3 and maintain backwards-compatibility for 2.7.
 * Follow the [PEP 8](http://filltherealaddress.com) style conventions, such as:
+	* Adopt the lower camelCase nomenclature for [coherence with the
+	preexisting code](https://www.python.org/dev/peps/pep-0008/\#function-and-variable-names)
+	(e.g. `fileName` and not `file_name`, `writeFile()` rather than
+	`write_file()`).
     * Never go beyond line lengths of 79 characters.
-    * Maintain correct spacing between global-scoped classes (two spaces in
-	between etc.).
+    * Maintain correct spacing between global-scoped classes and functions (two
+    spaces in between etc.) and within internal code blocks.
 * Provide [docstring documentation](https://www.python.org/dev/peps/pep-0257/)
 for public classes and functions. 
 * **Provide test cases** for individual units of development of your own.

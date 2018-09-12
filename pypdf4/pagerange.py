@@ -101,7 +101,7 @@ class PageRange(object):
         return self._slice
 
     def __str__(self):
-        """ A string like "1:2:3". """
+        """A string like "1:2:3"."""
         s = self._slice
         if s.step is None:
             if s.start is not None and s.stop == s.start + 1:
@@ -113,13 +113,13 @@ class PageRange(object):
         return ':'.join("" if i is None else str(i) for i in indices)
 
     def __repr__(self):
-        """ A string like "PageRange('1:2:3')". """
+        """A string like "PageRange('1:2:3')"."""
         return "PageRange(" + repr(str(self)) + ")"
 
     def indices(self, n):
         """
-        n is the length of the list of pages to choose from.
-        Returns arguments for range().  See help(slice.indices).
+        ``n`` is the length of the list of pages to choose from.
+        Returns arguments for ``range()``.  See ``help(slice.indices)``.
         """
         return self._slice.indices(n)
 
@@ -131,28 +131,29 @@ def parseFilenamePageRanges(args):
     """
     Given a list of filenames and page ranges, return a list of
     (filename, page_range) pairs.
-    First arg must be a filename; other ags are filenames, page-range
+    First arg must be a filename; other args are filenames, page-range
     expressions, slice objects, or PageRange objects.
     A filename not followed by a page range indicates all pages of the file.
     """
     pairs = []
-    pdf_filename = None
-    did_page_range = False
+    pdfFilename = None
+    didPageRange = False
 
     for arg in args + [None]:
         if PageRange.valid(arg):
-            if not pdf_filename:
-                raise ValueError("The first argument must be a filename, "
-                                 "not a page range.")
+            if not pdfFilename:
+                raise ValueError(
+                    "The first argument must be a filename, not a page range."
+                )
 
-            pairs.append((pdf_filename, PageRange(arg)))
-            did_page_range = True
+            pairs.append((pdfFilename, PageRange(arg)))
+            didPageRange = True
         else:
             # New filename or end of list--do all of the previous file?
-            if pdf_filename and not did_page_range:
-                pairs.append((pdf_filename, PAGE_RANGE_ALL))
+            if pdfFilename and not didPageRange:
+                pairs.append((pdfFilename, PAGE_RANGE_ALL))
 
-            pdf_filename = arg
-            did_page_range = False
+            pdfFilename = arg
+            didPageRange = False
 
     return pairs
