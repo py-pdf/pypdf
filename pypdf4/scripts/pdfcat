@@ -30,12 +30,15 @@ import sys
 import traceback
 
 from sys import stderr, stdout, exit
-from os.path import dirname as d, abspath as a
+from os.path import dirname, abspath, join
 
-sys.path.append(a(os.path.join(d(__file__), os.pardir)))
+PROJECT_ROOT = abspath(
+    join(dirname(__file__), os.pardir, os.pardir)
+)
+sys.path.append(PROJECT_ROOT)
 
-from PyPDF4 import PdfFileMerger, parseFilenamePageRanges, PdfFileReader
-from PyPDF4.pagerange import PAGE_RANGE_HELP
+from pypdf4 import PdfFileMerger, parseFilenamePageRanges, PdfFileReader
+from pypdf4.pagerange import PAGE_RANGE_HELP
 
 
 def parseArgs():

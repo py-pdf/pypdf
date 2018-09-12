@@ -1,17 +1,17 @@
 """
-Tests PDF primitives from PyPDF4.pdf.
+Tests PDF primitives from pypdf4.pdf.
 """
 import binascii
 import os
 import sys
 import unittest
 
-from PyPDF4.pdf import PdfFileReader, PdfFileWriter
+from pypdf4.pdf import PdfFileReader, PdfFileWriter
 
 # Configure path environment
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
-RESOURCE_ROOT = os.path.join(PROJECT_ROOT, 'Resources')
+TESTS_DATA_ROOT = os.path.join(TESTS_ROOT, "fixture_data")
 
 sys.path.append(PROJECT_ROOT)
 
@@ -24,7 +24,7 @@ class PdfReaderTestCases(unittest.TestCase):
         matches expected.
         """
         with open(
-                os.path.join(RESOURCE_ROOT, 'crazyones.pdf'), 'rb'
+                os.path.join(TESTS_DATA_ROOT, 'crazyones.pdf'), 'rb'
         ) as inputfile:
             # Load PDF file from file
             ipdf = PdfFileReader(inputfile)
@@ -32,7 +32,7 @@ class PdfReaderTestCases(unittest.TestCase):
 
             # Retrieve the text of the PDF
             with open(
-                    os.path.join(RESOURCE_ROOT, 'crazyones.txt'), 'rb'
+                    os.path.join(TESTS_DATA_ROOT, 'crazyones.txt'), 'rb'
             ) as pdftext_file:
                 pdftext = pdftext_file.read()
 
@@ -54,13 +54,13 @@ class PdfReaderTestCases(unittest.TestCase):
         matches expected.
         '''
 
-        with open(os.path.join(RESOURCE_ROOT, 'jpeg.pdf'), 'rb') as inputfile:
+        with open(os.path.join(TESTS_DATA_ROOT, 'jpeg.pdf'), 'rb') as inputfile:
             # Load PDF file from file
             ipdf = PdfFileReader(inputfile)
 
             # Retrieve the text of the image
             with open(
-                    os.path.join(RESOURCE_ROOT, 'jpeg.txt'), 'r'
+                    os.path.join(TESTS_DATA_ROOT, 'jpeg.txt'), 'r'
             ) as pdftext_file:
                 imagetext = pdftext_file.read()
 
@@ -95,7 +95,7 @@ class PdfReaderTestCases(unittest.TestCase):
 
 class AddJsTestCase(unittest.TestCase):
     def setUp(self):
-        ipdf = PdfFileReader(os.path.join(RESOURCE_ROOT, 'crazyones.pdf'))
+        ipdf = PdfFileReader(os.path.join(TESTS_DATA_ROOT, 'crazyones.pdf'))
         self.pdfFileWriter = PdfFileWriter()
         self.pdfFileWriter.appendPagesFromReader(ipdf)
 

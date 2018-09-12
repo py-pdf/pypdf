@@ -1,4 +1,4 @@
-from PyPDF4 import PdfFileMerger
+from pypdf4 import PdfFileMerger
 
 merger = PdfFileMerger()
 

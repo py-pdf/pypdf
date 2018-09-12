@@ -1,12 +1,16 @@
 #!/usr/bin/env python
 from __future__ import print_function
+from os.path import dirname, join
 
-from PyPDF4.pdf import PdfFileWriter, PdfFileReader
+from pypdf4.pdf import PdfFileWriter, PdfFileReader
+
+SAMPLE_CODE_ROOT = dirname(__file__)
+SAMPLE_PDF_ROOT = join(SAMPLE_CODE_ROOT, "pdfsamples")
 
 
 output = PdfFileWriter()
 input1 = PdfFileReader(
-    open("../PDF_Samples/Seige_of_Vicksburg_Sample_OCR.pdf", "rb")
+    open(join(SAMPLE_PDF_ROOT, "Seige_of_Vicksburg_Sample_OCR.pdf"), "rb")
 )
 
 # Print how many pages input1 has:
@@ -24,7 +28,9 @@ output.addPage(input1.getPage(2).rotateCounterClockwise(90))
 
 # Add page 4 from input1, but first add a watermark from another PDF:
 page4 = input1.getPage(3)
-watermark = PdfFileReader(open("../PDF_Samples/AutoCad_Diagram.pdf", "rb"))
+watermark = PdfFileReader(
+    open(join(SAMPLE_PDF_ROOT, "AutoCad_Diagram.pdf"), "rb")
+)
 page4.mergePage(watermark.getPage(0))
 output.addPage(page4)
 

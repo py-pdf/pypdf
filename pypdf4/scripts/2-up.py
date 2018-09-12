@@ -1,10 +1,19 @@
+from __future__ import print_function
+
+import os
 import sys
 
-from PyPDF4 import PdfFileWriter, PdfFileReader
+from os.path import abspath, dirname, join
+
+PROJECT_ROOT = abspath(
+    join(dirname(__file__), os.pardir, os.pardir)
+)
+sys.path.append(PROJECT_ROOT)
+
+from pypdf4 import PdfFileWriter, PdfFileReader
+
 
 # TO-DO Decide which one of the two halves below to keep
-
-
 def main():
     if len(sys.argv) != 3:
         print("usage: python 2-up.py input_file output_file")

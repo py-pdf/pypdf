@@ -336,6 +336,7 @@ class PdfFileMerger(object):
         for v in dests:
             pageno = None
             pdf = None
+
             if '/Page' in v:
                 for i, p in enumerate(self.pages):
                     if p.id == v['/Page']:
@@ -343,12 +344,13 @@ class PdfFileMerger(object):
                         pageno = i
                         pdf = p.src
                         break
-            if pageno != None:
+
+            if pageno is not None:
                 self.output.addNamedDestinationObject(v)
 
     def _write_bookmarks(self, bookmarks=None, parent=None):
 
-        if bookmarks == None:
+        if bookmarks is None:
             bookmarks = self.bookmarks
 
         last_added = None
@@ -362,10 +364,9 @@ class PdfFileMerger(object):
             if '/Page' in b:
                 for i, p in enumerate(self.pages):
                     if p.id == b['/Page']:
-                        #b[NameObject('/Page')] = p.out_pagedata
+                        # b[NameObject('/Page')] = p.out_pagedata
                         args = [NumberObject(p.id), NameObject(b['/Type'])]
-                        #nothing more to add
-                        #if b['/Type'] == '/Fit' or b['/Type'] == '/FitB'
+                        # Nothing more to add
                         if b['/Type'] == '/FitH' or b['/Type'] == '/FitBH':
                             if '/Top' in b and not isinstance(b['/Top'], NullObject):
                                 args.append(FloatObject(b['/Top']))

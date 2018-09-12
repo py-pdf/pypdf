@@ -13,7 +13,7 @@ inch = 72
 TEXT = """%s    page %d of %d
 
 a wonderful file
-created with Sample_Code/makesimple.py"""
+created with samplecode/makesimple.py"""
 
 
 def makePdfFile(output_filename, np):

@@ -10,17 +10,17 @@ import unittest
 from itertools import product as cartesian_product
 from math import floor, log
 
-from os.path import join
+from os.path import abspath, dirname, join
 
-from PyPDF4.filters import FlateCodec, ASCIIHexCodec, ASCII85Codec, \
+from pypdf4.filters import FlateCodec, ASCIIHexCodec, ASCII85Codec,\
     LZWCodec, DCTCodec, CCITTFaxCodec, decodeStreamData
-from PyPDF4.generic import EncodedStreamObject, DictionaryObject,\
-    IndirectObject
-from PyPDF4.pdf import PdfFileReader
-from PyPDF4.utils import PdfReadError, PdfStreamError, hexEncode
-from Tests.utils import intToBitstring
+from pypdf4.generic import EncodedStreamObject, IndirectObject
+from pypdf4.pdf import PdfFileReader
+from pypdf4.utils import PdfReadError, PdfStreamError, hexEncode
+from tests.utils import intToBitstring
 
-TEST_DATA_DIR = join("Tests", "TestData")
+TESTS_ROOT = abspath(dirname(__file__))
+TEST_DATA_ROOT = join(TESTS_ROOT, "fixture_data")
 
 
 class FlateDecodeTestCase(unittest.TestCase):
@@ -36,7 +36,7 @@ class FlateDecodeTestCase(unittest.TestCase):
             string.punctuation, string.whitespace,  # Add more...
         ]
         for f in ("TheHappyPrince.txt", ):
-            with open(join(TEST_DATA_DIR, f)) as infile:
+            with open(join(TEST_DATA_ROOT, f)) as infile:
                 cls.filterInputs.append(infile.read())
 
         cls.filterInputs = tuple(
@@ -151,7 +151,7 @@ class ASCII85DecodeTestCase(unittest.TestCase):
         ]
 
         for filename in ("TheHappyPrince.txt", ):
-            with open(join(TEST_DATA_DIR, filename)) as infile:
+            with open(join(TEST_DATA_ROOT, filename)) as infile:
                 inputs.append(infile.read())
 
         for i in inputs:
@@ -274,7 +274,7 @@ class LZWDecodeTestCase(unittest.TestCase):
         ]
 
         for f in ("TheHappyPrince.txt", ):
-            with open(join(TEST_DATA_DIR, f), "rb") as infile:
+            with open(join(TEST_DATA_ROOT, f), "rb") as infile:
                 # TO-DO If we approach the number of bytes read to 10K the
                 # codec stops working correctly. This is a bug to fix!
                 inputs.append(infile.read(9500))
@@ -298,7 +298,7 @@ class DecodeStreamDataTestCase(unittest.TestCase):
     produced by the filter that is known to be used.
     """
     def testDecodeStreamData(self):
-        DIR = join("Tests", "TestData", "Filters")
+        DIR = join(TEST_DATA_ROOT, "filters")
         # Stores PDF files infos and the coordinates of stream objects. We
         # don't care if we need to open a new file stream for each obj.
         # reference -- unit tests don't have to be efficient

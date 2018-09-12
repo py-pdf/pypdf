@@ -11,7 +11,7 @@ for np in 5 11 17; do
      echo "$f           page $p of $np"
      echo ""
      echo "an incredible, yet simple example"
-     echo "Created with Sample_Code/makesimple.sh"
+     echo "Created with samplecode/makesimple.sh"
      p=$(expr $p + 1)
     done | enscript --no-header -o - |ps2pdf - $f
    echo $f

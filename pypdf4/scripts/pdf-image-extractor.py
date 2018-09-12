@@ -4,10 +4,22 @@ Extract images from PDF without resampling or altering.
 Adapted from work by Sylvain Pelissier
 http://stackoverflow.com/questions/2693820/extract-images-from-pdf-without-resampling-in-python
 """
+from __future__ import print_function
 
+import os
 import sys
-import PyPDF4
+
+# TO-DO Add PIL as a project requirement
 from PIL import Image
+from os.path import abspath, dirname, join
+
+PROJECT_ROOT = abspath(
+    join(dirname(__file__), os.pardir, os.pardir)
+)
+sys.path.append(PROJECT_ROOT)
+
+import pypdf4
+
 
 if len(sys.argv) != 2:
     print("\nUsage: python {} input_file\n".format(sys.argv[0]))
@@ -16,7 +28,7 @@ if len(sys.argv) != 2:
 pdf = sys.argv[1]
 
 if __name__ == '__main__':
-    input1 = PyPDF4.PdfFileReader(open(pdf, "rb"))
+    input1 = pypdf4.PdfFileReader(open(pdf, "rb"))
     page0 = input1.getPage(30)
 
     if '/XObject' in page0['/Resources']:

@@ -142,7 +142,7 @@ def parseFilenamePageRanges(args):
     for arg in args + [None]:
         if PageRange.valid(arg):
             if not pdf_filename:
-                raise ValueError("The first argument must be a filename, " \
+                raise ValueError("The first argument must be a filename, "
                                  "not a page range.")
 
             pairs.append((pdf_filename, PageRange(arg)))
