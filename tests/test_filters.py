@@ -23,7 +23,7 @@ TESTS_ROOT = abspath(dirname(__file__))
 TEST_DATA_ROOT = join(TESTS_ROOT, "fixture_data")
 
 
-class FlateDecodeTestCase(unittest.TestCase):
+class FlateCodecTestCase(unittest.TestCase):
     """
     Tests expected results and edge cases of FlateCodec.
     """
@@ -76,7 +76,7 @@ class FlateDecodeTestCase(unittest.TestCase):
                 codec.decode(codec.encode(s), {"/Predictor": predictor})
 
 
-class ASCIIHexDecodeTestCase(unittest.TestCase):
+class ASCIIHexCodecTestCase(unittest.TestCase):
     """
     Tests primarily the decode() method of ASCIIHexCodec.
     """
@@ -134,7 +134,7 @@ class ASCIIHexDecodeTestCase(unittest.TestCase):
                 ASCIIHexCodec.decode(i)
 
 
-class ASCII85DecodeTestCase(unittest.TestCase):
+class ASCII85CodecTestCase(unittest.TestCase):
     """
     Tests the ``decode()`` method of ``ASCII85Codec``.
     """
@@ -203,7 +203,7 @@ class ASCII85DecodeTestCase(unittest.TestCase):
             )
 
 
-class LZWDecodeTestCase(unittest.TestCase):
+class LZWCodecTestCase(unittest.TestCase):
     """
     Tests the ``LZWCodec.decode()`` method by means of a LZW Encoder built
     specifically for testing it.
@@ -273,11 +273,11 @@ class LZWDecodeTestCase(unittest.TestCase):
             string.ascii_letters, 2000 * string.ascii_letters
         ]
 
-        for f in ("TheHappyPrince.txt", ):
+        for f in ("Hamlet.txt", "TheHappyPrince.txt", ):
             with open(join(TEST_DATA_ROOT, f), "rb") as infile:
-                # TO-DO If we approach the number of bytes read to 10K the
+                # TO-DO If we approach the number of read bytes to 10K the
                 # codec stops working correctly. This is a bug to fix!
-                inputs.append(infile.read(9500))
+                inputs.append(infile.read())
 
         for t in inputs:
             e = LZWCodec.Encoder(t)

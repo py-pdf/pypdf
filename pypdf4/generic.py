@@ -799,9 +799,9 @@ class TreeObject(DictionaryObject):
         lastRef = self[NameObject('/Last')]
         last = lastRef.getObject()
 
-        while cur != None:
+        while cur is not None:
             if cur == childObj:
-                if prev == None:
+                if prev is None:
                     if NameObject('/Next') in cur:
                         # Removing first tree node
                         nextRef = cur[NameObject('/Next')]

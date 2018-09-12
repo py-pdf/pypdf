@@ -1460,7 +1460,7 @@ class PdfFileReader(object):
             :class:`Destinations<pypdf4.generic.Destination>`.
         :rtype: dict
         """
-        if retval == None:
+        if retval is None:
             retval = {}
             catalog = self.trailer["/Root"]
 
