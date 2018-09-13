@@ -29,6 +29,8 @@ Utility functions for PDF library.
 """
 import sys
 
+from binascii import hexlify
+
 try:
     import __builtin__ as builtins
 except ImportError:  # Py3
@@ -64,7 +66,7 @@ def isBytes(b):
 
 #custom implementation of warnings.formatwarning
 def formatWarning(message, category, filename, lineno, line=None):
-    file = filename.replace("/", "\\").rsplit("\\", 1)[1] # find the file name
+    file = filename.replace("/", "\\").rsplit("\\", 1)[1]  # find the file name
     return "%s: %s [%s:%s]\n" % (category.__name__, message, file, lineno)
 
 
@@ -74,13 +76,17 @@ def readUntilWhitespace(stream, maxchars=None):
     Stops upon encountering whitespace or when maxchars is reached.
     """
     txt = pypdfBytes("")
+
     while True:
         tok = stream.read(1)
+
         if tok.isspace() or not tok:
             break
+
         txt += tok
         if len(txt) == maxchars:
             break
+
     return txt
 
 
@@ -89,8 +95,10 @@ def readNonWhitespace(stream):
     Finds and reads the next non-whitespace character (ignores whitespace).
     """
     tok = WHITESPACES[0]
+
     while tok in WHITESPACES:
         tok = stream.read(1)
+
     return tok
 
 
@@ -100,16 +108,19 @@ def skipOverWhitespace(stream):
     one whitespace character was read.
     """
     tok = WHITESPACES[0]
-    cnt = 0;
+    cnt = 0
+
     while tok in WHITESPACES:
         tok = stream.read(1)
         cnt+=1
-    return (cnt > 1)
+
+    return cnt > 1
 
 
 def skipOverComment(stream):
     tok = stream.read(1)
     stream.seek(-1, 1)
+
     if tok == pypdfBytes('%'):
         while tok not in (pypdfBytes('\n'), pypdfBytes('\r')):
             tok = stream.read(1)
@@ -122,8 +133,10 @@ def readUntilRegex(stream, regex, ignore_eof=False):
     :param bool ignore_eof: If true, ignore end-of-line and return immediately
     """
     name = pypdfBytes('')
+
     while True:
         tok = stream.read(16)
+
         if not tok:
             # stream has truncated prematurely
             if ignore_eof == True:
@@ -136,6 +149,7 @@ def readUntilRegex(stream, regex, ignore_eof=False):
             stream.seek(m.start()-len(tok), 1)
             break
         name += tok
+
     return name
 
 
@@ -154,34 +168,41 @@ class ConvertFunctionsToVirtualList(object):
             return cls(indices.__len__, lambda idx: self[indices[idx]])
         if not isInt(index):
             raise TypeError("sequence indices must be integers")
+
         len_self = len(self)
+
         if index < 0:
             # support negative indexes
             index = len_self + index
         if index < 0 or index >= len_self:
             raise IndexError("sequence index out of range")
+
         return self.getFunction(index)
 
 
 def RC4Encrypt(key, plaintext):
     S = [i for i in range(256)]
     j = 0
+
     for i in range(256):
         j = (j + S[i] + pypdfOrd(key[i % len(key)])) % 256
         S[i], S[j] = S[j], S[i]
+
     i, j = 0, 0
     retval = []
+
     for x in range(len(plaintext)):
         i = (i + 1) % 256
         j = (j + S[i]) % 256
         S[i], S[j] = S[j], S[i]
         t = S[(S[i] + S[j]) % 256]
         retval.append(pypdfBytes(chr(pypdfOrd(plaintext[x]) ^ t)))
+
     return pypdfBytes("").join(retval)
 
 
 def matrixMultiply(a, b):
-    return [[sum([float(i)*float(j)
+    return [[sum([float(i) * float(j)
                   for i, j in zip(row, col)]
                 ) for col in zip(*b)]
             for row in a]
@@ -256,8 +277,8 @@ def pypdfStr(b):
     if sys.version_info[0] < 3:
         return b
     else:
-        if type(b) == bytes:
-            return b.decode('latin-1')
+        if isinstance(b, bytes):
+            return b.decode("LATIN1")
         else:
             return b
 
@@ -306,20 +327,23 @@ def pypdfBytearray(b):
 
 def hexEncode(s):
     """
-    Abstracts the conversion from an ASCII string to an hex-valued string
+    Abstracts the conversion from a LATIN 1 string to an hex-valued string
     representation of the former over versions 2.7.x and 3 of Python.
 
-    :param s: a ``str'` to convert from UTF-8 characters to a hexadecimal
-        string representation.
+    :param str s: a ``str`` to convert from LATIN 1 to an hexadecimal string
+        representation.
     :return: a hex-valued string, e.g. ``hexEncode("$A'") == "244127"``.
+    :rtype: str
     """
-    if sys.version_info[0] < 3:
+    if sys.version_info < (3, 0):
         return s.encode('hex')
     else:
-        import codecs
-        e = codecs.getencoder('hex_codec')
+        if isinstance(s, str):
+            s = s.encode("LATIN1")
 
-        return e(s.encode("utf-8"))[0].decode("utf-8")
+        # The output is in the set of "0123456789ABCDEF" characters. Using the
+        # ASCII decoder is a safeguard against anomalies, albeit unlikely
+        return hexlify(s).decode("ASCII")
 
 
 def hexStr(num):
