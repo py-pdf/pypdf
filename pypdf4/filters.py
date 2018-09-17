@@ -53,7 +53,7 @@ try:
         return zlib.compress(data)
 except ImportError:
     # Unable to import zlib.  Attempt to use the System.IO.Compression
-    # library from the .NET framework. (IronPython only)
+    # library from the .NET framework. (IronPython only.)
     import System
     from System import IO, Array
 
@@ -130,8 +130,9 @@ class FlateCodec(object):
     def encode(data, decodeParms=None):
         return compress(data)
 
+    # pylint: disable=too-many-locals, too-many-branches
     @staticmethod
-    def decode(data, decodeParms):    # pylint: disable=too-many-locals, too-many-branches
+    def decode(data, decodeParms=None):
         """
         :param data: flate-encoded data.
         :param decodeParms: a dictionary of values, understanding the

@@ -38,7 +38,7 @@ def main():
         print(USAGE)
         exit(1)
     else:
-        inputpath = argv[1]
+        inputpath = argv[1].strip()
         filename = basename(inputpath)
 
         if len(argv) > 2:

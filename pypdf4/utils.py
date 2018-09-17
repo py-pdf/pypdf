@@ -93,6 +93,8 @@ def readUntilWhitespace(stream, maxchars=None):
 def readNonWhitespace(stream):
     """
     Finds and reads the next non-whitespace character (ignores whitespace).
+
+    :param stream: a file-like object.
     """
     tok = WHITESPACES[0]
 
@@ -104,8 +106,10 @@ def readNonWhitespace(stream):
 
 def skipOverWhitespace(stream):
     """
-    Similar to readNonWhitespace, but returns a Boolean if more than
+    Similar to ``readNonWhitespace()``, but returns a Boolean if more than
     one whitespace character was read.
+
+    :param stream: a file-like object.
     """
     tok = WHITESPACES[0]
     cnt = 0
@@ -241,7 +245,7 @@ class PdfStreamError(PdfReadError):
     pass
 
 
-if sys.version_info[0] < 3:
+if sys.version_info < (3, 0):
     pypdfBytes = lambda s: s
 else:
     def pypdfBytes(s):
