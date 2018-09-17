@@ -1131,7 +1131,7 @@ class PdfFileReader(object):
                     file = sys.stderr
                 try:
                     file.write(formatWarning(message, category, filename, lineno, line))
-                except:
+                except Exception:
                     pass
             warnings.showwarning = _showwarning
         self.strict = strict
