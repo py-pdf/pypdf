@@ -1187,6 +1187,8 @@ class PdfFileWriter(object):
 
 
 class PdfFileReader(object):
+    OBJ_XTABLE, OBJ_XSTREAM, OBJ_BOTH = (1, 2, 3)
+
     def __init__(
             self, stream, strict=True, warndest=None, overwriteWarnings=True,
             debug=False
@@ -1228,12 +1230,13 @@ class PdfFileReader(object):
             warnings.showwarning = _showwarning
 
         # Stores the Cross-Reference Table indices. The keys are gen. numbers,
-        # the values a dict of the form {obj. id: byte offset within file}.
+        # the values a dict of the form {obj. id: (byte offset within file,
+        # is in free object list)}
         self._xref = {}
         self._xrefIndex = 0
         # Stores the Cross-Reference Stream data. The keys are id numbers of
         # objects. The values a series of (id of obj. stream, id internal to
-        # obj. stream) couples
+        # obj. stream) tuples
         self._xrefObjStm = {}
         self._cachedObjects = {}
         self._trailer = DictionaryObject()
@@ -1814,6 +1817,58 @@ class PdfFileReader(object):
 
         return NullObject()
 
+    def objects(self, empty=True, freeObjects=False, select=OBJ_BOTH):
+        """
+        Returns an iterable of indexed objects (either by the Cross-Reference
+        tables or Cross-Reference Streams) stored in this PDF file.
+
+        :param empty: whether the items should **not** contain the associated
+            :class:`PdfObject<generic.PdfObject>`. Defaults to ``True``.
+        :param freeObjects: whether to include objects from the free entries
+            list. Defaults to ``False`` (only objects that can be fetched are
+            included).
+        :param select: whether to select items from the XRef Table only, the
+            Cross-Reference Stream only or both. Accepted values are:\n
+            * PdfFileReader.OBJ_XREF   Only items from the XRef Table
+            * PdfFileReader.OBJ_XSTREAM    Only items from the
+                Cross-Reference Stream
+            * PdfFileReader.OBJ_XBOTH  The default, selects both of the
+                above
+        :return: an iterable of tuples, whose values are:\n
+            0.   ID number of the object
+            1.   Generation number of the object
+            2.   (If ``empty == False``.) Associated PDF object (an instance\
+                 of :class:`PdfObject<generic.PdfObject>`).
+        """
+        if select & self.OBJ_XTABLE:
+            # Reverse-sorted list of generation numbers from the XRef Table
+            gens = sorted(self._xref.keys(), reverse=True)
+
+            # We give the X-Ref Table a higher precedence than the
+            # Cross-Reference Stream
+            for gen in gens:
+                for id in self._xref[gen]:
+                    # If this object is in the free-object list:
+                    if not freeObjects and self._xref[gen][id][1] == True:
+                        continue
+
+                    if empty:
+                        yield (id, gen)
+                    else:
+                        r = IndirectObject(id, gen, self)
+
+                        yield (id, gen, self.getObject(r))
+        if select & self.OBJ_XSTREAM:
+            # Iterate through the Cross-Reference Stream
+            for id in self._xrefObjStm.keys():
+                if empty:
+                    # We are in object streams, yield a generation number of 0
+                    yield (id, 0)
+                else:
+                    r = IndirectObject(id, gen, self)
+
+                    yield (id, 0, self.getObject(r))
+
     def getObject(self, indirectReference):
         """
         Retrieves an indirect reference object, caching it appropriately, from
@@ -1836,7 +1891,7 @@ class PdfFileReader(object):
         if r.generation == 0 and r.idnum in self._xrefObjStm:
             retval = self._getObjectFromStream(r)
         elif r.generation in self._xref and r.idnum in self._xref[r.generation]:
-            start = self._xref[r.generation][r.idnum]
+            start = self._xref[r.generation][r.idnum][0]
 
             if self.debug:
                 print(
@@ -2003,10 +2058,11 @@ class PdfFileReader(object):
                 firsttime = True
 
                 while True:
-                    num = readObject(stream, self)
+                    # The current id of this subsection items
+                    currid = readObject(stream, self)
 
-                    if firsttime and num != 0:
-                         self._xrefIndex = num
+                    if firsttime and currid != 0:
+                         self._xrefIndex = currid
 
                          if self.strict:
                             warnings.warn(
@@ -2050,20 +2106,37 @@ class PdfFileReader(object):
 
                         offset, generation = line[:16].split(b_(" "))
                         offset, generation = int(offset), int(generation)
+                        # state should be in {"f", "n"}
+                        state = line[17]
+
+                        # Probably stream is a byte string and we need to
+                        # convert a single line[k] to str
+                        if isinstance(state, int):
+                            state = chr(state)
+
+                        if state not in "fn":
+                            raise ValueError(
+                                "Error in Cross-Reference table with object "
+                                "(%d, %d): third item (18th byte) should be "
+                                "either \"n\" or \"f\", found \"%c\"" % (
+                                    currid, offset, state
+                                )
+                            )
 
                         if generation not in self._xref:
                             self._xref[generation] = {}
-                        if num in self._xref[generation]:
+                        if currid in self._xref[generation]:
                             # It really seems like we should allow the last
                             # xref table in the file to override previous
                             # ones. Since we read the file backwards, assume
                             # any existing key is already set correctly.
                             pass
                         else:
-                            self._xref[generation][num] = offset
+                            self._xref[generation][currid]\
+                                = (offset, state == "f")
 
                         cnt += 1
-                        num += 1
+                        currid += 1
 
                     readNonWhitespace(stream)
                     stream.seek(-1, 1)
@@ -2155,6 +2228,8 @@ class PdfFileReader(object):
                             # Linked list of free objects
                             nextFreeObject = getEntry(1)
                             nextGeneration = getEntry(2)
+
+                            # TO-DO URGENT: Add linked-list of free objects
                         elif xrefType == 1:
                             # Objects that are in use but are not compressed
                             byteOffset = getEntry(1)
@@ -2163,7 +2238,8 @@ class PdfFileReader(object):
                             if generation not in self._xref:
                                 self._xref[generation] = {}
                             if not usedBefore(num, generation):
-                                self._xref[generation][num] = byteOffset
+                                self._xref[generation][num]\
+                                    = (byteOffset, False)
 
                                 if self.debug:
                                     print(
@@ -2234,7 +2310,7 @@ class PdfFileReader(object):
                     continue
 
                 for id in self._xref[gen]:
-                    stream.seek(self._xref[gen][id], 0)
+                    stream.seek(self._xref[gen][id][0], 0)
 
                     try:
                         pid, pgen = self._readObjectHeader(stream)
@@ -2251,7 +2327,7 @@ class PdfFileReader(object):
 
     def _zeroXref(self, generation):
         self._xref[generation] = dict(
-            (k - self._xrefIndex, v) for (k, v)
+            (id - self._xrefIndex, v) for (id, v)
             in list(self._xref[generation].items())
         )
 

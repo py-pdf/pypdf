@@ -9,7 +9,6 @@ from __future__ import print_function
 import os
 import sys
 
-# TO-DO Add PIL as a project requirement
 from PIL import Image
 from os.path import abspath, dirname, join
 

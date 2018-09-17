@@ -2,18 +2,20 @@
 Tests PDF primitives from pypdf4.pdf.
 """
 import binascii
-import os
 import sys
 import unittest
 
-from pypdf4.pdf import PdfFileReader, PdfFileWriter
+from os.path import abspath, dirname, join, pardir
 
 # Configure path environment
-TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
-PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
-TESTS_DATA_ROOT = os.path.join(TESTS_ROOT, "fixture_data")
+PROJECT_ROOT = abspath(
+    join(dirname(__file__), pardir)
+)
+TESTS_DATA_ROOT = join(PROJECT_ROOT, "tests", "fixture_data")
 
 sys.path.append(PROJECT_ROOT)
+
+from pypdf4.pdf import PdfFileReader, PdfFileWriter
 
 
 class PdfReaderTestCases(unittest.TestCase):
@@ -24,7 +26,7 @@ class PdfReaderTestCases(unittest.TestCase):
         matches expected.
         """
         with open(
-                os.path.join(TESTS_DATA_ROOT, 'crazyones.pdf'), 'rb'
+                join(TESTS_DATA_ROOT, 'crazyones.pdf'), 'rb'
         ) as inputfile:
             # Load PDF file from file
             ipdf = PdfFileReader(inputfile)
@@ -32,37 +34,37 @@ class PdfReaderTestCases(unittest.TestCase):
 
             # Retrieve the text of the PDF
             with open(
-                    os.path.join(TESTS_DATA_ROOT, 'crazyones.txt'), 'rb'
-            ) as pdftext_file:
-                pdftext = pdftext_file.read()
+                    join(TESTS_DATA_ROOT, 'crazyones.txt'), 'rb'
+            ) as pdftextFile:
+                pdftext = pdftextFile.read()
 
-            ipdf_p1_text = ipdfP1.extractText(). \
+            ipdfP1Text = ipdfP1.extractText().\
                 replace('\n', '').encode('utf-8')
 
             # Compare the text of the PDF to a known source
             self.assertEqual(
-                ipdf_p1_text, pdftext,
+                ipdfP1Text, pdftext,
                 msg='PDF extracted text differs from expected value.'
                     '\n\nExpected:\n\n%r\n\nExtracted:\n\n%r\n\n'
-                    % (pdftext, ipdf_p1_text)
+                    % (pdftext, ipdfP1Text)
             )
 
     def testJpegImage(self):
-        '''
+        """
         Test loading and parsing of a file. Extract the image of the file and
         compare to expected textual output. Expected outcome: file loads, image
         matches expected.
-        '''
+        """
 
-        with open(os.path.join(TESTS_DATA_ROOT, 'jpeg.pdf'), 'rb') as inputfile:
+        with open(join(TESTS_DATA_ROOT, 'jpeg.pdf'), 'rb') as inputfile:
             # Load PDF file from file
             ipdf = PdfFileReader(inputfile)
 
             # Retrieve the text of the image
             with open(
-                    os.path.join(TESTS_DATA_ROOT, 'jpeg.txt'), 'r'
-            ) as pdftext_file:
-                imagetext = pdftext_file.read()
+                    join(TESTS_DATA_ROOT, 'jpeg.txt'), 'r'
+            ) as pdftextFile:
+                imagetext = pdftextFile.read()
 
             ipdfP0 = ipdf.getPage(0)
             xObject = ipdfP0['/Resources']['/XObject'].getObject()
@@ -75,6 +77,77 @@ class PdfReaderTestCases(unittest.TestCase):
                     '\n\nExpected:\n\n%r\n\nExtracted:\n\n%r\n\n'
                     % (imagetext, binascii.hexlify(data).decode())
             )
+
+    def testXRefTableObjects(self):
+        """
+        Ensures that after ``PdfFileReader._parsePdfFile()`` all the indirect
+        references from the XRef-Table *only* have been loaded as expected.
+        Objects from the free entries list are included as well in the test.
+
+        This case tests the part of ``PdfFileReader.objects()`` responsible for
+        generating the Cross-Reference Table entries.
+        """
+        self.maxDiff = None
+        LOCAL_DATA_ROOT = join(
+            TESTS_DATA_ROOT, self.testXRefTableObjects.__name__
+        )
+        inputFiles = (
+            "jpeg.pdf", "GeoBase_NHNC1_Data_Model_UML_EN.pdf",
+            "Seige_of_Vicksburg_Sample_OCR.pdf"
+        )
+
+        for file in inputFiles:
+            filepath = join(TESTS_DATA_ROOT, file)
+            testdatapath = join(LOCAL_DATA_ROOT, file)
+            r = PdfFileReader(filepath)
+            actualItems = sorted(
+                r.objects(True, True, PdfFileReader.OBJ_XTABLE)
+            )
+            # expItems contains tuples of (id number, gen. number, byte offset,
+            # free status) values
+            expItems = list()
+
+            # With this block we artificially read the XRef Table entries that
+            # we know belong to filepath, and store them into expItems
+            with open(testdatapath, "r") as instream:
+                startid = None
+                expecteditems = None
+                itemssofar = None
+
+                for line in instream:
+                    if not line or line.isspace() or line.startswith("#"):
+                        continue
+
+                    tokens = line.strip().split()
+
+                    # We are beginning a new sub reference section
+                    if len(tokens) == 2:
+                        if itemssofar != expecteditems:
+                            raise ValueError(
+                                "Line \"%d %d\" specified %d items, %d read"
+                                % (startid, expecteditems, expecteditems,
+                                   itemssofar)
+                            )
+
+                        startid = int(tokens[0])
+                        expecteditems = int(tokens[1])
+                        itemssofar = 0
+                    elif len(tokens) == 3:  # New object info to add
+                        expItems.append((
+                            startid + itemssofar, int(tokens[1]),
+                            int(tokens[0]), tokens[2]
+                        ))
+                        itemssofar += 1
+                    else:
+                        raise ValueError(
+                            "Something unexpected was written in %s"
+                            % testdatapath
+                        )
+
+            expItems = sorted([
+                (id, gen) for (id, gen, offset, state) in expItems
+            ])
+            self.assertListEqual(expItems, actualItems)
 
     def testProperties(self):
         """
@@ -95,7 +168,7 @@ class PdfReaderTestCases(unittest.TestCase):
 
 class AddJsTestCase(unittest.TestCase):
     def setUp(self):
-        ipdf = PdfFileReader(os.path.join(TESTS_DATA_ROOT, 'crazyones.pdf'))
+        ipdf = PdfFileReader(join(TESTS_DATA_ROOT, 'crazyones.pdf'))
         self.pdfFileWriter = PdfFileWriter()
         self.pdfFileWriter.appendPagesFromReader(ipdf)
 
