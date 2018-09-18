@@ -298,7 +298,7 @@ class DecodeStreamDataTestCase(unittest.TestCase):
     produced by the filter that is known to be used.
     """
     def testDecodeStreamData(self):
-        DIR = join(TEST_DATA_ROOT, "filters")
+        DIR = join(TEST_DATA_ROOT, self.testDecodeStreamData.__name__)
         # Stores PDF files infos and the coordinates of stream objects. We
         # don't care if we need to open a new file stream for each obj.
         # reference -- unit tests don't have to be efficient
