@@ -37,9 +37,10 @@ import warnings
 
 from . import filters
 from . import utils
-from .utils import PdfStreamError
-from .utils import pypdfBytes as b_, pypdfUnicode as u_, pypdfChr, pypdfOrd
-from .utils import readNonWhitespace, RC4Encrypt, skipOverComment
+from pypdf4.utils import PdfStreamError
+from pypdf4.utils import pypdfBytes as b_, pypdfUnicode as u_, pypdfChr,\
+        pypdfOrd
+from pypdf4.utils import readNonWhitespace, RC4Encrypt, skipOverComment
 
 
 __author__ = "Mathieu Fenniak"
@@ -100,6 +101,7 @@ class PdfObject(object):
         return self
 
 
+# TO-DO Add __repr_() implementations to the *Object classes
 class NullObject(PdfObject):
     def writeToStream(self, stream, encryption_key):
         stream.write(b_("null"))

@@ -9,7 +9,7 @@ see https://github.com/claird/PyPDF4/blob/master/LICENSE.md
 
 import re
 
-from .utils import isString
+from pypdf4.utils import isString
 
 _INT_RE = r"(0|-?[1-9]\d*)"  # A decimal int, don't allow "-0".
 PAGE_RANGE_RE = "^({int}|({int}?(:{int}?(:{int}?)?)))$".format(int=_INT_RE)
@@ -89,12 +89,10 @@ class PageRange(object):
             __init__.__doc__.format(page_range_help=PAGE_RANGE_HELP)
 
     @staticmethod
-    def valid(input_value):
+    def valid(input):
         """ True if input is a valid initializer for a PageRange. """
-        return isinstance(input_value, slice) or \
-               isinstance(input_value, PageRange) or \
-               (isString(input_value)
-                and bool(re.match(PAGE_RANGE_RE, input_value)))
+        return isinstance(input, slice) or isinstance(input, PageRange) or\
+               (isString(input) and bool(re.match(PAGE_RANGE_RE, input)))
 
     def toSlice(self):
         """ Return the slice equivalent of this page range. """

@@ -100,5 +100,6 @@ def main():
 
     print("Output successfully written to", output)
 
+
 if __name__ == "__main__":
     main()

@@ -489,7 +489,7 @@ class LZWCodec(object):
         return LZWCodec.Encoder(data).encode()
 
     @staticmethod
-    def decode(data, decode_params=None):
+    def decode(data, decodeParms=None):
         return LZWCodec.Decoder(data).decode()
 
 
@@ -552,9 +552,8 @@ class ASCII85Codec(object):
 
         :param data: a str or bytes sequence of ASCII85-encoded characters.
         :return: bytes for Python 3, str for Python 2.
-
-        TO-DO Add check for missing '~>' EOD marker.
         """
+        # TO-DO Add check for missing '~>' EOD marker.
         group_index = b = 0
         out = bytearray()
 
@@ -602,7 +601,7 @@ class DCTCodec(object):
         raise NotImplementedError()
 
     @staticmethod
-    def decode(data, decode_params=None):
+    def decode(data, decodeParms=None):
         """
         TO-DO Implement this filter.
         """

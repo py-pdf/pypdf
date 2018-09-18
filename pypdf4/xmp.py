@@ -100,10 +100,10 @@ class XmpInformation(PdfObject):
 
         return text
 
-    def _converter_string(value):
+    def _converterString(value):
         return value
 
-    def _converter_date(value):
+    def _converterDate(value):
         m = iso8601.match(value)
         year = int(m.group("year"))
         month = int(m.group("month") or "1")
@@ -127,9 +127,9 @@ class XmpInformation(PdfObject):
 
         return dt
 
-    _test_converter_date = staticmethod(_converter_date)
+    _test_converter_date = staticmethod(_converterDate)
 
-    def _getter_bag(namespace, name, converter):
+    def _getterBag(namespace, name, converter):
         def get(self):
             cached = self.cache.get(namespace, {}).get(name)
             retval = []
@@ -156,7 +156,7 @@ class XmpInformation(PdfObject):
 
         return get
 
-    def _getter_seq(namespace, name, converter):
+    def _getterSeq(namespace, name, converter):
         def get(self):
             cached = self.cache.get(namespace, {}).get(name)
             retval = []
@@ -186,7 +186,7 @@ class XmpInformation(PdfObject):
 
         return get
 
-    def _getter_langalt(namespace, name, converter):
+    def _getterLangalt(namespace, name, converter):
         def get(self):
             cached = self.cache.get(namespace, {}).get(name)
             retval = {}
@@ -213,7 +213,7 @@ class XmpInformation(PdfObject):
 
         return get
 
-    def _getter_single(namespace, name, converter):
+    def _getterSingle(namespace, name, converter):
         def get(self):
             cached = self.cache.get(namespace, {}).get(name)
 
@@ -240,7 +240,7 @@ class XmpInformation(PdfObject):
         return get
 
     dc_contributor = property(
-        _getter_bag(DC_NAMESPACE, "contributor", _converter_string)
+        _getterBag(DC_NAMESPACE, "contributor", _converterString)
     )
     """
     Contributors to the resource (other than the authors). An unsorted array of
@@ -248,28 +248,28 @@ class XmpInformation(PdfObject):
     """
 
     dc_coverage = property(
-        _getter_single(DC_NAMESPACE, "coverage", _converter_string)
+        _getterSingle(DC_NAMESPACE, "coverage", _converterString)
     )
     """
     Text describing the extent or scope of the resource.
     """
 
     dc_creator = property(
-        _getter_seq(DC_NAMESPACE, "creator", _converter_string)
+        _getterSeq(DC_NAMESPACE, "creator", _converterString)
     )
     """
     A sorted array of names of the authors of the resource, listed in order of
     precedence.
     """
 
-    dc_date = property(_getter_seq(DC_NAMESPACE, "date", _converter_date))
+    dc_date = property(_getterSeq(DC_NAMESPACE, "date", _converterDate))
     """
     A sorted array of dates (``datetime.datetime`` instances) of significance
     to the resource.  The dates and times are in UTC.
     """
 
     dc_description = property(
-        _getter_langalt(DC_NAMESPACE, "description", _converter_string)
+        _getterLangalt(DC_NAMESPACE, "description", _converterString)
     )
     """
     A language-keyed dictionary of textual descriptions of the content of the
@@ -277,35 +277,35 @@ class XmpInformation(PdfObject):
     """
 
     dc_format = property(
-        _getter_single(DC_NAMESPACE, "format", _converter_string)
+        _getterSingle(DC_NAMESPACE, "format", _converterString)
     )
     """
     The mime-type of the resource.
     """
 
     dc_identifier = property(
-        _getter_single(DC_NAMESPACE, "identifier", _converter_string)
+        _getterSingle(DC_NAMESPACE, "identifier", _converterString)
     )
     """
     Unique identifier of the resource.
     """
 
     dc_language = property(
-        _getter_bag(DC_NAMESPACE, "language", _converter_string)
+        _getterBag(DC_NAMESPACE, "language", _converterString)
     )
     """
     An unordered array specifying the languages used in the resource.
     """
 
     dc_publisher = property(
-        _getter_bag(DC_NAMESPACE, "publisher", _converter_string)
+        _getterBag(DC_NAMESPACE, "publisher", _converterString)
     )
     """
     An unordered array of publisher names.
     """
 
     dc_relation = property(
-        _getter_bag(DC_NAMESPACE, "relation", _converter_string)
+        _getterBag(DC_NAMESPACE, "relation", _converterString)
     )
     """
     An unordered array of text descriptions of relationships to other
@@ -313,7 +313,7 @@ class XmpInformation(PdfObject):
     """
 
     dc_rights = property(
-        _getter_langalt(DC_NAMESPACE, "rights", _converter_string)
+        _getterLangalt(DC_NAMESPACE, "rights", _converterString)
     )
     """
     A language-keyed dictionary of textual descriptions of the rights the user
@@ -321,14 +321,14 @@ class XmpInformation(PdfObject):
     """
 
     dc_source = property(
-        _getter_single(DC_NAMESPACE, "source", _converter_string)
+        _getterSingle(DC_NAMESPACE, "source", _converterString)
     )
     """
     Unique identifier of the work from which this resource was derived.
     """
 
     dc_subject = property(
-        _getter_bag(DC_NAMESPACE, "subject", _converter_string)
+        _getterBag(DC_NAMESPACE, "subject", _converterString)
     )
     """
     An unordered array of descriptive phrases or keywrods that specify the
@@ -336,40 +336,40 @@ class XmpInformation(PdfObject):
     """
 
     dc_title = property(
-        _getter_langalt(DC_NAMESPACE, "title", _converter_string)
+        _getterLangalt(DC_NAMESPACE, "title", _converterString)
     )
     """
     A language-keyed dictionary of the title of the resource.
     """
 
-    dc_type = property(_getter_bag(DC_NAMESPACE, "type", _converter_string))
+    dc_type = property(_getterBag(DC_NAMESPACE, "type", _converterString))
     """
     An unordered array of textual descriptions of the document type.
     """
 
     pdf_keywords = property(
-        _getter_single(PDF_NAMESPACE, "Keywords", _converter_string)
+        _getterSingle(PDF_NAMESPACE, "Keywords", _converterString)
     )
     """
     An unformatted text string representing document keywords.
     """
 
     pdf_pdfversion = property(
-        _getter_single(PDF_NAMESPACE, "PDFVersion", _converter_string)
+        _getterSingle(PDF_NAMESPACE, "PDFVersion", _converterString)
     )
     """
     The PDF file version, for example ``1.0``, ``1.3``.
     """
 
     pdf_producer = property(
-        _getter_single(PDF_NAMESPACE, "Producer", _converter_string)
+        _getterSingle(PDF_NAMESPACE, "Producer", _converterString)
     )
     """
     The name of the tool that created the PDF document.
     """
 
     xmp_createDate = property(
-        _getter_single(XMP_NAMESPACE, "CreateDate", _converter_date)
+        _getterSingle(XMP_NAMESPACE, "CreateDate", _converterDate)
     )
     """
     The date and time the resource was originally created.  The date and time
@@ -377,7 +377,7 @@ class XmpInformation(PdfObject):
     """
 
     xmp_modifyDate = property(
-        _getter_single(XMP_NAMESPACE, "ModifyDate", _converter_date)
+        _getterSingle(XMP_NAMESPACE, "ModifyDate", _converterDate)
     )
     """
     The date and time the resource was last modified.  The date and time are
@@ -385,7 +385,7 @@ class XmpInformation(PdfObject):
     """
 
     xmp_metadataDate = property(
-        _getter_single(XMP_NAMESPACE, "MetadataDate", _converter_date)
+        _getterSingle(XMP_NAMESPACE, "MetadataDate", _converterDate)
     )
     """
     The date and time that any metadata for this resource was last changed. The
@@ -393,21 +393,21 @@ class XmpInformation(PdfObject):
     """
 
     xmp_creatorTool = property(
-        _getter_single(XMP_NAMESPACE, "CreatorTool", _converter_string)
+        _getterSingle(XMP_NAMESPACE, "CreatorTool", _converterString)
     )
     """
     The name of the first known tool used to create the resource.
     """
 
     xmpmm_documentId = property(
-        _getter_single(XMPMM_NAMESPACE, "DocumentID", _converter_string)
+        _getterSingle(XMPMM_NAMESPACE, "DocumentID", _converterString)
     )
     """
     The common identifier for all versions and renditions of this resource.
     """
 
     xmpmm_instanceId = property(
-        _getter_single(XMPMM_NAMESPACE, "InstanceID", _converter_string)
+        _getterSingle(XMPMM_NAMESPACE, "InstanceID", _converterString)
     )
     """
     An identifier for a specific incarnation of a document, updated each time a

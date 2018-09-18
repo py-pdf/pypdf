@@ -14,7 +14,7 @@ for better ongoing support to start in August 2018.
 Homepage (available soon): http://claird.github.io/PyPDF4/.
 
 ## Examples
-Please see the `samplecode` folder.
+Please see the `samplecode/` folder.
 
 ## Documentation
 Documentation soon will be available, although probably not at
