@@ -93,7 +93,7 @@ class PdfReaderTestCases(unittest.TestCase):
         )
         inputFiles = (
             "jpeg.pdf", "GeoBase_NHNC1_Data_Model_UML_EN.pdf",
-            "Seige_of_Vicksburg_Sample_OCR.pdf"
+            "Seige_of_Vicksburg_Sample_OCR.pdf", "SF424_page2.pdf"
         )
 
         for file in inputFiles:
