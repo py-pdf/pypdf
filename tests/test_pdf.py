@@ -85,7 +85,7 @@ class PdfReaderTestCases(unittest.TestCase):
         Objects from the free entries list are included as well in the test.
 
         This case tests the part of ``PdfFileReader.objects()`` responsible for
-        generating the Cross-Reference Table entries.
+        generating the Cross-Reference Table entries too.
         """
         self.maxDiff = None
         LOCAL_DATA_ROOT = join(
@@ -98,18 +98,21 @@ class PdfReaderTestCases(unittest.TestCase):
 
         for file in inputFiles:
             filepath = join(TESTS_DATA_ROOT, file)
-            testdatapath = join(LOCAL_DATA_ROOT, file)
+            xtablepath = join(LOCAL_DATA_ROOT, file)
             r = PdfFileReader(filepath)
+            # (id, gen, byte offset)-valued list
             actualItems = sorted(
-                r.objects(True, True, PdfFileReader.OBJ_XTABLE)
+                (ref.idnum, ref.generation,\
+                 r._xref[ref.generation][ref.idnum][0])\
+                for ref in r.objects(PdfFileReader.OBJ_XTABLE, True)
             )
-            # expItems contains tuples of (id number, gen. number, byte offset,
-            # free status) values
+            # expItems contains tuples of (id number, gen. number, byte offset)
+            # values, like actualItems
             expItems = list()
 
             # With this block we artificially read the XRef Table entries that
             # we know belong to filepath, and store them into expItems
-            with open(testdatapath, "r") as instream:
+            with open(xtablepath, "r") as instream:
                 startid = None
                 expecteditems = None
                 itemssofar = None
@@ -133,20 +136,19 @@ class PdfReaderTestCases(unittest.TestCase):
                         expecteditems = int(tokens[1])
                         itemssofar = 0
                     elif len(tokens) == 3:  # New object info to add
+                        # We append an (id, gen, byte offset) tuple
                         expItems.append((
                             startid + itemssofar, int(tokens[1]),
-                            int(tokens[0]), tokens[2]
+                            int(tokens[0])
                         ))
                         itemssofar += 1
                     else:
                         raise ValueError(
                             "Something unexpected was written in %s"
-                            % testdatapath
+                            % xtablepath
                         )
 
-            expItems = sorted([
-                (id, gen) for (id, gen, offset, state) in expItems
-            ])
+            expItems = sorted(expItems)
             self.assertListEqual(expItems, actualItems)
 
     def testProperties(self):

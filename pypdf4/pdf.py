@@ -1742,10 +1742,10 @@ class PdfFileReader(object):
             pageObj.update(pages)
             self._flattenedPages.append(pageObj)
 
-    def _getObjectFromStream(self, indirectReference):
-        # Indirect reference to object in object stream
-        # Read the entire object stream into memory
-        stmnum, idx = self._xrefObjStm[indirectReference.idnum]
+    def _getObjectFromStream(self, ref):
+        # Indirect reference to object in object stream.
+        # Read the entire object stream into memory.
+        stmnum, idx = self._xrefObjStm[ref.idnum]
 
         if self.debug:
             print("Here1: %s %s" % (stmnum, idx))
@@ -1773,7 +1773,7 @@ class PdfFileReader(object):
             readNonWhitespace(streamData)
             streamData.seek(-1, 1)
 
-            if objnum != indirectReference.idnum:
+            if objnum != ref.idnum:
                 # We're only interested in one object
                 continue
             if self.strict and idx != i:
@@ -1799,8 +1799,7 @@ class PdfFileReader(object):
                 e = sys.exc_info()[1]
                 warnings.warn(
                     "Invalid stream (index %d) within object %d %d: %s" %
-                    (i, indirectReference.idnum, indirectReference.generation,
-                     e), utils.PdfReadWarning
+                    (i, ref.idnum, ref.generation, e), utils.PdfReadWarning
                 )
 
                 if self.strict:
@@ -1817,28 +1816,23 @@ class PdfFileReader(object):
 
         return NullObject()
 
-    def objects(self, empty=True, freeObjects=False, select=OBJ_BOTH):
+    def objects(self, select=OBJ_BOTH, freeObjects=False):
         """
-        Returns an iterable of indexed objects (either by the Cross-Reference
-        tables or Cross-Reference Streams) stored in this PDF file.
+        Returns an iterable of :class:`IndirectObject<generic.IndirectObject>`
+        instances (either by the Cross-Reference Tables or Cross-Reference
+        Streams) stored in this PDF file.
 
-        :param empty: whether the items should **not** contain the associated
-            :class:`PdfObject<generic.PdfObject>`. Defaults to ``True``.
-        :param freeObjects: whether to include objects from the free entries
-            list. Defaults to ``False`` (only objects that can be fetched are
-            included).
-        :param select: whether to select items from the XRef Table only, the
+        :param select: whether to include items from the XRef Table only, the
             Cross-Reference Stream only or both. Accepted values are:\n
             * PdfFileReader.OBJ_XREF   Only items from the XRef Table
             * PdfFileReader.OBJ_XSTREAM    Only items from the
                 Cross-Reference Stream
-            * PdfFileReader.OBJ_XBOTH  The default, selects both of the
-                above
-        :return: an iterable of tuples, whose values are:\n
-            0.   ID number of the object
-            1.   Generation number of the object
-            2.   (If ``empty == False``.) Associated PDF object (an instance\
-                 of :class:`PdfObject<generic.PdfObject>`).
+            * PdfFileReader.OBJ_XBOTH  The default, selects both of the above
+        :param freeObjects: whether to include objects from the free entries
+            list. Defaults to ``False`` (only objects that can be fetched from
+            the File Body are included).
+        :return: an unsorted iterable of
+            :class:`IndirectObject<generic.IndirectObject>` values.
         """
         if select & self.OBJ_XTABLE:
             # Reverse-sorted list of generation numbers from the XRef Table
@@ -1852,75 +1846,65 @@ class PdfFileReader(object):
                     if not freeObjects and self._xref[gen][id][1] == True:
                         continue
 
-                    if empty:
-                        yield (id, gen)
-                    else:
-                        r = IndirectObject(id, gen, self)
-
-                        yield (id, gen, self.getObject(r))
+                    yield IndirectObject(id, gen, self)
         if select & self.OBJ_XSTREAM:
             # Iterate through the Cross-Reference Stream
             for id in self._xrefObjStm.keys():
-                if empty:
-                    # We are in object streams, yield a generation number of 0
-                    yield (id, 0)
-                else:
-                    r = IndirectObject(id, gen, self)
+                # We are in object streams, yield a generation number of 0
+                yield IndirectObject(id, 0, self)
 
-                    yield (id, 0, self.getObject(r))
-
-    def getObject(self, indirectReference):
+    def getObject(self, ref):
         """
         Retrieves an indirect reference object, caching it appropriately, from
         the File Body of the associated PDF file.
 
-        :param indirectReference: an
+        :param IndirectObject ref: an
             :class:`IndirectObject<generic.IndirectObject>` instance
             identifying the indirect object properties (id. and gen. number).
         :return: the :class:`PdfObject<generic.PdfObject` queried for, if
             found.
-        :raises PdfReadError: if ``indirectReference`` did not relate to any
-            object.
+        :raises PdfReadError: if ``ref`` did not relate to any object.
         """
-        r = indirectReference
         if self.debug:
-            print("looking at:", r.idnum, r.generation)
+            print("looking at:", ref.idnum, ref.generation)
 
-        if (r.generation, r.idnum) in self._cachedObjects:
-            return self._cachedObjects[(r.generation, r.idnum)]
-        if r.generation == 0 and r.idnum in self._xrefObjStm:
-            retval = self._getObjectFromStream(r)
-        elif r.generation in self._xref and r.idnum in self._xref[r.generation]:
-            start = self._xref[r.generation][r.idnum][0]
+        if (ref.generation, ref.idnum) in self._cachedObjects:
+            return self._cachedObjects[(ref.generation, ref.idnum)]
+        if ref.generation == 0 and ref.idnum in self._xrefObjStm:
+            retval = self._getObjectFromStream(ref)
+        elif ref.generation in self._xref and\
+            ref.idnum in self._xref[ref.generation]:
+            start = self._xref[ref.generation][ref.idnum][0]
 
             if self.debug:
                 print(
-                    "  Uncompressed Object", r.idnum, r.generation, ":", start
+                    "  Uncompressed Object", ref.idnum, ref.generation, ":",
+                    start
                 )
 
             self.stream.seek(start, 0)
             idnum, generation = self._readObjectHeader(self.stream)
 
-            if idnum != r.idnum and self._xrefIndex:
+            if idnum != ref.idnum and self._xrefIndex:
                 # Xref table probably had bad indexes due to not being
                 # zero-indexed
                 if self.strict:
                     raise utils.PdfReadError(
                         "Expected object ID (%d %d) does not match actual"
                         "(%d %d); xref table not zero-indexed."
-                        % (r.idnum, r.generation, idnum, generation)
+                        % (ref.idnum, ref.generation, idnum, generation)
                     )
                 else:
                     # Xref table is corrected in non-strict mode
                     pass
-            elif idnum != r.idnum and self.strict:
+            elif idnum != ref.idnum and self.strict:
                 # Some other problem
                 raise utils.PdfReadError(
                     "Expected object ID (%d %d) does not match actual (%d %d)."
-                    % (r.idnum, r.generation, idnum, generation)
+                    % (ref.idnum, ref.generation, idnum, generation)
                 )
             if self.strict:
-                assert generation == r.generation
+                assert generation == ref.generation
             retval = readObject(self.stream, self)
 
             # Override encryption is used for the /Encrypt dictionary
@@ -1930,8 +1914,8 @@ class PdfFileReader(object):
                     raise utils.PdfReadError("file has not been decrypted")
 
                 # otherwise, decrypt here...
-                pack1 = struct.pack("<i", r.idnum)[:3]
-                pack2 = struct.pack("<i", r.generation)[:2]
+                pack1 = struct.pack("<i", ref.idnum)[:3]
+                pack2 = struct.pack("<i", ref.generation)[:2]
                 key = self._decryption_key + pack1 + pack2
                 assert len(key) == (len(self._decryption_key) + 5)
                 md5_hash = md5(key).digest()
@@ -1940,11 +1924,11 @@ class PdfFileReader(object):
         else:
             warnings.warn(
                 "Object %d %d not defined." %
-                (r.idnum, r.generation), utils.PdfReadWarning
+                (ref.idnum, ref.generation), utils.PdfReadWarning
             )
             raise utils.PdfReadError("Could not find object")
 
-        self._cacheIndirectObject(r.generation, r.idnum, retval)
+        self._cacheIndirectObject(ref.generation, ref.idnum, retval)
 
         return retval
 
