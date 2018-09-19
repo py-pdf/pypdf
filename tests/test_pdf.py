@@ -55,7 +55,6 @@ class PdfReaderTestCases(unittest.TestCase):
         compare to expected textual output. Expected outcome: file loads, image
         matches expected.
         """
-
         with open(join(TESTS_DATA_ROOT, 'jpeg.pdf'), 'rb') as inputfile:
             # Load PDF file from file
             ipdf = PdfFileReader(inputfile)
@@ -100,15 +99,17 @@ class PdfReaderTestCases(unittest.TestCase):
             filepath = join(TESTS_DATA_ROOT, file)
             xtablepath = join(LOCAL_DATA_ROOT, file)
             r = PdfFileReader(filepath)
-            # (id, gen, byte offset)-valued list
-            actualItems = sorted(
-                (ref.idnum, ref.generation,\
-                 r._xref[ref.generation][ref.idnum][0])\
-                for ref in r.objects(PdfFileReader.OBJ_XTABLE, True)
-            )
-            # expItems contains tuples of (id number, gen. number, byte offset)
-            # values, like actualItems
+            # The two below are (id, gen, byte offset)-valued lists
+            actualItems = list()
             expItems = list()
+
+            for ref in r.objects(PdfFileReader.OBJ_XTABLE, True):
+                actualItems.append(
+                    (ref.idnum, ref.generation,\
+                     r._xref[ref.generation][ref.idnum][0])
+                )
+
+            actualItems = sorted(actualItems)
 
             # With this block we artificially read the XRef Table entries that
             # we know belong to filepath, and store them into expItems
@@ -118,7 +119,7 @@ class PdfReaderTestCases(unittest.TestCase):
                 itemssofar = None
 
                 for line in instream:
-                    if not line or line.isspace() or line.startswith("#"):
+                    if not line or line.isspace() or line.startswith("%"):
                         continue
 
                     tokens = line.strip().split()
