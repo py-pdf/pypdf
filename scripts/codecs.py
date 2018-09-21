@@ -18,7 +18,7 @@ path.append(PROJECT_ROOT)
 
 from pypdf4.filters import *
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 CODECS = {
     "flate": FlateCodec, "asciihex": ASCIIHexCodec, "lzw": LZWCodec,
     "ascii85": ASCII85Codec, "dct": DCTCodec, "jpx": JPXCodec,
@@ -65,15 +65,15 @@ def main():
 
     args = parser.parse_args()
 
-    # TO-DO If the output is in bytes form, strip the b'' characters from the
-    # output
+    # TO-DO Find a proper way of writing bytes directly to the console (perhaps
+    # throught bytes streams?). Decoded byte strings are not enough reliable.
     if args.action in CODEC_ACTIONS:
         codec = CODECS[args.codec]
 
         if args.isfile:
             try:
-                with open(args.data, "rb") as infile:
-                    data = infile.read()
+                with open(args.data, "rb") as instream:
+                    data = instream.read()
             except IOError as e:
                 print(e, file=stderr)
                 return 1
@@ -81,9 +81,14 @@ def main():
             data = args.data.encode("LATIN1")
 
         if args.action == ENCODE:
-            print(codec.encode(data))
+            data = codec.encode(data)
         elif args.action == DECODE:
-            print(codec.decode(data))
+            data = codec.decode(data)
+
+        if isinstance(data, bytes):
+            data = data.decode("LATIN1")
+
+        print(data)
     elif args.action == LIST:
         print("Available codecs:", *CODECS.keys(), sep="\n\t")
     else:
