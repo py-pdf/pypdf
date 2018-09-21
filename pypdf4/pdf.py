@@ -106,6 +106,20 @@ class PdfFileWriter(object):
             self._header.decode(), self.debug
         )
 
+    def __del__(self):
+        self.close()
+        del self._objects, self._pages, self._info, self._root,\
+        self._root_object
+
+    def close(self):
+        """
+        Deallocates file-system resources associated with this
+        ``PdfFileWriter`` instance.
+        """
+        # TO-DO Make stream from PdfFileWriter.write() an instance attribute so
+        # that it is freed automatically by this class
+        pass
+
     def _addObject(self, obj):
         self._objects.append(obj)
         return IndirectObject(len(self._objects), 0, self)
@@ -461,7 +475,7 @@ class PdfFileWriter(object):
         Writes the collection of pages added to this object out as a PDF file.
 
         :param stream: An object to write the file to.  The object must support
-            the write method and the tell method, similar to a file object.
+            the ``write()`` and the ``tell()`` methods.
         """
         if hasattr(stream, 'mode') and 'b' not in stream.mode:
             warnings.warn(
@@ -1280,6 +1294,20 @@ class PdfFileReader(object):
             self.__class__.__module__, self.__class__.__name__, self._filepath,
             self.stream, self.strict, self.debug
         )
+
+    def __del__(self):
+        self.close()
+        del self._xref, self._xrefObjStm, self._cachedObjects, self._trailer,
+        self._pageId2Num, self._flattenedPages, self.stream
+
+    def close(self):
+        """
+        Deallocates file-system resources associated with this
+        ``PdfFileReader`` instance.
+        """
+        if self.stream and hasattr(self.stream, "close") \
+                and callable(self.stream.close):
+            self.stream.close()
 
     def getDocumentInfo(self):
         """

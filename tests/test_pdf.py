@@ -19,6 +19,36 @@ from pypdf4.pdf import PdfFileReader, PdfFileWriter
 
 
 class PdfReaderTestCases(unittest.TestCase):
+    def testDel(self):
+        """
+        Tests the ``__del__()`` method of ``PdfFileReader`` and
+        ``PdfFileWriter`` ensuring that no exceptions are raised.
+        """
+        r = PdfFileReader(join(TESTS_DATA_ROOT, "crazyones.pdf"))
+        w = PdfFileWriter()
+
+        try:
+            # This may generate some collateral warnings in stderr when del r
+            # is performed by the GC
+            r.__del__()
+            self.assertTrue(True)
+        except Exception as e:
+            self.assertTrue(
+                False,
+                "Exception '%s' was raised in %s.__del__()" %
+                (e, PdfFileReader.__name__)
+            )
+
+        try:
+            w.__del__()
+            self.assertTrue(True)
+        except Exception as e:
+            self.assertTrue(
+                False,
+                "Exception '%s' was raised in %s.__del__()" %
+                (e, PdfFileWriter.__name__)
+            )
+
     def testFileLoad(self):
         """
         Test loading and parsing of a file. Extract text of the file and
