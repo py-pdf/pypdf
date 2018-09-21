@@ -37,10 +37,10 @@ import warnings
 
 from . import filters
 from . import utils
-from pypdf4.utils import PdfStreamError
-from pypdf4.utils import pypdfBytes as b_, pypdfUnicode as u_, pypdfChr,\
+from pypdf.utils import PdfStreamError
+from pypdf.utils import pypdfBytes as b_, pypdfUnicode as u_, pypdfChr,\
         pypdfOrd
-from pypdf4.utils import readNonWhitespace, RC4Encrypt, skipOverComment
+from pypdf.utils import readNonWhitespace, RC4Encrypt, skipOverComment
 
 
 __author__ = "Mathieu Fenniak"
@@ -963,14 +963,14 @@ class EncodedStreamObject(StreamObject):
 
 class RectangleObject(ArrayObject):
     """
-    This class is used to represent *page boxes* in pypdf4. These boxes
+    This class is used to represent *page boxes* in PyPDF. These boxes
     include:
 
-        * :attr:`artBox<pypdf4.pdf.PageObject.artBox>`
-        * :attr:`bleedBox<pypdf4.pdf.PageObject.bleedBox>`
-        * :attr:`cropBox<pypdf4.pdf.PageObject.cropBox>`
-        * :attr:`mediaBox<pypdf4.pdf.PageObject.mediaBox>`
-        * :attr:`trimBox<pypdf4.pdf.PageObject.trimBox>`
+        * :attr:`artBox<pypdf.pdf.PageObject.artBox>`
+        * :attr:`bleedBox<pypdf.pdf.PageObject.bleedBox>`
+        * :attr:`cropBox<pypdf.pdf.PageObject.cropBox>`
+        * :attr:`mediaBox<pypdf.pdf.PageObject.mediaBox>`
+        * :attr:`trimBox<pypdf.pdf.PageObject.trimBox>`
     """
     def __init__(self, arr):
         # Must have four points
@@ -1068,7 +1068,7 @@ class RectangleObject(ArrayObject):
 class Field(TreeObject):
     """
     A class representing a field dictionary. This class is accessed through
-    :meth:`getFields()<pypdf4.PdfFileReader.getFields>`
+    :meth:`getFields()<pypdf.PdfFileReader.getFields>`
     """
     def __init__(self, data):
         DictionaryObject.__init__(self)
@@ -1108,8 +1108,8 @@ class Field(TreeObject):
     mappingName = property(lambda self: self.get("/TM"))
     """
     Read-only property accessing the mapping name of this field. This
-    name is used by pypdf4 as a key in the dictionary returned by
-    :meth:`getFields<pypdf4.PdfFileReader.getFields>`.
+    name is used by PyPDF as a key in the dictionary returned by
+    :meth:`getFields<pypdf.PdfFileReader.getFields>`.
     """
 
     flags = property(lambda self: self.get("/Ff"))

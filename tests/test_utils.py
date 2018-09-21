@@ -1,7 +1,7 @@
 import string
 import unittest
 
-from pypdf4.utils import hexEncode
+from pypdf.utils import hexEncode
 from tests.utils import intToBitstring, bitstringToInt
 
 

@@ -12,11 +12,11 @@ from math import floor, log
 
 from os.path import abspath, dirname, join
 
-from pypdf4.filters import FlateCodec, ASCIIHexCodec, ASCII85Codec,\
+from pypdf.filters import FlateCodec, ASCIIHexCodec, ASCII85Codec,\
     LZWCodec, DCTCodec, CCITTFaxCodec, decodeStreamData
-from pypdf4.generic import EncodedStreamObject, IndirectObject
-from pypdf4.pdf import PdfFileReader
-from pypdf4.utils import PdfReadError, PdfStreamError, hexEncode
+from pypdf.generic import EncodedStreamObject, IndirectObject
+from pypdf.pdf import PdfFileReader
+from pypdf.utils import PdfReadError, PdfStreamError, hexEncode
 from tests.utils import intToBitstring
 
 TESTS_ROOT = abspath(dirname(__file__))

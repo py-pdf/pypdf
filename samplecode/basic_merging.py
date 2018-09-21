@@ -16,7 +16,7 @@ path.append(
     abspath(join(SAMPLE_CODE_ROOT, pardir))
 )
 
-from pypdf4 import PdfFileReader, PdfFileMerger
+from pypdf import PdfFileReader, PdfFileMerger
 
 FLAG_HELP = {"-h", "--help"}
 USAGE = """\

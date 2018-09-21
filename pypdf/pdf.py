@@ -45,8 +45,8 @@ import uuid
 from hashlib import md5
 from sys import version_info
 
-from pypdf4.generic import *
-from pypdf4.utils import readNonWhitespace, readUntilWhitespace, \
+from pypdf.generic import *
+from pypdf.utils import readNonWhitespace, readUntilWhitespace, \
     ConvertFunctionsToVirtualList, isString, pypdfUnicode, pypdfOrd, pypdfStr, \
     formatWarning, pypdfBytes as b_, PdfReadError, PdfStreamError
 
@@ -87,7 +87,7 @@ class PdfFileWriter(object):
         info = DictionaryObject()
         info.update({
             NameObject("/Producer"): createStringObject(
-                codecs.BOM_UTF16_BE + pypdfUnicode("pypdf4").encode('utf-16be')
+                codecs.BOM_UTF16_BE + pypdfUnicode("pypdf").encode('utf-16be')
             )
         })
         self._info = self._addObject(info)
@@ -146,7 +146,7 @@ class PdfFileWriter(object):
         :class:`PdfFileReader<PdfFileReader>` instance.
 
         :param PageObject page: The page to add to the document. Should be
-            an instance of :class:`PageObject<pypdf4.pdf.PageObject>`
+            an instance of :class:`PageObject<pypdf.pdf.PageObject>`
         """
         self._addPage(page, list.append)
 
@@ -193,7 +193,7 @@ class PdfFileWriter(object):
         :param float height: The height of the new page expressed in default
             user space units.
         :return: the newly appended page
-        :rtype: :class:`PageObject<pypdf4.pdf.PageObject>`
+        :rtype: :class:`PageObject<pypdf.pdf.PageObject>`
         :raises PageSizeNotDefinedError: if width and height are not defined
             and previous page does not exist.
         """
@@ -213,7 +213,7 @@ class PdfFileWriter(object):
             user space units.
         :param int index: Position to add the page.
         :return: the newly appended page
-        :rtype: :class:`PageObject<pypdf4.pdf.PageObject>`
+        :rtype: :class:`PageObject<pypdf.pdf.PageObject>`
         :raises PageSizeNotDefinedError: if width and height are not defined
             and previous page does not exist.
         """
@@ -985,7 +985,7 @@ class PdfFileWriter(object):
 
         :param int pagenum: index of the page on which to place the URI action.
         :param int uri: string -- uri of resource to link to.
-        :param rect: :class:`RectangleObject<pypdf4.generic.RectangleObject>`
+        :param rect: :class:`RectangleObject<pypdf.generic.RectangleObject>`
             or array of four integers specifying the clickable rectangular area
             ``[xLL, yLL, xUR, yUR]``, or string in the form
             ``"[ xLL yLL xUR yUR ]"``.
@@ -1040,7 +1040,7 @@ class PdfFileWriter(object):
 
         :param int pagenum: index of the page on which to place the link.
         :param int pagedest: index of the page to which the link should go.
-        :param rect: :class:`RectangleObject<pypdf4.generic.RectangleObject>`
+        :param rect: :class:`RectangleObject<pypdf.generic.RectangleObject>`
             or array of four integers specifying the clickable rectangular area
             ``[xLL, yLL, xUR, yUR]``, or string in the form
             ``"[ xLL yLL xUR yUR ]"``.
@@ -1416,7 +1416,7 @@ class PdfFileReader(object):
         :param fileobj: A file object (usually a text file) to write
             a report to on all interactive form fields found.
         :return: A dictionary where each key is a field name, and each
-            value is a :class:`Field<pypdf4.generic.Field>` object. By
+            value is a :class:`Field<pypdf.generic.Field>` object. By
             default, the mapping name is used for keys.
         :rtype: ``dict``, or ``None`` if form data could not be located.
         """
@@ -1521,7 +1521,7 @@ class PdfFileReader(object):
         Retrieves the named destinations present in the document.
 
         :return: a dictionary which maps names to
-            :class:`Destinations<pypdf4.generic.Destination>`.
+            :class:`Destinations<pypdf.generic.Destination>`.
         :rtype: dict
         """
         if retval is None:
@@ -1571,7 +1571,7 @@ class PdfFileReader(object):
         Retrieves the document outline present in the document.
 
         :return: a nested list of
-            :class:`Destinations<pypdf4.generic.Destination>`.
+            :class:`Destinations<pypdf.generic.Destination>`.
         """
         if outlines is None:
             outlines = []
@@ -1645,7 +1645,7 @@ class PdfFileReader(object):
         Retrieve page number of a given PageObject
 
         :param PageObject page: The page to get page number. Should be
-            an instance of :class:`PageObject<pypdf4.pdf.PageObject>`
+            an instance of :class:`PageObject<pypdf.pdf.PageObject>`
         :return: the page number or -1 if page not found
         :rtype: int
         """
@@ -1659,7 +1659,7 @@ class PdfFileReader(object):
 
         :param Destination destination: The destination to get page number.
              Should be an instance of
-             :class:`Destination<pypdf4.pdf.Destination>`
+             :class:`Destination<pypdf.pdf.Destination>`
         :return: the page number or ``-1`` if the page was not found.
         :rtype: int
         """
@@ -2559,8 +2559,8 @@ class PageObject(DictionaryObject):
     """
     This class represents a single page within a PDF file.  Typically this
     object will be created by accessing the
-    :meth:`getPage()<pypdf4.PdfFileReader.getPage>` method of the
-    :class:`PdfFileReader<pypdf4.PdfFileReader>` class, but it is
+    :meth:`getPage()<pypdf.PdfFileReader.getPage>` method of the
+    :class:`PdfFileReader<pypdf.PdfFileReader>` class, but it is
     also possible to create an empty page with the
     :meth:`createBlankPage()<PageObject.createBlankPage>` static method.
 
@@ -3145,14 +3145,14 @@ class PageObject(DictionaryObject):
 
     mediaBox = createRectangleAccessor("/MediaBox", ())
     """
-    A :class:`RectangleObject<pypdf4.generic.RectangleObject>`, expressed in
+    A :class:`RectangleObject<pypdf.generic.RectangleObject>`, expressed in
     default user space units, defining the boundaries of the physical medium on
     which the page is intended to be displayed or printed.
     """
 
     cropBox = createRectangleAccessor("/CropBox", ("/MediaBox",))
     """
-    A :class:`RectangleObject<pypdf4.generic.RectangleObject>`, expressed in
+    A :class:`RectangleObject<pypdf.generic.RectangleObject>`, expressed in
     default user space units, defining the visible region of default user
     space.  When the page is displayed or printed, its contents are to be
     clipped (cropped) to this rectangle and then imposed on the output medium
@@ -3162,21 +3162,21 @@ class PageObject(DictionaryObject):
 
     bleedBox = createRectangleAccessor("/BleedBox", ("/CropBox", "/MediaBox"))
     """
-    A :class:`RectangleObject<pypdf4.generic.RectangleObject>`, expressed in
+    A :class:`RectangleObject<pypdf.generic.RectangleObject>`, expressed in
     default user space units, defining the region to which the contents of the
     page should be clipped when output in a production enviroment.
     """
 
     trimBox = createRectangleAccessor("/TrimBox", ("/CropBox", "/MediaBox"))
     """
-    A :class:`RectangleObject<pypdf4.generic.RectangleObject>`, expressed in
+    A :class:`RectangleObject<pypdf.generic.RectangleObject>`, expressed in
     default user space units, defining the intended dimensions of the finished
     page after trimming.
     """
 
     artBox = createRectangleAccessor("/ArtBox", ("/CropBox", "/MediaBox"))
     """
-    A :class:`RectangleObject<pypdf4.generic.RectangleObject>`, expressed in
+    A :class:`RectangleObject<pypdf.generic.RectangleObject>`, expressed in
     default user space units, defining the extent of the page's meaningful
     content as intended by the page's creator.
     """
@@ -3326,13 +3326,13 @@ class DocumentInformation(DictionaryObject):
     """
     A class representing the basic document metadata provided in a PDF File.
     This class is accessible through
-    :meth:`getDocumentInfo()<pypdf4.PdfFileReader.getDocumentInfo()>`
+    :meth:`getDocumentInfo()<pypdf.PdfFileReader.getDocumentInfo()>`
 
     All text properties of the document metadata have
     *two* properties, eg. author and author_raw. The non-raw property will
     always return a ``TextStringObject``, making it ideal for a case where
     the metadata is being displayed. The raw property can sometimes return
-    a ``ByteStringObject``, if pypdf4 was unable to decode the string's
+    a ``ByteStringObject``, if PyPDF was unable to decode the string's
     text encoding; this requires additional safety in the caller and
     therefore is not as commonly accessed.
     """

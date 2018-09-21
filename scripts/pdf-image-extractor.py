@@ -17,7 +17,7 @@ PROJECT_ROOT = abspath(
 )
 sys.path.append(PROJECT_ROOT)
 
-import pypdf4
+import pypdf
 
 
 if len(sys.argv) != 2:
@@ -27,7 +27,7 @@ if len(sys.argv) != 2:
 pdf = sys.argv[1]
 
 if __name__ == '__main__':
-    input1 = pypdf4.PdfFileReader(open(pdf, "rb"))
+    input1 = pypdf.PdfFileReader(open(pdf, "rb"))
     page0 = input1.getPage(30)
 
     if '/XObject' in page0['/Resources']:

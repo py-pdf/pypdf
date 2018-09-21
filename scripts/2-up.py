@@ -10,7 +10,7 @@ PROJECT_ROOT = abspath(
 )
 sys.path.append(PROJECT_ROOT)
 
-from pypdf4 import PdfFileWriter, PdfFileReader
+from pypdf import PdfFileWriter, PdfFileReader
 
 
 # TO-DO Decide which one of the two halves below to keep

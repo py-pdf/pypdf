@@ -54,7 +54,7 @@ iso8601 = re.compile("""
 class XmpInformation(PdfObject):
     """
     An object that represents Adobe XMP metadata. Usually accessed by
-    :meth:`getXmpMetadata()<pypdf4.PdfFileReader.getXmpMetadata>`
+    :meth:`getXmpMetadata()<pypdf.PdfFileReader.getXmpMetadata>`
     """
     def __init__(self, stream):
         self.stream = stream

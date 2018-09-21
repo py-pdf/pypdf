@@ -1,5 +1,5 @@
 """
-Tests PDF primitives from pypdf4.pdf.
+Tests PDF primitives from pypdf.pdf.
 """
 import binascii
 import sys
@@ -15,7 +15,7 @@ TESTS_DATA_ROOT = join(PROJECT_ROOT, "tests", "fixture_data")
 
 sys.path.append(PROJECT_ROOT)
 
-from pypdf4.pdf import PdfFileReader, PdfFileWriter
+from pypdf.pdf import PdfFileReader, PdfFileWriter
 
 
 class PdfReaderTestCases(unittest.TestCase):

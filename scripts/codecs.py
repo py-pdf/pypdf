@@ -16,7 +16,7 @@ PROJECT_ROOT = abspath(
 )
 path.append(PROJECT_ROOT)
 
-from pypdf4.filters import *
+from pypdf.filters import *
 
 __version__ = "0.3.0"
 CODECS = {
