@@ -273,20 +273,21 @@ class LZWCodecTestCase(unittest.TestCase):
             string.ascii_letters, 2000 * string.ascii_letters
         ]
 
+        if sys.version_info > (3, 0):
+            for index, e in enumerate(inputs):
+                inputs[index] = e.encode("LATIN1")
+
         for f in ("Hamlet.txt", "TheHappyPrince.txt", ):
             with open(join(TEST_DATA_ROOT, f), "rb") as infile:
                 # TO-DO If we approach the number of read bytes to 10K the
                 # codec stops working correctly. This is a bug to fix!
                 inputs.append(infile.read())
 
-        for t in inputs:
-            e = LZWCodec.Encoder(t)
+        for b in inputs:
+            e = LZWCodec.Encoder(b)
             d = LZWCodec.Decoder(e.encode())
 
-            if isinstance(t, bytes) and sys.version_info > (3, 0):
-                self.assertEqual(t, d.decode().encode("LATIN1"))
-            else:
-                self.assertEqual(t, d.decode())
+            self.assertEqual(b, d.decode())
 
 
 class DecodeStreamDataTestCase(unittest.TestCase):

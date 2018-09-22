@@ -34,14 +34,10 @@ Implementation of stream filters for PDF.
 import math
 import struct
 import sys
+from io import BytesIO
 from sys import version_info
 
 from .utils import PdfReadError, pypdfOrd, paethPredictor, PdfStreamError
-
-if version_info < (3, 0):
-    from cStringIO import StringIO
-else:
-    from io import StringIO
 
 try:
     import zlib
@@ -135,9 +131,9 @@ class FlateCodec(object):
     def decode(data, decodeParms=None):
         """
         :param data: flate-encoded data.
-        :param decodeParms: a dictionary of values, understanding the
-            "/Predictor":<int> key only
+        :param decodeParms: a dictionary of parameter values.
         :return: the flate-decoded data.
+        :rtype: bytes
         """
         data = decompress(data)
         predictor = 1
@@ -156,7 +152,7 @@ class FlateCodec(object):
 
             # PNG prediction:
             if 10 <= predictor <= 15:
-                output = StringIO()
+                output = BytesIO()
                 # PNG prediction can vary from row to row
                 row_length = columns + 1
                 assert len(data) % row_length == 0
@@ -165,7 +161,7 @@ class FlateCodec(object):
                 for row in range(len(data) // row_length):
                     rowdata = [
                         pypdfOrd(x) for x in
-                        data[(row*row_length):((row+1)*row_length)]
+                        data[(row * row_length):((row + 1) * row_length)]
                     ]
                     filterByte = rowdata[0]
 
@@ -173,14 +169,14 @@ class FlateCodec(object):
                         pass
                     elif filterByte == 1:
                         for i in range(2, row_length):
-                            rowdata[i] = (rowdata[i] + rowdata[i-1]) % 256
+                            rowdata[i] = (rowdata[i] + rowdata[i - 1]) % 256
                     elif filterByte == 2:
                         for i in range(1, row_length):
                             rowdata[i] = (rowdata[i] + prev_rowdata[i]) % 256
                     elif filterByte == 3:
                         for i in range(1, row_length):
                             left = rowdata[i - 1] if i > 1 else 0
-                            floor = math.floor(left + prev_rowdata[i])/2
+                            floor = math.floor(left + prev_rowdata[i]) / 2
                             rowdata[i] = (rowdata[i] + int(floor)) % 256
                     elif filterByte == 4:
                         for i in range(1, row_length):
@@ -194,8 +190,15 @@ class FlateCodec(object):
                         raise PdfReadError(
                             "Unsupported PNG filter %r" % filterByte
                         )
+
                     prev_rowdata = rowdata
-                    output.write(''.join([chr(x) for x in rowdata[1:]]))
+
+                    for d in rowdata:
+                        if sys.version_info < (3, 0):
+                            output.write(chr(d))
+                        else:
+                            output.write(bytes([d]))
+
 
                 data = output.getvalue()
             else:
@@ -399,15 +402,15 @@ class LZWCodec(object):
             self.data = data
             self.bytepos = 0
             self.bitpos = 0
-            self.dict = [u""] * self.MAX_ENTRIES
+            self.dict = [b""] * self.MAX_ENTRIES
             self.dictindex = None
             self.bitspercode = None
 
             for i in range(256):
                 if sys.version_info < (3, 0):
-                    self.dict[i] = chr(i).decode("LATIN1")
-                else:
                     self.dict[i] = chr(i)
+                else:
+                    self.dict[i] = bytes([i])
 
             self._resetDict()
 
@@ -415,9 +418,12 @@ class LZWCodec(object):
             """
             TIFF 6.0 specification explains in sufficient details the steps to
             implement the LZW encode() and decode() algorithms.
+
+            :rtype: bytes
             """
+            # TO-DO Make return value type bytes, as instructed by ISO 32000
             cW = self.CLEARDICT
-            output = u""
+            output = b""
 
             while True:
                 pW = cW
@@ -436,11 +442,19 @@ class LZWCodec(object):
                 else:
                     if cW < self.dictindex:
                         output += self.dict[cW]
-                        p = self.dict[pW] + self.dict[cW][0]
+
+                        if sys.version_info > (3, 0):
+                            p = self.dict[pW] + bytes([self.dict[cW][0]])
+                        else:
+                            p = self.dict[pW] + self.dict[cW][0]
 
                         self._addCodeToTable(p)
                     else:
-                        p = self.dict[pW] + self.dict[pW][0]
+                        if sys.version_info > (3, 0):
+                            p = self.dict[pW] + bytes([self.dict[pW][0]])
+                        else:
+                            p = self.dict[pW] + self.dict[pW][0]
+
                         output += p
                         self._addCodeToTable(p)
 
@@ -486,10 +500,21 @@ class LZWCodec(object):
 
     @staticmethod
     def encode(data, decodeParms=None):
+        """
+        :param data: ``str`` or ``bytes`` input to encode.
+        :param decodeParms:
+        :return: encoded LZW text.
+        """
         return LZWCodec.Encoder(data).encode()
 
     @staticmethod
     def decode(data, decodeParms=None):
+        """
+        :param data: ``bytes`` or ``str`` text to decode.
+        :param decodeParms: a dictionary of parameter values.
+        :return: decoded data.
+        :rtype: bytes
+        """
         return LZWCodec.Decoder(data).decode()
 
 
