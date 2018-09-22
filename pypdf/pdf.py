@@ -101,15 +101,19 @@ class PdfFileWriter(object):
         self._root_object = root
 
     def __repr__(self):
-        return "<%s.%s _header=%s, debug=%s>" % (
+        return "<%s.%s _header=%s, isClosed=%s, debug=%s>" % (
             self.__class__.__module__, self.__class__.__name__,
-            self._header.decode(), self.debug
+            self._header.decode(), self.isClosed, self.debug
         )
 
     def __del__(self):
         self.close()
-        del self._objects, self._pages, self._info, self._root,\
-        self._root_object
+
+        for a in (
+                "_objects", "_pages", "_info", "_root", "_root_object"
+        ):
+            if hasattr(self, a):
+                delattr(self, a)
 
     def close(self):
         """
@@ -119,6 +123,15 @@ class PdfFileWriter(object):
         # TO-DO Make stream from PdfFileWriter.write() an instance attribute so
         # that it is freed automatically by this class
         pass
+
+    @property
+    def isClosed(self):
+        """
+        :return: ``True`` if the IO streams associated with this file have
+            been closed, ``False`` otherwise.
+        """
+        # TO-DO Implement along with close()
+        return False
 
     def _addObject(self, obj):
         self._objects.append(obj)
@@ -1290,15 +1303,30 @@ class PdfFileReader(object):
         self.stream = stream
 
     def __repr__(self):
-        return "<%s.%s _filepath=%s, stream=%s, strict=%s, debug=%s>" % (
-            self.__class__.__module__, self.__class__.__name__, self._filepath,
-            self.stream, self.strict, self.debug
+        return """\
+<%s.%s isClosed=%s, _filepath=%s, stream=%s, strict=%s, debug=%s>\
+        """ % (
+            self.__class__.__module__, self.__class__.__name__, self.isClosed,
+            self._filepath, self.stream, self.strict, self.debug
         )
 
     def __del__(self):
         self.close()
-        del self._xref, self._xrefObjStm, self._cachedObjects, self._trailer,
-        self._pageId2Num, self._flattenedPages, self.stream
+
+        for a in (
+                "_xrefTable", "_xrefStm", "_cachedObjects", "_trailer",
+                "_pageId2Num", "_flattenedPages", "stream"
+        ):
+            if hasattr(self, a):
+                delattr(self, a)
+
+    @property
+    def isClosed(self):
+        """
+        :return: ``True`` if the IO streams associated with this file have
+            been closed, ``False`` otherwise.
+        """
+        return self.stream.closed
 
     def close(self):
         """
