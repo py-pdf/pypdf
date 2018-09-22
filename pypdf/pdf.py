@@ -39,16 +39,14 @@ import io
 import math
 import random
 import struct
-import sys
 import time
 import uuid
 from hashlib import md5
 from sys import version_info
 
 from pypdf.generic import *
-from pypdf.utils import readNonWhitespace, readUntilWhitespace, \
-    ConvertFunctionsToVirtualList, isString, pypdfUnicode, pypdfOrd, pypdfStr, \
-    formatWarning, pypdfBytes as b_, PdfReadError, PdfStreamError
+from pypdf.utils import *
+from pypdf.utils import pypdfBytes as b_
 
 if version_info < (3, 0):
     from cStringIO import StringIO
@@ -1286,7 +1284,7 @@ class PdfFileReader(object):
         if hasattr(stream, 'mode') and 'b' not in stream.mode:
             warnings.warn(
                 "PdfFileReader stream/file object is not in binary mode. It "
-                "may not be read correctly.", utils.PdfReadWarning
+                "may not be read correctly.", PdfReadWarning
             )
 
             if isinstance(stream, io.FileIO):
@@ -1867,7 +1865,7 @@ class PdfFileReader(object):
                 e = sys.exc_info()[1]
                 warnings.warn(
                     "Invalid stream (index %d) within object %d %d: %s" %
-                    (i, ref.idnum, ref.generation, e), utils.PdfReadWarning
+                    (i, ref.idnum, ref.generation, e), PdfReadWarning
                 )
 
                 if self.strict:
@@ -1991,7 +1989,7 @@ class PdfFileReader(object):
         else:
             warnings.warn(
                 "Object %d %d not defined." %
-                (ref.idnum, ref.generation), utils.PdfReadWarning
+                (ref.idnum, ref.generation), PdfReadWarning
             )
             raise PdfReadError("Could not find object")
 
@@ -2002,9 +2000,9 @@ class PdfFileReader(object):
     def _decryptObject(self, obj, key):
         if isinstance(obj, ByteStringObject)\
                 or isinstance(obj, TextStringObject):
-            obj = createStringObject(utils.RC4Encrypt(key, obj.original_bytes))
+            obj = createStringObject(RC4Encrypt(key, obj.original_bytes))
         elif isinstance(obj, StreamObject):
-            obj._data = utils.RC4Encrypt(key, obj._data)
+            obj._data = RC4Encrypt(key, obj._data)
         elif isinstance(obj, DictionaryObject):
             for dictkey, value in list(obj.items()):
                 obj[dictkey] = self._decryptObject(value, key)
@@ -2020,10 +2018,10 @@ class PdfFileReader(object):
         # object header.  In reality... some files have stupid cross reference
         # tables that are off by whitespace bytes.
         extra = False
-        utils.skipOverComment(stream)
-        extra |= utils.skipOverWhitespace(stream); stream.seek(-1, 1)
+        skipOverComment(stream)
+        extra |= skipOverWhitespace(stream); stream.seek(-1, 1)
         idnum = readUntilWhitespace(stream)
-        extra |= utils.skipOverWhitespace(stream); stream.seek(-1, 1)
+        extra |= skipOverWhitespace(stream); stream.seek(-1, 1)
         generation = readUntilWhitespace(stream)
         obj = stream.read(3)
         readNonWhitespace(stream)
@@ -2033,7 +2031,7 @@ class PdfFileReader(object):
             # Not a fatal error
             warnings.warn(
                 "Superfluous whitespace found in object header %s %s" %
-                (idnum, generation), utils.PdfReadWarning
+                (idnum, generation), PdfReadWarning
             )
 
         return int(idnum), int(generation)
@@ -2119,7 +2117,7 @@ class PdfFileReader(object):
                             warnings.warn(
                                 "Xref table not zero-indexed. ID numbers for"
                                 "objects will be corrected.",
-                                utils.PdfReadWarning
+                                PdfReadWarning
                             )
                             # If table not zero indexed, could be due to error
                             # from when PDF was created #which will lead to
@@ -2309,7 +2307,7 @@ class PdfFileReader(object):
 
                                 self._xrefObjStm[num] = (objstrNum, obstrIdx)
                         elif self.strict:
-                            raise utils.PdfReadError(
+                            raise PdfReadError(
                                 "Unknown xref type: %s" % xrefType
                             )
 
@@ -2493,7 +2491,7 @@ class PdfFileReader(object):
             real_O = encrypt["/O"].getObject()
 
             if rev == 2:
-                userpass = utils.RC4Encrypt(key, real_O)
+                userpass = RC4Encrypt(key, real_O)
             else:
                 val = real_O
 
@@ -2501,9 +2499,9 @@ class PdfFileReader(object):
                     new_key = b_('')
 
                     for l in range(len(key)):
-                        new_key += b_(chr(utils.pypdfOrd(key[l]) ^ i))
+                        new_key += b_(chr(pypdfOrd(key[l]) ^ i))
 
-                    val = utils.RC4Encrypt(new_key, val)
+                    val = RC4Encrypt(new_key, val)
                 userpass = val
             owner_password, key = self._authenticateUserPassword(userpass)
 
@@ -2631,7 +2629,7 @@ class PageObject(DictionaryObject):
                 width = lastpage.mediaBox.getWidth()
                 height = lastpage.mediaBox.getHeight()
             else:
-                raise utils.PageSizeNotDefinedError()
+                raise PageSizeNotDefinedError()
         page.__setitem__(
             NameObject('/MediaBox'), RectangleObject([0, 0, width, height])
         )
@@ -2933,8 +2931,8 @@ class PageObject(DictionaryObject):
         rtranslation = [
             [1, 0, 0], [0, 1, 0], [tx, ty, 1]
         ]
-        ctm = utils.matrixMultiply(translation, rotating)
-        ctm = utils.matrixMultiply(ctm, rtranslation)
+        ctm = matrixMultiply(translation, rotating)
+        ctm = matrixMultiply(ctm, rtranslation)
 
         return self.mergeTransformedPage(
             page2,
@@ -2963,7 +2961,7 @@ class PageObject(DictionaryObject):
         scaling = [
             [scale, 0, 0], [0, scale, 0], [0, 0, 1]
         ]
-        ctm = utils.matrixMultiply(rotating, scaling)
+        ctm = matrixMultiply(rotating, scaling)
 
         return self.mergeTransformedPage(
             page2,
@@ -2991,7 +2989,7 @@ class PageObject(DictionaryObject):
         scaling = [
             [scale, 0, 0], [0, scale, 0], [0, 0, 1]
         ]
-        ctm = utils.matrixMultiply(scaling, translation)
+        ctm = matrixMultiply(scaling, translation)
 
         return self.mergeTransformedPage(
             page2,
@@ -3027,8 +3025,8 @@ class PageObject(DictionaryObject):
         scaling = [
             [scale, 0, 0], [0, scale, 0], [0, 0, 1]
         ]
-        ctm = utils.matrixMultiply(rotating, scaling)
-        ctm = utils.matrixMultiply(ctm, translation)
+        ctm = matrixMultiply(rotating, scaling)
+        ctm = matrixMultiply(ctm, translation)
 
         return self.mergeTransformedPage(
             page2,
@@ -3242,7 +3240,7 @@ class ContentStream(DecodedStreamObject):
 
             stream.seek(-1, 1)
             if peek.isalpha() or peek == b_("'") or peek == b_('"'):
-                operator = utils.readUntilRegex(
+                operator = readUntilRegex(
                     stream, NameObject.delimiterPattern, True
                 )
                 if operator == b_("BI"):
@@ -3303,7 +3301,7 @@ class ContentStream(DecodedStreamObject):
                     # We need to find whitespace between EI and Q.
                     has_q_whitespace = False
 
-                    while tok3 in utils.WHITESPACES:
+                    while tok3 in WHITESPACES:
                         has_q_whitespace = True
                         info += tok3
                         tok3 = stream.read(1)
@@ -3508,7 +3506,7 @@ def _alg33(owner_pwd, user_pwd, rev, keylen):
     user_pwd = b_((user_pwd + pypdfStr(_encryption_padding))[:32])
     # 6. Encrypt the result of step 5, using an RC4 encryption function with
     # the encryption key obtained in step 4.
-    val = utils.RC4Encrypt(key, user_pwd)
+    val = RC4Encrypt(key, user_pwd)
     # 7. (Revision 3 or greater) Do the following 19 times: Take the output
     # from the previous invocation of the RC4 function and pass it as input to
     # a new invocation of the function; use an encryption key generated by
@@ -3520,7 +3518,7 @@ def _alg33(owner_pwd, user_pwd, rev, keylen):
             new_key = ''
             for l in range(len(key)):
                 new_key += chr(pypdfOrd(key[l]) ^ i)
-            val = utils.RC4Encrypt(new_key, val)
+            val = RC4Encrypt(new_key, val)
     # 8. Store the output from the final invocation of the RC4 as the value of
     # the /O entry in the encryption dictionary.
     return val
@@ -3562,7 +3560,7 @@ def _alg34(password, owner_entry, p_entry, id1_entry):
     # 2. Encrypt the 32-byte padding string shown in step 1 of algorithm 3.2,
     # using an RC4 encryption function with the encryption key from the
     # preceding step.
-    U = utils.RC4Encrypt(key, _encryption_padding)
+    U = RC4Encrypt(key, _encryption_padding)
     # 3. Store the result of step 2 as the value of the /U entry in the
     # encryption dictionary.
     return U, key
@@ -3591,7 +3589,7 @@ def _alg35(
     md5_hash = m.digest()
     # 4. Encrypt the 16-byte result of the hash, using an RC4 encryption
     # function with the encryption key from step 1.
-    val = utils.RC4Encrypt(key, md5_hash)
+    val = RC4Encrypt(key, md5_hash)
     # 5. Do the following 19 times: Take the output from the previous
     # invocation of the RC4 function and pass it as input to a new invocation
     # of the function; use an encryption key generated by taking each byte of
@@ -3602,7 +3600,7 @@ def _alg35(
         new_key = b_('')
         for l in range(len(key)):
             new_key += b_(chr(pypdfOrd(key[l]) ^ i))
-        val = utils.RC4Encrypt(new_key, val)
+        val = RC4Encrypt(new_key, val)
     # 6. Append 16 bytes of arbitrary padding to the output from the final
     # invocation of the RC4 function and store the 32-byte result as the value
     # of the U entry in the encryption dictionary.

@@ -35,13 +35,8 @@ import decimal
 import re
 import warnings
 
-from . import filters
-from . import utils
-from pypdf.utils import PdfStreamError
-from pypdf.utils import pypdfBytes as b_, pypdfUnicode as u_, pypdfChr,\
-        pypdfOrd
-from pypdf.utils import readNonWhitespace, RC4Encrypt, skipOverComment
-
+from pypdf.utils import *
+from pypdf.utils import pypdfBytes as b_, pypdfUnicode as u_
 
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
@@ -111,7 +106,7 @@ class NullObject(PdfObject):
         null_text = stream.read(4)
 
         if null_text != b_("null"):
-            raise utils.PdfReadError("Could not read Null object")
+            raise PdfReadError("Could not read Null object")
 
         return NullObject()
 
@@ -137,7 +132,7 @@ class BooleanObject(PdfObject):
 
             return BooleanObject(False)
         else:
-            raise utils.PdfReadError('Could not read Boolean object')
+            raise PdfReadError('Could not read Boolean object')
 
 
 class ArrayObject(list, PdfObject):
@@ -156,7 +151,7 @@ class ArrayObject(list, PdfObject):
         tmp = stream.read(1)
 
         if tmp != b_("["):
-            raise utils.PdfReadError("Could not read array")
+            raise PdfReadError("Could not read array")
         while True:
             # skip leading whitespace
             tok = stream.read(1)
@@ -250,9 +245,9 @@ class IndirectObject(PdfObject):
         r = readNonWhitespace(stream)
 
         if r != b_("R"):
-            raise utils.PdfReadError(
+            raise PdfReadError(
                 "Error reading indirect object reference at byte %s" %
-                utils.hexStr(stream.tell())
+                hexStr(stream.tell())
             )
 
         return IndirectObject(int(idnum), int(generation), pdf)
@@ -262,7 +257,7 @@ class FloatObject(decimal.Decimal, PdfObject):
     def __new__(cls, value="0", context=None):
         try:
             return decimal.Decimal.__new__(
-                cls, utils.pypdfStr(value), context
+                cls, pypdfStr(value), context
             )
         except:
             return decimal.Decimal.__new__(cls, str(value))
@@ -304,7 +299,7 @@ class NumberObject(int, PdfObject):
 
     @staticmethod
     def readFromStream(stream):
-        num = utils.readUntilRegex(stream, NumberObject.NumberPattern)
+        num = readUntilRegex(stream, NumberObject.NumberPattern)
 
         if num.find(NumberObject.ByteDot) != -1:
             return FloatObject(num)
@@ -318,9 +313,9 @@ def createStringObject(string):
     :class:`ByteStringObject<ByteStringObject>` or a
     :class:`TextStringObject<TextStringObject>` to represent the string.
     """
-    if isinstance(string, utils.string_type):
+    if isinstance(string, string_type):
         return TextStringObject(string)
-    elif isinstance(string, utils.bytes_type):
+    elif isinstance(string, bytes_type):
         try:
             if string.startswith(codecs.BOM_UTF16_BE):
                 retval = TextStringObject(string.decode("utf-16"))
@@ -427,7 +422,7 @@ def readStringFromStream(stream):
                     # line break was escaped:
                     tok = b_('')
                 else:
-                    raise utils.PdfReadError(
+                    raise PdfReadError(
                         r"Unexpected escaped string: %s" % tok
                     )
         txt += tok
@@ -435,7 +430,7 @@ def readStringFromStream(stream):
     return createStringObject(txt)
 
 
-class ByteStringObject(utils.bytes_type, PdfObject):
+class ByteStringObject(bytes_type, PdfObject):
     """
     Represents a string object where the text encoding could not be determined.
     This occurs quite often, as the PDF spec doesn't provide an alternate way
@@ -453,11 +448,11 @@ class ByteStringObject(utils.bytes_type, PdfObject):
             bytearr = RC4Encrypt(encryption_key, bytearr)
 
         stream.write(b_("<"))
-        stream.write(b_(utils.hexEncode(bytearr)))
+        stream.write(b_(hexEncode(bytearr)))
         stream.write(b_(">"))
 
 
-class TextStringObject(utils.string_type, PdfObject):
+class TextStringObject(string_type, PdfObject):
     """
     Represents a ``str`` object that has been decoded into a real ``unicode``
     string. If read from a PDF document, this string appeared to match the
@@ -528,9 +523,9 @@ class NameObject(str, PdfObject):
         name = stream.read(1)
 
         if name != NameObject.surfix:
-            raise utils.PdfReadError("name read error")
+            raise PdfReadError("name read error")
 
-        name += utils.readUntilRegex(
+        name += readUntilRegex(
             stream, NameObject.delimiterPattern, ignore_eof=True
         )
 
@@ -543,11 +538,11 @@ class NameObject(str, PdfObject):
             # with a '#' followed by the symbol's hex number
             if not pdf.strict:
                 warnings.warn(
-                    "Illegal character in Name Object", utils.PdfReadWarning
+                    "Illegal character in Name Object", PdfReadWarning
                 )
                 return NameObject(name)
             else:
-                raise utils.PdfReadError("Illegal character in Name Object")
+                raise PdfReadError("Illegal character in Name Object")
 
 
 class DictionaryObject(dict, PdfObject):
@@ -624,9 +619,9 @@ class DictionaryObject(dict, PdfObject):
         buff = stream.read(2)
 
         if buff != b_("<<"):
-            raise utils.PdfReadError(
+            raise PdfReadError(
                 "Dictionary read error at byte %s: stream must begin with '<<'"
-                % utils.hexStr(stream.tell())
+                % hexStr(stream.tell())
             )
 
         while True:
@@ -659,14 +654,14 @@ class DictionaryObject(dict, PdfObject):
                 data[key] = value
             elif pdf.strict:
                 # multiple definitions of key not permitted
-                raise utils.PdfReadError(
+                raise PdfReadError(
                     "Multiple definitions in dictionary at byte %s for key %s"
-                    % (utils.hexStr(stream.tell()), key)
+                    % (hexStr(stream.tell()), key)
                 )
             else:
                 warnings.warn(
                     "Multiple definitions in dictionary at byte %s for key %s"
-                    % (utils.hexStr(stream.tell()), key), utils.PdfReadWarning
+                    % (hexStr(stream.tell()), key), PdfReadWarning
                 )
 
         pos = stream.tell()
@@ -717,14 +712,11 @@ class DictionaryObject(dict, PdfObject):
                     # we found it by looking back one character further.
                     data["__streamdata__"] = data["__streamdata__"][:-1]
                 else:
-                    if debug:
-                        print(("E", e, ndstream, debugging.toHex(end)))
-
                     stream.seek(pos, 0)
 
-                    raise utils.PdfReadError(
+                    raise PdfReadError(
                         "Unable to find 'endstream' marker after stream at "
-                        "byte %s." % utils.hexStr(stream.tell())
+                        "byte %s." % hexStr(stream.tell())
                     )
         else:
             stream.seek(pos, 0)
@@ -907,6 +899,8 @@ class StreamObject(DictionaryObject):
         return retval
 
     def flateEncode(self):
+        from pypdf.filters import FlateCodec
+
         if "/Filter" in self:
             f = self["/Filter"]
 
@@ -922,7 +916,7 @@ class StreamObject(DictionaryObject):
 
         retval = EncodedStreamObject()
         retval[NameObject("/Filter")] = f
-        retval._data = filters.FlateCodec.encode(self._data)
+        retval._data = FlateCodec.encode(self._data)
 
         return retval
 
@@ -940,6 +934,8 @@ class EncodedStreamObject(StreamObject):
         self.decodedSelf = None
 
     def getData(self):
+        from pypdf.filters import decodeStreamData
+
         if self.decodedSelf:
             # Cached version of decoded object
             return self.decodedSelf.getData()
@@ -947,7 +943,7 @@ class EncodedStreamObject(StreamObject):
             # Create decoded object
             decoded = DecodedStreamObject()
 
-            decoded._data = filters.decodeStreamData(self)
+            decoded._data = decodeStreamData(self)
             for key, value in list(self.items()):
                 if not key in ("/Length", "/Filter", "/DecodeParms"):
                     decoded[key] = value
@@ -956,7 +952,7 @@ class EncodedStreamObject(StreamObject):
             return decoded._data
 
     def setData(self, data):
-        raise utils.PdfReadError(
+        raise PdfReadError(
             "Creating EncodedStreamObject is not currently supported"
         )
 
@@ -1178,7 +1174,7 @@ class Destination(TreeObject):
         elif typ in ["/Fit", "/FitB"]:
             pass
         else:
-            raise utils.PdfReadError("Unknown Destination Type: %r" % typ)
+            raise PdfReadError("Unknown Destination Type: %r" % typ)
 
     def getDestArray(self):
         return ArrayObject(
@@ -1308,7 +1304,7 @@ def decodePdfDocEncoding(byteArray):
 
         if c == u_('\u0000'):
             raise UnicodeDecodeError(
-                "pdfdocencoding", utils.pypdfBytearray(b), -1, -1,
+                "pdfdocencoding", pypdfBytearray(b), -1, -1,
                 "does not exist in translation table"
             )
 

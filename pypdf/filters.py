@@ -33,11 +33,13 @@ Implementation of stream filters for PDF.
 
 import math
 import struct
-import sys
 from io import BytesIO
 from sys import version_info
 
-from .utils import PdfReadError, pypdfOrd, paethPredictor, PdfStreamError
+from pypdf import generic
+from pypdf.generic import *
+from pypdf.utils import PdfReadError, pypdfOrd, paethPredictor, \
+    PdfStreamError
 
 try:
     import zlib
@@ -194,7 +196,7 @@ class FlateCodec(object):
                     prev_rowdata = rowdata
 
                     for d in rowdata:
-                        if sys.version_info < (3, 0):
+                        if version_info < (3, 0):
                             output.write(chr(d))
                         else:
                             output.write(bytes([d]))
@@ -278,7 +280,7 @@ class LZWCodec(object):
             """
             :param data: a ``str`` or ``bytes`` string to encode with LZW.
             """
-            if isinstance(data, str) and sys.version_info > (3, 0):
+            if isinstance(data, str) and version_info > (3, 0):
                 self.data = data.encode("UTF-8")
             elif isinstance(data, bytes):  # bytes is str in Python 2
                 self.data = data
@@ -308,7 +310,7 @@ class LZWCodec(object):
             for b in self.data:
                 # If we iterate on a bytes instance under Python 3, we get int
                 # rather than bytes values, which we need to convert
-                if sys.version_info > (3, 0):
+                if version_info > (3, 0):
                     b = bytes([b])
 
                 if buffer + b in self.table:
@@ -333,7 +335,7 @@ class LZWCodec(object):
             """
             self.bitspercode = 9
 
-            if sys.version_info < (3, 0):
+            if version_info < (3, 0):
                 self.table = {
                     chr(b): b for b in range(256)
                 }
@@ -407,7 +409,7 @@ class LZWCodec(object):
             self.bitspercode = None
 
             for i in range(256):
-                if sys.version_info < (3, 0):
+                if version_info < (3, 0):
                     self.dict[i] = chr(i)
                 else:
                     self.dict[i] = bytes([i])
@@ -443,14 +445,14 @@ class LZWCodec(object):
                     if cW < self.dictindex:
                         output += self.dict[cW]
 
-                        if sys.version_info > (3, 0):
+                        if version_info > (3, 0):
                             p = self.dict[pW] + bytes([self.dict[cW][0]])
                         else:
                             p = self.dict[pW] + self.dict[cW][0]
 
                         self._addCodeToTable(p)
                     else:
-                        if sys.version_info > (3, 0):
+                        if version_info > (3, 0):
                             p = self.dict[pW] + bytes([self.dict[pW][0]])
                         else:
                             p = self.dict[pW] + self.dict[pW][0]
@@ -688,10 +690,13 @@ class CCITTFaxCodec(object):    # pylint: disable=too-few-public-methods
 
 # pylint: disable=too-many-branches
 def decodeStreamData(stream):
-    from .generic import NameObject
+    """
+    :param stream: ``EncodedStreamData`` instance.
+    :return: decoded data from the encoded stream.
+    """
     filters = stream.get("/Filter", ())
 
-    if filters and not isinstance(filters[0], NameObject):
+    if filters and not isinstance(filters[0], generic.NameObject):
         # we have a single filter instance
         filters = (filters,)
 
