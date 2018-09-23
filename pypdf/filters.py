@@ -31,15 +31,12 @@
 Implementation of stream filters for PDF.
 """
 
-import math
 import struct
-from io import BytesIO
 from sys import version_info
 
 from pypdf import generic
 from pypdf.generic import *
-from pypdf.utils import PdfReadError, pypdfOrd, paethPredictor, \
-    PdfStreamError
+from pypdf.utils import PdfReadError, pypdfOrd, paethPredictor, PdfStreamError
 
 try:
     import zlib
@@ -200,7 +197,6 @@ class FlateCodec(object):
                             output.write(chr(d))
                         else:
                             output.write(bytes([d]))
-
 
                 data = output.getvalue()
             else:
@@ -691,7 +687,7 @@ class CCITTFaxCodec(object):    # pylint: disable=too-few-public-methods
 # pylint: disable=too-many-branches
 def decodeStreamData(stream):
     """
-    :param stream: ``EncodedStreamData`` instance.
+    :param stream: ``EncodedStreamObject`` instance.
     :return: decoded data from the encoded stream.
     """
     filters = stream.get("/Filter", ())
