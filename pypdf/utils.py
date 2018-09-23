@@ -369,3 +369,15 @@ def paethPredictor(left, up, up_left):
         return up
     else:
         return up_left
+
+
+def pairs(sequence):
+    """
+    :param sequence: an indexable sequence value with ``__len__()``.
+    :return: an iterable of paired values from ``sequence``.
+    """
+    if (len(sequence) % 2) != 0:
+        raise ValueError("sequence must contain an even number of elements")
+
+    for i in range(0, len(sequence) - 1, 2):
+        yield (sequence[i], sequence[i + 1])

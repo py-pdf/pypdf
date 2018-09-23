@@ -2262,7 +2262,7 @@ class PdfFileReader(object):
 
                 # Iterate through each subsection
                 lastEnd = 0
-                for start, size in self._pairs(idxPairs):
+                for start, size in pairs(idxPairs):
                     # The subsections must increase
                     assert start >= lastEnd
                     lastEnd = start + size
@@ -2377,10 +2377,6 @@ class PdfFileReader(object):
             (id - self._xrefIndex, v) for (id, v)
             in list(self._xref[generation].items())
         )
-
-    def _pairs(self, array):
-        for i in range(0, len(array) - 1, 2):
-            yield (array[i], array[i + 1])
 
     def _readNextEndLine(self, stream):
         if self.debug:

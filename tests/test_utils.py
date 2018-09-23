@@ -1,7 +1,7 @@
 import string
 import unittest
 
-from pypdf.utils import hexEncode
+from pypdf.utils import hexEncode, pairs
 from tests.utils import intToBitstring, bitstringToInt
 
 
@@ -45,6 +45,35 @@ class UtilsTestCase(unittest.TestCase):
         for o, i in zip(expOutputs, inputs):
             self.assertEqual(o, hexEncode(i))
 
+    def testPairs(self):
+        """
+        Tests ``utils.pairs()``.
+        """
+        inputs = (
+            range(0), range(6), range(10)
+        )
+        expOutputs = (
+            tuple(),
+            ((0, 1), (2, 3), (4, 5)),
+            ((0, 1), (2, 3), (4, 5), (6, 7), (8, 9))
+        )
+
+        for o, i in zip(expOutputs, inputs):
+            self.assertTupleEqual(
+                o, tuple(pairs(i))
+            )
+
+    def testPairsException(self):
+        """
+        Tests ``utils.pairs()`` when it is fed unaccepted values.
+        """
+        inputs = (
+            range(1), range(5), range(11), range(111)
+        )
+
+        for i in inputs:
+            with self.assertRaises(ValueError):
+                list(pairs(i))
 
 class TestUtilsTestCase(unittest.TestCase):
     """
