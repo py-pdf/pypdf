@@ -1350,9 +1350,8 @@ class PdfFileReader(object):
         if "/Info" not in self._trailer:
             return None
 
-        obj = self._trailer['/Info']
         retval = DocumentInformation()
-        retval.update(obj)
+        retval.update(self._trailer["/Info"])
 
         return retval
 
@@ -2053,6 +2052,28 @@ class PdfFileReader(object):
         return retval
 
     def _parsePdfFile(self, stream):
+        def getEntry(i, streamData):
+            """
+            Reads the correct number of bytes for each entry. See the
+            discussion of the /W parameter in PDF spec. table 17.
+            """
+            if entrySizes[i] > 0:
+                d = streamData.read(entrySizes[i])
+                return _convertToInt(d, entrySizes[i])
+
+            # PDF Spec Table 17: A value of zero for an element in the
+            # W array indicates... the default value shall be used
+            if i == 0:
+                # First value defaults to 1
+                return 1
+            else:
+                return 0
+
+        def usedBefore(num, generation):
+            # We move backwards through the xrefs, don't replace any.
+            return num in self._xrefTable.get(generation, []) or \
+                   num in self._xrefStm
+
         stream.seek(-1, 2)  # Start at the end:
 
         if not stream.tell():
@@ -2198,7 +2219,7 @@ class PdfFileReader(object):
                 stream.seek(-1, 1)
                 newTrailer = readObject(stream, self)
 
-                for key, value in list(newTrailer.items()):
+                for key, value in newTrailer.items():
                     if key not in self._trailer:
                         self._trailer[key] = value
                 if "/Prev" in newTrailer:
@@ -2236,28 +2257,6 @@ class PdfFileReader(object):
                         "Excess number of /W entries: %s" % entrySizes
                     )
 
-                def getEntry(i):
-                    """
-                    Reads the correct number of bytes for each entry. See the
-                    discussion of the W parameter in PDF spec. table 17.
-                    """
-                    if entrySizes[i] > 0:
-                        d = streamData.read(entrySizes[i])
-                        return _convertToInt(d, entrySizes[i])
-
-                    # PDF Spec Table 17: A value of zero for an element in the
-                    # W array indicates... the default value shall be used
-                    if i == 0:
-                        # First value defaults to 1
-                        return 1
-                    else:
-                        return 0
-
-                def usedBefore(num, generation):
-                    # We move backwards through the xrefs, don't replace any.
-                    return num in self._xrefTable.get(generation, []) or \
-                           num in self._xrefStm
-
                 # Iterate through each subsection
                 lastEnd = 0
                 for start, size in pairs(idrange):
@@ -2267,21 +2266,21 @@ class PdfFileReader(object):
 
                     for idnum in range(start, start + size):
                         # The first entry is the type
-                        xrefType = getEntry(0)
+                        xrefType = getEntry(0, streamData)
 
                         # The rest of the elements depend on the xrefType
                         if xrefType == 0:
                             # Linked list of free objects
-                            nextFreeObject = getEntry(1)
-                            nextGeneration = getEntry(2)
+                            nextFreeObject = getEntry(1, streamData)
+                            nextGeneration = getEntry(2, streamData)
 
                             self._xrefStm[idnum] = (
                                 0, nextFreeObject, nextGeneration
                             )
                         elif xrefType == 1:
                             # Objects that are in use but are not compressed
-                            byteOffset = getEntry(1)
-                            generation = getEntry(2)
+                            byteOffset = getEntry(1, streamData)
+                            generation = getEntry(2, streamData)
 
                             if not usedBefore(idnum, generation):
                                 self._xrefStm[idnum] = (
@@ -2289,24 +2288,23 @@ class PdfFileReader(object):
                                 )
                         elif xrefType == 2:
                             # Compressed objects
-                            objStmId = getEntry(1)
-                            localId = getEntry(2)
+                            objStmId = getEntry(1, streamData)
+                            localId = getEntry(2, streamData)
                             # According to PDF spec table 18, generation is 0
 
                             if not usedBefore(idnum, generation):
-                                self._xrefStm[idnum] = (
-                                    2, objStmId, localId
-                                )
+                                self._xrefStm[idnum] = (2, objStmId, localId)
                         elif self.strict:
                             raise PdfReadError(
                                 "Unknown xref type: %s" % xrefType
                             )
 
-                trailerKeys = "/Root", "/Encrypt", "/Info", "/ID"
+                trailerKeys = ("/Root", "/Encrypt", "/Info", "/ID")
 
                 for key in trailerKeys:
                     if key in xrefstream and key not in self._trailer:
                         self._trailer[NameObject(key)] = xrefstream.rawGet(key)
+
                 if "/Prev" in xrefstream:
                     startxref = xrefstream["/Prev"]
                 else:
@@ -2354,6 +2352,7 @@ class PdfFileReader(object):
                         pid, pgen = self._readObjectHeader(stream)
                     except ValueError:
                         break
+
                     if pid == id - self._xrefIndex:
                         self._zeroXref(gen)
                         break
