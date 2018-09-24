@@ -5,6 +5,7 @@ import binascii
 import sys
 import unittest
 
+from io import BytesIO
 from os.path import abspath, dirname, join, pardir
 
 # Configure path environment
@@ -16,6 +17,7 @@ TESTS_DATA_ROOT = join(PROJECT_ROOT, "tests", "fixture_data")
 sys.path.append(PROJECT_ROOT)
 
 from pypdf.pdf import PdfFileReader, PdfFileWriter
+from pypdf.generic import IndirectObject, readObject
 
 
 class PdfReaderTestCases(unittest.TestCase):
@@ -136,10 +138,10 @@ class PdfReaderTestCases(unittest.TestCase):
             actualItems = list()
             expItems = list()
 
-            for ref in r.objects(PdfFileReader.OBJ_XTABLE, True):
+            for ref in r.objects(PdfFileReader.R_XTABLE, True):
                 actualItems.append(
                     (ref.idnum, ref.generation,\
-                     r._xref[ref.generation][ref.idnum][0])
+                     r._xrefTable[ref.generation][ref.idnum][0])
                 )
 
             actualItems = sorted(actualItems)
@@ -183,6 +185,105 @@ class PdfReaderTestCases(unittest.TestCase):
                         )
 
             expItems = sorted(expItems)
+            self.assertListEqual(expItems, actualItems)
+
+    def testXRefStreamObjects(self):
+        """
+        Like ``PdfReaderTestCases.testXRefTableObjects()``, except that it
+        tests objects referenced by the Cross-Reference Stream.
+        ``PdfFileReader.objects()`` second part (dealing with XStream objects)
+        is invoked and implicitly tested.
+        """
+        LOCAL_DATA_ROOT = join(
+            TESTS_DATA_ROOT, self.testXRefStreamObjects.__name__
+        )
+        inputFiles = ("crazyones.pdf", )
+
+        for filename in inputFiles:
+            filepath = join(LOCAL_DATA_ROOT, filename)
+            r = PdfFileReader(join(TESTS_DATA_ROOT, filename))
+            # Two lists of tuples as explained by Table 18
+            actualItems = list()
+            expItems = list()
+
+            with open(filepath, "r") as instream:
+                for line in instream:
+                    if not line or line.isspace() or line.startswith("%"):
+                        continue
+
+                    type, field2, field3 = (int(f) for f in line.split())
+                    expItems.append((type, field2, field3))
+
+            for item in r.objects(PdfFileReader.R_XSTREAM, True):
+                priv8Item = r._xrefStm[item.idnum]
+
+                if priv8Item[0] in {0, 1}:
+                    self.assertEqual(priv8Item[2], item.generation)
+                elif priv8Item[0] == 2:
+                    self.assertEqual(item.generation, 0)
+
+                actualItems.append(priv8Item)
+
+            r.close()
+            actualItems = sorted(actualItems)
+            expItems = sorted(expItems)
+
+            self.assertListEqual(
+                expItems, actualItems,
+                "Didn't correctly read the Cross-Reference Stream"
+            )
+
+    def testReadXRefStreamCompressedObjects(self):
+        """
+        Targets the same objects as ``testXRefStreamObjects()``, but instead
+        of ensuring an identity between the list of items read and the one
+        expected, it verifies that their *contents* are identical.
+
+        This method does **not** test ``PdfFileReader.objects()`` as two of the
+        previous test cases did.
+        """
+        self.maxDiff = None
+        LOCAL_DATA_ROOT = join(
+            TESTS_DATA_ROOT,
+            self.testReadXRefStreamCompressedObjects.__name__
+        )
+        inputFiles = ("crazyones.pdf", )
+        # expItems and actualItems will contain two-element tuples, where the
+        # first element is the object ID, used to sort.
+        sortKey = lambda e: e[0]
+        compressedObj = lambda e: e[1][0] == 2
+
+        for filename in inputFiles:
+            filepath = join(LOCAL_DATA_ROOT, filename)
+            r = PdfFileReader(join(TESTS_DATA_ROOT, filename))
+            expItems = list()
+            actualItems = list()
+
+            with open(filepath, "rb") as instream:
+                for line in instream:
+                    if not line or line.isspace() or line.startswith(b"%"):
+                        continue
+
+                    globalId, offset, object = line.split(b" ", 2)
+                    globalId, offset = int(globalId), int(offset)
+
+                    with BytesIO(object) as objStream:
+                        object = readObject(objStream, r)
+
+                    expItems.append((globalId, object))
+
+            for itemid, item in filter(compressedObj, r._xrefStm.items()):
+                # We deal exclusively with compressed objects (from Table 18 of
+                # ISO 32000 reference, 2008) whose generation number is 0
+                actualItems.append(
+                    # (ID, PdfObject) tuples
+                    (itemid, IndirectObject(itemid, 0, r).getObject())
+                )
+
+            r.close()
+            expItems = sorted(expItems, key=sortKey)
+            actualItems = sorted(actualItems, key=sortKey)
+
             self.assertListEqual(expItems, actualItems)
 
     def testProperties(self):

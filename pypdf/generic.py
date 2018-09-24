@@ -1103,7 +1103,8 @@ class ContentStream(DecodedStreamObject):
         return newdata.getvalue()
 
     def _setData(self, value):
-        self.__parseContentStream(BytesIO(b_(value)))
+        if value:
+            self.__parseContentStream(BytesIO(b_(value)))
 
     _data = property(_getData, _setData)
 
@@ -1138,6 +1139,7 @@ class ObjectStream(EncodedStreamObject):
             )
 
         return tuple(output[i] for i in range(0, len(output), 2))
+
 
 class DocumentInformation(DictionaryObject):
     """

@@ -36,7 +36,6 @@ See README.md for links to FAQ, documentation, homepage, etc.
 """
 
 import io
-import math
 import random
 import struct
 import time
@@ -44,6 +43,7 @@ import uuid
 from hashlib import md5
 from sys import version_info
 
+from pypdf import utils
 from pypdf.generic import *
 from pypdf.utils import *
 from pypdf.utils import pypdfBytes as b_
@@ -410,7 +410,7 @@ class PdfFileWriter(object):
     def cloneReaderDocumentRoot(self, reader):
         """
         Copy the reader document root to the writer.
-        
+
         :param reader: ``PdfFileReader`` from the document root that should be
             copied.
         """
@@ -522,9 +522,6 @@ class PdfFileWriter(object):
         # TO-DO Instance attribute defined outside __init__(). Carefully move
         # it out of here
         self.stack = []
-
-        if self.debug:
-            print("ERM:", externalReferenceMap, "root:", self._root)
 
         self._sweepIndirectReferences(externalReferenceMap, self._root)
         del self.stack
@@ -1221,18 +1218,18 @@ class PdfFileWriter(object):
 
 
 class PdfFileReader(object):
-    OBJ_XTABLE, OBJ_XSTREAM, OBJ_BOTH = (1, 2, 3)
+    R_XTABLE, R_XSTREAM, R_BOTH = (1, 2, 3)
 
     def __init__(
             self, stream, strict=True, warndest=None, overwriteWarnings=True,
             debug=False
     ):
         """
-        Initializes a PdfFileReader object.  This operation can take some time,
-        as the PDF stream's cross-reference tables are read into memory.
+        Initializes a ``PdfFileReader`` instance.  This operation can take some
+        time, as the PDF stream's cross-reference tables are read into memory.
 
-        :param stream: A file-like object with read() and seek() methods. Could
-            also be a string representing a path to a PDF file.
+        :param stream: A file-like object with ``read()`` and ``seek()``
+            methods. Could also be a string representing a path to a PDF file.
         :param bool strict: Determines whether user should be warned of all
             problems and also causes some correctable problems to be fatal.
             Defaults to ``True``.
@@ -1242,7 +1239,7 @@ class PdfFileReader(object):
             ``warnings.py`` module with a custom implementation (defaults to
             ``True``).
         :param bool debug: Whether this class should emit debug informations
-            (recommended for development). Defaults to False.
+            (recommended for development). Defaults to ``False``.
         """
         if overwriteWarnings:
             # Have to dynamically override the default showwarning since there
@@ -1263,15 +1260,19 @@ class PdfFileReader(object):
 
             warnings.showwarning = _showwarning
 
-        # Stores the Cross-Reference Table indices. The keys are gen. numbers,
-        # the values a dict of the form {obj. id: (byte offset within file,
-        # is in free object list)}
-        self._xref = {}
+        self._xrefTable = {}
+        """
+        Stores the Cross-Reference Table indices. The keys are gen. numbers,
+        the values a dict of the form ``{obj. id: (byte offset within file, is
+        in free object list)}``.
+        """
         self._xrefIndex = 0
-        # Stores the Cross-Reference Stream data. The keys are id numbers of
-        # objects. The values a series of (id of obj. stream, id internal to
-        # obj. stream) tuples
-        self._xrefObjStm = {}
+        self._xrefStm = {}
+        """
+        Stores the Cross-Reference Stream data. The keys are id numbers of
+        objects. The values are exactly as in Table 18 of section 7.5.8.3 of
+        the ISO 32000 Reference (2008), represented as a tuple of length three.
+        """
         self._cachedObjects = {}
         self._trailer = DictionaryObject()
         self._pageId2Num = None  # Maps page IndirectRef number to Page Number
@@ -1293,9 +1294,9 @@ class PdfFileReader(object):
                 self._filepath = ""
         elif isString(stream):
             self._filepath = stream
-            fileobj = open(stream, 'rb')
-            stream = BytesIO(b_(fileobj.read()))
-            fileobj.close()
+
+            with open(stream, 'rb') as fileobj:
+                stream = BytesIO(fileobj.read())
 
         self._parsePdfFile(stream)
         self.stream = stream
@@ -1331,7 +1332,7 @@ class PdfFileReader(object):
         Deallocates file-system resources associated with this
         ``PdfFileReader`` instance.
         """
-        if self.stream and hasattr(self.stream, "close") \
+        if getattr(self, "stream", None) and hasattr(self.stream, "close") \
                 and callable(self.stream.close):
             self.stream.close()
 
@@ -1808,64 +1809,163 @@ class PdfFileReader(object):
             pageObj.update(pages)
             self._flattenedPages.append(pageObj)
 
-    def _getObjectFromStream(self, ref):
-        # Indirect reference to object in object stream.
-        # Read the entire object stream into memory.
-        stmnum, idx = self._xrefObjStm[ref.idnum]
+    def _getObjectByRef(self, ref, source):
+        """
+        Fetches an indirect object identified by ``ref`` from either the XRef
+        Table or the XRef Stream.
 
-        if self.debug:
-            print("Here1: %s %s" % (stmnum, idx))
+        :param ref: an ``IndirectObject`` instance.
+        :param source: the source whence the object should be fetched,
+            between the XRef Table and the XRef Stream. Accepted values are:\n
+            * ``PdfFileReader.R_XTABLE``   XRef Table
+            * ``PdfFileReader.R_XSTREAM``    Cross-Reference Stream
+        :rtype: PdfObject
+        """
+        isXTable, isXStream = source & self.R_XTABLE, source & self.R_XSTREAM
 
-        objStm = IndirectObject(stmnum, 0, self).getObject()
-        if self.debug:
-            print(
-                "Here2: objStm=%s.. stmnum=%s data=%s" %
-                (objStm, stmnum, objStm.getData())
+        if isXTable:
+            if self._xrefTable[ref.generation][ref.idnum][1] is True:
+                raise PdfReadError(
+                    "Cannot fetch a free object (id, next gen.) = (%d, %d)" %
+                    (ref.idnum, ref.generation)
+                )
+
+            offset = self._xrefTable[ref.generation][ref.idnum][0]
+        elif isXStream:
+            # See ISO 32000 (2008), Table 18 "Entries in a cross-reference
+            # stream"
+            type = self._xrefStm[ref.idnum][0]
+
+            if type == 0:
+                raise PdfReadError(
+                    "Cannot fetch a free object (id, next gen.) = (%d, %d)" %
+                    (ref.idnum, ref.generation)
+                )
+            elif type == 1:
+                offset, generation = self._xrefStm[ref.idnum][1:3]
+
+                if generation != ref.generation:
+                    raise ValueError(
+                        "Generation number given as input (%d) doesn't equate "
+                        "the one stored (%d) in the XRef Stream"
+                        % (ref.generation, generation)
+                    )
+            elif type == 2:
+                return self._getCompressedObjectFromXRefStream(ref)
+            else:
+                # «Any other value shall be interpreted as a reference to the
+                # null object, thus permitting new entry types to be defined in
+                # the future.» Section 7.5.8.3 of ISO 32000 (2008)
+                return NullObject()
+        else:
+            raise ValueError("Unaccepted value of source = %d" % source)
+
+        self.stream.seek(offset, 0)
+        actualId, actualGen = self._readObjectHeader(self.stream)
+
+        if isXTable and self._xrefIndex and actualId != ref.idnum:
+            # Xref table probably had bad indexes due to not being
+            # zero-indexed
+            if self.strict:
+                raise PdfReadError(
+                    "Expected object ID (%d %d) does not match actual "
+                    "(%d %d); xref table not zero-indexed."
+                    % (ref.idnum, ref.generation, actualId, actualGen)
+                )
+            else:
+                # XRef Table is corrected in non-strict mode
+                pass
+        elif self.strict and (
+                actualId != ref.idnum or actualGen != ref.generation
+        ):
+            # Some other problem
+            raise PdfReadError(
+                "Expected object ID (%d, %d) does not match actual (%d, %d)."
+                % (ref.idnum, ref.generation, actualId, actualGen)
             )
 
-        # This is an xref to a stream, so its type better be a stream
-        assert objStm['/Type'] == '/ObjStm'
-        # /N is the number of indirect objects in the stream
-        assert idx < objStm['/N']
+        retval = readObject(self.stream, self)
+
+        # Override encryption is used for the /Encrypt dictionary
+        if not self._overrideEncryption and self.isEncrypted:
+            # If we don't have the encryption key:
+            if not hasattr(self, '_decryption_key'):
+                raise PdfReadError("file has not been decrypted")
+
+            # otherwise, decrypt here...
+            pack1 = struct.pack("<i", ref.idnum)[:3]
+            pack2 = struct.pack("<i", ref.generation)[:2]
+            key = self._decryption_key + pack1 + pack2
+            assert len(key) == (len(self._decryption_key) + 5)
+            md5Hash = md5(key).digest()
+            key = md5Hash[:min(16, len(self._decryption_key) + 5)]
+
+            retval = self._decryptObject(retval, key)
+
+        return retval
+
+    def _getCompressedObjectFromXRefStream(self, ref):
+        """
+        Fetches a type 2 compressed object from a Cross-Reference stream.
+
+        :param ref: an ``IndirectObject`` instance.
+        :return: a ``PdfObject`` stored into a compressed object stream.
+        """
+        entryType, objStmId, localId = self._xrefStm[ref.idnum]
+
+        if entryType != 2:
+            raise PdfReadError(
+                "Expected a type 2 (compressed) object but type is %d" %
+                entryType
+            )
+
+        # Object streams always have a generation number of 0
+        objStm = IndirectObject(objStmId, 0, self).getObject()
+
+        if objStm["/Type"] != "/ObjStm":
+            raise PdfReadError(
+                "/Type of object stream expected to be /ObjStm, was %s instead"
+                % objStm["/Type"]
+            )
+        if localId >= objStm["/N"]:
+            raise PdfStreamError(
+                "Local object id is %d, but a maximum of only %d is allowed" %
+                (localId, objStm["/N"] - 1)
+            )
+
         streamData = BytesIO(b_(objStm.getData()))
 
-        for i in range(objStm['/N']):
+        for index in range(objStm['/N']):
             readNonWhitespace(streamData)
             streamData.seek(-1, 1)
             objnum = NumberObject.readFromStream(streamData)
+
             readNonWhitespace(streamData)
             streamData.seek(-1, 1)
             offset = NumberObject.readFromStream(streamData)
+
             readNonWhitespace(streamData)
             streamData.seek(-1, 1)
 
             if objnum != ref.idnum:
                 # We're only interested in one object
                 continue
-            if self.strict and idx != i:
+            if self.strict and localId != index:
                 raise PdfReadError("Object is in wrong index.")
 
             streamData.seek(objStm['/First'] + offset, 0)
 
-            if self.debug:
-                pos = streamData.tell()
-                streamData.seek(0, 0)
-                lines = streamData.readlines()
-
-                for i in range(0, len(lines)):
-                    print(lines[i])
-
-                streamData.seek(pos, 0)
-
             try:
                 obj = readObject(streamData, self)
             except PdfStreamError as e:
-                # Stream object cannot be read. Normally, a critical error, but
-                # Adobe Reader doesn't complain, so continue (in strict mode?)
+                # Stream object cannot be read. Normally, a critical error,
+                # but Adobe Reader doesn't complain, so continue (in strict
+                # mode?)
                 e = sys.exc_info()[1]
                 warnings.warn(
                     "Invalid stream (index %d) within object %d %d: %s" %
-                    (i, ref.idnum, ref.generation, e), PdfReadWarning
+                    (index, ref.idnum, ref.generation, e),
+                    utils.PdfReadWarning
                 )
 
                 if self.strict:
@@ -1878,10 +1978,10 @@ class PdfFileReader(object):
 
         if self.strict:
             raise PdfReadError("This is a fatal error in strict mode.")
+        else:
+            return NullObject()
 
-        return NullObject()
-
-    def objects(self, select=OBJ_BOTH, freeObjects=False):
+    def objects(self, select=R_BOTH, freeObjects=False):
         """
         Returns an iterable of :class:`IndirectObject<generic.IndirectObject>`
         instances (either by the Cross-Reference Tables or Cross-Reference
@@ -1889,34 +1989,36 @@ class PdfFileReader(object):
 
         :param select: whether to include items from the XRef Table only, the
             Cross-Reference Stream only or both. Accepted values are:\n
-            * PdfFileReader.OBJ_XREF   Only items from the XRef Table
-            * PdfFileReader.OBJ_XSTREAM    Only items from the
+            * PdfFileReader.R_XTABLE   Only items from the XRef Table
+            * PdfFileReader.R_XSTREAM    Only items from the
                 Cross-Reference Stream
-            * PdfFileReader.OBJ_XBOTH  The default, selects both of the above
+            * PdfFileReader.R_BOTH  The default, selects both of the above
         :param freeObjects: whether to include objects from the free entries
             list. Defaults to ``False`` (only objects that can be fetched from
             the File Body are included).
         :return: an unsorted iterable of
             :class:`IndirectObject<generic.IndirectObject>` values.
         """
-        if select & self.OBJ_XTABLE:
+        if select & self.R_XTABLE:
             # Reverse-sorted list of generation numbers from the XRef Table
-            gens = sorted(self._xref.keys(), reverse=True)
+            gens = sorted(self._xrefTable.keys(), reverse=True)
 
             # We give the X-Ref Table a higher precedence than the
             # Cross-Reference Stream
             for gen in gens:
-                for id in self._xref[gen]:
-                    # If this object is in the free-object list:
-                    if not freeObjects and self._xref[gen][id][1] == True:
-                        continue
-
-                    yield IndirectObject(id, gen, self)
-        if select & self.OBJ_XSTREAM:
+                for id in self._xrefTable[gen]:
+                    # "If freeObjects or this object is not a free one..."
+                    if freeObjects or self._xrefTable[gen][id][1] is False:
+                        yield IndirectObject(id, gen, self)
+        if select & self.R_XSTREAM:
             # Iterate through the Cross-Reference Stream
-            for id in self._xrefObjStm.keys():
-                # We are in object streams, yield a generation number of 0
-                yield IndirectObject(id, 0, self)
+            for id, v in self._xrefStm.items():
+                if freeObjects and v[0] == 0:
+                   yield IndirectObject(id, v[2], self)
+                elif v[0] == 1:
+                    yield IndirectObject(id, v[2], self)
+                elif v[0] == 2:
+                    yield IndirectObject(id, 0, self)
 
     def getObject(self, ref):
         """
@@ -1930,131 +2032,29 @@ class PdfFileReader(object):
             found.
         :raises PdfReadError: if ``ref`` did not relate to any object.
         """
-        if self.debug:
-            print("looking at:", ref.idnum, ref.generation)
-
         if (ref.generation, ref.idnum) in self._cachedObjects:
             return self._cachedObjects[(ref.generation, ref.idnum)]
-        if ref.generation == 0 and ref.idnum in self._xrefObjStm:
-            retval = self._getObjectFromStream(ref)
-        elif ref.generation in self._xref and\
-            ref.idnum in self._xref[ref.generation]:
-            start = self._xref[ref.generation][ref.idnum][0]
-
-            if self.debug:
-                print(
-                    "  Uncompressed Object", ref.idnum, ref.generation, ":",
-                    start
-                )
-
-            self.stream.seek(start, 0)
-            idnum, generation = self._readObjectHeader(self.stream)
-
-            if idnum != ref.idnum and self._xrefIndex:
-                # Xref table probably had bad indexes due to not being
-                # zero-indexed
-                if self.strict:
-                    raise PdfReadError(
-                        "Expected object ID (%d %d) does not match actual"
-                        "(%d %d); xref table not zero-indexed."
-                        % (ref.idnum, ref.generation, idnum, generation)
-                    )
-                else:
-                    # Xref table is corrected in non-strict mode
-                    pass
-            elif idnum != ref.idnum and self.strict:
-                # Some other problem
-                raise PdfReadError(
-                    "Expected object ID (%d %d) does not match actual (%d %d)."
-                    % (ref.idnum, ref.generation, idnum, generation)
-                )
-            if self.strict:
-                assert generation == ref.generation
-            retval = readObject(self.stream, self)
-
-            # Override encryption is used for the /Encrypt dictionary
-            if not self._overrideEncryption and self.isEncrypted:
-                # If we don't have the encryption key:
-                if not hasattr(self, '_decryption_key'):
-                    raise PdfReadError("file has not been decrypted")
-
-                # otherwise, decrypt here...
-                pack1 = struct.pack("<i", ref.idnum)[:3]
-                pack2 = struct.pack("<i", ref.generation)[:2]
-                key = self._decryption_key + pack1 + pack2
-                assert len(key) == (len(self._decryption_key) + 5)
-                md5_hash = md5(key).digest()
-                key = md5_hash[:min(16, len(self._decryption_key) + 5)]
-                retval = self._decryptObject(retval, key)
+        elif ref.idnum in self._xrefStm:
+            retval = self._getObjectByRef(ref, self.R_XSTREAM)
+        elif ref.generation in self._xrefTable and \
+                ref.idnum in self._xrefTable[ref.generation]:
+            retval = self._getObjectByRef(ref, self.R_XTABLE)
         else:
             warnings.warn(
                 "Object %d %d not defined." %
                 (ref.idnum, ref.generation), PdfReadWarning
             )
-            raise PdfReadError("Could not find object")
+            raise PdfReadError(
+                "Could not find object (%d, %d)" % (ref.idnum, ref.generation)
+            )
 
         self._cacheIndirectObject(ref.generation, ref.idnum, retval)
 
         return retval
 
-    def _decryptObject(self, obj, key):
-        if isinstance(obj, ByteStringObject)\
-                or isinstance(obj, TextStringObject):
-            obj = createStringObject(RC4Encrypt(key, obj.original_bytes))
-        elif isinstance(obj, StreamObject):
-            obj._data = RC4Encrypt(key, obj._data)
-        elif isinstance(obj, DictionaryObject):
-            for dictkey, value in list(obj.items()):
-                obj[dictkey] = self._decryptObject(value, key)
-        elif isinstance(obj, ArrayObject):
-            for i in range(len(obj)):
-                obj[i] = self._decryptObject(obj[i], key)
-
-        return obj
-
-    def _readObjectHeader(self, stream):
-        # Should never be necessary to read out whitespace, since the
-        # cross-reference table should put us in the right spot to read the
-        # object header.  In reality... some files have stupid cross reference
-        # tables that are off by whitespace bytes.
-        extra = False
-        skipOverComment(stream)
-        extra |= skipOverWhitespace(stream); stream.seek(-1, 1)
-        idnum = readUntilWhitespace(stream)
-        extra |= skipOverWhitespace(stream); stream.seek(-1, 1)
-        generation = readUntilWhitespace(stream)
-        obj = stream.read(3)
-        readNonWhitespace(stream)
-        stream.seek(-1, 1)
-
-        if extra and self.strict:
-            # Not a fatal error
-            warnings.warn(
-                "Superfluous whitespace found in object header %s %s" %
-                (idnum, generation), PdfReadWarning
-            )
-
-        return int(idnum), int(generation)
-
-    def _cacheIndirectObject(self, generation, idnum, obj):
-        # Sometimes we want to turn off cache for debugging.
-        if (generation, idnum) in self._cachedObjects:
-            msg = "Overwriting cache for %s %s" % (generation, idnum)
-
-            if self.strict:
-                raise PdfReadError(msg)
-            else:
-                warnings.warn(msg)
-
-        self._cachedObjects[(generation, idnum)] = obj
-
-        return obj
-
     def _parsePdfFile(self, stream):
-        if self.debug:
-            print(">>read", stream)
-
         stream.seek(-1, 2)  # Start at the end:
+
         if not stream.tell():
             raise PdfReadError("Cannot read an empty file")
 
@@ -2067,9 +2067,6 @@ class PdfFileReader(object):
                 raise PdfReadError("EOF marker not found")
 
             line = self._readNextEndLine(stream)
-
-            if self.debug:
-                print("  line:", line)
 
         # Find startxref entry - the location of the xref table
         line = self._readNextEndLine(stream)
@@ -2172,16 +2169,16 @@ class PdfFileReader(object):
                                 )
                             )
 
-                        if generation not in self._xref:
-                            self._xref[generation] = {}
-                        if currid in self._xref[generation]:
+                        if generation not in self._xrefTable:
+                            self._xrefTable[generation] = {}
+                        if currid in self._xrefTable[generation]:
                             # It really seems like we should allow the last
                             # xref table in the file to override previous
                             # ones. Since we read the file backwards, assume
                             # any existing key is already set correctly.
                             pass
                         else:
-                            self._xref[generation][currid]\
+                            self._xrefTable[generation][currid] \
                                 = (offset, state == "f")
 
                         cnt += 1
@@ -2216,7 +2213,7 @@ class PdfFileReader(object):
 
                 if xrefstream["/Type"] != "/XRef":
                     raise PdfReadError(
-                        "The type of this object should be /XRef, found %s"
+                        "The type of this object should be /XRef, found %s "
                         "instead" % xrefstream["/Type"]
                     )
 
@@ -2224,25 +2221,26 @@ class PdfFileReader(object):
                 streamData = BytesIO(b_(xrefstream.getData()))
                 # Index pairs specify the subsections in the dictionary. If
                 # none create one subsection that spans everything.
-                idxPairs = xrefstream.get(
+                idrange = xrefstream.get(
                     "/Index", [0, xrefstream.get("/Size")]
                 )
 
-                if self.debug:
-                    print(
-                        "read idxPairs=%s" % list(self._pairs(idxPairs))
+                entrySizes = xrefstream.get("/W")
+
+                if len(entrySizes) < 3:
+                    raise PdfReadError(
+                        "Insufficient number of /W entries: %s" % entrySizes
+                    )
+                if self.strict and len(entrySizes) > 3:
+                    raise PdfReadError(
+                        "Excess number of /W entries: %s" % entrySizes
                     )
 
-                entrySizes = xrefstream.get("/W")
-                # TO-DO Replace with a raised exception
-                assert len(entrySizes) >= 3
-
-                if self.strict and len(entrySizes) > 3:
-                    raise PdfReadError("Too many entry sizes: %s" % entrySizes)
-
                 def getEntry(i):
-                    # Reads the correct number of bytes for each entry. See the
-                    # discussion of the W parameter in PDF spec. table 17.
+                    """
+                    Reads the correct number of bytes for each entry. See the
+                    discussion of the W parameter in PDF spec. table 17.
+                    """
                     if entrySizes[i] > 0:
                         d = streamData.read(entrySizes[i])
                         return _convertToInt(d, entrySizes[i])
@@ -2257,55 +2255,48 @@ class PdfFileReader(object):
 
                 def usedBefore(num, generation):
                     # We move backwards through the xrefs, don't replace any.
-                    return num in self._xref.get(generation, []) or \
-                           num in self._xrefObjStm
+                    return num in self._xrefTable.get(generation, []) or \
+                           num in self._xrefStm
 
                 # Iterate through each subsection
                 lastEnd = 0
-                for start, size in pairs(idxPairs):
+                for start, size in pairs(idrange):
                     # The subsections must increase
                     assert start >= lastEnd
                     lastEnd = start + size
 
-                    for num in range(start, start + size):
+                    for idnum in range(start, start + size):
                         # The first entry is the type
                         xrefType = getEntry(0)
+
                         # The rest of the elements depend on the xrefType
                         if xrefType == 0:
                             # Linked list of free objects
                             nextFreeObject = getEntry(1)
                             nextGeneration = getEntry(2)
 
-                            # TO-DO URGENT: Add linked-list of free objects
+                            self._xrefStm[idnum] = (
+                                0, nextFreeObject, nextGeneration
+                            )
                         elif xrefType == 1:
                             # Objects that are in use but are not compressed
                             byteOffset = getEntry(1)
                             generation = getEntry(2)
 
-                            if generation not in self._xref:
-                                self._xref[generation] = {}
-                            if not usedBefore(num, generation):
-                                self._xref[generation][num]\
-                                    = (byteOffset, False)
-
-                                if self.debug:
-                                    print(
-                                        "XREF Uncompressed: %s %s" %
-                                        (num, generation)
-                                    )
+                            if not usedBefore(idnum, generation):
+                                self._xrefStm[idnum] = (
+                                    1, byteOffset, generation
+                                )
                         elif xrefType == 2:
                             # Compressed objects
-                            objstrNum = getEntry(1)
-                            obstrIdx = getEntry(2)
-                            # PDF spec table 18, generation is 0
-                            generation = 0
+                            objStmId = getEntry(1)
+                            localId = getEntry(2)
+                            # According to PDF spec table 18, generation is 0
 
-                            if not usedBefore(num, generation):
-                                if self.debug:
-                                    print("XREF Compressed: %s %s %s" %
-                                          (num, objstrNum, obstrIdx))
-
-                                self._xrefObjStm[num] = (objstrNum, obstrIdx)
+                            if not usedBefore(idnum, generation):
+                                self._xrefStm[idnum] = (
+                                    2, objStmId, localId
+                                )
                         elif self.strict:
                             raise PdfReadError(
                                 "Unknown xref type: %s" % xrefType
@@ -2352,12 +2343,12 @@ class PdfFileReader(object):
         if self._xrefIndex and not self.strict:
             loc = stream.tell()
 
-            for gen in self._xref:
+            for gen in self._xrefTable:
                 if gen == 65535:
                     continue
 
-                for id in self._xref[gen]:
-                    stream.seek(self._xref[gen][id][0], 0)
+                for id in self._xrefTable[gen]:
+                    stream.seek(self._xrefTable[gen][id][0], 0)
 
                     try:
                         pid, pgen = self._readObjectHeader(stream)
@@ -2372,16 +2363,70 @@ class PdfFileReader(object):
             # Return to where it was
             stream.seek(loc, 0)
 
+    def _decryptObject(self, obj, key):
+        if isinstance(obj, ByteStringObject)\
+                or isinstance(obj, TextStringObject):
+            obj = createStringObject(RC4Encrypt(key, obj.original_bytes))
+        elif isinstance(obj, StreamObject):
+            obj._data = RC4Encrypt(key, obj._data)
+        elif isinstance(obj, DictionaryObject):
+            for dictkey, value in list(obj.items()):
+                obj[dictkey] = self._decryptObject(value, key)
+        elif isinstance(obj, ArrayObject):
+            for i in range(len(obj)):
+                obj[i] = self._decryptObject(obj[i], key)
+
+        return obj
+
+    def _readObjectHeader(self, stream):
+        # Should never be necessary to read out whitespace, since the
+        # cross-reference table should put us in the right spot to read the
+        # object header.  In reality... some files have stupid cross reference
+        # tables that are off by whitespace bytes.
+        extra = False
+        utils.skipOverComment(stream)
+        extra |= utils.skipOverWhitespace(stream)
+        stream.seek(-1, 1)
+
+        idnum = readUntilWhitespace(stream)
+        extra |= utils.skipOverWhitespace(stream)
+        stream.seek(-1, 1)
+
+        generation = readUntilWhitespace(stream)
+        obj = stream.read(3)
+        readNonWhitespace(stream)
+        stream.seek(-1, 1)
+
+        if extra and self.strict:
+            # Not a fatal error
+            warnings.warn(
+                "Superfluous whitespace found in object header %s %s" %
+                (idnum, generation), PdfReadWarning
+            )
+
+        return int(idnum), int(generation)
+
+    def _cacheIndirectObject(self, generation, idnum, obj):
+        # Sometimes we want to turn off cache for debugging.
+        if (generation, idnum) in self._cachedObjects:
+            msg = "Overwriting cache for %s %s" % (generation, idnum)
+
+            if self.strict:
+                raise PdfReadError(msg)
+            else:
+                warnings.warn(msg)
+
+        self._cachedObjects[(generation, idnum)] = obj
+
+        return obj
+
     def _zeroXref(self, generation):
-        self._xref[generation] = dict(
+        self._xrefTable[generation] = dict(
             (id - self._xrefIndex, v) for (id, v)
-            in list(self._xref[generation].items())
+            in list(self._xrefTable[generation].items())
         )
 
     def _readNextEndLine(self, stream):
-        if self.debug:
-            print(">>_readNextEndLine")
-
         line = b_("")
 
         while True:
@@ -2390,8 +2435,6 @@ class PdfFileReader(object):
                 raise PdfReadError("Could not read malformed PDF file")
             x = stream.read(1)
 
-            if self.debug:
-                print("  x:", x, "%x" % ord(x))
             if stream.tell() < 2:
                 raise PdfReadError("EOL marker not found")
 
@@ -2401,11 +2444,6 @@ class PdfFileReader(object):
                 crlf = False
 
                 while x == b_('\n') or x == b_('\r'):
-                    if self.debug:
-                        if ord(x) == 0x0D:
-                            print("  x is CR 0D")
-                        elif ord(x) == 0x0A:
-                            print("  x is LF 0A")
                     x = stream.read(1)
                     if x == b_('\n') or x == b_('\r'): # account for CR+LF
                         stream.seek(-1, 1)
@@ -2418,16 +2456,7 @@ class PdfFileReader(object):
                 stream.seek(2 if crlf else 1, 1)
                 break
             else:
-                if self.debug:
-                    print("  x is neither")
-
                 line = x + line
-
-                if self.debug:
-                    print("  %s line:" % self._readNextEndLine.__name__, line)
-
-        if self.debug:
-            print("leaving %s" % self._readNextEndLine.__name__)
 
         return line
 
