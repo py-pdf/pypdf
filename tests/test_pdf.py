@@ -55,6 +55,8 @@ class PdfReaderTestCases(unittest.TestCase):
         compare to expected textual output. Expected outcome: file loads, text
         matches expected.
         """
+        LOCAL_DATA_ROOT = join(TESTS_DATA_ROOT, self.testFileLoad.__name__)
+
         with open(
                 join(TESTS_DATA_ROOT, 'crazyones.pdf'), 'rb'
         ) as inputfile:
@@ -64,16 +66,15 @@ class PdfReaderTestCases(unittest.TestCase):
 
             # Retrieve the text of the PDF
             with open(
-                    join(TESTS_DATA_ROOT, 'crazyones.txt'), 'rb'
+                    join(LOCAL_DATA_ROOT, 'crazyones.txt'), 'rb'
             ) as pdftextFile:
                 pdftext = pdftextFile.read()
 
-            ipdfP1Text = ipdfP1.extractText().\
-                replace('\n', '').encode('utf-8')
+            ipdfP1Text = ipdfP1.extractText().replace('\n', '').encode('utf-8')
 
             # Compare the text of the PDF to a known source
             self.assertEqual(
-                ipdfP1Text, pdftext,
+                pdftext, ipdfP1Text,
                 msg='PDF extracted text differs from expected value.'
                     '\n\nExpected:\n\n%r\n\nExtracted:\n\n%r\n\n'
                     % (pdftext, ipdfP1Text)
@@ -85,13 +86,15 @@ class PdfReaderTestCases(unittest.TestCase):
         compare to expected textual output. Expected outcome: file loads, image
         matches expected.
         """
+        LOCAL_DATA_ROOT = join(TESTS_DATA_ROOT, self.testJpegImage.__name__)
+
         with open(join(TESTS_DATA_ROOT, 'jpeg.pdf'), 'rb') as inputfile:
             # Load PDF file from file
             ipdf = PdfFileReader(inputfile)
 
             # Retrieve the text of the image
             with open(
-                    join(TESTS_DATA_ROOT, 'jpeg.txt'), 'r'
+                    join(LOCAL_DATA_ROOT, 'jpeg.txt'), 'r'
             ) as pdftextFile:
                 imagetext = pdftextFile.read()
 
