@@ -511,7 +511,8 @@ class PdfFileWriter(object):
         if len(self._objects) > 25 and progress_bar_enabled and progress_bar is 'gui' and 'PySimpleGUI' in sys.modules:
             import PySimpleGUI as gui
             for i in range(len(self._objects)):
-                if not gui.EasyProgressMeter('Encrypting PDF', i + 1, len(self._objects), orientation='h'):
+                if not gui.OneLineProgressMeter('Encrypting PDF', i + 1, len(self._objects), orientation='h',
+                                                key='progress'):
                     break
                 idnum = (i + 1)
                 obj = self._objects[i]
