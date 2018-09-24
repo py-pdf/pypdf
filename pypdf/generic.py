@@ -734,7 +734,7 @@ class DictionaryObject(dict, PdfObject):
 
 class TreeObject(DictionaryObject):
     def __init__(self):
-        DictionaryObject.__init__(self)
+        DictionaryObject.__init__()
 
     def hasChildren(self):
         return '/First' in self
@@ -871,6 +871,7 @@ class TreeObject(DictionaryObject):
 
 class StreamObject(DictionaryObject):
     def __init__(self):
+        super(StreamObject, self).__init__()
         self._data = None
         self.decodedSelf = None
 
@@ -890,7 +891,10 @@ class StreamObject(DictionaryObject):
     @staticmethod
     def initializeFromDictionary(data):
         if "/Filter" in data:
-            retval = EncodedStreamObject()
+            if data.get("/Type") == "/ObjStm":
+                retval = ObjectStream()
+            else:
+                retval = EncodedStreamObject()
         else:
             retval = DecodedStreamObject()
 
@@ -926,6 +930,7 @@ class StreamObject(DictionaryObject):
 
 class EncodedStreamObject(StreamObject):
     def __init__(self):
+        super(EncodedStreamObject, self).__init__()
         self.decodedSelf = None
 
     def getData(self):
@@ -944,15 +949,19 @@ class EncodedStreamObject(StreamObject):
                     decoded[key] = value
 
             self.decodedSelf = decoded
+
             return decoded._data
 
     def setData(self, data):
-        raise PdfReadError(
+        raise NotImplementedError(
             "Creating EncodedStreamObject is not currently supported"
         )
 
 
 class DecodedStreamObject(StreamObject):
+    def __init__(self):
+        super(DecodedStreamObject, self).__init__()
+
     def getData(self):
         return self._data
 
@@ -962,8 +971,7 @@ class DecodedStreamObject(StreamObject):
 
 class ContentStream(DecodedStreamObject):
     def __init__(self, stream, pdf):
-        # TO-DO Why is the call to super().__init__() missing here? Shouldn't
-        # it be added?
+        super(ContentStream, self).__init__()
         self.pdf = pdf
         self.operations = []
         # stream may be a StreamObject or an ArrayObject containing
@@ -1099,6 +1107,37 @@ class ContentStream(DecodedStreamObject):
 
     _data = property(_getData, _setData)
 
+
+class ObjectStream(EncodedStreamObject):
+    DATA_HEADER_RE = re.compile(b"(?:\d+\s)+")
+    """
+    Regex to match pairs of ids and offset numbers in the first part of an
+    object stream data.
+    """
+
+    def __init__(self):
+        """
+        Class intended to provide simplified access to some of object streams'
+        properties.
+        """
+        super(ObjectStream, self).__init__()
+
+    @property
+    def objectIds(self):
+        """
+        :return: an iterable containing a sequence of object ids sorted
+            according to their appearance order, stored in the object stream
+            header.
+        """
+        match = self.DATA_HEADER_RE.match(self.getData())
+        output = [int(n) for n in match.group().split()]
+
+        if (len(output) % 2) != 0:
+            raise PdfReadError(
+                "Object stream header must contain an even list of numbers"
+            )
+
+        return tuple(output[i] for i in range(0, len(output), 2))
 
 class DocumentInformation(DictionaryObject):
     """
