@@ -135,8 +135,7 @@ class PdfReaderTestCases(unittest.TestCase):
             TESTS_DATA_ROOT, self.testXRefTableObjects.__name__
         )
         inputFiles = (
-            "jpeg.pdf", "GeoBase_NHNC1_Data_Model_UML_EN.pdf",
-            "Seige_of_Vicksburg_Sample_OCR.pdf", "SF424_page2.pdf"
+            "jpeg.pdf", "Seige_of_Vicksburg_Sample_OCR.pdf", "SF424_page2.pdf"
         )
 
         for filename in inputFiles:

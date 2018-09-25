@@ -2223,7 +2223,10 @@ class PdfFileReader(object):
                 for key, value in newTrailer.items():
                     if key not in self._trailer:
                         self._trailer[key] = value
-                if "/Prev" in newTrailer:
+
+                if "/XRefStm" in newTrailer:
+                    startxref = newTrailer["/XRefStm"]
+                elif "/Prev" in newTrailer:
                     startxref = newTrailer["/Prev"]
                 else:
                     break
@@ -2284,6 +2287,22 @@ class PdfFileReader(object):
                             # Objects that are in use but are not compressed
                             byteOffset = getEntry(1, streamData)
                             generation = getEntry(2, streamData)
+
+                            # # We read the actual object id from the stream
+                            # lastpos = stream.tell()
+                            # stream.seek(byteOffset, 0)
+                            # actualId, actualGen = self._readObjectHeader(
+                            #     stream
+                            # )
+                            #
+                            # if self.strict and actualGen != generation:
+                            #     raise PdfReadError(
+                            #         "The read gen. number and the gen. number "
+                            #         "specified by the XRef Stream do not match"
+                            #         ": %d != %d" % (actualGen, generation)
+                            #     )
+                            #
+                            # stream.seek(lastpos, 0)
 
                             if not usedBefore(idnum, generation):
                                 self._xrefStm[idnum] = (
