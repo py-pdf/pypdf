@@ -1,5 +1,10 @@
 """
 Tests PDF primitives from pypdf.pdf.
+
+Note for future developers: if defining some code in a ``testX()`` method
+that relies on a "fixture data" (e.g. a test file to read from) place it in the
+``/tests/fixture_data/testX/`` path (see some of the examples below to have a
+hint on how to do this).
 """
 import binascii
 import sys
@@ -63,8 +68,8 @@ class PdfReaderTestCases(unittest.TestCase):
                 join(TESTS_DATA_ROOT, 'crazyones.pdf'), 'rb'
         ) as inputfile:
             # Load PDF file from file
-            ipdf = PdfFileReader(inputfile)
-            ipdfP1 = ipdf.getPage(0)
+            r = PdfFileReader(inputfile)
+            page1 = r.getPage(0)
 
             # Retrieve the text of the PDF
             with open(
@@ -72,7 +77,7 @@ class PdfReaderTestCases(unittest.TestCase):
             ) as pdftextFile:
                 pdftext = pdftextFile.read()
 
-            ipdfP1Text = ipdfP1.extractText().replace('\n', '').encode('utf-8')
+            ipdfP1Text = page1.extractText().replace('\n', '').encode('utf-8')
 
             # Compare the text of the PDF to a known source
             self.assertEqual(
@@ -81,6 +86,8 @@ class PdfReaderTestCases(unittest.TestCase):
                     '\n\nExpected:\n\n%r\n\nExtracted:\n\n%r\n\n'
                     % (pdftext, ipdfP1Text)
             )
+
+            r.close()
 
     def testJpegImage(self):
         """
@@ -92,7 +99,7 @@ class PdfReaderTestCases(unittest.TestCase):
 
         with open(join(TESTS_DATA_ROOT, 'jpeg.pdf'), 'rb') as inputfile:
             # Load PDF file from file
-            ipdf = PdfFileReader(inputfile)
+            r = PdfFileReader(inputfile)
 
             # Retrieve the text of the image
             with open(
@@ -100,8 +107,8 @@ class PdfReaderTestCases(unittest.TestCase):
             ) as pdftextFile:
                 imagetext = pdftextFile.read()
 
-            ipdfP0 = ipdf.getPage(0)
-            xObject = ipdfP0['/Resources']['/XObject'].getObject()
+            page1 = r.getPage(0)
+            xObject = page1['/Resources']['/XObject'].getObject()
             data = xObject['/Im4'].getData()
 
             # Compare the text of the PDF to a known source
@@ -111,6 +118,8 @@ class PdfReaderTestCases(unittest.TestCase):
                     '\n\nExpected:\n\n%r\n\nExtracted:\n\n%r\n\n'
                     % (imagetext, binascii.hexlify(data).decode())
             )
+
+            r.close()
 
     def testXRefTableObjects(self):
         """
@@ -130,62 +139,30 @@ class PdfReaderTestCases(unittest.TestCase):
             "Seige_of_Vicksburg_Sample_OCR.pdf", "SF424_page2.pdf"
         )
 
-        for file in inputFiles:
-            filepath = join(TESTS_DATA_ROOT, file)
-            xtablepath = join(LOCAL_DATA_ROOT, file)
+        for filename in inputFiles:
+            filepath = join(TESTS_DATA_ROOT, filename)
+            xtablepath = join(LOCAL_DATA_ROOT, filename)
             r = PdfFileReader(filepath)
             # The two below are (id, gen, byte offset)-valued lists
             actualItems = list()
             expItems = list()
 
             for ref in r.objects(PdfFileReader.R_XTABLE, True):
-                actualItems.append(
-                    (ref.idnum, ref.generation,\
-                     r._xrefTable[ref.generation][ref.idnum][0])
-                )
+                actualItems.append((
+                    ref.idnum, ref.generation,
+                    r._xrefTable[ref.generation][ref.idnum][0]
+                ))
 
+            r.close()
+            # We artificially read the XRef Table entries that we know belong
+            # to filepath, and store them into expItems.
+            expItems = sorted(self._parseXRefTable(xtablepath, (0, 1, 2)))
             actualItems = sorted(actualItems)
-
-            # With this block we artificially read the XRef Table entries that
-            # we know belong to filepath, and store them into expItems
-            with open(xtablepath, "r") as instream:
-                startid = None
-                expecteditems = None
-                itemssofar = None
-
-                for line in instream:
-                    if not line or line.isspace() or line.startswith("%"):
-                        continue
-
-                    tokens = line.strip().split()
-
-                    # We are beginning a new sub reference section
-                    if len(tokens) == 2:
-                        if itemssofar != expecteditems:
-                            raise ValueError(
-                                "Line \"%d %d\" specified %d items, %d read"
-                                % (startid, expecteditems, expecteditems,
-                                   itemssofar)
-                            )
-
-                        startid = int(tokens[0])
-                        expecteditems = int(tokens[1])
-                        itemssofar = 0
-                    elif len(tokens) == 3:  # New object info to add
-                        # We append an (id, gen, byte offset) tuple
-                        expItems.append((
-                            startid + itemssofar, int(tokens[1]),
-                            int(tokens[0])
-                        ))
-                        itemssofar += 1
-                    else:
-                        raise ValueError(
-                            "Something unexpected was written in %s"
-                            % xtablepath
-                        )
-
             expItems = sorted(expItems)
-            self.assertListEqual(expItems, actualItems)
+
+            self.assertListEqual(
+                expItems, actualItems, "Differences found in " + filename
+            )
 
     def testXRefStreamObjects(self):
         """
@@ -244,8 +221,7 @@ class PdfReaderTestCases(unittest.TestCase):
         """
         self.maxDiff = None
         LOCAL_DATA_ROOT = join(
-            TESTS_DATA_ROOT,
-            self.testReadXRefStreamCompressedObjects.__name__
+            TESTS_DATA_ROOT, self.testReadXRefStreamCompressedObjects.__name__
         )
         inputFiles = ("crazyones.pdf", )
         # expItems and actualItems will contain two-element tuples, where the
@@ -264,13 +240,13 @@ class PdfReaderTestCases(unittest.TestCase):
                     if not line or line.isspace() or line.startswith(b"%"):
                         continue
 
-                    globalId, offset, object = line.split(b" ", 2)
+                    globalId, offset, obj = line.split(b" ", 2)
                     globalId, offset = int(globalId), int(offset)
 
-                    with BytesIO(object) as objStream:
-                        object = readObject(objStream, r)
+                    with BytesIO(obj) as objStream:
+                        obj = readObject(objStream, r)
 
-                    expItems.append((globalId, object))
+                    expItems.append((globalId, obj))
 
             for itemid, item in filter(compressedObj, r._xrefStm.items()):
                 # We deal exclusively with compressed objects (from Table 18 of
@@ -285,6 +261,108 @@ class PdfReaderTestCases(unittest.TestCase):
             actualItems = sorted(actualItems, key=sortKey)
 
             self.assertListEqual(expItems, actualItems)
+
+    def testXTableAgainstXStream(self):
+        """
+        In section 7.5.8.4 of ISO 32000, "Compatibility with Applications That
+        Do Not Support Compressed Reference Streams", the standard describes a
+        means of crafting PDF files designed for versions 1.5+ that can be
+        opened nevertheless by readers that support older versions.
+
+        This test case verifies that all the items hidden by the XRef Table in
+        non-conforming readers are *all and exactly* loaded into the XRef
+        Stream by readers that support PDF 1.5+.
+        """
+        self.maxDiff = None
+        LOCAL_DATA_ROOT = join(
+            TESTS_DATA_ROOT, self.testXTableAgainstXStream.__name__
+        )
+        # TO-DO Possibly add a few other files to this test case
+        inputFiles = ("GeoBase_NHNC1_Data_Model_UML_EN.pdf", )
+
+        for filename in inputFiles:
+            filepath = join(LOCAL_DATA_ROOT, filename)
+            expItems = {
+                e[0]: e[1:] for e in self._parseXRefTable(filepath, (0, 2, 3))
+            }
+            actualItems = list()
+            r = PdfFileReader(join(TESTS_DATA_ROOT, filename))
+
+            for ref in r.objects(PdfFileReader.R_XSTREAM, True):
+                actualItems.append(ref)
+
+            r.close()
+            actualItems = sorted(actualItems, key=lambda e: e.idnum)
+            expKeys = sorted(expItems.keys())
+            actualKeys = list(map(lambda e: e.idnum, actualItems))
+
+            self.assertListEqual(
+                expKeys, actualKeys, "Lists of item IDs are not identical"
+            )
+
+            for e, a in zip(expKeys, actualItems):
+                self.assertEqual(e, a.idnum, "Items ID does not correspond")
+
+                # If an item is in use in the XRef Stream, ensure then that it
+                # is marked free in the XRef Table.
+                if r._xrefStm[a.idnum][0] in (2, ):
+                    self.assertTrue(
+                        expItems[e][-1],
+                        "Item %d should be hid by the XRef Table, but it was "
+                        "not." % e
+                    )
+
+    @staticmethod
+    def _parseXRefTable(filepath, mask=tuple()):
+        """
+        Parses a Cross-Reference Table, such as the sampled ones used for
+        testing.
+
+        :param filepath: file path where the table is stored in.
+        :param mask: a list of fields' indices indicating which fields are to
+            be returned. For example, ``(0, 2, 3)`` indicates that only the
+            ``id``, ``byteOffset`` and ``isFree`` fields have to be returned.
+        :return: an iterable of items of the form
+            ``(id, gen, byteOffset, isFree)`` if ``mask`` hasn't been set,
+            otherwise an iterable of all the items ``mask`` has specified.
+        """
+        startid = None
+        expecteditems = None
+        itemssofar = None
+
+        if not mask:
+            mask = tuple(range(4))
+
+        with open(filepath, "r") as instream:
+            for line in instream:
+                if not line or line.isspace() or line.startswith("%"):
+                    continue
+
+                tokens = line.strip().split()
+
+                # We are beginning a new sub reference section
+                if len(tokens) == 2:
+                    if itemssofar != expecteditems:
+                        raise ValueError(
+                            "Line \"%d %d\" specified %d items, %d read"
+                            % (startid, expecteditems, expecteditems,
+                               itemssofar)
+                        )
+
+                    startid = int(tokens[0])
+                    expecteditems = int(tokens[1])
+                    itemssofar = 0
+                elif len(tokens) == 3:  # New object info to add
+                    # We yield an (id, gen, byte offset) tuple
+                    output = (
+                        startid + itemssofar, int(tokens[1]), int(tokens[0]),
+                        tokens[2] == "f"
+                    )
+                    yield tuple(output[s] for s in mask)
+
+                    itemssofar += 1
+                else:
+                    raise ValueError("Unexpected token in %s" % filepath)
 
     def testProperties(self):
         """

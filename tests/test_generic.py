@@ -38,8 +38,10 @@ class ObjectStreamTestCase(unittest.TestCase):
             ref = IndirectObject(d[1], d[2], r)
             objStm = r.getObject(ref)
 
+            r.close()
+
             self.assertIsInstance(objStm, ObjectStream)
-            self.assertTupleEqual(tuple(objStm.objectIds), tuple(o))
+            self.assertTupleEqual(tuple(o), tuple(objStm.objectIds))
 
 
 if __name__ == "__main__":
