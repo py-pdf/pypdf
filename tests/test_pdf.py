@@ -17,7 +17,7 @@ from os.path import abspath, dirname, join, pardir
 PROJECT_ROOT = abspath(
     join(dirname(__file__), pardir)
 )
-TESTS_DATA_ROOT = join(PROJECT_ROOT, "tests", "fixture_data")
+TEST_DATA_ROOT = join(PROJECT_ROOT, "tests", "fixture_data")
 
 sys.path.append(PROJECT_ROOT)
 
@@ -26,12 +26,19 @@ from pypdf.generic import IndirectObject, readObject
 
 
 class PdfReaderTestCases(unittest.TestCase):
+    def setUp(self):
+        # Variable defining the path where the method to be run next can store
+        # its own fixture (test) data.
+        self.localDataRoot = join(
+            TEST_DATA_ROOT, self.id().split(".")[-1]
+        )
+
     def testDel(self):
         """
         Tests the ``__del__()`` method of ``PdfFileReader`` and
         ``PdfFileWriter`` ensuring that no exceptions are raised.
         """
-        r = PdfFileReader(join(TESTS_DATA_ROOT, "crazyones.pdf"))
+        r = PdfFileReader(join(TEST_DATA_ROOT, "crazyones.pdf"))
         w = PdfFileWriter()
 
         try:
@@ -62,10 +69,8 @@ class PdfReaderTestCases(unittest.TestCase):
         compare to expected textual output. Expected outcome: file loads, text
         matches expected.
         """
-        LOCAL_DATA_ROOT = join(TESTS_DATA_ROOT, self.testFileLoad.__name__)
-
         with open(
-                join(TESTS_DATA_ROOT, 'crazyones.pdf'), 'rb'
+                join(TEST_DATA_ROOT, 'crazyones.pdf'), 'rb'
         ) as inputfile:
             # Load PDF file from file
             r = PdfFileReader(inputfile)
@@ -73,18 +78,18 @@ class PdfReaderTestCases(unittest.TestCase):
 
             # Retrieve the text of the PDF
             with open(
-                    join(LOCAL_DATA_ROOT, 'crazyones.txt'), 'rb'
+                    join(self.localDataRoot, 'crazyones.txt'), 'rb'
             ) as pdftextFile:
                 pdftext = pdftextFile.read()
 
-            ipdfP1Text = page1.extractText().replace('\n', '').encode('utf-8')
+            page1Text = page1.extractText().replace('\n', '').encode('utf-8')
 
             # Compare the text of the PDF to a known source
             self.assertEqual(
-                pdftext, ipdfP1Text,
+                pdftext, page1Text,
                 msg='PDF extracted text differs from expected value.'
                     '\n\nExpected:\n\n%r\n\nExtracted:\n\n%r\n\n'
-                    % (pdftext, ipdfP1Text)
+                    % (pdftext, page1Text)
             )
 
             r.close()
@@ -95,15 +100,13 @@ class PdfReaderTestCases(unittest.TestCase):
         compare to expected textual output. Expected outcome: file loads, image
         matches expected.
         """
-        LOCAL_DATA_ROOT = join(TESTS_DATA_ROOT, self.testJpegImage.__name__)
-
-        with open(join(TESTS_DATA_ROOT, 'jpeg.pdf'), 'rb') as inputfile:
+        with open(join(TEST_DATA_ROOT, 'jpeg.pdf'), 'rb') as inputfile:
             # Load PDF file from file
             r = PdfFileReader(inputfile)
 
             # Retrieve the text of the image
             with open(
-                    join(LOCAL_DATA_ROOT, 'jpeg.txt'), 'r'
+                    join(self.localDataRoot, 'jpeg.txt'), 'r'
             ) as pdftextFile:
                 imagetext = pdftextFile.read()
 
@@ -131,16 +134,13 @@ class PdfReaderTestCases(unittest.TestCase):
         generating the Cross-Reference Table entries too.
         """
         self.maxDiff = None
-        LOCAL_DATA_ROOT = join(
-            TESTS_DATA_ROOT, self.testXRefTableObjects.__name__
-        )
         inputFiles = (
             "jpeg.pdf", "Seige_of_Vicksburg_Sample_OCR.pdf", "SF424_page2.pdf"
         )
 
         for filename in inputFiles:
-            filepath = join(TESTS_DATA_ROOT, filename)
-            xtablepath = join(LOCAL_DATA_ROOT, filename)
+            filepath = join(TEST_DATA_ROOT, filename)
+            xtablepath = join(self.localDataRoot, filename)
             r = PdfFileReader(filepath)
             # The two below are (id, gen, byte offset)-valued lists
             actualItems = list()
@@ -170,14 +170,11 @@ class PdfReaderTestCases(unittest.TestCase):
         ``PdfFileReader.objects()`` second part (dealing with XStream objects)
         is invoked and implicitly tested.
         """
-        LOCAL_DATA_ROOT = join(
-            TESTS_DATA_ROOT, self.testXRefStreamObjects.__name__
-        )
         inputFiles = ("crazyones.pdf", )
 
         for filename in inputFiles:
-            filepath = join(LOCAL_DATA_ROOT, filename)
-            r = PdfFileReader(join(TESTS_DATA_ROOT, filename))
+            filepath = join(self.localDataRoot, filename)
+            r = PdfFileReader(join(TEST_DATA_ROOT, filename))
             # Two lists of tuples as explained by Table 18
             actualItems = list()
             expItems = list()
@@ -219,9 +216,6 @@ class PdfReaderTestCases(unittest.TestCase):
         previous test cases did.
         """
         self.maxDiff = None
-        LOCAL_DATA_ROOT = join(
-            TESTS_DATA_ROOT, self.testReadXRefStreamCompressedObjects.__name__
-        )
         inputFiles = ("crazyones.pdf", )
         # expItems and actualItems will contain two-element tuples, where the
         # first element is the object ID, used to sort.
@@ -229,8 +223,8 @@ class PdfReaderTestCases(unittest.TestCase):
         compressedObj = lambda e: e[1][0] == 2
 
         for filename in inputFiles:
-            filepath = join(LOCAL_DATA_ROOT, filename)
-            r = PdfFileReader(join(TESTS_DATA_ROOT, filename))
+            filepath = join(self.localDataRoot, filename)
+            r = PdfFileReader(join(TEST_DATA_ROOT, filename))
             expItems = list()
             actualItems = list()
 
@@ -273,19 +267,16 @@ class PdfReaderTestCases(unittest.TestCase):
         Stream by readers that support PDF 1.5+.
         """
         self.maxDiff = None
-        LOCAL_DATA_ROOT = join(
-            TESTS_DATA_ROOT, self.testXTableAgainstXStream.__name__
-        )
         # TO-DO Possibly add a few other files to this test case
         inputFiles = ("GeoBase_NHNC1_Data_Model_UML_EN.pdf", )
 
         for filename in inputFiles:
-            filepath = join(LOCAL_DATA_ROOT, filename)
+            filepath = join(self.localDataRoot, filename)
             expItems = {
                 e[0]: e[1:] for e in self._parseXRefTable(filepath, (0, 2, 3))
             }
             actualItems = list()
-            r = PdfFileReader(join(TESTS_DATA_ROOT, filename))
+            r = PdfFileReader(join(TEST_DATA_ROOT, filename))
 
             for ref in r.objects(PdfFileReader.R_XSTREAM, True):
                 actualItems.append(ref)
@@ -382,7 +373,7 @@ class PdfReaderTestCases(unittest.TestCase):
 
 class AddJsTestCase(unittest.TestCase):
     def setUp(self):
-        ipdf = PdfFileReader(join(TESTS_DATA_ROOT, 'crazyones.pdf'))
+        ipdf = PdfFileReader(join(TEST_DATA_ROOT, 'crazyones.pdf'))
         self.pdfFileWriter = PdfFileWriter()
         self.pdfFileWriter.appendPagesFromReader(ipdf)
 
