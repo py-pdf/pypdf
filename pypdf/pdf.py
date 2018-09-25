@@ -2055,7 +2055,8 @@ class PdfFileReader(object):
         def getEntry(i, streamData):
             """
             Reads the correct number of bytes for each entry. See the
-            discussion of the /W parameter in PDF spec. table 17.
+            discussion of the ``/W`` parameter in ISO 32000, section 7.5.8.2,
+            table 17.
             """
             if entrySizes[i] > 0:
                 d = streamData.read(entrySizes[i])
@@ -2226,10 +2227,10 @@ class PdfFileReader(object):
                     startxref = newTrailer["/Prev"]
                 else:
                     break
-            elif x.isdigit():
-                # PDF 1.5+ Cross-Reference Stream
+            elif x.isdigit():   # PDF 1.5+ Cross-Reference Stream
                 stream.seek(-1, 1)
-                idnum, generation = self._readObjectHeader(stream)
+                xrefstreamOffset = stream.tell()
+                xrefstmId, xrefstmGen = self._readObjectHeader(stream)
                 xrefstream = readObject(stream, self)
 
                 if xrefstream["/Type"] != "/XRef":
@@ -2238,7 +2239,8 @@ class PdfFileReader(object):
                         "instead" % xrefstream["/Type"]
                     )
 
-                self._cacheIndirectObject(generation, idnum, xrefstream)
+                self._cacheIndirectObject(xrefstmGen, xrefstmId, xrefstream)
+
                 streamData = BytesIO(b_(xrefstream.getData()))
                 # Index pairs specify the subsections in the dictionary. If
                 # none create one subsection that spans everything.
@@ -2259,6 +2261,7 @@ class PdfFileReader(object):
 
                 # Iterate through each subsection
                 lastEnd = 0
+
                 for start, size in pairs(idrange):
                     # The subsections must increase
                     assert start >= lastEnd
@@ -2292,12 +2295,21 @@ class PdfFileReader(object):
                             localId = getEntry(2, streamData)
                             # According to PDF spec table 18, generation is 0
 
-                            if not usedBefore(idnum, generation):
+                            if not usedBefore(idnum, 0):
                                 self._xrefStm[idnum] = (2, objStmId, localId)
                         elif self.strict:
                             raise PdfReadError(
                                 "Unknown xref type: %s" % xrefType
                             )
+
+                # As we've seen this happen, if the XRef Stream wasn't indexed
+                # in neither the XRef Table or within itself, we artificially
+                # add it with a /W type value of 1 (used but uncompressed
+                # objects).
+                if not usedBefore(xrefstmId, xrefstmGen):
+                    self._xrefStm[xrefstmId] = (
+                        1, xrefstreamOffset, xrefstmGen
+                    )
 
                 trailerKeys = ("/Root", "/Encrypt", "/Info", "/ID")
 
@@ -2336,6 +2348,7 @@ class PdfFileReader(object):
                 raise PdfReadError(
                     "Could not find xref table at specified location"
                 )
+
         # If not zero-indexed, verify that the table is correct; change it if
         # necessary
         if self._xrefIndex and not self.strict:
