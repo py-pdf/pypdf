@@ -2051,6 +2051,24 @@ class PdfFileReader(object):
 
         return retval
 
+    def isObjectFree(self, ref):
+        """
+        :param ref: a :class:`IndirectObject<pypdf.generic.IndirectObject>`
+            instance.
+        :return: ``True`` if ``ref`` is in the free entries list, ``False``
+            otherwise.
+        """
+        if ref.generation in self._xrefTable\
+            and ref.idnum in self._xrefTable[ref.generation]:
+            return self._xrefTable[ref.generation][ref.idnum][1]
+        elif ref.idnum in self._xrefStm:
+            return self._xrefStm[ref.idnum][0] == 0
+
+        # Object does not exist
+        raise ValueError(
+            "%r does not exist in %s" % (str(ref), self._filepath)
+        )
+
     def _parsePdfFile(self, stream):
         def getEntry(i, streamData):
             """

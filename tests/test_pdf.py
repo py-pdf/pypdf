@@ -302,6 +302,34 @@ class PdfReaderTestCases(unittest.TestCase):
                         "not." % e
                     )
 
+    def testIsObjectFree(self):
+        """
+        Tests the ``PdfFileReader.isObjectFree()` method.
+        """
+        # TO-DO Find PDF files that feature free-entry lists. We are checking
+        # isObjectFree() only against used items.
+        inputFiles = (
+            "jpeg.pdf", "Seige_of_Vicksburg_Sample_OCR.pdf", "SF424_page2.pdf",
+        )
+
+        for filename in inputFiles:
+            filepath = join(self.localDataRoot, filename)
+            r = PdfFileReader(join(TEST_DATA_ROOT, filename))
+            expItems = self._parseXRefTable(filepath, (0, 1, 3))
+            actualItems = list()
+
+            for ref in r.objects(PdfFileReader.R_XTABLE, True):
+                actualItems.append(
+                    # This is where isObjectFree() gets invoked
+                    (ref.idnum, ref.generation, r.isObjectFree(ref))
+                )
+
+            r.close()
+            expItems = sorted(expItems)
+            actualItems = sorted(actualItems)
+
+            self.assertListEqual(expItems, actualItems)
+
     @staticmethod
     def _parseXRefTable(filepath, mask=tuple()):
         """
