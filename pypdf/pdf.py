@@ -98,6 +98,16 @@ class PdfFileWriter(object):
         self._root = None
         self._root_object = root
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, excType, excVal, excTb):
+        # TO-DO Implement AND TEST along with PdfFileWriter.close()
+        if not self.isClosed:
+            self.close()
+
+        return False
+
     def __repr__(self):
         return "<%s.%s _header=%s, isClosed=%s, debug=%s>" % (
             self.__class__.__module__, self.__class__.__name__,
@@ -1318,6 +1328,27 @@ class PdfFileReader(object):
         ):
             if hasattr(self, a):
                 delattr(self, a)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, excType, excVal, excTb):
+        if not self.isClosed:
+            self.close()
+
+        return False
+
+    @property
+    def filepath(self):
+        """
+        :return: The PDF file path this ``PdfFileReader`` is associated to, or
+            ``None`` if there isn't such a path (like when initializing a
+            ``PdfFileReader`` from a non-file stream).
+        """
+        if self._filepath:
+            return self._filepath
+
+        return None
 
     @property
     def isClosed(self):

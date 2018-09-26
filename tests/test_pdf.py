@@ -11,7 +11,7 @@ import sys
 import unittest
 
 from io import BytesIO
-from os.path import abspath, dirname, join, pardir
+from os.path import abspath, basename, dirname, join, pardir
 
 # Configure path environment
 PROJECT_ROOT = abspath(
@@ -329,6 +329,25 @@ class PdfReaderTestCases(unittest.TestCase):
             actualItems = sorted(actualItems)
 
             self.assertListEqual(expItems, actualItems)
+
+    def testContextManager(self):
+        """
+        Tests the context manager implementation (the ``with <expr> as
+        identifier`` feature) of ``PdfFileReader``.
+        """
+        inputFiles = (
+            "jpeg.pdf", "Seige_of_Vicksburg_Sample_OCR.pdf", "SF424_page2.pdf"
+        )
+
+        for filename in inputFiles:
+            r = None
+
+            with PdfFileReader(join(TEST_DATA_ROOT, filename)) as r:
+                # Test assertions not strictly related to the whole test case
+                self.assertEqual(filename, basename(r.filepath))
+                self.assertFalse(r.isClosed)
+
+            self.assertTrue(r.isClosed)
 
     @staticmethod
     def _parseXRefTable(filepath, mask=tuple()):
