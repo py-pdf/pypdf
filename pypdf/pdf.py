@@ -143,6 +143,7 @@ class PdfFileWriter(object):
 
     def _addObject(self, obj):
         self._objects.append(obj)
+
         return IndirectObject(len(self._objects), 0, self)
 
     def getObject(self, ido):
@@ -1292,24 +1293,24 @@ class PdfFileReader(object):
         self.debug = debug
         self._overrideEncryption = False
 
+        if isinstance(stream, io.FileIO):
+            self._filepath = stream.name
+        elif isString(stream):
+            self._filepath = stream
+        else:
+            self._filepath = None
+
         if hasattr(stream, 'mode') and 'b' not in stream.mode:
             warnings.warn(
                 "PdfFileReader stream/file object is not in binary mode. It "
                 "may not be read correctly.", PdfReadWarning
             )
-
-            if isinstance(stream, io.FileIO):
-                self._filepath = stream.name
-            else:
-                self._filepath = ""
         elif isString(stream):
-            self._filepath = stream
-
             with open(stream, 'rb') as fileobj:
                 stream = BytesIO(fileobj.read())
 
-        self._parsePdfFile(stream)
         self.stream = stream
+        self._parsePdfFile(stream)
 
     def __repr__(self):
         return """\
