@@ -602,10 +602,10 @@ class PdfFileWriter(object):
 
     def _sweepIndirectReferences(self, externMap, data):
         if self.debug:
-            print((data, "TYPE", data.__class__.__name__))
+            print(data, "TYPE", data.__class__.__name__)
 
         if isinstance(data, DictionaryObject):
-            for key, value in list(data.items()):
+            for key, value in data.items():
                 value = self._sweepIndirectReferences(externMap, value)
 
                 if isinstance(value, StreamObject):
@@ -635,7 +635,7 @@ class PdfFileWriter(object):
                     self._sweepIndirectReferences(externMap, realdata)
                     return data
             else:
-                if data.pdf.stream.closed:
+                if data.pdf.isClosed:
                     raise ValueError(
                         "I/O operation on closed file: " + data.pdf.stream.name
                     )
