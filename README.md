@@ -1,5 +1,7 @@
 # PyPDF3
 
+[![GuardRails badge](https://badges.production.guardrails.io/mrstephenneal/PyPDF3.svg)](https://www.guardrails.io)
+
 Fork of PyPDF2 with feature improvements.
 
 PyPDF3 is a pure-python PDF library capable of
