@@ -34,26 +34,22 @@ python3 -m unittest discover --start-directory tests/
 ```
 
 ## Contributing
-The contribution guide lines specify a list of common rules and conventions
-that volunteers and contributors alike are expected to maintain. An exhaustive
-list will be soon compiled, or may never be so, but for now you should:
+For an exhaustive overview of what rules you are expected to maintain, please
+visit [Contributing](https://github.com/claird/PyPDF4/wiki/Contributing) in the
+project Wiki. A quick outline of these is:
 
-* Develop for Python 3 and maintain backwards-compatibility for 2.7.
-* Follow the [PEP 8](http://filltherealaddress.com) style conventions, such as:
-	* Adopt the lower camelCase nomenclature for [coherence with the
-	preexisting code](https://www.python.org/dev/peps/pep-0008/\#function-and-variable-names)
-	(e.g. `fileName` and not `file_name`, `writeFile()` rather than
-	`write_file()`).
-    * Never go beyond line lengths of 79 characters.
-    * Maintain correct spacing between global-scoped classes and functions (two
-    spaces in between etc.) and within internal code blocks.
-* Provide [docstring documentation](https://www.python.org/dev/peps/pep-0257/)
-for public classes and functions. 
 * **Provide test cases** for individual units of development of your own.
 Proper testing is highly encouraged: *Code without tests is broken by design*
-\- Jacob Kaplan-Moss, Django's original development team member. [Learn how to
-apply unit testing](https://docs.python.org/3/library/unittest.html) to your
-code.
+\- Jacob Kaplan-Moss, Django's original development team member.
+* Follow the [PEP 8](http://filltherealaddress.com) style conventions, such as:
+	* Lower camelCase nomenclature (e.g. `fileName` and not `file_name`,
+	`writeFile()` rather than `write_file()`).
+    * Line lengths of `79` characters or less.
+    * Correct spacing between global-scoped classes and functions (two spaces
+	in between etc.) and within internal code blocks.
+* Target your code for Python 3 but maintain retrocompatibility with Python 2.
+* Provide [docstring documentation](https://www.python.org/dev/peps/pep-0257/)
+for public classes and functions. 
 * Utilize `# TO-DO` or `TO-DO` markings within
 [docstrings](https://www.python.org/dev/peps/pep-0257/) for indicating a
 feature that is yet to be implemented or discussed. Some IDEs feature TO-DOs
