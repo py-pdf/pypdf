@@ -1318,25 +1318,24 @@ class PdfFileReader(object):
 
         if isString(stream):
             with open(stream, 'rb') as fileobj:
-                self.stream = BytesIO(fileobj.read())
+                self._stream = BytesIO(fileobj.read())
         else:
             # We rely on duck typing
-            self.stream = stream
+            self._stream = stream
 
-        if hasattr(self.stream, 'mode') and 'b' not in self.stream.mode:
+        if hasattr(self._stream, 'mode') and 'b' not in self._stream.mode:
             warnings.warn(
                 "PdfFileReader stream/file object is not in binary mode. It "
                 "may not be read correctly.", PdfReadWarning
             )
 
-        self._parsePdfFile(self.stream)
+        self._parsePdfFile(self._stream)
 
     def __repr__(self):
-        return """\
-<%s.%s isClosed=%s, _filepath=%s, stream=%s, strict=%s, debug=%s>\
-        """ % (
+        return "<%s.%s isClosed=%s, _filepath=%s, _stream=%s, strict=%s, " \
+               "debug=%s>" % (
             self.__class__.__module__, self.__class__.__name__, self.isClosed,
-            self._filepath, self.stream, self.strict, self.debug
+            self._filepath, self._stream, self.strict, self.debug
         )
 
     def __del__(self):
@@ -1344,7 +1343,7 @@ class PdfFileReader(object):
 
         for a in (
                 "_xrefTable", "_xrefStm", "_cachedObjects", "_trailer",
-                "_pageId2Num", "_flattenedPages", "stream"
+                "_pageId2Num", "_flattenedPages", "_stream"
         ):
             if hasattr(self, a):
                 delattr(self, a)
@@ -1376,16 +1375,16 @@ class PdfFileReader(object):
         :return: ``True`` if the IO streams associated with this file have
             been closed, ``False`` otherwise.
         """
-        return self.stream.closed
+        return not bool(self._stream) or self._stream.closed
 
     def close(self):
         """
         Deallocates file-system resources associated with this
         ``PdfFileReader`` instance.
         """
-        if getattr(self, "stream", None) and hasattr(self.stream, "close") \
-                and callable(self.stream.close):
-            self.stream.close()
+        if getattr(self, "_stream", None) and hasattr(self._stream, "close") \
+                and callable(self._stream.close):
+            self._stream.close()
 
     def getDocumentInfo(self):
         """
@@ -1910,8 +1909,8 @@ class PdfFileReader(object):
         else:
             raise ValueError("Unaccepted value of source = %d" % source)
 
-        self.stream.seek(offset, 0)
-        actualId, actualGen = self._readObjectHeader(self.stream)
+        self._stream.seek(offset, 0)
+        actualId, actualGen = self._readObjectHeader(self._stream)
 
         if isXTable and self._xrefIndex and actualId != ref.idnum:
             # Xref table probably had bad indexes due to not being
@@ -1934,7 +1933,7 @@ class PdfFileReader(object):
                 % (ref.idnum, ref.generation, actualId, actualGen)
             )
 
-        retval = readObject(self.stream, self)
+        retval = readObject(self._stream, self)
 
         # Override encryption is used for the /Encrypt dictionary
         if not self._overrideEncryption and self.isEncrypted:

@@ -105,10 +105,10 @@ class PdfFileMerger(object):
         myFile = False
 
         # If the fileobj parameter is a string, assume it is a path
-        # and create a file object at that location. If it is a file,
+        # and open a file object at that location. If it is a file,
         # copy the file's contents into a BytesIO (or StreamIO) stream object;
-        # if # it is a PdfFileReader, copy that reader's stream into a
-        # BytesIO (or StreamIO) stream.
+        # if it is a PdfFileReader, copy that reader's stream into a BytesIO
+        # (or StreamIO) stream.
         # If fileobj is none of the above types, it is not modified
         decryptionKey = None
 
