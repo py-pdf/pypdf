@@ -34,7 +34,7 @@ def main():
 
     print("writing " + sys.argv[2])
     output_stream = open(sys.argv[2], "wb")
-    output.write(output_stream)
+    output.write()
     print("done.")
 
 
@@ -61,7 +61,7 @@ def main():
 
     print("writing " + sys.argv[2])
     output_stream = open(sys.argv[2], "wb")
-    output.write(output_stream)
+    output.write()
     print("done.")
 
 

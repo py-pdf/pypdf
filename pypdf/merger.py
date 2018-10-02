@@ -69,6 +69,7 @@ class PdfFileMerger(object):
     """
 
     def __init__(self, strict=True):
+        # TO-DO Add a stream parameter to __init__()
         self.inputs = []
         self.pages = []
         self.output = PdfFileWriter()
@@ -77,8 +78,10 @@ class PdfFileMerger(object):
         self.id_count = 0
         self.strict = strict
 
-    def merge(self, position, fileobj, bookmark=None, pages=None,
-              importBookmarks=True):
+    def merge(
+            self, position, fileobj, bookmark=None, pages=None,
+            importBookmarks=True
+    ):
         """
         Merges the pages from the given file into the output file at the
         specified page number.
@@ -232,6 +235,7 @@ class PdfFileMerger(object):
         self._writeBookmarks()
 
         # Write the output to the file
+        # TO-DO Remove argument to write()
         self.output.write(fileobj)
 
         if myFile:
@@ -249,7 +253,7 @@ class PdfFileMerger(object):
                 fo.close()
 
         self.inputs = []
-        self.output = None
+        del self.output
 
     def addMetadata(self, infos):
         """

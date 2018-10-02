@@ -39,17 +39,14 @@ class PdfReaderTestCases(unittest.TestCase):
         ``PdfFileWriter`` ensuring that no exceptions are raised.
         """
         r = PdfFileReader(join(TEST_DATA_ROOT, "crazyones.pdf"))
-        w = PdfFileWriter()
+        w = PdfFileWriter(BytesIO(b""))
 
         try:
-            # This may generate some collateral warnings in stderr when del r
-            # is performed by the GC
             r.__del__()
             self.assertTrue(True)
         except Exception as e:
             self.assertTrue(
-                False,
-                "Exception '%s' was raised in %s.__del__()" %
+                False, "Exception '%s' was raised in %s.__del__()" %
                 (e, PdfFileReader.__name__)
             )
 
@@ -420,35 +417,35 @@ class PdfReaderTestCases(unittest.TestCase):
 
 class AddJsTestCase(unittest.TestCase):
     def setUp(self):
-        ipdf = PdfFileReader(join(TEST_DATA_ROOT, 'crazyones.pdf'))
-        self.pdfFileWriter = PdfFileWriter()
-        self.pdfFileWriter.appendPagesFromReader(ipdf)
+        reader = PdfFileReader(join(TEST_DATA_ROOT, 'crazyones.pdf'))
+        self.writer = PdfFileWriter(BytesIO(b""))
+        self.writer.appendPagesFromReader(reader)
 
     def testAdd(self):
-        self.pdfFileWriter.addJS(
+        self.writer.addJS(
             "this.print({bUI:true,bSilent:false,bShrinkToFit:true});"
         )
 
         self.assertIn(
-            '/Names', self.pdfFileWriter._root_object,
+            '/Names', self.writer._root_object,
             "addJS should add a name catalog in the root object."
         )
         self.assertIn(
-            '/JavaScript', self.pdfFileWriter._root_object['/Names'],
+            '/JavaScript', self.writer._root_object['/Names'],
             "addJS should add a JavaScript name tree under the name catalog."
         )
         self.assertIn(
-            '/OpenAction', self.pdfFileWriter._root_object,
+            '/OpenAction', self.writer._root_object,
             "addJS should add an OpenAction to the catalog."
         )
 
     def testOverwrite(self):
-        self.pdfFileWriter.addJS(
+        self.writer.addJS(
             "this.print({bUI:true,bSilent:false,bShrinkToFit:true});"
         )
         first_js = self._getJavascriptName()
 
-        self.pdfFileWriter.addJS(
+        self.writer.addJS(
             "this.print({bUI:true,bSilent:false,bShrinkToFit:true});"
         )
         second_js = self._getJavascriptName()
@@ -459,13 +456,13 @@ class AddJsTestCase(unittest.TestCase):
         )
 
     def _getJavascriptName(self):
-        self.assertIn('/Names', self.pdfFileWriter._root_object)
+        self.assertIn('/Names', self.writer._root_object)
         self.assertIn(
-            '/JavaScript', self.pdfFileWriter._root_object['/Names']
+            '/JavaScript', self.writer._root_object['/Names']
         )
         self.assertIn(
             '/Names',
-            self.pdfFileWriter._root_object['/Names']['/JavaScript']
+            self.writer._root_object['/Names']['/JavaScript']
         )
-        return self.pdfFileWriter. \
+        return self.writer. \
             _root_object['/Names']['/JavaScript']['/Names'][0]

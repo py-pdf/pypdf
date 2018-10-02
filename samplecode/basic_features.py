@@ -44,8 +44,10 @@ def main():
         if len(argv) > 2:
             output = argv[2].strip()
 
+    # We can instantiate a PdfFileReader/Writer by giving in a stream object
+    # or a path string
     reader = PdfFileReader(open(inputpath, "rb"))
-    writer = PdfFileWriter()
+    writer = PdfFileWriter(output)
 
     # Check that the PDF file has the required number of pages
     if reader.numPages < pagesRequired:
@@ -95,10 +97,12 @@ def main():
     writer.encrypt(password)
 
     # Finally, write the resulting PDF document to ``output``
-    with open(output, "wb") as outputStream:
-        writer.write(outputStream)
+    writer.write()
 
     print("Output successfully written to", output)
+
+    reader.close()
+    writer.close()
 
 
 if __name__ == "__main__":

@@ -62,17 +62,33 @@ __maintainer_email = "PyPDF4@phaseit.net"
 
 
 class PdfFileWriter(object):
-    def __init__(self, debug=False):
+    def __init__(self, stream, debug=False):
         """
         This class supports writing PDF files out, given pages produced by
         another class (typically :class:`PdfFileReader<PdfFileReader>`).
 
+        :param stream: File-like object or path to a PDF file in ``str``
+            format. If of the former type, the object must support the
+            ``write()`` and the ``tell()`` methods.
         :param bool debug: Whether this class should emit debug informations
             (recommended for development). Defaults to False.
         """
         self._header = b_("%PDF-1.3")
         self._objects = []  # array of indirect objects
         self.debug = debug
+
+        if isString(stream):
+            self._stream = open(stream, "wb")
+        else:
+            # We rely on duck typing
+            self._stream = stream
+
+        if hasattr(self._stream, "mode") and "b" not in self._stream.mode:
+            warnings.warn(
+                "File <%s> to write to is not in binary mode. It may not be "
+                "written to correctly." % self._stream.name
+            )
+
         # The root of our page tree node.
         pages = DictionaryObject()
         pages.update({
@@ -109,8 +125,8 @@ class PdfFileWriter(object):
         return False
 
     def __repr__(self):
-        return "<%s.%s _header=%s, isClosed=%s, debug=%s>" % (
-            self.__class__.__module__, self.__class__.__name__,
+        return "<%s.%s _stream=%s, _header=%s, isClosed=%s, debug=%s>" % (
+            self.__class__.__module__, self.__class__.__name__, self._stream,
             self._header.decode(), self.isClosed, self.debug
         )
 
@@ -118,7 +134,8 @@ class PdfFileWriter(object):
         self.close()
 
         for a in (
-                "_objects", "_pages", "_info", "_root", "_root_object"
+                "_objects", "_stream", "_pages", "_info", "_root",
+                "_root_object"
         ):
             if hasattr(self, a):
                 delattr(self, a)
@@ -128,9 +145,9 @@ class PdfFileWriter(object):
         Deallocates file-system resources associated with this
         ``PdfFileWriter`` instance.
         """
-        # TO-DO Make stream from PdfFileWriter.write() an instance attribute so
-        # that it is freed automatically by this class
-        pass
+        if not self._stream.closed:
+            self._stream.flush()
+            self._stream.close()
 
     @property
     def isClosed(self):
@@ -138,8 +155,7 @@ class PdfFileWriter(object):
         :return: ``True`` if the IO streams associated with this file have
             been closed, ``False`` otherwise.
         """
-        # TO-DO Implement along with close()
-        return False
+        return not bool(self._stream) or self._stream.closed
 
     def _addObject(self, obj):
         self._objects.append(obj)
@@ -492,18 +508,14 @@ class PdfFileWriter(object):
         self._encrypt = self._addObject(encrypt)
         self._encrypt_key = key
 
-    def write(self, stream):
+    def write(self):
         """
         Writes the collection of pages added to this object out as a PDF file.
-
-        :param stream: An object to write the file to.  The object must support
-            the ``write()`` and the ``tell()`` methods.
         """
         if hasattr(stream, 'mode') and 'b' not in stream.mode:
-# TODO:  style the English better.
             warnings.warn(
-                "File <%s> to write to is not in binary mode. It may not be "
-                "written to correctly." % stream.name
+                "File %s is not in binary mode. It might not be written "
+                "correctly." % stream.name
             )
 
         if not self._root:
@@ -524,6 +536,7 @@ class PdfFileWriter(object):
 
             if isinstance(obj, PageObject) and obj.indirectRef is not None:
                 data = obj.indirectRef
+
                 if data.pdf not in externalReferenceMap:
                     externalReferenceMap[data.pdf] = {}
                 if data.generation not in externalReferenceMap[data.pdf]:
@@ -540,14 +553,14 @@ class PdfFileWriter(object):
 
         # Begin writing:
         object_positions = []
-        stream.write(self._header + b_("\n"))
-        stream.write(b_("%\xE2\xE3\xCF\xD3\n"))
+        self._stream.write(self._header + b_("\n"))
+        self._stream.write(b_("%\xE2\xE3\xCF\xD3\n"))
 
         for i in range(len(self._objects)):
             idnum = (i + 1)
             obj = self._objects[i]
-            object_positions.append(stream.tell())
-            stream.write(b_(str(idnum) + " 0 obj\n"))
+            object_positions.append(self._stream.tell())
+            self._stream.write(b_(str(idnum) + " 0 obj\n"))
             key = None
 
             if hasattr(self, "_encrypt") and idnum != self._encrypt.idnum:
@@ -557,19 +570,19 @@ class PdfFileWriter(object):
                 assert len(key) == (len(self._encrypt_key) + 5)
                 md5_hash = md5(key).digest()
                 key = md5_hash[:min(16, len(self._encrypt_key) + 5)]
-            obj.writeToStream(stream, key)
-            stream.write(b_("\nendobj\n"))
+            obj.writeToStream(self._stream, key)
+            self._stream.write(b_("\nendobj\n"))
 
         # xref table
-        xref_location = stream.tell()
-        stream.write(b_("xref\n"))
-        stream.write(b_("0 %s\n" % (len(self._objects) + 1)))
-        stream.write(b_("%010d %05d f \n" % (0, 65535)))
+        xref_location = self._stream.tell()
+        self._stream.write(b_("xref\n"))
+        self._stream.write(b_("0 %s\n" % (len(self._objects) + 1)))
+        self._stream.write(b_("%010d %05d f \n" % (0, 65535)))
 
         for offset in object_positions:
-            stream.write(b_("%010d %05d n \n" % (offset, 0)))
+            self._stream.write(b_("%010d %05d n \n" % (offset, 0)))
 
-        stream.write(b_("trailer\n"))
+        self._stream.write(b_("trailer\n"))
         trailer = DictionaryObject()
         trailer.update({
             NameObject("/Size"): NumberObject(len(self._objects) + 1),
@@ -582,10 +595,10 @@ class PdfFileWriter(object):
         if hasattr(self, "_encrypt"):
             trailer[NameObject("/Encrypt")] = self._encrypt
 
-        trailer.writeToStream(stream, None)
+        trailer.writeToStream(self._stream, None)
 
         # EOF
-        stream.write(b_("\nstartxref\n%s\n%%%%EOF\n" % xref_location))
+        self._stream.write(b_("\nstartxref\n%s\n%%%%EOF\n" % xref_location))
 
     def addMetadata(self, infos):
         """
@@ -638,7 +651,8 @@ class PdfFileWriter(object):
             else:
                 if data.pdf.isClosed:
                     raise ValueError(
-                        "I/O operation on closed file: " + data.pdf.stream.name
+                        "I/O operation on closed file: "
+                        + data.pdf._stream.name
                     )
                 newobj = externMap.get(data.pdf, {}).\
                     get(data.generation, {}).\
@@ -1262,6 +1276,7 @@ class PdfFileReader(object):
             ):
                 if file is None:
                     file = sys.stderr
+
                 try:
                     file.write(
                         formatWarning(message, category, filename, lineno,
@@ -1301,17 +1316,20 @@ class PdfFileReader(object):
         else:
             self._filepath = None
 
-        if hasattr(stream, 'mode') and 'b' not in stream.mode:
+        if isString(stream):
+            with open(stream, 'rb') as fileobj:
+                self.stream = BytesIO(fileobj.read())
+        else:
+            # We rely on duck typing
+            self.stream = stream
+
+        if hasattr(self.stream, 'mode') and 'b' not in self.stream.mode:
             warnings.warn(
                 "PdfFileReader stream/file object is not in binary mode. It "
                 "may not be read correctly.", PdfReadWarning
             )
-        elif isString(stream):
-            with open(stream, 'rb') as fileobj:
-                stream = BytesIO(fileobj.read())
 
-        self.stream = stream
-        self._parsePdfFile(stream)
+        self._parsePdfFile(self.stream)
 
     def __repr__(self):
         return """\
@@ -2338,22 +2356,6 @@ class PdfFileReader(object):
                             # Objects that are in use but are not compressed
                             byteOffset = getEntry(1, streamData)
                             generation = getEntry(2, streamData)
-
-                            # # We read the actual object id from the stream
-                            # lastpos = stream.tell()
-                            # stream.seek(byteOffset, 0)
-                            # actualId, actualGen = self._readObjectHeader(
-                            #     stream
-                            # )
-                            #
-                            # if self.strict and actualGen != generation:
-                            #     raise PdfReadError(
-                            #         "The read gen. number and the gen. number "
-                            #         "specified by the XRef Stream do not match"
-                            #         ": %d != %d" % (actualGen, generation)
-                            #     )
-                            #
-                            # stream.seek(lastpos, 0)
 
                             if not usedBefore(idnum, generation):
                                 self._xrefStm[idnum] = (
