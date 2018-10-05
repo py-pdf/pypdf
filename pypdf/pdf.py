@@ -212,14 +212,15 @@ class PdfFileWriter(object):
         # XXX: crude hack
         return pages["/Kids"][pageNumber].getObject()
 
-    def getNumPages(self):
+    @property
+    def numPages(self):
         """
         :return: the number of pages.
         :rtype: int
         """
-        pages = self.getObject(self._pages)
-
-        return int(pages[NameObject("/Count")])
+        return int(
+            self.getObject(self._pages)[NameObject("/Count")]
+        )
 
     def addBlankPage(self, width=None, height=None):
         """
@@ -256,7 +257,7 @@ class PdfFileWriter(object):
             and previous page does not exist.
         """
         if width is None or height is None and\
-                (self.getNumPages() - 1) >= index:
+                (self.numPages - 1) >= index:
             oldpage = self.getPage(index)
             width = oldpage.mediaBox.getWidth()
             height = oldpage.mediaBox.getHeight()
@@ -402,8 +403,8 @@ class PdfFileWriter(object):
              that references to the page appended to the writer.
          """
         # Get page count from writer and reader
-        writerNumPages = self.getNumPages()
         readerNumPages = reader.numPages
+        writerNumPages = self.numPages
 
         # Copy pages from reader to writer
         for rpagenum in range(readerNumPages):
@@ -1143,7 +1144,7 @@ class PdfFileWriter(object):
         else:
             pageRef[NameObject('/Annots')] = ArrayObject([lnkRef])
 
-    _valid_layouts = [
+    _VALID_LAYOUTS = [
         '/NoLayout', '/SinglePage', '/OneColumn', '/TwoColumnLeft',
         '/TwoColumnRight', '/TwoPageLeft', '/TwoPageRight'
     ]
@@ -1182,9 +1183,9 @@ class PdfFileWriter(object):
                  the right
         """
         if not isinstance(layout, NameObject):
-            if layout not in self._valid_layouts:
+            if layout not in self._VALID_LAYOUTS:
                 warnings.warn("Layout should be one of: {}".format(
-                    ', '.join(self._valid_layouts))
+                    ', '.join(self._VALID_LAYOUTS))
                 )
             layout = NameObject(layout)
         self._rootObject.update({NameObject('/PageLayout'): layout})
@@ -1196,8 +1197,10 @@ class PdfFileWriter(object):
     :meth:`setPageLayout()<PdfFileWriter.setPageLayout>` methods.
     """
 
-    _valid_modes = ['/UseNone', '/UseOutlines', '/UseThumbs', '/FullScreen',
-                    '/UseOC', '/UseAttachments']
+    _VALID_MODES = (
+        '/UseNone', '/UseOutlines', '/UseThumbs', '/FullScreen', '/UseOC',
+        '/UseAttachments'
+    )
 
     def getPageMode(self):
         """
@@ -1228,9 +1231,9 @@ class PdfFileWriter(object):
             /UseAttachments  Show attachments panel
         """
         if not isinstance(mode, NameObject):
-            if mode not in self._valid_modes:
+            if mode not in self._VALID_MODES:
                 warnings.warn("Mode should be one of: {}".format(
-                    ', '.join(self._valid_modes)
+                    ', '.join(self._VALID_MODES)
                 ))
             mode = NameObject(mode)
         self._rootObject.update({NameObject('/PageMode'): mode})
