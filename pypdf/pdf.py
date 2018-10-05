@@ -500,8 +500,9 @@ class PdfFileWriter(object):
             the ``write()`` and the ``tell()`` methods.
         """
         if hasattr(stream, 'mode') and 'b' not in stream.mode:
+# TODO:  style the English better.
             warnings.warn(
-                "File <%s> to write to is not in binary mode. It may not be"
+                "File <%s> to write to is not in binary mode. It may not be "
                 "written to correctly." % stream.name
             )
 
@@ -666,7 +667,7 @@ class PdfFileWriter(object):
                         # Unable to resolve the Object, returning NullObject
                         # instead.
                         warnings.warn(
-                            "Unable to resolve [{}: {}], returning NullObject"
+                            "Unable to resolve [{}: {}], returning NullObject "
                             "instead".format(data.__class__.__name__, data)
                         )
                         return NullObject()
@@ -1877,7 +1878,7 @@ class PdfFileReader(object):
 
                 if generation != ref.generation:
                     raise ValueError(
-                        "Generation number given as input (%d) doesn't equate "
+                        "Generation number given as input (%d) doesn't equal "
                         "the one stored (%d) in the XRef Stream"
                         % (ref.generation, generation)
                     )
@@ -2184,7 +2185,7 @@ class PdfFileReader(object):
 
                         if self.strict:
                             warnings.warn(
-                                "Xref table not zero-indexed. ID numbers for"
+                                "Xref table not zero-indexed. ID numbers for "
                                 "objects will be corrected.",
                                 PdfReadWarning
                             )
@@ -2577,8 +2578,8 @@ class PdfFileReader(object):
             )
         if not (encrypt['/V'] in (1, 2)):
             raise NotImplementedError(
-                "only algorithm code 1 and 2 are supported. This PDF uses code"
-                "%s" % encrypt['/V']
+                "only algorithm codes 1 and 2 are supported. This PDF uses "
+                "code %s" % encrypt['/V']
             )
         user_password, key = self._authenticateUserPassword(password)
 
