@@ -70,13 +70,13 @@ class PdfFileMerger(object):
 
     def __init__(self, strict=True):
         # TO-DO Add a stream parameter to __init__()
-        self.inputs = []
-        self.pages = []
-        self.output = PdfFileWriter()
-        self.bookmarks = []
-        self.named_dests = []
-        self.id_count = 0
         self.strict = strict
+        self._inputs = []
+        self._pages = []
+        self._writer = PdfFileWriter()
+        self._bookmarks = []
+        self._namedDests = []
+        self._idCount = 0
 
     def merge(
             self, position, fileobj, bookmark=None, pages=None,
@@ -100,7 +100,7 @@ class PdfFileMerger(object):
         :param bool importBookmarks: You may prevent the source document's
             bookmarks from being imported by specifying this as ``False``.
         """
-        # This parameter is passed to self.inputs.append and means
+        # This parameter is passed to self._inputs.append and means
         # that the stream used was created in this method.
         myFile = False
 
@@ -150,7 +150,7 @@ class PdfFileMerger(object):
         srcpages = []
         if bookmark:
             bookmark = Bookmark(
-                TextStringObject(bookmark), NumberObject(self.id_count),
+                TextStringObject(bookmark), NumberObject(self._idCount),
                 NameObject('/Fit')
             )
 
@@ -160,20 +160,20 @@ class PdfFileMerger(object):
             outline = pdfr.getOutlines()
             outline = self._trimOutline(pdfr, outline, pages)
         if bookmark:
-            self.bookmarks += [bookmark, outline]
+            self._bookmarks += [bookmark, outline]
         else:
-            self.bookmarks += outline
+            self._bookmarks += outline
 
         dests = pdfr.namedDestinations
         dests = self._trimDests(pdfr, dests, pages)
-        self.named_dests += dests
+        self._namedDests += dests
 
         # Gather all the pages that are going to be merged
         for i in range(*pages):
             pg = pdfr.getPage(i)
 
-            id = self.id_count
-            self.id_count += 1
+            id = self._idCount
+            self._idCount += 1
 
             mp = _MergedPage(pg, pdfr, id)
 
@@ -183,10 +183,10 @@ class PdfFileMerger(object):
         self._associateBookmarksToPages(srcpages)
 
         # Slice to insert the pages at the specified position
-        self.pages[position:position] = srcpages
+        self._pages[position:position] = srcpages
 
         # Keep track of our input files so we can close them later
-        self.inputs.append((fileobj, pdfr, myFile))
+        self._inputs.append((fileobj, pdfr, myFile))
 
     def append(self, fileobj, bookmark=None, pages=None, importBookmarks=True):
         """
@@ -206,7 +206,7 @@ class PdfFileMerger(object):
         :param bool importBookmarks: You may prevent the source document's
             bookmarks from being imported by specifying this as ``False``.
         """
-        self.merge(len(self.pages), fileobj, bookmark, pages, importBookmarks)
+        self.merge(len(self._pages), fileobj, bookmark, pages, importBookmarks)
 
     def write(self, fileobj):
         """
@@ -224,10 +224,10 @@ class PdfFileMerger(object):
         # Add pages to the PdfFileWriter
         # The commented out line below was replaced with the two lines below it
         # to allow PdfFileMerger to work with PyPdf 1.13
-        for page in self.pages:
-            self.output.addPage(page.pagedata)
-            page.out_pagedata = self.output.getReference(
-                self.output._pages.getObject()["/Kids"][-1].getObject()
+        for page in self._pages:
+            self._writer.addPage(page.pagedata)
+            page.out_pagedata = self._writer.getReference(
+                self._writer._pages.getObject()["/Kids"][-1].getObject()
             )
 
         # Once all pages are added, create bookmarks to point at those pages
@@ -246,14 +246,14 @@ class PdfFileMerger(object):
         Shuts all file descriptors (input and output) and clears all memory
         usage.
         """
-        self.pages = []
+        self._pages = []
 
-        for fo, pdfr, mine in self.inputs:
+        for fo, pdfr, mine in self._inputs:
             if mine:
                 fo.close()
 
-        self.inputs = []
-        del self.output
+        self._inputs = []
+        del self._writer
 
     def addMetadata(self, infos):
         """
@@ -263,7 +263,7 @@ class PdfFileMerger(object):
             each value is your new metadata.
             Example: ``{u'/Title': u'My title'}``.
         """
-        self.output.addMetadata(infos)
+        self._writer.addMetadata(infos)
 
     def setPageLayout(self, layout):
         """
@@ -284,7 +284,7 @@ class PdfFileMerger(object):
              /TwoPageRight    Show two pages at a time, odd-numbered pages on
                  the right
         """
-        self.output.setPageLayout(layout)
+        self._writer.setPageLayout(layout)
 
     def setPageMode(self, mode):
         """
@@ -300,7 +300,7 @@ class PdfFileMerger(object):
             /UseOC           Show Optional Content Group (OCG) panel
             /UseAttachments  Show attachments panel
         """
-        self.output.setPageMode(mode)
+        self._writer.setPageMode(mode)
 
     def _trimDests(self, pdf, dests, pages):
         """
@@ -347,14 +347,14 @@ class PdfFileMerger(object):
         return newOutline
 
     def _writeDests(self):
-        dests = self.named_dests
+        dests = self._namedDests
 
         for v in dests:
             pageno = None
             pdf = None
 
             if '/Page' in v:
-                for i, p in enumerate(self.pages):
+                for i, p in enumerate(self._pages):
                     if p.id == v['/Page']:
                         v[NameObject('/Page')] = p.out_pagedata
                         pageno = i
@@ -362,11 +362,11 @@ class PdfFileMerger(object):
                         break
 
             if pageno is not None:
-                self.output.addNamedDestinationObject(v)
+                self._writer.addNamedDestinationObject(v)
 
     def _writeBookmarks(self, bookmarks=None, parent=None):
         if bookmarks is None:
-            bookmarks = self.bookmarks
+            bookmarks = self._bookmarks
 
         last_added = None
         for b in bookmarks:
@@ -378,7 +378,7 @@ class PdfFileMerger(object):
             pdf = None
 
             if '/Page' in b:
-                for i, p in enumerate(self.pages):
+                for i, p in enumerate(self._pages):
                     if p.id == b['/Page']:
                         args = [NumberObject(p.id), NameObject(b['/Type'])]
                         # Nothing more to add
@@ -447,10 +447,10 @@ class PdfFileMerger(object):
                         break
             if pageno is not None:
                 del b['/Page'], b['/Type']
-                last_added = self.output.addBookmarkDict(b, parent)
+                last_added = self._writer.addBookmarkDict(b, parent)
 
     def _associateDestsToPages(self, pages):
-        for nd in self.named_dests:
+        for nd in self._namedDests:
             pageno = None
             np = nd['/Page']
 
@@ -470,7 +470,7 @@ class PdfFileMerger(object):
 
     def _associateBookmarksToPages(self, pages, bookmarks=None):
         if bookmarks is None:
-            bookmarks = self.bookmarks
+            bookmarks = self._bookmarks
 
         for b in bookmarks:
             if isinstance(b, list):
@@ -494,7 +494,7 @@ class PdfFileMerger(object):
 
     def findBookmark(self, bookmark, root=None):
         if root is None:
-            root = self.bookmarks
+            root = self._bookmarks
 
         for i, b in enumerate(root):
             if isinstance(b, list):
@@ -516,7 +516,7 @@ class PdfFileMerger(object):
             bookmarks.
         """
         if parent is None:
-            iloc = [len(self.bookmarks)-1]
+            iloc = [len(self._bookmarks) - 1]
         elif isinstance(parent, list):
             iloc = parent
         else:
@@ -528,9 +528,9 @@ class PdfFileMerger(object):
         )
 
         if parent is None:
-            self.bookmarks.append(dest)
+            self._bookmarks.append(dest)
         else:
-            bmparent = self.bookmarks
+            bmparent = self._bookmarks
 
             for i in iloc[:-1]:
                 bmparent = bmparent[i]
@@ -555,7 +555,7 @@ class PdfFileMerger(object):
             TextStringObject(title), NumberObject(pagenum),
             NameObject('/FitH'), NumberObject(826)
         )
-        self.named_dests.append(dest)
+        self._namedDests.append(dest)
 
 
 class OutlinesObject(list):
