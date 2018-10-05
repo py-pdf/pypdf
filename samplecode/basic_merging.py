@@ -44,7 +44,7 @@ def main():
             output = argv[4].strip()
 
     reader1 = PdfFileReader(files[0])
-    merger = PdfFileMerger()
+    merger = PdfFileMerger(open(output, "wb"))
 
     if reader1.numPages < requiredPages:
         print(
@@ -67,11 +67,10 @@ def main():
     # Append entire input3 document to the end of the output document
     merger.append(input3)
 
-    # Write to an output PDF document
-    with open(output, "wb") as outputStream:
-        merger.write(outputStream)
-
+    merger.write()
     print("Output successfully written to", output)
+
+    merger.close()
 
 
 if __name__ == "__main__":

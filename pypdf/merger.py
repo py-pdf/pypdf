@@ -44,8 +44,8 @@ else:
 
 class _MergedPage(object):
     """
-    _MergedPage is used internally by PdfFileMerger to collect necessary
-    information on each page that is being merged.
+    ``_MergedPage()`` is used internally by ``PdfFileMerger`` to collect
+    necessary information on each page that is being merged.
     """
     def __init__(self, pagedata, src, id):
         self.src = src
@@ -55,25 +55,24 @@ class _MergedPage(object):
 
 
 class PdfFileMerger(object):
-    """
-    Initializes a PdfFileMerger object. PdfFileMerger merges multiple PDFs
-    into a single PDF. It can concatenate, slice, insert, or any combination
-    of the above.
+    def __init__(self, output, strict=True):
+        """
+        Initializes a ``PdfFileMerger`` object. ``PdfFileMerger`` merges
+        multiple PDFs into a single PDF. It can concatenate, slice, insert, or
+        any combination of the above.
 
-    See the functions :meth:`merge()<merge>` (or :meth:`append()<append>`)
-    and :meth:`write()<write>` for usage information.
+        See the functions :meth:`merge()<merge>` (or :meth:`append()<append>`)
+        and :meth:`write()<write>` for usage information.
 
-    :param bool strict: Determines whether user should be warned of all
-            problems and also causes some correctable problems to be fatal.
-            Defaults to ``True``.
-    """
-
-    def __init__(self, strict=True):
-        # TO-DO Add a stream parameter to __init__()
+        :param output: I/O stream to be used to write the merge results to.
+        :param bool strict: Determines whether user should be warned of all
+                problems and also causes some correctable problems to be fatal.
+                Defaults to ``True``.
+        """
         self.strict = strict
+        self._writer = PdfFileWriter(output)
         self._inputs = []
         self._pages = []
-        self._writer = PdfFileWriter()
         self._bookmarks = []
         self._namedDests = []
         self._idCount = 0
@@ -208,22 +207,10 @@ class PdfFileMerger(object):
         """
         self.merge(len(self._pages), fileobj, bookmark, pages, importBookmarks)
 
-    def write(self, fileobj):
+    def write(self):
         """
         Writes all data that has been merged to the given output file.
-
-        :param fileobj: Output file. Can be a filename or any kind of file-like
-            object.
         """
-        myFile = False
-
-        if isString(fileobj):
-            fileobj = file(fileobj, 'wb')
-            myFile = True
-
-        # Add pages to the PdfFileWriter
-        # The commented out line below was replaced with the two lines below it
-        # to allow PdfFileMerger to work with PyPdf 1.13
         for page in self._pages:
             self._writer.addPage(page.pagedata)
             page.out_pagedata = self._writer.getReference(
@@ -235,11 +222,7 @@ class PdfFileMerger(object):
         self._writeBookmarks()
 
         # Write the output to the file
-        # TO-DO Remove argument to write()
-        self.output.write(fileobj)
-
-        if myFile:
-            fileobj.close()
+        self._writer.write()
 
     def close(self):
         """
@@ -253,6 +236,10 @@ class PdfFileMerger(object):
                 fo.close()
 
         self._inputs = []
+
+        if not self._writer.isClosed:
+            self._writer.close()
+
         del self._writer
 
     def addMetadata(self, infos):

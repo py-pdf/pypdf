@@ -33,12 +33,12 @@ from sys import stderr, stdout, exit
 from os.path import dirname, abspath, join
 
 PROJECT_ROOT = abspath(
-    join(dirname(__file__), os.pardir, os.pardir)
+    join(dirname(__file__), os.pardir)
 )
 sys.path.append(PROJECT_ROOT)
 
-from pypdf import PdfFileMerger, parseFilenamePageRanges, PdfFileReader
-from pypdf.pagerange import PAGE_RANGE_HELP
+from pypdf import PdfFileReader, PdfFileMerger
+from pypdf.pagerange import PAGE_RANGE_HELP, parseFilenamePageRanges
 
 
 def parseArgs():
@@ -73,7 +73,7 @@ if __name__ == "__main__":
         stdout.flush()
         output = os.fdopen(stdout.fileno(), "wb")
 
-    merger = PdfFileMerger()
+    merger = PdfFileMerger(output)
     in_fs = dict()
     curr_page = 0
 
@@ -104,6 +104,7 @@ if __name__ == "__main__":
         print("Error while reading " + filename, file=stderr)
         exit(1)
 
-    merger.write(output)
+    merger.write()
+    merger.close()
     # In 3.0, input files must stay open until output is written.
     # Not closing the in_fs because this script exits now.
