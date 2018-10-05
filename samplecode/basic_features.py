@@ -58,7 +58,7 @@ def main():
         exit(1)
     else:
         print(
-            "'%s' has %d pages... OK" % (filename, reader.getNumPages())
+            "'%s' has %d pages... OK" % (filename, reader.numPages)
         )
 
     # Add page 1 from reader to output document, unchanged

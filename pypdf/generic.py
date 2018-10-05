@@ -1145,7 +1145,7 @@ class DocumentInformation(DictionaryObject):
     """
     A class representing the basic document metadata provided in a PDF File.
     This class is accessible through
-    :meth:`getDocumentInfo()<pypdf.PdfFileReader.getDocumentInfo()>`
+    :meth:`documentInfo()<pypdf.PdfFileReader.documentInfo()>`
 
     All text properties of the document metadata have
     *two* properties, e.g. author and author_raw. The non-raw property will
@@ -1406,8 +1406,8 @@ class PageObject(DictionaryObject):
         page.__setitem__(NameObject('/Resources'), DictionaryObject())
 
         if width is None or height is None:
-            if pdf is not None and pdf.getNumPages() > 0:
-                lastpage = pdf.getPage(pdf.getNumPages() - 1)
+            if pdf is not None and pdf.numPages > 0:
+                lastpage = pdf.getPage(pdf.numPages - 1)
                 width = lastpage.mediaBox.getWidth()
                 height = lastpage.mediaBox.getHeight()
             else:

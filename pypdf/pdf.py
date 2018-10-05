@@ -402,8 +402,8 @@ class PdfFileWriter(object):
              that references to the page appended to the writer.
          """
         # Get page count from writer and reader
-        readerNumPages = reader.getNumPages()
         writerNumPages = self.getNumPages()
+        readerNumPages = reader.numPages
 
         # Copy pages from reader to writer
         for rpagenum in range(readerNumPages):
@@ -1386,7 +1386,8 @@ class PdfFileReader(object):
                 and callable(self._stream.close):
             self._stream.close()
 
-    def getDocumentInfo(self):
+    @property
+    def documentInfo(self):
         """
         Retrieves the PDF file's document information dictionary, if it exists.
         Note that some PDF files use metadata streams instead of docinfo
@@ -1405,13 +1406,8 @@ class PdfFileReader(object):
 
         return retval
 
-    documentInfo = property(getDocumentInfo)
-    """
-    Read-only property that accesses the
-    :meth:`getDocumentInfo()<PdfFileReader.getDocumentInfo>` function.
-    """
-
-    def getXmpMetadata(self):
+    @property
+    def xmpMetadata(self):
         """
         Retrieves XMP (Extensible Metadata Platform) data from the PDF document
         root.
@@ -1427,13 +1423,8 @@ class PdfFileReader(object):
         finally:
             self._overrideEncryption = False
 
-    xmpMetadata = property(getXmpMetadata)
-    """
-    Read-only property that accesses the
-    :meth:`getXmpMetadata()<PdfFileReader.getXmpMetadata>` function.
-    """
-
-    def getNumPages(self):
+    @property
+    def numPages(self):
         """
         Calculates the number of pages in this PDF file.
 
@@ -1460,12 +1451,6 @@ class PdfFileReader(object):
                 self._flatten()
 
             return len(self._flattenedPages)
-
-    numPages = property(getNumPages)
-    """
-    Read-only property that accesses the
-    :meth:`getNumPages()<PdfFileReader.getNumPages>` function.
-    """
 
     def getPage(self, pageNumber):
         """
@@ -1580,7 +1565,8 @@ class PdfFileReader(object):
                 # Field attribute is N/A or unknown, so don't write anything
                 pass
 
-    def getFormTextFields(self):
+    @property
+    def formTextFields(self):
         """
         Retrieves form fields from the document with textual data (inputs,
         dropdowns).
@@ -1635,13 +1621,6 @@ class PdfFileReader(object):
 
         return retval
 
-    namedDestinations = property(getNamedDestinations)
-    """
-    Read-only property that accesses the
-    :meth:`getNamedDestinations()<PdfFileReader.getNamedDestinations>`
-    function.
-    """
-
     def getOutlines(self, node=None, outlines=None):
         """
         Retrieves the document outline present in the document.
@@ -1690,12 +1669,6 @@ class PdfFileReader(object):
             node = node["/Next"]
 
         return outlines
-
-    outlines = property(getOutlines)
-    """
-    Read-only property that accesses the
-    :meth:`getOutlines()<PdfFileReader.getOutlines>` function.
-    """
 
     def _getPageNumberByIndirect(self, indirectRef):
         """Generate _pageId2Num"""
@@ -1773,16 +1746,17 @@ class PdfFileReader(object):
 
     pages = property(
         lambda self: ConvertFunctionsToVirtualList(
-            self.getNumPages, self.getPage
+            lambda: self.numPages, self.getPage
         )
     )
     """
     Read-only property that emulates a list based upon the
-    :meth:`getNumPages()<PdfFileReader.getNumPages>` and
+    :meth:`numPages<PdfFileReader.numPages>` and
     :meth:`getPage()<PdfFileReader.getPage>` methods.
     """
 
-    def getPageLayout(self):
+    @property
+    def pageLayout(self):
         """
         Get the page layout.
         See :meth:`setPageLayout()<PdfFileWriter.setPageLayout>`
@@ -1796,13 +1770,8 @@ class PdfFileReader(object):
         except KeyError:
             return None
 
-    pageLayout = property(getPageLayout)
-    """
-    Read-only property accessing the
-    :meth:`getPageLayout()<PdfFileReader.getPageLayout>` method.
-    """
-
-    def getPageMode(self):
+    @property
+    def pageMode(self):
         """
         Get the page mode.
         See :meth:`setPageMode()<PdfFileWriter.setPageMode>`
@@ -1815,12 +1784,6 @@ class PdfFileReader(object):
             return self._trailer['/Root']['/PageMode']
         except KeyError:
             return None
-
-    pageMode = property(getPageMode)
-    """
-    Read-only property accessing the
-    :meth:`getPageMode()<PdfFileReader.getPageMode>` method.
-    """
 
     def _flatten(self, pages=None, inherit=None, indirectRef=None):
         inheritablePageAttributes = (
@@ -2641,15 +2604,9 @@ class PdfFileReader(object):
 
         return U == real_U, key
 
-    def getIsEncrypted(self):
+    @property
+    def isEncrypted(self):
         return "/Encrypt" in self._trailer
-
-    isEncrypted = property(getIsEncrypted)
-    """
-    Read-only boolean property showing whether this PDF file is encrypted.
-    Note that this property, if True, will remain True even after the
-    :meth:`decrypt()<PdfFileReader.decrypt>` method is called.
-    """
 
 
 def _convertToInt(d, size):

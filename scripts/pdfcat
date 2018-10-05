@@ -94,7 +94,7 @@ if __name__ == "__main__":
                 fallbackName = fallbackName[:fallbackName.rfind(".")]
 
                 merger.addBookmark(
-                    getattr(r.getDocumentInfo(), "title", fallbackName)
+                    getattr(r.documentInfo, "title", fallbackName)
                     or fallbackName, curr_page
                 )
 

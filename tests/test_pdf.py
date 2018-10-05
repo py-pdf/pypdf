@@ -401,18 +401,32 @@ class PdfReaderTestCases(unittest.TestCase):
     def testProperties(self):
         """
         The switch from PyPDF2 to PyPDF4 sees many stylistic changes, including
-        the use of the @property decorator (where possible) and pruning out
-        of unnecessary arguments to property() as a function.
+        the use of the ``@property`` decorator (where possible) and pruning out
+        of unnecessary arguments to ``property()`` as a function.
+        In some cases, functions that previously had a ``@property`` accessor
+        have it no more (to remove duplicate accesses).
+
         This test ensures that the two styles, the older and the newer, are
         functionally equivalent.
         """
         properties = (
-            "documentInfo", "xmpMetadata", "numPages", "namedDestinations",
-            "outlines", "pages", "pageLayout", "pageMode", "isEncrypted"
+            "documentInfo", "xmpMetadata", "numPages", "pages", "pageLayout",
+            "pageMode", "isEncrypted"
         )
+        methods = ("getNamedDestinations", "getOutlines")
 
         for p in properties:
             self.assertIsInstance(getattr(PdfFileReader, p), property)
+
+        for m in methods:
+            self.assertTrue(
+                hasattr(PdfFileReader, m),
+                "%s() is not part of %s" % (m, PdfFileReader.__name__)
+            )
+            self.assertTrue(
+                callable(getattr(PdfFileReader, m)),
+                "%s.%s() is not callable" % (PdfFileReader.__name__, m)
+            )
 
 
 class AddJsTestCase(unittest.TestCase):

@@ -140,9 +140,9 @@ class PdfFileMerger(object):
 
         # Find the range of pages to merge.
         if pages is None:
-            pages = (0, pdfr.getNumPages())
+            pages = (0, pdfr.numPages)
         elif isinstance(pages, PageRange):
-            pages = pages.indices(pdfr.getNumPages())
+            pages = pages.indices(pdfr.numPages)
         elif not isinstance(pages, tuple):
             raise TypeError('"pages" must be a tuple of (start, stop[, step])')
 

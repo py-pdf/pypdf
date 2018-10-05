@@ -24,7 +24,7 @@ def main():
     input1 = PdfFileReader(open(sys.argv[1], "rb"))
     output = PdfFileWriter()
 
-    for iter in range(0, input1.getNumPages() - 1, 2):
+    for iter in range(0, input1.numPages - 1, 2):
         lhs = input1.getPage(iter)
         rhs = input1.getPage(iter+1)
         lhs.mergeTranslatedPage(rhs, lhs.mediaBox.getUpperRight_x(), 0, True)
@@ -51,7 +51,7 @@ def main():
     input1 = PdfFileReader(open(sys.argv[1], "rb"))
     output = PdfFileWriter()
 
-    for i in range (0, input1.getNumPages()-1, 2):
+    for i in range (0, input1.numPages - 1, 2):
         lhs = input1.getPage(i)
         rhs = input1.getPage(i + 1)
         lhs.mergeTranslatedPage(rhs, lhs.mediaBox.getUpperRight_x(), 0, True)
