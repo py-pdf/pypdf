@@ -112,7 +112,7 @@ class PdfFileWriter(object):
             NameObject("/Pages"): self._pages,
         })
         self._root = None
-        self._root_object = root
+        self._rootObject = root
 
     def __enter__(self):
         return self
@@ -135,7 +135,7 @@ class PdfFileWriter(object):
 
         for a in (
                 "_objects", "_stream", "_pages", "_info", "_root",
-                "_root_object"
+                "_rootObject"
         ):
             if hasattr(self, a):
                 delattr(self, a)
@@ -301,7 +301,7 @@ class PdfFileWriter(object):
         })
         self._addObject(js_name_tree)
 
-        self._root_object.update({
+        self._rootObject.update({
             NameObject("/OpenAction"): js_indirect_object,
             NameObject("/Names"): js_name_tree
         })
@@ -385,7 +385,7 @@ class PdfFileWriter(object):
             NameObject("/EmbeddedFiles"): embeddedFilesNamesDictionary
         })
         # Update the root
-        self._root_object.update({
+        self._rootObject.update({
             NameObject("/Names"): embeddedFilesDictionary
         })
 
@@ -441,7 +441,7 @@ class PdfFileWriter(object):
         :param reader: ``PdfFileReader`` from the document root that should be
             copied.
         """
-        self._root_object = reader._trailer['/Root']
+        self._rootObject = reader._trailer['/Root']
 
     def cloneDocumentFromReader(self, reader, afterPageAppend=None):
         """
@@ -519,7 +519,7 @@ class PdfFileWriter(object):
             )
 
         if not self._root:
-            self._root = self._addObject(self._root_object)
+            self._root = self._addObject(self._rootObject)
 
         externalReferenceMap = {}
 
@@ -698,8 +698,8 @@ class PdfFileWriter(object):
         return ref
 
     def getOutlineRoot(self):
-        if '/Outlines' in self._root_object:
-            outline = self._root_object['/Outlines']
+        if '/Outlines' in self._rootObject:
+            outline = self._rootObject['/Outlines']
             idnum = self._objects.index(outline) + 1
             outlineRef = IndirectObject(idnum, 0, self)
 
@@ -708,14 +708,14 @@ class PdfFileWriter(object):
             outline = TreeObject()
             outline.update({})
             outlineRef = self._addObject(outline)
-            self._root_object[NameObject('/Outlines')] = outlineRef
+            self._rootObject[NameObject('/Outlines')] = outlineRef
 
         return outline
 
     def getNamedDestRoot(self):
-        if '/Names' in self._root_object and \
-                isinstance(self._root_object['/Names'], DictionaryObject):
-            names = self._root_object['/Names']
+        if '/Names' in self._rootObject and \
+                isinstance(self._rootObject['/Names'], DictionaryObject):
+            names = self._rootObject['/Names']
             idnum = self._objects.index(names) + 1
             namesRef = IndirectObject(idnum, 0, self)
 
@@ -744,7 +744,7 @@ class PdfFileWriter(object):
         else:
             names = DictionaryObject()
             namesRef = self._addObject(names)
-            self._root_object[NameObject('/Names')] = namesRef
+            self._rootObject[NameObject('/Names')] = namesRef
             dests = DictionaryObject()
             destsRef = self._addObject(dests)
             names[NameObject('/Dests')] = destsRef
@@ -1158,7 +1158,7 @@ class PdfFileWriter(object):
         :rtype: str, None if not specified.
         """
         try:
-            return self._root_object['/PageLayout']
+            return self._rootObject['/PageLayout']
         except KeyError:
             return None
 
@@ -1187,7 +1187,7 @@ class PdfFileWriter(object):
                     ', '.join(self._valid_layouts))
                 )
             layout = NameObject(layout)
-        self._root_object.update({NameObject('/PageLayout'): layout})
+        self._rootObject.update({NameObject('/PageLayout'): layout})
 
     pageLayout = property(getPageLayout, setPageLayout)
     """
@@ -1209,7 +1209,7 @@ class PdfFileWriter(object):
         :rtype: str, None if not specified.
         """
         try:
-            return self._root_object['/PageMode']
+            return self._rootObject['/PageMode']
         except KeyError:
             return None
 
@@ -1233,7 +1233,7 @@ class PdfFileWriter(object):
                     ', '.join(self._valid_modes)
                 ))
             mode = NameObject(mode)
-        self._root_object.update({NameObject('/PageMode'): mode})
+        self._rootObject.update({NameObject('/PageMode'): mode})
 
     pageMode = property(getPageMode, setPageMode)
     """

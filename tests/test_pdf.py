@@ -427,15 +427,15 @@ class AddJsTestCase(unittest.TestCase):
         )
 
         self.assertIn(
-            '/Names', self.writer._root_object,
+            '/Names', self.writer._rootObject,
             "addJS should add a name catalog in the root object."
         )
         self.assertIn(
-            '/JavaScript', self.writer._root_object['/Names'],
+            '/JavaScript', self.writer._rootObject['/Names'],
             "addJS should add a JavaScript name tree under the name catalog."
         )
         self.assertIn(
-            '/OpenAction', self.writer._root_object,
+            '/OpenAction', self.writer._rootObject,
             "addJS should add an OpenAction to the catalog."
         )
 
@@ -456,13 +456,13 @@ class AddJsTestCase(unittest.TestCase):
         )
 
     def _getJavascriptName(self):
-        self.assertIn('/Names', self.writer._root_object)
+        self.assertIn('/Names', self.writer._rootObject)
         self.assertIn(
-            '/JavaScript', self.writer._root_object['/Names']
+            '/JavaScript', self.writer._rootObject['/Names']
         )
         self.assertIn(
             '/Names',
-            self.writer._root_object['/Names']['/JavaScript']
+            self.writer._rootObject['/Names']['/JavaScript']
         )
         return self.writer. \
-            _root_object['/Names']['/JavaScript']['/Names'][0]
+            _rootObject['/Names']['/JavaScript']['/Names'][0]
