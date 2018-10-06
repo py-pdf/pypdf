@@ -513,12 +513,6 @@ class PdfFileWriter(object):
         """
         Writes the collection of pages added to this object out as a PDF file.
         """
-        if hasattr(stream, 'mode') and 'b' not in stream.mode:
-            warnings.warn(
-                "File %s is not in binary mode. It might not be written "
-                "correctly." % stream.name
-            )
-
         if not self._root:
             self._root = self._addObject(self._rootObject)
 
@@ -2622,8 +2616,10 @@ def _convertToInt(d, size):
     return struct.unpack(">q", d)[0]
 
 
+# TO-DO Refactor the code pertaining to these _algX() functions, as they do not
+# seem to conform with OOP and local project conventions.
 # ref: pdf1.8 spec section 3.5.2 algorithm 3.2
-_encryption_padding =\
+_ENCRYPTION_PADDING =\
     b_('\x28\xbf\x4e\x5e\x4e\x75\x8a\x41\x64\x00\x4e\x56') + \
     b_('\xff\xfa\x01\x08\x2e\x2e\x00\xb6\xd0\x68\x3e\x80\x2f\x0c') + \
     b_('\xa9\xfe\x64\x53\x69\x7a')
@@ -2641,8 +2637,8 @@ def _alg32(
     # password string is more than 32 bytes long, use only its first 32 bytes;
     # if it is less than 32 bytes long, pad it by appending the required number
     # of additional bytes from the beginning of the padding string
-    # (_encryption_padding).
-    password = b_((pypdfStr(password) + pypdfStr(_encryption_padding))[:32])
+    # (_ENCRYPTION_PADDING).
+    password = b_((pypdfStr(password) + pypdfStr(_ENCRYPTION_PADDING))[:32])
     # 2. Initialize the MD5 hash function and pass the result of step 1 as
     # input to this function.
     m = md5(password)
@@ -2686,7 +2682,7 @@ def _alg33(owner_pwd, user_pwd, rev, keylen):
     key = _alg33_1(owner_pwd, rev, keylen)
     # 5. Pad or truncate the user password string as described in step 1 of
     # algorithm 3.2.
-    user_pwd = b_((user_pwd + pypdfStr(_encryption_padding))[:32])
+    user_pwd = b_((user_pwd + pypdfStr(_ENCRYPTION_PADDING))[:32])
     # 6. Encrypt the result of step 5, using an RC4 encryption function with
     # the encryption key obtained in step 4.
     val = RC4Encrypt(key, user_pwd)
@@ -2714,7 +2710,7 @@ def _alg33_1(password, rev, keylen):
     # 1. Pad or truncate the owner password string as described in step 1 of
     # algorithm 3.2.  If there is no owner password, use the user password
     # instead.
-    password = b_((password + pypdfStr(_encryption_padding))[:32])
+    password = b_((password + pypdfStr(_ENCRYPTION_PADDING))[:32])
     # 2. Initialize the MD5 hash function and pass the result of step 1 as
     # input to this function.
     m = md5(password)
@@ -2743,7 +2739,7 @@ def _alg34(password, owner_entry, p_entry, id1_entry):
     # 2. Encrypt the 32-byte padding string shown in step 1 of algorithm 3.2,
     # using an RC4 encryption function with the encryption key from the
     # preceding step.
-    U = RC4Encrypt(key, _encryption_padding)
+    U = RC4Encrypt(key, _ENCRYPTION_PADDING)
     # 3. Store the result of step 2 as the value of the /U entry in the
     # encryption dictionary.
     return U, key
@@ -2763,7 +2759,7 @@ def _alg35(
     # 2. Initialize the MD5 hash function and pass the 32-byte padding string
     # shown in step 1 of Algorithm 3.2 as input to this function.
     m = md5()
-    m.update(_encryption_padding)
+    m.update(_ENCRYPTION_PADDING)
     # 3. Pass the first element of the file's file identifier array (the value
     # of the ID entry in the document's trailer dictionary; see Table 3.13 on
     # page 73) to the hash function and finish the hash.  (See implementation
