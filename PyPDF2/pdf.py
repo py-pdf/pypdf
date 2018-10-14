@@ -2649,7 +2649,7 @@ class PageObject(DictionaryObject):
                 content = ContentStream(content, self.pdf)
             self[NameObject("/Contents")] = content.flateEncode()
 
-    def extractText(self):
+    def extractText(self, lineCallback=None):
         """
         Locate all text drawing commands, in the order they are provided in the
         content stream, and extract the text.  This works well for some PDF
@@ -2664,6 +2664,8 @@ class PageObject(DictionaryObject):
         content = self["/Contents"].getObject()
         if not isinstance(content, ContentStream):
             content = ContentStream(content, self.pdf)
+        lastPosition = (0, 0)
+        lineElements = []
         # Note: we check all strings are TextStringObjects.  ByteStringObjects
         # are strings where the byte->string encoding was unknown, so adding
         # them to the text here would be gibberish.
@@ -2672,24 +2674,41 @@ class PageObject(DictionaryObject):
                 _text = operands[0]
                 if isinstance(_text, TextStringObject):
                     text += _text
-                    text += "\n"
+                    text += "|"
+                    # print("TD = " + str(lastPosition) + " Tj Text Element:" +_text)
+                    if (lastPosition[1] != 0):
+                        text += "\n"
+                        if (lineCallback != None):
+                            lineCallback(lineElements)
+                        lineElements = []
+                    lineElements.append({ 'text':_text, 'x': lastPosition[0], 'y': lastPosition[1]})
             elif operator == b_("T*"):
+                dbg(2, "T*T*T*T*T*T*T*T*T")
                 text += "\n"
             elif operator == b_("'"):
+                dbg(2, "'''''''''''''''''''''''''''''")
                 text += "\n"
                 _text = operands[0]
                 if isinstance(_text, TextStringObject):
                     text += operands[0]
             elif operator == b_('"'):
+                dbg(2, '""""""""""""""""""""""""""""')
                 _text = operands[2]
                 if isinstance(_text, TextStringObject):
                     text += "\n"
                     text += _text
             elif operator == b_("TJ"):
+                dbg(2, "TJTJTJTJTJTJTJTJTJTJTJ")
                 for i in operands[0]:
                     if isinstance(i, TextStringObject):
                         text += i
                 text += "\n"
+            elif operator == b_("Td"):
+
+                # print("Td: x = " + str(operands[0]) + " y = " + str(operands[1]))
+                lastPosition = (operands[0], operands[1])
+            # else:
+                #print ("operator: " + operator)
         return text
 
     mediaBox = createRectangleAccessor("/MediaBox", ())
