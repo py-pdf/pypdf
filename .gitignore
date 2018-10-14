@@ -5,3 +5,6 @@
 build
 .idea/*
 
+.project
+.vscode/launch.json
+.vscode/settings.json
