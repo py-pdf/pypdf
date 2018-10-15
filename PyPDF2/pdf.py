@@ -102,6 +102,7 @@ def parseCMap(cstr, firstChar, lastChar):
     result = {
         '__firstChar': firstChar,
         '__lastChar': lastChar,
+        '__type': 'cmap'
     }
     cmapType = 'UNKNOWN'
     #Char based CMap
@@ -160,6 +161,7 @@ def parseEncodingDifferences(arr, firstChar, lastChar):
     result = {
         '__firstChar': firstChar,
         '__lastChar': lastChar,
+        '__type': 'differences'
     }
     ordinal = 0
     for pos in range(len(arr)):
@@ -2818,13 +2820,13 @@ class PageObject(DictionaryObject):
         # so adding them to the text here would be gibberish.
         def translate(text, cmap):
             newText = ""
-            if isinstance(text, TextStringObject):
-                if cmap == None:
-                    return text
-                for c in text:
-                    newText += cmap.get(ord(c), unichr(ord(c)))
-            if isinstance(text, ByteStringObject) and cmap != None:
+
+            if isinstance(text, TextStringObject) and cmap == None:
+                return text
+
+            if (isinstance(text, TextStringObject) or isinstance(text, ByteStringObject)) and cmap != None:
                 singleByte = cmap['__lastChar'] < 256
+                text = text.original_bytes
                 for pos in range(len(text)):
                     if (not singleByte and pos % 2 != 0):
                         continue
@@ -2835,7 +2837,8 @@ class PageObject(DictionaryObject):
                         c = (ord(text[pos]) << 8) + ord(text[pos+1])
                     if c == 0:#This is a hack for cases where singlebyte is written in two bytes
                         continue
-                    newText += cmap.get(c, unichr(ord(c)))
+                    newChar = cmap.get(c,unichr(c))
+                    newText += newChar
             return newText
 
         def handleTextElement(operator, textState, _text):
@@ -2877,10 +2880,17 @@ class PageObject(DictionaryObject):
                     dbg(1, '""""""""""""""""""""""""""""')
                     handleTextElement(operator, textState, translate(operands[2]), cmap)
                 elif operator == b_("TJ"):
+                    #The TJ operator provides an array with both strings and numbers
+                    #The strings are displayed and the numbers are offsets on the X Axis (if writing horizontally)
+                    #The numbers are expressed in 1000th of
                     dbg(1, "TJTJTJTJTJTJTJTJTJTJTJ")
                     _text = u''
                     for i in operands[0]:
-                        _text += translate(i, cmap)
+                        if isinstance(i, decimal.Decimal) or isinstance(i, NumberObject):
+                            #TODO: per char positioning
+                            textState.currentPosition = textState.currentPosition#(textState.currentPosition[0] - (i / 1000), textState.currentPosition[1])
+                        else:
+                            _text += translate(i, cmap)
                     handleTextElement(operator, textState, _text)
                 elif operator == b_("Td") or operator == b_("TD"):
                     dbg(2, operator + ": x = " + str(operands[0]) + " y = " + str(operands[1]))
@@ -2922,7 +2932,7 @@ class PageObject(DictionaryObject):
                                     cmap = parseCMap(str_(cmapData), firstChar, lastChar)
                                 except utils.PdfReadError:
                                     print("Error reading CMAP (font = " + str(font) + ')')
-                            elif '/Encoding' in fontObj:
+                            if '/Encoding' in fontObj:
                                 encoding =  fontObj["/Encoding"]
                                 if '/Differences' in encoding:
                                     firstChar = 0xffff
