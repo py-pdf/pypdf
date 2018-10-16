@@ -2865,6 +2865,18 @@ class PageObject(DictionaryObject):
 
         :return: a unicode string object
         """
+        return self.extractTextState(lineCallback=lineCallback, lineMargin=lineMargin).text
+
+    def extractTextState(self, lineCallback = None, lineMargin = 1):
+        """
+        Locate all text drawing commands, in the order they are provided in the
+        content stream, and extract the text line by line.
+        For each line, the lineCallback function is called with all the text elements in the line.
+        Each element has x and y position properties so the caller can decide on the sort oder.
+        Line detection is done by comparing the y position to the line margin argument.
+
+        :return: a TextState structure, which describes the page in detail
+        """
         textState = TextState(lineCallback)
         firstParagraph = True
 
@@ -3086,7 +3098,7 @@ class PageObject(DictionaryObject):
         if textState.lineCallback:
             for y in sorted(textState.lines.keys(), reverse=True):
                 textState.lineCallback(textState.lines[y], textState)
-        return textState.text
+        return textState
 
     mediaBox = createRectangleAccessor("/MediaBox", ())
     """
