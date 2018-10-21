@@ -3009,7 +3009,7 @@ class PageObject(DictionaryObject):
                     #Update the top of stack
                     textState.graphicsStack[0] = GraphicsMatrix(operands[0], operands[3], operands[4], operands[5])
                 elif operator == b_("BT"):
-                    dbg(2, operator)
+                    dbg(2, repr(operator))
                     #TODO: to really sort by lines, need to create a dictionary with buckets by y location or something
                     textState.currentPosition = (0, 0)
                 elif operator == b_("Tf"):
@@ -3075,7 +3075,7 @@ class PageObject(DictionaryObject):
                         dbg(3, "xObj operations: " + repr(xobjContent.operations))
                         processOperations(xobjContent, xObj)
                 elif operator == b_("ET"):
-                    dbg(3, operator)
+                    dbg(3, repr(operator))
                 elif operator == b_("q"):
                     dbg(10, "Save grahics state: " + repr(operator) + " ops: " + repr(operands))
                     #Insert a default state to the top of stack
