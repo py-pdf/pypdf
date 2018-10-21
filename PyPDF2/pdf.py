@@ -66,7 +66,7 @@ import codecs
 from .generic import *
 from .utils import readNonWhitespace, readUntilWhitespace, ConvertFunctionsToVirtualList
 from .utils import isString, b_, u_, ord_, chr_, str_, formatWarning
-from glyphNamesToUnicode import glyphNameToUnicode
+from .glyphNamesToUnicode import glyphNameToUnicode
 
 if version_info < ( 2, 4 ):
    from sets import ImmutableSet as frozenset
@@ -83,7 +83,7 @@ def dbg(level, msg):
     debugLevel = 0
     if debugLevel < level:
         return
-    print "DBG: " + msg
+    print("DBG: " + msg)
 
 class GraphicsMatrix:
     """
@@ -166,9 +166,9 @@ def parseCMap(cstr, firstChar, lastChar):
                         curTargetChar = targetChars.pop(0)
                     unicodeVal = int(curTargetChar, base=16) + targetOffset
                     try:
-                        result[ch] = unichr(unicodeVal)
+                        result[ch] = chr_(unicodeVal)
                     except ValueError:
-                        result[ch] = unichr(0)
+                        result[ch] = chr_(0)
                     targetOffset += targetIncrement
                     maxCh = max(ch, maxCh)
     result['__lastChar'] = maxCh
@@ -198,8 +198,8 @@ def parseEncodingDifferences(arr, firstChar, lastChar):
                 uni = glyphNameToUnicode(glyph)
                 if uni == None:
                     print("Unicode char name not found: " + glyph)
-                    uni = ord('?')
-        result[ordinal] = unichr(uni)
+                    uni = ord_('?')
+        result[ordinal] = chr_(uni)
         dbg(10, "GlyphName: " + glyph + " char: " + result[ordinal])
     return result
 
@@ -2908,20 +2908,20 @@ class PageObject(DictionaryObject):
                     if (not singleByte and pos % 2 != 0):
                         continue
                     if (singleByte):
-                        c = ord(text[pos])
+                        c = ord_(text[pos])
                     else:
                         #Assume the characters are 2 bytes each and convert them to hex
-                        c = (ord(text[pos]) << 8) + ord(text[pos+1])
+                        c = (ord_(text[pos]) << 8) + ord_(text[pos+1])
                     if c == 0:#This is a hack for cases where singlebyte is written in two bytes
                         continue
-                    newChar = cmap.get(c, unichr(c))
+                    newChar = cmap.get(c, chr_(c))
                     textWidth += calcCharWidth(textState, c)
                     newText += newChar
             return (newText, textWidth)
 
         def handleTextElement(operator, textState, _text, textWidth):
             textState.text += _text
-            dbg(9, "Operator: " + operator + ": " + str(textState.currentPosition) + " Text Element (Text: " + _text + ')')
+            dbg(9, "Operator: " + repr(operator) + ": " + repr(textState.currentPosition) + " Text Element (Text: " + _text + ')')
             newLine = (operator == 'FAKENL' or operator == 'T*' or
                        operator == "'" or operator == '"')
             if (newLine or
@@ -2987,25 +2987,25 @@ class PageObject(DictionaryObject):
                             width += tmpWidth
                     handleTextElement(operator, textState, _text, width)
                 elif operator == b_("Td") or operator == b_("TD"):
-                    dbg(2, operator + ": x = " + str(operands[0]) + " y = " + str(operands[1]))
+                    dbg(2, repr(operator) + ": x = " + repr(operands[0]) + " y = " + repr(operands[1]))
                     positionOffset = (float(operands[0]), float(operands[1]))
                     textState.currentPosition = (textState.currentPosition[0] + positionOffset[0], textState.currentPosition[1] + positionOffset[1])
                 elif operator == b_('Tc'):
-                    dbg(2, "Tc " + str(operands))
+                    dbg(2, "Tc " + repr(operands))
                 elif operator == b_('Tw'):
-                    dbg(2, "Tw " + str(operands))
+                    dbg(2, "Tw " + repr(operands))
                 elif operator == b_('Tz'):
-                    dbg(2, "Tz " + str(operands))
+                    dbg(2, "Tz " + repr(operands))
                 elif operator == b_('Tm'):
                     newX = float(operands[4] if operands[0] > 0 else -1 * operands[4])
                     newY = float(operands[5] if operands[3] > 0 else -1 * operands[5])
-                    dbg(2, operator + ": x = " + str(newX) + " y = " + str(newY) + "xMult = " + str(operands[3]))
+                    dbg(2, operator + ": x = " + repr(newX) + " y = " + repr(newY) + "xMult = " + repr(operands[3]))
                     textState.textMatrix = GraphicsMatrix(operands[0], operands[3], operands[4], operands[5])
                     textState.currentPosition = (newX, newY)
                     if (operands[0] != operands[3] or operands[1] != 0 or operands[2] != 0):
-                        dbg(1, "Potentially unsafe handling of Tm operator: " + operator + " ops: " + str(operands))
+                        dbg(1, "Potentially unsafe handling of Tm operator: " + operator + " ops: " + repr(operands))
                 elif operator == b_('cm'):
-                    dbg(10, "cm operator: " + operator + " ops: " + str(operands))
+                    dbg(10, "cm operator: " + repr(operator) + " ops: " + repr(operands))
                     #Update the top of stack
                     textState.graphicsStack[0] = GraphicsMatrix(operands[0], operands[3], operands[4], operands[5])
                 elif operator == b_("BT"):
@@ -3064,7 +3064,7 @@ class PageObject(DictionaryObject):
                             textState.widths = parseWidthsArray(fontObj)
                             textState.widthsCache[font] = textState.widths
                 elif operator == b_("Do"):
-                    dbg(2, "Do " + str(operands[0]))
+                    dbg(2, "Do " + repr(operands[0]))
                     xObjName = operands[0]
                     if not xObjName in obj['/Resources']['/XObject']:
                         continue
@@ -3072,22 +3072,22 @@ class PageObject(DictionaryObject):
                     if (xObj['/Subtype'] == '/Form'):
                         dbg(2, "Processing Form named: " + xObjName)
                         xobjContent = ContentStream(xObj, self.pdf)
-                        dbg(3, "xObj operations: " + str(xobjContent.operations))
+                        dbg(3, "xObj operations: " + repr(xobjContent.operations))
                         processOperations(xobjContent, xObj)
                 elif operator == b_("ET"):
                     dbg(3, operator)
                 elif operator == b_("q"):
-                    dbg(10, "Save grahics state: " + operator + " ops: " + str(operands))
+                    dbg(10, "Save grahics state: " + repr(operator) + " ops: " + repr(operands))
                     #Insert a default state to the top of stack
                     textState.graphicsStack.insert(0, GraphicsMatrix())
                 elif operator == b_("Q"):
-                    dbg(10, "Restore graphics state: " + operator + " ops: " + str(operands))
+                    dbg(10, "Restore graphics state: " + repr(operator) + " ops: " + repr(operands))
                     #Remove the top of stack
                     textState.graphicsStack.pop(0)
                     if len(textState.graphicsStack) == 0:
                         textState.graphicsStack = [GraphicsMatrix()]
                 else:
-                    dbg(10, "operator: " + operator + " ops: " + str(operands))
+                    dbg(10, "operator: " + repr(operator) + " ops: " + repr(operands))
             handleTextElement('FAKENL', textState, '', 0)
 
         content = self["/Contents"].getObject()
