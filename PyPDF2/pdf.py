@@ -200,7 +200,7 @@ def parseEncodingDifferences(arr, firstChar, lastChar):
                     print("Unicode char name not found: " + glyph)
                     uni = ord_('?')
         result[ordinal] = chr_(uni)
-        dbg(10, "GlyphName: " + glyph + " char: " + result[ordinal])
+        dbg(10, "GlyphName: " + repr(glyph) + " char: " + repr(result[ordinal]))
     return result
 
 def mergeCmap(cmap1, cmap2):
@@ -2999,11 +2999,11 @@ class PageObject(DictionaryObject):
                 elif operator == b_('Tm'):
                     newX = float(operands[4] if operands[0] > 0 else -1 * operands[4])
                     newY = float(operands[5] if operands[3] > 0 else -1 * operands[5])
-                    dbg(2, operator + ": x = " + repr(newX) + " y = " + repr(newY) + "xMult = " + repr(operands[3]))
+                    dbg(2, repr(operator) + ": x = " + repr(newX) + " y = " + repr(newY) + "xMult = " + repr(operands[3]))
                     textState.textMatrix = GraphicsMatrix(operands[0], operands[3], operands[4], operands[5])
                     textState.currentPosition = (newX, newY)
                     if (operands[0] != operands[3] or operands[1] != 0 or operands[2] != 0):
-                        dbg(1, "Potentially unsafe handling of Tm operator: " + operator + " ops: " + repr(operands))
+                        dbg(1, "Potentially unsafe handling of Tm operator: " + repr(operator) + " ops: " + repr(operands))
                 elif operator == b_('cm'):
                     dbg(10, "cm operator: " + repr(operator) + " ops: " + repr(operands))
                     #Update the top of stack
