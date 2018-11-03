@@ -163,7 +163,7 @@ class PdfFileMerger(object):
         else:
             self._bookmarks += outline
 
-        dests = pdfr.namedDestinations
+        dests = pdfr.getNamedDestinations()
         dests = self._trimDests(pdfr, dests, pages)
         self._namedDests += dests
 
