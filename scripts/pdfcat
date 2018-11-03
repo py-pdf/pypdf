@@ -50,6 +50,10 @@ def parseArgs():
     parser.add_argument("-o", "--output", metavar="output_file")
     parser.add_argument("-v", "--verbose", action="store_true",
                         help="show page ranges as they are being read")
+    parser.add_argument(
+        "--no-strict", default=False, action="store_true",
+        help="Whether to parse PDF files in strict mode (defaults to True)."
+    )
     parser.add_argument("first_filename", nargs=1,
                         metavar="filename [page range...]")
     # argparse chokes on page ranges like "-2:" unless caught like this:
@@ -73,7 +77,7 @@ if __name__ == "__main__":
     else:
         output = BytesIO()
 
-    merger = PdfFileMerger(output, args.strict)
+    merger = PdfFileMerger(output, not args.no_strict)
     in_fs = dict()
     curr_page = 0
 
