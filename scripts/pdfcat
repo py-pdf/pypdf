@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Concatenate pages from pdf files into a single pdf file.
 
@@ -29,6 +29,7 @@ import os
 import sys
 import traceback
 
+from io import BytesIO
 from sys import stderr, stdout, exit
 from os.path import dirname, abspath, join
 
@@ -70,10 +71,9 @@ if __name__ == "__main__":
     if args.output:
         output = open(args.output, "wb")
     else:
-        stdout.flush()
-        output = os.fdopen(stdout.fileno(), "wb")
+        output = BytesIO()
 
-    merger = PdfFileMerger(output)
+    merger = PdfFileMerger(output, args.strict)
     in_fs = dict()
     curr_page = 0
 
@@ -105,6 +105,11 @@ if __name__ == "__main__":
         exit(1)
 
     merger.write()
+
+    if not args.output:
+        output.seek(0, 0)
+        stdout.buffer.write(output.read())
+
     merger.close()
     # In 3.0, input files must stay open until output is written.
     # Not closing the in_fs because this script exits now.
