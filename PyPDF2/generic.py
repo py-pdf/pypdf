@@ -631,7 +631,9 @@ class DictionaryObject(dict, PdfObject):
                 else:
                     if debug: print(("E", e, ndstream, debugging.toHex(end)))
                     stream.seek(pos, 0)
-                    raise utils.PdfReadError("Unable to find 'endstream' marker after stream at byte %s." % utils.hexStr(stream.tell()))
+                    raise utils.PdfReadError("Unable to find 'endstream' "
+                        "marker after stream at byte %s. (nd='%s', end='%s')"%(
+                            utils.hexStr(stream.tell()), ndstream, end))
         else:
             stream.seek(pos, 0)
         if "__streamdata__" in data:
