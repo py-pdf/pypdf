@@ -310,7 +310,8 @@ class ASCII85Decode(object):
                         group[2] * (85**2) + \
                         group[3] * 85 + \
                         group[4]
-                    assert b < (2**32 - 1)
+                    # Can represent values between 0 and 2^32 - 1
+                    assert b <= (2**32 - 1)
                     c4 = chr((b >> 0) % 256)
                     c3 = chr((b >> 8) % 256)
                     c2 = chr((b >> 16) % 256)
