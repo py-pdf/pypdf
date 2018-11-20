@@ -30,16 +30,20 @@ from PyPDF2.pagerange import PAGE_RANGE_HELP
 def parse_args():
     parser = argparse.ArgumentParser(
         description=__doc__.format(page_range_help=PAGE_RANGE_HELP),
-        formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("-o", "--output",
-                        metavar="output_file")
-    parser.add_argument("-v", "--verbose", action="store_true",
-                        help="show page ranges as they are being read")
-    parser.add_argument("first_filename", nargs=1,
-                        metavar="filename [page range...]")
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument("-o", "--output", metavar="output_file")
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="show page ranges as they are being read",
+    )
+    parser.add_argument("first_filename", nargs=1, metavar="filename [page range...]")
     # argparse chokes on page ranges like "-2:" unless caught like this:
-    parser.add_argument("fn_pgrgs", nargs=argparse.REMAINDER,
-                        metavar="filenames and/or page ranges")
+    parser.add_argument(
+        "fn_pgrgs", nargs=argparse.REMAINDER, metavar="filenames and/or page ranges"
+    )
     args = parser.parse_args()
     args.fn_pgrgs.insert(0, args.first_filename[0])
     return args
@@ -53,7 +57,7 @@ from collections import defaultdict
 from PyPDF2 import PdfFileMerger, parse_filename_page_ranges
 
 
-if __name__ == "__main__":
+def main():
     args = parse_args()
     filename_page_ranges = parse_filename_page_ranges(args.fn_pgrgs)
     if args.output:
@@ -78,3 +82,7 @@ if __name__ == "__main__":
     merger.write(output)
     # In 3.0, input files must stay open until output is written.
     # Not closing the in_fs because this script exits now.
+
+
+if __name__ == "__main__":
+    main()
