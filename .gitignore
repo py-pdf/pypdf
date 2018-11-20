@@ -4,4 +4,4 @@
 .tox
 build
 .idea/*
-
+*.egg-info/
