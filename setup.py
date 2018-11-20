@@ -20,7 +20,7 @@ objects rather than file streams, allowing for PDF manipulation in memory.
 It is therefore a useful tool for websites that manage or manipulate PDFs.
 """
 
-VERSIONFILE="PyPDF2/_version.py"
+VERSIONFILE = "PyPDF2/_version.py"
 verstrline = open(VERSIONFILE, "rt").read()
 VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
 mo = re.search(VSRE, verstrline, re.M)
@@ -30,23 +30,30 @@ else:
     raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE))
 
 setup(
-        name="PyPDF2",
-        version=verstr,
-        description="PDF toolkit",
-        long_description=long_description,
-        author="Mathieu Fenniak",
-        author_email="biziqe@mathieu.fenniak.net",
-        maintainer="Phaseit, Inc.",
-        maintainer_email="PyPDF2@phaseit.net",
-        url="http://mstamy2.github.com/PyPDF2",
-        classifiers = [
-            "Development Status :: 5 - Production/Stable",
-            "Intended Audience :: Developers",
-            "License :: OSI Approved :: BSD License",
-            "Programming Language :: Python :: 2",
-            "Programming Language :: Python :: 3",
-            "Operating System :: OS Independent",
-            "Topic :: Software Development :: Libraries :: Python Modules",
-            ],
-        packages=["PyPDF2"],
-    )
+    name="PyPDF2",
+    version=verstr,
+    description="PDF toolkit",
+    long_description=long_description,
+    author="Mathieu Fenniak",
+    author_email="biziqe@mathieu.fenniak.net",
+    maintainer="Phaseit, Inc.",
+    maintainer_email="PyPDF2@phaseit.net",
+    url="http://mstamy2.github.com/PyPDF2",
+    classifiers=[
+        "Development Status :: 5 - Production/Stable",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: BSD License",
+        "Programming Language :: Python :: 2",
+        "Programming Language :: Python :: 3",
+        "Operating System :: OS Independent",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+    ],
+    packages=["PyPDF2"],
+    entry_points={
+        "console_scripts": [
+            "pdfcat = Scripts.pdfcat:main",
+            "pdf-image-extractor = Scripts.pdf_image_extractor:main",
+            "2-up = Scripts.2_up:main",
+        ]
+    },
+)
