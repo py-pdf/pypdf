@@ -41,13 +41,14 @@ project Wiki. A quick outline of these is:
 * **Provide test cases** for individual units of development of your own.
 Proper testing is highly encouraged: *Code without tests is broken by design*
 \- Jacob Kaplan-Moss, Django's original development team member.
-* Follow the [PEP 8](http://filltherealaddress.com) style conventions, such as:
-	* Lower camelCase nomenclature (e.g. `fileName` and not `file_name`,
-	`writeFile()` rather than `write_file()`).
+* Follow the [PEP 8](https://www.python.org/dev/peps/pep-0008/) style conventions, such as:
+	* lower_case_with_underscores nomenclature (e.g., `file_name` rather than `fileName`,
+	and `write_file()` rather than `writeFile()`).
     * Line lengths of `79` characters or less.
-    * Correct spacing between global-scoped classes and functions (two spaces
+    * Correct spacing between global-scoped classes and functions (two newlines
 	in between etc.) and within internal code blocks.
-* Target your code for Python 3 but maintain retrocompatibility with Python 2.
+* Target your code for Python 3 but maintain retrocompatibility with Python 2
+(do we retain Py2?  Still under active consideration).
 * Provide [docstring documentation](https://www.python.org/dev/peps/pep-0257/)
 for public classes and functions. 
 * Utilize `# TO-DO` or `TO-DO` markings within
