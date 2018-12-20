@@ -13,11 +13,11 @@ if (len(sys.argv) != 2):
     print("\nUsage: python {} input_file\n".format(sys.argv[0]))
     sys.exit(1)
 
-pdf = sys.argv[1]
+pdfFileName = sys.argv[1]
 
 if __name__ == '__main__':
-    input1 = PyPDF2.PdfFileReader(open(pdf, "rb"))
-    page0 = input1.getPage(30)
+    inputPdf = PyPDF2.PdfFileReader(open(pdfFileName, "rb"))
+    page0 = inputPdf.getPage(0)
 
     if '/XObject' in page0['/Resources']:
         xObject = page0['/Resources']['/XObject'].getObject()
@@ -30,7 +30,7 @@ if __name__ == '__main__':
                     mode = "RGB"
                 else:
                     mode = "P"
-                
+
                 if '/Filter' in xObject[obj]:
                     if xObject[obj]['/Filter'] == '/FlateDecode':
                         img = Image.frombytes(mode, size, data)
