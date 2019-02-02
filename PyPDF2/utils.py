@@ -47,6 +47,11 @@ bytes_type = type(bytes()) # Works the same in Python 2.X and 3.X
 string_type = getattr(builtins, "unicode", str)
 int_types = (int, long) if sys.version_info[0] < 3 else (int,)
 
+_file_encoding = 'utf-8'
+
+def setFileEncoding(encoding):
+    """Set file encoding."""
+    _file_encoding = encoding
 
 # Make basic type tests more consistent
 def isString(s):
@@ -235,7 +240,7 @@ else:
         if type(s) == bytes:
             return s
         else:
-            r = s.encode('latin-1')
+            r = s.encode(_file_encoding)
             if len(s) < 2:
                 bc[s] = r
             return r
@@ -253,7 +258,7 @@ def str_(b):
         return b
     else:
         if type(b) == bytes:
-            return b.decode('latin-1')
+            return b.decode(_file_encoding)
         else:
             return b
 
