@@ -49,4 +49,5 @@ setup(
             "Topic :: Software Development :: Libraries :: Python Modules",
             ],
         packages=["PyPDF2"],
+        scripts=["Scripts/pdfcat"]
     )
