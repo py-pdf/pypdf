@@ -1220,7 +1220,16 @@ class DocumentInformation(DictionaryObject):
 
     producer_raw = property(lambda self: self.get("/Producer"))
     """The "raw" version of producer; can return a ``ByteStringObject``."""
+    
+    keywords = property(lambda self: self.getText("/Keywords"))
+    """
+    Read-only property accessing the document's **keywords**.
+    Returns a unicode string (``TextStringObject``) or ``None``
+    if the keywords are not specified.
+    """
 
+    keywords_raw = property(lambda self: self.get("/Keywords"))
+    """The "raw" version of keywords; can return a ``ByteStringObject``."""
 
 class RectangleObject(ArrayObject):
     """
