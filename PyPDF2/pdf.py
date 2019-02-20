@@ -1130,7 +1130,11 @@ class PdfFileReader(object):
                 if file is None:
                     file = sys.stderr
                 try:
-                    file.write(formatWarning(message, category, filename, lineno, line))
+                    # It is possible for sys.stderr to be defined as None, most commonly in the case that the script
+                    # is being run vida pythonw.exe on Windows. In this case, just swallow the warning.
+                    # See also https://docs.python.org/3/library/sys.html#sys.__stderr__
+                    if file is not None:
+                        file.write(formatWarning(message, category, filename, lineno, line))
                 except IOError:
                     pass
             warnings.showwarning = _showwarning
