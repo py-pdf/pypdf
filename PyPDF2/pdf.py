@@ -1777,6 +1777,27 @@ class PdfFileReader(object):
             if line[:9] != b_("startxref"):
                 raise utils.PdfReadError("startxref not found")
 
+            # bad xref character at startxref.  Let's see if we can find
+            # the xref table nearby, as we've observed this error with an
+            # off-by-one before.
+            stream.seek(-11, 1)
+            tmp = stream.read(20)
+            xref_loc = tmp.find(b_("xref"))
+            if xref_loc != -1:
+                startxref -= (10 - xref_loc)
+            else:
+                # No explicit xref table, try finding a cross-reference stream.
+                stream.seek(startxref, 0)
+                found = False
+                for look in range(5):
+                    if stream.read(1).isdigit():
+                        # This is not a standard PDF, consider adding a warning
+                        startxref += look
+                        found = True
+                        break
+                if not found:
+                    raise utils.PdfReadError("Could not find xref table at specified location")
+
         # read all cross reference tables and their trailers
         self.xref = {}
         self.xref_objStm = {}
