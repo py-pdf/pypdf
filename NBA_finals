@@ -1,0 +1,140 @@
+import random
+import math
+
+East = [('Milwaukee Bucks', 8.8), ('Toronto Raptors', 6.0), ('Philadelphia 76ers', 2.7), ('Boston Celtics', 4.4), ('Indiana Pacers', 3.3), ('Brooklyn Nets', 0), ('Orlando Magic', 0.7), ('Detroit Pistons', 0)]
+
+West = [('Golden State Warriors', 6.5), ('Denver Nuggets', 4.0), ('Portland Trail Blazers', 4.2), ('Houston Rockets', 4.8), ('Utah Jazz', 5.2), ('Oklahoma City Thunder', 3.4), ('San Antonio Spurs', 1.7), ('Los Angeles Clippers', 0.8)]
+
+def play_game(team1, team2, team_list):
+    
+    seed1 = team_list.index(team1)
+    seed2 = team_list.index(team2)
+    
+    pts_differential1 = team1[1]
+    pts_differential2 = team2[1]
+    
+    pts_differential_factor = (pts_differential1 - pts_differential2)**1
+    
+    d = random.randint(1,115)
+    
+    if seed1 == 0:
+        x = d + (seed2 - seed1)**2.525
+    elif seed1 == 1:
+        x = d + (seed2 - seed1)**1.925
+    elif seed2 - seed1 < 0:
+        x = d - abs(seed2-seed1)**1
+    else:
+        x = d + (seed2 - seed1)**1
+    
+    if x + pts_differential_factor > 45:
+        winner = team1
+        
+    else:
+        winner = team2
+
+    return winner
+    
+def play_round(team_list, bracket):
+    
+    next_round = []
+    
+    num_games = len(team_list)/2
+    
+    for i in range(num_games):
+        winner = play_game(team_list[i], team_list[2*num_games-1-i], bracket)
+        
+        next_round = next_round + [winner]
+        
+    return next_round
+
+def play_playoffs(bracket):
+    
+    num_rounds = int(math.log(len(bracket))/math.log(2))
+    
+    for i in range(num_rounds):
+        if i == 0:
+            
+            new_bracket = play_round(bracket, bracket)
+    
+            print new_bracket
+            
+        else:
+    
+            new_bracket = play_round(new_bracket, bracket)
+    
+            print new_bracket
+    seed_winner = bracket.index(new_bracket[0]) + 1
+#    print seed_winner
+    return new_bracket, seed_winner
+    
+def play_NBA_finals():
+    
+    Championship = []
+
+    Championship = Championship + [play_playoffs(East)]
+    Championship = Championship + [play_playoffs(West)]
+    
+    print Championship
+    
+    champion = play_game(Championship[0], Championship[1], Championship)
+    
+    print 'Your 2019 NBA Champion is the ' + str(champion) + '!!!!!'
+    return champion
+    
+play_NBA_finals()  
+
+def iterate_finals():
+    one_seed_counter = 0
+    two_seed_counter = 0
+    three_seed_counter = 0
+    four_seed_counter = 0
+    five_seed_counter = 0
+    six_seed_counter = 0
+    seven_seed_counter = 0
+    eight_seed_counter = 0
+
+    for i in range(100):
+        champion = play_NBA_finals()
+        
+        if champion[1] == 1:
+            
+            one_seed_counter = one_seed_counter + 1
+            
+        if champion[1] == 2:
+            
+            two_seed_counter =two_seed_counter + 1
+            
+        if champion[1] == 3:
+            
+            three_seed_counter = three_seed_counter + 1
+        
+        if champion[1] == 4:
+            
+            four_seed_counter = four_seed_counter + 1
+            
+        if champion[1] == 5:
+            
+            five_seed_counter = five_seed_counter + 1
+        
+        if champion[1] == 6:
+            
+            six_seed_counter = six_seed_counter + 1
+        
+        if champion[1] == 7:
+            
+            seven_seed_counter = seven_seed_counter + 1
+        
+        if champion[1] == 8:
+            
+            eight_seed_counter = eight_seed_counter + 1
+                          
+        print "ONE SEED WINNERS: " + str(one_seed_counter)
+        print "TWO SEED WINNERS: " + str(two_seed_counter)
+        print "THREE SEED WINNERS: " + str(three_seed_counter)
+        print "FOUR SEED WINNERS: " + str(four_seed_counter)
+        print "FIVE SEED WINNERS: " + str(five_seed_counter)
+        print "SIX SEED WINNERS: " + str(six_seed_counter)
+        print "SEVEN SEED WINNERS: " + str(seven_seed_counter)
+        print "EIGHT SEED WINNERS: " + str(eight_seed_counter)
+
+iterate_finals()
