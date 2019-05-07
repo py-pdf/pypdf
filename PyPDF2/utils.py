@@ -51,6 +51,7 @@ _file_encoding = 'utf-8'
 
 def setFileEncoding(encoding):
     """Set file encoding."""
+    global _file_encoding
     _file_encoding = encoding
 
 # Make basic type tests more consistent
