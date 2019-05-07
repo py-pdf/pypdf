@@ -292,22 +292,12 @@ def pypdfStr(b):
 
 def pypdfOrd(b):
     """
-    Abstracts the conversion from a single-character string to the
-    corresponding integer value over versions 2.7.x and 3 of Python.
+    :type b: Union[int, bytes, str, unicode]
+    :rtype: int
     """
-    # In case of bugs, try to look here! Should the condition be brought like
-    # it used to be in the comment below?
-    # if sys.version_info[0] < 3 or type(b) == str:
-    # (``str is bytes == True`` in Python 2)
-    if isinstance(b, str):
-        return ord(b)
-    elif sys.version_info < (3, 0) and isinstance(b, unicode):
-        return ord(b)
-    # TO-DO The code below should be changed (b could be ANYTHING!) but I have
-    # no idea of what (and how much) previous code could be depending on this
-    # behavior
-    else:
+    if isinstance(b, int):
         return b
+    return ord(b)
 
 
 def pypdfChr(c):
