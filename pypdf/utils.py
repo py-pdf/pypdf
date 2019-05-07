@@ -282,16 +282,17 @@ def pypdfUnicode(s):
 
 def pypdfStr(b):
     """
-    Abstracts the conversion from bytes to string over versions 2.7.x and
-    3 of Python.
+    :type b: Union[bytes, str, unicode]
+    :rtype: str
     """
     if sys.version_info[0] < 3:
+        if isinstance(b, unicode):
+            return b.encode('latin-1')
         return b
     else:
         if isinstance(b, bytes):
-            return b.decode("LATIN1")
-        else:
-            return b
+            return b.decode('latin-1')
+        return b
 
 
 def pypdfOrd(b):
