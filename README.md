@@ -26,11 +26,11 @@ Please see http://claird.github.io/PyPDF4/FAQ.html (available in early August).
 ## Tests
 PyPDF4 includes a modest (but growing!) test suite built on the unittest
 framework. All tests are located in the `tests/` folder and are distributed
-among dedicated modules. Tests can be run from the command line by:
+among dedicated modules. Tests can be run from the command line using tox:
 
 ```
-python2 -m unittest discover --start-directory tests/
-python3 -m unittest discover --start-directory tests/
+python -m pip install tox
+python -m tox
 ```
 
 ## Contributing

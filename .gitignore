@@ -4,3 +4,5 @@
 .tox
 build
 .idea/*
+htmlcov/
+.coverage
