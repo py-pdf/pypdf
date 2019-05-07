@@ -1,8 +1,55 @@
+# Copyright 2018 Acsor <nildexo@yandex.com>
+# Copyright 2019 Kurt McKee <contactme@kurtmckee.org>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+# * Redistributions of source code must retain the above copyright notice,
+# this list of conditions and the following disclaimer.
+# * Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation
+# and/or other materials provided with the distribution.
+# * The name of the author may not be used to endorse or promote products
+# derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+import io
+import re
 import string
 import unittest
 
-from pypdf.utils import hexEncode, pairs
+import pytest
+
+import pypdf.utils
 from tests.utils import intToBitstring, bitstringToInt
+
+
+# Establish the bytes/str/unicode types.
+try:
+    unicode
+except NameError:
+    # Python 3
+    bytes_type = bytes
+    str_type = str
+    unicode_type = str
+else:
+    # Python 2
+    bytes_type = str
+    str_type = str
+    unicode_type = unicode
 
 
 class UtilsTestCase(unittest.TestCase):
@@ -43,7 +90,7 @@ class UtilsTestCase(unittest.TestCase):
         )
 
         for o, i in zip(expOutputs, inputs):
-            self.assertEqual(o, hexEncode(i))
+            self.assertEqual(o, pypdf.utils.hexEncode(i))
 
     def testPairs(self):
         """
@@ -60,7 +107,7 @@ class UtilsTestCase(unittest.TestCase):
 
         for o, i in zip(expOutputs, inputs):
             self.assertTupleEqual(
-                o, tuple(pairs(i))
+                o, tuple(pypdf.utils.pairs(i))
             )
 
     def testPairsException(self):
@@ -73,7 +120,8 @@ class UtilsTestCase(unittest.TestCase):
 
         for i in inputs:
             with self.assertRaises(ValueError):
-                list(pairs(i))
+                list(pypdf.utils.pairs(i))
+
 
 class TestUtilsTestCase(unittest.TestCase):
     """
@@ -121,5 +169,273 @@ class TestUtilsTestCase(unittest.TestCase):
             )
 
 
-if __name__ == "__main__":
-    unittest.main()
+@pytest.mark.parametrize(
+    "arg, expected",
+    (
+        (u'str', True),
+        ('str', True),
+
+        (123, False),
+
+        # I *think* that the function behaves incorrectly here.
+        #
+        # Python 2 support ends in 2020, but for now, I think that is_string()
+        # should return False for Python 2 `bytes` and `str` objects, and only
+        # `unicode` objects should return True.
+        #
+        # If this gets fixed, this additional test parameter will need
+        # to be uncommented:
+        #
+        # (b'bytes', False)
+    )
+)
+def test_is_string(arg, expected):
+    assert pypdf.utils.isString(arg) == expected
+
+
+@pytest.mark.parametrize(
+    "arg, expected",
+    (
+        (123, True),
+        (1 << 100, True),
+
+        (123.123, False),
+        ('str', False),
+    )
+)
+def test_is_int(arg, expected):
+    assert pypdf.utils.isInt(arg) == expected
+
+
+@pytest.mark.parametrize(
+    "arg, expected",
+    (
+        (b'bytes', True),
+        (u'bytes'.encode('utf8'), True),
+
+        (u'str', False),
+        (b'str'.decode('utf8'), False),
+        (10, False),
+    )
+)
+def test_is_bytes(arg, expected):
+    assert pypdf.utils.isBytes(arg) == expected
+
+
+@pytest.mark.parametrize(
+    "data, maxchars, expected_value, expected_tell",
+    (
+        (b'', None, b'', 0),
+        (b'abcdef', None, b'abcdef', 6),
+        (b'abcdef', 3, b'abc', 3),
+        (b'abc def', None, b'abc', 4),
+    )
+)
+def test_read_until_whitespace(data, maxchars, expected_value, expected_tell):
+    stream = io.BytesIO(data)
+    assert pypdf.utils.readUntilWhitespace(stream, maxchars) == expected_value
+    assert stream.tell() == expected_tell
+
+
+@pytest.mark.parametrize(
+    "data, expected_value, expected_tell",
+    (
+        (b'', b'', 0),
+        (b'      ', b'', 6),
+        (b'   a   ', b'a', 4),
+    )
+)
+def test_read_non_whitespace(data, expected_value, expected_tell):
+    stream = io.BytesIO(data)
+    assert pypdf.utils.readNonWhitespace(stream) == expected_value
+    assert stream.tell() == expected_tell
+
+
+@pytest.mark.parametrize(
+    "data, expected_result, expected_tell",
+    (
+        (b'', False, 0),
+        (b'      ', True, 6),
+        (b'a   ', False, 1),
+        (b' a   ', True, 2),
+        (b'  a   ', True, 3),
+    )
+)
+def test_skip_over_whitespace(data, expected_result, expected_tell):
+    stream = io.BytesIO(data)
+    assert pypdf.utils.skipOverWhitespace(stream) == expected_result
+    assert stream.tell() == expected_tell
+
+
+@pytest.mark.parametrize(
+    "data, expected_tell",
+    (
+        (b'', 0),
+        (b' ', 0),
+        (b'a', 0),
+        (b'%a\n\r', 3),
+        (b'%a\r\n', 3),
+        (b'%aa\r', 4),
+    )
+)
+def test_skip_over_comments(data, expected_tell):
+    stream = io.BytesIO(data)
+    pypdf.utils.skipOverComment(stream)
+    assert stream.tell() == expected_tell
+
+
+@pytest.mark.parametrize(
+    "data, pattern, expected_value, expected_tell",
+    (
+        (b'', b'123', b'', 0),
+        (b'abc123def', b'123', b'abc', 3),
+        (b'abcdef', b'123', b'abcdef', 6),
+    )
+)
+def test_read_until_regex(data, pattern, expected_value, expected_tell):
+    stream = io.BytesIO(data)
+    regex = re.compile(pattern)
+    assert pypdf.utils.readUntilRegex(stream, regex, ignore_eof=True) == expected_value
+    assert stream.tell() == expected_tell
+
+
+def test_read_until_regex_exception():
+    stream = io.BytesIO(b'abcdef')
+    regex = re.compile(b'123')
+    with pytest.raises(pypdf.utils.PdfStreamError):
+        pypdf.utils.readUntilRegex(stream, regex, ignore_eof=False)
+
+
+def test_matrix_multiply():
+    matrix1 = [
+        [1, 2],
+        [3, 4],
+    ]
+    matrix2 = [
+        [2, 3],
+        [5, 7],
+    ]
+    expected_result = [
+        [12, 17],
+        [26, 37],
+    ]
+    assert pypdf.utils.matrixMultiply(matrix1, matrix2) == expected_result
+
+
+@pytest.mark.parametrize(
+    "arg, expected_value",
+    (
+        (b'a', b'a'),
+        (b'a'[0], b'a'),
+        ('a', b'a'),
+        (u'a', b'a'),
+        (97, b'a'),
+    )
+)
+def test_pypdf_bytes(arg, expected_value):
+    value = pypdf.utils.pypdfBytes(arg)
+    assert value == expected_value
+    assert isinstance(value, bytes_type)
+
+
+@pytest.mark.parametrize(
+    "arg, expected_value",
+    (
+        (b'abc', 'abc'),
+        ('abc', 'abc'),
+        (u'abc', 'abc'),
+    )
+)
+def test_pypdf_str(arg, expected_value):
+    value = pypdf.utils.pypdfStr(arg)
+    assert value == expected_value
+    assert isinstance(value, str_type)
+
+
+@pytest.mark.parametrize(
+    "arg, expected_value",
+    (
+        (b'abc', u'abc'),
+        ('abc', u'abc'),
+        (u'abc', u'abc'),
+        (b'\\u0061bc', u'abc'),
+        (u'\\u0061bc', u'\\u0061bc'),
+    )
+)
+def test_pypdf_unicode(arg, expected_value):
+    value = pypdf.utils.pypdfUnicode(arg)
+    assert value == expected_value
+    assert isinstance(value, unicode_type)
+
+
+@pytest.mark.parametrize(
+    "arg, expected_value",
+    (
+        (b'a', 97),
+        (b'a'[0], 97),
+        ('a', 97),
+        ('a'[0], 97),
+        (u'a', 97),
+        (u'a'[0], 97),
+        (97, 97),
+    )
+)
+def test_pypdf_ord(arg, expected_value):
+    value = pypdf.utils.pypdfOrd(arg)
+    assert value == expected_value
+    assert isinstance(value, int)
+
+
+@pytest.mark.parametrize(
+    "arg, expected_value",
+    (
+        (97, 'a'),
+        (b'a', 'a'),
+        ('a', 'a'),
+        (u'a', 'a'),
+    )
+)
+def test_pypdf_chr(arg, expected_value):
+    value = pypdf.utils.pypdfChr(arg)
+    assert value == expected_value
+    assert isinstance(value, str_type)
+
+
+@pytest.mark.parametrize(
+    "arg, expected_value",
+    (
+        (0x1, '0x1'),
+        (1 << 100, '0x10000000000000000000000000'),
+    )
+)
+def test_hex_str(arg, expected_value):
+    value = pypdf.utils.hexStr(arg)
+    assert value == expected_value
+    assert isinstance(value, str_type)
+
+
+def test_rc4_encode():
+    crypto_text = pypdf.utils.RC4Encrypt('def', 'abc')
+    assert crypto_text == b'\x9e\xa6\xef'
+    assert isinstance(crypto_text, bytes)
+
+
+@pytest.mark.parametrize(
+    "filename",
+    (
+        r'path/to/filename',
+        r'path\to\filename',
+        r'filename',
+    )
+)
+def test_format_warning(filename):
+    args = ('message', Warning, filename, 'lineno', 'line')
+    warning = pypdf.utils.formatWarning(*args)
+    assert warning == 'Warning: message [filename:lineno]\n'
+
+
+def test_whitespaces():
+    whitespaces = {b' ', b'\n', b'\r', b'\t', b'\x00'}
+    assert whitespaces == set(pypdf.utils.WHITESPACES)
+    for character in pypdf.utils.WHITESPACES:
+        assert isinstance(character, bytes_type)
