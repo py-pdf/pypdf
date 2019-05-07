@@ -245,19 +245,23 @@ class PdfStreamError(PdfReadError):
     pass
 
 
-if sys.version_info < (3, 0):
-    pypdfBytes = lambda s: s
-else:
-    def pypdfBytes(s):
-        if isinstance(s, bytes):  # In Python 2, bytes is str
+def pypdfBytes(s):
+    """
+    :type s: Union[bytes, str, int, unicode]
+    :rtype: bytes
+    """
+    if sys.version_info[0] < 3:
+        if isinstance(s, int):
+            return chr(s)
+        if isinstance(s, bytes):
             return s
-        else:
-            return s.encode('LATIN-1')
-
-pypdfBytes.__doc__ = """
-Abstracts the conversion from ``str`` to ``bytes`` over versions 2.7.x and
-3 of Python.
-"""
+        return s.encode('latin-1')
+    else:
+        if isinstance(s, int):
+            return bytes([s])
+        if isinstance(s, bytes):
+            return s
+        return s.encode('latin-1')
 
 
 def pypdfUnicode(s):
