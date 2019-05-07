@@ -306,13 +306,12 @@ def pypdfOrd(b):
 
 def pypdfChr(c):
     """
-    Abstracts the conversion from a single byte to the corresponding ASCII
-    character over versions 2.7.x and 3 of Python.
+    :type c: Union[int, bytes, str, unicode]
+    :rtype: str
     """
-    if sys.version_info[0] < 3:
-        return c
-    else:
+    if isinstance(c, int):
         return chr(c)
+    return chr(ord(c))
 
 
 def pypdfBytearray(b):
