@@ -262,15 +262,18 @@ Abstracts the conversion from ``str`` to ``bytes`` over versions 2.7.x and
 
 def pypdfUnicode(s):
     """
-    Encodes a string ``s`` according to the Unicode character set (default for
-    Python 3).
-    :param s: a ``str`` instance.
-    :rtype: ``unicode`` for Python 2, ``str`` for Python 3.
+    :type s: Union[bytes, str, unicode]
+    :returns: ``unicode`` for Python 2, ``str`` for Python 3.
+    :rtype: Union[str, unicode]
     """
     if sys.version_info[0] < 3:
+        if isinstance(s, unicode):
+            return s
         return unicode(s, 'unicode_escape')
     else:
-        return s
+        if isinstance(s, str):
+            return s
+        return s.decode('unicode_escape')
 
 
 def pypdfStr(b):
