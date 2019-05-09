@@ -604,6 +604,9 @@ class ASCII85Codec(object):
                 data = data[2:]
 
             for index, c in enumerate(data):
+                # Ignore whitespace characters.
+                if not c.strip(' \n\r\t\v'):
+                    continue
                 byte = ord(c)
 
                 # 33 == ord('!') and 117 == ord('u')
