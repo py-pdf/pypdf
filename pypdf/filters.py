@@ -568,7 +568,7 @@ class ASCII85Codec(object):
                 # resulting group of 5.» - ISO 32000 (2008), sec. 7.4.3
                 result += ascii85[:min(5, groupWidth + 1)]
 
-            return (result + "~>").encode("LATIN1")
+            return ("<~" + result + "~>").encode("LATIN1")
         else:
             return base64.a85encode(data, adobe=True)
 
