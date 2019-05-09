@@ -581,7 +581,6 @@ class ASCII85Codec(object):
         :return: bytes for Python 3, str for Python 2.
         """
         if sys.version_info[0] < 3:
-            # TO-DO Add check for missing '~>' EOD marker.
             group_index = b = 0
             out = bytearray()
 
@@ -602,6 +601,10 @@ class ASCII85Codec(object):
             # Strip leading '<~' characters, if present.
             if data.startswith("<~"):
                 data = data[2:]
+
+            # Ensure that the data ends with '~>' characters.
+            if not data.endswith("~>"):
+                raise ValueError("Ascii85 encoded byte sequences must end with '~>'")
 
             for index, c in enumerate(data):
                 # Ignore whitespace characters.
