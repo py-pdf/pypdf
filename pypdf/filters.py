@@ -599,6 +599,10 @@ class ASCII85Codec(object):
                     data.__class__.__name__
                 )
 
+            # Strip leading '<~' characters, if present.
+            if data.startswith("<~"):
+                data = data[2:]
+
             for index, c in enumerate(data):
                 byte = ord(c)
 
