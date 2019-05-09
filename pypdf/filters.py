@@ -616,7 +616,8 @@ class ASCII85Codec(object):
                         group_index = b = 0
                 # 122 == ord('z')
                 elif byte == 122:
-                    assert group_index == 0
+                    if group_index:
+                        raise ValueError('z inside Ascii85 5-tuple')
                     out.extend(b"\x00\x00\x00\x00")
                 # 126 == ord('~') and 62 == ord('>')
                 elif byte == 126 and data[index + 1] == '>':
