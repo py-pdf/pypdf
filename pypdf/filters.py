@@ -585,6 +585,12 @@ class ASCII85Codec(object):
             group_index = b = 0
             out = bytearray()
 
+            if isinstance(data, unicode):
+                try:
+                    data = data.encode("ascii")
+                except UnicodeEncodeError:
+                    raise ValueError('unicode argument should contain only ASCII characters')
+
             if isinstance(data, bytes):
                 data = data.decode("LATIN1")
             elif not isinstance(data, str):
