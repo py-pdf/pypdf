@@ -162,13 +162,13 @@ class ASCII85CodecTestCase(unittest.TestCase):
         """
         e, d = ASCII85Codec.encode, ASCII85Codec.decode
         inputs = [
-            string.ascii_lowercase, string.ascii_uppercase,
-            string.ascii_letters, string.whitespace,
-            "\x00\x00\x00\x00", 2 * "\x00\x00\x00\x00",
+            string.ascii_lowercase.encode('ascii'), string.ascii_uppercase.encode('ascii'),
+            string.ascii_letters.encode('ascii'), string.whitespace.encode('ascii'),
+            b"\x00\x00\x00\x00", 2 * b"\x00\x00\x00\x00",
         ]
 
         for filename in ("TheHappyPrince.txt", ):
-            with open(join(TEST_DATA_ROOT, filename)) as infile:
+            with open(join(TEST_DATA_ROOT, filename), 'rb') as infile:
                 inputs.append(infile.read())
 
         for i in inputs:
@@ -179,8 +179,6 @@ class ASCII85CodecTestCase(unittest.TestCase):
                 exp = i
 
             self.assertEqual(exp, d(e(i)))
-            # Tests with input in bytes form
-            self.assertEqual(exp, d(e(i.encode("LATIN1"))))
 
     def testWithOverflow(self):
         inputs = (
@@ -204,19 +202,19 @@ class ASCII85CodecTestCase(unittest.TestCase):
         by the character with code 122 (z) instead of by five exclamation
         points (!!!!!).»
         """
-        inputs = ("z", "zz", "zzz")
+        inputs = (b"z~>", b"zz~>", b"zzz~>")
         expOutputs = (
             b"\x00\x00\x00\x00", b"\x00\x00\x00\x00" * 2,
             b"\x00\x00\x00\x00" * 3,
         )
 
         self.assertEqual(
-            ASCII85Codec.decode("!!!!!"), ASCII85Codec.decode("z")
+            ASCII85Codec.decode(b"!!!!!~>"), ASCII85Codec.decode(b"z~>")
         )
 
         for o, i in zip(expOutputs, inputs):
             self.assertEqual(
-                o, ASCII85Codec.decode(i + "~>")
+                o, ASCII85Codec.decode(i)
             )
 
 
