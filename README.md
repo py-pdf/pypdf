@@ -10,6 +10,13 @@ as merge entire files together.
 Homepage  
 http://mstamy2.github.io/PyPDF2/
 
+## Installation
+
+To install PyPDF2 you can downloaded from PyPi running 
+the next command:
+
+    $ pip install -U PyPDF2
+
 ## Examples
 
 Please see the `Sample_Code` folder.
