@@ -189,7 +189,7 @@ class TestUtilsTestCase(unittest.TestCase):
         # (b'bytes', False)
     )
 )
-def test_is_string(arg, expected):
+def testIsString(arg, expected):
     assert pypdf.utils.isString(arg) == expected
 
 
@@ -203,7 +203,7 @@ def test_is_string(arg, expected):
         ('str', False),
     )
 )
-def test_is_int(arg, expected):
+def testIsInt(arg, expected):
     assert pypdf.utils.isInt(arg) == expected
 
 
@@ -218,7 +218,7 @@ def test_is_int(arg, expected):
         (10, False),
     )
 )
-def test_is_bytes(arg, expected):
+def testIsBytes(arg, expected):
     assert pypdf.utils.isBytes(arg) == expected
 
 
@@ -231,7 +231,7 @@ def test_is_bytes(arg, expected):
         (b'abc def', None, b'abc', 4),
     )
 )
-def test_read_until_whitespace(data, maxchars, expected_value, expected_tell):
+def testReadUntilWhitespace(data, maxchars, expected_value, expected_tell):
     stream = io.BytesIO(data)
     assert pypdf.utils.readUntilWhitespace(stream, maxchars) == expected_value
     assert stream.tell() == expected_tell
@@ -245,7 +245,7 @@ def test_read_until_whitespace(data, maxchars, expected_value, expected_tell):
         (b'   a   ', b'a', 4),
     )
 )
-def test_read_non_whitespace(data, expected_value, expected_tell):
+def testReadNonWhitespace(data, expected_value, expected_tell):
     stream = io.BytesIO(data)
     assert pypdf.utils.readNonWhitespace(stream) == expected_value
     assert stream.tell() == expected_tell
@@ -261,7 +261,7 @@ def test_read_non_whitespace(data, expected_value, expected_tell):
         (b'  a   ', True, 3),
     )
 )
-def test_skip_over_whitespace(data, expected_result, expected_tell):
+def testSkipOverWhitespace(data, expected_result, expected_tell):
     stream = io.BytesIO(data)
     assert pypdf.utils.skipOverWhitespace(stream) == expected_result
     assert stream.tell() == expected_tell
@@ -278,7 +278,7 @@ def test_skip_over_whitespace(data, expected_result, expected_tell):
         (b'%aa\r', 4),
     )
 )
-def test_skip_over_comments(data, expected_tell):
+def testSkipOverComments(data, expected_tell):
     stream = io.BytesIO(data)
     pypdf.utils.skipOverComment(stream)
     assert stream.tell() == expected_tell
@@ -292,21 +292,21 @@ def test_skip_over_comments(data, expected_tell):
         (b'abcdef', b'123', b'abcdef', 6),
     )
 )
-def test_read_until_regex(data, pattern, expected_value, expected_tell):
+def testReadUntilRegex(data, pattern, expected_value, expected_tell):
     stream = io.BytesIO(data)
     regex = re.compile(pattern)
     assert pypdf.utils.readUntilRegex(stream, regex, ignore_eof=True) == expected_value
     assert stream.tell() == expected_tell
 
 
-def test_read_until_regex_exception():
+def testReadUntilRegexException():
     stream = io.BytesIO(b'abcdef')
     regex = re.compile(b'123')
     with pytest.raises(pypdf.utils.PdfStreamError):
         pypdf.utils.readUntilRegex(stream, regex, ignore_eof=False)
 
 
-def test_matrix_multiply():
+def testMatrixMultiply():
     matrix1 = [
         [1, 2],
         [3, 4],
@@ -332,7 +332,7 @@ def test_matrix_multiply():
         (97, b'a'),
     )
 )
-def test_pypdf_bytes(arg, expected_value):
+def testPypdfBytes(arg, expected_value):
     value = pypdf.utils.pypdfBytes(arg)
     assert value == expected_value
     assert isinstance(value, bytes_type)
@@ -346,7 +346,7 @@ def test_pypdf_bytes(arg, expected_value):
         (u'abc', 'abc'),
     )
 )
-def test_pypdf_str(arg, expected_value):
+def testPypdfStr(arg, expected_value):
     value = pypdf.utils.pypdfStr(arg)
     assert value == expected_value
     assert isinstance(value, str_type)
@@ -362,7 +362,7 @@ def test_pypdf_str(arg, expected_value):
         (u'\\u0061bc', u'\\u0061bc'),
     )
 )
-def test_pypdf_unicode(arg, expected_value):
+def testPypdfUnicode(arg, expected_value):
     value = pypdf.utils.pypdfUnicode(arg)
     assert value == expected_value
     assert isinstance(value, unicode_type)
@@ -380,7 +380,7 @@ def test_pypdf_unicode(arg, expected_value):
         (97, 97),
     )
 )
-def test_pypdf_ord(arg, expected_value):
+def testPypdfOrd(arg, expected_value):
     value = pypdf.utils.pypdfOrd(arg)
     assert value == expected_value
     assert isinstance(value, int)
@@ -395,7 +395,7 @@ def test_pypdf_ord(arg, expected_value):
         (u'a', 'a'),
     )
 )
-def test_pypdf_chr(arg, expected_value):
+def testPypdfChr(arg, expected_value):
     value = pypdf.utils.pypdfChr(arg)
     assert value == expected_value
     assert isinstance(value, str_type)
@@ -408,13 +408,13 @@ def test_pypdf_chr(arg, expected_value):
         (1 << 100, '0x10000000000000000000000000'),
     )
 )
-def test_hex_str(arg, expected_value):
+def testHexStr(arg, expected_value):
     value = pypdf.utils.hexStr(arg)
     assert value == expected_value
     assert isinstance(value, str_type)
 
 
-def test_rc4_encode():
+def testRC4Encode():
     crypto_text = pypdf.utils.RC4Encrypt('def', 'abc')
     assert crypto_text == b'\x9e\xa6\xef'
     assert isinstance(crypto_text, bytes)
@@ -428,13 +428,13 @@ def test_rc4_encode():
         r'filename',
     )
 )
-def test_format_warning(filename):
+def testFormatWarning(filename):
     args = ('message', Warning, filename, 'lineno', 'line')
     warning = pypdf.utils.formatWarning(*args)
     assert warning == 'Warning: message [filename:lineno]\n'
 
 
-def test_whitespaces():
+def testWhitespaces():
     whitespaces = {b' ', b'\n', b'\r', b'\t', b'\x00'}
     assert whitespaces == set(pypdf.utils.WHITESPACES)
     for character in pypdf.utils.WHITESPACES:
