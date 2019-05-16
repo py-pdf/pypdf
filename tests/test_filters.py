@@ -400,7 +400,7 @@ def test_ascii85_decode(data, expected_value, exception):
         (b'\x00\x00\x00\x00', b'<~z~>'),
     )
 )
-def test_ascii85_encode(data, expected_value):
+def testASCII85Encode(data, expected_value):
     value = ASCII85Codec.encode(data)
     assert value == expected_value
     assert isinstance(value, bytes_type)
