@@ -1,3 +1,4 @@
+dist/
 *.pyc
 *.sw[op]
 .DS_Store
