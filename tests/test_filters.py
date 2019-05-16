@@ -12,6 +12,8 @@ from math import floor, log
 
 from os.path import abspath, dirname, join
 
+import pytest
+
 from pypdf.filters import FlateCodec, ASCIIHexCodec, ASCII85Codec,\
     LZWCodec, DCTCodec, CCITTFaxCodec, decodeStreamData
 from pypdf.generic import EncodedStreamObject, IndirectObject
@@ -21,6 +23,21 @@ from tests.utils import intToBitstring
 
 TESTS_ROOT = abspath(dirname(__file__))
 TEST_DATA_ROOT = join(TESTS_ROOT, "fixture_data")
+
+
+# Establish bytes/str/unicode types.
+try:
+    unicode
+except NameError:
+    # Python 3
+    bytes_type = bytes
+    str_type = str
+    unicode_type = str
+else:
+    # Python 2
+    bytes_type = bytes
+    str_type = str
+    unicode_type = unicode
 
 
 class FlateCodecTestCase(unittest.TestCase):
@@ -145,13 +162,13 @@ class ASCII85CodecTestCase(unittest.TestCase):
         """
         e, d = ASCII85Codec.encode, ASCII85Codec.decode
         inputs = [
-            string.ascii_lowercase, string.ascii_uppercase,
-            string.ascii_letters, string.whitespace,
-            "\x00\x00\x00\x00", 2 * "\x00\x00\x00\x00",
+            string.ascii_lowercase.encode('ascii'), string.ascii_uppercase.encode('ascii'),
+            string.ascii_letters.encode('ascii'), string.whitespace.encode('ascii'),
+            b"\x00\x00\x00\x00", 2 * b"\x00\x00\x00\x00",
         ]
 
         for filename in ("TheHappyPrince.txt", ):
-            with open(join(TEST_DATA_ROOT, filename)) as infile:
+            with open(join(TEST_DATA_ROOT, filename), 'rb') as infile:
                 inputs.append(infile.read())
 
         for i in inputs:
@@ -162,8 +179,6 @@ class ASCII85CodecTestCase(unittest.TestCase):
                 exp = i
 
             self.assertEqual(exp, d(e(i)))
-            # Tests with input in bytes form
-            self.assertEqual(exp, d(e(i.encode("LATIN1"))))
 
     def testWithOverflow(self):
         inputs = (
@@ -187,19 +202,19 @@ class ASCII85CodecTestCase(unittest.TestCase):
         by the character with code 122 (z) instead of by five exclamation
         points (!!!!!).»
         """
-        inputs = ("z", "zz", "zzz")
+        inputs = (b"z~>", b"zz~>", b"zzz~>")
         expOutputs = (
             b"\x00\x00\x00\x00", b"\x00\x00\x00\x00" * 2,
             b"\x00\x00\x00\x00" * 3,
         )
 
         self.assertEqual(
-            ASCII85Codec.decode("!!!!!"), ASCII85Codec.decode("z")
+            ASCII85Codec.decode(b"!!!!!~>"), ASCII85Codec.decode(b"z~>")
         )
 
         for o, i in zip(expOutputs, inputs):
             self.assertEqual(
-                o, ASCII85Codec.decode(i + "~>")
+                o, ASCII85Codec.decode(i)
             )
 
 
@@ -346,5 +361,46 @@ class DecodeStreamDataTestCase(unittest.TestCase):
                     )
 
 
-if __name__ == "__main__":
-    unittest.main()
+@pytest.mark.parametrize(
+    "data, expected_value, exception",
+    (
+        (b'<~~>', b'', None),  # Empty input
+        (b'<~@:E^~>', b'abc', None),  # Basic decoding
+        (u'<~@:E^~>', b'abc', None),  # Handle a str (or unicode) object
+        (b'<~@: E^~>', b'abc', None),  # Ignore whitespace
+        (b'<~z~>', b'\x00\x00\x00\x00', None),  # Handle 'z'
+        (b'~>', b'', None),  # No initial '<~'
+        (b'@:E^~>', b'abc', None),  # No initial '<~'
+
+        (b'', None, ValueError),  # Choke on missing '~>'
+        (b'>', None, ValueError),  # Choke on missing '~>'
+        (b'<~<~~>', None, ValueError),  # Don't double-skip '<~'
+        (b'<~~~>', None, ValueError),  # Choke on bare '~'
+        (b'<~aazaa~>', None, ValueError),  # Choke on mid-group 'z'
+        (u'<~\x80~>', None, ValueError),  # Choke on non-ASCII characters
+    )
+)
+def test_ascii85_decode(data, expected_value, exception):
+    if exception:
+        with pytest.raises(exception):
+            ASCII85Codec.decode(data)
+    else:
+        value = ASCII85Codec.decode(data)
+        assert value == expected_value
+        assert isinstance(value, bytes_type)
+
+
+@pytest.mark.parametrize(
+    "data, expected_value",
+    (
+        (b'', b'<~~>'),
+        (b'abc', b'<~@:E^~>'),
+        (b'\x00', b'<~!!~>'),
+        (b'\xff', b'<~rr~>'),
+        (b'\x00\x00\x00\x00', b'<~z~>'),
+    )
+)
+def testASCII85Encode(data, expected_value):
+    value = ASCII85Codec.encode(data)
+    assert value == expected_value
+    assert isinstance(value, bytes_type)
