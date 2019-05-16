@@ -66,7 +66,7 @@ def isBytes(b):
 
 #custom implementation of warnings.formatwarning
 def formatWarning(message, category, filename, lineno, line=None):
-    file = filename.replace("/", "\\").rsplit("\\", 1)[1]  # find the file name
+    file = filename.replace("/", "\\").rsplit("\\", 1)[-1]  # find the file name
     return "%s: %s [%s:%s]\n" % (category.__name__, message, file, lineno)
 
 
@@ -212,19 +212,6 @@ def matrixMultiply(a, b):
             for row in a]
 
 
-def markLocation(stream):
-    """Creates text file showing current location in context."""
-    # Mainly for debugging
-    RADIUS = 5000
-    stream.seek(-RADIUS, 1)
-    outputDoc = open('PyPDF4_pdfLocation.txt', 'w')
-    outputDoc.write(stream.read(RADIUS))
-    outputDoc.write('HERE')
-    outputDoc.write(stream.read(RADIUS))
-    outputDoc.close()
-    stream.seek(-RADIUS, 1)
-
-
 class PyPdfError(Exception):
     pass
 
@@ -245,77 +232,74 @@ class PdfStreamError(PdfReadError):
     pass
 
 
-if sys.version_info < (3, 0):
-    pypdfBytes = lambda s: s
-else:
-    def pypdfBytes(s):
-        if isinstance(s, bytes):  # In Python 2, bytes is str
+def pypdfBytes(s):
+    """
+    :type s: Union[bytes, str, int, unicode]
+    :rtype: bytes
+    """
+    if sys.version_info[0] < 3:
+        if isinstance(s, int):
+            return chr(s)
+        if isinstance(s, bytes):
             return s
-        else:
-            return s.encode('LATIN-1')
-
-pypdfBytes.__doc__ = """
-Abstracts the conversion from ``str`` to ``bytes`` over versions 2.7.x and
-3 of Python.
-"""
+        return s.encode('latin-1')
+    else:
+        if isinstance(s, int):
+            return bytes([s])
+        if isinstance(s, bytes):
+            return s
+        return s.encode('latin-1')
 
 
 def pypdfUnicode(s):
     """
-    Encodes a string ``s`` according to the Unicode character set (default for
-    Python 3).
-    :param s: a ``str`` instance.
-    :rtype: ``unicode`` for Python 2, ``str`` for Python 3.
+    :type s: Union[bytes, str, unicode]
+    :returns: ``unicode`` for Python 2, ``str`` for Python 3.
+    :rtype: Union[str, unicode]
     """
     if sys.version_info[0] < 3:
+        if isinstance(s, unicode):
+            return s
         return unicode(s, 'unicode_escape')
     else:
-        return s
+        if isinstance(s, str):
+            return s
+        return s.decode('unicode_escape')
 
 
 def pypdfStr(b):
     """
-    Abstracts the conversion from bytes to string over versions 2.7.x and
-    3 of Python.
+    :type b: Union[bytes, str, unicode]
+    :rtype: str
     """
     if sys.version_info[0] < 3:
+        if isinstance(b, unicode):
+            return b.encode('latin-1')
         return b
     else:
         if isinstance(b, bytes):
-            return b.decode("LATIN1")
-        else:
-            return b
+            return b.decode('latin-1')
+        return b
 
 
 def pypdfOrd(b):
     """
-    Abstracts the conversion from a single-character string to the
-    corresponding integer value over versions 2.7.x and 3 of Python.
+    :type b: Union[int, bytes, str, unicode]
+    :rtype: int
     """
-    # In case of bugs, try to look here! Should the condition be brought like
-    # it used to be in the comment below?
-    # if sys.version_info[0] < 3 or type(b) == str:
-    # (``str is bytes == True`` in Python 2)
-    if isinstance(b, str):
-        return ord(b)
-    elif sys.version_info < (3, 0) and isinstance(b, unicode):
-        return ord(b)
-    # TO-DO The code below should be changed (b could be ANYTHING!) but I have
-    # no idea of what (and how much) previous code could be depending on this
-    # behavior
-    else:
+    if isinstance(b, int):
         return b
+    return ord(b)
 
 
 def pypdfChr(c):
     """
-    Abstracts the conversion from a single byte to the corresponding ASCII
-    character over versions 2.7.x and 3 of Python.
+    :type c: Union[int, bytes, str, unicode]
+    :rtype: str
     """
-    if sys.version_info[0] < 3:
-        return c
-    else:
+    if isinstance(c, int):
         return chr(c)
+    return chr(ord(c))
 
 
 def pypdfBytearray(b):
