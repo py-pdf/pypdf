@@ -6,3 +6,4 @@ build
 .idea/*
 htmlcov/
 .coverage
+MANIFEST
