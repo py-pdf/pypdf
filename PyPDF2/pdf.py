@@ -369,6 +369,16 @@ class PdfFileWriter(object):
                     writer_annot.update({
                         NameObject("/V"): TextStringObject(fields[field])
                     })
+            # If the PDF file has more than one field with the same name,
+            # the `writer_annot` object will not have the '/T' attribute,
+            # then it will not be filled. So, fix it.
+            if writer_annot.get('/Parent'):
+                writer_annot = writer_annot['/Parent'].getObject()
+                field = writer_annot.get('/T')
+                if field in fields:
+                    writer_annot.update({
+                        NameObject("/V"): TextStringObject(fields[field])
+                    })
 
     def cloneReaderDocumentRoot(self, reader):
         '''
