@@ -2322,7 +2322,7 @@ class PageObject(DictionaryObject):
                     for ref in annots:
                         newAnnots.append(ref)
 
-        for res in "/ExtGState", "/Font", "/XObject", "/ColorSpace", "/Pattern", "/Shading", "/Properties":
+        for res in "/ExtGState", "/Font", "/XObject", "/ColorSpace", "/Pattern", "/Shading", "/Properties", "/Annots":
             new, newrename = PageObject._mergeResources(originalResources, page2Resources, res)
             if new:
                 newResources[NameObject(res)] = new
