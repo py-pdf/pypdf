@@ -1511,6 +1511,15 @@ class PdfFileReader(object):
                 outline[NameObject("/Title")] = title
             else:
                 raise utils.PdfReadError("Unexpected destination %r" % dest)
+
+        if "/C" in node:
+            # Color of outline in (R, G, B) with values ranging 0.0-1.0
+            outline[NameObject("/C")] = node["/C"]
+
+        if "/F" in node:
+            # format of outline; 1=italic, 2=bold, 3=both
+            outline[NameObject("/F")] = node["/F"]
+
         return outline
 
     pages = property(lambda self: ConvertFunctionsToVirtualList(self.getNumPages, self.getPage),
