@@ -485,7 +485,6 @@ class PdfFileWriter(object):
         # Begin writing:
         object_positions = []
         stream.write(self._header + b_("\n"))
-        stream.write(b_("%\xE2\xE3\xCF\xD3\n"))
         for i in range(len(self._objects)):
             idnum = (i + 1)
             obj = self._objects[i]
@@ -572,8 +571,6 @@ class PdfFileWriter(object):
                     self._sweepIndirectReferences(externMap, realdata)
                     return data
             else:
-                if data.pdf.stream.closed:
-                    raise ValueError("I/O operation on closed file: {}".format(data.pdf.stream.name))
                 newobj = externMap.get(data.pdf, {}).get(data.generation, {}).get(data.idnum, None)
                 if newobj == None:
                     try:
@@ -591,9 +588,6 @@ class PdfFileWriter(object):
                         return newobj_ido
                     except ValueError:
                         # Unable to resolve the Object, returning NullObject instead.
-                        warnings.warn("Unable to resolve [{}: {}], returning NullObject instead".format(
-                            data.__class__.__name__, data
-                        ))
                         return NullObject()
                 return newobj
         else:
@@ -895,64 +889,6 @@ class PdfFileWriter(object):
                                 operands[0][i] = TextStringObject()
 
             pageRef.__setitem__(NameObject('/Contents'), content)
-
-    def addURI(self, pagenum, uri, rect, border=None):
-        """
-        Add an URI from a rectangular area to the specified page.
-        This uses the basic structure of AddLink
-
-        :param int pagenum: index of the page on which to place the URI action.
-        :param int uri: string -- uri of resource to link to.
-        :param rect: :class:`RectangleObject<PyPDF2.generic.RectangleObject>` or array of four
-            integers specifying the clickable rectangular area
-            ``[xLL, yLL, xUR, yUR]``, or string in the form ``"[ xLL yLL xUR yUR ]"``.
-        :param border: if provided, an array describing border-drawing
-            properties. See the PDF spec for details. No border will be
-            drawn if this argument is omitted.
-
-        REMOVED FIT/ZOOM ARG
-        -John Mulligan
-        """
-
-        pageLink = self.getObject(self._pages)['/Kids'][pagenum]
-        pageRef = self.getObject(pageLink)
-
-        if border is not None:
-            borderArr = [NameObject(n) for n in border[:3]]
-            if len(border) == 4:
-                dashPattern = ArrayObject([NameObject(n) for n in border[3]])
-                borderArr.append(dashPattern)
-        else:
-            borderArr = [NumberObject(2)] * 3
-
-        if isString(rect):
-            rect = NameObject(rect)
-        elif isinstance(rect, RectangleObject):
-            pass
-        else:
-            rect = RectangleObject(rect)
-
-        lnk2 = DictionaryObject()
-        lnk2.update({
-        NameObject('/S'): NameObject('/URI'),
-        NameObject('/URI'): TextStringObject(uri)
-        });
-        lnk = DictionaryObject()
-        lnk.update({
-        NameObject('/Type'): NameObject('/Annot'),
-        NameObject('/Subtype'): NameObject('/Link'),
-        NameObject('/P'): pageLink,
-        NameObject('/Rect'): rect,
-        NameObject('/H'): NameObject('/I'),
-        NameObject('/Border'): ArrayObject(borderArr),
-        NameObject('/A'): lnk2
-        })
-        lnkRef = self._addObject(lnk)
-
-        if "/Annots" in pageRef:
-            pageRef['/Annots'].append(lnkRef)
-        else:
-            pageRef[NameObject('/Annots')] = ArrayObject([lnkRef])
 
     def addLink(self, pagenum, pagedest, rect, border=None, fit='/Fit', *args):
         """
@@ -1667,12 +1603,11 @@ class PdfFileReader(object):
                     raise utils.PdfReadError("Expected object ID (%d %d) does not match actual (%d %d); xref table not zero-indexed." \
                                      % (indirectReference.idnum, indirectReference.generation, idnum, generation))
                 else: pass # xref table is corrected in non-strict mode
-            elif idnum != indirectReference.idnum and self.strict:
+            elif idnum != indirectReference.idnum:
                 # some other problem
                 raise utils.PdfReadError("Expected object ID (%d %d) does not match actual (%d %d)." \
                                          % (indirectReference.idnum, indirectReference.generation, idnum, generation))
-            if self.strict:
-                assert generation == indirectReference.generation
+            assert generation == indirectReference.generation
             retval = readObject(self.stream, self)
 
             # override encryption is used for the /Encrypt dictionary
@@ -2058,7 +1993,7 @@ class PdfFileReader(object):
         if encrypt['/Filter'] != '/Standard':
             raise NotImplementedError("only Standard PDF encryption handler is available")
         if not (encrypt['/V'] in (1, 2)):
-            raise NotImplementedError("only algorithm code 1 and 2 are supported. This PDF uses code %s" % encrypt['/V'])
+            raise NotImplementedError("only algorithm code 1 and 2 are supported")
         user_password, key = self._authenticateUserPassword(password)
         if user_password:
             self._decryption_key = key
@@ -2227,8 +2162,7 @@ class PageObject(DictionaryObject):
         return self
 
     def _rotate(self, angle):
-        rotateObj = self.get("/Rotate", 0)
-        currentAngle = rotateObj if isinstance(rotateObj, int) else rotateObj.getObject()
+        currentAngle = self.get("/Rotate", 0)
         self[NameObject("/Rotate")] = NumberObject(currentAngle + angle)
 
     def _mergeResources(res1, res2, resource):
@@ -2656,7 +2590,10 @@ class PageObject(DictionaryObject):
         :return: a unicode string object.
         """
         text = u_("")
-        content = self["/Contents"].getObject()
+        if self["/Contents"]:
+            content = self["/Contents"].getObject()
+        else: 
+            content = None
         if not isinstance(content, ContentStream):
             content = ContentStream(content, self.pdf)
         # Note: we check all strings are TextStringObjects.  ByteStringObjects
@@ -2667,7 +2604,6 @@ class PageObject(DictionaryObject):
                 _text = operands[0]
                 if isinstance(_text, TextStringObject):
                     text += _text
-                    text += "\n"
             elif operator == b_("T*"):
                 text += "\n"
             elif operator == b_("'"):
@@ -2730,15 +2666,18 @@ class ContentStream(DecodedStreamObject):
         self.operations = []
         # stream may be a StreamObject or an ArrayObject containing
         # multiple StreamObjects to be cat'd together.
-        stream = stream.getObject()
+        if stream:
+            stream = stream.getObject()
         if isinstance(stream, ArrayObject):
             data = b_("")
             for s in stream:
-                data += b_(s.getObject().getData())
+                data += s.getObject().getData()
             stream = BytesIO(b_(data))
         else:
-            stream = BytesIO(b_(stream.getData()))
-        self.__parseContentStream(stream)
+            if stream:
+                stream = BytesIO(b_(stream.getData()))
+        if stream:
+            self.__parseContentStream(stream)
 
     def __parseContentStream(self, stream):
         # file("f:\\tmp.txt", "w").write(stream.read())

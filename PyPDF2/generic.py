@@ -48,7 +48,7 @@ import sys
 
 ObjectPrefix = b_('/<[tf(n%')
 NumberSigns = b_('+-')
-IndirectPattern = re.compile(b_(r"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]"))
+IndirectPattern = re.compile(b_(r"(\d+)\s+(\d+)\s+R[^a-zA-Z]"))
 
 
 def readObject(stream, pdf):
@@ -82,15 +82,14 @@ def readObject(stream, pdf):
         # comment
         while tok not in (b_('\r'), b_('\n')):
             tok = stream.read(1)
-            # Prevents an infinite loop by raising an error if the stream is at
-            # the EOF
-            if len(tok) <= 0:
-                raise PdfStreamError("File ended unexpectedly.")
         tok = readNonWhitespace(stream)
         stream.seek(-1, 1)
         return readObject(stream, pdf)
     else:
         # number object OR indirect reference
+        if tok in NumberSigns:
+            # number
+            return NumberObject.readFromStream(stream)
         peek = stream.read(20)
         stream.seek(-len(peek), 1) # reset to start
         if IndirectPattern.match(peek) != None:
@@ -340,56 +339,55 @@ def readStringFromStream(stream):
                 break
         elif tok == b_("\\"):
             tok = stream.read(1)
-            ESCAPE_DICT = {b_("n") : b_("\n"),
-                           b_("r") : b_("\r"),
-                           b_("t") : b_("\t"),
-                           b_("b") : b_("\b"),
-                           b_("f") : b_("\f"),
-                           b_("c") : b_("\c"),
-                           b_("(") : b_("("),
-                           b_(")") : b_(")"),
-                           b_("/") : b_("/"),
-                           b_("\\") : b_("\\"),
-                           b_(" ") : b_(" "),
-                           b_("/") : b_("/"),
-                           b_("%") : b_("%"),
-                           b_("<") : b_("<"),
-                           b_(">") : b_(">"),
-                           b_("[") : b_("["), 
-                           b_("]") : b_("]"),
-                           b_("#") : b_("#"),
-                           b_("_") : b_("_"),
-                           b_("&") : b_("&"),
-                           b_('$') : b_('$'),
-                           }
-            try:
-                tok = ESCAPE_DICT[tok]
-            except KeyError:
-                if tok.isdigit():
-                    # "The number ddd may consist of one, two, or three
-                    # octal digits; high-order overflow shall be ignored.
-                    # Three octal digits shall be used, with leading zeros
-                    # as needed, if the next character of the string is also
-                    # a digit." (PDF reference 7.3.4.2, p 16)
-                    for i in range(2):
-                        ntok = stream.read(1)
-                        if ntok.isdigit():
-                            tok += ntok
-                        else:
-                            break
-                    tok = b_(chr(int(tok, base=8)))
-                elif tok in b_("\n\r"):
-                    # This case is  hit when a backslash followed by a line
-                    # break occurs.  If it's a multi-char EOL, consume the
-                    # second character:
-                    tok = stream.read(1)
-                    if not tok in b_("\n\r"):
-                        stream.seek(-1, 1)
-                    # Then don't add anything to the actual string, since this
-                    # line break was escaped:
-                    tok = b_('')
-                else:
-                    raise utils.PdfReadError(r"Unexpected escaped string: %s" % tok)
+            if tok == b_("n"):
+                tok = b_("\n")
+            elif tok == b_("r"):
+                tok = b_("\r")
+            elif tok == b_("t"):
+                tok = b_("\t")
+            elif tok == b_("b"):
+                tok = b_("\b")
+            elif tok == b_("f"):
+                tok = b_("\f")
+            elif tok == b_("c"):
+                tok = b_("\c")
+            elif tok == b_("("):
+                tok = b_("(")
+            elif tok == b_(")"):
+                tok = b_(")")
+            elif tok == b_("/"):
+                tok = b_("/")
+            elif tok == b_("\\"):
+                tok = b_("\\")
+            elif tok in (b_(" "), b_("/"), b_("%"), b_("<"), b_(">"), b_("["), 
+                    b_("]"), b_("#"),  b_("_"), b_("&"), b_('$')):
+                # odd/unnessecary escape sequences we have encountered
+                tok = b_(tok)
+            elif tok.isdigit():
+                # "The number ddd may consist of one, two, or three
+                # octal digits; high-order overflow shall be ignored.
+                # Three octal digits shall be used, with leading zeros
+                # as needed, if the next character of the string is also
+                # a digit." (PDF reference 7.3.4.2, p 16)
+                for i in range(2):
+                    ntok = stream.read(1)
+                    if ntok.isdigit():
+                        tok += ntok
+                    else:
+                        break
+                tok = b_(chr(int(tok, base=8)))
+            elif tok in b_("\n\r"):
+                # This case is  hit when a backslash followed by a line
+                # break occurs.  If it's a multi-char EOL, consume the
+                # second character:
+                tok = stream.read(1)
+                if not tok in b_("\n\r"):
+                    stream.seek(-1, 1)
+                # Then don't add anything to the actual string, since this
+                # line break was escaped:
+                tok = b_('')
+            else:
+                raise utils.PdfReadError(r"Unexpected escaped string: %s" % tok)
         txt += tok
     return createStringObject(txt)
 
@@ -515,7 +513,13 @@ class DictionaryObject(dict, PdfObject):
         return dict.setdefault(self, key, value)
 
     def __getitem__(self, key):
-        return dict.__getitem__(self, key).getObject()
+        # return dict.__getitem__(self, key).getObject()
+        val = 0
+        try:
+            val = dict.__getitem__(self, key).getObject()
+        except KeyError:
+            val = None
+        return val
 
     ##
     # Retrieves XMP (Extensible Metadata Platform) data relevant to the
