@@ -514,7 +514,6 @@ class DictionaryObject(dict, PdfObject):
 
     def __getitem__(self, key):
         # return dict.__getitem__(self, key).getObject()
-        val = 0
         try:
             val = dict.__getitem__(self, key).getObject()
         except KeyError:
