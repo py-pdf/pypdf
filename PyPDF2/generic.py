@@ -1850,6 +1850,19 @@ class Destination(TreeObject):
         """Read-only property accessing the bottom vertical coordinate."""
         return self.get("/Bottom", None)
 
+    color = property(lambda self: self.get("/C", None))
+    """
+    Read-only property accessing the color of an outline.
+
+    :rtype: list of 3 floats from 0.-1. as [red, green, blue], or ``None`` if not available.
+    """
+    
+    fmt = property(lambda self: self.get("/F", None))
+    """
+    Read-only property accessing the font format of an outline.
+
+    :rtype: int where 1 is italic, 2 is bold, 3 is both, or ``None`` if not available.
+    """
 
 class Bookmark(Destination):
     def write_to_stream(
