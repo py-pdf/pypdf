@@ -345,7 +345,7 @@ def readStringFromStream(stream):
                            b_("t") : b_("\t"),
                            b_("b") : b_("\b"),
                            b_("f") : b_("\f"),
-                           b_("c") : b_("\c"),
+                           b_("c") : b_(r"\c"),
                            b_("(") : b_("("),
                            b_(")") : b_(")"),
                            b_("/") : b_("/"),
