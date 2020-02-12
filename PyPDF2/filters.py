@@ -39,9 +39,10 @@ import math
 from .utils import PdfReadError, ord_, chr_, paethPredictor
 from sys import version_info
 if version_info < ( 3, 0 ):
-    from cStringIO import StringIO
+    from cStringIO import StringIO as BytesIO
+    bytearray = buffer
 else:
-    from io import StringIO
+    from io import BytesIO
     import struct
 
 try:
@@ -123,39 +124,52 @@ class FlateDecode(object):
             columns = decodeParms["/Columns"]
             # PNG prediction:
             if predictor >= 10 and predictor <= 15:
-                output = StringIO()
-                # PNG prediction can vary from row to row
-                rowlength = columns + 1
-                assert len(data) % rowlength == 0
+                bitsPerComponent = decodeParms.get("/BitsPerComponent")
+                output = BytesIO()
+
+                # PNG predictor can vary by row and so is the lead byte on each row
+                rowlength = math.ceil(columns * bitsPerComponent / 8) + 1 # number of bytes
+                if len(data) % rowlength != 0:
+                    raise PdfReadError("Image data is not rectangular")
+
                 prev_rowdata = (0,) * rowlength
                 for row in range(len(data) // rowlength):
                     rowdata = [ord_(x) for x in data[(row*rowlength):((row+1)*rowlength)]]
                     filterByte = rowdata[0]
-                    if filterByte == 0:
-                        pass
-                    elif filterByte == 1:
-                        for i in range(2, rowlength):
-                            rowdata[i] = (rowdata[i] + rowdata[i-1]) % 256
-                    elif filterByte == 2:
-                        for i in range(1, rowlength):
-                            rowdata[i] = (rowdata[i] + prev_rowdata[i]) % 256
-                    elif filterByte == 3:
-                        for i in range(1, rowlength):
-                            left = rowdata[i-1] if i > 1 else 0
-                            floor = math.floor(left + prev_rowdata[i])/2
-                            rowdata[i] = (rowdata[i] + int(floor)) % 256
-                    elif filterByte == 4:
-                        for i in range(1, rowlength):
-                            left = rowdata[i - 1] if i > 1 else 0
-                            up = prev_rowdata[i]
-                            up_left = prev_rowdata[i - 1] if i > 1 else 0
-                            paeth = paethPredictor(left, up, up_left)
-                            rowdata[i] = (rowdata[i] + paeth) % 256
+
+                    if bitsPerComponent == 1:
+                        # bitmap data, filters don't make sense but the filter byte is still present
+                        if filterByte != 0:
+                            raise PdfReadError("Unsupported filter byte in bitmap mode: %r" % (filterByte,))
+
                     else:
-                        # unsupported PNG filter
-                        raise PdfReadError("Unsupported PNG filter %r" % filterByte)
+                        if filterByte == 0:
+                            pass
+                        elif filterByte == 1:
+                            for i in range(2, rowlength):
+                                rowdata[i] = (rowdata[i] + rowdata[i-1]) % 256
+                        elif filterByte == 2:
+                            for i in range(1, rowlength):
+                                rowdata[i] = (rowdata[i] + prev_rowdata[i]) % 256
+                        elif filterByte == 3:
+                            for i in range(1, rowlength):
+                                left = rowdata[i-1] if i > 1 else 0
+                                floor = math.floor(left + prev_rowdata[i])/2
+                                rowdata[i] = (rowdata[i] + int(floor)) % 256
+                        elif filterByte == 4:
+                            for i in range(1, rowlength):
+                                left = rowdata[i - 1] if i > 1 else 0
+                                up = prev_rowdata[i]
+                                up_left = prev_rowdata[i - 1] if i > 1 else 0
+                                paeth = paethPredictor(left, up, up_left)
+                                rowdata[i] = (rowdata[i] + paeth) % 256
+
+                        else:
+                            # unsupported PNG filter
+                            raise PdfReadError("Unsupported PNG filter %r" % filterByte)
+
                     prev_rowdata = rowdata
-                    output.write(''.join([chr(x) for x in rowdata[1:]]))
+                    output.write(bytearray(rowdata[1:]))
                 data = output.getvalue()
             else:
                 # unsupported predictor
