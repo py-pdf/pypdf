@@ -167,12 +167,12 @@ class FlateDecode(object):
         return compress(data)
     encode = staticmethod(encode)
 
-
 class ASCIIHexDecode(object):
     def decode(data, decodeParms=None):
         retval = ""
         char = ""
         x = 0
+        data = data.decode()
         while True:
             c = data[x]
             if c == ">":
@@ -358,12 +358,12 @@ class JPXDecode(object):
 class CCITTFaxDecode(object):   
     def decode(data, decodeParms=None, height=0):
         if decodeParms:
-            if decodeParms.get("/K", 1) == -1:
+            if decodeParms[0]['/K'] == -1:
                 CCITTgroup = 4
             else:
                 CCITTgroup = 3
         
-        width = decodeParms["/Columns"]
+        width = decodeParms[0]["/Columns"]
         imgSize = len(data)
         tiff_header_struct = '<' + '2s' + 'h' + 'l' + 'h' + 'hhll' * 8 + 'h'
         tiffHeader = struct.pack(tiff_header_struct,
