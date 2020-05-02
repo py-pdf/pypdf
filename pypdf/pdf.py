@@ -303,7 +303,7 @@ class PdfFileWriter(object):
         self._addObject(js_name_tree)
 
         self._rootObject.update({
-            NameObject("/OpenAction"): js_indirect_object,
+            NameObject("/JavaScript"): js_indirect_object,
             NameObject("/Names"): js_name_tree
         })
 

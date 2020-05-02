@@ -449,8 +449,8 @@ class AddJsTestCase(unittest.TestCase):
             "addJS should add a JavaScript name tree under the name catalog."
         )
         self.assertIn(
-            '/OpenAction', self.writer._rootObject,
-            "addJS should add an OpenAction to the catalog."
+            '/JavaScript', self.writer._rootObject,
+            "addJS should add a JavaScript action to the catalog."
         )
 
     def testOverwrite(self):
