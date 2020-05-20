@@ -10,6 +10,14 @@ as merge entire files together.
 Homepage  
 http://mstamy2.github.io/PyPDF2/
 
+## Installation
+
+Install via pip:
+
+```bash
+pip install PyPDF2
+```
+
 ## Examples
 
 Please see the `Sample_Code` folder.
