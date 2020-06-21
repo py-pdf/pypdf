@@ -387,7 +387,7 @@ class PdfFileWriter(object):
         js.update({
             NameObject("/Type"): NameObject("/Action"),
             NameObject("/S"): NameObject("/JavaScript"),
-            NameObject("/JS"): NameObject("(%s)" % javascript)
+            NameObject("/JS"): createStringObject(javascript)
         })
         js_indirect_object = self._addObject(js)
 
