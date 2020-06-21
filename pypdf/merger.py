@@ -207,9 +207,12 @@ class PdfFileMerger(object):
         """
         self.merge(len(self._pages), fileobj, bookmark, pages, importBookmarks)
 
-    def write(self):
+    def write(self, fileobj=None):
         """
         Writes all data that has been merged to the given output file.
+
+        :param fileobj: Output file. Can be a filename or any kind of
+            file-like object.
         """
         for page in self._pages:
             self._writer.addPage(page.pagedata)
@@ -222,7 +225,7 @@ class PdfFileMerger(object):
         self._writeBookmarks()
 
         # Write the output to the file
-        self._writer.write()
+        self._writer.write(fileobj)
 
     def close(self):
         """
