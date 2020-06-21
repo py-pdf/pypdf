@@ -38,9 +38,8 @@ import uuid
 import warnings
 from io import BytesIO
 
-#from . import utils
-from .utils import * 
-from .utils import pypdfUnicode as u_, pypdfBytes as b_
+from pypdf.utils import *
+from pypdf.utils import pypdfBytes as b_, pypdfUnicode as u_
 
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
@@ -99,10 +98,6 @@ class PdfObject(object):
         """Resolves indirect references."""
         return self
 
-    def clone(self,pdfD):  #PPzz
-        """ clone object into pdfD """
-        raise Exception("clone PdfObject")
-        return self
 
 # TO-DO Add __repr_() implementations to the *Object classes
 class NullObject(PdfObject):
@@ -119,18 +114,9 @@ class NullObject(PdfObject):
         return NullObject()
 
 
-    def clone(self,pdfD):  #PPzz
-        """ clone object into pdfD """
-        return NullObject()
-
-
 class BooleanObject(PdfObject):
     def __init__(self, value):
         self.value = value
-
-    def clone(self,pdfD):  #PPzz
-        """ clone object into pdfD """
-        return BooleanObject(self.value)
 
     def writeToStream(self, stream, encryption_key):
         if self.value:
@@ -153,17 +139,6 @@ class BooleanObject(PdfObject):
 
 
 class ArrayObject(list, PdfObject):
-
-    def clone(self,pdfD):  #PPzz
-        """ clone object into pdfD """
-        arr = ArrayObject()
-        for data in self:
-            if 'clone' in dir(data):
-                arr.append(data.clone(pdfD))
-            else:
-                arr.append(data)
-        return arr
-
     def writeToStream(self, stream, encryption_key):
         stream.write(b_("["))
 
@@ -220,22 +195,6 @@ class IndirectObject(PdfObject):
         self.idnum = idnum
         self.generation = generation
         self.pdf = pdf
-
-    def clone(self,pdfD):  #PPzz
-        """ clone object into pdfD """
-        try: pdfD._IdTranslated
-        except:
-            pdfD._IdTranslated={}
-        try:
-            n=pdfD._IdTranslated[self.idnum]
-        except:
-            n=len(pdfD._objects)+1
-            pdfD._IdTranslated[self.idnum]=n
-            pdfD._objects.append("%d NotInit"%n)
-            o=self.getObject().clone(pdfD)
-            pdfD._objects[n-1]=o
-
-        return IndirectObject(n,0,pdfD)
 
     def getObject(self):
         return self.pdf.getObject(self).getObject()
@@ -306,10 +265,6 @@ class FloatObject(decimal.Decimal, PdfObject):
         except:
             return decimal.Decimal.__new__(cls, str(value))
 
-    def clone(self,pdfD):  #PPzz
-        """ clone object into pdfD """
-        return FloatObject(self.asNumeric())
-
     def __repr__(self):
         if self == self.to_integral():
             return str(self.quantize(decimal.Decimal(1)))
@@ -338,10 +293,6 @@ class NumberObject(int, PdfObject):
             return int.__new__(cls, val)
         except OverflowError:
             return int.__new__(cls, 0)
-
-    def clone(self,pdfD):  #PPzz
-        """ clone object into pdfD """
-        return NumberObject(self.asNumeric())
 
     def asNumeric(self):
         return int(b_(repr(self)))
@@ -493,10 +444,6 @@ class ByteStringObject(bytes_type, PdfObject):
     # returns self.
     original_bytes = property(lambda self: self)
 
-    def clone(self,pdfD):  #PPzz
-        """ clone object into pdfD """
-        return ByteStringObject(self)
-
     def writeToStream(self, stream, encryption_key):
         bytearr = self
 
@@ -523,10 +470,6 @@ class TextStringObject(string_type, PdfObject):
     # if that occurs, this "original_bytes" property can be used to
     # back-calculate what the original encoded bytes were.
     original_bytes = property(lambda self: self.getOriginalBytes())
-
-    def clone(self,pdfD):  #PPzz
-        """ clone object into pdfD """
-        return createStringObject(self)
 
     def getOriginalBytes(self):
         # We're a text string object, but the library is trying to get our raw
@@ -570,10 +513,6 @@ class NameObject(str, PdfObject):
     delimiterPattern = re.compile(b_(r"\s+|[\(\)<>\[\]{}/%]"))
     surfix = b_("/")
 
-    def clone(self,pdfD):  #PPzz
-        """ clone object into pdfD """
-        return NameObject(self)
-
     def writeToStream(self, stream, encryption_key):
         stream.write(b_(self))
 
@@ -610,15 +549,6 @@ class NameObject(str, PdfObject):
 
 
 class DictionaryObject(dict, PdfObject):
-
-    def clone(self,pdfD):  #PPzz
-        """ clone object into pdfD """
-        d=DictionaryObject()
-        for k,v in self.items():
-             d.update({(k.clone(k) if 'clone' in dir(k) else k):
-                               (v.clone(pdfD) if 'clone' in dir(v) else v) })
-        return d
-
     def rawGet(self, key):
         return dict.__getitem__(self, key)
 
@@ -804,15 +734,7 @@ class DictionaryObject(dict, PdfObject):
 
 class TreeObject(DictionaryObject):
     def __init__(self):
-        DictionaryObject.__init__(self)
-
-    def clone(self,pdfD):  #PPzz
-        """ clone object into pdfD """
-        raise Exception("clone TreeObject",self)
-        obj=TreeObject()
-        for k,v in self.items():
-                obj.addChild(v.clone(pdfD),pdfD)
-        return obj
+        DictionaryObject.__init__()
 
     def hasChildren(self):
         return '/First' in self
@@ -953,14 +875,6 @@ class StreamObject(DictionaryObject):
         self._data = None
         self.decodedSelf = None
 
-    def clone(self,pdfD):  #PPzz
-        """ clone object into pdfD """
-        st=self.__class__()
-        st._data=self._data
-        st.decodedSelf=self.decodedSelf
-        st.update(self)
-        return self
-
     def writeToStream(self, stream, encryption_key):
         self[NameObject("/Length")] = NumberObject(len(self._data))
         DictionaryObject.writeToStream(self, stream, encryption_key)
@@ -992,7 +906,7 @@ class StreamObject(DictionaryObject):
         return retval
 
     def flateEncode(self):
-        from .filters import FlateCodec
+        from pypdf.filters import FlateCodec
 
         if "/Filter" in self:
             f = self["/Filter"]
@@ -1020,7 +934,7 @@ class EncodedStreamObject(StreamObject):
         self.decodedSelf = None
 
     def getData(self):
-        from .filters import decodeStreamData
+        from pypdf.filters import decodeStreamData
 
         if self.decodedSelf:
             # Cached version of decoded object
@@ -2184,7 +2098,6 @@ class Destination(TreeObject):
         self[NameObject("/Title")] = title
         self[NameObject("/Page")] = page
         self[NameObject("/Type")] = typ
-        self.parent=None #PPzz
 
         # from table 8.2 of the PDF 1.7 reference.
         if typ == "/XYZ":
@@ -2281,106 +2194,6 @@ class Destination(TreeObject):
 
     :rtype: ``int``, or ``None`` if not available.
     """
-
-class PageLabel():
-    def __init__(self,pn=0,defObject=None):
-        """
-        :param
-        integer pn: 1st Page of the group
-        defObject: tuple (1stPage,prefix,increment) or DictionnaryObject from the file
-        """
-        
-        if defObject is None:
-            defObject = DictionaryObject()
-
-        try:
-            if type(defObject) != tuple:
-                self.prefix=defObject['/P']
-            else:
-                self.prefix=defObject[1]+""#None will induce and error and reach default value
-        except:
-            self.prefix=''
-
-        try:
-            if type(defObject) != tuple:
-                self.numbering=defObject['/S']
-            else:
-                self.numbering=defObject[2]+""#None will induce and error and reach default value
-        except:
-            self.numbering='/D' if self.prefix == "" else ""
-
-        self.pn=pn  #1st page of the range
-        try:
-            if type(defObject) != tuple:
-                self.first=int(defObject['/St'])-pn
-            else:
-                self.first=max(1,int(defObject[0]))-pn   #None will induce and error and reach default value
-        except:
-            self.first=1-pn
-
-    def __repr__(self):
-        return "PageLabel Obj(@%r :%s-%s)" % (self.first, self.prefix, self.numbering)
-
-    def buildDefinition(self,pn=None):
-        """
-        build the DictionnaryObjecgt to inject into the PDF
-        """
-        o=DictionaryObject()
-        if self.numbering!='/D' or self.prefix!='':
-            o.update({ NameObject("/S"):NameObject(self.numbering) })
-        if self.prefix!='':
-            o.update({ NameObject("/P"):NameObject(self.prefix) })
-        if pn==None:
-            o.update({ NameObject("/St"):NumberObject(self.first+self.pn) })
-        elif pn==0:
-            pass;  #No start value
-        else:        
-            o.update({ NameObject("/St"):NumberObject(pn) })
-        return o
-
-    def getLabel(self,pn):
-        def int_to_Roman(num):
-            val = [
-                1000, 900, 500, 400,
-                100, 90, 50, 40,
-                10, 9, 5, 4,
-                1
-                ]
-            syb = [
-                "M", "CM", "D", "CD",
-                "C", "XC", "L", "XL",
-                "X", "IX", "V", "IV",
-                "I"
-                ]
-            roman_num = ''
-            i = 0
-            while  num > 0:
-                for _ in range(num // val[i]):
-                    roman_num += syb[i]
-                    num -= val[i]
-                i += 1
-            return roman_num
-
-        def int_to_Alpha(num):
-            t=""
-            while(num>0):
-                    num=num-1
-                    t=chr(num%26+65)+t
-                    num=num//26
-            return t
-        if self.numbering=='/D':
-            st=str(pn+self.first)
-        elif self.numbering=='/R':
-            st=int_to_Roman(pn+self.first)
-        elif self.numbering=='/r':
-            st=int_to_Roman(pn+self.first).lower()
-        elif self.numbering=='/A':
-            st=int_to_Alpha(pn+self.first)
-        elif self.numbering=='/a':
-            st=int_to_Alpha(pn+self.first).lower()
-        else:
-            st=''
-        return self.prefix+st
 
 
 class Bookmark(Destination):
