@@ -7,7 +7,9 @@ that relies on a "fixture data" (e.g. a test file to read from) place it in the
 hint on how to do this).
 """
 import binascii
+import os
 import sys
+import tempfile
 import unittest
 
 from io import BytesIO
@@ -47,7 +49,7 @@ class PdfReaderTestCases(unittest.TestCase):
         except Exception as e:
             self.assertTrue(
                 False, "Exception '%s' was raised in %s.__del__()" %
-                (e, PdfFileReader.__name__)
+                       (e, PdfFileReader.__name__)
             )
 
         try:
@@ -167,7 +169,7 @@ class PdfReaderTestCases(unittest.TestCase):
         ``PdfFileReader.objects()`` second part (dealing with XStream objects)
         is invoked and implicitly tested.
         """
-        inputFiles = ("crazyones.pdf", )
+        inputFiles = ("crazyones.pdf",)
 
         for filename in inputFiles:
             filepath = join(self.localDataRoot, filename)
@@ -213,7 +215,7 @@ class PdfReaderTestCases(unittest.TestCase):
         previous test cases did.
         """
         self.maxDiff = None
-        inputFiles = ("crazyones.pdf", )
+        inputFiles = ("crazyones.pdf",)
         # expItems and actualItems will contain two-element tuples, where the
         # first element is the object ID, used to sort.
         sortKey = lambda e: e[0]
@@ -265,7 +267,7 @@ class PdfReaderTestCases(unittest.TestCase):
         """
         self.maxDiff = None
         # TO-DO Possibly add a few other files to this test case
-        inputFiles = ("GeoBase_NHNC1_Data_Model_UML_EN.pdf", )
+        inputFiles = ("GeoBase_NHNC1_Data_Model_UML_EN.pdf",)
 
         for filename in inputFiles:
             filepath = join(self.localDataRoot, filename)
@@ -292,7 +294,7 @@ class PdfReaderTestCases(unittest.TestCase):
 
                 # If an item is in use in the XRef Stream, ensure then that it
                 # is marked free in the XRef Table.
-                if r._xrefStm[a.idnum][0] in (2, ):
+                if r._xrefStm[a.idnum][0] in (2,):
                     self.assertTrue(
                         expItems[e][-1],
                         "Item %d should be hid by the XRef Table, but it was "
@@ -427,6 +429,74 @@ class PdfReaderTestCases(unittest.TestCase):
                 callable(getattr(PdfFileReader, m)),
                 "%s.%s() is not callable" % (PdfFileReader.__name__, m)
             )
+
+    def testAddAttachment(self):
+        """
+        Tests the addAttachment function for attaching a single file.
+
+        Since the Names array in the EmbeddedFiles dictionary contains both the
+        name (string) and indirect object (dictionary) for each file, we have
+        to check for two entries per attached file.
+        """
+
+        _, testfile = tempfile.mkstemp()
+
+        try:
+            # Make PDF with attachment
+            with PdfFileReader(join(TEST_DATA_ROOT, 'jpeg.pdf')) as reader:
+                with PdfFileWriter(testfile) as writer:
+                    writer.appendPagesFromReader(reader)
+                    with open(join(TEST_DATA_ROOT, 'attachment_small.png'), "rb") \
+                            as attachment_stream:
+                        read_data = attachment_stream.read()
+                        writer.addAttachment('attachment_small.png', read_data)
+                    writer.write()
+
+            # Check for attachment entries
+            with PdfFileReader(testfile) as pdf:
+                pdf.numPages  # For caching _cachedObjects data
+                for k, v in pdf._cachedObjects.items():
+                    if '/Type' in v:
+                        if v['/Type'] == '/Catalog':
+                            self.assertIsNotNone(v['/Names']['/EmbeddedFiles'])
+                            real = len(v['/Names']['/EmbeddedFiles']['/Names'])
+                            self.assertEqual(2, real)
+        finally:
+            os.remove(testfile)
+
+    def testAttachFiles(self):
+        """
+        Tests the addAttachment function for attaching multiple files.
+
+        Since the Names array in the EmbeddedFiles dictionary contains both the
+        name (string) and indirect object (dictionary) for each file, we have
+        to check for two entries per attached file.
+        """
+
+        numAttachments = 3
+        _, testfile = tempfile.mkstemp()
+
+        try:
+            # Make PDF with attachment
+            with PdfFileReader(join(TEST_DATA_ROOT, 'jpeg.pdf')) as reader:
+                with PdfFileWriter(testfile) as writer:
+                    writer.appendPagesFromReader(reader)
+
+                    writer.attachFiles([join(
+                        TEST_DATA_ROOT, 'attachment_small.png')] * numAttachments)
+                    writer.write()
+
+            # Check for attachment entries
+            with PdfFileReader(testfile) as pdf:
+                pdf.numPages  # For caching _cachedObjects data
+                for k, v in pdf._cachedObjects.items():
+                    if '/Type' in v:
+                        if v['/Type'] == '/Catalog':
+                            self.assertIsNotNone(v['/Names']['/EmbeddedFiles'])
+                            real = len(v['/Names']['/EmbeddedFiles']['/Names'])
+                            self.assertEqual(numAttachments * 2, real)
+        finally:
+            os.remove(testfile)
 
 
 class AddJsTestCase(unittest.TestCase):
