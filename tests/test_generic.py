@@ -1,6 +1,7 @@
 """
 Tests the ``pypdf/generic.py`` module.
 """
+import io
 import sys
 import unittest
 
@@ -15,7 +16,7 @@ TESTS_DATA_ROOT = join(PROJECT_ROOT, "tests", "fixture_data")
 sys.path.append(PROJECT_ROOT)
 
 from pypdf.pdf import PdfFileReader
-from pypdf.generic import IndirectObject, ObjectStream
+from pypdf.generic import IndirectObject, ObjectStream, TextStringObject
 
 
 class ObjectStreamTestCase(unittest.TestCase):
@@ -46,6 +47,38 @@ class ObjectStreamTestCase(unittest.TestCase):
 
             self.assertIsInstance(objStm, ObjectStream)
             self.assertTupleEqual(tuple(o), tuple(objStm.objectIds))
+
+class TextStringObjectTestCase(unittest.TestCase):
+    @staticmethod
+    def _getOutputBytesForString(inputString):
+        stream = io.BytesIO()
+        textStringObject = TextStringObject(inputString)
+        textStringObject.writeToStream(stream, encryption_key=None)
+        streamOutput = stream.getvalue()
+        return streamOutput
+
+    def testWriteToStream(self):
+        """
+        Tests the ``TextStringObject.writeToStream()`` method.
+        """
+
+        outputForLowercaseLetter = self._getOutputBytesForString('k')
+        self.assertEqual(outputForLowercaseLetter, b'(k)')
+
+        outputForUppercaseLetter = self._getOutputBytesForString('K')
+        self.assertEqual(outputForUppercaseLetter, b'(K)')
+
+        outputForDigit = self._getOutputBytesForString('7')
+        self.assertEqual(outputForDigit, b'(7)')
+
+        outputForSpace = self._getOutputBytesForString(' ')
+        self.assertEqual(outputForSpace, b'( )')
+
+        outputForOpeningParentheses = self._getOutputBytesForString('(')
+        self.assertEqual(outputForOpeningParentheses, b'(\\050)')
+
+        outputForBackslash = self._getOutputBytesForString('\\')
+        self.assertEqual(outputForBackslash, b'(\\134)')
 
 
 if __name__ == "__main__":
