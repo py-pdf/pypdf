@@ -734,7 +734,7 @@ class DictionaryObject(dict, PdfObject):
 
 class TreeObject(DictionaryObject):
     def __init__(self):
-        DictionaryObject.__init__()
+        DictionaryObject.__init__(self)
 
     def hasChildren(self):
         return '/First' in self
