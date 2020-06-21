@@ -39,14 +39,17 @@ import io
 import random
 import struct
 import time
+import datetime
+import sys
 import uuid
 from hashlib import md5
+from types import MethodType
 from sys import version_info
 
-from pypdf import utils
-from pypdf.generic import *
-from pypdf.utils import *
-from pypdf.utils import pypdfBytes as b_
+from . import utils
+from .generic import *
+from .utils import *
+from .utils import pypdfBytes as b_
 
 if version_info < (3, 0):
     from cStringIO import StringIO
@@ -54,6 +57,8 @@ if version_info < (3, 0):
 else:
     from io import StringIO, BytesIO
 
+import warnings
+import codecs
 
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
@@ -62,7 +67,7 @@ __maintainer_email = "PyPDF4@phaseit.net"
 
 
 class PdfFileWriter(object):
-    def __init__(self, stream, debug=False):
+    def __init__(self, stream=None, pdfReaderAsSource=None,debug=False):
         """
         This class supports writing PDF files out, given pages produced by
         another class (typically :class:`PdfFileReader<PdfFileReader>`).
@@ -70,6 +75,8 @@ class PdfFileWriter(object):
         :param stream: File-like object or path to a PDF file in ``str``
             format. If of the former type, the object must support the
             ``write()`` and the ``tell()`` methods.
+        :para pdfReaderAsSource: pdfFileReader object :
+            if passed, it is cloned into the writer
         :param bool debug: Whether this class should emit debug informations
             (recommended for development). Defaults to False.
         """
@@ -88,6 +95,15 @@ class PdfFileWriter(object):
                 "File <%s> to write to is not in binary mode. It may not be "
                 "written to correctly." % self._stream.name
             )
+
+        # to be done before cloning alternative
+        self._flattenPageLabels=None
+        # copy compatible methods from Reader
+        self.getPageLabel=MethodType(PdfFileReader.getPageLabel,self)
+            
+        if isinstance(pdfReaderAsSource,PdfFileReader):
+            self.clone(pdfReaderAsSource)
+            return
 
         # The root of our page tree node.
         pages = DictionaryObject()
@@ -157,6 +173,14 @@ class PdfFileWriter(object):
         """
         return not bool(self._stream) or self._stream.closed
 
+    def clone(self,pdfR): #ppZZ
+        self._IdTranslated={}
+        tr=pdfR._trailer.clone(self)
+        self._pages=tr['/Root'].rawGet('/Pages')
+        self._info=tr.rawGet('/Info')
+        self._rootObject=tr['/Root']
+        self._root=tr.rawGet('/Root')
+
     def _addObject(self, obj):
         self._objects.append(obj)
 
@@ -168,16 +192,29 @@ class PdfFileWriter(object):
 
         return self._objects[ido.idnum - 1]
 
-    def _addPage(self, page, action):
-        if page["/Type"] != "/Page":
-            raise ValueError("Page type is not /Page")
+    def _insertPage(self, page, pageNumber):
+        assert page["/Type"] == "/Page"
+        pn=self._pages.getObject()['/Count']
+        if pageNumber>=pn:
+            nextPage,firstPageNum=self._getPage(pn-1,self._pages,0)
+            pageNumber=pn
+        else:
+            nextPage,firstPageNum=self._getPage(pageNumber,self._pages,0)
 
-        page[NameObject("/Parent")] = self._pages
-        pages = self.getObject(self._pages)
-        action(pages["/Kids"], self._addObject(page))
+        nextPage=nextPage.getObject()
+        pages=nextPage['/Parent']
+        pp=nextPage.rawGet('/Parent')
+        page[NameObject("/Parent")] = pp
+        pages["/Kids"].insert(pageNumber-firstPageNum,self._addObject(page))
 
-        pages[NameObject("/Count")] = NumberObject(pages["/Count"] + 1)
-
+        while pp is not None:
+            pp1=pp.getObject()
+            pp1[NameObject("/Count")] = NumberObject(pp1["/Count"] + 1)
+            if pp==self._pages:
+                pp=None
+            else:
+                pp=pp1.rawGet("/Parent")
+        
     def addPage(self, page):
         """
         Adds a page to this PDF file.  The page is usually acquired from a
@@ -186,7 +223,7 @@ class PdfFileWriter(object):
         :param PageObject page: The page to add to the document. Should be
             an instance of :class:`PageObject<pypdf.pdf.PageObject>`
         """
-        self._addPage(page, list.append)
+        self.insertPage(page,self._pages.getObject()["/Count"])
 
     def insertPage(self, page, index=0):
         """
@@ -197,20 +234,88 @@ class PdfFileWriter(object):
             should be an instance of :class:`PageObject<pdf.PageObject>`.
         :param int index: Position at which the page will be inserted.
         """
-        self._addPage(page, lambda l, p: l.insert(index, p))
+        assert 0<=index<=self._pages.getObject()["/Count"]
+        self._insertPage(page,index)
 
-    def getPage(self, pageNumber):
+    def _getPage(self,pageNum,node,firstPageNum): #ppZZ
+        """
+        internal
+        :param int pageNum: page searched for
+        :param IndirectObject node: point to a page or pages within the page tree
+        :param int firstPageNum: page number of the first page of the tree below
+        
+        """
+        if node.getObject()['/Type'] == '/Page':   # it is only one page we have to check
+            if pageNum == firstPageNum :
+                return node,-1  #One Page is not a group, we have to return -1 in order to return the 1st page number of the group
+            else:
+                return firstPageNum+1,-1   # return next first page number
+        elif firstPageNum <= pageNum <firstPageNum+node.getObject()['/Count']:  # the page is within the kids or subkids
+            ret=firstPageNum  #init loop
+            node =node.getObject()
+            for k in node['/Kids']:
+                ret,ret2=self._getPage(pageNum,k,ret)
+                if isinstance(ret,IndirectObject): # page found
+                    if ret2<0:
+                        ret2=firstPageNum
+                    return ret,ret2  # we have the result and push-it up in the recursive call
+            raise("nb of pages not iaw count")
+        else:
+            return firstPageNum+node.getObject()['/Count'],-1   #not found, provide firstPageNumber for next possible group
+
+                
+    def getPage(self, pageNumber,ref=False):
         """
         Retrieves a page by number from this PDF file.
 
         :param int pageNumber: The page number to retrieve
             (pages begin at zero).
-        :return: the page at the index given by *pageNumber*
+        :param boolean ref: return IndirectObject if True else the object (default: False)
+        :return: the page at the index given by *pageNumber* or if not foudn the number of pages
         :rtype: :class:`PageObject<pdf.PageObject>`
         """
-        pages = self.getObject(self._pages)
-        # XXX: crude hack
-        return pages["/Kids"][pageNumber].getObject()
+        assert 0<=pageNumber<self.numPages,\
+                         "PageNumber(%d) Out of pages range [0-%d]"%(pageNumber,self.numPages-1)
+        t=self._getPage(pageNumber,self._pages.getObject(),0)[0]
+        if isinstance(t,int): #not found return the number of pages...
+            return t
+        elif ref:
+            return t
+        else:
+            return t.getObject()
+
+    def removePage(self,pageNum,node=None,firstPageNum=0): #ppZZ
+        """
+        internal
+        :param int pageNum: page searched for
+        :param IndirectObject node: point to a page or pages within the page tree
+        :param int firstPageNum: page number of the first page of the tree below
+        
+        """
+        if node is None:
+            node=self._pages;
+            if not (firstPageNum <= pageNum <firstPageNum+node.getObject()['/Count']):
+                return False
+        if node.getObject()['/Type'] == '/Page':   # it is only one page we have to check
+            if pageNum == firstPageNum :
+                return node  #One Page is not a group, we have to return -1 in order to return the 1st page number of the group
+            else:
+                return firstPageNum+1   # return next first page number
+        elif firstPageNum <= pageNum <firstPageNum+node.getObject()['/Count']:  # the page is within the kids or subkids
+            ret=firstPageNum  #init loop
+            node =node.getObject()
+            for i,k in enumerate(node['/Kids']):
+                ret=self.removePage(pageNum,k,ret)
+                if isinstance(ret,IndirectObject): # page found
+                    del node['/Kids'][i]
+                    node[NameObject('/Count')]=NumberObject(node['/Count']-1)
+                    return True  # we have the result and push-it up in the recursive call
+                elif isinstance(ret,bool) and ret: # page found at a lower level
+                    node[NameObject('/Count')]=NumberObject(node['/Count']-1)
+                    return True  # we have the result and push-it up in the recursive call
+            raise("nb of pages not iaw count")
+        else:
+            return firstPageNum+node.getObject()['/Count']   #not found, provide firstPageNumber for next possible group
 
     @property
     def numPages(self):
@@ -408,7 +513,8 @@ class PdfFileWriter(object):
 
         # Copy pages from reader to writer
         for rpagenum in range(readerNumPages):
-            self.addPage(reader.getPage(rpagenum))
+            readerPage = reader.getPage(rpagenum)
+            self.addPage(readerPage.clone(self))
             writerPage = self.getPage(writerNumPages + rpagenum)
 
             # Trigger callback, pass writer page as parameter
@@ -454,8 +560,11 @@ class PdfFileWriter(object):
             page is appended to the writer. Takes as a single argument a
             reference to the page appended.
         """
-        self.cloneReaderDocumentRoot(reader)
-        self.appendPagesFromReader(reader, afterPageAppend)
+        #self.cloneReaderDocumentRoot(reader)
+        #self.appendPagesFromReader(reader, afterPageAppend)
+        self.clone(reader)
+        for i in range(self.numPages):  # it is no exactly after each append, but the way things are done,...
+            afterPageAppend(self.getPage(i))
 
     def encrypt(self, userPwd, ownerPwd=None, use128Bits=True):
         """
@@ -509,10 +618,31 @@ class PdfFileWriter(object):
         self._encrypt = self._addObject(encrypt)
         self._encrypt_key = key
 
-    def write(self):
+    def write(self, stream=None):
         """
         Writes the collection of pages added to this object out as a PDF file.
+
+        :param stream: An object to write the file to.  The object must support
+            the write method and the tell method, similar to a file object.
+            if empty use the parameter passed through __init__
         """
+        if isinstance(stream,str): #ppZZ
+            with open(stream,'wb') as f:
+                self.write(f)
+            return
+        
+        if hasattr(stream, 'mode') and 'b' not in stream.mode:
+            warnings.warn("File <%s> to write to is not in binary mode. It may not be written to correctly." % stream.name)
+ 
+        if stream is not None:
+            savedStream=self._stream
+            self._stream=stream
+            try:
+                self.write()
+            finally:
+                self._stream=savedStream
+            return
+
         if not self._root:
             self._root = self._addObject(self._rootObject)
 
@@ -692,6 +822,10 @@ class PdfFileWriter(object):
 
         return ref
 
+    def getIndirectObject(self, idnum): #ppZZ
+        ref = IndirectObject(idnum, 0, self)
+        return ref
+
     def getOutlineRoot(self):
         if '/Outlines' in self._rootObject:
             outline = self._rootObject['/Outlines']
@@ -707,47 +841,64 @@ class PdfFileWriter(object):
 
         return outline
 
-    def getNamedDestRoot(self):
-        if '/Names' in self._rootObject and \
-                isinstance(self._rootObject['/Names'], DictionaryObject):
-            names = self._rootObject['/Names']
-            idnum = self._objects.index(names) + 1
-            namesRef = IndirectObject(idnum, 0, self)
+    
+    #Copied from Reader
+    def _buildDestination(self, title, array):
+        return Destination(title, array[0], array[1], *array[2:])
 
-            assert namesRef.getObject() == names
+    def getNamedDestinations(self, tree=None, retval=None):
+        """
+        Retrieves the named destinations present in the document.
 
-            if '/Dests' in names and \
-                    isinstance(names['/Dests'], DictionaryObject):
-                dests = names['/Dests']
-                idnum = self._objects.index(dests) + 1
-                destsRef = IndirectObject(idnum, 0, self)
+        :return: a dictionary which maps names to
+            :class:`Destinations<pypdf.generic.Destination>`.
+        :rtype: dict
+        """
+        if retval is None:
+            retval = {}
+            catalog = self._rootObject
 
-                assert destsRef.getObject() == dests
+            # get the name tree
+            if "/Dests" in catalog:
+                tree = catalog["/Dests"]
+            elif "/Names" in catalog:
+                names = catalog['/Names']
+                if "/Dests" in names:
+                    tree = names['/Dests']
 
-                if '/Names' in dests:
-                    nd = dests['/Names']
-                else:
-                    nd = ArrayObject()
-                    dests[NameObject('/Names')] = nd
-            else:
-                dests = DictionaryObject()
-                destsRef = self._addObject(dests)
-                names[NameObject('/Dests')] = destsRef
-                nd = ArrayObject()
-                dests[NameObject('/Names')] = nd
+        if tree is None:
+            return retval
 
-        else:
-            names = DictionaryObject()
-            namesRef = self._addObject(names)
-            self._rootObject[NameObject('/Names')] = namesRef
-            dests = DictionaryObject()
-            destsRef = self._addObject(dests)
-            names[NameObject('/Dests')] = destsRef
-            nd = ArrayObject()
-            dests[NameObject('/Names')] = nd
+        if "/Kids" in tree:
+            # recurse down the tree
+            for kid in tree["/Kids"]:
+                self.getNamedDestinations(kid.getObject(), retval)
 
-        return nd
+        elif "/Names" in tree: #ppZZ if => elif
+            names = tree["/Names"]
+            for i in range(0, len(names), 2):
+                key = names[i].getObject()
+                val = names[i+1].getObject()
 
+                if isinstance(val, DictionaryObject) and '/D' in val:
+                    val = val['/D']
+
+                dest = self._buildDestination(key, val)
+                if dest is not None:
+                    retval[key] = dest
+        else:  # case where Dests is in root catalog
+            for k,v in tree.items():
+                val=v.getObject()
+                if isinstance(val, DictionaryObject) and '/D' in val:
+                    val = val['/D']
+                dest = self._buildDestination(k,val)
+                if dest != None:
+                    retval[k] = dest
+
+        return retval
+
+
+    #bookmarks are added in 
     def addBookmarkDestination(self, dest, parent=None):
         destRef = self._addObject(dest)
 
@@ -788,8 +939,7 @@ class PdfFileWriter(object):
 
     def addBookmark(
             self, title, pagenum, parent=None, color=None, bold=False,
-            italic=False, fit='/Fit', *args
-    ):
+            italic=False, fit='/Fit', *args):
         """
         Add a bookmark to this PDF file.
 
@@ -804,7 +954,7 @@ class PdfFileWriter(object):
         :param str fit: The fit of the destination page. See
             :meth:`addLink()<addLink>` for details.
         """
-        pageRef = self.getObject(self._pages)['/Kids'][pagenum]
+        pageRef = self.getPage(pagenum,True)
         action = DictionaryObject()
         zoomArgs = []
 
@@ -853,40 +1003,303 @@ class PdfFileWriter(object):
 
         return bookmarkRef
 
-    def addNamedDestinationObject(self, dest):
-        destRef = self._addObject(dest)
+    def addNamedDestinationObject(self, dest,title=None):
+        def _getMinMaxKey(node,_min=True):
+            if "/Names" in node:
+                return node["/Names"][0 if _min else -2]
+            elif "/Kids" in node:
+                return _getMinMaxKey(node["/Kids"][0 if _min else -1].getObject(),_min)
+            else:
+                raise Exception("_getMinMaxKey abnormal")
+            
+        def _insertNamedDest(title,dest,node,force=0):
+            if "/Limits" in node:
+                mi,ma=node['/Limits'][0:2]
+            elif ("/Kids" in node and len(node["/Kids"]) == 0) :
+                raise Exception("Kids list empty ???")
+            elif ("/Names" in node and len(node["/Names"]) == 0):
+                title=TextStringObject(title)
+                node['/Names'].append(title)
+                node['/Names'].append(dest)
+                node.update({NameObject('/Limits'):ArrayObject([title,title])})
+                return node['/Limits']
+            else:  #there is some data but no Limits(it should not exists
+                mi=_getMinMaxKey(node,True)   
+                ma=_getMinMaxKey(node,False)
+                    
+            if "/Names" in node:  #it is a list of names
+                if title<ma or force != 0:
+                    if force == -1:
+                        i=0
+                    else:
+                        for i in range(len(node['/Names'])//2):
+                            if title<node['/Names'][i*2]:
+                                break
+                    title=TextStringObject(title)
+                    if force == +1:
+                        node['/Names'].append(title)
+                        node['/Names'].append(dest)
+                    else:
+                        node['/Names'].insert(i*2,dest)
+                        node['/Names'].insert(i*2,title)
+                    if '/Limits' not in node:
+                        node.update({ NameObject('/Limits'):ArrayObject([title,title]) })
+                    if title<node['/Limits'][0]:
+                        node['/Limits'][0]=title
+                    if title>node['/Limits'][1]:
+                        node['/Limits'][1]=title
+                    return node['/Limits']
+                else:
+                    return None
+            elif "/Kids" in node:     #need to process one level down
+                if force == 1:
+                    lim=_insertNamedDest(title,dest,node['/Kids'][-1].getObject(),+1)
+                    if '/Limits' not in node: node.update({ NameObject('/Limits') : ArrayObject([ mi, lim[1] ]) })
+                    node['/Limits'][1]=lim[1]
+                    return node['/Limits']
+                elif title<mi or force == -1:
+                    lim=_insertNamedDest(title,dest,node['/Kids'][0].getObject(),-1)
+                    if '/Limits' not in node: node.update({ NameObject('/Limits') : ArrayObject([ lim[0], ma ]) })
+                    node['/Limits'][0]=lim[0]
+                    return node['/Limits']
+                elif title<ma:
+                    for k in node['/Kids']:
+                        lim=_insertNamedDest(title,dest,k.getObject())
+                        if lim is None: continue
+                        if lim[0]<mi:
+                            node['/Limits'][0]=TextStringObject(mi)
+                        if ma<lim[1]:
+                            node['/Limits'][1]=TextStringObject(ma)
+                        return node['/Limits']
+                    raise Exception('no Kids Found ????')
+                else:
+                    return None
 
-        nd = self.getNamedDestRoot()
-        nd.extend([dest['/Title'], destRef])
+        if title is None:
+            if '/Title' in dest:
+                title=dest['/Title']
+            else:
+                title='_'+''.join(random.choices("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",k=10))
 
-        return destRef
+        assert title not in self.getNamedDestinations(),"Named Destination '%s' already defined"%(title,)
 
-    def addNamedDestination(self, title, pagenum):
-        pageRef = self.getObject(self._pages)['/Kids'][pagenum]
+        try:
+            dests = self._rootObject.rawGet('/Dests').getObject()
+        except:
+            dests = None
+        if dests: assert isinstance(dests, DictionaryObject),"Dests in Root Catalog not a dictionnary"
+
+        try:
+            dests2 = self._rootObject['/Names'].rawGet('/Dests').getObject()
+        except:
+            dests2 = None
+
+        if dests is not None and dests2 is not None:
+            raise PdfStreamError("/Dest exists both in Root catalog and in Names section")
+
+        if dests is None and dests2 is None:
+            #TODO : we are currently using the PDF 1.1 solution to simplify implementation
+            dests = DictionaryObject()
+            self._rootObject.update({NameObject("/Dests"):self._addObject(dests)})
+
+        if isinstance(dest,IndirectObject):
+            destRef = self._addObject(dest)
+        else:
+            destRef = dest
+
+
+        if dests:
+            dests.update({NameObject(title):destRef})
+            return title,destRef
+
+        if dests2:
+            assert (isinstance(dests2, DictionaryObject) and ("/Kids" in dests2 or "/Names" in dests2 )),"Dests in Names not a names tree"
+            lim=_insertNamedDest(title,destRef,dests2)
+            if lim is None:
+                lim=_insertNamedDest(title,destRef,dests2,+1)  # we force object to be created at the end of the list
+            return title,destRef
+
+    def addNamedDestination(self, title, pagenum,top=None,left=None,zoom=0.0):
+        pageRef = self.getPage(pagenum,ref=True)
         dest = DictionaryObject()
+        try:
+            if top<=1.0:
+                top=float(pageRef.getObject()['/MediaBox'][3])*(1-top)
+        except:
+            pass
+        try:
+            if left<=1.0:  #top est en % de la page
+                left=float(pageRef.getObject()['/MediaBox'][2])*(left)
+        except:
+            pass
+
+        if top is None and left is None:
+            d=ArrayObject([pageRef, NameObject('/Fit')])
+        elif left is None:
+            d=ArrayObject([pageRef, NameObject('/FitH'),
+                           NumberObject(top)])
+        else:
+            d=ArrayObject([pageRef, NameObject('/XYZ'),
+                           NumberObject(left), NumberObject(top),
+                           NumberObject(zoom)])
+
         dest.update({
-            NameObject('/D'):
-                ArrayObject([pageRef, NameObject('/FitH'), NumberObject(826)]),
+            NameObject('/D'): d,
             NameObject('/S'): NameObject('/GoTo')
         })
 
-        destRef = self._addObject(dest)
-        nd = self.getNamedDestRoot()
-        nd.extend([title, destRef])
+        return self.addNamedDestinationObject(dest,title)
 
-        return destRef
+    def delNamedDestination(self, title):
+        def _getMinMaxKey(node,_min=True):
+            if "/Names" in node:
+                return node["/Names"][0 if _min else -2]
+            elif "/Kids" in node:
+                return _getMinMaxKey(node["/Kids"][0 if _min else -1].getObject(),_min)
+            else:
+                raise Exception("_getMinMaxKey abnormal")
+            
+        def _delNamedDest(title,node,top=True):
+            if "/Limits" in node:
+                mi,ma=node['/Limits'][0:2]
+            elif ("/Kids" in node and len(node["/Kids"]) == 0) :
+                try:
+                    del node["/Kids"]
+                except:
+                    pass
+                try:
+                    del node["/Limits"]
+                except:
+                    pass
+                node.update({NameObject("/Names"):ArrayObject()})
+                return False
+            elif ("/Names" in node and len(node["/Names"]) == 0):
+                try:
+                    del node["/Limits"]
+                except:
+                    pass
+                return False
+            else:
+                mi=_getMinMaxKey(node,True)   # for tests...
+                ma=_getMinMaxKey(node,False)   # for tests...
+                    
+            if "/Names" in node:  #it is a list of names
+                if mi<=title<=ma:
+                    for i in range(len(node['/Names'])//2):
+                        if title==node['/Names'][i*2]:
+                            del node['/Names'][i*2+1]
+                            del node['/Names'][i*2]
+                            if len(node['/Names'])==0:
+                                del node["/Limits"]
+                            else:
+                                node["/Limits"][0]=node["/Names"][0]
+                                node["/Limits"][1]=node["/Names"][-2]
+                            return len(node['/Names'])//2
+                    return -1 # nothing has not been found but it should have been there
+                else:
+                    return -2 # not within the range
+            elif "/Kids" in node:     #need to process one level down
+                if mi<=title<=ma:
+                    for i,k in enumerate(node['/Kids']):
+                        ret=_delNamedDest(title,k.getObject(),False)
+                        if ret == -2:
+                            continue
+                        if ret == -1:
+                            return -1
+                        if ret==0:
+                            del node['/Kids'][i]
+                            if len(node['/Kids'])==0:
+                                del node['/Limits']
+                                if top:  #no empty kids at root
+                                    del node['/Kids']
+                                    node.update({NameObject("/Names"):ArrayObject()})
+                                return 0
+                        node['/Limits'][0]=_getMinMaxKey(node,True)
+                        node['/Limits'][1]=_getMinMaxKey(node,False)
+                        return len(node['/Kids'])
+                else:
+                    return -2
+            else:
+                raise Exception('no Kids nor name Found ????')
+
+        assert title is not None
+
+        try:
+            dests = self._rootObject.rawGet('/Dests').getObject()
+        except:
+            dests = None
+        if dests: assert isinstance(dests, DictionaryObject),"Dests in Root Catalog not a dictionnary"
+
+        try:
+            dests2 = self._rootObject['/Names'].rawGet('/Dests').getObject()
+        except:
+            dests2 = None
+
+        if dests is not None and dests2 is not None:
+            raise PdfStreamError("/Dest exists both in Root catalog and in Names section")
+
+        if dests is None and dests2 is None:
+            #TODO : we are currently using the PDF 1.1 solution to simplify implementation
+            dests = DictionaryObject()
+            self._rootObject.update({NameObject("/Dests"):self._addObject(dests)})
+
+        if dests:
+            for k in dests:
+                if title == k:
+                    del dests[k]            
+                    return True
+            return False
+
+        if dests2:
+            assert (isinstance(dests2, DictionaryObject) and ("/Kids" in dests2)),"Dests in Names not a names tree"
+            return _delNamedDest(title,dests2)>=0
+
+    def removeAnnots(self,pageSet=None,links=False,comments=False,attachments=False,prints=False,_3D=False):
+        """
+        Removes different annotations from this output.
+        """
+        if pageSet is None:
+            pageSet=range(self.numPages)
+            
+        #if all are false, for compatibility, they should be all deleted
+        if not(links or comments or attachments or prints or _3D):
+            links=True
+            comments=True
+            attachments=True
+            prints=True
+            _3D=True
+        subTypes=[]
+        if links:
+            subTypes.extend(['/Link',])
+        if comments:
+            subTypes.extend(['/Text','/FreeText','/Line','/Square','/Circle','/Polygon','/PolyLine',\
+                             '/Highlight','/Underline','/Squiggly','/StrikeOut','/Stamp','/Caret',\
+                             '/Ink','/Popup',])
+        if attachments:
+            subTypes.extend(['/FileAttachment','/Sound','/Movie','/Widget','/Screen',])
+        if prints:
+            subTypes.extend(['/PrinterMark','/TrapNet','/Watermark',])
+        if _3D:
+            subTypes.extend(['/3D'])
+
+        for i in pageSet:
+            page = self.getPage(i)
+            if "/Annots" in page:
+                ik=0
+                while ik<len(page['/Annots']):
+                    k=page['/Annots'][ik].getObject()
+                    if k['/Subtype'] in subTypes:
+                            del page['/Annots'][ik]
+                    else:
+                        ik=ik+1
+                if len(page['/Annots'])==0:
+                    del page['/Annots']
 
     def removeLinks(self):
         """
-        Removes links and annotations from this output.
+        Removes All annotations from all pages. Kept for compatibility with old api
         """
-        pages = self.getObject(self._pages)['/Kids']
-
-        for page in pages:
-            pageRef = self.getObject(page)
-
-            if "/Annots" in pageRef:
-                del pageRef['/Annots']
+        self.removeAnnots();
 
     def removeImages(self, ignoreByteStringObject=False):
         """
@@ -1006,6 +1419,140 @@ class PdfFileWriter(object):
                                 operands[0][i] = TextStringObject()
 
             pageRef.__setitem__(NameObject('/Contents'), content)
+
+    def addPageLabel(self, pn,pagelbl):
+        """
+        if pagelbl is None, we remove the definition from the nums tree
+        """
+        def _getMinMaxKey(node,_min=True):
+            if "/Nums" in node:
+                return node["/Nums"][0 if _min else -2]
+            elif "/Kids" in node:
+                return _getMinMaxKey(node["/Kids"][0 if _min else -1].getObject(),_min)
+            else:
+                raise Exception("_getMinMaxKey abnormal")
+            
+        def _insertPageLabel(pn,pagelbl,node,force=0):
+            if "/Limits" in node:
+                mi,ma=node['/Limits'][0:2]
+            elif ("/Kids" in node and len(node["/Kids"]) == 0) :
+                raise Exception("Kids list empty ???")
+            elif ("/Nums" in node and len(node["/Nums"]) == 0):
+                pn=NumberObject(pn)
+                node['/Nums'].append(pn)
+                node['/Nums'].append(pagelbl)
+                node.update({NameObject('/Limits'):ArrayObject([pn,pn])})
+                return node['/Limits']
+            else:
+                mi=_getMinMaxKey(node,True)   # for tests...
+                ma=_getMinMaxKey(node,False)   # for tests...
+                    
+            if "/Nums" in node:  #it is a list of names
+                #first the case where the entry already exists.
+                try:
+                    idx=node['/Nums'].index(pn)
+                    if pagelbl is not None:
+                        node['/Nums'][idx+1]=pagelbl
+                    else:
+                        del node['/Nums'][idx+1]
+                        del node['/Nums'][idx]
+                    if len(node['/Nums'])==0:
+                        try: del node['/Limits']
+                        except: pass
+                        return -1
+                    if '/Limits' not in node:
+                        node.update({ NameObject('/Limits'):ArrayObject([node['/Nums'][0],node['/Nums'][-2]]) })
+                    node['/Limits'][0]=node['/Nums'][0]
+                    node['/Limits'][1]=node['/Nums'][-2]
+                    return node['/Limits']
+                except:
+                    pass
+                    
+                if mi<=pn<ma or force != 0:
+                    if force == -1:
+                        i=0
+                    else:
+                        for i in range(len(node['/Nums'])//2):
+                            if pn<node['/Nums'][i*2]:
+                                break
+                    pn=NumberObject(pn)
+                    if force == +1:
+                        node['/Nums'].append(pn)
+                        node['/Nums'].append(pagelbl)
+                    else:
+                        node['/Nums'].insert(i*2,pagelbl)
+                        node['/Nums'].insert(i*2,pn)
+                    if '/Limits' not in node:
+                        node.update({ NameObject('/Limits'):ArrayObject([min(pn,mi),max(pn,ma)]) })
+                    if pn<node['/Limits'][0]:
+                        node['/Limits'][0]=pn
+                    if pn>node['/Limits'][1]:
+                        node['/Limits'][1]=pn
+                    return node['/Limits']
+                else:
+                    return None
+            elif "/Kids" in node:     #need to process one level down
+                if force == 1:
+                    lim=_insertPageLabel(pn,pagelbl,node['/Kids'][-1].getObject(),+1)
+                    if '/Limits' not in node: node.update({ NameObject('/Limits') : ArrayObject([ mi, lim[1] ]) })
+                    node['/Limits'][1]=lim[1]
+                    return node['/Limits']
+                elif pn<mi or force == -1:
+                    lim=_insertPageLabel(pn,pagelbl,node['/Kids'][0].getObject(),-1)
+                    if '/Limits' not in node: node.update({ NameObject('/Limits') : ArrayObject([ lim[0], ma ]) })
+                    node['/Limits'][0]=lim[0]
+                    return node['/Limits']
+                elif pn<=ma:
+                    for k in node['/Kids']:
+                        lim=_insertPageLabel(pn,pagelbl,k.getObject())
+                        if lim is None:
+                            continue
+                        if lim is -1: #The call indicates the sub node is empty
+                            del node['/Kids'][node['/Kids'].index(k)]
+                        if lim[0]<mi:
+                            node['/Limits'][0]=TextStringObject(lim[0])
+                        if ma<lim[1]:
+                            node['/Limits'][1]=TextStringObject(lim[1])
+                        return node['/Limits']
+                    raise Exception('no Kids Found ????')
+                else:
+                    return None
+
+        self.getPageLabel(pn)
+        try:
+            dests = self._rootObject.rawGet('/PageLabels').getObject()
+        except:
+            dests=DictionaryObject()
+            dests.update({NameObject("/Nums"):ArrayObject()})
+            self._rootObject.update({NameObject('/PageLabels'):self._addObject(dests)})
+
+        if isinstance(pagelbl,PageLabel):
+            pagelblRef = self._addObject(pagelbl.buildDefinition()) 
+        elif pagelbl is None:
+            if pn not in self._flattenPageLabels:
+                return pn,False
+            pagelblRef = pagelbl
+        elif isinstance(pagelbl,IndirectObject):
+            pagelblRef = pagelbl
+        elif isinstance(pagelbl,DictionaryObject):
+            pagelblRef = self._addObject(pagelbl)
+        else:
+            raise Exception("PageLabel type incorrect")
+
+        assert (isinstance(dests, DictionaryObject) and ("/Kids" in dests or "/Nums" in dests )),"PageLbl root has Kids and  Nums"
+        lim=_insertPageLabel(pn,pagelblRef,dests)
+        if lim is None:
+            lim=_insertPageLabel(pn,pagelblRef,dests,+1)  # we force object to be created at the end of the list
+        self._flattenPageLabels=None
+        self.getPageLabel(pn) # to regenerate _flattenPageLabels
+        return pn,pagelblRef
+
+    def removePageLabel(self,pn):
+        """
+        to provide a clear call to the adequate function
+        return true is deletion occured else return False
+        """
+        return self.addPageLabel(pn,None)[-1] is None
 
     def addURI(self, pagenum, uri, rect, border=None):
         """
@@ -1137,6 +1684,88 @@ class PdfFileWriter(object):
             pageRef['/Annots'].append(lnkRef)
         else:
             pageRef[NameObject('/Annots')] = ArrayObject([lnkRef])
+
+    def addCommentObject(self,pageNum,comment,irtSubstitute=None):
+        if isinstance(comment,IndirectObject):
+            comment=comment.getObject()
+        try:
+            irt=comment.rawGet('/IRT')
+            if irtSubstitute is not None:
+                irt=irtSubstitute
+        except:
+            irt=None
+        try:
+            state=comment['/State']
+        except:
+            state=None
+        rgb=comment['/C']
+        try:
+            co=comment['/Contents']
+            co=co.decode('unicode_escape')
+        except:
+            pass
+        try:
+            auth=comment['/T']
+            auth=auth.decode('unicode_escape')
+        except:
+            pass
+        return self.addComment(pageNum,co,auth,comment['/CreationDate'],irt,state,comment['/Rect'][1],comment['/Rect'][0],rgb[0],rgb[1],rgb[2])
+
+    def addComment(self,pageNum,text,author="Unindentified",creationDate=None,irt=None,state=None,top=0,left=0,R=1.0,G=0.81961,B=0.0):
+        page=self.getPage(pageNum)
+        if creationDate == None:
+            creationDate = datetime.datetime.now()
+        if isinstance(creationDate,datetime.datetime):
+            creationDate=creationDate.strftime("D:%Y%m%d%H%M%S%z")
+
+        if top<=1.0:  #top est en % de la page
+            top=float(page['/MediaBox'][3])*(1-top)
+        if left<=1.0:  #top est en % de la page
+            left=float(page['/MediaBox'][2])*(left)
+
+        ano=DictionaryObject()
+        ano.update({NameObject("/Type"):NameObject("/Annot"),NameObject("/Subtype"):NameObject("/Text"),NameObject("/Name"):NameObject("/Comment"),NameObject('/F'):NumberObject(4),
+             NameObject('/Open'): BooleanObject(False),
+             NameObject("/Subj"):TextStringObject("Note"),
+             NameObject("/C"):ArrayObject([FloatObject(R), FloatObject(G), FloatObject(B)]),
+             
+             NameObject("/T"):TextStringObject(author),
+             NameObject("/Contents") : TextStringObject(text),
+
+             NameObject("/CreationDate"):TextStringObject(creationDate), NameObject("/M"):TextStringObject(creationDate), ##"D:20200101020304+01'00'"),
+        
+             NameObject("/Rect"):ArrayObject([FloatObject(left),FloatObject(top),FloatObject(float(left)+24.0),FloatObject(float(top)+24.0)]),
+            })
+        if irt is not None:
+            ano.update({NameObject("/IRT"):irt,
+                        NameObject("/Rect"):irt.getObject()['/Rect'],
+                       })
+        if state is not None:
+            ano.update({NameObject("/State"):TextStringObject(state),NameObject("/StateModel"):TextStringObject('Review'),
+                       })
+        if not '/Annots' in page:
+            page.update({NameObject('/Annots'):ArrayObject(), })
+        ano=self._addObject(ano)
+        page['/Annots'].append(ano)
+        return ano
+
+    def addCommentsFromPage(self,pageNum,page):
+        ret=[]
+        tr={}
+        try:
+            for c in page['/Annots']:
+                co=c.getObject()
+                if co['/Subtype']=='/Text':
+                    try:
+                        irt=co.rawGet('/IRT')
+                        irt=tr[irt.idnum]
+                    except:
+                        irt=None
+                    r=self.addCommentObject(pageNum,co,irt)
+                    tr[c.idnum]=r
+                    ret.append(r)
+        finally:
+            return ret
 
     _VALID_LAYOUTS = [
         '/NoLayout', '/SinglePage', '/OneColumn', '/TwoColumnLeft',
@@ -1301,6 +1930,7 @@ class PdfFileReader(object):
         self._trailer = DictionaryObject()
         self._pageId2Num = None  # Maps page IndirectRef number to Page Number
         self._flattenedPages = None
+        self._flattenPageLabels = None
 
         self.strict = strict
         self.debug = debug
@@ -1327,6 +1957,9 @@ class PdfFileReader(object):
             )
 
         self._parsePdfFile(self._stream)
+        # for homogeneity with Writer
+        self._root=self._trailer.rawGet("/Root")
+        self._rootObject=self._root.getObject()
 
     def __repr__(self):
         return "<%s.%s isClosed=%s, _filepath=%s, _stream=%s, strict=%s, " \
@@ -1416,7 +2049,7 @@ class PdfFileReader(object):
         """
         try:
             self._overrideEncryption = True
-            return self._trailer["/Root"].getXmpMetadata()
+            return self._rootObject.getXmpMetadata()
         finally:
             self._overrideEncryption = False
 
@@ -1438,7 +2071,7 @@ class PdfFileReader(object):
                 self._overrideEncryption = True
                 self.decrypt('')
 
-                return self._trailer["/Root"]["/Pages"]["/Count"]
+                return self._rootObject["/Pages"]["/Count"]
             except Exception:
                 raise PdfReadError("File has not been decrypted")
             finally:
@@ -1486,7 +2119,7 @@ class PdfFileReader(object):
 
         if retval is None:
             retval = {}
-            catalog = self._trailer["/Root"]
+            catalog = self._rootObject
 
             # Get the AcroForm tree
             if "/AcroForm" in catalog:
@@ -1585,7 +2218,7 @@ class PdfFileReader(object):
         """
         if retval is None:
             retval = {}
-            catalog = self._trailer["/Root"]
+            catalog = self._rootObject
 
             # get the name tree
             if "/Dests" in catalog:
@@ -1603,7 +2236,7 @@ class PdfFileReader(object):
             for kid in tree["/Kids"]:
                 self.getNamedDestinations(kid.getObject(), retval)
 
-        if "/Names" in tree:
+        elif "/Names" in tree: #ppZZ if => elif
             names = tree["/Names"]
             for i in range(0, len(names), 2):
                 key = names[i].getObject()
@@ -1615,6 +2248,12 @@ class PdfFileReader(object):
                 dest = self._buildDestination(key, val)
                 if dest is not None:
                     retval[key] = dest
+        else:  # case where Dests is in root catalog
+            for k,v in tree.items():
+                val=v.getObject()
+                dest = self._buildDestination(k,val)
+                if dest != None:
+                    retval[k] = dest
 
         return retval
 
@@ -1627,7 +2266,7 @@ class PdfFileReader(object):
         """
         if outlines is None:
             outlines = []
-            catalog = self._trailer["/Root"]
+            catalog = self._rootObject
 
             # get the outline dictionary and named destinations
             if "/Outlines" in catalog:
@@ -1739,6 +2378,19 @@ class PdfFileReader(object):
                 outline[NameObject("/Title")] = title
             else:
                 raise PdfReadError("Unexpected destination %r" % dest)
+
+        #ppZZ : add parent
+        outline.parent=None
+        if "/Parent" in node:
+            p=node["/Parent"].getObject()
+            try:
+                if "/Type" in p and p["/Type"] == '/Outlines':
+                    outline.parent=None
+                elif "/Title" in p and p["/Title"] != '':
+                    outline.parent=node["/Parent"]
+            except:
+                pass
+
         return outline
 
     pages = property(
@@ -1751,6 +2403,51 @@ class PdfFileReader(object):
     :meth:`numPages<PdfFileReader.numPages>` and
     :meth:`getPage()<PdfFileReader.getPage>` methods.
     """
+
+    def getPageLabel(self,num):
+        def findPageLblEntry(num):
+            #there will be always 0 that will match...
+            k1=-.5
+            for k in sorted(self._flattenPageLabels.keys()): 
+                if k>num: break
+                k1=k
+                
+            if num!=k:
+                k=k1
+            return self._flattenPageLabels[k].getLabel(num)
+            
+        def flattenPageLabel(node=None):
+            flat={}
+            """
+            the default value we use this value in order to have a
+            default value that will be overriden by 0 if provided and
+            if we want to check that there is a definition for page 0
+            """
+            flat[-0.5]=PageLabel(0,(0,'','/D')) 
+            if node is None:
+                p1=self._rootObject
+                if "/PageLabels" in p1:
+                    node=p1["/PageLabels"]
+                else:
+                    return flat
+            if '/Nums' in node:
+               node=node['/Nums'].getObject()
+               for i in range(len(node)//2):
+                   o=PageLabel(node[2*i],node[2*i+1].getObject())
+                   flat[node[2*i]]=o
+            elif '/Kids' in node:
+               for k in node['/Kids']:
+                   flat.update(flattenPageLabel(k.getObject()))
+            else:
+                raise Exception("issue processing PageLabels")
+            return flat
+
+        if self._flattenPageLabels is None:
+            self._flattenPageLabels =flattenPageLabel()
+        assert 0 <= num < self.numPages,"Page Number out of range"
+        return findPageLblEntry(num)            
+                                
+                
 
     @property
     def pageLayout(self):
@@ -1791,7 +2488,7 @@ class PdfFileReader(object):
             inherit = dict()
         if pages is None:
             self._flattenedPages = []
-            catalog = self._trailer["/Root"].getObject()
+            catalog = self._rootObject
             pages = catalog["/Pages"].getObject()
 
         t = "/Pages"
@@ -2254,8 +2951,10 @@ class PdfFileReader(object):
 
                 if "/XRefStm" in newTrailer:
                     startxref = newTrailer["/XRefStm"]
+                    del self._trailer["/XRefStm"] #to ensure there will be no loops
                 elif "/Prev" in newTrailer:
                     startxref = newTrailer["/Prev"]
+                    del self._trailer["/Prev"] #to ensure there will be no loops
                 else:
                     break
             elif x.isdigit():   # PDF 1.5+ Cross-Reference Stream
@@ -2342,14 +3041,16 @@ class PdfFileReader(object):
                         1, xrefstreamOffset, xrefstmGen
                     )
 
-                trailerKeys = ("/Root", "/Encrypt", "/Info", "/ID")
+                trailerKeys = ("/Root", "/Encrypt", "/Info", "/ID","/Prev")
 
                 for key in trailerKeys:
                     if key in xrefstream and key not in self._trailer:
                         self._trailer[NameObject(key)] = xrefstream.rawGet(key)
 
-                if "/Prev" in xrefstream:
-                    startxref = xrefstream["/Prev"]
+                #based on other software, the Previous Prev shall also be processed...
+                if "/Prev" in self._trailer:  ##ppZZ  : /Prev was collected/updated before
+                    startxref = self._trailer["/Prev"]
+                    del self._trailer["/Prev"] #to ensure there will be no loops
                 else:
                     break
             else:
@@ -2604,6 +3305,12 @@ class PdfFileReader(object):
     @property
     def isEncrypted(self):
         return "/Encrypt" in self._trailer
+
+    def getIndirectObject(self, idnum): #ppZZ
+        ref = IndirectObject(idnum, 0, self)
+        return ref
+
+
 
 
 def _convertToInt(d, size):

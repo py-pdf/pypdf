@@ -1,4 +1,3 @@
-# -*- coding: UTF-8 -*-
 # vim: sw=4:expandtab:foldmethod=marker
 #
 # Copyright (c) 2006, Mathieu Fenniak
@@ -31,13 +30,14 @@
 Implementation of stream filters for PDF.
 """
 
+import math
 import base64
 import struct
 from sys import version_info
 
-from pypdf import generic
-from pypdf.generic import *
-from pypdf.utils import PdfReadError, pypdfOrd, paethPredictor, PdfStreamError
+from . import generic
+from .generic import *
+from .utils import PdfReadError, pypdfOrd, paethPredictor,PdfStreamError
 
 try:
     import zlib
@@ -193,7 +193,7 @@ class FlateCodec(object):
 
                     prev_rowdata = rowdata
 
-                    for d in rowdata:
+                    for d in rowdata[1:]: ##ppZZ ???? err in latest version
                         if version_info < (3, 0):
                             output.write(chr(d))
                         else:
