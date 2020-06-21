@@ -1,0 +1,20 @@
+# Override Pylint's default configuration.
+#
+# Reference: <URL: https://pylint.readthedocs.io/en/latest/technical_reference/features.html >.
+#
+# Generate a default config file with comments by commanding
+#     pylint --generate-rcfile
+
+[MESSAGES CONTROL]
+# Construct the configuration as exceptions from the well-defined
+# "all-enabled" starting point.
+enable=all
+
+disable=
+  suppressed-message,
+  locally-disabled
+
+[BASIC]
+# PyPDF4 frequently binds exceptions as "e".
+good-names=
+  e
