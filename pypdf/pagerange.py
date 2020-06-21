@@ -8,7 +8,8 @@ see https://github.com/claird/PyPDF4/blob/master/LICENSE.md
 """
 
 import re
-from .utils import isString
+
+from pypdf.utils import isString
 
 _INT_RE = r"(0|-?[1-9]\d*)"  # A decimal int, don't allow "-0".
 PAGE_RANGE_RE = "^({int}|({int}?(:{int}?(:{int}?)?)))$".format(int=_INT_RE)
