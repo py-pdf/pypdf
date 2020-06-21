@@ -7,13 +7,16 @@ that relies on a "fixture data" (e.g. a test file to read from) place it in the
 hint on how to do this).
 """
 import binascii
+from io import BytesIO
 import os
+# TODO:  switch dependence to pathlib.
+from os.path import abspath, basename, dirname, join, pardir
 import sys
 import tempfile
 import unittest
 
-from io import BytesIO
-from os.path import abspath, basename, dirname, join, pardir
+from pypdf.generic import IndirectObject, readObject
+from pypdf.pdf import PdfFileReader, PdfFileWriter
 
 # Configure path environment
 PROJECT_ROOT = abspath(join(dirname(__file__), pardir))
@@ -21,11 +24,10 @@ TEST_DATA_ROOT = join(PROJECT_ROOT, "tests", "fixture_data")
 
 sys.path.append(PROJECT_ROOT)
 
-from pypdf.pdf import PdfFileReader, PdfFileWriter
-from pypdf.generic import IndirectObject, readObject
-
 
 class PdfReaderTestCases(unittest.TestCase):
+    """ [EXPLAIN THIS CLASS.] """
+
     def setUp(self):
         # Variable defining the path where the method to be run next can store
         # its own fixture (test) data.
@@ -42,7 +44,7 @@ class PdfReaderTestCases(unittest.TestCase):
         try:
             r.__del__()
             self.assertTrue(True)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             self.assertTrue(
                 False,
                 "Exception '%s' was raised in %s.__del__()"
@@ -52,7 +54,7 @@ class PdfReaderTestCases(unittest.TestCase):
         try:
             w.__del__()
             self.assertTrue(True)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             self.assertTrue(
                 False,
                 "Exception '%s' was raised in %s.__del__()"
@@ -180,8 +182,8 @@ class PdfReaderTestCases(unittest.TestCase):
                     if not line or line.isspace() or line.startswith("%"):
                         continue
 
-                    type, field2, field3 = (int(f) for f in line.split())
-                    expItems.append((type, field2, field3))
+                    this_type, field2, field3 = (int(f) for f in line.split())
+                    expItems.append((this_type, field2, field3))
 
             for item in r.objects(PdfFileReader.R_XSTREAM, True):
                 priv8Item = r._xrefStm[item.idnum]
@@ -203,7 +205,7 @@ class PdfReaderTestCases(unittest.TestCase):
                 "Didn't correctly read the Cross-Reference Stream",
             )
 
-    def testReadXRefStreamCompressedObjects(self):
+    def testReadXRefStreamCompressedObjects(self):  # pylint: disable=too-many-locals
         """
         Targets the same objects as ``testXRefStreamObjects()``, but instead
         of ensuring an identity between the list of items read and the one
@@ -238,7 +240,7 @@ class PdfReaderTestCases(unittest.TestCase):
 
                     expItems.append((globalId, obj))
 
-            for itemid, item in filter(compressedObj, r._xrefStm.items()):
+            for itemid, _item in filter(compressedObj, r._xrefStm.items()):
                 # We deal exclusively with compressed objects (from Table 18 of
                 # ISO 32000 reference, 2008) whose generation number is 0
                 actualItems.append(
@@ -380,7 +382,7 @@ class PdfReaderTestCases(unittest.TestCase):
                 if len(tokens) == 2:
                     if itemssofar != expecteditems:
                         raise ValueError(
-                            'Line "%d %d" specified %d items, %d read'
+                            'Line "%d %d" specified %d items, %d read'  # pylint: disable=bad-string-format-type
                             % (startid, expecteditems, expecteditems, itemssofar)
                         )
 
@@ -453,7 +455,10 @@ class PdfReaderTestCases(unittest.TestCase):
                 with PdfFileWriter(testfile) as writer:
                     writer.appendPagesFromReader(reader)
                     with open(
-                        join(TEST_DATA_ROOT, "attachment_small.png"), "rb"
+                        join(  # pylint: disable=bad-continuation
+                            TEST_DATA_ROOT, "attachment_small.png"
+                        ),
+                        "rb",  # pylint: disable=bad-continuation  # pylint: disable=bad-continuation
                     ) as attachment_stream:
                         read_data = attachment_stream.read()
                         writer.addAttachment("attachment_small.png", read_data)
@@ -461,8 +466,9 @@ class PdfReaderTestCases(unittest.TestCase):
 
             # Check for attachment entries
             with PdfFileReader(testfile) as pdf:
-                pdf.numPages  # For caching _cachedObjects data
-                for k, v in pdf._cachedObjects.items():
+                # For caching _cachedObjects data
+                pdf.numPages  # pylint: disable=pointless-statement
+                for _k, v in pdf._cachedObjects.items():
                     if "/Type" in v:
                         if v["/Type"] == "/Catalog":
                             self.assertIsNotNone(v["/Names"]["/EmbeddedFiles"])
@@ -496,8 +502,9 @@ class PdfReaderTestCases(unittest.TestCase):
 
             # Check for attachment entries
             with PdfFileReader(testfile) as pdf:
-                pdf.numPages  # For caching _cachedObjects data
-                for k, v in pdf._cachedObjects.items():
+                # For caching _cachedObjects data
+                pdf.numPages  # pylint: disable=pointless-statement
+                for _k, v in pdf._cachedObjects.items():
                     if "/Type" in v:
                         if v["/Type"] == "/Catalog":
                             self.assertIsNotNone(v["/Names"]["/EmbeddedFiles"])
@@ -508,12 +515,16 @@ class PdfReaderTestCases(unittest.TestCase):
 
 
 class AddJsTestCase(unittest.TestCase):
+    """ [EXPLAIN THIS CLASS.] """
+
     def setUp(self):
+        """ [EXPLAIN THIS CONVENIENCE.] """
         reader = PdfFileReader(join(TEST_DATA_ROOT, "crazyones.pdf"))
         self.writer = PdfFileWriter(BytesIO(b""))
         self.writer.appendPagesFromReader(reader)
 
     def testAdd(self):
+        """ [EXPLAIN THIS TEST.] """
         self.writer.addJS("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
 
         self.assertIn(
@@ -533,6 +544,7 @@ class AddJsTestCase(unittest.TestCase):
         )
 
     def testOverwrite(self):
+        """ [EXPLAIN THIS TEST.] """
         self.writer.addJS("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
         first_js = self._getJavascriptName()
 
