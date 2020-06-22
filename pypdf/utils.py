@@ -183,7 +183,6 @@ class ConvertFunctionsToVirtualList(object):
 
 
 def RC4Encrypt(key, plaintext):
-    # S = [i for i in range(256)]
     S = list(range(256))
     j = 0
 
