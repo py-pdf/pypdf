@@ -142,10 +142,9 @@ def readUntilRegex(stream, regex, ignore_eof=False):
 
         if not tok:
             # stream has truncated prematurely
-            if ignore_eof == True:
+            if ignore_eof:
                 return name
-            else:
-                raise PdfStreamError("Stream has ended unexpectedly")
+            raise PdfStreamError("Stream has ended unexpectedly")
         m = regex.search(tok)
         if m is not None:
             name += tok[: m.start()]
@@ -184,7 +183,8 @@ class ConvertFunctionsToVirtualList(object):
 
 
 def RC4Encrypt(key, plaintext):
-    S = [i for i in range(256)]
+    # S = [i for i in range(256)]
+    S = list(range(256))
     j = 0
 
     for i in range(256):
@@ -242,12 +242,11 @@ def pypdfBytes(s):
         if isinstance(s, bytes):
             return s
         return s.encode("latin-1")
-    else:
-        if isinstance(s, int):
-            return bytes([s])
-        if isinstance(s, bytes):
-            return s
-        return s.encode("latin-1")
+    if isinstance(s, int):
+        return bytes([s])
+    if isinstance(s, bytes):
+        return s
+    return s.encode("latin-1")
 
 
 def pypdfUnicode(s):
@@ -260,10 +259,9 @@ def pypdfUnicode(s):
         if isinstance(s, unicode):
             return s
         return unicode(s, "unicode_escape")
-    else:
-        if isinstance(s, str):
-            return s
-        return s.decode("unicode_escape")
+    if isinstance(s, str):
+        return s
+    return s.decode("unicode_escape")
 
 
 def pypdfStr(b):
@@ -275,10 +273,9 @@ def pypdfStr(b):
         if isinstance(b, unicode):
             return b.encode("latin-1")
         return b
-    else:
-        if isinstance(b, bytes):
-            return b.decode("latin-1")
-        return b
+    if isinstance(b, bytes):
+        return b.decode("latin-1")
+    return b
 
 
 def pypdfOrd(b):
@@ -308,8 +305,7 @@ def pypdfBytearray(b):
     """
     if sys.version_info[0] < 3:
         return b
-    else:
-        return bytearray(b)
+    return bytearray(b)
 
 
 def hexEncode(s):
@@ -324,13 +320,12 @@ def hexEncode(s):
     """
     if sys.version_info < (3, 0):
         return s.encode("hex")
-    else:
-        if isinstance(s, str):
-            s = s.encode("LATIN1")
+    if isinstance(s, str):
+        s = s.encode("LATIN1")
 
-        # The output is in the set of "0123456789ABCDEF" characters. Using the
-        # ASCII decoder is a safeguard against anomalies, albeit unlikely
-        return hexlify(s).decode("ASCII")
+    # The output is in the set of "0123456789ABCDEF" characters. Using the
+    # ASCII decoder is a safeguard against anomalies, albeit unlikely
+    return hexlify(s).decode("ASCII")
 
 
 def hexStr(num):
@@ -348,10 +343,9 @@ def paethPredictor(left, up, up_left):
 
     if dist_left <= dist_up and dist_left <= dist_up_left:
         return left
-    elif dist_up <= dist_up_left:
+    if dist_up <= dist_up_left:
         return up
-    else:
-        return up_left
+    return up_left
 
 
 def pairs(sequence):
