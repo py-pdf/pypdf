@@ -2,10 +2,12 @@
 Tests the ``pypdf/generic.py`` module.
 """
 import io
+from os.path import abspath, dirname, join, pardir
 import sys
 import unittest
 
-from os.path import abspath, dirname, join, pardir
+from pypdf.generic import IndirectObject, ObjectStream, TextStringObject
+from pypdf.pdf import PdfFileReader
 
 # Configure path environment
 PROJECT_ROOT = abspath(
@@ -15,8 +17,6 @@ TESTS_DATA_ROOT = join(PROJECT_ROOT, "tests", "fixture_data")
 
 sys.path.append(PROJECT_ROOT)
 
-from pypdf.pdf import PdfFileReader
-from pypdf.generic import IndirectObject, ObjectStream, TextStringObject
 
 
 class ObjectStreamTestCase(unittest.TestCase):

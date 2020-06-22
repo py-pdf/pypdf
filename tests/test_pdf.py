@@ -6,10 +6,10 @@ that relies on a "fixture data" (e.g. a test file to read from) place it in the
 ``/tests/fixture_data/testX/`` path (see some of the examples below to have a
 hint on how to do this).
 """
+# TODO:  switch dependence to pathlib.
 import binascii
 from io import BytesIO
 import os
-# TODO:  switch dependence to pathlib.
 from os.path import abspath, basename, dirname, join, pardir
 import sys
 import tempfile

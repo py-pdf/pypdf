@@ -34,8 +34,7 @@ import unittest
 import pytest
 
 import pypdf.utils
-from tests.utils import intToBitstring, bitstringToInt
-
+from tests.utils import bitstringToInt, intToBitstring
 
 # Establish the bytes/str/unicode types.
 try:
