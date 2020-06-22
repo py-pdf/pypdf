@@ -100,14 +100,14 @@ class PageRange(object):
 
     def __str__(self):
         """A string like "1:2:3"."""
-        __s = self._slice
-        if __s.step is None:
-            if __s.start is not None and __s.stop == __s.start + 1:
-                return str(__s.start)
+        s__ = self._slice
+        if s__.step is None:
+            if s__.start is not None and s__.stop == s__.start + 1:
+                return str(s__.start)
 
-            indices = __s.start, __s.stop
+            indices = s__.start, s__.stop
         else:
-            indices = __s.start, __s.stop, __s.step
+            indices = s__.start, s__.stop, s__.step
         return ":".join("" if i is None else str(i) for i in indices)
 
     def __repr__(self):

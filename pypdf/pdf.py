@@ -229,6 +229,15 @@ class PdfFileWriter(object):
 
         pages[NameObject("/Count")] = NumberObject(pages["/Count"] + 1)
 
+########
+#
+# Note that pubpub-zz offered pull request #75.  CL accepted part of it, and mangled
+# the pull request.  pubpub-zz, please contact CL again, so we can construct and merge
+# a fully valid pull request.
+#
+# See <URL: https://github.com/claird/PyPDF4/pull/75/ > for related information.
+#
+########
     def addPage(self, page):
         """
         Adds a page to this PDF file.  The page is usually acquired from a
@@ -729,7 +738,7 @@ class PdfFileWriter(object):
                 data[key] = value
 
             return data
-        elif isinstance(data, ArrayObject):
+        if isinstance(data, ArrayObject):
             for i in range(len(data)):
                 value = self._sweepIndirectReferences(externMap, data[i])
                 if isinstance(value, StreamObject):
@@ -738,55 +747,52 @@ class PdfFileWriter(object):
                     value = self._addObject(value)
                 data[i] = value
             return data
-        elif isinstance(data, IndirectObject):
+        if isinstance(data, IndirectObject):
             # Internal indirect references are fine
             if data.pdf == self:
                 if data.idnum in self.stack:
                     return data
-                else:
-                    self.stack.append(data.idnum)
-                    realdata = self.getObject(data)
-                    self._sweepIndirectReferences(externMap, realdata)
-                    return data
-            else:
-                if data.pdf.isClosed:
-                    raise ValueError(
-                        "I/O operation on closed file: " + data.pdf._stream.name
-                    )
-                newobj = (
-                    externMap.get(data.pdf, {})
-                    .get(data.generation, {})
-                    .get(data.idnum, None)
+                self.stack.append(data.idnum)
+                realdata = self.getObject(data)
+                self._sweepIndirectReferences(externMap, realdata)
+                return data
+            if data.pdf.isClosed:
+                raise ValueError(
+                    "I/O operation on closed file: " + data.pdf._stream.name
                 )
+            newobj = (
+                externMap.get(data.pdf, {})
+                .get(data.generation, {})
+                .get(data.idnum, None)
+            )
 
-                if newobj is None:
-                    try:
-                        newobj = data.pdf.getObject(data)
-                        self._objects.append(None)  # placeholder
-                        idnum = len(self._objects)
-                        newobj_ido = IndirectObject(idnum, 0, self)
+            if newobj is None:
+                try:
+                    newobj = data.pdf.getObject(data)
+                    self._objects.append(None)  # placeholder
+                    idnum = len(self._objects)
+                    newobj_ido = IndirectObject(idnum, 0, self)
 
-                        if data.pdf not in externMap:
-                            externMap[data.pdf] = {}
-                        if data.generation not in externMap[data.pdf]:
-                            externMap[data.pdf][data.generation] = {}
+                    if data.pdf not in externMap:
+                        externMap[data.pdf] = {}
+                    if data.generation not in externMap[data.pdf]:
+                        externMap[data.pdf][data.generation] = {}
 
-                        externMap[data.pdf][data.generation][data.idnum] = newobj_ido
-                        newobj = self._sweepIndirectReferences(externMap, newobj)
-                        self._objects[idnum - 1] = newobj
+                    externMap[data.pdf][data.generation][data.idnum] = newobj_ido
+                    newobj = self._sweepIndirectReferences(externMap, newobj)
+                    self._objects[idnum - 1] = newobj
 
-                        return newobj_ido
-                    except (ValueError, PyPdfError):
-                        # Unable to resolve the Object, returning NullObject
-                        # instead.
-                        warnings.warn(
-                            "Unable to resolve [{}: {}], returning NullObject "
-                            "instead".format(data.__class__.__name__, data)
-                        )
-                        return NullObject()
-                return newobj
-        else:
-            return data
+                    return newobj_ido
+                except (ValueError, PyPdfError):
+                    # Unable to resolve the Object, returning NullObject
+                    # instead.
+                    warnings.warn(
+                        "Unable to resolve [{}: {}], returning NullObject "
+                        "instead".format(data.__class__.__name__, data)
+                    )
+                    return NullObject()
+            return newobj
+        return data
 
     def getReference(self, obj):
         idnum = self._objects.index(obj) + 1
@@ -951,14 +957,14 @@ class PdfFileWriter(object):
                 {NameObject("/C"): ArrayObject([FloatObject(c) for c in color])}
             )
 
-        format = 0
+        this_format = 0
 
         if italic:
-            format += 1
+            this_format += 1
         if bold:
-            format += 2
-        if format:
-            bookmark.update({NameObject("/F"): NumberObject(format)})
+            this_format += 2
+        if this_format:
+            bookmark.update({NameObject("/F"): NumberObject(this_format)})
 
         bookmarkRef = self._addObject(bookmark)
 
@@ -2018,14 +2024,14 @@ class PdfFileReader(object):
         elif isXStream:
             # See ISO 32000 (2008), Table 18 "Entries in a cross-reference
             # stream"
-            type = self._xrefStm[ref.idnum][0]
+            this_type = self._xrefStm[ref.idnum][0]
 
-            if type == 0:
+            if this_type == 0:
                 raise PdfReadError(
                     "Cannot fetch a free object (id, next gen.) = (%d, %d)"
                     % (ref.idnum, ref.generation)
                 )
-            elif type == 1:
+            if this_type == 1:
                 offset, generation = self._xrefStm[ref.idnum][1:3]
 
                 if generation != ref.generation:
@@ -2034,7 +2040,7 @@ class PdfFileReader(object):
                         "the one stored (%d) in the XRef Stream"
                         % (ref.generation, generation)
                     )
-            elif type == 2:
+            elif this_type == 2:
                 return self._getCompressedObjectFromXRefStream(ref)
             else:
                 # «Any other value shall be interpreted as a reference to the
@@ -2056,9 +2062,7 @@ class PdfFileReader(object):
                     "(%d %d); xref table not zero-indexed."
                     % (ref.idnum, ref.generation, actualId, actualGen)
                 )
-            else:
-                # XRef Table is corrected in non-strict mode
-                pass
+            # XRef Table is corrected in non-strict mode
         elif self.strict and (actualId != ref.idnum or actualGen != ref.generation):
             # Some other problem
             raise PdfReadError(
@@ -2159,8 +2163,7 @@ class PdfFileReader(object):
 
         if self.strict:
             raise PdfReadError("This is a fatal error in strict mode.")
-        else:
-            return NullObject()
+        return NullObject()
 
     def objects(self, select=R_BOTH, freeObjects=False):
         """
@@ -2187,19 +2190,19 @@ class PdfFileReader(object):
             # We give the X-Ref Table a higher precedence than the
             # Cross-Reference Stream
             for gen in gens:
-                for id in self._xrefTable[gen]:
+                for id_ in self._xrefTable[gen]:
                     # "If freeObjects or this object is not a free one..."
-                    if freeObjects or self._xrefTable[gen][id][1] is False:
-                        yield IndirectObject(id, gen, self)
+                    if freeObjects or self._xrefTable[gen][id_][1] is False:
+                        yield IndirectObject(id_, gen, self)
         if select & self.R_XSTREAM:
             # Iterate through the Cross-Reference Stream
-            for id, v in self._xrefStm.items():
-                if freeObjects and v[0] == 0:
-                    yield IndirectObject(id, v[2], self)
-                elif v[0] == 1:
-                    yield IndirectObject(id, v[2], self)
-                elif v[0] == 2:
-                    yield IndirectObject(id, 0, self)
+            for id_, v__ in self._xrefStm.items():
+                if freeObjects and v__[0] == 0:
+                    yield IndirectObject(id_, v__[2], self)
+                elif v__[0] == 1:
+                    yield IndirectObject(id_, v__[2], self)
+                elif v__[0] == 2:
+                    yield IndirectObject(id_, 0, self)
 
     def getObject(self, ref):
         """
@@ -2215,7 +2218,7 @@ class PdfFileReader(object):
         """
         if (ref.generation, ref.idnum) in self._cachedObjects:
             return self._cachedObjects[(ref.generation, ref.idnum)]
-        elif ref.idnum in self._xrefStm:
+        if ref.idnum in self._xrefStm:
             retval = self._getObjectByRef(ref, self.R_XSTREAM)
         elif (
             ref.generation in self._xrefTable
@@ -2247,7 +2250,7 @@ class PdfFileReader(object):
             and ref.idnum in self._xrefTable[ref.generation]
         ):
             return self._xrefTable[ref.generation][ref.idnum][1]
-        elif ref.idnum in self._xrefStm:
+        if ref.idnum in self._xrefStm:
             return self._xrefStm[ref.idnum][0] == 0
 
         # Object does not exist
@@ -2269,8 +2272,7 @@ class PdfFileReader(object):
             if i == 0:
                 # First value defaults to 1
                 return 1
-            else:
-                return 0
+            return 0
 
         def usedBefore(num, generation):
             # We move backwards through the xrefs, don't replace any.
@@ -2546,15 +2548,15 @@ class PdfFileReader(object):
                 if gen == 65535:
                     continue
 
-                for id in self._xrefTable[gen]:
-                    stream.seek(self._xrefTable[gen][id][0], 0)
+                for this_id in self._xrefTable[gen]:
+                    stream.seek(self._xrefTable[gen][this_id][0], 0)
 
                     try:
                         pid, _pgen = self._readObjectHeader(stream)
                     except ValueError:
                         break
 
-                    if pid == id - self._xrefIndex:
+                    if pid == this_id - self._xrefIndex:
                         self._zeroXref(gen)
                         break
                     # If not, then either it's just plain wrong, or the
@@ -2564,7 +2566,7 @@ class PdfFileReader(object):
             stream.seek(loc, 0)
 
     def _decryptObject(self, obj, key):
-        if isinstance(obj, ByteStringObject) or isinstance(obj, TextStringObject):
+        if isinstance(obj, (ByteStringObject, TextStringObject)):
             obj = createStringObject(RC4Encrypt(key, obj.original_bytes))
         elif isinstance(obj, StreamObject):
             obj._data = RC4Encrypt(key, obj._data)
@@ -2613,8 +2615,7 @@ class PdfFileReader(object):
 
             if self.strict:
                 raise PdfReadError(msg)
-            else:
-                warnings.warn(msg)
+            warnings.warn(msg)
 
         self._cachedObjects[(generation, idnum)] = obj
 
@@ -2655,8 +2656,7 @@ class PdfFileReader(object):
                 # If using CR+LF, go back 2 bytes, else 1
                 stream.seek(2 if crlf else 1, 1)
                 break
-            else:
-                line = x + line
+            line = x + line
 
         return line
 
@@ -2694,7 +2694,7 @@ class PdfFileReader(object):
             raise NotImplementedError(
                 "only Standard PDF encryption handler is available"
             )
-        if not (encrypt["/V"] in (1, 2)):
+        if not encrypt["/V"] in (1, 2):
             raise NotImplementedError(
                 "only algorithm codes 1 and 2 are supported. This PDF uses "
                 "code %s" % encrypt["/V"]
@@ -2704,35 +2704,34 @@ class PdfFileReader(object):
         if user_password:
             self._decryption_key = key
             return 1
+        rev = encrypt["/R"].getObject()
+
+        if rev == 2:
+            keylen = 5
         else:
-            rev = encrypt["/R"].getObject()
+            keylen = encrypt["/Length"].getObject() // 8
 
-            if rev == 2:
-                keylen = 5
-            else:
-                keylen = encrypt["/Length"].getObject() // 8
+        key = _alg33_1(password, rev, keylen)
+        real_O = encrypt["/O"].getObject()
 
-            key = _alg33_1(password, rev, keylen)
-            real_O = encrypt["/O"].getObject()
+        if rev == 2:
+            userpass = RC4Encrypt(key, real_O)
+        else:
+            val = real_O
 
-            if rev == 2:
-                userpass = RC4Encrypt(key, real_O)
-            else:
-                val = real_O
+            for i in range(19, -1, -1):
+                new_key = b_("")
 
-                for i in range(19, -1, -1):
-                    new_key = b_("")
+                for l in range(len(key)):
+                    new_key += b_(chr(pypdfOrd(key[l]) ^ i))
 
-                    for l in range(len(key)):
-                        new_key += b_(chr(pypdfOrd(key[l]) ^ i))
+                val = RC4Encrypt(new_key, val)
+            userpass = val
+        owner_password, key = self._authenticateUserPassword(userpass)
 
-                    val = RC4Encrypt(new_key, val)
-                userpass = val
-            owner_password, key = self._authenticateUserPassword(userpass)
-
-            if owner_password:
-                self._decryption_key = key
-                return 2
+        if owner_password:
+            self._decryption_key = key
+            return 2
 
         return 0
 
@@ -2932,10 +2931,10 @@ def _alg35(password, rev, keylen, owner_entry, p_entry, id1_entry, _metadata_enc
     # the original encryption key (obtained in step 2) and performing an XOR
     # operation between that byte and the single-byte value of the iteration
     # counter (from 1 to 19).
-    for i in range(1, 20):
+    for i__ in range(1, 20):
         new_key = b_("")
-        for l in range(len(key)):
-            new_key += b_(chr(pypdfOrd(key[l]) ^ i))
+        for l__ in range(len(key)):
+            new_key += b_(chr(pypdfOrd(key[l__]) ^ i__))
         val = RC4Encrypt(new_key, val)
     # 6. Append 16 bytes of arbitrary padding to the output from the final
     # invocation of the RC4 function and store the 32-byte result as the value
