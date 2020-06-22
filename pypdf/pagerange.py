@@ -44,7 +44,7 @@ class PageRange(object):
 
     *  PageRange(str) parses a string representing a page range.
     *  PageRange(slice) directly "imports" a slice.
-    *  toSlice() gives the equivalent slice.
+    *  _to_slice() gives the equivalent slice.
     *  str() and repr() allow printing.
     *  indices(n) is like slice.indices(n).
     """
@@ -67,60 +67,59 @@ class PageRange(object):
             return
 
         if isinstance(arg, PageRange):
-            self._slice = arg.toSlice()
+            self._slice = arg._to_slice()
             return
 
-        m = isString(arg) and re.match(PAGE_RANGE_RE, arg)
+        match = isString(arg) and re.match(PAGE_RANGE_RE, arg)
 
-        if not m:
+        if not match:
             raise ParseError(arg)
-        elif m.group(2):
+        if match.group(2):
             # Special case: just an int means a range of one page.
-            start = int(m.group(2))
+            start = int(match.group(2))
             stop = start + 1 if start != -1 else None
             self._slice = slice(start, stop)
         else:
-            self._slice = slice(*[int(g) if g else None for g in m.group(4, 6, 8)])
+            self._slice = slice(*[int(g) if g else None for g in match.group(4, 6, 8)])
 
     # Just formatting this when there is __doc__ for __init__
     if __init__.__doc__:
         __init__.__doc__ = __init__.__doc__.format(page_range_help=PAGE_RANGE_HELP)
 
     @staticmethod
-    def valid(input):
+    def valid(this_input):
         """ True if input is a valid initializer for a PageRange. """
         return (
-            isinstance(input, slice)
-            or isinstance(input, PageRange)
-            or (isString(input) and bool(re.match(PAGE_RANGE_RE, input)))
+            isinstance(this_input, (slice, PageRange))
+            or (isString(this_input) and bool(re.match(PAGE_RANGE_RE, this_input)))
         )
 
-    def toSlice(self):
+    def _to_slice(self):
         """ Return the slice equivalent of this page range. """
         return self._slice
 
     def __str__(self):
         """A string like "1:2:3"."""
-        s = self._slice
-        if s.step is None:
-            if s.start is not None and s.stop == s.start + 1:
-                return str(s.start)
+        __s = self._slice
+        if __s.step is None:
+            if __s.start is not None and __s.stop == __s.start + 1:
+                return str(__s.start)
 
-            indices = s.start, s.stop
+            indices = __s.start, __s.stop
         else:
-            indices = s.start, s.stop, s.step
+            indices = __s.start, __s.stop, __s.step
         return ":".join("" if i is None else str(i) for i in indices)
 
     def __repr__(self):
         """A string like "PageRange('1:2:3')"."""
         return "PageRange(" + repr(str(self)) + ")"
 
-    def indices(self, n):
+    def indices(self, this_n):
         """
-        ``n`` is the length of the list of pages to choose from.
+        ``this_n`` is the length of the list of pages to choose from.
         Returns arguments for ``range()``.  See ``help(slice.indices)``.
         """
-        return self._slice.indices(n)
+        return self._slice.indices(this_n)
 
 
 PAGE_RANGE_ALL = PageRange(":")  # The range of all pages.
