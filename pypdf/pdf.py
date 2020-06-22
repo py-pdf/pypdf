@@ -40,13 +40,55 @@ import io
 import os
 import random
 import struct
+import sys
 from sys import version_info
 import time
 import uuid
 
 from pypdf import utils
-from pypdf.generic import *
-from pypdf.utils import *
+from pypdf.generic import (
+    ArrayObject,
+    BooleanObject,
+    ByteStringObject,
+    ContentStream,
+    ConvertFunctionsToVirtualList,
+    DecodedStreamObject,
+    Destination,
+    DictionaryObject,
+    DocumentInformation,
+    Field,
+    FloatObject,
+    IndirectObject,
+    NameObject,
+    NullObject,
+    NumberObject,
+    PageObject,
+    RectangleObject,
+    StreamObject,
+    TextStringObject,
+    TreeObject,
+    codecs,
+    createStringObject,
+    readObject,
+    warnings,
+)
+from pypdf.utils import (
+    PdfReadError,
+    PdfReadWarning,
+    PdfStreamError,
+    PyPdfError,
+    RC4Encrypt,
+    formatWarning,
+    isString,
+    pairs,
+)
+from pypdf.utils import (
+    pypdfOrd,
+    pypdfStr,
+    pypdfUnicode,
+    readNonWhitespace,
+    readUntilWhitespace,
+)
 from pypdf.utils import pypdfBytes as b_
 
 if version_info < (3, 0):
@@ -325,7 +367,7 @@ class PdfFileWriter(object):
 
         :param str fname: The filename to display.
         :param str fdata: The data in the file.
-      
+
         Reference:
         https://www.adobe.com/content/dam/Adobe/en/devnet/acrobat/pdfs/PDF32000_2008.pdf
         Section 7.11.3
@@ -345,7 +387,7 @@ class PdfFileWriter(object):
         stream
         Hello world!
         endstream
-        endobj        
+        endobj
         """
         file_entry = DecodedStreamObject()
         file_entry.setData(fdata)
@@ -384,7 +426,7 @@ class PdfFileWriter(object):
             /Names << /EmbeddedFiles << /Names [(hello.txt) 7 0 R] >> >>
         >>
         endobj
-        
+
         """
         embeddedFilesNamesDictionary = DictionaryObject()
         embeddedFilesNamesDictionary.update(
@@ -2508,7 +2550,7 @@ class PdfFileReader(object):
                     stream.seek(self._xrefTable[gen][id][0], 0)
 
                     try:
-                        pid, pgen = self._readObjectHeader(stream)
+                        pid, _pgen = self._readObjectHeader(stream)
                     except ValueError:
                         break
 
@@ -2550,7 +2592,7 @@ class PdfFileReader(object):
         stream.seek(-1, 1)
 
         generation = readUntilWhitespace(stream)
-        obj = stream.read(3)
+        _obj = stream.read(3)
         readNonWhitespace(stream)
         stream.seek(-1, 1)
 
@@ -2782,7 +2824,7 @@ def _alg32(
     # encryption key as defined by the value of the encryption dictionary's
     # /Length entry.
     if rev >= 3:
-        for i in range(50):
+        for _i in range(50):
             md5_hash = md5(md5_hash[:keylen]).digest()
     # 9. Set the encryption key to the first n bytes of the output from the
     # final MD5 hash, where n is always 5 for revision 2 but, for revision 3 or
@@ -2836,7 +2878,7 @@ def _alg33_1(password, rev, keylen):
     # from the previous MD5 hash and pass it as input into a new MD5 hash.
     md5_hash = m.digest()
     if rev >= 3:
-        for i in range(50):
+        for _i in range(50):
             md5_hash = md5(md5_hash).digest()
     # 4. Create an RC4 encryption key using the first n bytes of the output
     # from the final MD5 hash, where n is always 5 for revision 2 but, for
@@ -2863,7 +2905,7 @@ def _alg34(password, owner_entry, p_entry, id1_entry):
     return U, key
 
 
-def _alg35(password, rev, keylen, owner_entry, p_entry, id1_entry, metadata_encrypt):
+def _alg35(password, rev, keylen, owner_entry, p_entry, id1_entry, _metadata_encrypt):
     """
     Implementation of algorithm 3.4 of the PDF standard security handler,
     section 3.5.2 of the PDF 1.6 reference.
