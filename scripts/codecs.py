@@ -7,27 +7,29 @@ Although PyPDF4 mandates Python 2 support as well, only Python 3 is supported
 by this script.
 """
 import argparse
-from sys import path, stderr
-
 from os.path import abspath, dirname, join, pardir
-
-PROJECT_ROOT = abspath(
-    join(dirname(__file__), pardir)
-)
-path.append(PROJECT_ROOT)
+from sys import exit, path, stderr
 
 from pypdf.filters import *
 
+PROJECT_ROOT = abspath(join(dirname(__file__), pardir))
+path.append(PROJECT_ROOT)
+
+
 __version__ = "0.3.0"
 CODECS = {
-    "flate": FlateCodec, "asciihex": ASCIIHexCodec, "lzw": LZWCodec,
-    "ascii85": ASCII85Codec, "dct": DCTCodec, "jpx": JPXCodec,
-    "ccittfax": CCITTFaxCodec
+    "flate": FlateCodec,
+    "asciihex": ASCIIHexCodec,
+    "lzw": LZWCodec,
+    "ascii85": ASCII85Codec,
+    "dct": DCTCodec,
+    "jpx": JPXCodec,
+    "ccittfax": CCITTFaxCodec,
 }
 
 ENCODE, DECODE, LIST = ("encode", "decode", "list")
 CODEC_ACTIONS = (ENCODE, DECODE)
-VIEW_ACTIONS = (LIST, )
+VIEW_ACTIONS = (LIST,)
 
 
 def main():
@@ -37,30 +39,37 @@ def main():
     """
     parser = argparse.ArgumentParser(
         description="Encodes/decodes some data fed in with PyPDF codecs",
-        epilog="Version %s" % __version__
+        epilog="Version %s" % __version__,
     )
     subparsers = parser.add_subparsers(title="Commands", dest="action")
-    codecParser = subparsers.add_parser(
-        ENCODE, aliases=(DECODE, ), help="Encode/decode data"
+    codec_parser = subparsers.add_parser(
+        ENCODE, aliases=(DECODE,), help="Encode/decode data"
     )
-    listParser = subparsers.add_parser(LIST, help="List available codecs")
+    _list_parser = subparsers.add_parser(LIST, help="List available codecs")
 
     subparsers.required = True
     parser.add_argument(
         "-v", "--version", action="version", version="%(prog)s " + __version__
     )
 
-    codecParser.add_argument("data", help="Data to either encode or decode")
+    codec_parser.add_argument("data", help="Data to either encode or decode")
     # TO-DO Add chained list of encoders/decoders support (like
     # ASCIIHexDecode(LZWDecode(data))).
-    codecParser.add_argument(
-        "-c", "--codec", choices=CODECS.keys(), required=True,
-        help="The codec to encode/decode with"
+    codec_parser.add_argument(
+        "-c",
+        "--codec",
+        choices=CODECS.keys(),
+        required=True,
+        help="The codec to encode/decode with",
     )
-    codecParser.add_argument(
-        "-f", "--file", dest="isfile", action="store_const", const=True,
+    codec_parser.add_argument(
+        "-f",
+        "--file",
+        dest="isfile",
+        action="store_const",
+        const=True,
         help="Whether the argument provided to DATA should be interpreted as a"
-             " file path"
+        " file path",
     )
 
     args = parser.parse_args()

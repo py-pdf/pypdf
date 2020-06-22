@@ -5,18 +5,16 @@ Showcases basic features of PyPDF.
 from __future__ import print_function
 
 from os import pardir
+from os.path import abspath, basename, dirname, join
 from sys import argv, path, stderr
 
-from os.path import abspath, basename, dirname, join
+from pypdf.pdf import PdfFileReader, PdfFileWriter
 
 SAMPLE_CODE_ROOT = dirname(__file__)
 SAMPLE_PDF_ROOT = join(SAMPLE_CODE_ROOT, "pdfsamples")
 
-path.append(
-    abspath(join(SAMPLE_CODE_ROOT, pardir))
-)
+path.append(abspath(join(SAMPLE_CODE_ROOT, pardir)))
 
-from pypdf.pdf import PdfFileWriter, PdfFileReader
 
 FLAG_HELP = {"-h", "--help"}
 USAGE = """\
@@ -24,7 +22,9 @@ Showcases basic features of PyPDF.
 
 %(progname)s: <input file> [output file]
 %(progname)s: [-h | --help]
-""" % {"progname": argv[0]}
+""" % {
+    "progname": argv[0]
+}
 
 
 def main():
@@ -52,14 +52,13 @@ def main():
     # Check that the PDF file has the required number of pages
     if reader.numPages < pagesRequired:
         print(
-            "We require a document with %d pages at least, %s has %d" %
-            (pagesRequired, filename, reader.numPages), file=stderr
+            "We require a document with %d pages at least, %s has %d"
+            % (pagesRequired, filename, reader.numPages),
+            file=stderr,
         )
         exit(1)
     else:
-        print(
-            "'%s' has %d pages... OK" % (filename, reader.numPages)
-        )
+        print("'%s' has %d pages... OK" % (filename, reader.numPages))
 
     # Add page 1 from reader to output document, unchanged
     writer.addPage(reader.getPage(0))
@@ -73,9 +72,7 @@ def main():
 
     # Add page 4 from reader, but first add a watermark from another PDF:
     page4 = reader.getPage(3)
-    watermark = PdfFileReader(
-        open(join(SAMPLE_PDF_ROOT, "AutoCad_Diagram.pdf"), "rb")
-    )
+    watermark = PdfFileReader(open(join(SAMPLE_PDF_ROOT, "AutoCad_Diagram.pdf"), "rb"))
     page4.mergePage(watermark.getPage(0))
     writer.addPage(page4)
 
@@ -83,7 +80,7 @@ def main():
     page5 = reader.getPage(4)
     page5.mediaBox.upperRight = (
         page5.mediaBox.getUpperRight_x() / 2,
-        page5.mediaBox.getUpperRight_y() / 2
+        page5.mediaBox.getUpperRight_y() / 2,
     )
     writer.addPage(page5)
 

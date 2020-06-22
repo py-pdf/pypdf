@@ -229,15 +229,15 @@ class PdfFileWriter(object):
 
         pages[NameObject("/Count")] = NumberObject(pages["/Count"] + 1)
 
-########
-#
-# Note that pubpub-zz offered pull request #75.  CL accepted part of it, and mangled
-# the pull request.  pubpub-zz, please contact CL again, so we can construct and merge
-# a fully valid pull request.
-#
-# See <URL: https://github.com/claird/PyPDF4/pull/75/ > for related information.
-#
-########
+    ########
+    #
+    # Note that pubpub-zz offered pull request #75.  CL accepted part of it, and mangled
+    # the pull request.  pubpub-zz, please contact CL again, so we can construct and merge
+    # a fully valid pull request.
+    #
+    # See <URL: https://github.com/claird/PyPDF4/pull/75/ > for related information.
+    #
+    ########
     def addPage(self, page):
         """
         Adds a page to this PDF file.  The page is usually acquired from a

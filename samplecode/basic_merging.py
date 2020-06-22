@@ -5,18 +5,16 @@ Merges three PDF documents input from the command line.
 from __future__ import print_function
 
 from os import pardir
+from os.path import abspath, dirname, join
 from sys import argv, path
 
-from os.path import abspath, dirname, join
+from pypdf import PdfFileMerger, PdfFileReader
 
 SAMPLE_CODE_ROOT = dirname(__file__)
 SAMPLE_PDF_ROOT = join(SAMPLE_CODE_ROOT, "pdfsamples")
 
-path.append(
-    abspath(join(SAMPLE_CODE_ROOT, pardir))
-)
+path.append(abspath(join(SAMPLE_CODE_ROOT, pardir)))
 
-from pypdf import PdfFileReader, PdfFileMerger
 
 FLAG_HELP = {"-h", "--help"}
 USAGE = """\
@@ -24,7 +22,9 @@ Merges three PDF documents input from the command line.
 
 %(progname)s: <PDF 1> <PDF 2> <PDF 3> [output filename]
 %(progname)s: [-h | --help]
-""" % {"progname": argv[0]}
+""" % {
+    "progname": argv[0]
+}
 
 
 def main():
@@ -48,8 +48,8 @@ def main():
 
     if reader1.numPages < requiredPages:
         print(
-            "File 1 requires %d pages, but it has just %d" %
-            (requiredPages, reader1.numPages)
+            "File 1 requires %d pages, but it has just %d"
+            % (requiredPages, reader1.numPages)
         )
         exit(1)
 

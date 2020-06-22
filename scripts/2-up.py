@@ -1,16 +1,13 @@
 from __future__ import print_function
 
 import os
+from os.path import abspath, dirname, join
 import sys
 
-from os.path import abspath, dirname, join
+from pypdf import PdfFileReader, PdfFileWriter
 
-PROJECT_ROOT = abspath(
-    join(dirname(__file__), os.pardir, os.pardir)
-)
+PROJECT_ROOT = abspath(join(dirname(__file__), os.pardir, os.pardir))
 sys.path.append(PROJECT_ROOT)
-
-from pypdf import PdfFileWriter, PdfFileReader
 
 
 # TO-DO Decide which one of the two halves below to keep
@@ -26,7 +23,7 @@ def main():
 
     for iter in range(0, input1.numPages - 1, 2):
         lhs = input1.getPage(iter)
-        rhs = input1.getPage(iter+1)
+        rhs = input1.getPage(iter + 1)
         lhs.mergeTranslatedPage(rhs, lhs.mediaBox.getUpperRight_x(), 0, True)
         output.addPage(lhs)
         print(str(iter) + " "),
@@ -51,12 +48,12 @@ def main():
     input1 = PdfFileReader(open(sys.argv[1], "rb"))
     output = PdfFileWriter()
 
-    for i in range (0, input1.numPages - 1, 2):
+    for i in range(0, input1.numPages - 1, 2):
         lhs = input1.getPage(i)
         rhs = input1.getPage(i + 1)
         lhs.mergeTranslatedPage(rhs, lhs.mediaBox.getUpperRight_x(), 0, True)
         output.addPage(lhs)
-        print (str(i) + " "),
+        print(str(i) + " "),
         sys.stdout.flush()
 
     print("writing " + sys.argv[2])
