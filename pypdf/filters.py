@@ -37,7 +37,7 @@ from sys import version_info
 
 from pypdf import generic
 from pypdf.generic import *
-from pypdf.utils import PdfReadError, pypdfOrd, paethPredictor, PdfStreamError
+from pypdf.utils import PdfReadError, PdfStreamError, paethPredictor, pypdfOrd
 
 try:
     import zlib
@@ -47,6 +47,8 @@ try:
 
     def compress(data):
         return zlib.compress(data)
+
+
 except ImportError:
     # Unable to import zlib.  Attempt to use the System.IO.Compression
     # library from the .NET framework. (IronPython only.)
@@ -92,9 +94,7 @@ except ImportError:
         ms = IO.MemoryStream()
         ms.Write(bytes, 0, these_bytes.Length)
         ms.Position = 0  # fseek 0
-        gz = IO.Compression.DeflateStream(
-            ms, IO.Compression.CompressionMode.Decompress
-        )
+        gz = IO.Compression.DeflateStream(ms, IO.Compression.CompressionMode.Decompress)
         these_bytes = _read_bytes(gz)
         retval = _bytearr_to_string(these_bytes)
         gz.Close()
@@ -142,7 +142,7 @@ class FlateCodec(object):
             try:
                 predictor = decodeParms.get("/Predictor", 1)
             except AttributeError:
-                pass    # Usually an array with a null object was read
+                pass  # Usually an array with a null object was read
 
         # predictor 1 == no predictor
         if predictor != 1:
@@ -156,12 +156,12 @@ class FlateCodec(object):
                 # PNG prediction can vary from row to row
                 row_length = columns + 1
                 assert len(data) % row_length == 0
-                prev_rowdata = (0, ) * row_length
+                prev_rowdata = (0,) * row_length
 
                 for row in range(len(data) // row_length):
                     rowdata = [
-                        pypdfOrd(x) for x in
-                        data[(row * row_length):((row + 1) * row_length)]
+                        pypdfOrd(x)
+                        for x in data[(row * row_length) : ((row + 1) * row_length)]
                     ]
                     filterByte = rowdata[0]
 
@@ -187,9 +187,7 @@ class FlateCodec(object):
                             rowdata[i] = (rowdata[i] + paeth) % 256
                     else:
                         # Unsupported PNG filter
-                        raise PdfReadError(
-                            "Unsupported PNG filter %r" % filterByte
-                        )
+                        raise PdfReadError("Unsupported PNG filter %r" % filterByte)
 
                     prev_rowdata = rowdata
 
@@ -202,9 +200,7 @@ class FlateCodec(object):
                 data = output.getvalue()
             else:
                 # unsupported predictor
-                raise PdfReadError(
-                    "Unsupported flatedecode predictor %r" % predictor
-                )
+                raise PdfReadError("Unsupported flatedecode predictor %r" % predictor)
 
         return data
 
@@ -214,6 +210,7 @@ class ASCIIHexCodec(object):
         The ASCIIHexCodec filter decodes data that has been encoded in ASCII
         hexadecimal form into a base-7 ASCII format.
     """
+
     @staticmethod
     def encode(data, decodeParms=None):
         raise NotImplementedError()
@@ -265,12 +262,14 @@ class LZWCodec(object):
     For a reference of the LZW algorithm consult ISO 32000, section 7.4.4 or
     Section 13 of "TIFF 6.0 Specification" for a more detailed discussion.
     """
+
     class Encoder(object):
         """
         ``LZWCodec.Encoder`` is primarily employed for testing purposes and
         its implementation doesn't (yet) cover all the little facets present in
         the ISO standard.
         """
+
         MAX_ENTRIES = 2 ** 12
 
         def __init__(self, data):
@@ -333,13 +332,9 @@ class LZWCodec(object):
             self.bitspercode = 9
 
             if version_info < (3, 0):
-                self.table = {
-                    chr(b): b for b in range(256)
-                }
+                self.table = {chr(b): b for b in range(256)}
             else:
-                self.table = {
-                    bytes([b]): b for b in range(256)
-                }
+                self.table = {bytes([b]): b for b in range(256)}
             # self.table is actually a bytes-to-integers mapping, but we are
             # doing a little inoffensive misuse here!
             self.table[256] = len(self.table)
@@ -368,9 +363,7 @@ class LZWCodec(object):
                     ((code << bitsWritten) >> (self.bitspercode - 8)) & 0xFF
                 ) >> relbitpos
 
-                bitsWritten += min(
-                    8 - relbitpos, self.bitspercode - bitsWritten
-                )
+                bitsWritten += min(8 - relbitpos, self.bitspercode - bitsWritten)
                 relbitpos = (self.bitpos + bitsWritten) % 8
                 bytepos = int(math.floor((self.bitpos + bitsWritten) / 8))
 
@@ -429,9 +422,7 @@ class LZWCodec(object):
                 cW = self._readCode()
 
                 if cW == -1:
-                    raise PdfReadError(
-                        "Missed the stop code in during LZW decoding"
-                    )
+                    raise PdfReadError("Missed the stop code in during LZW decoding")
                 if cW == self.STOP:
                     break
                 elif cW == self.CLEARDICT:
@@ -477,9 +468,10 @@ class LZWCodec(object):
                 if bitsfromhere > toread:
                     bitsfromhere = toread
 
-                value |= ((nextbits >> (8 - self.bitpos - bitsfromhere)) &
-                          (0xFF >> (8 - bitsfromhere))
-                          ) << (toread - bitsfromhere)
+                value |= (
+                    (nextbits >> (8 - self.bitpos - bitsfromhere))
+                    & (0xFF >> (8 - bitsfromhere))
+                ) << (toread - bitsfromhere)
                 toread -= bitsfromhere
                 self.bitpos += bitsfromhere
 
@@ -493,8 +485,7 @@ class LZWCodec(object):
             self.dict[self.dictindex] = data
             self.dictindex += 1
 
-            if self.dictindex >= (2 ** self.bitspercode)\
-                    and self.bitspercode < 12:
+            if self.dictindex >= (2 ** self.bitspercode) and self.bitspercode < 12:
                 self.bitspercode += 1
 
     @staticmethod
@@ -522,6 +513,7 @@ class ASCII85Codec(object):
     """
     Decodes string ASCII85-encoded data into a byte format.
     """
+
     # pylint: disable=too-many-branches, too-many-statements, too-many-locals
     @staticmethod
     def encode(data, decodeParms=None):
@@ -539,8 +531,7 @@ class ASCII85Codec(object):
 
             if type(data) not in (str, bytes):
                 raise TypeError(
-                    "Expected str or bytes type for data, got %s instead" %
-                    type(data)
+                    "Expected str or bytes type for data, got %s instead" % type(data)
                 )
 
             for group in range(int(math.ceil(len(data) / 4.0))):
@@ -552,8 +543,9 @@ class ASCII85Codec(object):
                     data = data + (4 - groupWidth) * filler
 
                 for byte in range(4):
-                    decimalRepr +=\
-                        pypdfOrd(data[4 * group + byte]) << 8 * (4 - byte - 1)
+                    decimalRepr += pypdfOrd(data[4 * group + byte]) << 8 * (
+                        4 - byte - 1
+                    )
 
                 # If all bytes are 0, we turn them into a single 'z' character
                 if decimalRepr == 0 and groupWidth == 4:
@@ -566,7 +558,7 @@ class ASCII85Codec(object):
                 # In case of a partial group of four bytes, the standard says:
                 # «Finally, it shall write only the first n + 1 characters of the
                 # resulting group of 5.» - ISO 32000 (2008), sec. 7.4.3
-                result += ascii85[:min(5, groupWidth + 1)]
+                result += ascii85[: min(5, groupWidth + 1)]
 
             return ("<~" + result + "~>").encode("LATIN1")
         else:
@@ -588,14 +580,16 @@ class ASCII85Codec(object):
                 try:
                     data = data.encode("ascii")
                 except UnicodeEncodeError:
-                    raise ValueError('unicode argument should contain only ASCII characters')
+                    raise ValueError(
+                        "unicode argument should contain only ASCII characters"
+                    )
 
             if isinstance(data, bytes):
                 data = data.decode("LATIN1")
             elif not isinstance(data, str):
                 raise TypeError(
-                    "data is of %s type, expected str or bytes" %
-                    data.__class__.__name__
+                    "data is of %s type, expected str or bytes"
+                    % data.__class__.__name__
                 )
 
             # Strip leading '<~' characters, if present.
@@ -608,7 +602,7 @@ class ASCII85Codec(object):
 
             for index, c in enumerate(data):
                 # Ignore whitespace characters.
-                if not c.strip(' \n\r\t\v'):
+                if not c.strip(" \n\r\t\v"):
                     continue
                 byte = ord(c)
 
@@ -618,19 +612,19 @@ class ASCII85Codec(object):
                     b = b * 85 + (byte - 33)
 
                     if group_index == 5:
-                        out += struct.pack(b'>L', b)
+                        out += struct.pack(b">L", b)
                         group_index = b = 0
                 # 122 == ord('z')
                 elif byte == 122:
                     if group_index:
-                        raise ValueError('z inside Ascii85 5-tuple')
+                        raise ValueError("z inside Ascii85 5-tuple")
                     out.extend(b"\x00\x00\x00\x00")
                 # 126 == ord('~') and 62 == ord('>')
-                elif byte == 126 and data[index + 1] == '>':
+                elif byte == 126 and data[index + 1] == ">":
                     if group_index:
                         for _ in range(5 - group_index):
                             b = b * 85 + 84
-                        out += struct.pack(b'>L', b)[:group_index - 1]
+                        out += struct.pack(b">L", b)[: group_index - 1]
 
                     break
                 else:
@@ -655,7 +649,7 @@ class DCTCodec(object):
         return data
 
 
-class JPXCodec(object):    # pylint: disable=too-few-public-methods
+class JPXCodec(object):  # pylint: disable=too-few-public-methods
     @staticmethod
     def encode(data, decodeParms=None):
         raise NotImplementedError()
@@ -668,7 +662,7 @@ class JPXCodec(object):    # pylint: disable=too-few-public-methods
         return data
 
 
-class CCITTFaxCodec(object):    # pylint: disable=too-few-public-methods
+class CCITTFaxCodec(object):  # pylint: disable=too-few-public-methods
     @staticmethod
     def encode(data, decodeParms=None):
         raise NotImplementedError()
@@ -683,24 +677,48 @@ class CCITTFaxCodec(object):    # pylint: disable=too-few-public-methods
 
         width = decodeParms["/Columns"]
         imgSize = len(data)
-        tiffHeaderStruct = '<' + '2s' + 'h' + 'l' + 'h' + 'hhll' * 8 + 'h'
+        tiffHeaderStruct = "<" + "2s" + "h" + "l" + "h" + "hhll" * 8 + "h"
         tiffHeader = struct.pack(
             tiffHeaderStruct,
-            b'II',  # Byte order indication: Little endian
+            b"II",  # Byte order indication: Little endian
             42,  # Version number (always 42)
             8,  # Offset to first IFD
             8,  # Number of tags in IFD
-            256, 4, 1, width,  # ImageWidth, LONG, 1, width
-            257, 4, 1, height,  # ImageLength, LONG, 1, length
-            258, 3, 1, 1,  # BitsPerSample, SHORT, 1, 1
+            256,
+            4,
+            1,
+            width,  # ImageWidth, LONG, 1, width
+            257,
+            4,
+            1,
+            height,  # ImageLength, LONG, 1, length
+            258,
+            3,
+            1,
+            1,  # BitsPerSample, SHORT, 1, 1
             # Compression, SHORT, 1, 4 = CCITT Group 4 fax encoding
-            259, 3, 1, CCITTgroup,
-            262, 3, 1, 0,  # Thresholding, SHORT, 1, 0 = WhiteIsZero
+            259,
+            3,
+            1,
+            CCITTgroup,
+            262,
+            3,
+            1,
+            0,  # Thresholding, SHORT, 1, 0 = WhiteIsZero
             # StripOffsets, LONG, 1, length of header
-            273, 4, 1, struct.calcsize(tiffHeaderStruct),
-            278, 4, 1, height,  # RowsPerStrip, LONG, 1, length
-            279, 4, 1, imgSize,  # StripByteCounts, LONG, 1, size of image
-            0  # last IFD
+            273,
+            4,
+            1,
+            struct.calcsize(tiffHeaderStruct),
+            278,
+            4,
+            1,
+            height,  # RowsPerStrip, LONG, 1, length
+            279,
+            4,
+            1,
+            imgSize,  # StripByteCounts, LONG, 1, size of image
+            0,  # last IFD
         )
 
         # TO-DO Finish implementing (the code above only adds header infos.)
@@ -739,9 +757,7 @@ def decodeStreamData(stream):
                 data = JPXCodec.decode(data)
             elif filterType == "/CCITTFaxDecode":
                 height = stream.get("/Height", ())
-                data = CCITTFaxCodec.decode(
-                    data, stream.get("/DecodeParms"), height
-                )
+                data = CCITTFaxCodec.decode(data, stream.get("/DecodeParms"), height)
             elif filterType == "/Crypt":
                 decodeParams = stream.get("/DecodeParams", {})
 

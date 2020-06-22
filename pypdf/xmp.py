@@ -34,7 +34,8 @@ XMPMM_NAMESPACE = "http://ns.adobe.com/xap/1.0/mm/"
 # reverse engineering, and does not constitute a full specification.
 PDFX_NAMESPACE = "http://ns.adobe.com/pdfx/1.3/"
 
-iso8601 = re.compile("""
+iso8601 = re.compile(
+    """
         (?P<year>[0-9]{4})
         (-
             (?P<month>[0-9]{2})
@@ -48,7 +49,9 @@ iso8601 = re.compile("""
                 )?
             )?
         )?
-        """, re.VERBOSE)
+        """,
+    re.VERBOSE,
+)
 
 
 class XmpInformation(PdfObject):
@@ -56,6 +59,7 @@ class XmpInformation(PdfObject):
     An object that represents Adobe XMP metadata. Usually accessed by
     :meth:`xmpMetadata()<pypdf.PdfFileReader.xmpMetadata>`
     """
+
     def __init__(self, stream):
         self.stream = stream
         docRoot = parseString(self.stream.getData())
@@ -66,9 +70,7 @@ class XmpInformation(PdfObject):
         self.stream.writeToStream(stream, encryption_key)
 
     def getElement(self, aboutUri, namespace, name):
-        for desc in self.rdfRoot.getElementsByTagNameNS(
-                RDF_NAMESPACE, "Description"
-        ):
+        for desc in self.rdfRoot.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):
             if desc.getAttributeNS(RDF_NAMESPACE, "about") == aboutUri:
                 attr = desc.getAttributeNodeNS(namespace, name)
 
@@ -78,9 +80,7 @@ class XmpInformation(PdfObject):
                     yield element
 
     def getNodesInNamespace(self, aboutUri, namespace):
-        for desc in self.rdfRoot.getElementsByTagNameNS(
-                RDF_NAMESPACE, "Description"
-        ):
+        for desc in self.rdfRoot.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):
             if desc.getAttributeNS(RDF_NAMESPACE, "about") == aboutUri:
                 for i in range(desc.attributes.length):
                     attr = desc.attributes.item(i)
@@ -114,9 +114,7 @@ class XmpInformation(PdfObject):
         seconds = second.to_integral(decimal.ROUND_FLOOR)
         milliseconds = (second - seconds) * 1000000
         tzd = m.group("tzd") or "Z"
-        dt = datetime.datetime(
-            year, month, day, hour, minute, seconds, milliseconds
-        )
+        dt = datetime.datetime(year, month, day, hour, minute, seconds, milliseconds)
 
         if tzd != "Z":
             tzd_hours, tzd_minutes = [int(x) for x in tzd.split(":")]
@@ -142,9 +140,7 @@ class XmpInformation(PdfObject):
 
                 if len(bags):
                     for bag in bags:
-                        for item in bag.getElementsByTagNameNS(
-                                RDF_NAMESPACE, "li"
-                        ):
+                        for item in bag.getElementsByTagNameNS(RDF_NAMESPACE, "li"):
                             value = self._getText(item)
                             value = converter(value)
                             retval.append(value)
@@ -169,9 +165,7 @@ class XmpInformation(PdfObject):
 
                 if len(seqs):
                     for seq in seqs:
-                        for item in seq.getElementsByTagNameNS(
-                                RDF_NAMESPACE, "li"
-                        ):
+                        for item in seq.getElementsByTagNameNS(RDF_NAMESPACE, "li"):
                             value = self._getText(item)
                             value = converter(value)
                             retval.append(value)
@@ -197,9 +191,7 @@ class XmpInformation(PdfObject):
                 alts = element.getElementsByTagNameNS(RDF_NAMESPACE, "Alt")
                 if len(alts):
                     for alt in alts:
-                        for item in alt.getElementsByTagNameNS(
-                                RDF_NAMESPACE, "li"
-                        ):
+                        for item in alt.getElementsByTagNameNS(RDF_NAMESPACE, "li"):
                             value = self._getText(item)
                             value = converter(value)
                             retval[item.getAttribute("xml:lang")] = value
@@ -239,24 +231,18 @@ class XmpInformation(PdfObject):
 
         return get
 
-    dc_contributor = property(
-        _getterBag(DC_NAMESPACE, "contributor", _converterString)
-    )
+    dc_contributor = property(_getterBag(DC_NAMESPACE, "contributor", _converterString))
     """
     Contributors to the resource (other than the authors). An unsorted array of
     names.
     """
 
-    dc_coverage = property(
-        _getterSingle(DC_NAMESPACE, "coverage", _converterString)
-    )
+    dc_coverage = property(_getterSingle(DC_NAMESPACE, "coverage", _converterString))
     """
     Text describing the extent or scope of the resource.
     """
 
-    dc_creator = property(
-        _getterSeq(DC_NAMESPACE, "creator", _converterString)
-    )
+    dc_creator = property(_getterSeq(DC_NAMESPACE, "creator", _converterString))
     """
     A sorted array of names of the authors of the resource, listed in order of
     precedence.
@@ -276,9 +262,7 @@ class XmpInformation(PdfObject):
     resource.
     """
 
-    dc_format = property(
-        _getterSingle(DC_NAMESPACE, "format", _converterString)
-    )
+    dc_format = property(_getterSingle(DC_NAMESPACE, "format", _converterString))
     """
     The mime-type of the resource.
     """
@@ -290,54 +274,40 @@ class XmpInformation(PdfObject):
     Unique identifier of the resource.
     """
 
-    dc_language = property(
-        _getterBag(DC_NAMESPACE, "language", _converterString)
-    )
+    dc_language = property(_getterBag(DC_NAMESPACE, "language", _converterString))
     """
     An unordered array specifying the languages used in the resource.
     """
 
-    dc_publisher = property(
-        _getterBag(DC_NAMESPACE, "publisher", _converterString)
-    )
+    dc_publisher = property(_getterBag(DC_NAMESPACE, "publisher", _converterString))
     """
     An unordered array of publisher names.
     """
 
-    dc_relation = property(
-        _getterBag(DC_NAMESPACE, "relation", _converterString)
-    )
+    dc_relation = property(_getterBag(DC_NAMESPACE, "relation", _converterString))
     """
     An unordered array of text descriptions of relationships to other
     documents.
     """
 
-    dc_rights = property(
-        _getterLangalt(DC_NAMESPACE, "rights", _converterString)
-    )
+    dc_rights = property(_getterLangalt(DC_NAMESPACE, "rights", _converterString))
     """
     A language-keyed dictionary of textual descriptions of the rights the user
     has to this resource.
     """
 
-    dc_source = property(
-        _getterSingle(DC_NAMESPACE, "source", _converterString)
-    )
+    dc_source = property(_getterSingle(DC_NAMESPACE, "source", _converterString))
     """
     Unique identifier of the work from which this resource was derived.
     """
 
-    dc_subject = property(
-        _getterBag(DC_NAMESPACE, "subject", _converterString)
-    )
+    dc_subject = property(_getterBag(DC_NAMESPACE, "subject", _converterString))
     """
     An unordered array of descriptive phrases or keywrods that specify the
     topic of the content of the resource.
     """
 
-    dc_title = property(
-        _getterLangalt(DC_NAMESPACE, "title", _converterString)
-    )
+    dc_title = property(_getterLangalt(DC_NAMESPACE, "title", _converterString))
     """
     A language-keyed dictionary of the title of the resource.
     """
@@ -347,9 +317,7 @@ class XmpInformation(PdfObject):
     An unordered array of textual descriptions of the document type.
     """
 
-    pdf_keywords = property(
-        _getterSingle(PDF_NAMESPACE, "Keywords", _converterString)
-    )
+    pdf_keywords = property(_getterSingle(PDF_NAMESPACE, "Keywords", _converterString))
     """
     An unformatted text string representing document keywords.
     """
@@ -361,9 +329,7 @@ class XmpInformation(PdfObject):
     The PDF file version, for example ``1.0``, ``1.3``.
     """
 
-    pdf_producer = property(
-        _getterSingle(PDF_NAMESPACE, "Producer", _converterString)
-    )
+    pdf_producer = property(_getterSingle(PDF_NAMESPACE, "Producer", _converterString))
     """
     The name of the tool that created the PDF document.
     """
@@ -437,9 +403,11 @@ class XmpInformation(PdfObject):
                     if idx == -1:
                         break
 
-                    key = key[:idx] + chr(
-                        int(key[idx + 1:idx + 5], base=16)
-                    ) + key[idx+5:]
+                    key = (
+                        key[:idx]
+                        + chr(int(key[idx + 1 : idx + 5], base=16))
+                        + key[idx + 5 :]
+                    )
                 if node.nodeType == node.ATTRIBUTE_NODE:
                     value = node.nodeValue
                 else:
