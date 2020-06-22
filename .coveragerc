@@ -1,0 +1,4 @@
+[run]
+omit = .tox/*
+
+# TODO:  still need to arrange coverage for samplecode/*.py and scripts/*.py.
