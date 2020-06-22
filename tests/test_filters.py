@@ -36,14 +36,14 @@ try:
     unicode
 except NameError:
     # Python 3
-    bytes_type = bytes
-    str_type = str
-    unicode_type = str
+    BytesType = bytes
+    StrType = str
+    UnicodeType = str
 else:
     # Python 2
-    bytes_type = bytes
-    str_type = str
-    unicode_type = unicode
+    BytesType = bytes
+    StrType = str
+    UnicodeType = unicode
 
 
 class FlateCodecTestCase(unittest.TestCase):
@@ -429,7 +429,7 @@ def test_ascii85_decode(data, expected_value, exception):
     else:
         value = ASCII85Codec.decode(data)
         assert value == expected_value
-        assert isinstance(value, bytes_type)
+        assert isinstance(value, BytesType)
 
 
 @pytest.mark.parametrize(
@@ -441,9 +441,9 @@ def test_ascii85_decode(data, expected_value, exception):
         (b"\xff", b"<~rr~>"),
         (b"\x00\x00\x00\x00", b"<~z~>"),
     ),
-)
+)  # pylint: disable=invalid-name
 def testASCII85Encode(data, expected_value):
     """ [EXPLAIN THIS.] """
     value = ASCII85Codec.encode(data)
     assert value == expected_value
-    assert isinstance(value, bytes_type)
+    assert isinstance(value, BytesType)
