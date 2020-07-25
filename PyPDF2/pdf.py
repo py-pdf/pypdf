@@ -2683,6 +2683,7 @@ class PageObject(DictionaryObject):
             elif operator == b_("TJ"):
                 for i in operands[0]:
                     if isinstance(i, TextStringObject):
+                        text += " "
                         text += i
                 text += "\n"
         return text
