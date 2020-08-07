@@ -1,5 +1,7 @@
 # PyPDF2
 
+This repo was forked from PyPDF2 (https://github.com/mstamy2/PyPDF2)
+
 PyPDF2 is a pure-python PDF library capable of
 splitting, merging together, cropping, and transforming
 the pages of PDF files. It can also add custom
