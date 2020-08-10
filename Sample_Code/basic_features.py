@@ -1,3 +1,12 @@
+"""
+Sample code that demonstrates:
+
+* Getting metadata from a PDF.
+* Copying a PDF, one page at a time, and performing different operations on each page (resize, rotate, add a watermark).
+* Encrypting a PDF.
+* Adding javascript that runs when the PDF is opened.
+"""
+
 from PyPDF2 import PdfFileWriter, PdfFileReader
 
 output = PdfFileWriter()

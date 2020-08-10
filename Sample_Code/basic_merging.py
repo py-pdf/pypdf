@@ -1,3 +1,8 @@
+"""
+Sample code that demonstrates merging together three PDFs into one, picking and choosing which pages appear in which order.
+Selected pages can be added to the end of the output PDF being built, or inserted in the middle.
+"""
+
 from PyPDF2 import PdfFileMerger
 
 merger = PdfFileMerger()
