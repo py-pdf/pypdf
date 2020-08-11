@@ -250,17 +250,17 @@ class PdfFileWriter(object):
 
         :param str fname: The filename to display.
         :param str fdata: The data in the file.
-      
+
         Reference:
         https://www.adobe.com/content/dam/Adobe/en/devnet/acrobat/pdfs/PDF32000_2008.pdf
         Section 7.11.3
         """
-        
+
         # We need 3 entries:
         # * The file's data
         # * The /Filespec entry
         # * The file's name, which goes in the Catalog
-        
+
 
         # The entry for the file
         """ Sample:
@@ -272,7 +272,7 @@ class PdfFileWriter(object):
         stream
         Hello world!
         endstream
-        endobj        
+        endobj
         """
         file_entry = DecodedStreamObject()
         file_entry.setData(fdata)
@@ -291,14 +291,14 @@ class PdfFileWriter(object):
         """
         efEntry = DictionaryObject()
         efEntry.update({ NameObject("/F"):file_entry })
-        
+
         filespec = DictionaryObject()
         filespec.update({
                 NameObject("/Type"): NameObject("/Filespec"),
                 NameObject("/F"): createStringObject(fname),  # Perhaps also try TextStringObject
                 NameObject("/EF"): efEntry
                 })
-                
+
         # Then create the entry for the root, as it needs a reference to the Filespec
         """ Sample:
         1 0 obj
@@ -309,13 +309,13 @@ class PdfFileWriter(object):
          /Names << /EmbeddedFiles << /Names [(hello.txt) 7 0 R] >> >>
         >>
         endobj
-        
+
         """
         embeddedFilesNamesDictionary = DictionaryObject()
         embeddedFilesNamesDictionary.update({
                 NameObject("/Names"): ArrayObject([createStringObject(fname), filespec])
                 })
-        
+
         embeddedFilesDictionary = DictionaryObject()
         embeddedFilesDictionary.update({
                 NameObject("/EmbeddedFiles"): embeddedFilesNamesDictionary
@@ -329,7 +329,7 @@ class PdfFileWriter(object):
         """
         Copy pages from reader to writer. Includes an optional callback parameter
         which is invoked after pages are appended to the writer.
-        
+
         :param reader: a PdfFileReader object from which to copy page
             annotations to this writer object.  The writer's annots
         will then be updated
@@ -351,7 +351,7 @@ class PdfFileWriter(object):
             # Trigger callback, pass writer page as parameter
             if callable(after_page_append): after_page_append(writer_page)
 
-    def updatePageFormFieldValues(self, page, fields):
+    def updatePageFormFieldValues(self, page, fields, read_only = False):
         '''
         Update the form field values for a given page from a fields dictionary.
         Copy field texts and values from fields to page.
@@ -360,20 +360,39 @@ class PdfFileWriter(object):
             and field data will be updated.
         :param fields: a Python dictionary of field names (/T) and text
             values (/V)
+
+        Credit for figuring out that it sometimes helps to set the field to
+        read-only: https://stackoverflow.com/users/8382028/viatech
         '''
         # Iterate through pages, update field values
         for j in range(0, len(page['/Annots'])):
             writer_annot = page['/Annots'][j].getObject()
             for field in fields:
                 if writer_annot.get('/T') == field:
-                    writer_annot.update({
-                        NameObject("/V"): TextStringObject(fields[field])
-                    })
+                    writer_annot.update({NameObject("/V"): TextStringObject(fields[field])})
+                    if read_only:
+                        writer_annot.update({NameObject("/Ff"): NumberObject(1)})
+
+    def have_viewer_render_fields(self):
+        """
+        Some PDF viewers need to be coaxed into rendering field values.
+        This does so by setting a `/NeedAppearances` attribute to True
+        (which adds to the processing time slightly).
+        Credit for figuring this out: https://stackoverflow.com/users/8382028/viatech
+        """
+        try:
+            catalog = self._root_object
+            if "/AcroForm" not in catalog:
+                self._root_object.update({NameObject("/AcroForm"): IndirectObject(len(self._objects), 0, self)})
+            need_appearances = NameObject("/NeedAppearances")
+            self._root_object["/AcroForm"][need_appearances] = BooleanObject(True)
+        except Exception as e:
+            warnings.warn("Unable to set the /NeedAppearances flag. Filled-in field values may not render correctly. [{}]".format(repr(e)))
 
     def cloneReaderDocumentRoot(self, reader):
         '''
         Copy the reader document root to the writer.
-        
+
         :param reader:  PdfFileReader from the document root should be copied.
         :callback after_page_append
         '''
@@ -1342,10 +1361,11 @@ class PdfFileReader(object):
         '''
         # Retrieve document form fields
         formfields = self.getFields()
-        return dict(
-            (formfields[field]['/T'], formfields[field].get('/V')) for field in formfields \
-                if formfields[field].get('/FT') == '/Tx'
-        )
+        if formfields:
+            return dict(
+                (formfields[field]['/T'], formfields[field].get('/V')) for field in formfields \
+                    if formfields[field].get('/FT') == '/Tx')
+        return None
 
     def getNamedDestinations(self, tree=None, retval=None):
         """
