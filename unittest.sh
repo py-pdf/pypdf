@@ -1,1 +1,1 @@
-python -m unittest Tests/*.py
+python -m unittest tests/*.py
