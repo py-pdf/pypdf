@@ -32,3 +32,4 @@ Tests can be run from the command line by:
 ```bash
 python -m unittest Tests.tests
 ```
+This script lets you to write and read the PDF file
