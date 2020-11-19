@@ -499,8 +499,11 @@ class PdfFileWriter(object):
                 assert len(key) == (len(self._encrypt_key) + 5)
                 md5_hash = md5(key).digest()
                 key = md5_hash[:min(16, len(self._encrypt_key) + 5)]
-            obj.writeToStream(stream, key)
-            stream.write(b_("\nendobj\n"))
+            try:
+                obj.writeToStream(stream, key)
+                stream.write(b_("\nendobj\n"))
+            except:
+                pass
 
         # xref table
         xref_location = stream.tell()
@@ -1636,7 +1639,7 @@ class PdfFileReader(object):
                 warnings.warn("Invalid stream (index %d) within object %d %d: %s" % \
                       (i, indirectReference.idnum, indirectReference.generation, e), utils.PdfReadWarning)
 
-                if self.strict:
+                if not self.strict:
                     raise utils.PdfReadError("Can't read object stream: %s"%e)
                 # Replace with null. Hopefully it's nothing important.
                 obj = NullObject()
@@ -1692,8 +1695,8 @@ class PdfFileReader(object):
         else:
             warnings.warn("Object %d %d not defined."%(indirectReference.idnum,
                         indirectReference.generation), utils.PdfReadWarning)
-            #if self.strict:
-            raise utils.PdfReadError("Could not find object.")
+            if not self.strict:
+                raise utils.PdfReadError("Could not find object.")
         self.cacheIndirectObject(indirectReference.generation,
                     indirectReference.idnum, retval)
         return retval
