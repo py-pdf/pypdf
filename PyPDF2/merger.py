@@ -119,13 +119,13 @@ class PdfFileMerger(object):
             fileobj = StreamIO(filecontent)
             my_file = True
         elif isinstance(fileobj, PdfFileReader):
+            if hasattr(fileobj, '_decryption_key'):
+                decryption_key = fileobj._decryption_key
             orig_tell = fileobj.stream.tell()
             fileobj.stream.seek(0)
             filecontent = StreamIO(fileobj.stream.read())
             fileobj.stream.seek(orig_tell) # reset the stream to its original location
             fileobj = filecontent
-            if hasattr(fileobj, '_decryption_key'):
-                decryption_key = fileobj._decryption_key
             my_file = True
 
         # Create a new PdfFileReader instance using the stream
