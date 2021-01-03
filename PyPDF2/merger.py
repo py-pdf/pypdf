@@ -133,6 +133,10 @@ class PdfFileMerger(object):
         pdfr = PdfFileReader(fileobj, strict=self.strict)
         if decryption_key is not None:
             pdfr._decryption_key = decryption_key
+        elif pdfr.isEncrypted:
+            # if the file is encrypted at least try 
+            # the decryption with an empty password
+            pdfr.decrypt('')
 
         # Find the range of pages to merge.
         if pages == None:
