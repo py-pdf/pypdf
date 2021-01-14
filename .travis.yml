@@ -1,10 +1,17 @@
 language: python
+
 python:
-  - 3.5
   - 3.6
   - 3.7
   - 3.8
+  - 3.9
   - 3.9-dev
+  - nightly
+
+jobs:
+  allow_failures:
+    - python: 3.9-dev
+    - python: nightly
 
 before_install:
   - python --version
