@@ -638,7 +638,7 @@ class PdfFileWriter(object):
                         newobj = self._sweepIndirectReferences(externMap, newobj)
                         self._objects[idnum - 1] = newobj
                         return newobj_ido
-                    except ValueError:
+                    except (ValueError, RecursionError):
                         # Unable to resolve the Object, returning NullObject instead.
                         warnings.warn("Unable to resolve [{}: {}], returning NullObject instead".format(
                             data.__class__.__name__, data
@@ -1749,8 +1749,9 @@ class PdfFileReader(object):
         else:
             warnings.warn("Object %d %d not defined." % (indirectReference.idnum,
                                                          indirectReference.generation), utils.PdfReadWarning)
-            # if self.strict:
-            raise utils.PdfReadError("Could not find object.")
+            if self.strict:
+                raise utils.PdfReadError("Could not find object.")
+
         self.cacheIndirectObject(indirectReference.generation,
                                  indirectReference.idnum, retval)
         return retval
@@ -2392,7 +2393,7 @@ class PageObject(DictionaryObject):
 
         for page in (self, page2):
             if "/Annots" in page:
-                annots = page["/Annots"]
+                annots = page.get('/Annots')
                 if isinstance(annots, ArrayObject):
                     for ref in annots:
                         newAnnots.append(ref)
