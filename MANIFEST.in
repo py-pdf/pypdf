@@ -1,1 +1,12 @@
 include CHANGELOG
+include LICENSE
+include README.md
+include requirements.txt
+include tox.ini
+recursive-include Resources *.pdf
+recursive-include Resources *.txt
+recursive-include Sample_Code *.py
+recursive-include Sample_Code *.sh
+recursive-include Sample_Code *.txt
+recursive-include Scripts *.py
+recursive-include tests *.py
