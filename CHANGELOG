@@ -1,4 +1,10 @@
-﻿Version 1.0.0, 2018-08-28
+﻿Version 1.0.3, 2021-02-08
+--------------------------
+ - Optimize Travis CI config
+ - Add automated PyPi deployment to Travis CI config
+
+
+Version 1.0.0, 2018-08-28
 --------------------------
  - Added tqdm to setup.py install_requires
  - Modified progress bar message for pdf.py write method
