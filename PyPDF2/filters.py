@@ -48,7 +48,17 @@ try:
     import zlib
 
     def decompress(data):
-        return zlib.decompress(data)
+        try:
+            return zlib.decompress(data)
+        except zlib.error:
+            d = zlib.decompressobj(zlib.MAX_WBITS | 32)
+            result_str = b''
+            for b in [data[i:i + 1] for i in range(len(data))]:
+                try:
+                    result_str += d.decompress(b)
+                except zlib.error:
+                    pass
+            return result_str
 
     def compress(data):
         return zlib.compress(data)
