@@ -61,6 +61,18 @@ class PdfReaderTestCases(unittest.TestCase):
                              msg='PDF extracted image differs from expected value.\n\nExpected:\n\n%r\n\nExtracted:\n\n%r\n\n' 
                              % (imagetext, binascii.hexlify(data).decode()))
 
+    def test_PdfReaderDecryptWhenNoID(self):
+        '''
+        Decrypt an encrypted file that's missing the 'ID' value in its
+        trailer.
+        https://github.com/mstamy2/PyPDF2/issues/608
+        '''
+
+        with open(os.path.join(RESOURCE_ROOT, 'encrypted_doc_no_id.pdf'), 'rb') as inputfile:
+            ipdf = PdfFileReader(inputfile)
+            ipdf.decrypt('')
+            self.assertEqual(ipdf.getDocumentInfo(), {'/Producer': 'European Patent Office'})
+
 class AddJsTestCase(unittest.TestCase):
 
     def setUp(self):
