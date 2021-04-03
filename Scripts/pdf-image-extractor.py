@@ -34,6 +34,9 @@ if __name__ == '__main__':
                 if '/Filter' in xObject[obj]:
                     if xObject[obj]['/Filter'] == '/FlateDecode':
                         img = Image.frombytes(mode, size, data)
+                        if "/SMask" in XObject[obj]: # add alpha channel
+                            alpha = Image.frombytes("L", size, XObject[obj]["/SMask"].getData())
+                            img.putalpha(alpha)
                         img.save(obj[1:] + ".png")
                     elif xObject[obj]['/Filter'] == '/DCTDecode':
                         img = open(obj[1:] + ".jpg", "wb")
