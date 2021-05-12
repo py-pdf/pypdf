@@ -482,16 +482,15 @@ class NameObject(str, PdfObject):
         name += utils.readUntilRegex(stream, NameObject.delimiterPattern, 
             ignore_eof=True)
         if debug: print(name)
+        # Name objects should represent irregular characters with
+        # a '#' followed by the symbol's hex number. That is not implemented.
         try:
             return NameObject(name.decode('utf-8'))
         except (UnicodeEncodeError, UnicodeDecodeError) as e:
-            # Name objects should represent irregular characters
-            # with a '#' followed by the symbol's hex number
-            if not pdf.strict:
-                warnings.warn("Illegal character in Name Object", utils.PdfReadWarning)
-                return NameObject(name)
-            else:
-                raise utils.PdfReadError("Illegal character in Name Object")
+            # The spec suggests UTF-8 in some situations but doesn't seem to
+            # insist. In any case, there are PDFs in the wild with other
+            # encodings.
+            return NameObject(name.decode("latin-1"))
 
     readFromStream = staticmethod(readFromStream)
 
