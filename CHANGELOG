@@ -1,4 +1,9 @@
-﻿Version 1.0.3, 2021-02-08
+Version 1.0.4, 2021-05-17
+--------------------------
+- Fix issue with PDF's using /Prev=0 in the xref trailer
+
+
+Version 1.0.3, 2021-02-08
 --------------------------
  - Optimize Travis CI config
  - Add automated PyPi deployment to Travis CI config
