@@ -1,3 +1,4 @@
+import tempfile
 import os
 import sys
 import unittest
@@ -60,6 +61,30 @@ class PdfReaderTestCases(unittest.TestCase):
             self.assertEqual(binascii.hexlify(data).decode(), imagetext, 
                              msg='PDF extracted image differs from expected value.\n\nExpected:\n\n%r\n\nExtracted:\n\n%r\n\n' 
                              % (imagetext, binascii.hexlify(data).decode()))
+
+    def test_PdfReaderincludeSJISfontname(self):
+        '''
+        Test loading and parsing of a file. Extract text of the file and compare to expected
+        textual output. Expected outcome: file loads, text matches expected.
+        Condition: Includes the font name of Shift JIS in the file to be read.
+        '''
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with open(os.path.join(RESOURCE_ROOT, 'includeSJISfontname.pdf'), 'rb') as inputfile:
+                # Load PDF file from file
+                ipdf = PdfFileReader(inputfile, strict=False)
+                tempfn = os.path.join(tmpdir, "temp.pdf")
+
+                writer = PdfFileWriter()
+                for page in ipdf.pages:
+                    writer.addPage(page)
+                with open(tempfn, "wb") as pdf:
+                    writer.write(pdf)
+
+                with open(tempfn, "rb") as pdf:
+                    pdf = PdfFileReader(pdf)
+                    pdf.getPage(0)["/Resources"]["/Font"]["/F1"]
+                    self.assertTrue(True,msg='No error occurred')
 
 class AddJsTestCase(unittest.TestCase):
 
