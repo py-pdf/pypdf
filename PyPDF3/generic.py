@@ -489,7 +489,11 @@ class NameObject(str, PdfObject):
             # with a '#' followed by the symbol's hex number
             if not pdf.strict:
                 warnings.warn("Illegal character in Name Object", utils.PdfReadWarning)
-                return NameObject(name)
+                try:
+                    ss = name.decode("Shift-JIS").split("+")
+                    return NameObject(f"{ss[0]}+{''.join([f'#{c:X}' for c in ss[1].encode()])}")
+                except (UnicodeEncodeError, UnicodeDecodeError) as e:
+                    return NameObject(name)
             else:
                 raise utils.PdfReadError("Illegal character in Name Object")
 
