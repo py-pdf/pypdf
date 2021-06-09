@@ -1,3 +1,8 @@
+﻿Version 1.0.5, 2021-06-09
+--------------------------
+ - Fixed an issue where embedded font names would not be written when reading and saving old Japanese PDF files with font names specified in Shift-JIS
+
+
 Version 1.0.4, 2021-05-17
 --------------------------
 - Fix issue with PDF's using /Prev=0 in the xref trailer
