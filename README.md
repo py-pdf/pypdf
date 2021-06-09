@@ -1,6 +1,6 @@
 # PyPDF3
 
-[![GuardRails badge](https://badges.production.guardrails.io/mrstephenneal/PyPDF3.svg)](https://www.guardrails.io)
+[![GuardRails badge](https://badges.production.guardrails.io/sfneal/PyPDF3.svg)](https://www.guardrails.io)
 
 Fork of PyPDF2 with feature improvements.
 

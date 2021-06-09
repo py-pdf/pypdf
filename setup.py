@@ -37,7 +37,7 @@ setup(
         long_description=long_description,
         author="Stephen Neal",
         author_email="stephen@stephenneal.net",
-        url="https://github.com/mrstephenneal/PyPDF3",
+        url="https://github.com/sfneal/PyPDF3",
         classifiers=[
             "Development Status :: 5 - Production/Stable",
             "Intended Audience :: Developers",
