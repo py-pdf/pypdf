@@ -38,7 +38,7 @@ setup(
         author_email="biziqe@mathieu.fenniak.net",
         maintainer="Phaseit, Inc.",
         maintainer_email="PyPDF2@phaseit.net",
-        url="http://mstamy2.github.com/PyPDF2",
+        url="https://mstamy2.github.io/PyPDF2",
         classifiers = [
             "Development Status :: 5 - Production/Stable",
             "Intended Audience :: Developers",
