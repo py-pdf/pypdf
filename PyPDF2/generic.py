@@ -471,7 +471,7 @@ class NameObject(str, PdfObject):
     surfix = b_("/")
 
     def writeToStream(self, stream, encryption_key):
-        stream.write(b_(self))
+        stream.write(self.encode('utf8'))
 
     def readFromStream(stream, pdf):
         debug = False
