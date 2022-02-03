@@ -62,7 +62,10 @@ def isBytes(b):
 
 #custom implementation of warnings.formatwarning
 def formatWarning(message, category, filename, lineno, line=None):
-    file = filename.replace("/", "\\").rsplit("\\", 1)[1] # find the file name
+    try:
+        file = filename.replace("/", "\\").rsplit("\\", 1)[1] # find the file name
+    except IndexError:
+        file = filename
     return "%s: %s [%s:%s]\n" % (category.__name__, message, file, lineno)
 
 
