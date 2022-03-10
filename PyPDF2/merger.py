@@ -36,10 +36,9 @@ if version_info < ( 3, 0 ):
     from cStringIO import StringIO
     StreamIO = StringIO
 else:
-    from io import BytesIO
     from io import FileIO as file
     StreamIO = BytesIO
-
+from io import BytesIO
 
 class _MergedPage(object):
     """
@@ -514,6 +513,48 @@ class PdfFileMerger(object):
 
         dest = Destination(TextStringObject(title), NumberObject(pagenum), NameObject('/FitH'), NumberObject(826))
         self.named_dests.append(dest)
+
+
+    def addBlankPage(self, number_of_pages_to_add = 1, page_format="A4", rotate=False, width=None, height=None, coef=0.352778):
+        """
+        Add a blank page to the merger
+        Useful if you merge pdf with odd number of pages and you want to keep recto/verso
+        number = number of pages to add
+        page_format = Specify a format for the page
+        rotate = Used with format, True if landscape
+        width = page width in mm. If specified, override page_format
+        height = page height in mm. If specified, override page_format
+        coef = coef factor to convert mm to pdf points (used for pdf blank page size)
+        """
+        # Blank page format
+        formats = {"A4":[210,297], "A3":[297,420]}
+        
+        # Verify if format exists
+        if formats.get(page_format) is None:
+            raise ValueError("Unknown page format")
+
+        # Take values from format
+        if not rotate:
+            page_width = formats[page_format][0]
+            page_height = formats[page_format][1]
+        else:
+            page_width = formats[page_format][1]
+            page_height = formats[page_format][0]
+
+        # If a width or height is specified it overrides page format
+        if width is not None:
+            page_width = width
+        if height is not None:
+            page_height = height
+
+        # Create a blank page and add it to the merger (for the specified number of times)
+        blank_file = PdfFileWriter()
+        blank_file.addBlankPage(width=width/coef, height=height/coef)
+        blank_file_memory = BytesIO()
+        blank_file.write(blank_file_memory)
+        for i in range(number_of_pages_to_add):    
+            self.append(blank_file_memory)
+        blank_file_memory.close()
 
 
 class OutlinesObject(list):
