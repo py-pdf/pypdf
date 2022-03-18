@@ -549,7 +549,7 @@ class PdfFileMerger(object):
 
         # Create a blank page and add it to the merger (for the specified number of times)
         blank_file = PdfFileWriter()
-        blank_file.addBlankPage(width=width/coef, height=height/coef)
+        blank_file.addBlankPage(width=page_width/coef, page_height=height/coef)
         blank_file_memory = BytesIO()
         blank_file.write(blank_file_memory)
         for i in range(number_of_pages_to_add):    
