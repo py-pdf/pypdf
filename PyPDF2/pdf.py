@@ -844,7 +844,7 @@ class PdfFileWriter(object):
 
     def removeText(self, ignoreByteStringObject=False):
         """
-        Removes images from this output.
+        Removes text from this output.
 
         :param bool ignoreByteStringObject: optional parameter
             to ignore ByteString Objects.
