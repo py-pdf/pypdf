@@ -46,6 +46,6 @@ output.encrypt(password)
 # add a title to your new PDF's metadata:
 output.addMetadata({'/Title': 'PDF Metadata Title'})
 
-# finally, write "output" to document-output.pdf:
-outputStream = open("PyPDF2-output.pdf", "wb")
-output.write(outputStream)
+# finally, write "output" to document-output.pdf
+with open("PyPDF2-output.pdf", "wb") as outputStream:
+    output.write(outputStream)
