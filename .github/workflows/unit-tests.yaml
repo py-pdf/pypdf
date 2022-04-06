@@ -28,6 +28,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements/ci.txt
         pip install .
+    - name: Test with flake8
+      run: |
+        flake8 . --ignore E,F,I,SIM,C,PT,N,ASS,A,P,R,W
     - name: Test with pytest
       run: |
         pytest Tests/tests.py --cov --cov-report term-missing -vv
