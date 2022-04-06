@@ -39,6 +39,11 @@ setup(
         maintainer="Phaseit, Inc.",
         maintainer_email="PyPDF2@phaseit.net",
         url="https://mstamy2.github.io/PyPDF2",
+        project_urls={
+            "Source": "https://github.com/mstamy2/PyPDF2",
+            "Bug Reports": "https://github.com/mstamy2/PyPDF2/issues",
+            "Changelog": "https://raw.githubusercontent.com/mstamy2/PyPDF2/master/CHANGELOG",
+        },
         classifiers = [
             "Development Status :: 5 - Production/Stable",
             "Intended Audience :: Developers",
