@@ -8,6 +8,8 @@ attrs==21.4.0
     # via
     #   flake8-bugbear
     #   pytest
+coverage[toml]==6.3.2
+    # via pytest-cov
 flake8==4.0.1
     # via
     #   -r ci.in
@@ -31,6 +33,12 @@ pyflakes==2.4.0
 pyparsing==3.0.7
     # via packaging
 pytest==7.1.1
+    # via
+    #   -r ci.in
+    #   pytest-cov
+pytest-cov==3.0.0
     # via -r ci.in
 tomli==2.0.1
-    # via pytest
+    # via
+    #   coverage
+    #   pytest
