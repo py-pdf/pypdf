@@ -26,3 +26,25 @@ def test_get_annotations(src):
                 if subtype == "/Text":
                     print(annot.getObject()["/Contents"])
                     print("")
+
+
+@pytest.mark.parametrize(
+    "src",
+    [
+        (os.path.join(RESOURCE_ROOT, "attachment.pdf")),
+        (os.path.join(RESOURCE_ROOT, "crazyones.pdf")),
+    ],
+)
+def test_get_attachments(src):
+    reader = PyPDF2.PdfFileReader(open(src, "rb"))
+
+    attachments = {}
+    for i in range(reader.getNumPages()):
+        page = reader.getPage(i)
+        if "/Annots" in page:
+            for annotation in page["/Annots"]:
+                annotobj = annotation.getObject()
+                if annotobj["/Subtype"] == "/FileAttachment":
+                    fileobj = annotobj["/FS"]
+                    attachments[fileobj["/F"]] = fileobj["/EF"]["/F"].getData()
+    return attachments
