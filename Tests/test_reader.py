@@ -49,6 +49,7 @@ def test_get_attachments(src):
                     attachments[fileobj["/F"]] = fileobj["/EF"]["/F"].getData()
     return attachments
 
+
 @pytest.mark.parametrize(
     "src,outline_elements",
     [
@@ -60,3 +61,69 @@ def test_get_outlines(src, outline_elements):
     reader = PyPDF2.PdfFileReader(open(src, "rb"))
     outlines = reader.getOutlines()
     assert len(outlines) == outline_elements
+
+
+@pytest.mark.parametrize(
+    "src,nb_images",
+    [
+        (os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf"), 0),
+        (os.path.join(RESOURCE_ROOT, "crazyones.pdf"), 0),
+        (os.path.join(RESOURCE_ROOT, "git.pdf"), 1),
+    ],
+)
+def test_get_images(src, nb_images):
+    from PIL import Image
+
+    input1 = PyPDF2.PdfFileReader(open(src, "rb"))
+    page0 = input1.getPage(0)
+
+    images_extracted = []
+
+    if "/XObject" in page0["/Resources"]:
+        xObject = page0["/Resources"]["/XObject"].getObject()
+
+        for obj in xObject:
+            if xObject[obj]["/Subtype"] == "/Image":
+                size = (xObject[obj]["/Width"], xObject[obj]["/Height"])
+                data = xObject[obj].getData()
+                if xObject[obj]["/ColorSpace"] == "/DeviceRGB":
+                    mode = "RGB"
+                else:
+                    mode = "P"
+
+                filename = None
+                if "/Filter" in xObject[obj]:
+                    if xObject[obj]["/Filter"] == "/FlateDecode":
+                        img = Image.frombytes(mode, size, data)
+                        if "/SMask" in xObject[obj]:  # add alpha channel
+                            alpha = Image.frombytes(
+                                "L", size, xObject[obj]["/SMask"].getData()
+                            )
+                            img.putalpha(alpha)
+                        filename = obj[1:] + ".png"
+                        img.save(filename)
+                    elif xObject[obj]["/Filter"] == "/DCTDecode":
+                        filename = obj[1:] + ".jpg"
+                        img = open(filename, "wb")
+                        img.write(data)
+                        img.close()
+                    elif xObject[obj]["/Filter"] == "/JPXDecode":
+                        filename = obj[1:] + ".jp2"
+                        img = open(filename, "wb")
+                        img.write(data)
+                        img.close()
+                    elif xObject[obj]["/Filter"] == "/CCITTFaxDecode":
+                        filename = obj[1:] + ".tiff"
+                        img = open(filename, "wb")
+                        img.write(data)
+                        img.close()
+                else:
+                    img = Image.frombytes(mode, size, data)
+                    filename = obj[1:] + ".png"
+                    img.save(filename)
+                if filename is not None:
+                    images_extracted.append(filename)
+    else:
+        print("No image found.")
+
+    assert len(images_extracted) == nb_images
