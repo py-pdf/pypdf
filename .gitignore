@@ -5,3 +5,4 @@
 build
 .idea/*
 .coverage
+dont_commit_merged.pdf
