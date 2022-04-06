@@ -64,7 +64,7 @@ import warnings
 import codecs
 from .generic import *
 from .utils import readNonWhitespace, readUntilWhitespace, ConvertFunctionsToVirtualList
-from .utils import isString, b_, u_, ord_, chr_, str_, formatWarning
+from .utils import isString, b_, u_, ord_, str_, formatWarning
 
 if version_info < ( 2, 4 ):
    from sets import ImmutableSet as frozenset

@@ -43,8 +43,6 @@ from . import filters
 from . import utils
 import decimal
 import codecs
-import sys
-#import debugging
 
 ObjectPrefix = b_('/<[tf(n%')
 NumberSigns = b_('+-')

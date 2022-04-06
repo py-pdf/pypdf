@@ -61,6 +61,8 @@ def isInt(n):
 
 def isBytes(b):
     """Test if arg is a bytes instance. Compatible with Python 2 and 3."""
+    import warnings
+    warnings.warn("PyPDF2.utils.isBytes will be deprecated", DeprecationWarning)
     return isinstance(b, bytes_type)
 
 
