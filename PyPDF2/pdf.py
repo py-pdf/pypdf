@@ -2471,7 +2471,7 @@ class PageObject(DictionaryObject):
                                                    expand, background=background)
         
         else:
-            return self.mergePage(page2, expand, background=background)
+            return self._mergePage(page2, expand=expand, background=background)
 
     def mergeTranslatedPage(self, page2, tx, ty, expand=False, background=False):
         """
