@@ -33,4 +33,4 @@ jobs:
         flake8 . --ignore E,F,I,SIM,C,PT,N,ASS,A,P,R,W
     - name: Test with pytest
       run: |
-        pytest Tests/tests.py --cov --cov-report term-missing -vv
+        pytest Tests/tests.py Tests --cov --cov-report term-missing -vv
