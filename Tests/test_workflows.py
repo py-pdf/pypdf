@@ -61,6 +61,18 @@ def test_PdfReaderJpegImage():
         )
 
 
+def test_read_metadata():
+    with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
+        ipdf = PdfFileReader(inputfile)
+        metadict = ipdf.getDocumentInfo()
+        assert metadict.title is None
+        assert dict(metadict) == {
+            "/CreationDate": "D:20150604133406-06'00'",
+            "/Creator": " XeTeX output 2015.06.04:1334",
+            "/Producer": "xdvipdfmx (20140317)",
+        }
+
+
 def test_decrypt():
     with open(
         os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf"), "rb"
@@ -70,7 +82,12 @@ def test_decrypt():
         ipdf.decrypt("openpassword")
         assert ipdf.getNumPages() == 1
         assert ipdf.isEncrypted == True
-
+        metadict = ipdf.getDocumentInfo()
+        assert dict(metadict) == {
+            "/CreationDate": "D:20220403203552+02'00'",
+            "/Creator": "Writer",
+            "/Producer": "LibreOffice 6.4",
+        }
         # Is extractText() broken for encrypted files?
         # assert ipdf.getPage(0).extractText().replace('\n', '') == "\n˘\n\u02c7\u02c6˙\n\n\n˘\u02c7\u02c6˙\n\n"
 
