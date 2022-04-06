@@ -18,3 +18,5 @@ def test_read_xmp(src, has_xmp):
         ipdf = PyPDF2.PdfFileReader(inputfile)
         xmp = ipdf.getXmpMetadata()
         assert (xmp is None) == (not has_xmp)
+        if has_xmp:
+            print(xmp.xmp_createDate )

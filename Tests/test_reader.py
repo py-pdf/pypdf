@@ -48,3 +48,15 @@ def test_get_attachments(src):
                     fileobj = annotobj["/FS"]
                     attachments[fileobj["/F"]] = fileobj["/EF"]["/F"].getData()
     return attachments
+
+@pytest.mark.parametrize(
+    "src,outline_elements",
+    [
+        (os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf"), 9),
+        (os.path.join(RESOURCE_ROOT, "crazyones.pdf"), 0),
+    ],
+)
+def test_get_outlines(src, outline_elements):
+    reader = PyPDF2.PdfFileReader(open(src, "rb"))
+    outlines = reader.getOutlines()
+    assert len(outlines) == outline_elements
