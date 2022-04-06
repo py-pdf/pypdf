@@ -2,3 +2,4 @@ pytest
 flake8
 flake8-bugbear
 pytest-cov
+pillow

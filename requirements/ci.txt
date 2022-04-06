@@ -22,6 +22,8 @@ mccabe==0.6.1
     # via flake8
 packaging==21.3
     # via pytest
+pillow==9.1.0
+    # via -r ci.in
 pluggy==1.0.0
     # via pytest
 py==1.11.0
