@@ -1,6 +1,7 @@
 import os
 import binascii
 import sys
+import pytest
 
 from PyPDF2 import PdfFileReader, PdfFileWriter
 
@@ -9,6 +10,7 @@ PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
 RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
 
 sys.path.append(PROJECT_ROOT)
+
 
 def test_PdfReaderFileLoad():
     """
@@ -60,12 +62,30 @@ def test_PdfReaderJpegImage():
 
 
 def test_decrypt():
-    with open(os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf"), "rb") as inputfile:
+    with open(
+        os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf"), "rb"
+    ) as inputfile:
         ipdf = PdfFileReader(inputfile)
         assert ipdf.isEncrypted == True
-        ipdf.decrypt('openpassword')
+        ipdf.decrypt("openpassword")
         assert ipdf.getNumPages() == 1
         assert ipdf.isEncrypted == True
 
         # Is extractText() broken for encrypted files?
         # assert ipdf.getPage(0).extractText().replace('\n', '') == "\n˘\n\u02c7\u02c6˙\n\n\n˘\u02c7\u02c6˙\n\n"
+
+
+@pytest.mark.parametrize("degree", [0, 90, 180, 270, 360, -90])
+def test_rotate(degree):
+    with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
+        ipdf = PdfFileReader(inputfile)
+        page = ipdf.getPage(0)
+        page.rotateCounterClockwise(degree)
+
+
+def test_rotate_45():
+    with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
+        ipdf = PdfFileReader(inputfile)
+        page = ipdf.getPage(0)
+        with pytest.raises(AssertionError):
+            page.rotateCounterClockwise(45)
