@@ -41,5 +41,5 @@ password = "secret"
 output.encrypt(password)
 
 # finally, write "output" to document-output.pdf
-outputStream = file("PyPDF2-output.pdf", "wb")
-output.write(outputStream)
+with open("PyPDF2-output.pdf", "wb") as outputStream:
+    output.write(outputStream)
