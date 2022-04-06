@@ -4,4 +4,4 @@
 .tox
 build
 .idea/*
-
+.coverage
