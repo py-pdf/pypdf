@@ -1,6 +1,8 @@
 *.pyc
 *.swp
 .DS_Store
+.tox
 build
 .idea/*
-
+.coverage
+dont_commit_merged.pdf

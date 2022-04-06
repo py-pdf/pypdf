@@ -3,8 +3,8 @@ from PyPDF2 import PdfFileWriter, PdfFileReader
 output = PdfFileWriter()
 input1 = PdfFileReader(open("document1.pdf", "rb"))
 
-# print how many pages input1 has in python2:
-print "document1.pdf has %d pages." % input1.getNumPages()
+# print how many pages input1 has:
+print("document1.pdf has %d pages." % input1.getNumPages())
 
 # print how many pages input1 has in python3:
 # print("This chart has {} pages.".format(input1.getNumPages()))
