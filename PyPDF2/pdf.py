@@ -3064,8 +3064,8 @@ def _alg35(password, rev, keylen, owner_entry, p_entry, id1_entry, metadata_encr
     # counter (from 1 to 19).
     for i in range(1, 20):
         new_key = b_('')
-        for l in range(len(key)):
-            new_key += b_(chr(ord_(key[l]) ^ i))
+        for k in key:
+            new_key += b_(chr(ord_(k) ^ i))
         val = utils.RC4_encrypt(new_key, val)
     # 6. Append 16 bytes of arbitrary padding to the output from the final
     # invocation of the RC4 function and store the 32-byte result as the value
