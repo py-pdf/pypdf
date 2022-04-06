@@ -61,12 +61,14 @@ def isInt(n):
 
 def isBytes(b):
     """Test if arg is a bytes instance. Compatible with Python 2 and 3."""
+    import warnings
+    warnings.warn("PyPDF2.utils.isBytes will be deprecated", DeprecationWarning)
     return isinstance(b, bytes_type)
 
 
 #custom implementation of warnings.formatwarning
 def formatWarning(message, category, filename, lineno, line=None):
-    file = filename.replace("/", "\\").rsplit("\\", 1)[1] # find the file name
+    file = filename.replace("/", "\\").rsplit("\\", 1)[-1] # find the file name
     return "%s: %s [%s:%s]\n" % (category.__name__, message, file, lineno)
 
 

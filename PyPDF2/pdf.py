@@ -64,7 +64,7 @@ import warnings
 import codecs
 from .generic import *
 from .utils import readNonWhitespace, readUntilWhitespace, ConvertFunctionsToVirtualList
-from .utils import isString, b_, u_, ord_, chr_, str_, formatWarning
+from .utils import isString, b_, u_, ord_, str_, formatWarning
 
 if version_info < ( 2, 4 ):
    from sets import ImmutableSet as frozenset
@@ -863,7 +863,7 @@ class PdfFileWriter(object):
 
     def removeText(self, ignoreByteStringObject=False):
         """
-        Removes images from this output.
+        Removes text from this output.
 
         :param bool ignoreByteStringObject: optional parameter
             to ignore ByteString Objects.
@@ -1149,7 +1149,11 @@ class PdfFileReader(object):
                 if file is None:
                     file = sys.stderr
                 try:
-                    file.write(formatWarning(message, category, filename, lineno, line))
+                    # It is possible for sys.stderr to be defined as None, most commonly in the case that the script
+                    # is being run vida pythonw.exe on Windows. In this case, just swallow the warning.
+                    # See also https://docs.python.org/3/library/sys.html#sys.__stderr__
+                    if file is not None:
+                        file.write(formatWarning(message, category, filename, lineno, line))
                 except IOError:
                     pass
             warnings.showwarning = _showwarning
@@ -1229,7 +1233,7 @@ class PdfFileReader(object):
                 self._override_encryption = True
                 self.decrypt('')
                 return self.trailer["/Root"]["/Pages"]["/Count"]
-            except:
+            except Exception:
                 raise utils.PdfReadError("File has not been decrypted")
             finally:
                 self._override_encryption = False
@@ -2270,7 +2274,7 @@ class PageObject(DictionaryObject):
         if not rename:
             return stream
         stream = ContentStream(stream, pdf)
-        for operands, operator in stream.operations:
+        for operands, _operator in stream.operations:
             for i in range(len(operands)):
                 op = operands[i]
                 if isinstance(op, NameObject):
@@ -2703,6 +2707,7 @@ class PageObject(DictionaryObject):
             elif operator == b_("TJ"):
                 for i in operands[0]:
                     if isinstance(i, TextStringObject):
+                        text += " "
                         text += i
                 text += "\n"
         return text
@@ -2977,7 +2982,7 @@ def _alg32(password, rev, keylen, owner_entry, p_entry, id1_entry, metadata_encr
     # encryption key as defined by the value of the encryption dictionary's
     # /Length entry.
     if rev >= 3:
-        for i in range(50):
+        for _ in range(50):
             md5_hash = md5(md5_hash[:keylen]).digest()
     # 9. Set the encryption key to the first n bytes of the output from the
     # final MD5 hash, where n is always 5 for revision 2 but, for revision 3 or
@@ -3027,7 +3032,7 @@ def _alg33_1(password, rev, keylen):
     # from the previous MD5 hash and pass it as input into a new MD5 hash.
     md5_hash = m.digest()
     if rev >= 3:
-        for i in range(50):
+        for _ in range(50):
             md5_hash = md5(md5_hash).digest()
     # 4. Create an RC4 encryption key using the first n bytes of the output
     # from the final MD5 hash, where n is always 5 for revision 2 but, for
@@ -3079,8 +3084,8 @@ def _alg35(password, rev, keylen, owner_entry, p_entry, id1_entry, metadata_encr
     # counter (from 1 to 19).
     for i in range(1, 20):
         new_key = b_('')
-        for l in range(len(key)):
-            new_key += b_(chr(ord_(key[l]) ^ i))
+        for k in key:
+            new_key += b_(chr(ord_(k) ^ i))
         val = utils.RC4_encrypt(new_key, val)
     # 6. Append 16 bytes of arbitrary padding to the output from the final
     # invocation of the RC4 function and store the 32-byte result as the value
