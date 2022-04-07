@@ -36,7 +36,7 @@ class PdfReaderTestCases(unittest.TestCase):
             ipdf_p1 = ipdf.getPage(0)
 
             # Retrieve the text of the PDF
-            with open(os.path.join(RESOURCE_ROOT, 'crazyones.txt'), 'r') as pdftext_file:
+            with open(os.path.join(RESOURCE_ROOT, 'crazyones.txt'), 'rb') as pdftext_file:
                 pdftext = pdftext_file.read()
 
             ipdf_p1_text = ipdf_p1.extractText().replace('\n', '').encode('utf-8')
