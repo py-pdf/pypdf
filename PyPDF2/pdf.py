@@ -47,7 +47,6 @@ import math
 import struct
 import sys
 import uuid
-import types
 from sys import version_info
 if version_info < ( 3, 0 ):
     from cStringIO import StringIO
@@ -2256,12 +2255,12 @@ class PageObject(DictionaryObject):
             return stream
         stream = ContentStream(stream, pdf)
         for operands, _operator in stream.operations:
-            if type (operands) == types.ListType:
+            if isinstance(operands, list):
                 for i in range(len(operands)):
                     op = operands[i]
                     if isinstance(op, NameObject):
                         operands[i] = rename.get(op,op)
-            elif type (operands) == types.DictType:
+            elif isinstance(operands, dict):
                 for i in operands:
                     op = operands[i]
                     if isinstance(op, NameObject):
