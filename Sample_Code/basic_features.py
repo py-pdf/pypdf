@@ -1,4 +1,3 @@
-from __future__ import print_function
 from PyPDF2 import PdfFileWriter, PdfFileReader
 
 output = PdfFileWriter()
