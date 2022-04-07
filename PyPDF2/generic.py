@@ -1033,15 +1033,25 @@ class Destination(TreeObject):
     :param args: Additional arguments may be necessary depending on the type.
     :raises PdfReadError: If destination type is invalid.
 
-    Valid ``typ`` arguments (see PDF spec for details):
-             /Fit       No additional arguments
-             /XYZ       [left] [top] [zoomFactor]
-             /FitH      [top]
-             /FitV      [left]
-             /FitR      [left] [bottom] [right] [top]
-             /FitB      No additional arguments
-             /FitBH     [top]
-             /FitBV     [left]
+    .. list-table:: Valid ``typ`` arguments (see PDF spec for details)
+       :widths: 50 50
+
+       * - /Fit
+         - No additional arguments
+       * - /XYZ
+         - [left] [top] [zoomFactor]
+       * - /FitH
+         - [top]
+       * - /FitV
+         - [left]
+       * - /FitR
+         - [left] [bottom] [right] [top]
+       * - /FitB
+         - No additional arguments
+       * - /FitBH
+         - [top]
+       * - /FitBV
+         - [left]
     """
     def __init__(self, title, page, typ, *args):
         DictionaryObject.__init__(self)
