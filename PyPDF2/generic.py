@@ -43,8 +43,6 @@ from . import filters
 from . import utils
 import decimal
 import codecs
-import sys
-#import debugging
 
 ObjectPrefix = b_('/<[tf(n%')
 NumberSigns = b_('+-')
@@ -228,7 +226,7 @@ class FloatObject(decimal.Decimal, PdfObject):
     def __new__(cls, value="0", context=None):
         try:
             return decimal.Decimal.__new__(cls, utils.str_(value), context)
-        except:
+        except Exception:
             return decimal.Decimal.__new__(cls, str(value))
 
     def __repr__(self):
@@ -345,7 +343,7 @@ def readStringFromStream(stream):
                            b_("t") : b_("\t"),
                            b_("b") : b_("\b"),
                            b_("f") : b_("\f"),
-                           b_("c") : b_("\c"),
+                           b_("c") : b_(r"\c"),
                            b_("(") : b_("("),
                            b_(")") : b_(")"),
                            b_("/") : b_("/"),
@@ -355,7 +353,7 @@ def readStringFromStream(stream):
                            b_("%") : b_("%"),
                            b_("<") : b_("<"),
                            b_(">") : b_(">"),
-                           b_("[") : b_("["), 
+                           b_("[") : b_("["),
                            b_("]") : b_("]"),
                            b_("#") : b_("#"),
                            b_("_") : b_("_"),
@@ -371,7 +369,7 @@ def readStringFromStream(stream):
                     # Three octal digits shall be used, with leading zeros
                     # as needed, if the next character of the string is also
                     # a digit." (PDF reference 7.3.4.2, p 16)
-                    for i in range(2):
+                    for _ in range(2):
                         ntok = stream.read(1)
                         if ntok.isdigit():
                             tok += ntok
@@ -479,7 +477,7 @@ class NameObject(str, PdfObject):
         name = stream.read(1)
         if name != NameObject.surfix:
             raise utils.PdfReadError("name read error")
-        name += utils.readUntilRegex(stream, NameObject.delimiterPattern, 
+        name += utils.readUntilRegex(stream, NameObject.delimiterPattern,
             ignore_eof=True)
         if debug: print(name)
         try:
@@ -1029,7 +1027,8 @@ class Destination(TreeObject):
     See section 8.2.1 of the PDF 1.6 reference.
 
     :param str title: Title of this destination.
-    :param int page: Page number of this destination.
+    :param IndirectObject page: Reference to the page of this destination. Should
+        be an instance of :class:`IndirectObject<PyPDF2.generic.IndirectObject>`.
     :param str typ: How the destination is displayed.
     :param args: Additional arguments may be necessary depending on the type.
     :raises PdfReadError: If destination type is invalid.
