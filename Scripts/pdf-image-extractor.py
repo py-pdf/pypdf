@@ -30,7 +30,7 @@ if __name__ == '__main__':
                     mode = "RGB"
                 else:
                     mode = "P"
-                
+
                 if '/Filter' in xObject[obj]:
                     if xObject[obj]['/Filter'] == '/FlateDecode':
                         img = Image.frombytes(mode, size, data)

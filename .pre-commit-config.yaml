@@ -1,7 +1,7 @@
 # pre-commit run --all-files
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.1.0
+    rev: v4.2.0
     hooks:
     -   id: check-ast
     -   id: check-byte-order-marker
