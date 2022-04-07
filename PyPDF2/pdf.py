@@ -2648,7 +2648,7 @@ class PageObject(DictionaryObject):
                 content = ContentStream(content, self.pdf)
             self[NameObject("/Contents")] = content.flateEncode()
 
-    def extractText(self, Tj_sep="", TJ_sep=""):
+    def extractText(self, Tj_sep="", TJ_sep=" "):
         """
         Locate all text drawing commands, in the order they are provided in the
         content stream, and extract the text.  This works well for some PDF
