@@ -1,0 +1,44 @@
+.. PyPDF2 documentation master file, created by
+   sphinx-quickstart on Thu Apr  7 20:13:19 2022.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+Welcome to PyPDF2
+=================
+
+
+User Guide
+------------
+
+.. toctree::
+   :maxdepth: 2
+
+   user/installation
+
+API Reference
+-------------
+
+.. toctree::
+   :maxdepth: 2
+
+   modules/PdfFileReader
+   modules/PdfFileMerger
+   modules/PageObject
+   modules/PdfFileWriter
+   modules/DocumentInformation
+   modules/XmpInformation
+   modules/Destination
+   modules/RectangleObject
+   modules/Field
+
+
+
+
+
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
