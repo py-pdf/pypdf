@@ -1,3 +1,44 @@
+Version 1.27.0, 2022-04-07
+--------------------------
+
+Features:
+
+ - Add alpha channel support for png files in Script (#614)
+
+Bug fixes (BUG):
+
+ - Fix formatWarning for filename without slash (#612)
+ - Add whitespace between words for extractText() (#569, #334)
+ - "invalid escape sequence" SyntaxError (#522)
+ - Avoid error when printing warning in pythonw (#486)
+ - Stream operations can be List or Dict (#665)
+
+Documentation (DOC):
+
+ - Added Scripts/pdf-image-extractor.py
+ - Documentation improvements (#550, #538, #324, #426, #394)
+
+Tests and Test setup (TST):
+
+ - Add Github Action which automatically run unit tests via pytest and
+   static code analysis with Flake8 (#660)
+ - Add several unit tests (#661, #663)
+ - Add .coveragerc to create coverage reports
+
+Developer Experience Improvements (DEV):
+
+ - Pre commit: Developers can now `pre-commit install` to avoid tiny issues
+               like trailing whitespaces
+
+Miscallenious:
+
+ - Add the LICENSE file to the distributed packages (#288)
+ - Use setuptools instead of distutils (#599)
+ - Improvements for the PyPI page (#644)
+ - Python 3 changes (#504, #366)
+
+You can see the full changelog at: https://github.com/mstamy2/PyPDF2/compare/1.26.0...1.27.0
+
 Version 1.26.0, 2016-05-18
 --------------------------
 
