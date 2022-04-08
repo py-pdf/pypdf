@@ -48,6 +48,6 @@ def test_basic_features():
     password = "secret"
     output.encrypt(password)
 
-    # finally, write "output" to document-output.pdf
+    # finally, write "output" to PyPDF2-output.pdf
     with open("PyPDF2-output.pdf", "wb") as outputStream:
         output.write(outputStream)
