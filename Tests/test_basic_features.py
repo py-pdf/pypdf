@@ -1,5 +1,10 @@
-from PyPDF2 import PdfFileWriter, PdfFileReader
 import os
+
+import pytest
+
+from PyPDF2 import PdfFileWriter, PdfFileReader
+from PyPDF2.utils import PdfReadError
+from PyPDF2.pdf import convertToInt
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -51,3 +56,8 @@ def test_basic_features():
     # finally, write "output" to PyPDF2-output.pdf
     with open("PyPDF2-output.pdf", "wb") as outputStream:
         output.write(outputStream)
+
+
+def test_convertToInt():
+    with pytest.raises(PdfReadError):
+        convertToInt(256, 16)
