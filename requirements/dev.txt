@@ -4,10 +4,16 @@
 #
 #    pip-compile requirements/dev.in
 #
+black==22.3.0
+    # via -r requirements/dev.in
 cfgv==3.3.1
     # via pre-commit
 click==8.0.4
-    # via pip-tools
+    # via
+    #   black
+    #   pip-tools
+dataclasses==0.8
+    # via black
 distlib==0.3.4
     # via virtualenv
 filelock==3.4.1
@@ -24,14 +30,20 @@ importlib-resources==5.2.3
     # via
     #   pre-commit
     #   virtualenv
+mypy-extensions==0.4.3
+    # via black
 nodeenv==1.6.0
     # via pre-commit
+pathspec==0.9.0
+    # via black
 pep517==0.12.0
     # via pip-tools
 pip-tools==6.4.0
     # via -r requirements/dev.in
 platformdirs==2.4.0
-    # via virtualenv
+    # via
+    #   black
+    #   virtualenv
 pre-commit==2.17.0
     # via -r requirements/dev.in
 pyyaml==6.0
@@ -41,9 +53,15 @@ six==1.16.0
 toml==0.10.2
     # via pre-commit
 tomli==1.2.3
-    # via pep517
+    # via
+    #   black
+    #   pep517
+typed-ast==1.5.2
+    # via black
 typing-extensions==4.1.1
-    # via importlib-metadata
+    # via
+    #   black
+    #   importlib-metadata
 virtualenv==20.14.0
     # via pre-commit
 wheel==0.37.1

@@ -6,6 +6,7 @@ TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
 RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
 
+
 @pytest.mark.parametrize(
     "src,has_xmp",
     [
@@ -19,4 +20,4 @@ def test_read_xmp(src, has_xmp):
         xmp = ipdf.getXmpMetadata()
         assert (xmp is None) == (not has_xmp)
         if has_xmp:
-            print(xmp.xmp_createDate )
+            print(xmp.xmp_createDate)

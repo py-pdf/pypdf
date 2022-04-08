@@ -80,9 +80,7 @@ class PageRange(object):
             self._slice = slice(*[int(g) if g else None
                                   for g in m.group(4, 6, 8)])
 
-    # Just formatting this when there is __doc__ for __init__
-    if __init__.__doc__:
-        __init__.__doc__ = __init__.__doc__.format(page_range_help=PAGE_RANGE_HELP)
+    __init__.__doc__ = __init__.__doc__.format(page_range_help=PAGE_RANGE_HELP)
 
     @staticmethod
     def valid(input):
@@ -118,6 +116,11 @@ class PageRange(object):
         Returns arguments for range().  See help(slice.indices).
         """
         return self._slice.indices(n)
+
+    def __eq__(self, other):
+        if not isinstance(other, PageRange):
+            return False
+        return self._slice == other._slice
 
 
 PAGE_RANGE_ALL = PageRange(":")  # The range of all pages.

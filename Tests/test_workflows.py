@@ -5,7 +5,7 @@ import binascii
 import sys
 import pytest
 
-from PyPDF2 import PdfFileReader, PdfFileWriter
+from PyPDF2 import PdfFileReader
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -61,18 +61,6 @@ def test_PdfReaderJpegImage():
             "PDF extracted image differs from expected value.\n\nExpected:\n\n%r\n\nExtracted:\n\n%r\n\n"
             % (imagetext, binascii.hexlify(data).decode())
         )
-
-
-def test_read_metadata():
-    with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
-        ipdf = PdfFileReader(inputfile)
-        metadict = ipdf.getDocumentInfo()
-        assert metadict.title is None
-        assert dict(metadict) == {
-            "/CreationDate": "D:20150604133406-06'00'",
-            "/Creator": " XeTeX output 2015.06.04:1334",
-            "/Producer": "xdvipdfmx (20140317)",
-        }
 
 
 def test_decrypt():

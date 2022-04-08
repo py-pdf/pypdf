@@ -7,6 +7,18 @@ PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
 RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
 
 
+def test_read_metadata():
+    with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
+        ipdf = PyPDF2.PdfFileReader(inputfile)
+        metadict = ipdf.getDocumentInfo()
+        assert metadict.title is None
+        assert dict(metadict) == {
+            "/CreationDate": "D:20150604133406-06'00'",
+            "/Creator": " XeTeX output 2015.06.04:1334",
+            "/Producer": "xdvipdfmx (20140317)",
+        }
+
+
 @pytest.mark.parametrize(
     "src",
     [
@@ -17,8 +29,7 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
 def test_get_annotations(src):
     reader = PyPDF2.PdfFileReader(open(src, "rb"))
 
-    for i in range(reader.getNumPages()):
-        page = reader.getPage(i)
+    for page in reader.pages:
         print("/Annots" in page)
         if "/Annots" in page:
             for annot in page["/Annots"]:
@@ -75,7 +86,12 @@ def test_get_images(src, nb_images):
     from PIL import Image
 
     input1 = PyPDF2.PdfFileReader(open(src, "rb"))
-    page0 = input1.getPage(0)
+
+    with pytest.raises(TypeError):
+        page0 = input1.pages["0"]
+
+    page0 = input1.pages[-1]
+    page0 = input1.pages[0]
 
     images_extracted = []
 

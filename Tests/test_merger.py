@@ -14,6 +14,7 @@ sys.path.append(PROJECT_ROOT)
 def test_merge():
     pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
     outline = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
+    pdf_forms = os.path.join(RESOURCE_ROOT, "pdflatex-forms.pdf")
 
     file_merger = PyPDF2.PdfFileMerger()
 
@@ -21,7 +22,7 @@ def test_merge():
     file_merger.append(pdf_path)
     file_merger.append(outline)
     file_merger.append(pdf_path, pages=PyPDF2.pagerange.PageRange(slice(0, 0)))
-
+    file_merger.append(pdf_forms)
 
     # PdfFileReader object:
     file_merger.append(PyPDF2.PdfFileReader(pdf_path, "rb"))
