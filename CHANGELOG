@@ -37,7 +37,7 @@ Miscallenious:
  - Improvements for the PyPI page (#644)
  - Python 3 changes (#504, #366)
 
-You can see the full changelog at: https://github.com/mstamy2/PyPDF2/compare/1.26.0...1.27.0
+You can see the full changelog at: https://github.com/py-pdf/PyPDF2/compare/1.26.0...1.27.0
 
 Version 1.26.0, 2016-05-18
 --------------------------

@@ -1,7 +1,7 @@
 [![PyPI version](https://badge.fury.io/py/PyPDF2.svg)](https://badge.fury.io/py/PyPDF2)
 [![Python Support](https://img.shields.io/pypi/pyversions/PyPDF2.svg)](https://pypi.org/project/PyPDF2/)
 [![](https://img.shields.io/badge/-documentation-green)](https://pythonhosted.org/PyPDF2/)
-![GitHub last commit](https://img.shields.io/github/last-commit/mstamy2/PyPDF2)
+![GitHub last commit](https://img.shields.io/github/last-commit/py-pdf/PyPDF2)
 
 # PyPDF2
 
@@ -12,7 +12,7 @@ data, viewing options, and passwords to PDF files.
 It can retrieve text and metadata from PDFs as well
 as merge entire files together.
 
-[Homepage](http://mstamy2.github.io/PyPDF2/)
+[Homepage](http://py-pdf.github.io/PyPDF2/)
 
 
 
@@ -31,8 +31,6 @@ Please see the `Sample_Code` folder.
 ## FAQ
 
 A lot of questions are asked [on StackOverflow](https://stackoverflow.com/questions/tagged/pypdf2).
-
-Please see [FAQ](http://mstamy2.github.io/PyPDF2/FAQ.html)
 
 ## Contributions
 
