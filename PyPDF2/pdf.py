@@ -2863,7 +2863,7 @@ class DocumentInformation(DictionaryObject):
     """
     A class representing the basic document metadata provided in a PDF File.
     This class is accessible through
-    :meth:`getDocumentInfo()<PyPDF2.PdfFileReader.getDocumentInfo()>`
+    :meth:`.getDocumentInfo()`
 
     All text properties of the document metadata have
     *two* properties, eg. author and author_raw. The non-raw property will
