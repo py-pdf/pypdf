@@ -18,3 +18,8 @@ merger.append(input3)
 # Write to an output PDF document
 output = open("document-output.pdf", "wb")
 merger.write(output)
+
+# Close File Descriptors
+merger.close()
+output.close()
+
