@@ -5,7 +5,7 @@ from PyPDF2.generic import NameObject
 
 
 def test_nameobject_decoding():
-    czech_diacritics_pangram = "Vyciď křišťálový nůž ó učiň úděsné líbivým"
+    czech_diacritics_pangram = u"Vyciď křišťálový nůž ó učiň úděsné líbivým"
     name_string = "/" + czech_diacritics_pangram.replace(" ", "")
     utf8 = name_string.encode("utf-8")
     latin1 = name_string.encode("latin-1", errors="ignore")
