@@ -11,6 +11,7 @@ upload:
 clean:
 	python setup.py clean --all
 	pyclean .
+	rm -rf Tests/__pycache__ PyPDF2/__pycache__ Image9.png htmlcov docs/_build dist dont_commit_merged.pdf dont_commit_writer.pdf PyPDF2.egg-info PyPDF2_pdfLocation.txt
 
 test:
 	pytest Tests/tests.py Tests --cov --cov-report term-missing -vv --cov-report html
