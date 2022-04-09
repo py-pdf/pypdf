@@ -217,7 +217,7 @@ class XmpInformation(PdfObject):
 
     dc_date = property(_getter_seq(DC_NAMESPACE, "date", _converter_date))
     """
-    A sorted array of dates (datetime.datetime instances) of signifigance to
+    A sorted array of dates (datetime.datetime instances) of significance to
     the resource.  The dates and times are in UTC.
     """
 

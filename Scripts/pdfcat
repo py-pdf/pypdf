@@ -20,7 +20,7 @@ EXAMPLES
 """
 # Copyright (c) 2014, Steve Witham <switham_github@mac-guyver.com>.
 # All rights reserved. This software is available under a BSD license;
-# see https://github.com/mstamy2/PyPDF2/LICENSE
+# see https://github.com/py-pdf/PyPDF2/LICENSE
 
 from __future__ import print_function
 import argparse
