@@ -19,7 +19,7 @@ def main():
         sys.stdout.flush()
 
     print("writing " + sys.argv[2])
-    outputStream = file(sys.argv[2], "wb")
+    outputStream = open(sys.argv[2], "wb")
     output.write(outputStream)
     print("done.")
 

@@ -4,12 +4,15 @@ output = PdfFileWriter()
 input1 = PdfFileReader(open("document1.pdf", "rb"))
 
 # print how many pages input1 has:
-print "document1.pdf has %d pages." % input1.getNumPages()
+print("document1.pdf has %d pages." % input1.getNumPages())
 
-# add page 1 from input1 to output document, unchanged
+# print how many pages input1 has in python3:
+# print("This chart has {} pages.".format(input1.getNumPages()))
+
+# add page 1 from input1 to output document, unchanged:
 output.addPage(input1.getPage(0))
 
-# add page 2 from input1, but rotated clockwise 90 degrees
+# add page 2 from input1, but rotated clockwise 90 degrees:
 output.addPage(input1.getPage(1).rotateClockwise(90))
 
 # add page 3 from input1, rotated the other way:
@@ -33,13 +36,16 @@ output.addPage(page5)
 
 # add some Javascript to launch the print window on opening this PDF.
 # the password dialog may prevent the print dialog from being shown,
-# comment the the encription lines, if that's the case, to try this out
+# comment the the encription lines, if that's the case, to try this out:
 output.addJS("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
 
-# encrypt your new PDF and add a password
+# encrypt your new PDF and add a password:
 password = "secret"
 output.encrypt(password)
 
+# add a title to your new PDF's metadata:
+output.addMetadata({'/Title': 'PDF Metadata Title'})
+
 # finally, write "output" to document-output.pdf
-outputStream = file("PyPDF2-output.pdf", "wb")
-output.write(outputStream)
+with open("PyPDF2-output.pdf", "wb") as outputStream:
+    output.write(outputStream)

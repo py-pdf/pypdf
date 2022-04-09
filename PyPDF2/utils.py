@@ -61,12 +61,14 @@ def isInt(n):
 
 def isBytes(b):
     """Test if arg is a bytes instance. Compatible with Python 2 and 3."""
+    import warnings
+    warnings.warn("PyPDF2.utils.isBytes will be deprecated", DeprecationWarning)
     return isinstance(b, bytes_type)
 
 
-#custom implementation of warnings.formatwarning
 def formatWarning(message, category, filename, lineno, line=None):
-    file = filename.replace("/", "\\").rsplit("\\", 1)[1] # find the file name
+    """custom implementation of warnings.formatwarning"""
+    file = filename.replace("/", "\\").rsplit("\\", 1)[-1] # find the file name
     return "%s: %s [%s:%s]\n" % (category.__name__, message, file, lineno)
 
 
@@ -172,14 +174,14 @@ def RC4_encrypt(key, plaintext):
         j = (j + S[i] + ord_(key[i % len(key)])) % 256
         S[i], S[j] = S[j], S[i]
     i, j = 0, 0
-    retval = b_("")
+    retval = []
     for x in range(len(plaintext)):
         i = (i + 1) % 256
         j = (j + S[i]) % 256
         S[i], S[j] = S[j], S[i]
         t = S[(S[i] + S[j]) % 256]
-        retval += b_(chr(ord_(plaintext[x]) ^ t))
-    return retval
+        retval.append(b_(chr(ord_(plaintext[x]) ^ t)))
+    return b_("").join(retval)
 
 
 def matrixMultiply(a, b):
@@ -194,9 +196,9 @@ def markLocation(stream):
     # Mainly for debugging
     RADIUS = 5000
     stream.seek(-RADIUS, 1)
-    outputDoc = open('PyPDF2_pdfLocation.txt', 'w')
+    outputDoc = open('PyPDF2_pdfLocation.txt', 'wb')
     outputDoc.write(stream.read(RADIUS))
-    outputDoc.write('HERE')
+    outputDoc.write(b'HERE')
     outputDoc.write(stream.read(RADIUS))
     outputDoc.close()
     stream.seek(-RADIUS, 1)
