@@ -1,7 +1,11 @@
 PyPDF2 vs X
 ===========
 
-PyPDF2 is a free and open source pure-python PDF library.
+PyPDF2 is a `free <https://en.wikipedia.org/wiki/Free_software>`_ and open
+source pure-python PDF library capable of splitting,
+merging, cropping, and transforming the pages of PDF files. It can also add
+custom data, viewing options, and passwords to PDF files.
+PyPDF2 can retrieve text and metadata from PDFs as well.
 
 PyMuPDF and PikePDF
 -------------------
@@ -31,7 +35,7 @@ and in the case of PyPDF2 not paid at all. Having a continuous support is hard.
 PyPDF2 was initially released in 2012 on PyPI and received releases until 2016.
 From 2016 to 2022 there was no update - but people were still using it.
 
-As PyPDF2 is open source, there were attempts to fork it and continue the
+As PyPDF2 is free software, there were attempts to fork it and continue the
 development. PyPDF3 was first released in 2018 and still receives updates.
 PyPDF4 has only one release from 2018.
 

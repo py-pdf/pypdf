@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath("../"))
 # -- Project information -----------------------------------------------------
 
 project = 'PyPDF2'
-copyright = '2022, Mathieu Fenniak'
+copyright = '2006 - 2008, Mathieu Fenniak'
 author = 'Mathieu Fenniak'
 
 
