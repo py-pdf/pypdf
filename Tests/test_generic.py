@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import io
 
 from PyPDF2.generic import NameObject
