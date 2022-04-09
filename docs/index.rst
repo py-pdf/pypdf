@@ -19,11 +19,22 @@ User Guide
 ------------
 
 .. toctree::
+   :caption: User Guide
    :maxdepth: 1
 
    user/installation
    user/extract-text
    user/merging-pdfs
+   user/cropping-and-transforming
+   user/add-watermark
+
+Scripts
+-------
+
+.. toctree::
+   :caption: Scripts
+   :maxdepth: 1
+
    user/pdfcat
 
 
@@ -31,7 +42,8 @@ API Reference
 -------------
 
 .. toctree::
-   :maxdepth: 2
+   :caption: API Reference
+   :maxdepth: 1
 
    modules/PdfFileReader
    modules/PdfFileMerger
@@ -44,10 +56,11 @@ API Reference
    modules/Field
    modules/PageRange
 
-Meta
-----
+About PyPDF2
+------------
 
 .. toctree::
+   :caption: About PyPDF2
    :maxdepth: 1
 
    user/history
