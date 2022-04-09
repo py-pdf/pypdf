@@ -1,4 +1,51 @@
-﻿Version 1.26.0, 2016-05-18
+Version 1.27.0, 2022-04-07
+--------------------------
+
+Features:
+
+ - Add alpha channel support for png files in Script (#614)
+
+Bug fixes (BUG):
+
+ - Fix formatWarning for filename without slash (#612)
+ - Add whitespace between words for extractText() (#569, #334)
+ - "invalid escape sequence" SyntaxError (#522)
+ - Avoid error when printing warning in pythonw (#486)
+ - Stream operations can be List or Dict (#665)
+
+Documentation (DOC):
+
+ - Added Scripts/pdf-image-extractor.py
+ - Documentation improvements (#550, #538, #324, #426, #394)
+
+Tests and Test setup (TST):
+
+ - Add Github Action which automatically run unit tests via pytest and
+   static code analysis with Flake8 (#660)
+ - Add several unit tests (#661, #663)
+ - Add .coveragerc to create coverage reports
+
+Developer Experience Improvements (DEV):
+
+ - Pre commit: Developers can now `pre-commit install` to avoid tiny issues
+               like trailing whitespaces
+
+Miscallenious:
+
+ - Add the LICENSE file to the distributed packages (#288)
+ - Use setuptools instead of distutils (#599)
+ - Improvements for the PyPI page (#644)
+ - Python 3 changes (#504, #366)
+
+You can see the full changelog at: https://github.com/py-pdf/PyPDF2/compare/1.26.0...1.27.0
+
+Intermediate release 1.27.1, 2022-04-08
+
+- Fixed project links on PyPI page after migration from mstamy2
+  to MartinThoma to the py-pdf organization on GitHub
+- Documentation is now at https://pypdf2.readthedocs.io/en/latest/
+
+Version 1.26.0, 2016-05-18
 --------------------------
 
  - NOTE: Active maintenance on PyPDF2 is resuming after a hiatus
@@ -168,7 +215,7 @@ Version 1.23, 2014-08-11
  - Annotations (links, comment windows, etc.) are now preserved when
    pages are merged together
 
- - Used the Destination class in addLink() and addBookmark() so that 
+ - Used the Destination class in addLink() and addBookmark() so that
    the page fit option could be properly customized
 
 
@@ -188,7 +235,7 @@ Version 1.22, 2014-05-29
  - Fixed bug where an exception was thrown upon reading a NULL string
    (by speedplane)
 
- - Allow string literals (non-unicode strings in Python 2) to be passed 
+ - Allow string literals (non-unicode strings in Python 2) to be passed
    to PdfFileReader
 
  - Allow ConvertFunctionsToVirtualList to be indexed with slices and
@@ -199,7 +246,7 @@ Version 1.22, 2014-05-29
 
  - General code clean-up and improvements (with Steve Witham and Henry Keiter)
 
- - Fixed bug that caused crash when comments are present at end of 
+ - Fixed bug that caused crash when comments are present at end of
    dictionary
 
 
@@ -318,7 +365,7 @@ OTHER:
 UPCOMING:
  - More bugfixes (We have received many problematic PDFs via email, we
    will work with them)
- 
+
  - Documentation - It's time for PyPDF2 to get its own documentation
    since it has grown much since the original pyPdf
 
@@ -328,11 +375,11 @@ UPCOMING:
 Version 1.18, 2013-08-19
 ------------------------
 
- - Fixed a bug where older verions of objects were incorrectly added to the 
+ - Fixed a bug where older verions of objects were incorrectly added to the
    cache, resulting in outdated or missing pages, images, and other objects
    (from speedplane)
 
- - Fixed a bug in parsing the xref table where new xref values were 
+ - Fixed a bug in parsing the xref table where new xref values were
    overwritten; also cleaned up code (from speedplane)
 
  - New method mergeRotatedAroundPointPage which merges a page while rotating
@@ -355,8 +402,8 @@ Other Changes:
 Version 1.17, 2013-07-25
 ------------------------
 
- - Removed one (from pdf.py) of the two Destination classes. Both 
-   classes had the same name, but were slightly different in content, 
+ - Removed one (from pdf.py) of the two Destination classes. Both
+   classes had the same name, but were slightly different in content,
    causing some errors. (from Janne Vanhala)
 
  - Corrected and Expanded README file to demonstrate PdfFileMerger
@@ -373,9 +420,9 @@ Versions -1.16, -2013-06-30
  - Note: This ChangeLog has not been kept up-to-date for a while.
    Hopefully we can keep better track of it from now on. Some of the
    changes listed here come from previous versions 1.14 and 1.15; they
-   were only vaguely defined. With the new _version.py file we should 
+   were only vaguely defined. With the new _version.py file we should
    have more structured and better documented versioning from now on.
- 
+
  - Defined PyPDF2.__version__
 
  - Fixed encrypt() method (from Martijn The)
@@ -388,14 +435,14 @@ Versions -1.16, -2013-06-30
 
  - Fixed an bug caused by DecimalError Exception (from Adam Morris)
 
- - Many other bug fixes and features by: 
-	
+ - Many other bug fixes and features by:
+
 	jeansch
 	Anton Vlasenko
 	Joseph Walton
 	Jan Oliver Oelerich
 	Fabian Henze
-	And any others I missed. 
+	And any others I missed.
 	Thanks for contributing!
 
 
@@ -535,7 +582,7 @@ Version 1.6, 2006-06-06
    stream filters more easily, including compressed streams.
 
  - Add a graphics state push/pop around page merges.  Improves quality of
-   page merges when one page's content stream leaves the graphics 
+   page merges when one page's content stream leaves the graphics
    in an abnormal state.
 
  - Add PageObject.compressContentStreams function, which filters all content
@@ -628,4 +675,3 @@ Version 1.0, 2006-01-17
 
 - Does not support some PDF 1.5 features, such as object streams,
   cross-reference streams.
-
