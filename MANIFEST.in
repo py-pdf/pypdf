@@ -1,2 +1,4 @@
 include CHANGELOG
 include LICENSE
+include Scripts/pdfcat
+recursive-include Resources *

@@ -91,7 +91,7 @@ class PdfFileMerger(object):
         :param str bookmark: Optionally, you may specify a bookmark to be applied at
             the beginning of the included file by supplying the text of the bookmark.
 
-        :param pages: can be a :ref:`Page Range <page-range>` or a ``(start, stop[, step])`` tuple
+        :param pages: can be a :class:`PageRange<PyPDF2.pagerange.PageRange>` or a ``(start, stop[, step])`` tuple
             to merge only the specified range of pages from the source
             document into the output document.
 
@@ -192,7 +192,7 @@ class PdfFileMerger(object):
         :param str bookmark: Optionally, you may specify a bookmark to be applied at
             the beginning of the included file by supplying the text of the bookmark.
 
-        :param pages: can be a :ref:`Page Range <page-range>` or a ``(start, stop[, step])`` tuple
+        :param pages: can be a :class:`PageRange<PyPDF2.pagerange.PageRange>` or a ``(start, stop[, step])`` tuple
             to merge only the specified range of pages from the source
             document into the output document.
 
@@ -261,14 +261,23 @@ class PdfFileMerger(object):
 
         :param str layout: The page layout to be used
 
-        Valid layouts are:
-             /NoLayout        Layout explicitly not specified
-             /SinglePage      Show one page at a time
-             /OneColumn       Show one column at a time
-             /TwoColumnLeft   Show pages in two columns, odd-numbered pages on the left
-             /TwoColumnRight  Show pages in two columns, odd-numbered pages on the right
-             /TwoPageLeft     Show two pages at a time, odd-numbered pages on the left
-             /TwoPageRight    Show two pages at a time, odd-numbered pages on the right
+        .. list-table:: Valid ``layout`` arguments
+           :widths: 50 200
+
+           * - /NoLayout
+             - Layout explicitly not specified
+           * - /SinglePage
+             - Show one page at a time
+           * - /OneColumn
+             - Show one column at a time
+           * - /TwoColumnLeft
+             - Show pages in two columns, odd-numbered pages on the left
+           * - /TwoColumnRight
+             - Show pages in two columns, odd-numbered pages on the right
+           * - /TwoPageLeft
+             - Show two pages at a time, odd-numbered pages on the left
+           * - /TwoPageRight
+             - Show two pages at a time, odd-numbered pages on the right
         """
         self.output.setPageLayout(layout)
 
@@ -278,13 +287,21 @@ class PdfFileMerger(object):
 
         :param str mode: The page mode to use.
 
-        Valid modes are:
-            /UseNone         Do not show outlines or thumbnails panels
-            /UseOutlines     Show outlines (aka bookmarks) panel
-            /UseThumbs       Show page thumbnails panel
-            /FullScreen      Fullscreen view
-            /UseOC           Show Optional Content Group (OCG) panel
-            /UseAttachments  Show attachments panel
+        .. list-table:: Valid ``mode`` arguments
+           :widths: 50 200
+
+           * - /UseNone
+             - Do not show outlines or thumbnails panels
+           * - /UseOutlines
+             - Show outlines (aka bookmarks) panel
+           * - /UseThumbs
+             - Show page thumbnails panel
+           * - /FullScreen
+             - Fullscreen view
+           * - /UseOC
+             - Show Optional Content Group (OCG) panel
+           * - /UseAttachments
+             - Show attachments panel
         """
         self.output.setPageMode(mode)
 

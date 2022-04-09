@@ -57,3 +57,25 @@ def test_writer_operations():
     # finally, write "output" to PyPDF2-output.pdf
     with open("dont_commit_writer.pdf", "wb") as output_stream:
         output.write(output_stream)
+
+
+def test_remove_images():
+    pdf_path = os.path.join(RESOURCE_ROOT, "side-by-side-subfig.pdf")
+
+    reader = PdfFileReader(open(pdf_path, "rb"))
+    output = PdfFileWriter()
+
+    page = reader.pages[0]
+    output.insertPage(page, 0)
+    output.removeImages()
+
+    # finally, write "output" to PyPDF2-output.pdf
+    tmp_filename = "dont_commit_writer_removed_image.pdf"
+    with open(tmp_filename, "wb") as output_stream:
+        output.write(output_stream)
+
+    reader = PdfFileReader(open(tmp_filename, "rb"))
+    assert "Lorem ipsum dolor sit amet" in reader.getPage(0).extractText()
+
+    # Cleanup
+    os.remove(tmp_filename)

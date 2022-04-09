@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath("../"))
 # -- Project information -----------------------------------------------------
 
 project = 'PyPDF2'
-copyright = '2022, Mathieu Fenniak'
+copyright = '2006 - 2008, Mathieu Fenniak'
 author = 'Mathieu Fenniak'
 
 
@@ -33,6 +33,7 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinx.ext.viewcode",
     "sphinx.ext.napoleon",
+    "myst_parser",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
