@@ -11,9 +11,10 @@ User Guide
 ------------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    user/installation
+
 
 API Reference
 -------------
@@ -30,9 +31,17 @@ API Reference
    modules/Destination
    modules/RectangleObject
    modules/Field
+   modules/PageRange
 
+Meta
+----
 
+.. toctree::
+   :maxdepth: 1
 
+   user/history
+   user/comparisons
+   user/faq
 
 
 

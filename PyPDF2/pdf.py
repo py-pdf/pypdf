@@ -332,12 +332,11 @@ class PdfFileWriter(object):
 
         :param reader: a PdfFileReader object from which to copy page
             annotations to this writer object.  The writer's annots
-        will then be updated
+            will then be updated
         :callback after_page_append (function): Callback function that is invoked after
             each page is appended to the writer. Callback signature:
-
-            :param writer_pageref (PDF page reference): Reference to the page
-                appended to the writer.
+        :param writer_pageref (PDF page reference): Reference to the page
+            appended to the writer.
         """
         # Get page count from writer and reader
         reader_num_pages = reader.getNumPages()
@@ -375,7 +374,7 @@ class PdfFileWriter(object):
         Copy the reader document root to the writer.
 
         :param reader:  PdfFileReader from the document root should be copied.
-        :callback after_page_append
+        :callback after_page_append:
         '''
         self._root_object = reader.trailer['/Root']
 
@@ -969,15 +968,25 @@ class PdfFileWriter(object):
         :param str fit: Page fit or 'zoom' option (see below). Additional arguments may need
             to be supplied. Passing ``None`` will be read as a null value for that coordinate.
 
-        Valid zoom arguments (see Table 8.2 of the PDF 1.7 reference for details):
-             /Fit       No additional arguments
-             /XYZ       [left] [top] [zoomFactor]
-             /FitH      [top]
-             /FitV      [left]
-             /FitR      [left] [bottom] [right] [top]
-             /FitB      No additional arguments
-             /FitBH     [top]
-             /FitBV     [left]
+    .. list-table:: Valid ``zoom`` arguments (see Table 8.2 of the PDF 1.7 reference for details)
+       :widths: 50 200
+
+       * - /Fit
+         - No additional arguments
+       * - /XYZ
+         - [left] [top] [zoomFactor]
+       * - /FitH
+         - [top]
+       * - /FitV
+         - [left]
+       * - /FitR
+         - [left] [bottom] [right] [top]
+       * - /FitB
+         - No additional arguments
+       * - /FitBH
+         - [top]
+       * - /FitBV
+         - [left]
         """
 
         pageLink = self.getObject(self._pages)['/Kids'][pagenum]
@@ -1045,14 +1054,23 @@ class PdfFileWriter(object):
 
         :param str layout: The page layout to be used
 
-        Valid layouts are:
-             /NoLayout        Layout explicitly not specified
-             /SinglePage      Show one page at a time
-             /OneColumn       Show one column at a time
-             /TwoColumnLeft   Show pages in two columns, odd-numbered pages on the left
-             /TwoColumnRight  Show pages in two columns, odd-numbered pages on the right
-             /TwoPageLeft     Show two pages at a time, odd-numbered pages on the left
-             /TwoPageRight    Show two pages at a time, odd-numbered pages on the right
+        .. list-table:: Valid ``layout`` arguments
+           :widths: 50 200
+
+           * - /NoLayout
+             - Layout explicitly not specified
+           * - /SinglePage
+             - Show one page at a time
+           * - /OneColumn
+             - Show one column at a time
+           * - /TwoColumnLeft
+             - Show pages in two columns, odd-numbered pages on the left
+           * - /TwoColumnRight
+             - Show pages in two columns, odd-numbered pages on the right
+           * - /TwoPageLeft
+             - Show two pages at a time, odd-numbered pages on the left
+           * - /TwoPageRight
+             - Show two pages at a time, odd-numbered pages on the right
         """
         if not isinstance(layout, NameObject):
             if layout not in self._valid_layouts:
@@ -1086,13 +1104,21 @@ class PdfFileWriter(object):
 
         :param str mode: The page mode to use.
 
-        Valid modes are:
-            /UseNone         Do not show outlines or thumbnails panels
-            /UseOutlines     Show outlines (aka bookmarks) panel
-            /UseThumbs       Show page thumbnails panel
-            /FullScreen      Fullscreen view
-            /UseOC           Show Optional Content Group (OCG) panel
-            /UseAttachments  Show attachments panel
+        .. list-table:: Valid ``mode`` arguments
+           :widths: 50 200
+
+           * - /UseNone
+             - Do not show outlines or thumbnails panels
+           * - /UseOutlines
+             - Show outlines (aka bookmarks) panel
+           * - /UseThumbs
+             - Show page thumbnails panel
+           * - /FullScreen
+             - Fullscreen view
+           * - /UseOC
+             - Show Optional Content Group (OCG) panel
+           * - /UseAttachments
+             - Show attachments panel
         """
         if not isinstance(mode, NameObject):
             if mode not in self._valid_modes:
