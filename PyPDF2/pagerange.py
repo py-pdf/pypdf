@@ -4,7 +4,7 @@ Representation and utils for ranges of PDF file pages.
 
 Copyright (c) 2014, Steve Witham <switham_github@mac-guyver.com>.
 All rights reserved. This software is available under a BSD license;
-see https://github.com/mstamy2/PyPDF2/blob/master/LICENSE
+see https://github.com/py-pdf/PyPDF2/blob/master/LICENSE
 """
 
 import re
@@ -37,14 +37,17 @@ class PageRange(object):
     """
     A slice-like representation of a range of page indices,
         i.e. page numbers, only starting at zero.
+
     The syntax is like what you would put between brackets [ ].
     The slice is one of the few Python types that can't be subclassed,
     but this class converts to and from slices, and allows similar use.
-      o  PageRange(str) parses a string representing a page range.
-      o  PageRange(slice) directly "imports" a slice.
-      o  to_slice() gives the equivalent slice.
-      o  str() and repr() allow printing.
-      o  indices(n) is like slice.indices(n).
+
+      -  PageRange(str) parses a string representing a page range.
+      -  PageRange(slice) directly "imports" a slice.
+      -  to_slice() gives the equivalent slice.
+      -  str() and repr() allow printing.
+      -  indices(n) is like slice.indices(n).
+
     """
 
     def __init__(self, arg):
@@ -80,9 +83,7 @@ class PageRange(object):
             self._slice = slice(*[int(g) if g else None
                                   for g in m.group(4, 6, 8)])
 
-    # Just formatting this when there is __doc__ for __init__
-    if __init__.__doc__:
-        __init__.__doc__ = __init__.__doc__.format(page_range_help=PAGE_RANGE_HELP)
+    __init__.__doc__ = __init__.__doc__.format(page_range_help=PAGE_RANGE_HELP)
 
     @staticmethod
     def valid(input):
@@ -118,6 +119,11 @@ class PageRange(object):
         Returns arguments for range().  See help(slice.indices).
         """
         return self._slice.indices(n)
+
+    def __eq__(self, other):
+        if not isinstance(other, PageRange):
+            return False
+        return self._slice == other._slice
 
 
 PAGE_RANGE_ALL = PageRange(":")  # The range of all pages.
