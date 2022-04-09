@@ -35,6 +35,8 @@ __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import re
+import sys
+
 from .utils import readNonWhitespace, RC4_encrypt, skipOverComment
 from .utils import b_, u_, chr_, ord_
 from .utils import PdfStreamError
@@ -482,6 +484,8 @@ class NameObject(str, PdfObject):
         if debug: print(name)
         # Name objects should represent irregular characters with
         # a '#' followed by the symbol's hex number. That is not implemented.
+        if sys.version_info[0] < 3:
+            return NameObject(name)
         try:
             return NameObject(name.decode('utf-8'))
         except (UnicodeEncodeError, UnicodeDecodeError) as e:
