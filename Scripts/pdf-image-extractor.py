@@ -30,10 +30,13 @@ if __name__ == '__main__':
                     mode = "RGB"
                 else:
                     mode = "P"
-                
+
                 if '/Filter' in xObject[obj]:
                     if xObject[obj]['/Filter'] == '/FlateDecode':
                         img = Image.frombytes(mode, size, data)
+                        if "/SMask" in xObject[obj]: # add alpha channel
+                            alpha = Image.frombytes("L", size, xObject[obj]["/SMask"].getData())
+                            img.putalpha(alpha)
                         img.save(obj[1:] + ".png")
                     elif xObject[obj]['/Filter'] == '/DCTDecode':
                         img = open(obj[1:] + ".jpg", "wb")

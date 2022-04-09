@@ -19,7 +19,7 @@ we won't add PDFs without expressed permission.
 (This folder is available through GitHub only)
 
 
-Feel free to add any type of PDF file or sample code, 
+Feel free to add any type of PDF file or sample code,
 either by
 
 	1) sending it via email to PyPDF2@phaseit.net

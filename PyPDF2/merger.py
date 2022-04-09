@@ -238,7 +238,7 @@ class PdfFileMerger(object):
         usage.
         """
         self.pages = []
-        for fo, pdfr, mine in self.inputs:
+        for fo, _pdfr, mine in self.inputs:
             if mine:
                 fo.close()
 
