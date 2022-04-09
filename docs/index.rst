@@ -22,6 +22,8 @@ User Guide
    :maxdepth: 1
 
    user/installation
+   user/extract-text
+   user/merging-pdfs
    user/pdfcat
 
 
