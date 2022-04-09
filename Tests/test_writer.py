@@ -74,8 +74,9 @@ def test_remove_images():
     with open(tmp_filename, "wb") as output_stream:
         output.write(output_stream)
 
-    reader = PdfFileReader(open(tmp_filename, "rb"))
-    assert "Lorem ipsum dolor sit amet" in reader.getPage(0).extractText()
+    with open(tmp_filename, "rb") as input_stream:
+        reader = PdfFileReader(input_stream)
+        assert "Lorem ipsum dolor sit amet" in reader.getPage(0).extractText()
 
     # Cleanup
     os.remove(tmp_filename)
