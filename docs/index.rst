@@ -31,6 +31,7 @@ API Reference
    modules/Destination
    modules/RectangleObject
    modules/Field
+   modules/PageRange
 
 Meta
 ----

@@ -1,11 +1,7 @@
 PyPDF2 vs X
 ===========
 
-PyPDF2 was created with the aim to be a strict successor of pyPdf: it did
-everything pyPdf did, but more.
-
-PyPDF2 is largely about metadata:
-PyPDF2 manages metadata, merges PDF instances, and so on.
+PyPDF2 is a free and open source pure-python PDF library.
 
 PyMuPDF and PikePDF
 -------------------

@@ -37,14 +37,17 @@ class PageRange(object):
     """
     A slice-like representation of a range of page indices,
         i.e. page numbers, only starting at zero.
+
     The syntax is like what you would put between brackets [ ].
     The slice is one of the few Python types that can't be subclassed,
     but this class converts to and from slices, and allows similar use.
-      o  PageRange(str) parses a string representing a page range.
-      o  PageRange(slice) directly "imports" a slice.
-      o  to_slice() gives the equivalent slice.
-      o  str() and repr() allow printing.
-      o  indices(n) is like slice.indices(n).
+
+      -  PageRange(str) parses a string representing a page range.
+      -  PageRange(slice) directly "imports" a slice.
+      -  to_slice() gives the equivalent slice.
+      -  str() and repr() allow printing.
+      -  indices(n) is like slice.indices(n).
+
     """
 
     def __init__(self, arg):
