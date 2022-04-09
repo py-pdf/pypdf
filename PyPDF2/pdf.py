@@ -1971,6 +1971,15 @@ class PdfFileReader(object):
                 else:
                     break
             else:
+                # some PDFs have /Prev=0 in the trailer, instead of no /Prev
+                if startxref == 0:
+                    if self.strict:
+                        raise utils.PdfReadError("/Prev=0 in the trailer (try"
+                                                 " opening with strict=False)")
+                    else:
+                        warnings.warn("/Prev=0 in the trailer - assuming there"
+                                      " is no previous xref table")
+                        break
                 # bad xref character at startxref.  Let's see if we can find
                 # the xref table nearby, as we've observed this error with an
                 # off-by-one before.
