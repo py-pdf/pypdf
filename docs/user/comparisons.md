@@ -47,3 +47,15 @@ bring the community back to one path of development. Let's see.
   [MuPDF]: https://mupdf.com/
   [PikePDF]: https://pypi.org/project/pikepdf/
   [QPDF]: https://github.com/qpdf/qpdf
+
+
+## pdfrw and pdfminer
+
+I don't have experience with either of those libraries. Please add a
+comparison if you know PyPDF2 and [`pdfrw`](https://pypi.org/project/pdfrw/) or
+[`pdfminer.six`](https://pypi.org/project/pdfminer.six/)!
+
+Please be aware that there is also
+[`pdfminer`](https://pypi.org/project/pdfminer/) which is not maintained.
+Then there is [`pdfrw2`](https://pypi.org/project/pdfrw2/) which doesn't have
+a large community behind it.
