@@ -64,7 +64,7 @@ import warnings
 import codecs
 from .generic import *
 from .utils import readNonWhitespace, readUntilWhitespace, ConvertFunctionsToVirtualList
-from .utils import isString, b_, u_, ord_, chr_, str_, formatWarning
+from .utils import isString, b_, u_, ord_, str_, formatWarning
 
 if version_info < ( 2, 4 ):
    from sets import ImmutableSet as frozenset
@@ -250,17 +250,17 @@ class PdfFileWriter(object):
 
         :param str fname: The filename to display.
         :param str fdata: The data in the file.
-      
+
         Reference:
         https://www.adobe.com/content/dam/Adobe/en/devnet/acrobat/pdfs/PDF32000_2008.pdf
         Section 7.11.3
         """
-        
+
         # We need 3 entries:
         # * The file's data
         # * The /Filespec entry
         # * The file's name, which goes in the Catalog
-        
+
 
         # The entry for the file
         """ Sample:
@@ -272,7 +272,7 @@ class PdfFileWriter(object):
         stream
         Hello world!
         endstream
-        endobj        
+        endobj
         """
         file_entry = DecodedStreamObject()
         file_entry.setData(fdata)
@@ -291,14 +291,14 @@ class PdfFileWriter(object):
         """
         efEntry = DictionaryObject()
         efEntry.update({ NameObject("/F"):file_entry })
-        
+
         filespec = DictionaryObject()
         filespec.update({
                 NameObject("/Type"): NameObject("/Filespec"),
                 NameObject("/F"): createStringObject(fname),  # Perhaps also try TextStringObject
                 NameObject("/EF"): efEntry
                 })
-                
+
         # Then create the entry for the root, as it needs a reference to the Filespec
         """ Sample:
         1 0 obj
@@ -309,13 +309,13 @@ class PdfFileWriter(object):
          /Names << /EmbeddedFiles << /Names [(hello.txt) 7 0 R] >> >>
         >>
         endobj
-        
+
         """
         embeddedFilesNamesDictionary = DictionaryObject()
         embeddedFilesNamesDictionary.update({
                 NameObject("/Names"): ArrayObject([createStringObject(fname), filespec])
                 })
-        
+
         embeddedFilesDictionary = DictionaryObject()
         embeddedFilesDictionary.update({
                 NameObject("/EmbeddedFiles"): embeddedFilesNamesDictionary
@@ -329,7 +329,7 @@ class PdfFileWriter(object):
         """
         Copy pages from reader to writer. Includes an optional callback parameter
         which is invoked after pages are appended to the writer.
-        
+
         :param reader: a PdfFileReader object from which to copy page
             annotations to this writer object.  The writer's annots
         will then be updated
@@ -373,7 +373,7 @@ class PdfFileWriter(object):
     def cloneReaderDocumentRoot(self, reader):
         '''
         Copy the reader document root to the writer.
-        
+
         :param reader:  PdfFileReader from the document root should be copied.
         :callback after_page_append
         '''
@@ -485,6 +485,7 @@ class PdfFileWriter(object):
         # Begin writing:
         object_positions = []
         stream.write(self._header + b_("\n"))
+        stream.write(b_("%\xE2\xE3\xCF\xD3\n"))
         for i in range(len(self._objects)):
             idnum = (i + 1)
             obj = self._objects[i]
@@ -571,6 +572,8 @@ class PdfFileWriter(object):
                     self._sweepIndirectReferences(externMap, realdata)
                     return data
             else:
+                if data.pdf.stream.closed:
+                    raise ValueError("I/O operation on closed file: {}".format(data.pdf.stream.name))
                 newobj = externMap.get(data.pdf, {}).get(data.generation, {}).get(data.idnum, None)
                 if newobj == None:
                     try:
@@ -588,6 +591,9 @@ class PdfFileWriter(object):
                         return newobj_ido
                     except ValueError:
                         # Unable to resolve the Object, returning NullObject instead.
+                        warnings.warn("Unable to resolve [{}: {}], returning NullObject instead".format(
+                            data.__class__.__name__, data
+                        ))
                         return NullObject()
                 return newobj
         else:
@@ -838,7 +844,7 @@ class PdfFileWriter(object):
 
     def removeText(self, ignoreByteStringObject=False):
         """
-        Removes images from this output.
+        Removes text from this output.
 
         :param bool ignoreByteStringObject: optional parameter
             to ignore ByteString Objects.
@@ -889,6 +895,64 @@ class PdfFileWriter(object):
                                 operands[0][i] = TextStringObject()
 
             pageRef.__setitem__(NameObject('/Contents'), content)
+
+    def addURI(self, pagenum, uri, rect, border=None):
+        """
+        Add an URI from a rectangular area to the specified page.
+        This uses the basic structure of AddLink
+
+        :param int pagenum: index of the page on which to place the URI action.
+        :param int uri: string -- uri of resource to link to.
+        :param rect: :class:`RectangleObject<PyPDF2.generic.RectangleObject>` or array of four
+            integers specifying the clickable rectangular area
+            ``[xLL, yLL, xUR, yUR]``, or string in the form ``"[ xLL yLL xUR yUR ]"``.
+        :param border: if provided, an array describing border-drawing
+            properties. See the PDF spec for details. No border will be
+            drawn if this argument is omitted.
+
+        REMOVED FIT/ZOOM ARG
+        -John Mulligan
+        """
+
+        pageLink = self.getObject(self._pages)['/Kids'][pagenum]
+        pageRef = self.getObject(pageLink)
+
+        if border is not None:
+            borderArr = [NameObject(n) for n in border[:3]]
+            if len(border) == 4:
+                dashPattern = ArrayObject([NameObject(n) for n in border[3]])
+                borderArr.append(dashPattern)
+        else:
+            borderArr = [NumberObject(2)] * 3
+
+        if isString(rect):
+            rect = NameObject(rect)
+        elif isinstance(rect, RectangleObject):
+            pass
+        else:
+            rect = RectangleObject(rect)
+
+        lnk2 = DictionaryObject()
+        lnk2.update({
+        NameObject('/S'): NameObject('/URI'),
+        NameObject('/URI'): TextStringObject(uri)
+        });
+        lnk = DictionaryObject()
+        lnk.update({
+        NameObject('/Type'): NameObject('/Annot'),
+        NameObject('/Subtype'): NameObject('/Link'),
+        NameObject('/P'): pageLink,
+        NameObject('/Rect'): rect,
+        NameObject('/H'): NameObject('/I'),
+        NameObject('/Border'): ArrayObject(borderArr),
+        NameObject('/A'): lnk2
+        })
+        lnkRef = self._addObject(lnk)
+
+        if "/Annots" in pageRef:
+            pageRef['/Annots'].append(lnkRef)
+        else:
+            pageRef[NameObject('/Annots')] = ArrayObject([lnkRef])
 
     def addLink(self, pagenum, pagedest, rect, border=None, fit='/Fit', *args):
         """
@@ -1066,7 +1130,11 @@ class PdfFileReader(object):
                 if file is None:
                     file = sys.stderr
                 try:
-                    file.write(formatWarning(message, category, filename, lineno, line))
+                    # It is possible for sys.stderr to be defined as None, most commonly in the case that the script
+                    # is being run vida pythonw.exe on Windows. In this case, just swallow the warning.
+                    # See also https://docs.python.org/3/library/sys.html#sys.__stderr__
+                    if file is not None:
+                        file.write(formatWarning(message, category, filename, lineno, line))
                 except IOError:
                     pass
             warnings.showwarning = _showwarning
@@ -1146,7 +1214,7 @@ class PdfFileReader(object):
                 self._override_encryption = True
                 self.decrypt('')
                 return self.trailer["/Root"]["/Pages"]["/Count"]
-            except:
+            except Exception:
                 raise utils.PdfReadError("File has not been decrypted")
             finally:
                 self._override_encryption = False
@@ -1603,11 +1671,12 @@ class PdfFileReader(object):
                     raise utils.PdfReadError("Expected object ID (%d %d) does not match actual (%d %d); xref table not zero-indexed." \
                                      % (indirectReference.idnum, indirectReference.generation, idnum, generation))
                 else: pass # xref table is corrected in non-strict mode
-            elif idnum != indirectReference.idnum:
+            elif idnum != indirectReference.idnum and self.strict:
                 # some other problem
                 raise utils.PdfReadError("Expected object ID (%d %d) does not match actual (%d %d)." \
                                          % (indirectReference.idnum, indirectReference.generation, idnum, generation))
-            assert generation == indirectReference.generation
+            if self.strict:
+                assert generation == indirectReference.generation
             retval = readObject(self.stream, self)
 
             # override encryption is used for the /Encrypt dictionary
@@ -1993,7 +2062,7 @@ class PdfFileReader(object):
         if encrypt['/Filter'] != '/Standard':
             raise NotImplementedError("only Standard PDF encryption handler is available")
         if not (encrypt['/V'] in (1, 2)):
-            raise NotImplementedError("only algorithm code 1 and 2 are supported")
+            raise NotImplementedError("only algorithm code 1 and 2 are supported. This PDF uses code %s" % encrypt['/V'])
         user_password, key = self._authenticateUserPassword(password)
         if user_password:
             self._decryption_key = key
@@ -2162,7 +2231,8 @@ class PageObject(DictionaryObject):
         return self
 
     def _rotate(self, angle):
-        currentAngle = self.get("/Rotate", 0)
+        rotateObj = self.get("/Rotate", 0)
+        currentAngle = rotateObj if isinstance(rotateObj, int) else rotateObj.getObject()
         self[NameObject("/Rotate")] = NumberObject(currentAngle + angle)
 
     def _mergeResources(res1, res2, resource):
@@ -2184,11 +2254,19 @@ class PageObject(DictionaryObject):
         if not rename:
             return stream
         stream = ContentStream(stream, pdf)
-        for operands, operator in stream.operations:
-            for i in range(len(operands)):
-                op = operands[i]
-                if isinstance(op, NameObject):
-                    operands[i] = rename.get(op,op)
+        for operands, _operator in stream.operations:
+            if isinstance(operands, list):
+                for i in range(len(operands)):
+                    op = operands[i]
+                    if isinstance(op, NameObject):
+                        operands[i] = rename.get(op,op)
+            elif isinstance(operands, dict):
+                for i in operands:
+                    op = operands[i]
+                    if isinstance(op, NameObject):
+                        operands[i] = rename.get(op,op)
+            else:
+                raise KeyError ("type of operands is %s" % type (operands))
         return stream
     _contentStreamRename = staticmethod(_contentStreamRename)
 
@@ -2578,7 +2656,7 @@ class PageObject(DictionaryObject):
                 content = ContentStream(content, self.pdf)
             self[NameObject("/Contents")] = content.flateEncode()
 
-    def extractText(self):
+    def extractText(self, Tj_sep="", TJ_sep=" "):
         """
         Locate all text drawing commands, in the order they are provided in the
         content stream, and extract the text.  This works well for some PDF
@@ -2600,7 +2678,9 @@ class PageObject(DictionaryObject):
             if operator == b_("Tj"):
                 _text = operands[0]
                 if isinstance(_text, TextStringObject):
+                    text += Tj_sep
                     text += _text
+                    text += "\n"
             elif operator == b_("T*"):
                 text += "\n"
             elif operator == b_("'"):
@@ -2616,6 +2696,7 @@ class PageObject(DictionaryObject):
             elif operator == b_("TJ"):
                 for i in operands[0]:
                     if isinstance(i, TextStringObject):
+                        text += TJ_sep
                         text += i
                 text += "\n"
         return text
@@ -2667,7 +2748,7 @@ class ContentStream(DecodedStreamObject):
         if isinstance(stream, ArrayObject):
             data = b_("")
             for s in stream:
-                data += s.getObject().getData()
+                data += b_(s.getObject().getData())
             stream = BytesIO(b_(data))
         else:
             stream = BytesIO(b_(stream.getData()))
@@ -2792,7 +2873,7 @@ class DocumentInformation(DictionaryObject):
     """
     A class representing the basic document metadata provided in a PDF File.
     This class is accessible through
-    :meth:`getDocumentInfo()<PyPDF2.PdfFileReader.getDocumentInfo()>`
+    :meth:`.getDocumentInfo()`
 
     All text properties of the document metadata have
     *two* properties, eg. author and author_raw. The non-raw property will
@@ -2900,7 +2981,7 @@ def _alg32(password, rev, keylen, owner_entry, p_entry, id1_entry, metadata_encr
     # encryption key as defined by the value of the encryption dictionary's
     # /Length entry.
     if rev >= 3:
-        for i in range(50):
+        for _ in range(50):
             md5_hash = md5(md5_hash[:keylen]).digest()
     # 9. Set the encryption key to the first n bytes of the output from the
     # final MD5 hash, where n is always 5 for revision 2 but, for revision 3 or
@@ -2950,7 +3031,7 @@ def _alg33_1(password, rev, keylen):
     # from the previous MD5 hash and pass it as input into a new MD5 hash.
     md5_hash = m.digest()
     if rev >= 3:
-        for i in range(50):
+        for _ in range(50):
             md5_hash = md5(md5_hash).digest()
     # 4. Create an RC4 encryption key using the first n bytes of the output
     # from the final MD5 hash, where n is always 5 for revision 2 but, for
@@ -3002,8 +3083,8 @@ def _alg35(password, rev, keylen, owner_entry, p_entry, id1_entry, metadata_encr
     # counter (from 1 to 19).
     for i in range(1, 20):
         new_key = b_('')
-        for l in range(len(key)):
-            new_key += b_(chr(ord_(key[l]) ^ i))
+        for k in key:
+            new_key += b_(chr(ord_(k) ^ i))
         val = utils.RC4_encrypt(new_key, val)
     # 6. Append 16 bytes of arbitrary padding to the output from the final
     # invocation of the RC4 function and store the 32-byte result as the value

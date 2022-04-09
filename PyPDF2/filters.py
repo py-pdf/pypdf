@@ -34,7 +34,9 @@ Implementation of stream filters for PDF.
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
-from .utils import PdfReadError, ord_, chr_
+import math
+
+from .utils import PdfReadError, ord_, paethPredictor
 from sys import version_info
 if version_info < ( 3, 0 ):
     from cStringIO import StringIO
@@ -137,6 +139,18 @@ class FlateDecode(object):
                     elif filterByte == 2:
                         for i in range(1, rowlength):
                             rowdata[i] = (rowdata[i] + prev_rowdata[i]) % 256
+                    elif filterByte == 3:
+                        for i in range(1, rowlength):
+                            left = rowdata[i-1] if i > 1 else 0
+                            floor = math.floor(left + prev_rowdata[i])/2
+                            rowdata[i] = (rowdata[i] + int(floor)) % 256
+                    elif filterByte == 4:
+                        for i in range(1, rowlength):
+                            left = rowdata[i - 1] if i > 1 else 0
+                            up = prev_rowdata[i]
+                            up_left = prev_rowdata[i - 1] if i > 1 else 0
+                            paeth = paethPredictor(left, up, up_left)
+                            rowdata[i] = (rowdata[i] + paeth) % 256
                     else:
                         # unsupported PNG filter
                         raise PdfReadError("Unsupported PNG filter %r" % filterByte)
@@ -202,7 +216,7 @@ class LZWDecode(object):
             while fillbits>0 :
                 if self.bytepos >= len(self.data):
                     return -1
-                nextbits=ord(self.data[self.bytepos])
+                nextbits=ord_(self.data[self.bytepos])
                 bitsfromhere=8-self.bitpos
                 if bitsfromhere>fillbits:
                     bitsfromhere=fillbits
@@ -332,10 +346,51 @@ class ASCII85Decode(object):
             return bytes(out)
     decode = staticmethod(decode)
 
+class DCTDecode(object):
+    def decode(data, decodeParms=None):
+        return data
+    decode = staticmethod(decode)
+
+class JPXDecode(object):
+    def decode(data, decodeParms=None):
+        return data
+    decode = staticmethod(decode)
+
+class CCITTFaxDecode(object):
+    def decode(data, decodeParms=None, height=0):
+        if decodeParms:
+            if decodeParms.get("/K", 1) == -1:
+                CCITTgroup = 4
+            else:
+                CCITTgroup = 3
+
+        width = decodeParms["/Columns"]
+        imgSize = len(data)
+        tiff_header_struct = '<' + '2s' + 'h' + 'l' + 'h' + 'hhll' * 8 + 'h'
+        tiffHeader = struct.pack(tiff_header_struct,
+                           b'II',  # Byte order indication: Little endian
+                           42,  # Version number (always 42)
+                           8,  # Offset to first IFD
+                           8,  # Number of tags in IFD
+                           256, 4, 1, width,  # ImageWidth, LONG, 1, width
+                           257, 4, 1, height,  # ImageLength, LONG, 1, length
+                           258, 3, 1, 1,  # BitsPerSample, SHORT, 1, 1
+                           259, 3, 1, CCITTgroup,  # Compression, SHORT, 1, 4 = CCITT Group 4 fax encoding
+                           262, 3, 1, 0,  # Thresholding, SHORT, 1, 0 = WhiteIsZero
+                           273, 4, 1, struct.calcsize(tiff_header_struct),  # StripOffsets, LONG, 1, length of header
+                           278, 4, 1, height,  # RowsPerStrip, LONG, 1, length
+                           279, 4, 1, imgSize,  # StripByteCounts, LONG, 1, size of image
+                           0  # last IFD
+                           )
+
+        return tiffHeader + data
+
+    decode = staticmethod(decode)
 
 def decodeStreamData(stream):
     from .generic import NameObject
     filters = stream.get("/Filter", ())
+
     if len(filters) and not isinstance(filters[0], NameObject):
         # we have a single filter instance
         filters = (filters,)
@@ -351,6 +406,13 @@ def decodeStreamData(stream):
                 data = LZWDecode.decode(data, stream.get("/DecodeParms"))
             elif filterType == "/ASCII85Decode" or filterType == "/A85":
                 data = ASCII85Decode.decode(data)
+            elif filterType == "/DCTDecode":
+                data = DCTDecode.decode(data)
+            elif filterType == "/JPXDecode":
+                data = JPXDecode.decode(data)
+            elif filterType == "/CCITTFaxDecode":
+                height = stream.get("/Height", ())
+                data = CCITTFaxDecode.decode(data, stream.get("/DecodeParms"), height)
             elif filterType == "/Crypt":
                 decodeParams = stream.get("/DecodeParams", {})
                 if "/Name" not in decodeParams and "/Type" not in decodeParams:
