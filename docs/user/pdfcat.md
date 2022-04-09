@@ -8,6 +8,7 @@ as *page ranges*.
 
 ```{admonition} Deprecation Discussion
 We are thinking about moving pdfcat to a separate package.
+Please [participate in the discussion](https://github.com/py-pdf/PyPDF2/discussions/718).
 ```
 
 **Page range** expression examples:
