@@ -28,15 +28,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-"""
-Implementation of stream filters for PDF.
-"""
+"""Implementation of stream filters for PDF."""
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import math
 
-from .utils import PdfReadError, ord_, chr_, paethPredictor
+from .utils import PdfReadError, ord_, paethPredictor
 from sys import version_info
 if version_info < ( 3, 0 ):
     from cStringIO import StringIO as BytesIO
@@ -363,20 +361,20 @@ class DCTDecode(object):
     def decode(data, decodeParms=None):
         return data
     decode = staticmethod(decode)
-    
+
 class JPXDecode(object):
     def decode(data, decodeParms=None):
         return data
     decode = staticmethod(decode)
-    
-class CCITTFaxDecode(object):   
+
+class CCITTFaxDecode(object):
     def decode(data, decodeParms=None, height=0):
         if decodeParms:
             if decodeParms.get("/K", 1) == -1:
                 CCITTgroup = 4
             else:
                 CCITTgroup = 3
-        
+
         width = decodeParms["/Columns"]
         imgSize = len(data)
         tiff_header_struct = '<' + '2s' + 'h' + 'l' + 'h' + 'hhll' * 8 + 'h'
@@ -395,11 +393,11 @@ class CCITTFaxDecode(object):
                            279, 4, 1, imgSize,  # StripByteCounts, LONG, 1, size of image
                            0  # last IFD
                            )
-        
+
         return tiffHeader + data
-    
+
     decode = staticmethod(decode)
-    
+
 def decodeStreamData(stream):
     from .generic import NameObject
     filters = stream.get("/Filter", ())
