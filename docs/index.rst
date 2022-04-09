@@ -14,10 +14,6 @@ PyPDF2 can retrieve text and metadata from PDFs as well.
 
 You can contribute to `PyPDF2 on Github <https://github.com/py-pdf/PyPDF2>`_.
 
-
-User Guide
-------------
-
 .. toctree::
    :caption: User Guide
    :maxdepth: 1
@@ -28,8 +24,6 @@ User Guide
    user/cropping-and-transforming
    user/add-watermark
 
-Scripts
--------
 
 .. toctree::
    :caption: Scripts
@@ -37,9 +31,6 @@ Scripts
 
    user/pdfcat
 
-
-API Reference
--------------
 
 .. toctree::
    :caption: API Reference
@@ -56,8 +47,6 @@ API Reference
    modules/Field
    modules/PageRange
 
-About PyPDF2
-------------
 
 .. toctree::
    :caption: About PyPDF2
