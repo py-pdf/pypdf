@@ -14,6 +14,7 @@ User Guide
    :maxdepth: 1
 
    user/installation
+   user/pdfcat
 
 
 API Reference
