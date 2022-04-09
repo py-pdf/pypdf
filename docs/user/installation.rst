@@ -30,3 +30,13 @@ Anaconda
 ========
 
 Anaconda users can `install PyPDF2 via conda-forge <https://anaconda.org/conda-forge/pypdf2>`_
+
+
+Development Version
+===================
+
+In case you want to use the current version under development:
+
+.. code-block:: bash
+
+  pip install git+https://github.com/py-pdf/PyPDF2.git
