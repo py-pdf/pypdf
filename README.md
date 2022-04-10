@@ -31,11 +31,10 @@ pip install PyPDF2
 ```python
 from PyPDF2 import PdfFileReader
 
-with open("Resources/crazyones.pdf", "rb") as fp:
-    reader = PdfFileReader(fp)
-    number_of_pages = reader.getNumPages()
-    page = reader.pages[0]
-    text = page.extractText()
+reader = PdfFileReader("example.pdf")
+number_of_pages = reader.numPages
+page = reader.pages[0]
+text = page.extractText()
 ```
 
 PyPDF2 can do a lot more, e.g. splitting, merging, reading and creating
