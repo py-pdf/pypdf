@@ -40,8 +40,7 @@ text = page.extractText()
 PyPDF2 can do a lot more, e.g. splitting, merging, reading and creating
 annotations, decrypting and encrypting, and more.
 
-Please see [the documentation](https://pypdf2.readthedocs.io/en/latest/),
-[`Sample_Code`](https://github.com/py-pdf/PyPDF2/tree/master/Sample_Code)
+Please see [the documentation](https://pypdf2.readthedocs.io/en/latest/)
 and [`Scripts`](https://github.com/py-pdf/PyPDF2/tree/master/Scripts) for
 more usage examples!
 

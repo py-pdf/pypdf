@@ -13,5 +13,5 @@ when changes to PyPDF2 are made, we keep them in mind.
 
 (This folder is available through GitHub only)
 
-Feel free to add any type of PDF file or sample code,
+Feel free to add any type of PDF file
 either by including it in a pull request on GitHub
