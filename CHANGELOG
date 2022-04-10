@@ -51,6 +51,20 @@ Patch release 1.27.2, 2022-04-09
   PyPDF2. It was removed by accident in 1.27.0, but might get removed with 2.0.0
   See https://github.com/py-pdf/PyPDF2/discussions/718 for discussion
 
+Patch release 1.27.3, 2022-04-10
+
+- PKG: Make Tests not a subpackage (#728)
+- BUG: Fix ASCII85Decode.decode assertion (#729)
+- BUG: Error in Chinese character encoding (#463)
+- BUG: Code duplication in Scripts/2-up.py
+- ROBUST: Guard 'obj.writeToStream' with 'if obj is not None'
+- ROBUST: Ignore a /Prev entry with the value 0 in the trailer 
+- MAINT: Remove Sample_Code (#726)
+- TST: Close file handle in test_writer (#722)
+- TST: Fix test_get_images (#730)
+- DEV: Make tox use pytest and add more Python versions (#721)
+- DOC: Many (#720, #723-725, #469)
+
 Version 1.26.0, 2016-05-18
 --------------------------
 
