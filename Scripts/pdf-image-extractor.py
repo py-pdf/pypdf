@@ -8,15 +8,9 @@ http://stackoverflow.com/questions/2693820/extract-images-from-pdf-without-resam
 import sys
 import PyPDF2
 from PyPDF2.filters import _xobj_to_image
-from PIL import Image
 
-if len(sys.argv) != 2:
-    print("\nUsage: python {} input_file\n".format(sys.argv[0]))
-    sys.exit(1)
 
-pdf = sys.argv[1]
-
-if __name__ == "__main__":
+def main(pdf: str):
     reader = PyPDF2.PdfFileReader(open(pdf, "rb"))
     page = reader.pages[30]
 
@@ -33,3 +27,11 @@ if __name__ == "__main__":
     else:
         print("No image found.")
 
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("\nUsage: python {} input_file\n".format(sys.argv[0]))
+        sys.exit(1)
+
+    pdf = sys.argv[1]
+    main(pdf)
