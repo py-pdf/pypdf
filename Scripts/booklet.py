@@ -16,13 +16,13 @@ import argparse
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('input', type=argparse.FileType('rb'))
-    parser.add_argument('output')
+    parser.add_argument("input", type=argparse.FileType("rb"))
+    parser.add_argument("output")
     args = parser.parse_args()
 
     reader = PyPDF2.PdfFileReader(args.input)
     numPages = reader.getNumPages()
-    print('Pages in file:', numPages)
+    print("Pages in file:", numPages)
 
     pagesPerSheet = 4
     virtualPages = (numPages + pagesPerSheet - 1) // pagesPerSheet * pagesPerSheet
@@ -31,16 +31,19 @@ def main():
     mb = firstPage.mediaBox
     pageWidth = 2 * mb.getWidth()
     pageHeight = mb.getHeight()
-    print('Medium size:', '{}x{}'.format(pageWidth, pageHeight))
+    print("Medium size:", "{}x{}".format(pageWidth, pageHeight))
 
     writer = PyPDF2.PdfFileWriter()
 
     def scale(page):
-        return min(mb.getWidth() / page.mediaBox.getWidth(), mb.getHeight() / page.mediaBox.getHeight())
+        return min(
+            mb.getWidth() / page.mediaBox.getWidth(),
+            mb.getHeight() / page.mediaBox.getHeight(),
+        )
 
     def mergePage(dst, src, xOffset):
         pageScale = scale(src)
-        print('scaling by', pageScale)
+        print("scaling by", pageScale)
         dx = (mb.getWidth() - pageScale * src.mediaBox.getWidth()) / 2
         dy = (mb.getHeight() - pageScale * src.mediaBox.getHeight()) / 2
         dst.mergeScaledTranslatedPage(src, scale(src), xOffset + dx, dy)
@@ -48,7 +51,7 @@ def main():
     def mergePageByNumber(dstPage, pageNumber, xOffset):
         if pageNumber >= numPages:
             return
-        print('merging page', pageNumber, 'with offset', xOffset)
+        print("merging page", pageNumber, "with offset", xOffset)
         page = reader.getPage(pageNumber)
         mergePage(dstPage, page, xOffset)
 
@@ -60,8 +63,8 @@ def main():
         mergePageByNumber(page, i, offsets[0])
         mergePageByNumber(page, virtualPages - i - 1, offsets[1])
 
-    writer.write(open(args.output, 'wb'))
+    writer.write(open(args.output, "wb"))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

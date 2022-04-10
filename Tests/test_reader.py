@@ -122,32 +122,35 @@ def test_get_images(src, nb_images):
     ],
 )
 def test_get_images_raw(strict, with_prev_0, should_fail):
-    pdf_data = b"%%PDF-1.7\n" \
-               b"1 0 obj << /Count 1 /Kids [4 0 R] /Type /Pages >> endobj\n" \
-               b"2 0 obj << >> endobj\n" \
-               b"3 0 obj << >> endobj\n" \
-               b"4 0 obj << /Contents 3 0 R /CropBox [0.0 0.0 2550.0 3508.0]" \
-               b" /MediaBox [0.0 0.0 2550.0 3508.0] /Parent 1 0 R" \
-               b" /Resources << /Font << >> >>" \
-               b" /Rotate 0 /Type /Page >> endobj\n" \
-               b"5 0 obj << /Pages 1 0 R /Type /Catalog >> endobj\n" \
-               b"xref 1 5\n" \
-               b"%010d 00000 n\n" \
-               b"%010d 00000 n\n" \
-               b"%010d 00000 n\n" \
-               b"%010d 00000 n\n" \
-               b"%010d 00000 n\n" \
-               b"trailer << %s/Root 5 0 R /Size 6 >>\n" \
-               b"startxref %d\n" \
-               b"%%%%EOF"
-    pdf_data = pdf_data % (pdf_data.find(b"1 0 obj"),
-                           pdf_data.find(b"2 0 obj"),
-                           pdf_data.find(b"3 0 obj"),
-                           pdf_data.find(b"4 0 obj"),
-                           pdf_data.find(b"5 0 obj"),
-                           b"/Prev 0 " if with_prev_0 else b"",
-                           pdf_data.find(b"xref"),
-                           )
+    pdf_data = (
+        b"%%PDF-1.7\n"
+        b"1 0 obj << /Count 1 /Kids [4 0 R] /Type /Pages >> endobj\n"
+        b"2 0 obj << >> endobj\n"
+        b"3 0 obj << >> endobj\n"
+        b"4 0 obj << /Contents 3 0 R /CropBox [0.0 0.0 2550.0 3508.0]"
+        b" /MediaBox [0.0 0.0 2550.0 3508.0] /Parent 1 0 R"
+        b" /Resources << /Font << >> >>"
+        b" /Rotate 0 /Type /Page >> endobj\n"
+        b"5 0 obj << /Pages 1 0 R /Type /Catalog >> endobj\n"
+        b"xref 1 5\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"trailer << %s/Root 5 0 R /Size 6 >>\n"
+        b"startxref %d\n"
+        b"%%%%EOF"
+    )
+    pdf_data = pdf_data % (
+        pdf_data.find(b"1 0 obj"),
+        pdf_data.find(b"2 0 obj"),
+        pdf_data.find(b"3 0 obj"),
+        pdf_data.find(b"4 0 obj"),
+        pdf_data.find(b"5 0 obj"),
+        b"/Prev 0 " if with_prev_0 else b"",
+        pdf_data.find(b"xref"),
+    )
     pdf_stream = io.BytesIO(pdf_data)
     if should_fail:
         with pytest.raises(PyPDF2.pdf.utils.PdfReadError):
