@@ -5,10 +5,9 @@ You can extract text from a PDF like this:
 ```python
 from PyPDF2 import PdfFileReader
 
-with open("example.pdf", "rb") as fp:
-    reader = PdfFileReader(fp)
-    pageObj = reader.pages[0]
-    print(pageObj.extractText())
+reader = PdfFileReader("example.pdf")
+page = reader.pages[0]
+print(page.extractText())
 ```
 
 ## Why Text Extraction is hard

@@ -5,10 +5,10 @@ from PyPDF2 import PdfFileWriter, PdfFileReader
 
 
 # Read the watermark
-watermark = PdfFileReader(open("watermark.pdf", "rb"))
+watermark = PdfFileReader("watermark.pdf")
 
 # Read the page without watermark
-reader = PdfFileReader(open("example.pdf", "rb"))
+reader = PdfFileReader("example.pdf")
 page = reader.pages[0]
 
 # Add the watermark to the page
