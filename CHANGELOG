@@ -39,11 +39,17 @@ Miscallenious:
 
 You can see the full changelog at: https://github.com/py-pdf/PyPDF2/compare/1.26.0...1.27.0
 
-Intermediate release 1.27.1, 2022-04-08
+Patch release 1.27.1, 2022-04-08
 
 - Fixed project links on PyPI page after migration from mstamy2
   to MartinThoma to the py-pdf organization on GitHub
 - Documentation is now at https://pypdf2.readthedocs.io/en/latest/
+
+Patch release 1.27.2, 2022-04-09
+
+- Add Scripts (including `pdfcat`), Resources, Tests, and Sample_Code back to
+  PyPDF2. It was removed by accident in 1.27.0, but might get removed with 2.0.0
+  See https://github.com/py-pdf/PyPDF2/discussions/718 for discussion
 
 Version 1.26.0, 2016-05-18
 --------------------------

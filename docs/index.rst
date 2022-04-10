@@ -6,20 +6,37 @@
 Welcome to PyPDF2
 =================
 
+PyPDF2 is a `free <https://en.wikipedia.org/wiki/Free_software>`_ and open
+source pure-python PDF library capable of splitting,
+merging, cropping, and transforming the pages of PDF files. It can also add
+custom data, viewing options, and passwords to PDF files.
+PyPDF2 can retrieve text and metadata from PDFs as well.
 
-User Guide
-------------
+You can contribute to `PyPDF2 on Github <https://github.com/py-pdf/PyPDF2>`_.
 
 .. toctree::
-   :maxdepth: 2
+   :caption: User Guide
+   :maxdepth: 1
 
    user/installation
+   user/metadata
+   user/extract-text
+   user/encryption-decryption
+   user/merging-pdfs
+   user/cropping-and-transforming
+   user/add-watermark
 
-API Reference
--------------
 
 .. toctree::
-   :maxdepth: 2
+   :caption: Scripts
+   :maxdepth: 1
+
+   user/pdfcat
+
+
+.. toctree::
+   :caption: API Reference
+   :maxdepth: 1
 
    modules/PdfFileReader
    modules/PdfFileMerger
@@ -30,9 +47,16 @@ API Reference
    modules/Destination
    modules/RectangleObject
    modules/Field
+   modules/PageRange
 
 
+.. toctree::
+   :caption: About PyPDF2
+   :maxdepth: 1
 
+   user/history
+   user/comparisons
+   user/faq
 
 
 

@@ -28,9 +28,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-"""
-Implementation of stream filters for PDF.
-"""
+"""Implementation of stream filters for PDF."""
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
@@ -310,7 +308,6 @@ class ASCII85Decode(object):
                         group[2] * (85**2) + \
                         group[3] * 85 + \
                         group[4]
-                    # Can represent values between 0 and 2^32 - 1
                     assert b <= (2**32 - 1)
                     c4 = chr((b >> 0) % 256)
                     c3 = chr((b >> 8) % 256)

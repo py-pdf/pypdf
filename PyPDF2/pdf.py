@@ -33,7 +33,6 @@
 
 """
 A pure-Python PDF library with an increasing number of capabilities.
-See README for links to FAQ, documentation, homepage, etc.
 """
 
 __author__ = "Mathieu Fenniak"
@@ -332,12 +331,11 @@ class PdfFileWriter(object):
 
         :param reader: a PdfFileReader object from which to copy page
             annotations to this writer object.  The writer's annots
-        will then be updated
+            will then be updated
         :callback after_page_append (function): Callback function that is invoked after
             each page is appended to the writer. Callback signature:
-
-            :param writer_pageref (PDF page reference): Reference to the page
-                appended to the writer.
+        :param writer_pageref (PDF page reference): Reference to the page
+            appended to the writer.
         """
         # Get page count from writer and reader
         reader_num_pages = reader.getNumPages()
@@ -375,7 +373,7 @@ class PdfFileWriter(object):
         Copy the reader document root to the writer.
 
         :param reader:  PdfFileReader from the document root should be copied.
-        :callback after_page_append
+        :callback after_page_append:
         '''
         self._root_object = reader.trailer['/Root']
 
@@ -469,7 +467,7 @@ class PdfFileWriter(object):
         # copying in a new copy of the page object.
         for objIndex in range(len(self._objects)):
             obj = self._objects[objIndex]
-            if isinstance(obj, PageObject) and obj.indirectRef != None:
+            if isinstance(obj, PageObject) and obj.indirectRef is not None:
                 data = obj.indirectRef
                 if data.pdf not in externalReferenceMap:
                     externalReferenceMap[data.pdf] = {}
@@ -487,20 +485,22 @@ class PdfFileWriter(object):
         stream.write(self._header + b_("\n"))
         stream.write(b_("%\xE2\xE3\xCF\xD3\n"))
         for i in range(len(self._objects)):
-            idnum = (i + 1)
             obj = self._objects[i]
-            object_positions.append(stream.tell())
-            stream.write(b_(str(idnum) + " 0 obj\n"))
-            key = None
-            if hasattr(self, "_encrypt") and idnum != self._encrypt.idnum:
-                pack1 = struct.pack("<i", i + 1)[:3]
-                pack2 = struct.pack("<i", 0)[:2]
-                key = self._encrypt_key + pack1 + pack2
-                assert len(key) == (len(self._encrypt_key) + 5)
-                md5_hash = md5(key).digest()
-                key = md5_hash[:min(16, len(self._encrypt_key) + 5)]
-            obj.writeToStream(stream, key)
-            stream.write(b_("\nendobj\n"))
+            # If the obj is None we can't write anything
+            if obj is not None:
+                idnum = (i + 1)
+                object_positions.append(stream.tell())
+                stream.write(b_(str(idnum) + " 0 obj\n"))
+                key = None
+                if hasattr(self, "_encrypt") and idnum != self._encrypt.idnum:
+                    pack1 = struct.pack("<i", i + 1)[:3]
+                    pack2 = struct.pack("<i", 0)[:2]
+                    key = self._encrypt_key + pack1 + pack2
+                    assert len(key) == (len(self._encrypt_key) + 5)
+                    md5_hash = md5(key).digest()
+                    key = md5_hash[:min(16, len(self._encrypt_key) + 5)]
+                obj.writeToStream(stream, key)
+                stream.write(b_("\nendobj\n"))
 
         # xref table
         xref_location = stream.tell()
@@ -969,15 +969,25 @@ class PdfFileWriter(object):
         :param str fit: Page fit or 'zoom' option (see below). Additional arguments may need
             to be supplied. Passing ``None`` will be read as a null value for that coordinate.
 
-        Valid zoom arguments (see Table 8.2 of the PDF 1.7 reference for details):
-             /Fit       No additional arguments
-             /XYZ       [left] [top] [zoomFactor]
-             /FitH      [top]
-             /FitV      [left]
-             /FitR      [left] [bottom] [right] [top]
-             /FitB      No additional arguments
-             /FitBH     [top]
-             /FitBV     [left]
+    .. list-table:: Valid ``zoom`` arguments (see Table 8.2 of the PDF 1.7 reference for details)
+       :widths: 50 200
+
+       * - /Fit
+         - No additional arguments
+       * - /XYZ
+         - [left] [top] [zoomFactor]
+       * - /FitH
+         - [top]
+       * - /FitV
+         - [left]
+       * - /FitR
+         - [left] [bottom] [right] [top]
+       * - /FitB
+         - No additional arguments
+       * - /FitBH
+         - [top]
+       * - /FitBV
+         - [left]
         """
 
         pageLink = self.getObject(self._pages)['/Kids'][pagenum]
@@ -1045,14 +1055,23 @@ class PdfFileWriter(object):
 
         :param str layout: The page layout to be used
 
-        Valid layouts are:
-             /NoLayout        Layout explicitly not specified
-             /SinglePage      Show one page at a time
-             /OneColumn       Show one column at a time
-             /TwoColumnLeft   Show pages in two columns, odd-numbered pages on the left
-             /TwoColumnRight  Show pages in two columns, odd-numbered pages on the right
-             /TwoPageLeft     Show two pages at a time, odd-numbered pages on the left
-             /TwoPageRight    Show two pages at a time, odd-numbered pages on the right
+        .. list-table:: Valid ``layout`` arguments
+           :widths: 50 200
+
+           * - /NoLayout
+             - Layout explicitly not specified
+           * - /SinglePage
+             - Show one page at a time
+           * - /OneColumn
+             - Show one column at a time
+           * - /TwoColumnLeft
+             - Show pages in two columns, odd-numbered pages on the left
+           * - /TwoColumnRight
+             - Show pages in two columns, odd-numbered pages on the right
+           * - /TwoPageLeft
+             - Show two pages at a time, odd-numbered pages on the left
+           * - /TwoPageRight
+             - Show two pages at a time, odd-numbered pages on the right
         """
         if not isinstance(layout, NameObject):
             if layout not in self._valid_layouts:
@@ -1086,13 +1105,21 @@ class PdfFileWriter(object):
 
         :param str mode: The page mode to use.
 
-        Valid modes are:
-            /UseNone         Do not show outlines or thumbnails panels
-            /UseOutlines     Show outlines (aka bookmarks) panel
-            /UseThumbs       Show page thumbnails panel
-            /FullScreen      Fullscreen view
-            /UseOC           Show Optional Content Group (OCG) panel
-            /UseAttachments  Show attachments panel
+        .. list-table:: Valid ``mode`` arguments
+           :widths: 50 200
+
+           * - /UseNone
+             - Do not show outlines or thumbnails panels
+           * - /UseOutlines
+             - Show outlines (aka bookmarks) panel
+           * - /UseThumbs
+             - Show page thumbnails panel
+           * - /FullScreen
+             - Fullscreen view
+           * - /UseOC
+             - Show Optional Content Group (OCG) panel
+           * - /UseAttachments
+             - Show attachments panel
         """
         if not isinstance(mode, NameObject):
             if mode not in self._valid_modes:
@@ -1696,8 +1723,8 @@ class PdfFileReader(object):
         else:
             warnings.warn("Object %d %d not defined."%(indirectReference.idnum,
                         indirectReference.generation), utils.PdfReadWarning)
-            #if self.strict:
-            raise utils.PdfReadError("Could not find object.")
+            if self.strict:
+                raise utils.PdfReadError("Could not find object.")
         self.cacheIndirectObject(indirectReference.generation,
                     indirectReference.idnum, retval)
         return retval
@@ -1946,6 +1973,15 @@ class PdfFileReader(object):
                 else:
                     break
             else:
+                # some PDFs have /Prev=0 in the trailer, instead of no /Prev
+                if startxref == 0:
+                    if self.strict:
+                        raise utils.PdfReadError("/Prev=0 in the trailer (try"
+                                                 " opening with strict=False)")
+                    else:
+                        warnings.warn("/Prev=0 in the trailer - assuming there"
+                                      " is no previous xref table")
+                        break
                 # bad xref character at startxref.  Let's see if we can find
                 # the xref table nearby, as we've observed this error with an
                 # off-by-one before.
