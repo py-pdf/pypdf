@@ -6,9 +6,14 @@
 # PyPDF2
 
 PyPDF2 is a free and open-source pure-python PDF library capable of splitting,
-merging, cropping, and transforming the pages of PDF files. It can also add
-custom data, viewing options, and passwords to PDF files.
-PyPDF2 can retrieve text and metadata from PDFs as well.
+[merging](https://pypdf2.readthedocs.io/en/latest/user/merging-pdfs.html),
+[cropping, and transforming](https://pypdf2.readthedocs.io/en/latest/user/cropping-and-transforming.html)
+the pages of PDF files. It can also add
+custom data, viewing options, and
+[passwords](https://pypdf2.readthedocs.io/en/latest/user/encryption-decryption.html)
+to PDF files. PyPDF2 can
+[retrieve text](https://pypdf2.readthedocs.io/en/latest/user/extract-text.html)
+and metadata from PDFs as well.
 
 
 ## Installation
