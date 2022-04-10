@@ -2,6 +2,7 @@ import io
 import os
 import pytest
 import PyPDF2
+from PyPDF2.filters import decodeStreamData
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -107,7 +108,9 @@ def test_get_images(src, nb_images):
                     mode = "RGB"
                 else:
                     mode = "P"
-
+                with open("out-example", "wb") as fp:
+                    decoded = decodeStreamData(xObject[obj])
+                    fp.write(decoded)
                 filename = None
                 if "/Filter" in xObject[obj]:
                     if xObject[obj]["/Filter"] == "/FlateDecode":
@@ -155,7 +158,7 @@ def test_get_images(src, nb_images):
         (False, False, False),
     ],
 )
-def test_get_images(strict, with_prev_0, should_fail):
+def test_get_images_raw(strict, with_prev_0, should_fail):
     pdf_data = b"%%PDF-1.7\n" \
                b"1 0 obj << /Count 1 /Kids [4 0 R] /Type /Pages >> endobj\n" \
                b"2 0 obj << >> endobj\n" \
