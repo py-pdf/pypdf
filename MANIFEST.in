@@ -1,1 +1,6 @@
 include CHANGELOG
+include LICENSE
+recursive-include Resources *
+recursive-include Sample_Code *
+recursive-include Scripts *
+recursive-include Tests *
