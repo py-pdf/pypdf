@@ -420,3 +420,48 @@ def decodeStreamData(stream):
                 # unsupported filter
                 raise NotImplementedError("unsupported filter %s" % filterType)
     return data
+
+
+def _xobj_to_image(x_object_obj):
+    """
+    Users need to have the pillow package installed.
+
+    It's unclear if PyPDF2 will keep this function here, hence it's private.
+    It might get removed at any point.
+
+    :return: Tuple[file extension, bytes]
+    """
+    import io
+    from PIL import Image
+
+    size = (x_object_obj["/Width"], x_object_obj["/Height"])
+    data = x_object_obj.getData()
+    if x_object_obj["/ColorSpace"] == "/DeviceRGB":
+        mode = "RGB"
+    else:
+        mode = "P"
+    extension = None
+    if "/Filter" in x_object_obj:
+        if x_object_obj["/Filter"] == "/FlateDecode":
+            extension = ".png"
+            img = Image.frombytes(mode, size, data)
+            if "/SMask" in x_object_obj:  # add alpha channel
+                alpha = Image.frombytes("L", size, x_object_obj["/SMask"].getData())
+                img.putalpha(alpha)
+            img_byte_arr = io.BytesIO()
+            img.save(img_byte_arr, format="PNG")
+            data = img_byte_arr.getvalue()
+        elif x_object_obj["/Filter"] == "/DCTDecode":
+            extension = ".jpg"
+        elif x_object_obj["/Filter"] == "/JPXDecode":
+            extension = ".jp2"
+        elif x_object_obj["/Filter"] == "/CCITTFaxDecode":
+            extension = ".tiff"
+    else:
+        extension = ".png"
+        img = Image.frombytes(mode, size, data)
+        img_byte_arr = io.BytesIO()
+        img.save(img_byte_arr, format="PNG")
+        data = img_byte_arr.getvalue()
+
+    return extension, data
