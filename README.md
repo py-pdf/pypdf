@@ -13,7 +13,9 @@ custom data, viewing options, and
 [passwords](https://pypdf2.readthedocs.io/en/latest/user/encryption-decryption.html)
 to PDF files. PyPDF2 can
 [retrieve text](https://pypdf2.readthedocs.io/en/latest/user/extract-text.html)
-and metadata from PDFs as well.
+and
+[metadata](https://pypdf2.readthedocs.io/en/latest/user/metadata.html)
+from PDFs as well.
 
 
 ## Installation
