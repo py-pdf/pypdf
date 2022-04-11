@@ -28,15 +28,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-"""
-Implementation of stream filters for PDF.
-"""
+"""Implementation of stream filters for PDF."""
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import math
 
-from .utils import PdfReadError, ord_, chr_, paethPredictor
+from .utils import PdfReadError, ord_, paethPredictor
 from sys import version_info
 if version_info < ( 3, 0 ):
     from cStringIO import StringIO
@@ -310,7 +308,7 @@ class ASCII85Decode(object):
                         group[2] * (85**2) + \
                         group[3] * 85 + \
                         group[4]
-                    assert b < (2**32 - 1)
+                    assert b <= (2**32 - 1)
                     c4 = chr((b >> 0) % 256)
                     c3 = chr((b >> 8) % 256)
                     c2 = chr((b >> 16) % 256)
@@ -349,20 +347,20 @@ class DCTDecode(object):
     def decode(data, decodeParms=None):
         return data
     decode = staticmethod(decode)
-    
+
 class JPXDecode(object):
     def decode(data, decodeParms=None):
         return data
     decode = staticmethod(decode)
-    
-class CCITTFaxDecode(object):   
+
+class CCITTFaxDecode(object):
     def decode(data, decodeParms=None, height=0):
         if decodeParms:
             if decodeParms.get("/K", 1) == -1:
                 CCITTgroup = 4
             else:
                 CCITTgroup = 3
-        
+
         width = decodeParms["/Columns"]
         imgSize = len(data)
         tiff_header_struct = '<' + '2s' + 'h' + 'l' + 'h' + 'hhll' * 8 + 'h'
@@ -381,11 +379,11 @@ class CCITTFaxDecode(object):
                            279, 4, 1, imgSize,  # StripByteCounts, LONG, 1, size of image
                            0  # last IFD
                            )
-        
+
         return tiffHeader + data
-    
+
     decode = staticmethod(decode)
-    
+
 def decodeStreamData(stream):
     from .generic import NameObject
     filters = stream.get("/Filter", ())
@@ -422,3 +420,48 @@ def decodeStreamData(stream):
                 # unsupported filter
                 raise NotImplementedError("unsupported filter %s" % filterType)
     return data
+
+
+def _xobj_to_image(x_object_obj):
+    """
+    Users need to have the pillow package installed.
+
+    It's unclear if PyPDF2 will keep this function here, hence it's private.
+    It might get removed at any point.
+
+    :return: Tuple[file extension, bytes]
+    """
+    import io
+    from PIL import Image
+
+    size = (x_object_obj["/Width"], x_object_obj["/Height"])
+    data = x_object_obj.getData()
+    if x_object_obj["/ColorSpace"] == "/DeviceRGB":
+        mode = "RGB"
+    else:
+        mode = "P"
+    extension = None
+    if "/Filter" in x_object_obj:
+        if x_object_obj["/Filter"] == "/FlateDecode":
+            extension = ".png"
+            img = Image.frombytes(mode, size, data)
+            if "/SMask" in x_object_obj:  # add alpha channel
+                alpha = Image.frombytes("L", size, x_object_obj["/SMask"].getData())
+                img.putalpha(alpha)
+            img_byte_arr = io.BytesIO()
+            img.save(img_byte_arr, format="PNG")
+            data = img_byte_arr.getvalue()
+        elif x_object_obj["/Filter"] == "/DCTDecode":
+            extension = ".jpg"
+        elif x_object_obj["/Filter"] == "/JPXDecode":
+            extension = ".jp2"
+        elif x_object_obj["/Filter"] == "/CCITTFaxDecode":
+            extension = ".tiff"
+    else:
+        extension = ".png"
+        img = Image.frombytes(mode, size, data)
+        img_byte_arr = io.BytesIO()
+        img.save(img_byte_arr, format="PNG")
+        data = img_byte_arr.getvalue()
+
+    return extension, data

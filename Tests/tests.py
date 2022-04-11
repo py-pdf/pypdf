@@ -17,6 +17,17 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
 sys.path.append(PROJECT_ROOT)
 
 
+if sys.version_info[0] < 3:
+
+    def u_(s):
+        return s.decode("utf-8")
+
+else:
+
+    def u_(s):
+        return s
+
+
 class PdfReaderTestCases(unittest.TestCase):
     def test_PdfReaderFileLoad(self):
         """
