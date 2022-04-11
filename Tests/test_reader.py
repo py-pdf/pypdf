@@ -1,7 +1,7 @@
 import io
 import os
 import pytest
-import PyPDF2
+import PyPDF2.utils
 from PyPDF2.filters import decodeStreamData, _xobj_to_image
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -157,3 +157,15 @@ def test_get_images_raw(strict, with_prev_0, should_fail):
             PyPDF2.PdfFileReader(pdf_stream, strict=strict)
     else:
         PyPDF2.PdfFileReader(pdf_stream, strict=strict)
+
+
+@pytest.mark.xfail(
+    reason=(
+        "It's still broken - and unclear what the issue is. "
+        "Help would be appreciated!"
+    )
+)
+def test_issue297():
+    path = os.path.join(RESOURCE_ROOT, "issue-297.pdf")
+    reader = PyPDF2.PdfFileReader(path, "rb")
+    reader.getPage(0)
