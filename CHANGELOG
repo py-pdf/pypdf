@@ -30,7 +30,7 @@ Developer Experience Improvements (DEV):
  - Pre commit: Developers can now `pre-commit install` to avoid tiny issues
                like trailing whitespaces
 
-Miscallenious:
+Miscellaneous:
 
  - Add the LICENSE file to the distributed packages (#288)
  - Use setuptools instead of distutils (#599)
