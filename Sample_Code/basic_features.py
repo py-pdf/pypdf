@@ -27,7 +27,7 @@ output.addPage(page4)
 page5 = input1.getPage(4)
 page5.mediaBox.upperRight = (
     page5.mediaBox.getUpperRight_x() / 2,
-    page5.mediaBox.getUpperRight_y() / 2
+    page5.mediaBox.getUpperRight_y() / 2,
 )
 output.addPage(page5)
 

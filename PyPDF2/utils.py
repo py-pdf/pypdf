@@ -43,7 +43,7 @@ except ImportError:  # Py3
 xrange_fn = getattr(builtins, "xrange", range)
 _basestring = getattr(builtins, "basestring", str)
 
-bytes_type = type(bytes()) # Works the same in Python 2.X and 3.X
+bytes_type = type(bytes())  # Works the same in Python 2.X and 3.X
 string_type = getattr(builtins, "unicode", str)
 int_types = (int, long) if sys.version_info[0] < 3 else (int,)
 
@@ -64,9 +64,9 @@ def isBytes(b):
     return isinstance(b, bytes_type)
 
 
-#custom implementation of warnings.formatwarning
+# custom implementation of warnings.formatwarning
 def formatWarning(message, category, filename, lineno, line=None):
-    file = filename.replace("/", "\\").rsplit("\\", 1)[1] # find the file name
+    file = filename.replace("/", "\\").rsplit("\\", 1)[1]  # find the file name
     return "%s: %s [%s:%s]\n" % (category.__name__, message, file, lineno)
 
 
@@ -102,18 +102,18 @@ def skipOverWhitespace(stream):
     one whitespace character was read.
     """
     tok = WHITESPACES[0]
-    cnt = 0;
+    cnt = 0
     while tok in WHITESPACES:
         tok = stream.read(1)
-        cnt+=1
-    return (cnt > 1)
+        cnt += 1
+    return cnt > 1
 
 
 def skipOverComment(stream):
     tok = stream.read(1)
     stream.seek(-1, 1)
-    if tok == b_('%'):
-        while tok not in (b_('\n'), b_('\r')):
+    if tok == b_("%"):
+        while tok not in (b_("\n"), b_("\r")):
             tok = stream.read(1)
 
 
@@ -123,7 +123,7 @@ def readUntilRegex(stream, regex, ignore_eof=False):
     Raise PdfStreamError on premature end-of-file.
     :param bool ignore_eof: If true, ignore end-of-line and return immediately
     """
-    name = b_('')
+    name = b_("")
     while True:
         tok = stream.read(16)
         if not tok:
@@ -134,8 +134,8 @@ def readUntilRegex(stream, regex, ignore_eof=False):
                 raise PdfStreamError("Stream has ended unexpectedly")
         m = regex.search(tok)
         if m is not None:
-            name += tok[:m.start()]
-            stream.seek(m.start()-len(tok), 1)
+            name += tok[: m.start()]
+            stream.seek(m.start() - len(tok), 1)
             break
         name += tok
     return name
@@ -183,10 +183,10 @@ def RC4_encrypt(key, plaintext):
 
 
 def matrixMultiply(a, b):
-    return [[sum([float(i)*float(j)
-                  for i, j in zip(row, col)]
-                ) for col in zip(*b)]
-            for row in a]
+    return [
+        [sum([float(i) * float(j) for i, j in zip(row, col)]) for col in zip(*b)]
+        for row in a
+    ]
 
 
 def markLocation(stream):
@@ -194,9 +194,9 @@ def markLocation(stream):
     # Mainly for debugging
     RADIUS = 5000
     stream.seek(-RADIUS, 1)
-    outputDoc = open('PyPDF2_pdfLocation.txt', 'w')
+    outputDoc = open("PyPDF2_pdfLocation.txt", "w")
     outputDoc.write(stream.read(RADIUS))
-    outputDoc.write('HERE')
+    outputDoc.write("HERE")
     outputDoc.write(stream.read(RADIUS))
     outputDoc.close()
     stream.seek(-RADIUS, 1)
@@ -223,8 +223,11 @@ class PdfStreamError(PdfReadError):
 
 
 if sys.version_info[0] < 3:
+
     def b_(s):
         return s
+
+
 else:
     B_CACHE = {}
 
@@ -235,7 +238,7 @@ else:
         if type(s) == bytes:
             return s
         else:
-            r = s.encode('latin-1')
+            r = s.encode("latin-1")
             if len(s) < 2:
                 bc[s] = r
             return r
@@ -243,7 +246,7 @@ else:
 
 def u_(s):
     if sys.version_info[0] < 3:
-        return unicode(s, 'unicode_escape')
+        return unicode(s, "unicode_escape")
     else:
         return s
 
@@ -253,7 +256,7 @@ def str_(b):
         return b
     else:
         if type(b) == bytes:
-            return b.decode('latin-1')
+            return b.decode("latin-1")
         else:
             return b
 
@@ -281,18 +284,19 @@ def barray(b):
 
 def hexencode(b):
     if sys.version_info[0] < 3:
-        return b.encode('hex')
+        return b.encode("hex")
     else:
         import codecs
-        coder = codecs.getencoder('hex_codec')
+
+        coder = codecs.getencoder("hex_codec")
         return coder(b)[0]
 
 
 def hexStr(num):
-    return hex(num).replace('L', '')
+    return hex(num).replace("L", "")
 
 
-WHITESPACES = [b_(x) for x in [' ', '\n', '\r', '\t', '\x00']]
+WHITESPACES = [b_(x) for x in [" ", "\n", "\r", "\t", "\x00"]]
 
 
 def paethPredictor(left, up, up_left):
