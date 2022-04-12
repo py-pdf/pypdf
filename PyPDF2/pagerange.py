@@ -83,7 +83,8 @@ class PageRange(object):
             self._slice = slice(*[int(g) if g else None
                                   for g in m.group(4, 6, 8)])
 
-    __init__.__doc__ = __init__.__doc__.format(page_range_help=PAGE_RANGE_HELP)
+    if __init__.__doc__:  # see https://github.com/py-pdf/PyPDF2/issues/737
+        __init__.__doc__ = __init__.__doc__.format(page_range_help=PAGE_RANGE_HELP)
 
     @staticmethod
     def valid(input):
