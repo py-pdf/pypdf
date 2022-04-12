@@ -41,12 +41,13 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 __maintainer__ = "Phaseit, Inc."
 __maintainer_email = "PyPDF2@phaseit.net"
 
-import string
 import math
+import string
 import struct
 import sys
 import uuid
 from sys import version_info
+
 if version_info < ( 3, 0 ):
     from cStringIO import StringIO
 else:
@@ -57,13 +58,18 @@ if version_info < ( 3, 0 ):
 else:
     from io import BytesIO
 
-from . import filters
-from . import utils
-import warnings
 import codecs
-from .generic import *
-from .utils import readNonWhitespace, readUntilWhitespace, ConvertFunctionsToVirtualList
-from .utils import isString, b_, u_, ord_, str_, formatWarning
+import warnings
+
+from . import filters, utils
+from .generic import (ArrayObject, BooleanObject, ByteStringObject,
+                      DecodedStreamObject, Destination, DictionaryObject,
+                      Field, FloatObject, IndirectObject, NameObject,
+                      NullObject, NumberObject, RectangleObject, StreamObject,
+                      TextStringObject, TreeObject, createStringObject,
+                      readObject)
+from .utils import (ConvertFunctionsToVirtualList, b_, formatWarning, isString,
+                    ord_, readNonWhitespace, readUntilWhitespace, str_, u_)
 
 if version_info < ( 2, 4 ):
    from sets import ImmutableSet as frozenset
@@ -72,7 +78,6 @@ if version_info < ( 2, 5 ):
     from md5 import md5
 else:
     from hashlib import md5
-import uuid
 
 
 class PdfFileWriter(object):
@@ -406,7 +411,8 @@ class PdfFileWriter(object):
             encryption.  When false, 40bit encryption will be used.  By default,
             this flag is on.
         """
-        import time, random
+        import random
+        import time
         if owner_pwd == None:
             owner_pwd = user_pwd
         if use_128bit:

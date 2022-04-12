@@ -34,15 +34,14 @@ Implementation of generic PDF objects (dictionary, number, string, and so on)
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
-import re
-from .utils import readNonWhitespace, RC4_encrypt, skipOverComment
-from .utils import b_, u_, chr_, ord_
-from .utils import PdfStreamError
-import warnings
-from . import filters
-from . import utils
-import decimal
 import codecs
+import decimal
+import re
+import warnings
+
+from . import filters, utils
+from .utils import (PdfStreamError, RC4_encrypt, b_, chr_, ord_,
+                    readNonWhitespace, skipOverComment, u_)
 
 ObjectPrefix = b_('/<[tf(n%')
 NumberSigns = b_('+-')
@@ -631,7 +630,6 @@ class DictionaryObject(dict, PdfObject):
                     # we found it by looking back one character further.
                     data["__streamdata__"] = data["__streamdata__"][:-1]
                 else:
-                    if debug: print(("E", e, ndstream, debugging.toHex(end)))
                     stream.seek(pos, 0)
                     raise utils.PdfReadError("Unable to find 'endstream' marker after stream at byte %s." % utils.hexStr(stream.tell()))
         else:

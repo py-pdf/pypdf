@@ -43,7 +43,7 @@ jobs:
 
     - name: Test with flake8
       run: |
-        flake8 . --ignore E,F,I,SIM,C,PT,N,ASS,A,P,R,W
+        flake8 . --ignore E,I,SIM,C,PT,N,ASS,A,P,R,W,F401,F841
       if: matrix.python-version != '2.7'
 
     - name: Test with pytest
