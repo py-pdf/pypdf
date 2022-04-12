@@ -1692,18 +1692,10 @@ class PdfFileReader(object):
 
             # override encryption is used for the /Encrypt dictionary
             if not self._override_encryption and self.isEncrypted:
-                # if we don't have the encryption key:
-                if not hasattr(self, '_decryption_key'):
+                if not hasattr(self, "_encryption"):
                     raise utils.PdfReadError("file has not been decrypted")
-                # otherwise, decrypt here...
-                import struct
-                pack1 = struct.pack("<i", indirectReference.idnum)[:3]
-                pack2 = struct.pack("<i", indirectReference.generation)[:2]
-                key = self._decryption_key + pack1 + pack2
-                assert len(key) == (len(self._decryption_key) + 5)
-                md5_hash = md5(key).digest()
-                key = md5_hash[:min(16, len(self._decryption_key) + 5)]
-                retval = self._decryptObject(retval, key)
+                retval = self._encryption.decryptObject(retval, indirectReference.idnum, indirectReference.generation)
+
         else:
             warnings.warn("Object %d %d not defined."%(indirectReference.idnum,
                         indirectReference.generation), utils.PdfReadWarning)
@@ -2082,56 +2074,22 @@ class PdfFileReader(object):
             self._override_encryption = False
 
     def _decrypt(self, password):
-        encrypt = self.trailer['/Encrypt'].getObject()
-        if encrypt['/Filter'] != '/Standard':
-            raise NotImplementedError("only Standard PDF encryption handler is available")
-        if not (encrypt['/V'] in (1, 2)):
-            raise NotImplementedError("only algorithm code 1 and 2 are supported. This PDF uses code %s" % encrypt['/V'])
-        user_password, key = self._authenticateUserPassword(password)
-        if user_password:
-            self._decryption_key = key
-            return 1
-        else:
-            rev = encrypt['/R'].getObject()
-            if rev == 2:
-                keylen = 5
-            else:
-                keylen = encrypt[SA.LENGTH].getObject() // 8
-            key = _alg33_1(password, rev, keylen)
-            real_O = encrypt["/O"].getObject()
-            if rev == 2:
-                userpass = utils.RC4_encrypt(key, real_O)
-            else:
-                val = real_O
-                for i in range(19, -1, -1):
-                    new_key = b_('')
-                    for l in range(len(key)):
-                        new_key += b_(chr(utils.ord_(key[l]) ^ i))
-                    val = utils.RC4_encrypt(new_key, val)
-                userpass = val
-            owner_password, key = self._authenticateUserPassword(userpass)
-            if owner_password:
-                self._decryption_key = key
-                return 2
-        return 0
-
-    def _authenticateUserPassword(self, password):
-        encrypt = self.trailer['/Encrypt'].getObject()
-        rev = encrypt['/R'].getObject()
-        owner_entry = encrypt['/O'].getObject()
-        p_entry = encrypt['/P'].getObject()
-        id_entry = self.trailer['/ID'].getObject()
-        id1_entry = id_entry[0].getObject()
-        real_U = encrypt['/U'].getObject().original_bytes
-        if rev == 2:
-            U, key = _alg34(password, owner_entry, p_entry, id1_entry)
-        elif rev >= 3:
-            U, key = _alg35(password, rev,
-                    encrypt[SA.LENGTH].getObject() // 8, owner_entry,
-                    p_entry, id1_entry,
-                    encrypt.get("/EncryptMetadata", BooleanObject(False)).getObject())
-            U, real_U = U[:16], real_U[:16]
-        return U == real_U, key
+        # already got the KEY
+        if hasattr(self, "_encryption"):
+            return 3
+        from PyPDF2.encryption import Encryption
+        id_entry = self.trailer.get("/ID")
+        id1_entry = id_entry[0].getObject().original_bytes if id_entry else None
+        encryptEntry = self.trailer['/Encrypt'].getObject()
+        encryption = Encryption.read(encryptEntry, id1_entry)
+        u_entry = encryptEntry["/U"].getObject().original_bytes
+        o_entry = encryptEntry["/O"].getObject().original_bytes
+        # maybe password is owner password
+        # TODO: add/modify api to set owner password
+        rr = encryption.decryptPdf(u_entry, o_entry, password, "")
+        if rr > 0:
+            self._encryption = encryption
+        return rr
 
     def getIsEncrypted(self):
         return "/Encrypt" in self.trailer
