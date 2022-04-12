@@ -45,7 +45,7 @@ _basestring = getattr(builtins, "basestring", str)
 
 bytes_type = type(bytes()) # Works the same in Python 2.X and 3.X
 string_type = getattr(builtins, "unicode", str)
-int_types = (int, long) if sys.version_info[0] < 3 else (int,)
+int_types = (int, long) if sys.version_info[0] < 3 else (int,)  # noqa
 
 
 # Make basic type tests more consistent
@@ -130,7 +130,7 @@ def readUntilRegex(stream, regex, ignore_eof=False):
         tok = stream.read(16)
         if not tok:
             # stream has truncated prematurely
-            if ignore_eof == True:
+            if ignore_eof:
                 return name
             else:
                 raise PdfStreamError("Stream has ended unexpectedly")
@@ -252,7 +252,7 @@ else:
 
 def u_(s):
     if sys.version_info[0] < 3:
-        return unicode(s, 'unicode_escape')
+        return unicode(s, 'unicode_escape')  # noqa
     else:
         return s
 

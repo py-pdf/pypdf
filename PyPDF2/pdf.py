@@ -72,7 +72,6 @@ if version_info < ( 2, 5 ):
     from md5 import md5
 else:
     from hashlib import md5
-import uuid
 
 
 class PdfFileWriter(object):
@@ -407,7 +406,7 @@ class PdfFileWriter(object):
             this flag is on.
         """
         import time, random
-        if owner_pwd == None:
+        if owner_pwd is None:
             owner_pwd = user_pwd
         if use_128bit:
             V = 2
@@ -575,7 +574,7 @@ class PdfFileWriter(object):
                 if data.pdf.stream.closed:
                     raise ValueError("I/O operation on closed file: {}".format(data.pdf.stream.name))
                 newobj = externMap.get(data.pdf, {}).get(data.generation, {}).get(data.idnum, None)
-                if newobj == None:
+                if newobj is None:
                     try:
                         newobj = data.pdf.getObject(data)
                         self._objects.append(None) # placeholder
@@ -659,11 +658,11 @@ class PdfFileWriter(object):
 
         outlineRef = self.getOutlineRoot()
 
-        if parent == None:
+        if parent is None:
             parent = outlineRef
 
         parent = parent.getObject()
-        #print parent.__class__.__name__
+        # print parent.__class__.__name__
         parent.addChild(destRef, self)
 
         return destRef
@@ -685,7 +684,7 @@ class PdfFileWriter(object):
 
         outlineRef = self.getOutlineRoot()
 
-        if parent == None:
+        if parent is None:
             parent = outlineRef
 
         parent = parent.getObject()
@@ -726,7 +725,7 @@ class PdfFileWriter(object):
 
         outlineRef = self.getOutlineRoot()
 
-        if parent == None:
+        if parent is None:
             parent = outlineRef
 
         bookmark = TreeObject()
@@ -991,7 +990,7 @@ class PdfFileWriter(object):
         """
 
         pageLink = self.getObject(self._pages)['/Kids'][pagenum]
-        pageDest = self.getObject(self._pages)['/Kids'][pagedest] #TODO: switch for external link
+        pageDest = self.getObject(self._pages)['/Kids'][pagedest] # TODO: switch for external link
         pageRef = self.getObject(pageLink)
 
         if border is not None:
@@ -1015,7 +1014,7 @@ class PdfFileWriter(object):
                 zoomArgs.append(NumberObject(a))
             else:
                 zoomArgs.append(NullObject())
-        dest = Destination(NameObject("/LinkName"), pageDest, NameObject(fit), *zoomArgs) #TODO: create a better name for the link
+        dest = Destination(NameObject("/LinkName"), pageDest, NameObject(fit), *zoomArgs) # TODO: create a better name for the link
         destArray = dest.getDestArray()
 
         lnk = DictionaryObject()
@@ -1159,7 +1158,7 @@ class PdfFileReader(object):
                 try:
                     # It is possible for sys.stderr to be defined as None, most commonly in the case that the script
                     # is being run vida pythonw.exe on Windows. In this case, just swallow the warning.
-                    # See also https://docs.python.org/3/library/sys.html#sys.__stderr__
+                    # See also https://docs.python.org/3/library/sys.html# sys.__stderr__
                     if file is not None:
                         file.write(formatWarning(message, category, filename, lineno, line))
                 except IOError:
@@ -1246,7 +1245,7 @@ class PdfFileReader(object):
             finally:
                 self._override_encryption = False
         else:
-            if self.flattenedPages == None:
+            if self.flattenedPages is None:
                 self._flatten()
             return len(self.flattenedPages)
 
@@ -1266,8 +1265,8 @@ class PdfFileReader(object):
         :rtype: :class:`PageObject<pdf.PageObject>`
         """
         ## ensure that we're not trying to access an encrypted PDF
-        #assert not self.trailer.has_key("/Encrypt")
-        if self.flattenedPages == None:
+        # assert not self.trailer.has_key("/Encrypt")
+        if self.flattenedPages is None:
             self._flatten()
         return self.flattenedPages[pageNumber]
 
@@ -1297,7 +1296,7 @@ class PdfFileReader(object):
                        "/T" : "Field Name", "/TU" : "Alternate Field Name",
                        "/TM" : "Mapping Name", "/Ff" : "Field Flags",
                        "/V" : "Value", "/DV" : "Default Value"}
-        if retval == None:
+        if retval is None:
             retval = {}
             catalog = self.trailer["/Root"]
             # get the AcroForm tree
@@ -1305,7 +1304,7 @@ class PdfFileReader(object):
                 tree = catalog["/AcroForm"]
             else:
                 return None
-        if tree == None:
+        if tree is None:
             return retval
 
         self._checkKids(tree, retval, fileobj)
@@ -1386,7 +1385,7 @@ class PdfFileReader(object):
             :class:`Destinations<PyPDF2.generic.Destination>`.
         :rtype: dict
         """
-        if retval == None:
+        if retval is None:
             retval = {}
             catalog = self.trailer["/Root"]
 
@@ -1398,7 +1397,7 @@ class PdfFileReader(object):
                 if "/Dests" in names:
                     tree = names['/Dests']
 
-        if tree == None:
+        if tree is None:
             return retval
 
         if "/Kids" in tree:
@@ -1414,7 +1413,7 @@ class PdfFileReader(object):
                 if isinstance(val, DictionaryObject) and '/D' in val:
                     val = val['/D']
                 dest = self._buildDestination(key, val)
-                if dest != None:
+                if dest is not None:
                     retval[key] = dest
 
         return retval
@@ -1431,7 +1430,7 @@ class PdfFileReader(object):
 
         :return: a nested list of :class:`Destinations<PyPDF2.generic.Destination>`.
         """
-        if outlines == None:
+        if outlines is None:
             outlines = []
             catalog = self.trailer["/Root"]
 
@@ -1449,7 +1448,7 @@ class PdfFileReader(object):
                     node = lines["/First"]
             self._namedDests = self.getNamedDestinations()
 
-        if node == None:
+        if node is None:
           return outlines
 
         # see if there are any more outlines
@@ -1593,9 +1592,9 @@ class PdfFileReader(object):
             NameObject("/Resources"), NameObject("/MediaBox"),
             NameObject("/CropBox"), NameObject("/Rotate")
             )
-        if inherit == None:
+        if inherit is None:
             inherit = dict()
-        if pages == None:
+        if pages is None:
             self.flattenedPages = []
             catalog = self.trailer["/Root"].getObject()
             pages = catalog["/Pages"].getObject()
@@ -1681,7 +1680,7 @@ class PdfFileReader(object):
         if debug: print(("looking at:", indirectReference.idnum, indirectReference.generation))
         retval = self.cacheGetIndirectObject(indirectReference.generation,
                                                 indirectReference.idnum)
-        if retval != None:
+        if retval is not None:
             return retval
         if indirectReference.generation == 0 and \
                         indirectReference.idnum in self.xref_objStm:
@@ -1757,7 +1756,7 @@ class PdfFileReader(object):
         readNonWhitespace(stream)
         stream.seek(-1, 1)
         if (extra and self.strict):
-            #not a fatal error
+            # not a fatal error
             warnings.warn("Superfluous whitespace found in object header %s %s" % \
                           (idnum, generation), utils.PdfReadWarning)
         return int(idnum), int(generation)
@@ -1830,8 +1829,8 @@ class PdfFileReader(object):
                          self.xrefIndex = num
                          if self.strict:
                             warnings.warn("Xref table not zero-indexed. ID numbers for objects will be corrected.", utils.PdfReadWarning)
-                            #if table not zero indexed, could be due to error from when PDF was created
-                            #which will lead to mismatched indices later on, only warned and corrected if self.strict=True
+                            # if table not zero indexed, could be due to error from when PDF was created
+                            # which will lead to mismatched indices later on, only warned and corrected if self.strict=True
                     firsttime = False
                     readNonWhitespace(stream)
                     stream.seek(-1, 1)
@@ -2004,7 +2003,7 @@ class PdfFileReader(object):
                     continue
                 # no xref table found at specified location
                 raise utils.PdfReadError("Could not find xref table at specified location")
-        #if not zero-indexed, verify that the table is correct; change it if necessary
+        # if not zero-indexed, verify that the table is correct; change it if necessary
         if self.xrefIndex and not self.strict:
             loc = stream.tell()
             for gen in self.xref:
@@ -2018,8 +2017,8 @@ class PdfFileReader(object):
                     if pid == id - self.xrefIndex:
                         self._zeroXref(gen)
                         break
-                    #if not, then either it's just plain wrong, or the non-zero-index is actually correct
-            stream.seek(loc, 0) #return to where it was
+                    # if not, then either it's just plain wrong, or the non-zero-index is actually correct
+            stream.seek(loc, 0) # return to where it was
 
     def _zeroXref(self, generation):
         self.xref[generation] = dict( (k-self.xrefIndex, v) for (k, v) in list(self.xref[generation].items()) )
@@ -2058,7 +2057,7 @@ class PdfFileReader(object):
                     if stream.tell() < 2:
                         raise utils.PdfReadError("EOL marker not found")
                     stream.seek(-2, 1)
-                stream.seek(2 if crlf else 1, 1) #if using CR+LF, go back 2 bytes, else 1
+                stream.seek(2 if crlf else 1, 1) # if using CR+LF, go back 2 bytes, else 1
                 break
             else:
                 if debug: print("  x is neither")
@@ -2160,10 +2159,10 @@ def getRectangle(self, name, defaults):
     retval = self.get(name)
     if isinstance(retval, RectangleObject):
         return retval
-    if retval == None:
+    if retval is None:
         for d in defaults:
             retval = self.get(d)
-            if retval != None:
+            if retval is not None:
                 break
     if isinstance(retval, IndirectObject):
         retval = self.pdf.getObject(retval)
