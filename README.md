@@ -41,7 +41,7 @@ PyPDF2 can do a lot more, e.g. splitting, merging, reading and creating
 annotations, decrypting and encrypting, and more.
 
 Please see [the documentation](https://pypdf2.readthedocs.io/en/latest/)
-and [`Scripts`](https://github.com/py-pdf/PyPDF2/tree/master/Scripts) for
+and [`Scripts`](https://github.com/py-pdf/PyPDF2/tree/main/Scripts) for
 more usage examples!
 
 A lot of questions are asked and answered

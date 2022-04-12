@@ -4,7 +4,7 @@ Representation and utils for ranges of PDF file pages.
 
 Copyright (c) 2014, Steve Witham <switham_github@mac-guyver.com>.
 All rights reserved. This software is available under a BSD license;
-see https://github.com/py-pdf/PyPDF2/blob/master/LICENSE
+see https://github.com/py-pdf/PyPDF2/blob/main/LICENSE
 """
 
 import re

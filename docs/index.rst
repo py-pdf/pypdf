@@ -1,4 +1,4 @@
-.. PyPDF2 documentation master file, created by
+.. PyPDF2 documentation main file, created by
    sphinx-quickstart on Thu Apr  7 20:13:19 2022.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
