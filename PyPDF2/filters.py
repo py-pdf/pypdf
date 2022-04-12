@@ -233,17 +233,17 @@ class LZWDecode(object):
             http://www.rasip.fer.hr/research/compress/algorithms/fund/lz/lzw.html
             and the PDFReference
             """
-            cW = self.CLEARDICT;
+            cW = self.CLEARDICT
             baos=""
             while True:
-                pW = cW;
-                cW = self.nextCode();
+                pW = cW
+                cW = self.nextCode()
                 if cW == -1:
                     raise PdfReadError("Missed the stop code in LZWDecode!")
                 if cW == self.STOP:
-                    break;
+                    break
                 elif cW == self.CLEARDICT:
-                    self.resetDict();
+                    self.resetDict()
                 elif pW == self.CLEARDICT:
                     baos+=self.dict[cW]
                 else:
@@ -255,7 +255,7 @@ class LZWDecode(object):
                     else:
                         p=self.dict[pW]+self.dict[pW][0]
                         baos+=p
-                        self.dict[self.dictlen] = p;
+                        self.dict[self.dictlen] = p
                         self.dictlen+=1
                     if (self.dictlen >= (1 << self.bitspercode) - 1 and
                         self.bitspercode < 12):
@@ -281,7 +281,7 @@ class ASCII85Decode(object):
                 if len(retval) == 0 and c == "<" and data[x+1] == "~":
                     x += 2
                     continue
-                #elif c.isspace():
+                # elif c.isspace():
                 #    x += 1
                 #    continue
                 elif c == 'z':
