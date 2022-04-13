@@ -16,7 +16,7 @@ def main():
         print("usage: python 2-up.py input_file output_file")
         sys.exit(1)
     print("2-up input " + sys.argv[1])
-    reader = PdfFileReader(open(sys.argv[1], "rb"))
+    reader = PdfFileReader(sys.argv[1])
     writer = PdfFileWriter()
     for iter in range(0, reader.getNumPages() - 1, 2):
         lhs = reader.getPage(iter)
