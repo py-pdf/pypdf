@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
 """
-    Layout the pages from a PDF file to print a booklet or brochure.
+Layout the pages from a PDF file to print a booklet or brochure.
 
-    The resulting media size is twice the size of the first page
-    of the source document. If you print the resulting PDF in duplex
-    (short edge), you get a center fold brochure that you can staple
-    together and read as a booklet.
+The resulting media size is twice the size of the first page
+of the source document. If you print the resulting PDF in duplex
+(short edge), you get a center fold brochure that you can staple
+together and read as a booklet.
 """
 
 from __future__ import division, print_function
@@ -63,7 +63,8 @@ def main():
         mergePageByNumber(page, i, offsets[0])
         mergePageByNumber(page, virtualPages - i - 1, offsets[1])
 
-    writer.write(open(args.output, "wb"))
+    with open(args.output, "wb") as fp:
+        writer.write(fp)
 
 
 if __name__ == "__main__":

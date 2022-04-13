@@ -2,7 +2,7 @@ import io
 import os
 import pytest
 import PyPDF2.utils
-from PyPDF2.filters import decodeStreamData, _xobj_to_image
+from PyPDF2.filters import _xobj_to_image
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -29,7 +29,7 @@ def test_read_metadata():
     ],
 )
 def test_get_annotations(src):
-    reader = PyPDF2.PdfFileReader(open(src, "rb"))
+    reader = PyPDF2.PdfFileReader(src)
 
     for page in reader.pages:
         print("/Annots" in page)
@@ -49,7 +49,7 @@ def test_get_annotations(src):
     ],
 )
 def test_get_attachments(src):
-    reader = PyPDF2.PdfFileReader(open(src, "rb"))
+    reader = PyPDF2.PdfFileReader(src)
 
     attachments = {}
     for i in range(reader.getNumPages()):
@@ -71,7 +71,7 @@ def test_get_attachments(src):
     ],
 )
 def test_get_outlines(src, outline_elements):
-    reader = PyPDF2.PdfFileReader(open(src, "rb"))
+    reader = PyPDF2.PdfFileReader(src)
     outlines = reader.getOutlines()
     assert len(outlines) == outline_elements
 
@@ -85,7 +85,7 @@ def test_get_outlines(src, outline_elements):
     ],
 )
 def test_get_images(src, nb_images):
-    reader = PyPDF2.PdfFileReader(open(src, "rb"))
+    reader = PyPDF2.PdfFileReader(src)
 
     with pytest.raises(TypeError):
         page = reader.pages["0"]

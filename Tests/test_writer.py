@@ -3,7 +3,7 @@ import pytest
 
 from PyPDF2 import PdfFileReader, PdfFileWriter
 from PyPDF2.utils import PageSizeNotDefinedError
-from PyPDF2.generic import IndirectObject, RectangleObject
+from PyPDF2.generic import RectangleObject
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -20,8 +20,8 @@ def test_writer_operations():
     pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
     pdf_outline_path = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
 
-    reader = PdfFileReader(open(pdf_path, "rb"))
-    reader_outline = PdfFileReader(open(pdf_outline_path, "rb"))
+    reader = PdfFileReader(pdf_path)
+    reader_outline = PdfFileReader(pdf_outline_path)
 
     output = PdfFileWriter()
     page = reader.pages[0]
@@ -62,7 +62,7 @@ def test_writer_operations():
 def test_remove_images():
     pdf_path = os.path.join(RESOURCE_ROOT, "side-by-side-subfig.pdf")
 
-    reader = PdfFileReader(open(pdf_path, "rb"))
+    reader = PdfFileReader(pdf_path)
     output = PdfFileWriter()
 
     page = reader.pages[0]

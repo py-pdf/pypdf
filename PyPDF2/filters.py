@@ -55,7 +55,7 @@ except ImportError:
     # Unable to import zlib.  Attempt to use the System.IO.Compression
     # library from the .NET framework. (IronPython only)
     import System
-    from System import IO, Collections, Array
+    from System import IO, Array
 
     def _string_to_bytearr(buf):
         retval = Array.CreateInstance(System.Byte, len(buf))
@@ -275,7 +275,7 @@ class ASCII85Decode(object):
             x = 0
             hitEod = False
             # remove all whitespace from data
-            data = [y for y in data if not (y in ' \n\r\t')]
+            data = [y for y in data if y not in ' \n\r\t']
             while not hitEod:
                 c = data[x]
                 if len(retval) == 0 and c == "<" and data[x+1] == "~":
@@ -363,7 +363,7 @@ class CCITTFaxDecode(object):
 
         width = decodeParms["/Columns"]
         imgSize = len(data)
-        tiff_header_struct = '<' + '2s' + 'h' + 'l' + 'h' + 'hhll' * 8 + 'h'
+        tiff_header_struct = '<2shlh' + 'hhll' * 8 + 'h'
         tiffHeader = struct.pack(tiff_header_struct,
                            b'II',  # Byte order indication: Little endian
                            42,  # Version number (always 42)

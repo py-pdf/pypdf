@@ -1,5 +1,4 @@
 import os
-import binascii
 import sys
 
 import PyPDF2
@@ -34,8 +33,8 @@ def test_merge():
     # file_merger.append(reader)
 
     # File handle
-    fh = open(pdf_path, "rb")
-    file_merger.append(fh)
+    with open(pdf_path, "rb") as fh:
+        file_merger.append(fh)
 
     file_merger.addBookmark("A bookmark", 0)
 

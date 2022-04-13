@@ -15,7 +15,7 @@ def test_page_operations():
     output is as expected.
     """
     pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
-    reader = PdfFileReader(open(pdf_path, "rb"))
+    reader = PdfFileReader(pdf_path)
     page = reader.pages[0]
     page.mergeRotatedScaledPage(page, 90, 1, 1)
     page.mergeScaledTranslatedPage(page, 1, 1, 1)

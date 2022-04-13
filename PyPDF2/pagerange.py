@@ -89,8 +89,7 @@ class PageRange(object):
     @staticmethod
     def valid(input):
         """ True if input is a valid initializer for a PageRange. """
-        return isinstance(input, slice)  or \
-               isinstance(input, PageRange) or \
+        return isinstance(input, (slice, PageRange))  or \
                (isString(input)
                 and bool(re.match(PAGE_RANGE_RE, input)))
 
@@ -144,7 +143,7 @@ def parse_filename_page_ranges(args):
     for arg in args + [None]:
         if PageRange.valid(arg):
             if not pdf_filename:
-                raise ValueError("The first argument must be a filename, " \
+                raise ValueError("The first argument must be a filename, "
                                  "not a page range.")
 
             pairs.append( (pdf_filename, PageRange(arg)) )

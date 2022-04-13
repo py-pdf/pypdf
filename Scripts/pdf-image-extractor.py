@@ -11,7 +11,7 @@ from PyPDF2.filters import _xobj_to_image
 
 
 def main(pdf: str):
-    reader = PyPDF2.PdfFileReader(open(pdf, "rb"))
+    reader = PyPDF2.PdfFileReader(pdf)
     page = reader.pages[30]
 
     if "/XObject" in page["/Resources"]:

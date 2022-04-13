@@ -14,7 +14,7 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
 def test_basic_features():
     output = PdfFileWriter()
     document1 = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
-    input1 = PdfFileReader(open(document1, "rb"))
+    input1 = PdfFileReader(document1)
 
     # print how many pages input1 has:
     print("document1.pdf has %d pages." % input1.getNumPages())
@@ -32,7 +32,7 @@ def test_basic_features():
     # add page 4 from input1, but first add a watermark from another PDF:
     page4 = input1.getPage(0)
     watermark_pdf = document1
-    watermark = PdfFileReader(open(watermark_pdf, "rb"))
+    watermark = PdfFileReader(watermark_pdf)
     page4.mergePage(watermark.getPage(0))
     output.addPage(page4)
 

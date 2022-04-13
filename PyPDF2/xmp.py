@@ -2,7 +2,6 @@ import re
 import datetime
 import decimal
 from .generic import PdfObject
-from xml.dom import getDOMImplementation
 from xml.dom.minidom import parseString
 from .utils import u_
 
