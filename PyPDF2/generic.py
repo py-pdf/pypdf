@@ -483,10 +483,10 @@ class NameObject(str, PdfObject):
         try:
             try:
                 ret=name.decode('utf-8')
-            except (UnicodeEncodeError, UnicodeDecodeError) as e:
+            except (UnicodeEncodeError, UnicodeDecodeError):
                 ret=name.decode('gbk')
             return NameObject(ret)
-        except (UnicodeEncodeError, UnicodeDecodeError) as e:
+        except (UnicodeEncodeError, UnicodeDecodeError):
             # Name objects should represent irregular characters
             # with a '#' followed by the symbol's hex number
             if not pdf.strict:

@@ -311,7 +311,6 @@ class PdfFileMerger(object):
         page set.
         """
         new_dests = []
-        prev_header_added = True
         for k, o in list(dests.items()):
             for j in range(*pages):
                 if pdf.getPage(j).getObject() == o['/Page'].getObject():
@@ -356,7 +355,7 @@ class PdfFileMerger(object):
                     if p.id == v['/Page']:
                         v[NameObject('/Page')] = p.out_pagedata
                         pageno = i
-                        pdf = p.src
+                        pdf = p.src  # noqa: F841
                         break
             if pageno is not None:
                 self.output.addNamedDestinationObject(v)
@@ -429,7 +428,7 @@ class PdfFileMerger(object):
                         b[NameObject('/A')] = DictionaryObject({NameObject('/S'): NameObject('/GoTo'), NameObject('/D'): ArrayObject(args)})
 
                         pageno = i
-                        pdf = p.src
+                        pdf = p.src  # noqa: F841
                         break
             if pageno is not None:
                 del b['/Page'], b['/Type']

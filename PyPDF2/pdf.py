@@ -41,7 +41,6 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 __maintainer__ = "Phaseit, Inc."
 __maintainer_email = "PyPDF2@phaseit.net"
 
-import string
 import math
 import struct
 import sys
@@ -57,7 +56,6 @@ if version_info < ( 3, 0 ):
 else:
     from io import BytesIO
 
-from . import filters
 from . import utils
 import warnings
 import codecs
@@ -543,7 +541,6 @@ class PdfFileWriter(object):
         if debug: print((data, "TYPE", data.__class__.__name__))
         if isinstance(data, DictionaryObject):
             for key, value in list(data.items()):
-                origvalue = value
                 value = self._sweepIndirectReferences(externMap, value)
                 if isinstance(value, StreamObject):
                     # a dictionary value is a stream.  streams must be indirect
@@ -1752,7 +1749,10 @@ class PdfFileReader(object):
         idnum = readUntilWhitespace(stream)
         extra |= utils.skipOverWhitespace(stream); stream.seek(-1, 1)
         generation = readUntilWhitespace(stream)
-        obj = stream.read(3)
+
+        # although it's not used, it might still be necessary to read
+        _obj = stream.read(3)  # noqa: F841
+
         readNonWhitespace(stream)
         stream.seek(-1, 1)
         if (extra and self.strict):
@@ -1938,8 +1938,8 @@ class PdfFileReader(object):
                         # The rest of the elements depend on the xref_type
                         if xref_type == 0:
                             # linked list of free objects
-                            next_free_object = getEntry(1)
-                            next_generation = getEntry(2)
+                            next_free_object = getEntry(1)  # noqa: F841
+                            next_generation = getEntry(2)  # noqa: F841
                         elif xref_type == 1:
                             # objects that are in use but are not compressed
                             byte_offset = getEntry(1)
