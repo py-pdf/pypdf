@@ -363,7 +363,7 @@ class CCITTFaxDecode(object):
 
         width = decodeParms["/Columns"]
         imgSize = len(data)
-        tiff_header_struct = '<' + '2s' + 'h' + 'l' + 'h' + 'hhll' * 8 + 'h'
+        tiff_header_struct = '<2shlh' + 'hhll' * 8 + 'h'
         tiffHeader = struct.pack(tiff_header_struct,
                            b'II',  # Byte order indication: Little endian
                            42,  # Version number (always 42)
