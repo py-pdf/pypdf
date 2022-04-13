@@ -275,7 +275,7 @@ class ASCII85Decode(object):
             x = 0
             hitEod = False
             # remove all whitespace from data
-            data = [y for y in data if not (y in ' \n\r\t')]
+            data = [y for y in data if y not in ' \n\r\t']
             while not hitEod:
                 c = data[x]
                 if len(retval) == 0 and c == "<" and data[x+1] == "~":

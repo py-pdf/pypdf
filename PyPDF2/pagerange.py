@@ -89,8 +89,7 @@ class PageRange(object):
     @staticmethod
     def valid(input):
         """ True if input is a valid initializer for a PageRange. """
-        return isinstance(input, slice)  or \
-               isinstance(input, PageRange) or \
+        return isinstance(input, (slice, PageRange))  or \
                (isString(input)
                 and bool(re.match(PAGE_RANGE_RE, input)))
 

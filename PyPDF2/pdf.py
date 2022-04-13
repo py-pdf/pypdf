@@ -791,6 +791,11 @@ class PdfFileWriter(object):
             to ignore ByteString Objects.
         """
         pages = self.getObject(self._pages)['/Kids']
+        jump_operators = [
+            b_('cm'), b_('w'), b_('J'), b_('j'), b_('M'), b_('d'), b_('ri'), b_('i'),
+            b_('gs'), b_('W'), b_('b'), b_('s'), b_('S'), b_('f'), b_('F'), b_('n'), b_('m'), b_('l'),
+            b_('c'), b_('v'), b_('y'), b_('h'), b_('B'), b_('Do'), b_('sh')
+        ]
         for j in range(len(pages)):
             page = pages[j]
             pageRef = self.getObject(page)
@@ -801,36 +806,29 @@ class PdfFileWriter(object):
             _operations = []
             seq_graphics = False
             for operands, operator in content.operations:
-                if operator == b_('Tj'):
-                    text = operands[0]
-                    if ignoreByteStringObject:
-                        if not isinstance(text, TextStringObject):
-                            operands[0] = TextStringObject()
-                elif operator == b_("'"):
+                if operator in [b_('Tj'), b_("'")]:
                     text = operands[0]
                     if ignoreByteStringObject:
                         if not isinstance(text, TextStringObject):
                             operands[0] = TextStringObject()
                 elif operator == b_('"'):
                     text = operands[2]
-                    if ignoreByteStringObject:
-                        if not isinstance(text, TextStringObject):
-                            operands[2] = TextStringObject()
+                    if ignoreByteStringObject and not isinstance(text, TextStringObject):
+                        operands[2] = TextStringObject()
                 elif operator == b_("TJ"):
                     for i in range(len(operands[0])):
-                        if ignoreByteStringObject:
-                            if not isinstance(operands[0][i], TextStringObject):
-                                operands[0][i] = TextStringObject()
+                        if (
+                            ignoreByteStringObject
+                            and not isinstance(operands[0][i], TextStringObject)
+                        ):
+                            operands[0][i] = TextStringObject()
 
                 if operator == b_('q'):
                     seq_graphics = True
                 if operator == b_('Q'):
                     seq_graphics = False
-                if seq_graphics:
-                    if operator in [b_('cm'), b_('w'), b_('J'), b_('j'), b_('M'), b_('d'), b_('ri'), b_('i'),
-                            b_('gs'), b_('W'), b_('b'), b_('s'), b_('S'), b_('f'), b_('F'), b_('n'), b_('m'), b_('l'),
-                            b_('c'), b_('v'), b_('y'), b_('h'), b_('B'), b_('Do'), b_('sh')]:
-                        continue
+                if seq_graphics and operator in jump_operators:
+                    continue
                 if operator == b_('re'):
                     continue
                 _operations.append((operands, operator))
@@ -853,23 +851,13 @@ class PdfFileWriter(object):
             if not isinstance(content, ContentStream):
                 content = ContentStream(content, pageRef)
             for operands,operator in content.operations:
-                if operator == b_('Tj'):
+                if operator in [b_('Tj'), b_("'")]:
                     text = operands[0]
                     if not ignoreByteStringObject:
                         if isinstance(text, TextStringObject):
                             operands[0] = TextStringObject()
                     else:
-                        if isinstance(text, TextStringObject) or \
-                                isinstance(text, ByteStringObject):
-                            operands[0] = TextStringObject()
-                elif operator == b_("'"):
-                    text = operands[0]
-                    if not ignoreByteStringObject:
-                        if isinstance(text, TextStringObject):
-                            operands[0] = TextStringObject()
-                    else:
-                        if isinstance(text, TextStringObject) or \
-                                isinstance(text, ByteStringObject):
+                        if isinstance(text, (TextStringObject, ByteStringObject)):
                             operands[0] = TextStringObject()
                 elif operator == b_('"'):
                     text = operands[2]
@@ -877,8 +865,7 @@ class PdfFileWriter(object):
                         if isinstance(text, TextStringObject):
                             operands[2] = TextStringObject()
                     else:
-                        if isinstance(text, TextStringObject) or \
-                                isinstance(text, ByteStringObject):
+                        if isinstance(text, (TextStringObject, ByteStringObject)):
                             operands[2] = TextStringObject()
                 elif operator == b_("TJ"):
                     for i in range(len(operands[0])):
@@ -886,8 +873,7 @@ class PdfFileWriter(object):
                             if isinstance(operands[0][i], TextStringObject):
                                 operands[0][i] = TextStringObject()
                         else:
-                            if isinstance(operands[0][i], TextStringObject) or \
-                                    isinstance(operands[0][i], ByteStringObject):
+                            if isinstance(operands[0][i], (TextStringObject, ByteStringObject)):
                                 operands[0][i] = TextStringObject()
 
             pageRef.__setitem__(NameObject('/Contents'), content)
@@ -1169,9 +1155,8 @@ class PdfFileReader(object):
         if hasattr(stream, 'mode') and 'b' not in stream.mode:
             warnings.warn("PdfFileReader stream/file object is not in binary mode. It may not be read correctly.", utils.PdfReadWarning)
         if isString(stream):
-            fileobj = open(stream, 'rb')
-            stream = BytesIO(b_(fileobj.read()))
-            fileobj.close()
+            with open(stream, 'rb') as fileobj:
+                stream = BytesIO(b_(fileobj.read()))
         self.read(stream)
         self.stream = stream
 
@@ -1726,7 +1711,7 @@ class PdfFileReader(object):
         return retval
 
     def _decryptObject(self, obj, key):
-        if isinstance(obj, ByteStringObject) or isinstance(obj, TextStringObject):
+        if isinstance(obj, (ByteStringObject, TextStringObject)):
             obj = createStringObject(utils.RC4_encrypt(key, obj.original_bytes))
         elif isinstance(obj, StreamObject):
             obj._data = utils.RC4_encrypt(key, obj._data)
