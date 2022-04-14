@@ -16,7 +16,6 @@ def pdf_file_writer():
     yield pdf_file_writer
 
 def test_add_js(pdf_file_writer):
-
     pdf_file_writer.addJS(
         "this.print({bUI:true,bSilent:false,bShrinkToFit:true});"
     )
