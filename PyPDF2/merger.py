@@ -31,6 +31,7 @@ from .generic import *
 from .utils import isString, str_
 from .pdf import PdfFileReader, PdfFileWriter
 from .pagerange import PageRange
+from PyPDF2.pdf_attributes import PagesAttributes as PA
 from sys import version_info
 if version_info < ( 3, 0 ):
     from cStringIO import StringIO
@@ -218,8 +219,8 @@ class PdfFileMerger(object):
         # The commented out line below was replaced with the two lines below it to allow PdfFileMerger to work with PyPdf 1.13
         for page in self.pages:
             self.output.addPage(page.pagedata)
-            page.out_pagedata = self.output.getReference(self.output._pages.getObject()["/Kids"][-1].getObject())
-            # idnum = self.output._objects.index(self.output._pages.getObject()["/Kids"][-1].getObject()) + 1
+            page.out_pagedata = self.output.getReference(self.output._pages.getObject()[PA.KIDS][-1].getObject())
+            # idnum = self.output._objects.index(self.output._pages.getObject()[PA.KIDS][-1].getObject()) + 1
             # page.out_pagedata = IndirectObject(idnum, 0, self.output)
 
         # Once all pages are added, create bookmarks to point at those pages
@@ -545,7 +546,7 @@ class OutlinesObject(list):
         self.tree.removeChild(obj)
 
     def add(self, title, pagenum):
-        pageRef = self.pdf.getObject(self.pdf._pages)['/Kids'][pagenum]
+        pageRef = self.pdf.getObject(self.pdf._pages)[PA.KIDS][pagenum]
         action = DictionaryObject()
         action.update({
             NameObject('/D') : ArrayObject([pageRef, NameObject('/FitH'), NumberObject(826)]),
