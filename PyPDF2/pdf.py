@@ -2903,7 +2903,7 @@ class DocumentInformation(DictionaryObject):
             return retval
         return None
 
-    title = property(lambda self: self.getText("/Title"))
+    title = property(lambda self: self.getText("/Title") or self['/Title'])
     """Read-only property accessing the document's **title**.
     Returns a unicode string (``TextStringObject``) or ``None``
     if the title is not specified."""
