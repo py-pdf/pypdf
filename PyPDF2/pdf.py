@@ -1572,8 +1572,8 @@ class PdfFileReader(object):
 
     def _flatten(self, pages=None, inherit=None, indirectRef=None):
         inheritablePageAttributes = (
-            NameObject("/Resources"), NameObject(PG.MEDIABOX),
-            NameObject("/CropBox"), NameObject("/Rotate")
+            NameObject(PG.RESOURCES), NameObject(PG.MEDIABOX),
+            NameObject(PG.CROPBOX), NameObject(PG.ROTATE)
             )
         if inherit is None:
             inherit = dict()
@@ -2344,13 +2344,13 @@ class PageObject(DictionaryObject):
 
         newResources = DictionaryObject()
         rename = {}
-        originalResources = self["/Resources"].getObject()
-        page2Resources = page2["/Resources"].getObject()
+        originalResources = self[PG.RESOURCES].getObject()
+        page2Resources = page2[PG.RESOURCES].getObject()
         newAnnots = ArrayObject()
 
         for page in (self, page2):
-            if "/Annots" in page:
-                annots = page["/Annots"]
+            if PG.ANNOTS in page:
+                annots = page[PG.ANNOTS]
                 if isinstance(annots, ArrayObject):
                     for ref in annots:
                         newAnnots.append(ref)

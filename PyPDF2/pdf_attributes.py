@@ -15,3 +15,11 @@ class PageAttributes:
     """Page attributes, Table 6.3, Page 53"""
     TYPE = "/Type"  # name, required; must be /Page
     MEDIABOX = "/MediaBox"  # array, required; rectangle specifying page size
+    PARENT = "/Parent"  # dictionary, required; a pages object
+    RESOURCES = "/Resources"  # dictionary, required if there are any
+    CONTENTS = "/Contents"  # stream or array, optional
+    CROPBOX = "/CropBox"  # array, optional; rectangle
+    ROTATE = "/Rotate"  # integer, optional; page rotation in degrees
+    THUMB = "/Thumb"  # stream, optional; indirect reference to image of the page
+    ANNOTS = "/Annots"  # array, optional; an array of annotations
+    
