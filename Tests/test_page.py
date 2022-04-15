@@ -19,12 +19,16 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
             os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf"),
             "openpassword",
         ),
+        (os.path.join(RESOURCE_ROOT, "imagemagick-images.pdf"), None),
+        (os.path.join(RESOURCE_ROOT, "imagemagick-lzw.pdf"), None),
     ],
     ids=[
         "crazyones",
         "attachment",
         "side-by-side-subfig",
         "libreoffice-writer-password",
+        "imagemagick-images",
+        "imagemagick-lzw",
     ],
 )
 def test_page_operations(pdf_path, password):

@@ -111,6 +111,7 @@ def test_get_outlines(src, outline_elements):
         (os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf"), 0),
         (os.path.join(RESOURCE_ROOT, "crazyones.pdf"), 0),
         (os.path.join(RESOURCE_ROOT, "git.pdf"), 1),
+        (os.path.join(RESOURCE_ROOT, "imagemagick-lzw.pdf"), 1),
     ],
 )
 def test_get_images(src, nb_images):
@@ -135,10 +136,12 @@ def test_get_images(src, nb_images):
                     with open(filename, "wb") as img:
                         img.write(byte_stream)
                     images_extracted.append(filename)
-    else:
-        pass  # No image found
 
     assert len(images_extracted) == nb_images
+
+    # Cleanup
+    for filepath in images_extracted:
+        os.remove(filepath)
 
 
 @pytest.mark.parametrize(

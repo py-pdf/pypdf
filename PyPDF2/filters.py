@@ -449,6 +449,16 @@ def _xobj_to_image(x_object_obj):
             img_byte_arr = io.BytesIO()
             img.save(img_byte_arr, format="PNG")
             data = img_byte_arr.getvalue()
+        elif x_object_obj["/Filter"] == ["/LZWDecode"]:
+            from PyPDF2.utils import b_
+            extension = ".png"
+            img = Image.frombytes(mode, size, b_(data))
+            if "/SMask" in x_object_obj:  # add alpha channel
+                alpha = Image.frombytes("L", size, x_object_obj["/SMask"].getData())
+                img.putalpha(alpha)
+            img_byte_arr = io.BytesIO()
+            img.save(img_byte_arr, format="PNG")
+            data = img_byte_arr.getvalue()
         elif x_object_obj["/Filter"] == "/DCTDecode":
             extension = ".jpg"
         elif x_object_obj["/Filter"] == "/JPXDecode":
