@@ -1,3 +1,42 @@
+Version 1.27.5, 2022-04-15
+--------------------------
+
+Security (SEC):
+
+- ContentStream_readInlineImage had potential infinite loop (#740)
+
+Bug fixes (BUG):
+
+- Fix merging encrypted files (#757)
+- CCITTFaxDecode decodeParms can be an ArrayObject (#756)
+
+Robustness improvements (ROBUST):
+
+- title sometimes None (#744) 
+
+Documentation (DOC):
+
+- Adjust short description of the package
+
+Tests and Test setup (TST):
+
+- Rewrite JS tests from unittest to pytest (#746)
+- Increase Test coverage, mainly with filters (#756)
+- Add test for inline images (#758)
+
+Developer Experience Improvements (DEV):
+
+- Remove unused Travis-CI configuration (#747)
+- Show code coverage (#754, #755)
+- Add mutmut (#760)
+
+Miscellaneous:
+
+- STY: Closing file handles, explicit exports, ... (#743)
+
+All changes: https://github.com/py-pdf/PyPDF2/compare/1.27.4...1.27.5
+
+
 Version 1.27.4, 2022-04-12
 --------------------------
 
