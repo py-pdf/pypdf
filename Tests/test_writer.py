@@ -1,9 +1,10 @@
 import os
+
 import pytest
 
 from PyPDF2 import PdfFileReader, PdfFileWriter
-from PyPDF2.utils import PageSizeNotDefinedError
 from PyPDF2.generic import RectangleObject
+from PyPDF2.utils import PageSizeNotDefinedError
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -77,6 +78,34 @@ def test_remove_images():
     with open(tmp_filename, "rb") as input_stream:
         reader = PdfFileReader(input_stream)
         assert "Lorem ipsum dolor sit amet" in reader.getPage(0).extractText()
+
+    # Cleanup
+    os.remove(tmp_filename)
+
+
+def test_write_metadata():
+    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+
+    reader = PdfFileReader(pdf_path)
+    writer = PdfFileWriter()
+
+    for page in reader.pages:
+        writer.addPage(page)
+
+    metadata = reader.getDocumentInfo()
+    writer.addMetadata(metadata)
+
+    writer.addMetadata({"/Title": "The Crazy Ones"})
+
+    # finally, write data to PyPDF2-output.pdf
+    tmp_filename = "dont_commit_writer_added_metadata.pdf"
+    with open(tmp_filename, "wb") as output_stream:
+        writer.write(output_stream)
+
+    # Check if the title was set
+    reader = PdfFileReader(tmp_filename)
+    metadata = reader.getDocumentInfo()
+    assert metadata.get("/Title") == "The Crazy Ones"
 
     # Cleanup
     os.remove(tmp_filename)

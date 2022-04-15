@@ -1,7 +1,10 @@
 import io
 import os
+
 import pytest
+
 import PyPDF2.utils
+from PyPDF2 import PdfFileReader
 from PyPDF2.filters import _xobj_to_image
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -9,16 +12,44 @@ PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
 RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
 
 
-def test_read_metadata():
-    with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
-        ipdf = PyPDF2.PdfFileReader(inputfile)
-        metadict = ipdf.getDocumentInfo()
-        assert metadict.title is None
-        assert dict(metadict) == {
-            "/CreationDate": "D:20150604133406-06'00'",
-            "/Creator": " XeTeX output 2015.06.04:1334",
-            "/Producer": "xdvipdfmx (20140317)",
-        }
+@pytest.mark.parametrize(
+    "pdf_path, expected",
+    [
+        (
+            os.path.join(RESOURCE_ROOT, "crazyones.pdf"),
+            {
+                "/CreationDate": "D:20150604133406-06'00'",
+                "/Creator": " XeTeX output 2015.06.04:1334",
+                "/Producer": "xdvipdfmx (20140317)",
+            },
+        ),
+        (
+            os.path.join(RESOURCE_ROOT, "metadata.pdf"),
+            {
+                "/CreationDate": "D:20220415093243+02'00'",
+                "/ModDate": "D:20220415093243+02'00'",
+                "/Creator": "pdflatex, or other tool",
+                "/Producer": "Latex with hyperref, or other system",
+                "/Author": "Martin Thoma",
+                "/Keywords": "Some Keywords, other keywords; more keywords",
+                "/Subject": "The Subject",
+                "/Title": "The Title",
+                "/Trapped": "/False",
+                "/PTEX.Fullbanner": (
+                    "This is pdfTeX, Version "
+                    "3.141592653-2.6-1.40.23 (TeX Live 2021) "
+                    "kpathsea version 6.3.3"
+                ),
+            },
+        ),
+    ],
+    ids=["crazyones", "metadata"],
+)
+def test_read_metadata(pdf_path, expected):
+    with open(pdf_path, "rb") as inputfile:
+        reader = PdfFileReader(inputfile)
+        metadict = reader.getDocumentInfo()
+        assert dict(metadict) == expected
 
 
 @pytest.mark.parametrize(
@@ -29,16 +60,14 @@ def test_read_metadata():
     ],
 )
 def test_get_annotations(src):
-    reader = PyPDF2.PdfFileReader(src)
+    reader = PdfFileReader(src)
 
     for page in reader.pages:
-        print("/Annots" in page)
         if "/Annots" in page:
             for annot in page["/Annots"]:
                 subtype = annot.getObject()["/Subtype"]
                 if subtype == "/Text":
-                    print(annot.getObject()["/Contents"])
-                    print("")
+                    annot.getObject()["/Contents"]
 
 
 @pytest.mark.parametrize(
@@ -49,7 +78,7 @@ def test_get_annotations(src):
     ],
 )
 def test_get_attachments(src):
-    reader = PyPDF2.PdfFileReader(src)
+    reader = PdfFileReader(src)
 
     attachments = {}
     for i in range(reader.getNumPages()):
@@ -71,7 +100,7 @@ def test_get_attachments(src):
     ],
 )
 def test_get_outlines(src, outline_elements):
-    reader = PyPDF2.PdfFileReader(src)
+    reader = PdfFileReader(src)
     outlines = reader.getOutlines()
     assert len(outlines) == outline_elements
 
@@ -79,13 +108,17 @@ def test_get_outlines(src, outline_elements):
 @pytest.mark.parametrize(
     "src,nb_images",
     [
-        (os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf"), 0),
-        (os.path.join(RESOURCE_ROOT, "crazyones.pdf"), 0),
-        (os.path.join(RESOURCE_ROOT, "git.pdf"), 1),
+        ("pdflatex-outline.pdf", 0),
+        ("crazyones.pdf", 0),
+        ("git.pdf", 1),
+        ("imagemagick-lzw.pdf", 1),
+        ("imagemagick-ASCII85Decode.pdf", 1),
+        ("imagemagick-CCITTFaxDecode.pdf", 1),
     ],
 )
 def test_get_images(src, nb_images):
-    reader = PyPDF2.PdfFileReader(src)
+    src =os.path.join(RESOURCE_ROOT, src)
+    reader = PdfFileReader(src)
 
     with pytest.raises(TypeError):
         page = reader.pages["0"]
@@ -106,10 +139,12 @@ def test_get_images(src, nb_images):
                     with open(filename, "wb") as img:
                         img.write(byte_stream)
                     images_extracted.append(filename)
-    else:
-        print("No image found.")
 
     assert len(images_extracted) == nb_images
+
+    # Cleanup
+    for filepath in images_extracted:
+        os.remove(filepath)
 
 
 @pytest.mark.parametrize(
@@ -153,10 +188,10 @@ def test_get_images_raw(strict, with_prev_0, should_fail):
     )
     pdf_stream = io.BytesIO(pdf_data)
     if should_fail:
-        with pytest.raises(PyPDF2.pdf.utils.PdfReadError):
-            PyPDF2.PdfFileReader(pdf_stream, strict=strict)
+        with pytest.raises(PyPDF2.utils.PdfReadError):
+            PdfFileReader(pdf_stream, strict=strict)
     else:
-        PyPDF2.PdfFileReader(pdf_stream, strict=strict)
+        PdfFileReader(pdf_stream, strict=strict)
 
 
 @pytest.mark.xfail(
@@ -167,5 +202,5 @@ def test_get_images_raw(strict, with_prev_0, should_fail):
 )
 def test_issue297():
     path = os.path.join(RESOURCE_ROOT, "issue-297.pdf")
-    reader = PyPDF2.PdfFileReader(path, "rb")
+    reader = PdfFileReader(path, "rb")
     reader.getPage(0)
