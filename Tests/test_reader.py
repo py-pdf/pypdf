@@ -108,13 +108,16 @@ def test_get_outlines(src, outline_elements):
 @pytest.mark.parametrize(
     "src,nb_images",
     [
-        (os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf"), 0),
-        (os.path.join(RESOURCE_ROOT, "crazyones.pdf"), 0),
-        (os.path.join(RESOURCE_ROOT, "git.pdf"), 1),
-        (os.path.join(RESOURCE_ROOT, "imagemagick-lzw.pdf"), 1),
+        ("pdflatex-outline.pdf", 0),
+        ("crazyones.pdf", 0),
+        ("git.pdf", 1),
+        ("imagemagick-lzw.pdf", 1),
+        ("imagemagick-ASCII85Decode.pdf", 1),
+        ("imagemagick-CCITTFaxDecode.pdf", 1),
     ],
 )
 def test_get_images(src, nb_images):
+    src =os.path.join(RESOURCE_ROOT, src)
     reader = PdfFileReader(src)
 
     with pytest.raises(TypeError):

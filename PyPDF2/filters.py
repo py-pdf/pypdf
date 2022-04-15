@@ -354,6 +354,10 @@ class JPXDecode(object):
 class CCITTFaxDecode(object):
     def decode(data, decodeParms=None, height=0):
         if decodeParms:
+            from PyPDF2.generic import ArrayObject
+            if isinstance(decodeParms, ArrayObject):
+                if len(decodeParms) == 1:
+                    decodeParms = decodeParms[0]
             if decodeParms.get("/K", 1) == -1:
                 CCITTgroup = 4
             else:
@@ -449,16 +453,10 @@ def _xobj_to_image(x_object_obj):
             img_byte_arr = io.BytesIO()
             img.save(img_byte_arr, format="PNG")
             data = img_byte_arr.getvalue()
-        elif x_object_obj["/Filter"] == ["/LZWDecode"]:
+        elif x_object_obj["/Filter"] in (["/LZWDecode"], ['/ASCII85Decode'], ['/CCITTFaxDecode']):
             from PyPDF2.utils import b_
             extension = ".png"
-            img = Image.frombytes(mode, size, b_(data))
-            if "/SMask" in x_object_obj:  # add alpha channel
-                alpha = Image.frombytes("L", size, x_object_obj["/SMask"].getData())
-                img.putalpha(alpha)
-            img_byte_arr = io.BytesIO()
-            img.save(img_byte_arr, format="PNG")
-            data = img_byte_arr.getvalue()
+            data = b_(data)
         elif x_object_obj["/Filter"] == "/DCTDecode":
             extension = ".jpg"
         elif x_object_obj["/Filter"] == "/JPXDecode":
