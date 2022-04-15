@@ -23,7 +23,7 @@ def test_read_xmp(src, has_xmp):
         for el in xmp.getElement(
             aboutUri="", namespace=PyPDF2.xmp.RDF_NAMESPACE, name="Artist"
         ):
-            print(f"el={el}")
+            print("el={el}".format(el=el))
 
         assert get_all_tiff(xmp) == {"tiff:Artist": ["me"]}
         assert xmp.dc_contributor == []
