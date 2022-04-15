@@ -48,8 +48,11 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
 def test_read_metadata(pdf_path, expected):
     with open(pdf_path, "rb") as inputfile:
         reader = PdfFileReader(inputfile)
-        metadict = reader.getDocumentInfo()
-        assert dict(metadict) == expected
+        docinfo = reader.getDocumentInfo()
+        metadict = dict(docinfo)
+        assert metadict == expected
+        if '/Title' in metadict:
+            assert metadict['/Title'] == docinfo.title
 
 
 @pytest.mark.parametrize(
