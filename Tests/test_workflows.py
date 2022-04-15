@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import os
 import binascii
+import os
 import sys
+
 import pytest
 
 from PyPDF2 import PdfFileReader

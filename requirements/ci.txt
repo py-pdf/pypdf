@@ -9,8 +9,8 @@ attrs==20.3.0
     #   flake8-bugbear
     #   flake8-implicit-str-concat
     #   pytest
-coverage[toml]==6.2
-    # via pytest-cov
+coverage==6.2
+    # via -r requirements/ci.in
 flake8==4.0.1
     # via
     #   -r requirements/ci.in
@@ -45,15 +45,9 @@ pyflakes==2.4.0
 pyparsing==3.0.7
     # via packaging
 pytest==7.0.1
-    # via
-    #   -r requirements/ci.in
-    #   pytest-cov
-pytest-cov==3.0.0
     # via -r requirements/ci.in
 tomli==1.2.3
-    # via
-    #   coverage
-    #   pytest
+    # via pytest
 typing-extensions==4.1.1
     # via importlib-metadata
 zipp==3.6.0

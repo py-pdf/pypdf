@@ -1,6 +1,6 @@
-pytest
+coverage
 flake8
-flake8-bugbear
 flake8_implicit_str_concat
-pytest-cov
+flake8-bugbear
 pillow
+pytest

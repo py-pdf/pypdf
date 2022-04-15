@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 #
-# vim: sw=4:expandtab:foldmethod=marker
-#
 # Copyright (c) 2006, Mathieu Fenniak
 # Copyright (c) 2007, Ashish Kulkarni <kulkarni.ashish@gmail.com>
 #
@@ -1638,7 +1636,7 @@ class PdfFileReader(object):
                 streamData.seek(0, 0)
                 lines = streamData.readlines()
                 for i in range(0, len(lines)):
-                    print((lines[i]))
+                    print(lines[i])
                 streamData.seek(pos, 0)
             try:
                 obj = readObject(streamData, self)
@@ -2227,7 +2225,7 @@ class PageObject(DictionaryObject):
             RectangleObject([0, 0, width, height]))
 
         return page
-    createBlankPage = staticmethod(createBlankPage)
+    createBlankPage = staticmethod(createBlankPage)  # type: ignore
 
     def rotateClockwise(self, angle):
         """
@@ -2269,7 +2267,7 @@ class PageObject(DictionaryObject):
             elif key not in newRes:
                 newRes[key] = page2Res.raw_get(key)
         return newRes, renameRes
-    _mergeResources = staticmethod(_mergeResources)
+    _mergeResources = staticmethod(_mergeResources)  # type: ignore
 
     def _contentStreamRename(stream, rename, pdf):
         if not rename:
@@ -2289,7 +2287,7 @@ class PageObject(DictionaryObject):
             else:
                 raise KeyError ("type of operands is %s" % type (operands))
         return stream
-    _contentStreamRename = staticmethod(_contentStreamRename)
+    _contentStreamRename = staticmethod(_contentStreamRename)  # type: ignore
 
     def _pushPopGS(contents, pdf):
         # adds a graphics state "push" and "pop" to the beginning and end
@@ -2299,7 +2297,7 @@ class PageObject(DictionaryObject):
         stream.operations.insert(0, [[], "q"])
         stream.operations.append([[], "Q"])
         return stream
-    _pushPopGS = staticmethod(_pushPopGS)
+    _pushPopGS = staticmethod(_pushPopGS)  # type: ignore
 
     def _addTransformationMatrix(contents, pdf, ctm):
         # adds transformation matrix at the beginning of the given
@@ -2310,7 +2308,7 @@ class PageObject(DictionaryObject):
             FloatObject(c), FloatObject(d), FloatObject(e),
             FloatObject(f)], " cm"])
         return contents
-    _addTransformationMatrix = staticmethod(_addTransformationMatrix)
+    _addTransformationMatrix = staticmethod(_addTransformationMatrix)  # type: ignore
 
     def getContents(self):
         """
@@ -2589,11 +2587,6 @@ class PageObject(DictionaryObject):
                                                  ctm[1][0], ctm[1][1],
                                                  ctm[2][0], ctm[2][1]], expand)
 
-    ##
-    # Applys a transformation matrix the page.
-    #
-    # @param ctm   A 6 elements tuple containing the operands of the
-    #              transformation matrix
     def addTransformation(self, ctm):
         """
         Applies a transformation matrix to the page.
@@ -2825,11 +2818,25 @@ class ContentStream(DecodedStreamObject):
         # left at beginning of ID
         tmp = stream.read(3)
         assert tmp[:2] == b_("ID")
-        data = b_("")
+        data = BytesIO()
+        # Read the inline image, while checking for EI (End Image) operator.
         while True:
-            # Read the inline image, while checking for EI (End Image) operator.
-            tok = stream.read(1)
-            if tok == b_("E"):
+            # Read 8 kB at a time and check if the chunk contains the E operator.
+            buf = stream.read(8192)
+            # We have reached the end of the stream, but haven't found the EI operator.
+            if not buf:
+                raise utils.PdfReadError("Unexpected end of stream")
+            loc = buf.find(b_("E"))
+
+            if loc == -1:
+                data.write(buf)
+            else:
+                # Write out everything before the E.
+                data.write(buf[0:loc])
+
+                # Seek back in the stream to read the E next.
+                stream.seek(loc - len(buf), 1)
+                tok = stream.read(1)
                 # Check for End Image
                 tok2 = stream.read(1)
                 if tok2 == b_("I"):
@@ -2846,14 +2853,12 @@ class ContentStream(DecodedStreamObject):
                         stream.seek(-1, 1)
                         break
                     else:
-                        stream.seek(-1,1)
-                        data += info
+                        stream.seek(-1, 1)
+                        data.write(info)
                 else:
                     stream.seek(-1, 1)
-                    data += tok
-            else:
-                data += tok
-        return {"settings": settings, "data": data}
+                    data.write(tok)
+        return {"settings": settings, "data": data.getvalue()}
 
     def _getData(self):
         newdata = BytesIO()
@@ -2904,7 +2909,7 @@ class DocumentInformation(DictionaryObject):
             return retval
         return None
 
-    title = property(lambda self: self.getText("/Title"))
+    title = property(lambda self: self.getText("/Title") or self.get("/Title").getObject() if self.get("/Title") else None)
     """Read-only property accessing the document's **title**.
     Returns a unicode string (``TextStringObject``) or ``None``
     if the title is not specified."""

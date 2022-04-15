@@ -1,5 +1,3 @@
-# vim: sw=4:expandtab:foldmethod=marker
-#
 # Copyright (c) 2006, Mathieu Fenniak
 # All rights reserved.
 #
@@ -40,7 +38,7 @@ if version_info < ( 3, 0 ):
     from cStringIO import StringIO
 else:
     from io import StringIO
-    import struct
+import struct
 
 try:
     import zlib
@@ -159,11 +157,11 @@ class FlateDecode(object):
                 # unsupported predictor
                 raise PdfReadError("Unsupported flatedecode predictor %r" % predictor)
         return data
-    decode = staticmethod(decode)
+    decode = staticmethod(decode)  # type: ignore
 
     def encode(data):
         return compress(data)
-    encode = staticmethod(encode)
+    encode = staticmethod(encode)  # type: ignore
 
 
 class ASCIIHexDecode(object):
@@ -185,7 +183,7 @@ class ASCIIHexDecode(object):
             x += 1
         assert char == ""
         return retval
-    decode = staticmethod(decode)
+    decode = staticmethod(decode)  # type: ignore
 
 
 class LZWDecode(object):
@@ -341,21 +339,25 @@ class ASCII85Decode(object):
                         out += struct.pack(b'>L',b)[:n-1]
                     break
             return bytes(out)
-    decode = staticmethod(decode)
+    decode = staticmethod(decode)  # type: ignore
 
 class DCTDecode(object):
     def decode(data, decodeParms=None):
         return data
-    decode = staticmethod(decode)
+    decode = staticmethod(decode)  # type: ignore
 
 class JPXDecode(object):
     def decode(data, decodeParms=None):
         return data
-    decode = staticmethod(decode)
+    decode = staticmethod(decode)  # type: ignore
 
 class CCITTFaxDecode(object):
     def decode(data, decodeParms=None, height=0):
         if decodeParms:
+            from PyPDF2.generic import ArrayObject
+            if isinstance(decodeParms, ArrayObject):
+                if len(decodeParms) == 1:
+                    decodeParms = decodeParms[0]
             if decodeParms.get("/K", 1) == -1:
                 CCITTgroup = 4
             else:
@@ -382,7 +384,7 @@ class CCITTFaxDecode(object):
 
         return tiffHeader + data
 
-    decode = staticmethod(decode)
+    decode = staticmethod(decode)  # type: ignore
 
 def decodeStreamData(stream):
     from .generic import NameObject
@@ -451,6 +453,10 @@ def _xobj_to_image(x_object_obj):
             img_byte_arr = io.BytesIO()
             img.save(img_byte_arr, format="PNG")
             data = img_byte_arr.getvalue()
+        elif x_object_obj["/Filter"] in (["/LZWDecode"], ['/ASCII85Decode'], ['/CCITTFaxDecode']):
+            from PyPDF2.utils import b_
+            extension = ".png"
+            data = b_(data)
         elif x_object_obj["/Filter"] == "/DCTDecode":
             extension = ".jpg"
         elif x_object_obj["/Filter"] == "/JPXDecode":
