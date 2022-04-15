@@ -46,3 +46,15 @@ def test_encryption(src):
             assert ipdf.isEncrypted == True
             ipdf.decrypt("asdfzxcv")
         assert ipdf.getNumPages() == 1
+        metadict = ipdf.getDocumentInfo()
+        dd = dict(metadict)
+        # remove empty value entry
+        dd = {x[0]: x[1] for x in dd.items() if x[1]}
+        assert dd == {
+            '/Author': 'cheng',
+            '/CreationDate': "D:20220414132421+05'24'",
+            '/Creator': 'WPS Writer',
+            '/ModDate': "D:20220414132421+05'24'",
+            '/SourceModified': "D:20220414132421+05'24'",
+            '/Trapped': '/False'
+        }

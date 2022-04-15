@@ -59,9 +59,9 @@ try:
         def encrypt(self, data: bytes) -> bytes:
             iv = bytes(bytearray(random.randint(0, 255) for _ in range(16)))
             p = 16 - len(data) % 16
-            text = text + bytes(bytearray(p for _ in range(p)))
+            data += bytes(bytearray(p for _ in range(p)))
             aes = AES.new(self.key, AES.MODE_CBC, iv)
-            return aes.encrypt(data)
+            return iv + aes.encrypt(data)
 
         def decrypt(self, data: bytes) -> bytes:
             iv = data[:16]
@@ -77,18 +77,19 @@ except ImportError:
             self.S = list(range(256))
             j = 0
             for i in range(256):
-                j = ( j + self.S[i] + key[i % len(key)] ) % 256
-                self.S[i] , self.S[j] = self.S[j] , self.S[i]
+                j = (j + self.S[i] + key[i % len(key)]) % 256
+                self.S[i], self.S[j] = self.S[j], self.S[i]
 
         def encrypt(self, data: bytes) -> bytes:
             S = [x for x in self.S]
             out = list(0 for _ in range(len(data)))
             i, j = 0, 0
             for k in range(len(data)):
-                i = ( i + 1 ) % 256
-                j = ( j + S[i] ) % 256
-                S[i] , S[j] = S[j] , S[i]
-                out[k] = S[( S[i] + S[j]) % 256]
+                i = (i + 1) % 256
+                j = (j + S[i]) % 256
+                S[i], S[j] = S[j], S[i]
+                x = S[(S[i] + S[j]) % 256]
+                out[k] = data[k] ^ x
             return bytes(bytearray(out))
 
         def decrypt(self, data: bytes) -> bytes:
@@ -339,7 +340,7 @@ class CryptFilter:
 
     def encryptObject(self, obj: PdfObject) -> PdfObject:
         # TODO
-        raise NotImplementedError
+        return NotImplemented
 
     def decryptObject(self, obj: PdfObject) -> PdfObject:
         if isinstance(obj, ByteStringObject) or isinstance(obj, TextStringObject):
@@ -371,7 +372,7 @@ class Encryption:
 
     def encryptObject(self, obj: PdfObject) -> PdfObject:
         # TODO
-        raise NotImplemented
+        return NotImplemented
 
     def decryptObject(self, obj: PdfObject, idnum: int, generation: int) -> PdfObject:
         """
@@ -426,7 +427,7 @@ class Encryption:
 
     def encryptPdf(self, user_pwd: str, owner_pwd: str=None) -> DictionaryObject:
         # TODO
-        raise NotImplemented
+        return NotImplemented
 
     def decryptPdf(self, u_entry: bytes, o_entry: bytes, user_pwd: str, owner_pwd: str=None) -> int:
         user_pwd = _bytes(user_pwd)
