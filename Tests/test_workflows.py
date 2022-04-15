@@ -7,6 +7,7 @@ import sys
 import pytest
 
 from PyPDF2 import PdfFileReader
+from PyPDF2.constants import PageAttributes as PG
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -54,7 +55,7 @@ def test_PdfReaderJpegImage():
             imagetext = pdftext_file.read()
 
         ipdf_p0 = ipdf.getPage(0)
-        xObject = ipdf_p0["/Resources"]["/XObject"].getObject()
+        xObject = ipdf_p0[PG.RESOURCES]["/XObject"].getObject()
         data = xObject["/Im4"].getData()
 
         # Compare the text of the PDF to a known source

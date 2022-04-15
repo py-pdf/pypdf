@@ -29,15 +29,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-"""
-A pure-Python PDF library with an increasing number of capabilities.
-"""
+"""A pure-Python PDF library with an increasing number of capabilities."""
 
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
-
-__maintainer__ = "Phaseit, Inc."
-__maintainer_email = "PyPDF2@phaseit.net"
 
 import math
 import struct
@@ -60,7 +55,12 @@ import codecs
 from .generic import *
 from .utils import readNonWhitespace, readUntilWhitespace, ConvertFunctionsToVirtualList
 from .utils import isString, b_, u_, ord_, str_, formatWarning
-from PyPDF2.pdf_attributes import PagesAttributes as PA, PageAttributes as PG
+from PyPDF2.constants import (
+    PagesAttributes as PA,
+    PageAttributes as PG,
+    Ressources as RES,
+    StreamAttributes as SA,
+)
 
 if version_info < ( 2, 4 ):
    from sets import ImmutableSet as frozenset
@@ -356,8 +356,8 @@ class PdfFileWriter(object):
             values (/V)
         '''
         # Iterate through pages, update field values
-        for j in range(0, len(page['/Annots'])):
-            writer_annot = page['/Annots'][j].getObject()
+        for j in range(0, len(page[PG.ANNOTS])):
+            writer_annot = page[PG.ANNOTS][j].getObject()
             for field in fields:
                 if writer_annot.get('/T') == field:
                     writer_annot.update({
@@ -425,10 +425,10 @@ class PdfFileWriter(object):
             assert rev == 3
             U, key = _alg35(user_pwd, rev, keylen, O, P, ID_1, False)
         encrypt = DictionaryObject()
-        encrypt[NameObject("/Filter")] = NameObject("/Standard")
+        encrypt[NameObject(SA.FILTER)] = NameObject("/Standard")
         encrypt[NameObject("/V")] = NumberObject(V)
         if V == 2:
-            encrypt[NameObject("/Length")] = NumberObject(keylen * 8)
+            encrypt[NameObject(SA.LENGTH)] = NumberObject(keylen * 8)
         encrypt[NameObject("/R")] = NumberObject(rev)
         encrypt[NameObject("/O")] = ByteStringObject(O)
         encrypt[NameObject("/U")] = ByteStringObject(U)
@@ -779,8 +779,8 @@ class PdfFileWriter(object):
         pages = self.getObject(self._pages)[PA.KIDS]
         for page in pages:
             pageRef = self.getObject(page)
-            if "/Annots" in pageRef:
-                del pageRef['/Annots']
+            if PG.ANNOTS in pageRef:
+                del pageRef[PG.ANNOTS]
 
     def removeImages(self, ignoreByteStringObject=False):
         """
@@ -920,7 +920,7 @@ class PdfFileWriter(object):
         });
         lnk = DictionaryObject()
         lnk.update({
-        NameObject('/Type'): NameObject('/Annot'),
+        NameObject('/Type'): NameObject(PG.ANNOTS),
         NameObject('/Subtype'): NameObject('/Link'),
         NameObject('/P'): pageLink,
         NameObject('/Rect'): rect,
@@ -930,10 +930,10 @@ class PdfFileWriter(object):
         })
         lnkRef = self._addObject(lnk)
 
-        if "/Annots" in pageRef:
-            pageRef['/Annots'].append(lnkRef)
+        if PG.ANNOTS in pageRef:
+            pageRef[PG.ANNOTS].append(lnkRef)
         else:
-            pageRef[NameObject('/Annots')] = ArrayObject([lnkRef])
+            pageRef[NameObject(PG.ANNOTS)] = ArrayObject([lnkRef])
 
     def addLink(self, pagenum, pagedest, rect, border=None, fit='/Fit', *args):
         """
@@ -1001,7 +1001,7 @@ class PdfFileWriter(object):
 
         lnk = DictionaryObject()
         lnk.update({
-            NameObject('/Type'): NameObject('/Annot'),
+            NameObject('/Type'): NameObject(PG.ANNOTS),
             NameObject('/Subtype'): NameObject('/Link'),
             NameObject('/P'): pageLink,
             NameObject('/Rect'): rect,
@@ -1010,10 +1010,10 @@ class PdfFileWriter(object):
         })
         lnkRef = self._addObject(lnk)
 
-        if "/Annots" in pageRef:
-            pageRef['/Annots'].append(lnkRef)
+        if PG.ANNOTS in pageRef:
+            pageRef[PG.ANNOTS].append(lnkRef)
         else:
-            pageRef[NameObject('/Annots')] = ArrayObject([lnkRef])
+            pageRef[NameObject(PG.ANNOTS)] = ArrayObject([lnkRef])
 
     _valid_layouts = ['/NoLayout', '/SinglePage', '/OneColumn', '/TwoColumnLeft', '/TwoColumnRight', '/TwoPageLeft', '/TwoPageRight']
 
@@ -2091,7 +2091,7 @@ class PdfFileReader(object):
             if rev == 2:
                 keylen = 5
             else:
-                keylen = encrypt['/Length'].getObject() // 8
+                keylen = encrypt[SA.LENGTH].getObject() // 8
             key = _alg33_1(password, rev, keylen)
             real_O = encrypt["/O"].getObject()
             if rev == 2:
@@ -2122,7 +2122,7 @@ class PdfFileReader(object):
             U, key = _alg34(password, owner_entry, p_entry, id1_entry)
         elif rev >= 3:
             U, key = _alg35(password, rev,
-                    encrypt["/Length"].getObject() // 8, owner_entry,
+                    encrypt[SA.LENGTH].getObject() // 8, owner_entry,
                     p_entry, id1_entry,
                     encrypt.get("/EncryptMetadata", BooleanObject(False)).getObject())
             U, real_U = U[:16], real_U[:16]
@@ -2213,7 +2213,7 @@ class PageObject(DictionaryObject):
         # Creates a new page (cf PDF Reference  7.7.3.3)
         page.__setitem__(NameObject('/Type'), NameObject('/Page'))
         page.__setitem__(NameObject('/Parent'), NullObject())
-        page.__setitem__(NameObject('/Resources'), DictionaryObject())
+        page.__setitem__(NameObject(PG.RESOURCES), DictionaryObject())
         if width is None or height is None:
             if pdf is not None and pdf.getNumPages() > 0:
                 lastpage = pdf.getPage(pdf.getNumPages() - 1)
@@ -2353,16 +2353,16 @@ class PageObject(DictionaryObject):
                     for ref in annots:
                         newAnnots.append(ref)
 
-        for res in "/ExtGState", "/Font", "/XObject", "/ColorSpace", "/Pattern", "/Shading", "/Properties":
+        for res in "/ExtGState", RES.FONT, RES.XOBJECT, RES.COLOR_SPACE, "/Pattern", "/Shading", "/Properties":
             new, newrename = PageObject._mergeResources(originalResources, page2Resources, res)
             if new:
                 newResources[NameObject(res)] = new
                 rename.update(newrename)
 
         # Combine /ProcSet sets.
-        newResources[NameObject("/ProcSet")] = ArrayObject(
-            frozenset(originalResources.get("/ProcSet", ArrayObject()).getObject()).union(
-                frozenset(page2Resources.get("/ProcSet", ArrayObject()).getObject())
+        newResources[NameObject(RES.PROCSET)] = ArrayObject(
+            frozenset(originalResources.get(RES.PROCSET, ArrayObject()).getObject()).union(
+                frozenset(page2Resources.get(RES.PROCSET, ArrayObject()).getObject())
             )
         )
 
@@ -2406,8 +2406,8 @@ class PageObject(DictionaryObject):
             self.mediaBox.setUpperRight(upperright)
 
         self[NameObject('/Contents')] = ContentStream(newContentArray, self.pdf)
-        self[NameObject('/Resources')] = newResources
-        self[NameObject('/Annots')] = newAnnots
+        self[NameObject(PG.RESOURCES)] = newResources
+        self[NameObject(PG.ANNOTS)] = newAnnots
 
     def mergeTransformedPage(self, page2, ctm, expand=False):
         """

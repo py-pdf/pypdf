@@ -6,6 +6,7 @@ import pytest
 import PyPDF2.utils
 from PyPDF2 import PdfFileReader
 from PyPDF2.filters import _xobj_to_image
+from PyPDF2.constants import PageAttributes as PG
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -51,8 +52,8 @@ def test_read_metadata(pdf_path, expected):
         docinfo = reader.getDocumentInfo()
         metadict = dict(docinfo)
         assert metadict == expected
-        if '/Title' in metadict:
-            assert metadict['/Title'] == docinfo.title
+        if "/Title" in metadict:
+            assert metadict["/Title"] == docinfo.title
 
 
 @pytest.mark.parametrize(
@@ -66,8 +67,8 @@ def test_get_annotations(src):
     reader = PdfFileReader(src)
 
     for page in reader.pages:
-        if "/Annots" in page:
-            for annot in page["/Annots"]:
+        if PG.ANNOTS in page:
+            for annot in page[PG.ANNOTS]:
                 subtype = annot.getObject()["/Subtype"]
                 if subtype == "/Text":
                     annot.getObject()["/Contents"]
@@ -86,8 +87,8 @@ def test_get_attachments(src):
     attachments = {}
     for i in range(reader.getNumPages()):
         page = reader.getPage(i)
-        if "/Annots" in page:
-            for annotation in page["/Annots"]:
+        if PG.ANNOTS in page:
+            for annotation in page[PG.ANNOTS]:
                 annotobj = annotation.getObject()
                 if annotobj["/Subtype"] == "/FileAttachment":
                     fileobj = annotobj["/FS"]
@@ -120,7 +121,7 @@ def test_get_outlines(src, outline_elements):
     ],
 )
 def test_get_images(src, nb_images):
-    src =os.path.join(RESOURCE_ROOT, src)
+    src = os.path.join(RESOURCE_ROOT, src)
     reader = PdfFileReader(src)
 
     with pytest.raises(TypeError):
@@ -131,8 +132,8 @@ def test_get_images(src, nb_images):
 
     images_extracted = []
 
-    if "/XObject" in page["/Resources"]:
-        xObject = page["/Resources"]["/XObject"].getObject()
+    if "/XObject" in page[PG.RESOURCES]:
+        xObject = page[PG.RESOURCES]["/XObject"].getObject()
 
         for obj in xObject:
             if xObject[obj]["/Subtype"] == "/Image":

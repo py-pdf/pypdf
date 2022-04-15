@@ -29,7 +29,7 @@ from .generic import *
 from .utils import isString, str_
 from .pdf import PdfFileReader, PdfFileWriter
 from .pagerange import PageRange
-from PyPDF2.pdf_attributes import PagesAttributes as PA
+from PyPDF2.constants import PagesAttributes as PA
 from sys import version_info
 if version_info < ( 3, 0 ):
     from cStringIO import StringIO

@@ -62,6 +62,7 @@ def test_parse_filename_page_ranges_err():
 
 def test_page_range_help():
     from PyPDF2.pagerange import PAGE_RANGE_HELP
+
     assert len(PAGE_RANGE_HELP) > 20
     assert "0:3" in PAGE_RANGE_HELP
     assert PAGE_RANGE_HELP.endswith("\n")

@@ -43,6 +43,7 @@ import decimal
 import codecs
 
 from PyPDF2.utils import ERR_STREAM_TRUNCATED_PREMATURELY
+from PyPDF2.constants import StreamAttributes as SA
 
 ObjectPrefix = b_('/<[tf(n%')
 NumberSigns = b_('+-')
@@ -604,8 +605,8 @@ class DictionaryObject(dict, PdfObject):
                 if stream.read(1)  != b_('\n'):
                     stream.seek(-1, 1)
             # this is a stream object, not a dictionary
-            assert "/Length" in data
-            length = data["/Length"]
+            assert SA.LENGTH in data
+            length = data[SA.LENGTH]
             if debug: print(data)
             if isinstance(length, IndirectObject):
                 t = stream.tell()
@@ -780,9 +781,9 @@ class StreamObject(DictionaryObject):
         self.decodedSelf = None
 
     def writeToStream(self, stream, encryption_key):
-        self[NameObject("/Length")] = NumberObject(len(self._data))
+        self[NameObject(SA.LENGTH)] = NumberObject(len(self._data))
         DictionaryObject.writeToStream(self, stream, encryption_key)
-        del self["/Length"]
+        del self[SA.LENGTH]
         stream.write(b_("\nstream\n"))
         data = self._data
         if encryption_key:
@@ -791,20 +792,20 @@ class StreamObject(DictionaryObject):
         stream.write(b_("\nendstream"))
 
     def initializeFromDictionary(data):
-        if "/Filter" in data:
+        if SA.FILTER in data:
             retval = EncodedStreamObject()
         else:
             retval = DecodedStreamObject()
         retval._data = data["__streamdata__"]
         del data["__streamdata__"]
-        del data["/Length"]
+        del data[SA.LENGTH]
         retval.update(data)
         return retval
     initializeFromDictionary = staticmethod(initializeFromDictionary)  # type: ignore
 
     def flateEncode(self):
-        if "/Filter" in self:
-            f = self["/Filter"]
+        if SA.FILTER in self:
+            f = self[SA.FILTER]
             if isinstance(f, ArrayObject):
                 f.insert(0, NameObject("/FlateDecode"))
             else:
@@ -815,7 +816,7 @@ class StreamObject(DictionaryObject):
         else:
             f = NameObject("/FlateDecode")
         retval = EncodedStreamObject()
-        retval[NameObject("/Filter")] = f
+        retval[NameObject(SA.FILTER)] = f
         retval._data = filters.FlateDecode.encode(self._data)
         return retval
 
@@ -842,7 +843,7 @@ class EncodedStreamObject(StreamObject):
 
             decoded._data = filters.decodeStreamData(self)
             for key, value in list(self.items()):
-                if key not in ("/Length", "/Filter", "/DecodeParms"):
+                if key not in (SA.LENGTH, SA.FILTER, SA.DECODE_PARAMS):
                     decoded[key] = value
             self.decodedSelf = decoded
             return decoded._data
