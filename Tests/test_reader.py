@@ -61,13 +61,11 @@ def test_get_annotations(src):
     reader = PdfFileReader(src)
 
     for page in reader.pages:
-        print("/Annots" in page)
         if "/Annots" in page:
             for annot in page["/Annots"]:
                 subtype = annot.getObject()["/Subtype"]
                 if subtype == "/Text":
-                    print(annot.getObject()["/Contents"])
-                    print("")
+                    annot.getObject()["/Contents"]
 
 
 @pytest.mark.parametrize(
@@ -136,7 +134,7 @@ def test_get_images(src, nb_images):
                         img.write(byte_stream)
                     images_extracted.append(filename)
     else:
-        print("No image found.")
+        pass  # No image found
 
     assert len(images_extracted) == nb_images
 

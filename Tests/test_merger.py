@@ -14,6 +14,7 @@ def test_merge():
     pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
     outline = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
     pdf_forms = os.path.join(RESOURCE_ROOT, "pdflatex-forms.pdf")
+    pdf_pw = os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf")
 
     file_merger = PyPDF2.PdfFileMerger()
 
@@ -23,14 +24,13 @@ def test_merge():
     file_merger.append(pdf_path, pages=PyPDF2.pagerange.PageRange(slice(0, 0)))
     file_merger.append(pdf_forms)
 
+    # Merging an encrypted file
+    pdfr = PyPDF2.PdfFileReader(pdf_pw)
+    pdfr.decrypt("openpassword")
+    file_merger.append(pdfr)
+
     # PdfFileReader object:
     file_merger.append(PyPDF2.PdfFileReader(pdf_path, "rb"))
-
-    # Is merging encrypted files broken?
-    # encrypted = os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf")
-    # reader = PyPDF2.PdfFileReader(pdf_path, "rb")
-    # reader.decrypt("openpassword")
-    # file_merger.append(reader)
 
     # File handle
     with open(pdf_path, "rb") as fh:

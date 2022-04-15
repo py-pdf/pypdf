@@ -1637,7 +1637,7 @@ class PdfFileReader(object):
                 streamData.seek(0, 0)
                 lines = streamData.readlines()
                 for i in range(0, len(lines)):
-                    print((lines[i]))
+                    print(lines[i])
                 streamData.seek(pos, 0)
             try:
                 obj = readObject(streamData, self)

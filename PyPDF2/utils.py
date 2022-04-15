@@ -242,7 +242,6 @@ else:
                     bc[s] = r
                 return r
             except Exception:
-                print(s)
                 r = s.encode('utf-8')
                 if len(s) < 2:
                     bc[s] = r
