@@ -1,7 +1,7 @@
 # This workflow will install Python dependencies, run tests and lint with a variety of Python versions
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
-name: Unit Tests
+name: CI
 
 on:
   push:
@@ -11,6 +11,7 @@ on:
 
 jobs:
   tests:
+    name: pytest on ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -93,13 +94,7 @@ jobs:
       - name: Combine coverage & create xml report
         run: |
           python -m coverage combine
-          python -m coverage html --skip-covered --skip-empty
           python -m coverage xml
-      - name: Upload HTML report
-        uses: actions/upload-artifact@v3
-        with:
-          name: html-report
-          path: htmlcov
       - name: Upload Coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
