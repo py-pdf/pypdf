@@ -39,7 +39,7 @@ try:
 except ImportError:  # Py3
     import builtins
 
-
+ERR_STREAM_TRUNCATED_PREMATURELY = "Stream has ended unexpectedly"
 xrange_fn = getattr(builtins, "xrange", range)
 _basestring = getattr(builtins, "basestring", str)
 
@@ -122,7 +122,7 @@ def skipOverComment(stream):
 def readUntilRegex(stream, regex, ignore_eof=False):
     """
     Reads until the regular expression pattern matched (ignore the match)
-    Raise PdfStreamError on premature end-of-file.
+    :raises PdfStreamError: on premature end-of-file
     :param bool ignore_eof: If true, ignore end-of-line and return immediately
     """
     name = b_('')
@@ -133,7 +133,7 @@ def readUntilRegex(stream, regex, ignore_eof=False):
             if ignore_eof:
                 return name
             else:
-                raise PdfStreamError("Stream has ended unexpectedly")
+                raise PdfStreamError(ERR_STREAM_TRUNCATED_PREMATURELY)
         m = regex.search(tok)
         if m is not None:
             name += tok[:m.start()]
@@ -242,7 +242,6 @@ else:
                     bc[s] = r
                 return r
             except Exception:
-                print(s)
                 r = s.encode('utf-8')
                 if len(s) < 2:
                     bc[s] = r

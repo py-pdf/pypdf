@@ -1,5 +1,3 @@
-# vim: sw=4:expandtab:foldmethod=marker
-#
 # Copyright (c) 2006, Mathieu Fenniak
 # All rights reserved.
 #
@@ -40,7 +38,7 @@ if version_info < ( 3, 0 ):
     from cStringIO import StringIO
 else:
     from io import StringIO
-    import struct
+import struct
 
 try:
     import zlib
@@ -356,6 +354,10 @@ class JPXDecode(object):
 class CCITTFaxDecode(object):
     def decode(data, decodeParms=None, height=0):
         if decodeParms:
+            from PyPDF2.generic import ArrayObject
+            if isinstance(decodeParms, ArrayObject):
+                if len(decodeParms) == 1:
+                    decodeParms = decodeParms[0]
             if decodeParms.get("/K", 1) == -1:
                 CCITTgroup = 4
             else:
@@ -451,6 +453,10 @@ def _xobj_to_image(x_object_obj):
             img_byte_arr = io.BytesIO()
             img.save(img_byte_arr, format="PNG")
             data = img_byte_arr.getvalue()
+        elif x_object_obj["/Filter"] in (["/LZWDecode"], ['/ASCII85Decode'], ['/CCITTFaxDecode']):
+            from PyPDF2.utils import b_
+            extension = ".png"
+            data = b_(data)
         elif x_object_obj["/Filter"] == "/DCTDecode":
             extension = ".jpg"
         elif x_object_obj["/Filter"] == "/JPXDecode":

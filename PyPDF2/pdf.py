@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 #
-# vim: sw=4:expandtab:foldmethod=marker
-#
 # Copyright (c) 2006, Mathieu Fenniak
 # Copyright (c) 2007, Ashish Kulkarni <kulkarni.ashish@gmail.com>
 #
@@ -1637,7 +1635,7 @@ class PdfFileReader(object):
                 streamData.seek(0, 0)
                 lines = streamData.readlines()
                 for i in range(0, len(lines)):
-                    print((lines[i]))
+                    print(lines[i])
                 streamData.seek(pos, 0)
             try:
                 obj = readObject(streamData, self)
@@ -2588,11 +2586,6 @@ class PageObject(DictionaryObject):
                                                  ctm[1][0], ctm[1][1],
                                                  ctm[2][0], ctm[2][1]], expand)
 
-    ##
-    # Applys a transformation matrix the page.
-    #
-    # @param ctm   A 6 elements tuple containing the operands of the
-    #              transformation matrix
     def addTransformation(self, ctm):
         """
         Applies a transformation matrix to the page.

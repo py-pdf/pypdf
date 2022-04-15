@@ -3,6 +3,18 @@ import pytest
 from PyPDF2.pagerange import PageRange, ParseError, parse_filename_page_ranges
 
 
+def test_equality():
+    pr1 = PageRange(slice(0, 5))
+    pr2 = PageRange(slice(0, 5))
+    assert pr1 == pr2
+
+
+def test_equality_other_objectc():
+    pr1 = PageRange(slice(0, 5))
+    pr2 = "PageRange(slice(0, 5))"
+    assert pr1 != pr2
+
+
 def test_idempotency():
     pr = PageRange(slice(0, 5))
     pr2 = PageRange(pr)
