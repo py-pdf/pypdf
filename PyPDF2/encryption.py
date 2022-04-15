@@ -72,6 +72,8 @@ try:
 
 except ImportError:
 
+    from PyPDF2._aes import AESCBC
+
     class CryptRC4(CryptBase):
         def __init__(self, key: bytes) -> None:
             self.S = list(range(256))
@@ -97,13 +99,19 @@ except ImportError:
 
     class CryptAES(CryptBase):
         def __init__(self, key: bytes) -> None:
-            self.key = key
+            self.aes = AESCBC(key)
 
         def encrypt(self, data: bytes) -> bytes:
-            raise RuntimeError("PyCryptodome is required for AES encryption")
+            iv = bytes(bytearray(random.randint(0, 255) for _ in range(16)))
+            p = 16 - len(data) % 16
+            data += bytes(bytearray(p for _ in range(p)))
+            return iv + self.aes.encrypt(iv, data)
 
         def decrypt(self, data: bytes) -> bytes:
-            raise RuntimeError("PyCryptodome is required for AES decryption")
+            iv = data[:16]
+            data = data[16:]
+            d = self.aes.decrypt(iv, data)
+            return d[:-d[-1]]
 
 
 class CryptIdentity(CryptBase):
