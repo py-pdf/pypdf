@@ -2822,11 +2822,9 @@ class ContentStream(DecodedStreamObject):
         while True:
             # Read 8 kB at a time and check if the chunk contains the E operator.
             buf = stream.read(8192)
-            
             # We have reached the end of the stream, but haven't found the EI operator.
             if not buf:
                 raise utils.PdfReadError("Unexpected end of stream")
-            
             loc = buf.find(b_("E"))
 
             if loc == -1:
