@@ -10,16 +10,44 @@ PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
 RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
 
 
-def test_read_metadata():
-    with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
+@pytest.mark.parametrize(
+    "pdf_path, expected",
+    [
+        (
+            os.path.join(RESOURCE_ROOT, "crazyones.pdf"),
+            {
+                "/CreationDate": "D:20150604133406-06'00'",
+                "/Creator": " XeTeX output 2015.06.04:1334",
+                "/Producer": "xdvipdfmx (20140317)",
+            },
+        ),
+        (
+            os.path.join(RESOURCE_ROOT, "metadata.pdf"),
+            {
+                "/CreationDate": "D:20220415093243+02'00'",
+                "/ModDate": "D:20220415093243+02'00'",
+                "/Creator": "pdflatex, or other tool",
+                "/Producer": "Latex with hyperref, or other system",
+                "/Author": "Martin Thoma",
+                "/Keywords": "Some Keywords, other keywords; more keywords",
+                "/Subject": "The Subject",
+                "/Title": "The Title",
+                "/Trapped": "/False",
+                "/PTEX.Fullbanner": (
+                    "This is pdfTeX, Version "
+                    "3.141592653-2.6-1.40.23 (TeX Live 2021) "
+                    "kpathsea version 6.3.3"
+                ),
+            },
+        ),
+    ],
+    ids=["crazyones", "metadata"],
+)
+def test_read_metadata(pdf_path, expected):
+    with open(pdf_path, "rb") as inputfile:
         reader = PdfFileReader(inputfile)
         metadict = reader.getDocumentInfo()
-        assert metadict.title is None
-        assert dict(metadict) == {
-            "/CreationDate": "D:20150604133406-06'00'",
-            "/Creator": " XeTeX output 2015.06.04:1334",
-            "/Producer": "xdvipdfmx (20140317)",
-        }
+        assert dict(metadict) == expected
 
 
 @pytest.mark.parametrize(

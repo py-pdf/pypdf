@@ -1,6 +1,14 @@
 import pytest
 import PyPDF2.utils
 import io
+import os
+
+from PyPDF2 import PdfFileReader
+
+
+TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
+PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
+RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
 
 
 @pytest.mark.parametrize(
@@ -9,6 +17,9 @@ import io
 def test_isInt(value, expected):
     assert PyPDF2.utils.isInt(value) == expected
 
+
+def test_isBytes():
+    assert PyPDF2.utils.isBytes(b"")
 
 @pytest.mark.parametrize(
     "stream,expected",
@@ -73,3 +84,11 @@ def test_matrixMultiply(a, b, expected):
 def test_markLocation():
     stream = io.BytesIO(b"abde" * 6000)
     PyPDF2.utils.markLocation(stream)
+
+
+def test_ConvertFunctionsToVirtualList():
+    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    reader = PdfFileReader(pdf_path)
+
+    # Test if getting as slice throws an error
+    assert len(reader.pages[:]) == 1
