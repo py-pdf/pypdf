@@ -44,6 +44,8 @@ from . import utils
 import decimal
 import codecs
 
+from PyPDF2.utils import ERR_STREAM_TRUNCATED_PREMATURELY
+
 ObjectPrefix = b_('/<[tf(n%')
 NumberSigns = b_('+-')
 IndirectPattern = re.compile(b_(r"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]"))
@@ -199,8 +201,7 @@ class IndirectObject(PdfObject):
         while True:
             tok = stream.read(1)
             if not tok:
-                # stream has truncated prematurely
-                raise PdfStreamError("Stream has ended unexpectedly")
+                raise PdfStreamError(ERR_STREAM_TRUNCATED_PREMATURELY)
             if tok.isspace():
                 break
             idnum += tok
@@ -208,8 +209,7 @@ class IndirectObject(PdfObject):
         while True:
             tok = stream.read(1)
             if not tok:
-                # stream has truncated prematurely
-                raise PdfStreamError("Stream has ended unexpectedly")
+                raise PdfStreamError(ERR_STREAM_TRUNCATED_PREMATURELY)
             if tok.isspace():
                 if not generation:
                     continue
@@ -273,10 +273,11 @@ class NumberObject(int, PdfObject):
     readFromStream = staticmethod(readFromStream)
 
 
-##
-# Given a string (either a "str" or "unicode"), create a ByteStringObject or a
-# TextStringObject to represent the string.
 def createStringObject(string):
+    """
+    Given a string (either a "str" or "unicode"), create a ByteStringObject or a
+    TextStringObject to represent the string.
+    """
     if isinstance(string, utils.string_type):
         return TextStringObject(string)
     elif isinstance(string, utils.bytes_type):
@@ -306,8 +307,7 @@ def readHexStringFromStream(stream):
     while True:
         tok = readNonWhitespace(stream)
         if not tok:
-            # stream has truncated prematurely
-            raise PdfStreamError("Stream has ended unexpectedly")
+            raise PdfStreamError(ERR_STREAM_TRUNCATED_PREMATURELY)
         if tok == b_(">"):
             break
         x += tok
@@ -328,8 +328,7 @@ def readStringFromStream(stream):
     while True:
         tok = stream.read(1)
         if not tok:
-            # stream has truncated prematurely
-            raise PdfStreamError("Stream has ended unexpectedly")
+            raise PdfStreamError(ERR_STREAM_TRUNCATED_PREMATURELY)
         if tok == b_("("):
             parens += 1
         elif tok == b_(")"):
@@ -392,16 +391,17 @@ def readStringFromStream(stream):
     return createStringObject(txt)
 
 
-##
-# Represents a string object where the text encoding could not be determined.
-# This occurs quite often, as the PDF spec doesn't provide an alternate way to
-# represent strings -- for example, the encryption data stored in files (like
-# /O) is clearly not text, but is still stored in a "String" object.
 class ByteStringObject(utils.bytes_type, PdfObject):
+    """
+    Represents a string object where the text encoding could not be determined.
+    This occurs quite often, as the PDF spec doesn't provide an alternate way to
+    represent strings -- for example, the encryption data stored in files (like
+    /O) is clearly not text, but is still stored in a "String" object.
+    """
 
     ##
     # For compatibility with TextStringObject.original_bytes.  This method
-    # returns self.
+    #  self.
     original_bytes = property(lambda self: self)
 
     def writeToStream(self, stream, encryption_key):
@@ -413,12 +413,14 @@ class ByteStringObject(utils.bytes_type, PdfObject):
         stream.write(b_(">"))
 
 
-##
-# Represents a string object that has been decoded into a real unicode string.
-# If read from a PDF document, this string appeared to match the
-# PDFDocEncoding, or contained a UTF-16BE BOM mark to cause UTF-16 decoding to
-# occur.
 class TextStringObject(utils.string_type, PdfObject):
+    """
+    Represents a string object that has been decoded into a real unicode string.
+    If read from a PDF document, this string appeared to match the
+    PDFDocEncoding, or contained a UTF-16BE BOM mark to cause UTF-16 decoding to
+    occur.
+    """
+
     autodetect_pdfdocencoding = False
     autodetect_utf16 = False
 
@@ -569,8 +571,7 @@ class DictionaryObject(dict, PdfObject):
                 skipOverComment(stream)
                 continue
             if not tok:
-                # stream has truncated prematurely
-                raise PdfStreamError("Stream has ended unexpectedly")
+                raise PdfStreamError(ERR_STREAM_TRUNCATED_PREMATURELY)
 
             if debug: print(("Tok:", tok))
             if tok == b_(">"):

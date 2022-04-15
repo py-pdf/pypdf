@@ -2588,11 +2588,6 @@ class PageObject(DictionaryObject):
                                                  ctm[1][0], ctm[1][1],
                                                  ctm[2][0], ctm[2][1]], expand)
 
-    ##
-    # Applys a transformation matrix the page.
-    #
-    # @param ctm   A 6 elements tuple containing the operands of the
-    #              transformation matrix
     def addTransformation(self, ctm):
         """
         Applies a transformation matrix to the page.
