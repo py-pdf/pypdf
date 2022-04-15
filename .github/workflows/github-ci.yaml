@@ -34,7 +34,7 @@ jobs:
     - name: Install requirements (Python 2)
       if: matrix.python-version == '2.7'
       run: |
-        pip install pillow pytest
+        pip install pillow pytest coverage
     - name: Install PyPDF2
       run: |
         pip install .
