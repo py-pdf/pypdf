@@ -22,4 +22,3 @@ class PageAttributes:
     ROTATE = "/Rotate"  # integer, optional; page rotation in degrees
     THUMB = "/Thumb"  # stream, optional; indirect reference to image of the page
     ANNOTS = "/Annots"  # array, optional; an array of annotations
-    
