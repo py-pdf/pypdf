@@ -31,18 +31,23 @@ __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import math
+from sys import version_info
+
+from PyPDF2.constants import CcittFaxDecodeParameters as CCITT
+from PyPDF2.constants import ColorSpaces
+from PyPDF2.constants import FilterTypeAbbreviations as FTA
+from PyPDF2.constants import FilterTypes as FT
+from PyPDF2.constants import ImageAttributes as IA
+from PyPDF2.constants import LzwFilterParameters as LZW
+from PyPDF2.constants import StreamAttributes as SA
 
 from .utils import PdfReadError, ord_, paethPredictor
-from PyPDF2.constants import (
-    FilterTypes as FT,
-    ImageAttributes as IA,
-    StreamAttributes as SA,
-)
-from sys import version_info
+
 if version_info < ( 3, 0 ):
     from cStringIO import StringIO
 else:
     from io import StringIO
+
 import struct
 
 try:
@@ -115,13 +120,13 @@ class FlateDecode(object):
         predictor = 1
         if decodeParms:
             try:
-                predictor = decodeParms.get("/Predictor", 1)
+                predictor = decodeParms.get(LZW.PREDICTOR, 1)
             except AttributeError:
                 pass    # usually an array with a null object was read
 
         # predictor 1 == no predictor
         if predictor != 1:
-            columns = decodeParms["/Columns"]
+            columns = decodeParms[LZW.COLUMNS]
             # PNG prediction:
             if predictor >= 10 and predictor <= 15:
                 output = StringIO()
@@ -368,7 +373,7 @@ class CCITTFaxDecode(object):
             else:
                 CCITTgroup = 3
 
-        width = decodeParms["/Columns"]
+        width = decodeParms[CCITT.COLUMNS]
         imgSize = len(data)
         tiff_header_struct = '<2shlh' + 'hhll' * 8 + 'h'
         tiffHeader = struct.pack(tiff_header_struct,
@@ -402,13 +407,13 @@ def decodeStreamData(stream):
     # If there is not data to decode we should not try to decode the data.
     if data:
         for filterType in filters:
-            if filterType == "/FlateDecode" or filterType == "/Fl":
+            if filterType == FT.FLATE_DECODE or filterType == FTA.FL:
                 data = FlateDecode.decode(data, stream.get(SA.DECODE_PARAMS))
-            elif filterType == FT.ASCII_HEX_DECODE or filterType == "/AHx":
+            elif filterType == FT.ASCII_HEX_DECODE or filterType == FTA.AHx:
                 data = ASCIIHexDecode.decode(data)
-            elif filterType == FT.LZW_DECODE or filterType == "/LZW":
+            elif filterType == FT.LZW_DECODE or filterType == FTA.LZW:
                 data = LZWDecode.decode(data, stream.get(SA.DECODE_PARAMS))
-            elif filterType == FT.ASCII_85_DECODE or filterType == "/A85":
+            elif filterType == FT.ASCII_85_DECODE or filterType == FTA.A85:
                 data = ASCII85Decode.decode(data)
             elif filterType == FT.DCT_DECODE:
                 data = DCTDecode.decode(data)
@@ -439,21 +444,24 @@ def _xobj_to_image(x_object_obj):
     :return: Tuple[file extension, bytes]
     """
     import io
+
     from PIL import Image
+
+    from PyPDF2.constants import GraphicsStateParameters as G
 
     size = (x_object_obj[IA.WIDTH], x_object_obj[IA.HEIGHT])
     data = x_object_obj.getData()
-    if x_object_obj["/ColorSpace"] == "/DeviceRGB":
+    if x_object_obj[IA.COLOR_SPACE] == ColorSpaces.DEVICE_RGB:
         mode = "RGB"
     else:
         mode = "P"
     extension = None
     if SA.FILTER in x_object_obj:
-        if x_object_obj[SA.FILTER] == "/FlateDecode":
+        if x_object_obj[SA.FILTER] == FT.FLATE_DECODE:
             extension = ".png"
             img = Image.frombytes(mode, size, data)
-            if "/SMask" in x_object_obj:  # add alpha channel
-                alpha = Image.frombytes("L", size, x_object_obj["/SMask"].getData())
+            if G.S_MASK in x_object_obj:  # add alpha channel
+                alpha = Image.frombytes("L", size, x_object_obj[G.S_MASK].getData())
                 img.putalpha(alpha)
             img_byte_arr = io.BytesIO()
             img.save(img_byte_arr, format="PNG")

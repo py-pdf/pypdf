@@ -39,6 +39,7 @@ import struct
 import sys
 import uuid
 from sys import version_info
+
 if version_info < ( 3, 0 ):
     from cStringIO import StringIO
 else:
@@ -49,18 +50,18 @@ if version_info < ( 3, 0 ):
 else:
     from io import BytesIO
 
-from . import utils
-import warnings
 import codecs
+import warnings
+
+from PyPDF2.constants import PageAttributes as PG
+from PyPDF2.constants import PagesAttributes as PA
+from PyPDF2.constants import Ressources as RES
+from PyPDF2.constants import StreamAttributes as SA
+
+from . import utils
 from .generic import *
-from .utils import readNonWhitespace, readUntilWhitespace, ConvertFunctionsToVirtualList
-from .utils import isString, b_, u_, ord_, str_, formatWarning
-from PyPDF2.constants import (
-    PagesAttributes as PA,
-    PageAttributes as PG,
-    Ressources as RES,
-    StreamAttributes as SA,
-)
+from .utils import (ConvertFunctionsToVirtualList, b_, formatWarning, isString,
+                    ord_, readNonWhitespace, readUntilWhitespace, str_, u_)
 
 if version_info < ( 2, 4 ):
    from sets import ImmutableSet as frozenset
@@ -402,7 +403,8 @@ class PdfFileWriter(object):
             encryption.  When false, 40bit encryption will be used.  By default,
             this flag is on.
         """
-        import time, random
+        import random
+        import time
         if owner_pwd is None:
             owner_pwd = user_pwd
         if use_128bit:

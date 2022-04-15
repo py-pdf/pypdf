@@ -5,8 +5,10 @@ import pytest
 
 import PyPDF2.utils
 from PyPDF2 import PdfFileReader
-from PyPDF2.filters import _xobj_to_image
+from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import PageAttributes as PG
+from PyPDF2.constants import Ressources as RES
+from PyPDF2.filters import _xobj_to_image
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -69,7 +71,7 @@ def test_get_annotations(src):
     for page in reader.pages:
         if PG.ANNOTS in page:
             for annot in page[PG.ANNOTS]:
-                subtype = annot.getObject()["/Subtype"]
+                subtype = annot.getObject()[IA.SUBTYPE]
                 if subtype == "/Text":
                     annot.getObject()["/Contents"]
 
@@ -90,7 +92,7 @@ def test_get_attachments(src):
         if PG.ANNOTS in page:
             for annotation in page[PG.ANNOTS]:
                 annotobj = annotation.getObject()
-                if annotobj["/Subtype"] == "/FileAttachment":
+                if annotobj[IA.SUBTYPE] == "/FileAttachment":
                     fileobj = annotobj["/FS"]
                     attachments[fileobj["/F"]] = fileobj["/EF"]["/F"].getData()
     return attachments
@@ -132,11 +134,11 @@ def test_get_images(src, nb_images):
 
     images_extracted = []
 
-    if "/XObject" in page[PG.RESOURCES]:
-        xObject = page[PG.RESOURCES]["/XObject"].getObject()
+    if RES.XOBJECT in page[PG.RESOURCES]:
+        xObject = page[PG.RESOURCES][RES.XOBJECT].getObject()
 
         for obj in xObject:
-            if xObject[obj]["/Subtype"] == "/Image":
+            if xObject[obj][IA.SUBTYPE] == "/Image":
                 extension, byte_stream = _xobj_to_image(xObject[obj])
                 if extension is not None:
                     filename = obj[1:] + ".png"

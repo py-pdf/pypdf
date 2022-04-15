@@ -32,18 +32,18 @@ Implementation of generic PDF objects (dictionary, number, string, and so on)
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
-import re
-from .utils import readNonWhitespace, RC4_encrypt, skipOverComment
-from .utils import b_, u_, chr_, ord_
-from .utils import PdfStreamError
-import warnings
-from . import filters
-from . import utils
-import decimal
 import codecs
+import decimal
+import re
+import warnings
 
-from PyPDF2.utils import ERR_STREAM_TRUNCATED_PREMATURELY
+from PyPDF2.constants import FilterTypes as FT
 from PyPDF2.constants import StreamAttributes as SA
+from PyPDF2.utils import ERR_STREAM_TRUNCATED_PREMATURELY
+
+from . import filters, utils
+from .utils import (PdfStreamError, RC4_encrypt, b_, chr_, ord_,
+                    readNonWhitespace, skipOverComment, u_)
 
 ObjectPrefix = b_('/<[tf(n%')
 NumberSigns = b_('+-')
@@ -807,7 +807,7 @@ class StreamObject(DictionaryObject):
         if SA.FILTER in self:
             f = self[SA.FILTER]
             if isinstance(f, ArrayObject):
-                f.insert(0, NameObject("/FlateDecode"))
+                f.insert(0, NameObject(FT.FLATE_DECODE))
             else:
                 newf = ArrayObject()
                 newf.append(NameObject("/FlateDecode"))
@@ -1062,18 +1062,21 @@ class Destination(TreeObject):
         self[NameObject("/Page")] = page
         self[NameObject("/Type")] = typ
 
+        from PyPDF2.constants import TypArguments as TA
+        from PyPDF2.constants import TypFitArguments as TF
+
         # from table 8.2 of the PDF 1.7 reference.
         if typ == "/XYZ":
-            (self[NameObject("/Left")], self[NameObject("/Top")],
+            (self[NameObject(TA.LEFT)], self[NameObject(TA.TOP)],
                 self[NameObject("/Zoom")]) = args
-        elif typ == "/FitR":
-            (self[NameObject("/Left")], self[NameObject("/Bottom")],
-                self[NameObject("/Right")], self[NameObject("/Top")]) = args
-        elif typ in ["/FitH", "/FitBH"]:
-            self[NameObject("/Top")], = args
-        elif typ in ["/FitV", "/FitBV"]:
-            self[NameObject("/Left")], = args
-        elif typ in ["/Fit", "/FitB"]:
+        elif typ == TF.FIT_R:
+            (self[NameObject(TA.LEFT)], self[NameObject(TA.BOTTOM)],
+                self[NameObject(TA.RIGHT)], self[NameObject(TA.TOP)]) = args
+        elif typ in [TF.FIT_H, TF.FIT_BH]:
+            self[NameObject(TA.TOP)], = args
+        elif typ in [TF.FIT_V, TF.FIT_BV]:
+            self[NameObject(TA.LEFT)], = args
+        elif typ in [TF.FIT, TF.FIT_B]:
             pass
         else:
             raise utils.PdfReadError("Unknown Destination Type: %r" % typ)
