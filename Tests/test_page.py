@@ -21,6 +21,7 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
         ),
         (os.path.join(RESOURCE_ROOT, "imagemagick-images.pdf"), None),
         (os.path.join(RESOURCE_ROOT, "imagemagick-lzw.pdf"), None),
+        (os.path.join(RESOURCE_ROOT, "reportlab-inline-image.pdf"), None),
     ],
     ids=[
         "crazyones",
@@ -29,6 +30,7 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
         "libreoffice-writer-password",
         "imagemagick-images",
         "imagemagick-lzw",
+        "reportlab-inline-image"
     ],
 )
 def test_page_operations(pdf_path, password):
