@@ -21,6 +21,7 @@ def test_isInt(value, expected):
 def test_isBytes():
     assert PyPDF2.utils.isBytes(b"")
 
+
 @pytest.mark.parametrize(
     "stream,expected",
     [
