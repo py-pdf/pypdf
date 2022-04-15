@@ -8,7 +8,7 @@ build
 dist/*
 
 # Code coverage artifacts
-.coverage
+.coverage*
 coverage.xml
 
 # Editors / IDEs
