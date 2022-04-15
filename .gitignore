@@ -4,9 +4,12 @@
 .tox
 build
 .idea/*
-.coverage
 *.egg-info/
 dist/*
+
+# Code coverage artifacts
+.coverage
+coverage.xml
 
 # Editors / IDEs
 .vscode/
