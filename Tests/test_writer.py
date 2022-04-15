@@ -80,3 +80,31 @@ def test_remove_images():
 
     # Cleanup
     os.remove(tmp_filename)
+
+
+def test_write_metadata():
+    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+
+    reader = PdfFileReader(pdf_path)
+    writer = PdfFileWriter()
+
+    for page in reader.pages:
+        writer.addPage(page)
+
+    metadata = reader.getDocumentInfo()
+    writer.addMetadata(metadata)
+
+    writer.addMetadata({"/Title": "The Crazy Ones"})
+
+    # finally, write data to PyPDF2-output.pdf
+    tmp_filename = "dont_commit_writer_added_metadata.pdf"
+    with open(tmp_filename, "wb") as output_stream:
+        writer.write(output_stream)
+
+    # Check if the title was set
+    reader = PdfFileReader(tmp_filename)
+    metadata = reader.getDocumentInfo()
+    assert metadata.get("/Title") == "The Crazy Ones"
+
+    # Cleanup
+    os.remove(tmp_filename)

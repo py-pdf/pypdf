@@ -1,6 +1,7 @@
 import io
 import os
 import pytest
+from PyPDF2 import PdfFileReader
 import PyPDF2.utils
 from PyPDF2.filters import _xobj_to_image
 
@@ -11,8 +12,8 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
 
 def test_read_metadata():
     with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
-        ipdf = PyPDF2.PdfFileReader(inputfile)
-        metadict = ipdf.getDocumentInfo()
+        reader = PdfFileReader(inputfile)
+        metadict = reader.getDocumentInfo()
         assert metadict.title is None
         assert dict(metadict) == {
             "/CreationDate": "D:20150604133406-06'00'",
@@ -29,7 +30,7 @@ def test_read_metadata():
     ],
 )
 def test_get_annotations(src):
-    reader = PyPDF2.PdfFileReader(src)
+    reader = PdfFileReader(src)
 
     for page in reader.pages:
         print("/Annots" in page)
@@ -49,7 +50,7 @@ def test_get_annotations(src):
     ],
 )
 def test_get_attachments(src):
-    reader = PyPDF2.PdfFileReader(src)
+    reader = PdfFileReader(src)
 
     attachments = {}
     for i in range(reader.getNumPages()):
@@ -71,7 +72,7 @@ def test_get_attachments(src):
     ],
 )
 def test_get_outlines(src, outline_elements):
-    reader = PyPDF2.PdfFileReader(src)
+    reader = PdfFileReader(src)
     outlines = reader.getOutlines()
     assert len(outlines) == outline_elements
 
@@ -85,7 +86,7 @@ def test_get_outlines(src, outline_elements):
     ],
 )
 def test_get_images(src, nb_images):
-    reader = PyPDF2.PdfFileReader(src)
+    reader = PdfFileReader(src)
 
     with pytest.raises(TypeError):
         page = reader.pages["0"]
@@ -153,10 +154,10 @@ def test_get_images_raw(strict, with_prev_0, should_fail):
     )
     pdf_stream = io.BytesIO(pdf_data)
     if should_fail:
-        with pytest.raises(PyPDF2.pdf.utils.PdfReadError):
-            PyPDF2.PdfFileReader(pdf_stream, strict=strict)
+        with pytest.raises(PyPDF2.utils.PdfReadError):
+            PdfFileReader(pdf_stream, strict=strict)
     else:
-        PyPDF2.PdfFileReader(pdf_stream, strict=strict)
+        PdfFileReader(pdf_stream, strict=strict)
 
 
 @pytest.mark.xfail(
@@ -167,5 +168,5 @@ def test_get_images_raw(strict, with_prev_0, should_fail):
 )
 def test_issue297():
     path = os.path.join(RESOURCE_ROOT, "issue-297.pdf")
-    reader = PyPDF2.PdfFileReader(path, "rb")
+    reader = PdfFileReader(path, "rb")
     reader.getPage(0)
