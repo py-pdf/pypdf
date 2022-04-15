@@ -1,8 +1,10 @@
 import io
 import os
+
 import pytest
-from PyPDF2 import PdfFileReader
+
 import PyPDF2.utils
+from PyPDF2 import PdfFileReader
 from PyPDF2.filters import _xobj_to_image
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))

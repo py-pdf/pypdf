@@ -1,7 +1,9 @@
 import os
+
 import pytest
-from PyPDF2 import PdfFileReader
+
 import PyPDF2.xmp
+from PyPDF2 import PdfFileReader
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)

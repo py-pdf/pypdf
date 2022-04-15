@@ -1,10 +1,10 @@
-import pytest
-import PyPDF2.utils
 import io
 import os
 
-from PyPDF2 import PdfFileReader
+import pytest
 
+import PyPDF2.utils
+from PyPDF2 import PdfFileReader
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)

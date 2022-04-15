@@ -1,4 +1,5 @@
 import os
+
 import pytest
 
 from PyPDF2 import PdfFileReader
@@ -18,6 +19,12 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
             os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf"),
             "openpassword",
         ),
+    ],
+    ids=[
+        "crazyones",
+        "attachment",
+        "side-by-side-subfig",
+        "libreoffice-writer-password",
     ],
 )
 def test_page_operations(pdf_path, password):

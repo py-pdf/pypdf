@@ -30,13 +30,18 @@ def test_merge():
     file_merger.append(pdfr)
 
     # PdfFileReader object:
-    file_merger.append(PyPDF2.PdfFileReader(pdf_path, "rb"))
+    file_merger.append(PyPDF2.PdfFileReader(pdf_path, "rb"), bookmark=True)
 
     # File handle
     with open(pdf_path, "rb") as fh:
         file_merger.append(fh)
 
-    file_merger.addBookmark("A bookmark", 0)
+    bookmark = file_merger.addBookmark("A bookmark", 0)
+    file_merger.addBookmark("deeper", 0, parent=bookmark)
+    file_merger.addMetadata({"author": "Martin Thoma"})
+    file_merger.addNamedDestination("title", 0)
+    file_merger.setPageLayout("/SinglePage")
+    file_merger.setPageMode("/UseThumbs")
 
     file_merger.write("dont_commit_merged.pdf")
     file_merger.close()
