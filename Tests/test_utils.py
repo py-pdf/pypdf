@@ -92,3 +92,7 @@ def test_ConvertFunctionsToVirtualList():
 
     # Test if getting as slice throws an error
     assert len(reader.pages[:]) == 1
+
+
+def test_hexStr():
+    assert PyPDF2.utils.hexStr(10) == "0xa"
