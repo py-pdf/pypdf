@@ -7,6 +7,10 @@ build
 *.egg-info/
 dist/*
 
+#
+.mutmut-cache
+mutmut-results.*
+
 # Code coverage artifacts
 .coverage*
 coverage.xml

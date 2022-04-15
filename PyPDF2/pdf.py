@@ -2224,7 +2224,7 @@ class PageObject(DictionaryObject):
             RectangleObject([0, 0, width, height]))
 
         return page
-    createBlankPage = staticmethod(createBlankPage)
+    createBlankPage = staticmethod(createBlankPage)  # type: ignore
 
     def rotateClockwise(self, angle):
         """
@@ -2266,7 +2266,7 @@ class PageObject(DictionaryObject):
             elif key not in newRes:
                 newRes[key] = page2Res.raw_get(key)
         return newRes, renameRes
-    _mergeResources = staticmethod(_mergeResources)
+    _mergeResources = staticmethod(_mergeResources)  # type: ignore
 
     def _contentStreamRename(stream, rename, pdf):
         if not rename:
@@ -2286,7 +2286,7 @@ class PageObject(DictionaryObject):
             else:
                 raise KeyError ("type of operands is %s" % type (operands))
         return stream
-    _contentStreamRename = staticmethod(_contentStreamRename)
+    _contentStreamRename = staticmethod(_contentStreamRename)  # type: ignore
 
     def _pushPopGS(contents, pdf):
         # adds a graphics state "push" and "pop" to the beginning and end
@@ -2296,7 +2296,7 @@ class PageObject(DictionaryObject):
         stream.operations.insert(0, [[], "q"])
         stream.operations.append([[], "Q"])
         return stream
-    _pushPopGS = staticmethod(_pushPopGS)
+    _pushPopGS = staticmethod(_pushPopGS)  # type: ignore
 
     def _addTransformationMatrix(contents, pdf, ctm):
         # adds transformation matrix at the beginning of the given
@@ -2307,7 +2307,7 @@ class PageObject(DictionaryObject):
             FloatObject(c), FloatObject(d), FloatObject(e),
             FloatObject(f)], " cm"])
         return contents
-    _addTransformationMatrix = staticmethod(_addTransformationMatrix)
+    _addTransformationMatrix = staticmethod(_addTransformationMatrix)  # type: ignore
 
     def getContents(self):
         """

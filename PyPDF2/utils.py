@@ -35,9 +35,10 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 import sys
 
 try:
-    import __builtin__ as builtins
-except ImportError:  # Py3
     import builtins
+    from typing import Dict
+except ImportError:  # Py2.7
+    import __builtin__ as builtins  # type: ignore
 
 ERR_STREAM_TRUNCATED_PREMATURELY = "Stream has ended unexpectedly"
 xrange_fn = getattr(builtins, "xrange", range)
@@ -45,7 +46,7 @@ _basestring = getattr(builtins, "basestring", str)
 
 bytes_type = type(bytes()) # Works the same in Python 2.X and 3.X
 string_type = getattr(builtins, "unicode", str)
-int_types = (int, long) if sys.version_info[0] < 3 else (int,)  # noqa
+int_types = (int, long) if sys.version_info[0] < 3 else (int,)  # type: ignore  # noqa
 
 
 # Make basic type tests more consistent
@@ -227,7 +228,7 @@ if sys.version_info[0] < 3:
     def b_(s):
         return s
 else:
-    B_CACHE = {}
+    B_CACHE = {}  # type: Dict[str, bytes]
 
     def b_(s):
         bc = B_CACHE
