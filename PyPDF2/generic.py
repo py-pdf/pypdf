@@ -1,5 +1,3 @@
-# vim: sw=4:expandtab:foldmethod=marker
-#
 # Copyright (c) 2006, Mathieu Fenniak
 # All rights reserved.
 #
@@ -114,7 +112,7 @@ class NullObject(PdfObject):
         if nulltxt != b_("null"):
             raise utils.PdfReadError("Could not read Null object")
         return NullObject()
-    readFromStream = staticmethod(readFromStream)
+    readFromStream = staticmethod(readFromStream)  # type: ignore
 
 
 class BooleanObject(PdfObject):
@@ -136,7 +134,7 @@ class BooleanObject(PdfObject):
             return BooleanObject(False)
         else:
             raise utils.PdfReadError('Could not read Boolean object')
-    readFromStream = staticmethod(readFromStream)
+    readFromStream = staticmethod(readFromStream)  # type: ignore
 
 
 class ArrayObject(list, PdfObject):
@@ -166,7 +164,7 @@ class ArrayObject(list, PdfObject):
             # read and append obj
             arr.append(readObject(stream, pdf))
         return arr
-    readFromStream = staticmethod(readFromStream)
+    readFromStream = staticmethod(readFromStream)  # type: ignore
 
 
 class IndirectObject(PdfObject):
@@ -219,7 +217,7 @@ class IndirectObject(PdfObject):
         if r != b_("R"):
             raise utils.PdfReadError("Error reading indirect object reference at byte %s" % utils.hexStr(stream.tell()))
         return IndirectObject(int(idnum), int(generation), pdf)
-    readFromStream = staticmethod(readFromStream)
+    readFromStream = staticmethod(readFromStream)  # type: ignore
 
 
 class FloatObject(decimal.Decimal, PdfObject):
@@ -270,7 +268,7 @@ class NumberObject(int, PdfObject):
             return FloatObject(num)
         else:
             return NumberObject(num)
-    readFromStream = staticmethod(readFromStream)
+    readFromStream = staticmethod(readFromStream)  # type: ignore
 
 
 def createStringObject(string):
@@ -391,7 +389,7 @@ def readStringFromStream(stream):
     return createStringObject(txt)
 
 
-class ByteStringObject(utils.bytes_type, PdfObject):
+class ByteStringObject(utils.bytes_type, PdfObject):  # type: ignore
     """
     Represents a string object where the text encoding could not be determined.
     This occurs quite often, as the PDF spec doesn't provide an alternate way to
@@ -413,7 +411,7 @@ class ByteStringObject(utils.bytes_type, PdfObject):
         stream.write(b_(">"))
 
 
-class TextStringObject(utils.string_type, PdfObject):
+class TextStringObject(utils.string_type, PdfObject):  # type: ignore
     """
     Represents a string object that has been decoded into a real unicode string.
     If read from a PDF document, this string appeared to match the
@@ -497,7 +495,7 @@ class NameObject(str, PdfObject):
             else:
                 raise utils.PdfReadError("Illegal character in Name Object")
 
-    readFromStream = staticmethod(readFromStream)
+    readFromStream = staticmethod(readFromStream)  # type: ignore
 
 
 class DictionaryObject(dict, PdfObject):
@@ -642,7 +640,7 @@ class DictionaryObject(dict, PdfObject):
             retval = DictionaryObject()
             retval.update(data)
             return retval
-    readFromStream = staticmethod(readFromStream)
+    readFromStream = staticmethod(readFromStream)  # type: ignore
 
 
 class TreeObject(DictionaryObject):
@@ -802,7 +800,7 @@ class StreamObject(DictionaryObject):
         del data["/Length"]
         retval.update(data)
         return retval
-    initializeFromDictionary = staticmethod(initializeFromDictionary)
+    initializeFromDictionary = staticmethod(initializeFromDictionary)  # type: ignore
 
     def flateEncode(self):
         if "/Filter" in self:
