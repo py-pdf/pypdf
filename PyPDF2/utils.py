@@ -39,13 +39,13 @@ try:
 except ImportError:  # Py3
     import builtins
 
-
+ERR_STREAM_TRUNCATED_PREMATURELY = "Stream has ended unexpectedly"
 xrange_fn = getattr(builtins, "xrange", range)
 _basestring = getattr(builtins, "basestring", str)
 
 bytes_type = type(bytes()) # Works the same in Python 2.X and 3.X
 string_type = getattr(builtins, "unicode", str)
-int_types = (int, long) if sys.version_info[0] < 3 else (int,)
+int_types = (int, long) if sys.version_info[0] < 3 else (int,)  # noqa
 
 
 # Make basic type tests more consistent
@@ -122,7 +122,7 @@ def skipOverComment(stream):
 def readUntilRegex(stream, regex, ignore_eof=False):
     """
     Reads until the regular expression pattern matched (ignore the match)
-    Raise PdfStreamError on premature end-of-file.
+    :raises PdfStreamError: on premature end-of-file
     :param bool ignore_eof: If true, ignore end-of-line and return immediately
     """
     name = b_('')
@@ -130,10 +130,10 @@ def readUntilRegex(stream, regex, ignore_eof=False):
         tok = stream.read(16)
         if not tok:
             # stream has truncated prematurely
-            if ignore_eof == True:
+            if ignore_eof:
                 return name
             else:
-                raise PdfStreamError("Stream has ended unexpectedly")
+                raise PdfStreamError(ERR_STREAM_TRUNCATED_PREMATURELY)
         m = regex.search(tok)
         if m is not None:
             name += tok[:m.start()]
@@ -196,11 +196,10 @@ def markLocation(stream):
     # Mainly for debugging
     RADIUS = 5000
     stream.seek(-RADIUS, 1)
-    outputDoc = open('PyPDF2_pdfLocation.txt', 'wb')
-    outputDoc.write(stream.read(RADIUS))
-    outputDoc.write(b'HERE')
-    outputDoc.write(stream.read(RADIUS))
-    outputDoc.close()
+    with open('PyPDF2_pdfLocation.txt', 'wb') as outputDoc:
+        outputDoc.write(stream.read(RADIUS))
+        outputDoc.write(b'HERE')
+        outputDoc.write(stream.read(RADIUS))
     stream.seek(-RADIUS, 1)
 
 
@@ -242,8 +241,7 @@ else:
                 if len(s) < 2:
                     bc[s] = r
                 return r
-            except Exception as e:
-                print(s)
+            except Exception:
                 r = s.encode('utf-8')
                 if len(s) < 2:
                     bc[s] = r
@@ -252,7 +250,7 @@ else:
 
 def u_(s):
     if sys.version_info[0] < 3:
-        return unicode(s, 'unicode_escape')
+        return unicode(s, 'unicode_escape')  # noqa
     else:
         return s
 

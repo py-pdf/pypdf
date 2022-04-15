@@ -1,5 +1,3 @@
-# vim: sw=4:expandtab:foldmethod=marker
-#
 # Copyright (c) 2006, Mathieu Fenniak
 # All rights reserved.
 #
@@ -40,7 +38,7 @@ if version_info < ( 3, 0 ):
     from cStringIO import StringIO
 else:
     from io import StringIO
-    import struct
+import struct
 
 try:
     import zlib
@@ -55,7 +53,7 @@ except ImportError:
     # Unable to import zlib.  Attempt to use the System.IO.Compression
     # library from the .NET framework. (IronPython only)
     import System
-    from System import IO, Collections, Array
+    from System import IO, Array
 
     def _string_to_bytearr(buf):
         retval = Array.CreateInstance(System.Byte, len(buf))
@@ -233,17 +231,17 @@ class LZWDecode(object):
             http://www.rasip.fer.hr/research/compress/algorithms/fund/lz/lzw.html
             and the PDFReference
             """
-            cW = self.CLEARDICT;
+            cW = self.CLEARDICT
             baos=""
             while True:
-                pW = cW;
-                cW = self.nextCode();
+                pW = cW
+                cW = self.nextCode()
                 if cW == -1:
                     raise PdfReadError("Missed the stop code in LZWDecode!")
                 if cW == self.STOP:
-                    break;
+                    break
                 elif cW == self.CLEARDICT:
-                    self.resetDict();
+                    self.resetDict()
                 elif pW == self.CLEARDICT:
                     baos+=self.dict[cW]
                 else:
@@ -255,7 +253,7 @@ class LZWDecode(object):
                     else:
                         p=self.dict[pW]+self.dict[pW][0]
                         baos+=p
-                        self.dict[self.dictlen] = p;
+                        self.dict[self.dictlen] = p
                         self.dictlen+=1
                     if (self.dictlen >= (1 << self.bitspercode) - 1 and
                         self.bitspercode < 12):
@@ -275,13 +273,13 @@ class ASCII85Decode(object):
             x = 0
             hitEod = False
             # remove all whitespace from data
-            data = [y for y in data if not (y in ' \n\r\t')]
+            data = [y for y in data if y not in ' \n\r\t']
             while not hitEod:
                 c = data[x]
                 if len(retval) == 0 and c == "<" and data[x+1] == "~":
                     x += 2
                     continue
-                #elif c.isspace():
+                # elif c.isspace():
                 #    x += 1
                 #    continue
                 elif c == 'z':
@@ -356,6 +354,10 @@ class JPXDecode(object):
 class CCITTFaxDecode(object):
     def decode(data, decodeParms=None, height=0):
         if decodeParms:
+            from PyPDF2.generic import ArrayObject
+            if isinstance(decodeParms, ArrayObject):
+                if len(decodeParms) == 1:
+                    decodeParms = decodeParms[0]
             if decodeParms.get("/K", 1) == -1:
                 CCITTgroup = 4
             else:
@@ -363,7 +365,7 @@ class CCITTFaxDecode(object):
 
         width = decodeParms["/Columns"]
         imgSize = len(data)
-        tiff_header_struct = '<' + '2s' + 'h' + 'l' + 'h' + 'hhll' * 8 + 'h'
+        tiff_header_struct = '<2shlh' + 'hhll' * 8 + 'h'
         tiffHeader = struct.pack(tiff_header_struct,
                            b'II',  # Byte order indication: Little endian
                            42,  # Version number (always 42)
@@ -451,6 +453,10 @@ def _xobj_to_image(x_object_obj):
             img_byte_arr = io.BytesIO()
             img.save(img_byte_arr, format="PNG")
             data = img_byte_arr.getvalue()
+        elif x_object_obj["/Filter"] in (["/LZWDecode"], ['/ASCII85Decode'], ['/CCITTFaxDecode']):
+            from PyPDF2.utils import b_
+            extension = ".png"
+            data = b_(data)
         elif x_object_obj["/Filter"] == "/DCTDecode":
             extension = ".jpg"
         elif x_object_obj["/Filter"] == "/JPXDecode":

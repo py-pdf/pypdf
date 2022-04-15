@@ -1,3 +1,26 @@
+Version 1.27.4, 2022-04-12
+--------------------------
+
+Bug fixes (BUG):
+
+- Guard formatting of __init__.__doc__ string (#738)
+
+Packaging (PKG):
+
+- Add more precise license field to setup (#733)
+
+Testing (TST):
+
+- Add test for issue #297
+
+Miscellaneous:
+
+- DOC: Miscallenious ➔ Miscellaneous (Typo)
+- TST: Fix CI triggering (master ➔ main) (#739)
+- STY: Fix various style issues (#742)
+
+All changes: https://github.com/py-pdf/PyPDF2/compare/1.27.3...1.27.4
+
 Version 1.27.0, 2022-04-07
 --------------------------
 
