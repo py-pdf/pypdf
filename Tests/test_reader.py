@@ -51,8 +51,8 @@ def test_read_metadata(pdf_path, expected):
         docinfo = reader.getDocumentInfo()
         metadict = dict(docinfo)
         assert metadict == expected
-        if '/Title' in metadict:
-            assert metadict['/Title'] == docinfo.title
+        if "/Title" in metadict:
+            assert metadict["/Title"] == docinfo.title
 
 
 @pytest.mark.parametrize(
@@ -120,7 +120,7 @@ def test_get_outlines(src, outline_elements):
     ],
 )
 def test_get_images(src, nb_images):
-    src =os.path.join(RESOURCE_ROOT, src)
+    src = os.path.join(RESOURCE_ROOT, src)
     reader = PdfFileReader(src)
 
     with pytest.raises(TypeError):

@@ -22,6 +22,21 @@ def test_idempotency():
 
 
 @pytest.mark.parametrize(
+    "a, b, expected",
+    [
+        (PageRange(slice(0, 5)), PageRange(slice(2, 10)), slice(0, 10)),
+        (PageRange(slice(0, 5)), PageRange(slice(2, 3)), slice(0, 5)),
+        (PageRange(slice(0, 5)), PageRange(slice(5, 10)), slice(0, 10)),
+    ],
+)
+def test_addition(a, b, expected):
+    pr1 = PageRange(a)
+    pr2 = PageRange(b)
+    assert pr1 + pr2 == PageRange(expected)
+    assert pr2 + pr1 == PageRange(expected)  # addition is commutative
+
+
+@pytest.mark.parametrize(
     "range_str,expected",
     [
         ("42", slice(42, 43)),

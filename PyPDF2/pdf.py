@@ -121,7 +121,7 @@ class PdfFileWriter(object):
         action(pages["/Kids"], page)
         pages[NameObject("/Count")] = NumberObject(pages["/Count"] + 1)
 
-    def addPage(self, page):
+    def append(self, page):
         """
         Adds a page to this PDF file.  The page is usually acquired from a
         :class:`PdfFileReader<PdfFileReader>` instance.
@@ -131,7 +131,10 @@ class PdfFileWriter(object):
         """
         self._addPage(page, list.append)
 
-    def insertPage(self, page, index=0):
+    def addPage(self, page):
+        self.append(page)
+
+    def insert(self, page, index=0):
         """
         Insert a page in this PDF file. The page is usually acquired from a
         :class:`PdfFileReader<PdfFileReader>` instance.
@@ -142,7 +145,10 @@ class PdfFileWriter(object):
         """
         self._addPage(page, lambda l, p: l.insert(index, p))
 
-    def getPage(self, pageNumber):
+    def insertPage(self, page, index=0):
+        self.insert(page, index)
+
+    def __getitem__(self, key):
         """
         Retrieves a page by number from this PDF file.
 
@@ -153,15 +159,21 @@ class PdfFileWriter(object):
         """
         pages = self.getObject(self._pages)
         # XXX: crude hack
-        return pages["/Kids"][pageNumber].getObject()
+        return pages["/Kids"][key].getObject()
 
-    def getNumPages(self):
+    def getPage(self, pageNumber):
+        return self[pageNumber]
+
+    def __len__(self):
         """
         :return: the number of pages.
         :rtype: int
         """
         pages = self.getObject(self._pages)
         return int(pages[NameObject("/Count")])
+
+    def getNumPages(self):
+        return len(self)
 
     def addBlankPage(self, width=None, height=None):
         """
@@ -1063,6 +1075,8 @@ class PdfFileWriter(object):
     """Read and write property accessing the :meth:`getPageLayout()<PdfFileWriter.getPageLayout>`
     and :meth:`setPageLayout()<PdfFileWriter.setPageLayout>` methods."""
 
+    page_layout = pageLayout
+
     _valid_modes = ['/UseNone', '/UseOutlines', '/UseThumbs', '/FullScreen', '/UseOC', '/UseAttachments']
 
     def getPageMode(self):
@@ -1110,6 +1124,8 @@ class PdfFileWriter(object):
     pageMode = property(getPageMode, setPageMode)
     """Read and write property accessing the :meth:`getPageMode()<PdfFileWriter.getPageMode>`
     and :meth:`setPageMode()<PdfFileWriter.setPageMode>` methods."""
+
+    page_mode = pageMode
 
 
 class PdfFileReader(object):
@@ -1180,6 +1196,8 @@ class PdfFileReader(object):
     documentInfo = property(lambda self: self.getDocumentInfo(), None, None)
     """Read-only property that accesses the :meth:`getDocumentInfo()<PdfFileReader.getDocumentInfo>` function."""
 
+    document_info = documentInfo
+
     def getXmpMetadata(self):
         """
         Retrieves XMP (Extensible Metadata Platform) data from the PDF document
@@ -1201,6 +1219,8 @@ class PdfFileReader(object):
     Read-only property that accesses the
     :meth:`getXmpMetadata()<PdfFileReader.getXmpMetadata>` function.
     """
+
+    xmp_metadata = xmpMetadata
 
     def getNumPages(self):
         """
@@ -1235,7 +1255,7 @@ class PdfFileReader(object):
     :meth:`getNumPages()<PdfFileReader.getNumPages>` function.
     """
 
-    def getPage(self, pageNumber):
+    def __getitem__(self, key):
         """
         Retrieves a page by number from this PDF file.
 
@@ -1248,7 +1268,10 @@ class PdfFileReader(object):
         # assert not self.trailer.has_key("/Encrypt")
         if self.flattenedPages is None:
             self._flatten()
-        return self.flattenedPages[pageNumber]
+        return self.flattenedPages[key]
+
+    def getPage(self, pageNumber):
+        return self[pageNumber]
 
     namedDestinations = property(lambda self:
                                   self.getNamedDestinations(), None, None)
@@ -1256,6 +1279,8 @@ class PdfFileReader(object):
     Read-only property that accesses the
     :meth:`getNamedDestinations()<PdfFileReader.getNamedDestinations>` function.
     """
+
+    named_destinations = namedDestinations
 
     # A select group of relevant field attributes. For the complete list,
     # see section 8.6.2 of the PDF 1.7 reference.
@@ -1549,6 +1574,8 @@ class PdfFileReader(object):
     """Read-only property accessing the
     :meth:`getPageLayout()<PdfFileReader.getPageLayout>` method."""
 
+    page_layout = pageLayout
+
     def getPageMode(self):
         """
         Get the page mode.
@@ -1566,6 +1593,8 @@ class PdfFileReader(object):
     pageMode = property(getPageMode)
     """Read-only property accessing the
     :meth:`getPageMode()<PdfFileReader.getPageMode>` method."""
+
+    page_mode = pageMode
 
     def _flatten(self, pages=None, inherit=None, indirectRef=None):
         inheritablePageAttributes = (
@@ -2136,6 +2165,8 @@ class PdfFileReader(object):
     Note that this property, if true, will remain true even after the
     :meth:`decrypt()<PdfFileReader.decrypt>` method is called.
     """
+
+    is_encrypted = isEncrypted
 
 
 def getRectangle(self, name, defaults):

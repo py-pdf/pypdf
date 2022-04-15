@@ -30,7 +30,7 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
         "libreoffice-writer-password",
         "imagemagick-images",
         "imagemagick-lzw",
-        "reportlab-inline-image"
+        "reportlab-inline-image",
     ],
 )
 def test_page_operations(pdf_path, password):
