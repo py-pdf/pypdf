@@ -38,7 +38,7 @@ if version_info < ( 3, 0 ):
     from cStringIO import StringIO
 else:
     from io import StringIO
-    import struct
+import struct
 
 try:
     import zlib
