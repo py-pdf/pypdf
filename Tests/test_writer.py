@@ -1,9 +1,10 @@
 import os
+
 import pytest
 
 from PyPDF2 import PdfFileReader, PdfFileWriter
+from PyPDF2.generic import RectangleObject
 from PyPDF2.utils import PageSizeNotDefinedError
-from PyPDF2.generic import IndirectObject, RectangleObject
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -20,8 +21,8 @@ def test_writer_operations():
     pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
     pdf_outline_path = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
 
-    reader = PdfFileReader(open(pdf_path, "rb"))
-    reader_outline = PdfFileReader(open(pdf_outline_path, "rb"))
+    reader = PdfFileReader(pdf_path)
+    reader_outline = PdfFileReader(pdf_outline_path)
 
     output = PdfFileWriter()
     page = reader.pages[0]
@@ -57,3 +58,54 @@ def test_writer_operations():
     # finally, write "output" to PyPDF2-output.pdf
     with open("dont_commit_writer.pdf", "wb") as output_stream:
         output.write(output_stream)
+
+
+def test_remove_images():
+    pdf_path = os.path.join(RESOURCE_ROOT, "side-by-side-subfig.pdf")
+
+    reader = PdfFileReader(pdf_path)
+    output = PdfFileWriter()
+
+    page = reader.pages[0]
+    output.insertPage(page, 0)
+    output.removeImages()
+
+    # finally, write "output" to PyPDF2-output.pdf
+    tmp_filename = "dont_commit_writer_removed_image.pdf"
+    with open(tmp_filename, "wb") as output_stream:
+        output.write(output_stream)
+
+    with open(tmp_filename, "rb") as input_stream:
+        reader = PdfFileReader(input_stream)
+        assert "Lorem ipsum dolor sit amet" in reader.getPage(0).extractText()
+
+    # Cleanup
+    os.remove(tmp_filename)
+
+
+def test_write_metadata():
+    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+
+    reader = PdfFileReader(pdf_path)
+    writer = PdfFileWriter()
+
+    for page in reader.pages:
+        writer.addPage(page)
+
+    metadata = reader.getDocumentInfo()
+    writer.addMetadata(metadata)
+
+    writer.addMetadata({"/Title": "The Crazy Ones"})
+
+    # finally, write data to PyPDF2-output.pdf
+    tmp_filename = "dont_commit_writer_added_metadata.pdf"
+    with open(tmp_filename, "wb") as output_stream:
+        writer.write(output_stream)
+
+    # Check if the title was set
+    reader = PdfFileReader(tmp_filename)
+    metadata = reader.getDocumentInfo()
+    assert metadata.get("/Title") == "The Crazy Ones"
+
+    # Cleanup
+    os.remove(tmp_filename)

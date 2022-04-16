@@ -1,5 +1,7 @@
 import os
 
+import pytest
+
 from PyPDF2 import PdfFileReader
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -7,15 +9,42 @@ PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
 RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
 
 
-def test_page_operations():
+@pytest.mark.parametrize(
+    "pdf_path, password",
+    [
+        (os.path.join(RESOURCE_ROOT, "crazyones.pdf"), None),
+        (os.path.join(RESOURCE_ROOT, "attachment.pdf"), None),
+        (os.path.join(RESOURCE_ROOT, "side-by-side-subfig.pdf"), None),
+        (
+            os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf"),
+            "openpassword",
+        ),
+        (os.path.join(RESOURCE_ROOT, "imagemagick-images.pdf"), None),
+        (os.path.join(RESOURCE_ROOT, "imagemagick-lzw.pdf"), None),
+        (os.path.join(RESOURCE_ROOT, "reportlab-inline-image.pdf"), None),
+    ],
+    ids=[
+        "crazyones",
+        "attachment",
+        "side-by-side-subfig",
+        "libreoffice-writer-password",
+        "imagemagick-images",
+        "imagemagick-lzw",
+        "reportlab-inline-image"
+    ],
+)
+def test_page_operations(pdf_path, password):
     """
     This test just checks if the operation throws an exception.
 
     This should be done way more thoroughly: It should be checked if the
     output is as expected.
     """
-    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
-    reader = PdfFileReader(open(pdf_path, "rb"))
+    reader = PdfFileReader(pdf_path)
+
+    if password:
+        reader.decrypt(password)
+
     page = reader.pages[0]
     page.mergeRotatedScaledPage(page, 90, 1, 1)
     page.mergeScaledTranslatedPage(page, 1, 1, 1)
@@ -26,3 +55,23 @@ def test_page_operations():
     page.scaleTo(100, 100)
     page.compressContentStreams()
     page.extractText()
+
+
+@pytest.mark.parametrize(
+    "pdf_path, password",
+    [
+        (os.path.join(RESOURCE_ROOT, "crazyones.pdf"), None),
+        (os.path.join(RESOURCE_ROOT, "attachment.pdf"), None),
+        (os.path.join(RESOURCE_ROOT, "side-by-side-subfig.pdf"), None),
+        (
+            os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf"),
+            "openpassword",
+        ),
+    ],
+)
+def test_compress_content_streams(pdf_path, password):
+    reader = PdfFileReader(pdf_path)
+    if password:
+        reader.decrypt(password)
+    for page in reader.pages:
+        page.compressContentStreams()
