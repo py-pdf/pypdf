@@ -51,8 +51,8 @@ def test_read_metadata(pdf_path, expected):
         docinfo = reader.getDocumentInfo()
         metadict = dict(docinfo)
         assert metadict == expected
-        if '/Title' in metadict:
-            assert metadict['/Title'] == docinfo.title
+        if "/Title" in metadict:
+            assert metadict["/Title"] == docinfo.title
 
 
 @pytest.mark.parametrize(
@@ -120,7 +120,7 @@ def test_get_outlines(src, outline_elements):
     ],
 )
 def test_get_images(src, nb_images):
-    src =os.path.join(RESOURCE_ROOT, src)
+    src = os.path.join(RESOURCE_ROOT, src)
     reader = PdfFileReader(src)
 
     with pytest.raises(TypeError):
@@ -206,4 +206,20 @@ def test_get_images_raw(strict, with_prev_0, should_fail):
 def test_issue297():
     path = os.path.join(RESOURCE_ROOT, "issue-297.pdf")
     reader = PdfFileReader(path, "rb")
+    reader.getPage(0)
+
+
+def test_get_page_of_encrypted_file():
+    """
+    Check if we can read a page of an encrypted file.
+
+    This is a regression test for issue 327:
+    IndexError for getPage() of decrypted file
+    """
+    path = os.path.join(RESOURCE_ROOT, "encrypted-file.pdf")
+    reader = PdfFileReader(path)
+
+    # Password is correct:)
+    reader.decrypt("test")
+
     reader.getPage(0)
