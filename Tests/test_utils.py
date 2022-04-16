@@ -85,6 +85,7 @@ def test_matrixMultiply(a, b, expected):
 def test_markLocation():
     stream = io.BytesIO(b"abde" * 6000)
     PyPDF2.utils.markLocation(stream)
+    os.remove("PyPDF2_pdfLocation.txt")  # cleanup
 
 
 def test_ConvertFunctionsToVirtualList():
