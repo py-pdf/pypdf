@@ -125,7 +125,6 @@ class FlateDecode(object):
                 for decodeParm in decodeParms:
                     if '/Predictor' in decodeParm:
                         predictor = decodeParm['/Predictor']
- 
         # predictor 1 == no predictor
         if predictor != 1:
             columns = decodeParms[LZW.COLUMNS]
