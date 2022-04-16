@@ -2,6 +2,7 @@
 [![Python Support](https://img.shields.io/pypi/pyversions/PyPDF2.svg)](https://pypi.org/project/PyPDF2/)
 [![](https://img.shields.io/badge/-documentation-green)](https://pypdf2.readthedocs.io/en/latest/)
 ![GitHub last commit](https://img.shields.io/github/last-commit/py-pdf/PyPDF2)
+[![codecov](https://codecov.io/gh/py-pdf/PyPDF2/branch/main/graph/badge.svg?token=id42cGNZ5Z)](https://codecov.io/gh/py-pdf/PyPDF2)
 
 # PyPDF2
 
@@ -40,9 +41,8 @@ text = page.extractText()
 PyPDF2 can do a lot more, e.g. splitting, merging, reading and creating
 annotations, decrypting and encrypting, and more.
 
-Please see [the documentation](https://pypdf2.readthedocs.io/en/latest/),
-[`Sample_Code`](https://github.com/py-pdf/PyPDF2/tree/master/Sample_Code)
-and [`Scripts`](https://github.com/py-pdf/PyPDF2/tree/master/Scripts) for
+Please see [the documentation](https://pypdf2.readthedocs.io/en/latest/)
+and [`Scripts`](https://github.com/py-pdf/PyPDF2/tree/main/Scripts) for
 more usage examples!
 
 A lot of questions are asked and answered

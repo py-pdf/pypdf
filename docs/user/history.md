@@ -1,5 +1,7 @@
 # History of PyPDF2
 
+## The Origins: pyPDF
+
 In 2005, [Mathieu Fenniak] launched pyPdf "as a PDF toolkit..."
 focused on
 
@@ -8,6 +10,8 @@ focused on
 -   document introspection;
 -   page cropping; and
 -   document encryption and decryption.
+
+## PyPDF2 is born
 
 At the end of 2011, after consultation with Mathieu and others, Phaseit
 sponsored PyPDF2 as a fork of pyPdf on GitHub. The initial impetus was
@@ -30,8 +34,15 @@ process, and it handles a wider range of variant PDF formats
 \[explain\]. PyPDF2 has its own FAQ to answer other questions that have
 arisen.
 
+## PyPDF2 rises
+
 The Reddit [/r/python crowd chatted] obliquely and briefly about PyPDF2
 in March 2012.
+
+## PyPDF2: Reborn
+
+Martin Thoma took over maintenance of PyPDF2 in April 2022.
+
 
   [Mathieu Fenniak]: https://mathieu.fenniak.net/
   [pyfpdf]: https://github.com/reingart/pyfpdf

@@ -1,5 +1,4 @@
 import os
-import binascii
 import sys
 
 import PyPDF2
@@ -15,6 +14,7 @@ def test_merge():
     pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
     outline = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
     pdf_forms = os.path.join(RESOURCE_ROOT, "pdflatex-forms.pdf")
+    pdf_pw = os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf")
 
     file_merger = PyPDF2.PdfFileMerger()
 
@@ -24,20 +24,28 @@ def test_merge():
     file_merger.append(pdf_path, pages=PyPDF2.pagerange.PageRange(slice(0, 0)))
     file_merger.append(pdf_forms)
 
-    # PdfFileReader object:
-    file_merger.append(PyPDF2.PdfFileReader(pdf_path, "rb"))
+    # Merging an encrypted file
+    pdfr = PyPDF2.PdfFileReader(pdf_pw)
+    pdfr.decrypt("openpassword")
+    file_merger.append(pdfr)
 
-    # Is merging encrypted files broken?
-    # encrypted = os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf")
-    # reader = PyPDF2.PdfFileReader(pdf_path, "rb")
-    # reader.decrypt("openpassword")
-    # file_merger.append(reader)
+    # PdfFileReader object:
+    file_merger.append(PyPDF2.PdfFileReader(pdf_path, "rb"), bookmark=True)
 
     # File handle
-    fh = open(pdf_path, "rb")
-    file_merger.append(fh)
+    with open(pdf_path, "rb") as fh:
+        file_merger.append(fh)
 
-    file_merger.addBookmark("A bookmark", 0)
+    bookmark = file_merger.addBookmark("A bookmark", 0)
+    file_merger.addBookmark("deeper", 0, parent=bookmark)
+    file_merger.addMetadata({"author": "Martin Thoma"})
+    file_merger.addNamedDestination("title", 0)
+    file_merger.setPageLayout("/SinglePage")
+    file_merger.setPageMode("/UseThumbs")
 
-    file_merger.write("dont_commit_merged.pdf")
+    tmp_path = "dont_commit_merged.pdf"
+    file_merger.write(tmp_path)
     file_merger.close()
+
+    # Clean up
+    os.remove(tmp_path)
