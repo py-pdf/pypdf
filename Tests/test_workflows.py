@@ -7,6 +7,7 @@ import sys
 import pytest
 
 from PyPDF2 import PdfFileReader
+from PyPDF2.constants import PageAttributes as PG
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -54,7 +55,7 @@ def test_PdfReaderJpegImage():
             imagetext = pdftext_file.read()
 
         page = reader.getPage(0)
-        x_object = page["/Resources"]["/XObject"].getObject()
+        x_object = page[PG.RESOURCES]["/XObject"].getObject()
         data = x_object["/Im4"].getData()
 
         # Compare the text of the PDF to a known source
@@ -80,7 +81,7 @@ def test_decrypt():
             "/Producer": "LibreOffice 6.4",
         }
         # Is extractText() broken for encrypted files?
-        # assert ipdf.getPage(0).extractText().replace('\n', '') == "\n˘\n\u02c7\u02c6˙\n\n\n˘\u02c7\u02c6˙\n\n"
+        # assert reader.getPage(0).extractText().replace('\n', '') == "\n˘\n\u02c7\u02c6˙\n\n\n˘\u02c7\u02c6˙\n\n"
 
 
 @pytest.mark.parametrize("degree", [0, 90, 180, 270, 360, -90])

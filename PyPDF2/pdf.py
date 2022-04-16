@@ -29,21 +29,17 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-"""
-A pure-Python PDF library with an increasing number of capabilities.
-"""
+"""A pure-Python PDF library with an increasing number of capabilities."""
 
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
-
-__maintainer__ = "Phaseit, Inc."
-__maintainer_email = "PyPDF2@phaseit.net"
 
 import math
 import struct
 import sys
 import uuid
 from sys import version_info
+
 if version_info < ( 3, 0 ):
     from cStringIO import StringIO
 else:
@@ -54,12 +50,18 @@ if version_info < ( 3, 0 ):
 else:
     from io import BytesIO
 
-from . import utils
-import warnings
 import codecs
+import warnings
+
+from PyPDF2.constants import PageAttributes as PG
+from PyPDF2.constants import PagesAttributes as PA
+from PyPDF2.constants import Ressources as RES
+from PyPDF2.constants import StreamAttributes as SA
+
+from . import utils
 from .generic import *
-from .utils import readNonWhitespace, readUntilWhitespace, ConvertFunctionsToVirtualList
-from .utils import isString, b_, u_, ord_, str_, formatWarning
+from .utils import (ConvertFunctionsToVirtualList, b_, formatWarning, isString,
+                    ord_, readNonWhitespace, readUntilWhitespace, str_, u_)
 
 if version_info < ( 2, 4 ):
    from sets import ImmutableSet as frozenset
@@ -82,9 +84,9 @@ class PdfFileWriter(object):
         # The root of our page tree node.
         pages = DictionaryObject()
         pages.update({
-                NameObject("/Type"): NameObject("/Pages"),
-                NameObject("/Count"): NumberObject(0),
-                NameObject("/Kids"): ArrayObject(),
+                NameObject(PA.TYPE): NameObject("/Pages"),
+                NameObject(PA.COUNT): NumberObject(0),
+                NameObject(PA.KIDS): ArrayObject(),
                 })
         self._pages = self._addObject(pages)
 
@@ -98,7 +100,7 @@ class PdfFileWriter(object):
         # root object
         root = DictionaryObject()
         root.update({
-            NameObject("/Type"): NameObject("/Catalog"),
+            NameObject(PA.TYPE): NameObject("/Catalog"),
             NameObject("/Pages"): self._pages,
             })
         self._root = None
@@ -114,12 +116,12 @@ class PdfFileWriter(object):
         return self._objects[ido.idnum - 1]
 
     def _addPage(self, page, action):
-        assert page["/Type"] == "/Page"
+        assert page[PA.TYPE] == "/Page"
         page[NameObject("/Parent")] = self._pages
         page = self._addObject(page)
         pages = self.getObject(self._pages)
-        action(pages["/Kids"], page)
-        pages[NameObject("/Count")] = NumberObject(pages["/Count"] + 1)
+        action(pages[PA.KIDS], page)
+        pages[NameObject(PA.COUNT)] = NumberObject(pages[PA.COUNT] + 1)
 
     def addPage(self, page):
         """
@@ -153,7 +155,7 @@ class PdfFileWriter(object):
         """
         pages = self.getObject(self._pages)
         # XXX: crude hack
-        return pages["/Kids"][pageNumber].getObject()
+        return pages[PA.KIDS][pageNumber].getObject()
 
     def getNumPages(self):
         """
@@ -216,7 +218,7 @@ class PdfFileWriter(object):
         """
         js = DictionaryObject()
         js.update({
-                NameObject("/Type"): NameObject("/Action"),
+                NameObject(PA.TYPE): NameObject("/Action"),
                 NameObject("/S"): NameObject("/JavaScript"),
                 NameObject("/JS"): NameObject("(%s)" % javascript)
                 })
@@ -271,7 +273,7 @@ class PdfFileWriter(object):
         file_entry = DecodedStreamObject()
         file_entry.setData(fdata)
         file_entry.update({
-                NameObject("/Type"): NameObject("/EmbeddedFile")
+                NameObject(PA.TYPE): NameObject("/EmbeddedFile")
                 })
 
         # The Filespec entry
@@ -288,7 +290,7 @@ class PdfFileWriter(object):
 
         filespec = DictionaryObject()
         filespec.update({
-                NameObject("/Type"): NameObject("/Filespec"),
+                NameObject(PA.TYPE): NameObject("/Filespec"),
                 NameObject("/F"): createStringObject(fname),  # Perhaps also try TextStringObject
                 NameObject("/EF"): efEntry
                 })
@@ -355,8 +357,8 @@ class PdfFileWriter(object):
             values (/V)
         '''
         # Iterate through pages, update field values
-        for j in range(0, len(page['/Annots'])):
-            writer_annot = page['/Annots'][j].getObject()
+        for j in range(0, len(page[PG.ANNOTS])):
+            writer_annot = page[PG.ANNOTS][j].getObject()
             for field in fields:
                 if writer_annot.get('/T') == field:
                     writer_annot.update({
@@ -401,7 +403,8 @@ class PdfFileWriter(object):
             encryption.  When false, 40bit encryption will be used.  By default,
             this flag is on.
         """
-        import time, random
+        import random
+        import time
         if owner_pwd is None:
             owner_pwd = user_pwd
         if use_128bit:
@@ -424,10 +427,10 @@ class PdfFileWriter(object):
             assert rev == 3
             U, key = _alg35(user_pwd, rev, keylen, O, P, ID_1, False)
         encrypt = DictionaryObject()
-        encrypt[NameObject("/Filter")] = NameObject("/Standard")
+        encrypt[NameObject(SA.FILTER)] = NameObject("/Standard")
         encrypt[NameObject("/V")] = NumberObject(V)
         if V == 2:
-            encrypt[NameObject("/Length")] = NumberObject(keylen * 8)
+            encrypt[NameObject(SA.LENGTH)] = NumberObject(keylen * 8)
         encrypt[NameObject("/R")] = NumberObject(rev)
         encrypt[NameObject("/O")] = ByteStringObject(O)
         encrypt[NameObject("/U")] = ByteStringObject(U)
@@ -702,7 +705,7 @@ class PdfFileWriter(object):
         :param str fit: The fit of the destination page. See
             :meth:`addLink()<addLink>` for details.
         """
-        pageRef = self.getObject(self._pages)['/Kids'][pagenum]
+        pageRef = self.getObject(self._pages)[PA.KIDS][pagenum]
         action = DictionaryObject()
         zoomArgs = []
         for a in args:
@@ -757,7 +760,7 @@ class PdfFileWriter(object):
         return destRef
 
     def addNamedDestination(self, title, pagenum):
-        pageRef = self.getObject(self._pages)['/Kids'][pagenum]
+        pageRef = self.getObject(self._pages)[PA.KIDS][pagenum]
         dest = DictionaryObject()
         dest.update({
             NameObject('/D') : ArrayObject([pageRef, NameObject('/FitH'), NumberObject(826)]),
@@ -775,11 +778,11 @@ class PdfFileWriter(object):
         """
         Removes links and annotations from this output.
         """
-        pages = self.getObject(self._pages)['/Kids']
+        pages = self.getObject(self._pages)[PA.KIDS]
         for page in pages:
             pageRef = self.getObject(page)
-            if "/Annots" in pageRef:
-                del pageRef['/Annots']
+            if PG.ANNOTS in pageRef:
+                del pageRef[PG.ANNOTS]
 
     def removeImages(self, ignoreByteStringObject=False):
         """
@@ -788,7 +791,7 @@ class PdfFileWriter(object):
         :param bool ignoreByteStringObject: optional parameter
             to ignore ByteString Objects.
         """
-        pages = self.getObject(self._pages)['/Kids']
+        pages = self.getObject(self._pages)[PA.KIDS]
         jump_operators = [
             b_('cm'), b_('w'), b_('J'), b_('j'), b_('M'), b_('d'), b_('ri'), b_('i'),
             b_('gs'), b_('W'), b_('b'), b_('s'), b_('S'), b_('f'), b_('F'), b_('n'), b_('m'), b_('l'),
@@ -841,7 +844,7 @@ class PdfFileWriter(object):
         :param bool ignoreByteStringObject: optional parameter
             to ignore ByteString Objects.
         """
-        pages = self.getObject(self._pages)['/Kids']
+        pages = self.getObject(self._pages)[PA.KIDS]
         for j in range(len(pages)):
             page = pages[j]
             pageRef = self.getObject(page)
@@ -894,7 +897,7 @@ class PdfFileWriter(object):
         -John Mulligan
         """
 
-        pageLink = self.getObject(self._pages)['/Kids'][pagenum]
+        pageLink = self.getObject(self._pages)[PA.KIDS][pagenum]
         pageRef = self.getObject(pageLink)
 
         if border is not None:
@@ -919,7 +922,7 @@ class PdfFileWriter(object):
         });
         lnk = DictionaryObject()
         lnk.update({
-        NameObject('/Type'): NameObject('/Annot'),
+        NameObject('/Type'): NameObject(PG.ANNOTS),
         NameObject('/Subtype'): NameObject('/Link'),
         NameObject('/P'): pageLink,
         NameObject('/Rect'): rect,
@@ -929,10 +932,10 @@ class PdfFileWriter(object):
         })
         lnkRef = self._addObject(lnk)
 
-        if "/Annots" in pageRef:
-            pageRef['/Annots'].append(lnkRef)
+        if PG.ANNOTS in pageRef:
+            pageRef[PG.ANNOTS].append(lnkRef)
         else:
-            pageRef[NameObject('/Annots')] = ArrayObject([lnkRef])
+            pageRef[NameObject(PG.ANNOTS)] = ArrayObject([lnkRef])
 
     def addLink(self, pagenum, pagedest, rect, border=None, fit='/Fit', *args):
         """
@@ -970,8 +973,8 @@ class PdfFileWriter(object):
          - [left]
         """
 
-        pageLink = self.getObject(self._pages)['/Kids'][pagenum]
-        pageDest = self.getObject(self._pages)['/Kids'][pagedest] # TODO: switch for external link
+        pageLink = self.getObject(self._pages)[PA.KIDS][pagenum]
+        pageDest = self.getObject(self._pages)[PA.KIDS][pagedest] # TODO: switch for external link
         pageRef = self.getObject(pageLink)
 
         if border is not None:
@@ -1000,7 +1003,7 @@ class PdfFileWriter(object):
 
         lnk = DictionaryObject()
         lnk.update({
-            NameObject('/Type'): NameObject('/Annot'),
+            NameObject('/Type'): NameObject(PG.ANNOTS),
             NameObject('/Subtype'): NameObject('/Link'),
             NameObject('/P'): pageLink,
             NameObject('/Rect'): rect,
@@ -1009,10 +1012,10 @@ class PdfFileWriter(object):
         })
         lnkRef = self._addObject(lnk)
 
-        if "/Annots" in pageRef:
-            pageRef['/Annots'].append(lnkRef)
+        if PG.ANNOTS in pageRef:
+            pageRef[PG.ANNOTS].append(lnkRef)
         else:
-            pageRef[NameObject('/Annots')] = ArrayObject([lnkRef])
+            pageRef[NameObject(PG.ANNOTS)] = ArrayObject([lnkRef])
 
     _valid_layouts = ['/NoLayout', '/SinglePage', '/OneColumn', '/TwoColumnLeft', '/TwoColumnRight', '/TwoPageLeft', '/TwoPageRight']
 
@@ -1318,9 +1321,9 @@ class PdfFileReader(object):
         retval[key] = Field(field)
 
     def _checkKids(self, tree, retval, fileobj):
-        if "/Kids" in tree:
+        if PA.KIDS in tree:
             # recurse down the tree
-            for kid in tree["/Kids"]:
+            for kid in tree[PA.KIDS]:
                 self.getFields(kid.getObject(), retval, fileobj)
 
     def _writeField(self, fileobj, field, fieldAttributes):
@@ -1380,9 +1383,9 @@ class PdfFileReader(object):
         if tree is None:
             return retval
 
-        if "/Kids" in tree:
+        if PA.KIDS in tree:
             # recurse down the tree
-            for kid in tree["/Kids"]:
+            for kid in tree[PA.KIDS]:
                 self.getNamedDestinations(kid.getObject(), retval)
 
         if "/Names" in tree:
@@ -1569,8 +1572,8 @@ class PdfFileReader(object):
 
     def _flatten(self, pages=None, inherit=None, indirectRef=None):
         inheritablePageAttributes = (
-            NameObject("/Resources"), NameObject("/MediaBox"),
-            NameObject("/CropBox"), NameObject("/Rotate")
+            NameObject(PG.RESOURCES), NameObject(PG.MEDIABOX),
+            NameObject(PG.CROPBOX), NameObject(PG.ROTATE)
             )
         if inherit is None:
             inherit = dict()
@@ -1582,14 +1585,14 @@ class PdfFileReader(object):
             self.flattenedPages = []
 
         t = "/Pages"
-        if "/Type" in pages:
-            t = pages["/Type"]
+        if PA.TYPE in pages:
+            t = pages[PA.TYPE]
 
         if t == "/Pages":
             for attr in inheritablePageAttributes:
                 if attr in pages:
                     inherit[attr] = pages[attr]
-            for page in pages["/Kids"]:
+            for page in pages[PA.KIDS]:
                 addt = {}
                 if isinstance(page, IndirectObject):
                     addt["indirectRef"] = page
@@ -2093,7 +2096,7 @@ class PdfFileReader(object):
             if rev == 2:
                 keylen = 5
             else:
-                keylen = encrypt['/Length'].getObject() // 8
+                keylen = encrypt[SA.LENGTH].getObject() // 8
             key = _alg33_1(password, rev, keylen)
             real_O = encrypt["/O"].getObject()
             if rev == 2:
@@ -2124,7 +2127,7 @@ class PdfFileReader(object):
             U, key = _alg34(password, owner_entry, p_entry, id1_entry)
         elif rev >= 3:
             U, key = _alg35(password, rev,
-                    encrypt["/Length"].getObject() // 8, owner_entry,
+                    encrypt[SA.LENGTH].getObject() // 8, owner_entry,
                     p_entry, id1_entry,
                     encrypt.get("/EncryptMetadata", BooleanObject(False)).getObject())
             U, real_U = U[:16], real_U[:16]
@@ -2215,7 +2218,7 @@ class PageObject(DictionaryObject):
         # Creates a new page (cf PDF Reference  7.7.3.3)
         page.__setitem__(NameObject('/Type'), NameObject('/Page'))
         page.__setitem__(NameObject('/Parent'), NullObject())
-        page.__setitem__(NameObject('/Resources'), DictionaryObject())
+        page.__setitem__(NameObject(PG.RESOURCES), DictionaryObject())
         if width is None or height is None:
             if pdf is not None and pdf.getNumPages() > 0:
                 lastpage = pdf.getPage(pdf.getNumPages() - 1)
@@ -2223,7 +2226,7 @@ class PageObject(DictionaryObject):
                 height = lastpage.mediaBox.getHeight()
             else:
                 raise utils.PageSizeNotDefinedError()
-        page.__setitem__(NameObject('/MediaBox'),
+        page.__setitem__(NameObject(PG.MEDIABOX),
             RectangleObject([0, 0, width, height]))
 
         return page
@@ -2344,27 +2347,27 @@ class PageObject(DictionaryObject):
 
         newResources = DictionaryObject()
         rename = {}
-        originalResources = self["/Resources"].getObject()
-        page2Resources = page2["/Resources"].getObject()
+        originalResources = self[PG.RESOURCES].getObject()
+        page2Resources = page2[PG.RESOURCES].getObject()
         newAnnots = ArrayObject()
 
         for page in (self, page2):
-            if "/Annots" in page:
-                annots = page["/Annots"]
+            if PG.ANNOTS in page:
+                annots = page[PG.ANNOTS]
                 if isinstance(annots, ArrayObject):
                     for ref in annots:
                         newAnnots.append(ref)
 
-        for res in "/ExtGState", "/Font", "/XObject", "/ColorSpace", "/Pattern", "/Shading", "/Properties":
+        for res in "/ExtGState", RES.FONT, RES.XOBJECT, RES.COLOR_SPACE, "/Pattern", "/Shading", "/Properties":
             new, newrename = PageObject._mergeResources(originalResources, page2Resources, res)
             if new:
                 newResources[NameObject(res)] = new
                 rename.update(newrename)
 
         # Combine /ProcSet sets.
-        newResources[NameObject("/ProcSet")] = ArrayObject(
-            frozenset(originalResources.get("/ProcSet", ArrayObject()).getObject()).union(
-                frozenset(page2Resources.get("/ProcSet", ArrayObject()).getObject())
+        newResources[NameObject(RES.PROCSET)] = ArrayObject(
+            frozenset(originalResources.get(RES.PROCSET, ArrayObject()).getObject()).union(
+                frozenset(page2Resources.get(RES.PROCSET, ArrayObject()).getObject())
             )
         )
 
@@ -2408,8 +2411,8 @@ class PageObject(DictionaryObject):
             self.mediaBox.setUpperRight(upperright)
 
         self[NameObject('/Contents')] = ContentStream(newContentArray, self.pdf)
-        self[NameObject('/Resources')] = newResources
-        self[NameObject('/Annots')] = newAnnots
+        self[NameObject(PG.RESOURCES)] = newResources
+        self[NameObject(PG.ANNOTS)] = newAnnots
 
     def mergeTransformedPage(self, page2, ctm, expand=False):
         """
@@ -2717,14 +2720,14 @@ class PageObject(DictionaryObject):
                 text += "\n"
         return text
 
-    mediaBox = createRectangleAccessor("/MediaBox", ())
+    mediaBox = createRectangleAccessor(PG.MEDIABOX, ())
     """
     A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
     defining the boundaries of the physical medium on which the page is
     intended to be displayed or printed.
     """
 
-    cropBox = createRectangleAccessor("/CropBox", ("/MediaBox",))
+    cropBox = createRectangleAccessor("/CropBox", (PG.MEDIABOX,))
     """
     A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
     defining the visible region of default user space.  When the page is
@@ -2733,20 +2736,20 @@ class PageObject(DictionaryObject):
     implementation-defined manner.  Default value: same as :attr:`mediaBox<mediaBox>`.
     """
 
-    bleedBox = createRectangleAccessor("/BleedBox", ("/CropBox", "/MediaBox"))
+    bleedBox = createRectangleAccessor("/BleedBox", ("/CropBox", PG.MEDIABOX))
     """
     A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
     defining the region to which the contents of the page should be clipped
     when output in a production enviroment.
     """
 
-    trimBox = createRectangleAccessor("/TrimBox", ("/CropBox", "/MediaBox"))
+    trimBox = createRectangleAccessor("/TrimBox", ("/CropBox", PG.MEDIABOX))
     """
     A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
     defining the intended dimensions of the finished page after trimming.
     """
 
-    artBox = createRectangleAccessor("/ArtBox", ("/CropBox", "/MediaBox"))
+    artBox = createRectangleAccessor("/ArtBox", ("/CropBox", PG.MEDIABOX))
     """
     A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
     defining the extent of the page's meaningful content as intended by the

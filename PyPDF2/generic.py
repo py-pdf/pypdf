@@ -32,17 +32,18 @@ Implementation of generic PDF objects (dictionary, number, string, and so on)
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
-import re
-from .utils import readNonWhitespace, RC4_encrypt, skipOverComment
-from .utils import b_, u_, chr_, ord_
-from .utils import PdfStreamError
-import warnings
-from . import filters
-from . import utils
-import decimal
 import codecs
+import decimal
+import re
+import warnings
 
+from PyPDF2.constants import FilterTypes as FT
+from PyPDF2.constants import StreamAttributes as SA
 from PyPDF2.utils import ERR_STREAM_TRUNCATED_PREMATURELY
+
+from . import filters, utils
+from .utils import (PdfStreamError, RC4_encrypt, b_, chr_, ord_,
+                    readNonWhitespace, skipOverComment, u_)
 
 ObjectPrefix = b_('/<[tf(n%')
 NumberSigns = b_('+-')
@@ -604,8 +605,8 @@ class DictionaryObject(dict, PdfObject):
                 if stream.read(1)  != b_('\n'):
                     stream.seek(-1, 1)
             # this is a stream object, not a dictionary
-            assert "/Length" in data
-            length = data["/Length"]
+            assert SA.LENGTH in data
+            length = data[SA.LENGTH]
             if debug: print(data)
             if isinstance(length, IndirectObject):
                 t = stream.tell()
@@ -780,9 +781,9 @@ class StreamObject(DictionaryObject):
         self.decodedSelf = None
 
     def writeToStream(self, stream, encryption_key):
-        self[NameObject("/Length")] = NumberObject(len(self._data))
+        self[NameObject(SA.LENGTH)] = NumberObject(len(self._data))
         DictionaryObject.writeToStream(self, stream, encryption_key)
-        del self["/Length"]
+        del self[SA.LENGTH]
         stream.write(b_("\nstream\n"))
         data = self._data
         if encryption_key:
@@ -791,22 +792,22 @@ class StreamObject(DictionaryObject):
         stream.write(b_("\nendstream"))
 
     def initializeFromDictionary(data):
-        if "/Filter" in data:
+        if SA.FILTER in data:
             retval = EncodedStreamObject()
         else:
             retval = DecodedStreamObject()
         retval._data = data["__streamdata__"]
         del data["__streamdata__"]
-        del data["/Length"]
+        del data[SA.LENGTH]
         retval.update(data)
         return retval
     initializeFromDictionary = staticmethod(initializeFromDictionary)  # type: ignore
 
     def flateEncode(self):
-        if "/Filter" in self:
-            f = self["/Filter"]
+        if SA.FILTER in self:
+            f = self[SA.FILTER]
             if isinstance(f, ArrayObject):
-                f.insert(0, NameObject("/FlateDecode"))
+                f.insert(0, NameObject(FT.FLATE_DECODE))
             else:
                 newf = ArrayObject()
                 newf.append(NameObject("/FlateDecode"))
@@ -815,7 +816,7 @@ class StreamObject(DictionaryObject):
         else:
             f = NameObject("/FlateDecode")
         retval = EncodedStreamObject()
-        retval[NameObject("/Filter")] = f
+        retval[NameObject(SA.FILTER)] = f
         retval._data = filters.FlateDecode.encode(self._data)
         return retval
 
@@ -842,7 +843,7 @@ class EncodedStreamObject(StreamObject):
 
             decoded._data = filters.decodeStreamData(self)
             for key, value in list(self.items()):
-                if key not in ("/Length", "/Filter", "/DecodeParms"):
+                if key not in (SA.LENGTH, SA.FILTER, SA.DECODE_PARMS):
                     decoded[key] = value
             self.decodedSelf = decoded
             return decoded._data
@@ -1061,18 +1062,21 @@ class Destination(TreeObject):
         self[NameObject("/Page")] = page
         self[NameObject("/Type")] = typ
 
+        from PyPDF2.constants import TypArguments as TA
+        from PyPDF2.constants import TypFitArguments as TF
+
         # from table 8.2 of the PDF 1.7 reference.
         if typ == "/XYZ":
-            (self[NameObject("/Left")], self[NameObject("/Top")],
+            (self[NameObject(TA.LEFT)], self[NameObject(TA.TOP)],
                 self[NameObject("/Zoom")]) = args
-        elif typ == "/FitR":
-            (self[NameObject("/Left")], self[NameObject("/Bottom")],
-                self[NameObject("/Right")], self[NameObject("/Top")]) = args
-        elif typ in ["/FitH", "/FitBH"]:
-            self[NameObject("/Top")], = args
-        elif typ in ["/FitV", "/FitBV"]:
-            self[NameObject("/Left")], = args
-        elif typ in ["/Fit", "/FitB"]:
+        elif typ == TF.FIT_R:
+            (self[NameObject(TA.LEFT)], self[NameObject(TA.BOTTOM)],
+                self[NameObject(TA.RIGHT)], self[NameObject(TA.TOP)]) = args
+        elif typ in [TF.FIT_H, TF.FIT_BH]:
+            self[NameObject(TA.TOP)], = args
+        elif typ in [TF.FIT_V, TF.FIT_BV]:
+            self[NameObject(TA.LEFT)], = args
+        elif typ in [TF.FIT, TF.FIT_B]:
             pass
         else:
             raise utils.PdfReadError("Unknown Destination Type: %r" % typ)

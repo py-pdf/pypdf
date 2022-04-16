@@ -8,6 +8,7 @@ see https://github.com/py-pdf/PyPDF2/blob/main/LICENSE
 """
 
 import re
+
 from .utils import isString
 
 _INT_RE = r"(0|-?[1-9]\d*)"  # A decimal int, don't allow "-0".
