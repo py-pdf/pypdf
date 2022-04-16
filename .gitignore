@@ -6,6 +6,7 @@ build
 .idea/*
 *.egg-info/
 dist/*
+__pycache__/
 
 #
 .mutmut-cache
