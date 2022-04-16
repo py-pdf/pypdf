@@ -13,9 +13,9 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
 @pytest.fixture
 def pdf_file_writer():
     reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
-    pdf_file_writer = PdfFileWriter()
-    pdf_file_writer.appendPagesFromReader(reader)
-    yield pdf_file_writer
+    writer = PdfFileWriter()
+    writer.appendPagesFromReader(reader)
+    yield writer
 
 
 def test_add_js(pdf_file_writer):

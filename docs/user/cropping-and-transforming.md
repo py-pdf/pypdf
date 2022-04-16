@@ -25,7 +25,7 @@ writer.addPage(page3)
 # comment the the encription lines, if that's the case, to try this out:
 writer.addJS("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
 
-# finally, write to document-output.pdf
+# write to document-output.pdf
 with open("PyPDF2-output.pdf", "wb") as fp:
-    output.write(fp)
+    writer.write(fp)
 ```

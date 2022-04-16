@@ -12,9 +12,9 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
 
 
 def test_basic_features():
-    writer = PdfFileWriter()
     pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
     reader = PdfFileReader(pdf_path)
+    writer = PdfFileWriter()
 
     # print how many pages input1 has:
     print("document1.pdf has %d pages." % reader.getNumPages())
@@ -54,8 +54,12 @@ def test_basic_features():
     writer.encrypt(password)
 
     # finally, write "output" to PyPDF2-output.pdf
-    with open("PyPDF2-output.pdf", "wb") as outputStream:
-        writer.write(outputStream)
+    tmp_path = "PyPDF2-output.pdf"
+    with open(tmp_path, "wb") as output_stream:
+        writer.write(output_stream)
+
+    # cleanup
+    os.remove(tmp_path)
 
 
 def test_convertToInt():
