@@ -51,7 +51,6 @@ else:
 
 import struct
 
-
 try:
     import zlib
 
