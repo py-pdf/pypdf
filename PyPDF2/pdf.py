@@ -374,6 +374,7 @@ class PdfFileWriter(object):
         for j in range(0, len(page[PG.ANNOTS])):
             writer_annot = page[PG.ANNOTS][j].getObject()
             # retrieve parent field values, if present
+            writer_parent_annot = {}  # fallback if it's not there
             if PG.PARENT in writer_annot:
                 writer_parent_annot = writer_annot[PG.PARENT]
             for field in fields:
