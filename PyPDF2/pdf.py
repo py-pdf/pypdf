@@ -1277,7 +1277,7 @@ class PdfFileReader(object):
                        "/T" : "Field Name", "/TU" : "Alternate Field Name",
                        "/TM" : "Mapping Name", "/Ff" : "Field Flags",
                        "/V" : "Value", "/DV" : "Default Value",  "/XFA" : "XML form"}
-        if retval == None:
+        if retval is None:
             retval = {}
             catalog = self.trailer["/Root"]
             # get the AcroForm tree
