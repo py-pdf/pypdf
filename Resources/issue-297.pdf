@@ -1,0 +1,82 @@
+%PDF-1.1
+
+1 0 obj
+<<
+ /Type /Catalog
+ /Outlines 2 0 R
+ /Pages 3 0 R
+ /OpenAction 7 0 R
+>>
+endobj
+
+2 0 obj
+<<
+ /Type /Outlines
+ /Count 0
+>>
+endobj
+
+3 0 obj
+<<
+ /Type /Pages
+ /Kids [4 0 R]
+ /Count 1
+>>
+endobj
+
+4 0 obj
+<<
+ /Type /Page
+ /Parent 3 0 R
+ /MediaBox [0 0 612 792]
+ /Contents 5 0 R
+ /Resources <<
+             /ProcSet [/PDF /Text]
+             /Font << /F1 6 0 R >>
+            >>
+>>
+endobj
+
+5 0 obj
+<< /Length 56 >>
+stream
+BT /F1 12 Tf 100 700 Td 15 TL (test example) Tj ET
+endstream
+endobj
+
+6 0 obj
+<<
+ /Type /Font
+ /Subtype /Type1
+ /Name /F1
+ /BaseFont /Helvetica
+ /Encoding /MacRomanEncoding
+>>
+endobj
+
+7 0 obj
+<<
+ /Type /Action
+ /S /JavaScript
+ /JS (app.alert({cMsg: 'Hello alert', cTitle: 'Testing PDF', nIcon: 3});)
+>>
+endobj
+
+xref
+0 8
+0000000000 65535 f
+0000000012 00000 n
+0000000109 00000 n
+0000000165 00000 n
+0000000234 00000 n
+0000000439 00000 n
+0000000553 00000 n
+0000000677 00000 n
+trailer
+<<
+ /Size 8
+ /Root 1 0 R
+>>
+startxref
+842
+%%EOF
