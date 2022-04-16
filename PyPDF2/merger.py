@@ -140,7 +140,7 @@ class PdfFileMerger(object):
         if decryption_key is not None:
             pdfr._decryption_key = decryption_key
         elif pdfr.isEncrypted:
-            # if the file is encrypted at least try 
+            # if the file is encrypted at least try
             # the decryption with an empty password
             pdfr.decrypt('')
 
