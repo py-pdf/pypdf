@@ -2114,8 +2114,8 @@ class PdfFileReader(object):
         permissions['accessability'] = permissions_code & (1 << 10-1) != 0  # bit 10
         permissions['assemble'] = permissions_code & (1 << 11-1) != 0  # bit 11
         permissions['print_high_quality'] = permissions_code & (1 << 12-1) != 0  # bit 12
-        return permissions            
-            
+        return permissions
+
     def _decrypt(self, password):
         # Decrypts data as per Section 3.5 (page 117) of PDF spec v1.7
         # "The security handler defines the use of encryption and decryption in
