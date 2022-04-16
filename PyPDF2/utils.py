@@ -33,6 +33,7 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 
 
 import sys
+from PyPDF2.errors import PdfStreamError
 
 try:
     import builtins
@@ -202,26 +203,6 @@ def markLocation(stream):
         output_fh.write(b'HERE')
         output_fh.write(stream.read(RADIUS))
     stream.seek(-RADIUS, 1)
-
-
-class PyPdfError(Exception):
-    pass
-
-
-class PdfReadError(PyPdfError):
-    pass
-
-
-class PageSizeNotDefinedError(PyPdfError):
-    pass
-
-
-class PdfReadWarning(UserWarning):
-    pass
-
-
-class PdfStreamError(PdfReadError):
-    pass
 
 
 if sys.version_info[0] < 3:
