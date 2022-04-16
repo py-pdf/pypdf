@@ -26,8 +26,9 @@ def test_writer_operations():
 
     writer = PdfFileWriter()
     page = reader.pages[0]
-    with pytest.raises(PageSizeNotDefinedError):
+    with pytest.raises(PageSizeNotDefinedError) as exc:
         writer.addBlankPage()
+    assert exc.value.args == ()
     writer.insertPage(page, 1)
     writer.removeText()
     writer.insertPage(reader_outline.pages[0], 0)
