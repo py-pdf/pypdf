@@ -271,7 +271,7 @@ class LZWDecode(object):
             return baos
 
     @staticmethod
-    def decode(data,decodeParams=None):
+    def decode(data, decodeParms=None):
         return LZWDecode.decoder(data).decode()
 
 
@@ -408,11 +408,11 @@ def decodeStreamData(stream):
     if data:
         for filterType in filters:
             if filterType == FT.FLATE_DECODE or filterType == FTA.FL:
-                data = FlateDecode.decode(data, stream.get(SA.DECODE_PARAMS))
+                data = FlateDecode.decode(data, stream.get(SA.DECODE_PARMS))
             elif filterType == FT.ASCII_HEX_DECODE or filterType == FTA.AHx:
                 data = ASCIIHexDecode.decode(data)
             elif filterType == FT.LZW_DECODE or filterType == FTA.LZW:
-                data = LZWDecode.decode(data, stream.get(SA.DECODE_PARAMS))
+                data = LZWDecode.decode(data, stream.get(SA.DECODE_PARMS))
             elif filterType == FT.ASCII_85_DECODE or filterType == FTA.A85:
                 data = ASCII85Decode.decode(data)
             elif filterType == FT.DCT_DECODE:
@@ -421,10 +421,10 @@ def decodeStreamData(stream):
                 data = JPXDecode.decode(data)
             elif filterType == FT.CCITT_FAX_DECODE:
                 height = stream.get(IA.HEIGHT, ())
-                data = CCITTFaxDecode.decode(data, stream.get(SA.DECODE_PARAMS), height)
+                data = CCITTFaxDecode.decode(data, stream.get(SA.DECODE_PARMS), height)
             elif filterType == "/Crypt":
-                decodeParams = stream.get(SA.DECODE_PARAMS, {})
-                if "/Name" not in decodeParams and "/Type" not in decodeParams:
+                decodeParms = stream.get(SA.DECODE_PARMS, {})
+                if "/Name" not in decodeParms and "/Type" not in decodeParms:
                     pass
                 else:
                     raise NotImplementedError("/Crypt filter with /Name or /Type not supported yet")

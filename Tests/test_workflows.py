@@ -54,8 +54,8 @@ def test_PdfReaderJpegImage():
         with open(os.path.join(RESOURCE_ROOT, "jpeg.txt"), "r") as pdftext_file:
             imagetext = pdftext_file.read()
 
-        page = ipdf.getPage(0)
-        x_object = ipdf_p0[PG.RESOURCES]["/XObject"].getObject()
+        page = reader.getPage(0)
+        x_object = page[PG.RESOURCES]["/XObject"].getObject()
         data = x_object["/Im4"].getData()
 
         # Compare the text of the PDF to a known source
@@ -81,7 +81,7 @@ def test_decrypt():
             "/Producer": "LibreOffice 6.4",
         }
         # Is extractText() broken for encrypted files?
-        # assert ipdf.getPage(0).extractText().replace('\n', '') == "\n˘\n\u02c7\u02c6˙\n\n\n˘\u02c7\u02c6˙\n\n"
+        # assert reader.getPage(0).extractText().replace('\n', '') == "\n˘\n\u02c7\u02c6˙\n\n\n˘\u02c7\u02c6˙\n\n"
 
 
 @pytest.mark.parametrize("degree", [0, 90, 180, 270, 360, -90])

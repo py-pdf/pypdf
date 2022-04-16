@@ -843,7 +843,7 @@ class EncodedStreamObject(StreamObject):
 
             decoded._data = filters.decodeStreamData(self)
             for key, value in list(self.items()):
-                if key not in (SA.LENGTH, SA.FILTER, SA.DECODE_PARAMS):
+                if key not in (SA.LENGTH, SA.FILTER, SA.DECODE_PARMS):
                     decoded[key] = value
             self.decodedSelf = decoded
             return decoded._data

@@ -46,7 +46,7 @@ class StreamAttributes:
 
     LENGTH = "/Length"  # integer, required
     FILTER = "/Filter"  # name or array of names, optional
-    DECODE_PARAMS = "/DecodeParms"  # variable, optional
+    DECODE_PARMS = "/DecodeParms"  # variable, optional -- 'decodeParams is wrong
 
 
 class FilterTypes:
