@@ -39,12 +39,22 @@ import warnings
 
 from PyPDF2.constants import FilterTypes as FT
 from PyPDF2.constants import StreamAttributes as SA
-from PyPDF2.errors import (STREAM_TRUNCATED_PREMATURELY, PdfReadError,
-                           PdfStreamError)
+from PyPDF2.errors import (
+    STREAM_TRUNCATED_PREMATURELY,
+    PdfReadError,
+    PdfStreamError,
+)
 
 from . import filters, utils
-from .utils import (RC4_encrypt, b_, chr_, ord_, readNonWhitespace,
-                    skipOverComment, u_)
+from .utils import (
+    RC4_encrypt,
+    b_,
+    chr_,
+    ord_,
+    readNonWhitespace,
+    skipOverComment,
+    u_,
+)
 
 ObjectPrefix = b_('/<[tf(n%')
 NumberSigns = b_('+-')

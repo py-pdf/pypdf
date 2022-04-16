@@ -57,12 +57,21 @@ from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.constants import PagesAttributes as PA
 from PyPDF2.constants import Ressources as RES
 from PyPDF2.constants import StreamAttributes as SA
-from PyPDF2.errors import PageSizeNotDefinedError, PdfReadError
+from PyPDF2.errors import PageSizeNotDefinedError, PdfReadError, PdfReadWarning
 
 from . import utils
 from .generic import *
-from .utils import (ConvertFunctionsToVirtualList, b_, formatWarning, isString,
-                    ord_, readNonWhitespace, readUntilWhitespace, str_, u_)
+from .utils import (
+    ConvertFunctionsToVirtualList,
+    b_,
+    formatWarning,
+    isString,
+    ord_,
+    readNonWhitespace,
+    readUntilWhitespace,
+    str_,
+    u_,
+)
 
 if version_info < ( 2, 4 ):
    from sets import ImmutableSet as frozenset
@@ -1155,7 +1164,7 @@ class PdfFileReader(object):
         self.xrefIndex = 0
         self._pageId2Num = None # map page IndirectRef number to Page Number
         if hasattr(stream, 'mode') and 'b' not in stream.mode:
-            warnings.warn("PdfFileReader stream/file object is not in binary mode. It may not be read correctly.", utils.PdfReadWarning)
+            warnings.warn("PdfFileReader stream/file object is not in binary mode. It may not be read correctly.", PdfReadWarning)
         if isString(stream):
             with open(stream, 'rb') as fileobj:
                 stream = BytesIO(b_(fileobj.read()))
@@ -1650,7 +1659,7 @@ class PdfFileReader(object):
                 # Adobe Reader doesn't complain, so continue (in strict mode?)
                 e = sys.exc_info()[1]
                 warnings.warn("Invalid stream (index %d) within object %d %d: %s" % \
-                      (i, indirectReference.idnum, indirectReference.generation, e), utils.PdfReadWarning)
+                      (i, indirectReference.idnum, indirectReference.generation, e), PdfReadWarning)
 
                 if self.strict:
                     raise PdfReadError("Can't read object stream: %s"%e)
@@ -1707,7 +1716,7 @@ class PdfFileReader(object):
                 retval = self._decryptObject(retval, key)
         else:
             warnings.warn("Object %d %d not defined."%(indirectReference.idnum,
-                        indirectReference.generation), utils.PdfReadWarning)
+                        indirectReference.generation), PdfReadWarning)
             if self.strict:
                 raise PdfReadError("Could not find object.")
         self.cacheIndirectObject(indirectReference.generation,
@@ -1748,7 +1757,7 @@ class PdfFileReader(object):
         if (extra and self.strict):
             # not a fatal error
             warnings.warn("Superfluous whitespace found in object header %s %s" % \
-                          (idnum, generation), utils.PdfReadWarning)
+                          (idnum, generation), PdfReadWarning)
         return int(idnum), int(generation)
 
     def cacheGetIndirectObject(self, generation, idnum):
@@ -1818,7 +1827,7 @@ class PdfFileReader(object):
                     if firsttime and num != 0:
                          self.xrefIndex = num
                          if self.strict:
-                            warnings.warn("Xref table not zero-indexed. ID numbers for objects will be corrected.", utils.PdfReadWarning)
+                            warnings.warn("Xref table not zero-indexed. ID numbers for objects will be corrected.", PdfReadWarning)
                             # if table not zero indexed, could be due to error from when PDF was created
                             # which will lead to mismatched indices later on, only warned and corrected if self.strict=True
                     firsttime = False
