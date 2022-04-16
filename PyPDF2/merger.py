@@ -67,9 +67,12 @@ class PdfFileMerger(object):
     :param bool strict: Determines whether user should be warned of all
             problems and also causes some correctable problems to be fatal.
             Defaults to ``True``.
+    :param bool overwriteWarnings: Determines whether to override Python's
+        ``warnings.py`` module with a custom implementation (defaults to
+        ``True``).
     """
 
-    def __init__(self, strict=True):
+    def __init__(self, strict=True, overwriteWarnings=True):
         self.inputs = []
         self.pages = []
         self.output = PdfFileWriter()
@@ -77,6 +80,7 @@ class PdfFileMerger(object):
         self.named_dests = []
         self.id_count = 0
         self.strict = strict
+        self.overwriteWarnings = overwriteWarnings
 
     def merge(self, position, fileobj, bookmark=None, pages=None, import_bookmarks=True):
         """
@@ -132,7 +136,7 @@ class PdfFileMerger(object):
 
         # Create a new PdfFileReader instance using the stream
         # (either file or BytesIO or StringIO) created above
-        pdfr = PdfFileReader(fileobj, strict=self.strict)
+        pdfr = PdfFileReader(fileobj, strict=self.strict, overwriteWarnings=self.overwriteWarnings)
         if decryption_key is not None:
             pdfr._decryption_key = decryption_key
 
