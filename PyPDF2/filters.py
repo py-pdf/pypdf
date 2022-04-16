@@ -120,6 +120,7 @@ class FlateDecode(object):
         predictor = 1
         if decodeParms:
             try:
+                from PyPDF2.generic import ArrayObject
                 if isinstance(decodeParms, ArrayObject):
                     for decodeParm in decodeParms:
                         if '/Predictor' in decodeParm:
