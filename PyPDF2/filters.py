@@ -40,8 +40,8 @@ from PyPDF2.constants import FilterTypes as FT
 from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import LzwFilterParameters as LZW
 from PyPDF2.constants import StreamAttributes as SA
-
-from .utils import PdfReadError, ord_, paethPredictor
+from PyPDF2.errors import PdfReadError
+from PyPDF2.utils import ord_, paethPredictor
 
 if version_info < ( 3, 0 ):
     from cStringIO import StringIO
@@ -54,7 +54,17 @@ try:
     import zlib
 
     def decompress(data):
-        return zlib.decompress(data)
+        try:
+            return zlib.decompress(data)
+        except zlib.error:
+            d = zlib.decompressobj(zlib.MAX_WBITS | 32)
+            result_str = b''
+            for b in [data[i:i + 1] for i in range(len(data))]:
+                try:
+                    result_str += d.decompress(b)
+                except zlib.error:
+                    pass
+            return result_str
 
     def compress(data):
         return zlib.compress(data)

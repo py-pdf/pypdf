@@ -3,11 +3,11 @@ import os
 
 import pytest
 
-import PyPDF2.utils
 from PyPDF2 import PdfFileReader
 from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.constants import Ressources as RES
+from PyPDF2.errors import PdfReadError
 from PyPDF2.filters import _xobj_to_image
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -194,8 +194,9 @@ def test_get_images_raw(strict, with_prev_0, should_fail):
     )
     pdf_stream = io.BytesIO(pdf_data)
     if should_fail:
-        with pytest.raises(PyPDF2.utils.PdfReadError):
+        with pytest.raises(PdfReadError) as exc:
             PdfFileReader(pdf_stream, strict=strict)
+        assert exc.value.args[0] == "/Prev=0 in the trailer (try opening with strict=False)"
     else:
         PdfFileReader(pdf_stream, strict=strict)
 
@@ -226,3 +227,19 @@ def test_get_page_of_encrypted_file():
     reader.decrypt("test")
 
     reader.getPage(0)
+
+
+@pytest.mark.parametrize(
+    "src,expected",
+    [
+        ("form.pdf", {"foo": ""}),
+        ("form_acrobatReader.pdf", {"foo": "Bar"}),
+        ("form_evince.pdf", {"foo": "bar"}),
+    ],
+)
+def test_form(src, expected):
+    """Check if we can read out form data."""
+    src = os.path.join(RESOURCE_ROOT, src)
+    pdf = PdfFileReader(src)
+    fields = pdf.getFormTextFields()
+    assert fields == expected

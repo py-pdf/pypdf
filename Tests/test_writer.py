@@ -3,8 +3,8 @@ import os
 import pytest
 
 from PyPDF2 import PdfFileReader, PdfFileWriter
+from PyPDF2.errors import PageSizeNotDefinedError
 from PyPDF2.generic import RectangleObject
-from PyPDF2.utils import PageSizeNotDefinedError
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -26,8 +26,9 @@ def test_writer_operations():
 
     writer = PdfFileWriter()
     page = reader.pages[0]
-    with pytest.raises(PageSizeNotDefinedError):
+    with pytest.raises(PageSizeNotDefinedError) as exc:
         writer.addBlankPage()
+    assert exc.value.args == ()
     writer.insertPage(page, 1)
     writer.removeText()
     writer.insertPage(reader_outline.pages[0], 0)
