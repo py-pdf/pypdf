@@ -8,12 +8,12 @@ PDF Reference, third edition, Version 1.4, 2001. ISBN 0-201-75839-3.
 PDF Reference, sixth edition, Version 1.7, 2006.
 """
 
-from telnetlib import ENCRYPT
-
 
 class Core:
     """Keywords that don't quite belong anywhere else"""
+
     OUTLINES = "/Outlines"
+
 
 class TrailerKeys:
     ROOT = "/Root"
@@ -22,10 +22,10 @@ class TrailerKeys:
     INFO = "/Info"
     SIZE = "/Size"
 
+
 class CatalogAttributes:
     NAMES = "/Names"
     DESTS = "/Dests"
-
 
 
 class PagesAttributes:
