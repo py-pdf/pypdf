@@ -1,4 +1,4 @@
-.. PyPDF2 documentation master file, created by
+.. PyPDF2 documentation main file, created by
    sphinx-quickstart on Thu Apr  7 20:13:19 2022.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
@@ -19,17 +19,14 @@ You can contribute to `PyPDF2 on Github <https://github.com/py-pdf/PyPDF2>`_.
    :maxdepth: 1
 
    user/installation
+   user/metadata
    user/extract-text
+   user/encryption-decryption
    user/merging-pdfs
    user/cropping-and-transforming
    user/add-watermark
-
-
-.. toctree::
-   :caption: Scripts
-   :maxdepth: 1
-
-   user/pdfcat
+   user/reading-pdf-annotations
+   user/adding-pdf-annotations
 
 
 .. toctree::
@@ -55,6 +52,14 @@ You can contribute to `PyPDF2 on Github <https://github.com/py-pdf/PyPDF2>`_.
    user/history
    user/comparisons
    user/faq
+
+
+.. toctree::
+   :caption: Scripts
+   :maxdepth: 1
+
+   user/pdfcat
+
 
 
 

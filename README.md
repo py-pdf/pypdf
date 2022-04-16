@@ -2,13 +2,21 @@
 [![Python Support](https://img.shields.io/pypi/pyversions/PyPDF2.svg)](https://pypi.org/project/PyPDF2/)
 [![](https://img.shields.io/badge/-documentation-green)](https://pypdf2.readthedocs.io/en/latest/)
 ![GitHub last commit](https://img.shields.io/github/last-commit/py-pdf/PyPDF2)
+[![codecov](https://codecov.io/gh/py-pdf/PyPDF2/branch/main/graph/badge.svg?token=id42cGNZ5Z)](https://codecov.io/gh/py-pdf/PyPDF2)
 
 # PyPDF2
 
 PyPDF2 is a free and open-source pure-python PDF library capable of splitting,
-merging, cropping, and transforming the pages of PDF files. It can also add
-custom data, viewing options, and passwords to PDF files.
-PyPDF2 can retrieve text and metadata from PDFs as well.
+[merging](https://pypdf2.readthedocs.io/en/latest/user/merging-pdfs.html),
+[cropping, and transforming](https://pypdf2.readthedocs.io/en/latest/user/cropping-and-transforming.html)
+the pages of PDF files. It can also add
+custom data, viewing options, and
+[passwords](https://pypdf2.readthedocs.io/en/latest/user/encryption-decryption.html)
+to PDF files. PyPDF2 can
+[retrieve text](https://pypdf2.readthedocs.io/en/latest/user/extract-text.html)
+and
+[metadata](https://pypdf2.readthedocs.io/en/latest/user/metadata.html)
+from PDFs as well.
 
 
 ## Installation
@@ -24,19 +32,17 @@ pip install PyPDF2
 ```python
 from PyPDF2 import PdfFileReader
 
-with open("Resources/crazyones.pdf", "rb") as fp:
-    reader = PdfFileReader(fp)
-    number_of_pages = reader.getNumPages()
-    page = reader.pages[0]
-    text = page.extractText()
+reader = PdfFileReader("example.pdf")
+number_of_pages = reader.numPages
+page = reader.pages[0]
+text = page.extractText()
 ```
 
 PyPDF2 can do a lot more, e.g. splitting, merging, reading and creating
 annotations, decrypting and encrypting, and more.
 
-Please see [the documentation](https://pypdf2.readthedocs.io/en/latest/),
-[`Sample_Code`](https://github.com/py-pdf/PyPDF2/tree/master/Sample_Code)
-and [`Scripts`](https://github.com/py-pdf/PyPDF2/tree/master/Scripts) for
+Please see [the documentation](https://pypdf2.readthedocs.io/en/latest/)
+and [`Scripts`](https://github.com/py-pdf/PyPDF2/tree/main/Scripts) for
 more usage examples!
 
 A lot of questions are asked and answered

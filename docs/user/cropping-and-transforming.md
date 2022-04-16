@@ -3,7 +3,7 @@
 ```python
 from PyPDF2 import PdfFileWriter, PdfFileReader
 
-reader = PdfFileReader(open("example.pdf", "rb"))
+reader = PdfFileReader("example.pdf")
 writer = PdfFileWriter()
 
 # add page 1 from reader to output document, unchanged:
@@ -25,14 +25,7 @@ writer.addPage(page3)
 # comment the the encription lines, if that's the case, to try this out:
 writer.addJS("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
 
-# encrypt your new PDF and add a password:
-password = "secret"
-writer.encrypt(password)
-
-# add a title to your new PDF's metadata:
-writer.addMetadata({"/Title": "PDF Metadata Title"})
-
-# finally, write to document-output.pdf
+# write to document-output.pdf
 with open("PyPDF2-output.pdf", "wb") as fp:
-    output.write(fp)
+    writer.write(fp)
 ```
