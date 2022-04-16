@@ -120,10 +120,15 @@ class FlateDecode(object):
         predictor = 1
         if decodeParms:
             try:
-                predictor = decodeParms.get(LZW.PREDICTOR, 1)
+                from PyPDF2.generic import ArrayObject
+                if isinstance(decodeParms, ArrayObject):
+                    for decodeParm in decodeParms:
+                        if '/Predictor' in decodeParm:
+                            predictor = decodeParm['/Predictor']
+                else:
+                    predictor = decodeParms.get("/Predictor", 1)
             except AttributeError:
-                pass    # usually an array with a null object was read
-
+                pass  # usually an array with a null object was read
         # predictor 1 == no predictor
         if predictor != 1:
             columns = decodeParms[LZW.COLUMNS]
@@ -363,17 +368,24 @@ class JPXDecode(object):
 
 class CCITTFaxDecode(object):
     def decode(data, decodeParms=None, height=0):
+        k = 1
+        width = 0
         if decodeParms:
             from PyPDF2.generic import ArrayObject
             if isinstance(decodeParms, ArrayObject):
-                if len(decodeParms) == 1:
-                    decodeParms = decodeParms[0]
-            if decodeParms.get("/K", 1) == -1:
+                for decodeParm in decodeParms:
+                    if CCITT.COLUMNS in decodeParm:
+                        width = decodeParm[CCITT.COLUMNS]
+                    if CCITT.K in decodeParm:
+                        k = decodeParm[CCITT.K]
+            else:
+                width = decodeParms[CCITT.COLUMNS]
+                k = decodeParms[CCITT.K]
+            if k == -1:
                 CCITTgroup = 4
             else:
                 CCITTgroup = 3
 
-        width = decodeParms[CCITT.COLUMNS]
         imgSize = len(data)
         tiff_header_struct = '<2shlh' + 'hhll' * 8 + 'h'
         tiffHeader = struct.pack(tiff_header_struct,
