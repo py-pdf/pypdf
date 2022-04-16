@@ -3,11 +3,11 @@ import os
 
 import pytest
 
-import PyPDF2.utils
 from PyPDF2 import PdfFileReader
 from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.constants import Ressources as RES
+from PyPDF2.errors import PdfReadError
 from PyPDF2.filters import _xobj_to_image
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -194,7 +194,7 @@ def test_get_images_raw(strict, with_prev_0, should_fail):
     )
     pdf_stream = io.BytesIO(pdf_data)
     if should_fail:
-        with pytest.raises(PyPDF2.utils.PdfReadError):
+        with pytest.raises(PdfReadError):
             PdfFileReader(pdf_stream, strict=strict)
     else:
         PdfFileReader(pdf_stream, strict=strict)
