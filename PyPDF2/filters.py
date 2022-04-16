@@ -45,9 +45,7 @@ from .utils import PdfReadError, ord_, paethPredictor
 
 if version_info < ( 3, 0 ):
     from cStringIO import StringIO as BytesIO
-    bytearray = buffer
-else:
-    from io import StringIO
+    bytearray = buffer  # noqa: F821
 
 import struct
 
