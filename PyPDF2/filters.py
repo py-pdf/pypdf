@@ -31,13 +31,23 @@ __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import math
+from sys import version_info
+
+from PyPDF2.constants import CcittFaxDecodeParameters as CCITT
+from PyPDF2.constants import ColorSpaces
+from PyPDF2.constants import FilterTypeAbbreviations as FTA
+from PyPDF2.constants import FilterTypes as FT
+from PyPDF2.constants import ImageAttributes as IA
+from PyPDF2.constants import LzwFilterParameters as LZW
+from PyPDF2.constants import StreamAttributes as SA
 
 from .utils import PdfReadError, ord_, paethPredictor
-from sys import version_info
+
 if version_info < ( 3, 0 ):
     from cStringIO import StringIO
 else:
     from io import StringIO
+
 import struct
 
 try:
@@ -110,13 +120,13 @@ class FlateDecode(object):
         predictor = 1
         if decodeParms:
             try:
-                predictor = decodeParms.get("/Predictor", 1)
+                predictor = decodeParms.get(LZW.PREDICTOR, 1)
             except AttributeError:
                 pass    # usually an array with a null object was read
 
         # predictor 1 == no predictor
         if predictor != 1:
-            columns = decodeParms["/Columns"]
+            columns = decodeParms[LZW.COLUMNS]
             # PNG prediction:
             if predictor >= 10 and predictor <= 15:
                 output = StringIO()
@@ -261,7 +271,7 @@ class LZWDecode(object):
             return baos
 
     @staticmethod
-    def decode(data,decodeParams=None):
+    def decode(data, decodeParms=None):
         return LZWDecode.decoder(data).decode()
 
 
@@ -363,7 +373,7 @@ class CCITTFaxDecode(object):
             else:
                 CCITTgroup = 3
 
-        width = decodeParms["/Columns"]
+        width = decodeParms[CCITT.COLUMNS]
         imgSize = len(data)
         tiff_header_struct = '<2shlh' + 'hhll' * 8 + 'h'
         tiffHeader = struct.pack(tiff_header_struct,
@@ -388,7 +398,7 @@ class CCITTFaxDecode(object):
 
 def decodeStreamData(stream):
     from .generic import NameObject
-    filters = stream.get("/Filter", ())
+    filters = stream.get(SA.FILTER, ())
 
     if len(filters) and not isinstance(filters[0], NameObject):
         # we have a single filter instance
@@ -397,24 +407,24 @@ def decodeStreamData(stream):
     # If there is not data to decode we should not try to decode the data.
     if data:
         for filterType in filters:
-            if filterType == "/FlateDecode" or filterType == "/Fl":
-                data = FlateDecode.decode(data, stream.get("/DecodeParms"))
-            elif filterType == "/ASCIIHexDecode" or filterType == "/AHx":
+            if filterType == FT.FLATE_DECODE or filterType == FTA.FL:
+                data = FlateDecode.decode(data, stream.get(SA.DECODE_PARMS))
+            elif filterType == FT.ASCII_HEX_DECODE or filterType == FTA.AHx:
                 data = ASCIIHexDecode.decode(data)
-            elif filterType == "/LZWDecode" or filterType == "/LZW":
-                data = LZWDecode.decode(data, stream.get("/DecodeParms"))
-            elif filterType == "/ASCII85Decode" or filterType == "/A85":
+            elif filterType == FT.LZW_DECODE or filterType == FTA.LZW:
+                data = LZWDecode.decode(data, stream.get(SA.DECODE_PARMS))
+            elif filterType == FT.ASCII_85_DECODE or filterType == FTA.A85:
                 data = ASCII85Decode.decode(data)
-            elif filterType == "/DCTDecode":
+            elif filterType == FT.DCT_DECODE:
                 data = DCTDecode.decode(data)
             elif filterType == "/JPXDecode":
                 data = JPXDecode.decode(data)
-            elif filterType == "/CCITTFaxDecode":
-                height = stream.get("/Height", ())
-                data = CCITTFaxDecode.decode(data, stream.get("/DecodeParms"), height)
+            elif filterType == FT.CCITT_FAX_DECODE:
+                height = stream.get(IA.HEIGHT, ())
+                data = CCITTFaxDecode.decode(data, stream.get(SA.DECODE_PARMS), height)
             elif filterType == "/Crypt":
-                decodeParams = stream.get("/DecodeParams", {})
-                if "/Name" not in decodeParams and "/Type" not in decodeParams:
+                decodeParms = stream.get(SA.DECODE_PARMS, {})
+                if "/Name" not in decodeParms and "/Type" not in decodeParms:
                     pass
                 else:
                     raise NotImplementedError("/Crypt filter with /Name or /Type not supported yet")
@@ -434,34 +444,37 @@ def _xobj_to_image(x_object_obj):
     :return: Tuple[file extension, bytes]
     """
     import io
+
     from PIL import Image
 
-    size = (x_object_obj["/Width"], x_object_obj["/Height"])
+    from PyPDF2.constants import GraphicsStateParameters as G
+
+    size = (x_object_obj[IA.WIDTH], x_object_obj[IA.HEIGHT])
     data = x_object_obj.getData()
-    if x_object_obj["/ColorSpace"] == "/DeviceRGB":
+    if x_object_obj[IA.COLOR_SPACE] == ColorSpaces.DEVICE_RGB:
         mode = "RGB"
     else:
         mode = "P"
     extension = None
-    if "/Filter" in x_object_obj:
-        if x_object_obj["/Filter"] == "/FlateDecode":
+    if SA.FILTER in x_object_obj:
+        if x_object_obj[SA.FILTER] == FT.FLATE_DECODE:
             extension = ".png"
             img = Image.frombytes(mode, size, data)
-            if "/SMask" in x_object_obj:  # add alpha channel
-                alpha = Image.frombytes("L", size, x_object_obj["/SMask"].getData())
+            if G.S_MASK in x_object_obj:  # add alpha channel
+                alpha = Image.frombytes("L", size, x_object_obj[G.S_MASK].getData())
                 img.putalpha(alpha)
             img_byte_arr = io.BytesIO()
             img.save(img_byte_arr, format="PNG")
             data = img_byte_arr.getvalue()
-        elif x_object_obj["/Filter"] in (["/LZWDecode"], ['/ASCII85Decode'], ['/CCITTFaxDecode']):
+        elif x_object_obj[SA.FILTER] in ([FT.LZW_DECODE], [FT.ASCII_85_DECODE], [FT.CCITT_FAX_DECODE]):
             from PyPDF2.utils import b_
             extension = ".png"
             data = b_(data)
-        elif x_object_obj["/Filter"] == "/DCTDecode":
+        elif x_object_obj[SA.FILTER] == FT.DCT_DECODE:
             extension = ".jpg"
-        elif x_object_obj["/Filter"] == "/JPXDecode":
+        elif x_object_obj[SA.FILTER] == "/JPXDecode":
             extension = ".jp2"
-        elif x_object_obj["/Filter"] == "/CCITTFaxDecode":
+        elif x_object_obj[SA.FILTER] == FT.CCITT_FAX_DECODE:
             extension = ".tiff"
     else:
         extension = ".png"

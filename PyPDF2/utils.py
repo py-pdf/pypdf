@@ -197,10 +197,10 @@ def markLocation(stream):
     # Mainly for debugging
     RADIUS = 5000
     stream.seek(-RADIUS, 1)
-    with open('PyPDF2_pdfLocation.txt', 'wb') as outputDoc:
-        outputDoc.write(stream.read(RADIUS))
-        outputDoc.write(b'HERE')
-        outputDoc.write(stream.read(RADIUS))
+    with open('PyPDF2_pdfLocation.txt', 'wb') as output_fh:
+        output_fh.write(stream.read(RADIUS))
+        output_fh.write(b'HERE')
+        output_fh.write(stream.read(RADIUS))
     stream.seek(-RADIUS, 1)
 
 

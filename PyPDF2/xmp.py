@@ -1,8 +1,9 @@
-import re
 import datetime
 import decimal
-from .generic import PdfObject
+import re
 from xml.dom.minidom import parseString
+
+from .generic import PdfObject
 from .utils import u_
 
 RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
