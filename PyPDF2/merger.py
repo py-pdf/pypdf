@@ -115,7 +115,7 @@ class PdfFileMerger(object):
         # it is a PdfFileReader, copy that reader's stream into a
         # BytesIO (or StreamIO) stream.
         # If fileobj is none of the above types, it is not modified
-        decryption_key = None
+        _encryption = None
         if isString(fileobj):
             fileobj = file(fileobj, 'rb')
             my_file = True
@@ -125,8 +125,8 @@ class PdfFileMerger(object):
             fileobj = StreamIO(filecontent)
             my_file = True
         elif isinstance(fileobj, PdfFileReader):
-            if hasattr(fileobj, '_decryption_key'):
-                decryption_key = fileobj._decryption_key
+            if hasattr(fileobj, '_encryption'):
+                _encryption = fileobj._encryption
             orig_tell = fileobj.stream.tell()
             fileobj.stream.seek(0)
             filecontent = StreamIO(fileobj.stream.read())
@@ -137,8 +137,8 @@ class PdfFileMerger(object):
         # Create a new PdfFileReader instance using the stream
         # (either file or BytesIO or StringIO) created above
         pdfr = PdfFileReader(fileobj, strict=self.strict, overwriteWarnings=self.overwriteWarnings)
-        if decryption_key is not None:
-            pdfr._decryption_key = decryption_key
+        if _encryption is not None:
+            pdfr._encryption = _encryption
 
         # Find the range of pages to merge.
         if pages is None:

@@ -64,3 +64,21 @@ def test_encryption(src):
             '/SourceModified': "D:20220414132421+05'24'",
             '/Trapped': '/False'
         }
+
+
+@pytest.mark.parametrize(
+    "names",
+    [
+        (["enc0.pdf", "enc4.pdf", "enc5.pdf", "enc6.pdf"]),
+    ],
+)
+def test_encryption_merge(names):
+    pdf_merger = PyPDF2.PdfFileMerger()
+    files = [os.path.join(RESOURCE_ROOT, "encryption", x) for x in names]
+    pdfs = [PyPDF2.PdfFileReader(x) for x in files]
+    for pdf in pdfs:
+        if pdf.isEncrypted:
+            pdf.decrypt("asdfzxcv")
+        pdf_merger.append(pdf)
+    # no need to write to file
+    pdf_merger.close()
