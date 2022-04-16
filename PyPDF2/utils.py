@@ -275,7 +275,7 @@ def ord_(b):
 
 def chr_(c):
     if sys.version_info[0] < 3:
-        return unichr(c)
+        return unichr(c)  # noqa: F821
     else:
         return chr(c)
 

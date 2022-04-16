@@ -136,7 +136,7 @@ def parseCMap(cstr, firstChar, lastChar):
             maxCh = 0
             ws = '[ \t]*'
             group = re.sub(ws, "", group)
-            entries = re.findall('([0-9a-fA-F]+)><([0-9a-fA-F]+)>(?:(\[[^\]]*\])|<([0-9a-fA-F]+)>)?', group)
+            entries = re.findall(r'([0-9a-fA-F]+)><([0-9a-fA-F]+)>(?:(\[[^\]]*\])|<([0-9a-fA-F]+)>)?', group)
             #This is the target of the range. It could be a simple value or it could be a list in []
 
             for entry in entries:
@@ -1369,7 +1369,7 @@ class PdfFileReader(object):
         try:
             self._override_encryption = True
             return self.trailer["/Root"].getXmpMetadata()
-        except:
+        except Exception:
             return None
         finally:
             self._override_encryption = False
@@ -2913,7 +2913,6 @@ class PageObject(DictionaryObject):
         :return: a TextState structure, which describes the page in detail
         """
         textState = TextState(lineCallback)
-        firstParagraph = True
 
         def calcCharWidth(textState, char):
             width = 0
@@ -2963,7 +2962,7 @@ class PageObject(DictionaryObject):
                 abs(textState.prevPosition[1] - textState.currentPosition[1]) > lineMargin):
                 textState.text += "\n"
             thisLineElements = []
-            thisColumnElements = []
+
             #The Y component of the Top of stack
             yMult = textState.graphicsStack[0].yMult
             yShift = textState.graphicsStack[0].yShift
