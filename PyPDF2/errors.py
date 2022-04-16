@@ -16,3 +16,7 @@ class PdfReadWarning(UserWarning):
 
 class PdfStreamError(PdfReadError):
     pass
+
+
+class ParseError(Exception):
+    pass

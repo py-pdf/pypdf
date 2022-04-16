@@ -3,8 +3,8 @@ import os
 import pytest
 
 from PyPDF2 import PdfFileReader, PdfFileWriter
+from PyPDF2.errors import PdfReadError
 from PyPDF2.pdf import convertToInt
-from PyPDF2.utils import PdfReadError
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)

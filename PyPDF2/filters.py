@@ -40,8 +40,8 @@ from PyPDF2.constants import FilterTypes as FT
 from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import LzwFilterParameters as LZW
 from PyPDF2.constants import StreamAttributes as SA
-
-from .utils import PdfReadError, ord_, paethPredictor
+from PyPDF2.errors import PdfReadError
+from PyPDF2.utils import ord_, paethPredictor
 
 if version_info < ( 3, 0 ):
     from cStringIO import StringIO
