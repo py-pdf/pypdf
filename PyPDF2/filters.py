@@ -127,7 +127,7 @@ class FlateDecode(object):
                 else:
                     predictor = decodeParms.get("/Predictor", 1)
             except AttributeError:
-                pass # usually an array with a null object was read
+                pass  # usually an array with a null object was read
         # predictor 1 == no predictor
         if predictor != 1:
             columns = decodeParms[LZW.COLUMNS]
