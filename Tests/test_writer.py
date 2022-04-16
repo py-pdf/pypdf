@@ -4,7 +4,7 @@ import pytest
 
 from PyPDF2 import PdfFileReader, PdfFileWriter
 from PyPDF2.generic import RectangleObject
-from PyPDF2.utils import PageSizeNotDefinedError
+from PyPDF2.errors import PageSizeNotDefinedError
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
