@@ -226,3 +226,19 @@ def test_get_page_of_encrypted_file():
     reader.decrypt("test")
 
     reader.getPage(0)
+
+
+@pytest.mark.parametrize(
+    "src,expected",
+    [
+        ("form.pdf", {"foo": ""}),
+        ("form_acrobatReader.pdf", {"foo": "Bar"}),
+        ("form_evince.pdf", {"foo": "bar"}),
+    ],
+)
+def test_form(src, expected):
+    """Check if we can read out form data."""
+    src = os.path.join(RESOURCE_ROOT, src)
+    pdf = PdfFileReader(src)
+    fields = pdf.getFormTextFields()
+    assert fields == expected
