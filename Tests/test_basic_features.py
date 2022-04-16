@@ -63,5 +63,6 @@ def test_basic_features():
 
 
 def test_convertToInt():
-    with pytest.raises(PdfReadError):
+    with pytest.raises(PdfReadError) as exc:
         convertToInt(256, 16)
+    assert exc.value.args[0] == "invalid size in convertToInt"

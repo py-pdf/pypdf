@@ -44,8 +44,9 @@ def test_str_init(range_str, expected):
 def test_str_init_error():
     init_str = "1-2"
     assert PageRange.valid(init_str) is False
-    with pytest.raises(ParseError):
+    with pytest.raises(ParseError) as exc:
         PageRange(init_str)
+    assert exc.value.args[0] == "1-2"
 
 
 @pytest.mark.parametrize(
