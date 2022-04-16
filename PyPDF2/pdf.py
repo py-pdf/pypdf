@@ -2697,7 +2697,7 @@ class PageObject(DictionaryObject):
         # Note: we check all strings are TextStringObjects.  ByteStringObjects
         # are strings where the byte->string encoding was unknown, so adding
         # them to the text here would be gibberish.
-        # 
+        #
         indent = 0
         previous_width = 0
         skip_next = False
