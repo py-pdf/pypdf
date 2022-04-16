@@ -57,7 +57,7 @@ from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.constants import PagesAttributes as PA
 from PyPDF2.constants import Ressources as RES
 from PyPDF2.constants import StreamAttributes as SA
-from PyPDF2.errors import PdfReadError, PageSizeNotDefinedError
+from PyPDF2.errors import PageSizeNotDefinedError, PdfReadError
 
 from . import utils
 from .generic import *

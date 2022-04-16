@@ -33,6 +33,7 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 
 
 import sys
+
 from PyPDF2.errors import PdfStreamError
 
 try:
