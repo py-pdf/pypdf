@@ -2086,7 +2086,7 @@ class PdfFileReader(object):
         o_entry = encryptEntry["/O"].getObject().original_bytes
         # maybe password is owner password
         # TODO: add/modify api to set owner password
-        rr = encryption.decryptPdf(u_entry, o_entry, password, "")
+        rr = encryption.decryptPdf(u_entry, o_entry, password, password)
         if rr > 0:
             self._encryption = encryption
         return rr
