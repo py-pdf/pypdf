@@ -53,10 +53,13 @@ else:
 import codecs
 import warnings
 
+from PyPDF2.constants import CatalogAttributes as CA
+from PyPDF2.constants import Core as CO
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.constants import PagesAttributes as PA
 from PyPDF2.constants import Ressources as RES
 from PyPDF2.constants import StreamAttributes as SA
+from PyPDF2.constants import TrailerKeys as TK
 from PyPDF2.errors import PageSizeNotDefinedError, PdfReadError, PdfReadWarning
 
 from . import utils
@@ -240,14 +243,14 @@ class PdfFileWriter(object):
         js_name_tree = DictionaryObject()
         js_name_tree.update({
                 NameObject("/JavaScript"): DictionaryObject({
-                  NameObject("/Names"): ArrayObject([createStringObject(js_string_name), js_indirect_object])
+                  NameObject(CA.NAMES): ArrayObject([createStringObject(js_string_name), js_indirect_object])
                 })
               })
         self._addObject(js_name_tree)
 
         self._root_object.update({
                 NameObject("/OpenAction"): js_indirect_object,
-                NameObject("/Names"): js_name_tree
+                NameObject(CA.NAMES): js_name_tree
                 })
 
     def addAttachment(self, fname, fdata):
@@ -319,7 +322,7 @@ class PdfFileWriter(object):
         """
         embeddedFilesNamesDictionary = DictionaryObject()
         embeddedFilesNamesDictionary.update({
-                NameObject("/Names"): ArrayObject([createStringObject(fname), filespec])
+                NameObject(CA.NAMES): ArrayObject([createStringObject(fname), filespec])
                 })
 
         embeddedFilesDictionary = DictionaryObject()
@@ -328,7 +331,7 @@ class PdfFileWriter(object):
                 })
         # Update the root
         self._root_object.update({
-                NameObject("/Names"): embeddedFilesDictionary
+                NameObject(CA.NAMES): embeddedFilesDictionary
                 })
 
     def appendPagesFromReader(self, reader, after_page_append=None):
@@ -382,7 +385,7 @@ class PdfFileWriter(object):
         :param reader:  PdfFileReader from the document root should be copied.
         :callback after_page_append:
         '''
-        self._root_object = reader.trailer['/Root']
+        self._root_object = reader.trailer[TK.ROOT]
 
     def cloneDocumentFromReader(self, reader, after_page_append=None):
         '''
@@ -522,14 +525,14 @@ class PdfFileWriter(object):
         stream.write(b_("trailer\n"))
         trailer = DictionaryObject()
         trailer.update({
-                NameObject("/Size"): NumberObject(len(self._objects) + 1),
-                NameObject("/Root"): self._root,
-                NameObject("/Info"): self._info,
+                NameObject(TK.SIZE): NumberObject(len(self._objects) + 1),
+                NameObject(TK.ROOT): self._root,
+                NameObject(TK.INFO): self._info,
                 })
         if hasattr(self, "_ID"):
-            trailer[NameObject("/ID")] = self._ID
+            trailer[NameObject(TK.ID)] = self._ID
         if hasattr(self, "_encrypt"):
-            trailer[NameObject("/Encrypt")] = self._encrypt
+            trailer[NameObject(TK.ENCRYPT)] = self._encrypt
         trailer.writeToStream(stream, None)
 
         # eof
@@ -613,8 +616,8 @@ class PdfFileWriter(object):
         return ref
 
     def getOutlineRoot(self):
-        if '/Outlines' in self._root_object:
-            outline = self._root_object['/Outlines']
+        if CO.OUTLINES in self._root_object:
+            outline = self._root_object[CO.OUTLINES]
             idnum = self._objects.index(outline) + 1
             outlineRef = IndirectObject(idnum, 0, self)
             assert outlineRef.getObject() == outline
@@ -622,42 +625,42 @@ class PdfFileWriter(object):
             outline = TreeObject()
             outline.update({ })
             outlineRef = self._addObject(outline)
-            self._root_object[NameObject('/Outlines')] = outlineRef
+            self._root_object[NameObject(CO.OUTLINES)] = outlineRef
 
         return outline
 
     def getNamedDestRoot(self):
-        if '/Names' in self._root_object and isinstance(self._root_object['/Names'], DictionaryObject):
-            names = self._root_object['/Names']
+        if CA.NAMES in self._root_object and isinstance(self._root_object[CA.NAMES], DictionaryObject):
+            names = self._root_object[CA.NAMES]
             idnum = self._objects.index(names) + 1
             namesRef = IndirectObject(idnum, 0, self)
             assert namesRef.getObject() == names
-            if '/Dests' in names and isinstance(names['/Dests'], DictionaryObject):
-                dests = names['/Dests']
+            if CA.DESTS in names and isinstance(names[CA.DESTS], DictionaryObject):
+                dests = names[CA.DESTS]
                 idnum = self._objects.index(dests) + 1
                 destsRef = IndirectObject(idnum, 0, self)
                 assert destsRef.getObject() == dests
-                if '/Names' in dests:
-                    nd = dests['/Names']
+                if CA.NAMES in dests:
+                    nd = dests[CA.NAMES]
                 else:
                     nd = ArrayObject()
-                    dests[NameObject('/Names')] = nd
+                    dests[NameObject(CA.NAMES)] = nd
             else:
                 dests = DictionaryObject()
                 destsRef = self._addObject(dests)
-                names[NameObject('/Dests')] = destsRef
+                names[NameObject(CA.DESTS)] = destsRef
                 nd = ArrayObject()
-                dests[NameObject('/Names')] = nd
+                dests[NameObject(CA.NAMES)] = nd
 
         else:
             names = DictionaryObject()
             namesRef = self._addObject(names)
-            self._root_object[NameObject('/Names')] = namesRef
+            self._root_object[NameObject(CA.NAMES)] = namesRef
             dests = DictionaryObject()
             destsRef = self._addObject(dests)
-            names[NameObject('/Dests')] = destsRef
+            names[NameObject(CA.DESTS)] = destsRef
             nd = ArrayObject()
-            dests[NameObject('/Names')] = nd
+            dests[NameObject(CA.NAMES)] = nd
 
         return nd
 
@@ -1183,9 +1186,9 @@ class PdfFileReader(object):
         :return: the document information of this PDF file
         :rtype: :class:`DocumentInformation<pdf.DocumentInformation>` or ``None`` if none exists.
         """
-        if "/Info" not in self.trailer:
+        if TK.INFO not in self.trailer:
             return None
-        obj = self.trailer['/Info']
+        obj = self.trailer[TK.INFO]
         retval = DocumentInformation()
         retval.update(obj)
         return retval
@@ -1205,7 +1208,7 @@ class PdfFileReader(object):
         """
         try:
             self._override_encryption = True
-            return self.trailer["/Root"].getXmpMetadata()
+            return self.trailer[TK.ROOT].getXmpMetadata()
         finally:
             self._override_encryption = False
 
@@ -1232,7 +1235,7 @@ class PdfFileReader(object):
             try:
                 self._override_encryption = True
                 self.decrypt('')
-                return self.trailer["/Root"]["/Pages"]["/Count"]
+                return self.trailer[TK.ROOT]["/Pages"]["/Count"]
             except Exception:
                 raise PdfReadError("File has not been decrypted")
             finally:
@@ -1258,7 +1261,7 @@ class PdfFileReader(object):
         :rtype: :class:`PageObject<pdf.PageObject>`
         """
         ## ensure that we're not trying to access an encrypted PDF
-        # assert not self.trailer.has_key("/Encrypt")
+        # assert not self.trailer.has_key(TK.ENCRYPT)
         if self.flattenedPages is None:
             self._flatten()
         return self.flattenedPages[pageNumber]
@@ -1291,7 +1294,7 @@ class PdfFileReader(object):
                        "/V" : "Value", "/DV" : "Default Value"}
         if retval is None:
             retval = {}
-            catalog = self.trailer["/Root"]
+            catalog = self.trailer[TK.ROOT]
             # get the AcroForm tree
             if "/AcroForm" in catalog:
                 tree = catalog["/AcroForm"]
@@ -1380,15 +1383,15 @@ class PdfFileReader(object):
         """
         if retval is None:
             retval = {}
-            catalog = self.trailer["/Root"]
+            catalog = self.trailer[TK.ROOT]
 
             # get the name tree
-            if "/Dests" in catalog:
-                tree = catalog["/Dests"]
-            elif "/Names" in catalog:
-                names = catalog['/Names']
-                if "/Dests" in names:
-                    tree = names['/Dests']
+            if CA.DESTS in catalog:
+                tree = catalog[CA.DESTS]
+            elif CA.NAMES in catalog:
+                names = catalog[CA.NAMES]
+                if CA.DESTS in names:
+                    tree = names[CA.DESTS]
 
         if tree is None:
             return retval
@@ -1398,8 +1401,8 @@ class PdfFileReader(object):
             for kid in tree[PA.KIDS]:
                 self.getNamedDestinations(kid.getObject(), retval)
 
-        if "/Names" in tree:
-            names = tree["/Names"]
+        if CA.NAMES in tree:
+            names = tree[CA.NAMES]
             for i in range(0, len(names), 2):
                 key = names[i].getObject()
                 val = names[i+1].getObject()
@@ -1425,12 +1428,12 @@ class PdfFileReader(object):
         """
         if outlines is None:
             outlines = []
-            catalog = self.trailer["/Root"]
+            catalog = self.trailer[TK.ROOT]
 
             # get the outline dictionary and named destinations
-            if "/Outlines" in catalog:
+            if CO.OUTLINES in catalog:
                 try:
-                    lines = catalog["/Outlines"]
+                    lines = catalog[CO.OUTLINES]
                 except PdfReadError:
                     # this occurs if the /Outlines object reference is incorrect
                     # for an example of such a file, see https://unglueit-files.s3.amazonaws.com/ebf/7552c42e9280b4476e59e77acc0bc812.pdf
@@ -1554,7 +1557,7 @@ class PdfFileReader(object):
         :rtype: ``str``, ``None`` if not specified
         """
         try:
-            return self.trailer['/Root']['/PageLayout']
+            return self.trailer[TK.ROOT]['/PageLayout']
         except KeyError:
             return None
 
@@ -1572,7 +1575,7 @@ class PdfFileReader(object):
         :rtype: ``str``, ``None`` if not specified
         """
         try:
-            return self.trailer['/Root']['/PageMode']
+            return self.trailer[TK.ROOT]['/PageMode']
         except KeyError:
             return None
 
@@ -1590,7 +1593,7 @@ class PdfFileReader(object):
         if pages is None:
             # Fix issue 327: set flattenedPages attribute only for
             # decrypted file
-            catalog = self.trailer["/Root"].getObject()
+            catalog = self.trailer[TK.ROOT].getObject()
             pages = catalog["/Pages"].getObject()
             self.flattenedPages = []
 
@@ -1962,7 +1965,7 @@ class PdfFileReader(object):
                             raise PdfReadError("Unknown xref type: %s"%
                                                         xref_type)
 
-                trailerKeys = "/Root", "/Encrypt", "/Info", "/ID"
+                trailerKeys = TK.ROOT, TK.ENCRYPT, TK.INFO, TK.ID
                 for key in trailerKeys:
                     if key in xrefstream and key not in self.trailer:
                         self.trailer[NameObject(key)] = xrefstream.raw_get(key)
@@ -2092,7 +2095,7 @@ class PdfFileReader(object):
             self._override_encryption = False
 
     def _decrypt(self, password):
-        encrypt = self.trailer['/Encrypt'].getObject()
+        encrypt = self.trailer[TK.ENCRYPT].getObject()
         if encrypt['/Filter'] != '/Standard':
             raise NotImplementedError("only Standard PDF encryption handler is available")
         if not (encrypt['/V'] in (1, 2)):
@@ -2126,11 +2129,11 @@ class PdfFileReader(object):
         return 0
 
     def _authenticateUserPassword(self, password):
-        encrypt = self.trailer['/Encrypt'].getObject()
+        encrypt = self.trailer[TK.ENCRYPT].getObject()
         rev = encrypt['/R'].getObject()
         owner_entry = encrypt['/O'].getObject()
         p_entry = encrypt['/P'].getObject()
-        id_entry = self.trailer['/ID'].getObject()
+        id_entry = self.trailer[TK.ID].getObject()
         id1_entry = id_entry[0].getObject()
         real_U = encrypt['/U'].getObject().original_bytes
         if rev == 2:
@@ -2144,7 +2147,7 @@ class PdfFileReader(object):
         return U == real_U, key
 
     def getIsEncrypted(self):
-        return "/Encrypt" in self.trailer
+        return TK.ENCRYPT in self.trailer
 
     isEncrypted = property(lambda self: self.getIsEncrypted(), None, None)
     """

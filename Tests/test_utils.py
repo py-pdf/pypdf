@@ -4,8 +4,8 @@ import os
 import pytest
 
 import PyPDF2.utils
-from PyPDF2.errors import PdfStreamError
 from PyPDF2 import PdfFileReader
+from PyPDF2.errors import PdfStreamError
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
