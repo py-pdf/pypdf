@@ -403,7 +403,6 @@ class PdfFileWriter(object):
                     writer_parent_annot.update({
                         NameObject("/V"): TextStringObject(fields[field])
                     })
-                        
     def cloneReaderDocumentRoot(self, reader):
         '''
         Copy the reader document root to the writer.
