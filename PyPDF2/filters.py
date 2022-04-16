@@ -370,19 +370,18 @@ class CCITTFaxDecode(object):
             from PyPDF2.generic import ArrayObject
             if isinstance(decodeParms, ArrayObject):
                 for decodeParm in decodeParms:
-                    if '/Columns' in decodeParm:
-                        width = decodeParm['/Columns']
-                    if '/K' in decodeParm:
-                        k = decodeParm['/K']
+                    if CCITT.COLUMNS in decodeParm:
+                        width = decodeParm[CCITT.COLUMNS]
+                    if CCITT.K in decodeParm:
+                        k = decodeParm[CCITT.K]
             else:
-                width = decodeParms['/Columns']
-                k = decodeParms['/K']
+                width = decodeParms[CCITT.COLUMNS]
+                k = decodeParms[CCITT.K]
             if k == -1:
                 CCITTgroup = 4
             else:
                 CCITTgroup = 3
 
-        width = decodeParms[CCITT.COLUMNS]
         imgSize = len(data)
         tiff_header_struct = '<2shlh' + 'hhll' * 8 + 'h'
         tiffHeader = struct.pack(tiff_header_struct,
