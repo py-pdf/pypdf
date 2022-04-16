@@ -138,8 +138,8 @@ class PdfFileWriter(object):
         pages[NameObject(PA.COUNT)] = NumberObject(pages[PA.COUNT] + 1)
 
     def set_need_appearances_writer(self):
-        # See 12.7.2 and 7.7.2 for more information: 
-        #http://www.adobe.com/content/dam/acom/en/devnet/acrobat/pdfs/PDF32000_2008.pdf
+        # See 12.7.2 and 7.7.2 for more information:
+        # http://www.adobe.com/content/dam/acom/en/devnet/acrobat/pdfs/PDF32000_2008.pdf
         try:
             catalog = self._root_object
             # get the AcroForm tree
@@ -147,10 +147,10 @@ class PdfFileWriter(object):
                 self._root_object.update({
                     NameObject("/AcroForm"): IndirectObject(len(self._objects),
                         0, self)})
-    
+
             need_appearances = NameObject("/NeedAppearances")
             self._root_object["/AcroForm"][need_appearances] = BooleanObject(True)
-    
+
         except Exception as e:
             print('set_need_appearances_writer() catch : ', repr(e))
 
@@ -404,7 +404,6 @@ class PdfFileWriter(object):
                     writer_parent_annot.update({
                         NameObject("/V"): TextStringObject(fields[field])
                     })
-
 
     def cloneReaderDocumentRoot(self, reader):
         '''
