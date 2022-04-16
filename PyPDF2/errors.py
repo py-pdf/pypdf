@@ -20,3 +20,6 @@ class PdfStreamError(PdfReadError):
 
 class ParseError(Exception):
     pass
+
+
+STREAM_TRUNCATED_PREMATURELY = "Stream has ended unexpectedly"

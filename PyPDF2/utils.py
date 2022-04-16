@@ -34,7 +34,7 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import sys
 
-from PyPDF2.errors import PdfStreamError
+from PyPDF2.errors import STREAM_TRUNCATED_PREMATURELY, PdfStreamError
 
 try:
     import builtins
@@ -42,7 +42,7 @@ try:
 except ImportError:  # Py2.7
     import __builtin__ as builtins  # type: ignore
 
-ERR_STREAM_TRUNCATED_PREMATURELY = "Stream has ended unexpectedly"
+
 xrange_fn = getattr(builtins, "xrange", range)
 _basestring = getattr(builtins, "basestring", str)
 
@@ -136,7 +136,7 @@ def readUntilRegex(stream, regex, ignore_eof=False):
             if ignore_eof:
                 return name
             else:
-                raise PdfStreamError(ERR_STREAM_TRUNCATED_PREMATURELY)
+                raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
         m = regex.search(tok)
         if m is not None:
             name += tok[:m.start()]

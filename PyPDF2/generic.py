@@ -39,8 +39,8 @@ import warnings
 
 from PyPDF2.constants import FilterTypes as FT
 from PyPDF2.constants import StreamAttributes as SA
-from PyPDF2.errors import PdfReadError, PdfStreamError
-from PyPDF2.utils import ERR_STREAM_TRUNCATED_PREMATURELY
+from PyPDF2.errors import (STREAM_TRUNCATED_PREMATURELY, PdfReadError,
+                           PdfStreamError)
 
 from . import filters, utils
 from .utils import (RC4_encrypt, b_, chr_, ord_, readNonWhitespace,
@@ -201,7 +201,7 @@ class IndirectObject(PdfObject):
         while True:
             tok = stream.read(1)
             if not tok:
-                raise PdfStreamError(ERR_STREAM_TRUNCATED_PREMATURELY)
+                raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
             if tok.isspace():
                 break
             idnum += tok
@@ -209,7 +209,7 @@ class IndirectObject(PdfObject):
         while True:
             tok = stream.read(1)
             if not tok:
-                raise PdfStreamError(ERR_STREAM_TRUNCATED_PREMATURELY)
+                raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
             if tok.isspace():
                 if not generation:
                     continue
@@ -307,7 +307,7 @@ def readHexStringFromStream(stream):
     while True:
         tok = readNonWhitespace(stream)
         if not tok:
-            raise PdfStreamError(ERR_STREAM_TRUNCATED_PREMATURELY)
+            raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
         if tok == b_(">"):
             break
         x += tok
@@ -328,7 +328,7 @@ def readStringFromStream(stream):
     while True:
         tok = stream.read(1)
         if not tok:
-            raise PdfStreamError(ERR_STREAM_TRUNCATED_PREMATURELY)
+            raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
         if tok == b_("("):
             parens += 1
         elif tok == b_(")"):
@@ -571,7 +571,7 @@ class DictionaryObject(dict, PdfObject):
                 skipOverComment(stream)
                 continue
             if not tok:
-                raise PdfStreamError(ERR_STREAM_TRUNCATED_PREMATURELY)
+                raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
 
             if debug: print(("Tok:", tok))
             if tok == b_(">"):
