@@ -3,6 +3,18 @@ import pytest
 from PyPDF2.pagerange import PageRange, ParseError, parse_filename_page_ranges
 
 
+def test_equality():
+    pr1 = PageRange(slice(0, 5))
+    pr2 = PageRange(slice(0, 5))
+    assert pr1 == pr2
+
+
+def test_equality_other_objectc():
+    pr1 = PageRange(slice(0, 5))
+    pr2 = "PageRange(slice(0, 5))"
+    assert pr1 != pr2
+
+
 def test_idempotency():
     pr = PageRange(slice(0, 5))
     pr2 = PageRange(pr)
@@ -46,3 +58,10 @@ def test_parse_filename_page_ranges(params, expected):
 def test_parse_filename_page_ranges_err():
     with pytest.raises(ValueError):
         parse_filename_page_ranges(["1:5", "foo.pdf"])
+
+
+def test_page_range_help():
+    from PyPDF2.pagerange import PAGE_RANGE_HELP
+    assert len(PAGE_RANGE_HELP) > 20
+    assert "0:3" in PAGE_RANGE_HELP
+    assert PAGE_RANGE_HELP.endswith("\n")

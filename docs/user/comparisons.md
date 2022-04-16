@@ -59,3 +59,8 @@ Please be aware that there is also
 [`pdfminer`](https://pypi.org/project/pdfminer/) which is not maintained.
 Then there is [`pdfrw2`](https://pypi.org/project/pdfrw2/) which doesn't have
 a large community behind it.
+
+And there are more:
+
+
+* [`pyfpdf`](https://github.com/reingart/pyfpdf)

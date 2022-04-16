@@ -4,9 +4,16 @@
 .tox
 build
 .idea/*
-.coverage
 *.egg-info/
 dist/*
+
+#
+.mutmut-cache
+mutmut-results.*
+
+# Code coverage artifacts
+.coverage*
+coverage.xml
 
 # Editors / IDEs
 .vscode/

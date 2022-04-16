@@ -4,7 +4,7 @@ Representation and utils for ranges of PDF file pages.
 
 Copyright (c) 2014, Steve Witham <switham_github@mac-guyver.com>.
 All rights reserved. This software is available under a BSD license;
-see https://github.com/py-pdf/PyPDF2/blob/master/LICENSE
+see https://github.com/py-pdf/PyPDF2/blob/main/LICENSE
 """
 
 import re
@@ -83,13 +83,13 @@ class PageRange(object):
             self._slice = slice(*[int(g) if g else None
                                   for g in m.group(4, 6, 8)])
 
-    __init__.__doc__ = __init__.__doc__.format(page_range_help=PAGE_RANGE_HELP)
+    if __init__.__doc__:  # see https://github.com/py-pdf/PyPDF2/issues/737
+        __init__.__doc__ = __init__.__doc__.format(page_range_help=PAGE_RANGE_HELP)
 
     @staticmethod
     def valid(input):
         """ True if input is a valid initializer for a PageRange. """
-        return isinstance(input, slice)  or \
-               isinstance(input, PageRange) or \
+        return isinstance(input, (slice, PageRange))  or \
                (isString(input)
                 and bool(re.match(PAGE_RANGE_RE, input)))
 
@@ -100,14 +100,14 @@ class PageRange(object):
     def __str__(self):
         """ A string like "1:2:3". """
         s = self._slice
-        if s.step == None:
-            if s.start != None  and  s.stop == s.start + 1:
+        if s.step is None:
+            if s.start is not None  and  s.stop == s.start + 1:
                 return str(s.start)
 
             indices = s.start, s.stop
         else:
             indices = s.start, s.stop, s.step
-        return ':'.join("" if i == None else str(i) for i in indices)
+        return ':'.join("" if i is None else str(i) for i in indices)
 
     def __repr__(self):
         """ A string like "PageRange('1:2:3')". """
@@ -143,7 +143,7 @@ def parse_filename_page_ranges(args):
     for arg in args + [None]:
         if PageRange.valid(arg):
             if not pdf_filename:
-                raise ValueError("The first argument must be a filename, " \
+                raise ValueError("The first argument must be a filename, "
                                  "not a page range.")
 
             pairs.append( (pdf_filename, PageRange(arg)) )
