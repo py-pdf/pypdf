@@ -2,6 +2,7 @@
 #
 # Copyright (c) 2006, Mathieu Fenniak
 # Copyright (c) 2007, Ashish Kulkarni <kulkarni.ashish@gmail.com>
+# Copyright (c) 2018, Assi Abramovitz <assiabramovitz@gmail.com>
 #
 # All rights reserved.
 #
@@ -60,8 +61,9 @@ from PyPDF2.constants import StreamAttributes as SA
 
 from . import utils
 from .generic import *
-from .utils import (ConvertFunctionsToVirtualList, b_, formatWarning, isString,
-                    ord_, readNonWhitespace, readUntilWhitespace, str_, u_)
+from .utils import readNonWhitespace, readUntilWhitespace, ConvertFunctionsToVirtualList
+from .utils import isString, b_, u_, ord_, chr_, str_, formatWarning
+from .glyphNamesToUnicode import glyphNameToUnicode
 
 if version_info < ( 2, 4 ):
    from sets import ImmutableSet as frozenset
@@ -71,6 +73,177 @@ if version_info < ( 2, 5 ):
 else:
     from hashlib import md5
 
+import re
+
+def dbg(level, msg):
+    debugLevel = 0
+    if debugLevel < level:
+        return
+    print("DBG: " + msg)
+
+class GraphicsMatrix:
+    """
+    Y = y*yMult + yShift
+    X = x*xMult + xShift
+    """
+    def __init__(self, xMult = 1, yMult = 1, xShift = 0, yShift = 0):
+        self.xMult = float(xMult)
+        self.yMult = float(yMult)
+        self.xShift = float(xShift)
+        self.yShift = float(yShift)
+
+class TextState:
+    def __init__(self, lineCallback):
+        self.text = u_("")
+        self.lineCallback = lineCallback
+        self.prevPosition = (0, 0)
+        self.currentPosition = (0, 0)
+        self.graphicsStack = [GraphicsMatrix()]
+        #Every element in the lines dictionary is a list of line elements
+        #The key is the Y bucket of the line
+        self.lines = {}
+        self.cmap = None
+        self.cmaps = {}
+        self.fontSize = None
+        self.widths = None
+        self.widthsCache = {}
+        self.fontObj = None
+        self.textMatrix = GraphicsMatrix()
+
+#Code adapted from: https://github.com/mstamy2/PyPDF2/pull/201/commits
+def parseCMap(cstr, firstChar, lastChar):
+    result = {
+        '__firstChar': firstChar,
+        '__lastChar': lastChar,
+        '__type': 'cmap'
+    }
+    cmapType = 'UNKNOWN'
+    #Char based CMap
+    #.*? -> non greedy match, to catch the closest closing marker, not the furthest
+    submaps = re.findall('((?:beginbfchar.*?endbfchar)|(?:beginbfrange.*?endbfrange))', cstr, re.DOTALL)
+    for submap in submaps:
+        rr = re.findall("beginbfchar\r?\n(.*?)\r?\nendbfchar", submap, re.DOTALL)
+        if (rr == None or len(rr) == 0):
+            rr = re.findall("beginbfrange\r?\n(.*?)\n[ \t]*endbfrange", submap, re.DOTALL)
+            if (rr != None and len(rr) != 0):
+                cmapType = "BFRANGE"
+            else:
+                return None
+        else:
+            cmapType = "BFCHAR"
+
+        for group in rr:
+            maxCh = 0
+            ws = '[ \t]*'
+            group = re.sub(ws, "", group)
+            entries = re.findall('([0-9a-fA-F]+)><([0-9a-fA-F]+)>(?:(\[[^\]]*\])|<([0-9a-fA-F]+)>)?', group)
+            #This is the target of the range. It could be a simple value or it could be a list in []
+
+            for entry in entries:
+                targetIncrement = 1
+                sourceFirst = int(entry[0], base=16)
+                sourceLast = sourceFirst
+                if cmapType == "BFRANGE":
+                    sourceLast = int(entry[1], base=16)
+                    if entry[3] != '':
+                        targetChars = [entry[3]]
+                    else:
+                        #The target is a list
+                        targetChars = re.findall('<([0-9a-fA-F]+)>', entry[2])
+                        targetIncrement = 0
+                        sourceFirst = int(entry[0], base=16)
+                else:#BFCHAR
+                    targetChars = [entry[1]]
+
+                curTargetChar = targetChars[0]
+                targetOffset = 0
+                for ch in range(sourceFirst, 1 + sourceLast):
+                    if len(targetChars) > 1:
+                        curTargetChar = targetChars.pop(0)
+                    unicodeVal = int(curTargetChar, base=16) + targetOffset
+                    try:
+                        result[ch] = chr_(unicodeVal)
+                    except ValueError:
+                        result[ch] = chr_(0)
+                    targetOffset += targetIncrement
+                    maxCh = max(ch, maxCh)
+    result['__lastChar'] = maxCh
+    return result
+
+def parseEncodingDifferences(arr, firstChar, lastChar):
+    result = {
+        '__firstChar': firstChar,
+        '__lastChar': lastChar,
+        '__type': 'differences'
+    }
+    ordinal = 0
+    for pos in range(len(arr)):
+        if isinstance(arr[pos], NumberObject):
+            ordinal = arr[pos] - 1
+            #TODO: Complete the cmap from the base encoding...
+            continue
+        ordinal += 1
+        glyph = arr[pos][1:]
+        uni = glyphNameToUnicode(glyph)
+        if uni == None:
+            if (glyph.lower()[0:4] == 'unic'):
+                #Handle UNICxxxx glyph names, where xxxx is a Hex unicode value
+                uni = int(glyph[5:], 16)
+            else:
+                glyph += ':hb'#TODO: this is Hebrew specific, may need user hint to choose the most likely language
+                uni = glyphNameToUnicode(glyph)
+                if uni == None:
+                    print("Unicode char name not found: " + glyph)
+                    uni = ord_('?')
+        result[ordinal] = chr_(uni)
+        dbg(10, "GlyphName: " + repr(glyph) + " char: " + repr(result[ordinal]))
+    return result
+
+def mergeCmap(cmap1, cmap2):
+    result = cmap1
+    result['__firstChar'] = min(cmap1['__firstChar'], cmap2['__firstChar'])
+    result['__lastChar'] = max(cmap1['__lastChar'], cmap2['__lastChar'])
+    result['__type'] = cmap1['__type'] + '+' + cmap2['__type']
+    for c in cmap2:
+        if ( str(c)[0] == '_'):
+            continue
+        cmap1[c] = cmap2[c]
+    return result
+
+def parseWidthsArray(fontObj):
+    widths = None
+    #Default widths, if not specified
+    dw = 0
+    dfArray = fontObj['/DescendantFonts'] if '/DescendantFonts' in fontObj else None
+    if dfArray == None:
+        dbg(1, "No descendantFonts found - can't extract widths")
+        return None
+    if len(dfArray) > 1:
+        dbg(1, "What should I do with this??")
+    for df in dfArray:
+        df = df.getObject()
+        dw = df['/DW'] if '/DW' in df else None
+        wArray = df['/W'] if '/W' in df else []
+        widths = {}
+        itemIndex = 0
+        #The format is a list of: <firstChar> <widthsArray>
+        #In this case, the next len(widthArray) chars get the values from the array
+        #OR:                      <firstChar> <lastChar> <width>
+        # In this case all the characters between first and last get the same width
+        while itemIndex < len(wArray):
+            charIndex = wArray[itemIndex]#FirstChar
+            if isinstance(wArray[itemIndex + 1], list):
+                widthsForRange = wArray[itemIndex + 1]
+                itemIndex += 2
+            else:#Simulate an array with the same value in all positions
+                lastChar = wArray[itemIndex + 1]
+                widthsForRange = [wArray[itemIndex + 2]] * (lastChar - charIndex + 1)
+                itemIndex += 3
+            for w in widthsForRange:
+                widths[charIndex] = float(w)
+                charIndex += 1
+    widths[-1] = dw #Place the default inside the dictionary
+    return widths
 
 class PdfFileWriter(object):
     """
@@ -1171,10 +1344,10 @@ class PdfFileReader(object):
         function.
 
         :return: the document information of this PDF file
-        :rtype: :class:`DocumentInformation<pdf.DocumentInformation>` or ``None`` if none exists.
+        :rtype: :class:`DocumentInformation<pdf.DocumentInformation>` or ``[]`` if none exists.
         """
         if "/Info" not in self.trailer:
-            return None
+            return []
         obj = self.trailer['/Info']
         retval = DocumentInformation()
         retval.update(obj)
@@ -1196,6 +1369,8 @@ class PdfFileReader(object):
         try:
             self._override_encryption = True
             return self.trailer["/Root"].getXmpMetadata()
+        except:
+            return None
         finally:
             self._override_encryption = False
 
@@ -1773,7 +1948,8 @@ class PdfFileReader(object):
         stream.seek(-1, 2)
         if not stream.tell():
             raise utils.PdfReadError('Cannot read an empty file')
-        last1K = stream.tell() - 1024 + 1 # offset of last 1024 bytes of stream
+        #Assi: increased tolerance for garbage after EOF. Not sure why it's limited at all
+        last1K = stream.tell() - 4* 1024 + 1 # offset of last 1024 bytes of stream
         line = b_('')
         while line[:5] != b_("%%EOF"):
             if stream.tell() < last1K:
@@ -2142,6 +2318,41 @@ class PdfFileReader(object):
     Note that this property, if true, will remain true even after the
     :meth:`decrypt()<PdfFileReader.decrypt>` method is called.
     """
+
+    """
+    Return a dictionary of images used in the PDF (currently only XObject images)
+    TODO: add inline images?
+    """
+    def extractImages(self):
+        images = {}
+        for page in self.pages:
+            if not '/XObject' in page["/Resources"]:
+                return images
+            for xobjName in page["/Resources"]['/XObject']:
+                xobj = page["/Resources"]['/XObject'][xobjName]
+                if xobj['/Subtype'] != '/Image':
+                    continue
+                images[xobjName] = xobj
+
+        return images
+
+    """
+    Return a sorted set of font names used in the PDF
+    """
+    def extractFonts(self):
+        uniqueFonts = []
+        for page in self.pages:
+            if not "/Font" in page["/Resources"]:
+                continue
+            for font in page["/Resources"]["/Font"]:
+                fontObj = page["/Resources"]["/Font"][font]
+                if '/BaseFont' in fontObj:
+                    baseFont = str(fontObj['/BaseFont'])
+                    if not baseFont in uniqueFonts:
+                        uniqueFonts.append(baseFont)
+                else:
+                    uniqueFonts.append(fontObj['/Subtype'])
+        return sorted(uniqueFonts)
 
 
 def getRectangle(self, name, defaults):
@@ -2679,50 +2890,250 @@ class PageObject(DictionaryObject):
                 content = ContentStream(content, self.pdf)
             self[NameObject("/Contents")] = content.flateEncode()
 
-    def extractText(self, Tj_sep="", TJ_sep=" "):
+    def extractText(self, Tj_sep="", TJ_sep=" ", lineCallback = None, lineMargin = 1):
         """
         Locate all text drawing commands, in the order they are provided in the
-        content stream, and extract the text.  This works well for some PDF
-        files, but poorly for others, depending on the generator used.  This will
-        be refined in the future.  Do not rely on the order of text coming out of
-        this function, as it will change if this function is made more
-        sophisticated.
+        content stream, and extract the text line by line.
+        For each line, the lineCallback function is called with all the text elements in the line.
+        Each element has x and y position properties so the caller can decide on the sort oder.
+        Line detection is done by comparing the y position to the line margin argument.
 
-        :return: a unicode string object.
+        :return: a unicode string object
         """
-        text = u_("")
+        return self.extractTextState(lineCallback=lineCallback, lineMargin=lineMargin).text
+
+    def extractTextState(self, lineCallback = None, lineMargin = 1):
+        """
+        Locate all text drawing commands, in the order they are provided in the
+        content stream, and extract the text line by line.
+        For each line, the lineCallback function is called with all the text elements in the line.
+        Each element has x and y position properties so the caller can decide on the sort oder.
+        Line detection is done by comparing the y position to the line margin argument.
+
+        :return: a TextState structure, which describes the page in detail
+        """
+        textState = TextState(lineCallback)
+        firstParagraph = True
+
+        def calcCharWidth(textState, char):
+            width = 0
+            if textState.widths != None and char in textState.widths:
+                #explicit char width provided in font
+                width = textState.widths[char] * textState.fontSize * 0.001
+            elif textState.widths != None and textState.widths[-1] != None:
+                #Not specified explicitly, but default provided
+                width = textState.widths[-1] * textState.fontSize * 0.001
+            else:
+                #Nothing found, fake it
+                width = textState.fontSize / 3.0
+            return width
+
+        # Concatenate TextStringObjects and try to translate ByteStringObjects
+        # when we have a CMap, when we don't, then byte->string encoding is unknown,
+        # so adding them to the text here would be gibberish.
+        def translate(text, cmap):
+            newText = ""
+            textWidth = 0
+            if isinstance(text, TextStringObject) and cmap == None:
+                newText = text
+            elif (isinstance(text, TextStringObject) or isinstance(text, ByteStringObject)) and cmap != None:
+                singleByte = cmap['__lastChar'] < 256
+                text = text.original_bytes
+                for pos in range(len(text)):
+                    if (not singleByte and pos % 2 != 0):
+                        continue
+                    if (singleByte):
+                        c = ord_(text[pos])
+                    else:
+                        #Assume the characters are 2 bytes each and convert them to hex
+                        c = (ord_(text[pos]) << 8) + ord_(text[pos+1])
+                    if c == 0:#This is a hack for cases where singlebyte is written in two bytes
+                        continue
+                    newChar = cmap.get(c, chr_(c))
+                    textWidth += calcCharWidth(textState, c)
+                    newText += newChar
+            return (newText, textWidth)
+
+        def handleTextElement(operator, textState, _text, textWidth):
+            textState.text += _text
+            dbg(9, "Operator: " + repr(operator) + ": " + repr(textState.currentPosition) + " Text Element (Text: " + _text + ')')
+            newLine = (operator == 'FAKENL' or operator == 'T*' or
+                       operator == "'" or operator == '"')
+            if (newLine or
+                abs(textState.prevPosition[1] - textState.currentPosition[1]) > lineMargin):
+                textState.text += "\n"
+            thisLineElements = []
+            thisColumnElements = []
+            #The Y component of the Top of stack
+            yMult = textState.graphicsStack[0].yMult
+            yShift = textState.graphicsStack[0].yShift
+            xMult = textState.graphicsStack[0].xMult
+            xShift = textState.graphicsStack[0].xShift
+
+            x = textState.currentPosition[0]* xMult + xShift
+            y = textState.currentPosition[1]
+            rightMostX = textState.currentPosition[0] * xMult + xShift + textWidth
+
+            line   = int(round((float(textState.currentPosition[1]) * yMult + yShift) / lineMargin))
+            if (line in textState.lines):
+                thisLineElements = textState.lines[line]
+            else:
+                textState.lines[line] = thisLineElements
+
+            element = { 'text':_text, 'x': x, 'y': y, 'rightMostX': rightMostX, 'line': line}
+            thisLineElements.append(element)
+            textState.prevPosition = textState.currentPosition
+
+        def processOperations(content, obj):
+            cmap = textState.cmap
+            cmaps = textState.cmaps
+            # Note: we check all strings are TextStringObjects.  ByteStringObjects
+            # are strings where the byte->string encoding was unknown, so adding
+            # them to the text here would be gibberish.
+            for operands, operator in content.operations:
+                if operator == b_("Tj"):
+                    (_text, width) = translate(operands[0], cmap)
+                    handleTextElement(operator, textState, _text, width)
+                elif operator == b_("T*"):
+                    dbg(1, "T*T*T*T*T*T*T*T*T")
+                    handleTextElement(operator, textState, '', 0)
+                elif operator == b_("'"):
+                    dbg(1, "'''''''''''''''''''''''''''''")
+                    (_text, width) = translate(operands[0], cmap)
+                    handleTextElement(operator, textState, _text, width)
+                elif operator == b_('"'):
+                    dbg(1, '""""""""""""""""""""""""""""')
+                    (_text, width) = translate(operands[2], cmap)
+                    handleTextElement(operator, textState, _text, width)
+                elif operator == b_("TJ"):
+                    #The TJ operator provides an array with both strings and numbers
+                    #The strings are displayed and the numbers are offsets on the X Axis (if writing horizontally)
+                    #The numbers are expressed in 1000th of
+                    dbg(1, "TJTJTJTJTJTJTJTJTJTJTJ")
+                    _text = u''
+                    width = 0
+                    for i in operands[0]:
+                        if isinstance(i, decimal.Decimal) or isinstance(i, NumberObject):
+                            #per char position micro-adjustment
+                            textState.currentPosition = (float(textState.currentPosition[0]) - (float(i) / 1000), textState.currentPosition[1])
+                        else:
+                            (tmpText, tmpWidth) = translate(i, cmap)
+                            _text += tmpText
+                            width += tmpWidth
+                    handleTextElement(operator, textState, _text, width)
+                elif operator == b_("Td") or operator == b_("TD"):
+                    dbg(2, repr(operator) + ": x = " + repr(operands[0]) + " y = " + repr(operands[1]))
+                    positionOffset = (float(operands[0]), float(operands[1]))
+                    textState.currentPosition = (textState.currentPosition[0] + positionOffset[0], textState.currentPosition[1] + positionOffset[1])
+                elif operator == b_('Tc'):
+                    dbg(2, "Tc " + repr(operands))
+                elif operator == b_('Tw'):
+                    dbg(2, "Tw " + repr(operands))
+                elif operator == b_('Tz'):
+                    dbg(2, "Tz " + repr(operands))
+                elif operator == b_('Tm'):
+                    newX = float(operands[4] if operands[0] > 0 else -1 * operands[4])
+                    newY = float(operands[5] if operands[3] > 0 else -1 * operands[5])
+                    dbg(2, repr(operator) + ": x = " + repr(newX) + " y = " + repr(newY) + "xMult = " + repr(operands[3]))
+                    textState.textMatrix = GraphicsMatrix(operands[0], operands[3], operands[4], operands[5])
+                    textState.currentPosition = (newX, newY)
+                    if (operands[0] != operands[3] or operands[1] != 0 or operands[2] != 0):
+                        dbg(1, "Potentially unsafe handling of Tm operator: " + repr(operator) + " ops: " + repr(operands))
+                elif operator == b_('cm'):
+                    dbg(10, "cm operator: " + repr(operator) + " ops: " + repr(operands))
+                    #Update the top of stack
+                    textState.graphicsStack[0] = GraphicsMatrix(operands[0], operands[3], operands[4], operands[5])
+                elif operator == b_("BT"):
+                    dbg(2, repr(operator))
+                    #TODO: to really sort by lines, need to create a dictionary with buckets by y location or something
+                    textState.currentPosition = (0, 0)
+                elif operator == b_("Tf"):
+                    #TODO: move this into a function
+                    dbg(2, "Tf " + str(operands))
+                    font = operands[0]
+                    if '/Resources' in obj and '/Font' in obj["/Resources"]:
+                        fontObj = obj["/Resources"]["/Font"][font]
+                    elif '/Font' in self["/Resources"] and '/Font' in self["/Resources"]:
+                        fontObj = self["/Resources"]["/Font"][font]
+                    cmap = cmaps.get(font)
+                    firstChar = 0xffff
+                    lastChar = 0xffff
+                    if '/FirstChar' in fontObj:
+                        firstChar = fontObj['/FirstChar']
+                    if '/LastChar' in fontObj:
+                        lastChar = fontObj['/LastChar']
+                    if (cmap == None):
+                        if "/ToUnicode" in fontObj:
+                            try:
+                                cmapData = fontObj["/ToUnicode"].getData()
+                                cmap = parseCMap(str_(cmapData), firstChar, lastChar)
+                            except utils.PdfReadError:
+                                print("Error reading CMAP (font = " + str(font) + ')')
+                        if '/Encoding' in fontObj:
+                            encoding =  fontObj["/Encoding"]
+                            if '/Differences' in encoding:
+                                cmap_differences = parseEncodingDifferences(encoding['/Differences'],
+                                    firstChar, lastChar)
+                                if (cmap != None):
+                                    cmap = mergeCmap(cmap_differences, cmap)
+                                else:
+                                    cmap = cmap_differences
+                        cmaps[font] = cmap
+                    textState.cmap = cmap
+                    textState.fontSize = float(operands[1]) * textState.textMatrix.xMult
+
+                    widthsArr = fontObj['/Widths'] if '/Widths' in fontObj else None
+                    if (widthsArr):
+                        #Convert to dictionary
+                        widths = {-1: None}
+                        for i in range(0, len(widthsArr)):
+                            charIndex= i + firstChar
+                            widths[charIndex] = float(widthsArr[i])
+                        if '/MissingWidth' in fontObj:
+                            widths[-1] = float(fontObj['/MissingWidth'])
+                        textState.widths = widths
+                    textState.fontObj = fontObj
+                    if textState.widths == None:
+                        textState.widths = textState.widthsCache.get(font)
+                        if textState.widths == None:
+                            textState.widths = parseWidthsArray(fontObj)
+                            textState.widthsCache[font] = textState.widths
+                elif operator == b_("Do"):
+                    dbg(2, "Do " + repr(operands[0]))
+                    xObjName = operands[0]
+                    if not xObjName in obj['/Resources']['/XObject']:
+                        continue
+                    xObj = obj['/Resources']['/XObject'][xObjName].getObject()
+                    if (xObj['/Subtype'] == '/Form'):
+                        dbg(2, "Processing Form named: " + xObjName)
+                        xobjContent = ContentStream(xObj, self.pdf)
+                        dbg(3, "xObj operations: " + repr(xobjContent.operations))
+                        processOperations(xobjContent, xObj)
+                elif operator == b_("ET"):
+                    dbg(3, repr(operator))
+                elif operator == b_("q"):
+                    dbg(10, "Save grahics state: " + repr(operator) + " ops: " + repr(operands))
+                    #Insert a default state to the top of stack
+                    textState.graphicsStack.insert(0, GraphicsMatrix())
+                elif operator == b_("Q"):
+                    dbg(10, "Restore graphics state: " + repr(operator) + " ops: " + repr(operands))
+                    #Remove the top of stack
+                    textState.graphicsStack.pop(0)
+                    if len(textState.graphicsStack) == 0:
+                        textState.graphicsStack = [GraphicsMatrix()]
+                else:
+                    dbg(10, "operator: " + repr(operator) + " ops: " + repr(operands))
+            handleTextElement('FAKENL', textState, '', 0)
+
         content = self["/Contents"].getObject()
         if not isinstance(content, ContentStream):
             content = ContentStream(content, self.pdf)
-        # Note: we check all strings are TextStringObjects.  ByteStringObjects
-        # are strings where the byte->string encoding was unknown, so adding
-        # them to the text here would be gibberish.
-        for operands, operator in content.operations:
-            if operator == b_("Tj"):
-                _text = operands[0]
-                if isinstance(_text, TextStringObject):
-                    text += Tj_sep
-                    text += _text
-                    text += "\n"
-            elif operator == b_("T*"):
-                text += "\n"
-            elif operator == b_("'"):
-                text += "\n"
-                _text = operands[0]
-                if isinstance(_text, TextStringObject):
-                    text += operands[0]
-            elif operator == b_('"'):
-                _text = operands[2]
-                if isinstance(_text, TextStringObject):
-                    text += "\n"
-                    text += _text
-            elif operator == b_("TJ"):
-                for i in operands[0]:
-                    if isinstance(i, TextStringObject):
-                        text += TJ_sep
-                        text += i
-                text += "\n"
-        return text
+        processOperations(content, self)
+        #Eventually call the line handler for all the lines, in increasing Y order
+        if textState.lineCallback:
+            for y in sorted(textState.lines.keys(), reverse=True):
+                textState.lineCallback(textState.lines[y], textState)
+        return textState
 
     mediaBox = createRectangleAccessor(PG.MEDIABOX, ())
     """
@@ -2807,7 +3218,9 @@ class ContentStream(DecodedStreamObject):
                 while peek not in (b_('\r'), b_('\n')):
                     peek = stream.read(1)
             else:
-                operands.append(readObject(stream, None))
+                obj = readObject(stream, None)
+                # print("OBJ: " + str(type(obj)) + str(obj))
+                operands.append(obj)
 
     def _readInlineImage(self, stream):
         # begin reading just after the "BI" - begin image

@@ -275,7 +275,7 @@ def ord_(b):
 
 def chr_(c):
     if sys.version_info[0] < 3:
-        return c
+        return unichr(c)
     else:
         return chr(c)
 
