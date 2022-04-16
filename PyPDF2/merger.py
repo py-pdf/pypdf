@@ -1,5 +1,3 @@
-# vim: sw=4:expandtab:foldmethod=marker
-#
 # Copyright (c) 2006, Mathieu Fenniak
 # All rights reserved.
 #
@@ -91,7 +89,7 @@ class PdfFileMerger(object):
         :param str bookmark: Optionally, you may specify a bookmark to be applied at
             the beginning of the included file by supplying the text of the bookmark.
 
-        :param pages: can be a :ref:`Page Range <page-range>` or a ``(start, stop[, step])`` tuple
+        :param pages: can be a :class:`PageRange<PyPDF2.pagerange.PageRange>` or a ``(start, stop[, step])`` tuple
             to merge only the specified range of pages from the source
             document into the output document.
 
@@ -119,13 +117,13 @@ class PdfFileMerger(object):
             fileobj = StreamIO(filecontent)
             my_file = True
         elif isinstance(fileobj, PdfFileReader):
+            if hasattr(fileobj, '_decryption_key'):
+                decryption_key = fileobj._decryption_key
             orig_tell = fileobj.stream.tell()
             fileobj.stream.seek(0)
             filecontent = StreamIO(fileobj.stream.read())
             fileobj.stream.seek(orig_tell) # reset the stream to its original location
             fileobj = filecontent
-            if hasattr(fileobj, '_decryption_key'):
-                decryption_key = fileobj._decryption_key
             my_file = True
 
         # Create a new PdfFileReader instance using the stream
@@ -135,7 +133,7 @@ class PdfFileMerger(object):
             pdfr._decryption_key = decryption_key
 
         # Find the range of pages to merge.
-        if pages == None:
+        if pages is None:
             pages = (0, pdfr.getNumPages())
         elif isinstance(pages, PageRange):
             pages = pages.indices(pdfr.getNumPages())
@@ -192,7 +190,7 @@ class PdfFileMerger(object):
         :param str bookmark: Optionally, you may specify a bookmark to be applied at
             the beginning of the included file by supplying the text of the bookmark.
 
-        :param pages: can be a :ref:`Page Range <page-range>` or a ``(start, stop[, step])`` tuple
+        :param pages: can be a :class:`PageRange<PyPDF2.pagerange.PageRange>` or a ``(start, stop[, step])`` tuple
             to merge only the specified range of pages from the source
             document into the output document.
 
@@ -219,8 +217,8 @@ class PdfFileMerger(object):
         for page in self.pages:
             self.output.addPage(page.pagedata)
             page.out_pagedata = self.output.getReference(self.output._pages.getObject()["/Kids"][-1].getObject())
-            #idnum = self.output._objects.index(self.output._pages.getObject()["/Kids"][-1].getObject()) + 1
-            #page.out_pagedata = IndirectObject(idnum, 0, self.output)
+            # idnum = self.output._objects.index(self.output._pages.getObject()["/Kids"][-1].getObject()) + 1
+            # page.out_pagedata = IndirectObject(idnum, 0, self.output)
 
         # Once all pages are added, create bookmarks to point at those pages
         self._write_dests()
@@ -238,7 +236,7 @@ class PdfFileMerger(object):
         usage.
         """
         self.pages = []
-        for fo, pdfr, mine in self.inputs:
+        for fo, _pdfr, mine in self.inputs:
             if mine:
                 fo.close()
 
@@ -261,14 +259,23 @@ class PdfFileMerger(object):
 
         :param str layout: The page layout to be used
 
-        Valid layouts are:
-             /NoLayout        Layout explicitly not specified
-             /SinglePage      Show one page at a time
-             /OneColumn       Show one column at a time
-             /TwoColumnLeft   Show pages in two columns, odd-numbered pages on the left
-             /TwoColumnRight  Show pages in two columns, odd-numbered pages on the right
-             /TwoPageLeft     Show two pages at a time, odd-numbered pages on the left
-             /TwoPageRight    Show two pages at a time, odd-numbered pages on the right
+        .. list-table:: Valid ``layout`` arguments
+           :widths: 50 200
+
+           * - /NoLayout
+             - Layout explicitly not specified
+           * - /SinglePage
+             - Show one page at a time
+           * - /OneColumn
+             - Show one column at a time
+           * - /TwoColumnLeft
+             - Show pages in two columns, odd-numbered pages on the left
+           * - /TwoColumnRight
+             - Show pages in two columns, odd-numbered pages on the right
+           * - /TwoPageLeft
+             - Show two pages at a time, odd-numbered pages on the left
+           * - /TwoPageRight
+             - Show two pages at a time, odd-numbered pages on the right
         """
         self.output.setPageLayout(layout)
 
@@ -278,13 +285,21 @@ class PdfFileMerger(object):
 
         :param str mode: The page mode to use.
 
-        Valid modes are:
-            /UseNone         Do not show outlines or thumbnails panels
-            /UseOutlines     Show outlines (aka bookmarks) panel
-            /UseThumbs       Show page thumbnails panel
-            /FullScreen      Fullscreen view
-            /UseOC           Show Optional Content Group (OCG) panel
-            /UseAttachments  Show attachments panel
+        .. list-table:: Valid ``mode`` arguments
+           :widths: 50 200
+
+           * - /UseNone
+             - Do not show outlines or thumbnails panels
+           * - /UseOutlines
+             - Show outlines (aka bookmarks) panel
+           * - /UseThumbs
+             - Show page thumbnails panel
+           * - /FullScreen
+             - Fullscreen view
+           * - /UseOC
+             - Show Optional Content Group (OCG) panel
+           * - /UseAttachments
+             - Show attachments panel
         """
         self.output.setPageMode(mode)
 
@@ -294,7 +309,6 @@ class PdfFileMerger(object):
         page set.
         """
         new_dests = []
-        prev_header_added = True
         for k, o in list(dests.items()):
             for j in range(*pages):
                 if pdf.getPage(j).getObject() == o['/Page'].getObject():
@@ -339,14 +353,14 @@ class PdfFileMerger(object):
                     if p.id == v['/Page']:
                         v[NameObject('/Page')] = p.out_pagedata
                         pageno = i
-                        pdf = p.src
+                        pdf = p.src  # noqa: F841
                         break
-            if pageno != None:
+            if pageno is not None:
                 self.output.addNamedDestinationObject(v)
 
     def _write_bookmarks(self, bookmarks=None, parent=None):
 
-        if bookmarks == None:
+        if bookmarks is None:
             bookmarks = self.bookmarks
 
         last_added = None
@@ -360,10 +374,10 @@ class PdfFileMerger(object):
             if '/Page' in b:
                 for i, p in enumerate(self.pages):
                     if p.id == b['/Page']:
-                        #b[NameObject('/Page')] = p.out_pagedata
+                        # b[NameObject('/Page')] = p.out_pagedata
                         args = [NumberObject(p.id), NameObject(b['/Type'])]
-                        #nothing more to add
-                        #if b['/Type'] == '/Fit' or b['/Type'] == '/FitB'
+                        # nothing more to add
+                        # if b['/Type'] == '/Fit' or b['/Type'] == '/FitB'
                         if b['/Type'] == '/FitH' or b['/Type'] == '/FitBH':
                             if '/Top' in b and not isinstance(b['/Top'], NullObject):
                                 args.append(FloatObject(b['/Top']))
@@ -412,9 +426,9 @@ class PdfFileMerger(object):
                         b[NameObject('/A')] = DictionaryObject({NameObject('/S'): NameObject('/GoTo'), NameObject('/D'): ArrayObject(args)})
 
                         pageno = i
-                        pdf = p.src
+                        pdf = p.src  # noqa: F841
                         break
-            if pageno != None:
+            if pageno is not None:
                 del b['/Page'], b['/Type']
                 last_added = self.output.addBookmarkDict(b, parent)
 
@@ -430,13 +444,13 @@ class PdfFileMerger(object):
                 if np.getObject() == p.pagedata.getObject():
                     pageno = p.id
 
-            if pageno != None:
+            if pageno is not None:
                 nd[NameObject('/Page')] = NumberObject(pageno)
             else:
                 raise ValueError("Unresolved named destination '%s'" % (nd['/Title'],))
 
     def _associate_bookmarks_to_pages(self, pages, bookmarks=None):
-        if bookmarks == None:
+        if bookmarks is None:
             bookmarks = self.bookmarks
 
         for b in bookmarks:
@@ -454,13 +468,13 @@ class PdfFileMerger(object):
                 if bp.getObject() == p.pagedata.getObject():
                     pageno = p.id
 
-            if pageno != None:
+            if pageno is not None:
                 b[NameObject('/Page')] = NumberObject(pageno)
             else:
                 raise ValueError("Unresolved bookmark '%s'" % (b['/Title'],))
 
     def findBookmark(self, bookmark, root=None):
-        if root == None:
+        if root is None:
             root = self.bookmarks
 
         for i, b in enumerate(root):
@@ -482,7 +496,7 @@ class PdfFileMerger(object):
         :param parent: A reference to a parent bookmark to create nested
             bookmarks.
         """
-        if parent == None:
+        if parent is None:
             iloc = [len(self.bookmarks)-1]
         elif isinstance(parent, list):
             iloc = parent
@@ -491,7 +505,7 @@ class PdfFileMerger(object):
 
         dest = Bookmark(TextStringObject(title), NumberObject(pagenum), NameObject('/FitH'), NumberObject(826))
 
-        if parent == None:
+        if parent is None:
             self.bookmarks.append(dest)
         else:
             bmparent = self.bookmarks
