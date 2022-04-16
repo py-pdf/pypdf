@@ -210,3 +210,19 @@ def test_issue297():
     path = os.path.join(RESOURCE_ROOT, "issue-297.pdf")
     reader = PdfFileReader(path, "rb")
     reader.getPage(0)
+
+
+def test_get_page_of_encrypted_file():
+    """
+    Check if we can read a page of an encrypted file.
+
+    This is a regression test for issue 327:
+    IndexError for getPage() of decrypted file
+    """
+    path = os.path.join(RESOURCE_ROOT, "encrypted-file.pdf")
+    reader = PdfFileReader(path)
+
+    # Password is correct:)
+    reader.decrypt("test")
+
+    reader.getPage(0)

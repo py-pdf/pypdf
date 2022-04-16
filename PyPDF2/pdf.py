@@ -1578,9 +1578,11 @@ class PdfFileReader(object):
         if inherit is None:
             inherit = dict()
         if pages is None:
-            self.flattenedPages = []
+            # Fix issue 327: set flattenedPages attribute only for
+            # decrypted file
             catalog = self.trailer["/Root"].getObject()
             pages = catalog["/Pages"].getObject()
+            self.flattenedPages = []
 
         t = "/Pages"
         if PA.TYPE in pages:
@@ -1735,6 +1737,7 @@ class PdfFileReader(object):
         idnum = readUntilWhitespace(stream)
         extra |= utils.skipOverWhitespace(stream); stream.seek(-1, 1)
         generation = readUntilWhitespace(stream)
+        extra |= utils.skipOverWhitespace(stream); stream.seek(-1, 1)
 
         # although it's not used, it might still be necessary to read
         _obj = stream.read(3)  # noqa: F841
