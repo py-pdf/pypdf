@@ -7,7 +7,6 @@ build
 *.egg-info/
 dist/*
 
-<<<<<<< HEAD
 #
 .mutmut-cache
 mutmut-results.*
@@ -28,8 +27,3 @@ dont_commit_writer.pdf
 PyPDF2-output.pdf
 Image9.png
 PyPDF2_pdfLocation.txt
-=======
-.project
-.vscode/launch.json
-.vscode/settings.json
->>>>>>> 5c9f0edff250aeeb1899c4e98afd3cede2d15dc9
