@@ -1,0 +1,6 @@
+black
+pip-tools
+pre-commit
+pytest-cov
+twine
+wheel
