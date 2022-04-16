@@ -375,7 +375,7 @@ class PdfFileWriter(object):
             writer_annot = page[PG.ANNOTS][j].getObject()
             # retrieve parent field values, if present
             if PG.PARENT in writer_annot:
-                writer_parent_annot = page[PG.ANNOTS][j].getObject()[PG.PARENT]
+                writer_parent_annot = writer_annot[PG.PARENT]
             for field in fields:
                 if writer_annot.get('/T') == field:
                     writer_annot.update({
