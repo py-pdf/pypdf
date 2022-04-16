@@ -120,11 +120,14 @@ class FlateDecode(object):
         predictor = 1
         if decodeParms:
             try:
-                predictor = decodeParms.get("/Predictor", 1)
-            except AttributeError:  # decodeParms is an ArrayObject
-                for decodeParm in decodeParms:
-                    if '/Predictor' in decodeParm:
-                        predictor = decodeParm['/Predictor']
+                if isinstance(decodeParms, ArrayObject):
+                    for decodeParm in decodeParms:
+                        if '/Predictor' in decodeParm:
+                            predictor = decodeParm['/Predictor']
+                else:
+                    predictor = decodeParms.get("/Predictor", 1)
+            except AttributeError:
+                pass # usually an array with a null object was read
         # predictor 1 == no predictor
         if predictor != 1:
             columns = decodeParms[LZW.COLUMNS]
