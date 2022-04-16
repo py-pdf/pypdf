@@ -292,7 +292,7 @@ class Recursion(WriterFixture, unittest.TestCase):
         self.writer._root_object[self.nest_key] = d
 
         # Add a nested set of dictionaries under the top-level item.
-        for i in range(10):
+        for _i in range(10):
             obj = PyPDF2.generic.NullObject()
             d[self.obj_key] = obj
             self.nested_objects.add(obj)
