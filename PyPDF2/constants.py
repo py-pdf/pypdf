@@ -9,6 +9,25 @@ PDF Reference, sixth edition, Version 1.7, 2006.
 """
 
 
+class Core:
+    """Keywords that don't quite belong anywhere else"""
+
+    OUTLINES = "/Outlines"
+
+
+class TrailerKeys:
+    ROOT = "/Root"
+    ENCRYPT = "/Encrypt"
+    ID = "/ID"
+    INFO = "/Info"
+    SIZE = "/Size"
+
+
+class CatalogAttributes:
+    NAMES = "/Names"
+    DESTS = "/Dests"
+
+
 class PagesAttributes:
     """Page Attributes, Table 6.2, Page 52"""
 
@@ -183,4 +202,7 @@ PDF_KEYS = [
     PageLayouts,
     GraphicsStateParameters,
     CatalogDictionary,
+    Core,
+    TrailerKeys,
+    CatalogAttributes,
 ]
