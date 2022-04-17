@@ -33,7 +33,6 @@ def test_writer_operations():
     writer.removeText()
     writer.insertPage(reader_outline.pages[0], 0)
     writer.addBookmarkDestination(page)
-    writer.addBookmark("A bookmark", 0)
     # output.addNamedDestination("A named destination", 1)
     writer.removeLinks()
     # assert output.getNamedDestRoot() == ['A named destination', IndirectObject(9, 0, output)]
@@ -122,7 +121,6 @@ def test_fill_form():
 
     page = reader.pages[0]
     fields = reader.getFields()
-    print(fields)
 
     writer.addPage(page)
 
@@ -132,3 +130,62 @@ def test_fill_form():
     tmp_filename = "dont_commit_filled_pdf.pdf"
     with open(tmp_filename, "wb") as output_stream:
         writer.write(output_stream)
+
+
+def test_encrypt():
+    reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "form.pdf"))
+    writer = PdfFileWriter()
+
+    page = reader.pages[0]
+
+    writer.addPage(page)
+    writer.encrypt(user_pwd="userpwd", owner_pwd="ownerpwd", use_128bit=False)
+
+    # write "output" to PyPDF2-output.pdf
+    tmp_filename = "dont_commit_encrypted.pdf"
+    with open(tmp_filename, "wb") as output_stream:
+        writer.write(output_stream)
+
+    # Cleanup
+    os.remove(tmp_filename)
+
+
+def test_add_bookmark():
+    reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf"))
+    writer = PdfFileWriter()
+
+    for page in reader.pages:
+        writer.addPage(page)
+
+    bookmark = writer.addBookmark(
+        "A bookmark", 1, None, (255, 0, 15), True, True, "/Fit", 200, 0, None
+    )
+    writer.addBookmark("Another", 2, bookmark, None, False, False, "/Fit", 0, 0, None)
+
+    # write "output" to PyPDF2-output.pdf
+    tmp_filename = "dont_commit_bookmark.pdf"
+    with open(tmp_filename, "wb") as output_stream:
+        writer.write(output_stream)
+
+    # Cleanup
+    os.remove(tmp_filename)
+
+
+def test_add_named_destination():
+    reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf"))
+    writer = PdfFileWriter()
+
+    for page in reader.pages:
+        writer.addPage(page)
+
+    from PyPDF2.pdf import NameObject
+
+    writer.addNamedDestination(NameObject("A bookmark"), 2)
+
+    # write "output" to PyPDF2-output.pdf
+    tmp_filename = "dont_commit_named_destination.pdf"
+    with open(tmp_filename, "wb") as output_stream:
+        writer.write(output_stream)
+
+    # Cleanup
+    os.remove(tmp_filename)
