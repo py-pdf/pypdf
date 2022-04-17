@@ -30,11 +30,8 @@ def test_writer_operations():
         writer.addBlankPage()
     assert exc.value.args == ()
     writer.insertPage(page, 1)
-    writer.removeText()
     writer.insertPage(reader_outline.pages[0], 0)
     writer.addBookmarkDestination(page)
-    writer.addBookmark("A bookmark", 0)
-    # output.addNamedDestination("A named destination", 1)
     writer.removeLinks()
     # assert output.getNamedDestRoot() == ['A named destination', IndirectObject(9, 0, output)]
     writer.addBlankPage()
@@ -49,8 +46,8 @@ def test_writer_operations():
     writer.insertBlankPage(width=100, height=100)
     writer.insertBlankPage()  # without parameters
 
-    # This gives "KeyError: '/Contents'" - is that a bug?
-    # output.removeImages()
+    # TODO: This gives "KeyError: '/Contents'" - is that a bug?
+    # writer.removeImages()
 
     writer.addMetadata({"author": "Martin Thoma"})
 
@@ -65,15 +62,22 @@ def test_writer_operations():
     os.remove(tmp_path)
 
 
-def test_remove_images():
-    pdf_path = os.path.join(RESOURCE_ROOT, "side-by-side-subfig.pdf")
+@pytest.mark.parametrize(
+    "input_path,ignoreByteStringObject",
+    [
+        ("side-by-side-subfig.pdf", False),
+        ("reportlab-inline-image.pdf", True),
+    ],
+)
+def test_remove_images(input_path, ignoreByteStringObject):
+    pdf_path = os.path.join(RESOURCE_ROOT, input_path)
 
     reader = PdfFileReader(pdf_path)
     writer = PdfFileWriter()
 
     page = reader.pages[0]
     writer.insertPage(page, 0)
-    writer.removeImages()
+    writer.removeImages(ignoreByteStringObject=ignoreByteStringObject)
 
     # finally, write "output" to PyPDF2-output.pdf
     tmp_filename = "dont_commit_writer_removed_image.pdf"
@@ -82,7 +86,36 @@ def test_remove_images():
 
     with open(tmp_filename, "rb") as input_stream:
         reader = PdfFileReader(input_stream)
-        assert "Lorem ipsum dolor sit amet" in reader.getPage(0).extractText()
+        if input_path == "side-by-side-subfig.pdf":
+            assert "Lorem ipsum dolor sit amet" in reader.getPage(0).extractText()
+
+    # Cleanup
+    os.remove(tmp_filename)
+
+
+@pytest.mark.parametrize(
+    "input_path,ignoreByteStringObject",
+    [
+        ("side-by-side-subfig.pdf", False),
+        ("side-by-side-subfig.pdf", True),
+        ("reportlab-inline-image.pdf", False),
+        ("reportlab-inline-image.pdf", True),
+    ],
+)
+def test_remove_text(input_path, ignoreByteStringObject):
+    pdf_path = os.path.join(RESOURCE_ROOT, input_path)
+
+    reader = PdfFileReader(pdf_path)
+    writer = PdfFileWriter()
+
+    page = reader.pages[0]
+    writer.insertPage(page, 0)
+    writer.removeText(ignoreByteStringObject=ignoreByteStringObject)
+
+    # finally, write "output" to PyPDF2-output.pdf
+    tmp_filename = "dont_commit_writer_removed_text.pdf"
+    with open(tmp_filename, "wb") as output_stream:
+        writer.write(output_stream)
 
     # Cleanup
     os.remove(tmp_filename)
@@ -114,3 +147,164 @@ def test_write_metadata():
 
     # Cleanup
     os.remove(tmp_filename)
+
+
+def test_fill_form():
+    reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "form.pdf"))
+    writer = PdfFileWriter()
+
+    page = reader.pages[0]
+
+    writer.addPage(page)
+
+    writer.updatePageFormFieldValues(writer.getPage(0), {"foo": "some filled in text"})
+
+    # write "output" to PyPDF2-output.pdf
+    tmp_filename = "dont_commit_filled_pdf.pdf"
+    with open(tmp_filename, "wb") as output_stream:
+        writer.write(output_stream)
+
+
+def test_encrypt():
+    reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "form.pdf"))
+    writer = PdfFileWriter()
+
+    page = reader.pages[0]
+
+    writer.addPage(page)
+    writer.encrypt(user_pwd="userpwd", owner_pwd="ownerpwd", use_128bit=False)
+
+    # write "output" to PyPDF2-output.pdf
+    tmp_filename = "dont_commit_encrypted.pdf"
+    with open(tmp_filename, "wb") as output_stream:
+        writer.write(output_stream)
+
+    # Cleanup
+    os.remove(tmp_filename)
+
+
+def test_add_bookmark():
+    reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf"))
+    writer = PdfFileWriter()
+
+    for page in reader.pages:
+        writer.addPage(page)
+
+    bookmark = writer.addBookmark(
+        "A bookmark", 1, None, (255, 0, 15), True, True, "/Fit", 200, 0, None
+    )
+    writer.addBookmark("Another", 2, bookmark, None, False, False, "/Fit", 0, 0, None)
+
+    # write "output" to PyPDF2-output.pdf
+    tmp_filename = "dont_commit_bookmark.pdf"
+    with open(tmp_filename, "wb") as output_stream:
+        writer.write(output_stream)
+
+    # Cleanup
+    os.remove(tmp_filename)
+
+
+def test_add_named_destination():
+    reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf"))
+    writer = PdfFileWriter()
+
+    for page in reader.pages:
+        writer.addPage(page)
+
+    from PyPDF2.pdf import NameObject
+
+    writer.addNamedDestination(NameObject("A bookmark"), 2)
+
+    # write "output" to PyPDF2-output.pdf
+    tmp_filename = "dont_commit_named_destination.pdf"
+    with open(tmp_filename, "wb") as output_stream:
+        writer.write(output_stream)
+
+    # Cleanup
+    os.remove(tmp_filename)
+
+
+def test_add_uri():
+    reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf"))
+    writer = PdfFileWriter()
+
+    for page in reader.pages:
+        writer.addPage(page)
+
+    from PyPDF2.pdf import RectangleObject
+
+    writer.addURI(
+        1,
+        "http://www.example.com",
+        RectangleObject([0, 0, 100, 100]),
+        border=[1, 2, 3, [4]],
+    )
+    writer.addURI(
+        2,
+        "https://pypdf2.readthedocs.io/en/latest/",
+        RectangleObject([20, 30, 50, 80]),
+        border=[1, 2, 3],
+    )
+    writer.addURI(
+        3,
+        "https://pypdf2.readthedocs.io/en/latest/user/adding-pdf-annotations.html",
+        "[ 200 300 250 350 ]",
+        border=[0, 0, 0],
+    )
+    writer.addURI(
+        3,
+        "https://pypdf2.readthedocs.io/en/latest/user/adding-pdf-annotations.html",
+        [100, 200, 150, 250],
+        border=[0, 0, 0],
+    )
+
+    # write "output" to PyPDF2-output.pdf
+    tmp_filename = "dont_commit_uri.pdf"
+    with open(tmp_filename, "wb") as output_stream:
+        writer.write(output_stream)
+
+    # Cleanup
+    os.remove(tmp_filename)
+
+
+def test_add_link():
+    reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf"))
+    writer = PdfFileWriter()
+
+    for page in reader.pages:
+        writer.addPage(page)
+
+    from PyPDF2.pdf import RectangleObject
+
+    writer.addLink(
+        1,
+        2,
+        RectangleObject([0, 0, 100, 100]),
+        border=[1, 2, 3, [4]],
+        fit="/Fit",
+    )
+    writer.addLink(2, 3, RectangleObject([20, 30, 50, 80]), [1, 2, 3], "/FitH", None)
+    writer.addLink(
+        3,
+        0,
+        "[ 200 300 250 350 ]",
+        [0, 0, 0],
+        "/XYZ",
+        0,
+        0,
+        2,
+    )
+    writer.addLink(
+        3,
+        0,
+        [100, 200, 150, 250],
+        border=[0, 0, 0],
+    )
+
+    # write "output" to PyPDF2-output.pdf
+    tmp_filename = "dont_commit_link.pdf"
+    with open(tmp_filename, "wb") as output_stream:
+        writer.write(output_stream)
+
+    # Cleanup
+    # os.remove(tmp_filename)

@@ -113,8 +113,8 @@ class PdfFileWriter(object):
         # root object
         root = DictionaryObject()
         root.update({
-            NameObject(PA.TYPE): NameObject("/Catalog"),
-            NameObject("/Pages"): self._pages,
+            NameObject(PA.TYPE): NameObject(CO.CATALOG),
+            NameObject(CO.PAGES): self._pages,
             })
         self._root = None
         self._root_object = root
@@ -140,8 +140,8 @@ class PdfFileWriter(object):
         return self._objects[ido.idnum - 1]
 
     def _addPage(self, page, action):
-        assert page[PA.TYPE] == "/Page"
-        page[NameObject("/Parent")] = self._pages
+        assert page[PA.TYPE] == CO.PAGE
+        page[NameObject(PA.PARENT)] = self._pages
         page = self._addObject(page)
         pages = self.getObject(self._pages)
         action(pages[PA.KIDS], page)
@@ -728,7 +728,17 @@ class PdfFileWriter(object):
 
         return bookmarkRef
 
-    def addBookmark(self, title, pagenum, parent=None, color=None, bold=False, italic=False, fit='/Fit', *args):
+    def addBookmark(
+        self,
+        title,
+        pagenum,
+        parent=None,
+        color=None,
+        bold=False,
+        italic=False,
+        fit='/Fit',
+        *args
+    ):
         """
         Add a bookmark to this PDF file.
 
@@ -1318,7 +1328,7 @@ class PdfFileReader(object):
             default, the mapping name is used for keys.
         :rtype: dict, or ``None`` if form data could not be located.
         """
-        fieldAttributes = {"/FT" : "Field Type", "/Parent" : "Parent",
+        fieldAttributes = {"/FT" : "Field Type", PA.PARENT : "Parent",
                        "/T" : "Field Name", "/TU" : "Alternate Field Name",
                        "/TM" : "Mapping Name", "/Ff" : "Field Flags",
                        "/V" : "Value", "/DV" : "Default Value"}
@@ -1370,7 +1380,7 @@ class PdfFileReader(object):
                 self.getFields(kid.getObject(), retval, fileobj)
 
     def _writeField(self, fileobj, field, fieldAttributes):
-        order = ["/TM", "/T", "/FT", "/Parent", "/TU", "/Ff", "/V", "/DV"]
+        order = ["/TM", "/T", "/FT", PA.PARENT, "/TU", "/Ff", "/V", "/DV"]
         for attr in order:
             attrName = fieldAttributes[attr]
             try:
@@ -1380,12 +1390,12 @@ class PdfFileReader(object):
                              "/Sig":"Signature"}
                     if field[attr] in types:
                         fileobj.write(attrName + ": " + types[field[attr]] + "\n")
-                elif attr == "/Parent":
+                elif attr == PA.PARENT:
                     # Let's just write the name of the parent
                     try:
-                        name = field["/Parent"]["/TM"]
+                        name = field[PA.PARENT]["/TM"]
                     except KeyError:
-                        name = field["/Parent"]["/T"]
+                        name = field[PA.PARENT]["/T"]
                     fileobj.write(attrName + ": " + name + "\n")
                 else:
                     fileobj.write(attrName + ": " + str(field[attr]) + "\n")
@@ -2124,8 +2134,34 @@ class PdfFileReader(object):
         finally:
             self._override_encryption = False
 
+    def decode_permissions(self, permissions_code):
+        # Takes the permissions as an integer, returns the allowed access
+        permissions = {}
+        permissions['print'] = permissions_code & (1 << 3-1) != 0  # bit 3
+        permissions['modify'] = permissions_code & (1 << 4-1) != 0  # bit 4
+        permissions['copy'] = permissions_code & (1 << 5-1) != 0  # bit 5
+        permissions['annotations'] = permissions_code & (1 << 6-1) != 0  # bit 6
+        permissions['forms'] = permissions_code & (1 << 9-1) != 0  # bit 9
+        permissions['accessability'] = permissions_code & (1 << 10-1) != 0  # bit 10
+        permissions['assemble'] = permissions_code & (1 << 11-1) != 0  # bit 11
+        permissions['print_high_quality'] = permissions_code & (1 << 12-1) != 0  # bit 12
+        return permissions
+
     def _decrypt(self, password):
+        # Decrypts data as per Section 3.5 (page 117) of PDF spec v1.7
+        # "The security handler defines the use of encryption and decryption in
+        # the document, using the rules specified by the CF, StmF, and StrF entries"
         encrypt = self.trailer[TK.ENCRYPT].getObject()
+        # /Encrypt Keys:
+        # Filter (name)   : "name of the preferred security handler "
+        # V (number)      : Algorithm Code
+        # Length (integer): Length of encryption key, in bits
+        # CF (dictionary) : Crypt filter
+        # StmF (name)     : Name of the crypt filter that is used by default when decrypting streams
+        # StrF (name)     : The name of the crypt filter that is used when decrypting all strings in the document
+        # R (number)      : Standard security handler revision number
+        # U (string)      : A 32-byte string, based on the user password
+        # P (integer)     : Permissions allowed with user access
         if encrypt['/Filter'] != '/Standard':
             raise NotImplementedError("only Standard PDF encryption handler is available")
         if not (encrypt['/V'] in (1, 2)):
@@ -2282,7 +2318,8 @@ class PageObject(DictionaryObject):
         :param int angle: Angle to rotate the page.  Must be an increment
             of 90 deg.
         """
-        assert angle % 90 == 0
+        if angle % 90 != 0:
+            raise ValueError("Rotation angle must be a multiple of 90")
         self._rotate(angle)
         return self
 
@@ -2293,7 +2330,8 @@ class PageObject(DictionaryObject):
         :param int angle: Angle to rotate the page.  Must be an increment
             of 90 deg.
         """
-        assert angle % 90 == 0
+        if angle % 90 != 0:
+            raise ValueError("Rotation angle must be a multiple of 90")
         self._rotate(-angle)
         return self
 

@@ -13,6 +13,9 @@ class Core:
     """Keywords that don't quite belong anywhere else"""
 
     OUTLINES = "/Outlines"
+    PAGE = "/Page"
+    PAGES = "/Pages"
+    CATALOG = "/Catalog"
 
 
 class TrailerKeys:

@@ -196,7 +196,10 @@ def test_get_images_raw(strict, with_prev_0, should_fail):
     if should_fail:
         with pytest.raises(PdfReadError) as exc:
             PdfFileReader(pdf_stream, strict=strict)
-        assert exc.value.args[0] == "/Prev=0 in the trailer (try opening with strict=False)"
+        assert (
+            exc.value.args[0]
+            == "/Prev=0 in the trailer (try opening with strict=False)"
+        )
     else:
         PdfFileReader(pdf_stream, strict=strict)
 
@@ -230,16 +233,69 @@ def test_get_page_of_encrypted_file():
 
 
 @pytest.mark.parametrize(
-    "src,expected",
+    "src,expected,expected_method",
     [
-        ("form.pdf", {"foo": ""}),
-        ("form_acrobatReader.pdf", {"foo": "Bar"}),
-        ("form_evince.pdf", {"foo": "bar"}),
+        (
+            "form.pdf",
+            {"foo": ""},
+            {"foo": {"/DV": "", "/FT": "/Tx", "/T": "foo", "/V": ""}},
+        ),
+        (
+            "form_acrobatReader.pdf",
+            {"foo": "Bar"},
+            {"foo": {"/DV": "", "/FT": "/Tx", "/T": "foo", "/V": "Bar"}},
+        ),
+        (
+            "form_evince.pdf",
+            {"foo": "bar"},
+            {"foo": {"/DV": "", "/FT": "/Tx", "/T": "foo", "/V": "bar"}},
+        ),
     ],
 )
-def test_form(src, expected):
+def test_get_form(src, expected, expected_method):
     """Check if we can read out form data."""
     src = os.path.join(RESOURCE_ROOT, src)
-    pdf = PdfFileReader(src)
-    fields = pdf.getFormTextFields()
+    reader = PdfFileReader(src)
+    fields = reader.getFormTextFields()
     assert fields == expected
+
+    fields = reader.getFields()
+    assert fields == expected_method
+
+
+@pytest.mark.parametrize(
+    "src,page_nb",
+    [
+        ("form.pdf", 0),
+        ("pdflatex-outline.pdf", 2),
+    ],
+)
+def test_get_page_number(src, page_nb):
+    src = os.path.join(RESOURCE_ROOT, src)
+    reader = PdfFileReader(src)
+    page = reader.pages[page_nb]
+    assert reader.getPageNumber(page) == page_nb
+
+
+@pytest.mark.parametrize(
+    "src,expected",
+    [
+        ("form.pdf", None),
+    ],
+)
+def test_get_page_layout(src, expected):
+    src = os.path.join(RESOURCE_ROOT, src)
+    reader = PdfFileReader(src)
+    assert reader.getPageLayout() == expected
+
+
+@pytest.mark.parametrize(
+    "src,expected",
+    [
+        ("form.pdf", "/UseNone"),
+    ],
+)
+def test_get_page_mode(src, expected):
+    src = os.path.join(RESOURCE_ROOT, src)
+    reader = PdfFileReader(src)
+    assert reader.getPageMode() == expected
