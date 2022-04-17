@@ -96,5 +96,6 @@ def test_rotate_45():
     with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
         reader = PdfFileReader(inputfile)
         page = reader.getPage(0)
-        with pytest.raises(AssertionError):
+        with pytest.raises(ValueError) as exc:
             page.rotateCounterClockwise(45)
+        assert exc.value.args[0] == "Rotation angle must be a multiple of 90"

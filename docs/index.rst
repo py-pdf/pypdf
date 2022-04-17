@@ -27,6 +27,8 @@ You can contribute to `PyPDF2 on Github <https://github.com/py-pdf/PyPDF2>`_.
    user/add-watermark
    user/reading-pdf-annotations
    user/adding-pdf-annotations
+   user/forms
+   user/streaming-data
 
 
 .. toctree::
