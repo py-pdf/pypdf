@@ -8,6 +8,9 @@ see https://github.com/py-pdf/PyPDF2/blob/main/LICENSE
 """
 
 import re
+
+from PyPDF2.errors import ParseError
+
 from .utils import isString
 
 _INT_RE = r"(0|-?[1-9]\d*)"  # A decimal int, don't allow "-0".
@@ -15,8 +18,7 @@ PAGE_RANGE_RE = "^({int}|({int}?(:{int}?(:{int}?)?)))$".format(int=_INT_RE)
 # groups:         12     34     5 6     7 8
 
 
-class ParseError(Exception):
-    pass
+
 
 
 PAGE_RANGE_HELP = """Remember, page indices start with zero.

@@ -3,8 +3,11 @@ import os
 
 import pytest
 
-import PyPDF2.utils
 from PyPDF2 import PdfFileReader
+from PyPDF2.constants import ImageAttributes as IA
+from PyPDF2.constants import PageAttributes as PG
+from PyPDF2.constants import Ressources as RES
+from PyPDF2.errors import PdfReadError
 from PyPDF2.filters import _xobj_to_image
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -66,9 +69,9 @@ def test_get_annotations(src):
     reader = PdfFileReader(src)
 
     for page in reader.pages:
-        if "/Annots" in page:
-            for annot in page["/Annots"]:
-                subtype = annot.getObject()["/Subtype"]
+        if PG.ANNOTS in page:
+            for annot in page[PG.ANNOTS]:
+                subtype = annot.getObject()[IA.SUBTYPE]
                 if subtype == "/Text":
                     annot.getObject()["/Contents"]
 
@@ -86,10 +89,10 @@ def test_get_attachments(src):
     attachments = {}
     for i in range(reader.getNumPages()):
         page = reader.getPage(i)
-        if "/Annots" in page:
-            for annotation in page["/Annots"]:
+        if PG.ANNOTS in page:
+            for annotation in page[PG.ANNOTS]:
                 annotobj = annotation.getObject()
-                if annotobj["/Subtype"] == "/FileAttachment":
+                if annotobj[IA.SUBTYPE] == "/FileAttachment":
                     fileobj = annotobj["/FS"]
                     attachments[fileobj["/F"]] = fileobj["/EF"]["/F"].getData()
     return attachments
@@ -131,11 +134,11 @@ def test_get_images(src, nb_images):
 
     images_extracted = []
 
-    if "/XObject" in page["/Resources"]:
-        xObject = page["/Resources"]["/XObject"].getObject()
+    if RES.XOBJECT in page[PG.RESOURCES]:
+        xObject = page[PG.RESOURCES][RES.XOBJECT].getObject()
 
         for obj in xObject:
-            if xObject[obj]["/Subtype"] == "/Image":
+            if xObject[obj][IA.SUBTYPE] == "/Image":
                 extension, byte_stream = _xobj_to_image(xObject[obj])
                 if extension is not None:
                     filename = obj[1:] + ".png"
@@ -191,8 +194,12 @@ def test_get_images_raw(strict, with_prev_0, should_fail):
     )
     pdf_stream = io.BytesIO(pdf_data)
     if should_fail:
-        with pytest.raises(PyPDF2.utils.PdfReadError):
+        with pytest.raises(PdfReadError) as exc:
             PdfFileReader(pdf_stream, strict=strict)
+        assert (
+            exc.value.args[0]
+            == "/Prev=0 in the trailer (try opening with strict=False)"
+        )
     else:
         PdfFileReader(pdf_stream, strict=strict)
 
@@ -207,3 +214,88 @@ def test_issue297():
     path = os.path.join(RESOURCE_ROOT, "issue-297.pdf")
     reader = PdfFileReader(path, "rb")
     reader.getPage(0)
+
+
+def test_get_page_of_encrypted_file():
+    """
+    Check if we can read a page of an encrypted file.
+
+    This is a regression test for issue 327:
+    IndexError for getPage() of decrypted file
+    """
+    path = os.path.join(RESOURCE_ROOT, "encrypted-file.pdf")
+    reader = PdfFileReader(path)
+
+    # Password is correct:)
+    reader.decrypt("test")
+
+    reader.getPage(0)
+
+
+@pytest.mark.parametrize(
+    "src,expected,expected_method",
+    [
+        (
+            "form.pdf",
+            {"foo": ""},
+            {"foo": {"/DV": "", "/FT": "/Tx", "/T": "foo", "/V": ""}},
+        ),
+        (
+            "form_acrobatReader.pdf",
+            {"foo": "Bar"},
+            {"foo": {"/DV": "", "/FT": "/Tx", "/T": "foo", "/V": "Bar"}},
+        ),
+        (
+            "form_evince.pdf",
+            {"foo": "bar"},
+            {"foo": {"/DV": "", "/FT": "/Tx", "/T": "foo", "/V": "bar"}},
+        ),
+    ],
+)
+def test_get_form(src, expected, expected_method):
+    """Check if we can read out form data."""
+    src = os.path.join(RESOURCE_ROOT, src)
+    reader = PdfFileReader(src)
+    fields = reader.getFormTextFields()
+    assert fields == expected
+
+    fields = reader.getFields()
+    assert fields == expected_method
+
+
+@pytest.mark.parametrize(
+    "src,page_nb",
+    [
+        ("form.pdf", 0),
+        ("pdflatex-outline.pdf", 2),
+    ],
+)
+def test_get_page_number(src, page_nb):
+    src = os.path.join(RESOURCE_ROOT, src)
+    reader = PdfFileReader(src)
+    page = reader.pages[page_nb]
+    assert reader.getPageNumber(page) == page_nb
+
+
+@pytest.mark.parametrize(
+    "src,expected",
+    [
+        ("form.pdf", None),
+    ],
+)
+def test_get_page_layout(src, expected):
+    src = os.path.join(RESOURCE_ROOT, src)
+    reader = PdfFileReader(src)
+    assert reader.getPageLayout() == expected
+
+
+@pytest.mark.parametrize(
+    "src,expected",
+    [
+        ("form.pdf", "/UseNone"),
+    ],
+)
+def test_get_page_mode(src, expected):
+    src = os.path.join(RESOURCE_ROOT, src)
+    reader = PdfFileReader(src)
+    assert reader.getPageMode() == expected

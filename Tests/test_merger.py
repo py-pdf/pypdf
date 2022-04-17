@@ -43,5 +43,9 @@ def test_merge():
     file_merger.setPageLayout("/SinglePage")
     file_merger.setPageMode("/UseThumbs")
 
-    file_merger.write("dont_commit_merged.pdf")
+    tmp_path = "dont_commit_merged.pdf"
+    file_merger.write(tmp_path)
     file_merger.close()
+
+    # Clean up
+    os.remove(tmp_path)

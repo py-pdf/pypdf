@@ -6,7 +6,11 @@ http://stackoverflow.com/questions/2693820/extract-images-from-pdf-without-resam
 """
 
 import sys
+
 import PyPDF2
+from PyPDF2.constants import ImageAttributes as IA
+from PyPDF2.constants import PageAttributes as PG
+from PyPDF2.constants import Ressources as RES
 from PyPDF2.filters import _xobj_to_image
 
 
@@ -14,11 +18,11 @@ def main(pdf: str):
     reader = PyPDF2.PdfFileReader(pdf)
     page = reader.pages[30]
 
-    if "/XObject" in page["/Resources"]:
-        xObject = page["/Resources"]["/XObject"].getObject()
+    if RES.XOBJECT in page[PG.RESOURCES]:
+        xObject = page[PG.RESOURCES][RES.XOBJECT].getObject()
 
         for obj in xObject:
-            if xObject[obj]["/Subtype"] == "/Image":
+            if xObject[obj][IA.SUBTYPE] == "/Image":
                 extension, byte_stream = _xobj_to_image(xObject[obj])
                 if extension is not None:
                     filename = obj[1:] + ".png"

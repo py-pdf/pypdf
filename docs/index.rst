@@ -25,13 +25,9 @@ You can contribute to `PyPDF2 on Github <https://github.com/py-pdf/PyPDF2>`_.
    user/merging-pdfs
    user/cropping-and-transforming
    user/add-watermark
-
-
-.. toctree::
-   :caption: Scripts
-   :maxdepth: 1
-
-   user/pdfcat
+   user/reading-pdf-annotations
+   user/adding-pdf-annotations
+   user/forms
 
 
 .. toctree::
@@ -57,6 +53,14 @@ You can contribute to `PyPDF2 on Github <https://github.com/py-pdf/PyPDF2>`_.
    user/history
    user/comparisons
    user/faq
+
+
+.. toctree::
+   :caption: Scripts
+   :maxdepth: 1
+
+   user/pdfcat
+
 
 
 

@@ -10,8 +10,10 @@ together and read as a booklet.
 """
 
 from __future__ import division, print_function
-import PyPDF2
+
 import argparse
+
+import PyPDF2
 
 
 def main():
