@@ -16,6 +16,14 @@ def test_str(page_range, expected):
     assert str(PageRange(page_range)) == expected
 
 
+@pytest.mark.parametrize(
+    "page_range,expected",
+    [(slice(0, 5), "PageRange('0:5')"), (slice(0, 5, 2), "PageRange('0:5:2')")],
+)
+def test_repr(page_range, expected):
+    assert repr(PageRange(page_range)) == expected
+
+
 def test_equality_other_objectc():
     pr1 = PageRange(slice(0, 5))
     pr2 = "PageRange(slice(0, 5))"
