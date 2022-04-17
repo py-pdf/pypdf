@@ -2305,7 +2305,8 @@ class PageObject(DictionaryObject):
         :param int angle: Angle to rotate the page.  Must be an increment
             of 90 deg.
         """
-        assert angle % 90 == 0
+        if angle % 90 != 0:
+            raise ValueError("Rotation angle must be a multiple of 90")
         self._rotate(angle)
         return self
 
@@ -2316,7 +2317,8 @@ class PageObject(DictionaryObject):
         :param int angle: Angle to rotate the page.  Must be an increment
             of 90 deg.
         """
-        assert angle % 90 == 0
+        if angle % 90 != 0:
+            raise ValueError("Rotation angle must be a multiple of 90")
         self._rotate(-angle)
         return self
 
