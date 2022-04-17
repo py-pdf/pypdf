@@ -1,5 +1,7 @@
 import os
 
+from io import StringIO
+
 import pytest
 
 from PyPDF2 import PdfFileReader, PdfFileWriter
@@ -9,6 +11,16 @@ from PyPDF2.generic import RectangleObject
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
 RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
+
+
+def test_writer_clone():
+    src = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
+
+    reader = PdfFileReader(src)
+    writer = PdfFileWriter()
+
+    writer.cloneDocumentFromReader(reader)
+    assert writer.getNumPages() == 4
 
 
 def test_writer_operations():
@@ -33,7 +45,6 @@ def test_writer_operations():
     writer.insertPage(reader_outline.pages[0], 0)
     writer.addBookmarkDestination(page)
     writer.removeLinks()
-    # assert output.getNamedDestRoot() == ['A named destination', IndirectObject(9, 0, output)]
     writer.addBlankPage()
     writer.addURI(2, "https://example.com", RectangleObject([0, 0, 100, 100]))
     writer.addLink(2, 1, RectangleObject([0, 0, 100, 100]))
@@ -213,7 +224,11 @@ def test_add_named_destination():
 
     from PyPDF2.pdf import NameObject
 
-    writer.addNamedDestination(NameObject("A bookmark"), 2)
+    writer.addNamedDestination(NameObject("A named dest"), 2)
+
+    from PyPDF2.pdf import IndirectObject
+
+    assert writer.getNamedDestRoot() == ["A named dest", IndirectObject(7, 0, writer)]
 
     # write "output" to PyPDF2-output.pdf
     tmp_filename = "dont_commit_named_destination.pdf"
@@ -307,4 +322,23 @@ def test_add_link():
         writer.write(output_stream)
 
     # Cleanup
-    # os.remove(tmp_filename)
+    os.remove(tmp_filename)
+
+
+def test_io_streams():
+    """This is the example from the docs ("Streaming data")."""
+    # Arrange
+    from io import BytesIO
+
+    filepath = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
+    with open(filepath, "rb") as fh:
+        bytes_stream = BytesIO(fh.read())
+
+    # Read from bytes stream
+    reader = PdfFileReader(bytes_stream)
+    assert reader.getNumPages() == 4
+
+    # Write to bytes stream
+    writer = PdfFileWriter()
+    with BytesIO() as output_stream:
+        writer.write(output_stream)
