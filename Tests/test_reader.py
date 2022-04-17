@@ -196,7 +196,10 @@ def test_get_images_raw(strict, with_prev_0, should_fail):
     if should_fail:
         with pytest.raises(PdfReadError) as exc:
             PdfFileReader(pdf_stream, strict=strict)
-        assert exc.value.args[0] == "/Prev=0 in the trailer (try opening with strict=False)"
+        assert (
+            exc.value.args[0]
+            == "/Prev=0 in the trailer (try opening with strict=False)"
+        )
     else:
         PdfFileReader(pdf_stream, strict=strict)
 

@@ -114,3 +114,21 @@ def test_write_metadata():
 
     # Cleanup
     os.remove(tmp_filename)
+
+
+def test_fill_form():
+    reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "form.pdf"))
+    writer = PdfFileWriter()
+
+    page = reader.pages[0]
+    fields = reader.getFields()
+    print(fields)
+
+    writer.addPage(page)
+
+    writer.updatePageFormFieldValues(writer.getPage(0), {"foo": "some filled in text"})
+
+    # write "output" to PyPDF2-output.pdf
+    tmp_filename = "dont_commit_filled_pdf.pdf"
+    with open(tmp_filename, "wb") as output_stream:
+        writer.write(output_stream)
