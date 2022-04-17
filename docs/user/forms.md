@@ -1,5 +1,15 @@
 # Interactions with PDF Forms
 
+## Reading form fields
+
+```python
+from PyPDF2 import PdfFileReader
+
+reader = PdfFileReader("form.pdf")
+fields = reader.getFormTextFields()
+fields == {"key": "value", "key2": "value2"}
+```
+
 ## Filling out forms
 
 ```python
