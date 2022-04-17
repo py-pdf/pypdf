@@ -113,8 +113,8 @@ class PdfFileWriter(object):
         # root object
         root = DictionaryObject()
         root.update({
-            NameObject(PA.TYPE): NameObject("/Catalog"),
-            NameObject("/Pages"): self._pages,
+            NameObject(PA.TYPE): NameObject(CO.CATALOG),
+            NameObject(CO.PAGES): self._pages,
             })
         self._root = None
         self._root_object = root
@@ -130,8 +130,8 @@ class PdfFileWriter(object):
         return self._objects[ido.idnum - 1]
 
     def _addPage(self, page, action):
-        assert page[PA.TYPE] == "/Page"
-        page[NameObject("/Parent")] = self._pages
+        assert page[PA.TYPE] == CO.PAGE
+        page[NameObject(PA.PARENT)] = self._pages
         page = self._addObject(page)
         pages = self.getObject(self._pages)
         action(pages[PA.KIDS], page)
@@ -730,7 +730,17 @@ class PdfFileWriter(object):
 
         return bookmarkRef
 
-    def addBookmark(self, title, pagenum, parent=None, color=None, bold=False, italic=False, fit='/Fit', *args):
+    def addBookmark(
+        self,
+        title,
+        pagenum,
+        parent=None,
+        color=None,
+        bold=False,
+        italic=False,
+        fit='/Fit',
+        *args
+    ):
         """
         Add a bookmark to this PDF file.
 
@@ -1315,7 +1325,7 @@ class PdfFileReader(object):
             default, the mapping name is used for keys.
         :rtype: dict, or ``None`` if form data could not be located.
         """
-        fieldAttributes = {"/FT" : "Field Type", "/Parent" : "Parent",
+        fieldAttributes = {"/FT" : "Field Type", PA.PARENT : "Parent",
                        "/T" : "Field Name", "/TU" : "Alternate Field Name",
                        "/TM" : "Mapping Name", "/Ff" : "Field Flags",
                        "/V" : "Value", "/DV" : "Default Value"}
@@ -1367,7 +1377,7 @@ class PdfFileReader(object):
                 self.getFields(kid.getObject(), retval, fileobj)
 
     def _writeField(self, fileobj, field, fieldAttributes):
-        order = ["/TM", "/T", "/FT", "/Parent", "/TU", "/Ff", "/V", "/DV"]
+        order = ["/TM", "/T", "/FT", PA.PARENT, "/TU", "/Ff", "/V", "/DV"]
         for attr in order:
             attrName = fieldAttributes[attr]
             try:
@@ -1377,12 +1387,12 @@ class PdfFileReader(object):
                              "/Sig":"Signature"}
                     if field[attr] in types:
                         fileobj.write(attrName + ": " + types[field[attr]] + "\n")
-                elif attr == "/Parent":
+                elif attr == PA.PARENT:
                     # Let's just write the name of the parent
                     try:
-                        name = field["/Parent"]["/TM"]
+                        name = field[PA.PARENT]["/TM"]
                     except KeyError:
-                        name = field["/Parent"]["/T"]
+                        name = field[PA.PARENT]["/T"]
                     fileobj.write(attrName + ": " + name + "\n")
                 else:
                     fileobj.write(attrName + ": " + str(field[attr]) + "\n")
