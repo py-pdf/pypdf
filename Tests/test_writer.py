@@ -154,7 +154,6 @@ def test_fill_form():
     writer = PdfFileWriter()
 
     page = reader.pages[0]
-    fields = reader.getFields()
 
     writer.addPage(page)
 
