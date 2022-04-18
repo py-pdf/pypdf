@@ -96,6 +96,7 @@ class XmpInformation(PdfObject):
     def _converter_string(value):
         return value
 
+    @staticmethod
     def _converter_date(value):
         m = iso8601.match(value)
         year = int(m.group("year"))
@@ -115,7 +116,6 @@ class XmpInformation(PdfObject):
                 tzd_minutes *= -1
             dt = dt + datetime.timedelta(hours=tzd_hours, minutes=tzd_minutes)
         return dt
-    _test_converter_date = staticmethod(_converter_date)
 
     def _getter_bag(namespace, name, converter):
         def get(self):

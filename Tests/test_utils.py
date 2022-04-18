@@ -5,6 +5,7 @@ import pytest
 
 import PyPDF2.utils
 from PyPDF2 import PdfFileReader
+from PyPDF2.errors import PdfStreamError
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -59,8 +60,9 @@ def test_readUntilRegex_premature_ending_raise():
     import re
 
     stream = io.BytesIO(b"")
-    with pytest.raises(PyPDF2.utils.PdfStreamError):
+    with pytest.raises(PdfStreamError) as exc:
         PyPDF2.utils.readUntilRegex(stream, re.compile(b"."))
+    assert exc.value.args[0] == "Stream has ended unexpectedly"
 
 
 def test_readUntilRegex_premature_ending_name():
