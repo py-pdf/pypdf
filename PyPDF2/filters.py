@@ -31,20 +31,40 @@ __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import math
-
-from .utils import PdfReadError, ord_, paethPredictor
 from sys import version_info
+
+from PyPDF2.constants import CcittFaxDecodeParameters as CCITT
+from PyPDF2.constants import ColorSpaces
+from PyPDF2.constants import FilterTypeAbbreviations as FTA
+from PyPDF2.constants import FilterTypes as FT
+from PyPDF2.constants import ImageAttributes as IA
+from PyPDF2.constants import LzwFilterParameters as LZW
+from PyPDF2.constants import StreamAttributes as SA
+from PyPDF2.errors import PdfReadError
+from PyPDF2.utils import ord_, paethPredictor
+
 if version_info < ( 3, 0 ):
     from cStringIO import StringIO
 else:
     from io import StringIO
+
 import struct
 
 try:
     import zlib
 
     def decompress(data):
-        return zlib.decompress(data)
+        try:
+            return zlib.decompress(data)
+        except zlib.error:
+            d = zlib.decompressobj(zlib.MAX_WBITS | 32)
+            result_str = b''
+            for b in [data[i:i + 1] for i in range(len(data))]:
+                try:
+                    result_str += d.decompress(b)
+                except zlib.error:
+                    pass
+            return result_str
 
     def compress(data):
         return zlib.compress(data)
@@ -105,66 +125,76 @@ except ImportError:
 
 
 class FlateDecode(object):
+    @staticmethod
     def decode(data, decodeParms):
         data = decompress(data)
         predictor = 1
         if decodeParms:
             try:
-                predictor = decodeParms.get("/Predictor", 1)
+                from PyPDF2.generic import ArrayObject
+                if isinstance(decodeParms, ArrayObject):
+                    for decodeParm in decodeParms:
+                        if '/Predictor' in decodeParm:
+                            predictor = decodeParm['/Predictor']
+                else:
+                    predictor = decodeParms.get("/Predictor", 1)
             except AttributeError:
-                pass    # usually an array with a null object was read
-
+                pass  # usually an array with a null object was read
         # predictor 1 == no predictor
         if predictor != 1:
-            columns = decodeParms["/Columns"]
+            columns = decodeParms[LZW.COLUMNS]
             # PNG prediction:
             if predictor >= 10 and predictor <= 15:
-                output = StringIO()
-                # PNG prediction can vary from row to row
-                rowlength = columns + 1
-                assert len(data) % rowlength == 0
-                prev_rowdata = (0,) * rowlength
-                for row in range(len(data) // rowlength):
-                    rowdata = [ord_(x) for x in data[(row*rowlength):((row+1)*rowlength)]]
-                    filterByte = rowdata[0]
-                    if filterByte == 0:
-                        pass
-                    elif filterByte == 1:
-                        for i in range(2, rowlength):
-                            rowdata[i] = (rowdata[i] + rowdata[i-1]) % 256
-                    elif filterByte == 2:
-                        for i in range(1, rowlength):
-                            rowdata[i] = (rowdata[i] + prev_rowdata[i]) % 256
-                    elif filterByte == 3:
-                        for i in range(1, rowlength):
-                            left = rowdata[i-1] if i > 1 else 0
-                            floor = math.floor(left + prev_rowdata[i])/2
-                            rowdata[i] = (rowdata[i] + int(floor)) % 256
-                    elif filterByte == 4:
-                        for i in range(1, rowlength):
-                            left = rowdata[i - 1] if i > 1 else 0
-                            up = prev_rowdata[i]
-                            up_left = prev_rowdata[i - 1] if i > 1 else 0
-                            paeth = paethPredictor(left, up, up_left)
-                            rowdata[i] = (rowdata[i] + paeth) % 256
-                    else:
-                        # unsupported PNG filter
-                        raise PdfReadError("Unsupported PNG filter %r" % filterByte)
-                    prev_rowdata = rowdata
-                    output.write(''.join([chr(x) for x in rowdata[1:]]))
-                data = output.getvalue()
+                data = FlateDecode._decode_png_prediction(data, columns)
             else:
                 # unsupported predictor
                 raise PdfReadError("Unsupported flatedecode predictor %r" % predictor)
         return data
-    decode = staticmethod(decode)  # type: ignore
 
+    @staticmethod
+    def _decode_png_prediction(data, columns):
+        output = StringIO()
+        # PNG prediction can vary from row to row
+        rowlength = columns + 1
+        assert len(data) % rowlength == 0
+        prev_rowdata = (0,) * rowlength
+        for row in range(len(data) // rowlength):
+            rowdata = [ord_(x) for x in data[(row*rowlength):((row+1)*rowlength)]]
+            filterByte = rowdata[0]
+            if filterByte == 0:
+                pass
+            elif filterByte == 1:
+                for i in range(2, rowlength):
+                    rowdata[i] = (rowdata[i] + rowdata[i-1]) % 256
+            elif filterByte == 2:
+                for i in range(1, rowlength):
+                    rowdata[i] = (rowdata[i] + prev_rowdata[i]) % 256
+            elif filterByte == 3:
+                for i in range(1, rowlength):
+                    left = rowdata[i-1] if i > 1 else 0
+                    floor = math.floor(left + prev_rowdata[i])/2
+                    rowdata[i] = (rowdata[i] + int(floor)) % 256
+            elif filterByte == 4:
+                for i in range(1, rowlength):
+                    left = rowdata[i - 1] if i > 1 else 0
+                    up = prev_rowdata[i]
+                    up_left = prev_rowdata[i - 1] if i > 1 else 0
+                    paeth = paethPredictor(left, up, up_left)
+                    rowdata[i] = (rowdata[i] + paeth) % 256
+            else:
+                # unsupported PNG filter
+                raise PdfReadError("Unsupported PNG filter %r" % filterByte)
+            prev_rowdata = rowdata
+            output.write(''.join([chr(x) for x in rowdata[1:]]))
+        return output.getvalue()
+
+    @staticmethod
     def encode(data):
         return compress(data)
-    encode = staticmethod(encode)  # type: ignore
 
 
 class ASCIIHexDecode(object):
+    @staticmethod
     def decode(data, decodeParms=None):
         retval = ""
         char = ""
@@ -183,7 +213,6 @@ class ASCIIHexDecode(object):
             x += 1
         assert char == ""
         return retval
-    decode = staticmethod(decode)  # type: ignore
 
 
 class LZWDecode(object):
@@ -261,11 +290,12 @@ class LZWDecode(object):
             return baos
 
     @staticmethod
-    def decode(data,decodeParams=None):
+    def decode(data, decodeParms=None):
         return LZWDecode.decoder(data).decode()
 
 
 class ASCII85Decode(object):
+    @staticmethod
     def decode(data, decodeParms=None):
         if version_info < ( 3, 0 ):
             retval = ""
@@ -339,31 +369,38 @@ class ASCII85Decode(object):
                         out += struct.pack(b'>L',b)[:n-1]
                     break
             return bytes(out)
-    decode = staticmethod(decode)  # type: ignore
 
 class DCTDecode(object):
+    @staticmethod
     def decode(data, decodeParms=None):
         return data
-    decode = staticmethod(decode)  # type: ignore
 
 class JPXDecode(object):
+    @staticmethod
     def decode(data, decodeParms=None):
         return data
-    decode = staticmethod(decode)  # type: ignore
 
 class CCITTFaxDecode(object):
+    @staticmethod
     def decode(data, decodeParms=None, height=0):
+        k = 1
+        width = 0
         if decodeParms:
             from PyPDF2.generic import ArrayObject
             if isinstance(decodeParms, ArrayObject):
-                if len(decodeParms) == 1:
-                    decodeParms = decodeParms[0]
-            if decodeParms.get("/K", 1) == -1:
+                for decodeParm in decodeParms:
+                    if CCITT.COLUMNS in decodeParm:
+                        width = decodeParm[CCITT.COLUMNS]
+                    if CCITT.K in decodeParm:
+                        k = decodeParm[CCITT.K]
+            else:
+                width = decodeParms[CCITT.COLUMNS]
+                k = decodeParms[CCITT.K]
+            if k == -1:
                 CCITTgroup = 4
             else:
                 CCITTgroup = 3
 
-        width = decodeParms["/Columns"]
         imgSize = len(data)
         tiff_header_struct = '<2shlh' + 'hhll' * 8 + 'h'
         tiffHeader = struct.pack(tiff_header_struct,
@@ -384,11 +421,10 @@ class CCITTFaxDecode(object):
 
         return tiffHeader + data
 
-    decode = staticmethod(decode)  # type: ignore
 
 def decodeStreamData(stream):
     from .generic import NameObject
-    filters = stream.get("/Filter", ())
+    filters = stream.get(SA.FILTER, ())
 
     if len(filters) and not isinstance(filters[0], NameObject):
         # we have a single filter instance
@@ -397,24 +433,24 @@ def decodeStreamData(stream):
     # If there is not data to decode we should not try to decode the data.
     if data:
         for filterType in filters:
-            if filterType == "/FlateDecode" or filterType == "/Fl":
-                data = FlateDecode.decode(data, stream.get("/DecodeParms"))
-            elif filterType == "/ASCIIHexDecode" or filterType == "/AHx":
+            if filterType == FT.FLATE_DECODE or filterType == FTA.FL:
+                data = FlateDecode.decode(data, stream.get(SA.DECODE_PARMS))
+            elif filterType == FT.ASCII_HEX_DECODE or filterType == FTA.AHx:
                 data = ASCIIHexDecode.decode(data)
-            elif filterType == "/LZWDecode" or filterType == "/LZW":
-                data = LZWDecode.decode(data, stream.get("/DecodeParms"))
-            elif filterType == "/ASCII85Decode" or filterType == "/A85":
+            elif filterType == FT.LZW_DECODE or filterType == FTA.LZW:
+                data = LZWDecode.decode(data, stream.get(SA.DECODE_PARMS))
+            elif filterType == FT.ASCII_85_DECODE or filterType == FTA.A85:
                 data = ASCII85Decode.decode(data)
-            elif filterType == "/DCTDecode":
+            elif filterType == FT.DCT_DECODE:
                 data = DCTDecode.decode(data)
             elif filterType == "/JPXDecode":
                 data = JPXDecode.decode(data)
-            elif filterType == "/CCITTFaxDecode":
-                height = stream.get("/Height", ())
-                data = CCITTFaxDecode.decode(data, stream.get("/DecodeParms"), height)
+            elif filterType == FT.CCITT_FAX_DECODE:
+                height = stream.get(IA.HEIGHT, ())
+                data = CCITTFaxDecode.decode(data, stream.get(SA.DECODE_PARMS), height)
             elif filterType == "/Crypt":
-                decodeParams = stream.get("/DecodeParams", {})
-                if "/Name" not in decodeParams and "/Type" not in decodeParams:
+                decodeParms = stream.get(SA.DECODE_PARMS, {})
+                if "/Name" not in decodeParms and "/Type" not in decodeParms:
                     pass
                 else:
                     raise NotImplementedError("/Crypt filter with /Name or /Type not supported yet")
@@ -434,34 +470,37 @@ def _xobj_to_image(x_object_obj):
     :return: Tuple[file extension, bytes]
     """
     import io
+
     from PIL import Image
 
-    size = (x_object_obj["/Width"], x_object_obj["/Height"])
+    from PyPDF2.constants import GraphicsStateParameters as G
+
+    size = (x_object_obj[IA.WIDTH], x_object_obj[IA.HEIGHT])
     data = x_object_obj.getData()
-    if x_object_obj["/ColorSpace"] == "/DeviceRGB":
+    if x_object_obj[IA.COLOR_SPACE] == ColorSpaces.DEVICE_RGB:
         mode = "RGB"
     else:
         mode = "P"
     extension = None
-    if "/Filter" in x_object_obj:
-        if x_object_obj["/Filter"] == "/FlateDecode":
+    if SA.FILTER in x_object_obj:
+        if x_object_obj[SA.FILTER] == FT.FLATE_DECODE:
             extension = ".png"
             img = Image.frombytes(mode, size, data)
-            if "/SMask" in x_object_obj:  # add alpha channel
-                alpha = Image.frombytes("L", size, x_object_obj["/SMask"].getData())
+            if G.S_MASK in x_object_obj:  # add alpha channel
+                alpha = Image.frombytes("L", size, x_object_obj[G.S_MASK].getData())
                 img.putalpha(alpha)
             img_byte_arr = io.BytesIO()
             img.save(img_byte_arr, format="PNG")
             data = img_byte_arr.getvalue()
-        elif x_object_obj["/Filter"] in (["/LZWDecode"], ['/ASCII85Decode'], ['/CCITTFaxDecode']):
+        elif x_object_obj[SA.FILTER] in ([FT.LZW_DECODE], [FT.ASCII_85_DECODE], [FT.CCITT_FAX_DECODE]):
             from PyPDF2.utils import b_
             extension = ".png"
             data = b_(data)
-        elif x_object_obj["/Filter"] == "/DCTDecode":
+        elif x_object_obj[SA.FILTER] == FT.DCT_DECODE:
             extension = ".jpg"
-        elif x_object_obj["/Filter"] == "/JPXDecode":
+        elif x_object_obj[SA.FILTER] == "/JPXDecode":
             extension = ".jp2"
-        elif x_object_obj["/Filter"] == "/CCITTFaxDecode":
+        elif x_object_obj[SA.FILTER] == FT.CCITT_FAX_DECODE:
             extension = ".tiff"
     else:
         extension = ".png"
