@@ -42,6 +42,7 @@ from PyPDF2.constants import StreamAttributes as SA
 from PyPDF2.errors import (
     STREAM_TRUNCATED_PREMATURELY,
     PdfReadError,
+    PdfReadWarning,
     PdfStreamError,
 )
 
@@ -595,11 +596,13 @@ class DictionaryObject(dict, PdfObject):
                 data[key] = value
             elif pdf.strict:
                 # multiple definitions of key not permitted
-                raise PdfReadError("Multiple definitions in dictionary at byte %s for key %s" \
-                                           % (utils.hexStr(stream.tell()), key))
+                raise PdfReadError(
+                    "Multiple definitions in dictionary at byte %s for key %s" \
+                    % (utils.hexStr(stream.tell()), key))
             else:
-                warnings.warn("Multiple definitions in dictionary at byte %s for key %s" \
-                                           % (utils.hexStr(stream.tell()), key), utils.PdfReadWarning)
+                warnings.warn(
+                    "Multiple definitions in dictionary at byte %s for key %s" \
+                    % (utils.hexStr(stream.tell()), key), PdfReadWarning)
 
         pos = stream.tell()
         s = readNonWhitespace(stream)
