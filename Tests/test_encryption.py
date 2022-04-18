@@ -28,13 +28,13 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
         # created by `qpdf --encrypt "asdfzxcv" "" 128 --use-aes=y -- enc0.pdf enc6.pdf`
         (os.path.join(RESOURCE_ROOT, "encryption", "enc6.pdf")),
 
-        # # V=5 and AES256 (TODO)
-        # # created by `qpdf --encrypt "" "" 256 -- enc0.pdf enc7.pdf`
-        # (os.path.join(RESOURCE_ROOT, "encryption", "enc7.pdf")),
-        # # created by `qpdf --encrypt "asdfzxcv" "" 256 -- enc0.pdf enc8.pdf`
-        # (os.path.join(RESOURCE_ROOT, "encryption", "enc8.pdf")),
-        # # created by `qpdf --encrypt "" "asdfzxcv" 256 -- enc0.pdf enc9.pdf`
-        # (os.path.join(RESOURCE_ROOT, "encryption", "enc9.pdf")),
+        # # V=5 and R=5 use AES-256
+        # # created by `qpdf --encrypt "" "" 256 --force-R5 -- enc0.pdf enc7.pdf`
+        (os.path.join(RESOURCE_ROOT, "encryption", "enc7.pdf")),
+        # # created by `qpdf --encrypt "asdfzxcv" "" 256 --force-R5 -- enc0.pdf enc8.pdf`
+        (os.path.join(RESOURCE_ROOT, "encryption", "enc8.pdf")),
+        # # created by `qpdf --encrypt "" "asdfzxcv" 256 --force-R5 -- enc0.pdf enc9.pdf`
+        (os.path.join(RESOURCE_ROOT, "encryption", "enc9.pdf")),
 
         # asdfzxcv is owner password
         # created by `qpdf --encrypt "" "asdfzxcv" 128 --use-aes=y -- enc0.pdf enca.pdf`

@@ -39,6 +39,10 @@ class CryptBase:
     def encrypt(self, data: bytes) -> bytes: return data
     def decrypt(self, data: bytes) -> bytes: return data
 
+
+class CryptIdentity(CryptBase): pass
+
+
 try:
     from Crypto.Cipher import ARC4, AES
 
@@ -70,9 +74,27 @@ try:
             d = aes.decrypt(data)
             return d[:-d[-1]]
 
+    def RC4_encrypt(key: bytes, data: bytes) -> bytes:
+        return ARC4.ARC4Cipher(key).encrypt(data)
+
+    def RC4_decrypt(key: bytes, data: bytes) -> bytes:
+        return ARC4.ARC4Cipher(key).decrypt(data)
+
+    def AES_ECB_encrypt(key: bytes, data: bytes) -> bytes:
+        return AES.new(key, AES.MODE_ECB).encrypt(data)
+
+    def AES_ECB_decrypt(key: bytes, data: bytes) -> bytes:
+        return AES.new(key, AES.MODE_ECB).decrypt(data)
+
+    def AES_CBC_encrypt(key: bytes, iv: bytes, data: bytes) -> bytes:
+        return AES.new(key, AES.MODE_CBC, iv).encrypt(data)
+
+    def AES_CBC_decrypt(key: bytes, iv: bytes, data: bytes) -> bytes:
+        return AES.new(key, AES.MODE_CBC, iv).decrypt(data)
+
 except ImportError:
 
-    from PyPDF2._aes import AESCBC
+    from PyPDF2._aes import AESECB, AESCBC
 
     class CryptRC4(CryptBase):
         def __init__(self, key: bytes) -> None:
@@ -113,231 +135,23 @@ except ImportError:
             d = self.aes.decrypt(iv, data)
             return d[:-d[-1]]
 
+    def RC4_encrypt(key: bytes, data: bytes) -> bytes:
+        return CryptRC4(key).encrypt(data)
 
-class CryptIdentity(CryptBase):
-    pass
+    def RC4_decrypt(key: bytes, data: bytes) -> bytes:
+        return CryptRC4(key).decrypt(data)
 
+    def AES_ECB_encrypt(key: bytes, data: bytes) -> bytes:
+        return AESECB(key).encrypt(data)
 
-_PADDING = bytes([
-    0x28, 0xBF, 0x4E, 0x5E, 0x4E, 0x75, 0x8A, 0x41,
-    0x64, 0x00, 0x4E, 0x56, 0xFF, 0xFA, 0x01, 0x08,
-    0x2E, 0x2E, 0x00, 0xB6, 0xD0, 0x68, 0x3E, 0x80,
-    0x2F, 0x0C, 0xA9, 0xFE, 0x64, 0x53, 0x69, 0x7A
-])
+    def AES_ECB_decrypt(key: bytes, data: bytes) -> bytes:
+        return AESECB(key).decrypt(data)
 
-def _padding(data: bytes) -> bytes:
-    return (data + _PADDING)[:32]
+    def AES_CBC_encrypt(key: bytes, iv: bytes, data: bytes) -> bytes:
+        return AESCBC(key).encrypt(iv, data)
 
-def _bytes(text: str) -> bytes:
-    try:
-        return text.encode('latin-1')
-    except Exception:  # noqa
-        return text.encode('utf-8')
-
-
-class StandardSecurityHandler:
-    def __init__(self, rev: int, perm: int, keylen: int, metadata_encrypted: bool, first_id_entry: bytes) -> None:
-        self.R = rev
-        self.P = (perm + 0x100000000) % 0x100000000  # maybe < 0
-        self.Length = keylen
-        self.metadata_encrypted = metadata_encrypted
-        self.id1_entry = first_id_entry if first_id_entry is not None else b""
-
-        self.key: typing.Optional[bytes] = None
-
-    def generate(self, user_pwd: str, owner_pwd: str=None) -> typing.Tuple[bytes, bytes]:
-        u_entry = self._compute_U_value(user_pwd, owner_pwd)
-        o_entry = self._compute_O_value(user_pwd, owner_pwd)
-        return u_entry, o_entry
-
-    def auth(self, u_entry: bytes, o_entry: bytes, user_pwd: str, owner_pwd: str=None) -> int:
-        if self._auth_user_password(u_entry, o_entry, user_pwd):
-            return 1
-        elif self._auth_owner_password(u_entry, o_entry, owner_pwd):
-            return 2
-        else:
-            self.key = None
-            return 0
-
-    def _compute_key(self, password: bytes, o_entry: bytes) -> bytes:
-        """
-        Algorithm 2: Computing an encryption key
-        """
-
-        """ a) Pad or truncate the password string to exactly 32 bytes. If the password string is more than 32 bytes long,
-               use only its first 32 bytes; if it is less than 32 bytes long, pad it by appending the required number of
-               additional bytes from the beginning of the following padding string:
-                   < 28 BF 4E 5E 4E 75 8A 41 64 00 4E 56 FF FA 01 08
-                   2E 2E 00 B6 D0 68 3E 80 2F 0C A9 FE 64 53 69 7A >
-               That is, if the password string is n bytes long, append the first 32 - n bytes of the padding string to the end
-               of the password string. If the password string is empty (zero-length), meaning there is no user password,
-               substitute the entire padding string in its place.
-        """
-        a = _padding(password)
-        """ b) Initialize the MD5 hash function and pass the result of step (a) as input to this function. """
-        u_hash = hashlib.md5(a)
-        """ c) Pass the value of the encryption dictionary’s O entry to the MD5 hash function. ("Algorithm 3: Computing
-               the encryption dictionary’s O (owner password) value" shows how the O value is computed.)
-        """
-        u_hash.update(o_entry)
-        """ d) Convert the integer value of the P entry to a 32-bit unsigned binary number and pass these bytes to the
-               MD5 hash function, low-order byte first.
-        """
-        u_hash.update(struct.pack('<I', self.P))
-        """ e) Pass the first element of the file’s file identifier array (the value of the ID entry in the document’s trailer
-               dictionary; see Table 15) to the MD5 hash function.
-        """
-        u_hash.update(self.id1_entry)
-        """ f) (Security handlers of revision 4 or greater) If document metadata is not being encrypted, pass 4 bytes with
-               the value 0xFFFFFFFF to the MD5 hash function.
-        """
-        if self.R >= 3 and not self.metadata_encrypted:
-            u_hash.update(b"\xff\xff\xff\xff")
-        """ g) Finish the hash. """
-        u_hash_digest = u_hash.digest()
-        """ h) (Security handlers of revision 3 or greater) Do the following 50 times: Take the output from the previous
-               MD5 hash and pass the first n bytes of the output as input into a new MD5 hash, where n is the number of
-               bytes of the encryption key as defined by the value of the encryption dictionary’s Length entry.
-        """
-        length = self.Length // 8
-        if self.R >= 3:
-            for _ in range(50):
-                u_hash_digest = hashlib.md5(u_hash_digest[:length]).digest()
-        """ i) Set the encryption key to the first n bytes of the output from the final MD5 hash, where n shall always be 5
-               for security handlers of revision 2 but, for security handlers of revision 3 or greater, shall depend on the
-               value of the encryption dictionary’s Length entry.
-        """
-        return u_hash_digest[:length]
-
-    def _compute_O_value(self, user_pwd: bytes, owner_pwd: bytes=None) -> bytes:
-        """
-        Algorithm 3: Computing the encryption dictionary’s O (owner password) value
-        """
-
-        """ a) Pad or truncate the owner password string as described in step (a) of "Algorithm 2: Computing an
-               encryption key". If there is no owner password, use the user password instead.
-        """
-        a = _padding(owner_pwd if owner_pwd else user_pwd)
-        """ b) Initialize the MD5 hash function and pass the result of step (a) as input to this function. """
-        o_hash_digest = hashlib.md5(a).digest()
-        """ c) (Security handlers of revision 3 or greater) Do the following 50 times: Take the output from the previous
-               MD5 hash and pass it as input into a new MD5 hash. """
-        if self.R >= 3:
-            for _ in range(50):
-                o_hash_digest = hashlib.md5(o_hash_digest).digest()
-        """ d) Create an RC4 encryption key using the first n bytes of the output from the final MD5 hash, where n shall
-               always be 5 for security handlers of revision 2 but, for security handlers of revision 3 or greater, shall
-               depend on the value of the encryption dictionary’s Length entry.
-        """
-        rc4_key = o_hash_digest[:self.Length // 8]
-        """ e) Pad or truncate the user password string as described in step (a) of "Algorithm 2: Computing an encryption key". """
-        a = _padding(user_pwd)
-        """ f) Encrypt the result of step (e), using an RC4 encryption function with the encryption key obtained in step (d). """
-        rc4_enc = CryptRC4(rc4_key).encrypt(a)
-        """ g) (Security handlers of revision 3 or greater) Do the following 19 times: Take the output from the previous
-               invocation of the RC4 function and pass it as input to a new invocation of the function; use an encryption
-               key generated by taking each byte of the encryption key obtained in step (d) and performing an XOR
-               (exclusive or) operation between that byte and the single-byte value of the iteration counter (from 1 to 19).
-        """
-        if self.R >= 3:
-            for i in range(1, 20):
-                key = bytes(bytearray([x ^ i for x in rc4_key]))
-                rc4_enc = CryptRC4(key).encrypt(rc4_enc)
-        """ h) Store the output from the final invocation of the RC4 function as the value of the O entry in the encryption dictionary. """
-        return rc4_enc
-
-    def _compute_U_value(self, user_pwd: bytes, o_entry: bytes) -> bytes:
-        """
-        Algorithm 4: Computing the encryption dictionary’s U (user password) value (Security handlers of revision 2)
-        """
-        """ a) Create an encryption key based on the user password string, as described in "Algorithm 2: Computing an encryption key". """
-        self.key = self._compute_key(user_pwd, o_entry)
-        """ b) Encrypt the 32-byte padding string shown in step (a) of "Algorithm 2: Computing an encryption key", using
-               an RC4 encryption function with the encryption key from the preceding step.
-            c) Store the result of step (b) as the value of the U entry in the encryption dictionary.
-        """
-        if self.R <= 2:
-            value = CryptRC4(self.key).encrypt(_PADDING)
-            return value
-
-        """
-        Algorithm 5: Computing the encryption dictionary’s U (user password) value (Security handlers of revision 3 or greater)
-        """
-        """ a) Create an encryption key based on the user password string, as described in "Algorithm 2: Computing an encryption key". """
-        """ b) Initialize the MD5 hash function and pass the 32-byte padding string shown in step (a) of "Algorithm 2:
-               Computing an encryption key" as input to this function. """
-        u_hash = hashlib.md5(_PADDING)
-        """ c) Pass the first element of the file’s file identifier array (the value of the ID entry in the document’s trailer
-               dictionary; see Table 15) to the hash function and finish the hash. """
-        u_hash.update(self.id1_entry)
-        """ d) Encrypt the 16-byte result of the hash, using an RC4 encryption function with the encryption key from step (a). """
-        rc4_enc = CryptRC4(self.key).encrypt(u_hash.digest())
-        """ e) Do the following 19 times: Take the output from the previous invocation of the RC4 function and pass it as
-               input to a new invocation of the function; use an encryption key generated by taking each byte of the
-               original encryption key obtained in step (a) and performing an XOR (exclusive or) operation between that
-               byte and the single-byte value of the iteration counter (from 1 to 19).
-        """
-        for i in range(1, 20):
-            key = bytes(bytearray([x ^ i for x in self.key]))
-            rc4_enc = CryptRC4(key).encrypt(rc4_enc)
-        """ f) Append 16 bytes of arbitrary padding to the output from the final invocation of the RC4 function and store
-               the 32-byte result as the value of the U entry in the encryption dictionary.
-        """
-        return _padding(rc4_enc)
-
-    def _auth_user_password(self, u_entry: bytes, o_entry: bytes, user_pwd: bytes) -> bool:
-        """
-        Algorithm 6: Authenticating the user password
-
-        a) Perform all but the last step of "Algorithm 4: Computing the encryption dictionary’s U (user password)
-           value (Security handlers of revision 2)" or "Algorithm 5: Computing the encryption dictionary’s U (user
-           password) value (Security handlers of revision 3 or greater)" using the supplied password string.
-        b) If the result of step (a) is equal to the value of the encryption dictionary’s U entry (comparing on the first 16
-           bytes in the case of security handlers of revision 3 or greater), the password supplied is the correct user
-           password. The key obtained in step (a) (that is, in the first step of "Algorithm 4: Computing the encryption
-           dictionary’s U (user password) value (Security handlers of revision 2)" or "Algorithm 5: Computing the
-           encryption dictionary’s U (user password) value (Security handlers of revision 3 or greater)") shall be used
-           to decrypt the document.
-        """
-        u_value = self._compute_U_value(user_pwd, o_entry)
-        if self.R >= 3:
-            u_value = u_value[:16]
-            u_entry = u_entry[:16]
-        return u_value == u_entry
-
-    def _auth_owner_password(self, u_entry: bytes, o_entry: bytes, owner_pwd: bytes=None) -> bool:
-        """
-        Algorithm 7: Authenticating the owner password
-
-        a) Compute an encryption key from the supplied password string, as described in steps (a) to (d) of
-           "Algorithm 3: Computing the encryption dictionary’s O (owner password) value".
-        b) (Security handlers of revision 2 only) Decrypt the value of the encryption dictionary’s O entry, using an RC4
-           encryption function with the encryption key computed in step (a).
-           (Security handlers of revision 3 or greater) Do the following 20 times: Decrypt the value of the encryption
-           dictionary’s O entry (first iteration) or the output from the previous iteration (all subsequent iterations),
-           using an RC4 encryption function with a different encryption key at each iteration. The key shall be
-           generated by taking the original key (obtained in step (a)) and performing an XOR (exclusive or) operation
-           between each byte of the key and the single-byte value of the iteration counter (from 19 to 0).
-        c) The result of step (b) purports to be the user password. Authenticate this user password using "Algorithm 6:
-           Authenticating the user password". If it is correct, the password supplied is the correct owner password.
-        """
-        if owner_pwd is None:
-            owner_pwd = b""
-        a = _padding(owner_pwd)
-        o_hash_digest = hashlib.md5(a).digest()
-        if self.R >= 3:
-            for _ in range(50):
-                o_hash_digest = hashlib.md5(o_hash_digest).digest()
-        rc4_key = o_hash_digest[:self.Length // 8]
-
-        if self.R <= 2:
-            u_pwd = CryptRC4(rc4_key).decrypt(o_entry)
-        else:
-            u_pwd = o_entry
-            for i in range(19, -1, -1):
-                key = bytes(bytearray([x ^ i for x in rc4_key]))
-                u_pwd = CryptRC4(key).decrypt(u_pwd)
-        return self._auth_user_password(u_entry, o_entry, u_pwd)
+    def AES_CBC_decrypt(key: bytes, iv: bytes, data: bytes) -> bytes:
+        return AESCBC(key).decrypt(iv, data)
 
 
 class CryptFilter:
@@ -365,24 +179,366 @@ class CryptFilter:
         return obj
 
 
+_PADDING = bytes([
+    0x28, 0xBF, 0x4E, 0x5E, 0x4E, 0x75, 0x8A, 0x41,
+    0x64, 0x00, 0x4E, 0x56, 0xFF, 0xFA, 0x01, 0x08,
+    0x2E, 0x2E, 0x00, 0xB6, 0xD0, 0x68, 0x3E, 0x80,
+    0x2F, 0x0C, 0xA9, 0xFE, 0x64, 0x53, 0x69, 0x7A
+])
+
+def _padding(data: bytes) -> bytes:
+    return (data + _PADDING)[:32]
+
+def _bytes(text: str) -> bytes:
+    try:
+        return text.encode('latin-1')
+    except Exception:  # noqa
+        return text.encode('utf-8')
+
+
+class AlgR4:
+    @staticmethod
+    def compute_key(password: bytes, rev: int, key_size: int, o_entry: bytes, P: int, id1_entry: bytes, metadata_encrypted: bool) -> bytes:
+        """
+        Algorithm 2: Computing an encryption key
+
+        a) Pad or truncate the password string to exactly 32 bytes. If the password string is more than 32 bytes long,
+           use only its first 32 bytes; if it is less than 32 bytes long, pad it by appending the required number of
+           additional bytes from the beginning of the following padding string:
+                < 28 BF 4E 5E 4E 75 8A 41 64 00 4E 56 FF FA 01 08
+                2E 2E 00 B6 D0 68 3E 80 2F 0C A9 FE 64 53 69 7A >
+           That is, if the password string is n bytes long, append the first 32 - n bytes of the padding string to the end
+           of the password string. If the password string is empty (zero-length), meaning there is no user password,
+           substitute the entire padding string in its place.
+
+        b) Initialize the MD5 hash function and pass the result of step (a) as input to this function.
+        c) Pass the value of the encryption dictionary’s O entry to the MD5 hash function. ("Algorithm 3: Computing
+           the encryption dictionary’s O (owner password) value" shows how the O value is computed.)
+        d) Convert the integer value of the P entry to a 32-bit unsigned binary number and pass these bytes to the
+           MD5 hash function, low-order byte first.
+        e) Pass the first element of the file’s file identifier array (the value of the ID entry in the document’s trailer
+           dictionary; see Table 15) to the MD5 hash function.
+        f) (Security handlers of revision 4 or greater) If document metadata is not being encrypted, pass 4 bytes with
+           the value 0xFFFFFFFF to the MD5 hash function.
+        g) Finish the hash.
+        h) (Security handlers of revision 3 or greater) Do the following 50 times: Take the output from the previous
+           MD5 hash and pass the first n bytes of the output as input into a new MD5 hash, where n is the number of
+           bytes of the encryption key as defined by the value of the encryption dictionary’s Length entry.
+        i) Set the encryption key to the first n bytes of the output from the final MD5 hash, where n shall always be 5
+           for security handlers of revision 2 but, for security handlers of revision 3 or greater, shall depend on the
+           value of the encryption dictionary’s Length entry.
+        """
+        a = _padding(password)
+        u_hash = hashlib.md5(a)
+        u_hash.update(o_entry)
+        u_hash.update(struct.pack('<I', P))
+        u_hash.update(id1_entry)
+        if rev >= 3 and not metadata_encrypted:
+            u_hash.update(b"\xff\xff\xff\xff")
+        u_hash_digest = u_hash.digest()
+        length = key_size // 8
+        if rev >= 3:
+            for _ in range(50):
+                u_hash_digest = hashlib.md5(u_hash_digest[:length]).digest()
+        return u_hash_digest[:length]
+
+    @staticmethod
+    def compute_O_value_key(owner_pwd: bytes, rev: int, key_size: int) -> bytes:
+        """
+        Algorithm 3: Computing the encryption dictionary’s O (owner password) value
+
+        a) Pad or truncate the owner password string as described in step (a) of "Algorithm 2: Computing an
+           encryption key". If there is no owner password, use the user password instead.
+        b) Initialize the MD5 hash function and pass the result of step (a) as input to this function.
+        c) (Security handlers of revision 3 or greater) Do the following 50 times: Take the output from the previous
+           MD5 hash and pass it as input into a new MD5 hash.
+        d) Create an RC4 encryption key using the first n bytes of the output from the final MD5 hash, where n shall
+           always be 5 for security handlers of revision 2 but, for security handlers of revision 3 or greater, shall
+           depend on the value of the encryption dictionary’s Length entry.
+        e) Pad or truncate the user password string as described in step (a) of "Algorithm 2: Computing an encryption key".
+        f) Encrypt the result of step (e), using an RC4 encryption function with the encryption key obtained in step (d).
+        g) (Security handlers of revision 3 or greater) Do the following 19 times: Take the output from the previous
+           invocation of the RC4 function and pass it as input to a new invocation of the function; use an encryption
+           key generated by taking each byte of the encryption key obtained in step (d) and performing an XOR
+           (exclusive or) operation between that byte and the single-byte value of the iteration counter (from 1 to 19).
+        h) Store the output from the final invocation of the RC4 function as the value of the O entry in the encryption
+           dictionary.
+        """
+
+        a = _padding(owner_pwd)
+        o_hash_digest = hashlib.md5(a).digest()
+
+        if rev >= 3:
+            for _ in range(50):
+                o_hash_digest = hashlib.md5(o_hash_digest).digest()
+
+        rc4_key = o_hash_digest[:key_size // 8]
+        return rc4_key
+
+    @staticmethod
+    def compute_O_value(rc4_key: bytes, user_pwd: bytes, rev: int) -> bytes:
+        """see :func:`compute_O_value_key`"""
+        a = _padding(user_pwd)
+        rc4_enc = RC4_encrypt(rc4_key, a)
+        if rev >= 3:
+            for i in range(1, 20):
+                key = bytes(bytearray([x ^ i for x in rc4_key]))
+                rc4_enc = RC4_encrypt(key, rc4_enc)
+        return rc4_enc
+
+    @staticmethod
+    def compute_U_value(key: bytes, rev: int, id1_entry: bytes) -> bytes:
+        """
+        Algorithm 4: Computing the encryption dictionary’s U (user password) value (Security handlers of revision 2)
+
+        a) Create an encryption key based on the user password string, as described in "Algorithm 2: Computing an
+           encryption key".
+        b) Encrypt the 32-byte padding string shown in step (a) of "Algorithm 2: Computing an encryption key", using
+           an RC4 encryption function with the encryption key from the preceding step.
+        c) Store the result of step (b) as the value of the U entry in the encryption dictionary.
+        """
+        if rev <= 2:
+            value = RC4_encrypt(key, _PADDING)
+            return value
+
+        """
+        Algorithm 5: Computing the encryption dictionary’s U (user password) value (Security handlers of revision 3 or greater)
+
+        a) Create an encryption key based on the user password string, as described in "Algorithm 2: Computing an
+           encryption key".
+        b) Initialize the MD5 hash function and pass the 32-byte padding string shown in step (a) of "Algorithm 2:
+           Computing an encryption key" as input to this function.
+        c) Pass the first element of the file’s file identifier array (the value of the ID entry in the document’s trailer
+           dictionary; see Table 15) to the hash function and finish the hash.
+        d) Encrypt the 16-byte result of the hash, using an RC4 encryption function with the encryption key from step (a).
+        e) Do the following 19 times: Take the output from the previous invocation of the RC4 function and pass it as
+           input to a new invocation of the function; use an encryption key generated by taking each byte of the
+           original encryption key obtained in step (a) and performing an XOR (exclusive or) operation between that
+           byte and the single-byte value of the iteration counter (from 1 to 19).
+        f) Append 16 bytes of arbitrary padding to the output from the final invocation of the RC4 function and store
+           the 32-byte result as the value of the U entry in the encryption dictionary.
+        """
+        u_hash = hashlib.md5(_PADDING)
+        u_hash.update(id1_entry)
+        rc4_enc = RC4_encrypt(key, u_hash.digest())
+        for i in range(1, 20):
+            rc4_key = bytes(bytearray([x ^ i for x in key]))
+            rc4_enc = RC4_encrypt(rc4_key, rc4_enc)
+        return _padding(rc4_enc)
+
+    @staticmethod
+    def verify_user_password(user_pwd: bytes, rev: int, key_size: int, o_entry: bytes, u_entry: bytes,
+                            P: int, id1_entry: bytes, metadata_encrypted: bool) -> bytes:
+        """
+        Algorithm 6: Authenticating the user password
+
+        a) Perform all but the last step of "Algorithm 4: Computing the encryption dictionary’s U (user password)
+           value (Security handlers of revision 2)" or "Algorithm 5: Computing the encryption dictionary’s U (user
+           password) value (Security handlers of revision 3 or greater)" using the supplied password string.
+        b) If the result of step (a) is equal to the value of the encryption dictionary’s U entry (comparing on the first 16
+           bytes in the case of security handlers of revision 3 or greater), the password supplied is the correct user
+           password. The key obtained in step (a) (that is, in the first step of "Algorithm 4: Computing the encryption
+           dictionary’s U (user password) value (Security handlers of revision 2)" or "Algorithm 5: Computing the
+           encryption dictionary’s U (user password) value (Security handlers of revision 3 or greater)") shall be used
+           to decrypt the document.
+        """
+        key = AlgR4.compute_key(user_pwd, rev, key_size, o_entry, P, id1_entry, metadata_encrypted)
+        u_value = AlgR4.compute_U_value(key, rev, id1_entry)
+        if rev >= 3:
+            u_value = u_value[:16]
+            u_entry = u_entry[:16]
+        if u_value != u_entry:
+            key = b""
+        return key
+
+    @staticmethod
+    def verify_owner_password(owner_pwd: bytes, rev: int, key_size: int, o_entry: bytes, u_entry: bytes,
+                            P: int, id1_entry: bytes, metadata_encrypted: bool) -> bytes:
+        """
+        Algorithm 7: Authenticating the owner password
+
+        a) Compute an encryption key from the supplied password string, as described in steps (a) to (d) of
+           "Algorithm 3: Computing the encryption dictionary’s O (owner password) value".
+        b) (Security handlers of revision 2 only) Decrypt the value of the encryption dictionary’s O entry, using an RC4
+           encryption function with the encryption key computed in step (a).
+           (Security handlers of revision 3 or greater) Do the following 20 times: Decrypt the value of the encryption
+           dictionary’s O entry (first iteration) or the output from the previous iteration (all subsequent iterations),
+           using an RC4 encryption function with a different encryption key at each iteration. The key shall be
+           generated by taking the original key (obtained in step (a)) and performing an XOR (exclusive or) operation
+           between each byte of the key and the single-byte value of the iteration counter (from 19 to 0).
+        c) The result of step (b) purports to be the user password. Authenticate this user password using "Algorithm 6:
+           Authenticating the user password". If it is correct, the password supplied is the correct owner password.
+        """
+        rc4_key = AlgR4.compute_O_value_key(owner_pwd, rev, key_size)
+
+        if rev <= 2:
+            u_pwd = RC4_decrypt(rc4_key, o_entry)
+        else:
+            u_pwd = o_entry
+            for i in range(19, -1, -1):
+                key = bytes(bytearray([x ^ i for x in rc4_key]))
+                u_pwd = RC4_decrypt(key, u_pwd)
+        return AlgR4.verify_user_password(u_pwd, rev, key_size, o_entry, u_entry, P, id1_entry, metadata_encrypted)
+
+
+class AlgR5:
+    @staticmethod
+    def verify_owner_password(password: bytes, o_value: bytes, oe_value: bytes, u_value: bytes) -> bytes:
+        """
+        Algorithm 3.2a Computing an encryption key
+
+        To understand the algorithm below, it is necessary to treat the O and U strings in the Encrypt dictionary
+        as made up of three sections. The first 32 bytes are a hash value (explained below). The next 8 bytes are
+        called the Validation Salt. The final 8 bytes are called the Key Salt.
+
+        1. The password string is generated from Unicode input by processing the input string with the SASLprep
+           (IETF RFC 4013) profile of stringprep (IETF RFC 3454), and then converting to a UTF-8 representation.
+        2. Truncate the UTF-8 representation to 127 bytes if it is longer than 127 bytes.
+        3. Test the password against the owner key by computing the SHA-256 hash of the UTF-8 password
+           concatenated with the 8 bytes of owner Validation Salt, concatenated with the 48-byte U string. If the
+           32-byte result matches the first 32 bytes of the O string, this is the owner password.
+           Compute an intermediate owner key by computing the SHA-256 hash of the UTF-8 password
+           concatenated with the 8 bytes of owner Key Salt, concatenated with the 48-byte U string. The 32-byte
+           result is the key used to decrypt the 32-byte OE string using AES-256 in CBC mode with no padding and
+           an initialization vector of zero. The 32-byte result is the file encryption key.
+        4. Test the password against the user key by computing the SHA-256 hash of the UTF-8 password
+           concatenated with the 8 bytes of user Validation Salt. If the 32 byte result matches the first 32 bytes of
+           the U string, this is the user password.
+           Compute an intermediate user key by computing the SHA-256 hash of the UTF-8 password
+           concatenated with the 8 bytes of user Key Salt. The 32-byte result is the key used to decrypt the 32-byte
+           UE string using AES-256 in CBC mode with no padding and an initialization vector of zero. The 32-byte
+           result is the file encryption key.
+        5. Decrypt the 16-byte Perms string using AES-256 in ECB mode with an initialization vector of zero and
+           the file encryption key as the key. Verify that bytes 9-11 of the result are the characters ‘a’, ‘d’, ‘b’. Bytes
+           0-3 of the decrypted Perms entry, treated as a little-endian integer, are the user permissions. They
+           should match the value in the P key.
+        """
+        password = password[:127]
+        if hashlib.sha256(password + o_value[32:40] + u_value).digest() != o_value[:32]:
+            return b""
+        iv = bytes(0 for _ in range(16))
+        tmp_key = hashlib.sha256(password + o_value[40:] + u_value).digest()
+        key = AES_CBC_decrypt(tmp_key, iv, oe_value)
+        return key
+
+    @staticmethod
+    def verify_user_password(password: bytes, u_value: bytes, ue_value: bytes) -> bytes:
+        """see :func:`verify_owner_password`"""
+        password = password[:127]
+        if hashlib.sha256(password + u_value[32:40]).digest() != u_value[:32]:
+            return b""
+        iv = bytes(0 for _ in range(16))
+        tmp_key = hashlib.sha256(password + u_value[40:]).digest()
+        return AES_CBC_decrypt(tmp_key, iv, ue_value)
+
+    def verify_perms(key: bytes, perms: bytes, p: int, metadata_encrypted: bool) -> bytes:
+        """see :func:`verify_owner_password` and :func:`compute_Perms_value`"""
+        b8 = b'T' if metadata_encrypted else 'F'
+        p1 = struct.pack("<I", p) + b"\xff\xff\xff\xff" + b8 + b"adb"
+        p2 = AES_ECB_decrypt(key, perms)
+        return p1 == p2[:12]
+
+    @staticmethod
+    def generate_values(user_pwd: bytes, owner_pwd: bytes, key: bytes, p: int, metadata_encrypted: bool) -> dict:
+        u_value, ue_value = AlgR5.compute_U_value(user_pwd, key)
+        o_value, oe_value = AlgR5.compute_O_value(owner_pwd, key, u_value)
+        perms = AlgR5.compute_Perms_value(key, p, metadata_encrypted)
+        return {
+            "/U": u_value,
+            "/UE": ue_value,
+            "/O": o_value,
+            "/OE": oe_value,
+            "/Perms": perms,
+        }
+
+    @staticmethod
+    def compute_U_value(password: bytes, key: bytes) -> typing.Tuple[bytes]:
+        """
+        Algorithm 3.8 Computing the encryption dictionary’s U (user password) and UE (user encryption key) values
+
+        1. Generate 16 random bytes of data using a strong random number generator. The first 8 bytes are the
+           User Validation Salt. The second 8 bytes are the User Key Salt. Compute the 32-byte SHA-256 hash of
+           the password concatenated with the User Validation Salt. The 48-byte string consisting of the 32-byte
+           hash followed by the User Validation Salt followed by the User Key Salt is stored as the U key.
+        2. Compute the 32-byte SHA-256 hash of the password concatenated with the User Key Salt. Using this
+           hash as the key, encrypt the file encryption key using AES-256 in CBC mode with no padding and an
+           initialization vector of zero. The resulting 32-byte string is stored as the UE key.
+        """
+        random_bytes = bytes(random.randrange(0, 256) for _ in range(16))
+        val_salt = random_bytes[:8]
+        key_salt = random_bytes[8:]
+        u_value = hashlib.sha256(password + val_salt).digest() + val_salt + key_salt
+
+        tmp_key = hashlib.sha256(password + key_salt).digest()
+        iv = bytes(0 for _ in range(16))
+        ue_value = AES_CBC_encrypt(tmp_key, iv, key)
+        return u_value, ue_value
+
+    @staticmethod
+    def compute_O_value(password: bytes, key: bytes, u_value: bytes) -> typing.Tuple[bytes]:
+        """
+        Algorithm 3.9 Computing the encryption dictionary’s O (owner password) and OE (owner encryption key) values
+
+        1. Generate 16 random bytes of data using a strong random number generator. The first 8 bytes are the
+           Owner Validation Salt. The second 8 bytes are the Owner Key Salt. Compute the 32-byte SHA-256 hash
+           of the password concatenated with the Owner Validation Salt and then concatenated with the 48-byte
+           U string as generated in Algorithm 3.8. The 48-byte string consisting of the 32-byte hash followed by
+           the Owner Validation Salt followed by the Owner Key Salt is stored as the O key.
+        2. Compute the 32-byte SHA-256 hash of the password concatenated with the Owner Key Salt and then
+           concatenated with the 48-byte U string as generated in Algorithm 3.8. Using this hash as the key,
+           encrypt the file encryption key using AES-256 in CBC mode with no padding and an initialization vector
+           of zero. The resulting 32-byte string is stored as the OE key.
+        """
+        random_bytes = bytes(random.randrange(0, 256) for _ in range(16))
+        val_salt = random_bytes[:8]
+        key_salt = random_bytes[8:]
+        o_value = hashlib.sha256(password + val_salt + u_value).digest() + val_salt + key_salt
+
+        tmp_key = hashlib.sha256(password + key_salt + u_value).digest()
+        iv = bytes(0 for _ in range(16))
+        oe_value = AES_CBC_encrypt(tmp_key, iv, key)
+        return o_value, oe_value
+
+    @staticmethod
+    def compute_Perms_value(key: bytes, p: int, metadata_encrypted: bool) -> bytes:
+        """
+        Algorithm 3.10 Computing the encryption dictionary’s Perms (permissions) value
+
+        1. Extend the permissions (contents of the P integer) to 64 bits by setting the upper 32 bits to all 1’s. (This
+           allows for future extension without changing the format.)
+        2. Record the 8 bytes of permission in the bytes 0-7 of the block, low order byte first.
+        3. Set byte 8 to the ASCII value ' T ' or ' F ' according to the EncryptMetadata Boolean.
+        4. Set bytes 9-11 to the ASCII characters ' a ', ' d ', ' b '.
+        5. Set bytes 12-15 to 4 bytes of random data, which will be ignored.
+        6. Encrypt the 16-byte block using AES-256 in ECB mode with an initialization vector of zero, using the file
+           encryption key as the key. The result (16 bytes) is stored as the Perms string, and checked for validity
+           when the file is opened.
+        """
+        b8 = b'T' if metadata_encrypted else 'F'
+        rr = bytes(random.randrange(0, 256) for _ in range(4))
+        data = struct.pack("<I", p) + b"\xff\xff\xff\xff" + b8 + b"adb" + rr
+        perms = AESECB.encrypt(key, data)
+        return perms
+
+
 class Encryption:
-    def __init__(self, algV: int, rev: int, perm: int, keylen: int,
-                metadata_encrypted: bool, first_id_entry: bytes,
-                StmF: str, StrF: str, EFF: str) -> None:
+    def __init__(self, algV: int, entry: DictionaryObject, first_id_entry: bytes, StmF: str, StrF: str, EFF: str) -> None:
         self.algV = algV
-        self.handler = StandardSecurityHandler(rev, perm, keylen, metadata_encrypted, first_id_entry)
+        self.entry = entry
+        self.key_size = entry.get("/Length", 40)
+        self.id1_entry = first_id_entry
         self.StmF = StmF
         self.StrF = StrF
         self.EFF = EFF
 
-    def key(self) -> typing.Optional[bytes]:
-        return self.handler.key
-
-    def encryptObject(self, obj: PdfObject) -> PdfObject:
-        # TODO
-        return NotImplemented
+        self._key = None
+        # keep key
+        self._user_keys = {}
+        self._owner_keys = {}
 
     def decryptObject(self, obj: PdfObject, idnum: int, generation: int) -> PdfObject:
+        """decrypt object"""
+
         """
         Algorithm 1: Encryption of data using the RC4 or AES algorithms
 
@@ -404,44 +560,122 @@ class Encryption:
            is used. The block size parameter is set to 16 bytes, and the initialization vector is a 16-byte random
            number that is stored as the first 16 bytes of the encrypted stream or string.
         """
+
+        """
+        Algorithm 3.1a Encryption of data using the AES algorithm
+        1. Use the 32-byte file encryption key for the AES-256 symmetric key algorithm, along with the string or
+           stream data to be encrypted.
+           Use the AES algorithm in Cipher Block Chaining (CBC) mode, which requires an initialization vector. The
+           block size parameter is set to 16 bytes, and the initialization vector is a 16-byte random number that is
+           stored as the first 16 bytes of the encrypted stream or string.
+           The output is the encrypted data to be stored in the PDF file.
+        """
         pack1 = struct.pack("<i", idnum)[:3]
         pack2 = struct.pack("<i", generation)[:2]
 
-        key = self.handler.key
-        keylen = self.handler.Length
-        n = 5 if self.algV == 1 else keylen // 8
+        key = self._key
+        n = 5 if self.algV == 1 else self.key_size // 8
         key_data = key[:n] + pack1 + pack2
         key_hash = hashlib.md5(key_data)
         rc4_key = key_hash.digest()[:min(n + 5, 16)]
-        #
+        # for AES-128
         key_hash.update(b"sAlT")
-        aes_key = key_hash.digest()[:min(n + 5, 16)]
+        aes128_key = key_hash.digest()[:min(n + 5, 16)]
 
-        stmCrypt = self._getCrypt(self.StmF, rc4_key, aes_key)
-        StrCrypt = self._getCrypt(self.StrF, rc4_key, aes_key)
-        efCrypt = self._getCrypt(self.EFF, rc4_key, aes_key)
+        # for V=5 use AES-256
+        aes256_key = key
+
+        stmCrypt = self._getCrypt(self.StmF, rc4_key, aes128_key, aes256_key)
+        StrCrypt = self._getCrypt(self.StrF, rc4_key, aes128_key, aes256_key)
+        efCrypt = self._getCrypt(self.EFF, rc4_key, aes128_key, aes256_key)
 
         cf = CryptFilter(stmCrypt, StrCrypt, efCrypt)
         return cf.decryptObject(obj)
 
     @staticmethod
-    def _getCrypt(method: str, rc4_key: bytes, aes_key: bytes) -> CryptBase:
+    def _getCrypt(method: str, rc4_key: bytes, aes128_key: bytes, aes256_key: bytes) -> CryptBase:
+        if method == "/AESV3":
+            return CryptAES(aes256_key)
         if method == "/AESV2":
-            return CryptAES(aes_key)
+            return CryptAES(aes128_key)
         elif method == "/Identity":
             return CryptIdentity()
         else:
             return CryptRC4(rc4_key)
 
-    def encryptPdf(self, user_pwd: str, owner_pwd: str=None) -> DictionaryObject:
-        # TODO
-        return NotImplemented
+    def verify(self, user_pwd: str, owner_pwd: str) -> int:
+        key = self._user_keys.get(user_pwd)
+        if key:
+            self._key = key
+            return 1
 
-    def decryptPdf(self, u_entry: bytes, o_entry: bytes, user_pwd: str, owner_pwd: str=None) -> int:
-        user_pwd = _bytes(user_pwd)
-        if owner_pwd is not None:
-            owner_pwd = _bytes(owner_pwd)
-        return self.handler.auth(u_entry, o_entry, user_pwd, owner_pwd)
+        key = self._owner_keys.get(owner_pwd)
+        if key:
+            self._key = key
+            return 2
+
+        rc = 0
+        if self.algV <= 4:
+            key, rc = self.verify_r4(user_pwd, owner_pwd)
+        else:
+            key, rc = self.verify_r5(user_pwd, owner_pwd)
+
+        if rc == 1:
+            self._key = key
+            self._user_keys[user_pwd] = key
+        elif rc == 2:
+            self._key = key
+            self._owner_keys[owner_pwd] = key
+
+        return rc
+
+    def verify_r4(self, user_pwd: str, owner_pwd: str) -> typing.Tuple[bytes, int]:
+        user_pwd1 = _bytes(user_pwd)
+        owner_pwd1 = _bytes(owner_pwd)
+
+        R = self.entry["/R"]
+        P = self.entry["/P"]
+        P = (P + 0x100000000) % 0x100000000  # maybe < 0
+        metadata_encrypted = self.entry.get("/EncryptMetadata", True)
+        o_entry = self.entry["/O"].getObject().original_bytes
+        u_entry = self.entry["/U"].getObject().original_bytes
+
+        key = AlgR4.verify_user_password(user_pwd1, R, self.key_size, o_entry, u_entry, P, self.id1_entry, metadata_encrypted)
+        if key:
+            return key, 1
+        key = AlgR4.verify_owner_password(owner_pwd1, R, self.key_size, o_entry, u_entry, P, self.id1_entry, metadata_encrypted)
+        if key:
+            return key, 2
+        return b"", 0
+
+    def verify_r5(self, user_pwd: str, owner_pwd: str) -> typing.Tuple[bytes, int]:
+        # TODO: use SASLprep process
+        user_pwd1 = _bytes(user_pwd)
+        owner_pwd1 = _bytes(owner_pwd)
+
+        o_entry = self.entry["/O"].getObject().original_bytes
+        u_entry = self.entry["/U"].getObject().original_bytes
+        oe_entry = self.entry["/OE"].getObject().original_bytes
+        ue_entry = self.entry["/UE"].getObject().original_bytes
+
+        rc = 0
+        key = AlgR5.verify_user_password(user_pwd1, u_entry, ue_entry)
+        if key:
+            rc = 1
+        else:
+            key = AlgR5.verify_owner_password(owner_pwd1, o_entry, oe_entry, u_entry)
+            if key:
+                rc = 2
+        if rc == 0:
+            return b"", 0
+        # verify Perms
+        perms = self.entry["/Perms"].getObject().original_bytes
+        P = self.entry["/P"]
+        P = (P + 0x100000000) % 0x100000000  # maybe < 0
+        metadata_encrypted = self.entry.get("/EncryptMetadata", True)
+        if not AlgR5.verify_perms(key, perms, P, metadata_encrypted):
+            return b"", 0
+        return key, rc
 
     @staticmethod
     def read(encryption_entry: DictionaryObject, first_id_entry: bytes=None) -> "Encryption":
@@ -456,9 +690,9 @@ class Encryption:
         EFF = "/V2"
 
         V = encryption_entry.get("/V", 0)
-        if V not in (1, 2, 3, 4):
+        if V not in (1, 2, 3, 4, 5):
             raise NotImplementedError("Encryption V=%d NOT supported" % V)
-        if V == 4:
+        if V >= 4:
             filters = encryption_entry["/CF"]
 
             StmF = encryption_entry.get("/StmF", "/Identity")
@@ -472,7 +706,7 @@ class Encryption:
             if EFF != "/Identity":
                 EFF = filters[EFF]["/CFM"]
 
-            allowed_methods = ("/Identity", "/V2", "/AESV2")
+            allowed_methods = ("/Identity", "/V2", "/AESV2", "/AESV3")
             if StmF not in allowed_methods:
                 raise NotImplementedError("StmF Method %s NOT supported!" % StmF)
             if StrF not in allowed_methods:
@@ -481,7 +715,7 @@ class Encryption:
                 raise NotImplementedError("EFF Method %s NOT supported!" % EFF)
 
         R = encryption_entry["/R"]
-        P = encryption_entry["/P"]
-        Length = encryption_entry.get("/Length", 5 * 8)
-        metadata_encrypted = encryption_entry.get("/EncryptMetadata", True)
-        return Encryption(V, R, P, Length, metadata_encrypted, first_id_entry, StmF, StrF, EFF)
+        if R > 5:
+            raise NotImplementedError("encryption R={} NOT supported!".format(R))
+
+        return Encryption(V, encryption_entry, first_id_entry, StmF, StrF, EFF)

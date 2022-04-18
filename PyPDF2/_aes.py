@@ -695,16 +695,22 @@ def _rijndaelDecrypt(rk: typing.Tuple[int], data: bytes) -> bytes:
     return struct.pack(">IIII", s0, s1, s2, s3)
 
 
-class _AES:
+class AESECB:
     def __init__(self, key: bytes) -> None:
         self._ek = _rijndaelKeySetupEnc(key)
         self._dk = _rijndaelKeySetupDec(self._ek)
 
     def encrypt(self, data: bytes) -> bytes:
-        return _rijndaelEncrypt(self._ek, data)
+        ee = []
+        for i in range(0, len(data), 16):
+            ee.append(_rijndaelEncrypt(self._ek, data[i:i + 16]))
+        return b"".join(ee)
 
     def decrypt(self, data: bytes) -> bytes:
-        return _rijndaelDecrypt(self._dk, data)
+        dd = []
+        for i in range(0, len(data), 16):
+            dd.append(_rijndaelDecrypt(self._dk, data[i:i + 16]))
+        return b"".join(dd)
 
 
 class AESCBC:
@@ -784,16 +790,16 @@ def _test():
         assert pp == d0 == d1
         assert e0 == e1
 
-    aes128_0 = _AES(key128)
-    aes192_0 = _AES(key192)
-    aes256_0 = _AES(key256)
+    aes128_0 = AESECB(key128)
+    aes192_0 = AESECB(key192)
+    aes256_0 = AESECB(key256)
 
     aes128_1 = PyCryptoAES.new(key128, PyCryptoAES.MODE_ECB)
     aes192_1 = PyCryptoAES.new(key192, PyCryptoAES.MODE_ECB)
     aes256_1 = PyCryptoAES.new(key256, PyCryptoAES.MODE_ECB)
 
     for _ in range(10):
-        pp = bytes(bytearray(random.randint(0, 255) for _ in range(16)))
+        pp = bytes(bytearray(random.randint(0, 255) for _ in range(32)))
         _test_enc_dec(aes128_0, aes128_1, pp)
         _test_enc_dec(aes192_0, aes192_1, pp)
         _test_enc_dec(aes256_0, aes256_1, pp)

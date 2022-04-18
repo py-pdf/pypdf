@@ -2074,19 +2074,14 @@ class PdfFileReader(object):
             self._override_encryption = False
 
     def _decrypt(self, password):
-        # already got the KEY
-        if hasattr(self, "_encryption"):
-            return 3
         from PyPDF2.encryption import Encryption
         id_entry = self.trailer.get("/ID")
-        id1_entry = id_entry[0].getObject().original_bytes if id_entry else None
+        id1_entry = id_entry[0].getObject().original_bytes if id_entry else b""
         encryptEntry = self.trailer['/Encrypt'].getObject()
         encryption = Encryption.read(encryptEntry, id1_entry)
-        u_entry = encryptEntry["/U"].getObject().original_bytes
-        o_entry = encryptEntry["/O"].getObject().original_bytes
         # maybe password is owner password
         # TODO: add/modify api to set owner password
-        rr = encryption.decryptPdf(u_entry, o_entry, password, password)
+        rr = encryption.verify(password, password)
         if rr > 0:
             self._encryption = encryption
         return rr
