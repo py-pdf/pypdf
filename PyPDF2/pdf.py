@@ -1694,7 +1694,7 @@ class PdfFileReader(object):
                 streamData.seek(pos, 0)
             try:
                 obj = readObject(streamData, self)
-            except utils.PdfStreamError as e:
+            except PdfStreamError as e:
                 # Stream object cannot be read. Normally, a critical error, but
                 # Adobe Reader doesn't complain, so continue (in strict mode?)
                 e = sys.exc_info()[1]
@@ -2273,6 +2273,7 @@ class PageObject(DictionaryObject):
         self.pdf = pdf
         self.indirectRef = indirectRef
 
+    @staticmethod
     def createBlankPage(pdf=None, width=None, height=None):
         """
         Returns a new blank page.
@@ -2306,7 +2307,6 @@ class PageObject(DictionaryObject):
             RectangleObject([0, 0, width, height]))
 
         return page
-    createBlankPage = staticmethod(createBlankPage)  # type: ignore
 
     def rotateClockwise(self, angle):
         """
@@ -2337,6 +2337,7 @@ class PageObject(DictionaryObject):
         currentAngle = rotateObj if isinstance(rotateObj, int) else rotateObj.getObject()
         self[NameObject("/Rotate")] = NumberObject(currentAngle + angle)
 
+    @staticmethod
     def _mergeResources(res1, res2, resource):
         newRes = DictionaryObject()
         newRes.update(res1.get(resource, DictionaryObject()).getObject())
@@ -2350,8 +2351,8 @@ class PageObject(DictionaryObject):
             elif key not in newRes:
                 newRes[key] = page2Res.raw_get(key)
         return newRes, renameRes
-    _mergeResources = staticmethod(_mergeResources)  # type: ignore
 
+    @staticmethod
     def _contentStreamRename(stream, rename, pdf):
         if not rename:
             return stream
@@ -2370,8 +2371,8 @@ class PageObject(DictionaryObject):
             else:
                 raise KeyError ("type of operands is %s" % type (operands))
         return stream
-    _contentStreamRename = staticmethod(_contentStreamRename)  # type: ignore
 
+    @staticmethod
     def _pushPopGS(contents, pdf):
         # adds a graphics state "push" and "pop" to the beginning and end
         # of a content stream.  This isolates it from changes such as
@@ -2380,8 +2381,8 @@ class PageObject(DictionaryObject):
         stream.operations.insert(0, [[], "q"])
         stream.operations.append([[], "Q"])
         return stream
-    _pushPopGS = staticmethod(_pushPopGS)  # type: ignore
 
+    @staticmethod
     def _addTransformationMatrix(contents, pdf, ctm):
         # adds transformation matrix at the beginning of the given
         # contents stream.
@@ -2391,7 +2392,6 @@ class PageObject(DictionaryObject):
             FloatObject(c), FloatObject(d), FloatObject(e),
             FloatObject(f)], " cm"])
         return contents
-    _addTransformationMatrix = staticmethod(_addTransformationMatrix)  # type: ignore
 
     def getContents(self):
         """

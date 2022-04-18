@@ -125,6 +125,7 @@ except ImportError:
 
 
 class FlateDecode(object):
+    @staticmethod
     def decode(data, decodeParms):
         data = decompress(data)
         predictor = 1
@@ -182,14 +183,14 @@ class FlateDecode(object):
                 # unsupported predictor
                 raise PdfReadError("Unsupported flatedecode predictor %r" % predictor)
         return data
-    decode = staticmethod(decode)  # type: ignore
 
+    @staticmethod
     def encode(data):
         return compress(data)
-    encode = staticmethod(encode)  # type: ignore
 
 
 class ASCIIHexDecode(object):
+    @staticmethod
     def decode(data, decodeParms=None):
         retval = ""
         char = ""
@@ -208,7 +209,6 @@ class ASCIIHexDecode(object):
             x += 1
         assert char == ""
         return retval
-    decode = staticmethod(decode)  # type: ignore
 
 
 class LZWDecode(object):
@@ -291,6 +291,7 @@ class LZWDecode(object):
 
 
 class ASCII85Decode(object):
+    @staticmethod
     def decode(data, decodeParms=None):
         if version_info < ( 3, 0 ):
             retval = ""
@@ -364,19 +365,19 @@ class ASCII85Decode(object):
                         out += struct.pack(b'>L',b)[:n-1]
                     break
             return bytes(out)
-    decode = staticmethod(decode)  # type: ignore
 
 class DCTDecode(object):
+    @staticmethod
     def decode(data, decodeParms=None):
         return data
-    decode = staticmethod(decode)  # type: ignore
 
 class JPXDecode(object):
+    @staticmethod
     def decode(data, decodeParms=None):
         return data
-    decode = staticmethod(decode)  # type: ignore
 
 class CCITTFaxDecode(object):
+    @staticmethod
     def decode(data, decodeParms=None, height=0):
         k = 1
         width = 0
@@ -416,7 +417,6 @@ class CCITTFaxDecode(object):
 
         return tiffHeader + data
 
-    decode = staticmethod(decode)  # type: ignore
 
 def decodeStreamData(stream):
     from .generic import NameObject
