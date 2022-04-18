@@ -34,13 +34,15 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import sys
 
+from PyPDF2.errors import STREAM_TRUNCATED_PREMATURELY, PdfStreamError
+
 try:
     import builtins
     from typing import Dict
 except ImportError:  # Py2.7
     import __builtin__ as builtins  # type: ignore
 
-ERR_STREAM_TRUNCATED_PREMATURELY = "Stream has ended unexpectedly"
+
 xrange_fn = getattr(builtins, "xrange", range)
 _basestring = getattr(builtins, "basestring", str)
 
@@ -134,7 +136,7 @@ def readUntilRegex(stream, regex, ignore_eof=False):
             if ignore_eof:
                 return name
             else:
-                raise PdfStreamError(ERR_STREAM_TRUNCATED_PREMATURELY)
+                raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
         m = regex.search(tok)
         if m is not None:
             name += tok[:m.start()]
@@ -169,7 +171,7 @@ class ConvertFunctionsToVirtualList(object):
 
 
 def RC4_encrypt(key, plaintext):
-    S = [i for i in range(256)]
+    S = list(range(256))
     j = 0
     for i in range(256):
         j = (j + S[i] + ord_(key[i % len(key)])) % 256
@@ -197,31 +199,11 @@ def markLocation(stream):
     # Mainly for debugging
     RADIUS = 5000
     stream.seek(-RADIUS, 1)
-    with open('PyPDF2_pdfLocation.txt', 'wb') as outputDoc:
-        outputDoc.write(stream.read(RADIUS))
-        outputDoc.write(b'HERE')
-        outputDoc.write(stream.read(RADIUS))
+    with open('PyPDF2_pdfLocation.txt', 'wb') as output_fh:
+        output_fh.write(stream.read(RADIUS))
+        output_fh.write(b'HERE')
+        output_fh.write(stream.read(RADIUS))
     stream.seek(-RADIUS, 1)
-
-
-class PyPdfError(Exception):
-    pass
-
-
-class PdfReadError(PyPdfError):
-    pass
-
-
-class PageSizeNotDefinedError(PyPdfError):
-    pass
-
-
-class PdfReadWarning(UserWarning):
-    pass
-
-
-class PdfStreamError(PdfReadError):
-    pass
 
 
 if sys.version_info[0] < 3:

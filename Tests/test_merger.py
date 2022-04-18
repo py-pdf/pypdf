@@ -2,6 +2,7 @@ import os
 import sys
 
 import PyPDF2
+from PyPDF2.generic import Destination
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -43,5 +44,25 @@ def test_merge():
     file_merger.setPageLayout("/SinglePage")
     file_merger.setPageMode("/UseThumbs")
 
-    file_merger.write("dont_commit_merged.pdf")
+    tmp_path = "dont_commit_merged.pdf"
+    file_merger.write(tmp_path)
     file_merger.close()
+
+    # Check if bookmarks are correct
+    pdfr = PyPDF2.PdfFileReader(tmp_path)
+    assert [el.title for el in pdfr.getOutlines() if isinstance(el, Destination)] == [
+        "Foo",
+        "Bar",
+        "Baz",
+        "Foo",
+        "Bar",
+        "Baz",
+        "Foo",
+        "Bar",
+        "Baz",
+        "True",
+        "A bookmark",
+    ]
+
+    # Clean up
+    os.remove(tmp_path)
