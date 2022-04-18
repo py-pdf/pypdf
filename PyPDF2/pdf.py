@@ -76,13 +76,7 @@ from .utils import (
     u_,
 )
 
-if version_info < ( 2, 4 ):
-   from sets import ImmutableSet as frozenset
-
-if version_info < ( 2, 5 ):
-    from md5 import md5
-else:
-    from hashlib import md5
+from hashlib import md5
 
 
 class PdfFileWriter(object):
