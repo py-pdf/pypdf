@@ -244,7 +244,6 @@ class FloatObject(decimal.Decimal, PdfObject):
             except decimal.InvalidOperation:
                 # If this isn't a valid decimal (happens in malformed PDFs)
                 # fallback to 0
-                #
                 logger.warning("Invalid FloatObject {}".format(value))
                 return decimal.Decimal.__new__(cls, "0")
 
