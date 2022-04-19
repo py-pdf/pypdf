@@ -36,6 +36,7 @@ import codecs
 import decimal
 import re
 import warnings
+import logging
 
 from PyPDF2.constants import FilterTypes as FT
 from PyPDF2.constants import StreamAttributes as SA
@@ -57,6 +58,7 @@ from .utils import (
     u_,
 )
 
+logger = logging.getLogger(__name__)
 ObjectPrefix = b_('/<[tf(n%')
 NumberSigns = b_('+-')
 IndirectPattern = re.compile(b_(r"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]"))
@@ -237,7 +239,13 @@ class FloatObject(decimal.Decimal, PdfObject):
         try:
             return decimal.Decimal.__new__(cls, utils.str_(value), context)
         except Exception:
-            return decimal.Decimal.__new__(cls, str(value))
+            try:
+                return decimal.Decimal.__new__(cls, str(value))
+            except decimal.InvalidOperation:
+                # If this isn't a valid decimal (happens in malformed PDFs)
+                # fallback to 0
+                logger.warning("Invalid FloatObject {}".format(value))
+                return decimal.Decimal.__new__(cls, "0")
 
     def __repr__(self):
         if self == self.to_integral():
