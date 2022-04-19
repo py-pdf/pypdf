@@ -19,6 +19,7 @@ You can contribute to `PyPDF2 on Github <https://github.com/py-pdf/PyPDF2>`_.
    :maxdepth: 1
 
    user/installation
+   user/robustness
    user/metadata
    user/extract-text
    user/encryption-decryption
@@ -36,9 +37,9 @@ You can contribute to `PyPDF2 on Github <https://github.com/py-pdf/PyPDF2>`_.
    :maxdepth: 1
 
    modules/PdfFileReader
+   modules/PdfFileWriter
    modules/PdfFileMerger
    modules/PageObject
-   modules/PdfFileWriter
    modules/DocumentInformation
    modules/XmpInformation
    modules/Destination
