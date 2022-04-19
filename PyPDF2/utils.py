@@ -36,6 +36,9 @@ import sys
 
 from PyPDF2.errors import STREAM_TRUNCATED_PREMATURELY, PdfStreamError
 
+# See https://github.com/py-pdf/PyPDF2/issues/779
+from PyPDF2.errors import PyPdfError, PdfReadError, PageSizeNotDefinedError, PdfReadWarning  # noqa
+
 try:
     import builtins
     from typing import Dict
