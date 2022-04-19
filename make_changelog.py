@@ -24,7 +24,7 @@ def main(changelog_path: str):
     today = datetime.now()
     header = f"Version {new_version}, {today:%Y-%m-%d}\n"
     header = header + "-" * (len(header) - 1) + "\n"
-    trailer = f"All changes: https://github.com/py-pdf/PyPDF2/compare/{git_tag}...{new_version}"
+    trailer = f"Full Changelog: https://github.com/py-pdf/PyPDF2/compare/{git_tag}...{new_version}"
     new_entry = header + changes + trailer
     print(new_entry)
 
