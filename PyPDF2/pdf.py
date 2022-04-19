@@ -760,7 +760,12 @@ class PdfFileWriter(object):
                 zoomArgs.append(NumberObject(a))
             else:
                 zoomArgs.append(NullObject())
-        dest = Destination(NameObject("/"+title + " bookmark"), pageRef, NameObject(fit), *zoomArgs)
+        dest = Destination(
+            NameObject("/"+title + " bookmark"),
+            pageRef,
+            NameObject(fit),
+            *zoomArgs,
+        )
         destArray = dest.getDestArray()
         action.update({
             NameObject('/D') : destArray,
@@ -1546,7 +1551,7 @@ class PdfFileReader(object):
     def _buildDestination(self, title, array):
         page, typ = array[0:2]
         array = array[2:]
-        return Destination(title, page, typ, *array)
+        return Destination(title, page, typ, *array, strict=self.strict)
 
     def _buildOutline(self, node):
         dest, title, outline = None, None, None

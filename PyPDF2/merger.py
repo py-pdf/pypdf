@@ -537,7 +537,13 @@ class PdfFileMerger(object):
         :param int pagenum: Page number this destination points at.
         """
 
-        dest = Destination(TextStringObject(title), NumberObject(pagenum), NameObject('/FitH'), NumberObject(826))
+        dest = Destination(
+            TextStringObject(title),
+            NumberObject(pagenum),
+            NameObject('/FitH'),
+            NumberObject(826),
+            strict=self.strict,
+        )
         self.named_dests.append(dest)
 
 

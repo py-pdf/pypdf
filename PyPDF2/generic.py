@@ -1076,7 +1076,7 @@ class Destination(TreeObject):
        * - /FitBV
          - [left]
     """
-    def __init__(self, title, page, typ, *args):
+    def __init__(self, title, page, typ, *args, strict=True):
         DictionaryObject.__init__(self)
         self[NameObject("/Title")] = title
         self[NameObject("/Page")] = page
@@ -1099,7 +1099,10 @@ class Destination(TreeObject):
         elif typ in [TF.FIT, TF.FIT_B]:
             pass
         else:
-            raise PdfReadError("Unknown Destination Type: %r" % typ)
+            if strict:
+                raise PdfReadError("Unknown Destination Type: %r" % typ)
+            else:
+                logger.warning("Unknown destination type: %r" % typ)
 
     def getDestArray(self):
         return ArrayObject([self.raw_get('/Page'), self['/Type']] + [self[x] for x in ['/Left', '/Bottom', '/Right', '/Top', '/Zoom'] if x in self])
