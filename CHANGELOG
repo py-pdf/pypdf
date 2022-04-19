@@ -1,3 +1,12 @@
+Version 1.27.7, 2022-04-19
+--------------------------
+
+Bug Fixes (BUG):
+- Import exceptions from PyPDF2.errors in PyPDF2.utils (#780)
+
+Code Style (STY):
+-  Naming in 'make_changelog.py'
+
 Version 1.27.6, 2022-04-18
 --------------------------
 
