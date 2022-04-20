@@ -1847,7 +1847,7 @@ class PdfFileReader(object):
         rebuildXrefTable = False
         try:
             stream.seek(startxref - 1,0) #-1 to check character before
-            line=stream.read(1) 
+            line=stream.read(1)
             if line not in b_("\r\n \t"):
                 raise UserWarning("incorrect startxref pointer(1)",line)
             line = stream.read(4)
@@ -1862,7 +1862,7 @@ class PdfFileReader(object):
                 if line.lower() != b_("obj"):
                     raise UserWarning("incorrect startxref pointer(3)")
                 while stream.read(1) in b_(" \t\r\n"):
-                    pass;  
+                    pass;
                 line=stream.read(256) # check that it is xref obj
                 if b_("/xref") not in line.lower():
                     raise UserWarning("incorrect startxref pointer(4)")
@@ -1872,7 +1872,7 @@ class PdfFileReader(object):
             if( not self.strict):
                 rebuildXrefTable = True
             else:
-                raise                     
+                raise
         # read all cross reference tables and their trailers
         self.xref = {}
         self.xref_objStm = {}
@@ -1957,20 +1957,19 @@ class PdfFileReader(object):
                 if "/Prev" in newTrailer:
                     startxref = newTrailer["/Prev"]
                 else:
-                    break               
+                    break
             elif rebuildXrefTable:
                 self.xref={}
-                p_ = stream.tell()
                 stream.seek(0,0)
                 f_ = stream.read(-1)
                 import re
-                for m in re.finditer(b_("[\r\n \t][ \t]*(\d+)[ \t]+(\d+)[ \t]+obj"),f_):
+                for m in re.finditer(b_(r"[\r\n \t][ \t]*(\d+)[ \t]+(\d+)[ \t]+obj"),f_):
                     idnum = int(m.group(1))
                     generation = int(m.group(2))
                     if generation not in self.xref:
                         self.xref[generation] = {}
                     self.xref[generation][idnum] = m.start(1)
-                trailerPos = f_.rfind(b"trailer") - len(f_) + 7                
+                trailerPos = f_.rfind(b"trailer") - len(f_) + 7
                 stream.seek(trailerPos,2)
                 #code below duplicated
                 readNonWhitespace(stream)
@@ -1982,7 +1981,7 @@ class PdfFileReader(object):
                 if "/Prev" in newTrailer:
                     startxref = newTrailer["/Prev"]
                 else:
-                    break                
+                    break
             elif x.isdigit():
                 # PDF 1.5+ Cross-Reference Stream
                 stream.seek(-1, 1)
