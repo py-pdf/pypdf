@@ -1843,6 +1843,36 @@ class PdfFileReader(object):
             if line[:9] != b_("startxref"):
                 raise PdfReadError("startxref not found")
 
+        #check and eventually correct the startxref only in not strict
+        rebuildXrefTable = False
+        try:
+            stream.seek(startxref - 1,0) #-1 to check character before
+            line=stream.read(1) 
+            if line not in b_("\r\n \t"):
+                raise UserWarning("incorrect startxref pointer(1)",line)
+            line = stream.read(4)
+            if line != b_("xref"):
+                #not an xref so check if it is an XREF object
+                line = b_("")
+                while line in b_("0123456789 \t"):
+                    line = stream.read(1)
+                    if line == b_(""):
+                        raise UserWarning("incorrect startxref pointer(2)")
+                line += stream.read(2)   #1 char already read, +2 to check "obj"
+                if line.lower() != b_("obj"):
+                    raise UserWarning("incorrect startxref pointer(3)")
+                while stream.read(1) in b_(" \t\r\n"):
+                    pass;  
+                line=stream.read(256) # check that it is xref obj
+                if b_("/xref") not in line.lower():
+                    raise UserWarning("incorrect startxref pointer(4)")
+        except UserWarning as e:
+            #import traceback;print(traceback.format_exc())
+            warnings.warn(str(e)+", need to rebuild xref table")
+            if( not self.strict):
+                rebuildXrefTable = True
+            else:
+                raise                     
         # read all cross reference tables and their trailers
         self.xref = {}
         self.xref_objStm = {}
@@ -1927,7 +1957,32 @@ class PdfFileReader(object):
                 if "/Prev" in newTrailer:
                     startxref = newTrailer["/Prev"]
                 else:
-                    break
+                    break               
+            elif rebuildXrefTable:
+                self.xref={}
+                p_ = stream.tell()
+                stream.seek(0,0)
+                f_ = stream.read(-1)
+                import re
+                for m in re.finditer(b_("[\r\n \t][ \t]*(\d+)[ \t]+(\d+)[ \t]+obj"),f_):
+                    idnum = int(m.group(1))
+                    generation = int(m.group(2))
+                    if generation not in self.xref:
+                        self.xref[generation] = {}
+                    self.xref[generation][idnum] = m.start(1)
+                trailerPos = f_.rfind(b"trailer") - len(f_) + 7                
+                stream.seek(trailerPos,2)
+                #code below duplicated
+                readNonWhitespace(stream)
+                stream.seek(-1, 1)
+                newTrailer = readObject(stream, self)
+                for key, value in list(newTrailer.items()):
+                    if key not in self.trailer:
+                        self.trailer[key] = value
+                if "/Prev" in newTrailer:
+                    startxref = newTrailer["/Prev"]
+                else:
+                    break                
             elif x.isdigit():
                 # PDF 1.5+ Cross-Reference Stream
                 stream.seek(-1, 1)

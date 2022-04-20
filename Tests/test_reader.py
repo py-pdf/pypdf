@@ -200,7 +200,7 @@ def test_get_images_raw(strict, with_prev_0, should_fail):
         pdf_data.find(b"4 0 obj"),
         pdf_data.find(b"5 0 obj"),
         b"/Prev 0 " if with_prev_0 else b"",
-        pdf_data.find(b"xref"),
+        pdf_data.find(b"xref") - 1, # -1 due to double % at the beginning
     )
     pdf_stream = io.BytesIO(pdf_data)
     if should_fail:
@@ -214,16 +214,11 @@ def test_get_images_raw(strict, with_prev_0, should_fail):
         PdfFileReader(pdf_stream, strict=strict)
 
 
-@pytest.mark.xfail(
-    reason=(
-        "It's still broken - and unclear what the issue is. "
-        "Help would be appreciated!"
-    )
-)
 def test_issue297():
     path = os.path.join(RESOURCE_ROOT, "issue-297.pdf")
-    reader = PdfFileReader(path, "rb")
-    reader.getPage(0)
+    with pytest.raises(UserWarning):
+        reader = PdfFileReader(path, "rb")
+        reader.getPage(0)
 
 
 def test_get_page_of_encrypted_file():
@@ -353,7 +348,7 @@ def test_read_prev_0_trailer():
         pdf_data.find(b"4 0 obj"),
         pdf_data.find(b"5 0 obj"),
         b"/Prev 0 " if with_prev_0 else b"",
-        pdf_data.find(b"xref"),
+        pdf_data.find(b"xref") - 1,
     )
     pdf_stream = io.BytesIO(pdf_data)
     with pytest.raises(PdfReadError) as exc:
@@ -388,7 +383,7 @@ def test_read_missing_startxref():
         pdf_data.find(b"3 0 obj"),
         pdf_data.find(b"4 0 obj"),
         pdf_data.find(b"5 0 obj"),
-        # pdf_data.find(b"xref"),
+        # pdf_data.find(b"xref") - 1,
     )
     pdf_stream = io.BytesIO(pdf_data)
     with pytest.raises(PdfReadError) as exc:
@@ -424,7 +419,7 @@ def test_read_unknown_zero_pages():
         pdf_data.find(b"3 0 obj"),
         pdf_data.find(b"4 0 obj"),
         pdf_data.find(b"5 0 obj"),
-        pdf_data.find(b"xref"),
+        pdf_data.find(b"xref") - 1,
     )
     pdf_stream = io.BytesIO(pdf_data)
     with pytest.raises(PdfReadError) as exc:
