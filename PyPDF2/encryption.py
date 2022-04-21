@@ -32,6 +32,7 @@ import random
 import struct
 import typing
 
+from PyPDF2.errors import DependencyError
 from PyPDF2.generic import *
 
 
@@ -94,8 +95,6 @@ try:
 
 except ImportError:
 
-    from PyPDF2._aes import AESECB, AESCBC
-
     class CryptRC4(CryptBase):
         def __init__(self, key: bytes) -> None:
             self.S = list(range(256))
@@ -121,19 +120,13 @@ except ImportError:
 
     class CryptAES(CryptBase):
         def __init__(self, key: bytes) -> None:
-            self.aes = AESCBC(key)
+            pass
 
         def encrypt(self, data: bytes) -> bytes:
-            iv = bytes(bytearray(random.randint(0, 255) for _ in range(16)))
-            p = 16 - len(data) % 16
-            data += bytes(bytearray(p for _ in range(p)))
-            return iv + self.aes.encrypt(iv, data)
+            raise DependencyError("PyCryptodome is required for AES algorithm")
 
         def decrypt(self, data: bytes) -> bytes:
-            iv = data[:16]
-            data = data[16:]
-            d = self.aes.decrypt(iv, data)
-            return d[:-d[-1]]
+            raise DependencyError("PyCryptodome is required for AES algorithm")
 
     def RC4_encrypt(key: bytes, data: bytes) -> bytes:
         return CryptRC4(key).encrypt(data)
@@ -142,16 +135,16 @@ except ImportError:
         return CryptRC4(key).decrypt(data)
 
     def AES_ECB_encrypt(key: bytes, data: bytes) -> bytes:
-        return AESECB(key).encrypt(data)
+        raise DependencyError("PyCryptodome is required for AES algorithm")
 
     def AES_ECB_decrypt(key: bytes, data: bytes) -> bytes:
-        return AESECB(key).decrypt(data)
+        raise DependencyError("PyCryptodome is required for AES algorithm")
 
     def AES_CBC_encrypt(key: bytes, iv: bytes, data: bytes) -> bytes:
-        return AESCBC(key).encrypt(iv, data)
+        raise DependencyError("PyCryptodome is required for AES algorithm")
 
     def AES_CBC_decrypt(key: bytes, iv: bytes, data: bytes) -> bytes:
-        return AESCBC(key).decrypt(iv, data)
+        raise DependencyError("PyCryptodome is required for AES algorithm")
 
 
 class CryptFilter:
@@ -517,7 +510,7 @@ class AlgR5:
         b8 = b'T' if metadata_encrypted else 'F'
         rr = bytes(random.randrange(0, 256) for _ in range(4))
         data = struct.pack("<I", p) + b"\xff\xff\xff\xff" + b8 + b"adb" + rr
-        perms = AESECB.encrypt(key, data)
+        perms = AES_ECB_encrypt(key, data)
         return perms
 
 

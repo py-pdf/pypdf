@@ -60,7 +60,7 @@ from PyPDF2.constants import PagesAttributes as PA
 from PyPDF2.constants import Ressources as RES
 from PyPDF2.constants import StreamAttributes as SA
 from PyPDF2.constants import TrailerKeys as TK
-from PyPDF2.errors import PageSizeNotDefinedError, PdfReadError, PdfReadWarning
+from PyPDF2.errors import DependencyError, PageSizeNotDefinedError, PdfReadError, PdfReadWarning
 
 from . import utils
 from .generic import *
@@ -1270,6 +1270,9 @@ class PdfFileReader(object):
                 self._override_encryption = True
                 self.decrypt('')
                 return self.trailer[TK.ROOT]["/Pages"]["/Count"]
+            except DependencyError as e:
+                # make dependency error clear to users
+                raise e
             except Exception:
                 raise PdfReadError("File has not been decrypted")
             finally:

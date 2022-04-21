@@ -4,3 +4,4 @@ flake8_implicit_str_concat
 flake8-bugbear
 pillow
 pytest
+pycryptodome  # to provide AES for test_encryption.py
