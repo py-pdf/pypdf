@@ -1,3 +1,80 @@
+Version 1.27.8, 2022-04-21
+--------------------------
+
+Bug Fixes (BUG):
+-  Use 1MB as offset for readNextEndLine (#321)
+-  'PdfFileWriter' object has no attribute 'stream' (#787)
+
+Robustness (ROB):
+-  Invalid float object; use 0 as fallback (#782)
+
+Documentation (DOC):
+-  Robustness (#785)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.27.7...1.27.8
+
+Version 1.27.7, 2022-04-19
+--------------------------
+
+Bug Fixes (BUG):
+- Import exceptions from PyPDF2.errors in PyPDF2.utils (#780)
+
+Code Style (STY):
+-  Naming in 'make_changelog.py'
+
+Version 1.27.6, 2022-04-18
+--------------------------
+
+Deprecations (DEP):
+-  Remove support for Python 2.6 and older (#776)
+
+New Features (ENH):
+-  Extract document permissions (#320)
+
+Bug Fixes (BUG):
+-  Clip by trimBox when merging pages, which would otherwise be ignored (#240)
+-  Add overwriteWarnings parameter PdfFileMerger (#243)
+-  IndexError for getPage() of decryped file (#359)
+-  Handle cases where decodeParms is an ArrayObject (#405)
+-  Updated PDF fields don't show up when page is written (#412)
+-  Set Linked Form Value (#414)
+-  Fix zlib -5 error for corrupt files (#603)
+-  Fix reading more than last1K for EOF (#642)
+-  Acciental import
+
+Robustness (ROB):
+-  Allow extra whitespace before "obj" in readObjectHeader (#567)
+
+Documentation (DOC):
+-  Link to pdftoc in Sample_Code (#628)
+-  Working with annotations (#764)
+-  Structure history
+
+Developer Experience (DEV):
+-  Add issue templates (#765)
+-  Add tool to generate changelog
+
+Maintenance (MAINT):
+-  Use grouped constants instead of string literals (#745)
+-  Add error module (#768)
+-  Use decorators for @staticmethod (#775)
+-  Split long functions (#777)
+
+Testing (TST):
+-  Run tests in CI once with -OO Flags (#770)
+-  Filling out forms (#771)
+-  Add tests for Writer (#772)
+-  Error cases (#773)
+-  Check Error messages (#769)
+-  Regression test for issue #88
+-  Regression test for issue #327
+
+Code Style (STY):
+-  Make variable naming more consistent in tests
+
+
+All changes: https://github.com/py-pdf/PyPDF2/compare/1.27.5...1.27.6
+
 Version 1.27.5, 2022-04-15
 --------------------------
 

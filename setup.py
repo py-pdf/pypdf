@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-from setuptools import setup
 import re
 
+from setuptools import setup
 
 VERSIONFILE = "PyPDF2/_version.py"
 with open(VERSIONFILE, "rt") as fp:
