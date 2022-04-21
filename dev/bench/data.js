@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1650372089203,
+  "lastUpdate": 1650558000105,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -61,6 +61,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004297642398638799",
             "extra": "mean: 97.49765827272809 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f0f1fa3641cf1cda96e1bb1a655493617df5281c",
+          "message": "DEV: Add Benchmark for Performance Testing (#781)\n\nWe want to track performance over time only for what actually\r\nis in main.\r\n\r\nCloses #761",
+          "timestamp": "2022-04-21T18:19:24+02:00",
+          "tree_id": "1eaf5ea1f69a7068b51ebe29334edb8c75efe091",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/f0f1fa3641cf1cda96e1bb1a655493617df5281c"
+        },
+        "date": 1650557998642,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 1.0526627229158771,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0067697065658216754",
+            "extra": "mean: 949.9718934000043 msec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 11.38381983307977,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004719622305106786",
+            "extra": "mean: 87.84397633333423 msec\nrounds: 12"
           }
         ]
       }
