@@ -1,6 +1,15 @@
-import pytest
-import PyPDF2.utils
 import io
+import os
+
+import pytest
+
+import PyPDF2.utils
+from PyPDF2 import PdfFileReader
+from PyPDF2.errors import PdfStreamError
+
+TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
+PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
+RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
 
 
 @pytest.mark.parametrize(
@@ -8,6 +17,10 @@ import io
 )
 def test_isInt(value, expected):
     assert PyPDF2.utils.isInt(value) == expected
+
+
+def test_isBytes():
+    assert PyPDF2.utils.isBytes(b"")
 
 
 @pytest.mark.parametrize(
@@ -47,8 +60,9 @@ def test_readUntilRegex_premature_ending_raise():
     import re
 
     stream = io.BytesIO(b"")
-    with pytest.raises(PyPDF2.utils.PdfStreamError):
+    with pytest.raises(PdfStreamError) as exc:
         PyPDF2.utils.readUntilRegex(stream, re.compile(b"."))
+    assert exc.value.args[0] == "Stream has ended unexpectedly"
 
 
 def test_readUntilRegex_premature_ending_name():
@@ -73,3 +87,16 @@ def test_matrixMultiply(a, b, expected):
 def test_markLocation():
     stream = io.BytesIO(b"abde" * 6000)
     PyPDF2.utils.markLocation(stream)
+    os.remove("PyPDF2_pdfLocation.txt")  # cleanup
+
+
+def test_ConvertFunctionsToVirtualList():
+    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    reader = PdfFileReader(pdf_path)
+
+    # Test if getting as slice throws an error
+    assert len(reader.pages[:]) == 1
+
+
+def test_hexStr():
+    assert PyPDF2.utils.hexStr(10) == "0xa"

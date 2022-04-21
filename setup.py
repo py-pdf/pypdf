@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
-from setuptools import setup
 import re
 
+from setuptools import setup
 
 VERSIONFILE = "PyPDF2/_version.py"
-verstrline = open(VERSIONFILE, "rt").read()
+with open(VERSIONFILE, "rt") as fp:
+    verstrline = fp.read()
 VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
 mo = re.search(VSRE, verstrline, re.M)
 if mo:
