@@ -76,13 +76,7 @@ from .utils import (
     u_,
 )
 
-if version_info < ( 2, 4 ):
-   from sets import ImmutableSet as frozenset
-
-if version_info < ( 2, 5 ):
-    from md5 import md5
-else:
-    from hashlib import md5
+from hashlib import md5
 
 
 class PdfFileWriter(object):
@@ -488,7 +482,6 @@ class PdfFileWriter(object):
         if hasattr(stream, 'mode') and 'b' not in stream.mode:
             warnings.warn("File <%s> to write to is not in binary mode. It may not be written to correctly." % stream.name)
         debug = False
-        import struct
 
         if not self._root:
             self._root = self._addObject(self._root_object)
@@ -518,7 +511,12 @@ class PdfFileWriter(object):
         self._sweepIndirectReferences(externalReferenceMap, self._root)
         del self.stack
 
-        # Begin writing:
+        object_positions = self._write_header(stream)
+        xref_location = self._write_xref_table(stream, object_positions)
+        self._write_trailer(stream)
+        stream.write(b_("\nstartxref\n%s\n%%%%EOF\n" % (xref_location)))  # eof
+
+    def _write_header(self, stream):
         object_positions = []
         stream.write(self._header + b_("\n"))
         stream.write(b_("%\xE2\xE3\xCF\xD3\n"))
@@ -539,16 +537,18 @@ class PdfFileWriter(object):
                     key = md5_hash[:min(16, len(self._encrypt_key) + 5)]
                 obj.writeToStream(stream, key)
                 stream.write(b_("\nendobj\n"))
+        return object_positions
 
-        # xref table
+    def _write_xref_table(self, stream, object_positions):
         xref_location = stream.tell()
         stream.write(b_("xref\n"))
         stream.write(b_("0 %s\n" % (len(self._objects) + 1)))
         stream.write(b_("%010d %05d f \n" % (0, 65535)))
         for offset in object_positions:
             stream.write(b_("%010d %05d n \n" % (offset, 0)))
+        return xref_location
 
-        # trailer
+    def _write_trailer(self, stream):
         stream.write(b_("trailer\n"))
         trailer = DictionaryObject()
         trailer.update({
@@ -561,9 +561,6 @@ class PdfFileWriter(object):
         if hasattr(self, "_encrypt"):
             trailer[NameObject(TK.ENCRYPT)] = self._encrypt
         trailer.writeToStream(stream, None)
-
-        # eof
-        stream.write(b_("\nstartxref\n%s\n%%%%EOF\n" % (xref_location)))
 
     def addMetadata(self, infos):
         """
@@ -609,7 +606,7 @@ class PdfFileWriter(object):
                     self._sweepIndirectReferences(externMap, realdata)
                     return data
             else:
-                if data.pdf.stream.closed:
+                if hasattr(data.pdf, "stream") and data.pdf.stream.closed:
                     raise ValueError("I/O operation on closed file: {}".format(data.pdf.stream.name))
                 newobj = externMap.get(data.pdf, {}).get(data.generation, {}).get(data.idnum, None)
                 if newobj is None:
@@ -1405,10 +1402,10 @@ class PdfFileReader(object):
         '''
         # Retrieve document form fields
         formfields = self.getFields()
-        return dict(
-            (formfields[field]['/T'], formfields[field].get('/V')) for field in formfields \
+        return {
+            formfields[field]['/T']: formfields[field].get('/V') for field in formfields \
                 if formfields[field].get('/FT') == '/Tx'
-        )
+        }
 
     def getNamedDestinations(self, tree=None, retval=None):
         """
@@ -1626,7 +1623,7 @@ class PdfFileReader(object):
             NameObject(PG.CROPBOX), NameObject(PG.ROTATE)
             )
         if inherit is None:
-            inherit = dict()
+            inherit = {}
         if pages is None:
             # Fix issue 327: set flattenedPages attribute only for
             # decrypted file
@@ -1694,7 +1691,7 @@ class PdfFileReader(object):
                 streamData.seek(pos, 0)
             try:
                 obj = readObject(streamData, self)
-            except utils.PdfStreamError as e:
+            except PdfStreamError as e:
                 # Stream object cannot be read. Normally, a critical error, but
                 # Adobe Reader doesn't complain, so continue (in strict mode?)
                 e = sys.exc_info()[1]
@@ -1713,8 +1710,7 @@ class PdfFileReader(object):
     def getObject(self, indirectReference):
         debug = False
         if debug: print(("looking at:", indirectReference.idnum, indirectReference.generation))
-        retval = self.cacheGetIndirectObject(indirectReference.generation,
-                                                indirectReference.idnum)
+        retval = self.cacheGetIndirectObject(indirectReference.generation, indirectReference.idnum)
         if retval is not None:
             return retval
         if indirectReference.generation == 0 and \
@@ -1729,13 +1725,15 @@ class PdfFileReader(object):
             if idnum != indirectReference.idnum and self.xrefIndex:
                 # Xref table probably had bad indexes due to not being zero-indexed
                 if self.strict:
-                    raise PdfReadError("Expected object ID (%d %d) does not match actual (%d %d); xref table not zero-indexed." \
-                                     % (indirectReference.idnum, indirectReference.generation, idnum, generation))
+                    raise PdfReadError(
+                        "Expected object ID (%d %d) does not match actual (%d %d); xref table not zero-indexed." \
+                        % (indirectReference.idnum, indirectReference.generation, idnum, generation))
                 else: pass # xref table is corrected in non-strict mode
             elif idnum != indirectReference.idnum and self.strict:
                 # some other problem
-                raise PdfReadError("Expected object ID (%d %d) does not match actual (%d %d)." \
-                                         % (indirectReference.idnum, indirectReference.generation, idnum, generation))
+                raise PdfReadError(
+                    "Expected object ID (%d %d) does not match actual (%d %d)." \
+                    % (indirectReference.idnum, indirectReference.generation, idnum, generation))
             if self.strict:
                 assert generation == indirectReference.generation
             retval = readObject(self.stream, self)
@@ -1746,7 +1744,6 @@ class PdfFileReader(object):
                 if not hasattr(self, '_decryption_key'):
                     raise PdfReadError("file has not been decrypted")
                 # otherwise, decrypt here...
-                import struct
                 pack1 = struct.pack("<i", indirectReference.idnum)[:3]
                 pack2 = struct.pack("<i", indirectReference.generation)[:2]
                 key = self._decryption_key + pack1 + pack2
@@ -1823,12 +1820,12 @@ class PdfFileReader(object):
         stream.seek(-1, 2)
         if not stream.tell():
             raise PdfReadError('Cannot read an empty file')
-        last1K = stream.tell() - 1024 + 1 # offset of last 1024 bytes of stream
+        last1M = stream.tell() - 1024 * 1024 + 1 # offset of last MB of stream
         line = b_('')
         while line[:5] != b_("%%EOF"):
-            if stream.tell() < last1K:
+            if stream.tell() < last1M:
                 raise PdfReadError("EOF marker not found")
-            line = self.readNextEndLine(stream, last1K)
+            line = self.readNextEndLine(stream)
             if debug: print("  line:",line)
 
         # find startxref entry - the location of the xref table
@@ -1966,41 +1963,7 @@ class PdfFileReader(object):
                             num in self.xref_objStm
 
                 # Iterate through each subsection
-                last_end = 0
-                for start, size in self._pairs(idx_pairs):
-                    # The subsections must increase
-                    assert start >= last_end
-                    last_end = start + size
-                    for num in range(start, start+size):
-                        # The first entry is the type
-                        xref_type = getEntry(0)
-                        # The rest of the elements depend on the xref_type
-                        if xref_type == 0:
-                            # linked list of free objects
-                            next_free_object = getEntry(1)  # noqa: F841
-                            next_generation = getEntry(2)  # noqa: F841
-                        elif xref_type == 1:
-                            # objects that are in use but are not compressed
-                            byte_offset = getEntry(1)
-                            generation = getEntry(2)
-                            if generation not in self.xref:
-                                self.xref[generation] = {}
-                            if not used_before(num, generation):
-                                self.xref[generation][num] = byte_offset
-                                if debug: print(("XREF Uncompressed: %s %s"%(
-                                                num, generation)))
-                        elif xref_type == 2:
-                            # compressed objects
-                            objstr_num = getEntry(1)
-                            obstr_idx = getEntry(2)
-                            generation = 0 # PDF spec table 18, generation is 0
-                            if not used_before(num, generation):
-                                if debug: print(("XREF Compressed: %s %s %s"%(
-                                        num, objstr_num, obstr_idx)))
-                                self.xref_objStm[num] = (objstr_num, obstr_idx)
-                        elif self.strict:
-                            raise PdfReadError("Unknown xref type: %s"%
-                                                        xref_type)
+                self._read_xref_subsections(idx_pairs, getEntry, used_before)
 
                 trailerKeys = TK.ROOT, TK.ENCRYPT, TK.INFO, TK.ID
                 for key in trailerKeys:
@@ -2014,11 +1977,14 @@ class PdfFileReader(object):
                 # some PDFs have /Prev=0 in the trailer, instead of no /Prev
                 if startxref == 0:
                     if self.strict:
-                        raise PdfReadError("/Prev=0 in the trailer (try"
-                                                 " opening with strict=False)")
+                        raise PdfReadError(
+                            "/Prev=0 in the trailer (try"
+                            " opening with strict=False)")
                     else:
-                        warnings.warn("/Prev=0 in the trailer - assuming there"
-                                      " is no previous xref table")
+                        warnings.warn(
+                            "/Prev=0 in the trailer - assuming there"
+                            " is no previous xref table"
+                        )
                         break
                 # bad xref character at startxref.  Let's see if we can find
                 # the xref table nearby, as we've observed this error with an
@@ -2059,8 +2025,40 @@ class PdfFileReader(object):
                     # if not, then either it's just plain wrong, or the non-zero-index is actually correct
             stream.seek(loc, 0) # return to where it was
 
+    def _read_xref_subsections(self, idx_pairs, getEntry, used_before):
+        last_end = 0
+        for start, size in self._pairs(idx_pairs):
+            # The subsections must increase
+            assert start >= last_end
+            last_end = start + size
+            for num in range(start, start+size):
+                # The first entry is the type
+                xref_type = getEntry(0)
+                # The rest of the elements depend on the xref_type
+                if xref_type == 0:
+                    # linked list of free objects
+                    next_free_object = getEntry(1)  # noqa: F841
+                    next_generation = getEntry(2)  # noqa: F841
+                elif xref_type == 1:
+                    # objects that are in use but are not compressed
+                    byte_offset = getEntry(1)
+                    generation = getEntry(2)
+                    if generation not in self.xref:
+                        self.xref[generation] = {}
+                    if not used_before(num, generation):
+                        self.xref[generation][num] = byte_offset
+                elif xref_type == 2:
+                    # compressed objects
+                    objstr_num = getEntry(1)
+                    obstr_idx = getEntry(2)
+                    generation = 0 # PDF spec table 18, generation is 0
+                    if not used_before(num, generation):
+                        self.xref_objStm[num] = (objstr_num, obstr_idx)
+                elif self.strict:
+                    raise PdfReadError("Unknown xref type: %s"% xref_type)
+
     def _zeroXref(self, generation):
-        self.xref[generation] = dict( (k-self.xrefIndex, v) for (k, v) in list(self.xref[generation].items()) )
+        self.xref[generation] = {k-self.xrefIndex: v for (k, v) in list(self.xref[generation].items())}
 
     def _pairs(self, array):
         i = 0
@@ -2273,6 +2271,7 @@ class PageObject(DictionaryObject):
         self.pdf = pdf
         self.indirectRef = indirectRef
 
+    @staticmethod
     def createBlankPage(pdf=None, width=None, height=None):
         """
         Returns a new blank page.
@@ -2306,7 +2305,6 @@ class PageObject(DictionaryObject):
             RectangleObject([0, 0, width, height]))
 
         return page
-    createBlankPage = staticmethod(createBlankPage)  # type: ignore
 
     def rotateClockwise(self, angle):
         """
@@ -2337,6 +2335,7 @@ class PageObject(DictionaryObject):
         currentAngle = rotateObj if isinstance(rotateObj, int) else rotateObj.getObject()
         self[NameObject("/Rotate")] = NumberObject(currentAngle + angle)
 
+    @staticmethod
     def _mergeResources(res1, res2, resource):
         newRes = DictionaryObject()
         newRes.update(res1.get(resource, DictionaryObject()).getObject())
@@ -2350,8 +2349,8 @@ class PageObject(DictionaryObject):
             elif key not in newRes:
                 newRes[key] = page2Res.raw_get(key)
         return newRes, renameRes
-    _mergeResources = staticmethod(_mergeResources)  # type: ignore
 
+    @staticmethod
     def _contentStreamRename(stream, rename, pdf):
         if not rename:
             return stream
@@ -2370,8 +2369,8 @@ class PageObject(DictionaryObject):
             else:
                 raise KeyError ("type of operands is %s" % type (operands))
         return stream
-    _contentStreamRename = staticmethod(_contentStreamRename)  # type: ignore
 
+    @staticmethod
     def _pushPopGS(contents, pdf):
         # adds a graphics state "push" and "pop" to the beginning and end
         # of a content stream.  This isolates it from changes such as
@@ -2380,8 +2379,8 @@ class PageObject(DictionaryObject):
         stream.operations.insert(0, [[], "q"])
         stream.operations.append([[], "Q"])
         return stream
-    _pushPopGS = staticmethod(_pushPopGS)  # type: ignore
 
+    @staticmethod
     def _addTransformationMatrix(contents, pdf, ctm):
         # adds transformation matrix at the beginning of the given
         # contents stream.
@@ -2391,7 +2390,6 @@ class PageObject(DictionaryObject):
             FloatObject(c), FloatObject(d), FloatObject(e),
             FloatObject(f)], " cm"])
         return contents
-    _addTransformationMatrix = staticmethod(_addTransformationMatrix)  # type: ignore
 
     def getContents(self):
         """
@@ -2523,9 +2521,11 @@ class PageObject(DictionaryObject):
             dimensions of the page to be merged.
         """
         # CTM to scale : [ sx 0 0 sy 0 0 ]
-        return self.mergeTransformedPage(page2, [scale, 0,
-                                                 0,      scale,
-                                                 0,      0], expand)
+        return self.mergeTransformedPage(
+            page2,
+            [scale, 0, 0, scale, 0, 0],
+            expand
+        )
 
     def mergeRotatedPage(self, page2, rotation, expand=False):
         """
@@ -2556,9 +2556,11 @@ class PageObject(DictionaryObject):
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
-        return self.mergeTransformedPage(page2, [1,  0,
-                                                 0,  1,
-                                                 tx, ty], expand)
+        return self.mergeTransformedPage(
+            page2,
+            [1, 0, 0, 1, tx, ty],
+            expand
+        )
 
     def mergeRotatedTranslatedPage(self, page2, rotation, tx, ty, expand=False):
         """
@@ -2587,9 +2589,11 @@ class PageObject(DictionaryObject):
         ctm = utils.matrixMultiply(translation, rotating)
         ctm = utils.matrixMultiply(ctm, rtranslation)
 
-        return self.mergeTransformedPage(page2, [ctm[0][0], ctm[0][1],
-                                                 ctm[1][0], ctm[1][1],
-                                                 ctm[2][0], ctm[2][1]], expand)
+        return self.mergeTransformedPage(
+            page2,
+            [ctm[0][0], ctm[0][1], ctm[1][0], ctm[1][1], ctm[2][0], ctm[2][1]],
+            expand
+        )
 
     def mergeRotatedScaledPage(self, page2, rotation, scale, expand=False):
         """
@@ -2612,10 +2616,11 @@ class PageObject(DictionaryObject):
                    [0,    0,    1]]
         ctm = utils.matrixMultiply(rotating, scaling)
 
-        return self.mergeTransformedPage(page2,
-                                         [ctm[0][0], ctm[0][1],
-                                          ctm[1][0], ctm[1][1],
-                                          ctm[2][0], ctm[2][1]], expand)
+        return self.mergeTransformedPage(
+            page2,
+            [ctm[0][0], ctm[0][1], ctm[1][0], ctm[1][1], ctm[2][0], ctm[2][1]],
+            expand
+        )
 
     def mergeScaledTranslatedPage(self, page2, scale, tx, ty, expand=False):
         """
@@ -2639,9 +2644,11 @@ class PageObject(DictionaryObject):
                    [0,    0,    1]]
         ctm = utils.matrixMultiply(scaling, translation)
 
-        return self.mergeTransformedPage(page2, [ctm[0][0], ctm[0][1],
-                                                 ctm[1][0], ctm[1][1],
-                                                 ctm[2][0], ctm[2][1]], expand)
+        return self.mergeTransformedPage(
+            page2,
+            [ctm[0][0], ctm[0][1], ctm[1][0], ctm[1][1], ctm[2][0], ctm[2][1]],
+            expand
+        )
 
     def mergeRotatedScaledTranslatedPage(self, page2, rotation, scale, tx, ty, expand=False):
         """
@@ -2670,9 +2677,11 @@ class PageObject(DictionaryObject):
         ctm = utils.matrixMultiply(rotating, scaling)
         ctm = utils.matrixMultiply(ctm, translation)
 
-        return self.mergeTransformedPage(page2, [ctm[0][0], ctm[0][1],
-                                                 ctm[1][0], ctm[1][1],
-                                                 ctm[2][0], ctm[2][1]], expand)
+        return self.mergeTransformedPage(
+            page2,
+            [ctm[0][0], ctm[0][1], ctm[1][0], ctm[1][1], ctm[2][0], ctm[2][1]],
+            expand
+        )
 
     def addTransformation(self, ctm):
         """
@@ -3060,7 +3069,6 @@ def _alg32(password, rev, keylen, owner_entry, p_entry, id1_entry, metadata_encr
     password = b_((str_(password) + str_(_encryption_padding))[:32])
     # 2. Initialize the MD5 hash function and pass the result of step 1 as
     # input to this function.
-    import struct
     m = md5(password)
     # 3. Pass the value of the encryption dictionary's /O entry to the MD5 hash
     # function.

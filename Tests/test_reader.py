@@ -16,6 +16,15 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
 
 
 @pytest.mark.parametrize(
+    "src,num_pages", [("selenium-PyPDF2-issue-177.pdf", 1), ("pdflatex-outline.pdf", 4)]
+)
+def test_get_num_pages(src, num_pages):
+    src = os.path.join(RESOURCE_ROOT, src)
+    reader = PdfFileReader(src)
+    assert reader.getNumPages() == num_pages
+
+
+@pytest.mark.parametrize(
     "pdf_path, expected",
     [
         (

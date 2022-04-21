@@ -36,6 +36,9 @@ import sys
 
 from PyPDF2.errors import STREAM_TRUNCATED_PREMATURELY, PdfStreamError
 
+# See https://github.com/py-pdf/PyPDF2/issues/779
+from PyPDF2.errors import PyPdfError, PdfReadError, PageSizeNotDefinedError, PdfReadWarning  # noqa
+
 try:
     import builtins
     from typing import Dict
@@ -171,7 +174,7 @@ class ConvertFunctionsToVirtualList(object):
 
 
 def RC4_encrypt(key, plaintext):
-    S = [i for i in range(256)]
+    S = list(range(256))
     j = 0
     for i in range(256):
         j = (j + S[i] + ord_(key[i % len(key)])) % 256

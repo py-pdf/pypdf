@@ -125,6 +125,7 @@ except ImportError:
 
 
 class FlateDecode(object):
+    @staticmethod
     def decode(data, decodeParms):
         data = decompress(data)
         predictor = 1
@@ -144,52 +145,56 @@ class FlateDecode(object):
             columns = decodeParms[LZW.COLUMNS]
             # PNG prediction:
             if predictor >= 10 and predictor <= 15:
-                output = StringIO()
-                # PNG prediction can vary from row to row
-                rowlength = columns + 1
-                assert len(data) % rowlength == 0
-                prev_rowdata = (0,) * rowlength
-                for row in range(len(data) // rowlength):
-                    rowdata = [ord_(x) for x in data[(row*rowlength):((row+1)*rowlength)]]
-                    filterByte = rowdata[0]
-                    if filterByte == 0:
-                        pass
-                    elif filterByte == 1:
-                        for i in range(2, rowlength):
-                            rowdata[i] = (rowdata[i] + rowdata[i-1]) % 256
-                    elif filterByte == 2:
-                        for i in range(1, rowlength):
-                            rowdata[i] = (rowdata[i] + prev_rowdata[i]) % 256
-                    elif filterByte == 3:
-                        for i in range(1, rowlength):
-                            left = rowdata[i-1] if i > 1 else 0
-                            floor = math.floor(left + prev_rowdata[i])/2
-                            rowdata[i] = (rowdata[i] + int(floor)) % 256
-                    elif filterByte == 4:
-                        for i in range(1, rowlength):
-                            left = rowdata[i - 1] if i > 1 else 0
-                            up = prev_rowdata[i]
-                            up_left = prev_rowdata[i - 1] if i > 1 else 0
-                            paeth = paethPredictor(left, up, up_left)
-                            rowdata[i] = (rowdata[i] + paeth) % 256
-                    else:
-                        # unsupported PNG filter
-                        raise PdfReadError("Unsupported PNG filter %r" % filterByte)
-                    prev_rowdata = rowdata
-                    output.write(''.join([chr(x) for x in rowdata[1:]]))
-                data = output.getvalue()
+                data = FlateDecode._decode_png_prediction(data, columns)
             else:
                 # unsupported predictor
                 raise PdfReadError("Unsupported flatedecode predictor %r" % predictor)
         return data
-    decode = staticmethod(decode)  # type: ignore
 
+    @staticmethod
+    def _decode_png_prediction(data, columns):
+        output = StringIO()
+        # PNG prediction can vary from row to row
+        rowlength = columns + 1
+        assert len(data) % rowlength == 0
+        prev_rowdata = (0,) * rowlength
+        for row in range(len(data) // rowlength):
+            rowdata = [ord_(x) for x in data[(row*rowlength):((row+1)*rowlength)]]
+            filterByte = rowdata[0]
+            if filterByte == 0:
+                pass
+            elif filterByte == 1:
+                for i in range(2, rowlength):
+                    rowdata[i] = (rowdata[i] + rowdata[i-1]) % 256
+            elif filterByte == 2:
+                for i in range(1, rowlength):
+                    rowdata[i] = (rowdata[i] + prev_rowdata[i]) % 256
+            elif filterByte == 3:
+                for i in range(1, rowlength):
+                    left = rowdata[i-1] if i > 1 else 0
+                    floor = math.floor(left + prev_rowdata[i])/2
+                    rowdata[i] = (rowdata[i] + int(floor)) % 256
+            elif filterByte == 4:
+                for i in range(1, rowlength):
+                    left = rowdata[i - 1] if i > 1 else 0
+                    up = prev_rowdata[i]
+                    up_left = prev_rowdata[i - 1] if i > 1 else 0
+                    paeth = paethPredictor(left, up, up_left)
+                    rowdata[i] = (rowdata[i] + paeth) % 256
+            else:
+                # unsupported PNG filter
+                raise PdfReadError("Unsupported PNG filter %r" % filterByte)
+            prev_rowdata = rowdata
+            output.write(''.join([chr(x) for x in rowdata[1:]]))
+        return output.getvalue()
+
+    @staticmethod
     def encode(data):
         return compress(data)
-    encode = staticmethod(encode)  # type: ignore
 
 
 class ASCIIHexDecode(object):
+    @staticmethod
     def decode(data, decodeParms=None):
         retval = ""
         char = ""
@@ -208,7 +213,6 @@ class ASCIIHexDecode(object):
             x += 1
         assert char == ""
         return retval
-    decode = staticmethod(decode)  # type: ignore
 
 
 class LZWDecode(object):
@@ -291,6 +295,7 @@ class LZWDecode(object):
 
 
 class ASCII85Decode(object):
+    @staticmethod
     def decode(data, decodeParms=None):
         if version_info < ( 3, 0 ):
             retval = ""
@@ -364,19 +369,19 @@ class ASCII85Decode(object):
                         out += struct.pack(b'>L',b)[:n-1]
                     break
             return bytes(out)
-    decode = staticmethod(decode)  # type: ignore
 
 class DCTDecode(object):
+    @staticmethod
     def decode(data, decodeParms=None):
         return data
-    decode = staticmethod(decode)  # type: ignore
 
 class JPXDecode(object):
+    @staticmethod
     def decode(data, decodeParms=None):
         return data
-    decode = staticmethod(decode)  # type: ignore
 
 class CCITTFaxDecode(object):
+    @staticmethod
     def decode(data, decodeParms=None, height=0):
         k = 1
         width = 0
@@ -416,7 +421,6 @@ class CCITTFaxDecode(object):
 
         return tiffHeader + data
 
-    decode = staticmethod(decode)  # type: ignore
 
 def decodeStreamData(stream):
     from .generic import NameObject
