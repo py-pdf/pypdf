@@ -610,7 +610,7 @@ class PdfFileWriter(object):
                     self._sweepIndirectReferences(externMap, realdata)
                     return data
             else:
-                if data.pdf.stream.closed:
+                if hasattr(data.pdf, "stream") and data.pdf.stream.closed:
                     raise ValueError("I/O operation on closed file: {}".format(data.pdf.stream.name))
                 newobj = externMap.get(data.pdf, {}).get(data.generation, {}).get(data.idnum, None)
                 if newobj is None:
@@ -1857,12 +1857,12 @@ class PdfFileReader(object):
         stream.seek(-1, 2)
         if not stream.tell():
             raise PdfReadError('Cannot read an empty file')
-        last1K = stream.tell() - 1024 + 1 # offset of last 1024 bytes of stream
+        last1M = stream.tell() - 1024 * 1024 + 1 # offset of last MB of stream
         line = b_('')
         while line[:5] != b_("%%EOF"):
-            if stream.tell() < last1K:
+            if stream.tell() < last1M:
                 raise PdfReadError("EOF marker not found")
-            line = self.readNextEndLine(stream, last1K)
+            line = self.readNextEndLine(stream)
             if debug: print("  line:",line)
 
         # find startxref entry - the location of the xref table
