@@ -4,6 +4,9 @@ maint:
 	pip-compile -U requirements/dev.in
 	pip-compile -U requirements/docs.in
 
+changelog:
+	python make_changelog.py
+
 upload:
 	make clean
 	python setup.py sdist bdist_wheel && twine upload -s dist/*

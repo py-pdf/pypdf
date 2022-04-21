@@ -340,3 +340,13 @@ def test_io_streams():
     writer = PdfFileWriter()
     with BytesIO() as output_stream:
         writer.write(output_stream)
+
+
+def test_regression_issue670():
+    filepath = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    reader = PdfFileReader(filepath, strict=False, overwriteWarnings=False)
+    for _ in range(2):
+        pdf_writer = PdfFileWriter()
+        pdf_writer.addPage(reader.getPage(0))
+        with open("dont_commit_issue670.pdf", "wb") as f_pdf:
+            pdf_writer.write(f_pdf)
