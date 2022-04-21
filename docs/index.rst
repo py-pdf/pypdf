@@ -47,6 +47,11 @@ You can contribute to `PyPDF2 on Github <https://github.com/py-pdf/PyPDF2>`_.
    modules/Field
    modules/PageRange
 
+.. toctree::
+   :caption: PyPDF Developers
+   :maxdepth: 1
+
+   dev/intro
 
 .. toctree::
    :caption: About PyPDF2
