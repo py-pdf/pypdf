@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1650558000105,
+  "lastUpdate": 1650607837980,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -99,6 +99,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004719622305106786",
             "extra": "mean: 87.84397633333423 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "668869f17988284e260c30b39c47eb26e033df54",
+          "message": "DOC: Add compression example (#792)",
+          "timestamp": "2022-04-22T08:10:05+02:00",
+          "tree_id": "50ce3e1e74b68984df1ee6d33fddab8e41c6054a",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/668869f17988284e260c30b39c47eb26e033df54"
+        },
+        "date": 1650607837510,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.9530085273748775,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012098282851842536",
+            "extra": "mean: 1.049308554199996 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 10.434029435085847,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0046057474193716705",
+            "extra": "mean: 95.84025099999849 msec\nrounds: 11"
           }
         ]
       }
