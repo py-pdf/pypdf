@@ -63,4 +63,9 @@ a large community behind it.
 And there are more:
 
 
-* [`pyfpdf`](https://github.com/reingart/pyfpdf)
+* [`pdfplumber`](https://pypi.org/project/pdfplumber/)
+
+## Document Generation
+
+There are (Python) [tools to generate PDF documents](https://github.com/py-pdf/awesome-pdf#generators).
+PyPDF2 is not one of them.
