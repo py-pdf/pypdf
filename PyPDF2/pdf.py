@@ -1654,7 +1654,7 @@ class PdfFileReader(object):
             pageObj.update(pages)
             self.flattenedPages.append(pageObj)
 
-    def _getObjectFromStream(self, indirectReference):
+    def _getObjectFromStream(self, indirectReference, strict=True):
         # indirect reference to object in object stream
         # read the entire object stream into memory
         debug = False
@@ -1670,10 +1670,10 @@ class PdfFileReader(object):
         for i in range(objStm['/N']):
             readNonWhitespace(streamData)
             streamData.seek(-1, 1)
-            objnum = NumberObject.readFromStream(streamData)
+            objnum = NumberObject.readFromStream(streamData, strict=self.strict)
             readNonWhitespace(streamData)
             streamData.seek(-1, 1)
-            offset = NumberObject.readFromStream(streamData)
+            offset = NumberObject.readFromStream(streamData, strict=self.strict)
             readNonWhitespace(streamData)
             streamData.seek(-1, 1)
             if objnum != indirectReference.idnum:
@@ -1690,7 +1690,7 @@ class PdfFileReader(object):
                     print(lines[i])
                 streamData.seek(pos, 0)
             try:
-                obj = readObject(streamData, self)
+                obj = readObject(streamData, self, strict)
             except PdfStreamError as e:
                 # Stream object cannot be read. Normally, a critical error, but
                 # Adobe Reader doesn't complain, so continue (in strict mode?)
@@ -1736,7 +1736,7 @@ class PdfFileReader(object):
                     % (indirectReference.idnum, indirectReference.generation, idnum, generation))
             if self.strict:
                 assert generation == indirectReference.generation
-            retval = readObject(self.stream, self)
+            retval = readObject(self.stream, self, self.strict)
 
             # override encryption is used for the /Encrypt dictionary
             if not self._override_encryption and self.isEncrypted:
@@ -1860,7 +1860,7 @@ class PdfFileReader(object):
                 stream.seek(-1, 1)
                 firsttime = True; # check if the first time looking at the xref table
                 while True:
-                    num = readObject(stream, self)
+                    num = readObject(stream, self, self.strict)
                     if firsttime and num != 0:
                          self.xrefIndex = num
                          if self.strict:
@@ -1870,7 +1870,7 @@ class PdfFileReader(object):
                     firsttime = False
                     readNonWhitespace(stream)
                     stream.seek(-1, 1)
-                    size = readObject(stream, self)
+                    size = readObject(stream, self, self.strict)
                     readNonWhitespace(stream)
                     stream.seek(-1, 1)
                     cnt = 0
@@ -1920,7 +1920,7 @@ class PdfFileReader(object):
                         break
                 readNonWhitespace(stream)
                 stream.seek(-1, 1)
-                newTrailer = readObject(stream, self)
+                newTrailer = readObject(stream, self, self.strict)
                 for key, value in list(newTrailer.items()):
                     if key not in self.trailer:
                         self.trailer[key] = value
@@ -1932,7 +1932,7 @@ class PdfFileReader(object):
                 # PDF 1.5+ Cross-Reference Stream
                 stream.seek(-1, 1)
                 idnum, generation = self.readObjectHeader(stream)
-                xrefstream = readObject(stream, self)
+                xrefstream = readObject(stream, self, self.strict)
                 assert xrefstream["/Type"] == "/XRef"
                 self.cacheIndirectObject(generation, idnum, xrefstream)
                 streamData = BytesIO(b_(xrefstream.getData()))
@@ -2864,7 +2864,7 @@ class ContentStream(DecodedStreamObject):
             stream = BytesIO(b_(stream.getData()))
         self.__parseContentStream(stream)
 
-    def __parseContentStream(self, stream):
+    def __parseContentStream(self, stream, strict=True):
         # file("f:\\tmp.txt", "w").write(stream.read())
         stream.seek(0, 0)
         operands = []
@@ -2894,9 +2894,9 @@ class ContentStream(DecodedStreamObject):
                 while peek not in (b_('\r'), b_('\n')):
                     peek = stream.read(1)
             else:
-                operands.append(readObject(stream, None))
+                operands.append(readObject(stream, None, strict))
 
-    def _readInlineImage(self, stream):
+    def _readInlineImage(self, stream, strict=True):
         # begin reading just after the "BI" - begin image
         # first read the dictionary of settings.
         settings = DictionaryObject()
@@ -2906,10 +2906,10 @@ class ContentStream(DecodedStreamObject):
             if tok == b_("I"):
                 # "ID" - begin of image data
                 break
-            key = readObject(stream, self.pdf)
+            key = readObject(stream, self.pdf, strict)
             tok = readNonWhitespace(stream)
             stream.seek(-1, 1)
-            value = readObject(stream, self.pdf)
+            value = readObject(stream, self.pdf, strict)
             settings[key] = value
         # left at beginning of ID
         tmp = stream.read(3)

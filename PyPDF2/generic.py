@@ -64,33 +64,33 @@ NumberSigns = b_('+-')
 IndirectPattern = re.compile(b_(r"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]"))
 
 
-def readObject(stream, pdf):
+def readObject(stream, pdf, strict=True):
     tok = stream.read(1)
     stream.seek(-1, 1) # reset to start
     idx = ObjectPrefix.find(tok)
     if idx == 0:
         # name object
-        return NameObject.readFromStream(stream, pdf)
+        return NameObject.readFromStream(stream, pdf, strict)
     elif idx == 1:
         # hexadecimal string OR dictionary
         peek = stream.read(2)
         stream.seek(-2, 1) # reset to start
         if peek == b_('<<'):
-            return DictionaryObject.readFromStream(stream, pdf)
+            return DictionaryObject.readFromStream(stream, pdf, strict)
         else:
             return readHexStringFromStream(stream)
     elif idx == 2:
         # array object
-        return ArrayObject.readFromStream(stream, pdf)
+        return ArrayObject.readFromStream(stream, pdf, strict)
     elif idx == 3 or idx == 4:
         # boolean object
-        return BooleanObject.readFromStream(stream)
+        return BooleanObject.readFromStream(stream, strict)
     elif idx == 5:
         # string object
-        return readStringFromStream(stream)
+        return readStringFromStream(stream, strict)
     elif idx == 6:
         # null object
-        return NullObject.readFromStream(stream)
+        return NullObject.readFromStream(stream, strict)
     elif idx == 7:
         # comment
         while tok not in (b_('\r'), b_('\n')):
@@ -101,15 +101,15 @@ def readObject(stream, pdf):
                 raise PdfStreamError("File ended unexpectedly.")
         tok = readNonWhitespace(stream)
         stream.seek(-1, 1)
-        return readObject(stream, pdf)
+        return readObject(stream, pdf, strict)
     else:
         # number object OR indirect reference
         peek = stream.read(20)
         stream.seek(-len(peek), 1) # reset to start
         if IndirectPattern.match(peek) is not None:
-            return IndirectObject.readFromStream(stream, pdf)
+            return IndirectObject.readFromStream(stream, pdf, strict)
         else:
-            return NumberObject.readFromStream(stream)
+            return NumberObject.readFromStream(stream, strict)
 
 
 class PdfObject(object):
@@ -123,7 +123,7 @@ class NullObject(PdfObject):
         stream.write(b_("null"))
 
     @staticmethod
-    def readFromStream(stream):
+    def readFromStream(stream, strict=True):
         nulltxt = stream.read(4)
         if nulltxt != b_("null"):
             raise PdfReadError("Could not read Null object")
@@ -141,7 +141,7 @@ class BooleanObject(PdfObject):
             stream.write(b_("false"))
 
     @staticmethod
-    def readFromStream(stream):
+    def readFromStream(stream, strict=True):
         word = stream.read(4)
         if word == b_("true"):
             return BooleanObject(True)
@@ -161,7 +161,7 @@ class ArrayObject(list, PdfObject):
         stream.write(b_(" ]"))
 
     @staticmethod
-    def readFromStream(stream, pdf):
+    def readFromStream(stream, pdf, strict=True):
         arr = ArrayObject()
         tmp = stream.read(1)
         if tmp != b_("["):
@@ -178,7 +178,7 @@ class ArrayObject(list, PdfObject):
                 break
             stream.seek(-1, 1)
             # read and append obj
-            arr.append(readObject(stream, pdf))
+            arr.append(readObject(stream, pdf, strict))
         return arr
 
 class IndirectObject(PdfObject):
@@ -209,7 +209,7 @@ class IndirectObject(PdfObject):
         stream.write(b_("%s %s R" % (self.idnum, self.generation)))
 
     @staticmethod
-    def readFromStream(stream, pdf):
+    def readFromStream(stream, pdf, strict=True):
         idnum = b_("")
         while True:
             tok = stream.read(1)
@@ -283,7 +283,7 @@ class NumberObject(int, PdfObject):
         stream.write(b_(repr(self)))
 
     @staticmethod
-    def readFromStream(stream):
+    def readFromStream(stream, strict=True):
         num = utils.readUntilRegex(stream, NumberObject.NumberPattern)
         if num.find(NumberObject.ByteDot) != -1:
             return FloatObject(num)
@@ -339,7 +339,7 @@ def readHexStringFromStream(stream):
     return createStringObject(b_(txt))
 
 
-def readStringFromStream(stream):
+def readStringFromStream(stream, strict=True):
     tok = stream.read(1)
     parens = 1
     txt = b_("")
@@ -404,7 +404,11 @@ def readStringFromStream(stream):
                     # line break was escaped:
                     tok = b_('')
                 else:
-                    raise PdfReadError(r"Unexpected escaped string: %s" % tok)
+                    msg = r"Unexpected escaped string: %s" % tok
+                    if strict:
+                        raise PdfReadError(msg)
+                    else:
+                        logger.warning(msg)
         txt += tok
     return createStringObject(txt)
 
@@ -492,7 +496,7 @@ class NameObject(str, PdfObject):
         stream.write(b_(self))
 
     @staticmethod
-    def readFromStream(stream, pdf):
+    def readFromStream(stream, pdf, strict=True):
         debug = False
         if debug: print((stream.tell()))
         name = stream.read(1)
@@ -574,7 +578,7 @@ class DictionaryObject(dict, PdfObject):
         stream.write(b_(">>"))
 
     @staticmethod
-    def readFromStream(stream, pdf):
+    def readFromStream(stream, pdf, strict=True):
         debug = False
         tmp = stream.read(2)
         if tmp != b_("<<"):
@@ -596,10 +600,10 @@ class DictionaryObject(dict, PdfObject):
                 stream.read(1)
                 break
             stream.seek(-1, 1)
-            key = readObject(stream, pdf)
+            key = readObject(stream, pdf, strict)
             tok = readNonWhitespace(stream)
             stream.seek(-1, 1)
-            value = readObject(stream, pdf)
+            value = readObject(stream, pdf, strict)
             if not data.get(key):
                 data[key] = value
             elif pdf.strict:
