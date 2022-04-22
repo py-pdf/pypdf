@@ -30,6 +30,7 @@ You can contribute to `PyPDF2 on Github <https://github.com/py-pdf/PyPDF2>`_.
    user/adding-pdf-annotations
    user/forms
    user/streaming-data
+   user/file-size
 
 
 .. toctree::
