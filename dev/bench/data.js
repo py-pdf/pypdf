@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1650701908236,
+  "lastUpdate": 1650703470794,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -175,6 +175,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0038475156847702775",
             "extra": "mean: 86.49379525000118 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "40df4d7622c8b838a631113ced680d021070dd80",
+          "message": "ENH: Allow setting permission flags when encrypting (#803)\n\nCloses #161\r\nCloses #308",
+          "timestamp": "2022-04-23T10:43:54+02:00",
+          "tree_id": "908a8418f3c819e228019736692c867df495166a",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/40df4d7622c8b838a631113ced680d021070dd80"
+        },
+        "date": 1650703469764,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.950078836259226,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005702058684478769",
+            "extra": "mean: 1.0525442330000003 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 10.280940522982494,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00423528362980359",
+            "extra": "mean: 97.26736554545309 msec\nrounds: 11"
           }
         ]
       }
