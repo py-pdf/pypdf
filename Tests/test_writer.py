@@ -1,4 +1,5 @@
 import os
+import re
 
 import pytest
 
@@ -9,7 +10,6 @@ from PyPDF2.generic import RectangleObject
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
 RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
-
 
 def test_writer_clone():
     src = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
@@ -96,7 +96,9 @@ def test_remove_images(input_path, ignoreByteStringObject):
     with open(tmp_filename, "rb") as input_stream:
         reader = PdfFileReader(input_stream)
         if input_path == "side-by-side-subfig.pdf":
-            assert "Lorem ipsum dolor sit amet" in reader.getPage(0).extractText()
+            pattern = re.compile("Lorem\s+ipsum\s+dolor\s+sit\s+amet")
+            extracted_text = reader.getPage(0).extractText()
+            assert pattern.match(extracted_text)
 
     # Cleanup
     os.remove(tmp_filename)
