@@ -2819,6 +2819,14 @@ class PageObject(DictionaryObject):
                     if isinstance(i, TextStringObject):
                         text += TJ_sep
                         text += i
+                    else:
+                        # a positive value decreases and the negative value increases
+                        # space
+                        if int(i) < 0:
+                            text += " "
+                        else:
+                            if text[-1] == " ":
+                                text = text[:-1]
                 text += "\n"
         return text
 
