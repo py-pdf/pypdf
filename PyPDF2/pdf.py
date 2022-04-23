@@ -35,6 +35,7 @@ __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import math
+import re
 import struct
 import sys
 import uuid
@@ -2263,6 +2264,17 @@ def createRectangleAccessor(name, fallback):
             lambda self: deleteRectangle(self, name)
             )
 
+def parseCMap(cstr):
+    rr = re.search("\nbegincmap\n(?:.*?\n)?[0-9]* beginbfchar\n(.*?)\nendbfchar\n(?:.*?\n)?endcmap\n", cstr, re.DOTALL)
+    if rr == None: return None
+    result = {}
+    cstr = rr.group(1)
+    for entry in cstr.split("\n"):
+        rr = re.match("\\s*<([0-9a-fA-F]+)>\\s+<([0-9a-fA-F]+)>\\s*", entry)
+        if rr == None: continue
+        result[int(rr.group(1), base=16)] = unichr(int(rr.group(2), base=16))
+    return result
+
 
 class PageObject(DictionaryObject):
     """
@@ -2792,30 +2804,50 @@ class PageObject(DictionaryObject):
         content = self["/Contents"].getObject()
         if not isinstance(content, ContentStream):
             content = ContentStream(content, self.pdf)
-        # Note: we check all strings are TextStringObjects.  ByteStringObjects
-        # are strings where the byte->string encoding was unknown, so adding
-        # them to the text here would be gibberish.
+
+        cmap = None
+        cmaps = {}
+        firstParagraph = True
+        # Concatenate TextStringObjects and try to translate ByteStringObjects
+        # when we have a CMap, when we don't, then byte->string encoding is unknown,
+        # so adding them to the text here would be gibberish.
+        def translate(text):
+            if isinstance(text, TextStringObject):
+                return text
+            if isinstance(text, ByteStringObject) and cmap != None:
+                newText = ""
+                for c in text:
+                    newText += cmap.get(ord_(c),"?")
+                return newText
+            return ""
+
         for operands, operator in content.operations:
-            if operator == b_("Tj"):
-                _text = operands[0]
-                if isinstance(_text, TextStringObject):
-                    text += Tj_sep
-                    text += _text
-                    text += "\n"
+            if operator == b_("Tf"):
+                try:
+                    font = operands[0]
+                    cmap = cmaps.get(font)
+                    if (cmap == None):
+                        cmap = parseCMap(str_(self["/Resources"]["/Font"][font]["/ToUnicode"].getData()))
+                        cmaps[font] = cmap
+                except KeyError:
+                    cmap = None
+            elif operator == b_("Tj"):
+                text += translate(operands[0])
+                # _text = operands[0]
+                # if isinstance(_text, TextStringObject):
+                #     text += Tj_sep
+                #     text += _text
+                #     text += "\n"
             elif operator == b_("T*"):
                 text += "\n"
             elif operator == b_("'"):
                 text += "\n"
-                _text = operands[0]
-                if isinstance(_text, TextStringObject):
-                    text += operands[0]
+                text += translate(operands[0])
             elif operator == b_('"'):
-                _text = operands[2]
-                if isinstance(_text, TextStringObject):
-                    text += "\n"
-                    text += _text
+                text += translate(operands[2])
             elif operator == b_("TJ"):
                 for i in operands[0]:
+                    text += translate(i)
                     if isinstance(i, TextStringObject):
                         text += TJ_sep
                         text += i
