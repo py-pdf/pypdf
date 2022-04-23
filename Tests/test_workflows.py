@@ -31,9 +31,12 @@ def test_PdfReaderFileLoad():
         with open(os.path.join(RESOURCE_ROOT, "crazyones.txt"), "rb") as pdftext_file:
             pdftext = pdftext_file.read()
 
-        text = page.extractText().replace("\n", "").encode("utf-8")
+        text = page.extractText().encode("utf-8")
 
         # Compare the text of the PDF to a known source
+        for expected_line, actual_line in zip(text.split(b"\n"), pdftext.split(b"\n")):
+            assert expected_line == actual_line
+
         assert text == pdftext, (
             "PDF extracted text differs from expected value.\n\nExpected:\n\n%r\n\nExtracted:\n\n%r\n\n"
             % (pdftext, text)
