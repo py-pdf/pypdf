@@ -11,6 +11,7 @@ TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
 RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
 
+
 def test_writer_clone():
     src = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
 
@@ -96,7 +97,7 @@ def test_remove_images(input_path, ignoreByteStringObject):
     with open(tmp_filename, "rb") as input_stream:
         reader = PdfFileReader(input_stream)
         if input_path == "side-by-side-subfig.pdf":
-            pattern = re.compile("Lorem\s+ipsum\s+dolor\s+sit\s+amet")
+            pattern = re.compile(r"Lorem\s+ipsum\s+dolor\s+sit\s+amet")
             extracted_text = reader.getPage(0).extractText()
             assert pattern.match(extracted_text)
 
@@ -168,7 +169,9 @@ def test_fill_form():
 
     writer.addPage(page)
 
-    writer.updatePageFormFieldValues(writer.getPage(0), {"foo": "some filled in text"}, flags=1)
+    writer.updatePageFormFieldValues(
+        writer.getPage(0), {"foo": "some filled in text"}, flags=1
+    )
 
     # write "output" to PyPDF2-output.pdf
     tmp_filename = "dont_commit_filled_pdf.pdf"
