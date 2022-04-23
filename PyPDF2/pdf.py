@@ -2807,7 +2807,6 @@ class PageObject(DictionaryObject):
 
         cmap = None
         cmaps = {}
-        firstParagraph = True
         # Concatenate TextStringObjects and try to translate ByteStringObjects
         # when we have a CMap, when we don't, then byte->string encoding is unknown,
         # so adding them to the text here would be gibberish.
