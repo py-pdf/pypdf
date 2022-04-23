@@ -16,19 +16,25 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
 sys.path.append(PROJECT_ROOT)
 
 
-def test_PdfReaderFileLoad():
+@pytest.mark.parametrize(
+    "pdf_filename,expected_text_filename",
+    [("crazyones.pdf", "crazyones.txt"), ("cmap.pdf", "cmap.txt")],
+)
+def test_PdfReaderFileLoad(pdf_filename, expected_text_filename):
     """
     Test loading and parsing of a file. Extract text of the file and compare to expected
     textual output. Expected outcome: file loads, text matches expected.
     """
 
-    with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
+    with open(os.path.join(RESOURCE_ROOT, pdf_filename), "rb") as inputfile:
         # Load PDF file from file
         reader = PdfFileReader(inputfile)
         page = reader.getPage(0)
 
         # Retrieve the text of the PDF
-        with open(os.path.join(RESOURCE_ROOT, "crazyones.txt"), "rb") as pdftext_file:
+        with open(
+            os.path.join(RESOURCE_ROOT, expected_text_filename), "rb"
+        ) as pdftext_file:
             pdftext = pdftext_file.read()
 
         text = page.extractText().encode("utf-8")
