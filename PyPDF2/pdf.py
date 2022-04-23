@@ -371,7 +371,7 @@ class PdfFileWriter(object):
             # Trigger callback, pass writer page as parameter
             if callable(after_page_append): after_page_append(writer_page)
 
-    def updatePageFormFieldValues(self, page, fields):
+    def updatePageFormFieldValues(self, page, fields, read_only = False):
         '''
         Update the form field values for a given page from a fields dictionary.
         Copy field texts and values from fields to page.
@@ -381,6 +381,10 @@ class PdfFileWriter(object):
             and field data will be updated.
         :param fields: a Python dictionary of field names (/T) and text
             values (/V)
+        :param read_only: a boolean indicating whether the field is read-only
+
+        Credit for figuring out that it sometimes helps to set the field to
+        read-only: https://stackoverflow.com/users/8382028/viatech
         '''
         # Iterate through pages, update field values
         for j in range(0, len(page[PG.ANNOTS])):
@@ -391,9 +395,9 @@ class PdfFileWriter(object):
                 writer_parent_annot = writer_annot[PG.PARENT]
             for field in fields:
                 if writer_annot.get('/T') == field:
-                    writer_annot.update({
-                        NameObject("/V"): TextStringObject(fields[field])
-                    })
+                    writer_annot.update({NameObject("/V"): TextStringObject(fields[field])})
+                    if read_only:
+                        writer_annot.update({NameObject("/Ff"): NumberObject(1)})
                 elif writer_parent_annot.get('/T') == field:
                     writer_parent_annot.update({
                         NameObject("/V"): TextStringObject(fields[field])
