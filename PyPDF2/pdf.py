@@ -381,7 +381,8 @@ class PdfFileWriter(object):
             and field data will be updated.
         :param fields: a Python dictionary of field names (/T) and text
             values (/V)
-        :param read_only: a boolean indicating whether the field is read-only
+        :param read_only: a boolean indicating whether the fields should be marked
+            as read-only
 
         Credit for figuring out that it sometimes helps to set the field to
         read-only: https://stackoverflow.com/users/8382028/viatech
@@ -395,8 +396,12 @@ class PdfFileWriter(object):
                 writer_parent_annot = writer_annot[PG.PARENT]
             for field in fields:
                 if writer_annot.get('/T') == field:
-                    writer_annot.update({NameObject("/V"): TextStringObject(fields[field])})
+                    writer_annot.update({
+                        NameObject("/V"): TextStringObject(fields[field])
+                    })
                     if read_only:
+                        # Setting the read-only field flag specified in
+                        # Table 8.70 of the PDF 1.7 reference.
                         writer_annot.update({NameObject("/Ff"): NumberObject(1)})
                 elif writer_parent_annot.get('/T') == field:
                     writer_parent_annot.update({
