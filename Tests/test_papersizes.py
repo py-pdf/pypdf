@@ -4,7 +4,7 @@ import pytest
 
 def test_din_a0():
     dim = papersizes.PaperSize.A0
-    area_square_pixels = dim.width * dim.height
+    area_square_pixels = float(dim.width) * dim.height
 
     # 72 pixels is 1 inch
     area_square_inch = area_square_pixels / 72**2
