@@ -2832,20 +2832,25 @@ class PageObject(DictionaryObject):
                 except KeyError:
                     cmap = None
             elif operator == b_("Tj"):
-                _text = translate(operands[0])
+                _text = operands[0]
                 if isinstance(_text, TextStringObject):
-                     text += Tj_sep
-                     text += _text
-                     text += "\n"
+                    text += Tj_sep
+                    text += translate(_text)
+                    text += "\n"
             elif operator == b_("T*"):
                 text += "\n"
             elif operator == b_("'"):
                 text += "\n"
-                text += translate(operands[0])
+                _text = operands[0]
+                if isinstance(_text, TextStringObject):
+                    text += translate(operands[0])
             elif operator == b_('"'):
-                text += translate(operands[2])
+                _text = operands[2]
+                if isinstance(_text, TextStringObject):
+                    text += "\n"
+                    text += translate(_text)
             elif operator == b_("TJ"):
-                for i in operands[0]:         
+                for i in operands[0]:
                     if isinstance(i, TextStringObject):
                         text += TJ_sep
                         text += translate(i)
