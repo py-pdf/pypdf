@@ -2988,9 +2988,9 @@ class PageObject(DictionaryObject):
 
         :return: a unicode string object
         """
-        return self.extractTextState(lineCallback=lineCallback, lineMargin=lineMargin).text
+        return self.extractTextState(Tj_sep, TJ_sep, lineCallback=lineCallback, lineMargin=lineMargin).text
 
-    def extractTextState(self, lineCallback = None, lineMargin = 1):
+    def extractTextState(self, Tj_sep="", TJ_sep=" ", lineCallback = None, lineMargin = 1):
         """
         Locate all text drawing commands, in the order they are provided in the
         content stream, and extract the text line by line.
@@ -3080,6 +3080,7 @@ class PageObject(DictionaryObject):
             for operands, operator in content.operations:
                 if operator == b_("Tj"):
                     (_text, width) = translate(operands[0], cmap)
+                    _text += Tj_sep
                     handleTextElement(operator, textState, _text, width)
                 elif operator == b_("T*"):
                     dbg(1, "T*T*T*T*T*T*T*T*T")
@@ -3107,6 +3108,7 @@ class PageObject(DictionaryObject):
                             (tmpText, tmpWidth) = translate(i, cmap)
                             _text += tmpText
                             width += tmpWidth
+                    _text += TJ_sep
                     handleTextElement(operator, textState, _text, width)
                 elif operator == b_("Td") or operator == b_("TD"):
                     dbg(2, repr(operator) + ": x = " + repr(operands[0]) + " y = " + repr(operands[1]))
