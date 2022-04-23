@@ -146,7 +146,7 @@ class PdfFileWriter(object):
             self._root_object["/AcroForm"][need_appearances] = BooleanObject(True)
 
         except Exception as e:
-            print('set_need_appearances_writer() catch : ', repr(e))
+            logger.error('set_need_appearances_writer() catch : ', repr(e))
 
     def addPage(self, page):
         """
@@ -2777,7 +2777,7 @@ class PageObject(DictionaryObject):
                 content = ContentStream(content, self.pdf)
             self[NameObject("/Contents")] = content.flateEncode()
 
-    def extractText(self, Tj_sep="", TJ_sep=" "):
+    def extractText(self, Tj_sep="", TJ_sep=""):
         """
         Locate all text drawing commands, in the order they are provided in the
         content stream, and extract the text.  This works well for some PDF
@@ -2819,6 +2819,15 @@ class PageObject(DictionaryObject):
                     if isinstance(i, TextStringObject):
                         text += TJ_sep
                         text += i
+                    elif isinstance(i, NumberObject):
+                        # a positive value decreases and the negative value increases
+                        # space
+                        if int(i) < 0:
+                            if len(text) == 0 or text[-1] != " ":
+                                text += " "
+                        else:
+                            if len(text) > 1 and text[-1] == " ":
+                                text = text[:-1]
                 text += "\n"
         return text
 
