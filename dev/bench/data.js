@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1650745705254,
+  "lastUpdate": 1650746992960,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -365,6 +365,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004528453099679591",
             "extra": "mean: 113.51314433333452 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d1be80dff6b3dee50fe742ad39ddc9621785dd4f",
+          "message": "BUG: Improve spacing for text extraction (#806)\n\nPyPDF2 now takes positive / negative spaces between text blocks into account. Not very elegant, but the result looks way better than before.",
+          "timestamp": "2022-04-23T22:49:16+02:00",
+          "tree_id": "0a6aa3c32ef620aef177d4b8768221b45e0b7202",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/d1be80dff6b3dee50fe742ad39ddc9621785dd4f"
+        },
+        "date": 1650746991936,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.6484490309962616,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004707152661956923",
+            "extra": "mean: 1.5421412511999961 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 10.089894095260362,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007410550961924088",
+            "extra": "mean: 99.10906800000419 msec\nrounds: 10"
           }
         ]
       }
