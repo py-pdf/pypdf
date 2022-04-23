@@ -1,5 +1,6 @@
 import io
 import os
+import time
 
 import pytest
 
@@ -9,6 +10,14 @@ from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.constants import Ressources as RES
 from PyPDF2.errors import PdfReadError
 from PyPDF2.filters import _xobj_to_image
+from sys import version_info
+
+if version_info < ( 3, 0 ):
+    from cStringIO import StringIO
+    StreamIO = StringIO
+else:
+    from io import BytesIO
+    StreamIO = BytesIO
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -462,3 +471,16 @@ def test_get_destination_age_number():
     for outline in outlines:
         if not isinstance(outline, list):
             reader.getDestinationPageNumber(outline)
+
+
+def test_do_not_get_stuck_on_large_files_without_start_xref():
+    """Tests for the absence of a DoS bug, where a large file without an startxref mark
+    would cause the library to hang for minutes to hours """
+    start_time = time.time()
+    broken_stream = StreamIO(b"\0" * 5 * 1000 * 1000)
+    with pytest.raises(PdfReadError):
+        PdfFileReader(broken_stream)
+    parse_duration = time.time() - start_time
+    # parsing is expected take less than a second on a modern cpu, but include a large
+    # tolerance to account for busy or slow systems
+    assert parse_duration < 60

@@ -2082,7 +2082,7 @@ class PdfFileReader(object):
     def readNextEndLine(self, stream, limit_offset=0):
         debug = False
         if debug: print(">>readNextEndLine")
-        line = b_("")
+        line_parts = []
         while True:
             # Prevent infinite loops in malformed PDFs
             if stream.tell() == 0 or stream.tell() == limit_offset:
@@ -2109,10 +2109,10 @@ class PdfFileReader(object):
                 break
             else:
                 if debug: print("  x is neither")
-                line = x + line
-                if debug: print(("  RNEL line:", line))
+                line_parts.append(x)
         if debug: print("leaving RNEL")
-        return line
+        line_parts.reverse()
+        return b"".join(line_parts)
 
     def decrypt(self, password):
         """
