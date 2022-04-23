@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1650703470794,
+  "lastUpdate": 1650704310019,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -213,6 +213,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00423528362980359",
             "extra": "mean: 97.26736554545309 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3d659389e7561c024b5ffb9edd810e94814fa63e",
+          "message": "ROB: Handle recursion error (#804)\n\nThis doesn't solve the issue, but it might make it less severe.\r\n\r\nSee #520\r\nSee #268\r\nSee https://github.com/virantha/pypdfocr/issues/59\r\n\r\nhttps://github.com/sfneal/PyPDF3/commit/3558a69388b12bbf166d81b8a863b1d6c9843c62\r\n\r\nCo-authored-by: danniesim <geemee@gmail.com>",
+          "timestamp": "2022-04-23T10:57:54+02:00",
+          "tree_id": "bc451d9cfc50cc3ba097311c2ed29028491f0ef3",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/3d659389e7561c024b5ffb9edd810e94814fa63e"
+        },
+        "date": 1650704308997,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.9304874995964462,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005964200812272813",
+            "extra": "mean: 1.0747054640000016 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 10.056596564428304,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0035597955706618586",
+            "extra": "mean: 99.43721949999969 msec\nrounds: 10"
           }
         ]
       }
