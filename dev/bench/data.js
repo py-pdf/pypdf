@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1650733972342,
+  "lastUpdate": 1650745705254,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -327,6 +327,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.006776916663739223",
             "extra": "mean: 119.17609577777455 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d4c8cab3292ccc52117ad1b38a10262640dfc158",
+          "message": "BUG: Fix PDFDocEncoding Character Set (#809)\n\nCloses #151",
+          "timestamp": "2022-04-23T22:27:38+02:00",
+          "tree_id": "0b6a206e03da2af191d7509479c739e2d3f99f89",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/d4c8cab3292ccc52117ad1b38a10262640dfc158"
+        },
+        "date": 1650745704204,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.5706882244432586,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014223725815557052",
+            "extra": "mean: 1.752270254000004 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 8.80955246084517,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004528453099679591",
+            "extra": "mean: 113.51314433333452 msec\nrounds: 9"
           }
         ]
       }
