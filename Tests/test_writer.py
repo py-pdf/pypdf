@@ -166,7 +166,7 @@ def test_fill_form():
 
     writer.addPage(page)
 
-    writer.updatePageFormFieldValues(writer.getPage(0), {"foo": "some filled in text"})
+    writer.updatePageFormFieldValues(writer.getPage(0), {"foo": "some filled in text"}, flags=1)
 
     # write "output" to PyPDF2-output.pdf
     tmp_filename = "dont_commit_filled_pdf.pdf"

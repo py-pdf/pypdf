@@ -371,7 +371,7 @@ class PdfFileWriter(object):
             # Trigger callback, pass writer page as parameter
             if callable(after_page_append): after_page_append(writer_page)
 
-    def updatePageFormFieldValues(self, page, fields):
+    def updatePageFormFieldValues(self, page, fields, flags=0):
         '''
         Update the form field values for a given page from a fields dictionary.
         Copy field texts and values from fields to page.
@@ -381,6 +381,9 @@ class PdfFileWriter(object):
             and field data will be updated.
         :param fields: a Python dictionary of field names (/T) and text
             values (/V)
+        :param flags: An integer (0 to 7). The first bit sets ReadOnly, the
+            second bit sets Required, the third bit sets NoExport. See
+            PDF Reference Table 8.70 for details.
         '''
         # Iterate through pages, update field values
         for j in range(0, len(page[PG.ANNOTS])):
@@ -394,6 +397,8 @@ class PdfFileWriter(object):
                     writer_annot.update({
                         NameObject("/V"): TextStringObject(fields[field])
                     })
+                    if flags:
+                        writer_annot.update({NameObject("/Ff"): NumberObject(flags)})
                 elif writer_parent_annot.get('/T') == field:
                     writer_parent_annot.update({
                         NameObject("/V"): TextStringObject(fields[field])
