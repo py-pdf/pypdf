@@ -2272,7 +2272,7 @@ def parseCMap(cstr):
     for entry in cstr.split("\n"):
         rr = re.match("\\s*<([0-9a-fA-F]+)>\\s+<([0-9a-fA-F]+)>\\s*", entry)
         if rr == None: continue
-        result[int(rr.group(1), base=16)] = unichr(int(rr.group(2), base=16))
+        result[int(rr.group(1), base=16)] = chr_(int(rr.group(2), base=16))
     return result
 
 
@@ -2832,12 +2832,11 @@ class PageObject(DictionaryObject):
                 except KeyError:
                     cmap = None
             elif operator == b_("Tj"):
-                text += translate(operands[0])
-                # _text = operands[0]
-                # if isinstance(_text, TextStringObject):
-                #     text += Tj_sep
-                #     text += _text
-                #     text += "\n"
+                _text = translate(operands[0])
+                if isinstance(_text, TextStringObject):
+                     text += Tj_sep
+                     text += _text
+                     text += "\n"
             elif operator == b_("T*"):
                 text += "\n"
             elif operator == b_("'"):
@@ -2846,11 +2845,10 @@ class PageObject(DictionaryObject):
             elif operator == b_('"'):
                 text += translate(operands[2])
             elif operator == b_("TJ"):
-                for i in operands[0]:
-                    text += translate(i)
+                for i in operands[0]:         
                     if isinstance(i, TextStringObject):
                         text += TJ_sep
-                        text += i
+                        text += translate(i)
                 text += "\n"
         return text
 

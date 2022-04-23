@@ -32,6 +32,7 @@ __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
 
+import logging
 import sys
 
 from PyPDF2.errors import STREAM_TRUNCATED_PREMATURELY, PdfStreamError
@@ -45,7 +46,7 @@ try:
 except ImportError:  # Py2.7
     import __builtin__ as builtins  # type: ignore
 
-
+logger = logging.getLogger(__name__)
 xrange_fn = getattr(builtins, "xrange", range)
 _basestring = getattr(builtins, "basestring", str)
 
@@ -260,9 +261,13 @@ def ord_(b):
 
 def chr_(c):
     if sys.version_info[0] < 3:
-        return c
+        return unichr(c)
     else:
-        return chr(c)
+        try:
+            return chr(c)
+        except (ValueError, OverflowError):
+            logger.warning("Character out of 0x110000 range")
+            return ""
 
 
 def barray(b):
