@@ -98,7 +98,7 @@ def test_remove_images(input_path, ignoreByteStringObject):
         if input_path == "side-by-side-subfig.pdf":
             extracted_text = reader.getPage(0).extractText()
             # TODO: Fix double whitespaces
-            assert "Lorem  ipsum  dolor  sit  amet" in extracted_text
+            assert "Lorem ipsum dolor sit amet" in extracted_text
 
     # Cleanup
     os.remove(tmp_filename)
