@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1650704310019,
+  "lastUpdate": 1650718255596,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -251,6 +251,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0035597955706618586",
             "extra": "mean: 99.43721949999969 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9941099b80dee1db6bfc747535b9d822b0fb0617",
+          "message": "TST: Newlines in text extraction (#807)",
+          "timestamp": "2022-04-23T14:50:17+02:00",
+          "tree_id": "5c94513b4178944e0e5a534e1dce9dbc1e9d4f80",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/9941099b80dee1db6bfc747535b9d822b0fb0617"
+        },
+        "date": 1650718254429,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.9236413346619341,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004035420224873149",
+            "extra": "mean: 1.0826713384000015 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 9.939253390400175,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0038204766514719417",
+            "extra": "mean: 100.61117879999415 msec\nrounds: 10"
           }
         ]
       }
