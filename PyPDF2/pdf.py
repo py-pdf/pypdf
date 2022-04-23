@@ -1849,7 +1849,7 @@ class PdfFileReader(object):
             stream.seek(startxref - 1,0) #-1 to check character before
             line=stream.read(1)
             if line not in b_("\r\n \t"):
-                raise UserWarning("incorrect startxref pointer(1)",line)
+                raise PdfReadWarning("incorrect startxref pointer(1)",line)
             line = stream.read(4)
             if line != b_("xref"):
                 #not an xref so check if it is an XREF object
@@ -1857,18 +1857,17 @@ class PdfFileReader(object):
                 while line in b_("0123456789 \t"):
                     line = stream.read(1)
                     if line == b_(""):
-                        raise UserWarning("incorrect startxref pointer(2)")
+                        raise PdfReadWarning("incorrect startxref pointer(2)")
                 line += stream.read(2)   #1 char already read, +2 to check "obj"
                 if line.lower() != b_("obj"):
-                    raise UserWarning("incorrect startxref pointer(3)")
+                    raise PdfReadWarning("incorrect startxref pointer(3)")
                 while stream.read(1) in b_(" \t\r\n"):
                     pass;
                 line=stream.read(256) # check that it is xref obj
                 if b_("/xref") not in line.lower():
-                    raise UserWarning("incorrect startxref pointer(4)")
-        except UserWarning as e:
-            #import traceback;print(traceback.format_exc())
-            warnings.warn(str(e)+", need to rebuild xref table")
+                    raise PdfReadWarning("incorrect startxref pointer(4)")
+        except PdfReadWarning as e:
+            warnings.warn(str(e)+", need to rebuild xref table (strict=False)",PdfReadWarning)
             if( not self.strict):
                 rebuildXrefTable = True
             else:
