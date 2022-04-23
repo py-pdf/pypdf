@@ -429,7 +429,7 @@ class PdfFileWriter(object):
         self.cloneReaderDocumentRoot(reader)
         self.appendPagesFromReader(reader, after_page_append)
 
-    def encrypt(self, user_pwd, owner_pwd = None, use_128bit = True):
+    def encrypt(self, user_pwd, owner_pwd = None, use_128bit = True, permissions_flag=-1):
         """
         Encrypt this PDF file with the PDF Standard encryption handler.
 
@@ -441,6 +441,13 @@ class PdfFileWriter(object):
         :param bool use_128bit: flag as to whether to use 128bit
             encryption.  When false, 40bit encryption will be used.  By default,
             this flag is on.
+        :param unsigned int permissions_flag: permissions as described in
+            TABLE 3.20 of the PDF 1.7 specification. A bit value of 1 means the
+            permission is grantend. Hence an integer value of -1 will set all
+            flags.
+            Bit position 3 is for printing, 4 is for modifying content, 5 and 6
+            control annotations, 9 for form fields, 10 for extraction of
+            text and graphics.
         """
         import random
         import time
@@ -454,8 +461,7 @@ class PdfFileWriter(object):
             V = 1
             rev = 2
             keylen = int(40 / 8)
-        # permit everything:
-        P = -1
+        P = permissions_flag
         O = ByteStringObject(_alg33(owner_pwd, user_pwd, rev, keylen))
         ID_1 = ByteStringObject(md5(b_(repr(time.time()))).digest())
         ID_2 = ByteStringObject(md5(b_(repr(random.random()))).digest())
