@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1650607837980,
+  "lastUpdate": 1650701908236,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -137,6 +137,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0046057474193716705",
             "extra": "mean: 95.84025099999849 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ffb208478144c2dc8f7ee9a4038f2c1c85ac99df",
+          "message": "ENH: Allow setting form field flags (#802)\n\nCloses #574\r\nCloses #801\r\n\r\nCo-authored-by: Craig Jones <craig@k6nnl.com>",
+          "timestamp": "2022-04-23T10:17:57+02:00",
+          "tree_id": "730c99cfa0a0db24008b5ec4faf861825b15be0a",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/ffb208478144c2dc8f7ee9a4038f2c1c85ac99df"
+        },
+        "date": 1650701907682,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 1.05365515080177,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005612559551809395",
+            "extra": "mean: 949.0771238000008 msec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 11.561522963694742,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0038475156847702775",
+            "extra": "mean: 86.49379525000118 msec\nrounds: 12"
           }
         ]
       }
