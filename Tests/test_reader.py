@@ -207,13 +207,10 @@ def test_get_images_raw(strict, with_prev_0, startx_correction, should_fail):
         # startx_correction should be -1 due to double % at the beginning indiducing an error on startxref computation
         pdf_data.find(b"xref") + startx_correction,
     )
-    print((strict, with_prev_0, should_fail))
-    print(pdf_data)
     pdf_stream = io.BytesIO(pdf_data)
     if should_fail:
         with pytest.raises(Exception) as exc:
             PdfFileReader(pdf_stream, strict=strict)
-        print(exc.type)
         if startx_correction != -1:
             assert exc.type == PdfReadWarning
         else:
@@ -229,10 +226,9 @@ def test_get_images_raw(strict, with_prev_0, startx_correction, should_fail):
 def test_issue297():
     path = os.path.join(RESOURCE_ROOT, "issue-297.pdf")
     with pytest.raises(PdfReadWarning) as exc:
-        print(exc)
         reader = PdfFileReader(path, strict=True)
         reader.getPage(0)
-    assert exc.value.args[0].find("startxref") > 0
+    assert "startxref" in exc.value.args[0]
     reader = PdfFileReader(path, strict=False)
     reader.getPage(0)
 
