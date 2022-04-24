@@ -84,7 +84,7 @@ startxref 1234
 
 Let's go through it:
 
-* `trailer <<` indicates that the *trailer dictionary` starts. It ends with `>>`.
+* `trailer <<` indicates that the *trailer dictionary* starts. It ends with `>>`.
 * `startxref` is a keyword followed by the byte-location of the `xref` keyword.
   As the trailer is always at the bottom of the file, this allows readers to
   quickly find the xref table.
