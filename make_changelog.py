@@ -133,6 +133,9 @@ def parse_commit_line(line) -> Change:
     # Standardize
     message.strip()
 
+    if message.endswith('"'):
+        message = message[:-1]
+
     prefix = prefix.strip()
     if prefix == "DOCS":
         prefix = "DOC"
