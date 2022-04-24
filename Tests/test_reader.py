@@ -486,3 +486,18 @@ def test_do_not_get_stuck_on_large_files_without_start_xref():
     # parsing is expected take less than a second on a modern cpu, but include a large
     # tolerance to account for busy or slow systems
     assert parse_duration < 60
+
+
+def test_PdfReaderDecryptWhenNoID():
+    """
+    Decrypt an encrypted file that's missing the 'ID' value in its
+    trailer.
+    https://github.com/mstamy2/PyPDF2/issues/608
+    """
+
+    with open(
+        os.path.join(RESOURCE_ROOT, "encrypted_doc_no_id.pdf"), "rb"
+    ) as inputfile:
+        ipdf = PdfFileReader(inputfile)
+        ipdf.decrypt("")
+        assert ipdf.getDocumentInfo() == {"/Producer": "European Patent Office"}

@@ -2205,7 +2205,13 @@ class PdfFileReader(object):
         rev = encrypt['/R'].getObject()
         owner_entry = encrypt['/O'].getObject()
         p_entry = encrypt['/P'].getObject()
-        id_entry = self.trailer[TK.ID].getObject()
+        if TK.ID in self.trailer:
+            id_entry = self.trailer[TK.ID].getObject()
+        else:
+            # Some documents may not have a /ID, use two empty
+            # byte strings instead. Solves
+            # https://github.com/mstamy2/PyPDF2/issues/608
+            id_entry = ArrayObject([ByteStringObject(b''), ByteStringObject(b'')])
         id1_entry = id_entry[0].getObject()
         real_U = encrypt['/U'].getObject().original_bytes
         if rev == 2:
