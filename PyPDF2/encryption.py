@@ -182,11 +182,13 @@ _PADDING = bytes([
 def _padding(data: bytes) -> bytes:
     return (data + _PADDING)[:32]
 
-def _bytes(text: str) -> bytes:
+def _bytes(value: typing.Union[bytes, str]) -> bytes:
+    if isinstance(value, bytes):
+        return value
     try:
-        return text.encode('latin-1')
+        return value.encode('latin-1')
     except Exception:  # noqa
-        return text.encode('utf-8')
+        return value.encode('utf-8')
 
 
 class AlgR4:
@@ -596,36 +598,36 @@ class Encryption:
         else:
             return CryptRC4(rc4_key)
 
-    def verify(self, user_pwd: str, owner_pwd: str) -> int:
-        key = self._user_keys.get(user_pwd)
+    def verify(self, user_pwd: typing.Union[bytes, str], owner_pwd: typing.Union[bytes, str]) -> int:
+        up_bytes = _bytes(user_pwd)
+        op_bytes = _bytes(owner_pwd)
+
+        key = self._user_keys.get(up_bytes)
         if key:
             self._key = key
             return 1
 
-        key = self._owner_keys.get(owner_pwd)
+        key = self._owner_keys.get(op_bytes)
         if key:
             self._key = key
             return 2
 
         rc = 0
         if self.algV <= 4:
-            key, rc = self.verify_r4(user_pwd, owner_pwd)
+            key, rc = self.verify_r4(up_bytes, op_bytes)
         else:
-            key, rc = self.verify_r5(user_pwd, owner_pwd)
+            key, rc = self.verify_r5(up_bytes, op_bytes)
 
         if rc == 1:
             self._key = key
-            self._user_keys[user_pwd] = key
+            self._user_keys[up_bytes] = key
         elif rc == 2:
             self._key = key
-            self._owner_keys[owner_pwd] = key
+            self._owner_keys[op_bytes] = key
 
         return rc
 
-    def verify_r4(self, user_pwd: str, owner_pwd: str) -> typing.Tuple[bytes, int]:
-        user_pwd1 = _bytes(user_pwd)
-        owner_pwd1 = _bytes(owner_pwd)
-
+    def verify_r4(self, user_pwd: bytes, owner_pwd: bytes) -> typing.Tuple[bytes, int]:
         R = self.entry["/R"]
         P = self.entry["/P"]
         P = (P + 0x100000000) % 0x100000000  # maybe < 0
@@ -633,30 +635,27 @@ class Encryption:
         o_entry = self.entry["/O"].getObject().original_bytes
         u_entry = self.entry["/U"].getObject().original_bytes
 
-        key = AlgR4.verify_user_password(user_pwd1, R, self.key_size, o_entry, u_entry, P, self.id1_entry, metadata_encrypted)
+        key = AlgR4.verify_user_password(user_pwd, R, self.key_size, o_entry, u_entry, P, self.id1_entry, metadata_encrypted)
         if key:
             return key, 1
-        key = AlgR4.verify_owner_password(owner_pwd1, R, self.key_size, o_entry, u_entry, P, self.id1_entry, metadata_encrypted)
+        key = AlgR4.verify_owner_password(owner_pwd, R, self.key_size, o_entry, u_entry, P, self.id1_entry, metadata_encrypted)
         if key:
             return key, 2
         return b"", 0
 
-    def verify_r5(self, user_pwd: str, owner_pwd: str) -> typing.Tuple[bytes, int]:
+    def verify_r5(self, user_pwd: bytes, owner_pwd: bytes) -> typing.Tuple[bytes, int]:
         # TODO: use SASLprep process
-        user_pwd1 = _bytes(user_pwd)
-        owner_pwd1 = _bytes(owner_pwd)
-
         o_entry = self.entry["/O"].getObject().original_bytes
         u_entry = self.entry["/U"].getObject().original_bytes
         oe_entry = self.entry["/OE"].getObject().original_bytes
         ue_entry = self.entry["/UE"].getObject().original_bytes
 
         rc = 0
-        key = AlgR5.verify_user_password(user_pwd1, u_entry, ue_entry)
+        key = AlgR5.verify_user_password(user_pwd, u_entry, ue_entry)
         if key:
             rc = 1
         else:
-            key = AlgR5.verify_owner_password(owner_pwd1, o_entry, oe_entry, u_entry)
+            key = AlgR5.verify_owner_password(owner_pwd, o_entry, oe_entry, u_entry)
             if key:
                 rc = 2
         if rc == 0:
