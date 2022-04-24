@@ -1,8 +1,10 @@
  Römische Zahlen:
  Liga turen
- : auffliegen auffinden finden Auflage Schifffahrt.
- Korrekt: auffliegen auffinden finden Auflage Schifffahrt.
+ : auffliegen auffinden finden A uflage Schifffahrt.
+ K orrekt
+ : auf fliegen auf finden finden A uf lage Schiff fahrt.
  Ziffern: 0123456789.
  Donau Donaudampfschiff Donaudampfschifffahrt Donaudampfschifffahrtskapitän Donau-
  dampfschifffahrtskapitän Donaudampfschifffahrtskapitän Donaudampfschifffahrtskapitän Do-
  naudampfschifffahrtskapitän Donaudampfschifffahrtskapitän
+ 1
