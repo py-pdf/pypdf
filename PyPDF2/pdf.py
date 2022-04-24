@@ -147,7 +147,7 @@ class PdfFileWriter(object):
             self._root_object["/AcroForm"][need_appearances] = BooleanObject(True)
 
         except Exception as e:
-            print('set_need_appearances_writer() catch : ', repr(e))
+            logger.error('set_need_appearances_writer() catch : ', repr(e))
 
     def addPage(self, page):
         """
@@ -372,7 +372,7 @@ class PdfFileWriter(object):
             # Trigger callback, pass writer page as parameter
             if callable(after_page_append): after_page_append(writer_page)
 
-    def updatePageFormFieldValues(self, page, fields):
+    def updatePageFormFieldValues(self, page, fields, flags=0):
         '''
         Update the form field values for a given page from a fields dictionary.
         Copy field texts and values from fields to page.
@@ -382,6 +382,9 @@ class PdfFileWriter(object):
             and field data will be updated.
         :param fields: a Python dictionary of field names (/T) and text
             values (/V)
+        :param flags: An integer (0 to 7). The first bit sets ReadOnly, the
+            second bit sets Required, the third bit sets NoExport. See
+            PDF Reference Table 8.70 for details.
         '''
         # Iterate through pages, update field values
         for j in range(0, len(page[PG.ANNOTS])):
@@ -395,6 +398,8 @@ class PdfFileWriter(object):
                     writer_annot.update({
                         NameObject("/V"): TextStringObject(fields[field])
                     })
+                    if flags:
+                        writer_annot.update({NameObject("/Ff"): NumberObject(flags)})
                 elif writer_parent_annot.get('/T') == field:
                     writer_parent_annot.update({
                         NameObject("/V"): TextStringObject(fields[field])
@@ -425,7 +430,7 @@ class PdfFileWriter(object):
         self.cloneReaderDocumentRoot(reader)
         self.appendPagesFromReader(reader, after_page_append)
 
-    def encrypt(self, user_pwd, owner_pwd = None, use_128bit = True):
+    def encrypt(self, user_pwd, owner_pwd = None, use_128bit = True, permissions_flag=-1):
         """
         Encrypt this PDF file with the PDF Standard encryption handler.
 
@@ -437,6 +442,13 @@ class PdfFileWriter(object):
         :param bool use_128bit: flag as to whether to use 128bit
             encryption.  When false, 40bit encryption will be used.  By default,
             this flag is on.
+        :param unsigned int permissions_flag: permissions as described in
+            TABLE 3.20 of the PDF 1.7 specification. A bit value of 1 means the
+            permission is grantend. Hence an integer value of -1 will set all
+            flags.
+            Bit position 3 is for printing, 4 is for modifying content, 5 and 6
+            control annotations, 9 for form fields, 10 for extraction of
+            text and graphics.
         """
         import random
         import time
@@ -450,8 +462,7 @@ class PdfFileWriter(object):
             V = 1
             rev = 2
             keylen = int(40 / 8)
-        # permit everything:
-        P = -1
+        P = permissions_flag
         O = ByteStringObject(_alg33(owner_pwd, user_pwd, rev, keylen))
         ID_1 = ByteStringObject(md5(b_(repr(time.time()))).digest())
         ID_2 = ByteStringObject(md5(b_(repr(random.random()))).digest())
@@ -627,7 +638,7 @@ class PdfFileWriter(object):
                         newobj = self._sweepIndirectReferences(externMap, newobj)
                         self._objects[idnum-1] = newobj
                         return newobj_ido
-                    except ValueError:
+                    except (ValueError, RecursionError):
                         # Unable to resolve the Object, returning NullObject instead.
                         warnings.warn("Unable to resolve [{}: {}], returning NullObject instead".format(
                             data.__class__.__name__, data
@@ -2108,7 +2119,7 @@ class PdfFileReader(object):
     def readNextEndLine(self, stream, limit_offset=0):
         debug = False
         if debug: print(">>readNextEndLine")
-        line = b_("")
+        line_parts = []
         while True:
             # Prevent infinite loops in malformed PDFs
             if stream.tell() == 0 or stream.tell() == limit_offset:
@@ -2135,10 +2146,10 @@ class PdfFileReader(object):
                 break
             else:
                 if debug: print("  x is neither")
-                line = x + line
-                if debug: print(("  RNEL line:", line))
+                line_parts.append(x)
         if debug: print("leaving RNEL")
-        return line
+        line_parts.reverse()
+        return b"".join(line_parts)
 
     def decrypt(self, password):
         """
@@ -2231,7 +2242,13 @@ class PdfFileReader(object):
         rev = encrypt['/R'].getObject()
         owner_entry = encrypt['/O'].getObject()
         p_entry = encrypt['/P'].getObject()
-        id_entry = self.trailer[TK.ID].getObject()
+        if TK.ID in self.trailer:
+            id_entry = self.trailer[TK.ID].getObject()
+        else:
+            # Some documents may not have a /ID, use two empty
+            # byte strings instead. Solves
+            # https://github.com/mstamy2/PyPDF2/issues/608
+            id_entry = ArrayObject([ByteStringObject(b''), ByteStringObject(b'')])
         id1_entry = id_entry[0].getObject()
         real_U = encrypt['/U'].getObject().original_bytes
         if rev == 2:
@@ -2803,7 +2820,7 @@ class PageObject(DictionaryObject):
                 content = ContentStream(content, self.pdf)
             self[NameObject("/Contents")] = content.flateEncode()
 
-    def extractText(self, Tj_sep="", TJ_sep=" "):
+    def extractText(self, Tj_sep="", TJ_sep=""):
         """
         Locate all text drawing commands, in the order they are provided in the
         content stream, and extract the text.  This works well for some PDF
@@ -2845,6 +2862,15 @@ class PageObject(DictionaryObject):
                     if isinstance(i, TextStringObject):
                         text += TJ_sep
                         text += i
+                    elif isinstance(i, NumberObject):
+                        # a positive value decreases and the negative value increases
+                        # space
+                        if int(i) < 0:
+                            if len(text) == 0 or text[-1] != " ":
+                                text += " "
+                        else:
+                            if len(text) > 1 and text[-1] == " ":
+                                text = text[:-1]
                 text += "\n"
         return text
 

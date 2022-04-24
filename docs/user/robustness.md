@@ -37,4 +37,5 @@ Choosing `strict=True` means that PyPDF2 will raise an exception if a PDF does
 not follow the specification.
 
 Choosing `strict=False` means that PyPDF2 will try to be forgiving and do
-something reasonable, but it will log a warning message.
+something reasonable, but it will log a warning message. It is a best-effort
+approach.
