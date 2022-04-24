@@ -341,7 +341,7 @@ def test_read_empty():
 def test_read_malformed_header():
     with pytest.raises(PdfReadError) as exc:
         PdfFileReader(io.BytesIO(b"foo"))
-    assert exc.value.args[0] == "PDF starts with b'foo', but '%PDF-' expected"
+    assert exc.value.args[0] == "PDF starts with 'foo', but '%PDF-' expected"
 
 
 def test_read_malformed_body():
