@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1650804721471,
+  "lastUpdate": 1650807056898,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -669,6 +669,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0069488832822520805",
             "extra": "mean: 100.2499638181808 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "e673a6eb2dc9b2207a144d253f2504739655f461",
+          "message": "DEV: Minor fix in make_changelog.py",
+          "timestamp": "2022-04-24T15:30:16+02:00",
+          "tree_id": "ec4435cfb572d70414b43320a4df5d94432b0e0c",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/e673a6eb2dc9b2207a144d253f2504739655f461"
+        },
+        "date": 1650807055894,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.6580371905513777,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0040697971114903985",
+            "extra": "mean: 1.5196709461999973 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 10.018692922795166,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00440530782071321",
+            "extra": "mean: 99.81341954545155 msec\nrounds: 11"
           }
         ]
       }
