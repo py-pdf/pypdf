@@ -31,6 +31,7 @@ You can contribute to `PyPDF2 on Github <https://github.com/py-pdf/PyPDF2>`_.
    user/forms
    user/streaming-data
    user/file-size
+   user/pdf-version-support
 
 
 .. toctree::
