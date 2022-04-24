@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1650799877028,
+  "lastUpdate": 1650800822699,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -593,6 +593,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0025973099354251743",
             "extra": "mean: 113.83911911111493 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "63b4c91f4f466fa6fb9e256af3cadc11bb8e4a05",
+          "message": "BUG: TypeError in xmp._converter_date (#813)\n\nFix: Convert decimal to int before passing it to datetime\r\n\r\nCloses #774",
+          "timestamp": "2022-04-24T13:46:20+02:00",
+          "tree_id": "33563b704555604f79db8e5c1737c3c781aa9546",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/63b4c91f4f466fa6fb9e256af3cadc11bb8e4a05"
+        },
+        "date": 1650800821542,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.5308827521609454,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07265480137831483",
+            "extra": "mean: 1.8836550932000038 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 8.928300240309044,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007008704187200776",
+            "extra": "mean: 112.0034018888892 msec\nrounds: 9"
           }
         ]
       }
