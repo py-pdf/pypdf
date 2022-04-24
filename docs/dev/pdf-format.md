@@ -84,7 +84,7 @@ startxref 1234
 
 Let's go through it:
 
-* `trailer <<` indicates that the *trailer dictionary` starts. It ends with `>>`.
+* `trailer <<` indicates that the *trailer dictionary* starts. It ends with `>>`.
 * `startxref` is a keyword followed by the byte-location of the `xref` keyword.
   As the trailer is always at the bottom of the file, this allows readers to
   quickly find the xref table.
@@ -99,3 +99,15 @@ Table 3.13 of the PDF Reference 1.7, e.g. `/Root` and `/Size` (both are required
     * `R` is the keyword that indicates that the object is a reference to the
       catalog dictionary.
 * `/Size` (integer) contains the total number of entries in the files xref table.
+
+
+## Reading PDF files
+
+Most PDF files are compressed. If you want to read them, first uncompress them:
+
+```bash
+pdftk crazyones.pdf output crazyones-uncomp.pdf uncompress
+```
+
+Then rename `crazyones-uncomp.pdf` to `crazyones-uncomp.txt` and open it in
+our favorite IDE / text editor.
