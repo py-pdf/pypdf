@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1650800822699,
+  "lastUpdate": 1650804721471,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -631,6 +631,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.007008704187200776",
             "extra": "mean: 112.0034018888892 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5bc7219360978dfb593fc4275e76b6f3057972c9",
+          "message": "MAINT: Validate PDF magic byte in strict mode (#814)\n\nCloses #626",
+          "timestamp": "2022-04-24T14:51:19+02:00",
+          "tree_id": "fac05cd2ef17e2fdd9a43ce133b252c299455a62",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/5bc7219360978dfb593fc4275e76b6f3057972c9"
+        },
+        "date": 1650804720365,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.5968691930782724,
+            "unit": "iter/sec",
+            "range": "stddev: 0.10524568460776369",
+            "extra": "mean: 1.6754089700000008 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 9.975065944299576,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0069488832822520805",
+            "extra": "mean: 100.2499638181808 msec\nrounds: 11"
           }
         ]
       }
