@@ -1,7 +1,7 @@
 [![PyPI version](https://badge.fury.io/py/PyPDF2.svg)](https://badge.fury.io/py/PyPDF2)
 [![Python Support](https://img.shields.io/pypi/pyversions/PyPDF2.svg)](https://pypi.org/project/PyPDF2/)
 [![](https://img.shields.io/badge/-documentation-green)](https://pypdf2.readthedocs.io/en/latest/)
-![GitHub last commit](https://img.shields.io/github/last-commit/py-pdf/PyPDF2)
+[![GitHub last commit](https://img.shields.io/github/last-commit/py-pdf/PyPDF2)](https://github.com/py-pdf/PyPDF2)
 [![codecov](https://codecov.io/gh/py-pdf/PyPDF2/branch/main/graph/badge.svg?token=id42cGNZ5Z)](https://codecov.io/gh/py-pdf/PyPDF2)
 
 # PyPDF2

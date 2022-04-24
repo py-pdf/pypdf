@@ -33,6 +33,8 @@ pluggy==1.0.0
     # via pytest
 py==1.11.0
     # via pytest
+py-cpuinfo==8.0.0
+    # via pytest-benchmark
 pycodestyle==2.8.0
     # via flake8
 pycryptodome==3.14.1
@@ -42,6 +44,10 @@ pyflakes==2.4.0
 pyparsing==3.0.7
     # via packaging
 pytest==7.0.1
+    # via
+    #   -r requirements/ci.in
+    #   pytest-benchmark
+pytest-benchmark==3.4.1
     # via -r requirements/ci.in
 tomli==1.2.3
     # via pytest

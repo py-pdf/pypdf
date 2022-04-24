@@ -1,3 +1,27 @@
+Version 1.27.8, 2022-04-21
+--------------------------
+
+Bug Fixes (BUG):
+-  Use 1MB as offset for readNextEndLine (#321)
+-  'PdfFileWriter' object has no attribute 'stream' (#787)
+
+Robustness (ROB):
+-  Invalid float object; use 0 as fallback (#782)
+
+Documentation (DOC):
+-  Robustness (#785)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.27.7...1.27.8
+
+Version 1.27.7, 2022-04-19
+--------------------------
+
+Bug Fixes (BUG):
+- Import exceptions from PyPDF2.errors in PyPDF2.utils (#780)
+
+Code Style (STY):
+-  Naming in 'make_changelog.py'
+
 Version 1.27.6, 2022-04-18
 --------------------------
 

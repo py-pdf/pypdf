@@ -19,6 +19,7 @@ You can contribute to `PyPDF2 on Github <https://github.com/py-pdf/PyPDF2>`_.
    :maxdepth: 1
 
    user/installation
+   user/robustness
    user/metadata
    user/extract-text
    user/encryption-decryption
@@ -29,6 +30,7 @@ You can contribute to `PyPDF2 on Github <https://github.com/py-pdf/PyPDF2>`_.
    user/adding-pdf-annotations
    user/forms
    user/streaming-data
+   user/file-size
 
 
 .. toctree::
@@ -36,9 +38,9 @@ You can contribute to `PyPDF2 on Github <https://github.com/py-pdf/PyPDF2>`_.
    :maxdepth: 1
 
    modules/PdfFileReader
+   modules/PdfFileWriter
    modules/PdfFileMerger
    modules/PageObject
-   modules/PdfFileWriter
    modules/DocumentInformation
    modules/XmpInformation
    modules/Destination
@@ -46,6 +48,12 @@ You can contribute to `PyPDF2 on Github <https://github.com/py-pdf/PyPDF2>`_.
    modules/Field
    modules/PageRange
 
+.. toctree::
+   :caption: Developer Guide
+   :maxdepth: 1
+
+   dev/intro
+   dev/pdf-format
 
 .. toctree::
    :caption: About PyPDF2
