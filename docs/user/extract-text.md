@@ -21,7 +21,14 @@ clear answer what the expected result should look like:
 3. **Outlines**: Should outlines be extracted at all?
 4. **Formatting**: If text is **bold** or *italic*, should it be included in the
    output?
-5. **Captions**: Should image and table captions be included?
+5. **Tables**: Should the text extraction skip tables? Should it extract just the
+   text? Should the borders be shown in some Markdown-like way or should the
+   structure be present e.g. as an HTML table? How would you deal with merged
+   cells?
+6. **Captions**: Should image and table captions be included?
+7. **Ligatures**: The Unicode symbol [U+FB00](https://www.compart.com/de/unicode/U+FB00)
+   is a single symbol ﬀ for two lowercase letters 'f'. Should that be parsed as
+   the Unicode symbol 'ﬀ' or as two ASCII symbols 'ff'?
 
 Then there are issues where most people would agree on the correct output, but
 the way PDF stores information just makes it hard to achieve that:
