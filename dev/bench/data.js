@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1650746992960,
+  "lastUpdate": 1650773068759,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -403,6 +403,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0007410550961924088",
             "extra": "mean: 99.10906800000419 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b3247e8d531b7dd35ca1c55a5bed5ea4151b9fa8",
+          "message": "ENH: Add papersizes (#800)",
+          "timestamp": "2022-04-24T06:03:50+02:00",
+          "tree_id": "966fb1ac42051614b11acae333b07bb52398e051",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/b3247e8d531b7dd35ca1c55a5bed5ea4151b9fa8"
+        },
+        "date": 1650773067691,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.5540552761217961,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0049744553903781135",
+            "extra": "mean: 1.804874067800003 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 8.949716349828208,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008507589272494641",
+            "extra": "mean: 111.73538477777514 msec\nrounds: 9"
           }
         ]
       }
