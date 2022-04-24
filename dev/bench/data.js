@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1650807175843,
+  "lastUpdate": 1650810621781,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -745,6 +745,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0016392937995490596",
             "extra": "mean: 107.28455380000099 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "39215c704791c10189668bbd1fa1d04d0b1f3f81",
+          "message": "DOC: More details on text parsing issues (#815)",
+          "timestamp": "2022-04-24T16:29:40+02:00",
+          "tree_id": "cf2929720a034465cd1497ceb5d50ef283785b74",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/39215c704791c10189668bbd1fa1d04d0b1f3f81"
+        },
+        "date": 1650810620707,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.5266091808541599,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04462753547546615",
+            "extra": "mean: 1.8989414471999908 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 8.53769833696998,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006891337436723719",
+            "extra": "mean: 117.12758644443966 msec\nrounds: 9"
           }
         ]
       }
