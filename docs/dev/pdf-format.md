@@ -99,3 +99,15 @@ Table 3.13 of the PDF Reference 1.7, e.g. `/Root` and `/Size` (both are required
     * `R` is the keyword that indicates that the object is a reference to the
       catalog dictionary.
 * `/Size` (integer) contains the total number of entries in the files xref table.
+
+
+## Reading PDF files
+
+Most PDF files are compressed. If you want to read them, first uncompress them:
+
+```bash
+pdftk crazyones.pdf output crazyones-uncomp.pdf uncompress
+```
+
+Then rename `crazyones-uncomp.pdf` to `crazyones-uncomp.txt` and open it in
+our favorite IDE / text editor.
