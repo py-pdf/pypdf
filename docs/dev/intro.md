@@ -9,6 +9,12 @@ the users, but for people who want to work on PyPDF2 itself.
 pip install -r requirements/dev.txt
 ```
 
+## Runnin Tests
+
+```
+pytest .
+```
+
 ## Benchmarks
 
 We need to keep an eye on performance and thus we have a few benchmarks.
