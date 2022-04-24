@@ -164,15 +164,19 @@ def test_get_images(src, nb_images):
 
 
 @pytest.mark.parametrize(
-    "strict,with_prev_0,should_fail",
+    "strict,with_prev_0,startx_correction,should_fail",
     [
-        (True, True, True),
-        (True, False, False),
-        (False, True, False),
-        (False, False, False),
+        (True, False, -1, False), # all nominal => no fail
+        (True, True, -1, True),   # Prev=0 => fail expected
+        (False, False, -1, False),
+        (False, True, -1, False), # Prev =0 => no strict so tolerant
+        (True, False, 0, True),   # error on startxref, in strict => fail expected
+        (True, True, 0, True),
+        (False, False, 0, False), # error on startxref, but no strict => xref rebuilt,no fail
+        (False, True, 0, False),
     ],
 )
-def test_get_images_raw(strict, with_prev_0, should_fail):
+def test_get_images_raw(strict, with_prev_0, startx_correction, should_fail):
     pdf_data = (
         b"%%PDF-1.7\n"
         b"1 0 obj << /Count 1 /Kids [4 0 R] /Type /Pages >> endobj\n"
@@ -200,16 +204,24 @@ def test_get_images_raw(strict, with_prev_0, should_fail):
         pdf_data.find(b"4 0 obj"),
         pdf_data.find(b"5 0 obj"),
         b"/Prev 0 " if with_prev_0 else b"",
-        pdf_data.find(b"xref") - 1,  # -1 due to double % at the beginning
+        # startx_correction should be -1 due to double % at the beginning indiducing an error on startxref computation
+        pdf_data.find(b"xref") + startx_correction,
     )
+    print((strict, with_prev_0, should_fail))
+    print(pdf_data)
     pdf_stream = io.BytesIO(pdf_data)
     if should_fail:
-        with pytest.raises(PdfReadError) as exc:
+        with pytest.raises(Exception) as exc:
             PdfFileReader(pdf_stream, strict=strict)
-        assert (
-            exc.value.args[0]
-            == "/Prev=0 in the trailer (try opening with strict=False)"
-        )
+        print(exc.type)
+        if startx_correction != -1:
+            assert exc.type == PdfReadWarning
+        else:
+            assert (
+                exc.type == PdfReadError
+                and exc.value.args[0]
+                == "/Prev=0 in the trailer (try opening with strict=False)"
+            )
     else:
         PdfFileReader(pdf_stream, strict=strict)
 

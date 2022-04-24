@@ -1977,10 +1977,10 @@ class PdfFileReader(object):
                 for key, value in list(newTrailer.items()):
                     if key not in self.trailer:
                         self.trailer[key] = value
-                if "/Prev" in newTrailer:
-                    startxref = newTrailer["/Prev"]
-                else:
-                    break
+                #if "/Prev" in newTrailer:
+                #    startxref = newTrailer["/Prev"]
+                #else:
+                break
             elif x.isdigit():
                 # PDF 1.5+ Cross-Reference Stream
                 stream.seek(-1, 1)
