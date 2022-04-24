@@ -62,6 +62,7 @@ from PyPDF2.constants import Ressources as RES
 from PyPDF2.constants import StreamAttributes as SA
 from PyPDF2.constants import TrailerKeys as TK
 from PyPDF2.errors import PageSizeNotDefinedError, PdfReadError, PdfReadWarning
+from PyPDF2.generic import _pdfDocEncoding_rev
 
 from . import utils
 from .generic import *
@@ -1698,8 +1699,7 @@ class PdfFileReader(object):
                 pos = streamData.tell()
                 streamData.seek(0, 0)
                 lines = streamData.readlines()
-                for i in range(0, len(lines)):
-                    print(lines[i])
+
                 streamData.seek(pos, 0)
             try:
                 obj = readObject(streamData, self)
@@ -2264,15 +2264,56 @@ def createRectangleAccessor(name, fallback):
             lambda self: deleteRectangle(self, name)
             )
 
+glyphs = {
+    "FB00": "ff",
+    "FB01": "fi",
+    "FB02": "fl",
+}
+
 def parseCMap(cstr):
+    if "begincodespacerange" in cstr:
+        rr = re.search("begincodespacerange[\s\n]+<([0-9a-fA-F]{2})>\s+<([0-9a-fA-F]{2})>[\s\n]+endcodespacerange", cstr, re.DOTALL)
+        if rr is None:
+            print(cstr)
+            space_range = None
+        else:
+            space_range = (int(rr.group(1), 16), int(rr.group(2), 16))
+        print("gotcha")
+    else:
+        space_range = None
     rr = re.search("\nbegincmap\n(?:.*?\n)?[0-9]* beginbfchar\n(.*?)\nendbfchar\n(?:.*?\n)?endcmap\n", cstr, re.DOTALL)
     if rr == None: return None
     result = {}
     cstr = rr.group(1)
+    print("@" * 80)
     for entry in cstr.split("\n"):
         rr = re.match("\\s*<([0-9a-fA-F]+)>\\s+<([0-9a-fA-F]+)>\\s*", entry)
         if rr == None: continue
-        result[int(rr.group(1), base=16)] = chr_(int(rr.group(2), base=16))
+        key = int(rr.group(1), base=16)
+        results = rr.group(2)
+        value = ""
+        print(f"results={results}")
+        for start_index in range(0, len(results), 4):
+            part = results[start_index:start_index+4]
+            print(part)
+            intval = int(part, base=16)
+            part = glyphs.get(part, chr_(intval))
+            print(part)
+            value += part
+        result[key] = value
+        # print(f"key: {key}")
+        # print(entry)
+        # print(f"result[key]: {result[key]}")
+    print(result)
+    print("@" * 80)
+    print(f"key={key} / start={intval:#x}, space_range={space_range}")
+    if space_range is not None and intval and key:
+        start = intval
+        for offset in range(space_range[0], space_range[1] + 1):
+            current = start + offset
+            part = glyphs.get(current, chr_(current))
+            result[key + offset] = part
+    print(result)
     return result
 
 
@@ -2812,12 +2853,23 @@ class PageObject(DictionaryObject):
         # so adding them to the text here would be gibberish.
         def translate(text):
             if isinstance(text, TextStringObject):
-                return text
-            if isinstance(text, ByteStringObject) and cmap != None:
-                newText = ""
+                debug = text == "mis˝ts."
+                new_text = ""
+                if debug: print(cmaps)
                 for c in text:
-                    newText += cmap.get(ord_(c),"?")
-                return newText
+                    # print(f"{c}: {ord(c)}")
+                    key = _pdfDocEncoding_rev[c]  # dirty hack; _pdfDocEncoding_rev should not have been applied at this point
+                    lookupval = cmap.get(key, c)  # Captures too much because of 
+                    if debug: print(f"{lookupval} key: {key}, c={c}")
+                    # print(cmap)
+                    new_text += lookupval
+                return new_text
+            if isinstance(text, ByteStringObject) and cmap != None:
+                new_text = ""
+                for c in text:
+                    key = _pdfDocEncoding_rev[c]  # ord_(c)?
+                    new_text += cmap.get(key,"?")
+                return new_text
             return ""
 
         for operands, operator in content.operations:
@@ -2834,7 +2886,7 @@ class PageObject(DictionaryObject):
                 _text = operands[0]
                 if isinstance(_text, TextStringObject):
                     text += Tj_sep
-                    text += translate(_text)
+                    # text += translate(_text)
                     text += "\n"
             elif operator == b_("T*"):
                 text += "\n"
@@ -2842,12 +2894,13 @@ class PageObject(DictionaryObject):
                 text += "\n"
                 _text = operands[0]
                 if isinstance(_text, TextStringObject):
-                    text += translate(operands[0])
+                    # text += translate(operands[0])
+                    pass
             elif operator == b_('"'):
                 _text = operands[2]
                 if isinstance(_text, TextStringObject):
                     text += "\n"
-                    text += translate(_text)
+                    # text += translate(_text)
             elif operator == b_("TJ"):
                 for i in operands[0]:
                     if isinstance(i, TextStringObject):
@@ -2948,7 +3001,8 @@ class ContentStream(DecodedStreamObject):
                 while peek not in (b_('\r'), b_('\n')):
                     peek = stream.read(1)
             else:
-                operands.append(readObject(stream, None))
+                obj = readObject(stream, None)
+                operands.append(obj)
 
     def _readInlineImage(self, stream):
         # begin reading just after the "BI" - begin image

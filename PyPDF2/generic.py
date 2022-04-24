@@ -178,7 +178,9 @@ class ArrayObject(list, PdfObject):
                 break
             stream.seek(-1, 1)
             # read and append obj
-            arr.append(readObject(stream, pdf))
+            obj = readObject(stream, pdf)
+            # print(f"{obj} - {type(obj)}")
+            arr.append(obj)
         return arr
 
 class IndirectObject(PdfObject):
@@ -1209,12 +1211,35 @@ def encode_pdfdocencoding(unicode_string):
 
 def decode_pdfdocencoding(byte_array):
     retval = u_('')
+    if byte_array == b'mis\x1cts.':
+        debug = True
+    else:
+        debug = False
+    if debug: print("<"*80)
+    if debug: print(f"byte_array={byte_array}")
+    collect_escape = 0
+    escape = u_('')  # remove the escape stuff
     for b in byte_array:
-        c = _pdfDocEncoding[ord_(b)]
-        if c == u_('\u0000'):
-            raise UnicodeDecodeError("pdfdocencoding", utils.barray(b), -1, -1,
-                    "does not exist in translation table")
-        retval += c
+        if debug: print(f"{chr(b)} -- {b}")
+        if ord_(b) == ord('\\'):
+            collect_escape = 3
+        else:
+            if collect_escape:
+                escape += b
+                collect_escape -= 1
+                if collect_escape == 0:
+                    retval += escape
+                    print(f"added escape: {escape}")
+                    escape = u_('')
+            else:
+                c = _pdfDocEncoding[ord_(b)]
+                if c == u_('\u0000'):
+                    raise UnicodeDecodeError("pdfdocencoding", utils.barray(b), -1, -1,
+                            "does not exist in translation table")
+                retval += c
+    retval += escape
+    # print(f"retval={retval}")
+    if debug: print(">"*80)
     return retval
 
 # PDFDocEncoding Character Set: Table D.2 of PDF Reference 1.7
