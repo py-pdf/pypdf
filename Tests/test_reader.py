@@ -338,9 +338,15 @@ def test_read_empty():
     assert exc.value.args[0] == "Cannot read an empty file"
 
 
-def test_read_malformed():
+def test_read_malformed_header():
     with pytest.raises(PdfReadError) as exc:
         PdfFileReader(io.BytesIO(b"foo"))
+    assert exc.value.args[0] == "PDF starts with b'foo', but '%PDF-' expected"
+
+
+def test_read_malformed_body():
+    with pytest.raises(PdfReadError) as exc:
+        PdfFileReader(io.BytesIO(b"%PDF-"))
     assert exc.value.args[0] == "Could not read malformed PDF file"
 
 
