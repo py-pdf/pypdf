@@ -96,7 +96,8 @@ def test_remove_images(input_path, ignoreByteStringObject):
     with open(tmp_filename, "rb") as input_stream:
         reader = PdfFileReader(input_stream)
         if input_path == "side-by-side-subfig.pdf":
-            assert "Lorem ipsum dolor sit amet" in reader.getPage(0).extractText()
+            extracted_text = reader.getPage(0).extractText()
+            assert "Lorem ipsum dolor sit amet" in extracted_text
 
     # Cleanup
     os.remove(tmp_filename)
