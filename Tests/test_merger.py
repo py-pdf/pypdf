@@ -51,6 +51,7 @@ def test_merge():
     # Check if bookmarks are correct
     pdfr = PyPDF2.PdfFileReader(tmp_path)
     assert [el.title for el in pdfr.getOutlines() if isinstance(el, Destination)] == [
+        "A bookmark",
         "Foo",
         "Bar",
         "Baz",
@@ -61,7 +62,6 @@ def test_merge():
         "Bar",
         "Baz",
         "True",
-        "A bookmark",
     ]
 
     # Clean up
