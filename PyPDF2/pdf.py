@@ -1835,7 +1835,7 @@ class PdfFileReader(object):
             stream.seek(0, 0)
             header_byte = stream.read(5)
             if header_byte != b"%PDF-":
-                raise PdfReadError("PDF starts with {}, but '%PDF-' expected".format(header_byte.decode("utf8")))
+                raise PdfReadError("PDF starts with '{}', but '%PDF-' expected".format(header_byte.decode("utf8")))
             stream.seek(-1, 2)
         last1M = stream.tell() - 1024 * 1024 + 1 # offset of last MB of stream
         line = b_('')
