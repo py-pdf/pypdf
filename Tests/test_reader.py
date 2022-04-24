@@ -7,7 +7,7 @@ from PyPDF2 import PdfFileReader
 from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.constants import Ressources as RES
-from PyPDF2.errors import PdfReadError,PdfReadWarning
+from PyPDF2.errors import PdfReadError, PdfReadWarning
 from PyPDF2.filters import _xobj_to_image
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -200,7 +200,7 @@ def test_get_images_raw(strict, with_prev_0, should_fail):
         pdf_data.find(b"4 0 obj"),
         pdf_data.find(b"5 0 obj"),
         b"/Prev 0 " if with_prev_0 else b"",
-        pdf_data.find(b"xref") - 1, # -1 due to double % at the beginning
+        pdf_data.find(b"xref") - 1,  # -1 due to double % at the beginning
     )
     pdf_stream = io.BytesIO(pdf_data)
     if should_fail:
@@ -218,10 +218,10 @@ def test_issue297():
     path = os.path.join(RESOURCE_ROOT, "issue-297.pdf")
     with pytest.raises(PdfReadWarning) as exc:
         print(exc)
-        reader = PdfFileReader(path,strict=True)
+        reader = PdfFileReader(path, strict=True)
         reader.getPage(0)
-    assert ( exc.value.args[0].find("startxref") > 0)
-    reader = PdfFileReader(path,strict=False)
+    assert exc.value.args[0].find("startxref") > 0
+    reader = PdfFileReader(path, strict=False)
     reader.getPage(0)
 
 
