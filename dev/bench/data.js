@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1650777195186,
+  "lastUpdate": 1650792708280,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -479,6 +479,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.006132508373283311",
             "extra": "mean: 98.78604936363384 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6729b8005e3d07ddf858da319e1ce27784368d88",
+          "message": "DOC: CMaps (#811)",
+          "timestamp": "2022-04-24T11:30:59+02:00",
+          "tree_id": "0e168da055bb6a4f07ccb33287a14b730d4daa8d",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/6729b8005e3d07ddf858da319e1ce27784368d88"
+        },
+        "date": 1650792707218,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.5062473877039959,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020347651861574872",
+            "extra": "mean: 1.9753188347999981 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 7.8468491530427995,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007294014757637078",
+            "extra": "mean: 127.43968700000133 msec\nrounds: 9"
           }
         ]
       }
