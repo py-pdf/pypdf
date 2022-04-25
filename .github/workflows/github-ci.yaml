@@ -56,7 +56,7 @@ jobs:
       run: |
         python -m coverage run --parallel-mode -m pytest Tests -vv -m "not no_py27"
       if: matrix.python-version == 2.7
-    - name: Test with pytest
+    - name: Test with pytest (OO flag)
       run: |
         python -OO -m coverage run --parallel-mode -m pytest Tests -vv
       if: matrix.python-version == '3.10.1'
