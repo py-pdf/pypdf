@@ -39,6 +39,7 @@ import pytest
         "whitespace",
     ],
 )
+@pytest.mark.no_py27
 def test_expected_results(input, expected):
     """
     Feeds a bunch of values to ASCIIHexDecode.decode() and ensures the
