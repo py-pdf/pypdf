@@ -1561,7 +1561,7 @@ class PdfFileReader(object):
         array = array[2:]
         try:
             return Destination(title, page, typ, *array)
-        except PdfReadError as e:
+        except PdfReadError:
             warnings.warn("Unknown destination : " + title + " " + str(array))
             if self.strict:
                 raise
@@ -1569,7 +1569,6 @@ class PdfFileReader(object):
                 #create a link to first Page
                 return Destination(title, self.getPage(0).indirectRef,
                                    TextStringObject("/Fit"))
-                
 
     def _buildOutline(self, node):
         dest, title, outline = None, None, None
