@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1650916455834,
+  "lastUpdate": 1650919176039,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -859,6 +859,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0012979079016196592",
             "extra": "mean: 120.44909111111224 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "39ffc1d6265e1b710d87cd6fc1a5f6b270978090",
+          "message": "TST: Add test for FlateDecode (#823)\n\nFull credit to\r\nhttps://github.com/py-pdf/PyPDF2/pull/817/commits/9f628b3989b2f9714db9eb850bed323329a61922\r\nwho added the test in 2018 to PyPDF4\r\n\r\nCo-authored-by: Acsor <nildexo@yandex.com>",
+          "timestamp": "2022-04-25T22:38:54+02:00",
+          "tree_id": "1406b92bec2277732129a7c71c9e5d0bf03b3e9e",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/39ffc1d6265e1b710d87cd6fc1a5f6b270978090"
+        },
+        "date": 1650919175534,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.533021892422493,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04128214521394912",
+            "extra": "mean: 1.8760955491999993 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 8.931744670108035,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009845891608524406",
+            "extra": "mean: 111.96020900000765 msec\nrounds: 9"
           }
         ]
       }
