@@ -524,7 +524,9 @@ def test_issue604(strict):
             with pytest.raises(PdfReadError) as exc:
                 pdf = PdfFileReader(f, strict=strict)
                 bookmarks = pdf.getOutlines()
-            assert "Unknown Destination Type" not in exc.value.args[0]
+            if "Unknown Destination" not in exc.value.args[0]:
+                raise Exception("Expected exception not raised")
+            return # bookmarks not correct
         else:
             pdf = PdfFileReader(f, strict=strict)
             bookmarks = pdf.getOutlines()
