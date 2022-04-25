@@ -40,7 +40,7 @@ from PyPDF2.constants import FilterTypes as FT
 from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import LzwFilterParameters as LZW
 from PyPDF2.constants import StreamAttributes as SA
-from PyPDF2.errors import PdfReadError
+from PyPDF2.errors import PdfReadError, PdfStreamError
 from PyPDF2.utils import ord_, paethPredictor
 
 if version_info < ( 3, 0 ):
@@ -194,12 +194,26 @@ class FlateDecode(object):
 
 
 class ASCIIHexDecode(object):
+    """
+    The ASCIIHexDecode filter decodes data that has been encoded in ASCII
+    hexadecimal form into a base-7 ASCII format.
+    """
+
     @staticmethod
     def decode(data, decodeParms=None):
+        """
+        :param data: a str sequence of hexadecimal-encoded values to be
+            converted into a base-7 ASCII string
+        :param decodeParms:
+        :return: a string conversion in base-7 ASCII, where each of its values
+            v is such that 0 <= ord(v) <= 127.
+        """
         retval = ""
         char = ""
         x = 0
         while True:
+            if x >= len(data):
+                raise PdfStreamError("Unexpected EOD in ASCIIHexDecode")
             c = data[x]
             if c == ">":
                 break
