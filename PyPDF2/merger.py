@@ -498,7 +498,8 @@ class PdfFileMerger(object):
 
         return None
 
-    def addBookmark(self, title, pagenum, parent=None):
+
+    def addBookmark(self, title, pagenum, parent=None, color=None, bold=False, italic=False, fit='/Fit', *args):
         """
         Add a bookmark to this PDF file.
 
@@ -506,28 +507,61 @@ class PdfFileMerger(object):
         :param int pagenum: Page number this bookmark will point to.
         :param parent: A reference to a parent bookmark to create nested
             bookmarks.
+        :param tuple color: Color of the bookmark as a red, green, blue tuple
+            from 0.0 to 1.0
+        :param bool bold: Bookmark is bold
+        :param bool italic: Bookmark is italic
+        :param str fit: The fit of the destination page. See
+            :meth:`addLink()<addLin>` for details.
         """
-        if parent is None:
-            iloc = [len(self.bookmarks)-1]
-        elif isinstance(parent, list):
-            iloc = parent
+        if len(self.output.getObject(self.output._pages)['/Kids']) > 0:
+            pageRef = self.output.getObject(self.output._pages)['/Kids'][pagenum]
         else:
-            iloc = self.findBookmark(parent)
+            pageRef = self.output.getObject(self.output._pages)
 
-        dest = Bookmark(TextStringObject(title), NumberObject(pagenum), NameObject('/FitH'), NumberObject(826))
-
-        if parent is None:
-            self.bookmarks.append(dest)
-        else:
-            bmparent = self.bookmarks
-            for i in iloc[:-1]:
-                bmparent = bmparent[i]
-            npos = iloc[-1]+1
-            if npos < len(bmparent) and isinstance(bmparent[npos], list):
-                bmparent[npos].append(dest)
+        action = DictionaryObject()
+        zoomArgs = []
+        for a in args:
+            if a is not None:
+                zoomArgs.append(NumberObject(a))
             else:
-                bmparent.insert(npos, [dest])
-        return dest
+                zoomArgs.append(NullObject())
+        dest = Destination(NameObject("/"+title + " bookmark"), pageRef, NameObject(fit), *zoomArgs)
+        destArray = dest.getDestArray()
+        action.update({
+            NameObject('/D') : destArray,
+            NameObject('/S') : NameObject('/GoTo')
+        })
+        actionRef = self.output._addObject(action)
+
+        outlineRef = self.output.getOutlineRoot()
+
+        if parent is None:
+            parent = outlineRef
+
+        bookmark = TreeObject()
+
+        bookmark.update({
+            NameObject('/A'): actionRef,
+            NameObject('/Title'): createStringObject(title),
+        })
+
+        if color is not None:
+            bookmark.update({NameObject('/C'): ArrayObject([FloatObject(c) for c in color])})
+
+        format = 0
+        if italic:
+            format += 1
+        if bold:
+            format += 2
+        if format:
+            bookmark.update({NameObject('/F'): NumberObject(format)})
+
+        bookmarkRef = self.output._addObject(bookmark)
+        parent = parent.getObject()
+        parent.addChild(bookmarkRef, self.output)
+
+        return bookmarkRef
 
     def addNamedDestination(self, title, pagenum):
         """

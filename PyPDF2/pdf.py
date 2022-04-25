@@ -1826,6 +1826,12 @@ class PdfFileReader(object):
         stream.seek(-1, 2)
         if not stream.tell():
             raise PdfReadError('Cannot read an empty file')
+        if self.strict:
+            stream.seek(0, 0)
+            header_byte = stream.read(5)
+            if header_byte != b"%PDF-":
+                raise PdfReadError("PDF starts with '{}', but '%PDF-' expected".format(header_byte.decode("utf8")))
+            stream.seek(-1, 2)
         last1M = stream.tell() - 1024 * 1024 + 1 # offset of last MB of stream
         line = b_('')
         while line[:5] != b_("%%EOF"):
@@ -2151,6 +2157,9 @@ class PdfFileReader(object):
     def _decrypt(self, password):
         from PyPDF2.encryption import Encryption
         id_entry = self.trailer.get(TK.ID)
+        # Some documents may not have a /ID, use two empty
+        # byte strings instead. Solves
+        # https://github.com/mstamy2/PyPDF2/issues/608
         id1_entry = id_entry[0].getObject().original_bytes if id_entry else b""
         encrypt_entry = self.trailer[TK.ENCRYPT].getObject()
         encryption = Encryption.read(encrypt_entry, id1_entry)

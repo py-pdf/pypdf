@@ -1,3 +1,41 @@
+Version 1.27.9, 2022-04-24
+--------------------------
+
+A change I would like to highlight is the performance improvement for
+large PDF files (#808) 🎉
+
+New Features (ENH):
+-  Add papersizes (#800)
+-  Allow setting permission flags when encrypting (#803)
+-  Allow setting form field flags (#802)
+
+Bug Fixes (BUG):
+-  TypeError in xmp._converter_date (#813)
+-  Improve spacing for text extraction (#806)
+-  Fix PDFDocEncoding Character Set (#809)
+
+Robustness (ROB):
+-  Use null ID when encrypted but no ID given (#812)
+-  Handle recursion error (#804)
+
+Documentation (DOC):
+-  CMaps (#811)
+-  The PDF Format + commit prefixes (#810)
+-  Add compression example (#792)
+
+Developer Experience (DEV):
+-  Add Benchmark for Performance Testing (#781)
+
+Maintenance (MAINT):
+-  Validate PDF magic byte in strict mode (#814)
+-  Make PdfFileMerger.addBookmark() behave life PdfFileWriters\' (#339)
+-  Quadratic runtime while parsing reduced to linear  (#808)
+
+Testing (TST):
+-  Newlines in text extraction (#807)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.27.8...1.27.9
+
 Version 1.27.8, 2022-04-21
 --------------------------
 

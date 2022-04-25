@@ -107,6 +107,10 @@ class XmpInformation(PdfObject):
         second = decimal.Decimal(m.group("second") or "0")
         seconds = second.to_integral(decimal.ROUND_FLOOR)
         milliseconds = (second - seconds) * 1000000
+
+        seconds = int(seconds)
+        milliseconds = int(milliseconds)
+
         tzd = m.group("tzd") or "Z"
         dt = datetime.datetime(year, month, day, hour, minute, seconds, milliseconds)
         if tzd != "Z":

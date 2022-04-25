@@ -338,9 +338,15 @@ def test_read_empty():
     assert exc.value.args[0] == "Cannot read an empty file"
 
 
-def test_read_malformed():
+def test_read_malformed_header():
     with pytest.raises(PdfReadError) as exc:
         PdfFileReader(io.BytesIO(b"foo"))
+    assert exc.value.args[0] == "PDF starts with 'foo', but '%PDF-' expected"
+
+
+def test_read_malformed_body():
+    with pytest.raises(PdfReadError) as exc:
+        PdfFileReader(io.BytesIO(b"%PDF-"))
     assert exc.value.args[0] == "Could not read malformed PDF file"
 
 
@@ -486,3 +492,18 @@ def test_do_not_get_stuck_on_large_files_without_start_xref():
     # parsing is expected take less than a second on a modern cpu, but include a large
     # tolerance to account for busy or slow systems
     assert parse_duration < 60
+
+
+def test_PdfReaderDecryptWhenNoID():
+    """
+    Decrypt an encrypted file that's missing the 'ID' value in its
+    trailer.
+    https://github.com/mstamy2/PyPDF2/issues/608
+    """
+
+    with open(
+        os.path.join(RESOURCE_ROOT, "encrypted_doc_no_id.pdf"), "rb"
+    ) as inputfile:
+        ipdf = PdfFileReader(inputfile)
+        ipdf.decrypt("")
+        assert ipdf.getDocumentInfo() == {"/Producer": "European Patent Office"}

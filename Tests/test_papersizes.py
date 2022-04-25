@@ -10,12 +10,11 @@ def test_din_a0():
     area_square_inch = area_square_pixels / 72**2
 
     # 25.4 millimeter is equal to 1 inches
-    area_square_mm = area_square_inch * (25.4)**2
+    area_square_mm = area_square_inch * (25.4) ** 2
     assert abs(area_square_mm - 999949) < 100
     conversion_factor = 72 / 25.4
     assert (dim.width - 841 * conversion_factor) < 1
     assert (dim.width - 1189 * conversion_factor) < 1
-
 
 
 @pytest.mark.parametrize("dimensions", papersizes._din_a)
