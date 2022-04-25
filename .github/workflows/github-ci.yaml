@@ -29,7 +29,8 @@ jobs:
     - name: Checkout PDFs
       uses: actions/checkout@v3
       with:
-        name: py-pdf/sample-files
+        repository: py-pdf/sample-files
+        path: sample-files
     - name: Setup Python
       uses: actions/setup-python@v3
       with:
