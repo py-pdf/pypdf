@@ -1,7 +1,47 @@
-from PyPDF2.filters import ASCIIHexDecode
 import string
-from PyPDF2.errors import PdfStreamError
+from itertools import product as cartesian_product
+
 import pytest
+
+from PyPDF2.errors import PdfReadError, PdfStreamError
+from PyPDF2.filters import ASCIIHexDecode, FlateDecode
+
+filter_inputs = (
+    # "", '', """""",
+    string.ascii_lowercase,
+    string.ascii_uppercase,
+    string.ascii_letters,
+    string.digits,
+    string.hexdigits,
+    string.punctuation,
+    string.whitespace,  # Add more...
+)
+
+
+@pytest.mark.parametrize("predictor, s", list(cartesian_product([1], filter_inputs)))
+def test_FlateDecode(predictor, s):
+    """
+    Tests FlateDecode decode() and encode() methods.
+    """
+    codec = FlateDecode()
+    s = s.encode()
+    encoded = codec.encode(s)
+    assert codec.decode(encoded, {"/Predictor": predictor}) == s
+
+
+def test_FlateDecode_unsupported_predictor():
+    """
+    Inputs an unsupported predictor (outside the [10, 15] range) checking
+    that PdfReadError() is raised. Once this predictor support is updated
+    in the future, this test case may be removed.
+    """
+    codec = FlateDecode()
+    predictors = (-10, -1, 0, 9, 16, 20, 100)
+
+    for predictor, s in cartesian_product(predictors, filter_inputs):
+        s = s.encode()
+        with pytest.raises(PdfReadError):
+            codec.decode(codec.encode(s), {"/Predictor": predictor})
 
 
 @pytest.mark.parametrize(
@@ -40,7 +80,7 @@ import pytest
     ],
 )
 @pytest.mark.no_py27
-def test_expected_results(input, expected):
+def test_ASCIIHexDecode(input, expected):
     """
     Feeds a bunch of values to ASCIIHexDecode.decode() and ensures the
     correct output is returned.
@@ -52,7 +92,7 @@ def test_expected_results(input, expected):
     assert ASCIIHexDecode.decode(input) == expected
 
 
-def test_no_eod():
+def test_ASCIIHexDecode_no_eod():
     """Ensuring an exception is raised when no EOD character is present"""
     with pytest.raises(PdfStreamError) as exc:
         ASCIIHexDecode.decode("")

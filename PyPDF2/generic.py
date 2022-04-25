@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) 2006, Mathieu Fenniak
 # All rights reserved.
 #
@@ -417,7 +418,6 @@ class ByteStringObject(utils.bytes_type, PdfObject):  # type: ignore
     /O) is clearly not text, but is still stored in a "String" object.
     """
 
-    ##
     # For compatibility with TextStringObject.original_bytes.  This method
     #  self.
     original_bytes = property(lambda self: self)
@@ -442,7 +442,6 @@ class TextStringObject(utils.string_type, PdfObject):  # type: ignore
     autodetect_pdfdocencoding = False
     autodetect_utf16 = False
 
-    ##
     # It is occasionally possible that a text string object gets created where
     # a byte string object was expected due to the autodetection mechanism --
     # if that occurs, this "original_bytes" property can be used to
@@ -538,15 +537,16 @@ class DictionaryObject(dict, PdfObject):
     def __getitem__(self, key):
         return dict.__getitem__(self, key).getObject()
 
-    ##
-    # Retrieves XMP (Extensible Metadata Platform) data relevant to the
-    # this object, if available.
-    # <p>
-    # Stability: Added in v1.12, will exist for all future v1.x releases.
-    # @return Returns a {@link #xmp.XmpInformation XmlInformation} instance
-    # that can be used to access XMP metadata from the document.  Can also
-    # return None if no metadata was found on the document root.
     def getXmpMetadata(self):
+        """
+        Retrieves XMP (Extensible Metadata Platform) data relevant to the
+        this object, if available.
+
+        Stability: Added in v1.12, will exist for all future v1.x releases.
+        @return Returns a {@link #xmp.XmpInformation XmlInformation} instance
+        that can be used to access XMP metadata from the document.  Can also
+        return None if no metadata was found on the document root.
+        """
         metadata = self.get("/Metadata", None)
         if metadata is None:
             return None
@@ -557,7 +557,6 @@ class DictionaryObject(dict, PdfObject):
             self[NameObject("/Metadata")] = metadata
         return metadata
 
-    ##
     # Read-only property that accesses the {@link
     # #DictionaryObject.getXmpData getXmpData} function.
     # <p>
