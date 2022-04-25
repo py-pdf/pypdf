@@ -1551,13 +1551,25 @@ class PdfFileReader(object):
         :rtype: int
         """
         indirectRef = destination.page
+        if type(indirectRef) is NullObject:
+            return -1
         ret = self._getPageNumberByIndirect(indirectRef)
         return ret
 
     def _buildDestination(self, title, array):
         page, typ = array[0:2]
         array = array[2:]
-        return Destination(title, page, typ, *array)
+        try:
+            return Destination(title, page, typ, *array)
+        except PdfReadError as e:
+            warnings.warn("Unknown destination : " + title + " " + str(array))
+            if self.strict:
+                raise
+            else:
+                #create a link to first Page
+                return Destination(title, self.getPage(0).indirectRef,
+                                   TextStringObject("/Fit"))
+                
 
     def _buildOutline(self, node):
         dest, title, outline = None, None, None
