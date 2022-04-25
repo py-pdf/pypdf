@@ -22,6 +22,7 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
         ("imagemagick-images.pdf", None),
         ("imagemagick-lzw.pdf", None),
         ("reportlab-inline-image.pdf", None),
+        ("sample-files/004-pdflatex-4-pages/pdflatex-4-pages.pdf", None),
     ],
 )
 def test_page_operations(pdf_path, password):
