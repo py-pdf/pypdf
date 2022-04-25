@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1650813391453,
+  "lastUpdate": 1650916455834,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -821,6 +821,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.005104605993043909",
             "extra": "mean: 126.29715466666546 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "10ccbae325e875432a9980c4b78758203b728f33",
+          "message": "TST: Add test for filters.ASCIIHexDecode (#822)\n\nFull Credit goes to https://github.com/py-pdf/PyPDF2/pull/817/commits/5c74416e6cb9675628975f12528ca908c554bb63\r\nwho wrote the test in 2018 for PyPDF4\r\n\r\nCo-authored-by: Acsor <nildexo@yandex.com>",
+          "timestamp": "2022-04-25T21:53:25+02:00",
+          "tree_id": "7ad67406b3aee8c71ae7848fddb8f4d705bc3f3c",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/10ccbae325e875432a9980c4b78758203b728f33"
+        },
+        "date": 1650916454674,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.4993369078003011,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026954339188757847",
+            "extra": "mean: 2.002655891000006 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 8.302262730048474,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0012979079016196592",
+            "extra": "mean: 120.44909111111224 msec\nrounds: 9"
           }
         ]
       }
