@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1650919176039,
+  "lastUpdate": 1650985418675,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -897,6 +897,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0009845891608524406",
             "extra": "mean: 111.96020900000765 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "963b25159a69eb3264cb7179082fe6ffce16126b",
+          "message": "TST: Use external repository for larger/more PDFs for testing (#820)\n\n* Use submodule so that the connection is clear. Ensure that Flake8 issues of the submodule don't show up here\r\n* As a first step, just try to get the number of pages from the non-encrypted PDFs\r\n* Create an \"external\" pytest marker which allows people to deactivate tests that need the submodule",
+          "timestamp": "2022-04-26T17:02:57+02:00",
+          "tree_id": "c2f56b9f16c0df0b78500c475fe2e36d672a47be",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/963b25159a69eb3264cb7179082fe6ffce16126b"
+        },
+        "date": 1650985417517,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.6455807745487593,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009333597564409836",
+            "extra": "mean: 1.5489928439999914 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 10.110828960054192,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007821850869459548",
+            "extra": "mean: 98.90385881818341 msec\nrounds: 11"
           }
         ]
       }
