@@ -325,30 +325,30 @@ class ASCII85Decode(object):
         if version_info < ( 3, 0 ):
             retval = ""
             group = []
-            x = 0
-            hitEod = False
+            index = 0
+            hit_eod = False
             # remove all whitespace from data
             data = [y for y in data if y not in ' \n\r\t']
-            while not hitEod:
-                c = data[x]
-                if len(retval) == 0 and c == "<" and data[x+1] == "~":
-                    x += 2
+            while not hit_eod:
+                c = data[index]
+                if len(retval) == 0 and c == "<" and data[index+1] == "~":
+                    index += 2
                     continue
                 # elif c.isspace():
-                #    x += 1
+                #    index += 1
                 #    continue
                 elif c == 'z':
                     assert len(group) == 0
                     retval += '\x00\x00\x00\x00'
-                    x += 1
+                    index += 1
                     continue
-                elif c == "~" and data[x+1] == ">":
+                elif c == "~" and data[index+1] == ">":
                     if len(group) != 0:
                         # cannot have a final group of just 1 char
                         assert len(group) > 1
                         cnt = len(group) - 1
                         group += [ 85, 85, 85 ]
-                        hitEod = cnt
+                        hit_eod = cnt
                     else:
                         break
                 else:
@@ -361,37 +361,42 @@ class ASCII85Decode(object):
                         group[2] * (85**2) + \
                         group[3] * 85 + \
                         group[4]
+                    if b > (2**32 - 1):
+                        raise OverflowError(
+                            "The sum of a ASCII85-encoded 4-byte group shall "
+                            "not exceed 2 ^ 32 - 1. See ISO 32000, 2008, 7.4.3"
+                        )
                     assert b <= (2**32 - 1)
                     c4 = chr((b >> 0) % 256)
                     c3 = chr((b >> 8) % 256)
                     c2 = chr((b >> 16) % 256)
                     c1 = chr(b >> 24)
                     retval += (c1 + c2 + c3 + c4)
-                    if hitEod:
-                        retval = retval[:-4+hitEod]
+                    if hit_eod:
+                        retval = retval[:-4+hit_eod]
                     group = []
-                x += 1
+                index += 1
             return retval
         else:
             if isinstance(data, str):
                 data = data.encode('ascii')
-            n = b = 0
+            group_index = b = 0
             out = bytearray()
             for c in data:
                 if ord('!') <= c and c <= ord('u'):
-                    n += 1
+                    group_index += 1
                     b = b*85+(c-33)
-                    if n == 5:
+                    if group_index == 5:
                         out += struct.pack(b'>L',b)
-                        n = b = 0
+                        group_index = b = 0
                 elif c == ord('z'):
-                    assert n == 0
+                    assert group_index == 0
                     out += b'\0\0\0\0'
                 elif c == ord('~'):
-                    if n:
-                        for _ in range(5-n):
+                    if group_index:
+                        for _ in range(5-group_index):
                             b = b*85+84
-                        out += struct.pack(b'>L',b)[:n-1]
+                        out += struct.pack(b'>L',b)[:group_index-1]
                     break
             return bytes(out)
 
