@@ -1412,6 +1412,8 @@ class PdfFileReader(object):
         '''
         # Retrieve document form fields
         formfields = self.getFields()
+        if formfields is None:
+            return {}
         return {
             formfields[field]['/T']: formfields[field].get('/V') for field in formfields \
                 if formfields[field].get('/FT') == '/Tx'
