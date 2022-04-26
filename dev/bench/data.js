@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1650990045330,
+  "lastUpdate": 1650990690151,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -973,6 +973,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0006931207886781686",
             "extra": "mean: 99.1474721999964 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "355f805f30e493cda2af134ccb768edccf3ff0ab",
+          "message": "DEV: Ignore IronPython parts for code coverage (#826)\n\nI have no idea how to test for that in GithubActions.\r\nAs this likely only affects a small fraction of PyPDF2 users,\r\nI want to ignore it for now.\r\n\r\nFeel free to add a PR that adds IronPython to GithubActions -\r\nthen we can enable this again.",
+          "timestamp": "2022-04-26T18:30:53+02:00",
+          "tree_id": "c399e5e719e31fdc84ae2cd3b91082c21b3bb121",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/355f805f30e493cda2af134ccb768edccf3ff0ab"
+        },
+        "date": 1650990689658,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.652312710979302,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008901747430670692",
+            "extra": "mean: 1.5330070734000003 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 10.376939144749729,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0060005167688021105",
+            "extra": "mean: 96.36753054545527 msec\nrounds: 11"
           }
         ]
       }
