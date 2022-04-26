@@ -100,3 +100,9 @@ def test_ConvertFunctionsToVirtualList():
 
 def test_hexStr():
     assert PyPDF2.utils.hexStr(10) == "0xa"
+
+
+def test_b():
+    assert PyPDF2.utils.b_("foo") == b"foo"
+    assert PyPDF2.utils.b_("😀") == "😀".encode("utf-8")
+    assert PyPDF2.utils.b_("‰") == "‰".encode("utf-8")

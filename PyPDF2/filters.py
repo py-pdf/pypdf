@@ -220,7 +220,7 @@ class ASCIIHexDecode(object):
             v is such that 0 <= ord(v) <= 127.
         """
         retval = ""
-        char = ""
+        hex_pair = ""
         x = 0
         while True:
             if x >= len(data):
@@ -231,12 +231,12 @@ class ASCIIHexDecode(object):
             elif c.isspace():
                 x += 1
                 continue
-            char += c
-            if len(char) == 2:
-                retval += chr(int(char, base=16))
-                char = ""
+            hex_pair += c
+            if len(hex_pair) == 2:
+                retval += chr(int(hex_pair, base=16))
+                hex_pair = ""
             x += 1
-        assert char == ""
+        assert hex_pair == ""
         return retval
 
 
@@ -244,6 +244,7 @@ class LZWDecode(object):
     """Taken from:
     http://www.java2s.com/Open-Source/Java-Document/PDF/PDF-Renderer/com/sun/pdfview/decode/LZWDecode.java.htm
     """
+
     class decoder(object):
         def __init__(self, data):
             self.STOP=257
@@ -281,9 +282,15 @@ class LZWDecode(object):
             return value
 
         def decode(self):
-            """ algorithm derived from:
+            """
+            TIFF 6.0 specification explains in sufficient details the steps to
+            implement the LZW encode() and decode() algorithms.
+
+            algorithm derived from:
             http://www.rasip.fer.hr/research/compress/algorithms/fund/lz/lzw.html
             and the PDFReference
+
+            :rtype: bytes
             """
             cW = self.CLEARDICT
             baos=""
@@ -316,10 +323,17 @@ class LZWDecode(object):
 
     @staticmethod
     def decode(data, decodeParms=None):
+        """
+        :param data: ``bytes`` or ``str`` text to decode.
+        :param decodeParms: a dictionary of parameter values.
+        :return: decoded data.
+        :rtype: bytes
+        """
         return LZWDecode.decoder(data).decode()
 
 
 class ASCII85Decode(object):
+    """Decodes string ASCII85-encoded data into a byte format."""
     @staticmethod
     def decode(data, decodeParms=None):
         if version_info < ( 3, 0 ):
@@ -485,7 +499,7 @@ def decodeStreamData(stream):
                 else:
                     raise NotImplementedError("/Crypt filter with /Name or /Type not supported yet")
             else:
-                # unsupported filter
+                # Unsupported filter
                 raise NotImplementedError("unsupported filter %s" % filterType)
     return data
 

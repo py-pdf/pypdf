@@ -28,7 +28,7 @@
 
 
 """
-Implementation of generic PDF objects (dictionary, number, string, and so on)
+Implementation of generic PDF objects (dictionary, number, string, and so on).
 """
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
@@ -75,8 +75,9 @@ def readObject(stream, pdf):
     elif idx == 1:
         # hexadecimal string OR dictionary
         peek = stream.read(2)
-        stream.seek(-2, 1) # reset to start
-        if peek == b_('<<'):
+        stream.seek(-2, 1)  # reset to start
+
+        if peek == b_("<<"):
             return DictionaryObject.readFromStream(stream, pdf)
         else:
             return readHexStringFromStream(stream)
