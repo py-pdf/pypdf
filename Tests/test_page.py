@@ -7,6 +7,20 @@ from PyPDF2 import PdfFileReader
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
 RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
+EXTERNAL_ROOT = os.path.join(PROJECT_ROOT, "sample-files")
+
+
+@pytest.mark.external
+@pytest.mark.parametrize(
+    "pdf_path",
+    [
+        "004-pdflatex-4-pages/pdflatex-4-pages.pdf",
+    ],
+)
+def test_read(pdf_path):
+    pdf_path = os.path.join(EXTERNAL_ROOT, pdf_path)
+    reader = PdfFileReader(pdf_path)
+    reader.pages[0]
 
 
 @pytest.mark.parametrize(
@@ -22,7 +36,6 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
         ("imagemagick-images.pdf", None),
         ("imagemagick-lzw.pdf", None),
         ("reportlab-inline-image.pdf", None),
-        ("sample-files/004-pdflatex-4-pages/pdflatex-4-pages.pdf", None),
     ],
 )
 def test_page_operations(pdf_path, password):

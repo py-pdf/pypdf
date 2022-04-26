@@ -26,11 +26,7 @@ jobs:
     steps:
     - name: Checkout Code
       uses: actions/checkout@v3
-    - name: Checkout PDFs
-      uses: actions/checkout@v3
-      with:
-        repository: py-pdf/sample-files
-        path: sample-files
+      submodules: 'recursive'
     - name: Setup Python
       uses: actions/setup-python@v3
       with:
