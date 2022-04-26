@@ -119,6 +119,7 @@ def test_ASCII85Decode_with_overflow():
         assert exc.value.args[0] == ""
 
 
+@pytest.mark.no_py27
 def test_ASCII85Decode_five_zero_bytes():
     """
     From ISO 32000 (2008) §7.4.3:
