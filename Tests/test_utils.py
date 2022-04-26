@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import io
 import os
 
@@ -102,7 +103,9 @@ def test_hexStr():
     assert PyPDF2.utils.hexStr(10) == "0xa"
 
 
+@pytest.mark.no_py27
 def test_b():
     assert PyPDF2.utils.b_("foo") == b"foo"
     assert PyPDF2.utils.b_("😀") == "😀".encode("utf-8")
     assert PyPDF2.utils.b_("‰") == "‰".encode("utf-8")
+    assert PyPDF2.utils.b_("▷") == "▷".encode("utf-8")
