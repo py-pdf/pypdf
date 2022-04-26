@@ -14,21 +14,24 @@ def get_all_sample_files():
     with open(os.path.join(EXTERNAL_ROOT, "files.json")) as fp:
         data = fp.read()
     meta = json.loads(data)
-    return [os.path.join(EXTERNAL_ROOT, m['path']) for m in meta["data"] if not m['encrypted']]
+    return meta
+    
 
 
-all_files = get_all_sample_files()
+all_files_meta = get_all_sample_files()
 
 
 @pytest.mark.external
 @pytest.mark.parametrize(
-    "pdf_path",
-    all_files,
+    "meta",
+    [m for m in all_files_meta["data"] if not m['encrypted']],
+    ids=[m['path'] for m in all_files_meta["data"] if not m['encrypted']],
 )
-def test_read(pdf_path):
-    pdf_path = os.path.join(EXTERNAL_ROOT, pdf_path)
+def test_read(meta):
+    pdf_path = os.path.join(EXTERNAL_ROOT, meta['path'])
     reader = PdfFileReader(pdf_path)
     reader.pages[0]
+    assert len(reader.pages) == meta['pages']
 
 
 @pytest.mark.parametrize(
