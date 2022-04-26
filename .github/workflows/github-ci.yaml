@@ -48,7 +48,7 @@ jobs:
         pip install .
     - name: Test with flake8
       run: |
-        flake8 . --ignore=E203,W503,W504,E,F403,F405 --exclude build
+        flake8 . --ignore=E203,W503,W504,E,F403,F405 --exclude build,sample-files
       if: matrix.python-version != '2.7'
     - name: Test with pytest
       run: |
