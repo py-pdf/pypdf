@@ -26,7 +26,8 @@ jobs:
     steps:
     - name: Checkout Code
       uses: actions/checkout@v3
-      submodules: 'recursive'
+      with:
+        submodules: 'recursive'
     - name: Setup Python
       uses: actions/setup-python@v3
       with:
