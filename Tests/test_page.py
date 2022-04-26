@@ -1,4 +1,5 @@
 import os
+import json
 
 import pytest
 
@@ -9,13 +10,20 @@ PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
 RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
 EXTERNAL_ROOT = os.path.join(PROJECT_ROOT, "sample-files")
 
+def get_all_sample_files():
+    with open(os.path.join(EXTERNAL_ROOT, "files.json")) as fp:
+        data = fp.read()
+    meta = json.loads(data)
+    return [os.path.join(EXTERNAL_ROOT, m['path']) for m in meta["data"] if not m['encrypted']]
+
+
+all_files = get_all_sample_files()
+
 
 @pytest.mark.external
 @pytest.mark.parametrize(
     "pdf_path",
-    [
-        "004-pdflatex-4-pages/pdflatex-4-pages.pdf",
-    ],
+    all_files,
 )
 def test_read(pdf_path):
     pdf_path = os.path.join(EXTERNAL_ROOT, pdf_path)
