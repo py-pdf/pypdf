@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) 2006, Mathieu Fenniak
 # All rights reserved.
 #
@@ -40,7 +41,7 @@ from PyPDF2.constants import FilterTypes as FT
 from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import LzwFilterParameters as LZW
 from PyPDF2.constants import StreamAttributes as SA
-from PyPDF2.errors import PdfReadError
+from PyPDF2.errors import PdfReadError, PdfStreamError
 from PyPDF2.utils import ord_, paethPredictor
 
 if version_info < ( 3, 0 ):
@@ -127,8 +128,15 @@ except ImportError:
 class FlateDecode(object):
     @staticmethod
     def decode(data, decodeParms):
+        """
+        :param data: flate-encoded data.
+        :param decodeParms: a dictionary of values, understanding the
+            "/Predictor":<int> key only
+        :return: the flate-decoded data.
+        """
         data = decompress(data)
         predictor = 1
+
         if decodeParms:
             try:
                 from PyPDF2.generic import ArrayObject
@@ -139,12 +147,15 @@ class FlateDecode(object):
                 else:
                     predictor = decodeParms.get("/Predictor", 1)
             except AttributeError:
-                pass  # usually an array with a null object was read
+                pass  # Usually an array with a null object was read
         # predictor 1 == no predictor
         if predictor != 1:
-            columns = decodeParms[LZW.COLUMNS]
+            # The /Columns param. has 1 as the default value; see ISO 32000,
+            # §7.4.4.3 LZWDecode and FlateDecode Parameters, Table 8
+            columns = decodeParms.get(LZW.COLUMNS, 1)
+
             # PNG prediction:
-            if predictor >= 10 and predictor <= 15:
+            if 10 <= predictor <= 15:
                 data = FlateDecode._decode_png_prediction(data, columns)
             else:
                 # unsupported predictor
@@ -194,12 +205,26 @@ class FlateDecode(object):
 
 
 class ASCIIHexDecode(object):
+    """
+    The ASCIIHexDecode filter decodes data that has been encoded in ASCII
+    hexadecimal form into a base-7 ASCII format.
+    """
+
     @staticmethod
     def decode(data, decodeParms=None):
+        """
+        :param data: a str sequence of hexadecimal-encoded values to be
+            converted into a base-7 ASCII string
+        :param decodeParms:
+        :return: a string conversion in base-7 ASCII, where each of its values
+            v is such that 0 <= ord(v) <= 127.
+        """
         retval = ""
         char = ""
         x = 0
         while True:
+            if x >= len(data):
+                raise PdfStreamError("Unexpected EOD in ASCIIHexDecode")
             c = data[x]
             if c == ">":
                 break
