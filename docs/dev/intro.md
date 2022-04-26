@@ -15,6 +15,14 @@ pip install -r requirements/dev.txt
 pytest .
 ```
 
+We have the following pytest markers defined:
+
+* `no_py27`: Flag for tests that fail under Python 2.7 only
+* `external`: Tests which use files from [the `sample-files` git submodule](https://github.com/py-pdf/sample-files)
+
+You can locally choose not to run those via `pytest -m "not external"`.
+
+
 ## Tools: git and pre-commit
 
 Git is a command line application for version control. If you don't know it,
