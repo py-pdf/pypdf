@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1650990690151,
+  "lastUpdate": 1651004445539,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1011,6 +1011,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0060005167688021105",
             "extra": "mean: 96.36753054545527 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f90a9d7140a9cddcc60cc1f17a695ca2b363af39",
+          "message": "TST: Add tests for utils, form fields, PageRange (#827)\n\ngetFormTextFields now return an empty dict instead of throwing an exception if no form fields are found. This should eliminate an error source",
+          "timestamp": "2022-04-26T22:20:02+02:00",
+          "tree_id": "4e8432ad79fb24f91acc3e0cf86d42a6259aff1d",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/f90a9d7140a9cddcc60cc1f17a695ca2b363af39"
+        },
+        "date": 1651004444445,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.5339640513290262,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012493021925103417",
+            "extra": "mean: 1.8727852511999998 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 8.75920949734288,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00284369106426063",
+            "extra": "mean: 114.16555344444627 msec\nrounds: 9"
           }
         ]
       }
