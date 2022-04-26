@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1650985418675,
+  "lastUpdate": 1650990045330,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -935,6 +935,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.007821850869459548",
             "extra": "mean: 98.90385881818341 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "96d8d0f937dbffc867f0d49d66f5c40b36bb431d",
+          "message": "TST: Add Test for ASCII85Decode (#825)\n\nFull credit to\r\nhttps://github.com/py-pdf/PyPDF2/pull/817/commits/6dc90b1e64c1965b61aa2561ce912f64ca19cad4\r\n\r\nCo-authored-by: Acsor <nildexo@yandex.com>",
+          "timestamp": "2022-04-26T18:20:09+02:00",
+          "tree_id": "02a47e5754b4e83a52ebb6301118b24d837ef7ed",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/96d8d0f937dbffc867f0d49d66f5c40b36bb431d"
+        },
+        "date": 1650990044230,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.6541198244177866,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003829907124529457",
+            "extra": "mean: 1.5287718896000002 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 10.085985833131874,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006931207886781686",
+            "extra": "mean: 99.1474721999964 msec\nrounds: 10"
           }
         ]
       }
