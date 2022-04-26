@@ -10,7 +10,8 @@ def test_equality():
 
 
 @pytest.mark.parametrize(
-    "page_range,expected", [(slice(0, 5), "0:5"), (slice(0, 5, 2), "0:5:2")]
+    "page_range,expected",
+    [(slice(0, 5), "0:5"), (slice(0, 5, 2), "0:5:2"), ("-1", "-1:"), ("0", "0")],
 )
 def test_str(page_range, expected):
     assert str(PageRange(page_range)) == expected

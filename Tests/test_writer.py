@@ -226,10 +226,16 @@ def test_add_named_destination():
     from PyPDF2.pdf import NameObject
 
     writer.addNamedDestination(NameObject("A named dest"), 2)
+    writer.addNamedDestination(NameObject("A named dest2"), 2)
 
     from PyPDF2.pdf import IndirectObject
 
-    assert writer.getNamedDestRoot() == ["A named dest", IndirectObject(7, 0, writer)]
+    assert writer.getNamedDestRoot() == [
+        "A named dest",
+        IndirectObject(7, 0, writer),
+        "A named dest2",
+        IndirectObject(10, 0, writer),
+    ]
 
     # write "output" to PyPDF2-output.pdf
     tmp_filename = "dont_commit_named_destination.pdf"

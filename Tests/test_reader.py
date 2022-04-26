@@ -263,7 +263,7 @@ def test_get_page_of_encrypted_file():
 
 
 @pytest.mark.parametrize(
-    "src,expected,expected_method",
+    "src,expected,expected_get_fields",
     [
         (
             "form.pdf",
@@ -280,9 +280,14 @@ def test_get_page_of_encrypted_file():
             {"foo": "bar"},
             {"foo": {"/DV": "", "/FT": "/Tx", "/T": "foo", "/V": "bar"}},
         ),
+        (
+            "crazyones.pdf",
+            {},
+            None,
+        ),
     ],
 )
-def test_get_form(src, expected, expected_method):
+def test_get_form(src, expected, expected_get_fields):
     """Check if we can read out form data."""
     src = os.path.join(RESOURCE_ROOT, src)
     reader = PdfFileReader(src)
@@ -290,7 +295,7 @@ def test_get_form(src, expected, expected_method):
     assert fields == expected
 
     fields = reader.getFields()
-    assert fields == expected_method
+    assert fields == expected_get_fields
 
 
 @pytest.mark.parametrize(

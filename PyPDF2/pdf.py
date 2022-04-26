@@ -276,8 +276,7 @@ class PdfFileWriter(object):
         https://www.adobe.com/content/dam/Adobe/en/devnet/acrobat/pdfs/PDF32000_2008.pdf
         Section 7.11.3
         """
-
-        # We need 3 entries:
+        # We need three entries:
         # * The file's data
         # * The /Filespec entry
         # * The file's name, which goes in the Catalog
@@ -1092,9 +1091,9 @@ class PdfFileWriter(object):
 
     def setPageLayout(self, layout):
         """
-        Set the page layout
+        Set the page layout.
 
-        :param str layout: The page layout to be used
+        :param str layout: The page layout to be used.
 
         .. list-table:: Valid ``layout`` arguments
            :widths: 50 200
@@ -1133,7 +1132,7 @@ class PdfFileWriter(object):
         of valid modes.
 
         :return: Page mode currently being used.
-        :rtype: str, None if not specified
+        :rtype: str, None if not specified.
         """
         try:
             return self._root_object['/PageMode']
@@ -1192,7 +1191,7 @@ class PdfFileReader(object):
     """
     def __init__(self, stream, strict=True, warndest = None, overwriteWarnings = True):
         if overwriteWarnings:
-            # have to dynamically override the default showwarning since there are no
+            # Have to dynamically override the default showwarning since there are no
             # public methods that specify the 'file' parameter
             def _showwarning(message, category, filename, lineno, file=warndest, line=None):
                 if file is None:
@@ -1413,6 +1412,8 @@ class PdfFileReader(object):
         '''
         # Retrieve document form fields
         formfields = self.getFields()
+        if formfields is None:
+            return {}
         return {
             formfields[field]['/T']: formfields[field].get('/V') for field in formfields \
                 if formfields[field].get('/FT') == '/Tx'
