@@ -70,7 +70,7 @@ try:
     def compress(data):
         return zlib.compress(data)
 
-except ImportError:
+except ImportError:  # pragma: no cover
     # Unable to import zlib.  Attempt to use the System.IO.Compression
     # library from the .NET framework. (IronPython only)
     import System
