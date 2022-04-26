@@ -22,6 +22,15 @@ We have the following pytest markers defined:
 
 You can locally choose not to run those via `pytest -m "not external"`.
 
+## The sample-files git submodule
+The reason for having the submodule `sample-files` is that we want to keep
+the size of the PyPDF2 repository small while we also want to have an extensive
+test suite. Those two goals contradict each other.
+
+The `Resources` folder should contain a select set of core examples that cover
+most cases we typically want to test for. The `sample-files` might cover a lot
+more edge cases, the behavior we get when file sizes get bigger, different
+PDF producers.
 
 ## Tools: git and pre-commit
 
