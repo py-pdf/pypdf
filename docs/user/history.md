@@ -1,6 +1,6 @@
 # History of PyPDF2
 
-## The Origins: pyPDF
+## The Origins: pyPdf (2005-2010)
 
 In 2005, [Mathieu Fenniak] launched pyPdf "as a PDF toolkit..."
 focused on
@@ -11,7 +11,10 @@ focused on
 -   page cropping; and
 -   document encryption and decryption.
 
-## PyPDF2 is born
+The last release of PyPI was [pyPdf 1.13](https://pypi.org/project/pyPdf/#history)
+in 2010.
+
+## PyPDF2 is born (2011-2016)
 
 At the end of 2011, after consultation with Mathieu and others, Phaseit
 sponsored PyPDF2 as a fork of pyPdf on GitHub. The initial impetus was
@@ -34,12 +37,19 @@ process, and it handles a wider range of variant PDF formats
 \[explain\]. PyPDF2 has its own FAQ to answer other questions that have
 arisen.
 
-## PyPDF2 rises
-
 The Reddit [/r/python crowd chatted] obliquely and briefly about PyPDF2
 in March 2012.
 
-## PyPDF2: Reborn
+## PyPDF3 and PyPDF4 (2018 - 2022)
+
+Two approaches were made to get PyPDF2 active again: PyPDF3 and PyPDF4.
+
+PyPDF3 had it's first release in 2018 and its last one in February 2022.
+It never got the user base from PyPDF2.
+
+PyPDF4 only had one release in 2018.
+
+## PyPDF2: Reborn (2022-Today)
 
 Martin Thoma took over maintenance of PyPDF2 in April 2022.
 
