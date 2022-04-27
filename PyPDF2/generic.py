@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) 2006, Mathieu Fenniak
 # All rights reserved.
 #
@@ -27,7 +28,7 @@
 
 
 """
-Implementation of generic PDF objects (dictionary, number, string, and so on)
+Implementation of generic PDF objects (dictionary, number, string, and so on).
 """
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
@@ -74,8 +75,9 @@ def readObject(stream, pdf):
     elif idx == 1:
         # hexadecimal string OR dictionary
         peek = stream.read(2)
-        stream.seek(-2, 1) # reset to start
-        if peek == b_('<<'):
+        stream.seek(-2, 1)  # reset to start
+
+        if peek == b_("<<"):
             return DictionaryObject.readFromStream(stream, pdf)
         else:
             return readHexStringFromStream(stream)
@@ -417,7 +419,6 @@ class ByteStringObject(utils.bytes_type, PdfObject):  # type: ignore
     /O) is clearly not text, but is still stored in a "String" object.
     """
 
-    ##
     # For compatibility with TextStringObject.original_bytes.  This method
     #  self.
     original_bytes = property(lambda self: self)
@@ -442,7 +443,6 @@ class TextStringObject(utils.string_type, PdfObject):  # type: ignore
     autodetect_pdfdocencoding = False
     autodetect_utf16 = False
 
-    ##
     # It is occasionally possible that a text string object gets created where
     # a byte string object was expected due to the autodetection mechanism --
     # if that occurs, this "original_bytes" property can be used to
@@ -493,14 +493,11 @@ class NameObject(str, PdfObject):
 
     @staticmethod
     def readFromStream(stream, pdf):
-        debug = False
-        if debug: print((stream.tell()))
         name = stream.read(1)
         if name != NameObject.surfix:
             raise PdfReadError("name read error")
         name += utils.readUntilRegex(stream, NameObject.delimiterPattern,
             ignore_eof=True)
-        if debug: print(name)
         try:
             try:
                 ret=name.decode('utf-8')
@@ -538,15 +535,16 @@ class DictionaryObject(dict, PdfObject):
     def __getitem__(self, key):
         return dict.__getitem__(self, key).getObject()
 
-    ##
-    # Retrieves XMP (Extensible Metadata Platform) data relevant to the
-    # this object, if available.
-    # <p>
-    # Stability: Added in v1.12, will exist for all future v1.x releases.
-    # @return Returns a {@link #xmp.XmpInformation XmlInformation} instance
-    # that can be used to access XMP metadata from the document.  Can also
-    # return None if no metadata was found on the document root.
     def getXmpMetadata(self):
+        """
+        Retrieves XMP (Extensible Metadata Platform) data relevant to the
+        this object, if available.
+
+        Stability: Added in v1.12, will exist for all future v1.x releases.
+        @return Returns a {@link #xmp.XmpInformation XmlInformation} instance
+        that can be used to access XMP metadata from the document.  Can also
+        return None if no metadata was found on the document root.
+        """
         metadata = self.get("/Metadata", None)
         if metadata is None:
             return None
@@ -557,7 +555,6 @@ class DictionaryObject(dict, PdfObject):
             self[NameObject("/Metadata")] = metadata
         return metadata
 
-    ##
     # Read-only property that accesses the {@link
     # #DictionaryObject.getXmpData getXmpData} function.
     # <p>
@@ -575,7 +572,6 @@ class DictionaryObject(dict, PdfObject):
 
     @staticmethod
     def readFromStream(stream, pdf):
-        debug = False
         tmp = stream.read(2)
         if tmp != b_("<<"):
             raise PdfReadError("Dictionary read error at byte %s: stream must begin with '<<'" % utils.hexStr(stream.tell()))
@@ -591,7 +587,6 @@ class DictionaryObject(dict, PdfObject):
             if not tok:
                 raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
 
-            if debug: print(("Tok:", tok))
             if tok == b_(">"):
                 stream.read(1)
                 break
@@ -628,14 +623,11 @@ class DictionaryObject(dict, PdfObject):
             # this is a stream object, not a dictionary
             assert SA.LENGTH in data
             length = data[SA.LENGTH]
-            if debug: print(data)
             if isinstance(length, IndirectObject):
                 t = stream.tell()
                 length = pdf.getObject(length)
                 stream.seek(t, 0)
             data["__streamdata__"] = stream.read(length)
-            if debug: print("here")
-            # if debug: print(binascii.hexlify(data["__streamdata__"]))
             e = readNonWhitespace(stream)
             ndstream = stream.read(8)
             if (e + ndstream) != b_("endstream"):

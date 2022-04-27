@@ -57,7 +57,7 @@ class _MergedPage(object):
 
 class PdfFileMerger(object):
     """
-    Initializes a PdfFileMerger object. PdfFileMerger merges multiple PDFs
+    Initializes a ``PdfFileMerger`` object. ``PdfFileMerger`` merges multiple PDFs
     into a single PDF. It can concatenate, slice, insert, or any combination
     of the above.
 
@@ -205,7 +205,6 @@ class PdfFileMerger(object):
         :param bool import_bookmarks: You may prevent the source document's bookmarks
             from being imported by specifying this as ``False``.
         """
-
         self.merge(len(self.pages), fileobj, bookmark, pages, import_bookmarks)
 
     def write(self, fileobj):
@@ -363,6 +362,7 @@ class PdfFileMerger(object):
                         pageno = i
                         pdf = p.src  # noqa: F841
                         break
+
             if pageno is not None:
                 self.output.addNamedDestinationObject(v)
 

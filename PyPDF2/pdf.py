@@ -276,8 +276,7 @@ class PdfFileWriter(object):
         https://www.adobe.com/content/dam/Adobe/en/devnet/acrobat/pdfs/PDF32000_2008.pdf
         Section 7.11.3
         """
-
-        # We need 3 entries:
+        # We need three entries:
         # * The file's data
         # * The /Filespec entry
         # * The file's name, which goes in the Catalog
@@ -492,7 +491,6 @@ class PdfFileWriter(object):
         """
         if hasattr(stream, 'mode') and 'b' not in stream.mode:
             warnings.warn("File <%s> to write to is not in binary mode. It may not be written to correctly." % stream.name)
-        debug = False
 
         if not self._root:
             self._root = self._addObject(self._root_object)
@@ -518,7 +516,6 @@ class PdfFileWriter(object):
                 externalReferenceMap[data.pdf][data.generation][data.idnum] = IndirectObject(objIndex + 1, 0, self)
 
         self.stack = []
-        if debug: print(("ERM:", externalReferenceMap, "root:", self._root))
         self._sweepIndirectReferences(externalReferenceMap, self._root)
         del self.stack
 
@@ -586,8 +583,6 @@ class PdfFileWriter(object):
         self.getObject(self._info).update(args)
 
     def _sweepIndirectReferences(self, externMap, data):
-        debug = False
-        if debug: print((data, "TYPE", data.__class__.__name__))
         if isinstance(data, DictionaryObject):
             for key, value in list(data.items()):
                 value = self._sweepIndirectReferences(externMap, value)
@@ -708,7 +703,6 @@ class PdfFileWriter(object):
             parent = outlineRef
 
         parent = parent.getObject()
-        # print parent.__class__.__name__
         parent.addChild(destRef, self)
 
         return destRef
@@ -1092,9 +1086,9 @@ class PdfFileWriter(object):
 
     def setPageLayout(self, layout):
         """
-        Set the page layout
+        Set the page layout.
 
-        :param str layout: The page layout to be used
+        :param str layout: The page layout to be used.
 
         .. list-table:: Valid ``layout`` arguments
            :widths: 50 200
@@ -1133,7 +1127,7 @@ class PdfFileWriter(object):
         of valid modes.
 
         :return: Page mode currently being used.
-        :rtype: str, None if not specified
+        :rtype: str, None if not specified.
         """
         try:
             return self._root_object['/PageMode']
@@ -1192,7 +1186,7 @@ class PdfFileReader(object):
     """
     def __init__(self, stream, strict=True, warndest = None, overwriteWarnings = True):
         if overwriteWarnings:
-            # have to dynamically override the default showwarning since there are no
+            # Have to dynamically override the default showwarning since there are no
             # public methods that specify the 'file' parameter
             def _showwarning(message, category, filename, lineno, file=warndest, line=None):
                 if file is None:
@@ -1308,7 +1302,7 @@ class PdfFileReader(object):
         :return: a :class:`PageObject<pdf.PageObject>` instance.
         :rtype: :class:`PageObject<pdf.PageObject>`
         """
-        ## ensure that we're not trying to access an encrypted PDF
+        # ensure that we're not trying to access an encrypted PDF
         # assert not self.trailer.has_key(TK.ENCRYPT)
         if self.flattenedPages is None:
             self._flatten()
@@ -1416,6 +1410,8 @@ class PdfFileReader(object):
         '''
         # Retrieve document form fields
         formfields = self.getFields()
+        if formfields is None:
+            return {}
         return {
             formfields[field]['/T']: formfields[field].get('/V') for field in formfields \
                 if formfields[field].get('/FT') == '/Tx'
@@ -1671,11 +1667,8 @@ class PdfFileReader(object):
     def _getObjectFromStream(self, indirectReference):
         # indirect reference to object in object stream
         # read the entire object stream into memory
-        debug = False
         stmnum, idx = self.xref_objStm[indirectReference.idnum]
-        if debug: print(("Here1: %s %s"%(stmnum, idx)))
         objStm = IndirectObject(stmnum, 0, self).getObject()
-        if debug: print(("Here2: objStm=%s.. stmnum=%s data=%s"%(objStm, stmnum, objStm.getData())))
         # This is an xref to a stream, so its type better be a stream
         assert objStm['/Type'] == '/ObjStm'
         # /N is the number of indirect objects in the stream
@@ -1696,13 +1689,6 @@ class PdfFileReader(object):
             if self.strict and idx != i:
                 raise PdfReadError("Object is in wrong index.")
             streamData.seek(objStm['/First']+offset, 0)
-            if debug:
-                pos = streamData.tell()
-                streamData.seek(0, 0)
-                lines = streamData.readlines()
-                for i in range(0, len(lines)):
-                    print(lines[i])
-                streamData.seek(pos, 0)
             try:
                 obj = readObject(streamData, self)
             except PdfStreamError as e:
@@ -1722,8 +1708,6 @@ class PdfFileReader(object):
         return NullObject()
 
     def getObject(self, indirectReference):
-        debug = False
-        if debug: print(("looking at:", indirectReference.idnum, indirectReference.generation))
         retval = self.cacheGetIndirectObject(indirectReference.generation, indirectReference.idnum)
         if retval is not None:
             return retval
@@ -1733,7 +1717,6 @@ class PdfFileReader(object):
         elif indirectReference.generation in self.xref and \
                 indirectReference.idnum in self.xref[indirectReference.generation]:
             start = self.xref[indirectReference.generation][indirectReference.idnum]
-            if debug: print(("  Uncompressed Object", indirectReference.idnum, indirectReference.generation, ":", start))
             self.stream.seek(start, 0)
             idnum, generation = self.readObjectHeader(self.stream)
             if idnum != indirectReference.idnum and self.xrefIndex:
@@ -1804,10 +1787,7 @@ class PdfFileReader(object):
         return int(idnum), int(generation)
 
     def cacheGetIndirectObject(self, generation, idnum):
-        debug = False
         out = self.resolvedObjects.get((generation, idnum))
-        if debug and out: print(("cache hit: %d %d"%(idnum, generation)))
-        elif debug: print(("cache miss: %d %d"%(idnum, generation)))
         return out
 
     def cacheIndirectObject(self, generation, idnum, obj):
@@ -1820,8 +1800,6 @@ class PdfFileReader(object):
         return obj
 
     def read(self, stream):
-        debug = False
-        if debug: print(">>read", stream)
         # start at the end:
         stream.seek(-1, 2)
         if not stream.tell():
@@ -1838,7 +1816,6 @@ class PdfFileReader(object):
             if stream.tell() < last1M:
                 raise PdfReadError("EOF marker not found")
             line = self.readNextEndLine(stream)
-            if debug: print("  line:",line)
 
         # find startxref entry - the location of the xref table
         line = self.readNextEndLine(stream)
@@ -1855,6 +1832,35 @@ class PdfFileReader(object):
             if line[:9] != b_("startxref"):
                 raise PdfReadError("startxref not found")
 
+        #check and eventually correct the startxref only in not strict
+        rebuildXrefTable = False
+        try:
+            stream.seek(startxref - 1,0) #-1 to check character before
+            line=stream.read(1)
+            if line not in b_("\r\n \t"):
+                raise PdfReadWarning("incorrect startxref pointer(1)",line)
+            line = stream.read(4)
+            if line != b_("xref"):
+                #not an xref so check if it is an XREF object
+                line = b_("")
+                while line in b_("0123456789 \t"):
+                    line = stream.read(1)
+                    if line == b_(""):
+                        raise PdfReadWarning("incorrect startxref pointer(2)")
+                line += stream.read(2)   #1 char already read, +2 to check "obj"
+                if line.lower() != b_("obj"):
+                    raise PdfReadWarning("incorrect startxref pointer(3)")
+                while stream.read(1) in b_(" \t\r\n"):
+                    pass;
+                line=stream.read(256) # check that it is xref obj
+                if b_("/xref") not in line.lower():
+                    raise PdfReadWarning("incorrect startxref pointer(4)")
+        except PdfReadWarning as e:
+            warnings.warn(str(e)+", need to rebuild xref table (strict=False)",PdfReadWarning)
+            if( not self.strict):
+                rebuildXrefTable = True
+            else:
+                raise
         # read all cross reference tables and their trailers
         self.xref = {}
         self.xref_objStm = {}
@@ -1940,6 +1946,30 @@ class PdfFileReader(object):
                     startxref = newTrailer["/Prev"]
                 else:
                     break
+            elif rebuildXrefTable:
+                self.xref={}
+                stream.seek(0,0)
+                f_ = stream.read(-1)
+                import re
+                for m in re.finditer(b_(r"[\r\n \t][ \t]*(\d+)[ \t]+(\d+)[ \t]+obj"),f_):
+                    idnum = int(m.group(1))
+                    generation = int(m.group(2))
+                    if generation not in self.xref:
+                        self.xref[generation] = {}
+                    self.xref[generation][idnum] = m.start(1)
+                trailerPos = f_.rfind(b"trailer") - len(f_) + 7
+                stream.seek(trailerPos,2)
+                #code below duplicated
+                readNonWhitespace(stream)
+                stream.seek(-1, 1)
+                newTrailer = readObject(stream, self)
+                for key, value in list(newTrailer.items()):
+                    if key not in self.trailer:
+                        self.trailer[key] = value
+                #if "/Prev" in newTrailer:
+                #    startxref = newTrailer["/Prev"]
+                #else:
+                break
             elif x.isdigit():
                 # PDF 1.5+ Cross-Reference Stream
                 stream.seek(-1, 1)
@@ -1951,7 +1981,6 @@ class PdfFileReader(object):
                 # Index pairs specify the subsections in the dictionary. If
                 # none create one subsection that spans everything.
                 idx_pairs = xrefstream.get("/Index", [0, xrefstream.get("/Size")])
-                if debug: print(("read idx_pairs=%s"%list(self._pairs(idx_pairs))))
                 entrySizes = xrefstream.get("/W")
                 assert len(entrySizes) >= 3
                 if self.strict and len(entrySizes) > 3:
@@ -2081,24 +2110,18 @@ class PdfFileReader(object):
                 break
 
     def readNextEndLine(self, stream, limit_offset=0):
-        debug = False
-        if debug: print(">>readNextEndLine")
         line_parts = []
         while True:
             # Prevent infinite loops in malformed PDFs
             if stream.tell() == 0 or stream.tell() == limit_offset:
                 raise PdfReadError("Could not read malformed PDF file")
             x = stream.read(1)
-            if debug: print(("  x:", x, "%x"%ord(x)))
             if stream.tell() < 2:
                 raise PdfReadError("EOL marker not found")
             stream.seek(-2, 1)
             if x == b_('\n') or x == b_('\r'): ## \n = LF; \r = CR
                 crlf = False
                 while x == b_('\n') or x == b_('\r'):
-                    if debug:
-                        if ord(x) == 0x0D: print("  x is CR 0D")
-                        elif ord(x) == 0x0A: print("  x is LF 0A")
                     x = stream.read(1)
                     if x == b_('\n') or x == b_('\r'): # account for CR+LF
                         stream.seek(-1, 1)
@@ -2109,9 +2132,7 @@ class PdfFileReader(object):
                 stream.seek(2 if crlf else 1, 1) # if using CR+LF, go back 2 bytes, else 1
                 break
             else:
-                if debug: print("  x is neither")
                 line_parts.append(x)
-        if debug: print("leaving RNEL")
         line_parts.reverse()
         return b"".join(line_parts)
 

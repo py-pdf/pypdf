@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) 2006, Mathieu Fenniak
 # All rights reserved.
 #
@@ -40,7 +41,7 @@ from PyPDF2.constants import FilterTypes as FT
 from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import LzwFilterParameters as LZW
 from PyPDF2.constants import StreamAttributes as SA
-from PyPDF2.errors import PdfReadError
+from PyPDF2.errors import PdfReadError, PdfStreamError
 from PyPDF2.utils import ord_, paethPredictor
 
 if version_info < ( 3, 0 ):
@@ -69,7 +70,7 @@ try:
     def compress(data):
         return zlib.compress(data)
 
-except ImportError:
+except ImportError:  # pragma: no cover
     # Unable to import zlib.  Attempt to use the System.IO.Compression
     # library from the .NET framework. (IronPython only)
     import System
@@ -127,8 +128,15 @@ except ImportError:
 class FlateDecode(object):
     @staticmethod
     def decode(data, decodeParms):
+        """
+        :param data: flate-encoded data.
+        :param decodeParms: a dictionary of values, understanding the
+            "/Predictor":<int> key only
+        :return: the flate-decoded data.
+        """
         data = decompress(data)
         predictor = 1
+
         if decodeParms:
             try:
                 from PyPDF2.generic import ArrayObject
@@ -139,12 +147,15 @@ class FlateDecode(object):
                 else:
                     predictor = decodeParms.get("/Predictor", 1)
             except AttributeError:
-                pass  # usually an array with a null object was read
+                pass  # Usually an array with a null object was read
         # predictor 1 == no predictor
         if predictor != 1:
-            columns = decodeParms[LZW.COLUMNS]
+            # The /Columns param. has 1 as the default value; see ISO 32000,
+            # §7.4.4.3 LZWDecode and FlateDecode Parameters, Table 8
+            columns = decodeParms.get(LZW.COLUMNS, 1)
+
             # PNG prediction:
-            if predictor >= 10 and predictor <= 15:
+            if 10 <= predictor <= 15:
                 data = FlateDecode._decode_png_prediction(data, columns)
             else:
                 # unsupported predictor
@@ -194,24 +205,38 @@ class FlateDecode(object):
 
 
 class ASCIIHexDecode(object):
+    """
+    The ASCIIHexDecode filter decodes data that has been encoded in ASCII
+    hexadecimal form into a base-7 ASCII format.
+    """
+
     @staticmethod
     def decode(data, decodeParms=None):
+        """
+        :param data: a str sequence of hexadecimal-encoded values to be
+            converted into a base-7 ASCII string
+        :param decodeParms:
+        :return: a string conversion in base-7 ASCII, where each of its values
+            v is such that 0 <= ord(v) <= 127.
+        """
         retval = ""
-        char = ""
+        hex_pair = ""
         x = 0
         while True:
+            if x >= len(data):
+                raise PdfStreamError("Unexpected EOD in ASCIIHexDecode")
             c = data[x]
             if c == ">":
                 break
             elif c.isspace():
                 x += 1
                 continue
-            char += c
-            if len(char) == 2:
-                retval += chr(int(char, base=16))
-                char = ""
+            hex_pair += c
+            if len(hex_pair) == 2:
+                retval += chr(int(hex_pair, base=16))
+                hex_pair = ""
             x += 1
-        assert char == ""
+        assert hex_pair == ""
         return retval
 
 
@@ -219,6 +244,7 @@ class LZWDecode(object):
     """Taken from:
     http://www.java2s.com/Open-Source/Java-Document/PDF/PDF-Renderer/com/sun/pdfview/decode/LZWDecode.java.htm
     """
+
     class decoder(object):
         def __init__(self, data):
             self.STOP=257
@@ -256,9 +282,15 @@ class LZWDecode(object):
             return value
 
         def decode(self):
-            """ algorithm derived from:
+            """
+            TIFF 6.0 specification explains in sufficient details the steps to
+            implement the LZW encode() and decode() algorithms.
+
+            algorithm derived from:
             http://www.rasip.fer.hr/research/compress/algorithms/fund/lz/lzw.html
             and the PDFReference
+
+            :rtype: bytes
             """
             cW = self.CLEARDICT
             baos=""
@@ -291,39 +323,46 @@ class LZWDecode(object):
 
     @staticmethod
     def decode(data, decodeParms=None):
+        """
+        :param data: ``bytes`` or ``str`` text to decode.
+        :param decodeParms: a dictionary of parameter values.
+        :return: decoded data.
+        :rtype: bytes
+        """
         return LZWDecode.decoder(data).decode()
 
 
 class ASCII85Decode(object):
+    """Decodes string ASCII85-encoded data into a byte format."""
     @staticmethod
     def decode(data, decodeParms=None):
         if version_info < ( 3, 0 ):
             retval = ""
             group = []
-            x = 0
-            hitEod = False
+            index = 0
+            hit_eod = False
             # remove all whitespace from data
             data = [y for y in data if y not in ' \n\r\t']
-            while not hitEod:
-                c = data[x]
-                if len(retval) == 0 and c == "<" and data[x+1] == "~":
-                    x += 2
+            while not hit_eod:
+                c = data[index]
+                if len(retval) == 0 and c == "<" and data[index+1] == "~":
+                    index += 2
                     continue
                 # elif c.isspace():
-                #    x += 1
+                #    index += 1
                 #    continue
                 elif c == 'z':
                     assert len(group) == 0
                     retval += '\x00\x00\x00\x00'
-                    x += 1
+                    index += 1
                     continue
-                elif c == "~" and data[x+1] == ">":
+                elif c == "~" and data[index+1] == ">":
                     if len(group) != 0:
                         # cannot have a final group of just 1 char
                         assert len(group) > 1
                         cnt = len(group) - 1
                         group += [ 85, 85, 85 ]
-                        hitEod = cnt
+                        hit_eod = cnt
                     else:
                         break
                 else:
@@ -336,37 +375,42 @@ class ASCII85Decode(object):
                         group[2] * (85**2) + \
                         group[3] * 85 + \
                         group[4]
+                    if b > (2**32 - 1):
+                        raise OverflowError(
+                            "The sum of a ASCII85-encoded 4-byte group shall "
+                            "not exceed 2 ^ 32 - 1. See ISO 32000, 2008, 7.4.3"
+                        )
                     assert b <= (2**32 - 1)
                     c4 = chr((b >> 0) % 256)
                     c3 = chr((b >> 8) % 256)
                     c2 = chr((b >> 16) % 256)
                     c1 = chr(b >> 24)
                     retval += (c1 + c2 + c3 + c4)
-                    if hitEod:
-                        retval = retval[:-4+hitEod]
+                    if hit_eod:
+                        retval = retval[:-4+hit_eod]
                     group = []
-                x += 1
+                index += 1
             return retval
         else:
             if isinstance(data, str):
                 data = data.encode('ascii')
-            n = b = 0
+            group_index = b = 0
             out = bytearray()
             for c in data:
                 if ord('!') <= c and c <= ord('u'):
-                    n += 1
+                    group_index += 1
                     b = b*85+(c-33)
-                    if n == 5:
+                    if group_index == 5:
                         out += struct.pack(b'>L',b)
-                        n = b = 0
+                        group_index = b = 0
                 elif c == ord('z'):
-                    assert n == 0
+                    assert group_index == 0
                     out += b'\0\0\0\0'
                 elif c == ord('~'):
-                    if n:
-                        for _ in range(5-n):
+                    if group_index:
+                        for _ in range(5-group_index):
                             b = b*85+84
-                        out += struct.pack(b'>L',b)[:n-1]
+                        out += struct.pack(b'>L',b)[:group_index-1]
                     break
             return bytes(out)
 
@@ -455,7 +499,7 @@ def decodeStreamData(stream):
                 else:
                     raise NotImplementedError("/Crypt filter with /Name or /Type not supported yet")
             else:
-                # unsupported filter
+                # Unsupported filter
                 raise NotImplementedError("unsupported filter %s" % filterType)
     return data
 

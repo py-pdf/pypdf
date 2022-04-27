@@ -26,6 +26,8 @@ jobs:
     steps:
     - name: Checkout Code
       uses: actions/checkout@v3
+      with:
+        submodules: 'recursive'
     - name: Setup Python
       uses: actions/setup-python@v3
       with:
@@ -46,13 +48,17 @@ jobs:
         pip install .
     - name: Test with flake8
       run: |
-        flake8 . --ignore=E203,W503,W504,E,F403,F405 --exclude build
+        flake8 . --ignore=E203,W503,W504,E,F403,F405 --exclude build,sample-files
       if: matrix.python-version != '2.7'
     - name: Test with pytest
       run: |
         python -m coverage run --parallel-mode -m pytest Tests -vv
-      if: matrix.python-version != '3.10.1'
-    - name: Test with pytest
+      if: matrix.python-version != '3.10.1' && matrix.python-version != 2.7
+    - name: Test with pytest (2.7)
+      run: |
+        python -m coverage run --parallel-mode -m pytest Tests -vv -m "not no_py27"
+      if: matrix.python-version == 2.7
+    - name: Test with pytest (OO flag)
       run: |
         python -OO -m coverage run --parallel-mode -m pytest Tests -vv
       if: matrix.python-version == '3.10.1'
