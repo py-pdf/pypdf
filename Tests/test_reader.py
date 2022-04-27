@@ -9,7 +9,7 @@ from PyPDF2 import PdfFileReader
 from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.constants import Ressources as RES
-from PyPDF2.errors import PdfReadError, PdfReadWarning
+from PyPDF2.errors import PdfReadError
 from PyPDF2.filters import _xobj_to_image
 
 if version_info < (3, 0):
@@ -229,14 +229,12 @@ def test_get_images_raw(strict, with_prev_0, startx_correction, should_fail):
     )
     pdf_stream = io.BytesIO(pdf_data)
     if should_fail:
-        with pytest.raises(Exception) as exc:
+        with pytest.raises(PdfReadError) as exc:
             PdfFileReader(pdf_stream, strict=strict)
-        if startx_correction != -1:
-            assert exc.type == PdfReadWarning
-        else:
+        assert exc.type == PdfReadError
+        if startx_correction == -1:
             assert (
-                exc.type == PdfReadError
-                and exc.value.args[0]
+                exc.value.args[0]
                 == "/Prev=0 in the trailer (try opening with strict=False)"
             )
     else:
@@ -245,10 +243,10 @@ def test_get_images_raw(strict, with_prev_0, startx_correction, should_fail):
 
 def test_issue297():
     path = os.path.join(RESOURCE_ROOT, "issue-297.pdf")
-    with pytest.raises(PdfReadWarning) as exc:
+    with pytest.raises(PdfReadError) as exc:
         reader = PdfFileReader(path, strict=True)
         reader.getPage(0)
-    assert "startxref" in exc.value.args[0]
+    assert "Broken xref table" in exc.value.args[0]
     reader = PdfFileReader(path, strict=False)
     reader.getPage(0)
 
