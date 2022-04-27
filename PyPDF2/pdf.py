@@ -1838,9 +1838,13 @@ class PdfFileReader(object):
                 raise PdfReadError("startxref not found")
 
         # check and eventually correct the startxref only in not strict
-        rebuildXrefTable = self.is_xref_broken(stream, startxref)
-        if self.strict and rebuildXrefTable:
+        xref_issue_nr = self._get_xref_issues(stream, startxref)
+        if self.strict and xref_issue_nr:
             raise PdfReadError("Broken xref table")
+        else:
+            warnings.warn(
+                "incorrect startxref pointer({})".format(xref_issue_nr), PdfReadWarning
+            )
 
         # read all cross reference tables and their trailers
         self.xref = {}
@@ -1927,7 +1931,7 @@ class PdfFileReader(object):
                     startxref = newTrailer["/Prev"]
                 else:
                     break
-            elif rebuildXrefTable:
+            elif xref_issue_nr:
                 self._rebuild_xref_table(stream)
                 break
             elif x.isdigit():
@@ -2027,12 +2031,12 @@ class PdfFileReader(object):
             stream.seek(loc, 0) # return to where it was
 
     @staticmethod
-    def is_xref_broken(stream, startxref):
+    def _get_xref_issues(stream, startxref):
+        """Returns an int which indicates an issue. 0 means there is no issue."""
         stream.seek(startxref - 1, 0)  # -1 to check character before
         line = stream.read(1)
         if line not in b_("\r\n \t"):
-            warnings.warn("incorrect startxref pointer(1)", PdfReadWarning)
-            return True
+            return 1
         line = stream.read(4)
         if line != b_("xref"):
             # not an xref so check if it is an XREF object
@@ -2040,19 +2044,16 @@ class PdfFileReader(object):
             while line in b_("0123456789 \t"):
                 line = stream.read(1)
                 if line == b_(""):
-                    warnings.warn("incorrect startxref pointer(2)", PdfReadWarning)
-                    return True
+                    return 2
             line += stream.read(2)  # 1 char already read, +2 to check "obj"
             if line.lower() != b_("obj"):
-                warnings.warn("incorrect startxref pointer(3)", PdfReadWarning)
-                return True
+                return 3
             while stream.read(1) in b_(" \t\r\n"):
                 pass
             line = stream.read(256)  # check that it is xref obj
             if b_("/xref") not in line.lower():
-                warnings.warn("incorrect startxref pointer(4)", PdfReadWarning)
-                return True
-        return False
+                return 4
+        return 0
 
     def _rebuild_xref_table(self, stream):
         self.xref = {}
