@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1651059072005,
+  "lastUpdate": 1651074295743,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1125,6 +1125,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.005338950545449663",
             "extra": "mean: 96.31083163635233 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "fd775d34d9ccf8f77596ca9e82944c869901ac0f",
+          "message": "MAINT: Refactoring after #788 (#830)\n\nThis refactoring aims at making maintenance easier:\r\n\r\n1. Too long functions make it hard to grasp the overall behavior. Hence the _get_xref_issues function was split out\r\n2. `_get_xref_issues` is made a static method of the PdfFileReader to show that it belongs to the reader, but doesn't require any of its attributes\r\n3. `_get_xref_issues` makes use of an integer return value instead of raising + catching exceptions. \r\n4. `_rebuild_xref_table` was moved to a method for the same reason.",
+          "timestamp": "2022-04-27T17:44:09+02:00",
+          "tree_id": "beff2babbf9ba4905400267caa89d4e7ddc069ac",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/fd775d34d9ccf8f77596ca9e82944c869901ac0f"
+        },
+        "date": 1651074294887,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.6534127715275444,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0030763372688520432",
+            "extra": "mean: 1.5304261618 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 10.089517366180937,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008623789855637931",
+            "extra": "mean: 99.11276860000271 msec\nrounds: 10"
           }
         ]
       }
