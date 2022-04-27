@@ -1858,12 +1858,12 @@ class PdfFileReader(object):
                 self._read_standard_xref_table(stream)
                 readNonWhitespace(stream)
                 stream.seek(-1, 1)
-                newTrailer = readObject(stream, self)
-                for key, value in list(newTrailer.items()):
+                new_trailer = readObject(stream, self)
+                for key, value in list(new_trailer.items()):
                     if key not in self.trailer:
                         self.trailer[key] = value
-                if "/Prev" in newTrailer:
-                    startxref = newTrailer["/Prev"]
+                if "/Prev" in new_trailer:
+                    startxref = new_trailer["/Prev"]
                 else:
                     break
             elif xref_issue_nr:
@@ -1929,7 +1929,8 @@ class PdfFileReader(object):
                     if pid == id - self.xrefIndex:
                         self._zeroXref(gen)
                         break
-                    # if not, then either it's just plain wrong, or the non-zero-index is actually correct
+                    # if not, then either it's just plain wrong, or the
+                    # non-zero-index is actually correct
             stream.seek(loc, 0) # return to where it was
 
     def _read_standard_xref_table(self, stream):
@@ -2010,21 +2011,21 @@ class PdfFileReader(object):
         xrefstream = readObject(stream, self)
         assert xrefstream["/Type"] == "/XRef"
         self.cacheIndirectObject(generation, idnum, xrefstream)
-        streamData = BytesIO(b_(xrefstream.getData()))
+        stream_data = BytesIO(b_(xrefstream.getData()))
         # Index pairs specify the subsections in the dictionary. If
         # none create one subsection that spans everything.
         idx_pairs = xrefstream.get("/Index", [0, xrefstream.get("/Size")])
-        entrySizes = xrefstream.get("/W")
-        assert len(entrySizes) >= 3
-        if self.strict and len(entrySizes) > 3:
-            raise PdfReadError("Too many entry sizes: %s" % entrySizes)
+        entry_sizes = xrefstream.get("/W")
+        assert len(entry_sizes) >= 3
+        if self.strict and len(entry_sizes) > 3:
+            raise PdfReadError("Too many entry sizes: %s" % entry_sizes)
 
-        def getEntry(i):
+        def get_entry(i):
             # Reads the correct number of bytes for each entry. See the
             # discussion of the W parameter in PDF spec table 17.
-            if entrySizes[i] > 0:
-                d = streamData.read(entrySizes[i])
-                return convertToInt(d, entrySizes[i])
+            if entry_sizes[i] > 0:
+                d = stream_data.read(entry_sizes[i])
+                return convertToInt(d, entry_sizes[i])
 
             # PDF Spec Table 17: A value of zero for an element in the
             # W array indicates...the default value shall be used
@@ -2038,7 +2039,7 @@ class PdfFileReader(object):
             return num in self.xref.get(generation, []) or num in self.xref_objStm
 
         # Iterate through each subsection
-        self._read_xref_subsections(idx_pairs, getEntry, used_before)
+        self._read_xref_subsections(idx_pairs, get_entry, used_before)
         return xrefstream
 
     @staticmethod
@@ -2078,13 +2079,13 @@ class PdfFileReader(object):
             if generation not in self.xref:
                 self.xref[generation] = {}
             self.xref[generation][idnum] = m.start(1)
-        trailerPos = f_.rfind(b"trailer") - len(f_) + 7
-        stream.seek(trailerPos, 2)
+        trailer_pos = f_.rfind(b"trailer") - len(f_) + 7
+        stream.seek(trailer_pos, 2)
         # code below duplicated
         readNonWhitespace(stream)
         stream.seek(-1, 1)
-        newTrailer = readObject(stream, self)
-        for key, value in list(newTrailer.items()):
+        new_trailer = readObject(stream, self)
+        for key, value in list(new_trailer.items()):
             if key not in self.trailer:
                 self.trailer[key] = value
 
