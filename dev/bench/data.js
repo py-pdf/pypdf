@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1651004445539,
+  "lastUpdate": 1651039435620,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1049,6 +1049,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00284369106426063",
             "extra": "mean: 114.16555344444627 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "35086b6e2c0b45ce4b80e2581e8b27cd12a6d373",
+          "message": "STY: Remove debug code (#828)",
+          "timestamp": "2022-04-27T08:03:14+02:00",
+          "tree_id": "9c32fdaceaabf28b00855dfe80d3eabb7b10481b",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/35086b6e2c0b45ce4b80e2581e8b27cd12a6d373"
+        },
+        "date": 1651039434526,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.5350829750413725,
+            "unit": "iter/sec",
+            "range": "stddev: 0.031613512699053894",
+            "extra": "mean: 1.8688690289999983 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 8.653130659753275,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004827429409492978",
+            "extra": "mean: 115.56511039999862 msec\nrounds: 10"
           }
         ]
       }
