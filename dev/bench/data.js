@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1651039435620,
+  "lastUpdate": 1651059072005,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1087,6 +1087,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004827429409492978",
             "extra": "mean: 115.56511039999862 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "904b0df5a2d840d0ef0d1db52c7ee6a114664594",
+          "message": "ROB: Fix corruption in startxref or xref table (#788)\n\nUse PdfReadWarning instead of UserWarning to be consistent\r\n\r\nCloses #297",
+          "timestamp": "2022-04-27T13:30:31+02:00",
+          "tree_id": "9b911b76a3f9a819ee0ca14a104336eeb0bd51db",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/904b0df5a2d840d0ef0d1db52c7ee6a114664594"
+        },
+        "date": 1651059070812,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.6500721455982809,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006260350447390519",
+            "extra": "mean: 1.5382907986000078 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 10.383048126671477,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005338950545449663",
+            "extra": "mean: 96.31083163635233 msec\nrounds: 11"
           }
         ]
       }
