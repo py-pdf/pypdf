@@ -5,7 +5,7 @@ from itertools import product as cartesian_product
 import pytest
 
 from PyPDF2.errors import PdfReadError, PdfStreamError
-from PyPDF2.filters import ASCIIHexDecode, FlateDecode, ASCII85Decode
+from PyPDF2.filters import ASCII85Decode, ASCIIHexDecode, FlateDecode
 
 filter_inputs = (
     # "", '', """""",

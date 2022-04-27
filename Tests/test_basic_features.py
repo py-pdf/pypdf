@@ -16,8 +16,7 @@ def test_basic_features():
     reader = PdfFileReader(pdf_path)
     writer = PdfFileWriter()
 
-    # print how many pages input1 has:
-    print("document1.pdf has %d pages." % reader.getNumPages())
+    reader.getNumPages()
 
     # add page 1 from input1 to output document, unchanged
     writer.addPage(reader.getPage(0))

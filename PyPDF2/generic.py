@@ -493,14 +493,11 @@ class NameObject(str, PdfObject):
 
     @staticmethod
     def readFromStream(stream, pdf):
-        debug = False
-        if debug: print((stream.tell()))
         name = stream.read(1)
         if name != NameObject.surfix:
             raise PdfReadError("name read error")
         name += utils.readUntilRegex(stream, NameObject.delimiterPattern,
             ignore_eof=True)
-        if debug: print(name)
         try:
             try:
                 ret=name.decode('utf-8')
@@ -575,7 +572,6 @@ class DictionaryObject(dict, PdfObject):
 
     @staticmethod
     def readFromStream(stream, pdf):
-        debug = False
         tmp = stream.read(2)
         if tmp != b_("<<"):
             raise PdfReadError("Dictionary read error at byte %s: stream must begin with '<<'" % utils.hexStr(stream.tell()))
@@ -591,7 +587,6 @@ class DictionaryObject(dict, PdfObject):
             if not tok:
                 raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
 
-            if debug: print(("Tok:", tok))
             if tok == b_(">"):
                 stream.read(1)
                 break
@@ -628,14 +623,11 @@ class DictionaryObject(dict, PdfObject):
             # this is a stream object, not a dictionary
             assert SA.LENGTH in data
             length = data[SA.LENGTH]
-            if debug: print(data)
             if isinstance(length, IndirectObject):
                 t = stream.tell()
                 length = pdf.getObject(length)
                 stream.seek(t, 0)
             data["__streamdata__"] = stream.read(length)
-            if debug: print("here")
-            # if debug: print(binascii.hexlify(data["__streamdata__"]))
             e = readNonWhitespace(stream)
             ndstream = stream.read(8)
             if (e + ndstream) != b_("endstream"):
