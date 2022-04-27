@@ -1837,35 +1837,15 @@ class PdfFileReader(object):
             if line[:9] != b_("startxref"):
                 raise PdfReadError("startxref not found")
 
-        #check and eventually correct the startxref only in not strict
-        rebuildXrefTable = False
-        try:
-            stream.seek(startxref - 1,0) #-1 to check character before
-            line=stream.read(1)
-            if line not in b_("\r\n \t"):
-                raise PdfReadWarning("incorrect startxref pointer(1)",line)
-            line = stream.read(4)
-            if line != b_("xref"):
-                #not an xref so check if it is an XREF object
-                line = b_("")
-                while line in b_("0123456789 \t"):
-                    line = stream.read(1)
-                    if line == b_(""):
-                        raise PdfReadWarning("incorrect startxref pointer(2)")
-                line += stream.read(2)   #1 char already read, +2 to check "obj"
-                if line.lower() != b_("obj"):
-                    raise PdfReadWarning("incorrect startxref pointer(3)")
-                while stream.read(1) in b_(" \t\r\n"):
-                    pass;
-                line=stream.read(256) # check that it is xref obj
-                if b_("/xref") not in line.lower():
-                    raise PdfReadWarning("incorrect startxref pointer(4)")
-        except PdfReadWarning as e:
-            warnings.warn(str(e)+", need to rebuild xref table (strict=False)",PdfReadWarning)
-            if( not self.strict):
-                rebuildXrefTable = True
-            else:
-                raise
+        # check and eventually correct the startxref only in not strict
+        xref_issue_nr = self._get_xref_issues(stream, startxref)
+        if self.strict and xref_issue_nr:
+            raise PdfReadError("Broken xref table")
+        else:
+            warnings.warn(
+                "incorrect startxref pointer({})".format(xref_issue_nr), PdfReadWarning
+            )
+
         # read all cross reference tables and their trailers
         self.xref = {}
         self.xref_objStm = {}
@@ -1875,72 +1855,7 @@ class PdfFileReader(object):
             stream.seek(startxref, 0)
             x = stream.read(1)
             if x == b_("x"):
-                # standard cross-reference table
-                ref = stream.read(4)
-                if ref[:3] != b_("ref"):
-                    raise PdfReadError("xref table read error")
-                readNonWhitespace(stream)
-                stream.seek(-1, 1)
-                firsttime = True; # check if the first time looking at the xref table
-                while True:
-                    num = readObject(stream, self)
-                    if firsttime and num != 0:
-                         self.xrefIndex = num
-                         if self.strict:
-                            warnings.warn("Xref table not zero-indexed. ID numbers for objects will be corrected.", PdfReadWarning)
-                            # if table not zero indexed, could be due to error from when PDF was created
-                            # which will lead to mismatched indices later on, only warned and corrected if self.strict=True
-                    firsttime = False
-                    readNonWhitespace(stream)
-                    stream.seek(-1, 1)
-                    size = readObject(stream, self)
-                    readNonWhitespace(stream)
-                    stream.seek(-1, 1)
-                    cnt = 0
-                    while cnt < size:
-                        line = stream.read(20)
-
-                        # It's very clear in section 3.4.3 of the PDF spec
-                        # that all cross-reference table lines are a fixed
-                        # 20 bytes (as of PDF 1.7). However, some files have
-                        # 21-byte entries (or more) due to the use of \r\n
-                        # (CRLF) EOL's. Detect that case, and adjust the line
-                        # until it does not begin with a \r (CR) or \n (LF).
-                        while line[0] in b_("\x0D\x0A"):
-                            stream.seek(-20 + 1, 1)
-                            line = stream.read(20)
-
-                        # On the other hand, some malformed PDF files
-                        # use a single character EOL without a preceeding
-                        # space.  Detect that case, and seek the stream
-                        # back one character.  (0-9 means we've bled into
-                        # the next xref entry, t means we've bled into the
-                        # text "trailer"):
-                        if line[-1] in b_("0123456789t"):
-                            stream.seek(-1, 1)
-
-                        offset, generation = line[:16].split(b_(" "))
-                        offset, generation = int(offset), int(generation)
-                        if generation not in self.xref:
-                            self.xref[generation] = {}
-                        if num in self.xref[generation]:
-                            # It really seems like we should allow the last
-                            # xref table in the file to override previous
-                            # ones. Since we read the file backwards, assume
-                            # any existing key is already set correctly.
-                            pass
-                        else:
-                            self.xref[generation][num] = offset
-                        cnt += 1
-                        num += 1
-                    readNonWhitespace(stream)
-                    stream.seek(-1, 1)
-                    trailertag = stream.read(7)
-                    if trailertag != b_("trailer"):
-                        # more xrefs!
-                        stream.seek(-7, 1)
-                    else:
-                        break
+                self._read_standard_xref_table(stream)
                 readNonWhitespace(stream)
                 stream.seek(-1, 1)
                 newTrailer = readObject(stream, self)
@@ -1951,65 +1866,11 @@ class PdfFileReader(object):
                     startxref = newTrailer["/Prev"]
                 else:
                     break
-            elif rebuildXrefTable:
-                self.xref={}
-                stream.seek(0,0)
-                f_ = stream.read(-1)
-                import re
-                for m in re.finditer(b_(r"[\r\n \t][ \t]*(\d+)[ \t]+(\d+)[ \t]+obj"),f_):
-                    idnum = int(m.group(1))
-                    generation = int(m.group(2))
-                    if generation not in self.xref:
-                        self.xref[generation] = {}
-                    self.xref[generation][idnum] = m.start(1)
-                trailerPos = f_.rfind(b"trailer") - len(f_) + 7
-                stream.seek(trailerPos,2)
-                #code below duplicated
-                readNonWhitespace(stream)
-                stream.seek(-1, 1)
-                newTrailer = readObject(stream, self)
-                for key, value in list(newTrailer.items()):
-                    if key not in self.trailer:
-                        self.trailer[key] = value
-                #if "/Prev" in newTrailer:
-                #    startxref = newTrailer["/Prev"]
-                #else:
+            elif xref_issue_nr:
+                self._rebuild_xref_table(stream)
                 break
             elif x.isdigit():
-                # PDF 1.5+ Cross-Reference Stream
-                stream.seek(-1, 1)
-                idnum, generation = self.readObjectHeader(stream)
-                xrefstream = readObject(stream, self)
-                assert xrefstream["/Type"] == "/XRef"
-                self.cacheIndirectObject(generation, idnum, xrefstream)
-                streamData = BytesIO(b_(xrefstream.getData()))
-                # Index pairs specify the subsections in the dictionary. If
-                # none create one subsection that spans everything.
-                idx_pairs = xrefstream.get("/Index", [0, xrefstream.get("/Size")])
-                entrySizes = xrefstream.get("/W")
-                assert len(entrySizes) >= 3
-                if self.strict and len(entrySizes) > 3:
-                    raise PdfReadError("Too many entry sizes: %s" %entrySizes)
-
-                def getEntry(i):
-                    # Reads the correct number of bytes for each entry. See the
-                    # discussion of the W parameter in PDF spec table 17.
-                    if entrySizes[i] > 0:
-                        d = streamData.read(entrySizes[i])
-                        return convertToInt(d, entrySizes[i])
-
-                    # PDF Spec Table 17: A value of zero for an element in the
-                    # W array indicates...the default value shall be used
-                    if i == 0:  return 1 # First value defaults to 1
-                    else:       return 0
-
-                def used_before(num, generation):
-                    # We move backwards through the xrefs, don't replace any.
-                    return num in self.xref.get(generation, []) or \
-                            num in self.xref_objStm
-
-                # Iterate through each subsection
-                self._read_xref_subsections(idx_pairs, getEntry, used_before)
+                xrefstream = self._read_pdf15_xref_stream(stream)
 
                 trailerKeys = TK.ROOT, TK.ENCRYPT, TK.INFO, TK.ID
                 for key in trailerKeys:
@@ -2070,6 +1931,162 @@ class PdfFileReader(object):
                         break
                     # if not, then either it's just plain wrong, or the non-zero-index is actually correct
             stream.seek(loc, 0) # return to where it was
+
+    def _read_standard_xref_table(self, stream):
+        # standard cross-reference table
+        ref = stream.read(4)
+        if ref[:3] != b_("ref"):
+            raise PdfReadError("xref table read error")
+        readNonWhitespace(stream)
+        stream.seek(-1, 1)
+        firsttime = True  # check if the first time looking at the xref table
+        while True:
+            num = readObject(stream, self)
+            if firsttime and num != 0:
+                self.xrefIndex = num
+                if self.strict:
+                    warnings.warn(
+                        "Xref table not zero-indexed. ID numbers for objects will be corrected.",
+                        PdfReadWarning,
+                    )
+                    # if table not zero indexed, could be due to error from when PDF was created
+                    # which will lead to mismatched indices later on, only warned and corrected if self.strict=True
+            firsttime = False
+            readNonWhitespace(stream)
+            stream.seek(-1, 1)
+            size = readObject(stream, self)
+            readNonWhitespace(stream)
+            stream.seek(-1, 1)
+            cnt = 0
+            while cnt < size:
+                line = stream.read(20)
+
+                # It's very clear in section 3.4.3 of the PDF spec
+                # that all cross-reference table lines are a fixed
+                # 20 bytes (as of PDF 1.7). However, some files have
+                # 21-byte entries (or more) due to the use of \r\n
+                # (CRLF) EOL's. Detect that case, and adjust the line
+                # until it does not begin with a \r (CR) or \n (LF).
+                while line[0] in b_("\x0D\x0A"):
+                    stream.seek(-20 + 1, 1)
+                    line = stream.read(20)
+
+                # On the other hand, some malformed PDF files
+                # use a single character EOL without a preceeding
+                # space.  Detect that case, and seek the stream
+                # back one character.  (0-9 means we've bled into
+                # the next xref entry, t means we've bled into the
+                # text "trailer"):
+                if line[-1] in b_("0123456789t"):
+                    stream.seek(-1, 1)
+
+                offset, generation = line[:16].split(b_(" "))
+                offset, generation = int(offset), int(generation)
+                if generation not in self.xref:
+                    self.xref[generation] = {}
+                if num in self.xref[generation]:
+                    # It really seems like we should allow the last
+                    # xref table in the file to override previous
+                    # ones. Since we read the file backwards, assume
+                    # any existing key is already set correctly.
+                    pass
+                else:
+                    self.xref[generation][num] = offset
+                cnt += 1
+                num += 1
+            readNonWhitespace(stream)
+            stream.seek(-1, 1)
+            trailertag = stream.read(7)
+            if trailertag != b_("trailer"):
+                # more xrefs!
+                stream.seek(-7, 1)
+            else:
+                break
+
+    def _read_pdf15_xref_stream(self, stream):
+        # PDF 1.5+ Cross-Reference Stream
+        stream.seek(-1, 1)
+        idnum, generation = self.readObjectHeader(stream)
+        xrefstream = readObject(stream, self)
+        assert xrefstream["/Type"] == "/XRef"
+        self.cacheIndirectObject(generation, idnum, xrefstream)
+        streamData = BytesIO(b_(xrefstream.getData()))
+        # Index pairs specify the subsections in the dictionary. If
+        # none create one subsection that spans everything.
+        idx_pairs = xrefstream.get("/Index", [0, xrefstream.get("/Size")])
+        entrySizes = xrefstream.get("/W")
+        assert len(entrySizes) >= 3
+        if self.strict and len(entrySizes) > 3:
+            raise PdfReadError("Too many entry sizes: %s" % entrySizes)
+
+        def getEntry(i):
+            # Reads the correct number of bytes for each entry. See the
+            # discussion of the W parameter in PDF spec table 17.
+            if entrySizes[i] > 0:
+                d = streamData.read(entrySizes[i])
+                return convertToInt(d, entrySizes[i])
+
+            # PDF Spec Table 17: A value of zero for an element in the
+            # W array indicates...the default value shall be used
+            if i == 0:
+                return 1  # First value defaults to 1
+            else:
+                return 0
+
+        def used_before(num, generation):
+            # We move backwards through the xrefs, don't replace any.
+            return num in self.xref.get(generation, []) or num in self.xref_objStm
+
+        # Iterate through each subsection
+        self._read_xref_subsections(idx_pairs, getEntry, used_before)
+        return xrefstream
+
+    @staticmethod
+    def _get_xref_issues(stream, startxref):
+        """Returns an int which indicates an issue. 0 means there is no issue."""
+        stream.seek(startxref - 1, 0)  # -1 to check character before
+        line = stream.read(1)
+        if line not in b_("\r\n \t"):
+            return 1
+        line = stream.read(4)
+        if line != b_("xref"):
+            # not an xref so check if it is an XREF object
+            line = b_("")
+            while line in b_("0123456789 \t"):
+                line = stream.read(1)
+                if line == b_(""):
+                    return 2
+            line += stream.read(2)  # 1 char already read, +2 to check "obj"
+            if line.lower() != b_("obj"):
+                return 3
+            while stream.read(1) in b_(" \t\r\n"):
+                pass
+            line = stream.read(256)  # check that it is xref obj
+            if b_("/xref") not in line.lower():
+                return 4
+        return 0
+
+    def _rebuild_xref_table(self, stream):
+        self.xref = {}
+        stream.seek(0, 0)
+        f_ = stream.read(-1)
+        import re
+
+        for m in re.finditer(b_(r"[\r\n \t][ \t]*(\d+)[ \t]+(\d+)[ \t]+obj"), f_):
+            idnum = int(m.group(1))
+            generation = int(m.group(2))
+            if generation not in self.xref:
+                self.xref[generation] = {}
+            self.xref[generation][idnum] = m.start(1)
+        trailerPos = f_.rfind(b"trailer") - len(f_) + 7
+        stream.seek(trailerPos, 2)
+        # code below duplicated
+        readNonWhitespace(stream)
+        stream.seek(-1, 1)
+        newTrailer = readObject(stream, self)
+        for key, value in list(newTrailer.items()):
+            if key not in self.trailer:
+                self.trailer[key] = value
 
     def _read_xref_subsections(self, idx_pairs, getEntry, used_before):
         last_end = 0
