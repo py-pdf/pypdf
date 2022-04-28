@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1651136596915,
+  "lastUpdate": 1651139639533,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1277,6 +1277,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.006762608643911026",
             "extra": "mean: 98.13598499999898 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "eef03d935dfeacaa75848b39082cf94d833d3174",
+          "message": "STY: Apply pre-commit (black, isort) + use snake_case variables (#832)\n\nThis change standardizes the code formatting quite a bit.\r\nHaving standardized formatting makes the code easier to read\r\nand reduces the diff.\r\n\r\nThis includes:\r\n\r\n* Applying the black auto-formatter (also in the docs)\r\n* Applying isort for import sorting\r\n* Making sure that files end with a newline\r\n\r\nAdditionally, in several places the property function call style was replaced by the decorator style",
+          "timestamp": "2022-04-28T11:53:18+02:00",
+          "tree_id": "93562802485ae6a26ff05fad3cf13e3a33bdb00a",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/eef03d935dfeacaa75848b39082cf94d833d3174"
+        },
+        "date": 1651139639035,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.744978809967256,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0047688953823038305",
+            "extra": "mean: 1.3423200587999986 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 11.643426095476853,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005384084734819235",
+            "extra": "mean: 85.88537358333663 msec\nrounds: 12"
           }
         ]
       }
