@@ -460,7 +460,7 @@ class CCITTFaxDecode(object):
             else:
                 CCITTgroup = 3
 
-        imgSize = len(data)
+        img_size = len(data)
         tiff_header_struct = "<2shlh" + "hhll" * 8 + "h"
         tiffHeader = struct.pack(
             tiff_header_struct,
@@ -501,7 +501,7 @@ class CCITTFaxDecode(object):
             279,
             4,
             1,
-            imgSize,  # StripByteCounts, LONG, 1, size of image
+            img_size,  # StripByteCounts, LONG, 1, size of image
             0,  # last IFD
         )
 

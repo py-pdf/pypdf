@@ -206,13 +206,13 @@ def matrixMultiply(a, b):
 def markLocation(stream):
     """Creates text file showing current location in context."""
     # Mainly for debugging
-    RADIUS = 5000
-    stream.seek(-RADIUS, 1)
+    radius = 5000
+    stream.seek(-radius, 1)
     with open("PyPDF2_pdfLocation.txt", "wb") as output_fh:
-        output_fh.write(stream.read(RADIUS))
+        output_fh.write(stream.read(radius))
         output_fh.write(b"HERE")
-        output_fh.write(stream.read(RADIUS))
-    stream.seek(-RADIUS, 1)
+        output_fh.write(stream.read(radius))
+    stream.seek(-radius, 1)
 
 
 if sys.version_info[0] < 3:

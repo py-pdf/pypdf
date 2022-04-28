@@ -539,36 +539,36 @@ class PdfFileMerger(object):
             :meth:`addLink()<addLin>` for details.
         """
         if len(self.output.getObject(self.output._pages)["/Kids"]) > 0:
-            pageRef = self.output.getObject(self.output._pages)["/Kids"][pagenum]
+            page_ref = self.output.getObject(self.output._pages)["/Kids"][pagenum]
         else:
-            pageRef = self.output.getObject(self.output._pages)
+            page_ref = self.output.getObject(self.output._pages)
 
         action = DictionaryObject()
-        zoomArgs = []
+        zoom_args = []
         for a in args:
             if a is not None:
-                zoomArgs.append(NumberObject(a))
+                zoom_args.append(NumberObject(a))
             else:
-                zoomArgs.append(NullObject())
+                zoom_args.append(NullObject())
         dest = Destination(
-            NameObject("/" + title + " bookmark"), pageRef, NameObject(fit), *zoomArgs
+            NameObject("/" + title + " bookmark"), page_ref, NameObject(fit), *zoom_args
         )
-        destArray = dest.getDestArray()
+        dest_array = dest.getDestArray()
         action.update(
-            {NameObject("/D"): destArray, NameObject("/S"): NameObject("/GoTo")}
+            {NameObject("/D"): dest_array, NameObject("/S"): NameObject("/GoTo")}
         )
-        actionRef = self.output._addObject(action)
+        action_ref = self.output._addObject(action)
 
-        outlineRef = self.output.getOutlineRoot()
+        outline_ref = self.output.getOutlineRoot()
 
         if parent is None:
-            parent = outlineRef
+            parent = outline_ref
 
         bookmark = TreeObject()
 
         bookmark.update(
             {
-                NameObject("/A"): actionRef,
+                NameObject("/A"): action_ref,
                 NameObject("/Title"): createStringObject(title),
             }
         )
@@ -586,11 +586,11 @@ class PdfFileMerger(object):
         if format:
             bookmark.update({NameObject("/F"): NumberObject(format)})
 
-        bookmarkRef = self.output._addObject(bookmark)
+        bookmark_ref = self.output._addObject(bookmark)
         parent = parent.getObject()
-        parent.addChild(bookmarkRef, self.output)
+        parent.addChild(bookmark_ref, self.output)
 
-        return bookmarkRef
+        return bookmark_ref
 
     def addNamedDestination(self, title, pagenum):
         """
@@ -622,22 +622,22 @@ class OutlinesObject(list):
         self.tree.removeChild(obj)
 
     def add(self, title, pagenum):
-        pageRef = self.pdf.getObject(self.pdf._pages)[PA.KIDS][pagenum]
+        page_ref = self.pdf.getObject(self.pdf._pages)[PA.KIDS][pagenum]
         action = DictionaryObject()
         action.update(
             {
                 NameObject("/D"): ArrayObject(
-                    [pageRef, NameObject("/FitH"), NumberObject(826)]
+                    [page_ref, NameObject("/FitH"), NumberObject(826)]
                 ),
                 NameObject("/S"): NameObject("/GoTo"),
             }
         )
-        actionRef = self.pdf._addObject(action)
+        action_ref = self.pdf._addObject(action)
         bookmark = TreeObject()
 
         bookmark.update(
             {
-                NameObject("/A"): actionRef,
+                NameObject("/A"): action_ref,
                 NameObject("/Title"): createStringObject(title),
             }
         )

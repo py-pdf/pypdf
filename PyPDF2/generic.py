@@ -362,7 +362,7 @@ def readStringFromStream(stream):
                 break
         elif tok == b_("\\"):
             tok = stream.read(1)
-            ESCAPE_DICT = {
+            escape_dict = {
                 b_("n"): b_("\n"),
                 b_("r"): b_("\r"),
                 b_("t"): b_("\t"),
@@ -386,7 +386,7 @@ def readStringFromStream(stream):
                 b_("$"): b_("$"),
             }
             try:
-                tok = ESCAPE_DICT[tok]
+                tok = escape_dict[tok]
             except KeyError:
                 if tok.isdigit():
                     # "The number ddd may consist of one, two, or three
@@ -714,8 +714,8 @@ class TreeObject(DictionaryObject):
             child = child["/Next"]
 
     def addChild(self, child, pdf):
-        childObj = child.getObject()
-        child = pdf.getReference(childObj)
+        child_obj = child.getObject()
+        child = pdf.getReference(child_obj)
         assert isinstance(child, IndirectObject)
 
         if "/First" not in self:
@@ -729,39 +729,39 @@ class TreeObject(DictionaryObject):
         self[NameObject("/Count")] = NumberObject(self[NameObject("/Count")] + 1)
 
         if prev:
-            prevRef = pdf.getReference(prev)
-            assert isinstance(prevRef, IndirectObject)
-            childObj[NameObject("/Prev")] = prevRef
+            prev_ref = pdf.getReference(prev)
+            assert isinstance(prev_ref, IndirectObject)
+            child_obj[NameObject("/Prev")] = prev_ref
             prev[NameObject("/Next")] = child
 
-        parentRef = pdf.getReference(self)
-        assert isinstance(parentRef, IndirectObject)
-        childObj[NameObject("/Parent")] = parentRef
+        parent_ref = pdf.getReference(self)
+        assert isinstance(parent_ref, IndirectObject)
+        child_obj[NameObject("/Parent")] = parent_ref
 
     def removeChild(self, child):
-        childObj = child.getObject()
+        child_obj = child.getObject()
 
-        if NameObject("/Parent") not in childObj:
+        if NameObject("/Parent") not in child_obj:
             raise ValueError("Removed child does not appear to be a tree item")
-        elif childObj[NameObject("/Parent")] != self:
+        elif child_obj[NameObject("/Parent")] != self:
             raise ValueError("Removed child is not a member of this tree")
 
         found = False
-        prevRef = None
+        prev_ref = None
         prev = None
-        curRef = self[NameObject("/First")]
-        cur = curRef.getObject()
-        lastRef = self[NameObject("/Last")]
-        last = lastRef.getObject()
+        cur_ref = self[NameObject("/First")]
+        cur = cur_ref.getObject()
+        last_ref = self[NameObject("/Last")]
+        last = last_ref.getObject()
         while cur is not None:
-            if cur == childObj:
+            if cur == child_obj:
                 if prev is None:
                     if NameObject("/Next") in cur:
                         # Removing first tree node
-                        nextRef = cur[NameObject("/Next")]
-                        next = nextRef.getObject()
+                        next_ref = cur[NameObject("/Next")]
+                        next = next_ref.getObject()
                         del next[NameObject("/Prev")]
-                        self[NameObject("/First")] = nextRef
+                        self[NameObject("/First")] = next_ref
                         self[NameObject("/Count")] = self[NameObject("/Count")] - 1
 
                     else:
@@ -774,46 +774,46 @@ class TreeObject(DictionaryObject):
                 else:
                     if NameObject("/Next") in cur:
                         # Removing middle tree node
-                        nextRef = cur[NameObject("/Next")]
-                        next = nextRef.getObject()
-                        next[NameObject("/Prev")] = prevRef
-                        prev[NameObject("/Next")] = nextRef
+                        next_ref = cur[NameObject("/Next")]
+                        next = next_ref.getObject()
+                        next[NameObject("/Prev")] = prev_ref
+                        prev[NameObject("/Next")] = next_ref
                         self[NameObject("/Count")] = self[NameObject("/Count")] - 1
                     else:
                         # Removing last tree node
                         assert cur == last
                         del prev[NameObject("/Next")]
-                        self[NameObject("/Last")] = prevRef
+                        self[NameObject("/Last")] = prev_ref
                         self[NameObject("/Count")] = self[NameObject("/Count")] - 1
                 found = True
                 break
 
-            prevRef = curRef
+            prev_ref = cur_ref
             prev = cur
             if NameObject("/Next") in cur:
-                curRef = cur[NameObject("/Next")]
-                cur = curRef.getObject()
+                cur_ref = cur[NameObject("/Next")]
+                cur = cur_ref.getObject()
             else:
-                curRef = None
+                cur_ref = None
                 cur = None
 
         if not found:
             raise ValueError("Removal couldn't find item in tree")
 
-        del childObj[NameObject("/Parent")]
-        if NameObject("/Next") in childObj:
-            del childObj[NameObject("/Next")]
-        if NameObject("/Prev") in childObj:
-            del childObj[NameObject("/Prev")]
+        del child_obj[NameObject("/Parent")]
+        if NameObject("/Next") in child_obj:
+            del child_obj[NameObject("/Next")]
+        if NameObject("/Prev") in child_obj:
+            del child_obj[NameObject("/Prev")]
 
     def emptyTree(self):
         for child in self:
-            childObj = child.getObject()
-            del childObj[NameObject("/Parent")]
-            if NameObject("/Next") in childObj:
-                del childObj[NameObject("/Next")]
-            if NameObject("/Prev") in childObj:
-                del childObj[NameObject("/Prev")]
+            child_obj = child.getObject()
+            del child_obj[NameObject("/Parent")]
+            if NameObject("/Next") in child_obj:
+                del child_obj[NameObject("/Next")]
+            if NameObject("/Prev") in child_obj:
+                del child_obj[NameObject("/Prev")]
 
         if NameObject("/Count") in self:
             del self[NameObject("/Count")]

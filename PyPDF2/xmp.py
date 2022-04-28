@@ -62,8 +62,8 @@ class XmpInformation(PdfObject):
 
     def __init__(self, stream):
         self.stream = stream
-        docRoot = parseString(self.stream.getData())
-        self.rdfRoot = docRoot.getElementsByTagNameNS(RDF_NAMESPACE, "RDF")[0]
+        doc_root = parseString(self.stream.getData())
+        self.rdfRoot = doc_root.getElementsByTagNameNS(RDF_NAMESPACE, "RDF")[0]
         self.cache = {}
 
     def writeToStream(self, stream, encryption_key):

@@ -327,8 +327,8 @@ class PdfFileWriter(object):
          /EF << /F 8 0 R >>
         >>
         """
-        efEntry = DictionaryObject()
-        efEntry.update({NameObject("/F"): file_entry})
+        ef_entry = DictionaryObject()
+        ef_entry.update({NameObject("/F"): file_entry})
 
         filespec = DictionaryObject()
         filespec.update(
@@ -337,7 +337,7 @@ class PdfFileWriter(object):
                 NameObject("/F"): createStringObject(
                     fname
                 ),  # Perhaps also try TextStringObject
-                NameObject("/EF"): efEntry,
+                NameObject("/EF"): ef_entry,
             }
         )
 
@@ -520,7 +520,7 @@ class PdfFileWriter(object):
         if not self._root:
             self._root = self._addObject(self._root_object)
 
-        externalReferenceMap = {}
+        external_reference_map = {}
 
         # PDF objects sometimes have circular references to their /Page objects
         # inside their object tree (for example, annotations).  Those will be
@@ -530,20 +530,20 @@ class PdfFileWriter(object):
         # we sweep for indirect references.  This forces self-page-referencing
         # trees to reference the correct new object location, rather than
         # copying in a new copy of the page object.
-        for objIndex in range(len(self._objects)):
-            obj = self._objects[objIndex]
+        for obj_index in range(len(self._objects)):
+            obj = self._objects[obj_index]
             if isinstance(obj, PageObject) and obj.indirectRef is not None:
                 data = obj.indirectRef
-                if data.pdf not in externalReferenceMap:
-                    externalReferenceMap[data.pdf] = {}
-                if data.generation not in externalReferenceMap[data.pdf]:
-                    externalReferenceMap[data.pdf][data.generation] = {}
-                externalReferenceMap[data.pdf][data.generation][
+                if data.pdf not in external_reference_map:
+                    external_reference_map[data.pdf] = {}
+                if data.generation not in external_reference_map[data.pdf]:
+                    external_reference_map[data.pdf][data.generation] = {}
+                external_reference_map[data.pdf][data.generation][
                     data.idnum
-                ] = IndirectObject(objIndex + 1, 0, self)
+                ] = IndirectObject(obj_index + 1, 0, self)
 
         self.stack = []
-        self._sweepIndirectReferences(externalReferenceMap, self._root)
+        self._sweepIndirectReferences(external_reference_map, self._root)
         del self.stack
 
         object_positions = self._write_header(stream)
@@ -686,13 +686,13 @@ class PdfFileWriter(object):
         if CO.OUTLINES in self._root_object:
             outline = self._root_object[CO.OUTLINES]
             idnum = self._objects.index(outline) + 1
-            outlineRef = IndirectObject(idnum, 0, self)
-            assert outlineRef.getObject() == outline
+            outline_ref = IndirectObject(idnum, 0, self)
+            assert outline_ref.getObject() == outline
         else:
             outline = TreeObject()
             outline.update({})
-            outlineRef = self._addObject(outline)
-            self._root_object[NameObject(CO.OUTLINES)] = outlineRef
+            outline_ref = self._addObject(outline)
+            self._root_object[NameObject(CO.OUTLINES)] = outline_ref
 
         return outline
 
@@ -702,13 +702,13 @@ class PdfFileWriter(object):
         ):
             names = self._root_object[CA.NAMES]
             idnum = self._objects.index(names) + 1
-            namesRef = IndirectObject(idnum, 0, self)
-            assert namesRef.getObject() == names
+            names_ref = IndirectObject(idnum, 0, self)
+            assert names_ref.getObject() == names
             if CA.DESTS in names and isinstance(names[CA.DESTS], DictionaryObject):
                 dests = names[CA.DESTS]
                 idnum = self._objects.index(dests) + 1
-                destsRef = IndirectObject(idnum, 0, self)
-                assert destsRef.getObject() == dests
+                dests_ref = IndirectObject(idnum, 0, self)
+                assert dests_ref.getObject() == dests
                 if CA.NAMES in dests:
                     nd = dests[CA.NAMES]
                 else:
@@ -716,60 +716,60 @@ class PdfFileWriter(object):
                     dests[NameObject(CA.NAMES)] = nd
             else:
                 dests = DictionaryObject()
-                destsRef = self._addObject(dests)
-                names[NameObject(CA.DESTS)] = destsRef
+                dests_ref = self._addObject(dests)
+                names[NameObject(CA.DESTS)] = dests_ref
                 nd = ArrayObject()
                 dests[NameObject(CA.NAMES)] = nd
 
         else:
             names = DictionaryObject()
-            namesRef = self._addObject(names)
-            self._root_object[NameObject(CA.NAMES)] = namesRef
+            names_ref = self._addObject(names)
+            self._root_object[NameObject(CA.NAMES)] = names_ref
             dests = DictionaryObject()
-            destsRef = self._addObject(dests)
-            names[NameObject(CA.DESTS)] = destsRef
+            dests_ref = self._addObject(dests)
+            names[NameObject(CA.DESTS)] = dests_ref
             nd = ArrayObject()
             dests[NameObject(CA.NAMES)] = nd
 
         return nd
 
     def addBookmarkDestination(self, dest, parent=None):
-        destRef = self._addObject(dest)
+        dest_ref = self._addObject(dest)
 
-        outlineRef = self.getOutlineRoot()
+        outline_ref = self.getOutlineRoot()
 
         if parent is None:
-            parent = outlineRef
+            parent = outline_ref
 
         parent = parent.getObject()
-        parent.addChild(destRef, self)
+        parent.addChild(dest_ref, self)
 
-        return destRef
+        return dest_ref
 
     def addBookmarkDict(self, bookmark, parent=None):
-        bookmarkObj = TreeObject()
+        bookmark_obj = TreeObject()
         for k, v in list(bookmark.items()):
-            bookmarkObj[NameObject(str(k))] = v
-        bookmarkObj.update(bookmark)
+            bookmark_obj[NameObject(str(k))] = v
+        bookmark_obj.update(bookmark)
 
         if "/A" in bookmark:
             action = DictionaryObject()
             for k, v in list(bookmark["/A"].items()):
                 action[NameObject(str(k))] = v
-            actionRef = self._addObject(action)
-            bookmarkObj[NameObject("/A")] = actionRef
+            action_ref = self._addObject(action)
+            bookmark_obj[NameObject("/A")] = action_ref
 
-        bookmarkRef = self._addObject(bookmarkObj)
+        bookmark_ref = self._addObject(bookmark_obj)
 
-        outlineRef = self.getOutlineRoot()
+        outline_ref = self.getOutlineRoot()
 
         if parent is None:
-            parent = outlineRef
+            parent = outline_ref
 
         parent = parent.getObject()
-        parent.addChild(bookmarkRef, self)
+        parent.addChild(bookmark_ref, self)
 
-        return bookmarkRef
+        return bookmark_ref
 
     def addBookmark(
         self,
@@ -796,33 +796,33 @@ class PdfFileWriter(object):
         :param str fit: The fit of the destination page. See
             :meth:`addLink()<addLink>` for details.
         """
-        pageRef = self.getObject(self._pages)[PA.KIDS][pagenum]
+        page_ref = self.getObject(self._pages)[PA.KIDS][pagenum]
         action = DictionaryObject()
-        zoomArgs = []
+        zoom_args = []
         for a in args:
             if a is not None:
-                zoomArgs.append(NumberObject(a))
+                zoom_args.append(NumberObject(a))
             else:
-                zoomArgs.append(NullObject())
+                zoom_args.append(NullObject())
         dest = Destination(
-            NameObject("/" + title + " bookmark"), pageRef, NameObject(fit), *zoomArgs
+            NameObject("/" + title + " bookmark"), page_ref, NameObject(fit), *zoom_args
         )
-        destArray = dest.getDestArray()
+        dest_array = dest.getDestArray()
         action.update(
-            {NameObject("/D"): destArray, NameObject("/S"): NameObject("/GoTo")}
+            {NameObject("/D"): dest_array, NameObject("/S"): NameObject("/GoTo")}
         )
-        actionRef = self._addObject(action)
+        action_ref = self._addObject(action)
 
-        outlineRef = self.getOutlineRoot()
+        outline_ref = self.getOutlineRoot()
 
         if parent is None:
-            parent = outlineRef
+            parent = outline_ref
 
         bookmark = TreeObject()
 
         bookmark.update(
             {
-                NameObject("/A"): actionRef,
+                NameObject("/A"): action_ref,
                 NameObject("/Title"): createStringObject(title),
             }
         )
@@ -840,39 +840,39 @@ class PdfFileWriter(object):
         if format:
             bookmark.update({NameObject("/F"): NumberObject(format)})
 
-        bookmarkRef = self._addObject(bookmark)
+        bookmark_ref = self._addObject(bookmark)
 
         parent = parent.getObject()
-        parent.addChild(bookmarkRef, self)
+        parent.addChild(bookmark_ref, self)
 
-        return bookmarkRef
+        return bookmark_ref
 
     def addNamedDestinationObject(self, dest):
-        destRef = self._addObject(dest)
+        dest_ref = self._addObject(dest)
 
         nd = self.getNamedDestRoot()
-        nd.extend([dest["/Title"], destRef])
+        nd.extend([dest["/Title"], dest_ref])
 
-        return destRef
+        return dest_ref
 
     def addNamedDestination(self, title, pagenum):
-        pageRef = self.getObject(self._pages)[PA.KIDS][pagenum]
+        page_ref = self.getObject(self._pages)[PA.KIDS][pagenum]
         dest = DictionaryObject()
         dest.update(
             {
                 NameObject("/D"): ArrayObject(
-                    [pageRef, NameObject("/FitH"), NumberObject(826)]
+                    [page_ref, NameObject("/FitH"), NumberObject(826)]
                 ),
                 NameObject("/S"): NameObject("/GoTo"),
             }
         )
 
-        destRef = self._addObject(dest)
+        dest_ref = self._addObject(dest)
         nd = self.getNamedDestRoot()
 
-        nd.extend([title, destRef])
+        nd.extend([title, dest_ref])
 
-        return destRef
+        return dest_ref
 
     def removeLinks(self):
         """
@@ -880,9 +880,9 @@ class PdfFileWriter(object):
         """
         pages = self.getObject(self._pages)[PA.KIDS]
         for page in pages:
-            pageRef = self.getObject(page)
-            if PG.ANNOTS in pageRef:
-                del pageRef[PG.ANNOTS]
+            page_ref = self.getObject(page)
+            if PG.ANNOTS in page_ref:
+                del page_ref[PG.ANNOTS]
 
     def removeImages(self, ignoreByteStringObject=False):
         """
@@ -921,10 +921,10 @@ class PdfFileWriter(object):
         ]
         for j in range(len(pages)):
             page = pages[j]
-            pageRef = self.getObject(page)
-            content = pageRef["/Contents"].getObject()
+            page_ref = self.getObject(page)
+            content = page_ref["/Contents"].getObject()
             if not isinstance(content, ContentStream):
-                content = ContentStream(content, pageRef)
+                content = ContentStream(content, page_ref)
 
             _operations = []
             seq_graphics = False
@@ -958,7 +958,7 @@ class PdfFileWriter(object):
                 _operations.append((operands, operator))
 
             content.operations = _operations
-            pageRef.__setitem__(NameObject("/Contents"), content)
+            page_ref.__setitem__(NameObject("/Contents"), content)
 
     def removeText(self, ignoreByteStringObject=False):
         """
@@ -970,10 +970,10 @@ class PdfFileWriter(object):
         pages = self.getObject(self._pages)[PA.KIDS]
         for j in range(len(pages)):
             page = pages[j]
-            pageRef = self.getObject(page)
-            content = pageRef["/Contents"].getObject()
+            page_ref = self.getObject(page)
+            content = page_ref["/Contents"].getObject()
             if not isinstance(content, ContentStream):
-                content = ContentStream(content, pageRef)
+                content = ContentStream(content, page_ref)
             for operands, operator in content.operations:
                 if operator in [b_("Tj"), b_("'")]:
                     text = operands[0]
@@ -1002,7 +1002,7 @@ class PdfFileWriter(object):
                             ):
                                 operands[0][i] = TextStringObject()
 
-            pageRef.__setitem__(NameObject("/Contents"), content)
+            page_ref.__setitem__(NameObject("/Contents"), content)
 
     def addURI(self, pagenum, uri, rect, border=None):
         """
@@ -1022,16 +1022,16 @@ class PdfFileWriter(object):
         -John Mulligan
         """
 
-        pageLink = self.getObject(self._pages)[PA.KIDS][pagenum]
-        pageRef = self.getObject(pageLink)
+        page_link = self.getObject(self._pages)[PA.KIDS][pagenum]
+        page_ref = self.getObject(page_link)
 
         if border is not None:
-            borderArr = [NameObject(n) for n in border[:3]]
+            border_arr = [NameObject(n) for n in border[:3]]
             if len(border) == 4:
-                dashPattern = ArrayObject([NameObject(n) for n in border[3]])
-                borderArr.append(dashPattern)
+                dash_pattern = ArrayObject([NameObject(n) for n in border[3]])
+                border_arr.append(dash_pattern)
         else:
-            borderArr = [NumberObject(2)] * 3
+            border_arr = [NumberObject(2)] * 3
 
         if isString(rect):
             rect = NameObject(rect)
@@ -1052,19 +1052,19 @@ class PdfFileWriter(object):
             {
                 NameObject("/Type"): NameObject(PG.ANNOTS),
                 NameObject("/Subtype"): NameObject("/Link"),
-                NameObject("/P"): pageLink,
+                NameObject("/P"): page_link,
                 NameObject("/Rect"): rect,
                 NameObject("/H"): NameObject("/I"),
-                NameObject("/Border"): ArrayObject(borderArr),
+                NameObject("/Border"): ArrayObject(border_arr),
                 NameObject("/A"): lnk2,
             }
         )
-        lnkRef = self._addObject(lnk)
+        lnk_ref = self._addObject(lnk)
 
-        if PG.ANNOTS in pageRef:
-            pageRef[PG.ANNOTS].append(lnkRef)
+        if PG.ANNOTS in page_ref:
+            page_ref[PG.ANNOTS].append(lnk_ref)
         else:
-            pageRef[NameObject(PG.ANNOTS)] = ArrayObject([lnkRef])
+            page_ref[NameObject(PG.ANNOTS)] = ArrayObject([lnk_ref])
 
     def addLink(self, pagenum, pagedest, rect, border=None, fit="/Fit", *args):
         """
@@ -1102,19 +1102,19 @@ class PdfFileWriter(object):
              - [left]
         """
 
-        pageLink = self.getObject(self._pages)[PA.KIDS][pagenum]
-        pageDest = self.getObject(self._pages)[PA.KIDS][
+        page_link = self.getObject(self._pages)[PA.KIDS][pagenum]
+        page_dest = self.getObject(self._pages)[PA.KIDS][
             pagedest
         ]  # TODO: switch for external link
-        pageRef = self.getObject(pageLink)
+        page_ref = self.getObject(page_link)
 
         if border is not None:
-            borderArr = [NameObject(n) for n in border[:3]]
+            border_arr = [NameObject(n) for n in border[:3]]
             if len(border) == 4:
-                dashPattern = ArrayObject([NameObject(n) for n in border[3]])
-                borderArr.append(dashPattern)
+                dash_pattern = ArrayObject([NameObject(n) for n in border[3]])
+                border_arr.append(dash_pattern)
         else:
-            borderArr = [NumberObject(0)] * 3
+            border_arr = [NumberObject(0)] * 3
 
         if isString(rect):
             rect = NameObject(rect)
@@ -1123,34 +1123,34 @@ class PdfFileWriter(object):
         else:
             rect = RectangleObject(rect)
 
-        zoomArgs = []
+        zoom_args = []
         for a in args:
             if a is not None:
-                zoomArgs.append(NumberObject(a))
+                zoom_args.append(NumberObject(a))
             else:
-                zoomArgs.append(NullObject())
+                zoom_args.append(NullObject())
         dest = Destination(
-            NameObject("/LinkName"), pageDest, NameObject(fit), *zoomArgs
+            NameObject("/LinkName"), page_dest, NameObject(fit), *zoom_args
         )  # TODO: create a better name for the link
-        destArray = dest.getDestArray()
+        dest_array = dest.getDestArray()
 
         lnk = DictionaryObject()
         lnk.update(
             {
                 NameObject("/Type"): NameObject(PG.ANNOTS),
                 NameObject("/Subtype"): NameObject("/Link"),
-                NameObject("/P"): pageLink,
+                NameObject("/P"): page_link,
                 NameObject("/Rect"): rect,
-                NameObject("/Border"): ArrayObject(borderArr),
-                NameObject("/Dest"): destArray,
+                NameObject("/Border"): ArrayObject(border_arr),
+                NameObject("/Dest"): dest_array,
             }
         )
-        lnkRef = self._addObject(lnk)
+        lnk_ref = self._addObject(lnk)
 
-        if PG.ANNOTS in pageRef:
-            pageRef[PG.ANNOTS].append(lnkRef)
+        if PG.ANNOTS in page_ref:
+            page_ref[PG.ANNOTS].append(lnk_ref)
         else:
-            pageRef[NameObject(PG.ANNOTS)] = ArrayObject([lnkRef])
+            page_ref[NameObject(PG.ANNOTS)] = ArrayObject([lnk_ref])
 
     _valid_layouts = [
         "/NoLayout",
@@ -1437,7 +1437,7 @@ class PdfFileReader(object):
             default, the mapping name is used for keys.
         :rtype: dict, or ``None`` if form data could not be located.
         """
-        fieldAttributes = {
+        field_attributes = {
             "/FT": "Field Type",
             PA.PARENT: "Parent",
             "/T": "Field Name",
@@ -1459,17 +1459,17 @@ class PdfFileReader(object):
             return retval
 
         self._checkKids(tree, retval, fileobj)
-        for attr in fieldAttributes:
+        for attr in field_attributes:
             if attr in tree:
                 # Tree is a field
-                self._buildField(tree, retval, fileobj, fieldAttributes)
+                self._buildField(tree, retval, fileobj, field_attributes)
                 break
 
         if "/Fields" in tree:
             fields = tree["/Fields"]
             for f in fields:
                 field = f.getObject()
-                self._buildField(field, retval, fileobj, fieldAttributes)
+                self._buildField(field, retval, fileobj, field_attributes)
 
         return retval
 
@@ -1497,7 +1497,7 @@ class PdfFileReader(object):
     def _writeField(self, fileobj, field, fieldAttributes):
         order = ["/TM", "/T", "/FT", PA.PARENT, "/TU", "/Ff", "/V", "/DV"]
         for attr in order:
-            attrName = fieldAttributes[attr]
+            attr_name = fieldAttributes[attr]
             try:
                 if attr == "/FT":
                     # Make the field type value more clear
@@ -1508,16 +1508,16 @@ class PdfFileReader(object):
                         "/Sig": "Signature",
                     }
                     if field[attr] in types:
-                        fileobj.write(attrName + ": " + types[field[attr]] + "\n")
+                        fileobj.write(attr_name + ": " + types[field[attr]] + "\n")
                 elif attr == PA.PARENT:
                     # Let's just write the name of the parent
                     try:
                         name = field[PA.PARENT]["/TM"]
                     except KeyError:
                         name = field[PA.PARENT]["/T"]
-                    fileobj.write(attrName + ": " + name + "\n")
+                    fileobj.write(attr_name + ": " + name + "\n")
                 else:
-                    fileobj.write(attrName + ": " + str(field[attr]) + "\n")
+                    fileobj.write(attr_name + ": " + str(field[attr]) + "\n")
             except KeyError:
                 # Field attribute is N/A or unknown, so don't write anything
                 pass
@@ -1616,10 +1616,10 @@ class PdfFileReader(object):
 
             # check for sub-outlines
             if "/First" in node:
-                subOutlines = []
-                self.getOutlines(node["/First"], subOutlines)
-                if subOutlines:
-                    outlines.append(subOutlines)
+                sub_outlines = []
+                self.getOutlines(node["/First"], sub_outlines)
+                if sub_outlines:
+                    outlines.append(sub_outlines)
 
             if "/Next" not in node:
                 break
@@ -1652,8 +1652,8 @@ class PdfFileReader(object):
         :return: the page number or -1 if page not found
         :rtype: int
         """
-        indirectRef = page.indirectRef
-        ret = self._getPageNumberByIndirect(indirectRef)
+        indirect_ref = page.indirectRef
+        ret = self._getPageNumberByIndirect(indirect_ref)
         return ret
 
     def getDestinationPageNumber(self, destination):
@@ -1666,8 +1666,8 @@ class PdfFileReader(object):
         :return: the page number or -1 if page not found
         :rtype: int
         """
-        indirectRef = destination.page
-        ret = self._getPageNumberByIndirect(indirectRef)
+        indirect_ref = destination.page
+        ret = self._getPageNumberByIndirect(indirect_ref)
         return ret
 
     def _buildDestination(self, title, array):
@@ -1782,37 +1782,37 @@ class PdfFileReader(object):
                 # parent's value:
                 if attr not in pages:
                     pages[attr] = value
-            pageObj = PageObject(self, indirectRef)
-            pageObj.update(pages)
-            self.flattenedPages.append(pageObj)
+            page_obj = PageObject(self, indirectRef)
+            page_obj.update(pages)
+            self.flattenedPages.append(page_obj)
 
     def _getObjectFromStream(self, indirectReference):
         # indirect reference to object in object stream
         # read the entire object stream into memory
         stmnum, idx = self.xref_objStm[indirectReference.idnum]
-        objStm = IndirectObject(stmnum, 0, self).getObject()
+        obj_stm = IndirectObject(stmnum, 0, self).getObject()
         # This is an xref to a stream, so its type better be a stream
-        assert objStm["/Type"] == "/ObjStm"
+        assert obj_stm["/Type"] == "/ObjStm"
         # /N is the number of indirect objects in the stream
-        assert idx < objStm["/N"]
-        streamData = BytesIO(b_(objStm.getData()))
-        for i in range(objStm["/N"]):
-            readNonWhitespace(streamData)
-            streamData.seek(-1, 1)
-            objnum = NumberObject.readFromStream(streamData)
-            readNonWhitespace(streamData)
-            streamData.seek(-1, 1)
-            offset = NumberObject.readFromStream(streamData)
-            readNonWhitespace(streamData)
-            streamData.seek(-1, 1)
+        assert idx < obj_stm["/N"]
+        stream_data = BytesIO(b_(obj_stm.getData()))
+        for i in range(obj_stm["/N"]):
+            readNonWhitespace(stream_data)
+            stream_data.seek(-1, 1)
+            objnum = NumberObject.readFromStream(stream_data)
+            readNonWhitespace(stream_data)
+            stream_data.seek(-1, 1)
+            offset = NumberObject.readFromStream(stream_data)
+            readNonWhitespace(stream_data)
+            stream_data.seek(-1, 1)
             if objnum != indirectReference.idnum:
                 # We're only interested in one object
                 continue
             if self.strict and idx != i:
                 raise PdfReadError("Object is in wrong index.")
-            streamData.seek(objStm["/First"] + offset, 0)
+            stream_data.seek(obj_stm["/First"] + offset, 0)
             try:
-                obj = readObject(streamData, self)
+                obj = readObject(stream_data, self)
             except PdfStreamError as e:
                 # Stream object cannot be read. Normally, a critical error, but
                 # Adobe Reader doesn't complain, so continue (in strict mode?)
@@ -2036,8 +2036,8 @@ class PdfFileReader(object):
             elif x.isdigit():
                 xrefstream = self._read_pdf15_xref_stream(stream)
 
-                trailerKeys = TK.ROOT, TK.ENCRYPT, TK.INFO, TK.ID
-                for key in trailerKeys:
+                trailer_keys = TK.ROOT, TK.ENCRYPT, TK.INFO, TK.ID
+                for key in trailer_keys:
                     if key in xrefstream and key not in self.trailer:
                         self.trailer[NameObject(key)] = xrefstream.raw_get(key)
                 if "/Prev" in xrefstream:
@@ -2575,26 +2575,26 @@ class PageObject(DictionaryObject):
         return self
 
     def _rotate(self, angle):
-        rotateObj = self.get("/Rotate", 0)
-        currentAngle = (
-            rotateObj if isinstance(rotateObj, int) else rotateObj.getObject()
+        rotate_obj = self.get("/Rotate", 0)
+        current_angle = (
+            rotate_obj if isinstance(rotate_obj, int) else rotate_obj.getObject()
         )
-        self[NameObject("/Rotate")] = NumberObject(currentAngle + angle)
+        self[NameObject("/Rotate")] = NumberObject(current_angle + angle)
 
     @staticmethod
     def _mergeResources(res1, res2, resource):
-        newRes = DictionaryObject()
-        newRes.update(res1.get(resource, DictionaryObject()).getObject())
-        page2Res = res2.get(resource, DictionaryObject()).getObject()
-        renameRes = {}
-        for key in list(page2Res.keys()):
-            if key in newRes and newRes.raw_get(key) != page2Res.raw_get(key):
+        new_res = DictionaryObject()
+        new_res.update(res1.get(resource, DictionaryObject()).getObject())
+        page2res = res2.get(resource, DictionaryObject()).getObject()
+        rename_res = {}
+        for key in list(page2res.keys()):
+            if key in new_res and new_res.raw_get(key) != page2res.raw_get(key):
                 newname = NameObject(key + str(uuid.uuid4()))
-                renameRes[key] = newname
-                newRes[newname] = page2Res[key]
-            elif key not in newRes:
-                newRes[key] = page2Res.raw_get(key)
-        return newRes, renameRes
+                rename_res[key] = newname
+                new_res[newname] = page2res[key]
+            elif key not in new_res:
+                new_res[key] = page2res.raw_get(key)
+        return new_res, rename_res
 
     @staticmethod
     def _contentStreamRename(stream, rename, pdf):
@@ -2678,18 +2678,18 @@ class PageObject(DictionaryObject):
         # to find out what symbols in the content streams we might need to
         # rename.
 
-        newResources = DictionaryObject()
+        new_resources = DictionaryObject()
         rename = {}
-        originalResources = self[PG.RESOURCES].getObject()
-        page2Resources = page2[PG.RESOURCES].getObject()
-        newAnnots = ArrayObject()
+        original_resources = self[PG.RESOURCES].getObject()
+        page2resources = page2[PG.RESOURCES].getObject()
+        new_annots = ArrayObject()
 
         for page in (self, page2):
             if PG.ANNOTS in page:
                 annots = page[PG.ANNOTS]
                 if isinstance(annots, ArrayObject):
                     for ref in annots:
-                        newAnnots.append(ref)
+                        new_annots.append(ref)
 
         for res in (
             "/ExtGState",
@@ -2701,31 +2701,31 @@ class PageObject(DictionaryObject):
             "/Properties",
         ):
             new, newrename = PageObject._mergeResources(
-                originalResources, page2Resources, res
+                original_resources, page2resources, res
             )
             if new:
-                newResources[NameObject(res)] = new
+                new_resources[NameObject(res)] = new
                 rename.update(newrename)
 
         # Combine /ProcSet sets.
-        newResources[NameObject(RES.PROCSET)] = ArrayObject(
+        new_resources[NameObject(RES.PROCSET)] = ArrayObject(
             frozenset(
-                originalResources.get(RES.PROCSET, ArrayObject()).getObject()
+                original_resources.get(RES.PROCSET, ArrayObject()).getObject()
             ).union(
-                frozenset(page2Resources.get(RES.PROCSET, ArrayObject()).getObject())
+                frozenset(page2resources.get(RES.PROCSET, ArrayObject()).getObject())
             )
         )
 
-        newContentArray = ArrayObject()
+        new_content_array = ArrayObject()
 
-        originalContent = self.getContents()
-        if originalContent is not None:
-            newContentArray.append(PageObject._pushPopGS(originalContent, self.pdf))
+        original_content = self.getContents()
+        if original_content is not None:
+            new_content_array.append(PageObject._pushPopGS(original_content, self.pdf))
 
-        page2Content = page2.getContents()
-        if page2Content is not None:
-            page2Content = ContentStream(page2Content, self.pdf)
-            page2Content.operations.insert(
+        page2content = page2.getContents()
+        if page2content is not None:
+            page2content = ContentStream(page2content, self.pdf)
+            page2content.operations.insert(
                 0,
                 [
                     map(
@@ -2740,15 +2740,15 @@ class PageObject(DictionaryObject):
                     "re",
                 ],
             )
-            page2Content.operations.insert(1, [[], "W"])
-            page2Content.operations.insert(2, [[], "n"])
+            page2content.operations.insert(1, [[], "W"])
+            page2content.operations.insert(2, [[], "n"])
             if page2transformation is not None:
-                page2Content = page2transformation(page2Content)
-            page2Content = PageObject._contentStreamRename(
-                page2Content, rename, self.pdf
+                page2content = page2transformation(page2content)
+            page2content = PageObject._contentStreamRename(
+                page2content, rename, self.pdf
             )
-            page2Content = PageObject._pushPopGS(page2Content, self.pdf)
-            newContentArray.append(page2Content)
+            page2content = PageObject._pushPopGS(page2content, self.pdf)
+            new_content_array.append(page2content)
 
         # if expanding the page to fit a new page, calculate the new media box size
         if expand:
@@ -2792,9 +2792,9 @@ class PageObject(DictionaryObject):
             self.mediaBox.setLowerLeft(lowerleft)
             self.mediaBox.setUpperRight(upperright)
 
-        self[NameObject("/Contents")] = ContentStream(newContentArray, self.pdf)
-        self[NameObject(PG.RESOURCES)] = newResources
-        self[NameObject(PG.ANNOTS)] = newAnnots
+        self[NameObject("/Contents")] = ContentStream(new_content_array, self.pdf)
+        self[NameObject(PG.RESOURCES)] = new_resources
+        self[NameObject(PG.ANNOTS)] = new_annots
 
     def mergeTransformedPage(self, page2, ctm, expand=False):
         """
@@ -2992,13 +2992,13 @@ class PageObject(DictionaryObject):
         :param tuple ctm: A 6-element tuple containing the operands of the
             transformation matrix.
         """
-        originalContent = self.getContents()
-        if originalContent is not None:
-            newContent = PageObject._addTransformationMatrix(
-                originalContent, self.pdf, ctm
+        original_content = self.getContents()
+        if original_content is not None:
+            new_content = PageObject._addTransformationMatrix(
+                original_content, self.pdf, ctm
             )
-            newContent = PageObject._pushPopGS(newContent, self.pdf)
-            self[NameObject("/Contents")] = newContent
+            new_content = PageObject._pushPopGS(new_content, self.pdf)
+            self[NameObject("/Contents")] = new_content
 
     def scale(self, sx, sy):
         """
