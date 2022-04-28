@@ -113,7 +113,8 @@ def test_readStringFromStream_not_in_escapedict_no_digit():
     stream = BytesIO(b"x\\y")
     with pytest.raises(PdfReadError) as exc:
         readStringFromStream(stream)
-    assert exc.value.args[0] == "Unexpected escaped string: y"
+    assert exc.value.args[0] == "Stream has ended unexpectedly"
+    # "Unexpected escaped string: y"
 
 
 def test_readStringFromStream_multichar_eol():
@@ -216,6 +217,11 @@ def test_DictionaryObject_key_is_no_pdfobject():
     assert exc.value.args[0] == "key must be PdfObject"
 
 
+def test_DictionaryObject_xmp_meta():
+    do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
+    assert do.xmpMetadata is None
+
+
 def test_DictionaryObject_value_is_no_pdfobject():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
     with pytest.raises(ValueError) as exc:
@@ -235,6 +241,11 @@ def test_DictionaryObject_setdefault_value_is_no_pdfobject():
     with pytest.raises(ValueError) as exc:
         do.setdefault(NameObject("/S"), "/GoTo")
     assert exc.value.args[0] == "value must be PdfObject"
+
+
+def test_DictionaryObject_setdefault_value():
+    do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
+    do.setdefault(NameObject("/S"), NameObject("/GoTo"))
 
 
 def test_DictionaryObject_read_from_stream():
