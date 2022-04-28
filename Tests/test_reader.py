@@ -537,3 +537,34 @@ def test_PdfReaderDecryptWhenNoID():
         ipdf = PdfFileReader(inputfile)
         ipdf.decrypt("")
         assert ipdf.getDocumentInfo() == {"/Producer": "European Patent Office"}
+
+
+def test_reader_properties():
+    reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
+    assert reader.outlines == []
+    assert len(reader.pages) == 1
+    assert reader.pageLayout is None
+    assert reader.pageMode is None
+    assert reader.isEncrypted is False
+
+
+def test_decode_permissions():
+    reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
+    base = {
+        "accessability": False,
+        "annotations": False,
+        "assemble": False,
+        "copy": False,
+        "forms": False,
+        "modify": False,
+        "print_high_quality": False,
+        "print": False,
+    }
+
+    print_ = base.copy()
+    print_["print"] = True
+    assert reader.decode_permissions(4) == print_
+
+    modify = base.copy()
+    modify["modify"] = True
+    assert reader.decode_permissions(8) == modify

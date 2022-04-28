@@ -73,8 +73,11 @@ def test_parse_filename_page_ranges(params, expected):
 
 
 def test_parse_filename_page_ranges_err():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as exc:
         parse_filename_page_ranges(["1:5", "foo.pdf"])
+    assert (
+        exc.value.args[0] == "The first argument must be a filename, not a page range."
+    )
 
 
 def test_page_range_help():
