@@ -9,7 +9,9 @@ from PyPDF2.generic import (
     ArrayObject,
     Bookmark,
     BooleanObject,
+    ByteStringObject,
     Destination,
+    DictionaryObject,
     FloatObject,
     IndirectObject,
     NameObject,
@@ -115,6 +117,11 @@ def test_readStringFromStream_multichar_eol():
     assert readStringFromStream(stream) == " "
 
 
+def test_readStringFromStream_multichar_eol2():
+    stream = BytesIO(b"x\\\n\n)")
+    assert readStringFromStream(stream) == ""
+
+
 def test_readStringFromStream_excape_digit():
     stream = BytesIO(b"x\\1a )")
     assert readStringFromStream(stream) == "\x01 "
@@ -178,3 +185,39 @@ def test_readObject_comment():
     pdf = None
     out = readObject(stream, pdf)
     assert out == 1
+
+
+def test_ByteStringObject():
+    bo = ByteStringObject("stream", encoding="utf-8")
+    stream = BytesIO(b"")
+    bo.writeToStream(stream, encryption_key="foobar")
+    stream.seek(0, 0)
+    assert stream.read() == b"<1cdd628b972e>"  # TODO: how can we verify this?
+
+
+def test_DictionaryObject_key_is_no_pdfobject():
+    do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
+    with pytest.raises(ValueError) as exc:
+        do["foo"] = NameObject("/GoTo")
+    assert exc.value.args[0] == "key must be PdfObject"
+
+
+def test_DictionaryObject_value_is_no_pdfobject():
+    do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
+    with pytest.raises(ValueError) as exc:
+        do[NameObject("/S")] = "/GoTo"
+    assert exc.value.args[0] == "value must be PdfObject"
+
+
+def test_DictionaryObject_setdefault_key_is_no_pdfobject():
+    do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
+    with pytest.raises(ValueError) as exc:
+        do.setdefault("foo", NameObject("/GoTo"))
+    assert exc.value.args[0] == "key must be PdfObject"
+
+
+def test_DictionaryObject_setdefault_value_is_no_pdfobject():
+    do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
+    with pytest.raises(ValueError) as exc:
+        do.setdefault(NameObject("/S"), "/GoTo")
+    assert exc.value.args[0] == "value must be PdfObject"
