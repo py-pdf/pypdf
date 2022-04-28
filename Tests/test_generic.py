@@ -41,12 +41,15 @@ def test_createStringObject_exception():
     assert exc.value.args[0] == "createStringObject should have str or unicode arg"
 
 
-@pytest.mark.parametrize("value, expected", [(b"true", b"true"), (b"false", b"false")])
-def test_boolean_object(value, expected):
+@pytest.mark.parametrize(
+    "value, expected, tell", [(b"true", b"true", 4), (b"false", b"false", 5)]
+)
+def test_boolean_object(value, expected, tell):
     stream = BytesIO(value)
     assert BooleanObject.readFromStream(stream).value == (expected == b"true")
     stream.seek(0, 0)
     assert stream.read() == expected
+    assert stream.tell() == tell
 
 
 def test_boolean_object_write():
