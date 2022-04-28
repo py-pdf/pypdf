@@ -18,6 +18,7 @@ from PyPDF2.generic import (
     NullObject,
     NumberObject,
     PdfObject,
+    RectangleObject,
     createStringObject,
     encode_pdfdocencoding,
     readHexStringFromStream,
@@ -138,7 +139,7 @@ def test_NameObject():
 
 
 def test_destination_fit_r():
-    Destination(
+    d = Destination(
         NameObject("title"),
         PdfObject(),
         NameObject(TF.FIT_R),
@@ -147,6 +148,13 @@ def test_destination_fit_r():
         FloatObject(0),
         FloatObject(0),
     )
+    assert d.title == NameObject("title")
+    assert d.typ == "/FitR"
+    assert d.zoom is None
+    assert d.left == FloatObject(0)
+    assert d.right == FloatObject(0)
+    assert d.top == FloatObject(0)
+    assert d.bottom == FloatObject(0)
 
 
 def test_destination_fit_v():
@@ -286,3 +294,23 @@ def test_DictionaryObject_read_from_stream_stream_stream_valid():
     do = DictionaryObject.readFromStream(stream, pdf)
     # TODO: What should happen with the stream?
     assert do == {"/S": "/GoTo"}
+
+
+def test_RectangleObject():
+    ro = RectangleObject((1, 2, 3, 4))
+    assert ro.lowerLeft == (1, 2)
+    assert ro.lowerRight == (3, 2)
+    assert ro.upperLeft == (1, 4)
+    assert ro.upperRight == (3, 4)
+
+    ro.lowerLeft = (5, 6)
+    assert ro.lowerLeft == (5, 6)
+
+    ro.lowerRight = (7, 8)
+    assert ro.lowerRight == (7, 8)
+
+    ro.upperLeft = (9, 11)
+    assert ro.upperLeft == (9, 11)
+
+    ro.upperRight = (13, 17)
+    assert ro.upperRight == (13, 17)
