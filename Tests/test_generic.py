@@ -155,6 +155,8 @@ def test_destination_fit_r():
     assert d.right == FloatObject(0)
     assert d.top == FloatObject(0)
     assert d.bottom == FloatObject(0)
+    assert list(d.children()) == []
+    d.emptyTree()
 
 
 def test_destination_fit_v():
