@@ -38,6 +38,7 @@ import decimal
 import re
 import warnings
 import logging
+import sys
 
 from PyPDF2.constants import FilterTypes as FT
 from PyPDF2.constants import StreamAttributes as SA
@@ -679,13 +680,19 @@ class TreeObject(DictionaryObject):
 
     def children(self):
         if not self.hasChildren():
-            raise StopIteration
+            if sys.version_info >= (3, 5):  # PEP 479
+                return
+            else:
+                raise StopIteration
 
         child = self['/First']
         while True:
             yield child
             if child == self['/Last']:
-                raise StopIteration
+                if sys.version_info >= (3, 5):  # PEP 479
+                    return
+                else:
+                    raise StopIteration
             child = child['/Next']
 
     def addChild(self, child, pdf):
