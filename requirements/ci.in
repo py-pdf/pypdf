@@ -1,0 +1,7 @@
+coverage
+flake8
+flake8_implicit_str_concat
+flake8-bugbear
+pillow
+pytest
+pytest-benchmark

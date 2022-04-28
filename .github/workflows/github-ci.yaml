@@ -1,0 +1,115 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - '**/*.md'
+      - '**/*.rst'
+  pull_request:
+    branches: [ main ]
+    paths-ignore:
+      - '**/*.md'
+      - '**/*.rst'
+
+jobs:
+  tests:
+    name: pytest on ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["2.7", "3.6", "3.7", "3.10.1", "3.8", "3.9", "3.10"]
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+      with:
+        submodules: 'recursive'
+    - name: Setup Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Upgrade pip
+      run: |
+        python -m pip install --upgrade pip
+    - name: Install requirements (Python 3)
+      if: matrix.python-version != '2.7'
+      run: |
+        pip install -r requirements/ci.txt
+    - name: Install requirements (Python 2)
+      if: matrix.python-version == '2.7'
+      run: |
+        pip install pillow pytest coverage
+    - name: Install PyPDF2
+      run: |
+        pip install .
+    - name: Test with flake8
+      run: |
+        flake8 . --ignore=E203,W503,W504,E,F403,F405 --exclude build,sample-files
+      if: matrix.python-version != '2.7'
+    - name: Test with pytest
+      run: |
+        python -m coverage run --parallel-mode -m pytest Tests -vv
+      if: matrix.python-version != '3.10.1' && matrix.python-version != 2.7
+    - name: Test with pytest (2.7)
+      run: |
+        python -m coverage run --parallel-mode -m pytest Tests -vv -m "not no_py27"
+      if: matrix.python-version == 2.7
+    - name: Test with pytest (OO flag)
+      run: |
+        python -OO -m coverage run --parallel-mode -m pytest Tests -vv
+      if: matrix.python-version == '3.10.1'
+    - name: Upload coverage data
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-data
+        path: .coverage.*
+        if-no-files-found: ignore
+
+  package:
+    name: Build & verify package
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+        with:
+          python-version: ${{env.PYTHON_LATEST}}
+
+      - run: python -m pip install build twine check-wheel-contents
+      - run: python -m build --sdist --wheel .
+      - run: ls -l dist
+      - run: check-wheel-contents dist/*.whl
+      - name: Check long_description
+        run: python -m twine check dist/*
+
+  coverage:
+    name: Combine & check coverage.
+    runs-on: ubuntu-latest
+    needs: tests
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+        with:
+          # Use latest Python, so it understands all syntax.
+          python-version: ${{env.PYTHON_LATEST}}
+
+      - run: python -m pip install --upgrade coverage[toml]
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: coverage-data
+
+      - name: Combine coverage & create xml report
+        run: |
+          python -m coverage combine
+          python -m coverage xml
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml

@@ -1,9 +1,9 @@
-import re
 import datetime
 import decimal
-from .generic import PdfObject
-from xml.dom import getDOMImplementation
+import re
 from xml.dom.minidom import parseString
+
+from .generic import PdfObject
 from .utils import u_
 
 RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
@@ -70,7 +70,7 @@ class XmpInformation(PdfObject):
         for desc in self.rdfRoot.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):
             if desc.getAttributeNS(RDF_NAMESPACE, "about") == aboutUri:
                 attr = desc.getAttributeNodeNS(namespace, name)
-                if attr != None:
+                if attr is not None:
                     yield attr
                 for element in desc.getElementsByTagNameNS(namespace, name):
                     yield element
@@ -96,6 +96,7 @@ class XmpInformation(PdfObject):
     def _converter_string(value):
         return value
 
+    @staticmethod
     def _converter_date(value):
         m = iso8601.match(value)
         year = int(m.group("year"))
@@ -106,6 +107,10 @@ class XmpInformation(PdfObject):
         second = decimal.Decimal(m.group("second") or "0")
         seconds = second.to_integral(decimal.ROUND_FLOOR)
         milliseconds = (second - seconds) * 1000000
+
+        seconds = int(seconds)
+        milliseconds = int(milliseconds)
+
         tzd = m.group("tzd") or "Z"
         dt = datetime.datetime(year, month, day, hour, minute, seconds, milliseconds)
         if tzd != "Z":
@@ -115,7 +120,6 @@ class XmpInformation(PdfObject):
                 tzd_minutes *= -1
             dt = dt + datetime.timedelta(hours=tzd_hours, minutes=tzd_minutes)
         return dt
-    _test_converter_date = staticmethod(_converter_date)
 
     def _getter_bag(namespace, name, converter):
         def get(self):
@@ -191,7 +195,7 @@ class XmpInformation(PdfObject):
                 else:
                     value = self._getText(element)
                 break
-            if value != None:
+            if value is not None:
                 value = converter(value)
             ns_cache = self.cache.setdefault(namespace, {})
             ns_cache[name] = value
@@ -217,7 +221,7 @@ class XmpInformation(PdfObject):
 
     dc_date = property(_getter_seq(DC_NAMESPACE, "date", _converter_date))
     """
-    A sorted array of dates (datetime.datetime instances) of signifigance to
+    A sorted array of dates (datetime.datetime instances) of significance to
     the resource.  The dates and times are in UTC.
     """
 

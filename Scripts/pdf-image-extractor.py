@@ -1,13 +1,18 @@
-'''
+"""
 Extract images from PDF without resampling or altering.
 
 Adapted from work by Sylvain Pelissier
 http://stackoverflow.com/questions/2693820/extract-images-from-pdf-without-resampling-in-python
-'''
+"""
 
 import sys
-import PyPDF2
 from PIL import Image
+
+import PyPDF2
+from PyPDF2.constants import ImageAttributes as IA
+from PyPDF2.constants import PageAttributes as PG
+from PyPDF2.constants import Ressources as RES
+from PyPDF2.filters import _xobj_to_image
 
 def getColorSpace(obj):
     if '/ColorSpace' not in obj:
@@ -59,13 +64,13 @@ if __name__ == '__main__':
                 print(xObject[obj])
                 size = (xObject[obj]['/Width'], xObject[obj]['/Height'])
                 data = xObject[obj].getData()
+                mode = getColorSpace(xObject[obj])
                 
                 if '/Filter' in xObject[obj]:
                     if xObject[obj]['/Filter'] == '/DCTDecode' or '/DCTDecode' in xObject[obj]['/Filter']:
                         img = open(obj[1:] + ".jpg", "wb")
                         img.write(data)
                     elif xObject[obj]['/Filter'] == '/FlateDecode' or '/FlateDecode' in xObject[obj]['/Filter']:
-                        mode = getColorSpace(xObject[obj])
                         if mode != None:
                             img = Image.frombytes(mode, size, data)
                             if mode == "CMYK":

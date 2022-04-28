@@ -34,10 +34,16 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import sys
 
+from PyPDF2.errors import STREAM_TRUNCATED_PREMATURELY, PdfStreamError
+
+# See https://github.com/py-pdf/PyPDF2/issues/779
+from PyPDF2.errors import PyPdfError, PdfReadError, PageSizeNotDefinedError, PdfReadWarning  # noqa
+
 try:
-    import __builtin__ as builtins
-except ImportError:  # Py3
     import builtins
+    from typing import Dict
+except ImportError:  # Py2.7
+    import __builtin__ as builtins  # type: ignore
 
 
 xrange_fn = getattr(builtins, "xrange", range)
@@ -45,7 +51,7 @@ _basestring = getattr(builtins, "basestring", str)
 
 bytes_type = type(bytes()) # Works the same in Python 2.X and 3.X
 string_type = getattr(builtins, "unicode", str)
-int_types = (int, long) if sys.version_info[0] < 3 else (int,)
+int_types = (int, long) if sys.version_info[0] < 3 else (int,)  # type: ignore  # noqa
 
 
 # Make basic type tests more consistent
@@ -61,12 +67,14 @@ def isInt(n):
 
 def isBytes(b):
     """Test if arg is a bytes instance. Compatible with Python 2 and 3."""
+    import warnings
+    warnings.warn("PyPDF2.utils.isBytes will be deprecated", DeprecationWarning)
     return isinstance(b, bytes_type)
 
 
-#custom implementation of warnings.formatwarning
 def formatWarning(message, category, filename, lineno, line=None):
-    file = filename.replace("/", "\\").rsplit("\\", 1)[1] # find the file name
+    """custom implementation of warnings.formatwarning"""
+    file = filename.replace("/", "\\").rsplit("\\", 1)[-1] # find the file name
     return "%s: %s [%s:%s]\n" % (category.__name__, message, file, lineno)
 
 
@@ -120,7 +128,7 @@ def skipOverComment(stream):
 def readUntilRegex(stream, regex, ignore_eof=False):
     """
     Reads until the regular expression pattern matched (ignore the match)
-    Raise PdfStreamError on premature end-of-file.
+    :raises PdfStreamError: on premature end-of-file
     :param bool ignore_eof: If true, ignore end-of-line and return immediately
     """
     name = b_('')
@@ -128,10 +136,10 @@ def readUntilRegex(stream, regex, ignore_eof=False):
         tok = stream.read(16)
         if not tok:
             # stream has truncated prematurely
-            if ignore_eof == True:
+            if ignore_eof:
                 return name
             else:
-                raise PdfStreamError("Stream has ended unexpectedly")
+                raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
         m = regex.search(tok)
         if m is not None:
             name += tok[:m.start()]
@@ -166,7 +174,7 @@ class ConvertFunctionsToVirtualList(object):
 
 
 def RC4_encrypt(key, plaintext):
-    S = [i for i in range(256)]
+    S = list(range(256))
     j = 0
     for i in range(256):
         j = (j + S[i] + ord_(key[i % len(key)])) % 256
@@ -194,39 +202,18 @@ def markLocation(stream):
     # Mainly for debugging
     RADIUS = 5000
     stream.seek(-RADIUS, 1)
-    outputDoc = open('PyPDF2_pdfLocation.txt', 'w')
-    outputDoc.write(stream.read(RADIUS))
-    outputDoc.write('HERE')
-    outputDoc.write(stream.read(RADIUS))
-    outputDoc.close()
+    with open('PyPDF2_pdfLocation.txt', 'wb') as output_fh:
+        output_fh.write(stream.read(RADIUS))
+        output_fh.write(b'HERE')
+        output_fh.write(stream.read(RADIUS))
     stream.seek(-RADIUS, 1)
-
-
-class PyPdfError(Exception):
-    pass
-
-
-class PdfReadError(PyPdfError):
-    pass
-
-
-class PageSizeNotDefinedError(PyPdfError):
-    pass
-
-
-class PdfReadWarning(UserWarning):
-    pass
-
-
-class PdfStreamError(PdfReadError):
-    pass
 
 
 if sys.version_info[0] < 3:
     def b_(s):
         return s
 else:
-    B_CACHE = {}
+    B_CACHE = {}  # type: Dict[str, bytes]
 
     def b_(s):
         bc = B_CACHE
@@ -235,15 +222,21 @@ else:
         if type(s) == bytes:
             return s
         else:
-            r = s.encode('latin-1')
-            if len(s) < 2:
-                bc[s] = r
-            return r
+            try:
+                r = s.encode('latin-1')
+                if len(s) < 2:
+                    bc[s] = r
+                return r
+            except Exception:
+                r = s.encode('utf-8')
+                if len(s) < 2:
+                    bc[s] = r
+                return r
 
 
 def u_(s):
     if sys.version_info[0] < 3:
-        return unicode(s, 'unicode_escape')
+        return unicode(s, 'unicode_escape')  # noqa
     else:
         return s
 
