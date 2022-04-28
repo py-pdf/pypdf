@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1651155111324,
+  "lastUpdate": 1651155538340,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1429,6 +1429,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004433978733442472",
             "extra": "mean: 99.95718145454578 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5e86977813d9714e9383a5b2801e26d57a16a86d",
+          "message": "ROB: warn-only in readStringFromStream (#837)\n\nAn unexpected escape string was raising a PdfReadError before.\r\nNow, only a warning is issued.\r\n\r\nCloses #360\r\nCloses #794 : Passing the strict parameter looks like a good idea,\r\n              but there is also the pdf parameter. Sadly, it is\r\n              None for that issue.",
+          "timestamp": "2022-04-28T16:18:18+02:00",
+          "tree_id": "8059010d5156444397416dc2e9b56b64e45f5437",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/5e86977813d9714e9383a5b2801e26d57a16a86d"
+        },
+        "date": 1651155537175,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.6544444290869603,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0032139339956374427",
+            "extra": "mean: 1.5280136182000006 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 10.13957595768099,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007348270835737484",
+            "extra": "mean: 98.62345370000156 msec\nrounds: 10"
           }
         ]
       }
