@@ -422,9 +422,9 @@ def readStringFromStream(stream):
                     # line break was escaped:
                     tok = b_("")
                 else:
-                    raise PdfReadError(
-                        r"Unexpected escaped string: {}".format(tok.decode("utf8"))
-                    )
+                    msg = r"Unexpected escaped string: {}".format(tok.decode("utf8"))
+                    # if.strict: PdfReadError(msg)
+                    logger.warning(msg)
         txt += tok
     return createStringObject(txt)
 
