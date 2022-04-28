@@ -186,13 +186,18 @@ def test_get_images(src, nb_images):
 @pytest.mark.parametrize(
     "strict,with_prev_0,startx_correction,should_fail",
     [
-        (True, False, -1, False), # all nominal => no fail
-        (True, True, -1, True),   # Prev=0 => fail expected
+        (True, False, -1, False),  # all nominal => no fail
+        (True, True, -1, True),  # Prev=0 => fail expected
         (False, False, -1, False),
-        (False, True, -1, False), # Prev =0 => no strict so tolerant
-        (True, False, 0, True),   # error on startxref, in strict => fail expected
+        (False, True, -1, False),  # Prev =0 => no strict so tolerant
+        (True, False, 0, True),  # error on startxref, in strict => fail expected
         (True, True, 0, True),
-        (False, False, 0, False), # error on startxref, but no strict => xref rebuilt,no fail
+        (
+            False,
+            False,
+            0,
+            False,
+        ),  # error on startxref, but no strict => xref rebuilt,no fail
         (False, True, 0, False),
     ],
 )
@@ -301,6 +306,21 @@ def test_get_form(src, expected, expected_get_fields):
 
     fields = reader.getFields()
     assert fields == expected_get_fields
+    if fields:
+        for field in fields.values():
+            # Just access the attributes
+            [
+                field.fieldType,
+                field.parent,
+                field.kids,
+                field.name,
+                field.altName,
+                field.mappingName,
+                field.flags,
+                field.value,
+                field.defaultValue,
+                field.additionalActions,
+            ]
 
 
 @pytest.mark.parametrize(
