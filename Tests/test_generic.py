@@ -19,6 +19,7 @@ from PyPDF2.generic import (
     createStringObject,
     encode_pdfdocencoding,
     readHexStringFromStream,
+    readObject,
     readStringFromStream,
 )
 
@@ -102,6 +103,23 @@ def test_readStringFromStream_exception():
     assert exc.value.args[0] == "Stream has ended unexpectedly"
 
 
+def test_readStringFromStream_not_in_escapedict_no_digit():
+    stream = BytesIO(b"x\\y")
+    with pytest.raises(PdfReadError) as exc:
+        readStringFromStream(stream)
+    assert exc.value.args[0] == "Unexpected escaped string: y"
+
+
+def test_readStringFromStream_multichar_eol():
+    stream = BytesIO(b"x\\\n )")
+    assert readStringFromStream(stream) == " "
+
+
+def test_readStringFromStream_excape_digit():
+    stream = BytesIO(b"x\\1a )")
+    assert readStringFromStream(stream) == "\x01 "
+
+
 def test_NameObject():
     stream = BytesIO(b"x")
     with pytest.raises(PdfReadError) as exc:
@@ -145,3 +163,18 @@ def test_encode_pdfdocencoding_keyerror():
     with pytest.raises(UnicodeEncodeError) as exc:
         encode_pdfdocencoding("😀")
     assert exc.value.args[0] == "pdfdocencoding"
+
+
+def test_readObject_comment_exception():
+    stream = BytesIO(b"% foobar")
+    pdf = None
+    with pytest.raises(PdfStreamError) as exc:
+        readObject(stream, pdf)
+    assert exc.value.args[0] == "File ended unexpectedly."
+
+
+def test_readObject_comment():
+    stream = BytesIO(b"% foobar\n1 ")
+    pdf = None
+    out = readObject(stream, pdf)
+    assert out == 1
