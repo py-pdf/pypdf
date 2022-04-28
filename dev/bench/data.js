@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1651149695008,
+  "lastUpdate": 1651155111324,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1391,6 +1391,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.006082521245230465",
             "extra": "mean: 97.21486590908833 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "matt.peveler@gmail.com",
+            "name": "Matthew Peveler",
+            "username": "MasterOdin"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5c7d6e8bc1908dd179383397a605133cf1d83939",
+          "message": "TST: swap incorrect test names (#838)",
+          "timestamp": "2022-04-28T16:11:12+02:00",
+          "tree_id": "3981c3cda471e4d14157fb0b97f1aac4b93cdec7",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/5c7d6e8bc1908dd179383397a605133cf1d83939"
+        },
+        "date": 1651155110130,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.6615813811562604,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0046065495210667684",
+            "extra": "mean: 1.5115298412000016 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 10.00428368875864,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004433978733442472",
+            "extra": "mean: 99.95718145454578 msec\nrounds: 11"
           }
         ]
       }
