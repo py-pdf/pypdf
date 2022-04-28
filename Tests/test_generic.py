@@ -64,15 +64,15 @@ def test_boolean_object_write():
 def test_boolean_object_exception():
     stream = BytesIO(b"False")
     with pytest.raises(PdfReadError) as exc:
-        ArrayObject.readFromStream(stream, None)
-    assert exc.value.args[0] == "Could not read array"
+        BooleanObject.readFromStream(stream)
+    assert exc.value.args[0] == "Could not read Boolean object"
 
 
 def test_array_object_exception():
     stream = BytesIO(b"False")
     with pytest.raises(PdfReadError) as exc:
-        BooleanObject.readFromStream(stream)
-    assert exc.value.args[0] == "Could not read Boolean object"
+        ArrayObject.readFromStream(stream, None)
+    assert exc.value.args[0] == "Could not read array"
 
 
 def test_null_object_exception():
