@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1651074641898,
+  "lastUpdate": 1651135255279,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1201,6 +1201,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0008580678769596281",
             "extra": "mean: 99.74050989999625 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "fcd1aed0f762d5c26eba9bcdff4eb8e0eb39ca8f",
+          "message": "TST: Add tests for PyPDF2.generic (#831)\n\n* BUG: StopIteration got deprecated in Python 3.7, see PEP 479\r\n* STY: Use property decorator\r\n\r\nCo-authored-by: Matthew Peveler <matt.peveler@gmail.com>",
+          "timestamp": "2022-04-28T10:39:51+02:00",
+          "tree_id": "3a9c71f52bc2f5e6cee461016ef1d1ad21078f00",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/fcd1aed0f762d5c26eba9bcdff4eb8e0eb39ca8f"
+        },
+        "date": 1651135253971,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.5520707881894535,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018268466912576466",
+            "extra": "mean: 1.811361914800011 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 8.792815022718578,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010336042124188555",
+            "extra": "mean: 113.72922066667319 msec\nrounds: 9"
           }
         ]
       }
