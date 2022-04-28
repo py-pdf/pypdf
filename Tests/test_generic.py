@@ -224,3 +224,64 @@ def test_DictionaryObject_setdefault_value_is_no_pdfobject():
     with pytest.raises(ValueError) as exc:
         do.setdefault(NameObject("/S"), "/GoTo")
     assert exc.value.args[0] == "value must be PdfObject"
+
+
+def test_DictionaryObject_read_from_stream():
+    stream = BytesIO(b"<< /S /GoTo >>")
+    pdf = None
+    out = DictionaryObject.readFromStream(stream, pdf)
+    assert out.getObject() == {NameObject("/S"): NameObject("/GoTo")}
+
+
+def test_DictionaryObject_read_from_stream_broken():
+    stream = BytesIO(b"< /S /GoTo >>")
+    pdf = None
+    with pytest.raises(PdfReadError) as exc:
+        DictionaryObject.readFromStream(stream, pdf)
+    assert (
+        exc.value.args[0]
+        == "Dictionary read error at byte 0x2: stream must begin with '<<'"
+    )
+
+
+def test_DictionaryObject_read_from_stream_unexpected_end():
+    stream = BytesIO(b"<< \x00/S /GoTo")
+    pdf = None
+    with pytest.raises(PdfStreamError) as exc:
+        DictionaryObject.readFromStream(stream, pdf)
+    assert exc.value.args[0] == "Stream has ended unexpectedly"
+
+
+def test_DictionaryObject_read_from_stream_stream_no_newline():
+    stream = BytesIO(b"<< /S /GoTo >>stream")
+    pdf = None
+    with pytest.raises(PdfReadError) as exc:
+        DictionaryObject.readFromStream(stream, pdf)
+    assert exc.value.args[0] == "Stream data must be followed by a newline"
+
+
+def test_DictionaryObject_read_from_stream_stream_no_stream_length():
+    stream = BytesIO(b"<< /S /GoTo >>stream\n")
+    pdf = None
+    with pytest.raises(PdfReadError) as exc:
+        DictionaryObject.readFromStream(stream, pdf)
+    assert exc.value.args[0] == "Stream length not defined"
+
+
+def test_DictionaryObject_read_from_stream_stream_stream_missing_endstream2():
+    stream = BytesIO(b"<< /S /GoTo /Length 10 >>stream\n ")
+    pdf = None
+    with pytest.raises(PdfReadError) as exc:
+        DictionaryObject.readFromStream(stream, pdf)
+    assert (
+        exc.value.args[0]
+        == "Unable to find 'endstream' marker after stream at byte 0x21."
+    )
+
+
+def test_DictionaryObject_read_from_stream_stream_stream_valid():
+    stream = BytesIO(b"<< /S /GoTo /Length 10 >>stream\nBT /F1\nendstream\n")
+    pdf = None
+    do = DictionaryObject.readFromStream(stream, pdf)
+    # TODO: What should happen with the stream?
+    assert do == {"/S": "/GoTo"}

@@ -624,13 +624,15 @@ class DictionaryObject(dict, PdfObject):
             # patch provided by Danial Sandler
             while eol == b_(' '):
                 eol = stream.read(1)
-            assert eol in (b_("\n"), b_("\r"))
+            if eol not in (b_("\n"), b_("\r")):
+                raise PdfStreamError("Stream data must be followed by a newline")
             if eol == b_("\r"):
                 # read \n after
                 if stream.read(1)  != b_('\n'):
                     stream.seek(-1, 1)
             # this is a stream object, not a dictionary
-            assert SA.LENGTH in data
+            if SA.LENGTH not in data:
+                raise PdfStreamError("Stream length not defined")
             length = data[SA.LENGTH]
             if isinstance(length, IndirectObject):
                 t = stream.tell()
