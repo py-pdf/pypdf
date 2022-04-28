@@ -9,10 +9,6 @@ import sys
 from PIL import Image
 
 import PyPDF2
-from PyPDF2.constants import ImageAttributes as IA
-from PyPDF2.constants import PageAttributes as PG
-from PyPDF2.constants import Ressources as RES
-from PyPDF2.filters import _xobj_to_image
 
 def getColorSpace(obj):
     if '/ColorSpace' not in obj:
@@ -61,11 +57,10 @@ if __name__ == '__main__':
 
         for obj in xObject:
             if xObject[obj]['/Subtype'] == '/Image':
-                print(xObject[obj])
                 size = (xObject[obj]['/Width'], xObject[obj]['/Height'])
                 data = xObject[obj].getData()
                 mode = getColorSpace(xObject[obj])
-                
+
                 if '/Filter' in xObject[obj]:
                     if xObject[obj]['/Filter'] == '/DCTDecode' or '/DCTDecode' in xObject[obj]['/Filter']:
                         img = open(obj[1:] + ".jpg", "wb")

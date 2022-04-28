@@ -221,7 +221,6 @@ class ASCIIHexDecode(object):
         retval = ""
         hex_pair = ""
         x = 0
-        data = data.decode()
         while True:
             if x >= len(data):
                 raise PdfStreamError("Unexpected EOD in ASCIIHexDecode")
