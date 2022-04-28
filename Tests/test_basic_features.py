@@ -16,7 +16,7 @@ def test_basic_features():
     reader = PdfFileReader(pdf_path)
     writer = PdfFileWriter()
 
-    reader.getNumPages()
+    assert reader.numPages == 1
 
     # add page 1 from input1 to output document, unchanged
     writer.addPage(reader.getPage(0))

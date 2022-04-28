@@ -4,6 +4,7 @@ import os
 import pytest
 
 from PyPDF2 import PdfFileReader
+from PyPDF2.generic import RectangleObject
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -92,3 +93,21 @@ def test_compress_content_streams(pdf_path, password):
         reader.decrypt(password)
     for page in reader.pages:
         page.compressContentStreams()
+
+
+def test_page_properties():
+    reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
+    page = reader.pages[0]
+    assert page.mediaBox == RectangleObject([0, 0, 612, 792])
+    assert page.cropBox == RectangleObject([0, 0, 612, 792])
+    assert page.bleedBox == RectangleObject([0, 0, 612, 792])
+    assert page.trimBox == RectangleObject([0, 0, 612, 792])
+    assert page.artBox == RectangleObject([0, 0, 612, 792])
+
+
+def test_page_rotation_non90():
+    reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
+    page = reader.pages[0]
+    with pytest.raises(ValueError) as exc:
+        page.rotateClockwise(91)
+    assert exc.value.args[0] == "Rotation angle must be a multiple of 90"

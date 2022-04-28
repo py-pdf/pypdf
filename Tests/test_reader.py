@@ -32,7 +32,7 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
 def test_get_num_pages(src, num_pages):
     src = os.path.join(RESOURCE_ROOT, src)
     reader = PdfFileReader(src)
-    assert reader.getNumPages() == num_pages
+    assert reader.numPages == num_pages
 
 
 @pytest.mark.parametrize(
@@ -71,7 +71,7 @@ def test_get_num_pages(src, num_pages):
 def test_read_metadata(pdf_path, expected):
     with open(pdf_path, "rb") as inputfile:
         reader = PdfFileReader(inputfile)
-        docinfo = reader.getDocumentInfo()
+        docinfo = reader.documentInfo
         metadict = dict(docinfo)
         assert metadict == expected
         docinfo.title
@@ -117,7 +117,7 @@ def test_get_attachments(src):
     reader = PdfFileReader(src)
 
     attachments = {}
-    for i in range(reader.getNumPages()):
+    for i in range(reader.numPages):
         page = reader.getPage(i)
         if PG.ANNOTS in page:
             for annotation in page[PG.ANNOTS]:
@@ -485,12 +485,12 @@ def test_read_unknown_zero_pages():
     pdf_stream = io.BytesIO(pdf_data)
     with pytest.raises(PdfReadError) as exc:
         reader = PdfFileReader(pdf_stream, strict=True)
-        reader.getNumPages()
+        reader.numPages
 
     assert exc.value.args[0] == "Could not find object."
     reader = PdfFileReader(pdf_stream, strict=False)
     with pytest.raises(AttributeError) as exc:
-        reader.getNumPages()
+        reader.numPages
     assert exc.value.args[0] == "'NoneType' object has no attribute 'getObject'"
 
 
@@ -498,7 +498,7 @@ def test_read_encrypted_without_decryption():
     src = os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf")
     reader = PdfFileReader(src)
     with pytest.raises(PdfReadError) as exc:
-        reader.getNumPages()
+        reader.numPages
     assert exc.value.args[0] == "File has not been decrypted"
 
 
@@ -537,3 +537,34 @@ def test_PdfReaderDecryptWhenNoID():
         ipdf = PdfFileReader(inputfile)
         ipdf.decrypt("")
         assert ipdf.getDocumentInfo() == {"/Producer": "European Patent Office"}
+
+
+def test_reader_properties():
+    reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
+    assert reader.outlines == []
+    assert len(reader.pages) == 1
+    assert reader.pageLayout is None
+    assert reader.pageMode is None
+    assert reader.isEncrypted is False
+
+
+def test_decode_permissions():
+    reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
+    base = {
+        "accessability": False,
+        "annotations": False,
+        "assemble": False,
+        "copy": False,
+        "forms": False,
+        "modify": False,
+        "print_high_quality": False,
+        "print": False,
+    }
+
+    print_ = base.copy()
+    print_["print"] = True
+    assert reader.decode_permissions(4) == print_
+
+    modify = base.copy()
+    modify["modify"] = True
+    assert reader.decode_permissions(8) == modify

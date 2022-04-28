@@ -1422,11 +1422,13 @@ class PdfFileReader(object):
             self._flatten()
         return self.flattenedPages[pageNumber]
 
-    namedDestinations = property(lambda self: self.getNamedDestinations(), None, None)
-    """
-    Read-only property that accesses the
-    :meth:`getNamedDestinations()<PdfFileReader.getNamedDestinations>` function.
-    """
+    @property
+    def namedDestinations(self):
+        """
+        Read-only property that accesses the
+        :meth:`getNamedDestinations()<PdfFileReader.getNamedDestinations>` function.
+        """
+        return self.getNamedDestinations()
 
     # A select group of relevant field attributes. For the complete list,
     # see section 8.6.2 of the PDF 1.7 reference.
