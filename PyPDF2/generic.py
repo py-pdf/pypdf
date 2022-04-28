@@ -1184,61 +1184,77 @@ class Destination(TreeObject):
         stream.write(b_("\n"))
         stream.write(b_(">>"))
 
-    title = property(lambda self: self.get("/Title"))
-    """
-    Read-only property accessing the destination title.
+    @property
+    def title(self):
+        """
+        Read-only property accessing the destination title.
 
-    :rtype: str
-    """
+        :rtype: str
+        """
+        return self.get("/Title")
 
-    page = property(lambda self: self.get("/Page"))
-    """
-    Read-only property accessing the destination page number.
+    @property
+    def page(self):
+        """
+        Read-only property accessing the destination page number.
 
-    :rtype: int
-    """
+        :rtype: int
+        """
+        return self.get("/Page")
 
-    typ = property(lambda self: self.get("/Type"))
-    """
-    Read-only property accessing the destination type.
+    @property
+    def typ(self):
+        """
+        Read-only property accessing the destination type.
 
-    :rtype: str
-    """
+        :rtype: str
+        """
+        return self.get("/Type")
 
-    zoom = property(lambda self: self.get("/Zoom", None))
-    """
-    Read-only property accessing the zoom factor.
+    @property
+    def zoom(self):
+        """
+        Read-only property accessing the zoom factor.
 
-    :rtype: int, or ``None`` if not available.
-    """
+        :rtype: int, or ``None`` if not available.
+        """
+        return self.get("/Zoom", None)
 
-    left = property(lambda self: self.get("/Left", None))
-    """
-    Read-only property accessing the left horizontal coordinate.
+    @property
+    def left(self):
+        """
+        Read-only property accessing the left horizontal coordinate.
 
-    :rtype: int, or ``None`` if not available.
-    """
+        :rtype: int, or ``None`` if not available.
+        """
+        return self.get("/Left", None)
 
-    right = property(lambda self: self.get("/Right", None))
-    """
-    Read-only property accessing the right horizontal coordinate.
+    @property
+    def right(self):
+        """
+        Read-only property accessing the right horizontal coordinate.
 
-    :rtype: int, or ``None`` if not available.
-    """
+        :rtype: int, or ``None`` if not available.
+        """
+        return self.get("/Right", None)
 
-    top = property(lambda self: self.get("/Top", None))
-    """
-    Read-only property accessing the top vertical coordinate.
+    @property
+    def top(self):
+        """
+        Read-only property accessing the top vertical coordinate.
 
-    :rtype: int, or ``None`` if not available.
-    """
+        :rtype: int, or ``None`` if not available.
+        """
+        return self.get("/Top", None)
 
-    bottom = property(lambda self: self.get("/Bottom", None))
-    """
-    Read-only property accessing the bottom vertical coordinate.
+    @property
+    def bottom(self):
+        """
+        Read-only property accessing the bottom vertical coordinate.
 
-    :rtype: int, or ``None`` if not available.
-    """
+        :rtype: int, or ``None`` if not available.
+        """
+        return self.get("/Bottom", None)
 
 
 class Bookmark(Destination):

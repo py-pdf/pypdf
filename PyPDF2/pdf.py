@@ -1343,8 +1343,10 @@ class PdfFileReader(object):
         retval.update(obj)
         return retval
 
-    documentInfo = property(lambda self: self.getDocumentInfo(), None, None)
-    """Read-only property that accesses the :meth:`getDocumentInfo()<PdfFileReader.getDocumentInfo>` function."""
+    @property
+    def documentInfo(self):
+        """Read-only property that accesses the :meth:`getDocumentInfo()<PdfFileReader.getDocumentInfo>` function."""
+        return self.getDocumentInfo()
 
     def getXmpMetadata(self):
         """
@@ -1362,11 +1364,13 @@ class PdfFileReader(object):
         finally:
             self._override_encryption = False
 
-    xmpMetadata = property(lambda self: self.getXmpMetadata(), None, None)
-    """
-    Read-only property that accesses the
-    :meth:`getXmpMetadata()<PdfFileReader.getXmpMetadata>` function.
-    """
+    @property
+    def xmpMetadata(self):
+        """
+        Read-only property that accesses the
+        :meth:`getXmpMetadata()<PdfFileReader.getXmpMetadata>` function.
+        """
+        return self.getXmpMetadata()
 
     def getNumPages(self):
         """
@@ -1395,11 +1399,13 @@ class PdfFileReader(object):
                 self._flatten()
             return len(self.flattenedPages)
 
-    numPages = property(lambda self: self.getNumPages(), None, None)
-    """
-    Read-only property that accesses the
-    :meth:`getNumPages()<PdfFileReader.getNumPages>` function.
-    """
+    @property
+    def numPages(self):
+        """
+        Read-only property that accesses the
+        :meth:`getNumPages()<PdfFileReader.getNumPages>` function.
+        """
+        return self.getNumPages()
 
     def getPage(self, pageNumber):
         """
@@ -1575,11 +1581,13 @@ class PdfFileReader(object):
 
         return retval
 
-    outlines = property(lambda self: self.getOutlines(), None, None)
-    """
-    Read-only property that accesses the
-        :meth:`getOutlines()<PdfFileReader.getOutlines>` function.
-    """
+    @property
+    def outlines(self):
+        """
+        Read-only property that accesses the
+            :meth:`getOutlines()<PdfFileReader.getOutlines>` function.
+        """
+        return self.getOutlines()
 
     def getOutlines(self, node=None, outlines=None):
         """
@@ -1700,16 +1708,14 @@ class PdfFileReader(object):
                 raise PdfReadError("Unexpected destination %r" % dest)
         return outline
 
-    pages = property(
-        lambda self: ConvertFunctionsToVirtualList(self.getNumPages, self.getPage),
-        None,
-        None,
-    )
-    """
-    Read-only property that emulates a list based upon the
-    :meth:`getNumPages()<PdfFileReader.getNumPages>` and
-    :meth:`getPage()<PdfFileReader.getPage>` methods.
-    """
+    @property
+    def pages(self):
+        """
+        Read-only property that emulates a list based upon the
+        :meth:`getNumPages()<PdfFileReader.getNumPages>` and
+        :meth:`getPage()<PdfFileReader.getPage>` methods.
+        """
+        return ConvertFunctionsToVirtualList(self.getNumPages, self.getPage)
 
     def getPageLayout(self):
         """
@@ -1725,9 +1731,11 @@ class PdfFileReader(object):
         except KeyError:
             return None
 
-    pageLayout = property(getPageLayout)
-    """Read-only property accessing the
-    :meth:`getPageLayout()<PdfFileReader.getPageLayout>` method."""
+    @property
+    def pageLayout(self):
+        """Read-only property accessing the
+        :meth:`getPageLayout()<PdfFileReader.getPageLayout>` method."""
+        return self.getPageLayout()
 
     def getPageMode(self):
         """
@@ -1743,9 +1751,11 @@ class PdfFileReader(object):
         except KeyError:
             return None
 
-    pageMode = property(getPageMode)
-    """Read-only property accessing the
-    :meth:`getPageMode()<PdfFileReader.getPageMode>` method."""
+    @property
+    def pageMode(self):
+        """Read-only property accessing the
+        :meth:`getPageMode()<PdfFileReader.getPageMode>` method."""
+        return self.getPageMode()
 
     def _flatten(self, pages=None, inherit=None, indirectRef=None):
         inheritablePageAttributes = (
@@ -2453,12 +2463,14 @@ class PdfFileReader(object):
     def getIsEncrypted(self):
         return TK.ENCRYPT in self.trailer
 
-    isEncrypted = property(lambda self: self.getIsEncrypted(), None, None)
-    """
-    Read-only boolean property showing whether this PDF file is encrypted.
-    Note that this property, if true, will remain true even after the
-    :meth:`decrypt()<PdfFileReader.decrypt>` method is called.
-    """
+    @property
+    def isEncrypted(self):
+        """
+        Read-only boolean property showing whether this PDF file is encrypted.
+        Note that this property, if true, will remain true even after the
+        :meth:`decrypt()<PdfFileReader.decrypt>` method is called.
+        """
+        return self.getIsEncrypted()
 
 
 def getRectangle(self, name, defaults):
@@ -3326,48 +3338,73 @@ class DocumentInformation(DictionaryObject):
             return retval
         return None
 
-    title = property(
-        lambda self: self.getText("/Title") or self.get("/Title").getObject()
-        if self.get("/Title")
-        else None
-    )
-    """Read-only property accessing the document's **title**.
-    Returns a unicode string (``TextStringObject``) or ``None``
-    if the title is not specified."""
-    title_raw = property(lambda self: self.get("/Title"))
-    """The "raw" version of title; can return a ``ByteStringObject``."""
+    @property
+    def title(self):
+        """Read-only property accessing the document's **title**.
+        Returns a unicode string (``TextStringObject``) or ``None``
+        if the title is not specified."""
+        return (
+            self.getText("/Title") or self.get("/Title").getObject()
+            if self.get("/Title")
+            else None
+        )
 
-    author = property(lambda self: self.getText("/Author"))
-    """Read-only property accessing the document's **author**.
-    Returns a unicode string (``TextStringObject``) or ``None``
-    if the author is not specified."""
-    author_raw = property(lambda self: self.get("/Author"))
-    """The "raw" version of author; can return a ``ByteStringObject``."""
+    @property
+    def title_raw(self):
+        """The "raw" version of title; can return a ``ByteStringObject``."""
+        return self.get("/Title")
 
-    subject = property(lambda self: self.getText("/Subject"))
-    """Read-only property accessing the document's **subject**.
-    Returns a unicode string (``TextStringObject``) or ``None``
-    if the subject is not specified."""
-    subject_raw = property(lambda self: self.get("/Subject"))
-    """The "raw" version of subject; can return a ``ByteStringObject``."""
+    @property
+    def author(self):
+        """Read-only property accessing the document's **author**.
+        Returns a unicode string (``TextStringObject``) or ``None``
+        if the author is not specified."""
+        return self.getText("/Author")
 
-    creator = property(lambda self: self.getText("/Creator"))
-    """Read-only property accessing the document's **creator**. If the
-    document was converted to PDF from another format, this is the name of the
-    application (e.g. OpenOffice) that created the original document from
-    which it was converted. Returns a unicode string (``TextStringObject``)
-    or ``None`` if the creator is not specified."""
-    creator_raw = property(lambda self: self.get("/Creator"))
-    """The "raw" version of creator; can return a ``ByteStringObject``."""
+    @property
+    def author_raw(self):
+        """The "raw" version of author; can return a ``ByteStringObject``."""
+        return self.get("/Author")
 
-    producer = property(lambda self: self.getText("/Producer"))
-    """Read-only property accessing the document's **producer**.
-    If the document was converted to PDF from another format, this is
-    the name of the application (for example, OSX Quartz) that converted
-    it to PDF. Returns a unicode string (``TextStringObject``)
-    or ``None`` if the producer is not specified."""
-    producer_raw = property(lambda self: self.get("/Producer"))
-    """The "raw" version of producer; can return a ``ByteStringObject``."""
+    @property
+    def subject(self):
+        """Read-only property accessing the document's **subject**.
+        Returns a unicode string (``TextStringObject``) or ``None``
+        if the subject is not specified."""
+        return self.getText("/Subject")
+
+    @property
+    def subject_raw(self):
+        """The "raw" version of subject; can return a ``ByteStringObject``."""
+        return self.get("/Subject")
+
+    @property
+    def creator(self):
+        """Read-only property accessing the document's **creator**. If the
+        document was converted to PDF from another format, this is the name of the
+        application (e.g. OpenOffice) that created the original document from
+        which it was converted. Returns a unicode string (``TextStringObject``)
+        or ``None`` if the creator is not specified."""
+        return self.getText("/Creator")
+
+    @property
+    def creator_raw(self):
+        """The "raw" version of creator; can return a ``ByteStringObject``."""
+        return self.get("/Creator")
+
+    @property
+    def producer(self):
+        """Read-only property accessing the document's **producer**.
+        If the document was converted to PDF from another format, this is
+        the name of the application (for example, OSX Quartz) that converted
+        it to PDF. Returns a unicode string (``TextStringObject``)
+        or ``None`` if the producer is not specified."""
+        return self.getText("/Producer")
+
+    @property
+    def producer_raw(self):
+        """The "raw" version of producer; can return a ``ByteStringObject``."""
+        return self.get("/Producer")
 
 
 def convertToInt(d, size):
