@@ -44,7 +44,7 @@ def test_createStringObject_exception():
 @pytest.mark.parametrize("value, expected", [(b"true", b"true"), (b"false", b"false")])
 def test_boolean_object(value, expected):
     stream = BytesIO(value)
-    BooleanObject.readFromStream(stream)
+    assert BooleanObject.readFromStream(stream).value == (expected == b"true")
     stream.seek(0, 0)
     assert stream.read() == expected
 
