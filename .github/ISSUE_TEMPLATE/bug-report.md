@@ -14,7 +14,7 @@ Replace this: What happened? What were you trying to achieve?
 Which environment were you using when you encountered the problem?
 
 ```python
-$ python -m platform 
+$ python -m platform
 # TODO: Your output goes here
 
 $ python -c "import PyPDF2;print(PyPDF2.__version__)"

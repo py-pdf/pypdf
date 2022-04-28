@@ -9,7 +9,7 @@ PyPDF2 supports streaming data to a file-like object and here is how.
 from io import BytesIO
 
 # Prepare example
-with open("example.pdf", 'rb') as fh:
+with open("example.pdf", "rb") as fh:
     bytes_stream = BytesIO(fh.read())
 
 # Read from bytes_stream

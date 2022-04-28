@@ -127,7 +127,7 @@ Bug fixes (BUG):
 
 Robustness improvements (ROBUST):
 
-- title sometimes None (#744) 
+- title sometimes None (#744)
 
 Documentation (DOC):
 
@@ -235,7 +235,7 @@ Patch release 1.27.3, 2022-04-10
 - BUG: Error in Chinese character encoding (#463)
 - BUG: Code duplication in Scripts/2-up.py
 - ROBUST: Guard 'obj.writeToStream' with 'if obj is not None'
-- ROBUST: Ignore a /Prev entry with the value 0 in the trailer 
+- ROBUST: Ignore a /Prev entry with the value 0 in the trailer
 - MAINT: Remove Sample_Code (#726)
 - TST: Close file handle in test_writer (#722)
 - TST: Fix test_get_images (#730)

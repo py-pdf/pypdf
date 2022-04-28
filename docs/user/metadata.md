@@ -43,5 +43,4 @@ writer.addMetadata(
 # Save the new PDF to a file
 with open("meta-pdf.pdf", "wb") as f:
     writer.write(f)
-
 ```
