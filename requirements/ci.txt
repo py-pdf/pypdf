@@ -15,7 +15,7 @@ flake8==4.0.1
     # via
     #   -r requirements/ci.in
     #   flake8-bugbear
-flake8-bugbear==22.3.23
+flake8-bugbear==22.4.25
     # via -r requirements/ci.in
 flake8-implicit-str-concat==0.2.0
     # via -r requirements/ci.in
@@ -44,7 +44,7 @@ pycodestyle==2.8.0
     # via flake8
 pyflakes==2.4.0
     # via flake8
-pyparsing==3.0.7
+pyparsing==3.0.8
     # via packaging
 pytest==7.0.1
     # via

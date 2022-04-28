@@ -96,7 +96,8 @@ def test_remove_images(input_path, ignoreByteStringObject):
     with open(tmp_filename, "rb") as input_stream:
         reader = PdfFileReader(input_stream)
         if input_path == "side-by-side-subfig.pdf":
-            assert "Lorem ipsum dolor sit amet" in reader.getPage(0).extractText()
+            extracted_text = reader.getPage(0).extractText()
+            assert "Lorem ipsum dolor sit amet" in extracted_text
 
     # Cleanup
     os.remove(tmp_filename)
@@ -166,7 +167,9 @@ def test_fill_form():
 
     writer.addPage(page)
 
-    writer.updatePageFormFieldValues(writer.getPage(0), {"foo": "some filled in text"})
+    writer.updatePageFormFieldValues(
+        writer.getPage(0), {"foo": "some filled in text"}, flags=1
+    )
 
     # write "output" to PyPDF2-output.pdf
     tmp_filename = "dont_commit_filled_pdf.pdf"
@@ -223,10 +226,16 @@ def test_add_named_destination():
     from PyPDF2.pdf import NameObject
 
     writer.addNamedDestination(NameObject("A named dest"), 2)
+    writer.addNamedDestination(NameObject("A named dest2"), 2)
 
     from PyPDF2.pdf import IndirectObject
 
-    assert writer.getNamedDestRoot() == ["A named dest", IndirectObject(7, 0, writer)]
+    assert writer.getNamedDestRoot() == [
+        "A named dest",
+        IndirectObject(7, 0, writer),
+        "A named dest2",
+        IndirectObject(10, 0, writer),
+    ]
 
     # write "output" to PyPDF2-output.pdf
     tmp_filename = "dont_commit_named_destination.pdf"
@@ -334,7 +343,7 @@ def test_io_streams():
 
     # Read from bytes stream
     reader = PdfFileReader(bytes_stream)
-    assert reader.getNumPages() == 4
+    assert reader.numPages == 4
 
     # Write to bytes stream
     writer = PdfFileWriter()

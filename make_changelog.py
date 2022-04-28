@@ -1,9 +1,10 @@
 """Internal tool to update the changelog."""
 
 import subprocess
-from dataclasses import dataclass
 from datetime import datetime
 from typing import List
+
+from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
@@ -132,6 +133,9 @@ def parse_commit_line(line) -> Change:
 
     # Standardize
     message.strip()
+
+    if message.endswith('"'):
+        message = message[:-1]
 
     prefix = prefix.strip()
     if prefix == "DOCS":

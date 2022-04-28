@@ -18,7 +18,7 @@ def main():
     print("2-up input " + sys.argv[1])
     reader = PdfFileReader(sys.argv[1])
     writer = PdfFileWriter()
-    for iter in range(0, reader.getNumPages() - 1, 2):
+    for iter in range(0, reader.numPages - 1, 2):
         lhs = reader.getPage(iter)
         rhs = reader.getPage(iter + 1)
         lhs.mergeTranslatedPage(rhs, lhs.mediaBox.getUpperRight_x(), 0, True)

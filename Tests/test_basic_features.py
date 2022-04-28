@@ -3,8 +3,8 @@ import os
 import pytest
 
 from PyPDF2 import PdfFileReader, PdfFileWriter
+from PyPDF2._reader import convertToInt
 from PyPDF2.errors import PdfReadError
-from PyPDF2.pdf import convertToInt
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -16,8 +16,7 @@ def test_basic_features():
     reader = PdfFileReader(pdf_path)
     writer = PdfFileWriter()
 
-    # print how many pages input1 has:
-    print("document1.pdf has %d pages." % reader.getNumPages())
+    assert reader.numPages == 1
 
     # add page 1 from input1 to output document, unchanged
     writer.addPage(reader.getPage(0))
