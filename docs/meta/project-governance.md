@@ -42,18 +42,18 @@ There were still questions asked, issues reported, and pull requests created.
 But the maintainer didn't have the time to move PyPDF2 forward. During that
 time, nobody else stepped up to become the new maintainer.
 
-For this reason, PyPDF2 has the **Benevolent Dictator for Life** (BDFL)
-governance model. The BDFL is a maintainer with all technical permissions -
+For this reason, PyPDF2 has the **Benevolent Dictator**
+governance model. The benevolent dictator is a maintainer with all technical permissions -
 most importantly the permission to push new PyPDF2 versions on PyPI.
 
-Being benevolent, the BDFL listens for decisions to the community and tries
+Being benevolent, the benevolent dictator listens for decisions to the community and tries
 their best to make decisions from which the overall community profits - the
-current one and the potential future one. Being a dictator, the BDFL always has
+current one and the potential future one. Being a dictator, the benevolent dictator always has
 the power and the right to make decisions on their own - also against some
 members of the community.
 
 As PyPDF2 is free software, parts of the community can split off (fork the code)
-and create a new community. This should limit the harm a bad BDFL can do.
+and create a new community. This should limit the harm a bad benevolent dictator can do.
 
 
 ## Project Language
@@ -70,18 +70,21 @@ as their mother tongue. We try our best to understand others -
 
 The community can expect the following:
 
-* The **BDFL** tries their best to make decisions from which the overall
-  community profits. The BDFL is aware that his/her decisons can shape the
-  overall community. Once the BDFL notices that she/he doesn't have the time
-  to advance PyPDF2, he/she looks for a new BDFL.
-* Every **maintainer** (including the BDFL) is aware of their permissions and
+* The **benevolent dictator** tries their best to make decisions from which the overall
+  community profits. The benevolent dictator is aware that his/her decisons can shape the
+  overall community. Once the benevolent dictator notices that she/he doesn't have the time
+  to advance PyPDF2, he/she looks for a new benevolent dictator. As it is expected
+  that the benevolent dictator will step down at some point of their choice
+  (hopefully before their death), it is NOT a benevolent dictator for life
+  (BDFL).
+* Every **maintainer** (including the benevolent dictator) is aware of their permissions and
   the harm they could do. They value security and ensure that the project is
   not harmed. They give their technical permissions back if they don't need them
   any longer. Any long-time contributor can become a maintainer. Maintainers
   can - and should! - step down from their role when they realize that they
   can no longer commit that time. Their contribution will be honored in the
   {doc}`history`.
-* Every **contributor** is aware that the time of maintainers and the BDFL is
+* Every **contributor** is aware that the time of maintainers and the benevolent dictator is
   limited. Short pull requests that briefly describe the solved issue and have
   a unit test have a higher chance to get merged soon - simply because it's
   easier for maintainers to see that the contribution will not harm the overall
@@ -130,7 +133,8 @@ maintainers do their best to fix that in a timely manner - please
 
 ## People
 
-* Martin Thoma is BDFL since April 2022.
+* Martin Thoma is benevolent dictator since April 2022.
 * Maintainers:
-    * Matthew Stamy (mstamy2) was the BDFL for a long time. He still is around on Github once in a while and has permissions on PyPI and Github.
+    * Matthew Stamy (mstamy2) was the benevolent dictator for a long time.
+      He still is around on Github once in a while and has permissions on PyPI and Github.
     * Matthew Peveler (MasterOdin) is a maintainer on Github.
