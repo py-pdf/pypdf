@@ -190,6 +190,7 @@ def test_readObject_comment():
     assert out == 1
 
 
+@pytest.mark.no_py27
 def test_ByteStringObject():
     bo = ByteStringObject("stream", encoding="utf-8")
     stream = BytesIO(b"")
