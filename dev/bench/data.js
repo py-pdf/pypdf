@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1651139639533,
+  "lastUpdate": 1651142755324,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1315,6 +1315,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.005384084734819235",
             "extra": "mean: 85.88537358333663 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c1dfdaa475c8705c45d82305f2d2ec76168e7e30",
+          "message": "TST: Reader and page properties (#835)",
+          "timestamp": "2022-04-28T12:45:14+02:00",
+          "tree_id": "4cf4b3c640d71220342496b9bb66ef1ee07d06ea",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/c1dfdaa475c8705c45d82305f2d2ec76168e7e30"
+        },
+        "date": 1651142754261,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.5525941267582756,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004335068924803803",
+            "extra": "mean: 1.8096464503999983 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 8.918099518311225,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0013836104991058473",
+            "extra": "mean: 112.13151388888794 msec\nrounds: 9"
           }
         ]
       }
