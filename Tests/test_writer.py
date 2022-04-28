@@ -343,7 +343,7 @@ def test_io_streams():
 
     # Read from bytes stream
     reader = PdfFileReader(bytes_stream)
-    assert reader.getNumPages() == 4
+    assert reader.numPages == 4
 
     # Write to bytes stream
     writer = PdfFileWriter()
