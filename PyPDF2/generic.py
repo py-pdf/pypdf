@@ -406,7 +406,7 @@ def readStringFromStream(stream):
                     # line break was escaped:
                     tok = b_('')
                 else:
-                    raise PdfReadError(r"Unexpected escaped string: %s" % tok)
+                    raise PdfReadError(r"Unexpected escaped string: {}".format(tok.decode('utf8')))
         txt += tok
     return createStringObject(txt)
 
@@ -419,9 +419,10 @@ class ByteStringObject(utils.bytes_type, PdfObject):  # type: ignore
     /O) is clearly not text, but is still stored in a "String" object.
     """
 
-    # For compatibility with TextStringObject.original_bytes.  This method
-    #  self.
-    original_bytes = property(lambda self: self)
+    @property
+    def original_bytes(self):
+        """For compatibility with TextStringObject.original_bytes."""
+        return self
 
     def writeToStream(self, stream, encryption_key):
         bytearr = self
@@ -443,11 +444,15 @@ class TextStringObject(utils.string_type, PdfObject):  # type: ignore
     autodetect_pdfdocencoding = False
     autodetect_utf16 = False
 
-    # It is occasionally possible that a text string object gets created where
-    # a byte string object was expected due to the autodetection mechanism --
-    # if that occurs, this "original_bytes" property can be used to
-    # back-calculate what the original encoded bytes were.
-    original_bytes = property(lambda self: self.get_original_bytes())
+    @property
+    def original_bytes(self):
+        """
+        It is occasionally possible that a text string object gets created where
+        a byte string object was expected due to the autodetection mechanism --
+        if that occurs, this "original_bytes" property can be used to
+        back-calculate what the original encoded bytes were.
+        """
+        return self.get_original_bytes()
 
     def get_original_bytes(self):
         # We're a text string object, but the library is trying to get our raw
@@ -555,11 +560,15 @@ class DictionaryObject(dict, PdfObject):
             self[NameObject("/Metadata")] = metadata
         return metadata
 
-    # Read-only property that accesses the {@link
-    # #DictionaryObject.getXmpData getXmpData} function.
-    # <p>
-    # Stability: Added in v1.12, will exist for all future v1.x releases.
-    xmpMetadata = property(lambda self: self.getXmpMetadata(), None, None)
+    @property
+    def xmpMetadata(self):
+        """
+        Read-only property that accesses the {@link
+        #DictionaryObject.getXmpData getXmpData} function.
+        <p>
+        Stability: Added in v1.12, will exist for all future v1.x releases.
+        """
+        return self.getXmpMetadata()
 
     def writeToStream(self, stream, encryption_key):
         stream.write(b_("<<\n"))
@@ -979,61 +988,70 @@ class Field(TreeObject):
             except KeyError:
                 pass
 
-    fieldType = property(lambda self: self.get("/FT"))
-    """
-    Read-only property accessing the type of this field.
-    """
+    @property
+    def fieldType(self):
+        """Read-only property accessing the type of this field."""
+        return self.get("/FT")
 
-    parent = property(lambda self: self.get("/Parent"))
-    """
-    Read-only property accessing the parent of this field.
-    """
+    @property
+    def parent(self):
+        """Read-only property accessing the parent of this field."""
+        return self.get("/Parent")
 
-    kids = property(lambda self: self.get("/Kids"))
-    """
-    Read-only property accessing the kids of this field.
-    """
+    @property
+    def kids(self):
+        """Read-only property accessing the kids of this field."""
+        return self.get("/Kids")
 
-    name = property(lambda self: self.get("/T"))
-    """
-    Read-only property accessing the name of this field.
-    """
+    @property
+    def name(self):
+        """Read-only property accessing the name of this field."""
+        return self.get("/T")
 
-    altName = property(lambda self: self.get("/TU"))
-    """
-    Read-only property accessing the alternate name of this field.
-    """
+    @property
+    def altName(self):
+        """Read-only property accessing the alternate name of this field."""
+        return self.get("/TU")
 
-    mappingName = property(lambda self: self.get("/TM"))
-    """
-    Read-only property accessing the mapping name of this field. This
-    name is used by PyPDF2 as a key in the dictionary returned by
-    :meth:`getFields()<PyPDF2.PdfFileReader.getFields>`
-    """
+    @property
+    def mappingName(self):
+        """
+        Read-only property accessing the mapping name of this field. This
+        name is used by PyPDF2 as a key in the dictionary returned by
+        :meth:`getFields()<PyPDF2.PdfFileReader.getFields>`
+        """
+        return self.get("/TM")
 
-    flags = property(lambda self: self.get("/Ff"))
-    """
-    Read-only property accessing the field flags, specifying various
-    characteristics of the field (see Table 8.70 of the PDF 1.7 reference).
-    """
+    @property
+    def flags(self):
+        """
+        Read-only property accessing the field flags, specifying various
+        characteristics of the field (see Table 8.70 of the PDF 1.7 reference).
+        """
+        return self.get("/Ff")
 
-    value = property(lambda self: self.get("/V"))
-    """
-    Read-only property accessing the value of this field. Format
-    varies based on field type.
-    """
+    @property
+    def value(self):
+        """
+        Read-only property accessing the value of this field. Format
+        varies based on field type.
+        """
+        return self.get("/V")
 
-    defaultValue = property(lambda self: self.get("/DV"))
-    """
-    Read-only property accessing the default value of this field.
-    """
+    @property
+    def defaultValue(self):
+        """Read-only property accessing the default value of this field."""
+        return self.get("/DV")
 
-    additionalActions = property(lambda self: self.get("/AA"))
-    """
-    Read-only property accessing the additional actions dictionary.
-    This dictionary defines the field's behavior in response to trigger events.
-    See Section 8.5.2 of the PDF 1.7 reference.
-    """
+
+    @property
+    def additionalActions(self):
+        """
+        Read-only property accessing the additional actions dictionary.
+        This dictionary defines the field's behavior in response to trigger events.
+        See Section 8.5.2 of the PDF 1.7 reference.
+        """
+        self.get("/AA")
 
 
 class Destination(TreeObject):
