@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1651142755324,
+  "lastUpdate": 1651149695008,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1353,6 +1353,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0013836104991058473",
             "extra": "mean: 112.13151388888794 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e1408f7488f2df54341b1208f2ad0a1b14eb8e81",
+          "message": "MAINT: Split pdf module (#836)",
+          "timestamp": "2022-04-28T14:40:53+02:00",
+          "tree_id": "0620d6908a07c4249190ebf5952edde1bd138176",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/e1408f7488f2df54341b1208f2ad0a1b14eb8e81"
+        },
+        "date": 1651149694527,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.6511333754112755,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005939225208470314",
+            "extra": "mean: 1.5357836623999959 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 10.28649261251013,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006082521245230465",
+            "extra": "mean: 97.21486590908833 msec\nrounds: 11"
           }
         ]
       }
