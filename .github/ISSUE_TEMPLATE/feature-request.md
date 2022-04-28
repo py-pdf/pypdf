@@ -16,5 +16,6 @@ How would your feature be used? (Remove this if it is not applicable.)
 
 ```python
 from PyPDF2 import PdfFileReader, PdfFileWriter
+
 ...  # your new feature in action!
 ```
