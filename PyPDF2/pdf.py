@@ -2049,7 +2049,7 @@ class PdfFileReader(object):
                 if startxref == 0:
                     if self.strict:
                         raise PdfReadError(
-                            "/Prev=0 in the trailer (try" " opening with strict=False)"
+                            "/Prev=0 in the trailer (try opening with strict=False)"
                         )
                     else:
                         warnings.warn(
