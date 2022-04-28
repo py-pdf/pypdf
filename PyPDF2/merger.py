@@ -27,12 +27,12 @@
 
 from sys import version_info
 
+from PyPDF2._reader import PdfFileReader
+from PyPDF2._writer import PdfFileWriter
 from PyPDF2.constants import PagesAttributes as PA
-
-from .generic import *
-from .pagerange import PageRange
-from .pdf import PdfFileReader, PdfFileWriter
-from .utils import isString, str_
+from PyPDF2.generic import *
+from PyPDF2.pagerange import PageRange
+from PyPDF2.utils import isString, str_
 
 if version_info < (3, 0):
     from cStringIO import StringIO

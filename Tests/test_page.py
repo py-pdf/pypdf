@@ -104,6 +104,9 @@ def test_page_properties():
     assert page.trimBox == RectangleObject([0, 0, 612, 792])
     assert page.artBox == RectangleObject([0, 0, 612, 792])
 
+    page.bleedBox = RectangleObject([0, 1, 100, 101])
+    assert page.bleedBox == RectangleObject([0, 1, 100, 101])
+
 
 def test_page_rotation_non90():
     reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))

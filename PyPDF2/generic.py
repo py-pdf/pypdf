@@ -39,6 +39,7 @@ import logging
 import re
 import sys
 import warnings
+from sys import version_info
 
 from PyPDF2.constants import FilterTypes as FT
 from PyPDF2.constants import StreamAttributes as SA
@@ -59,6 +60,15 @@ from .utils import (
     skipOverComment,
     u_,
 )
+
+if version_info < (3, 0):
+    from cStringIO import StringIO
+else:
+    from io import StringIO
+if version_info < (3, 0):
+    BytesIO = StringIO
+else:
+    from io import BytesIO
 
 logger = logging.getLogger(__name__)
 ObjectPrefix = b_("/<[tf(n%")
@@ -898,6 +908,140 @@ class EncodedStreamObject(StreamObject):
 
     def setData(self, data):
         raise PdfReadError("Creating EncodedStreamObject is not currently supported")
+
+
+class ContentStream(DecodedStreamObject):
+    def __init__(self, stream, pdf):
+        self.pdf = pdf
+        self.operations = []
+        # stream may be a StreamObject or an ArrayObject containing
+        # multiple StreamObjects to be cat'd together.
+        stream = stream.getObject()
+        if isinstance(stream, ArrayObject):
+            data = b_("")
+            for s in stream:
+                data += b_(s.getObject().getData())
+            stream = BytesIO(b_(data))
+        else:
+            stream = BytesIO(b_(stream.getData()))
+        self.__parseContentStream(stream)
+
+    def __parseContentStream(self, stream):
+        # file("f:\\tmp.txt", "w").write(stream.read())
+        stream.seek(0, 0)
+        operands = []
+        while True:
+            peek = readNonWhitespace(stream)
+            if peek == b_("") or ord_(peek) == 0:
+                break
+            stream.seek(-1, 1)
+            if peek.isalpha() or peek == b_("'") or peek == b_('"'):
+                operator = utils.readUntilRegex(
+                    stream, NameObject.delimiterPattern, True
+                )
+                if operator == b_("BI"):
+                    # begin inline image - a completely different parsing
+                    # mechanism is required, of course... thanks buddy...
+                    assert operands == []
+                    ii = self._readInlineImage(stream)
+                    self.operations.append((ii, b_("INLINE IMAGE")))
+                else:
+                    self.operations.append((operands, operator))
+                    operands = []
+            elif peek == b_("%"):
+                # If we encounter a comment in the content stream, we have to
+                # handle it here.  Typically, readObject will handle
+                # encountering a comment -- but readObject assumes that
+                # following the comment must be the object we're trying to
+                # read.  In this case, it could be an operator instead.
+                while peek not in (b_("\r"), b_("\n")):
+                    peek = stream.read(1)
+            else:
+                operands.append(readObject(stream, None))
+
+    def _readInlineImage(self, stream):
+        # begin reading just after the "BI" - begin image
+        # first read the dictionary of settings.
+        settings = DictionaryObject()
+        while True:
+            tok = readNonWhitespace(stream)
+            stream.seek(-1, 1)
+            if tok == b_("I"):
+                # "ID" - begin of image data
+                break
+            key = readObject(stream, self.pdf)
+            tok = readNonWhitespace(stream)
+            stream.seek(-1, 1)
+            value = readObject(stream, self.pdf)
+            settings[key] = value
+        # left at beginning of ID
+        tmp = stream.read(3)
+        assert tmp[:2] == b_("ID")
+        data = BytesIO()
+        # Read the inline image, while checking for EI (End Image) operator.
+        while True:
+            # Read 8 kB at a time and check if the chunk contains the E operator.
+            buf = stream.read(8192)
+            # We have reached the end of the stream, but haven't found the EI operator.
+            if not buf:
+                raise PdfReadError("Unexpected end of stream")
+            loc = buf.find(b_("E"))
+
+            if loc == -1:
+                data.write(buf)
+            else:
+                # Write out everything before the E.
+                data.write(buf[0:loc])
+
+                # Seek back in the stream to read the E next.
+                stream.seek(loc - len(buf), 1)
+                tok = stream.read(1)
+                # Check for End Image
+                tok2 = stream.read(1)
+                if tok2 == b_("I"):
+                    # Data can contain EI, so check for the Q operator.
+                    tok3 = stream.read(1)
+                    info = tok + tok2
+                    # We need to find whitespace between EI and Q.
+                    has_q_whitespace = False
+                    while tok3 in utils.WHITESPACES:
+                        has_q_whitespace = True
+                        info += tok3
+                        tok3 = stream.read(1)
+                    if tok3 == b_("Q") and has_q_whitespace:
+                        stream.seek(-1, 1)
+                        break
+                    else:
+                        stream.seek(-1, 1)
+                        data.write(info)
+                else:
+                    stream.seek(-1, 1)
+                    data.write(tok)
+        return {"settings": settings, "data": data.getvalue()}
+
+    def _getData(self):
+        newdata = BytesIO()
+        for operands, operator in self.operations:
+            if operator == b_("INLINE IMAGE"):
+                newdata.write(b_("BI"))
+                dicttext = BytesIO()
+                operands["settings"].writeToStream(dicttext, None)
+                newdata.write(dicttext.getvalue()[2:-2])
+                newdata.write(b_("ID "))
+                newdata.write(operands["data"])
+                newdata.write(b_("EI"))
+            else:
+                for op in operands:
+                    op.writeToStream(newdata, None)
+                    newdata.write(b_(" "))
+                newdata.write(b_(operator))
+            newdata.write(b_("\n"))
+        return newdata.getvalue()
+
+    def _setData(self, value):
+        self.__parseContentStream(BytesIO(b_(value)))
+
+    _data = property(_getData, _setData)
 
 
 class RectangleObject(ArrayObject):
