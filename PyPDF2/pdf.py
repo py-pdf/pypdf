@@ -1551,7 +1551,7 @@ class PdfFileReader(object):
         :rtype: int
         """
         indirectRef = destination.page
-        if type(indirectRef) is NullObject:
+        if isinstance(indirectRef,NullObject):
             return -1
         ret = self._getPageNumberByIndirect(indirectRef)
         return ret
