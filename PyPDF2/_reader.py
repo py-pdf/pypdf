@@ -909,6 +909,7 @@ class PdfFileReader(object):
     def read(self, stream):
         # start at the end:
         stream.seek(-1, 2)
+        absoluteEndFilePos = stream.tell() + 1
         if not stream.tell():
             raise PdfReadError("Cannot read an empty file")
         if self.strict:
@@ -921,7 +922,7 @@ class PdfFileReader(object):
                     )
                 )
             stream.seek(-1, 2)
-        last1M = stream.tell() - 1024 * 1024 + 1  # offset of last MB of stream
+        last1M = absoluteEndFilePos - 1024 * 1024 # offset of last MB of stream
         line = b_("")
         while line[:5] != b_("%%EOF"):
             if stream.tell() < last1M:
@@ -930,16 +931,25 @@ class PdfFileReader(object):
 
         startxref = self._find_startxref_pos(stream)
 
+        # Let's see if we can find the xref table nearby when
+        # startxref is zero.
+        if not self.strict and startxref == 0:
+            size1M = self._size_to_search_xref()
+            datablock = size1M if absoluteEndFilePos > size1M else absoluteEndFilePos
+            stream.seek(-datablock, 2)
+            tmp = stream.read(datablock)
+            xref_loc = tmp.find(b_("xref"))
+            if xref_loc != -1:
+                startxref = absoluteEndFilePos - datablock + xref_loc
+
         # check and eventually correct the startxref only in not strict
         xref_issue_nr = self._get_xref_issues(stream, startxref)
-        if xref_issue_nr != 0:
-            if self.strict and xref_issue_nr:
-                raise PdfReadError("Broken xref table")
-            else:
-                warnings.warn(
-                    "incorrect startxref pointer({})".format(xref_issue_nr),
-                    PdfReadWarning,
-                )
+        if self.strict and xref_issue_nr:
+            raise PdfReadError("Broken xref table")
+        elif xref_issue_nr != 0:
+            warnings.warn(
+                "incorrect startxref pointer({})".format(xref_issue_nr), PdfReadWarning
+            )
 
         # read all cross reference tables and their trailers
         self.xref = {}
@@ -1013,6 +1023,9 @@ class PdfFileReader(object):
                     continue
                 # no xref table found at specified location
                 raise PdfReadError("Could not find xref table at specified location")
+
+        if not self.xref:
+            raise PdfReadError("Could not find xref table - broken file")
         # if not zero-indexed, verify that the table is correct; change it if necessary
         if self.xrefIndex and not self.strict:
             loc = stream.tell()
@@ -1159,8 +1172,15 @@ class PdfFileReader(object):
         return xrefstream
 
     @staticmethod
+    def _size_to_search_xref():
+        # 1MB
+        return 1024 * 1024
+
+    @staticmethod
     def _get_xref_issues(stream, startxref):
         """Return an int which indicates an issue. 0 means there is no issue."""
+        if startxref == 0:
+            return 0
         stream.seek(startxref - 1, 0)  # -1 to check character before
         line = stream.read(1)
         if line not in b_("\r\n \t"):

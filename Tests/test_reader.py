@@ -2,6 +2,7 @@ import io
 import os
 import time
 from sys import version_info
+from unittest import mock
 
 import pytest
 
@@ -245,6 +246,111 @@ def test_get_images_raw(strict, with_prev_0, startx_correction, should_fail):
             )
     else:
         PdfFileReader(pdf_stream, strict=strict)
+
+
+@pytest.mark.parametrize(
+    "strict,should_fail",
+    [
+        (False, False),
+        (True, True),  # error on startxref, in strict  => fail
+    ],
+)
+def test_startxref_zero(strict, should_fail):
+    with_prev_0 = False
+    pdf_data = (
+        b"%%PDF-1.7\n"
+        b"1 0 obj << /Count 1 /Kids [4 0 R] /Type /Pages >> endobj\n"
+        b"2 0 obj << >> endobj\n"
+        b"3 0 obj << >> endobj\n"
+        b"4 0 obj << /Contents 3 0 R /CropBox [0.0 0.0 2550.0 3508.0]"
+        b" /MediaBox [0.0 0.0 2550.0 3508.0] /Parent 1 0 R"
+        b" /Resources << /Font << >> >>"
+        b" /Rotate 0 /Type /Page >> endobj\n"
+        b"5 0 obj << /Pages 1 0 R /Type /Catalog >> endobj\n"
+        b"xref 1 5\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"trailer << %s/Root 5 0 R /Size 6 >>\n"
+        b"startxref 0\n"
+        b"%%%%EOF"
+    )
+    pdf_data = pdf_data % (
+        pdf_data.find(b"1 0 obj"),
+        pdf_data.find(b"2 0 obj"),
+        pdf_data.find(b"3 0 obj"),
+        pdf_data.find(b"4 0 obj"),
+        pdf_data.find(b"5 0 obj"),
+        b"/Prev 0 " if with_prev_0 else b"",
+    )
+    pdf_stream = io.BytesIO(pdf_data)
+    if should_fail:
+        with pytest.raises(PdfReadError) as exc:
+            PdfFileReader(pdf_stream, strict=strict)
+        assert exc.type == PdfReadError
+        assert (
+            exc.value.args[0]
+            == "/Prev=0 in the trailer (try opening with strict=False)"
+        )
+    else:
+        PdfFileReader(pdf_stream, strict=strict)
+
+
+@pytest.mark.parametrize(
+    "should_fail,size_distance_mb",
+    [
+        (True, 1), # search xref 1 byte before
+        (False, 1024 * 1024), # search xref 1MB before
+    ],
+)
+def test_startxref_zero_xref_far_away(should_fail, size_distance_mb):
+    """
+    This test can simulate a file with 'startxref 0' impossilited to find the
+    xref entry because de xref is located away than 1MB.
+    """
+    strict = False
+    with_prev_0 = False
+    pdf_data = (
+        b"%%PDF-1.7\n"
+        b"1 0 obj << /Count 1 /Kids [4 0 R] /Type /Pages >> endobj\n"
+        b"2 0 obj << >> endobj\n"
+        b"3 0 obj << >> endobj\n"
+        b"4 0 obj << /Contents 3 0 R /CropBox [0.0 0.0 2550.0 3508.0]"
+        b" /MediaBox [0.0 0.0 2550.0 3508.0] /Parent 1 0 R"
+        b" /Resources << /Font << >> >>"
+        b" /Rotate 0 /Type /Page >> endobj\n"
+        b"5 0 obj << /Pages 1 0 R /Type /Catalog >> endobj\n"
+        b"xref  1 5\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"trailer << %s/Root 5 0 R /Size 6 >>\n"
+        b"startxref 0\n"
+        b"%%%%EOF"
+    )
+    pdf_data = pdf_data % (
+        pdf_data.find(b"1 0 obj"),
+        pdf_data.find(b"2 0 obj"),
+        pdf_data.find(b"3 0 obj"),
+        pdf_data.find(b"4 0 obj"),
+        pdf_data.find(b"5 0 obj"),
+        b"/Prev 0 " if with_prev_0 else b"",
+    )
+    pdf_stream = io.BytesIO(pdf_data)
+    if should_fail:
+        with pytest.raises(PdfReadError) as exc:
+            with mock.patch('PyPDF2.PdfFileReader._size_to_search_xref') as mocked:
+                mocked.return_value = size_distance_mb
+                PdfFileReader(pdf_stream, strict=strict)
+        assert exc.type == PdfReadError
+        assert (
+            exc.value.args[0]
+            == "Could not find xref table - broken file"
+        )
 
 
 def test_issue297():
