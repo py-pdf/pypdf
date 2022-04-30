@@ -60,9 +60,9 @@ class _MergedPage(object):
 
 class PdfFileMerger(object):
     """
-    Initializes a ``PdfFileMerger`` object. ``PdfFileMerger`` merges multiple PDFs
-    into a single PDF. It can concatenate, slice, insert, or any combination
-    of the above.
+    Initializes a ``PdfFileMerger`` object. ``PdfFileMerger`` merges multiple
+    PDFs into a single PDF. It can concatenate, slice, insert, or any
+    combination of the above.
 
     See the functions :meth:`merge()<merge>` (or :meth:`append()<append>`)
     and :meth:`write()<write>` for usage information.
@@ -95,19 +95,21 @@ class PdfFileMerger(object):
         :param int position: The *page number* to insert this file. File will
             be inserted after the given number.
 
-        :param fileobj: A File Object or an object that supports the standard read
-            and seek methods similar to a File Object. Could also be a
+        :param fileobj: A File Object or an object that supports the standard
+            read and seek methods similar to a File Object. Could also be a
             string representing a path to a PDF file.
 
-        :param str bookmark: Optionally, you may specify a bookmark to be applied at
-            the beginning of the included file by supplying the text of the bookmark.
+        :param str bookmark: Optionally, you may specify a bookmark to be
+            applied at the beginning of the included file by supplying the text
+            of the bookmark.
 
-        :param pages: can be a :class:`PageRange<PyPDF2.pagerange.PageRange>` or a ``(start, stop[, step])`` tuple
+        :param pages: can be a :class:`PageRange<PyPDF2.pagerange.PageRange>`
+            or a ``(start, stop[, step])`` tuple
             to merge only the specified range of pages from the source
             document into the output document.
 
-        :param bool import_bookmarks: You may prevent the source document's bookmarks
-            from being imported by specifying this as ``False``.
+        :param bool import_bookmarks: You may prevent the source document's
+            bookmarks from being imported by specifying this as ``False``.
         """
 
         # This parameter is passed to self.inputs.append and means
@@ -135,7 +137,10 @@ class PdfFileMerger(object):
             orig_tell = fileobj.stream.tell()
             fileobj.stream.seek(0)
             filecontent = StreamIO(fileobj.stream.read())
-            fileobj.stream.seek(orig_tell)  # reset the stream to its original location
+
+            # reset the stream to its original location
+            fileobj.stream.seek(orig_tell)
+
             fileobj = filecontent
             my_file = True
 
@@ -199,22 +204,25 @@ class PdfFileMerger(object):
 
     def append(self, fileobj, bookmark=None, pages=None, import_bookmarks=True):
         """
-        Identical to the :meth:`merge()<merge>` method, but assumes you want to concatenate
-        all pages onto the end of the file instead of specifying a position.
+        Identical to the :meth:`merge()<merge>` method, but assumes you want to
+        concatenate all pages onto the end of the file instead of specifying a
+        position.
 
-        :param fileobj: A File Object or an object that supports the standard read
-            and seek methods similar to a File Object. Could also be a
+        :param fileobj: A File Object or an object that supports the standard
+            read and seek methods similar to a File Object. Could also be a
             string representing a path to a PDF file.
 
-        :param str bookmark: Optionally, you may specify a bookmark to be applied at
-            the beginning of the included file by supplying the text of the bookmark.
+        :param str bookmark: Optionally, you may specify a bookmark to be
+            applied at the beginning of the included file by supplying the text
+            of the bookmark.
 
-        :param pages: can be a :class:`PageRange<PyPDF2.pagerange.PageRange>` or a ``(start, stop[, step])`` tuple
+        :param pages: can be a :class:`PageRange<PyPDF2.pagerange.PageRange>`
+            or a ``(start, stop[, step])`` tuple
             to merge only the specified range of pages from the source
             document into the output document.
 
-        :param bool import_bookmarks: You may prevent the source document's bookmarks
-            from being imported by specifying this as ``False``.
+        :param bool import_bookmarks: You may prevent the source document's
+            bookmarks from being imported by specifying this as ``False``.
         """
         self.merge(len(self.pages), fileobj, bookmark, pages, import_bookmarks)
 
@@ -231,7 +239,8 @@ class PdfFileMerger(object):
             my_file = True
 
         # Add pages to the PdfFileWriter
-        # The commented out line below was replaced with the two lines below it to allow PdfFileMerger to work with PyPdf 1.13
+        # The commented out line below was replaced with the two lines below it
+        # to allow PdfFileMerger to work with PyPdf 1.13
         for page in self.pages:
             self.output.addPage(page.pagedata)
             page.out_pagedata = self.output.getReference(
@@ -390,11 +399,10 @@ class PdfFileMerger(object):
                 continue
 
             page_no = None
-            pdf = None
             if "/Page" in bookmark:
-                for page_no, page in enumerate(self.pages):
+                for page_no, page in enumerate(self.pages):  # noqa: B007
                     if page.id == bookmark["/Page"]:
-                        pdf = self._write_bookmark_on_page(bookmark, page)
+                        self._write_bookmark_on_page(bookmark, page)
                         break
             if page_no is not None:
                 del bookmark["/Page"], bookmark["/Type"]
@@ -460,9 +468,6 @@ class PdfFileMerger(object):
         bookmark[NameObject("/A")] = DictionaryObject(
             {NameObject("/S"): NameObject("/GoTo"), NameObject("/D"): ArrayObject(args)}
         )
-
-        pdf = page.src  # noqa: F841
-        return pdf
 
     def _associate_dests_to_pages(self, pages):
         for nd in self.named_dests:

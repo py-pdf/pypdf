@@ -22,7 +22,7 @@ def get_all_sample_files():
 all_files_meta = get_all_sample_files()
 
 
-@pytest.mark.external
+@pytest.mark.external()
 @pytest.mark.parametrize(
     "meta",
     [m for m in all_files_meta["data"] if not m["encrypted"]],
@@ -36,7 +36,7 @@ def test_read(meta):
 
 
 @pytest.mark.parametrize(
-    "pdf_path, password",
+    ("pdf_path", "password"),
     [
         ("crazyones.pdf", None),
         ("attachment.pdf", None),
@@ -76,7 +76,7 @@ def test_page_operations(pdf_path, password):
 
 
 @pytest.mark.parametrize(
-    "pdf_path, password",
+    ("pdf_path", "password"),
     [
         (os.path.join(RESOURCE_ROOT, "crazyones.pdf"), None),
         (os.path.join(RESOURCE_ROOT, "attachment.pdf"), None),

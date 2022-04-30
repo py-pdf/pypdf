@@ -43,7 +43,7 @@ def test_createStringObject_exception():
 
 
 @pytest.mark.parametrize(
-    "value, expected, tell", [(b"true", b"true", 4), (b"false", b"false", 5)]
+    ("value", "expected", "tell"), [(b"true", b"true", 4), (b"false", b"false", 5)]
 )
 def test_boolean_object(value, expected, tell):
     stream = BytesIO(value)
@@ -179,7 +179,7 @@ def test_bookmark_write_to_stream():
     assert stream.read() == b"<<\n/Title title\n/Dest [  /FitV 0 ]\n>>"
 
 
-@pytest.mark.no_py27
+@pytest.mark.no_py27()
 def test_encode_pdfdocencoding_keyerror():
     with pytest.raises(UnicodeEncodeError) as exc:
         encode_pdfdocencoding("😀")
@@ -201,7 +201,7 @@ def test_readObject_comment():
     assert out == 1
 
 
-@pytest.mark.no_py27
+@pytest.mark.no_py27()
 def test_ByteStringObject():
     bo = ByteStringObject("stream", encoding="utf-8")
     stream = BytesIO(b"")

@@ -24,7 +24,8 @@ def test_din_a_ratio(dimensions):
 
 
 @pytest.mark.parametrize(
-    "dimensions_a, dimensions_b", list(zip(papersizes._din_a, papersizes._din_a[1:]))
+    ("dimensions_a", "dimensions_b"),
+    list(zip(papersizes._din_a, papersizes._din_a[1:])),
 )
 def test_din_a_doubling(dimensions_a, dimensions_b):
     assert abs(dimensions_a.height - 2 * dimensions_b.width) <= 4

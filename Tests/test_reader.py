@@ -27,7 +27,8 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
 
 
 @pytest.mark.parametrize(
-    "src,num_pages", [("selenium-PyPDF2-issue-177.pdf", 1), ("pdflatex-outline.pdf", 4)]
+    ("src", "num_pages"),
+    [("selenium-PyPDF2-issue-177.pdf", 1), ("pdflatex-outline.pdf", 4)],
 )
 def test_get_num_pages(src, num_pages):
     src = os.path.join(RESOURCE_ROOT, src)
@@ -36,7 +37,7 @@ def test_get_num_pages(src, num_pages):
 
 
 @pytest.mark.parametrize(
-    "pdf_path, expected",
+    ("pdf_path", "expected"),
     [
         (
             os.path.join(RESOURCE_ROOT, "crazyones.pdf"),
@@ -129,7 +130,7 @@ def test_get_attachments(src):
 
 
 @pytest.mark.parametrize(
-    "src,outline_elements",
+    ("src", "outline_elements"),
     [
         (os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf"), 9),
         (os.path.join(RESOURCE_ROOT, "crazyones.pdf"), 0),
@@ -142,7 +143,7 @@ def test_get_outlines(src, outline_elements):
 
 
 @pytest.mark.parametrize(
-    "src,nb_images",
+    ("src", "nb_images"),
     [
         ("pdflatex-outline.pdf", 0),
         ("crazyones.pdf", 0),
@@ -184,7 +185,7 @@ def test_get_images(src, nb_images):
 
 
 @pytest.mark.parametrize(
-    "strict,with_prev_0,startx_correction,should_fail",
+    ("strict", "with_prev_0", "startx_correction", "should_fail"),
     [
         (True, False, -1, False),  # all nominal => no fail
         (True, True, -1, True),  # Prev=0 => fail expected
@@ -250,7 +251,6 @@ def test_issue297():
     path = os.path.join(RESOURCE_ROOT, "issue-297.pdf")
     with pytest.raises(PdfReadError) as exc:
         reader = PdfFileReader(path, strict=True)
-        reader.getPage(0)
     assert "Broken xref table" in exc.value.args[0]
     reader = PdfFileReader(path, strict=False)
     reader.getPage(0)
@@ -273,7 +273,7 @@ def test_get_page_of_encrypted_file():
 
 
 @pytest.mark.parametrize(
-    "src,expected,expected_get_fields",
+    ("src", "expected", "expected_get_fields"),
     [
         (
             "form.pdf",
@@ -324,7 +324,7 @@ def test_get_form(src, expected, expected_get_fields):
 
 
 @pytest.mark.parametrize(
-    "src,page_nb",
+    ("src", "page_nb"),
     [
         ("form.pdf", 0),
         ("pdflatex-outline.pdf", 2),
@@ -338,7 +338,7 @@ def test_get_page_number(src, page_nb):
 
 
 @pytest.mark.parametrize(
-    "src,expected",
+    ("src", "expected"),
     [
         ("form.pdf", None),
     ],
@@ -350,7 +350,7 @@ def test_get_page_layout(src, expected):
 
 
 @pytest.mark.parametrize(
-    "src,expected",
+    ("src", "expected"),
     [
         ("form.pdf", "/UseNone"),
         ("crazyones.pdf", None),
@@ -483,8 +483,8 @@ def test_read_unknown_zero_pages():
         pdf_data.find(b"xref") - 1,
     )
     pdf_stream = io.BytesIO(pdf_data)
+    reader = PdfFileReader(pdf_stream, strict=True)
     with pytest.raises(PdfReadError) as exc:
-        reader = PdfFileReader(pdf_stream, strict=True)
         reader.numPages
 
     assert exc.value.args[0] == "Could not find object."

@@ -10,7 +10,7 @@ PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
 RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
 
 
-@pytest.fixture
+@pytest.fixture()
 def pdf_file_writer():
     reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
     writer = PdfFileWriter()
