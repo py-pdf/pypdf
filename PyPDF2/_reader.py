@@ -557,6 +557,8 @@ class PdfFileReader(object):
                 id2num[x.indirectRef.idnum] = i
             self._pageId2Num = id2num
 
+        if isinstance(indirectRef, NullObject):
+             return -1
         if isinstance(indirectRef, int):
             idnum = indirectRef
         else:
@@ -595,7 +597,17 @@ class PdfFileReader(object):
     def _buildDestination(self, title, array):
         page, typ = array[0:2]
         array = array[2:]
-        return Destination(title, page, typ, *array)
+        try:
+            return Destination(title, page, typ, *array)
+        except PdfReadError:
+            warnings.warn("Unknown destination : " + title + " " + str(array))
+            if self.strict:
+                raise
+            else:
+                #create a link to first Page
+                return Destination(title, self.getPage(0).indirectRef,
+                                   TextStringObject("/Fit"))
+
 
     def _buildOutline(self, node):
         dest, title, outline = None, None, None
