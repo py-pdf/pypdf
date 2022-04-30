@@ -14,7 +14,8 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
 
 
 @pytest.mark.parametrize(
-    "value,expected", [(0, True), (-1, True), (1, True), ("1", False), (1.5, False)]
+    ("value", "expected"),
+    [(0, True), (-1, True), (1, True), ("1", False), (1.5, False)],
 )
 def test_isInt(value, expected):
     assert PyPDF2.utils.isInt(value) == expected
@@ -25,7 +26,7 @@ def test_isBytes():
 
 
 @pytest.mark.parametrize(
-    "stream,expected",
+    ("stream", "expected"),
     [
         (io.BytesIO(b"foo"), False),
         (io.BytesIO(b""), False),
@@ -44,7 +45,7 @@ def test_readUntilWhitespace():
 
 
 @pytest.mark.parametrize(
-    "stream,remainder",
+    ("stream", "remainder"),
     [
         (io.BytesIO(b"% foobar\n"), b""),
         (io.BytesIO(b""), b""),
@@ -74,7 +75,7 @@ def test_readUntilRegex_premature_ending_name():
 
 
 @pytest.mark.parametrize(
-    "a,b,expected",
+    ("a", "b", "expected"),
     [
         ([[3]], [[7]], [[21]]),
         ([[3, 7]], [[5], [13]], [[3 * 5.0 + 7 * 13]]),
@@ -103,7 +104,7 @@ def test_hexStr():
     assert PyPDF2.utils.hexStr(10) == "0xa"
 
 
-@pytest.mark.no_py27
+@pytest.mark.no_py27()
 def test_b():
     assert PyPDF2.utils.b_("foo") == b"foo"
     assert PyPDF2.utils.b_("😀") == "😀".encode("utf-8")

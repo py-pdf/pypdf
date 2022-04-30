@@ -101,20 +101,20 @@ class XmpInformation(PdfObject):
 
     @staticmethod
     def _converter_date(value):
-        m = iso8601.match(value)
-        year = int(m.group("year"))
-        month = int(m.group("month") or "1")
-        day = int(m.group("day") or "1")
-        hour = int(m.group("hour") or "0")
-        minute = int(m.group("minute") or "0")
-        second = decimal.Decimal(m.group("second") or "0")
+        matches = iso8601.match(value)
+        year = int(matches.group("year"))
+        month = int(matches.group("month") or "1")
+        day = int(matches.group("day") or "1")
+        hour = int(matches.group("hour") or "0")
+        minute = int(matches.group("minute") or "0")
+        second = decimal.Decimal(matches.group("second") or "0")
         seconds = second.to_integral(decimal.ROUND_FLOOR)
         milliseconds = (second - seconds) * 1000000
 
         seconds = int(seconds)
         milliseconds = int(milliseconds)
 
-        tzd = m.group("tzd") or "Z"
+        tzd = matches.group("tzd") or "Z"
         dt = datetime.datetime(year, month, day, hour, minute, seconds, milliseconds)
         if tzd != "Z":
             tzd_hours, tzd_minutes = [int(x) for x in tzd.split(":")]

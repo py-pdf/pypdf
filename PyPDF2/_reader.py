@@ -40,6 +40,8 @@ from PyPDF2._page import PageObject
 from PyPDF2._security import _alg33_1, _alg34, _alg35
 from PyPDF2.constants import CatalogAttributes as CA
 from PyPDF2.constants import Core as CO
+from PyPDF2.constants import DocumentInformationAttributes as DI
+from PyPDF2.constants import EncryptionDictAttributes as ED
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.constants import PagesAttributes as PA
 from PyPDF2.constants import StreamAttributes as SA
@@ -118,39 +120,39 @@ class DocumentInformation(DictionaryObject):
         Returns a unicode string (``TextStringObject``) or ``None``
         if the title is not specified."""
         return (
-            self.getText("/Title") or self.get("/Title").getObject()
-            if self.get("/Title")
+            self.getText(DI.TITLE) or self.get(DI.TITLE).getObject()
+            if self.get(DI.TITLE)
             else None
         )
 
     @property
     def title_raw(self):
         """The "raw" version of title; can return a ``ByteStringObject``."""
-        return self.get("/Title")
+        return self.get(DI.TITLE)
 
     @property
     def author(self):
         """Read-only property accessing the document's **author**.
         Returns a unicode string (``TextStringObject``) or ``None``
         if the author is not specified."""
-        return self.getText("/Author")
+        return self.getText(DI.AUTHOR)
 
     @property
     def author_raw(self):
         """The "raw" version of author; can return a ``ByteStringObject``."""
-        return self.get("/Author")
+        return self.get(DI.AUTHOR)
 
     @property
     def subject(self):
         """Read-only property accessing the document's **subject**.
         Returns a unicode string (``TextStringObject``) or ``None``
         if the subject is not specified."""
-        return self.getText("/Subject")
+        return self.getText(DI.SUBJECT)
 
     @property
     def subject_raw(self):
         """The "raw" version of subject; can return a ``ByteStringObject``."""
-        return self.get("/Subject")
+        return self.get(DI.SUBJECT)
 
     @property
     def creator(self):
@@ -159,12 +161,12 @@ class DocumentInformation(DictionaryObject):
         application (e.g. OpenOffice) that created the original document from
         which it was converted. Returns a unicode string (``TextStringObject``)
         or ``None`` if the creator is not specified."""
-        return self.getText("/Creator")
+        return self.getText(DI.CREATOR)
 
     @property
     def creator_raw(self):
         """The "raw" version of creator; can return a ``ByteStringObject``."""
-        return self.get("/Creator")
+        return self.get(DI.CREATOR)
 
     @property
     def producer(self):
@@ -173,18 +175,20 @@ class DocumentInformation(DictionaryObject):
         the name of the application (for example, OSX Quartz) that converted
         it to PDF. Returns a unicode string (``TextStringObject``)
         or ``None`` if the producer is not specified."""
-        return self.getText("/Producer")
+        return self.getText(DI.PRODUCER)
 
     @property
     def producer_raw(self):
         """The "raw" version of producer; can return a ``ByteStringObject``."""
-        return self.get("/Producer")
+        return self.get(DI.PRODUCER)
 
 
 class PdfFileReader(object):
     """
-    Initializes a PdfFileReader object.  This operation can take some time, as
-    the PDF stream's cross-reference tables are read into memory.
+    Initialize a PdfFileReader object.
+
+    This operation can take some time, as the PDF stream's cross-reference
+    tables are read into memory.
 
     :param stream: A File object or an object that supports the standard read
         and seek methods similar to a File object. Could also be a
@@ -201,8 +205,8 @@ class PdfFileReader(object):
 
     def __init__(self, stream, strict=True, warndest=None, overwriteWarnings=True):
         if overwriteWarnings:
-            # Have to dynamically override the default showwarning since there are no
-            # public methods that specify the 'file' parameter
+            # Have to dynamically override the default showwarning since there
+            # are no public methods that specify the 'file' parameter
             def _showwarning(
                 message, category, filename, lineno, file=warndest, line=None
             ):
@@ -227,7 +231,8 @@ class PdfFileReader(object):
         self._pageId2Num = None  # map page IndirectRef number to Page Number
         if hasattr(stream, "mode") and "b" not in stream.mode:
             warnings.warn(
-                "PdfFileReader stream/file object is not in binary mode. It may not be read correctly.",
+                "PdfFileReader stream/file object is not in binary mode. "
+                "It may not be read correctly.",
                 PdfReadWarning,
             )
         if isString(stream):
@@ -240,13 +245,14 @@ class PdfFileReader(object):
 
     def getDocumentInfo(self):
         """
-        Retrieves the PDF file's document information dictionary, if it exists.
+        Retrieve the PDF file's document information dictionary, if it exists.
         Note that some PDF files use metadata streams instead of docinfo
         dictionaries, and these metadata streams will not be accessed by this
         function.
 
         :return: the document information of this PDF file
-        :rtype: :class:`DocumentInformation<pdf.DocumentInformation>` or ``None`` if none exists.
+        :rtype: :class:`DocumentInformation<pdf.DocumentInformation>` or
+            ``None`` if none exists.
         """
         if TK.INFO not in self.trailer:
             return None
@@ -257,12 +263,15 @@ class PdfFileReader(object):
 
     @property
     def documentInfo(self):
-        """Read-only property that accesses the :meth:`getDocumentInfo()<PdfFileReader.getDocumentInfo>` function."""
+        """
+        Read-only property that accesses the
+        :meth:`getDocumentInfo()<PdfFileReader.getDocumentInfo>` function.
+        """
         return self.getDocumentInfo()
 
     def getXmpMetadata(self):
         """
-        Retrieves XMP (Extensible Metadata Platform) data from the PDF document
+        Retrieve XMP (Extensible Metadata Platform) data from the PDF document
         root.
 
         :return: a :class:`XmpInformation<xmp.XmpInformation>`
@@ -505,7 +514,7 @@ class PdfFileReader(object):
 
     def getOutlines(self, node=None, outlines=None):
         """
-        Retrieves the document outline present in the document.
+        Retrieve the document outline present in the document.
 
         :return: a nested list of :class:`Destinations<PyPDF2.generic.Destination>`.
         """
@@ -646,6 +655,7 @@ class PdfFileReader(object):
     def getPageLayout(self):
         """
         Get the page layout.
+
         See :meth:`setPageLayout()<PdfFileWriter.setPageLayout>`
         for a description of valid layouts.
 
@@ -877,7 +887,6 @@ class PdfFileReader(object):
         readNonWhitespace(stream)
         stream.seek(-1, 1)
         if extra and self.strict:
-            # not a fatal error
             warnings.warn(
                 "Superfluous whitespace found in object header %s %s"
                 % (idnum, generation),
@@ -890,7 +899,6 @@ class PdfFileReader(object):
         return out
 
     def cacheIndirectObject(self, generation, idnum, obj):
-        # return None # Sometimes we want to turn off cache for debugging.
         if (generation, idnum) in self.resolvedObjects:
             msg = "Overwriting cache for %s %s" % (generation, idnum)
             if self.strict:
@@ -922,20 +930,7 @@ class PdfFileReader(object):
                 raise PdfReadError("EOF marker not found")
             line = self.readNextEndLine(stream)
 
-        # find startxref entry - the location of the xref table
-        line = self.readNextEndLine(stream)
-        try:
-            startxref = int(line)
-        except ValueError:
-            # 'startxref' may be on the same line as the location
-            if not line.startswith(b_("startxref")):
-                raise PdfReadError("startxref not found")
-            startxref = int(line[9:].strip())
-            warnings.warn("startxref on same line as offset")
-        else:
-            line = self.readNextEndLine(stream)
-            if line[:9] != b_("startxref"):
-                raise PdfReadError("startxref not found")
+        startxref = self._find_startxref_pos(stream)
 
         # check and eventually correct the startxref only in not strict
         xref_issue_nr = self._get_xref_issues(stream, startxref)
@@ -1033,6 +1028,23 @@ class PdfFileReader(object):
                     # if not, then either it's just plain wrong, or the
                     # non-zero-index is actually correct
             stream.seek(loc, 0)  # return to where it was
+
+    def _find_startxref_pos(self, stream):
+        """Find startxref entry - the location of the xref table"""
+        line = self.readNextEndLine(stream)
+        try:
+            startxref = int(line)
+        except ValueError:
+            # 'startxref' may be on the same line as the location
+            if not line.startswith(b_("startxref")):
+                raise PdfReadError("startxref not found")
+            startxref = int(line[9:].strip())
+            warnings.warn("startxref on same line as offset")
+        else:
+            line = self.readNextEndLine(stream)
+            if line[:9] != b_("startxref"):
+                raise PdfReadError("startxref not found")
+        return startxref
 
     def _read_standard_xref_table(self, stream):
         # standard cross-reference table
@@ -1145,7 +1157,7 @@ class PdfFileReader(object):
 
     @staticmethod
     def _get_xref_issues(stream, startxref):
-        """Returns an int which indicates an issue. 0 means there is no issue."""
+        """Return an int which indicates an issue. 0 means there is no issue."""
         stream.seek(startxref - 1, 0)  # -1 to check character before
         line = stream.read(1)
         if line not in b_("\r\n \t"):
@@ -1359,9 +1371,9 @@ class PdfFileReader(object):
 
     def _authenticateUserPassword(self, password):
         encrypt = self.trailer[TK.ENCRYPT].getObject()
-        rev = encrypt["/R"].getObject()
-        owner_entry = encrypt["/O"].getObject()
-        p_entry = encrypt["/P"].getObject()
+        rev = encrypt[ED.R].getObject()
+        owner_entry = encrypt[ED.O].getObject()
+        p_entry = encrypt[ED.P].getObject()
         if TK.ID in self.trailer:
             id_entry = self.trailer[TK.ID].getObject()
         else:
@@ -1370,7 +1382,7 @@ class PdfFileReader(object):
             # https://github.com/mstamy2/PyPDF2/issues/608
             id_entry = ArrayObject([ByteStringObject(b""), ByteStringObject(b"")])
         id1_entry = id_entry[0].getObject()
-        real_U = encrypt["/U"].getObject().original_bytes
+        real_U = encrypt[ED.U].getObject().original_bytes
         if rev == 2:
             U, key = _alg34(password, owner_entry, p_entry, id1_entry)
         elif rev >= 3:
@@ -1381,7 +1393,7 @@ class PdfFileReader(object):
                 owner_entry,
                 p_entry,
                 id1_entry,
-                encrypt.get("/EncryptMetadata", BooleanObject(False)).getObject(),
+                encrypt.get(ED.ENCRYPT_METADATA, BooleanObject(False)).getObject(),
             )
             U, real_U = U[:16], real_U[:16]
         return U == real_U, key

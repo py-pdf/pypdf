@@ -19,7 +19,9 @@ filter_inputs = (
 )
 
 
-@pytest.mark.parametrize("predictor, s", list(cartesian_product([1], filter_inputs)))
+@pytest.mark.parametrize(
+    ("predictor", "s"), list(cartesian_product([1], filter_inputs))
+)
 def test_FlateDecode(predictor, s):
     """
     Tests FlateDecode decode() and encode() methods.
@@ -46,7 +48,7 @@ def test_FlateDecode_unsupported_predictor():
 
 
 @pytest.mark.parametrize(
-    "input,expected",
+    ("input", "expected"),
     [
         (">", ""),
         (
@@ -80,7 +82,7 @@ def test_FlateDecode_unsupported_predictor():
         "whitespace",
     ],
 )
-@pytest.mark.no_py27
+@pytest.mark.no_py27()
 def test_ASCIIHexDecode(input, expected):
     """
     Feeds a bunch of values to ASCIIHexDecode.decode() and ensures the
@@ -100,7 +102,7 @@ def test_ASCIIHexDecode_no_eod():
     assert exc.value.args[0] == "Unexpected EOD in ASCIIHexDecode"
 
 
-@pytest.mark.xfail
+@pytest.mark.xfail()
 def test_ASCII85Decode_with_overflow():
     inputs = (
         v + "~>"
@@ -119,7 +121,7 @@ def test_ASCII85Decode_with_overflow():
         assert exc.value.args[0] == ""
 
 
-@pytest.mark.no_py27
+@pytest.mark.no_py27()
 def test_ASCII85Decode_five_zero_bytes():
     """
     From ISO 32000 (2008) §7.4.3:

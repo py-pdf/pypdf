@@ -11,7 +11,7 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
 
 
 @pytest.mark.parametrize(
-    "src,has_xmp",
+    ("src", "has_xmp"),
     [
         (os.path.join(RESOURCE_ROOT, "commented-xmp.pdf"), True),
         (os.path.join(RESOURCE_ROOT, "crazyones.pdf"), False),
