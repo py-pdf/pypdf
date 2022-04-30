@@ -81,7 +81,6 @@ def readObject(stream, pdf):
     stream.seek(-1, 1)  # reset to start
     idx = ObjectPrefix.find(tok)
     if idx == 0:
-        # name object
         return NameObject.readFromStream(stream, pdf)
     elif idx == 1:
         # hexadecimal string OR dictionary
@@ -93,16 +92,12 @@ def readObject(stream, pdf):
         else:
             return readHexStringFromStream(stream)
     elif idx == 2:
-        # array object
         return ArrayObject.readFromStream(stream, pdf)
     elif idx == 3 or idx == 4:
-        # boolean object
         return BooleanObject.readFromStream(stream)
     elif idx == 5:
-        # string object
         return readStringFromStream(stream)
     elif idx == 6:
-        # null object
         return NullObject.readFromStream(stream)
     elif idx == 7:
         # comment
@@ -127,7 +122,7 @@ def readObject(stream, pdf):
 
 class PdfObject(object):
     def getObject(self):
-        """Resolves indirect references."""
+        """Resolve indirect references."""
         return self
 
 
@@ -561,7 +556,7 @@ class DictionaryObject(dict, PdfObject):
 
     def getXmpMetadata(self):
         """
-        Retrieves XMP (Extensible Metadata Platform) data relevant to the
+        Retrieve XMP (Extensible Metadata Platform) data relevant to the
         this object, if available.
 
         Stability: Added in v1.12, will exist for all future v1.x releases.

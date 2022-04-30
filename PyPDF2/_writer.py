@@ -152,7 +152,7 @@ class PdfFileWriter(object):
 
     def addPage(self, page):
         """
-        Adds a page to this PDF file.  The page is usually acquired from a
+        Add a page to this PDF file.  The page is usually acquired from a
         :class:`PdfFileReader<PdfFileReader>` instance.
 
         :param PageObject page: The page to add to the document. Should be
@@ -173,7 +173,7 @@ class PdfFileWriter(object):
 
     def getPage(self, pageNumber):
         """
-        Retrieves a page by number from this PDF file.
+        Retrieve a page by number from this PDF file.
 
         :param int pageNumber: The page number to retrieve
             (pages begin at zero)
@@ -194,7 +194,7 @@ class PdfFileWriter(object):
 
     def addBlankPage(self, width=None, height=None):
         """
-        Appends a blank page to this PDF file and returns it. If no page size
+        Append a blank page to this PDF file and returns it. If no page size
         is specified, use the size of the last page.
 
         :param float width: The width of the new page expressed in default user
@@ -212,7 +212,7 @@ class PdfFileWriter(object):
 
     def insertBlankPage(self, width=None, height=None, index=0):
         """
-        Inserts a blank page to this PDF file and returns it. If no page size
+        Insert a blank page to this PDF file and returns it. If no page size
         is specified, use the size of the last page.
 
         :param float width: The width of the new page expressed in default user
@@ -496,7 +496,7 @@ class PdfFileWriter(object):
 
     def write(self, stream):
         """
-        Writes the collection of pages added to this object out as a PDF file.
+        Write the collection of pages added to this object out as a PDF file.
 
         :param stream: An object to write the file to.  The object must support
             the write method and the tell method, similar to a file object.
@@ -865,9 +865,7 @@ class PdfFileWriter(object):
         return dest_ref
 
     def removeLinks(self):
-        """
-        Removes links and annotations from this output.
-        """
+        """Remove links and annotations from this output."""
         pages = self.getObject(self._pages)[PA.KIDS]
         for page in pages:
             page_ref = self.getObject(page)
@@ -876,7 +874,7 @@ class PdfFileWriter(object):
 
     def removeImages(self, ignoreByteStringObject=False):
         """
-        Removes images from this output.
+        Remove images from this output.
 
         :param bool ignoreByteStringObject: optional parameter
             to ignore ByteString Objects.
@@ -952,7 +950,7 @@ class PdfFileWriter(object):
 
     def removeText(self, ignoreByteStringObject=False):
         """
-        Removes text from this output.
+        Remove text from this output.
 
         :param bool ignoreByteStringObject: optional parameter
             to ignore ByteString Objects.
@@ -1058,18 +1056,18 @@ class PdfFileWriter(object):
 
     def addLink(self, pagenum, pagedest, rect, border=None, fit="/Fit", *args):
         """
-            Add an internal link from a rectangular area to the specified page.
+        Add an internal link from a rectangular area to the specified page.
 
-            :param int pagenum: index of the page on which to place the link.
-            :param int pagedest: index of the page to which the link should go.
-            :param rect: :class:`RectangleObject<PyPDF2.generic.RectangleObject>` or array of four
-                integers specifying the clickable rectangular area
-                ``[xLL, yLL, xUR, yUR]``, or string in the form ``"[ xLL yLL xUR yUR ]"``.
-            :param border: if provided, an array describing border-drawing
-                properties. See the PDF spec for details. No border will be
-                drawn if this argument is omitted.
-            :param str fit: Page fit or 'zoom' option (see below). Additional arguments may need
-                to be supplied. Passing ``None`` will be read as a null value for that coordinate.
+        :param int pagenum: index of the page on which to place the link.
+        :param int pagedest: index of the page to which the link should go.
+        :param rect: :class:`RectangleObject<PyPDF2.generic.RectangleObject>` or array of four
+            integers specifying the clickable rectangular area
+            ``[xLL, yLL, xUR, yUR]``, or string in the form ``"[ xLL yLL xUR yUR ]"``.
+        :param border: if provided, an array describing border-drawing
+            properties. See the PDF spec for details. No border will be
+            drawn if this argument is omitted.
+        :param str fit: Page fit or 'zoom' option (see below). Additional arguments may need
+            to be supplied. Passing ``None`` will be read as a null value for that coordinate.
 
         .. list-table:: Valid ``zoom`` arguments (see Table 8.2 of the PDF 1.7 reference for details)
            :widths: 50 200
@@ -1155,6 +1153,7 @@ class PdfFileWriter(object):
     def getPageLayout(self):
         """
         Get the page layout.
+
         See :meth:`setPageLayout()<PdfFileWriter.setPageLayout>` for a description of valid layouts.
 
         :return: Page layout currently being used.

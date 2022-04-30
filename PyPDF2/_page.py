@@ -87,8 +87,9 @@ def createRectangleAccessor(name, fallback):
 
 class PageObject(DictionaryObject):
     """
-    This class represents a single page within a PDF file.  Typically this
-    object will be created by accessing the
+    PageObject represents a single page within a PDF file.
+
+    Typically this object will be created by accessing the
     :meth:`getPage()<PyPDF2.PdfFileReader.getPage>` method of the
     :class:`PdfFileReader<PyPDF2.PdfFileReader>` class, but it is
     also possible to create an empty page with the
@@ -107,7 +108,8 @@ class PageObject(DictionaryObject):
     @staticmethod
     def createBlankPage(pdf=None, width=None, height=None):
         """
-        Returns a new blank page.
+        Return a new blank page.
+
         If ``width`` or ``height`` is ``None``, try to get the page size
         from the last page of *pdf*.
 
@@ -142,7 +144,7 @@ class PageObject(DictionaryObject):
 
     def rotateClockwise(self, angle):
         """
-        Rotates a page clockwise by increments of 90 degrees.
+        Rotate a page clockwise by increments of 90 degrees.
 
         :param int angle: Angle to rotate the page.  Must be an increment
             of 90 deg.
@@ -154,7 +156,7 @@ class PageObject(DictionaryObject):
 
     def rotateCounterClockwise(self, angle):
         """
-        Rotates a page counter-clockwise by increments of 90 degrees.
+        Rotate a page counter-clockwise by increments of 90 degrees.
 
         :param int angle: Angle to rotate the page.  Must be an increment
             of 90 deg.
@@ -240,7 +242,7 @@ class PageObject(DictionaryObject):
 
     def getContents(self):
         """
-        Accesses the page contents.
+        Access the page contents.
 
         :return: the ``/Contents`` object, or ``None`` if it doesn't exist.
             ``/Contents`` is optional, as described in PDF Reference  7.7.3.3
@@ -252,7 +254,9 @@ class PageObject(DictionaryObject):
 
     def mergePage(self, page2):
         """
-        Merges the content streams of two pages into one.  Resource references
+        Merge the content streams of two pages into one.
+
+        Resource references
         (i.e. fonts) are maintained from both pages.  The mediabox/cropbox/etc
         of this page are not altered.  The parameter page's content stream will
         be added to the end of this page's content stream, meaning that it will
@@ -388,8 +392,8 @@ class PageObject(DictionaryObject):
 
     def mergeTransformedPage(self, page2, ctm, expand=False):
         """
-        This is similar to mergePage, but a transformation matrix is
-        applied to the merged stream.
+        mergeTransformedPage is similar to mergePage, but a transformation
+        matrix is applied to the merged stream.
 
         :param PageObject page2: The page to be merged into this one. Should be
             an instance of :class:`PageObject<PageObject>`.
@@ -409,8 +413,8 @@ class PageObject(DictionaryObject):
 
     def mergeScaledPage(self, page2, scale, expand=False):
         """
-        This is similar to mergePage, but the stream to be merged is scaled
-        by appling a transformation matrix.
+        mergeScaledPage is similar to mergePage, but the stream to be merged
+        is scaled by appling a transformation matrix.
 
         :param PageObject page2: The page to be merged into this one. Should be
             an instance of :class:`PageObject<PageObject>`.
@@ -423,8 +427,8 @@ class PageObject(DictionaryObject):
 
     def mergeRotatedPage(self, page2, rotation, expand=False):
         """
-        This is similar to mergePage, but the stream to be merged is rotated
-        by appling a transformation matrix.
+        mergeRotatedPage is similar to mergePage, but the stream to be merged
+        is rotated by appling a transformation matrix.
 
         :param PageObject page2: the page to be merged into this one. Should be
             an instance of :class:`PageObject<PageObject>`.
@@ -448,8 +452,8 @@ class PageObject(DictionaryObject):
 
     def mergeTranslatedPage(self, page2, tx, ty, expand=False):
         """
-        This is similar to mergePage, but the stream to be merged is translated
-        by appling a transformation matrix.
+        mergeTranslatedPage is similar to mergePage, but the stream to be
+        merged is translated by appling a transformation matrix.
 
         :param PageObject page2: the page to be merged into this one. Should be
             an instance of :class:`PageObject<PageObject>`.
@@ -462,8 +466,8 @@ class PageObject(DictionaryObject):
 
     def mergeRotatedTranslatedPage(self, page2, rotation, tx, ty, expand=False):
         """
-        This is similar to mergePage, but the stream to be merged is rotated
-        and translated by appling a transformation matrix.
+        mergeRotatedTranslatedPage is similar to mergePage, but the stream to
+        be merged is rotated and translated by appling a transformation matrix.
 
         :param PageObject page2: the page to be merged into this one. Should be
             an instance of :class:`PageObject<PageObject>`.
@@ -493,8 +497,8 @@ class PageObject(DictionaryObject):
 
     def mergeRotatedScaledPage(self, page2, rotation, scale, expand=False):
         """
-        This is similar to mergePage, but the stream to be merged is rotated
-        and scaled by appling a transformation matrix.
+        mergeRotatedScaledPage is similar to mergePage, but the stream to be
+        merged is rotated and scaled by appling a transformation matrix.
 
         :param PageObject page2: the page to be merged into this one. Should be
             an instance of :class:`PageObject<PageObject>`.
@@ -520,8 +524,8 @@ class PageObject(DictionaryObject):
 
     def mergeScaledTranslatedPage(self, page2, scale, tx, ty, expand=False):
         """
-        This is similar to mergePage, but the stream to be merged is translated
-        and scaled by appling a transformation matrix.
+        mergeScaledTranslatedPage is similar to mergePage, but the stream to be
+        merged is translated and scaled by appling a transformation matrix.
 
         :param PageObject page2: the page to be merged into this one. Should be
             an instance of :class:`PageObject<PageObject>`.
@@ -546,8 +550,9 @@ class PageObject(DictionaryObject):
         self, page2, rotation, scale, tx, ty, expand=False
     ):
         """
-        This is similar to mergePage, but the stream to be merged is translated,
-        rotated and scaled by appling a transformation matrix.
+        mergeRotatedScaledTranslatedPage is similar to mergePage, but the
+        stream to be merged is translated, rotated and scaled by appling a
+        transformation matrix.
 
         :param PageObject page2: the page to be merged into this one. Should be
             an instance of :class:`PageObject<PageObject>`.
@@ -577,7 +582,7 @@ class PageObject(DictionaryObject):
 
     def addTransformation(self, ctm):
         """
-        Applies a transformation matrix to the page.
+        Apply a transformation matrix to the page.
 
         :param tuple ctm: A 6-element tuple containing the operands of the
             transformation matrix.
@@ -592,7 +597,7 @@ class PageObject(DictionaryObject):
 
     def scale(self, sx, sy):
         """
-        Scales a page by the given factors by appling a transformation
+        Scale a page by the given factors by appling a transformation
         matrix to its content and updating the page size.
 
         :param float sx: The scaling factor on horizontal axis.
@@ -630,7 +635,7 @@ class PageObject(DictionaryObject):
 
     def scaleBy(self, factor):
         """
-        Scales a page by the given factor by appling a transformation
+        Scale a page by the given factor by appling a transformation
         matrix to its content and updating the page size.
 
         :param float factor: The scaling factor (for both X and Y axis).
@@ -639,7 +644,7 @@ class PageObject(DictionaryObject):
 
     def scaleTo(self, width, height):
         """
-        Scales a page to the specified dimentions by appling a
+        Scale a page to the specified dimentions by appling a
         transformation matrix to its content and updating the page size.
 
         :param float width: The new width.
@@ -655,7 +660,7 @@ class PageObject(DictionaryObject):
 
     def compressContentStreams(self):
         """
-        Compresses the size of this page by joining all content streams and
+        Compress the size of this page by joining all content streams and
         applying a FlateDecode filter.
 
         However, it is possible that this function will perform no action if

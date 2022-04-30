@@ -88,9 +88,7 @@ class FilterTypes:
 
 
 class FilterTypeAbbreviations:
-    """
-    Table 4.44 of the 1.7 Manual (page 353ff)
-    """
+    """Table 4.44 of the 1.7 Manual (page 353ff)"""
 
     AHx = "/AHx"
     A85 = "/A85"
