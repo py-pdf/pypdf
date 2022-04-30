@@ -40,6 +40,7 @@ from PyPDF2._page import PageObject
 from PyPDF2._security import _alg33, _alg34, _alg35
 from PyPDF2.constants import CatalogAttributes as CA
 from PyPDF2.constants import Core as CO
+from PyPDF2.constants import EncryptionDictAttributes as ED
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.constants import PagesAttributes as PA
 from PyPDF2.constants import StreamAttributes as SA
@@ -396,7 +397,7 @@ class PdfFileWriter(object):
             PDF Reference Table 8.70 for details.
         """
         # Iterate through pages, update field values
-        for j in range(0, len(page[PG.ANNOTS])):
+        for j in range(len(page[PG.ANNOTS])):
             writer_annot = page[PG.ANNOTS][j].getObject()
             # retrieve parent field values, if present
             writer_parent_annot = {}  # fallback if it's not there
@@ -487,10 +488,10 @@ class PdfFileWriter(object):
         encrypt[NameObject("/V")] = NumberObject(V)
         if V == 2:
             encrypt[NameObject(SA.LENGTH)] = NumberObject(keylen * 8)
-        encrypt[NameObject("/R")] = NumberObject(rev)
-        encrypt[NameObject("/O")] = ByteStringObject(O)
-        encrypt[NameObject("/U")] = ByteStringObject(U)
-        encrypt[NameObject("/P")] = NumberObject(P)
+        encrypt[NameObject(ED.R)] = NumberObject(rev)
+        encrypt[NameObject(ED.O)] = ByteStringObject(O)
+        encrypt[NameObject(ED.U)] = ByteStringObject(U)
+        encrypt[NameObject(ED.P)] = NumberObject(P)
         self._encrypt = self._addObject(encrypt)
         self._encrypt_key = key
 

@@ -226,21 +226,21 @@ class ASCIIHexDecode(object):
         """
         retval = ""
         hex_pair = ""
-        x = 0
+        index = 0
         while True:
-            if x >= len(data):
+            if index >= len(data):
                 raise PdfStreamError("Unexpected EOD in ASCIIHexDecode")
-            c = data[x]
-            if c == ">":
+            char = data[index]
+            if char == ">":
                 break
-            elif c.isspace():
-                x += 1
+            elif char.isspace():
+                index += 1
                 continue
-            hex_pair += c
+            hex_pair += char
             if len(hex_pair) == 2:
                 retval += chr(int(hex_pair, base=16))
                 hex_pair = ""
-            x += 1
+            index += 1
         assert hex_pair == ""
         return retval
 
@@ -353,19 +353,19 @@ class ASCII85Decode(object):
             # remove all whitespace from data
             data = [y for y in data if y not in " \n\r\t"]
             while not hit_eod:
-                c = data[index]
-                if len(retval) == 0 and c == "<" and data[index + 1] == "~":
+                char = data[index]
+                if len(retval) == 0 and char == "<" and data[index + 1] == "~":
                     index += 2
                     continue
                 # elif c.isspace():
                 #    index += 1
                 #    continue
-                elif c == "z":
+                elif char == "z":
                     assert len(group) == 0
                     retval += "\x00\x00\x00\x00"
                     index += 1
                     continue
-                elif c == "~" and data[index + 1] == ">":
+                elif char == "~" and data[index + 1] == ">":
                     if len(group) != 0:
                         # cannot have a final group of just 1 char
                         assert len(group) > 1
@@ -375,9 +375,9 @@ class ASCII85Decode(object):
                     else:
                         break
                 else:
-                    c = ord(c) - 33
-                    assert c >= 0 and c < 85
-                    group += [c]
+                    char = ord(char) - 33
+                    assert char >= 0 and char < 85
+                    group += [char]
                 if len(group) >= 5:
                     b = (
                         group[0] * (85**4)
@@ -407,17 +407,17 @@ class ASCII85Decode(object):
                 data = data.encode("ascii")
             group_index = b = 0
             out = bytearray()
-            for c in data:
-                if ord("!") <= c and c <= ord("u"):
+            for char in data:
+                if ord("!") <= char and char <= ord("u"):
                     group_index += 1
-                    b = b * 85 + (c - 33)
+                    b = b * 85 + (char - 33)
                     if group_index == 5:
                         out += struct.pack(b">L", b)
                         group_index = b = 0
-                elif c == ord("z"):
+                elif char == ord("z"):
                     assert group_index == 0
                     out += b"\0\0\0\0"
-                elif c == ord("~"):
+                elif char == ord("~"):
                     if group_index:
                         for _ in range(5 - group_index):
                             b = b * 85 + 84

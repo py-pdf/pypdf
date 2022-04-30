@@ -126,8 +126,8 @@ class PageObject(DictionaryObject):
         page = PageObject(pdf)
 
         # Creates a new page (cf PDF Reference  7.7.3.3)
-        page.__setitem__(NameObject("/Type"), NameObject("/Page"))
-        page.__setitem__(NameObject("/Parent"), NullObject())
+        page.__setitem__(NameObject(PG.TYPE), NameObject("/Page"))
+        page.__setitem__(NameObject(PG.PARENT), NullObject())
         page.__setitem__(NameObject(PG.RESOURCES), DictionaryObject())
         if width is None or height is None:
             if pdf is not None and pdf.getNumPages() > 0:
@@ -167,11 +167,11 @@ class PageObject(DictionaryObject):
         return self
 
     def _rotate(self, angle):
-        rotate_obj = self.get("/Rotate", 0)
+        rotate_obj = self.get(PG.ROTATE, 0)
         current_angle = (
             rotate_obj if isinstance(rotate_obj, int) else rotate_obj.getObject()
         )
-        self[NameObject("/Rotate")] = NumberObject(current_angle + angle)
+        self[NameObject(PG.ROTATE)] = NumberObject(current_angle + angle)
 
     @staticmethod
     def _mergeResources(res1, res2, resource):
@@ -247,8 +247,8 @@ class PageObject(DictionaryObject):
         :return: the ``/Contents`` object, or ``None`` if it doesn't exist.
             ``/Contents`` is optional, as described in PDF Reference  7.7.3.3
         """
-        if "/Contents" in self:
-            return self["/Contents"].getObject()
+        if PG.CONTENTS in self:
+            return self[PG.CONTENTS].getObject()
         else:
             return None
 
@@ -286,13 +286,13 @@ class PageObject(DictionaryObject):
                         new_annots.append(ref)
 
         for res in (
-            "/ExtGState",
+            RES.EXT_G_STATE,
             RES.FONT,
             RES.XOBJECT,
             RES.COLOR_SPACE,
-            "/Pattern",
-            "/Shading",
-            "/Properties",
+            RES.PATTERN,
+            RES.SHADING,
+            RES.PROPERTIES,
         ):
             new, newrename = PageObject._mergeResources(
                 original_resources, page2resources, res
@@ -302,11 +302,11 @@ class PageObject(DictionaryObject):
                 rename.update(newrename)
 
         # Combine /ProcSet sets.
-        new_resources[NameObject(RES.PROCSET)] = ArrayObject(
+        new_resources[NameObject(RES.PROC_SET)] = ArrayObject(
             frozenset(
-                original_resources.get(RES.PROCSET, ArrayObject()).getObject()
+                original_resources.get(RES.PROC_SET, ArrayObject()).getObject()
             ).union(
-                frozenset(page2resources.get(RES.PROCSET, ArrayObject()).getObject())
+                frozenset(page2resources.get(RES.PROC_SET, ArrayObject()).getObject())
             )
         )
 
@@ -386,7 +386,7 @@ class PageObject(DictionaryObject):
             self.mediaBox.setLowerLeft(lowerleft)
             self.mediaBox.setUpperRight(upperright)
 
-        self[NameObject("/Contents")] = ContentStream(new_content_array, self.pdf)
+        self[NameObject(PG.CONTENTS)] = ContentStream(new_content_array, self.pdf)
         self[NameObject(PG.RESOURCES)] = new_resources
         self[NameObject(PG.ANNOTS)] = new_annots
 
@@ -593,7 +593,7 @@ class PageObject(DictionaryObject):
                 original_content, self.pdf, ctm
             )
             new_content = PageObject._pushPopGS(new_content, self.pdf)
-            self[NameObject("/Contents")] = new_content
+            self[NameObject(PG.CONTENTS)] = new_content
 
     def scale(self, sx, sy):
         """
@@ -612,8 +612,8 @@ class PageObject(DictionaryObject):
                 float(self.mediaBox.getUpperRight_y()) * sy,
             ]
         )
-        if "/VP" in self:
-            viewport = self["/VP"]
+        if PG.VP in self:
+            viewport = self[PG.VP]
             if isinstance(viewport, ArrayObject):
                 bbox = viewport[0]["/BBox"]
             else:
@@ -627,11 +627,11 @@ class PageObject(DictionaryObject):
                 ]
             )
             if isinstance(viewport, ArrayObject):
-                self[NameObject("/VP")][NumberObject(0)][
+                self[NameObject(PG.VP)][NumberObject(0)][
                     NameObject("/BBox")
                 ] = scaled_bbox
             else:
-                self[NameObject("/VP")][NameObject("/BBox")] = scaled_bbox
+                self[NameObject(PG.VP)][NameObject("/BBox")] = scaled_bbox
 
     def scaleBy(self, factor):
         """
@@ -670,7 +670,7 @@ class PageObject(DictionaryObject):
         if content is not None:
             if not isinstance(content, ContentStream):
                 content = ContentStream(content, self.pdf)
-            self[NameObject("/Contents")] = content.flateEncode()
+            self[NameObject(PG.CONTENTS)] = content.flateEncode()
 
     def extractText(self, Tj_sep="", TJ_sep=""):
         """
@@ -684,7 +684,7 @@ class PageObject(DictionaryObject):
         :return: a unicode string object.
         """
         text = u_("")
-        content = self["/Contents"].getObject()
+        content = self[PG.CONTENTS].getObject()
         if not isinstance(content, ContentStream):
             content = ContentStream(content, self.pdf)
         # Note: we check all strings are TextStringObjects.  ByteStringObjects

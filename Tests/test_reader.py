@@ -104,7 +104,7 @@ def test_get_annotations(src):
             for annot in page[PG.ANNOTS]:
                 subtype = annot.getObject()[IA.SUBTYPE]
                 if subtype == "/Text":
-                    annot.getObject()["/Contents"]
+                    annot.getObject()[PG.CONTENTS]
 
 
 @pytest.mark.parametrize(

@@ -40,6 +40,8 @@ from PyPDF2._page import PageObject
 from PyPDF2._security import _alg33_1, _alg34, _alg35
 from PyPDF2.constants import CatalogAttributes as CA
 from PyPDF2.constants import Core as CO
+from PyPDF2.constants import DocumentInformationAttributes as DI
+from PyPDF2.constants import EncryptionDictAttributes as ED
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.constants import PagesAttributes as PA
 from PyPDF2.constants import StreamAttributes as SA
@@ -118,39 +120,39 @@ class DocumentInformation(DictionaryObject):
         Returns a unicode string (``TextStringObject``) or ``None``
         if the title is not specified."""
         return (
-            self.getText("/Title") or self.get("/Title").getObject()
-            if self.get("/Title")
+            self.getText(DI.TITLE) or self.get(DI.TITLE).getObject()
+            if self.get(DI.TITLE)
             else None
         )
 
     @property
     def title_raw(self):
         """The "raw" version of title; can return a ``ByteStringObject``."""
-        return self.get("/Title")
+        return self.get(DI.TITLE)
 
     @property
     def author(self):
         """Read-only property accessing the document's **author**.
         Returns a unicode string (``TextStringObject``) or ``None``
         if the author is not specified."""
-        return self.getText("/Author")
+        return self.getText(DI.AUTHOR)
 
     @property
     def author_raw(self):
         """The "raw" version of author; can return a ``ByteStringObject``."""
-        return self.get("/Author")
+        return self.get(DI.AUTHOR)
 
     @property
     def subject(self):
         """Read-only property accessing the document's **subject**.
         Returns a unicode string (``TextStringObject``) or ``None``
         if the subject is not specified."""
-        return self.getText("/Subject")
+        return self.getText(DI.SUBJECT)
 
     @property
     def subject_raw(self):
         """The "raw" version of subject; can return a ``ByteStringObject``."""
-        return self.get("/Subject")
+        return self.get(DI.SUBJECT)
 
     @property
     def creator(self):
@@ -159,12 +161,12 @@ class DocumentInformation(DictionaryObject):
         application (e.g. OpenOffice) that created the original document from
         which it was converted. Returns a unicode string (``TextStringObject``)
         or ``None`` if the creator is not specified."""
-        return self.getText("/Creator")
+        return self.getText(DI.CREATOR)
 
     @property
     def creator_raw(self):
         """The "raw" version of creator; can return a ``ByteStringObject``."""
-        return self.get("/Creator")
+        return self.get(DI.CREATOR)
 
     @property
     def producer(self):
@@ -173,12 +175,12 @@ class DocumentInformation(DictionaryObject):
         the name of the application (for example, OSX Quartz) that converted
         it to PDF. Returns a unicode string (``TextStringObject``)
         or ``None`` if the producer is not specified."""
-        return self.getText("/Producer")
+        return self.getText(DI.PRODUCER)
 
     @property
     def producer_raw(self):
         """The "raw" version of producer; can return a ``ByteStringObject``."""
-        return self.get("/Producer")
+        return self.get(DI.PRODUCER)
 
 
 class PdfFileReader(object):
@@ -1357,9 +1359,9 @@ class PdfFileReader(object):
 
     def _authenticateUserPassword(self, password):
         encrypt = self.trailer[TK.ENCRYPT].getObject()
-        rev = encrypt["/R"].getObject()
-        owner_entry = encrypt["/O"].getObject()
-        p_entry = encrypt["/P"].getObject()
+        rev = encrypt[ED.R].getObject()
+        owner_entry = encrypt[ED.O].getObject()
+        p_entry = encrypt[ED.P].getObject()
         if TK.ID in self.trailer:
             id_entry = self.trailer[TK.ID].getObject()
         else:
@@ -1368,7 +1370,7 @@ class PdfFileReader(object):
             # https://github.com/mstamy2/PyPDF2/issues/608
             id_entry = ArrayObject([ByteStringObject(b""), ByteStringObject(b"")])
         id1_entry = id_entry[0].getObject()
-        real_U = encrypt["/U"].getObject().original_bytes
+        real_U = encrypt[ED.U].getObject().original_bytes
         if rev == 2:
             U, key = _alg34(password, owner_entry, p_entry, id1_entry)
         elif rev >= 3:
@@ -1379,7 +1381,7 @@ class PdfFileReader(object):
                 owner_entry,
                 p_entry,
                 id1_entry,
-                encrypt.get("/EncryptMetadata", BooleanObject(False)).getObject(),
+                encrypt.get(ED.ENCRYPT_METADATA, BooleanObject(False)).getObject(),
             )
             U, real_U = U[:16], real_U[:16]
         return U == real_U, key

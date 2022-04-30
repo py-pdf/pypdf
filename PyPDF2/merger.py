@@ -372,21 +372,16 @@ class PdfFileMerger(object):
         return new_outline
 
     def _write_dests(self):
-        dests = self.named_dests
-
-        for v in dests:
+        for named_dest in self.named_dests:
             pageno = None
-            pdf = None
-            if "/Page" in v:
-                for i, p in enumerate(self.pages):
-                    if p.id == v["/Page"]:
-                        v[NameObject("/Page")] = p.out_pagedata
-                        pageno = i
-                        pdf = p.src  # noqa: F841
+            if "/Page" in named_dest:
+                for pageno, page in enumerate(self.pages):
+                    if page.id == named_dest["/Page"]:
+                        named_dest[NameObject("/Page")] = page.out_pagedata
                         break
 
             if pageno is not None:
-                self.output.addNamedDestinationObject(v)
+                self.output.addNamedDestinationObject(named_dest)
 
     def _write_bookmarks(self, bookmarks=None, parent=None):
         if bookmarks is None:
