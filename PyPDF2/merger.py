@@ -375,7 +375,7 @@ class PdfFileMerger(object):
         for named_dest in self.named_dests:
             pageno = None
             if "/Page" in named_dest:
-                for pageno, page in enumerate(self.pages):
+                for pageno, page in enumerate(self.pages):  # noqa: B007
                     if page.id == named_dest["/Page"]:
                         named_dest[NameObject("/Page")] = page.out_pagedata
                         break
