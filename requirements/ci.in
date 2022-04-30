@@ -5,3 +5,4 @@ flake8-bugbear
 pillow
 pytest
 pytest-benchmark
+mock==3.0.5
