@@ -48,7 +48,7 @@ from PyPDF2.generic import (
     RectangleObject,
     TextStringObject,
 )
-from PyPDF2.utils import b_, u_
+from PyPDF2.utils import b_
 
 
 def getRectangle(self, name, defaults):
@@ -683,7 +683,7 @@ class PageObject(DictionaryObject):
 
         :return: a unicode string object.
         """
-        text = u_("")
+        text = ""
         content = self[PG.CONTENTS].getObject()
         if not isinstance(content, ContentStream):
             content = ContentStream(content, self.pdf)

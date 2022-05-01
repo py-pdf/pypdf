@@ -25,24 +25,17 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sys import version_info
+from io import BytesIO
+from io import FileIO as file
 
 from PyPDF2._reader import PdfFileReader
 from PyPDF2._writer import PdfFileWriter
 from PyPDF2.constants import PagesAttributes as PA
 from PyPDF2.generic import *
 from PyPDF2.pagerange import PageRange
-from PyPDF2.utils import isString, str_
+from PyPDF2.utils import str_
 
-if version_info < (3, 0):
-    from cStringIO import StringIO
-
-    StreamIO = StringIO
-else:
-    from io import BytesIO
-    from io import FileIO as file
-
-    StreamIO = BytesIO
+StreamIO = BytesIO
 
 
 class _MergedPage(object):
@@ -123,7 +116,7 @@ class PdfFileMerger(object):
         # BytesIO (or StreamIO) stream.
         # If fileobj is none of the above types, it is not modified
         decryption_key = None
-        if isString(fileobj):
+        if isinstance(fileobj, str):
             fileobj = file(fileobj, "rb")
             my_file = True
         elif hasattr(fileobj, "seek") and hasattr(fileobj, "read"):
@@ -234,7 +227,7 @@ class PdfFileMerger(object):
             file-like object.
         """
         my_file = False
-        if isString(fileobj):
+        if isinstance(fileobj, str):
             fileobj = file(fileobj, "wb")
             my_file = True
 

@@ -14,18 +14,6 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
 
 
 @pytest.mark.parametrize(
-    ("value", "expected"),
-    [(0, True), (-1, True), (1, True), ("1", False), (1.5, False)],
-)
-def test_isInt(value, expected):
-    assert PyPDF2.utils.isInt(value) == expected
-
-
-def test_isBytes():
-    assert PyPDF2.utils.isBytes(b"")
-
-
-@pytest.mark.parametrize(
     ("stream", "expected"),
     [
         (io.BytesIO(b"foo"), False),
@@ -104,7 +92,6 @@ def test_hexStr():
     assert PyPDF2.utils.hexStr(10) == "0xa"
 
 
-@pytest.mark.no_py27()
 def test_b():
     assert PyPDF2.utils.b_("foo") == b"foo"
     assert PyPDF2.utils.b_("😀") == "😀".encode("utf-8")

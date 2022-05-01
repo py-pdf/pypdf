@@ -1,3 +1,20 @@
+Version 2.0.0
+-------------
+
+Deprecations (DEP):
+- PyPDF2 2.0 requires Python 3.6+. Python 2.7 and 3.5 support were dropped.
+- utils:
+  * `isInt(obj)`: Use `instance(obj, int)` instead
+  * `u_(s)`: Use `s` directly
+  * `chr_(c)`: Use `chr(c)` instead
+  * `barray(b)`: Use `bytearray(b)` instead
+  * `isBytes(b)`: Use `instance(b, type(bytes()))` instead
+  * `xrange_fn`: Use `range` instead
+  * `string_type`: Use `str` instead
+  * `isString(s)`: Use `instance(s, str)` instead
+  * `_basestring`: Use `str` instead
+
+
 Version 1.27.10, 2022-05-01
 ---------------------------
 

@@ -23,7 +23,6 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install requirements (Python 3)
-      if: matrix.python-version != '2.7'
       run: |
         pip install -r requirements/ci.txt
     - name: Install PyPDF2
