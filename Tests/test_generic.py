@@ -19,6 +19,7 @@ from PyPDF2.generic import (
     NumberObject,
     PdfObject,
     RectangleObject,
+    TextStringObject,
     createStringObject,
     encode_pdfdocencoding,
     readHexStringFromStream,
@@ -327,3 +328,16 @@ def test_RectangleObject():
 
     ro.upperRight = (13, 17)
     assert ro.upperRight == (13, 17)
+
+
+def test_TextStringObject_exc():
+    tso = TextStringObject("foo")
+    with pytest.raises(Exception) as exc:
+        tso.get_original_bytes()
+    assert exc.value.args[0] == "no information about original bytes"
+
+
+def test_TextStringObject_autodetect_utf16():
+    tso = TextStringObject("foo")
+    tso.autodetect_utf16 = True
+    assert tso.get_original_bytes() == b"\xfe\xff\x00f\x00o\x00o"

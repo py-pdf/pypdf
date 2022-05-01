@@ -63,12 +63,10 @@ from .utils import (
 
 if version_info < (3, 0):
     from cStringIO import StringIO
-else:
-    from io import StringIO
-if version_info < (3, 0):
+
     BytesIO = StringIO
 else:
-    from io import BytesIO
+    from io import BytesIO, StringIO
 
 logger = logging.getLogger(__name__)
 ObjectPrefix = b_("/<[tf(n%")

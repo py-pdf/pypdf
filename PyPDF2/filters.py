@@ -176,21 +176,21 @@ class FlateDecode(object):
             rowdata = [
                 ord_(x) for x in data[(row * rowlength) : ((row + 1) * rowlength)]
             ]
-            filterByte = rowdata[0]
-            if filterByte == 0:
+            filter_byte = rowdata[0]
+            if filter_byte == 0:
                 pass
-            elif filterByte == 1:
+            elif filter_byte == 1:
                 for i in range(2, rowlength):
                     rowdata[i] = (rowdata[i] + rowdata[i - 1]) % 256
-            elif filterByte == 2:
+            elif filter_byte == 2:
                 for i in range(1, rowlength):
                     rowdata[i] = (rowdata[i] + prev_rowdata[i]) % 256
-            elif filterByte == 3:
+            elif filter_byte == 3:
                 for i in range(1, rowlength):
                     left = rowdata[i - 1] if i > 1 else 0
                     floor = math.floor(left + prev_rowdata[i]) / 2
                     rowdata[i] = (rowdata[i] + int(floor)) % 256
-            elif filterByte == 4:
+            elif filter_byte == 4:
                 for i in range(1, rowlength):
                     left = rowdata[i - 1] if i > 1 else 0
                     up = prev_rowdata[i]
@@ -199,7 +199,7 @@ class FlateDecode(object):
                     rowdata[i] = (rowdata[i] + paeth) % 256
             else:
                 # unsupported PNG filter
-                raise PdfReadError("Unsupported PNG filter %r" % filterByte)
+                raise PdfReadError("Unsupported PNG filter %r" % filter_byte)
             prev_rowdata = rowdata
             output.write("".join([chr(x) for x in rowdata[1:]]))
         return output.getvalue()
@@ -438,31 +438,65 @@ class JPXDecode(object):
         return data
 
 
+class CCITParameters(object):
+    """TABLE 3.9 Optional parameters for the CCITTFaxDecode filter"""
+
+    def __init__(self, K=0, columns=0, rows=0):
+        self.K = K
+        self.EndOfBlock = None
+        self.EndOfLine = None
+        self.EncodedByteAlign = None
+        self.columns = columns  # width
+        self.rows = rows  # height
+        self.DamagedRowsBeforeError = None
+
+    @property
+    def group(self):
+        if self.K < 0:
+            CCITTgroup = 4
+        else:
+            # k == 0: Pure one-dimensional encoding (Group 3, 1-D)
+            # k > 0: Mixed one- and two-dimensional encoding (Group 3, 2-D)
+            CCITTgroup = 3
+        return CCITTgroup
+
+
 class CCITTFaxDecode(object):
+    """
+    See 3.3.5 CCITTFaxDecode Filter (PDF 1.7 Standard).
+
+    Either Group 3 or Group 4 CCITT facsimile (fax) encoding.
+    CCITT encoding is bit-oriented, not byte-oriented.
+
+    See: TABLE 3.9 Optional parameters for the CCITTFaxDecode filter
+    """
+
     @staticmethod
-    def decode(data, decodeParms=None, height=0):
-        k = 1
-        width = 0
-        if decodeParms:
+    def _get_parameters(parameters, rows):
+        k = 0
+        columns = 0
+        if parameters:
             from PyPDF2.generic import ArrayObject
 
-            if isinstance(decodeParms, ArrayObject):
-                for decodeParm in decodeParms:
+            if isinstance(parameters, ArrayObject):
+                for decodeParm in parameters:
                     if CCITT.COLUMNS in decodeParm:
-                        width = decodeParm[CCITT.COLUMNS]
+                        columns = decodeParm[CCITT.COLUMNS]
                     if CCITT.K in decodeParm:
                         k = decodeParm[CCITT.K]
             else:
-                width = decodeParms[CCITT.COLUMNS]
-                k = decodeParms[CCITT.K]
-            if k == -1:
-                CCITTgroup = 4
-            else:
-                CCITTgroup = 3
+                columns = parameters[CCITT.COLUMNS]
+                k = parameters[CCITT.K]
+
+        return CCITParameters(k, columns, rows)
+
+    @staticmethod
+    def decode(data, decodeParms=None, height=0):
+        parms = CCITTFaxDecode._get_parameters(decodeParms, height)
 
         img_size = len(data)
         tiff_header_struct = "<2shlh" + "hhll" * 8 + "h"
-        tiffHeader = struct.pack(
+        tiff_header = struct.pack(
             tiff_header_struct,
             b"II",  # Byte order indication: Little endian
             42,  # Version number (always 42)
@@ -471,11 +505,11 @@ class CCITTFaxDecode(object):
             256,
             4,
             1,
-            width,  # ImageWidth, LONG, 1, width
+            parms.columns,  # ImageWidth, LONG, 1, width
             257,
             4,
             1,
-            height,  # ImageLength, LONG, 1, length
+            parms.rows,  # ImageLength, LONG, 1, length
             258,
             3,
             1,
@@ -483,7 +517,7 @@ class CCITTFaxDecode(object):
             259,
             3,
             1,
-            CCITTgroup,  # Compression, SHORT, 1, 4 = CCITT Group 4 fax encoding
+            parms.group,  # Compression, SHORT, 1, 4 = CCITT Group 4 fax encoding
             262,
             3,
             1,
@@ -497,7 +531,7 @@ class CCITTFaxDecode(object):
             278,
             4,
             1,
-            height,  # RowsPerStrip, LONG, 1, length
+            parms.rows,  # RowsPerStrip, LONG, 1, length
             279,
             4,
             1,
@@ -505,7 +539,7 @@ class CCITTFaxDecode(object):
             0,  # last IFD
         )
 
-        return tiffHeader + data
+        return tiff_header + data
 
 
 def decodeStreamData(stream):
