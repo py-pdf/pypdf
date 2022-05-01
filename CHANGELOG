@@ -21,6 +21,11 @@ Deprecations (DEP):
 - `PyPDF2.pdf` (the `pdf` module) no longer exists. The contents were moved with
   the library. You should most likely import directly from `PyPDF2` instead.
   The `RectangleObject` is in `PyPDF2.generic`.
+- The `Resources`, `Scripts`, and `Tests` will no longer be part of the distribution
+  files on PyPI. This should have little to no impact on most people. The
+  `Tests` are renamed to `tests`, the `Resources` are renamed to `resources`.
+  Both are still in the git repository. The `Scripts` are now in
+  https://github.com/py-pdf/cpdf. `Sample_Code` was moved to the `docs`.
 
 
 Version 1.27.10, 2022-05-01

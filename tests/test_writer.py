@@ -8,7 +8,7 @@ from PyPDF2.generic import RectangleObject
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
-RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
+RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
 
 
 def test_writer_clone():

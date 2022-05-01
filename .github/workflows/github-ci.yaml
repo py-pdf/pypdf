@@ -46,11 +46,11 @@ jobs:
         flake8 . --ignore=E203,W503,W504,E,F403,F405 --exclude build,sample-files
     - name: Test with pytest
       run: |
-        python -m coverage run --parallel-mode -m pytest Tests -vv
+        python -m coverage run --parallel-mode -m pytest tests -vv
       if: matrix.python-version != '3.10.1'
     - name: Test with pytest (OO flag)
       run: |
-        python -OO -m coverage run --parallel-mode -m pytest Tests -vv
+        python -OO -m coverage run --parallel-mode -m pytest tests -vv
       if: matrix.python-version == '3.10.1'
     - name: Upload coverage data
       uses: actions/upload-artifact@v3
