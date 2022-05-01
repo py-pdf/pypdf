@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright (c) 2006, Mathieu Fenniak
 # Copyright (c) 2007, Ashish Kulkarni <kulkarni.ashish@gmail.com>
 #
@@ -168,7 +166,7 @@ class DocumentInformation(DictionaryObject):
         return self.get(DI.PRODUCER)
 
 
-class PdfFileReader(object):
+class PdfFileReader:
     """
     Initialize a PdfFileReader object.
 
@@ -862,7 +860,7 @@ class PdfFileReader(object):
 
     def cacheIndirectObject(self, generation, idnum, obj):
         if (generation, idnum) in self.resolvedObjects:
-            msg = "Overwriting cache for %s %s" % (generation, idnum)
+            msg = f"Overwriting cache for {generation} {idnum}"
             if self.strict:
                 raise PdfReadError(msg)
             else:
@@ -901,8 +899,7 @@ class PdfFileReader(object):
                 raise PdfReadError("Broken xref table")
             else:
                 warnings.warn(
-                    "incorrect startxref pointer({})".format(xref_issue_nr),
-                    PdfReadWarning,
+                    f"incorrect startxref pointer({xref_issue_nr})", PdfReadWarning
                 )
 
         # read all cross reference tables and their trailers

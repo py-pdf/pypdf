@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import string
 from itertools import product as cartesian_product
 

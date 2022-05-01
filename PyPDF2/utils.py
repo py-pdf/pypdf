@@ -110,7 +110,7 @@ def readUntilRegex(stream, regex, ignore_eof=False):
     return name
 
 
-class ConvertFunctionsToVirtualList(object):
+class ConvertFunctionsToVirtualList:
     def __init__(self, lengthFunction, getFunction):
         self.lengthFunction = lengthFunction
         self.getFunction = getFunction
@@ -153,7 +153,7 @@ def RC4_encrypt(key, plaintext):
 
 def matrixMultiply(a, b):
     return [
-        [sum([float(i) * float(j) for i, j in zip(row, col)]) for col in zip(*b)]
+        [sum(float(i) * float(j) for i, j in zip(row, col)) for col in zip(*b)]
         for row in a
     ]
 
