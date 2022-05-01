@@ -38,7 +38,7 @@ from PyPDF2.utils import str_
 StreamIO = BytesIO
 
 
-class _MergedPage(object):
+class _MergedPage:
     """
     _MergedPage is used internally by PdfFileMerger to collect necessary
     information on each page that is being merged.
@@ -51,7 +51,7 @@ class _MergedPage(object):
         self.id = id
 
 
-class PdfFileMerger(object):
+class PdfFileMerger:
     """
     Initializes a ``PdfFileMerger`` object. ``PdfFileMerger`` merges multiple
     PDFs into a single PDF. It can concatenate, slice, insert, or any
@@ -466,7 +466,9 @@ class PdfFileMerger(object):
             if pageno is not None:
                 nd[NameObject("/Page")] = NumberObject(pageno)
             else:
-                raise ValueError("Unresolved named destination '%s'" % (nd["/Title"],))
+                raise ValueError(
+                    "Unresolved named destination '{}'".format(nd["/Title"])
+                )
 
     def _associate_bookmarks_to_pages(self, pages, bookmarks=None):
         if bookmarks is None:
@@ -490,7 +492,7 @@ class PdfFileMerger(object):
             if pageno is not None:
                 b[NameObject("/Page")] = NumberObject(pageno)
             else:
-                raise ValueError("Unresolved bookmark '%s'" % (b["/Title"],))
+                raise ValueError("Unresolved bookmark '{}'".format(b["/Title"]))
 
     def findBookmark(self, bookmark, root=None):
         if root is None:
