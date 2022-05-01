@@ -7,7 +7,7 @@ from PyPDF2 import PdfFileReader, PdfFileWriter
 # Configure path environment
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
-RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
+RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
 
 
 @pytest.fixture()
