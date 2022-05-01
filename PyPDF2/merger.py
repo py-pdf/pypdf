@@ -40,7 +40,6 @@ StreamIO = BytesIO
 
 ERR_CLOSED_WRITER = "close() was called and thus the writer cannot be used anymore"
 
-
 class _MergedPage:
     """
     _MergedPage is used internally by PdfFileMerger to collect necessary
