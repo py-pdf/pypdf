@@ -74,12 +74,10 @@ from PyPDF2.utils import (
 
 if version_info < (3, 0):
     from cStringIO import StringIO
-else:
-    from io import StringIO
-if version_info < (3, 0):
+
     BytesIO = StringIO
 else:
-    from io import BytesIO
+    from io import BytesIO, StringIO
 
 
 def convertToInt(d, size):
@@ -567,7 +565,7 @@ class PdfFileReader(object):
             self._pageId2Num = id2num
 
         if isinstance(indirectRef, NullObject):
-             return -1
+            return -1
         if isinstance(indirectRef, int):
             idnum = indirectRef
         else:
@@ -613,10 +611,10 @@ class PdfFileReader(object):
             if self.strict:
                 raise
             else:
-                #create a link to first Page
-                return Destination(title, self.getPage(0).indirectRef,
-                                   TextStringObject("/Fit"))
-
+                # create a link to first Page
+                return Destination(
+                    title, self.getPage(0).indirectRef, TextStringObject("/Fit")
+                )
 
     def _buildOutline(self, node):
         dest, title, outline = None, None, None

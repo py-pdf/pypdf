@@ -5,7 +5,14 @@ from itertools import product as cartesian_product
 import pytest
 
 from PyPDF2.errors import PdfReadError, PdfStreamError
-from PyPDF2.filters import ASCII85Decode, ASCIIHexDecode, FlateDecode
+from PyPDF2.filters import (
+    ASCII85Decode,
+    ASCIIHexDecode,
+    CCITParameters,
+    CCITTFaxDecode,
+    FlateDecode,
+)
+from PyPDF2.generic import ArrayObject, DictionaryObject, NumberObject
 
 filter_inputs = (
     # "", '', """""",
@@ -140,3 +147,40 @@ def test_ASCII85Decode_five_zero_bytes():
 
     for expected, i in zip(exp_outputs, inputs):
         assert ASCII85Decode.decode(i) == expected
+
+
+def test_CCITParameters():
+    parms = CCITParameters()
+    assert parms.K == 0  # zero is the default according to page 78
+    assert parms.group == 3
+
+
+@pytest.mark.parametrize(
+    ("parameters", "expected_k"),
+    [
+        (None, 0),
+        (ArrayObject([{"/K": 1}, {"/Columns": 13}]), 1),
+    ],
+)
+def test_CCIT_get_parameters(parameters, expected_k):
+    parmeters = CCITTFaxDecode._get_parameters(parameters=parameters, rows=0)
+    assert parmeters.K == expected_k
+
+
+def test_CCITTFaxDecode():
+    data = b""
+    parameters = DictionaryObject(
+        {"/K": NumberObject(-1), "/Columns": NumberObject(17)}
+    )
+
+    # This was just the result PyPDF2 1.27.9 returned.
+    # It would be awesome if we could check if that is actually correct.
+    assert CCITTFaxDecode.decode(data, parameters) == (
+        b"II*\x00\x08\x00\x00\x00\x08\x00\x00\x01\x04\x00\x01\x00\x00\x00\x11\x00"
+        b"\x00\x00\x01\x01\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x02\x01"
+        b"\x03\x00\x01\x00\x00\x00\x01\x00\x00\x00\x03\x01\x03\x00\x01\x00"
+        b"\x00\x00\x04\x00\x00\x00\x06\x01\x03\x00\x01\x00\x00\x00\x00\x00"
+        b"\x00\x00\x11\x01\x04\x00\x01\x00\x00\x00l\x00\x00\x00\x16\x01"
+        b"\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x17\x01\x04\x00\x01\x00"
+        b"\x00\x00\x00\x00\x00\x00\x00\x00"
+    )

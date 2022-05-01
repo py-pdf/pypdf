@@ -42,13 +42,10 @@ from sys import version_info
 
 if version_info < (3, 0):
     from cStringIO import StringIO
-else:
-    from io import StringIO
 
-if version_info < (3, 0):
     BytesIO = StringIO
 else:
-    from io import BytesIO  # noqa: F401
+    from io import StringIO, BytesIO  # noqa: F401
 
 import codecs  # noqa: F401
 import warnings  # noqa: F401

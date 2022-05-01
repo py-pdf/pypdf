@@ -547,6 +547,7 @@ def test_reader_properties():
     assert reader.pageMode is None
     assert reader.isEncrypted is False
 
+
 @pytest.mark.parametrize(
     "strict",
     [(True), (False)],
@@ -564,14 +565,14 @@ def test_issue604(strict):
                 bookmarks = pdf.getOutlines()
             if "Unknown Destination" not in exc.value.args[0]:
                 raise Exception("Expected exception not raised")
-            return # bookmarks not correct
+            return  # bookmarks not correct
         else:
             pdf = PdfFileReader(f, strict=strict)
             bookmarks = pdf.getOutlines()
 
         def getDestPages(x):
             # print(x)
-            if isinstance(x,list):
+            if isinstance(x, list):
                 r = [getDestPages(y) for y in x]
                 return r
             else:
@@ -582,7 +583,8 @@ def test_issue604(strict):
             b
         ) in bookmarks:  # b can be destination or a list:preferred to just print them
             out.append(getDestPages(b))
-    #print(out)
+    # print(out)
+
 
 def test_decode_permissions():
     reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
