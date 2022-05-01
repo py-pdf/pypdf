@@ -180,12 +180,12 @@ class PdfFileReader(object):
         string representing a path to a PDF file.
     :param bool strict: Determines whether user should be warned of all
         problems and also causes some correctable problems to be fatal.
-        Defaults to ``True``.
+        Defaults to ``False``.
     :param warndest: Destination for logging warnings (defaults to
         ``sys.stderr``).
     """
 
-    def __init__(self, stream, strict=True, warndest=None):
+    def __init__(self, stream, strict=False, warndest=None):
         self.strict = strict
         self.flattenedPages = None
         self.resolvedObjects = {}
@@ -1031,7 +1031,7 @@ class PdfFileReader(object):
                         PdfReadWarning,
                     )
                     # if table not zero indexed, could be due to error from when PDF was created
-                    # which will lead to mismatched indices later on, only warned and corrected if self.strict=True
+                    # which will lead to mismatched indices later on, only warned and corrected if self.strict==True
             firsttime = False
             readNonWhitespace(stream)
             stream.seek(-1, 1)
