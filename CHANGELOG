@@ -13,6 +13,14 @@ Deprecations (DEP):
   * `string_type`: Use `str` instead
   * `isString(s)`: Use `instance(s, str)` instead
   * `_basestring`: Use `str` instead
+  * All Exceptions are now in `PyPDF2.errors`:
+    - PageSizeNotDefinedError
+    - PdfReadError
+    - PdfReadWarning
+    - PyPdfError
+- `PyPDF2.pdf` (the `pdf` module) no longer exists. The contents were moved with
+  the library. You should most likely import directly from `PyPDF2` instead.
+  The `RectangleObject` is in `PyPDF2.generic`.
 
 
 Version 1.27.10, 2022-05-01
