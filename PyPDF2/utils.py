@@ -32,7 +32,7 @@ __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
 
-import sys
+from typing import Dict
 
 # See https://github.com/py-pdf/PyPDF2/issues/779
 from PyPDF2.errors import (  # noqa
@@ -44,38 +44,7 @@ from PyPDF2.errors import (  # noqa
     PyPdfError,
 )
 
-try:
-    import builtins
-    from typing import Dict
-except ImportError:  # Py2.7
-    import __builtin__ as builtins  # type: ignore
-
-
-xrange_fn = getattr(builtins, "xrange", range)
-_basestring = getattr(builtins, "basestring", str)
-
 bytes_type = type(bytes())  # Works the same in Python 2.X and 3.X
-string_type = getattr(builtins, "unicode", str)
-int_types = (int, long) if sys.version_info[0] < 3 else (int,)  # type: ignore  # noqa
-
-
-# Make basic type tests more consistent
-def isString(s):
-    """Test if arg is a string. Compatible with Python 2 and 3."""
-    return isinstance(s, _basestring)
-
-
-def isInt(n):
-    """Test if arg is an int. Compatible with Python 2 and 3."""
-    return isinstance(n, int_types)
-
-
-def isBytes(b):
-    """Test if arg is a bytes instance. Compatible with Python 2 and 3."""
-    import warnings
-
-    warnings.warn("PyPDF2.utils.isBytes will be deprecated", DeprecationWarning)
-    return isinstance(b, bytes_type)
 
 
 def formatWarning(message, category, filename, lineno, line=None):
@@ -165,10 +134,10 @@ class ConvertFunctionsToVirtualList(object):
 
     def __getitem__(self, index):
         if isinstance(index, slice):
-            indices = xrange_fn(*index.indices(len(self)))
+            indices = range(*index.indices(len(self)))
             cls = type(self)
             return cls(indices.__len__, lambda idx: self[indices[idx]])
-        if not isInt(index):
+        if not isinstance(index, int):
             raise TypeError("sequence indices must be integers")
         len_self = len(self)
         if index < 0:
@@ -215,79 +184,47 @@ def markLocation(stream):
     stream.seek(-radius, 1)
 
 
-if sys.version_info[0] < 3:
+B_CACHE = {}  # type: Dict[str, bytes]
 
-    def b_(s):
+
+def b_(s):
+    bc = B_CACHE
+    if s in bc:
+        return bc[s]
+    if type(s) == bytes:
         return s
-
-else:
-    B_CACHE = {}  # type: Dict[str, bytes]
-
-    def b_(s):
-        bc = B_CACHE
-        if s in bc:
-            return bc[s]
-        if type(s) == bytes:
-            return s
-        else:
-            try:
-                r = s.encode("latin-1")
-                if len(s) < 2:
-                    bc[s] = r
-                return r
-            except Exception:
-                r = s.encode("utf-8")
-                if len(s) < 2:
-                    bc[s] = r
-                return r
-
-
-def u_(s):
-    if sys.version_info[0] < 3:
-        return unicode(s, "unicode_escape")  # noqa
     else:
-        return s
+        try:
+            r = s.encode("latin-1")
+            if len(s) < 2:
+                bc[s] = r
+            return r
+        except Exception:
+            r = s.encode("utf-8")
+            if len(s) < 2:
+                bc[s] = r
+            return r
 
 
 def str_(b):
-    if sys.version_info[0] < 3:
-        return b
+    if type(b) == bytes:
+        return b.decode("latin-1")
     else:
-        if type(b) == bytes:
-            return b.decode("latin-1")
-        else:
-            return b
+        return b
 
 
 def ord_(b):
-    if sys.version_info[0] < 3 or type(b) == str:
+    if type(b) == str:
         return ord(b)
     else:
         return b
 
 
-def chr_(c):
-    if sys.version_info[0] < 3:
-        return c
-    else:
-        return chr(c)
-
-
-def barray(b):
-    if sys.version_info[0] < 3:
-        return b
-    else:
-        return bytearray(b)
-
-
 def hexencode(b):
-    if sys.version_info[0] < 3:
-        return b.encode("hex")
-    else:
-        import codecs
+    import codecs
 
-        coder = codecs.getencoder("hex_codec")
-        return coder(b)[0]
+    coder = codecs.getencoder("hex_codec")
+    return coder(b)[0]
 
 
 def hexStr(num):

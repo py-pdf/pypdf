@@ -64,7 +64,7 @@ from PyPDF2.generic import (
     TreeObject,
     createStringObject,
 )
-from PyPDF2.utils import b_, isString, u_
+from PyPDF2.utils import b_
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +95,7 @@ class PdfFileWriter(object):
         info.update(
             {
                 NameObject("/Producer"): createStringObject(
-                    codecs.BOM_UTF16_BE + u_("PyPDF2").encode("utf-16be")
+                    codecs.BOM_UTF16_BE + "PyPDF2".encode("utf-16be")
                 )
             }
         )
@@ -1022,7 +1022,7 @@ class PdfFileWriter(object):
         else:
             border_arr = [NumberObject(2)] * 3
 
-        if isString(rect):
+        if isinstance(rect, str):
             rect = NameObject(rect)
         elif isinstance(rect, RectangleObject):
             pass
@@ -1105,7 +1105,7 @@ class PdfFileWriter(object):
         else:
             border_arr = [NumberObject(0)] * 3
 
-        if isString(rect):
+        if isinstance(rect, str):
             rect = NameObject(rect)
         elif isinstance(rect, RectangleObject):
             pass

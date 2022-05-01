@@ -1,7 +1,7 @@
 import io
 import os
 import time
-from sys import version_info
+from io import BytesIO
 
 import pytest
 
@@ -12,14 +12,7 @@ from PyPDF2.constants import Ressources as RES
 from PyPDF2.errors import PdfReadError
 from PyPDF2.filters import _xobj_to_image
 
-if version_info < (3, 0):
-    from cStringIO import StringIO
-
-    StreamIO = StringIO
-else:
-    from io import BytesIO
-
-    StreamIO = BytesIO
+StreamIO = BytesIO
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
