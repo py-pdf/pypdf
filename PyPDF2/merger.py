@@ -62,10 +62,10 @@ class PdfFileMerger(object):
 
     :param bool strict: Determines whether user should be warned of all
             problems and also causes some correctable problems to be fatal.
-            Defaults to ``True``.
+            Defaults to ``False``.
     """
 
-    def __init__(self, strict=True):
+    def __init__(self, strict=False):
         self.inputs = []
         self.pages = []
         self.output = PdfFileWriter()
