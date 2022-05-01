@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1651395339097,
+  "lastUpdate": 1651395428722,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1581,6 +1581,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004474913223608447",
             "extra": "mean: 99.69020299999958 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7592257855b619d1d13752afac052147377a3c3f",
+          "message": "DOC: Project Governance (#799)\n\nThank you Matthew for your support / suggestions!\r\n\r\nCo-authored-by: Matthew Peveler <matt.peveler@gmail.com>",
+          "timestamp": "2022-05-01T10:56:30+02:00",
+          "tree_id": "dd41e47f40b1052d0966d687b88e2020d3ef7297",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/7592257855b619d1d13752afac052147377a3c3f"
+        },
+        "date": 1651395428249,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.5730060597961345,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018179231162042064",
+            "extra": "mean: 1.745182241799995 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 9.116730914362284,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0012190247077632514",
+            "extra": "mean: 109.6884408888962 msec\nrounds: 9"
           }
         ]
       }
