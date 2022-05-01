@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import binascii
 import os
 import sys
@@ -54,7 +52,7 @@ def test_PdfReaderJpegImage():
         reader = PdfFileReader(inputfile)
 
         # Retrieve the text of the image
-        with open(os.path.join(RESOURCE_ROOT, "jpeg.txt"), "r") as pdftext_file:
+        with open(os.path.join(RESOURCE_ROOT, "jpeg.txt")) as pdftext_file:
             imagetext = pdftext_file.read()
 
         page = reader.getPage(0)

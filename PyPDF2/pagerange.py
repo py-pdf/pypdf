@@ -30,7 +30,7 @@ PAGE_RANGE_HELP = """Remember, page indices start with zero.
 """
 
 
-class PageRange(object):
+class PageRange:
     """
     A slice-like representation of a range of page indices,
         i.e. page numbers, only starting at zero.

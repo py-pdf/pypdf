@@ -10,6 +10,7 @@ repos:
     -   id: check-yaml
     -   id: debug-statements
     -   id: end-of-file-fixer
+        exclude: "resources/.*"
     -   id: trailing-whitespace
     -   id: mixed-line-ending
     -   id: check-added-large-files
@@ -45,3 +46,8 @@ repos:
     hooks:
     -   id: blacken-docs
         additional_dependencies: [black==22.1.0]
+-   repo: https://github.com/asottile/pyupgrade
+    rev: v2.31.0
+    hooks:
+    -   id: pyupgrade
+        args: [--py36-plus]
