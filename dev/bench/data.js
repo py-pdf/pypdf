@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1651395428722,
+  "lastUpdate": 1651396127542,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1619,6 +1619,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0012190247077632514",
             "extra": "mean: 109.6884408888962 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "be6cdd8864075ba08e789c2b5b0b83b16fc6ea9e",
+          "message": "DEV: Add benchmark command to Makefile",
+          "timestamp": "2022-05-01T11:08:03+02:00",
+          "tree_id": "57cc50e2e0749d944b412c468589ae5a1beaaccb",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/be6cdd8864075ba08e789c2b5b0b83b16fc6ea9e"
+        },
+        "date": 1651396126499,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.5648025130939326,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028904580240274903",
+            "extra": "mean: 1.7705303656000013 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 9.228001369841428,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004177987880058724",
+            "extra": "mean: 108.36582700000008 msec\nrounds: 10"
           }
         ]
       }
