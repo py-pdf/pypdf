@@ -64,12 +64,7 @@ from PyPDF2.generic import (
     readNonWhitespace,
     readObject,
 )
-from PyPDF2.utils import (
-    ConvertFunctionsToVirtualList,
-    b_,
-    formatWarning,
-    readUntilWhitespace,
-)
+from PyPDF2.utils import ConvertFunctionsToVirtualList, b_, readUntilWhitespace
 
 
 def convertToInt(d, size):
@@ -188,32 +183,9 @@ class PdfFileReader(object):
         Defaults to ``True``.
     :param warndest: Destination for logging warnings (defaults to
         ``sys.stderr``).
-    :param bool overwriteWarnings: Determines whether to override Python's
-        ``warnings.py`` module with a custom implementation (defaults to
-        ``True``).
     """
 
-    def __init__(self, stream, strict=True, warndest=None, overwriteWarnings=True):
-        if overwriteWarnings:
-            # Have to dynamically override the default showwarning since there
-            # are no public methods that specify the 'file' parameter
-            def _showwarning(
-                message, category, filename, lineno, file=warndest, line=None
-            ):
-                if file is None:
-                    file = sys.stderr
-                try:
-                    # It is possible for sys.stderr to be defined as None, most commonly in the case that the script
-                    # is being run vida pythonw.exe on Windows. In this case, just swallow the warning.
-                    # See also https://docs.python.org/3/library/sys.html# sys.__stderr__
-                    if file is not None:
-                        file.write(
-                            formatWarning(message, category, filename, lineno, line)
-                        )
-                except IOError:
-                    pass
-
-            warnings.showwarning = _showwarning
+    def __init__(self, stream, strict=True, warndest=None):
         self.strict = strict
         self.flattenedPages = None
         self.resolvedObjects = {}

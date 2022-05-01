@@ -353,7 +353,7 @@ def test_io_streams():
 
 def test_regression_issue670():
     filepath = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
-    reader = PdfFileReader(filepath, strict=False, overwriteWarnings=False)
+    reader = PdfFileReader(filepath, strict=False)
     for _ in range(2):
         pdf_writer = PdfFileWriter()
         pdf_writer.addPage(reader.getPage(0))

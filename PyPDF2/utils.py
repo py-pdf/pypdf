@@ -39,12 +39,6 @@ from PyPDF2.errors import STREAM_TRUNCATED_PREMATURELY, PdfStreamError
 bytes_type = type(bytes())  # Works the same in Python 2.X and 3.X
 
 
-def formatWarning(message, category, filename, lineno, line=None):
-    """custom implementation of warnings.formatwarning"""
-    file = filename.replace("/", "\\").rsplit("\\", 1)[-1]  # find the file name
-    return "%s: %s [%s:%s]\n" % (category.__name__, message, file, lineno)
-
-
 def readUntilWhitespace(stream, maxchars=None):
     """
     Reads non-whitespace characters and returns them.
