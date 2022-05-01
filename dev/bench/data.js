@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1651342802229,
+  "lastUpdate": 1651395339097,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1543,6 +1543,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.005972794829883468",
             "extra": "mean: 86.10843200000318 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d2ed8e593bedeca0cc6283f9d4894a45c7a85323",
+          "message": "MAINT: Separated CCITTFax param parsing/decoding (#841)\n\n* BUG: Changed default /K to conform with the PDF 1.7 standard\r\n* TST: Add test for CCITTFax\r\n* TST: Add test for TextStringObject\r\n\r\nSTY:\r\n* Group Python 2.7 imports\r\n* camelCase variables to snake_case\r\n* Apply black formatter",
+          "timestamp": "2022-05-01T10:55:00+02:00",
+          "tree_id": "c8e20b34d7d1b7804daf4ed0e385cb99d5d02205",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/d2ed8e593bedeca0cc6283f9d4894a45c7a85323"
+        },
+        "date": 1651395337855,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.6595642448645689,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0027934216538311064",
+            "extra": "mean: 1.5161525322000045 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 10.03107597243035,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004474913223608447",
+            "extra": "mean: 99.69020299999958 msec\nrounds: 11"
           }
         ]
       }
