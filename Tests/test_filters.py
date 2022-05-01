@@ -89,7 +89,6 @@ def test_FlateDecode_unsupported_predictor():
         "whitespace",
     ],
 )
-@pytest.mark.no_py27()
 def test_ASCIIHexDecode(input, expected):
     """
     Feeds a bunch of values to ASCIIHexDecode.decode() and ensures the
@@ -128,7 +127,6 @@ def test_ASCII85Decode_with_overflow():
         assert exc.value.args[0] == ""
 
 
-@pytest.mark.no_py27()
 def test_ASCII85Decode_five_zero_bytes():
     """
     From ISO 32000 (2008) §7.4.3:

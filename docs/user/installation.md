@@ -4,8 +4,7 @@ There are several ways to install PyPDF2. The most common option is to use pip.
 
 ## pip
 
-PyPDF2 requires Python 2.7+ to run, but [Python 2 is dead](https://pythonclock.org/).
-Please use a recent version of Python 3 instead.
+PyPDF2 requires Python 3.6+ to run.
 
 Typically Python comes with `pip`, a package installer. Using it you can
 install PyPDF2:
