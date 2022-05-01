@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2006, Mathieu Fenniak
 # All rights reserved.
 #
@@ -121,7 +120,7 @@ except ImportError:  # pragma: no cover
         return retval
 
 
-class FlateDecode(object):
+class FlateDecode:
     @staticmethod
     def decode(data, decodeParms):
         """
@@ -203,7 +202,7 @@ class FlateDecode(object):
         return compress(data)
 
 
-class ASCIIHexDecode(object):
+class ASCIIHexDecode:
     """
     The ASCIIHexDecode filter decodes data that has been encoded in ASCII
     hexadecimal form into a base-7 ASCII format.
@@ -239,12 +238,12 @@ class ASCIIHexDecode(object):
         return retval
 
 
-class LZWDecode(object):
+class LZWDecode:
     """Taken from:
     http://www.java2s.com/Open-Source/Java-Document/PDF/PDF-Renderer/com/sun/pdfview/decode/LZWDecode.java.htm
     """
 
-    class decoder(object):
+    class decoder:
         def __init__(self, data):
             self.STOP = 257
             self.CLEARDICT = 256
@@ -334,7 +333,7 @@ class LZWDecode(object):
         return LZWDecode.decoder(data).decode()
 
 
-class ASCII85Decode(object):
+class ASCII85Decode:
     """Decodes string ASCII85-encoded data into a byte format."""
 
     @staticmethod
@@ -362,19 +361,19 @@ class ASCII85Decode(object):
         return bytes(out)
 
 
-class DCTDecode(object):
+class DCTDecode:
     @staticmethod
     def decode(data, decodeParms=None):
         return data
 
 
-class JPXDecode(object):
+class JPXDecode:
     @staticmethod
     def decode(data, decodeParms=None):
         return data
 
 
-class CCITParameters(object):
+class CCITParameters:
     """TABLE 3.9 Optional parameters for the CCITTFaxDecode filter"""
 
     def __init__(self, K=0, columns=0, rows=0):
@@ -397,7 +396,7 @@ class CCITParameters(object):
         return CCITTgroup
 
 
-class CCITTFaxDecode(object):
+class CCITTFaxDecode:
     """
     See 3.3.5 CCITTFaxDecode Filter (PDF 1.7 Standard).
 

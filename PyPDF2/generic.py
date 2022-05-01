@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2006, Mathieu Fenniak
 # All rights reserved.
 #
@@ -102,7 +101,7 @@ def readObject(stream, pdf):
             return NumberObject.readFromStream(stream)
 
 
-class PdfObject(object):
+class PdfObject:
     def getObject(self):
         """Resolve indirect references."""
         return self
@@ -182,7 +181,7 @@ class IndirectObject(PdfObject):
         return self.pdf.getObject(self).getObject()
 
     def __repr__(self):
-        return "IndirectObject(%r, %r)" % (self.idnum, self.generation)
+        return f"IndirectObject({self.idnum!r}, {self.generation!r})"
 
     def __eq__(self, other):
         return (
@@ -197,7 +196,7 @@ class IndirectObject(PdfObject):
         return not self.__eq__(other)
 
     def writeToStream(self, stream, encryption_key):
-        stream.write(b_("%s %s R" % (self.idnum, self.generation)))
+        stream.write(b_(f"{self.idnum} {self.generation} R"))
 
     @staticmethod
     def readFromStream(stream, pdf):
@@ -238,7 +237,7 @@ class FloatObject(decimal.Decimal, PdfObject):
             except decimal.InvalidOperation:
                 # If this isn't a valid decimal (happens in malformed PDFs)
                 # fallback to 0
-                logger.warning("Invalid FloatObject {}".format(value))
+                logger.warning(f"Invalid FloatObject {value}")
                 return decimal.Decimal.__new__(cls, "0")
 
     def __repr__(self):
@@ -1077,16 +1076,16 @@ class RectangleObject(ArrayObject):
         return self.getUpperRight_x(), self.getUpperRight_y()
 
     def setLowerLeft(self, value):
-        self[0], self[1] = [self.ensureIsNumber(x) for x in value]
+        self[0], self[1] = (self.ensureIsNumber(x) for x in value)
 
     def setLowerRight(self, value):
-        self[2], self[1] = [self.ensureIsNumber(x) for x in value]
+        self[2], self[1] = (self.ensureIsNumber(x) for x in value)
 
     def setUpperLeft(self, value):
-        self[0], self[3] = [self.ensureIsNumber(x) for x in value]
+        self[0], self[3] = (self.ensureIsNumber(x) for x in value)
 
     def setUpperRight(self, value):
-        self[2], self[3] = [self.ensureIsNumber(x) for x in value]
+        self[2], self[3] = (self.ensureIsNumber(x) for x in value)
 
     def getWidth(self):
         return self.getUpperRight_x() - self.getLowerLeft_x()

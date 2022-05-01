@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright (c) 2006, Mathieu Fenniak
 # Copyright (c) 2007, Ashish Kulkarni <kulkarni.ashish@gmail.com>
 #
@@ -69,7 +67,7 @@ from PyPDF2.utils import b_
 logger = logging.getLogger(__name__)
 
 
-class PdfFileWriter(object):
+class PdfFileWriter:
     """
     This class supports writing PDF files out, given pages produced by another
     class (typically :class:`PdfFileReader<PdfFileReader>`).
@@ -634,7 +632,7 @@ class PdfFileWriter(object):
             else:
                 if hasattr(data.pdf, "stream") and data.pdf.stream.closed:
                     raise ValueError(
-                        "I/O operation on closed file: {}".format(data.pdf.stream.name)
+                        f"I/O operation on closed file: {data.pdf.stream.name}"
                     )
                 newobj = (
                     externMap.get(data.pdf, {})
@@ -771,7 +769,7 @@ class PdfFileWriter(object):
         bold=False,
         italic=False,
         fit="/Fit",
-        *args
+        *args,
     ):
         """
         Add a bookmark to this PDF file.

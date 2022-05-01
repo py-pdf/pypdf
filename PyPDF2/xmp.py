@@ -74,8 +74,7 @@ class XmpInformation(PdfObject):
                 attr = desc.getAttributeNodeNS(namespace, name)
                 if attr is not None:
                     yield attr
-                for element in desc.getElementsByTagNameNS(namespace, name):
-                    yield element
+                yield from desc.getElementsByTagNameNS(namespace, name)
 
     def getNodesInNamespace(self, aboutUri, namespace):
         for desc in self.rdfRoot.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):
@@ -116,7 +115,7 @@ class XmpInformation(PdfObject):
         tzd = matches.group("tzd") or "Z"
         dt = datetime.datetime(year, month, day, hour, minute, seconds, milliseconds)
         if tzd != "Z":
-            tzd_hours, tzd_minutes = [int(x) for x in tzd.split(":")]
+            tzd_hours, tzd_minutes = (int(x) for x in tzd.split(":"))
             tzd_hours *= -1
             if tzd_hours < 0:
                 tzd_minutes *= -1

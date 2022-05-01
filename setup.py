@@ -5,7 +5,7 @@ import re
 from setuptools import setup
 
 VERSIONFILE = "PyPDF2/_version.py"
-with open(VERSIONFILE, "rt") as fp:
+with open(VERSIONFILE) as fp:
     verstrline = fp.read()
 VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
 mo = re.search(VSRE, verstrline, re.M)

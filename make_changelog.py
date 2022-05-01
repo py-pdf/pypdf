@@ -42,7 +42,7 @@ def version_bump(git_tag: str) -> str:
 
 
 def get_changelog(changelog_path: str) -> str:
-    with open(changelog_path, "r") as fh:
+    with open(changelog_path) as fh:
         changelog = fh.read()
     return changelog
 
