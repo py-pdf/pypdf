@@ -571,7 +571,7 @@ class PdfFileReader(object):
         Retrieve page number of a given PageObject
 
         :param PageObject page: The page to get page number. Should be
-            an instance of :class:`PageObject<PyPDF2.pdf.PageObject>`
+            an instance of :class:`PageObject<PyPDF2._page.PageObject>`
         :return: the page number or -1 if page not found
         :rtype: int
         """
@@ -585,7 +585,7 @@ class PdfFileReader(object):
 
         :param Destination destination: The destination to get page number.
              Should be an instance of
-             :class:`Destination<PyPDF2.pdf.Destination>`
+             :class:`Destination<PyPDF2.generic.Destination>`
         :return: the page number or -1 if page not found
         :rtype: int
         """

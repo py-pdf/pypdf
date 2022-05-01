@@ -1,4 +1,3 @@
-from PyPDF2 import pdf
 from PyPDF2._reader import PdfFileReader
 from PyPDF2._version import __version__
 from PyPDF2._writer import PdfFileWriter
@@ -11,7 +10,6 @@ __all__ = [
     "PageRange",
     "PaperSize",
     "parse_filename_page_ranges",
-    "pdf",
     "PdfFileMerger",
     "PdfFileReader",
     "PdfFileWriter",
