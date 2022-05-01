@@ -1,3 +1,43 @@
+Version 1.27.10, 2022-05-01
+---------------------------
+
+Robustness (ROB):
+-  Handle missing destinations in reader (#840)
+-  warn-only in readStringFromStream (#837)
+-  Fix corruption in startxref or xref table (#788 and #830)
+
+Documentation (DOC):
+-  Project Governance (#799)
+-  History of PyPDF2
+-  PDF feature/version support (#816)
+-  More details on text parsing issues (#815)
+
+Developer Experience (DEV):
+-  Add benchmark command to Makefile
+-  Ignore IronPython parts for code coverage (#826)
+
+Maintenance (MAINT):
+-  Split pdf module (#836)
+-  Separated CCITTFax param parsing/decoding (#841)
+-  Update requirements files
+
+Testing (TST):
+-  Use external repository for larger/more PDFs for testing (#820)
+-  Swap incorrect test names (#838)
+-  Add test for PdfFileReader and page properties (#835)
+-  Add tests for PyPDF2.generic (#831)
+-  Add tests for utils, form fields, PageRange (#827)
+-  Add test for ASCII85Decode (#825)
+-  Add test for FlateDecode (#823)
+-  Add test for filters.ASCIIHexDecode (#822)
+
+Code Style (STY):
+-  Apply pre-commit (black, isort) + use snake_case variables (#832)
+-  Remove debug code (#828)
+-  Documentation, Variable names (#839)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.27.9...1.27.10
+
 Version 1.27.9, 2022-04-24
 --------------------------
 
