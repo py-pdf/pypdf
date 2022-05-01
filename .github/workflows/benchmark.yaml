@@ -30,7 +30,7 @@ jobs:
         pip install .
     - name: Run benchmark
       run: |
-        pytest Tests/bench.py --benchmark-json output.json
+        pytest tests/bench.py --benchmark-json output.json
     - name: Store benchmark result
       uses: benchmark-action/github-action-benchmark@v1
       with:

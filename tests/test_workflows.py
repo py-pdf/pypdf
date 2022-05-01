@@ -11,7 +11,7 @@ from PyPDF2.constants import PageAttributes as PG
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
-RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
+RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
 
 sys.path.append(PROJECT_ROOT)
 
