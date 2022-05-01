@@ -37,9 +37,8 @@ import codecs
 import decimal
 import logging
 import re
-import sys
 import warnings
-from sys import version_info
+from io import BytesIO
 
 from PyPDF2.constants import FilterTypes as FT
 from PyPDF2.constants import StreamAttributes as SA
@@ -51,22 +50,7 @@ from PyPDF2.errors import (
 )
 
 from . import filters, utils
-from .utils import (
-    RC4_encrypt,
-    b_,
-    chr_,
-    ord_,
-    readNonWhitespace,
-    skipOverComment,
-    u_,
-)
-
-if version_info < (3, 0):
-    from cStringIO import StringIO
-
-    BytesIO = StringIO
-else:
-    from io import BytesIO, StringIO
+from .utils import RC4_encrypt, b_, ord_, readNonWhitespace, skipOverComment
 
 logger = logging.getLogger(__name__)
 ObjectPrefix = b_("/<[tf(n%")
@@ -306,7 +290,7 @@ def createStringObject(string):
     Given a string (either a "str" or "unicode"), create a ByteStringObject or a
     TextStringObject to represent the string.
     """
-    if isinstance(string, utils.string_type):
+    if isinstance(string, str):
         return TextStringObject(string)
     elif isinstance(string, utils.bytes_type):
         try:
@@ -444,7 +428,7 @@ class ByteStringObject(utils.bytes_type, PdfObject):  # type: ignore
         stream.write(b_(">"))
 
 
-class TextStringObject(utils.string_type, PdfObject):  # type: ignore
+class TextStringObject(str, PdfObject):  # type: ignore
     """
     Represents a string object that has been decoded into a real unicode string.
     If read from a PDF document, this string appeared to match the
@@ -493,10 +477,10 @@ class TextStringObject(utils.string_type, PdfObject):  # type: ignore
         else:
             stream.write(b_("("))
             for c in bytearr:
-                if not chr_(c).isalnum() and c != b_(" "):
+                if not chr(c).isalnum() and c != b_(" "):
                     stream.write(b_("\\%03o" % ord_(c)))
                 else:
-                    stream.write(b_(chr_(c)))
+                    stream.write(b_(chr(c)))
             stream.write(b_(")"))
 
 
@@ -701,19 +685,13 @@ class TreeObject(DictionaryObject):
 
     def children(self):
         if not self.hasChildren():
-            if sys.version_info >= (3, 5):  # PEP 479
-                return
-            else:
-                raise StopIteration
+            return
 
         child = self["/First"]
         while True:
             yield child
             if child == self["/Last"]:
-                if sys.version_info >= (3, 5):  # PEP 479
-                    return
-                else:
-                    raise StopIteration
+                return
             child = child["/Next"]
 
     def addChild(self, child, pdf):
@@ -1429,13 +1407,13 @@ def encode_pdfdocencoding(unicode_string):
 
 
 def decode_pdfdocencoding(byte_array):
-    retval = u_("")
+    retval = ""
     for b in byte_array:
         c = _pdfDocEncoding[ord_(b)]
-        if c == u_("\u0000"):
+        if c == "\u0000":
             raise UnicodeDecodeError(
                 "pdfdocencoding",
-                utils.barray(b),
+                bytearray(b),
                 -1,
                 -1,
                 "does not exist in translation table",
@@ -1449,262 +1427,262 @@ def decode_pdfdocencoding(byte_array):
 # Some indices have '\u0000' although they should have something else:
 # 22: should be '\u0017'
 _pdfDocEncoding = (
-    u_("\u0000"),
-    u_("\u0001"),
-    u_("\u0002"),
-    u_("\u0003"),
-    u_("\u0004"),
-    u_("\u0005"),
-    u_("\u0006"),
-    u_("\u0007"),  #  0 -  7
-    u_("\u0008"),
-    u_("\u0009"),
-    u_("\u000a"),
-    u_("\u000b"),
-    u_("\u000c"),
-    u_("\u000d"),
-    u_("\u000e"),
-    u_("\u000f"),  #  8 - 15
-    u_("\u0010"),
-    u_("\u0011"),
-    u_("\u0012"),
-    u_("\u0013"),
-    u_("\u0014"),
-    u_("\u0015"),
-    u_("\u0000"),
-    u_("\u0017"),  # 16 - 23
-    u_("\u02d8"),
-    u_("\u02c7"),
-    u_("\u02c6"),
-    u_("\u02d9"),
-    u_("\u02dd"),
-    u_("\u02db"),
-    u_("\u02da"),
-    u_("\u02dc"),  # 24 - 31
-    u_("\u0020"),
-    u_("\u0021"),
-    u_("\u0022"),
-    u_("\u0023"),
-    u_("\u0024"),
-    u_("\u0025"),
-    u_("\u0026"),
-    u_("\u0027"),  # 32 - 39
-    u_("\u0028"),
-    u_("\u0029"),
-    u_("\u002a"),
-    u_("\u002b"),
-    u_("\u002c"),
-    u_("\u002d"),
-    u_("\u002e"),
-    u_("\u002f"),  # 40 - 47
-    u_("\u0030"),
-    u_("\u0031"),
-    u_("\u0032"),
-    u_("\u0033"),
-    u_("\u0034"),
-    u_("\u0035"),
-    u_("\u0036"),
-    u_("\u0037"),  # 48 - 55
-    u_("\u0038"),
-    u_("\u0039"),
-    u_("\u003a"),
-    u_("\u003b"),
-    u_("\u003c"),
-    u_("\u003d"),
-    u_("\u003e"),
-    u_("\u003f"),  # 56 - 63
-    u_("\u0040"),
-    u_("\u0041"),
-    u_("\u0042"),
-    u_("\u0043"),
-    u_("\u0044"),
-    u_("\u0045"),
-    u_("\u0046"),
-    u_("\u0047"),  # 64 - 71
-    u_("\u0048"),
-    u_("\u0049"),
-    u_("\u004a"),
-    u_("\u004b"),
-    u_("\u004c"),
-    u_("\u004d"),
-    u_("\u004e"),
-    u_("\u004f"),  # 72 - 79
-    u_("\u0050"),
-    u_("\u0051"),
-    u_("\u0052"),
-    u_("\u0053"),
-    u_("\u0054"),
-    u_("\u0055"),
-    u_("\u0056"),
-    u_("\u0057"),  # 80 - 87
-    u_("\u0058"),
-    u_("\u0059"),
-    u_("\u005a"),
-    u_("\u005b"),
-    u_("\u005c"),
-    u_("\u005d"),
-    u_("\u005e"),
-    u_("\u005f"),  # 88 - 95
-    u_("\u0060"),
-    u_("\u0061"),
-    u_("\u0062"),
-    u_("\u0063"),
-    u_("\u0064"),
-    u_("\u0065"),
-    u_("\u0066"),
-    u_("\u0067"),  # 96 - 103
-    u_("\u0068"),
-    u_("\u0069"),
-    u_("\u006a"),
-    u_("\u006b"),
-    u_("\u006c"),
-    u_("\u006d"),
-    u_("\u006e"),
-    u_("\u006f"),  # 104 - 111
-    u_("\u0070"),
-    u_("\u0071"),
-    u_("\u0072"),
-    u_("\u0073"),
-    u_("\u0074"),
-    u_("\u0075"),
-    u_("\u0076"),
-    u_("\u0077"),  # 112 - 119
-    u_("\u0078"),
-    u_("\u0079"),
-    u_("\u007a"),
-    u_("\u007b"),
-    u_("\u007c"),
-    u_("\u007d"),
-    u_("\u007e"),
-    u_("\u0000"),  # 120 - 127
-    u_("\u2022"),
-    u_("\u2020"),
-    u_("\u2021"),
-    u_("\u2026"),
-    u_("\u2014"),
-    u_("\u2013"),
-    u_("\u0192"),
-    u_("\u2044"),  # 128 - 135
-    u_("\u2039"),
-    u_("\u203a"),
-    u_("\u2212"),
-    u_("\u2030"),
-    u_("\u201e"),
-    u_("\u201c"),
-    u_("\u201d"),
-    u_("\u2018"),  # 136 - 143
-    u_("\u2019"),
-    u_("\u201a"),
-    u_("\u2122"),
-    u_("\ufb01"),
-    u_("\ufb02"),
-    u_("\u0141"),
-    u_("\u0152"),
-    u_("\u0160"),  # 144 - 151
-    u_("\u0178"),
-    u_("\u017d"),
-    u_("\u0131"),
-    u_("\u0142"),
-    u_("\u0153"),
-    u_("\u0161"),
-    u_("\u017e"),
-    u_("\u0000"),  # 152 - 159
-    u_("\u20ac"),
-    u_("\u00a1"),
-    u_("\u00a2"),
-    u_("\u00a3"),
-    u_("\u00a4"),
-    u_("\u00a5"),
-    u_("\u00a6"),
-    u_("\u00a7"),  # 160 - 167
-    u_("\u00a8"),
-    u_("\u00a9"),
-    u_("\u00aa"),
-    u_("\u00ab"),
-    u_("\u00ac"),
-    u_("\u0000"),
-    u_("\u00ae"),
-    u_("\u00af"),  # 168 - 175
-    u_("\u00b0"),
-    u_("\u00b1"),
-    u_("\u00b2"),
-    u_("\u00b3"),
-    u_("\u00b4"),
-    u_("\u00b5"),
-    u_("\u00b6"),
-    u_("\u00b7"),  # 176 - 183
-    u_("\u00b8"),
-    u_("\u00b9"),
-    u_("\u00ba"),
-    u_("\u00bb"),
-    u_("\u00bc"),
-    u_("\u00bd"),
-    u_("\u00be"),
-    u_("\u00bf"),  # 184 - 191
-    u_("\u00c0"),
-    u_("\u00c1"),
-    u_("\u00c2"),
-    u_("\u00c3"),
-    u_("\u00c4"),
-    u_("\u00c5"),
-    u_("\u00c6"),
-    u_("\u00c7"),  # 192 - 199
-    u_("\u00c8"),
-    u_("\u00c9"),
-    u_("\u00ca"),
-    u_("\u00cb"),
-    u_("\u00cc"),
-    u_("\u00cd"),
-    u_("\u00ce"),
-    u_("\u00cf"),  # 200 - 207
-    u_("\u00d0"),
-    u_("\u00d1"),
-    u_("\u00d2"),
-    u_("\u00d3"),
-    u_("\u00d4"),
-    u_("\u00d5"),
-    u_("\u00d6"),
-    u_("\u00d7"),  # 208 - 215
-    u_("\u00d8"),
-    u_("\u00d9"),
-    u_("\u00da"),
-    u_("\u00db"),
-    u_("\u00dc"),
-    u_("\u00dd"),
-    u_("\u00de"),
-    u_("\u00df"),  # 216 - 223
-    u_("\u00e0"),
-    u_("\u00e1"),
-    u_("\u00e2"),
-    u_("\u00e3"),
-    u_("\u00e4"),
-    u_("\u00e5"),
-    u_("\u00e6"),
-    u_("\u00e7"),  # 224 - 231
-    u_("\u00e8"),
-    u_("\u00e9"),
-    u_("\u00ea"),
-    u_("\u00eb"),
-    u_("\u00ec"),
-    u_("\u00ed"),
-    u_("\u00ee"),
-    u_("\u00ef"),  # 232 - 239
-    u_("\u00f0"),
-    u_("\u00f1"),
-    u_("\u00f2"),
-    u_("\u00f3"),
-    u_("\u00f4"),
-    u_("\u00f5"),
-    u_("\u00f6"),
-    u_("\u00f7"),  # 240 - 247
-    u_("\u00f8"),
-    u_("\u00f9"),
-    u_("\u00fa"),
-    u_("\u00fb"),
-    u_("\u00fc"),
-    u_("\u00fd"),
-    u_("\u00fe"),
-    u_("\u00ff"),  # 248 - 255
+    "\u0000",
+    "\u0001",
+    "\u0002",
+    "\u0003",
+    "\u0004",
+    "\u0005",
+    "\u0006",
+    "\u0007",  #  0 -  7
+    "\u0008",
+    "\u0009",
+    "\u000a",
+    "\u000b",
+    "\u000c",
+    "\u000d",
+    "\u000e",
+    "\u000f",  #  8 - 15
+    "\u0010",
+    "\u0011",
+    "\u0012",
+    "\u0013",
+    "\u0014",
+    "\u0015",
+    "\u0000",
+    "\u0017",  # 16 - 23
+    "\u02d8",
+    "\u02c7",
+    "\u02c6",
+    "\u02d9",
+    "\u02dd",
+    "\u02db",
+    "\u02da",
+    "\u02dc",  # 24 - 31
+    "\u0020",
+    "\u0021",
+    "\u0022",
+    "\u0023",
+    "\u0024",
+    "\u0025",
+    "\u0026",
+    "\u0027",  # 32 - 39
+    "\u0028",
+    "\u0029",
+    "\u002a",
+    "\u002b",
+    "\u002c",
+    "\u002d",
+    "\u002e",
+    "\u002f",  # 40 - 47
+    "\u0030",
+    "\u0031",
+    "\u0032",
+    "\u0033",
+    "\u0034",
+    "\u0035",
+    "\u0036",
+    "\u0037",  # 48 - 55
+    "\u0038",
+    "\u0039",
+    "\u003a",
+    "\u003b",
+    "\u003c",
+    "\u003d",
+    "\u003e",
+    "\u003f",  # 56 - 63
+    "\u0040",
+    "\u0041",
+    "\u0042",
+    "\u0043",
+    "\u0044",
+    "\u0045",
+    "\u0046",
+    "\u0047",  # 64 - 71
+    "\u0048",
+    "\u0049",
+    "\u004a",
+    "\u004b",
+    "\u004c",
+    "\u004d",
+    "\u004e",
+    "\u004f",  # 72 - 79
+    "\u0050",
+    "\u0051",
+    "\u0052",
+    "\u0053",
+    "\u0054",
+    "\u0055",
+    "\u0056",
+    "\u0057",  # 80 - 87
+    "\u0058",
+    "\u0059",
+    "\u005a",
+    "\u005b",
+    "\u005c",
+    "\u005d",
+    "\u005e",
+    "\u005f",  # 88 - 95
+    "\u0060",
+    "\u0061",
+    "\u0062",
+    "\u0063",
+    "\u0064",
+    "\u0065",
+    "\u0066",
+    "\u0067",  # 96 - 103
+    "\u0068",
+    "\u0069",
+    "\u006a",
+    "\u006b",
+    "\u006c",
+    "\u006d",
+    "\u006e",
+    "\u006f",  # 104 - 111
+    "\u0070",
+    "\u0071",
+    "\u0072",
+    "\u0073",
+    "\u0074",
+    "\u0075",
+    "\u0076",
+    "\u0077",  # 112 - 119
+    "\u0078",
+    "\u0079",
+    "\u007a",
+    "\u007b",
+    "\u007c",
+    "\u007d",
+    "\u007e",
+    "\u0000",  # 120 - 127
+    "\u2022",
+    "\u2020",
+    "\u2021",
+    "\u2026",
+    "\u2014",
+    "\u2013",
+    "\u0192",
+    "\u2044",  # 128 - 135
+    "\u2039",
+    "\u203a",
+    "\u2212",
+    "\u2030",
+    "\u201e",
+    "\u201c",
+    "\u201d",
+    "\u2018",  # 136 - 143
+    "\u2019",
+    "\u201a",
+    "\u2122",
+    "\ufb01",
+    "\ufb02",
+    "\u0141",
+    "\u0152",
+    "\u0160",  # 144 - 151
+    "\u0178",
+    "\u017d",
+    "\u0131",
+    "\u0142",
+    "\u0153",
+    "\u0161",
+    "\u017e",
+    "\u0000",  # 152 - 159
+    "\u20ac",
+    "\u00a1",
+    "\u00a2",
+    "\u00a3",
+    "\u00a4",
+    "\u00a5",
+    "\u00a6",
+    "\u00a7",  # 160 - 167
+    "\u00a8",
+    "\u00a9",
+    "\u00aa",
+    "\u00ab",
+    "\u00ac",
+    "\u0000",
+    "\u00ae",
+    "\u00af",  # 168 - 175
+    "\u00b0",
+    "\u00b1",
+    "\u00b2",
+    "\u00b3",
+    "\u00b4",
+    "\u00b5",
+    "\u00b6",
+    "\u00b7",  # 176 - 183
+    "\u00b8",
+    "\u00b9",
+    "\u00ba",
+    "\u00bb",
+    "\u00bc",
+    "\u00bd",
+    "\u00be",
+    "\u00bf",  # 184 - 191
+    "\u00c0",
+    "\u00c1",
+    "\u00c2",
+    "\u00c3",
+    "\u00c4",
+    "\u00c5",
+    "\u00c6",
+    "\u00c7",  # 192 - 199
+    "\u00c8",
+    "\u00c9",
+    "\u00ca",
+    "\u00cb",
+    "\u00cc",
+    "\u00cd",
+    "\u00ce",
+    "\u00cf",  # 200 - 207
+    "\u00d0",
+    "\u00d1",
+    "\u00d2",
+    "\u00d3",
+    "\u00d4",
+    "\u00d5",
+    "\u00d6",
+    "\u00d7",  # 208 - 215
+    "\u00d8",
+    "\u00d9",
+    "\u00da",
+    "\u00db",
+    "\u00dc",
+    "\u00dd",
+    "\u00de",
+    "\u00df",  # 216 - 223
+    "\u00e0",
+    "\u00e1",
+    "\u00e2",
+    "\u00e3",
+    "\u00e4",
+    "\u00e5",
+    "\u00e6",
+    "\u00e7",  # 224 - 231
+    "\u00e8",
+    "\u00e9",
+    "\u00ea",
+    "\u00eb",
+    "\u00ec",
+    "\u00ed",
+    "\u00ee",
+    "\u00ef",  # 232 - 239
+    "\u00f0",
+    "\u00f1",
+    "\u00f2",
+    "\u00f3",
+    "\u00f4",
+    "\u00f5",
+    "\u00f6",
+    "\u00f7",  # 240 - 247
+    "\u00f8",
+    "\u00f9",
+    "\u00fa",
+    "\u00fb",
+    "\u00fc",
+    "\u00fd",
+    "\u00fe",
+    "\u00ff",  # 248 - 255
 )
 
 assert len(_pdfDocEncoding) == 256
@@ -1712,7 +1690,7 @@ assert len(_pdfDocEncoding) == 256
 _pdfDocEncoding_rev = {}
 for i in range(256):
     char = _pdfDocEncoding[i]
-    if char == u_("\u0000"):
+    if char == "\u0000":
         continue
     assert char not in _pdfDocEncoding_rev, (
         str(char) + " at " + str(i) + " already at " + str(_pdfDocEncoding_rev[char])

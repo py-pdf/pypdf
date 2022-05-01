@@ -33,7 +33,7 @@ import struct
 import sys
 import warnings
 from hashlib import md5
-from sys import version_info
+from io import BytesIO
 
 from PyPDF2 import utils
 from PyPDF2._page import PageObject
@@ -68,16 +68,8 @@ from PyPDF2.utils import (
     ConvertFunctionsToVirtualList,
     b_,
     formatWarning,
-    isString,
     readUntilWhitespace,
 )
-
-if version_info < (3, 0):
-    from cStringIO import StringIO
-
-    BytesIO = StringIO
-else:
-    from io import BytesIO, StringIO
 
 
 def convertToInt(d, size):
@@ -233,7 +225,7 @@ class PdfFileReader(object):
                 "It may not be read correctly.",
                 PdfReadWarning,
             )
-        if isString(stream):
+        if isinstance(stream, str):
             with open(stream, "rb") as fileobj:
                 stream = BytesIO(b_(fileobj.read()))
         self.read(stream)
@@ -634,7 +626,7 @@ class PdfFileReader(object):
         if dest:
             if isinstance(dest, ArrayObject):
                 outline = self._buildDestination(title, dest)
-            elif isString(dest) and dest in self._namedDests:
+            elif isinstance(dest, str) and dest in self._namedDests:
                 outline = self._namedDests[dest]
                 outline[NameObject("/Title")] = title
             else:

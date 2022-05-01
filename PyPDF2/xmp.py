@@ -4,7 +4,6 @@ import re
 from xml.dom.minidom import parseString
 
 from .generic import PdfObject
-from .utils import u_
 
 RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 DC_NAMESPACE = "http://purl.org/dc/elements/1.1/"
@@ -372,7 +371,7 @@ class XmpInformation(PdfObject):
                 key = node.localName
                 while True:
                     # see documentation about PDFX_NAMESPACE earlier in file
-                    idx = key.find(u_("\u2182"))
+                    idx = key.find("\u2182")
                     if idx == -1:
                         break
                     key = (

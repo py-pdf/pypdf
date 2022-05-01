@@ -32,7 +32,8 @@ __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import math
-from sys import version_info
+import struct
+from io import StringIO
 
 from PyPDF2.constants import CcittFaxDecodeParameters as CCITT
 from PyPDF2.constants import ColorSpaces
@@ -43,13 +44,6 @@ from PyPDF2.constants import LzwFilterParameters as LZW
 from PyPDF2.constants import StreamAttributes as SA
 from PyPDF2.errors import PdfReadError, PdfStreamError
 from PyPDF2.utils import ord_, paethPredictor
-
-if version_info < (3, 0):
-    from cStringIO import StringIO
-else:
-    from io import StringIO
-
-import struct
 
 try:
     import zlib
@@ -345,85 +339,27 @@ class ASCII85Decode(object):
 
     @staticmethod
     def decode(data, decodeParms=None):
-        if version_info < (3, 0):
-            retval = ""
-            group = []
-            index = 0
-            hit_eod = False
-            # remove all whitespace from data
-            data = [y for y in data if y not in " \n\r\t"]
-            while not hit_eod:
-                char = data[index]
-                if len(retval) == 0 and char == "<" and data[index + 1] == "~":
-                    index += 2
-                    continue
-                # elif c.isspace():
-                #    index += 1
-                #    continue
-                elif char == "z":
-                    assert len(group) == 0
-                    retval += "\x00\x00\x00\x00"
-                    index += 1
-                    continue
-                elif char == "~" and data[index + 1] == ">":
-                    if len(group) != 0:
-                        # cannot have a final group of just 1 char
-                        assert len(group) > 1
-                        cnt = len(group) - 1
-                        group += [85, 85, 85]
-                        hit_eod = cnt
-                    else:
-                        break
-                else:
-                    char = ord(char) - 33
-                    assert char >= 0 and char < 85
-                    group += [char]
-                if len(group) >= 5:
-                    b = (
-                        group[0] * (85**4)
-                        + group[1] * (85**3)
-                        + group[2] * (85**2)
-                        + group[3] * 85
-                        + group[4]
-                    )
-                    if b > (2**32 - 1):
-                        raise OverflowError(
-                            "The sum of a ASCII85-encoded 4-byte group shall "
-                            "not exceed 2 ^ 32 - 1. See ISO 32000, 2008, 7.4.3"
-                        )
-                    assert b <= (2**32 - 1)
-                    c4 = chr((b >> 0) % 256)
-                    c3 = chr((b >> 8) % 256)
-                    c2 = chr((b >> 16) % 256)
-                    c1 = chr(b >> 24)
-                    retval += c1 + c2 + c3 + c4
-                    if hit_eod:
-                        retval = retval[: -4 + hit_eod]
-                    group = []
-                index += 1
-            return retval
-        else:
-            if isinstance(data, str):
-                data = data.encode("ascii")
-            group_index = b = 0
-            out = bytearray()
-            for char in data:
-                if ord("!") <= char and char <= ord("u"):
-                    group_index += 1
-                    b = b * 85 + (char - 33)
-                    if group_index == 5:
-                        out += struct.pack(b">L", b)
-                        group_index = b = 0
-                elif char == ord("z"):
-                    assert group_index == 0
-                    out += b"\0\0\0\0"
-                elif char == ord("~"):
-                    if group_index:
-                        for _ in range(5 - group_index):
-                            b = b * 85 + 84
-                        out += struct.pack(b">L", b)[: group_index - 1]
-                    break
-            return bytes(out)
+        if isinstance(data, str):
+            data = data.encode("ascii")
+        group_index = b = 0
+        out = bytearray()
+        for char in data:
+            if ord("!") <= char and char <= ord("u"):
+                group_index += 1
+                b = b * 85 + (char - 33)
+                if group_index == 5:
+                    out += struct.pack(b">L", b)
+                    group_index = b = 0
+            elif char == ord("z"):
+                assert group_index == 0
+                out += b"\0\0\0\0"
+            elif char == ord("~"):
+                if group_index:
+                    for _ in range(5 - group_index):
+                        b = b * 85 + 84
+                    out += struct.pack(b">L", b)[: group_index - 1]
+                break
+        return bytes(out)
 
 
 class DCTDecode(object):

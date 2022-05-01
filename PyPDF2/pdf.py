@@ -34,20 +34,11 @@
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
+import codecs  # noqa: F401
 import math  # noqa: F401
 import struct  # noqa: F401
 import sys  # noqa: F401
 import uuid  # noqa: F401
-from sys import version_info
-
-if version_info < (3, 0):
-    from cStringIO import StringIO
-
-    BytesIO = StringIO
-else:
-    from io import StringIO, BytesIO  # noqa: F401
-
-import codecs  # noqa: F401
 import warnings  # noqa: F401
 from hashlib import md5  # noqa: F401
 
@@ -73,10 +64,8 @@ from .utils import (  # noqa: F401
     ConvertFunctionsToVirtualList,
     b_,
     formatWarning,
-    isString,
     ord_,
     readNonWhitespace,
     readUntilWhitespace,
     str_,
-    u_,
 )
