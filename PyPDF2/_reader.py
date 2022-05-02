@@ -932,12 +932,14 @@ class PdfFileReader(object):
 
         # check and eventually correct the startxref only in not strict
         xref_issue_nr = self._get_xref_issues(stream, startxref)
-        if self.strict and xref_issue_nr:
-            raise PdfReadError("Broken xref table")
-        else:
-            warnings.warn(
-                "incorrect startxref pointer({})".format(xref_issue_nr), PdfReadWarning
-            )
+        if xref_issue_nr != 0:
+            if self.strict and xref_issue_nr:
+                raise PdfReadError("Broken xref table")
+            else:
+                warnings.warn(
+                    "incorrect startxref pointer({})".format(xref_issue_nr),
+                    PdfReadWarning,
+                )
 
         # read all cross reference tables and their trailers
         self.xref = {}
