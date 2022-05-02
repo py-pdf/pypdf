@@ -48,7 +48,7 @@ class PageRange:
 
     """
 
-    def __init__(self, arg):
+    def __init__(self, arg) -> None:
         """
         Initialize with either a slice -- giving the equivalent page range,
         or a PageRange object -- making a copy,
@@ -155,3 +155,6 @@ def parse_filename_page_ranges(args):
             pdf_filename = arg
             did_page_range = False
     return pairs
+
+
+PageRangeSpec = Union[str, PageRange, Tuple[int, int]]

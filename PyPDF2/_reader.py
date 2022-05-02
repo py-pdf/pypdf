@@ -32,6 +32,7 @@ import sys
 import warnings
 from hashlib import md5
 from io import BytesIO
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from PyPDF2 import utils
 from PyPDF2._page import PageObject
@@ -49,6 +50,7 @@ from PyPDF2.generic import (
     ArrayObject,
     BooleanObject,
     ByteStringObject,
+    ContentStream,
     Destination,
     DictionaryObject,
     Field,
@@ -56,6 +58,7 @@ from PyPDF2.generic import (
     NameObject,
     NullObject,
     NumberObject,
+    PdfObject,
     StreamObject,
     TextStringObject,
     createStringObject,
@@ -63,9 +66,10 @@ from PyPDF2.generic import (
     readObject,
 )
 from PyPDF2.utils import ConvertFunctionsToVirtualList, b_, readUntilWhitespace
+from PyPDF2.xmp import XmpInformation
 
 
-def convertToInt(d, size):
+def convertToInt(d, size: int):
     if size > 8:
         raise PdfReadError("invalid size in convertToInt")
     d = b_("\x00\x00\x00\x00\x00\x00\x00\x00") + b_(d)
@@ -98,47 +102,47 @@ class DocumentInformation(DictionaryObject):
         return None
 
     @property
-    def title(self):
+    def title(self) -> Optional[str]:
         """Read-only property accessing the document's **title**.
         Returns a unicode string (``TextStringObject``) or ``None``
         if the title is not specified."""
         return (
-            self.getText(DI.TITLE) or self.get(DI.TITLE).getObject()
+            self.getText(DI.TITLE) or self.get(DI.TITLE).getObject()  # type: ignore
             if self.get(DI.TITLE)
             else None
         )
 
     @property
-    def title_raw(self):
+    def title_raw(self) -> Optional[str]:
         """The "raw" version of title; can return a ``ByteStringObject``."""
         return self.get(DI.TITLE)
 
     @property
-    def author(self):
+    def author(self) -> Optional[str]:
         """Read-only property accessing the document's **author**.
         Returns a unicode string (``TextStringObject``) or ``None``
         if the author is not specified."""
         return self.getText(DI.AUTHOR)
 
     @property
-    def author_raw(self):
+    def author_raw(self) -> Optional[str]:
         """The "raw" version of author; can return a ``ByteStringObject``."""
         return self.get(DI.AUTHOR)
 
     @property
-    def subject(self):
+    def subject(self) -> Optional[str]:
         """Read-only property accessing the document's **subject**.
         Returns a unicode string (``TextStringObject``) or ``None``
         if the subject is not specified."""
         return self.getText(DI.SUBJECT)
 
     @property
-    def subject_raw(self):
+    def subject_raw(self) -> Optional[str]:
         """The "raw" version of subject; can return a ``ByteStringObject``."""
         return self.get(DI.SUBJECT)
 
     @property
-    def creator(self):
+    def creator(self) -> Optional[str]:
         """Read-only property accessing the document's **creator**. If the
         document was converted to PDF from another format, this is the name of the
         application (e.g. OpenOffice) that created the original document from
@@ -147,12 +151,12 @@ class DocumentInformation(DictionaryObject):
         return self.getText(DI.CREATOR)
 
     @property
-    def creator_raw(self):
+    def creator_raw(self) -> Optional[str]:
         """The "raw" version of creator; can return a ``ByteStringObject``."""
         return self.get(DI.CREATOR)
 
     @property
-    def producer(self):
+    def producer(self) -> Optional[str]:
         """Read-only property accessing the document's **producer**.
         If the document was converted to PDF from another format, this is
         the name of the application (for example, OSX Quartz) that converted
@@ -161,7 +165,7 @@ class DocumentInformation(DictionaryObject):
         return self.getText(DI.PRODUCER)
 
     @property
-    def producer_raw(self):
+    def producer_raw(self) -> Optional[str]:
         """The "raw" version of producer; can return a ``ByteStringObject``."""
         return self.get(DI.PRODUCER)
 
@@ -179,14 +183,12 @@ class PdfFileReader:
     :param bool strict: Determines whether user should be warned of all
         problems and also causes some correctable problems to be fatal.
         Defaults to ``False``.
-    :param warndest: Destination for logging warnings (defaults to
-        ``sys.stderr``).
     """
 
-    def __init__(self, stream, strict=False, warndest=None):
+    def __init__(self, stream: BytesIO, strict: bool = False) -> None:
         self.strict = strict
-        self.flattenedPages = None
-        self.resolvedObjects = {}
+        self.flattenedPages: Optional[List[PageObject]] = None
+        self.resolvedObjects: Dict[Tuple[Any, Any], PdfObject] = {}
         self.xrefIndex = 0
         self._pageId2Num = None  # map page IndirectRef number to Page Number
         if hasattr(stream, "mode") and "b" not in stream.mode:
@@ -203,7 +205,7 @@ class PdfFileReader:
 
         self._override_encryption = False
 
-    def getDocumentInfo(self):
+    def getDocumentInfo(self) -> Optional[DocumentInformation]:
         """
         Retrieve the PDF file's document information dictionary, if it exists.
         Note that some PDF files use metadata streams instead of docinfo
@@ -222,14 +224,14 @@ class PdfFileReader:
         return retval
 
     @property
-    def documentInfo(self):
+    def documentInfo(self) -> Optional[DocumentInformation]:
         """
         Read-only property that accesses the
         :meth:`getDocumentInfo()<PdfFileReader.getDocumentInfo>` function.
         """
         return self.getDocumentInfo()
 
-    def getXmpMetadata(self):
+    def getXmpMetadata(self) -> Optional[XmpInformation]:
         """
         Retrieve XMP (Extensible Metadata Platform) data from the PDF document
         root.
@@ -246,14 +248,14 @@ class PdfFileReader:
             self._override_encryption = False
 
     @property
-    def xmpMetadata(self):
+    def xmpMetadata(self) -> Optional[XmpInformation]:
         """
         Read-only property that accesses the
         :meth:`getXmpMetadata()<PdfFileReader.getXmpMetadata>` function.
         """
         return self.getXmpMetadata()
 
-    def getNumPages(self):
+    def getNumPages(self) -> int:
         """
         Calculates the number of pages in this PDF file.
 
@@ -278,7 +280,7 @@ class PdfFileReader:
         else:
             if self.flattenedPages is None:
                 self._flatten()
-            return len(self.flattenedPages)
+            return len(self.flattenedPages)  # type: ignore
 
     @property
     def numPages(self):
@@ -472,7 +474,7 @@ class PdfFileReader:
         """
         return self.getOutlines()
 
-    def getOutlines(self, node=None, outlines=None):
+    def getOutlines(self, node=None, outlines=None) -> List[Destination]:
         """
         Retrieve the document outline present in the document.
 
@@ -507,7 +509,7 @@ class PdfFileReader:
 
             # check for sub-outlines
             if "/First" in node:
-                sub_outlines = []
+                sub_outlines: List[Any] = []
                 self.getOutlines(node["/First"], sub_outlines)
                 if sub_outlines:
                     outlines.append(sub_outlines)
@@ -578,7 +580,7 @@ class PdfFileReader:
                     title, self.getPage(0).indirectRef, TextStringObject("/Fit")
                 )
 
-    def _buildOutline(self, node):
+    def _buildOutline(self, node) -> Optional[Destination]:
         dest, title, outline = None, None, None
 
         if "/A" in node and "/Title" in node:
@@ -612,7 +614,7 @@ class PdfFileReader:
         """
         return ConvertFunctionsToVirtualList(self.getNumPages, self.getPage)
 
-    def getPageLayout(self):
+    def getPageLayout(self) -> Optional[str]:
         """
         Get the page layout.
 
@@ -628,12 +630,12 @@ class PdfFileReader:
             return None
 
     @property
-    def pageLayout(self):
+    def pageLayout(self) -> Optional[str]:
         """Read-only property accessing the
         :meth:`getPageLayout()<PdfFileReader.getPageLayout>` method."""
         return self.getPageLayout()
 
-    def getPageMode(self):
+    def getPageMode(self) -> Optional[str]:
         """
         Get the page mode.
         See :meth:`setPageMode()<PdfFileWriter.setPageMode>`
@@ -653,7 +655,7 @@ class PdfFileReader:
         :meth:`getPageMode()<PdfFileReader.getPageMode>` method."""
         return self.getPageMode()
 
-    def _flatten(self, pages=None, inherit=None, indirectRef=None):
+    def _flatten(self, pages=None, inherit=None, indirectRef=None) -> None:
         inheritablePageAttributes = (
             NameObject(PG.RESOURCES),
             NameObject(PG.MEDIABOX),
@@ -690,7 +692,9 @@ class PdfFileReader:
                     pages[attr] = value
             page_obj = PageObject(self, indirectRef)
             page_obj.update(pages)
-            self.flattenedPages.append(page_obj)
+
+            # TODO: Could flattenedPages be None at this point?
+            self.flattenedPages.append(page_obj)  # type: ignore
 
     def _getObjectFromStream(self, indirectReference):
         # indirect reference to object in object stream
@@ -825,7 +829,7 @@ class PdfFileReader:
                 obj[i] = self._decryptObject(obj[i], key)
         return obj
 
-    def readObjectHeader(self, stream):
+    def readObjectHeader(self, stream) -> Tuple[int, int]:
         # Should never be necessary to read out whitespace, since the
         # cross-reference table should put us in the right spot to read the
         # object header.  In reality... some files have stupid cross reference
@@ -993,7 +997,7 @@ class PdfFileReader:
                     # non-zero-index is actually correct
             stream.seek(loc, 0)  # return to where it was
 
-    def _find_startxref_pos(self, stream):
+    def _find_startxref_pos(self, stream) -> int:
         """Find startxref entry - the location of the xref table"""
         line = self.readNextEndLine(stream)
         try:
@@ -1010,7 +1014,7 @@ class PdfFileReader:
                 raise PdfReadError("startxref not found")
         return startxref
 
-    def _read_standard_xref_table(self, stream):
+    def _read_standard_xref_table(self, stream) -> None:
         # standard cross-reference table
         ref = stream.read(4)
         if ref[:3] != b_("ref"):
@@ -1019,7 +1023,7 @@ class PdfFileReader:
         stream.seek(-1, 1)
         firsttime = True  # check if the first time looking at the xref table
         while True:
-            num = readObject(stream, self)
+            num: int = readObject(stream, self)  # type: ignore
             if firsttime and num != 0:
                 self.xrefIndex = num
                 if self.strict:
@@ -1032,7 +1036,7 @@ class PdfFileReader:
             firsttime = False
             readNonWhitespace(stream)
             stream.seek(-1, 1)
-            size = readObject(stream, self)
+            size: int = readObject(stream, self)  # type: ignore
             readNonWhitespace(stream)
             stream.seek(-1, 1)
             cnt = 0
@@ -1081,18 +1085,18 @@ class PdfFileReader:
             else:
                 break
 
-    def _read_pdf15_xref_stream(self, stream):
+    def _read_pdf15_xref_stream(self, stream) -> ContentStream:
         # PDF 1.5+ Cross-Reference Stream
         stream.seek(-1, 1)
         idnum, generation = self.readObjectHeader(stream)
-        xrefstream = readObject(stream, self)
+        xrefstream: ContentStream = readObject(stream, self)  # type: ignore
         assert xrefstream["/Type"] == "/XRef"
         self.cacheIndirectObject(generation, idnum, xrefstream)
         stream_data = BytesIO(b_(xrefstream.getData()))
         # Index pairs specify the subsections in the dictionary. If
         # none create one subsection that spans everything.
         idx_pairs = xrefstream.get("/Index", [0, xrefstream.get("/Size")])
-        entry_sizes = xrefstream.get("/W")
+        entry_sizes: Dict[Any, Any] = xrefstream.get("/W")  # type: ignore
         assert len(entry_sizes) >= 3
         if self.strict and len(entry_sizes) > 3:
             raise PdfReadError("Too many entry sizes: %s" % entry_sizes)
@@ -1120,7 +1124,7 @@ class PdfFileReader:
         return xrefstream
 
     @staticmethod
-    def _get_xref_issues(stream, startxref):
+    def _get_xref_issues(stream, startxref: int) -> int:
         """Return an int which indicates an issue. 0 means there is no issue."""
         stream.seek(startxref - 1, 0)  # -1 to check character before
         line = stream.read(1)
@@ -1144,7 +1148,7 @@ class PdfFileReader:
             #     return 4
         return 0
 
-    def _rebuild_xref_table(self, stream):
+    def _rebuild_xref_table(self, stream) -> None:
         self.xref = {}
         stream.seek(0, 0)
         f_ = stream.read(-1)
@@ -1163,7 +1167,7 @@ class PdfFileReader:
         stream.seek(-1, 1)
 
         # there might be something that is not a dict (see #856)
-        new_trailer = readObject(stream, self)
+        new_trailer: Dict[Any, Any] = readObject(stream, self)  # type: ignore
 
         for key, value in list(new_trailer.items()):
             if key not in self.trailer:
@@ -1206,7 +1210,7 @@ class PdfFileReader:
             k - self.xrefIndex: v for (k, v) in list(self.xref[generation].items())
         }
 
-    def _pairs(self, array):
+    def _pairs(self, array) -> Iterable[Tuple[int, int]]:
         i = 0
         while True:
             yield array[i], array[i + 1]
@@ -1214,7 +1218,7 @@ class PdfFileReader:
             if (i + 1) >= len(array):
                 break
 
-    def readNextEndLine(self, stream, limit_offset=0):
+    def readNextEndLine(self, stream, limit_offset: int = 0):
         line_parts = []
         while True:
             # Prevent infinite loops in malformed PDFs

@@ -38,7 +38,7 @@ import logging
 import re
 import warnings
 from io import BytesIO
-from typing import Dict, Optional
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from PyPDF2.constants import FilterTypes as FT
 from PyPDF2.constants import StreamAttributes as SA
@@ -64,50 +64,6 @@ class PdfObject:
         return self
 
 
-def readObject(stream, pdf) -> PdfObject:
-    tok = stream.read(1)
-    stream.seek(-1, 1)  # reset to start
-    idx = ObjectPrefix.find(tok)
-    if idx == 0:
-        return NameObject.readFromStream(stream, pdf)
-    elif idx == 1:
-        # hexadecimal string OR dictionary
-        peek = stream.read(2)
-        stream.seek(-2, 1)  # reset to start
-
-        if peek == b_("<<"):
-            return DictionaryObject.readFromStream(stream, pdf)
-        else:
-            return readHexStringFromStream(stream)
-    elif idx == 2:
-        return ArrayObject.readFromStream(stream, pdf)
-    elif idx == 3 or idx == 4:
-        return BooleanObject.readFromStream(stream)
-    elif idx == 5:
-        return readStringFromStream(stream)
-    elif idx == 6:
-        return NullObject.readFromStream(stream)
-    elif idx == 7:
-        # comment
-        while tok not in (b_("\r"), b_("\n")):
-            tok = stream.read(1)
-            # Prevents an infinite loop by raising an error if the stream is at
-            # the EOF
-            if len(tok) <= 0:
-                raise PdfStreamError("File ended unexpectedly.")
-        tok = readNonWhitespace(stream)
-        stream.seek(-1, 1)
-        return readObject(stream, pdf)
-    else:
-        # number object OR indirect reference
-        peek = stream.read(20)
-        stream.seek(-len(peek), 1)  # reset to start
-        if IndirectPattern.match(peek) is not None:
-            return IndirectObject.readFromStream(stream, pdf)
-        else:
-            return NumberObject.readFromStream(stream)
-
-
 class NullObject(PdfObject):
     def writeToStream(self, stream, encryption_key):
         stream.write(b_("null"))
@@ -121,7 +77,7 @@ class NullObject(PdfObject):
 
 
 class BooleanObject(PdfObject):
-    def __init__(self, value):
+    def __init__(self, value) -> None:
         self.value = value
 
     def writeToStream(self, stream, encryption_key):
@@ -173,7 +129,7 @@ class ArrayObject(list, PdfObject):
 
 
 class IndirectObject(PdfObject):
-    def __init__(self, idnum, generation, pdf):
+    def __init__(self, idnum, generation, pdf) -> None:
         self.idnum = idnum
         self.generation = generation
         self.pdf = pdf
@@ -229,7 +185,7 @@ class IndirectObject(PdfObject):
 
 
 class FloatObject(decimal.Decimal, PdfObject):
-    def __new__(cls, value="0", context=None):
+    def __new__(cls, value="0", context=None) -> "FloatObject":
         try:
             return decimal.Decimal.__new__(cls, utils.str_(value), context)
         except Exception:
@@ -241,7 +197,7 @@ class FloatObject(decimal.Decimal, PdfObject):
                 logger.warning(f"Invalid FloatObject {value}")
                 return decimal.Decimal.__new__(cls, "0")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         if self == self.to_integral():
             return str(self.quantize(decimal.Decimal(1)))
         else:
@@ -252,7 +208,7 @@ class FloatObject(decimal.Decimal, PdfObject):
                 o = o[:-1]
             return o
 
-    def as_numeric(self):
+    def as_numeric(self) -> float:
         return float(b_(repr(self)))
 
     def writeToStream(self, stream, encryption_key):
@@ -263,7 +219,7 @@ class NumberObject(int, PdfObject):
     NumberPattern = re.compile(b_("[^+-.0-9]"))
     ByteDot = b_(".")
 
-    def __new__(cls, value):
+    def __new__(cls, value) -> "NumberObject":
         val = int(value)
         try:
             return int.__new__(cls, val)
@@ -674,10 +630,10 @@ class DictionaryObject(dict, PdfObject):
 
 
 class TreeObject(DictionaryObject):
-    def __init__(self):
+    def __init__(self) -> None:
         DictionaryObject.__init__(self)
 
-    def hasChildren(self):
+    def hasChildren(self) -> bool:
         return "/First" in self
 
     def __iter__(self):
@@ -787,7 +743,7 @@ class TreeObject(DictionaryObject):
         if NameObject("/Prev") in child_obj:
             del child_obj[NameObject("/Prev")]
 
-    def emptyTree(self):
+    def emptyTree(self) -> None:
         for child in self:
             child_obj = child.getObject()
             del child_obj[NameObject("/Parent")]
@@ -805,7 +761,7 @@ class TreeObject(DictionaryObject):
 
 
 class StreamObject(DictionaryObject):
-    def __init__(self):
+    def __init__(self) -> None:
         self.__data: Optional[str] = None
         self.decodedSelf = None
 
@@ -867,7 +823,7 @@ class DecodedStreamObject(StreamObject):
 
 
 class EncodedStreamObject(StreamObject):
-    def __init__(self):
+    def __init__(self) -> None:
         self.decodedSelf = None
 
     def getData(self):
@@ -890,9 +846,9 @@ class EncodedStreamObject(StreamObject):
 
 
 class ContentStream(DecodedStreamObject):
-    def __init__(self, stream, pdf):
+    def __init__(self, stream, pdf) -> None:
         self.pdf = pdf
-        self.operations = []
+        self.operations: List[Tuple[Any, bytes]] = []
         # stream may be a StreamObject or an ArrayObject containing
         # multiple StreamObjects to be cat'd together.
         stream = stream.getObject()
@@ -1023,6 +979,50 @@ class ContentStream(DecodedStreamObject):
         self.__parseContentStream(BytesIO(b_(value)))
 
 
+def readObject(stream, pdf) -> Union[PdfObject, int, ContentStream]:
+    tok = stream.read(1)
+    stream.seek(-1, 1)  # reset to start
+    idx = ObjectPrefix.find(tok)
+    if idx == 0:
+        return NameObject.readFromStream(stream, pdf)
+    elif idx == 1:
+        # hexadecimal string OR dictionary
+        peek = stream.read(2)
+        stream.seek(-2, 1)  # reset to start
+
+        if peek == b_("<<"):
+            return DictionaryObject.readFromStream(stream, pdf)
+        else:
+            return readHexStringFromStream(stream)
+    elif idx == 2:
+        return ArrayObject.readFromStream(stream, pdf)
+    elif idx == 3 or idx == 4:
+        return BooleanObject.readFromStream(stream)
+    elif idx == 5:
+        return readStringFromStream(stream)
+    elif idx == 6:
+        return NullObject.readFromStream(stream)
+    elif idx == 7:
+        # comment
+        while tok not in (b_("\r"), b_("\n")):
+            tok = stream.read(1)
+            # Prevents an infinite loop by raising an error if the stream is at
+            # the EOF
+            if len(tok) <= 0:
+                raise PdfStreamError("File ended unexpectedly.")
+        tok = readNonWhitespace(stream)
+        stream.seek(-1, 1)
+        return readObject(stream, pdf)
+    else:
+        # number object OR indirect reference
+        peek = stream.read(20)
+        stream.seek(-len(peek), 1)  # reset to start
+        if IndirectPattern.match(peek) is not None:
+            return IndirectObject.readFromStream(stream, pdf)
+        else:
+            return NumberObject.readFromStream(stream)
+
+
 class RectangleObject(ArrayObject):
     """
     This class is used to represent *page boxes* in PyPDF2. These boxes include:
@@ -1034,7 +1034,7 @@ class RectangleObject(ArrayObject):
         * :attr:`trimBox <PyPDF2._page.PageObject.trimBox>`
     """
 
-    def __init__(self, arr):
+    def __init__(self, arr) -> None:
         # must have four points
         assert len(arr) == 4
         # automatically convert arr[x] into NumberObject(arr[x]) if necessary
@@ -1130,7 +1130,7 @@ class Field(TreeObject):
     :meth:`getFields()<PyPDF2.PdfFileReader.getFields>`
     """
 
-    def __init__(self, data):
+    def __init__(self, data) -> None:
         DictionaryObject.__init__(self)
         attributes = (
             "/FT",
@@ -1206,7 +1206,7 @@ class Field(TreeObject):
         return self.get("/DV")
 
     @property
-    def additionalActions(self):
+    def additionalActions(self) -> None:
         """
         Read-only property accessing the additional actions dictionary.
         This dictionary defines the field's behavior in response to trigger events.
@@ -1248,7 +1248,9 @@ class Destination(TreeObject):
          - [left]
     """
 
-    def __init__(self, title, page, typ, *args):
+    def __init__(
+        self, title: TextStringObject, page: NumberObject, typ: str, *args
+    ) -> None:
         DictionaryObject.__init__(self)
         self[NameObject("/Title")] = title
         self[NameObject("/Page")] = page

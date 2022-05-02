@@ -33,7 +33,8 @@ import struct
 import uuid
 import warnings
 from hashlib import md5
-from typing import List
+from io import BytesIO
+from typing import Any, Dict, List, Optional
 
 from PyPDF2._page import PageObject
 from PyPDF2._security import _alg33, _alg34, _alg35
@@ -109,7 +110,7 @@ class PdfFileWriter:
                 NameObject(CO.PAGES): self._pages,
             }
         )
-        self._root = None
+        self._root: Optional[IndirectObject] = None
         self._root_object = root
         self.set_need_appearances_writer()
 
@@ -126,11 +127,11 @@ class PdfFileWriter:
         assert page[PA.TYPE] == CO.PAGE
         page[NameObject(PA.PARENT)] = self._pages
         page = self._addObject(page)
-        pages = self.getObject(self._pages)
+        pages: DictionaryObject = self.getObject(self._pages)  # type: ignore
         action(pages[PA.KIDS], page)
         pages[NameObject(PA.COUNT)] = NumberObject(pages[PA.COUNT] + 1)
 
-    def set_need_appearances_writer(self):
+    def set_need_appearances_writer(self) -> None:
         # See 12.7.2 and 7.7.2 for more information:
         # http://www.adobe.com/content/dam/acom/en/devnet/acrobat/pdfs/PDF32000_2008.pdf
         try:
@@ -495,7 +496,7 @@ class PdfFileWriter:
         self._encrypt = self._addObject(encrypt)
         self._encrypt_key = key
 
-    def write(self, stream):
+    def write(self, stream: BytesIO):
         """
         Write the collection of pages added to this object out as a PDF file.
 
@@ -511,7 +512,7 @@ class PdfFileWriter:
         if not self._root:
             self._root = self._addObject(self._root_object)
 
-        external_reference_map = {}
+        external_reference_map: Dict[Any, Any] = {}
 
         # PDF objects sometimes have circular references to their /Page objects
         # inside their object tree (for example, annotations).  Those will be
@@ -533,7 +534,7 @@ class PdfFileWriter:
                     data.idnum
                 ] = IndirectObject(obj_index + 1, 0, self)
 
-        self.stack = []
+        self.stack: List[int] = []
         self._sweepIndirectReferences(external_reference_map, self._root)
         del self.stack
 
@@ -867,9 +868,9 @@ class PdfFileWriter:
 
     def removeLinks(self) -> None:
         """Remove links and annotations from this output."""
-        pages = self.getObject(self._pages)[PA.KIDS]
+        pages: DictionaryObject = self.getObject(self._pages)[PA.KIDS]  # type: ignore
         for page in pages:
-            page_ref = self.getObject(page)
+            page_ref: DictionaryObject = self.getObject(page)  # type: ignore
             if PG.ANNOTS in page_ref:
                 del page_ref[PG.ANNOTS]
 
@@ -880,7 +881,7 @@ class PdfFileWriter:
         :param bool ignoreByteStringObject: optional parameter
             to ignore ByteString Objects.
         """
-        pages = self.getObject(self._pages)[PA.KIDS]
+        pages: DictionaryObject = self.getObject(self._pages)[PA.KIDS]  # type: ignore
         jump_operators = [
             b_("cm"),
             b_("w"),
@@ -910,7 +911,7 @@ class PdfFileWriter:
         ]
         for j in range(len(pages)):
             page = pages[j]
-            page_ref = self.getObject(page)
+            page_ref: DictionaryObject = self.getObject(page)  # type: ignore
             content = page_ref["/Contents"].getObject()
             if not isinstance(content, ContentStream):
                 content = ContentStream(content, page_ref)

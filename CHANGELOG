@@ -5,6 +5,7 @@ Deprecations (DEP):
 - PyPDF2 2.0 requires Python 3.6+. Python 2.7 and 3.5 support were dropped.
 - PdfFileReader and PdfFileMerger no longer have the `overwriteWarnings`
   parameter. The new behavior is `overwriteWarnings=False`.
+- PdfFileReader: The "warndest" parameter was removed
 - merger: OutlinesObject was removed.
 - utils:
   * `formatWarning` was removed

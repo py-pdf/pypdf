@@ -32,14 +32,15 @@ __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
 
-from typing import Dict
+from io import BytesIO
+from typing import Dict, Optional
 
 from PyPDF2.errors import STREAM_TRUNCATED_PREMATURELY, PdfStreamError
 
 bytes_type = type(bytes())  # Works the same in Python 2.X and 3.X
 
 
-def readUntilWhitespace(stream, maxchars=None):
+def readUntilWhitespace(stream: BytesIO, maxchars: Optional[int] = None):
     """
     Reads non-whitespace characters and returns them.
     Stops upon encountering whitespace or when maxchars is reached.
@@ -111,7 +112,7 @@ def readUntilRegex(stream, regex, ignore_eof=False):
 
 
 class ConvertFunctionsToVirtualList:
-    def __init__(self, lengthFunction, getFunction):
+    def __init__(self, lengthFunction, getFunction) -> None:
         self.lengthFunction = lengthFunction
         self.getFunction = getFunction
 
@@ -173,7 +174,7 @@ def markLocation(stream):
 B_CACHE = {}  # type: Dict[str, bytes]
 
 
-def b_(s):
+def b_(s) -> bytes:
     bc = B_CACHE
     if s in bc:
         return bc[s]
@@ -192,7 +193,7 @@ def b_(s):
             return r
 
 
-def str_(b):
+def str_(b) -> str:
     if type(b) == bytes:
         return b.decode("latin-1")
     else:

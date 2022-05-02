@@ -249,7 +249,7 @@ class LZWDecode:
     """
 
     class decoder:
-        def __init__(self, data):
+        def __init__(self, data) -> None:
             self.STOP = 257
             self.CLEARDICT = 256
             self.data = data
@@ -260,7 +260,7 @@ class LZWDecode:
                 self.dict[i] = chr(i)
             self.resetDict()
 
-        def resetDict(self):
+        def resetDict(self) -> None:
             self.dictlen = 258
             self.bitspercode = 9
 
@@ -381,7 +381,7 @@ class JPXDecode:
 class CCITParameters:
     """TABLE 3.9 Optional parameters for the CCITTFaxDecode filter"""
 
-    def __init__(self, K=0, columns=0, rows=0):
+    def __init__(self, K=0, columns=0, rows=0) -> None:
         self.K = K
         self.EndOfBlock = None
         self.EndOfLine = None

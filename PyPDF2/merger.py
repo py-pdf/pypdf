@@ -27,18 +27,19 @@
 
 from io import BytesIO
 from io import FileIO as file
-from typing import List, Optional, Union
+from typing import Any, List, Optional, Tuple, Union
 
 from PyPDF2._reader import PdfFileReader
 from PyPDF2._writer import PdfFileWriter
 from PyPDF2.constants import PagesAttributes as PA
 from PyPDF2.generic import *
-from PyPDF2.pagerange import PageRange
+from PyPDF2.pagerange import PageRange, PageRangeSpec
 from PyPDF2.utils import str_
 
 StreamIO = BytesIO
 
 ERR_CLOSED_WRITER = "close() was called and thus the writer cannot be used anymore"
+
 
 class _MergedPage:
     """
@@ -46,7 +47,7 @@ class _MergedPage:
     information on each page that is being merged.
     """
 
-    def __init__(self, pagedata, src, id):
+    def __init__(self, pagedata, src, id) -> None:
         self.src = src
         self.pagedata = pagedata
         self.out_pagedata = None
@@ -67,17 +68,22 @@ class PdfFileMerger:
             Defaults to ``False``.
     """
 
-    def __init__(self, strict=False):
-        self.inputs = []
-        self.pages = []
+    def __init__(self, strict=False) -> None:
+        self.inputs: List[Tuple[Any, PdfFileReader, bool]] = []
+        self.pages: List[Any] = []
         self.output: Optional[PdfFileWriter] = PdfFileWriter()
-        self.bookmarks = []
-        self.named_dests = []
+        self.bookmarks: List[Union[Bookmark, Destination, List[Destination]]] = []
+        self.named_dests: List[Any] = []
         self.id_count = 0
         self.strict = strict
 
     def merge(
-        self, position, fileobj, bookmark=None, pages=None, import_bookmarks=True
+        self,
+        position: int,
+        fileobj,
+        bookmark: Optional[str] = None,
+        pages: Optional[PageRangeSpec] = None,
+        import_bookmarks: bool = True,
     ):
         """
         Merges the pages from the given file into the output file at the
@@ -150,20 +156,19 @@ class PdfFileMerger:
             raise TypeError('"pages" must be a tuple of (start, stop[, step])')
 
         srcpages = []
-        if bookmark:
-            bookmark = Bookmark(
-                TextStringObject(bookmark),
-                NumberObject(self.id_count),
-                NameObject("/Fit"),
-            )
 
         outline = []
         if import_bookmarks:
             outline = pdfr.getOutlines()
-            outline = self._trim_outline(pdfr, outline, pages)
+            outline = self._trim_outline(pdfr, outline, pages)  # type: ignore
 
         if bookmark:
-            self.bookmarks += [bookmark, outline]
+            bookmark_typ = Bookmark(
+                TextStringObject(bookmark),
+                NumberObject(self.id_count),
+                NameObject("/Fit"),
+            )
+            self.bookmarks += [bookmark_typ, outline]
         else:
             self.bookmarks += outline
 
@@ -172,7 +177,7 @@ class PdfFileMerger:
         self.named_dests += dests
 
         # Gather all the pages that are going to be merged
-        for i in range(*pages):
+        for i in range(*pages):  # type: ignore
             pg = pdfr.getPage(i)
 
             id = self.id_count
@@ -250,7 +255,7 @@ class PdfFileMerger:
         if my_file:
             fileobj.close()
 
-    def close(self):
+    def close(self) -> None:
         """
         Shuts all file descriptors (input and output) and clears all memory
         usage.
@@ -344,7 +349,9 @@ class PdfFileMerger:
                     break
         return new_dests
 
-    def _trim_outline(self, pdf, outline, pages):
+    def _trim_outline(
+        self, pdf: PdfFileReader, outline: List[Destination], pages: Tuple[int, int]
+    ) -> List[Destination]:
         """
         Removes any outline/bookmark entries that are not a part of the
         specified page set.
@@ -368,7 +375,7 @@ class PdfFileMerger:
                         break
         return new_outline
 
-    def _write_dests(self):
+    def _write_dests(self) -> None:
         if self.output is None:
             raise RuntimeError(ERR_CLOSED_WRITER)
         for named_dest in self.named_dests:
@@ -382,7 +389,7 @@ class PdfFileMerger:
             if pageno is not None:
                 self.output.addNamedDestinationObject(named_dest)
 
-    def _write_bookmarks(self, bookmarks=None, parent=None):
+    def _write_bookmarks(self, bookmarks=None, parent=None) -> None:
         if self.output is None:
             raise RuntimeError(ERR_CLOSED_WRITER)
         if bookmarks is None:

@@ -1,6 +1,7 @@
 import datetime
 import decimal
 import re
+from typing import Any, Dict
 from xml.dom.minidom import parseString
 
 from .generic import PdfObject
@@ -148,11 +149,11 @@ class XmpInformation(PdfObject):
     Usually accessed by :meth:`getXmpMetadata()<PyPDF2.PdfFileReader.getXmpMetadata>`
     """
 
-    def __init__(self, stream):
+    def __init__(self, stream) -> None:
         self.stream = stream
         doc_root = parseString(self.stream.getData())
         self.rdfRoot = doc_root.getElementsByTagNameNS(RDF_NAMESPACE, "RDF")[0]
-        self.cache = {}
+        self.cache: Dict[Any, Any] = {}
 
     def writeToStream(self, stream, encryption_key):
         self.stream.writeToStream(stream, encryption_key)
