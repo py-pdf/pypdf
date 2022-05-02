@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1651490904265,
+  "lastUpdate": 1651518421466,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1809,6 +1809,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004484850855279719",
             "extra": "mean: 111.82631479999543 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "48d5f0ca3e702da1460107dbe7d90ccdd60a4c1f",
+          "message": "BUG: _rebuild_xref_table expects trailer to be a dict (#857)\n\nThis caused:\r\n    AttributeError: 'FloatObject' object has no attribute 'items'\r\n\r\nCloses #856\r\n\r\nCo-authored-by: pubpub-zz <4083478+pubpub-zz@users.noreply.github.com>",
+          "timestamp": "2022-05-02T21:06:20+02:00",
+          "tree_id": "f67c717266a4e5080a449700dc88c806e776f63a",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/48d5f0ca3e702da1460107dbe7d90ccdd60a4c1f"
+        },
+        "date": 1651518420900,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.5464325263471695,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007997181509643857",
+            "extra": "mean: 1.830052114000003 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 8.927549861794354,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010864594569718394",
+            "extra": "mean: 112.0128160000004 msec\nrounds: 9"
           }
         ]
       }
