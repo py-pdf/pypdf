@@ -88,7 +88,7 @@ class DocumentInformation(DictionaryObject):
     therefore is not as commonly accessed.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         DictionaryObject.__init__(self)
 
     def getText(self, key):

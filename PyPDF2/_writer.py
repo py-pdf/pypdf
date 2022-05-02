@@ -33,6 +33,7 @@ import struct
 import uuid
 import warnings
 from hashlib import md5
+from typing import List
 
 from PyPDF2._page import PageObject
 from PyPDF2._security import _alg33, _alg34, _alg35
@@ -56,6 +57,7 @@ from PyPDF2.generic import (
     NameObject,
     NullObject,
     NumberObject,
+    PdfObject,
     RectangleObject,
     StreamObject,
     TextStringObject,
@@ -73,9 +75,9 @@ class PdfFileWriter:
     class (typically :class:`PdfFileReader<PdfFileReader>`).
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._header = b_("%PDF-1.3")
-        self._objects = []  # array of indirect objects
+        self._objects: List[PdfObject] = []  # array of indirect objects
 
         # The root of our page tree node.
         pages = DictionaryObject()
@@ -111,16 +113,16 @@ class PdfFileWriter:
         self._root_object = root
         self.set_need_appearances_writer()
 
-    def _addObject(self, obj):
+    def _addObject(self, obj) -> IndirectObject:
         self._objects.append(obj)
         return IndirectObject(len(self._objects), 0, self)
 
-    def getObject(self, ido):
+    def getObject(self, ido: IndirectObject) -> PdfObject:
         if ido.pdf != self:
             raise ValueError("pdf must be self")
         return self._objects[ido.idnum - 1]
 
-    def _addPage(self, page, action):
+    def _addPage(self, page, action) -> None:
         assert page[PA.TYPE] == CO.PAGE
         page[NameObject(PA.PARENT)] = self._pages
         page = self._addObject(page)
@@ -863,7 +865,7 @@ class PdfFileWriter:
 
         return dest_ref
 
-    def removeLinks(self):
+    def removeLinks(self) -> None:
         """Remove links and annotations from this output."""
         pages = self.getObject(self._pages)[PA.KIDS]
         for page in pages:
@@ -871,7 +873,7 @@ class PdfFileWriter:
             if PG.ANNOTS in page_ref:
                 del page_ref[PG.ANNOTS]
 
-    def removeImages(self, ignoreByteStringObject=False):
+    def removeImages(self, ignoreByteStringObject=False) -> None:
         """
         Remove images from this output.
 
