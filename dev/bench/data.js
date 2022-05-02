@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1651518421466,
+  "lastUpdate": 1651518714682,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1847,6 +1847,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0010864594569718394",
             "extra": "mean: 112.0128160000004 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "f3cb316f0135bc4f761e78086effa66e1652b2e4",
+          "message": "REL: 1.27.12\n\nBug Fixes (BUG):\n-  _rebuild_xref_table expects trailer to be a dict (#857)\n\nDocumentation (DOC):\n-  Security Policy\n\nFull Changelog: https://github.com/py-pdf/PyPDF2/compare/1.27.11...1.27.12",
+          "timestamp": "2022-05-02T21:10:50+02:00",
+          "tree_id": "7d28a3654698edfcf47b451f055bec5039d6118d",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/f3cb316f0135bc4f761e78086effa66e1652b2e4"
+        },
+        "date": 1651518714191,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.6517502234565721,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011350903544595869",
+            "extra": "mean: 1.5343301222000008 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 10.248858811233584,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006084210437525165",
+            "extra": "mean: 97.57183881818321 msec\nrounds: 11"
           }
         ]
       }
