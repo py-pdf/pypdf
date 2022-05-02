@@ -34,6 +34,11 @@ import math
 import struct
 from io import StringIO
 
+try:
+    from typing import Literal  # type: ignore[attr-defined]
+except ImportError:
+    from typing_extensions import Literal  # type: ignore[misc]
+
 from PyPDF2.constants import CcittFaxDecodeParameters as CCITT
 from PyPDF2.constants import ColorSpaces
 from PyPDF2.constants import FilterTypeAbbreviations as FTA
@@ -66,8 +71,8 @@ try:
 except ImportError:  # pragma: no cover
     # Unable to import zlib.  Attempt to use the System.IO.Compression
     # library from the .NET framework. (IronPython only)
-    import System
-    from System import IO, Array
+    import System  # type: ignore[import]
+    from System import IO, Array  # type: ignore[import]
 
     def _string_to_bytearr(buf):
         retval = Array.CreateInstance(System.Byte, len(buf))
@@ -536,7 +541,7 @@ def _xobj_to_image(x_object_obj):
     size = (x_object_obj[IA.WIDTH], x_object_obj[IA.HEIGHT])
     data = x_object_obj.getData()
     if x_object_obj[IA.COLOR_SPACE] == ColorSpaces.DEVICE_RGB:
-        mode = "RGB"
+        mode: Literal["RGB", "P"] = "RGB"
     else:
         mode = "P"
     extension = None

@@ -14,4 +14,4 @@ if mo:
 else:
     raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE))
 
-setup(version=verstr)
+setup(version=verstr, package_data={"PyPDF2": ["*.typed"]})
