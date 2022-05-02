@@ -962,8 +962,11 @@ class PdfFileReader(object):
                 else:
                     break
             elif xref_issue_nr:
-                self._rebuild_xref_table(stream)
-                break
+                try:
+                    self._rebuild_xref_table(stream)
+                    break
+                except Exception:
+                    xref_issue_nr = 0
             elif x.isdigit():
                 xrefstream = self._read_pdf15_xref_stream(stream)
 
@@ -1197,7 +1200,10 @@ class PdfFileReader(object):
         # code below duplicated
         readNonWhitespace(stream)
         stream.seek(-1, 1)
+
+        # there might be something that is not a dict (see #856)
         new_trailer = readObject(stream, self)
+
         for key, value in list(new_trailer.items()):
             if key not in self.trailer:
                 self.trailer[key] = value
