@@ -1176,11 +1176,11 @@ class PdfFileReader(object):
             line += stream.read(2)  # 1 char already read, +2 to check "obj"
             if line.lower() != b_("obj"):
                 return 3
-            while stream.read(1) in b_(" \t\r\n"):
-                pass
-            line = stream.read(256)  # check that it is xref obj
-            if b_("/xref") not in line.lower():
-                return 4
+            # while stream.read(1) in b_(" \t\r\n"):
+            #     pass
+            # line = stream.read(256)  # check that it is xref obj
+            # if b_("/xref") not in line.lower():
+            #     return 4
         return 0
 
     def _rebuild_xref_table(self, stream):
