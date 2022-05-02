@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1651396575910,
+  "lastUpdate": 1651473879467,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1695,6 +1695,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0047829961485161675",
             "extra": "mean: 100.56455963636908 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c96489d789c18170ba9ff8d9aa852efab1037d96",
+          "message": "BUG: Incorrectly issued xref warning/exception (#855)\n\nCloses #852",
+          "timestamp": "2022-05-02T08:44:00+02:00",
+          "tree_id": "2e9cf604a84066f36193d6c25ee3447bb6dcf0d0",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/c96489d789c18170ba9ff8d9aa852efab1037d96"
+        },
+        "date": 1651473878291,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.6619677017339488,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003690628561990942",
+            "extra": "mean: 1.5106477210000038 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 9.986055372417564,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004534714433574842",
+            "extra": "mean: 100.13964099999839 msec\nrounds: 11"
           }
         ]
       }
