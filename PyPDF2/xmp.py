@@ -53,6 +53,95 @@ iso8601 = re.compile(
 )
 
 
+def _getter_bag(namespace, name, converter):
+    def get(self):
+        cached = self.cache.get(namespace, {}).get(name)
+        if cached:
+            return cached
+        retval = []
+        for element in self.getElement("", namespace, name):
+            bags = element.getElementsByTagNameNS(RDF_NAMESPACE, "Bag")
+            if len(bags):
+                for bag in bags:
+                    for item in bag.getElementsByTagNameNS(RDF_NAMESPACE, "li"):
+                        value = self._getText(item)
+                        value = converter(value)
+                        retval.append(value)
+        ns_cache = self.cache.setdefault(namespace, {})
+        ns_cache[name] = retval
+        return retval
+
+    return get
+
+
+def _getter_seq(namespace, name, converter):
+    def get(self):
+        cached = self.cache.get(namespace, {}).get(name)
+        if cached:
+            return cached
+        retval = []
+        for element in self.getElement("", namespace, name):
+            seqs = element.getElementsByTagNameNS(RDF_NAMESPACE, "Seq")
+            if len(seqs):
+                for seq in seqs:
+                    for item in seq.getElementsByTagNameNS(RDF_NAMESPACE, "li"):
+                        value = self._getText(item)
+                        value = converter(value)
+                        retval.append(value)
+            else:
+                value = converter(self._getText(element))
+                retval.append(value)
+        ns_cache = self.cache.setdefault(namespace, {})
+        ns_cache[name] = retval
+        return retval
+
+    return get
+
+
+def _getter_langalt(namespace, name, converter):
+    def get(self):
+        cached = self.cache.get(namespace, {}).get(name)
+        if cached:
+            return cached
+        retval = {}
+        for element in self.getElement("", namespace, name):
+            alts = element.getElementsByTagNameNS(RDF_NAMESPACE, "Alt")
+            if len(alts):
+                for alt in alts:
+                    for item in alt.getElementsByTagNameNS(RDF_NAMESPACE, "li"):
+                        value = self._getText(item)
+                        value = converter(value)
+                        retval[item.getAttribute("xml:lang")] = value
+            else:
+                retval["x-default"] = converter(self._getText(element))
+        ns_cache = self.cache.setdefault(namespace, {})
+        ns_cache[name] = retval
+        return retval
+
+    return get
+
+
+def _getter_single(namespace, name, converter):
+    def get(self):
+        cached = self.cache.get(namespace, {}).get(name)
+        if cached:
+            return cached
+        value = None
+        for element in self.getElement("", namespace, name):
+            if element.nodeType == element.ATTRIBUTE_NODE:
+                value = element.nodeValue
+            else:
+                value = self._getText(element)
+            break
+        if value is not None:
+            value = converter(value)
+        ns_cache = self.cache.setdefault(namespace, {})
+        ns_cache[name] = value
+        return value
+
+    return get
+
+
 class XmpInformation(PdfObject):
     """
     An object that represents Adobe XMP metadata.
@@ -100,17 +189,19 @@ class XmpInformation(PdfObject):
     @staticmethod
     def _converter_date(value):
         matches = iso8601.match(value)
+        if matches is None:
+            raise ValueError("Invalid date format: %s" % value)
         year = int(matches.group("year"))
         month = int(matches.group("month") or "1")
         day = int(matches.group("day") or "1")
         hour = int(matches.group("hour") or "0")
         minute = int(matches.group("minute") or "0")
         second = decimal.Decimal(matches.group("second") or "0")
-        seconds = second.to_integral(decimal.ROUND_FLOOR)
-        milliseconds = (second - seconds) * 1000000
+        seconds_dec = second.to_integral(decimal.ROUND_FLOOR)
+        milliseconds_dec = (second - seconds_dec) * 1000000
 
-        seconds = int(seconds)
-        milliseconds = int(milliseconds)
+        seconds = int(seconds_dec)
+        milliseconds = int(milliseconds_dec)
 
         tzd = matches.group("tzd") or "Z"
         dt = datetime.datetime(year, month, day, hour, minute, seconds, milliseconds)
@@ -121,91 +212,6 @@ class XmpInformation(PdfObject):
                 tzd_minutes *= -1
             dt = dt + datetime.timedelta(hours=tzd_hours, minutes=tzd_minutes)
         return dt
-
-    def _getter_bag(namespace, name, converter):
-        def get(self):
-            cached = self.cache.get(namespace, {}).get(name)
-            if cached:
-                return cached
-            retval = []
-            for element in self.getElement("", namespace, name):
-                bags = element.getElementsByTagNameNS(RDF_NAMESPACE, "Bag")
-                if len(bags):
-                    for bag in bags:
-                        for item in bag.getElementsByTagNameNS(RDF_NAMESPACE, "li"):
-                            value = self._getText(item)
-                            value = converter(value)
-                            retval.append(value)
-            ns_cache = self.cache.setdefault(namespace, {})
-            ns_cache[name] = retval
-            return retval
-
-        return get
-
-    def _getter_seq(namespace, name, converter):
-        def get(self):
-            cached = self.cache.get(namespace, {}).get(name)
-            if cached:
-                return cached
-            retval = []
-            for element in self.getElement("", namespace, name):
-                seqs = element.getElementsByTagNameNS(RDF_NAMESPACE, "Seq")
-                if len(seqs):
-                    for seq in seqs:
-                        for item in seq.getElementsByTagNameNS(RDF_NAMESPACE, "li"):
-                            value = self._getText(item)
-                            value = converter(value)
-                            retval.append(value)
-                else:
-                    value = converter(self._getText(element))
-                    retval.append(value)
-            ns_cache = self.cache.setdefault(namespace, {})
-            ns_cache[name] = retval
-            return retval
-
-        return get
-
-    def _getter_langalt(namespace, name, converter):
-        def get(self):
-            cached = self.cache.get(namespace, {}).get(name)
-            if cached:
-                return cached
-            retval = {}
-            for element in self.getElement("", namespace, name):
-                alts = element.getElementsByTagNameNS(RDF_NAMESPACE, "Alt")
-                if len(alts):
-                    for alt in alts:
-                        for item in alt.getElementsByTagNameNS(RDF_NAMESPACE, "li"):
-                            value = self._getText(item)
-                            value = converter(value)
-                            retval[item.getAttribute("xml:lang")] = value
-                else:
-                    retval["x-default"] = converter(self._getText(element))
-            ns_cache = self.cache.setdefault(namespace, {})
-            ns_cache[name] = retval
-            return retval
-
-        return get
-
-    def _getter_single(namespace, name, converter):
-        def get(self):
-            cached = self.cache.get(namespace, {}).get(name)
-            if cached:
-                return cached
-            value = None
-            for element in self.getElement("", namespace, name):
-                if element.nodeType == element.ATTRIBUTE_NODE:
-                    value = element.nodeValue
-                else:
-                    value = self._getText(element)
-                break
-            if value is not None:
-                value = converter(value)
-            ns_cache = self.cache.setdefault(namespace, {})
-            ns_cache[name] = value
-            return value
-
-        return get
 
     dc_contributor = property(
         _getter_bag(DC_NAMESPACE, "contributor", _converter_string)
@@ -363,7 +369,15 @@ class XmpInformation(PdfObject):
     time a file is saved.
     """
 
+    @property
     def custom_properties(self):
+        """
+        Retrieves custom metadata properties defined in the undocumented pdfx
+        metadata schema.
+
+        :return: a dictionary of key/value items for custom metadata properties.
+        :rtype: dict
+        """
         if not hasattr(self, "_custom_properties"):
             self._custom_properties = {}
             for node in self.getNodesInNamespace("", PDFX_NAMESPACE):
@@ -384,12 +398,3 @@ class XmpInformation(PdfObject):
                     value = self._getText(node)
                 self._custom_properties[key] = value
         return self._custom_properties
-
-    custom_properties = property(custom_properties)
-    """
-    Retrieves custom metadata properties defined in the undocumented pdfx
-    metadata schema.
-
-    :return: a dictionary of key/value items for custom metadata properties.
-    :rtype: dict
-    """

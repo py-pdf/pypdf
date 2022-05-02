@@ -27,6 +27,7 @@
 
 from io import BytesIO
 from io import FileIO as file
+from typing import List, Optional, Union
 
 from PyPDF2._reader import PdfFileReader
 from PyPDF2._writer import PdfFileWriter
@@ -36,6 +37,8 @@ from PyPDF2.pagerange import PageRange
 from PyPDF2.utils import str_
 
 StreamIO = BytesIO
+
+ERR_CLOSED_WRITER = "close() was called and thus the writer cannot be used anymore"
 
 
 class _MergedPage:
@@ -68,7 +71,7 @@ class PdfFileMerger:
     def __init__(self, strict=False):
         self.inputs = []
         self.pages = []
-        self.output = PdfFileWriter()
+        self.output: Optional[PdfFileWriter] = PdfFileWriter()
         self.bookmarks = []
         self.named_dests = []
         self.id_count = 0
@@ -220,6 +223,8 @@ class PdfFileMerger:
         :param fileobj: Output file. Can be a filename or any kind of
             file-like object.
         """
+        if self.output is None:
+            raise RuntimeError(ERR_CLOSED_WRITER)
         my_file = False
         if isinstance(fileobj, str):
             fileobj = file(fileobj, "wb")
@@ -267,6 +272,8 @@ class PdfFileMerger:
             and each value is your new metadata.
             Example: ``{u'/Title': u'My title'}``
         """
+        if self.output is None:
+            raise RuntimeError(ERR_CLOSED_WRITER)
         self.output.addMetadata(infos)
 
     def setPageLayout(self, layout):
@@ -293,6 +300,8 @@ class PdfFileMerger:
            * - /TwoPageRight
              - Show two pages at a time, odd-numbered pages on the right
         """
+        if self.output is None:
+            raise RuntimeError(ERR_CLOSED_WRITER)
         self.output.setPageLayout(layout)
 
     def setPageMode(self, mode):
@@ -317,6 +326,8 @@ class PdfFileMerger:
            * - /UseAttachments
              - Show attachments panel
         """
+        if self.output is None:
+            raise RuntimeError(ERR_CLOSED_WRITER)
         self.output.setPageMode(mode)
 
     def _trim_dests(self, pdf, dests, pages):
@@ -359,6 +370,8 @@ class PdfFileMerger:
         return new_outline
 
     def _write_dests(self):
+        if self.output is None:
+            raise RuntimeError(ERR_CLOSED_WRITER)
         for named_dest in self.named_dests:
             pageno = None
             if "/Page" in named_dest:
@@ -371,6 +384,8 @@ class PdfFileMerger:
                 self.output.addNamedDestinationObject(named_dest)
 
     def _write_bookmarks(self, bookmarks=None, parent=None):
+        if self.output is None:
+            raise RuntimeError(ERR_CLOSED_WRITER)
         if bookmarks is None:
             bookmarks = self.bookmarks
 
@@ -533,13 +548,15 @@ class PdfFileMerger:
         :param str fit: The fit of the destination page. See
             :meth:`addLink()<addLin>` for details.
         """
+        if self.output is None:
+            raise RuntimeError(ERR_CLOSED_WRITER)
         if len(self.output.getObject(self.output._pages)["/Kids"]) > 0:
             page_ref = self.output.getObject(self.output._pages)["/Kids"][pagenum]
         else:
             page_ref = self.output.getObject(self.output._pages)
 
         action = DictionaryObject()
-        zoom_args = []
+        zoom_args: List[Union[NumberObject, NullObject]] = []
         for a in args:
             if a is not None:
                 zoom_args.append(NumberObject(a))

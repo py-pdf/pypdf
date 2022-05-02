@@ -8,6 +8,7 @@ see https://github.com/py-pdf/PyPDF2/blob/main/LICENSE
 """
 
 import re
+from typing import List, Tuple, Union
 
 from PyPDF2.errors import ParseError
 
@@ -96,6 +97,7 @@ class PageRange:
     def __str__(self):
         """A string like "1:2:3"."""
         s = self._slice
+        indices: Union[Tuple[int, int], Tuple[int, int, int]]
         if s.step is None:
             if s.start is not None and s.stop == s.start + 1:
                 return str(s.start)
@@ -133,7 +135,7 @@ def parse_filename_page_ranges(args):
     expressions, slice objects, or PageRange objects.
     A filename not followed by a page range indicates all pages of the file.
     """
-    pairs = []
+    pairs: List[Tuple[str, PageRange]] = []
     pdf_filename = None
     did_page_range = False
     for arg in args + [None]:

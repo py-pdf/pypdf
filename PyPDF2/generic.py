@@ -38,6 +38,7 @@ import logging
 import re
 import warnings
 from io import BytesIO
+from typing import Dict, Optional
 
 from PyPDF2.constants import FilterTypes as FT
 from PyPDF2.constants import StreamAttributes as SA
@@ -57,7 +58,13 @@ NumberSigns = b_("+-")
 IndirectPattern = re.compile(b_(r"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]"))
 
 
-def readObject(stream, pdf):
+class PdfObject:
+    def getObject(self):
+        """Resolve indirect references."""
+        return self
+
+
+def readObject(stream, pdf) -> PdfObject:
     tok = stream.read(1)
     stream.seek(-1, 1)  # reset to start
     idx = ObjectPrefix.find(tok)
@@ -99,12 +106,6 @@ def readObject(stream, pdf):
             return IndirectObject.readFromStream(stream, pdf)
         else:
             return NumberObject.readFromStream(stream)
-
-
-class PdfObject:
-    def getObject(self):
-        """Resolve indirect references."""
-        return self
 
 
 class NullObject(PdfObject):
@@ -508,7 +509,7 @@ class NameObject(str, PdfObject):
             # Name objects should represent irregular characters
             # with a '#' followed by the symbol's hex number
             if not pdf.strict:
-                warnings.warn("Illegal character in Name Object", utils.PdfReadWarning)
+                warnings.warn("Illegal character in Name Object", PdfReadWarning)
                 return NameObject(name)
             else:
                 raise PdfReadError("Illegal character in Name Object")
@@ -805,10 +806,18 @@ class TreeObject(DictionaryObject):
 
 class StreamObject(DictionaryObject):
     def __init__(self):
-        self._data = None
+        self.__data: Optional[str] = None
         self.decodedSelf = None
 
-    def writeToStream(self, stream, encryption_key):
+    @property
+    def _data(self):
+        return self.__data
+
+    @_data.setter
+    def _data(self, value):
+        self.__data = value
+
+    def writeToStream(self, stream, encryption_key) -> None:
         self[NameObject(SA.LENGTH)] = NumberObject(len(self._data))
         DictionaryObject.writeToStream(self, stream, encryption_key)
         del self[SA.LENGTH]
@@ -989,7 +998,8 @@ class ContentStream(DecodedStreamObject):
                     data.write(tok)
         return {"settings": settings, "data": data.getvalue()}
 
-    def _getData(self):
+    @property
+    def _data(self):
         newdata = BytesIO()
         for operands, operator in self.operations:
             if operator == b_("INLINE IMAGE"):
@@ -1008,10 +1018,9 @@ class ContentStream(DecodedStreamObject):
             newdata.write(b_("\n"))
         return newdata.getvalue()
 
-    def _setData(self, value):
+    @_data.setter
+    def _data(self, value):
         self.__parseContentStream(BytesIO(b_(value)))
-
-    _data = property(_getData, _setData)
 
 
 class RectangleObject(ArrayObject):
@@ -1686,7 +1695,7 @@ _pdfDocEncoding = (
 
 assert len(_pdfDocEncoding) == 256
 
-_pdfDocEncoding_rev = {}
+_pdfDocEncoding_rev: Dict[str, int] = {}
 for i in range(256):
     char = _pdfDocEncoding[i]
     if char == "\u0000":
