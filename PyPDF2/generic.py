@@ -59,7 +59,7 @@ IndirectPattern = re.compile(b_(r"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]"))
 
 
 class PdfObject:
-    def getObject(self):
+    def getObject(self) -> "PdfObject":
         """Resolve indirect references."""
         return self
 
@@ -134,7 +134,7 @@ class IndirectObject(PdfObject):
         self.generation = generation
         self.pdf = pdf
 
-    def getObject(self):
+    def getObject(self) -> Optional[PdfObject]:
         return self.pdf.getObject(self).getObject()
 
     def __repr__(self):
@@ -239,33 +239,6 @@ class NumberObject(int, PdfObject):
             return FloatObject(num)
         else:
             return NumberObject(num)
-
-
-def createStringObject(string):
-    """
-    Given a string (either a "str" or "unicode"), create a ByteStringObject or a
-    TextStringObject to represent the string.
-    """
-    if isinstance(string, str):
-        return TextStringObject(string)
-    elif isinstance(string, utils.bytes_type):
-        try:
-            if string.startswith(codecs.BOM_UTF16_BE):
-                retval = TextStringObject(string.decode("utf-16"))
-                retval.autodetect_utf16 = True
-                return retval
-            else:
-                # This is probably a big performance hit here, but we need to
-                # convert string objects into the text/unicode-aware version if
-                # possible... and the only way to check if that's possible is
-                # to try.  Some strings are strings, some are just byte arrays.
-                retval = TextStringObject(decode_pdfdocencoding(string))
-                retval.autodetect_pdfdocencoding = True
-                return retval
-        except UnicodeDecodeError:
-            return ByteStringObject(string)
-    else:
-        raise TypeError("createStringObject should have str or unicode arg")
 
 
 def readHexStringFromStream(stream):
@@ -650,7 +623,7 @@ class TreeObject(DictionaryObject):
                 return
             child = child["/Next"]
 
-    def addChild(self, child, pdf):
+    def addChild(self, child, pdf) -> None:
         child_obj = child.getObject()
         child = pdf.getReference(child_obj)
         assert isinstance(child, IndirectObject)
@@ -675,7 +648,7 @@ class TreeObject(DictionaryObject):
         assert isinstance(parent_ref, IndirectObject)
         child_obj[NameObject("/Parent")] = parent_ref
 
-    def removeChild(self, child):
+    def removeChild(self, child) -> None:
         child_obj = child.getObject()
 
         if NameObject("/Parent") not in child_obj:
@@ -1249,7 +1222,11 @@ class Destination(TreeObject):
     """
 
     def __init__(
-        self, title: TextStringObject, page: NumberObject, typ: str, *args
+        self,
+        title: str,
+        page: Union[NumberObject, IndirectObject, NullObject, DictionaryObject],
+        typ: Union[str, NumberObject],
+        *args,
     ) -> None:
         DictionaryObject.__init__(self)
         self[NameObject("/Title")] = title
@@ -1282,7 +1259,7 @@ class Destination(TreeObject):
         else:
             raise PdfReadError("Unknown Destination Type: %r" % typ)
 
-    def getDestArray(self):
+    def getDestArray(self) -> ArrayObject:
         return ArrayObject(
             [self.raw_get("/Page"), self["/Type"]]
             + [
@@ -1402,6 +1379,35 @@ class Bookmark(Destination):
         value.writeToStream(stream, encryption_key)
         stream.write(b_("\n"))
         stream.write(b_(">>"))
+
+
+def createStringObject(
+    string: Union[str, bytes]
+) -> Union[TextStringObject, ByteStringObject]:
+    """
+    Given a string, create a ByteStringObject or a TextStringObject to
+    represent the string.
+    """
+    if isinstance(string, str):
+        return TextStringObject(string)
+    elif isinstance(string, utils.bytes_type):
+        try:
+            if string.startswith(codecs.BOM_UTF16_BE):
+                retval = TextStringObject(string.decode("utf-16"))
+                retval.autodetect_utf16 = True
+                return retval
+            else:
+                # This is probably a big performance hit here, but we need to
+                # convert string objects into the text/unicode-aware version if
+                # possible... and the only way to check if that's possible is
+                # to try.  Some strings are strings, some are just byte arrays.
+                retval = TextStringObject(decode_pdfdocencoding(string))
+                retval.autodetect_pdfdocencoding = True
+                return retval
+        except UnicodeDecodeError:
+            return ByteStringObject(string)
+    else:
+        raise TypeError("createStringObject should have str or unicode arg")
 
 
 def encode_pdfdocencoding(unicode_string):

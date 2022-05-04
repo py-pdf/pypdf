@@ -111,7 +111,7 @@ class PageRange:
         """A string like "PageRange('1:2:3')"."""
         return "PageRange(" + repr(str(self)) + ")"
 
-    def indices(self, n):
+    def indices(self, n: int) -> Tuple[int, int, int]:
         """
         n is the length of the list of pages to choose from.
         Returns arguments for range().  See help(slice.indices).
@@ -157,4 +157,4 @@ def parse_filename_page_ranges(args):
     return pairs
 
 
-PageRangeSpec = Union[str, PageRange, Tuple[int, int]]
+PageRangeSpec = Union[str, PageRange, Tuple[int, int], Tuple[int, int, int]]

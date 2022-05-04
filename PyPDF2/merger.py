@@ -27,8 +27,14 @@
 
 from io import BytesIO
 from io import FileIO as file
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
+try:
+    from typing import Literal  # type: ignore[attr-defined]
+except ImportError:
+    from typing_extensions import Literal  # type: ignore[misc]
+
+from PyPDF2._page import PageObject
 from PyPDF2._reader import PdfFileReader
 from PyPDF2._writer import PdfFileWriter
 from PyPDF2.constants import PagesAttributes as PA
@@ -47,7 +53,7 @@ class _MergedPage:
     information on each page that is being merged.
     """
 
-    def __init__(self, pagedata, src, id) -> None:
+    def __init__(self, pagedata: PageObject, src: PdfFileReader, id) -> None:
         self.src = src
         self.pagedata = pagedata
         self.out_pagedata = None
@@ -68,7 +74,7 @@ class PdfFileMerger:
             Defaults to ``False``.
     """
 
-    def __init__(self, strict=False) -> None:
+    def __init__(self, strict: bool = False) -> None:
         self.inputs: List[Tuple[Any, PdfFileReader, bool]] = []
         self.pages: List[Any] = []
         self.output: Optional[PdfFileWriter] = PdfFileWriter()
@@ -84,7 +90,7 @@ class PdfFileMerger:
         bookmark: Optional[str] = None,
         pages: Optional[PageRangeSpec] = None,
         import_bookmarks: bool = True,
-    ):
+    ) -> None:
         """
         Merges the pages from the given file into the output file at the
         specified page number.
@@ -173,8 +179,8 @@ class PdfFileMerger:
             self.bookmarks += outline
 
         dests = pdfr.namedDestinations
-        dests = self._trim_dests(pdfr, dests, pages)
-        self.named_dests += dests
+        trimmed_dests = self._trim_dests(pdfr, dests, pages)
+        self.named_dests += trimmed_dests
 
         # Gather all the pages that are going to be merged
         for i in range(*pages):  # type: ignore
@@ -220,7 +226,7 @@ class PdfFileMerger:
         """
         self.merge(len(self.pages), fileobj, bookmark, pages, import_bookmarks)
 
-    def write(self, fileobj):
+    def write(self, fileobj) -> None:
         """
         Writes all data that has been merged to the given output file.
 
@@ -239,8 +245,9 @@ class PdfFileMerger:
         # to allow PdfFileMerger to work with PyPdf 1.13
         for page in self.pages:
             self.output.addPage(page.pagedata)
+            pages_obj: Dict[str, Any] = self.output._pages.getObject()  # type: ignore
             page.out_pagedata = self.output.getReference(
-                self.output._pages.getObject()[PA.KIDS][-1].getObject()
+                pages_obj[PA.KIDS][-1].getObject()
             )
             # idnum = self.output._objects.index(self.output._pages.getObject()[PA.KIDS][-1].getObject()) + 1
             # page.out_pagedata = IndirectObject(idnum, 0, self.output)
@@ -268,7 +275,7 @@ class PdfFileMerger:
         self.inputs = []
         self.output = None
 
-    def addMetadata(self, infos):
+    def addMetadata(self, infos: Dict[str, Any]) -> None:
         """
         Add custom metadata to the output.
 
@@ -280,7 +287,16 @@ class PdfFileMerger:
             raise RuntimeError(ERR_CLOSED_WRITER)
         self.output.addMetadata(infos)
 
-    def setPageLayout(self, layout):
+    def setPageLayout(
+        self,
+        layout: Literal[
+            "/NoLayout",
+            "/SinglePage",
+            "/OneColumn",
+            "/TwoColumnLeft",
+            "/TwoColumnRight",
+        ],
+    ) -> None:
         """
         Set the page layout
 
@@ -308,7 +324,12 @@ class PdfFileMerger:
             raise RuntimeError(ERR_CLOSED_WRITER)
         self.output.setPageLayout(layout)
 
-    def setPageMode(self, mode):
+    def setPageMode(
+        self,
+        mode: Literal[
+            "/UseNone", "/UseOutlines", "/UseThumbs", "/UseOC", "/UseAttachments"
+        ],
+    ) -> None:
         """
         Set the page mode.
 
@@ -334,23 +355,28 @@ class PdfFileMerger:
             raise RuntimeError(ERR_CLOSED_WRITER)
         self.output.setPageMode(mode)
 
-    def _trim_dests(self, pdf, dests, pages):
+    def _trim_dests(
+        self, pdf: PdfFileReader, dests: Dict[str, Dict[str, Any]], pages
+    ) -> List[Dict[str, Any]]:
         """
         Removes any named destinations that are not a part of the specified
         page set.
         """
         new_dests = []
-        for k, o in list(dests.items()):
+        for key, obj in dests.items():
             for j in range(*pages):
-                if pdf.getPage(j).getObject() == o["/Page"].getObject():
-                    o[NameObject("/Page")] = o["/Page"].getObject()
-                    assert str_(k) == str_(o["/Title"])
-                    new_dests.append(o)
+                if pdf.getPage(j).getObject() == obj["/Page"].getObject():
+                    obj[NameObject("/Page")] = obj["/Page"].getObject()
+                    assert str_(key) == str_(obj["/Title"])
+                    new_dests.append(obj)
                     break
         return new_dests
 
     def _trim_outline(
-        self, pdf: PdfFileReader, outline: List[Destination], pages: Tuple[int, int]
+        self,
+        pdf: PdfFileReader,
+        outline: List[Destination],
+        pages: Union[Tuple[int, int], Tuple[int, int, int]],
     ) -> List[Destination]:
         """
         Removes any outline/bookmark entries that are not a part of the
@@ -389,11 +415,16 @@ class PdfFileMerger:
             if pageno is not None:
                 self.output.addNamedDestinationObject(named_dest)
 
-    def _write_bookmarks(self, bookmarks=None, parent=None) -> None:
+    def _write_bookmarks(
+        self,
+        bookmarks: Optional[Iterable[Bookmark]] = None,
+        parent: Optional[IndirectObject] = None,
+    ) -> None:
         if self.output is None:
             raise RuntimeError(ERR_CLOSED_WRITER)
         if bookmarks is None:
-            bookmarks = self.bookmarks
+            bookmarks = self.bookmarks  # type: ignore
+        assert bookmarks is not None, "hint for mypy"  # TODO: is that true?
 
         last_added = None
         for bookmark in bookmarks:
@@ -411,7 +442,9 @@ class PdfFileMerger:
                 del bookmark["/Page"], bookmark["/Type"]
                 last_added = self.output.addBookmarkDict(bookmark, parent)
 
-    def _write_bookmark_on_page(self, bookmark, page):
+    def _write_bookmark_on_page(
+        self, bookmark: Union[Bookmark, Destination], page: _MergedPage
+    ) -> None:
         # b[NameObject('/Page')] = p.out_pagedata
         args = [NumberObject(page.id), NameObject(bookmark["/Type"])]
         # nothing more to add
@@ -472,7 +505,7 @@ class PdfFileMerger:
             {NameObject("/S"): NameObject("/GoTo"), NameObject("/D"): ArrayObject(args)}
         )
 
-    def _associate_dests_to_pages(self, pages):
+    def _associate_dests_to_pages(self, pages: List[_MergedPage]) -> None:
         for nd in self.named_dests:
             pageno = None
             np = nd["/Page"]
@@ -491,10 +524,12 @@ class PdfFileMerger:
                     "Unresolved named destination '{}'".format(nd["/Title"])
                 )
 
-    def _associate_bookmarks_to_pages(self, pages, bookmarks=None):
+    def _associate_bookmarks_to_pages(
+        self, pages: List[_MergedPage], bookmarks: Optional[Iterable[Bookmark]] = None
+    ) -> None:
         if bookmarks is None:
-            bookmarks = self.bookmarks
-
+            bookmarks = self.bookmarks  # type: ignore # TODO: self.bookmarks can be none!
+        assert bookmarks is not None, "hint for mypy"
         for b in bookmarks:
             if isinstance(b, list):
                 self._associate_bookmarks_to_pages(pages, b)
@@ -515,7 +550,13 @@ class PdfFileMerger:
             else:
                 raise ValueError("Unresolved bookmark '{}'".format(b["/Title"]))
 
-    def findBookmark(self, bookmark, root=None):
+    def findBookmark(
+        self,
+        bookmark: Dict[str, Any],
+        root: Optional[
+            Iterable[Union[Bookmark, Destination, List[Destination]]]
+        ] = None,
+    ) -> Optional[List[int]]:
         if root is None:
             root = self.bookmarks
 
@@ -531,15 +572,15 @@ class PdfFileMerger:
 
     def addBookmark(
         self,
-        title,
-        pagenum,
-        parent=None,
-        color=None,
-        bold=False,
-        italic=False,
-        fit="/Fit",
-        *args
-    ):
+        title: str,
+        pagenum: int,
+        parent: Union[TreeObject, None, IndirectObject, Destination] = None,
+        color: Optional[Tuple[float, float, float]] = None,
+        bold: bool = False,
+        italic: bool = False,
+        fit: str = "/Fit",
+        *args: Optional[float]
+    ) -> IndirectObject:
         """
         Add a bookmark to this PDF file.
 
@@ -556,10 +597,11 @@ class PdfFileMerger:
         """
         if self.output is None:
             raise RuntimeError(ERR_CLOSED_WRITER)
-        if len(self.output.getObject(self.output._pages)["/Kids"]) > 0:
-            page_ref = self.output.getObject(self.output._pages)["/Kids"][pagenum]
+        out_pages: Dict[str, Any] = self.output.getObject(self.output._pages)  # type: ignore
+        if len(out_pages["/Kids"]) > 0:
+            page_ref = out_pages["/Kids"][pagenum]
         else:
-            page_ref = self.output.getObject(self.output._pages)
+            page_ref = out_pages
 
         action = DictionaryObject()
         zoom_args: List[Union[NumberObject, NullObject]] = []
@@ -605,12 +647,13 @@ class PdfFileMerger:
             bookmark.update({NameObject("/F"): NumberObject(format)})
 
         bookmark_ref = self.output._addObject(bookmark)
-        parent = parent.getObject()
+        parent: Bookmark = parent.getObject()  # type: ignore
+        assert parent is not None, "hint for mypy"
         parent.addChild(bookmark_ref, self.output)
 
         return bookmark_ref
 
-    def addNamedDestination(self, title, pagenum):
+    def addNamedDestination(self, title: str, pagenum: int) -> None:
         """
         Add a destination to the output.
 

@@ -32,15 +32,17 @@ __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
 
-from io import BytesIO
-from typing import Dict, Optional
+from io import BufferedReader, BufferedWriter, BytesIO, FileIO
+from typing import Dict, Optional, Union
 
 from PyPDF2.errors import STREAM_TRUNCATED_PREMATURELY, PdfStreamError
 
 bytes_type = type(bytes())  # Works the same in Python 2.X and 3.X
+StreamType = Union[BytesIO, BufferedReader, BufferedWriter, FileIO]
+StrByteType = Union[str, StreamType]
 
 
-def readUntilWhitespace(stream: BytesIO, maxchars: Optional[int] = None):
+def readUntilWhitespace(stream: StreamType, maxchars: Optional[int] = None):
     """
     Reads non-whitespace characters and returns them.
     Stops upon encountering whitespace or when maxchars is reached.

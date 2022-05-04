@@ -29,8 +29,9 @@
 
 import math
 import uuid
+from decimal import Decimal
 from io import BytesIO
-from typing import Any, Iterable, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from PyPDF2 import utils
 from PyPDF2.constants import PageAttributes as PG
@@ -67,7 +68,7 @@ def getRectangle(self, name: str, defaults: Iterable[str]) -> RectangleObject:
     return retval
 
 
-def setRectangle(self, name: str, value) -> None:
+def setRectangle(self, name: str, value: Union[RectangleObject, float]) -> None:
     if not isinstance(name, NameObject):
         name = NameObject(name)
     self[name] = value
@@ -107,8 +108,10 @@ class PageObject(DictionaryObject):
 
     @staticmethod
     def createBlankPage(
-        pdf=None, width: Optional[float] = None, height: Optional[float] = None
-    ):
+        pdf=None,
+        width: Union[float, Decimal, None] = None,
+        height: Union[float, Decimal, None] = None,
+    ) -> "PageObject":
         """
         Return a new blank page.
 
@@ -176,7 +179,7 @@ class PageObject(DictionaryObject):
         self[NameObject(PG.ROTATE)] = NumberObject(current_angle + angle)
 
     @staticmethod
-    def _mergeResources(res1, res2, resource) -> Tuple[Any, Any]:
+    def _mergeResources(res1, res2, resource) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         new_res = DictionaryObject()
         new_res.update(res1.get(resource, DictionaryObject()).getObject())
         page2res = res2.get(resource, DictionaryObject()).getObject()
@@ -398,7 +401,9 @@ class PageObject(DictionaryObject):
         self[NameObject(PG.RESOURCES)] = new_resources
         self[NameObject(PG.ANNOTS)] = new_annots
 
-    def mergeTransformedPage(self, page2, ctm, expand: bool = False) -> None:
+    def mergeTransformedPage(
+        self, page2, ctm: List[float], expand: bool = False
+    ) -> None:
         """
         mergeTransformedPage is similar to mergePage, but a transformation
         matrix is applied to the merged stream.
@@ -419,7 +424,9 @@ class PageObject(DictionaryObject):
             expand,
         )
 
-    def mergeScaledPage(self, page2: "PageObject", scale, expand: bool = False) -> None:
+    def mergeScaledPage(
+        self, page2: "PageObject", scale: float, expand: bool = False
+    ) -> None:
         """
         mergeScaledPage is similar to mergePage, but the stream to be merged
         is scaled by appling a transformation matrix.
@@ -434,7 +441,7 @@ class PageObject(DictionaryObject):
         self.mergeTransformedPage(page2, [scale, 0, 0, scale, 0, 0], expand)
 
     def mergeRotatedPage(
-        self, page2: "PageObject", rotation, expand: bool = False
+        self, page2: "PageObject", rotation: float, expand: bool = False
     ) -> None:
         """
         mergeRotatedPage is similar to mergePage, but the stream to be merged
@@ -461,7 +468,7 @@ class PageObject(DictionaryObject):
         )
 
     def mergeTranslatedPage(
-        self, page2: "PageObject", tx, ty, expand: bool = False
+        self, page2: "PageObject", tx: float, ty: float, expand: bool = False
     ) -> None:
         """
         mergeTranslatedPage is similar to mergePage, but the stream to be
@@ -477,7 +484,12 @@ class PageObject(DictionaryObject):
         self.mergeTransformedPage(page2, [1, 0, 0, 1, tx, ty], expand)
 
     def mergeRotatedTranslatedPage(
-        self, page2: "PageObject", rotation: float, tx, ty, expand: bool = False
+        self,
+        page2: "PageObject",
+        rotation: float,
+        tx: float,
+        ty: float,
+        expand: bool = False,
     ) -> None:
         """
         mergeRotatedTranslatedPage is similar to mergePage, but the stream to
@@ -539,7 +551,12 @@ class PageObject(DictionaryObject):
         )
 
     def mergeScaledTranslatedPage(
-        self, page2: "PageObject", scale: float, tx, ty, expand: bool = False
+        self,
+        page2: "PageObject",
+        scale: float,
+        tx: float,
+        ty: float,
+        expand: bool = False,
     ) -> None:
         """
         mergeScaledTranslatedPage is similar to mergePage, but the stream to be
@@ -565,7 +582,13 @@ class PageObject(DictionaryObject):
         )
 
     def mergeRotatedScaledTranslatedPage(
-        self, page2: "PageObject", rotation: float, scale, tx, ty, expand: bool = False
+        self,
+        page2: "PageObject",
+        rotation: float,
+        scale: float,
+        tx: float,
+        ty: float,
+        expand: bool = False,
     ) -> None:
         """
         mergeRotatedScaledTranslatedPage is similar to mergePage, but the
@@ -598,7 +621,7 @@ class PageObject(DictionaryObject):
             expand,
         )
 
-    def addTransformation(self, ctm) -> None:
+    def addTransformation(self, ctm: List[float]) -> None:
         """
         Apply a transformation matrix to the page.
 
@@ -690,7 +713,7 @@ class PageObject(DictionaryObject):
                 content = ContentStream(content, self.pdf)
             self[NameObject(PG.CONTENTS)] = content.flateEncode()
 
-    def extractText(self, Tj_sep="", TJ_sep="") -> str:
+    def extractText(self, Tj_sep: str = "", TJ_sep: str = "") -> str:
         """
         Locate all text drawing commands, in the order they are provided in the
         content stream, and extract the text.  This works well for some PDF

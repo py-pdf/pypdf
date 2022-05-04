@@ -31,7 +31,7 @@ def test_merge():
     file_merger.append(pdfr)
 
     # PdfFileReader object:
-    file_merger.append(PyPDF2.PdfFileReader(pdf_path, "rb"), bookmark=True)
+    file_merger.append(PyPDF2.PdfFileReader(pdf_path), bookmark="foo")
 
     # File handle
     with open(pdf_path, "rb") as fh:
@@ -61,7 +61,7 @@ def test_merge():
         "Foo",
         "Bar",
         "Baz",
-        "True",
+        "foo",
     ]
 
     # Clean up

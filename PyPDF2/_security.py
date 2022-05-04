@@ -31,6 +31,7 @@
 
 import struct
 from hashlib import md5
+from typing import Tuple, Union
 
 from PyPDF2 import utils
 from PyPDF2.utils import b_, ord_, str_
@@ -141,7 +142,9 @@ def _alg33_1(password, rev, keylen):
 
 # Implementation of algorithm 3.4 of the PDF standard security handler,
 # section 3.5.2 of the PDF 1.6 reference.
-def _alg34(password, owner_entry, p_entry, id1_entry):
+def _alg34(
+    password: Union[str, bytes], owner_entry, p_entry, id1_entry
+) -> Tuple[bytes, bytes]:
     # 1. Create an encryption key based on the user password string, as
     # described in algorithm 3.2.
     key = _alg32(password, 2, 5, owner_entry, p_entry, id1_entry)
@@ -156,7 +159,15 @@ def _alg34(password, owner_entry, p_entry, id1_entry):
 
 # Implementation of algorithm 3.4 of the PDF standard security handler,
 # section 3.5.2 of the PDF 1.6 reference.
-def _alg35(password, rev, keylen, owner_entry, p_entry, id1_entry, metadata_encrypt):
+def _alg35(
+    password: Union[str, bytes],
+    rev,
+    keylen,
+    owner_entry,
+    p_entry,
+    id1_entry,
+    metadata_encrypt,
+):
     # 1. Create an encryption key based on the user password string, as
     # described in Algorithm 3.2.
     key = _alg32(password, rev, keylen, owner_entry, p_entry, id1_entry)

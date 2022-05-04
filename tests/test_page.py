@@ -4,6 +4,7 @@ import os
 import pytest
 
 from PyPDF2 import PdfFileReader
+from PyPDF2._page import PageObject
 from PyPDF2.generic import RectangleObject
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -63,10 +64,10 @@ def test_page_operations(pdf_path, password):
     if password:
         reader.decrypt(password)
 
-    page = reader.pages[0]
-    page.mergeRotatedScaledPage(page, 90, 1, 1)
+    page: PageObject = reader.pages[0]
+    page.mergeRotatedScaledPage(page, 90, 1, expand=True)
     page.mergeScaledTranslatedPage(page, 1, 1, 1)
-    page.mergeRotatedScaledTranslatedPage(page, 90, 1, 1, 1, 1)
+    page.mergeRotatedScaledTranslatedPage(page, 90, scale=1, tx=1, ty=1, expand=True)
     page.addTransformation([1, 0, 0, 0, 0, 0])
     page.scale(2, 2)
     page.scaleBy(0.5)
