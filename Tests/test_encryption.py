@@ -7,6 +7,7 @@ PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
 RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
 
 
+@pytest.mark.no_py27()
 @pytest.mark.parametrize(
     "src",
     [
@@ -66,6 +67,7 @@ def test_encryption(src):
         }
 
 
+@pytest.mark.no_py27()
 @pytest.mark.parametrize(
     "names",
     [
