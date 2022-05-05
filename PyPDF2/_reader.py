@@ -200,8 +200,10 @@ class PdfFileReader:
         self.flattenedPages: Optional[List[PageObject]] = None
         self.resolvedObjects: Dict[Tuple[Any, Any], Optional[PdfObject]] = {}
         self.xrefIndex = 0
-        self._pageId2Num = None  # map page IndirectRef number to Page Number
-        if hasattr(stream, "mode") and "b" not in stream.mode:
+        self._pageId2Num: Optional[
+            Dict[Any, Any]
+        ] = None  # map page IndirectRef number to Page Number
+        if hasattr(stream, "mode") and "b" not in stream.mode:  # type: ignore
             warnings.warn(
                 "PdfFileReader stream/file object is not in binary mode. "
                 "It may not be read correctly.",
@@ -484,7 +486,7 @@ class PdfFileReader:
         return retval
 
     @property
-    def outlines(self) -> List[Destination]:
+    def outlines(self) -> List[Union[Destination, List[Destination]]]:
         """
         Read-only property that accesses the
             :meth:`getOutlines()<PdfFileReader.getOutlines>` function.
@@ -616,10 +618,10 @@ class PdfFileReader:
         # if destination found, then create outline
         if dest:
             if isinstance(dest, ArrayObject):
-                outline = self._buildDestination(title, dest)
+                outline = self._buildDestination(title, dest)  # type: ignore
             elif isinstance(dest, str) and dest in self._namedDests:
                 outline = self._namedDests[dest]
-                outline[NameObject("/Title")] = title
+                outline[NameObject("/Title")] = title  # type: ignore
             else:
                 raise PdfReadError("Unexpected destination %r" % dest)
         return outline
@@ -747,7 +749,6 @@ class PdfFileReader:
             except PdfStreamError as e:
                 # Stream object cannot be read. Normally, a critical error, but
                 # Adobe Reader doesn't complain, so continue (in strict mode?)
-                e = sys.exc_info()[1]
                 warnings.warn(
                     "Invalid stream (index %d) within object %d %d: %s"
                     % (i, indirectReference.idnum, indirectReference.generation, e),
@@ -774,7 +775,7 @@ class PdfFileReader:
             indirectReference.generation == 0
             and indirectReference.idnum in self.xref_objStm
         ):
-            retval = self._getObjectFromStream(indirectReference)
+            retval = self._getObjectFromStream(indirectReference)  # type: ignore
         elif (
             indirectReference.generation in self.xref
             and indirectReference.idnum in self.xref[indirectReference.generation]
@@ -809,7 +810,7 @@ class PdfFileReader:
                 )
             if self.strict:
                 assert generation == indirectReference.generation
-            retval = readObject(self.stream, self)
+            retval = readObject(self.stream, self)  # type: ignore
 
             # override encryption is used for the /Encrypt dictionary
             if not self._override_encryption and self.isEncrypted:
@@ -823,7 +824,7 @@ class PdfFileReader:
                 assert len(key) == (len(self._decryption_key) + 5)
                 md5_hash = md5(key).digest()
                 key = md5_hash[: min(16, len(self._decryption_key) + 5)]
-                retval = self._decryptObject(retval, key)
+                retval = self._decryptObject(retval, key)  # type: ignore
         else:
             warnings.warn(
                 "Object %d %d not defined."
@@ -1103,8 +1104,8 @@ class PdfFileReader:
                 if line[-1] in b_("0123456789t"):
                     stream.seek(-1, 1)
 
-                offset, generation = line[:16].split(b_(" "))
-                offset, generation = int(offset), int(generation)
+                offset_b, generation_b = line[:16].split(b_(" "))
+                offset, generation = int(offset_b), int(generation_b)
                 if generation not in self.xref:
                     self.xref[generation] = {}
                 if num in self.xref[generation]:

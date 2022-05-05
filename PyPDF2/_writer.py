@@ -134,7 +134,7 @@ class PdfFileWriter:
     ) -> None:
         assert page[PA.TYPE] == CO.PAGE
         page[NameObject(PA.PARENT)] = self._pages
-        page = self._addObject(page)
+        page = self._addObject(page)  # type: ignore
         pages: DictionaryObject = self.getObject(self._pages)  # type: ignore
         action(pages[PA.KIDS], page)
         pages[NameObject(PA.COUNT)] = NumberObject(pages[PA.COUNT] + 1)
@@ -513,8 +513,10 @@ class PdfFileWriter:
         """
         if hasattr(stream, "mode") and "b" not in stream.mode:
             warnings.warn(
-                "File <%s> to write to is not in binary mode. It may not be written to correctly."
-                % stream.name
+                (
+                    "File <{}> to write to is not in binary mode. "  # type: ignore
+                    "It may not be written to correctly."
+                ).format(stream.name)
             )
 
         if not self._root:
@@ -609,7 +611,7 @@ class PdfFileWriter:
         args = {}
         for key, value in list(infos.items()):
             args[NameObject(key)] = createStringObject(value)
-        self.getObject(self._info).update(args)
+        self.getObject(self._info).update(args)  # type: ignore
 
     def _sweepIndirectReferences(
         self,
@@ -621,6 +623,7 @@ class PdfFileWriter:
             FloatObject,
             IndirectObject,
             NameObject,
+            PdfObject,
             NumberObject,
             TextStringObject,
             NullObject,
@@ -791,7 +794,7 @@ class PdfFileWriter:
         self,
         title: str,
         pagenum: int,
-        parent: Optional[IndirectObject] = None,
+        parent: Union[None, TreeObject] = None,
         color: Optional[Tuple[float, float, float]] = None,
         bold=False,
         italic=False,
@@ -859,8 +862,9 @@ class PdfFileWriter:
 
         bookmark_ref = self._addObject(bookmark)
 
-        parent = parent.getObject()
-        parent.addChild(bookmark_ref, self)
+        assert parent is not None, "hint for mypy"
+        parent_obj: TreeObject = parent.getObject()  # type: ignore
+        parent_obj.addChild(bookmark_ref, self)
 
         return bookmark_ref
 

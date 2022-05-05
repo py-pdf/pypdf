@@ -174,7 +174,7 @@ class PdfFileMerger:
                 NumberObject(self.id_count),
                 NameObject("/Fit"),
             )
-            self.bookmarks += [bookmark_typ, outline]
+            self.bookmarks += [bookmark_typ, outline]  # type: ignore
         else:
             self.bookmarks += outline
 
@@ -574,7 +574,7 @@ class PdfFileMerger:
         self,
         title: str,
         pagenum: int,
-        parent: Union[TreeObject, None, IndirectObject, Destination] = None,
+        parent: Union[TreeObject, None, Destination] = None,
         color: Optional[Tuple[float, float, float]] = None,
         bold: bool = False,
         italic: bool = False,

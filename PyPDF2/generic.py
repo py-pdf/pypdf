@@ -59,7 +59,7 @@ IndirectPattern = re.compile(b_(r"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]"))
 
 
 class PdfObject:
-    def getObject(self) -> "PdfObject":
+    def getObject(self) -> Optional["PdfObject"]:
         """Resolve indirect references."""
         return self
 
