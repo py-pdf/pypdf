@@ -27,19 +27,21 @@
 
 from sys import version_info
 
+from PyPDF2._reader import PdfFileReader
+from PyPDF2._writer import PdfFileWriter
 from PyPDF2.constants import PagesAttributes as PA
+from PyPDF2.generic import *
+from PyPDF2.pagerange import PageRange
+from PyPDF2.utils import isString, str_
 
-from .generic import *
-from .pagerange import PageRange
-from .pdf import PdfFileReader, PdfFileWriter
-from .utils import isString, str_
-
-if version_info < ( 3, 0 ):
+if version_info < (3, 0):
     from cStringIO import StringIO
+
     StreamIO = StringIO
 else:
     from io import BytesIO
     from io import FileIO as file
+
     StreamIO = BytesIO
 
 
@@ -48,6 +50,7 @@ class _MergedPage(object):
     _MergedPage is used internally by PdfFileMerger to collect necessary
     information on each page that is being merged.
     """
+
     def __init__(self, pagedata, src, id):
         self.src = src
         self.pagedata = pagedata
@@ -57,9 +60,9 @@ class _MergedPage(object):
 
 class PdfFileMerger(object):
     """
-    Initializes a ``PdfFileMerger`` object. ``PdfFileMerger`` merges multiple PDFs
-    into a single PDF. It can concatenate, slice, insert, or any combination
-    of the above.
+    Initializes a ``PdfFileMerger`` object. ``PdfFileMerger`` merges multiple
+    PDFs into a single PDF. It can concatenate, slice, insert, or any
+    combination of the above.
 
     See the functions :meth:`merge()<merge>` (or :meth:`append()<append>`)
     and :meth:`write()<write>` for usage information.
@@ -82,7 +85,9 @@ class PdfFileMerger(object):
         self.strict = strict
         self.overwriteWarnings = overwriteWarnings
 
-    def merge(self, position, fileobj, bookmark=None, pages=None, import_bookmarks=True):
+    def merge(
+        self, position, fileobj, bookmark=None, pages=None, import_bookmarks=True
+    ):
         """
         Merges the pages from the given file into the output file at the
         specified page number.
@@ -90,19 +95,21 @@ class PdfFileMerger(object):
         :param int position: The *page number* to insert this file. File will
             be inserted after the given number.
 
-        :param fileobj: A File Object or an object that supports the standard read
-            and seek methods similar to a File Object. Could also be a
+        :param fileobj: A File Object or an object that supports the standard
+            read and seek methods similar to a File Object. Could also be a
             string representing a path to a PDF file.
 
-        :param str bookmark: Optionally, you may specify a bookmark to be applied at
-            the beginning of the included file by supplying the text of the bookmark.
+        :param str bookmark: Optionally, you may specify a bookmark to be
+            applied at the beginning of the included file by supplying the text
+            of the bookmark.
 
-        :param pages: can be a :class:`PageRange<PyPDF2.pagerange.PageRange>` or a ``(start, stop[, step])`` tuple
+        :param pages: can be a :class:`PageRange<PyPDF2.pagerange.PageRange>`
+            or a ``(start, stop[, step])`` tuple
             to merge only the specified range of pages from the source
             document into the output document.
 
-        :param bool import_bookmarks: You may prevent the source document's bookmarks
-            from being imported by specifying this as ``False``.
+        :param bool import_bookmarks: You may prevent the source document's
+            bookmarks from being imported by specifying this as ``False``.
         """
 
         # This parameter is passed to self.inputs.append and means
@@ -117,7 +124,7 @@ class PdfFileMerger(object):
         # If fileobj is none of the above types, it is not modified
         _encryption = None
         if isString(fileobj):
-            fileobj = file(fileobj, 'rb')
+            fileobj = file(fileobj, "rb")
             my_file = True
         elif hasattr(fileobj, "seek") and hasattr(fileobj, "read"):
             fileobj.seek(0)
@@ -130,13 +137,18 @@ class PdfFileMerger(object):
             orig_tell = fileobj.stream.tell()
             fileobj.stream.seek(0)
             filecontent = StreamIO(fileobj.stream.read())
-            fileobj.stream.seek(orig_tell) # reset the stream to its original location
+
+            # reset the stream to its original location
+            fileobj.stream.seek(orig_tell)
+
             fileobj = filecontent
             my_file = True
 
         # Create a new PdfFileReader instance using the stream
         # (either file or BytesIO or StringIO) created above
-        pdfr = PdfFileReader(fileobj, strict=self.strict, overwriteWarnings=self.overwriteWarnings)
+        pdfr = PdfFileReader(
+            fileobj, strict=self.strict, overwriteWarnings=self.overwriteWarnings
+        )
         if _encryption is not None:
             pdfr._encryption = _encryption
 
@@ -150,7 +162,11 @@ class PdfFileMerger(object):
 
         srcpages = []
         if bookmark:
-            bookmark = Bookmark(TextStringObject(bookmark), NumberObject(self.id_count), NameObject('/Fit'))
+            bookmark = Bookmark(
+                TextStringObject(bookmark),
+                NumberObject(self.id_count),
+                NameObject("/Fit"),
+            )
 
         outline = []
         if import_bookmarks:
@@ -188,22 +204,25 @@ class PdfFileMerger(object):
 
     def append(self, fileobj, bookmark=None, pages=None, import_bookmarks=True):
         """
-        Identical to the :meth:`merge()<merge>` method, but assumes you want to concatenate
-        all pages onto the end of the file instead of specifying a position.
+        Identical to the :meth:`merge()<merge>` method, but assumes you want to
+        concatenate all pages onto the end of the file instead of specifying a
+        position.
 
-        :param fileobj: A File Object or an object that supports the standard read
-            and seek methods similar to a File Object. Could also be a
+        :param fileobj: A File Object or an object that supports the standard
+            read and seek methods similar to a File Object. Could also be a
             string representing a path to a PDF file.
 
-        :param str bookmark: Optionally, you may specify a bookmark to be applied at
-            the beginning of the included file by supplying the text of the bookmark.
+        :param str bookmark: Optionally, you may specify a bookmark to be
+            applied at the beginning of the included file by supplying the text
+            of the bookmark.
 
-        :param pages: can be a :class:`PageRange<PyPDF2.pagerange.PageRange>` or a ``(start, stop[, step])`` tuple
+        :param pages: can be a :class:`PageRange<PyPDF2.pagerange.PageRange>`
+            or a ``(start, stop[, step])`` tuple
             to merge only the specified range of pages from the source
             document into the output document.
 
-        :param bool import_bookmarks: You may prevent the source document's bookmarks
-            from being imported by specifying this as ``False``.
+        :param bool import_bookmarks: You may prevent the source document's
+            bookmarks from being imported by specifying this as ``False``.
         """
         self.merge(len(self.pages), fileobj, bookmark, pages, import_bookmarks)
 
@@ -216,14 +235,17 @@ class PdfFileMerger(object):
         """
         my_file = False
         if isString(fileobj):
-            fileobj = file(fileobj, 'wb')
+            fileobj = file(fileobj, "wb")
             my_file = True
 
         # Add pages to the PdfFileWriter
-        # The commented out line below was replaced with the two lines below it to allow PdfFileMerger to work with PyPdf 1.13
+        # The commented out line below was replaced with the two lines below it
+        # to allow PdfFileMerger to work with PyPdf 1.13
         for page in self.pages:
             self.output.addPage(page.pagedata)
-            page.out_pagedata = self.output.getReference(self.output._pages.getObject()[PA.KIDS][-1].getObject())
+            page.out_pagedata = self.output.getReference(
+                self.output._pages.getObject()[PA.KIDS][-1].getObject()
+            )
             # idnum = self.output._objects.index(self.output._pages.getObject()[PA.KIDS][-1].getObject()) + 1
             # page.out_pagedata = IndirectObject(idnum, 0, self.output)
 
@@ -318,9 +340,9 @@ class PdfFileMerger(object):
         new_dests = []
         for k, o in list(dests.items()):
             for j in range(*pages):
-                if pdf.getPage(j).getObject() == o['/Page'].getObject():
-                    o[NameObject('/Page')] = o['/Page'].getObject()
-                    assert str_(k) == str_(o['/Title'])
+                if pdf.getPage(j).getObject() == o["/Page"].getObject():
+                    o[NameObject("/Page")] = o["/Page"].getObject()
+                    assert str_(k) == str_(o["/Title"])
                     new_dests.append(o)
                     break
         return new_dests
@@ -337,116 +359,115 @@ class PdfFileMerger(object):
                 sub = self._trim_outline(pdf, o, pages)
                 if sub:
                     if not prev_header_added:
-                        new_outline.append(outline[i-1])
+                        new_outline.append(outline[i - 1])
                     new_outline.append(sub)
             else:
                 prev_header_added = False
                 for j in range(*pages):
-                    if pdf.getPage(j).getObject() == o['/Page'].getObject():
-                        o[NameObject('/Page')] = o['/Page'].getObject()
+                    if pdf.getPage(j).getObject() == o["/Page"].getObject():
+                        o[NameObject("/Page")] = o["/Page"].getObject()
                         new_outline.append(o)
                         prev_header_added = True
                         break
         return new_outline
 
     def _write_dests(self):
-        dests = self.named_dests
-
-        for v in dests:
+        for named_dest in self.named_dests:
             pageno = None
-            pdf = None
-            if '/Page' in v:
-                for i, p in enumerate(self.pages):
-                    if p.id == v['/Page']:
-                        v[NameObject('/Page')] = p.out_pagedata
-                        pageno = i
-                        pdf = p.src  # noqa: F841
+            if "/Page" in named_dest:
+                for pageno, page in enumerate(self.pages):  # noqa: B007
+                    if page.id == named_dest["/Page"]:
+                        named_dest[NameObject("/Page")] = page.out_pagedata
                         break
 
             if pageno is not None:
-                self.output.addNamedDestinationObject(v)
+                self.output.addNamedDestinationObject(named_dest)
 
     def _write_bookmarks(self, bookmarks=None, parent=None):
         if bookmarks is None:
             bookmarks = self.bookmarks
 
         last_added = None
-        for b in bookmarks:
-            if isinstance(b, list):
-                self._write_bookmarks(b, last_added)
+        for bookmark in bookmarks:
+            if isinstance(bookmark, list):
+                self._write_bookmarks(bookmark, last_added)
                 continue
 
-            pageno = None
-            pdf = None
-            if '/Page' in b:
-                for i, p in enumerate(self.pages):
-                    if p.id == b['/Page']:
-                        pageno, pdf = self._write_bookmark_on_page(b, p, i)
+            page_no = None
+            if "/Page" in bookmark:
+                for page_no, page in enumerate(self.pages):  # noqa: B007
+                    if page.id == bookmark["/Page"]:
+                        self._write_bookmark_on_page(bookmark, page)
                         break
-            if pageno is not None:
-                del b['/Page'], b['/Type']
-                last_added = self.output.addBookmarkDict(b, parent)
+            if page_no is not None:
+                del bookmark["/Page"], bookmark["/Type"]
+                last_added = self.output.addBookmarkDict(bookmark, parent)
 
-    def _write_bookmark_on_page(self, b, p, i):
+    def _write_bookmark_on_page(self, bookmark, page):
         # b[NameObject('/Page')] = p.out_pagedata
-        args = [NumberObject(p.id), NameObject(b['/Type'])]
+        args = [NumberObject(page.id), NameObject(bookmark["/Type"])]
         # nothing more to add
         # if b['/Type'] == '/Fit' or b['/Type'] == '/FitB'
-        if b['/Type'] == '/FitH' or b['/Type'] == '/FitBH':
-            if '/Top' in b and not isinstance(b['/Top'], NullObject):
-                args.append(FloatObject(b['/Top']))
+        if bookmark["/Type"] == "/FitH" or bookmark["/Type"] == "/FitBH":
+            if "/Top" in bookmark and not isinstance(bookmark["/Top"], NullObject):
+                args.append(FloatObject(bookmark["/Top"]))
             else:
                 args.append(FloatObject(0))
-            del b['/Top']
-        elif b['/Type'] == '/FitV' or b['/Type'] == '/FitBV':
-            if '/Left' in b and not isinstance(b['/Left'], NullObject):
-                args.append(FloatObject(b['/Left']))
+            del bookmark["/Top"]
+        elif bookmark["/Type"] == "/FitV" or bookmark["/Type"] == "/FitBV":
+            if "/Left" in bookmark and not isinstance(bookmark["/Left"], NullObject):
+                args.append(FloatObject(bookmark["/Left"]))
             else:
                 args.append(FloatObject(0))
-            del b['/Left']
-        elif b['/Type'] == '/XYZ':
-            if '/Left' in b and not isinstance(b['/Left'], NullObject):
-                args.append(FloatObject(b['/Left']))
+            del bookmark["/Left"]
+        elif bookmark["/Type"] == "/XYZ":
+            if "/Left" in bookmark and not isinstance(bookmark["/Left"], NullObject):
+                args.append(FloatObject(bookmark["/Left"]))
             else:
                 args.append(FloatObject(0))
-            if '/Top' in b and not isinstance(b['/Top'], NullObject):
-                args.append(FloatObject(b['/Top']))
+            if "/Top" in bookmark and not isinstance(bookmark["/Top"], NullObject):
+                args.append(FloatObject(bookmark["/Top"]))
             else:
                 args.append(FloatObject(0))
-            if '/Zoom' in b and not isinstance(b['/Zoom'], NullObject):
-                args.append(FloatObject(b['/Zoom']))
+            if "/Zoom" in bookmark and not isinstance(bookmark["/Zoom"], NullObject):
+                args.append(FloatObject(bookmark["/Zoom"]))
             else:
                 args.append(FloatObject(0))
-            del b['/Top'], b['/Zoom'], b['/Left']
-        elif b['/Type'] == '/FitR':
-            if '/Left' in b and not isinstance(b['/Left'], NullObject):
-                args.append(FloatObject(b['/Left']))
+            del bookmark["/Top"], bookmark["/Zoom"], bookmark["/Left"]
+        elif bookmark["/Type"] == "/FitR":
+            if "/Left" in bookmark and not isinstance(bookmark["/Left"], NullObject):
+                args.append(FloatObject(bookmark["/Left"]))
             else:
                 args.append(FloatObject(0))
-            if '/Bottom' in b and not isinstance(b['/Bottom'], NullObject):
-                args.append(FloatObject(b['/Bottom']))
+            if "/Bottom" in bookmark and not isinstance(
+                bookmark["/Bottom"], NullObject
+            ):
+                args.append(FloatObject(bookmark["/Bottom"]))
             else:
                 args.append(FloatObject(0))
-            if '/Right' in b and not isinstance(b['/Right'], NullObject):
-                args.append(FloatObject(b['/Right']))
+            if "/Right" in bookmark and not isinstance(bookmark["/Right"], NullObject):
+                args.append(FloatObject(bookmark["/Right"]))
             else:
                 args.append(FloatObject(0))
-            if '/Top' in b and not isinstance(b['/Top'], NullObject):
-                args.append(FloatObject(b['/Top']))
+            if "/Top" in bookmark and not isinstance(bookmark["/Top"], NullObject):
+                args.append(FloatObject(bookmark["/Top"]))
             else:
                 args.append(FloatObject(0))
-            del b['/Left'], b['/Right'], b['/Bottom'], b['/Top']
+            del (
+                bookmark["/Left"],
+                bookmark["/Right"],
+                bookmark["/Bottom"],
+                bookmark["/Top"],
+            )
 
-        b[NameObject('/A')] = DictionaryObject({NameObject('/S'): NameObject('/GoTo'), NameObject('/D'): ArrayObject(args)})
-
-        pageno = i
-        pdf = p.src  # noqa: F841
-        return (pageno, pdf)
+        bookmark[NameObject("/A")] = DictionaryObject(
+            {NameObject("/S"): NameObject("/GoTo"), NameObject("/D"): ArrayObject(args)}
+        )
 
     def _associate_dests_to_pages(self, pages):
         for nd in self.named_dests:
             pageno = None
-            np = nd['/Page']
+            np = nd["/Page"]
 
             if isinstance(np, NumberObject):
                 continue
@@ -456,9 +477,9 @@ class PdfFileMerger(object):
                     pageno = p.id
 
             if pageno is not None:
-                nd[NameObject('/Page')] = NumberObject(pageno)
+                nd[NameObject("/Page")] = NumberObject(pageno)
             else:
-                raise ValueError("Unresolved named destination '%s'" % (nd['/Title'],))
+                raise ValueError("Unresolved named destination '%s'" % (nd["/Title"],))
 
     def _associate_bookmarks_to_pages(self, pages, bookmarks=None):
         if bookmarks is None:
@@ -470,7 +491,7 @@ class PdfFileMerger(object):
                 continue
 
             pageno = None
-            bp = b['/Page']
+            bp = b["/Page"]
 
             if isinstance(bp, NumberObject):
                 continue
@@ -480,9 +501,9 @@ class PdfFileMerger(object):
                     pageno = p.id
 
             if pageno is not None:
-                b[NameObject('/Page')] = NumberObject(pageno)
+                b[NameObject("/Page")] = NumberObject(pageno)
             else:
-                raise ValueError("Unresolved bookmark '%s'" % (b['/Title'],))
+                raise ValueError("Unresolved bookmark '%s'" % (b["/Title"],))
 
     def findBookmark(self, bookmark, root=None):
         if root is None:
@@ -493,13 +514,22 @@ class PdfFileMerger(object):
                 res = self.findBookmark(bookmark, b)
                 if res:
                     return [i] + res
-            elif b == bookmark or b['/Title'] == bookmark:
+            elif b == bookmark or b["/Title"] == bookmark:
                 return [i]
 
         return None
 
-
-    def addBookmark(self, title, pagenum, parent=None, color=None, bold=False, italic=False, fit='/Fit', *args):
+    def addBookmark(
+        self,
+        title,
+        pagenum,
+        parent=None,
+        color=None,
+        bold=False,
+        italic=False,
+        fit="/Fit",
+        *args
+    ):
         """
         Add a bookmark to this PDF file.
 
@@ -514,40 +544,45 @@ class PdfFileMerger(object):
         :param str fit: The fit of the destination page. See
             :meth:`addLink()<addLin>` for details.
         """
-        if len(self.output.getObject(self.output._pages)['/Kids']) > 0:
-            pageRef = self.output.getObject(self.output._pages)['/Kids'][pagenum]
+        if len(self.output.getObject(self.output._pages)["/Kids"]) > 0:
+            page_ref = self.output.getObject(self.output._pages)["/Kids"][pagenum]
         else:
-            pageRef = self.output.getObject(self.output._pages)
+            page_ref = self.output.getObject(self.output._pages)
 
         action = DictionaryObject()
-        zoomArgs = []
+        zoom_args = []
         for a in args:
             if a is not None:
-                zoomArgs.append(NumberObject(a))
+                zoom_args.append(NumberObject(a))
             else:
-                zoomArgs.append(NullObject())
-        dest = Destination(NameObject("/"+title + " bookmark"), pageRef, NameObject(fit), *zoomArgs)
-        destArray = dest.getDestArray()
-        action.update({
-            NameObject('/D') : destArray,
-            NameObject('/S') : NameObject('/GoTo')
-        })
-        actionRef = self.output._addObject(action)
+                zoom_args.append(NullObject())
+        dest = Destination(
+            NameObject("/" + title + " bookmark"), page_ref, NameObject(fit), *zoom_args
+        )
+        dest_array = dest.getDestArray()
+        action.update(
+            {NameObject("/D"): dest_array, NameObject("/S"): NameObject("/GoTo")}
+        )
+        action_ref = self.output._addObject(action)
 
-        outlineRef = self.output.getOutlineRoot()
+        outline_ref = self.output.getOutlineRoot()
 
         if parent is None:
-            parent = outlineRef
+            parent = outline_ref
 
         bookmark = TreeObject()
 
-        bookmark.update({
-            NameObject('/A'): actionRef,
-            NameObject('/Title'): createStringObject(title),
-        })
+        bookmark.update(
+            {
+                NameObject("/A"): action_ref,
+                NameObject("/Title"): createStringObject(title),
+            }
+        )
 
         if color is not None:
-            bookmark.update({NameObject('/C'): ArrayObject([FloatObject(c) for c in color])})
+            bookmark.update(
+                {NameObject("/C"): ArrayObject([FloatObject(c) for c in color])}
+            )
 
         format = 0
         if italic:
@@ -555,13 +590,13 @@ class PdfFileMerger(object):
         if bold:
             format += 2
         if format:
-            bookmark.update({NameObject('/F'): NumberObject(format)})
+            bookmark.update({NameObject("/F"): NumberObject(format)})
 
-        bookmarkRef = self.output._addObject(bookmark)
+        bookmark_ref = self.output._addObject(bookmark)
         parent = parent.getObject()
-        parent.addChild(bookmarkRef, self.output)
+        parent.addChild(bookmark_ref, self.output)
 
-        return bookmarkRef
+        return bookmark_ref
 
     def addNamedDestination(self, title, pagenum):
         """
@@ -571,7 +606,12 @@ class PdfFileMerger(object):
         :param int pagenum: Page number this destination points at.
         """
 
-        dest = Destination(TextStringObject(title), NumberObject(pagenum), NameObject('/FitH'), NumberObject(826))
+        dest = Destination(
+            TextStringObject(title),
+            NumberObject(pagenum),
+            NameObject("/FitH"),
+            NumberObject(826),
+        )
         self.named_dests.append(dest)
 
 
@@ -588,19 +628,25 @@ class OutlinesObject(list):
         self.tree.removeChild(obj)
 
     def add(self, title, pagenum):
-        pageRef = self.pdf.getObject(self.pdf._pages)[PA.KIDS][pagenum]
+        page_ref = self.pdf.getObject(self.pdf._pages)[PA.KIDS][pagenum]
         action = DictionaryObject()
-        action.update({
-            NameObject('/D') : ArrayObject([pageRef, NameObject('/FitH'), NumberObject(826)]),
-            NameObject('/S') : NameObject('/GoTo')
-        })
-        actionRef = self.pdf._addObject(action)
+        action.update(
+            {
+                NameObject("/D"): ArrayObject(
+                    [page_ref, NameObject("/FitH"), NumberObject(826)]
+                ),
+                NameObject("/S"): NameObject("/GoTo"),
+            }
+        )
+        action_ref = self.pdf._addObject(action)
         bookmark = TreeObject()
 
-        bookmark.update({
-            NameObject('/A'): actionRef,
-            NameObject('/Title'): createStringObject(title),
-        })
+        bookmark.update(
+            {
+                NameObject("/A"): action_ref,
+                NameObject("/Title"): createStringObject(title),
+            }
+        )
 
         self.pdf._addObject(bookmark)
 

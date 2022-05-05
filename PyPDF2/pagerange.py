@@ -18,9 +18,6 @@ PAGE_RANGE_RE = "^({int}|({int}?(:{int}?(:{int}?)?)))$".format(int=_INT_RE)
 # groups:         12     34     5 6     7 8
 
 
-
-
-
 PAGE_RANGE_HELP = """Remember, page indices start with zero.
         Page range expression examples:
             :     all pages.                   -1    last page.
@@ -82,37 +79,36 @@ class PageRange(object):
             stop = start + 1 if start != -1 else None
             self._slice = slice(start, stop)
         else:
-            self._slice = slice(*[int(g) if g else None
-                                  for g in m.group(4, 6, 8)])
+            self._slice = slice(*[int(g) if g else None for g in m.group(4, 6, 8)])
 
     if __init__.__doc__:  # see https://github.com/py-pdf/PyPDF2/issues/737
         __init__.__doc__ = __init__.__doc__.format(page_range_help=PAGE_RANGE_HELP)
 
     @staticmethod
     def valid(input):
-        """ True if input is a valid initializer for a PageRange. """
-        return isinstance(input, (slice, PageRange))  or \
-               (isString(input)
-                and bool(re.match(PAGE_RANGE_RE, input)))
+        """True if input is a valid initializer for a PageRange."""
+        return isinstance(input, (slice, PageRange)) or (
+            isString(input) and bool(re.match(PAGE_RANGE_RE, input))
+        )
 
     def to_slice(self):
-        """ Return the slice equivalent of this page range. """
+        """Return the slice equivalent of this page range."""
         return self._slice
 
     def __str__(self):
-        """ A string like "1:2:3". """
+        """A string like "1:2:3"."""
         s = self._slice
         if s.step is None:
-            if s.start is not None  and  s.stop == s.start + 1:
+            if s.start is not None and s.stop == s.start + 1:
                 return str(s.start)
 
             indices = s.start, s.stop
         else:
             indices = s.start, s.stop, s.step
-        return ':'.join("" if i is None else str(i) for i in indices)
+        return ":".join("" if i is None else str(i) for i in indices)
 
     def __repr__(self):
-        """ A string like "PageRange('1:2:3')". """
+        """A string like "PageRange('1:2:3')"."""
         return "PageRange(" + repr(str(self)) + ")"
 
     def indices(self, n):
@@ -145,15 +141,16 @@ def parse_filename_page_ranges(args):
     for arg in args + [None]:
         if PageRange.valid(arg):
             if not pdf_filename:
-                raise ValueError("The first argument must be a filename, "
-                                 "not a page range.")
+                raise ValueError(
+                    "The first argument must be a filename, not a page range."
+                )
 
-            pairs.append( (pdf_filename, PageRange(arg)) )
+            pairs.append((pdf_filename, PageRange(arg)))
             did_page_range = True
         else:
             # New filename or end of list--do all of the previous file?
             if pdf_filename and not did_page_range:
-                pairs.append( (pdf_filename, PAGE_RANGE_ALL) )
+                pairs.append((pdf_filename, PAGE_RANGE_ALL))
 
             pdf_filename = arg
             did_page_range = False

@@ -75,7 +75,7 @@ def test_decrypt():
         reader = PdfFileReader(inputfile)
         assert reader.isEncrypted == True
         reader.decrypt("openpassword")
-        assert reader.getNumPages() == 1
+        assert reader.numPages == 1
         assert reader.isEncrypted == True
         metadict = reader.getDocumentInfo()
         assert dict(metadict) == {

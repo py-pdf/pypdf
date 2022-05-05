@@ -1,11 +1,11 @@
 # Reduce PDF Size
 
 There are multiple ways to reduce the size of a given PDF file. The easiest
-one is to remove content (e.g. images) or pages. 
+one is to remove content (e.g. images) or pages.
 
 ## Remove images
 
-    
+
 ```python
 import PyPDF2
 

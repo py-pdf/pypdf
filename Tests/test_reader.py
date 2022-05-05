@@ -9,7 +9,7 @@ from PyPDF2 import PdfFileReader
 from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.constants import Ressources as RES
-from PyPDF2.errors import PdfReadError, PdfReadWarning
+from PyPDF2.errors import PdfReadError
 from PyPDF2.filters import _xobj_to_image
 
 if version_info < (3, 0):
@@ -27,16 +27,17 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
 
 
 @pytest.mark.parametrize(
-    "src,num_pages", [("selenium-PyPDF2-issue-177.pdf", 1), ("pdflatex-outline.pdf", 4)]
+    ("src", "num_pages"),
+    [("selenium-PyPDF2-issue-177.pdf", 1), ("pdflatex-outline.pdf", 4)],
 )
 def test_get_num_pages(src, num_pages):
     src = os.path.join(RESOURCE_ROOT, src)
     reader = PdfFileReader(src)
-    assert reader.getNumPages() == num_pages
+    assert reader.numPages == num_pages
 
 
 @pytest.mark.parametrize(
-    "pdf_path, expected",
+    ("pdf_path", "expected"),
     [
         (
             os.path.join(RESOURCE_ROOT, "crazyones.pdf"),
@@ -71,7 +72,7 @@ def test_get_num_pages(src, num_pages):
 def test_read_metadata(pdf_path, expected):
     with open(pdf_path, "rb") as inputfile:
         reader = PdfFileReader(inputfile)
-        docinfo = reader.getDocumentInfo()
+        docinfo = reader.documentInfo
         metadict = dict(docinfo)
         assert metadict == expected
         docinfo.title
@@ -103,7 +104,7 @@ def test_get_annotations(src):
             for annot in page[PG.ANNOTS]:
                 subtype = annot.getObject()[IA.SUBTYPE]
                 if subtype == "/Text":
-                    annot.getObject()["/Contents"]
+                    annot.getObject()[PG.CONTENTS]
 
 
 @pytest.mark.parametrize(
@@ -117,7 +118,7 @@ def test_get_attachments(src):
     reader = PdfFileReader(src)
 
     attachments = {}
-    for i in range(reader.getNumPages()):
+    for i in range(reader.numPages):
         page = reader.getPage(i)
         if PG.ANNOTS in page:
             for annotation in page[PG.ANNOTS]:
@@ -129,7 +130,7 @@ def test_get_attachments(src):
 
 
 @pytest.mark.parametrize(
-    "src,outline_elements",
+    ("src", "outline_elements"),
     [
         (os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf"), 9),
         (os.path.join(RESOURCE_ROOT, "crazyones.pdf"), 0),
@@ -142,7 +143,7 @@ def test_get_outlines(src, outline_elements):
 
 
 @pytest.mark.parametrize(
-    "src,nb_images",
+    ("src", "nb_images"),
     [
         ("pdflatex-outline.pdf", 0),
         ("crazyones.pdf", 0),
@@ -184,15 +185,20 @@ def test_get_images(src, nb_images):
 
 
 @pytest.mark.parametrize(
-    "strict,with_prev_0,startx_correction,should_fail",
+    ("strict", "with_prev_0", "startx_correction", "should_fail"),
     [
-        (True, False, -1, False), # all nominal => no fail
-        (True, True, -1, True),   # Prev=0 => fail expected
+        (True, False, -1, False),  # all nominal => no fail
+        (True, True, -1, True),  # Prev=0 => fail expected
         (False, False, -1, False),
-        (False, True, -1, False), # Prev =0 => no strict so tolerant
-        (True, False, 0, True),   # error on startxref, in strict => fail expected
+        (False, True, -1, False),  # Prev =0 => no strict so tolerant
+        (True, False, 0, True),  # error on startxref, in strict => fail expected
         (True, True, 0, True),
-        (False, False, 0, False), # error on startxref, but no strict => xref rebuilt,no fail
+        (
+            False,
+            False,
+            0,
+            False,
+        ),  # error on startxref, but no strict => xref rebuilt,no fail
         (False, True, 0, False),
     ],
 )
@@ -229,14 +235,12 @@ def test_get_images_raw(strict, with_prev_0, startx_correction, should_fail):
     )
     pdf_stream = io.BytesIO(pdf_data)
     if should_fail:
-        with pytest.raises(Exception) as exc:
+        with pytest.raises(PdfReadError) as exc:
             PdfFileReader(pdf_stream, strict=strict)
-        if startx_correction != -1:
-            assert exc.type == PdfReadWarning
-        else:
+        assert exc.type == PdfReadError
+        if startx_correction == -1:
             assert (
-                exc.type == PdfReadError
-                and exc.value.args[0]
+                exc.value.args[0]
                 == "/Prev=0 in the trailer (try opening with strict=False)"
             )
     else:
@@ -245,10 +249,9 @@ def test_get_images_raw(strict, with_prev_0, startx_correction, should_fail):
 
 def test_issue297():
     path = os.path.join(RESOURCE_ROOT, "issue-297.pdf")
-    with pytest.raises(PdfReadWarning) as exc:
+    with pytest.raises(PdfReadError) as exc:
         reader = PdfFileReader(path, strict=True)
-        reader.getPage(0)
-    assert "startxref" in exc.value.args[0]
+    assert "Broken xref table" in exc.value.args[0]
     reader = PdfFileReader(path, strict=False)
     reader.getPage(0)
 
@@ -270,7 +273,7 @@ def test_get_page_of_encrypted_file():
 
 
 @pytest.mark.parametrize(
-    "src,expected,expected_get_fields",
+    ("src", "expected", "expected_get_fields"),
     [
         (
             "form.pdf",
@@ -303,10 +306,25 @@ def test_get_form(src, expected, expected_get_fields):
 
     fields = reader.getFields()
     assert fields == expected_get_fields
+    if fields:
+        for field in fields.values():
+            # Just access the attributes
+            [
+                field.fieldType,
+                field.parent,
+                field.kids,
+                field.name,
+                field.altName,
+                field.mappingName,
+                field.flags,
+                field.value,
+                field.defaultValue,
+                field.additionalActions,
+            ]
 
 
 @pytest.mark.parametrize(
-    "src,page_nb",
+    ("src", "page_nb"),
     [
         ("form.pdf", 0),
         ("pdflatex-outline.pdf", 2),
@@ -320,7 +338,7 @@ def test_get_page_number(src, page_nb):
 
 
 @pytest.mark.parametrize(
-    "src,expected",
+    ("src", "expected"),
     [
         ("form.pdf", None),
     ],
@@ -332,7 +350,7 @@ def test_get_page_layout(src, expected):
 
 
 @pytest.mark.parametrize(
-    "src,expected",
+    ("src", "expected"),
     [
         ("form.pdf", "/UseNone"),
         ("crazyones.pdf", None),
@@ -465,14 +483,14 @@ def test_read_unknown_zero_pages():
         pdf_data.find(b"xref") - 1,
     )
     pdf_stream = io.BytesIO(pdf_data)
+    reader = PdfFileReader(pdf_stream, strict=True)
     with pytest.raises(PdfReadError) as exc:
-        reader = PdfFileReader(pdf_stream, strict=True)
-        reader.getNumPages()
+        reader.numPages
 
     assert exc.value.args[0] == "Could not find object."
     reader = PdfFileReader(pdf_stream, strict=False)
     with pytest.raises(AttributeError) as exc:
-        reader.getNumPages()
+        reader.numPages
     assert exc.value.args[0] == "'NoneType' object has no attribute 'getObject'"
 
 
@@ -480,7 +498,7 @@ def test_read_encrypted_without_decryption():
     src = os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf")
     reader = PdfFileReader(src)
     with pytest.raises(PdfReadError) as exc:
-        reader.getNumPages()
+        reader.numPages
     assert exc.value.args[0] == "File has not been decrypted"
 
 
@@ -519,3 +537,72 @@ def test_PdfReaderDecryptWhenNoID():
         ipdf = PdfFileReader(inputfile)
         ipdf.decrypt("")
         assert ipdf.getDocumentInfo() == {"/Producer": "European Patent Office"}
+
+
+def test_reader_properties():
+    reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
+    assert reader.outlines == []
+    assert len(reader.pages) == 1
+    assert reader.pageLayout is None
+    assert reader.pageMode is None
+    assert reader.isEncrypted is False
+
+
+@pytest.mark.parametrize(
+    "strict",
+    [(True), (False)],
+)
+def test_issue604(strict):
+    """
+    Test with invalid destinations
+    """
+    with open(os.path.join(RESOURCE_ROOT, "issue-604.pdf"), "rb") as f:
+        pdf = None
+        bookmarks = None
+        if strict:
+            with pytest.raises(PdfReadError) as exc:
+                pdf = PdfFileReader(f, strict=strict)
+                bookmarks = pdf.getOutlines()
+            if "Unknown Destination" not in exc.value.args[0]:
+                raise Exception("Expected exception not raised")
+            return  # bookmarks not correct
+        else:
+            pdf = PdfFileReader(f, strict=strict)
+            bookmarks = pdf.getOutlines()
+
+        def getDestPages(x):
+            # print(x)
+            if isinstance(x, list):
+                r = [getDestPages(y) for y in x]
+                return r
+            else:
+                return pdf.getDestinationPageNumber(x) + 1
+
+        out = []
+        for (
+            b
+        ) in bookmarks:  # b can be destination or a list:preferred to just print them
+            out.append(getDestPages(b))
+    # print(out)
+
+
+def test_decode_permissions():
+    reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
+    base = {
+        "accessability": False,
+        "annotations": False,
+        "assemble": False,
+        "copy": False,
+        "forms": False,
+        "modify": False,
+        "print_high_quality": False,
+        "print": False,
+    }
+
+    print_ = base.copy()
+    print_["print"] = True
+    assert reader.decode_permissions(4) == print_
+
+    modify = base.copy()
+    modify["modify"] = True
+    assert reader.decode_permissions(8) == modify

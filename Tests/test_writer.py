@@ -72,7 +72,7 @@ def test_writer_operations():
 
 
 @pytest.mark.parametrize(
-    "input_path,ignoreByteStringObject",
+    ("input_path", "ignoreByteStringObject"),
     [
         ("side-by-side-subfig.pdf", False),
         ("reportlab-inline-image.pdf", True),
@@ -104,7 +104,7 @@ def test_remove_images(input_path, ignoreByteStringObject):
 
 
 @pytest.mark.parametrize(
-    "input_path,ignoreByteStringObject",
+    ("input_path", "ignoreByteStringObject"),
     [
         ("side-by-side-subfig.pdf", False),
         ("side-by-side-subfig.pdf", True),
@@ -343,7 +343,7 @@ def test_io_streams():
 
     # Read from bytes stream
     reader = PdfFileReader(bytes_stream)
-    assert reader.getNumPages() == 4
+    assert reader.numPages == 4
 
     # Write to bytes stream
     writer = PdfFileWriter()

@@ -27,7 +27,7 @@ endcmap
 CMapName currentdict /CMap defineresource pop
 ```
 
-## codespacerange 
+## codespacerange
 
 A codespacerange maps a complete sequence of bytes to a range of unicode glyphs.
 It defines a starting point:

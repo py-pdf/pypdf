@@ -4,6 +4,7 @@ import os
 import pytest
 
 from PyPDF2 import PdfFileReader
+from PyPDF2.generic import RectangleObject
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -21,7 +22,7 @@ def get_all_sample_files():
 all_files_meta = get_all_sample_files()
 
 
-@pytest.mark.external
+@pytest.mark.external()
 @pytest.mark.parametrize(
     "meta",
     [m for m in all_files_meta["data"] if not m["encrypted"]],
@@ -35,7 +36,7 @@ def test_read(meta):
 
 
 @pytest.mark.parametrize(
-    "pdf_path, password",
+    ("pdf_path", "password"),
     [
         ("crazyones.pdf", None),
         ("attachment.pdf", None),
@@ -75,7 +76,7 @@ def test_page_operations(pdf_path, password):
 
 
 @pytest.mark.parametrize(
-    "pdf_path, password",
+    ("pdf_path", "password"),
     [
         (os.path.join(RESOURCE_ROOT, "crazyones.pdf"), None),
         (os.path.join(RESOURCE_ROOT, "attachment.pdf"), None),
@@ -92,3 +93,24 @@ def test_compress_content_streams(pdf_path, password):
         reader.decrypt(password)
     for page in reader.pages:
         page.compressContentStreams()
+
+
+def test_page_properties():
+    reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
+    page = reader.pages[0]
+    assert page.mediaBox == RectangleObject([0, 0, 612, 792])
+    assert page.cropBox == RectangleObject([0, 0, 612, 792])
+    assert page.bleedBox == RectangleObject([0, 0, 612, 792])
+    assert page.trimBox == RectangleObject([0, 0, 612, 792])
+    assert page.artBox == RectangleObject([0, 0, 612, 792])
+
+    page.bleedBox = RectangleObject([0, 1, 100, 101])
+    assert page.bleedBox == RectangleObject([0, 1, 100, 101])
+
+
+def test_page_rotation_non90():
+    reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
+    page = reader.pages[0]
+    with pytest.raises(ValueError) as exc:
+        page.rotateClockwise(91)
+    assert exc.value.args[0] == "Rotation angle must be a multiple of 90"

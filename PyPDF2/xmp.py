@@ -34,7 +34,8 @@ XMPMM_NAMESPACE = "http://ns.adobe.com/xap/1.0/mm/"
 # reverse engineering, and does not constitute a full specification.
 PDFX_NAMESPACE = "http://ns.adobe.com/pdfx/1.3/"
 
-iso8601 = re.compile("""
+iso8601 = re.compile(
+    """
         (?P<year>[0-9]{4})
         (-
             (?P<month>[0-9]{2})
@@ -48,7 +49,9 @@ iso8601 = re.compile("""
                 )?
             )?
         )?
-        """, re.VERBOSE)
+        """,
+    re.VERBOSE,
+)
 
 
 class XmpInformation(PdfObject):
@@ -59,8 +62,8 @@ class XmpInformation(PdfObject):
 
     def __init__(self, stream):
         self.stream = stream
-        docRoot = parseString(self.stream.getData())
-        self.rdfRoot = docRoot.getElementsByTagNameNS(RDF_NAMESPACE, "RDF")[0]
+        doc_root = parseString(self.stream.getData())
+        self.rdfRoot = doc_root.getElementsByTagNameNS(RDF_NAMESPACE, "RDF")[0]
         self.cache = {}
 
     def writeToStream(self, stream, encryption_key):
@@ -98,20 +101,20 @@ class XmpInformation(PdfObject):
 
     @staticmethod
     def _converter_date(value):
-        m = iso8601.match(value)
-        year = int(m.group("year"))
-        month = int(m.group("month") or "1")
-        day = int(m.group("day") or "1")
-        hour = int(m.group("hour") or "0")
-        minute = int(m.group("minute") or "0")
-        second = decimal.Decimal(m.group("second") or "0")
+        matches = iso8601.match(value)
+        year = int(matches.group("year"))
+        month = int(matches.group("month") or "1")
+        day = int(matches.group("day") or "1")
+        hour = int(matches.group("hour") or "0")
+        minute = int(matches.group("minute") or "0")
+        second = decimal.Decimal(matches.group("second") or "0")
         seconds = second.to_integral(decimal.ROUND_FLOOR)
         milliseconds = (second - seconds) * 1000000
 
         seconds = int(seconds)
         milliseconds = int(milliseconds)
 
-        tzd = m.group("tzd") or "Z"
+        tzd = matches.group("tzd") or "Z"
         dt = datetime.datetime(year, month, day, hour, minute, seconds, milliseconds)
         if tzd != "Z":
             tzd_hours, tzd_minutes = [int(x) for x in tzd.split(":")]
@@ -138,6 +141,7 @@ class XmpInformation(PdfObject):
             ns_cache = self.cache.setdefault(namespace, {})
             ns_cache[name] = retval
             return retval
+
         return get
 
     def _getter_seq(namespace, name, converter):
@@ -160,6 +164,7 @@ class XmpInformation(PdfObject):
             ns_cache = self.cache.setdefault(namespace, {})
             ns_cache[name] = retval
             return retval
+
         return get
 
     def _getter_langalt(namespace, name, converter):
@@ -181,6 +186,7 @@ class XmpInformation(PdfObject):
             ns_cache = self.cache.setdefault(namespace, {})
             ns_cache[name] = retval
             return retval
+
         return get
 
     def _getter_single(namespace, name, converter):
@@ -200,9 +206,12 @@ class XmpInformation(PdfObject):
             ns_cache = self.cache.setdefault(namespace, {})
             ns_cache[name] = value
             return value
+
         return get
 
-    dc_contributor = property(_getter_bag(DC_NAMESPACE, "contributor", _converter_string))
+    dc_contributor = property(
+        _getter_bag(DC_NAMESPACE, "contributor", _converter_string)
+    )
     """
     Contributors to the resource (other than the authors). An unsorted
     array of names.
@@ -225,7 +234,9 @@ class XmpInformation(PdfObject):
     the resource.  The dates and times are in UTC.
     """
 
-    dc_description = property(_getter_langalt(DC_NAMESPACE, "description", _converter_string))
+    dc_description = property(
+        _getter_langalt(DC_NAMESPACE, "description", _converter_string)
+    )
     """
     A language-keyed dictionary of textual descriptions of the content of the
     resource.
@@ -236,7 +247,9 @@ class XmpInformation(PdfObject):
     The mime-type of the resource.
     """
 
-    dc_identifier = property(_getter_single(DC_NAMESPACE, "identifier", _converter_string))
+    dc_identifier = property(
+        _getter_single(DC_NAMESPACE, "identifier", _converter_string)
+    )
     """
     Unique identifier of the resource.
     """
@@ -284,51 +297,69 @@ class XmpInformation(PdfObject):
     An unordered array of textual descriptions of the document type.
     """
 
-    pdf_keywords = property(_getter_single(PDF_NAMESPACE, "Keywords", _converter_string))
+    pdf_keywords = property(
+        _getter_single(PDF_NAMESPACE, "Keywords", _converter_string)
+    )
     """
     An unformatted text string representing document keywords.
     """
 
-    pdf_pdfversion = property(_getter_single(PDF_NAMESPACE, "PDFVersion", _converter_string))
+    pdf_pdfversion = property(
+        _getter_single(PDF_NAMESPACE, "PDFVersion", _converter_string)
+    )
     """
     The PDF file version, for example 1.0, 1.3.
     """
 
-    pdf_producer = property(_getter_single(PDF_NAMESPACE, "Producer", _converter_string))
+    pdf_producer = property(
+        _getter_single(PDF_NAMESPACE, "Producer", _converter_string)
+    )
     """
     The name of the tool that created the PDF document.
     """
 
-    xmp_createDate = property(_getter_single(XMP_NAMESPACE, "CreateDate", _converter_date))
+    xmp_createDate = property(
+        _getter_single(XMP_NAMESPACE, "CreateDate", _converter_date)
+    )
     """
     The date and time the resource was originally created.  The date and
     time are returned as a UTC datetime.datetime object.
     """
 
-    xmp_modifyDate = property(_getter_single(XMP_NAMESPACE, "ModifyDate", _converter_date))
+    xmp_modifyDate = property(
+        _getter_single(XMP_NAMESPACE, "ModifyDate", _converter_date)
+    )
     """
     The date and time the resource was last modified.  The date and time
     are returned as a UTC datetime.datetime object.
     """
 
-    xmp_metadataDate = property(_getter_single(XMP_NAMESPACE, "MetadataDate", _converter_date))
+    xmp_metadataDate = property(
+        _getter_single(XMP_NAMESPACE, "MetadataDate", _converter_date)
+    )
     """
     The date and time that any metadata for this resource was last
     changed.  The date and time are returned as a UTC datetime.datetime
     object.
     """
 
-    xmp_creatorTool = property(_getter_single(XMP_NAMESPACE, "CreatorTool", _converter_string))
+    xmp_creatorTool = property(
+        _getter_single(XMP_NAMESPACE, "CreatorTool", _converter_string)
+    )
     """
     The name of the first known tool used to create the resource.
     """
 
-    xmpmm_documentId = property(_getter_single(XMPMM_NAMESPACE, "DocumentID", _converter_string))
+    xmpmm_documentId = property(
+        _getter_single(XMPMM_NAMESPACE, "DocumentID", _converter_string)
+    )
     """
     The common identifier for all versions and renditions of this resource.
     """
 
-    xmpmm_instanceId = property(_getter_single(XMPMM_NAMESPACE, "InstanceID", _converter_string))
+    xmpmm_instanceId = property(
+        _getter_single(XMPMM_NAMESPACE, "InstanceID", _converter_string)
+    )
     """
     An identifier for a specific incarnation of a document, updated each
     time a file is saved.
@@ -344,7 +375,11 @@ class XmpInformation(PdfObject):
                     idx = key.find(u_("\u2182"))
                     if idx == -1:
                         break
-                    key = key[:idx] + chr(int(key[idx+1:idx+5], base=16)) + key[idx+5:]
+                    key = (
+                        key[:idx]
+                        + chr(int(key[idx + 1 : idx + 5], base=16))
+                        + key[idx + 5 :]
+                    )
                 if node.nodeType == node.ATTRIBUTE_NODE:
                     value = node.nodeValue
                 else:

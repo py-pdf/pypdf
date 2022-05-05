@@ -6,4 +6,3 @@ pillow
 pytest
 pytest-benchmark
 pycryptodome  # to provide AES for test_encryption.py
-

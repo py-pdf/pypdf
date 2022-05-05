@@ -23,7 +23,7 @@ def main():
     args = parser.parse_args()
 
     reader = PyPDF2.PdfFileReader(args.input)
-    numPages = reader.getNumPages()
+    numPages = reader.numPages
     print("Pages in file:", numPages)
 
     pagesPerSheet = 4
