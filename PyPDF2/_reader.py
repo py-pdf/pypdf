@@ -32,25 +32,19 @@
 import struct
 import sys
 import warnings
-from hashlib import md5
 from sys import version_info
 
 from PyPDF2 import utils
 from PyPDF2._page import PageObject
-from PyPDF2._security import _alg33_1, _alg34, _alg35
 from PyPDF2.constants import CatalogAttributes as CA
 from PyPDF2.constants import Core as CO
 from PyPDF2.constants import DocumentInformationAttributes as DI
-from PyPDF2.constants import EncryptionDictAttributes as ED
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.constants import PagesAttributes as PA
-from PyPDF2.constants import StreamAttributes as SA
 from PyPDF2.constants import TrailerKeys as TK
 from PyPDF2.errors import DependencyError, PdfReadError, PdfReadWarning, PdfStreamError
 from PyPDF2.generic import (
     ArrayObject,
-    BooleanObject,
-    ByteStringObject,
     Destination,
     DictionaryObject,
     Field,
@@ -58,9 +52,7 @@ from PyPDF2.generic import (
     NameObject,
     NullObject,
     NumberObject,
-    StreamObject,
     TextStringObject,
-    createStringObject,
     readNonWhitespace,
     readObject,
 )
