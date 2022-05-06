@@ -40,7 +40,7 @@ from PyPDF2._writer import PdfFileWriter
 from PyPDF2.constants import PagesAttributes as PA
 from PyPDF2.generic import *
 from PyPDF2.pagerange import PageRange, PageRangeSpec
-from PyPDF2.utils import StrByteType, StreamType, str_
+from PyPDF2.utils import StrByteType, str_
 
 StreamIO = BytesIO
 

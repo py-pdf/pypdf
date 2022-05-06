@@ -28,7 +28,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import struct
-import sys
 import warnings
 from hashlib import md5
 from io import BytesIO

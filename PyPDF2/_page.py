@@ -30,7 +30,6 @@
 import math
 import uuid
 from decimal import Decimal
-from io import BytesIO
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from PyPDF2 import utils

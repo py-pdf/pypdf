@@ -16,7 +16,6 @@ from PyPDF2.generic import (
     NameObject,
     NullObject,
     NumberObject,
-    PdfObject,
     RectangleObject,
     TextStringObject,
     createStringObject,
