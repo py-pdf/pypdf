@@ -1,4 +1,4 @@
-from io import BytesIO
+ io import BytesIO
 
 import pytest
 
@@ -323,6 +323,7 @@ def test_DictionaryObject_read_from_stream_stream_stream_valid(
         raise PdfReadError("__ALLGOOD__")
     print(exc.value)
     assert shouldFail ^ (exc.value.args[0] == "__ALLGOOD__")
+
 
 
 def test_RectangleObject():

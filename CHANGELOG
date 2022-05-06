@@ -31,6 +31,16 @@ Deprecations (DEP):
   Both are still in the git repository. The `Scripts` are now in
   https://github.com/py-pdf/cpdf. `Sample_Code` was moved to the `docs`.
 
+Version 1.27.12, 2022-05-02
+---------------------------
+
+Bug Fixes (BUG):
+-  _rebuild_xref_table expects trailer to be a dict (#857)
+
+Documentation (DOC):
+-  Security Policy
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.27.11...1.27.12
 
 Version 1.27.11, 2022-05-02
 ---------------------------
