@@ -1,4 +1,4 @@
- io import BytesIO
+from io import BytesIO
 
 import pytest
 
