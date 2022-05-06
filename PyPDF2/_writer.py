@@ -794,7 +794,7 @@ class PdfFileWriter:
         self,
         title: str,
         pagenum: int,
-        parent: Union[None, TreeObject] = None,
+        parent: Union[None, TreeObject, IndirectObject] = None,
         color: Optional[Tuple[float, float, float]] = None,
         bold=False,
         italic=False,
@@ -876,8 +876,8 @@ class PdfFileWriter:
 
         return dest_ref
 
-    def addNamedDestination(self, title, pagenum):
-        page_ref = self.getObject(self._pages)[PA.KIDS][pagenum]
+    def addNamedDestination(self, title: str, pagenum: int) -> IndirectObject:
+        page_ref = self.getObject(self._pages)[PA.KIDS][pagenum]  # type: ignore
         dest = DictionaryObject()
         dest.update(
             {
@@ -1181,7 +1181,19 @@ class PdfFileWriter:
         "/TwoPageRight",
     ]
 
-    def getPageLayout(self):
+    def getPageLayout(
+        self,
+    ) -> Optional[
+        Literal[
+            "/NoLayout",
+            "/SinglePage",
+            "/OneColumn",
+            "/TwoColumnLeft",
+            "/TwoColumnRight",
+            "/TwoPageLeft",
+            "/TwoPageRight",
+        ]
+    ]:
         """
         Get the page layout.
 
@@ -1206,7 +1218,7 @@ class PdfFileWriter:
             "/TwoPageLeft",
             "/TwoPageRight",
         ],
-    ):
+    ) -> None:
         """
         Set the page layout.
 
@@ -1251,7 +1263,18 @@ class PdfFileWriter:
         "/UseAttachments",
     ]
 
-    def getPageMode(self):
+    def getPageMode(
+        self,
+    ) -> Optional[
+        Literal[
+            "/UseNone",
+            "/UseOutlines",
+            "/UseThumbs",
+            "/FullScreen",
+            "/UseOC",
+            "/UseAttachments",
+        ]
+    ]:
         """
         Get the page mode.
         See :meth:`setPageMode()<PdfFileWriter.setPageMode>` for a description
@@ -1275,7 +1298,7 @@ class PdfFileWriter:
             "/UseOC",
             "/UseAttachments",
         ],
-    ):
+    ) -> None:
         """
         Set the page mode.
 

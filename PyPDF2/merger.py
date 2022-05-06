@@ -27,7 +27,7 @@
 
 from io import BytesIO
 from io import FileIO as file
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 
 try:
     from typing import Literal  # type: ignore[attr-defined]
@@ -40,7 +40,7 @@ from PyPDF2._writer import PdfFileWriter
 from PyPDF2.constants import PagesAttributes as PA
 from PyPDF2.generic import *
 from PyPDF2.pagerange import PageRange, PageRangeSpec
-from PyPDF2.utils import str_
+from PyPDF2.utils import StrByteType, StreamType, str_
 
 StreamIO = BytesIO
 
@@ -53,7 +53,7 @@ class _MergedPage:
     information on each page that is being merged.
     """
 
-    def __init__(self, pagedata: PageObject, src: PdfFileReader, id) -> None:
+    def __init__(self, pagedata: PageObject, src: PdfFileReader, id: int) -> None:
         self.src = src
         self.pagedata = pagedata
         self.out_pagedata = None
@@ -86,7 +86,7 @@ class PdfFileMerger:
     def merge(
         self,
         position: int,
-        fileobj,
+        fileobj: Union[StrByteType, PdfFileReader],
         bookmark: Optional[str] = None,
         pages: Optional[PageRangeSpec] = None,
         import_bookmarks: bool = True,
@@ -130,26 +130,26 @@ class PdfFileMerger:
             fileobj = file(fileobj, "rb")
             my_file = True
         elif hasattr(fileobj, "seek") and hasattr(fileobj, "read"):
-            fileobj.seek(0)
-            filecontent = fileobj.read()
-            fileobj = StreamIO(filecontent)
+            fileobj.seek(0)  # type: ignore
+            filecontent = fileobj.read()  # type: ignore
+            fileobj = StreamIO(filecontent)  # type: ignore[arg-type]
             my_file = True
         elif isinstance(fileobj, PdfFileReader):
             if hasattr(fileobj, "_decryption_key"):
                 decryption_key = fileobj._decryption_key
             orig_tell = fileobj.stream.tell()
             fileobj.stream.seek(0)
-            filecontent = StreamIO(fileobj.stream.read())
+            filecontent = StreamIO(fileobj.stream.read())  # type: ignore[assignment]
 
             # reset the stream to its original location
             fileobj.stream.seek(orig_tell)
 
-            fileobj = filecontent
+            fileobj = filecontent  # type: ignore[assignment]
             my_file = True
 
         # Create a new PdfFileReader instance using the stream
         # (either file or BytesIO or StringIO) created above
-        pdfr = PdfFileReader(fileobj, strict=self.strict)
+        pdfr = PdfFileReader(fileobj, strict=self.strict)  # type: ignore[arg-type]
         if decryption_key is not None:
             pdfr._decryption_key = decryption_key
 
@@ -202,7 +202,13 @@ class PdfFileMerger:
         # Keep track of our input files so we can close them later
         self.inputs.append((fileobj, pdfr, my_file))
 
-    def append(self, fileobj, bookmark=None, pages=None, import_bookmarks=True):
+    def append(
+        self,
+        fileobj: Union[StrByteType, PdfFileReader],
+        bookmark: Optional[str] = None,
+        pages: Union[None, PageRange, Tuple[int, int], Tuple[int, int, int]] = None,
+        import_bookmarks: bool = True,
+    ) -> None:
         """
         Identical to the :meth:`merge()<merge>` method, but assumes you want to
         concatenate all pages onto the end of the file instead of specifying a
@@ -226,7 +232,7 @@ class PdfFileMerger:
         """
         self.merge(len(self.pages), fileobj, bookmark, pages, import_bookmarks)
 
-    def write(self, fileobj) -> None:
+    def write(self, fileobj: StrByteType) -> None:
         """
         Writes all data that has been merged to the given output file.
 
@@ -356,7 +362,10 @@ class PdfFileMerger:
         self.output.setPageMode(mode)
 
     def _trim_dests(
-        self, pdf: PdfFileReader, dests: Dict[str, Dict[str, Any]], pages
+        self,
+        pdf: PdfFileReader,
+        dests: Dict[str, Dict[str, Any]],
+        pages: Union[Tuple[int, int], Tuple[int, int, int]],
     ) -> List[Dict[str, Any]]:
         """
         Removes any named destinations that are not a part of the specified
@@ -574,7 +583,7 @@ class PdfFileMerger:
         self,
         title: str,
         pagenum: int,
-        parent: Union[TreeObject, None, Destination] = None,
+        parent: Union[None, TreeObject, IndirectObject] = None,
         color: Optional[Tuple[float, float, float]] = None,
         bold: bool = False,
         italic: bool = False,
@@ -647,7 +656,7 @@ class PdfFileMerger:
             bookmark.update({NameObject("/F"): NumberObject(format)})
 
         bookmark_ref = self.output._addObject(bookmark)
-        parent: Bookmark = parent.getObject()  # type: ignore
+        parent = cast(Bookmark, parent.getObject())
         assert parent is not None, "hint for mypy"
         parent.addChild(bookmark_ref, self.output)
 
