@@ -176,7 +176,7 @@ class PdfFileMerger:
                 NumberObject(self.id_count),
                 NameObject("/Fit"),
             )
-            self.bookmarks += [bookmark_typ, outline]  # type: ignore
+            self.bookmarks += [bookmark_typ, outline]
         else:
             self.bookmarks += outline
 
@@ -443,22 +443,23 @@ class PdfFileMerger:
         self, bookmark: Union[Bookmark, Destination], page: _MergedPage
     ) -> None:
         # b[NameObject('/Page')] = p.out_pagedata
-        args = [NumberObject(page.id), NameObject(bookmark["/Type"])]
+        bm_type = cast(BookmarkTypes, bookmark["/Type"])
+        args = [NumberObject(page.id), NameObject(bm_type)]
         # nothing more to add
         # if b['/Type'] == '/Fit' or b['/Type'] == '/FitB'
-        if bookmark["/Type"] == "/FitH" or bookmark["/Type"] == "/FitBH":
+        if bm_type == "/FitH" or bm_type == "/FitBH":
             if "/Top" in bookmark and not isinstance(bookmark["/Top"], NullObject):
                 args.append(FloatObject(bookmark["/Top"]))
             else:
                 args.append(FloatObject(0))
             del bookmark["/Top"]
-        elif bookmark["/Type"] == "/FitV" or bookmark["/Type"] == "/FitBV":
+        elif bm_type == "/FitV" or bm_type == "/FitBV":
             if "/Left" in bookmark and not isinstance(bookmark["/Left"], NullObject):
                 args.append(FloatObject(bookmark["/Left"]))
             else:
                 args.append(FloatObject(0))
             del bookmark["/Left"]
-        elif bookmark["/Type"] == "/XYZ":
+        elif bm_type == "/XYZ":
             if "/Left" in bookmark and not isinstance(bookmark["/Left"], NullObject):
                 args.append(FloatObject(bookmark["/Left"]))
             else:
@@ -472,7 +473,7 @@ class PdfFileMerger:
             else:
                 args.append(FloatObject(0))
             del bookmark["/Top"], bookmark["/Zoom"], bookmark["/Left"]
-        elif bookmark["/Type"] == "/FitR":
+        elif bm_type == "/FitR":
             if "/Left" in bookmark and not isinstance(bookmark["/Left"], NullObject):
                 args.append(FloatObject(bookmark["/Left"]))
             else:
@@ -606,7 +607,7 @@ class PdfFileMerger:
             else:
                 zoom_args.append(NullObject())
         dest = Destination(
-            NameObject("/" + title + " bookmark"), page_ref, NameObject(fit), *zoom_args  # type: ignore
+            NameObject("/" + title + " bookmark"), page_ref, NameObject(fit), *zoom_args
         )
         dest_array = dest.getDestArray()
         action.update(

@@ -118,7 +118,7 @@ def _alg33(owner_pwd: str, user_pwd: str, rev: int, keylen: int) -> bytes:
             new_key = ""
             for l in range(len(key)):
                 new_key += chr(ord_(key[l]) ^ i)
-            val = utils.RC4_encrypt(new_key, val)  # type: ignore
+            val = utils.RC4_encrypt(new_key, val)
     # 8. Store the output from the final invocation of the RC4 as the value of
     # the /O entry in the encryption dictionary.
     return val

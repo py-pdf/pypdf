@@ -183,7 +183,7 @@ def str_(b: bytes) -> str:
 
 def str_(b: Union[str, bytes]) -> str:
     if type(b) == bytes:
-        return b.decode("latin-1")  # type: ignore
+        return b.decode("latin-1")
     else:
         return b  # type: ignore
 

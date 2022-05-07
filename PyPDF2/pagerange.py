@@ -147,12 +147,12 @@ def parse_filename_page_ranges(
                     "The first argument must be a filename, not a page range."
                 )
 
-            pairs.append((pdf_filename, PageRange(arg)))  # type: ignore
+            pairs.append((pdf_filename, PageRange(arg)))
             did_page_range = True
         else:
             # New filename or end of list--do all of the previous file?
             if pdf_filename and not did_page_range:
-                pairs.append((pdf_filename, PAGE_RANGE_ALL))  # type: ignore
+                pairs.append((pdf_filename, PAGE_RANGE_ALL))
 
             pdf_filename = arg
             did_page_range = False
