@@ -391,7 +391,7 @@ class ByteStringObject(utils.bytes_type, PdfObject):  # type: ignore
         stream.write(b_(">"))
 
 
-class TextStringObject(str, PdfObject):  # type: ignore
+class TextStringObject(str, PdfObject):
     """
     Represents a string object that has been decoded into a real unicode string.
     If read from a PDF document, this string appeared to match the
@@ -641,7 +641,7 @@ class DictionaryObject(dict, PdfObject):
                 length = pdf.getObject(length)
                 stream.seek(t, 0)
             pstart = stream.tell()
-            data["__streamdata__"] = stream.read(length)  # type: ignore
+            data["__streamdata__"] = stream.read(length)
             e = readNonWhitespace(stream)
             ndstream = stream.read(8)
             if (e + ndstream) != b_("endstream"):
@@ -656,10 +656,10 @@ class DictionaryObject(dict, PdfObject):
                 end = stream.read(9)
                 if end == b_("endstream"):
                     # we found it by looking back one character further.
-                    data["__streamdata__"] = data["__streamdata__"][:-1]  # type: ignore
+                    data["__streamdata__"] = data["__streamdata__"][:-1]
                 elif not pdf.strict:
                     stream.seek(pstart, 0)
-                    data["__streamdata__"] = readUnsizedFromSteam(stream, pdf)  # type: ignore
+                    data["__streamdata__"] = readUnsizedFromSteam(stream, pdf)
                     pos = stream.tell()
                 else:
                     stream.seek(pos, 0)
@@ -670,7 +670,7 @@ class DictionaryObject(dict, PdfObject):
         else:
             stream.seek(pos, 0)
         if "__streamdata__" in data:
-            return StreamObject.initializeFromDictionary(data)  # type: ignore
+            return StreamObject.initializeFromDictionary(data)
         else:
             retval = DictionaryObject()
             retval.update(data)
@@ -747,7 +747,7 @@ class TreeObject(DictionaryObject):
                         next = next_ref.getObject()
                         del next[NameObject("/Prev")]
                         self[NameObject("/First")] = next_ref
-                        self[NameObject("/Count")] = self[NameObject("/Count")] - 1  # type: ignore
+                        self[NameObject("/Count")] -= 1  # type: ignore
 
                     else:
                         # Removing only tree node
@@ -763,13 +763,13 @@ class TreeObject(DictionaryObject):
                         next = next_ref.getObject()
                         next[NameObject("/Prev")] = prev_ref
                         prev[NameObject("/Next")] = next_ref
-                        self[NameObject("/Count")] = self[NameObject("/Count")] - 1  # type: ignore
+                        self[NameObject("/Count")] -= 1
                     else:
                         # Removing last tree node
                         assert cur == last
                         del prev[NameObject("/Next")]
                         self[NameObject("/Last")] = prev_ref
-                        self[NameObject("/Count")] = self[NameObject("/Count")] - 1
+                        self[NameObject("/Count")] -= 1
                 found = True
                 break
 
@@ -792,7 +792,7 @@ class TreeObject(DictionaryObject):
             del child_obj[NameObject("/Prev")]
 
     def emptyTree(self) -> None:
-        for child in self:  # type: ignore
+        for child in self:
             child_obj = child.getObject()
             del child_obj[NameObject("/Parent")]
             if NameObject("/Next") in child_obj:

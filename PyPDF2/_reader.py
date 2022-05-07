@@ -76,10 +76,15 @@ from PyPDF2.generic import (
     TextStringObject,
     TreeObject,
     createStringObject,
-    readNonWhitespace,
     readObject,
 )
-from PyPDF2.utils import StrByteType, StreamType, b_, readUntilWhitespace
+from PyPDF2.utils import (
+    StrByteType,
+    StreamType,
+    b_,
+    readNonWhitespace,
+    readUntilWhitespace,
+)
 from PyPDF2.xmp import XmpInformation
 
 
@@ -502,15 +507,15 @@ class PdfFileReader:
         """
         if retval is None:
             retval = {}
-            catalog = self.trailer[TK.ROOT]
+            catalog: DictionaryObject = self.trailer[TK.ROOT]  # type: ignore
 
             # get the name tree
-            if CA.DESTS in catalog:  # type: ignore
-                tree = catalog[CA.DESTS]  # type: ignore
-            elif CA.NAMES in catalog:  # type: ignore
-                names = catalog[CA.NAMES]  # type: ignore
+            if CA.DESTS in catalog:
+                tree = cast(TreeObject, catalog[CA.DESTS])
+            elif CA.NAMES in catalog:
+                names = cast(DictionaryObject, catalog[CA.NAMES])
                 if CA.DESTS in names:
-                    tree = names[CA.DESTS]
+                    tree = cast(TreeObject, names[CA.DESTS])
 
         if tree is None:
             return retval
@@ -521,13 +526,13 @@ class PdfFileReader:
                 self.getNamedDestinations(kid.getObject(), retval)
 
         if CA.NAMES in tree:
-            names = tree[CA.NAMES]
+            names = cast(DictionaryObject, tree[CA.NAMES])
             for i in range(0, len(names), 2):
                 key = names[i].getObject()
                 val = names[i + 1].getObject()
                 if isinstance(val, DictionaryObject) and "/D" in val:
                     val = val["/D"]
-                dest = self._buildDestination(key, val)
+                dest = self._buildDestination(key, val)  # type: ignore
                 if dest is not None:
                     retval[key] = dest
 
@@ -595,7 +600,7 @@ class PdfFileReader:
         """Generate _pageId2Num"""
         if self._pageId2Num is None:
             id2num = {}
-            for i, x in enumerate(self.pages):  # type: ignore
+            for i, x in enumerate(self.pages):
                 id2num[x.indirectRef.idnum] = i  # type: ignore
             self._pageId2Num = id2num
 
@@ -913,9 +918,9 @@ class PdfFileReader:
         key: Union[str, bytes],
     ) -> PdfObject:
         if isinstance(obj, (ByteStringObject, TextStringObject)):
-            obj = createStringObject(utils.RC4_encrypt(key, obj.original_bytes))  # type: ignore
+            obj = createStringObject(utils.RC4_encrypt(key, obj.original_bytes))
         elif isinstance(obj, StreamObject):
-            obj._data = utils.RC4_encrypt(key, obj._data)  # type: ignore
+            obj._data = utils.RC4_encrypt(key, obj._data)
         elif isinstance(obj, DictionaryObject):
             for dictkey, value in list(obj.items()):
                 obj[dictkey] = self._decryptObject(value, key)
@@ -1440,7 +1445,7 @@ class PdfFileReader:
                         new_key += b_(chr(utils.ord_(key[l]) ^ i))
                     val = utils.RC4_encrypt(new_key, val)
                 userpass = val
-            owner_password, key = self._authenticateUserPassword(userpass)  # type: ignore
+            owner_password, key = self._authenticateUserPassword(userpass)
             if owner_password:
                 self._decryption_key = key
                 return 2

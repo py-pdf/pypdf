@@ -33,7 +33,7 @@ import struct
 import uuid
 import warnings
 from hashlib import md5
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 
 from PyPDF2._page import PageObject
 from PyPDF2._reader import PdfFileReader
@@ -801,7 +801,8 @@ class PdfFileWriter:
 
         if "/A" in bookmark:
             action = DictionaryObject()
-            for k, v in list(bookmark["/A"].items()):  # type: ignore
+            a_dict = cast(DictionaryObject, bookmark["/A"])
+            for k, v in list(a_dict.items()):
                 action[NameObject(str(k))] = v
             action_ref = self._addObject(action)
             bookmark_obj[NameObject("/A")] = action_ref
@@ -854,7 +855,7 @@ class PdfFileWriter:
             else:
                 zoom_args.append(NullObject())
         dest = Destination(
-            NameObject("/" + title + " bookmark"), page_ref, NameObject(fit), *zoom_args  # type: ignore
+            NameObject("/" + title + " bookmark"), page_ref, NameObject(fit), *zoom_args
         )
         dest_array = dest.getDestArray()
         action.update(
@@ -1192,7 +1193,7 @@ class PdfFileWriter:
             else:
                 zoom_args.append(NullObject())
         dest = Destination(
-            NameObject("/LinkName"), page_dest, NameObject(fit), *zoom_args  # type: ignore
+            NameObject("/LinkName"), page_dest, NameObject(fit), *zoom_args
         )  # TODO: create a better name for the link
         dest_array = dest.getDestArray()
 
@@ -1234,7 +1235,7 @@ class PdfFileWriter:
         :rtype: str, None if not specified
         """
         try:
-            return self._root_object["/PageLayout"]  # type: ignore
+            return cast(LayoutType, self._root_object["/PageLayout"])
         except KeyError:
             return None
 
@@ -1293,7 +1294,7 @@ class PdfFileWriter:
         :rtype: str, None if not specified.
         """
         try:
-            return self._root_object["/PageMode"]  # type: ignore
+            return cast(PagemodeType, self._root_object["/PageMode"])
         except KeyError:
             return None
 

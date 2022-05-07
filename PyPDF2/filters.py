@@ -75,7 +75,7 @@ except ImportError:  # pragma: no cover
     # Unable to import zlib.  Attempt to use the System.IO.Compression
     # library from the .NET framework. (IronPython only)
     import System  # type: ignore[import]
-    from System import IO, Array  # type: ignore[import]
+    from System import IO, Array
 
     def _string_to_bytearr(buf):  # type: ignore[no-untyped-def]
         retval = Array.CreateInstance(System.Byte, len(buf))
@@ -130,7 +130,9 @@ except ImportError:  # pragma: no cover
 
 class FlateDecode:
     @staticmethod
-    def decode(data: bytes, decodeParms: Union[None, DictionaryObject]) -> bytes:
+    def decode(
+        data: bytes, decodeParms: Union[None, ArrayObject, DictionaryObject]
+    ) -> bytes:
         """
         :param data: flate-encoded data.
         :param decodeParms: a dictionary of values, understanding the
@@ -154,7 +156,13 @@ class FlateDecode:
         if predictor != 1:
             # The /Columns param. has 1 as the default value; see ISO 32000,
             # §7.4.4.3 LZWDecode and FlateDecode Parameters, Table 8
-            columns = 1 if decodeParms is None else decodeParms.get(LZW.COLUMNS, 1)
+            if isinstance(decodeParms, ArrayObject):
+                columns = 1
+                for decodeParm in decodeParms:
+                    if "/Columns" in decodeParm:
+                        columns = decodeParm["/Columns"]
+            else:
+                columns = 1 if decodeParms is None else decodeParms.get(LZW.COLUMNS, 1)
 
             # PNG prediction:
             if 10 <= predictor <= 15:
@@ -162,7 +170,7 @@ class FlateDecode:
             else:
                 # unsupported predictor
                 raise PdfReadError("Unsupported flatedecode predictor %r" % predictor)
-        return str_data  # type: ignore
+        return str_data
 
     @staticmethod
     def _decode_png_prediction(data: str, columns: int) -> str:
@@ -513,7 +521,7 @@ def decodeStreamData(stream: Any) -> Union[str, bytes]:  # utils.StreamObject
     if data:
         for filterType in filters:
             if filterType == FT.FLATE_DECODE or filterType == FTA.FL:
-                data = FlateDecode.decode(data, stream.get(SA.DECODE_PARMS))  # type: ignore
+                data = FlateDecode.decode(data, stream.get(SA.DECODE_PARMS))
             elif filterType == FT.ASCII_HEX_DECODE or filterType == FTA.AHx:
                 data = ASCIIHexDecode.decode(data)  # type: ignore
             elif filterType == FT.LZW_DECODE or filterType == FTA.LZW:

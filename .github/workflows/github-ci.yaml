@@ -54,7 +54,7 @@ jobs:
       if: matrix.python-version == '3.10.1'
     - name: Test with mypy
       run : |
-        mypy PyPDF2 --show-error-codes
+        mypy PyPDF2 --show-error-codes --disallow-untyped-defs --disallow-incomplete-defs
     - name: Upload coverage data
       uses: actions/upload-artifact@v3
       with:

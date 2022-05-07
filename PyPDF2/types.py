@@ -3,20 +3,22 @@
 from typing import List, Union
 
 try:
+    # Python 3.8+: https://peps.python.org/pep-0586
     from typing import Literal  # type: ignore[attr-defined]
 except ImportError:
     from typing_extensions import Literal  # type: ignore[misc]
 
 try:
+    # Python 3.10+: https://www.python.org/dev/peps/pep-0484/
     from typing import TypeAlias  # type: ignore[attr-defined]
 except ImportError:
-    # Python 3.9 and earlier
     from typing_extensions import TypeAlias  # type: ignore[misc]
 
 from PyPDF2.generic import (
     ArrayObject,
     Bookmark,
     Destination,
+    DictionaryObject,
     NameObject,
     NullObject,
     NumberObject,
