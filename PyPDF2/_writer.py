@@ -792,7 +792,7 @@ class PdfFileWriter:
         return dest_ref
 
     def addBookmarkDict(
-        self, bookmark: BookmarkTypes, parent: Optional[BookmarkTypes] = None
+        self, bookmark: BookmarkTypes, parent: Optional[TreeObject] = None
     ) -> IndirectObject:
         bookmark_obj = TreeObject()
         for k, v in list(bookmark.items()):
@@ -813,7 +813,8 @@ class PdfFileWriter:
         if parent is None:
             parent = outline_ref
 
-        parent: TreeObject = parent.getObject()  # type: ignore
+        parent = parent.getObject()  # type: ignore
+        assert parent is not None, "hint for mypy"
         parent.addChild(bookmark_ref, self)
 
         return bookmark_ref
@@ -1237,7 +1238,7 @@ class PdfFileWriter:
         except KeyError:
             return None
 
-    def setPageLayout(self, layout: LayoutType) -> None:
+    def setPageLayout(self, layout: Union[NameObject, LayoutType]) -> None:
         """
         Set the page layout.
 
@@ -1296,7 +1297,7 @@ class PdfFileWriter:
         except KeyError:
             return None
 
-    def setPageMode(self, mode: PagemodeType) -> None:
+    def setPageMode(self, mode: Union[NameObject, PagemodeType]) -> None:
         """
         Set the page mode.
 

@@ -415,7 +415,7 @@ class PdfFileMerger:
     def _write_bookmarks(
         self,
         bookmarks: Optional[Iterable[Bookmark]] = None,
-        parent: Optional[IndirectObject] = None,
+        parent: Optional[TreeObject] = None,
     ) -> None:
         if self.output is None:
             raise RuntimeError(ERR_CLOSED_WRITER)
