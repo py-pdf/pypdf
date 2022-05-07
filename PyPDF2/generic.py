@@ -71,14 +71,14 @@ class PdfObject:
         return self
 
     def writeToStream(
-        self, stream: StreamType, encryption_key: Optional[bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         raise NotImplementedError()
 
 
 class NullObject(PdfObject):
     def writeToStream(
-        self, stream: StreamType, encryption_key: Optional[bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         stream.write(b_("null"))
 
@@ -95,7 +95,7 @@ class BooleanObject(PdfObject):
         self.value = value
 
     def writeToStream(
-        self, stream: StreamType, encryption_key: Optional[bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         if self.value:
             stream.write(b_("true"))
@@ -116,7 +116,7 @@ class BooleanObject(PdfObject):
 
 class ArrayObject(list, PdfObject):
     def writeToStream(
-        self, stream: StreamType, encryption_key: Optional[bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         stream.write(b_("["))
         for data in self:
@@ -171,7 +171,7 @@ class IndirectObject(PdfObject):
         return not self.__eq__(other)
 
     def writeToStream(
-        self, stream: StreamType, encryption_key: Optional[bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         stream.write(b_(f"{self.idnum} {self.generation} R"))
 
@@ -236,7 +236,7 @@ class FloatObject(decimal.Decimal, PdfObject):
         return float(b_(repr(self)))
 
     def writeToStream(
-        self, stream: StreamType, encryption_key: Optional[bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         stream.write(b_(repr(self)))
 
@@ -256,7 +256,7 @@ class NumberObject(int, PdfObject):
         return int(b_(repr(self)))
 
     def writeToStream(
-        self, stream: StreamType, encryption_key: Optional[bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         stream.write(b_(repr(self)))
 
@@ -381,7 +381,7 @@ class ByteStringObject(utils.bytes_type, PdfObject):  # type: ignore
         return self
 
     def writeToStream(
-        self, stream: StreamType, encryption_key: Optional[bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         bytearr = self
         if encryption_key:
@@ -426,7 +426,7 @@ class TextStringObject(str, PdfObject):  # type: ignore
             raise Exception("no information about original bytes")
 
     def writeToStream(
-        self, stream: StreamType, encryption_key: Optional[bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         # Try to write the string out as a PDFDocEncoding encoded string.  It's
         # nicer to look at in the PDF file.  Sadly, we take a performance hit
@@ -454,7 +454,7 @@ class NameObject(str, PdfObject):
     surfix = b_("/")
 
     def writeToStream(
-        self, stream: StreamType, encryption_key: Optional[bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         stream.write(b_(self))
 
@@ -536,7 +536,7 @@ class DictionaryObject(dict, PdfObject):
         return self.getXmpMetadata()
 
     def writeToStream(
-        self, stream: StreamType, encryption_key: Optional[bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         stream.write(b_("<<\n"))
         for key, value in list(self.items()):
@@ -822,7 +822,7 @@ class StreamObject(DictionaryObject):
         self.__data = value
 
     def writeToStream(
-        self, stream: StreamType, encryption_key: Optional[bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         self[NameObject(SA.LENGTH)] = NumberObject(len(self._data))
         DictionaryObject.writeToStream(self, stream, encryption_key)
@@ -1116,59 +1116,59 @@ class RectangleObject(ArrayObject):
     def __repr__(self) -> str:
         return "RectangleObject(%s)" % repr(list(self))
 
-    def getLowerLeft_x(self) -> float:
+    def getLowerLeft_x(self) -> FloatObject:
         return self[0]
 
-    def getLowerLeft_y(self) -> float:
+    def getLowerLeft_y(self) -> FloatObject:
         return self[1]
 
-    def getUpperRight_x(self) -> float:
+    def getUpperRight_x(self) -> FloatObject:
         return self[2]
 
-    def getUpperRight_y(self) -> float:
+    def getUpperRight_y(self) -> FloatObject:
         return self[3]
 
-    def getUpperLeft_x(self) -> float:
+    def getUpperLeft_x(self) -> FloatObject:
         return self.getLowerLeft_x()
 
-    def getUpperLeft_y(self) -> float:
+    def getUpperLeft_y(self) -> FloatObject:
         return self.getUpperRight_y()
 
-    def getLowerRight_x(self) -> float:
+    def getLowerRight_x(self) -> FloatObject:
         return self.getUpperRight_x()
 
-    def getLowerRight_y(self) -> float:
+    def getLowerRight_y(self) -> FloatObject:
         return self.getLowerLeft_y()
 
-    def getLowerLeft(self) -> Tuple[float, float]:
+    def getLowerLeft(self) -> Tuple[FloatObject, FloatObject]:
         return self.getLowerLeft_x(), self.getLowerLeft_y()
 
-    def getLowerRight(self) -> Tuple[float, float]:
+    def getLowerRight(self) -> Tuple[FloatObject, FloatObject]:
         return self.getLowerRight_x(), self.getLowerRight_y()
 
-    def getUpperLeft(self) -> Tuple[float, float]:
+    def getUpperLeft(self) -> Tuple[FloatObject, FloatObject]:
         return self.getUpperLeft_x(), self.getUpperLeft_y()
 
-    def getUpperRight(self) -> Tuple[float, float]:
+    def getUpperRight(self) -> Tuple[FloatObject, FloatObject]:
         return self.getUpperRight_x(), self.getUpperRight_y()
 
-    def setLowerLeft(self, value: Iterable[float]) -> None:
+    def setLowerLeft(self, value: Iterable[FloatObject]) -> None:
         self[0], self[1] = (self.ensureIsNumber(x) for x in value)
 
-    def setLowerRight(self, value: Iterable[float]) -> None:
+    def setLowerRight(self, value: Iterable[FloatObject]) -> None:
         self[2], self[1] = (self.ensureIsNumber(x) for x in value)
 
-    def setUpperLeft(self, value: Iterable[float]) -> None:
+    def setUpperLeft(self, value: Iterable[FloatObject]) -> None:
         self[0], self[3] = (self.ensureIsNumber(x) for x in value)
 
-    def setUpperRight(self, value: Iterable[float]) -> None:
+    def setUpperRight(self, value: Iterable[FloatObject]) -> None:
         self[2], self[3] = (self.ensureIsNumber(x) for x in value)
 
     def getWidth(self) -> float:
-        return self.getUpperRight_x() - self.getLowerLeft_x()
+        return self.getUpperRight_x() - self.getLowerLeft_x()  # type: ignore
 
     def getHeight(self) -> float:
-        return self.getUpperRight_y() - self.getLowerLeft_y()
+        return self.getUpperRight_y() - self.getLowerLeft_y()  # type: ignore
 
     lowerLeft = property(getLowerLeft, setLowerLeft, None, None)
     """
@@ -1365,7 +1365,7 @@ class Destination(TreeObject):
         )
 
     def writeToStream(
-        self, stream: StreamType, encryption_key: Optional[bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         stream.write(b_("<<\n"))
         key = NameObject("/D")
@@ -1420,45 +1420,45 @@ class Destination(TreeObject):
         return self.get("/Zoom", None)
 
     @property
-    def left(self) -> Optional[int]:
+    def left(self) -> Optional[FloatObject]:
         """
         Read-only property accessing the left horizontal coordinate.
 
-        :rtype: int, or ``None`` if not available.
+        :rtype: float, or ``None`` if not available.
         """
         return self.get("/Left", None)
 
     @property
-    def right(self) -> Optional[int]:
+    def right(self) -> Optional[FloatObject]:
         """
         Read-only property accessing the right horizontal coordinate.
 
-        :rtype: int, or ``None`` if not available.
+        :rtype: float, or ``None`` if not available.
         """
         return self.get("/Right", None)
 
     @property
-    def top(self) -> Optional[int]:
+    def top(self) -> Optional[FloatObject]:
         """
         Read-only property accessing the top vertical coordinate.
 
-        :rtype: int, or ``None`` if not available.
+        :rtype: float, or ``None`` if not available.
         """
         return self.get("/Top", None)
 
     @property
-    def bottom(self) -> Optional[int]:
+    def bottom(self) -> Optional[FloatObject]:
         """
         Read-only property accessing the bottom vertical coordinate.
 
-        :rtype: int, or ``None`` if not available.
+        :rtype: float, or ``None`` if not available.
         """
         return self.get("/Bottom", None)
 
 
 class Bookmark(Destination):
     def writeToStream(
-        self, stream: StreamType, encryption_key: Optional[bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         stream.write(b_("<<\n"))
         for key in [

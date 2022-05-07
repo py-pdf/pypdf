@@ -1,7 +1,7 @@
 import datetime
 import decimal
 import re
-from typing import Any, Callable, Dict, Optional, TypeVar
+from typing import Any, Callable, Dict, Optional, TypeVar, Union
 from xml.dom.minidom import Document
 from xml.dom.minidom import Element as XmlElement
 from xml.dom.minidom import parseString
@@ -198,7 +198,7 @@ class XmpInformation(PdfObject):
         self.cache: Dict[Any, Any] = {}
 
     def writeToStream(
-        self, stream: StreamType, encryption_key: Optional[bytes]
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         self.stream.writeToStream(stream, encryption_key)
 

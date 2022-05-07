@@ -113,7 +113,7 @@ def readUntilRegex(stream: StreamType, regex: Any, ignore_eof: bool = False) -> 
     return name
 
 
-def RC4_encrypt(key: bytes, plaintext: bytes) -> bytes:
+def RC4_encrypt(key: Union[str, bytes], plaintext: bytes) -> bytes:
     S = list(range(256))
     j = 0
     for i in range(256):
