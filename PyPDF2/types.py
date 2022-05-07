@@ -18,7 +18,6 @@ from PyPDF2.generic import (
     ArrayObject,
     Bookmark,
     Destination,
-    DictionaryObject,
     NameObject,
     NullObject,
     NumberObject,

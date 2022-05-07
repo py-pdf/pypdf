@@ -156,16 +156,16 @@ def b_(s: Union[str, bytes]) -> bytes:
     bc = B_CACHE
     if s in bc:
         return bc[s]
-    if type(s) == bytes:
+    if isinstance(s, bytes):
         return s
     else:
         try:
-            r = s.encode("latin-1")  # type: ignore
+            r = s.encode("latin-1")
             if len(s) < 2:
                 bc[s] = r
             return r
         except Exception:
-            r = s.encode("utf-8")  # type: ignore
+            r = s.encode("utf-8")
             if len(s) < 2:
                 bc[s] = r
             return r
@@ -182,10 +182,10 @@ def str_(b: bytes) -> str:
 
 
 def str_(b: Union[str, bytes]) -> str:
-    if type(b) == bytes:
+    if isinstance(b, bytes):
         return b.decode("latin-1")
     else:
-        return b  # type: ignore
+        return b
 
 
 @overload
@@ -203,18 +203,19 @@ def ord_(b: int) -> int:
     ...
 
 
-def ord_(b: Union[int, str, bytes]) -> Union[int, bytes, int]:
-    if type(b) == str:
+def ord_(b: Union[int, str, bytes]) -> Union[int, bytes]:
+    if isinstance(b, str):
         return ord(b)
     else:
-        return b  # type: ignore
+        return b
 
 
 def hexencode(b: bytes) -> bytes:
     import codecs
 
     coder = codecs.getencoder("hex_codec")
-    return coder(b)[0]  # type: ignore
+    coded = coder(b)  # type: ignore
+    return coded[0]
 
 
 def hexStr(num: int) -> str:

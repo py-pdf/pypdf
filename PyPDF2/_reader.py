@@ -400,10 +400,10 @@ class PdfFileReader:
         }
         if retval is None:
             retval = {}
-            catalog = self.trailer[TK.ROOT]
+            catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
             # get the AcroForm tree
-            if "/AcroForm" in catalog:  # type: ignore
-                tree = catalog["/AcroForm"]  # type: ignore
+            if "/AcroForm" in catalog:
+                tree = cast(Optional[TreeObject], catalog["/AcroForm"])
             else:
                 return None
         if tree is None:
@@ -528,13 +528,13 @@ class PdfFileReader:
         if CA.NAMES in tree:
             names = cast(DictionaryObject, tree[CA.NAMES])
             for i in range(0, len(names), 2):
-                key = names[i].getObject()
+                title = names[i].getObject()
                 val = names[i + 1].getObject()
                 if isinstance(val, DictionaryObject) and "/D" in val:
                     val = val["/D"]
-                dest = self._buildDestination(key, val)  # type: ignore
+                dest = self._buildDestination(title, val)  # type: ignore
                 if dest is not None:
-                    retval[key] = dest
+                    retval[title] = dest
 
         return retval
 
@@ -1403,7 +1403,7 @@ class PdfFileReader:
         # Decrypts data as per Section 3.5 (page 117) of PDF spec v1.7
         # "The security handler defines the use of encryption and decryption in
         # the document, using the rules specified by the CF, StmF, and StrF entries"
-        encrypt = self.trailer[TK.ENCRYPT].getObject()
+        encrypt = cast(DictionaryObject, self.trailer[TK.ENCRYPT].getObject())
         # /Encrypt Keys:
         # Filter (name)   : "name of the preferred security handler "
         # V (number)      : Algorithm Code
@@ -1418,23 +1418,24 @@ class PdfFileReader:
             raise NotImplementedError(
                 "only Standard PDF encryption handler is available"
             )
-        if not (encrypt["/V"] in (1, 2)):  # type: ignore
+        encrypt_v = cast(int, encrypt["/V"])
+        if encrypt_v not in (1, 2):
             raise NotImplementedError(
                 "only algorithm code 1 and 2 are supported. This PDF uses code %s"
-                % encrypt["/V"]  # type: ignore
+                % encrypt_v
             )
         user_password, key = self._authenticateUserPassword(password)
         if user_password:
             self._decryption_key = key
             return 1
         else:
-            rev = encrypt["/R"].getObject()  # type: ignore
+            rev = cast(int, encrypt["/R"].getObject())
             if rev == 2:
                 keylen = 5
             else:
-                keylen = encrypt[SA.LENGTH].getObject() // 8  # type: ignore
+                keylen = cast(int, encrypt[SA.LENGTH].getObject()) // 8
             key = _alg33_1(password, rev, keylen)
-            real_O = encrypt["/O"].getObject()  # type: ignore
+            real_O = cast(bytes, encrypt["/O"].getObject())
             if rev == 2:
                 userpass = utils.RC4_encrypt(key, real_O)
             else:
@@ -1454,22 +1455,22 @@ class PdfFileReader:
     def _authenticateUserPassword(
         self, password: Union[str, bytes]
     ) -> Tuple[bool, bytes]:
-        encrypt = self.trailer[TK.ENCRYPT].getObject()
+        encrypt = cast(Optional[DictionaryObject], self.trailer[TK.ENCRYPT].getObject())
         if encrypt is None:
             raise Exception(
                 "_authenticateUserPassword was called on unencrypted document"
             )
-        rev = encrypt[ED.R].getObject()  # type: ignore
-        owner_entry = encrypt[ED.O].getObject()  # type: ignore
-        p_entry = encrypt[ED.P].getObject()  # type: ignore
+        rev = cast(int, encrypt[ED.R].getObject())
+        owner_entry = cast(ByteStringObject, encrypt[ED.O].getObject())
+        p_entry = cast(int, encrypt[ED.P].getObject())
         if TK.ID in self.trailer:
-            id_entry = self.trailer[TK.ID].getObject()
+            id_entry = cast(ArrayObject, self.trailer[TK.ID].getObject())
         else:
             # Some documents may not have a /ID, use two empty
             # byte strings instead. Solves
             # https://github.com/mstamy2/PyPDF2/issues/608
             id_entry = ArrayObject([ByteStringObject(b""), ByteStringObject(b"")])
-        id1_entry = id_entry[0].getObject()  # type: ignore
+        id1_entry = id_entry[0].getObject()
         real_U = encrypt[ED.U].getObject().original_bytes  # type: ignore
         if rev == 2:
             U, key = _alg34(password, owner_entry, p_entry, id1_entry)
