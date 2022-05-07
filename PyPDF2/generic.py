@@ -38,7 +38,7 @@ import logging
 import re
 import warnings
 from io import BytesIO
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple, Union
 
 from PyPDF2.constants import FilterTypes as FT
 from PyPDF2.constants import StreamAttributes as SA
@@ -83,7 +83,7 @@ class NullObject(PdfObject):
         stream.write(b_("null"))
 
     @staticmethod
-    def readFromStream(stream: StreamType):
+    def readFromStream(stream: StreamType) -> "NullObject":
         nulltxt = stream.read(4)
         if nulltxt != b_("null"):
             raise PdfReadError("Could not read Null object")
@@ -91,7 +91,7 @@ class NullObject(PdfObject):
 
 
 class BooleanObject(PdfObject):
-    def __init__(self, value) -> None:
+    def __init__(self, value: Any) -> None:
         self.value = value
 
     def writeToStream(
@@ -103,7 +103,7 @@ class BooleanObject(PdfObject):
             stream.write(b_("false"))
 
     @staticmethod
-    def readFromStream(stream):
+    def readFromStream(stream: StreamType) -> "BooleanObject":
         word = stream.read(4)
         if word == b_("true"):
             return BooleanObject(True)
@@ -125,7 +125,7 @@ class ArrayObject(list, PdfObject):
         stream.write(b_(" ]"))
 
     @staticmethod
-    def readFromStream(stream, pdf) -> "ArrayObject":
+    def readFromStream(stream: StreamType, pdf: Any) -> "ArrayObject":  # PdfFileReader
         arr = ArrayObject()
         tmp = stream.read(1)
         if tmp != b_("["):
@@ -147,7 +147,7 @@ class ArrayObject(list, PdfObject):
 
 
 class IndirectObject(PdfObject):
-    def __init__(self, idnum, generation, pdf) -> None:
+    def __init__(self, idnum: int, generation: int, pdf: Any) -> None:  # PdfFileReader
         self.idnum = idnum
         self.generation = generation
         self.pdf = pdf
@@ -155,10 +155,10 @@ class IndirectObject(PdfObject):
     def getObject(self) -> Optional[PdfObject]:
         return self.pdf.getObject(self).getObject()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"IndirectObject({self.idnum!r}, {self.generation!r})"
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         return (
             other is not None
             and isinstance(other, IndirectObject)
@@ -167,7 +167,7 @@ class IndirectObject(PdfObject):
             and self.pdf is other.pdf
         )
 
-    def __ne__(self, other):
+    def __ne__(self, other: Any) -> bool:
         return not self.__eq__(other)
 
     def writeToStream(
@@ -176,7 +176,9 @@ class IndirectObject(PdfObject):
         stream.write(b_(f"{self.idnum} {self.generation} R"))
 
     @staticmethod
-    def readFromStream(stream, pdf):
+    def readFromStream(
+        stream: StreamType, pdf: Any
+    ) -> "IndirectObject":  # PdfFileReader
         idnum = b_("")
         while True:
             tok = stream.read(1)
@@ -205,7 +207,9 @@ class IndirectObject(PdfObject):
 
 
 class FloatObject(decimal.Decimal, PdfObject):
-    def __new__(cls, value="0", context=None) -> "FloatObject":
+    def __new__(
+        cls, value: Union[str, Any] = "0", context: Optional[Any] = None
+    ) -> "FloatObject":
         try:
             return decimal.Decimal.__new__(cls, utils.str_(value), context)
         except Exception:
@@ -241,7 +245,7 @@ class NumberObject(int, PdfObject):
     NumberPattern = re.compile(b_("[^+-.0-9]"))
     ByteDot = b_(".")
 
-    def __new__(cls, value) -> "NumberObject":
+    def __new__(cls, value: Any) -> "NumberObject":
         val = int(value)
         try:
             return int.__new__(cls, val)
@@ -257,7 +261,7 @@ class NumberObject(int, PdfObject):
         stream.write(b_(repr(self)))
 
     @staticmethod
-    def readFromStream(stream):
+    def readFromStream(stream: StreamType) -> Union["NumberObject", FloatObject]:
         num = utils.readUntilRegex(stream, NumberObject.NumberPattern)
         if num.find(NumberObject.ByteDot) != -1:
             return FloatObject(num)
@@ -265,7 +269,9 @@ class NumberObject(int, PdfObject):
             return NumberObject(num)
 
 
-def readHexStringFromStream(stream):
+def readHexStringFromStream(
+    stream: StreamType,
+) -> Union["TextStringObject", "ByteStringObject"]:
     stream.read(1)
     txt = ""
     x = b_("")
@@ -286,7 +292,7 @@ def readHexStringFromStream(stream):
     return createStringObject(b_(txt))
 
 
-def readStringFromStream(stream):
+def readStringFromStream(stream: StreamType) -> str:
     tok = stream.read(1)
     parens = 1
     txt = b_("")
@@ -451,7 +457,7 @@ class NameObject(str, PdfObject):
         stream.write(b_(self))
 
     @staticmethod
-    def readFromStream(stream: StreamType, pdf):
+    def readFromStream(stream: StreamType, pdf: Any) -> "NameObject":  # PdfFileReader
         name = stream.read(1)
         if name != NameObject.surfix:
             raise PdfReadError("name read error")
@@ -475,24 +481,24 @@ class NameObject(str, PdfObject):
 
 
 class DictionaryObject(dict, PdfObject):
-    def raw_get(self, key):
+    def raw_get(self, key: Any) -> Any:
         return dict.__getitem__(self, key)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: Any, value: Any) -> Any:
         if not isinstance(key, PdfObject):
             raise ValueError("key must be PdfObject")
         if not isinstance(value, PdfObject):
             raise ValueError("value must be PdfObject")
         return dict.__setitem__(self, key, value)
 
-    def setdefault(self, key, value=None):
+    def setdefault(self, key: Any, value: Optional[Any] = None) -> Any:
         if not isinstance(key, PdfObject):
             raise ValueError("key must be PdfObject")
         if not isinstance(value, PdfObject):
             raise ValueError("value must be PdfObject")
-        return dict.setdefault(self, key, value)
+        return dict.setdefault(self, key, value)  # type: ignore
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: Any) -> PdfObject:
         return dict.__getitem__(self, key).getObject()
 
     def getXmpMetadata(self) -> Optional[Any]:  # XmpInformation
@@ -539,8 +545,12 @@ class DictionaryObject(dict, PdfObject):
         stream.write(b_(">>"))
 
     @staticmethod
-    def readFromStream(stream, pdf):
-        def getNextObjPos(p, p1, remGens, pdf):
+    def readFromStream(
+        stream: StreamType, pdf: Any
+    ) -> "DictionaryObject":  # PdfFileReader
+        def getNextObjPos(
+            p: int, p1: int, remGens: List[int], pdf: Any
+        ) -> int:  # PdfFileReader
             l = pdf.xref[remGens[0]]
             for o in l:
                 if p1 > l[o] and p < l[o]:
@@ -550,7 +560,9 @@ class DictionaryObject(dict, PdfObject):
             else:
                 return getNextObjPos(p, p1, remGens[1:], pdf)
 
-        def readUnsizedFromSteam(stream, pdf):
+        def readUnsizedFromSteam(
+            stream: StreamType, pdf: Any
+        ) -> bytes:  # PdfFileReader
             # we are just pointing at beginning of the stream
             eon = getNextObjPos(stream.tell(), 2**32, [g for g in pdf.xref], pdf) - 1
             curr = stream.tell()
@@ -569,7 +581,7 @@ class DictionaryObject(dict, PdfObject):
                 "Dictionary read error at byte %s: stream must begin with '<<'"
                 % utils.hexStr(stream.tell())
             )
-        data = {}
+        data: Dict[Any, Any] = {}
         while True:
             tok = readNonWhitespace(stream)
             if tok == b_("\x00"):
@@ -627,7 +639,7 @@ class DictionaryObject(dict, PdfObject):
                 length = pdf.getObject(length)
                 stream.seek(t, 0)
             pstart = stream.tell()
-            data["__streamdata__"] = stream.read(length)
+            data["__streamdata__"] = stream.read(length)  # type: ignore
             e = readNonWhitespace(stream)
             ndstream = stream.read(8)
             if (e + ndstream) != b_("endstream"):
@@ -642,10 +654,10 @@ class DictionaryObject(dict, PdfObject):
                 end = stream.read(9)
                 if end == b_("endstream"):
                     # we found it by looking back one character further.
-                    data["__streamdata__"] = data["__streamdata__"][:-1]
+                    data["__streamdata__"] = data["__streamdata__"][:-1]  # type: ignore
                 elif not pdf.strict:
                     stream.seek(pstart, 0)
-                    data["__streamdata__"] = readUnsizedFromSteam(stream, pdf)
+                    data["__streamdata__"] = readUnsizedFromSteam(stream, pdf)  # type: ignore
                     pos = stream.tell()
                 else:
                     stream.seek(pos, 0)
@@ -656,7 +668,7 @@ class DictionaryObject(dict, PdfObject):
         else:
             stream.seek(pos, 0)
         if "__streamdata__" in data:
-            return StreamObject.initializeFromDictionary(data)
+            return StreamObject.initializeFromDictionary(data)  # type: ignore
         else:
             retval = DictionaryObject()
             retval.update(data)
@@ -670,7 +682,7 @@ class TreeObject(DictionaryObject):
     def hasChildren(self) -> bool:
         return "/First" in self
 
-    def __iter__(self):
+    def __iter__(self) -> Any:
         return self.children()
 
     def children(self) -> Optional[Any]:
@@ -682,9 +694,9 @@ class TreeObject(DictionaryObject):
             yield child
             if child == self["/Last"]:
                 return
-            child = child["/Next"]
+            child = child["/Next"]  # type: ignore
 
-    def addChild(self, child, pdf) -> None:
+    def addChild(self, child: Any, pdf: Any) -> None:  # PdfFileReader
         child_obj = child.getObject()
         child = pdf.getReference(child_obj)
         assert isinstance(child, IndirectObject)
@@ -697,19 +709,19 @@ class TreeObject(DictionaryObject):
             prev = self["/Last"]
 
         self[NameObject("/Last")] = child
-        self[NameObject("/Count")] = NumberObject(self[NameObject("/Count")] + 1)
+        self[NameObject("/Count")] = NumberObject(self[NameObject("/Count")] + 1)  # type: ignore
 
         if prev:
             prev_ref = pdf.getReference(prev)
             assert isinstance(prev_ref, IndirectObject)
             child_obj[NameObject("/Prev")] = prev_ref
-            prev[NameObject("/Next")] = child
+            prev[NameObject("/Next")] = child  # type: ignore
 
         parent_ref = pdf.getReference(self)
         assert isinstance(parent_ref, IndirectObject)
         child_obj[NameObject("/Parent")] = parent_ref
 
-    def removeChild(self, child) -> None:
+    def removeChild(self, child: Any) -> None:
         child_obj = child.getObject()
 
         if NameObject("/Parent") not in child_obj:
@@ -720,8 +732,8 @@ class TreeObject(DictionaryObject):
         found = False
         prev_ref = None
         prev = None
-        cur_ref = self[NameObject("/First")]
-        cur = cur_ref.getObject()
+        cur_ref: Optional[Any] = self[NameObject("/First")]
+        cur: Optional[Dict[str, Any]] = cur_ref.getObject()  # type: ignore
         last_ref = self[NameObject("/Last")]
         last = last_ref.getObject()
         while cur is not None:
@@ -733,7 +745,7 @@ class TreeObject(DictionaryObject):
                         next = next_ref.getObject()
                         del next[NameObject("/Prev")]
                         self[NameObject("/First")] = next_ref
-                        self[NameObject("/Count")] = self[NameObject("/Count")] - 1
+                        self[NameObject("/Count")] = self[NameObject("/Count")] - 1  # type: ignore
 
                     else:
                         # Removing only tree node
@@ -749,7 +761,7 @@ class TreeObject(DictionaryObject):
                         next = next_ref.getObject()
                         next[NameObject("/Prev")] = prev_ref
                         prev[NameObject("/Next")] = next_ref
-                        self[NameObject("/Count")] = self[NameObject("/Count")] - 1
+                        self[NameObject("/Count")] = self[NameObject("/Count")] - 1  # type: ignore
                     else:
                         # Removing last tree node
                         assert cur == last
@@ -778,7 +790,7 @@ class TreeObject(DictionaryObject):
             del child_obj[NameObject("/Prev")]
 
     def emptyTree(self) -> None:
-        for child in self:
+        for child in self:  # type: ignore
             child_obj = child.getObject()
             del child_obj[NameObject("/Parent")]
             if NameObject("/Next") in child_obj:
@@ -804,7 +816,7 @@ class StreamObject(DictionaryObject):
         return self.__data
 
     @_data.setter
-    def _data(self, value):
+    def _data(self, value: Any) -> None:
         self.__data = value
 
     def writeToStream(
@@ -821,7 +833,10 @@ class StreamObject(DictionaryObject):
         stream.write(b_("\nendstream"))
 
     @staticmethod
-    def initializeFromDictionary(data):
+    def initializeFromDictionary(
+        data: Dict[str, Any]
+    ) -> Union["EncodedStreamObject", "DecodedStreamObject"]:
+        retval: Union["EncodedStreamObject", "DecodedStreamObject"]
         if SA.FILTER in data:
             retval = EncodedStreamObject()
         else:
@@ -877,7 +892,7 @@ class EncodedStreamObject(StreamObject):
             self.decodedSelf = decoded
             return decoded._data
 
-    def setData(self, data):
+    def setData(self, data: Any) -> None:
         raise PdfReadError("Creating EncodedStreamObject is not currently supported")
 
 
@@ -888,7 +903,7 @@ class ContentStream(DecodedStreamObject):
         # The inner list has two elements:
         #  [0] : List
         #  [1] : str
-        self.operations: List[List[Any]] = []
+        self.operations: List[Tuple[Any, Any]] = []
 
         # stream may be a StreamObject or an ArrayObject containing
         # multiple StreamObjects to be cat'd together.
@@ -902,10 +917,10 @@ class ContentStream(DecodedStreamObject):
             stream = BytesIO(b_(stream.getData()))
         self.__parseContentStream(stream)
 
-    def __parseContentStream(self, stream):
+    def __parseContentStream(self, stream: StreamType) -> None:
         # file("f:\\tmp.txt", "w").write(stream.read())
         stream.seek(0, 0)
-        operands = []
+        operands: List[Union[int, str, PdfObject]] = []
         while True:
             peek = readNonWhitespace(stream)
             if peek == b_("") or ord_(peek) == 0:
@@ -935,7 +950,7 @@ class ContentStream(DecodedStreamObject):
             else:
                 operands.append(readObject(stream, None))
 
-    def _readInlineImage(self, stream):
+    def _readInlineImage(self, stream: StreamType) -> Dict[str, Any]:
         # begin reading just after the "BI" - begin image
         # first read the dictionary of settings.
         settings = DictionaryObject()
@@ -1016,11 +1031,13 @@ class ContentStream(DecodedStreamObject):
         return newdata.getvalue()
 
     @_data.setter
-    def _data(self, value):
+    def _data(self, value: Union[str, bytes]) -> None:
         self.__parseContentStream(BytesIO(b_(value)))
 
 
-def readObject(stream, pdf) -> Union[PdfObject, int, ContentStream]:
+def readObject(
+    stream: StreamType, pdf: Any
+) -> Union[PdfObject, int, str, ContentStream]:  # PdfFileReader
     tok = stream.read(1)
     stream.seek(-1, 1)  # reset to start
     idx = ObjectPrefix.find(tok)
@@ -1075,18 +1092,18 @@ class RectangleObject(ArrayObject):
         * :attr:`trimBox <PyPDF2._page.PageObject.trimBox>`
     """
 
-    def __init__(self, arr) -> None:
+    def __init__(self, arr: List[Union[float, decimal.Decimal, None]]) -> None:
         # must have four points
         assert len(arr) == 4
         # automatically convert arr[x] into NumberObject(arr[x]) if necessary
         ArrayObject.__init__(self, [self.ensureIsNumber(x) for x in arr])  # type: ignore
 
-    def ensureIsNumber(self, value) -> Union[NumberObject, FloatObject]:
+    def ensureIsNumber(self, value: Any) -> Union[NumberObject, FloatObject]:
         if not isinstance(value, (NumberObject, FloatObject)):
             return FloatObject(value)
         return value
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "RectangleObject(%s)" % repr(list(self))
 
     def getLowerLeft_x(self) -> float:
@@ -1125,16 +1142,16 @@ class RectangleObject(ArrayObject):
     def getUpperRight(self) -> Tuple[float, float]:
         return self.getUpperRight_x(), self.getUpperRight_y()
 
-    def setLowerLeft(self, value):
+    def setLowerLeft(self, value: Iterable[float]) -> None:
         self[0], self[1] = (self.ensureIsNumber(x) for x in value)
 
-    def setLowerRight(self, value):
+    def setLowerRight(self, value: Iterable[float]) -> None:
         self[2], self[1] = (self.ensureIsNumber(x) for x in value)
 
-    def setUpperLeft(self, value):
+    def setUpperLeft(self, value: Iterable[float]) -> None:
         self[0], self[3] = (self.ensureIsNumber(x) for x in value)
 
-    def setUpperRight(self, value):
+    def setUpperRight(self, value: Iterable[float]) -> None:
         self[2], self[3] = (self.ensureIsNumber(x) for x in value)
 
     def getWidth(self) -> float:
@@ -1171,7 +1188,7 @@ class Field(TreeObject):
     :meth:`getFields()<PyPDF2.PdfFileReader.getFields>`
     """
 
-    def __init__(self, data) -> None:
+    def __init__(self, data: Dict[str, Any]) -> None:
         DictionaryObject.__init__(self)
         attributes = (
             "/FT",
@@ -1486,7 +1503,7 @@ def createStringObject(
         raise TypeError("createStringObject should have str or unicode arg")
 
 
-def encode_pdfdocencoding(unicode_string):
+def encode_pdfdocencoding(unicode_string: str) -> bytes:
     retval = b_("")
     for c in unicode_string:
         try:
@@ -1498,7 +1515,7 @@ def encode_pdfdocencoding(unicode_string):
     return retval
 
 
-def decode_pdfdocencoding(byte_array):
+def decode_pdfdocencoding(byte_array: bytes) -> str:
     retval = ""
     for b in byte_array:
         c = _pdfDocEncoding[ord_(b)]

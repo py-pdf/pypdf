@@ -224,7 +224,7 @@ def hexStr(num: int) -> str:
 WHITESPACES = [b_(x) for x in [" ", "\n", "\r", "\t", "\x00"]]
 
 
-def paethPredictor(left: float, up: float, up_left: float) -> float:
+def paethPredictor(left: int, up: int, up_left: int) -> int:
     p = left + up - up_left
     dist_left = abs(p - left)
     dist_up = abs(p - up)

@@ -130,7 +130,7 @@ class PdfFileWriter:
     def getObject(self, ido: IndirectObject) -> PdfObject:
         if ido.pdf != self:
             raise ValueError("pdf must be self")
-        return self._objects[ido.idnum - 1]
+        return self._objects[ido.idnum - 1]  # type: ignore
 
     def _addPage(
         self, page: PageObject, action: Callable[[Any, PageObject], None]
@@ -140,7 +140,7 @@ class PdfFileWriter:
         page = self._addObject(page)  # type: ignore
         pages: DictionaryObject = self.getObject(self._pages)  # type: ignore
         action(pages[PA.KIDS], page)
-        pages[NameObject(PA.COUNT)] = NumberObject(pages[PA.COUNT] + 1)
+        pages[NameObject(PA.COUNT)] = NumberObject(pages[PA.COUNT] + 1)  # type: ignore
 
     def set_need_appearances_writer(self) -> None:
         # See 12.7.2 and 7.7.2 for more information:
@@ -158,7 +158,7 @@ class PdfFileWriter:
                 )
 
             need_appearances = NameObject("/NeedAppearances")
-            self._root_object["/AcroForm"][need_appearances] = BooleanObject(True)
+            self._root_object["/AcroForm"][need_appearances] = BooleanObject(True)  # type: ignore
 
         except Exception as e:
             logger.error("set_need_appearances_writer() catch : ", repr(e))
@@ -422,8 +422,8 @@ class PdfFileWriter:
             PDF Reference Table 8.70 for details.
         """
         # Iterate through pages, update field values
-        for j in range(len(page[PG.ANNOTS])):
-            writer_annot = page[PG.ANNOTS][j].getObject()
+        for j in range(len(page[PG.ANNOTS])):  # type: ignore
+            writer_annot = page[PG.ANNOTS][j].getObject()  # type: ignore
             # retrieve parent field values, if present
             writer_parent_annot = {}  # fallback if it's not there
             if PG.PARENT in writer_annot:
@@ -447,7 +447,7 @@ class PdfFileWriter:
         :param reader:  PdfFileReader from the document root should be copied.
         :callback after_page_append:
         """
-        self._root_object = reader.trailer[TK.ROOT]
+        self._root_object = reader.trailer[TK.ROOT]  # type: ignore
 
     def cloneDocumentFromReader(
         self,
@@ -727,7 +727,7 @@ class PdfFileWriter:
 
     def getOutlineRoot(self) -> TreeObject:
         if CO.OUTLINES in self._root_object:
-            outline = self._root_object[CO.OUTLINES]
+            outline: TreeObject = self._root_object[CO.OUTLINES]  # type: ignore
             idnum = self._objects.index(outline) + 1
             outline_ref = IndirectObject(idnum, 0, self)
             assert outline_ref.getObject() == outline
@@ -747,8 +747,8 @@ class PdfFileWriter:
             idnum = self._objects.index(names) + 1
             names_ref = IndirectObject(idnum, 0, self)
             assert names_ref.getObject() == names
-            if CA.DESTS in names and isinstance(names[CA.DESTS], DictionaryObject):
-                dests = names[CA.DESTS]
+            if CA.DESTS in names and isinstance(names[CA.DESTS], DictionaryObject):  # type: ignore
+                dests = names[CA.DESTS]  # type: ignore
                 idnum = self._objects.index(dests) + 1
                 dests_ref = IndirectObject(idnum, 0, self)
                 assert dests_ref.getObject() == dests
@@ -760,7 +760,7 @@ class PdfFileWriter:
             else:
                 dests = DictionaryObject()
                 dests_ref = self._addObject(dests)
-                names[NameObject(CA.DESTS)] = dests_ref
+                names[NameObject(CA.DESTS)] = dests_ref  # type: ignore
                 nd = ArrayObject()
                 dests[NameObject(CA.NAMES)] = nd
 
@@ -1077,7 +1077,7 @@ class PdfFileWriter:
         """
 
         page_link = self.getObject(self._pages)[PA.KIDS][pagenum]  # type: ignore
-        page_ref: PageObject = self.getObject(page_link)  # type: ignore
+        page_ref: Dict[str, Any] = self.getObject(page_link)  # type: ignore
 
         border_arr: BorderArrayType
         if border is not None:

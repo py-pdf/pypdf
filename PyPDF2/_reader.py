@@ -41,6 +41,7 @@ from typing import (
     Optional,
     Tuple,
     Union,
+    cast,
 )
 
 from PyPDF2 import utils
@@ -268,7 +269,7 @@ class PdfFileReader:
             return None
         obj = self.trailer[TK.INFO]
         retval = DocumentInformation()
-        retval.update(obj)
+        retval.update(obj)  # type: ignore
         return retval
 
     @property
@@ -291,7 +292,7 @@ class PdfFileReader:
         """
         try:
             self._override_encryption = True
-            return self.trailer[TK.ROOT].getXmpMetadata()
+            return self.trailer[TK.ROOT].getXmpMetadata()  # type: ignore
         finally:
             self._override_encryption = False
 
@@ -320,7 +321,7 @@ class PdfFileReader:
             try:
                 self._override_encryption = True
                 self.decrypt("")
-                return self.trailer[TK.ROOT]["/Pages"]["/Count"]
+                return self.trailer[TK.ROOT]["/Pages"]["/Count"]  # type: ignore
             except Exception:
                 raise PdfReadError("File has not been decrypted")
             finally:
@@ -396,8 +397,8 @@ class PdfFileReader:
             retval = {}
             catalog = self.trailer[TK.ROOT]
             # get the AcroForm tree
-            if "/AcroForm" in catalog:
-                tree = catalog["/AcroForm"]
+            if "/AcroForm" in catalog:  # type: ignore
+                tree = catalog["/AcroForm"]  # type: ignore
             else:
                 return None
         if tree is None:
@@ -412,7 +413,7 @@ class PdfFileReader:
 
         if "/Fields" in tree:
             fields = tree["/Fields"]
-            for f in fields:
+            for f in fields:  # type: ignore
                 field = f.getObject()
                 self._buildField(field, retval, fileobj, field_attributes)
 
@@ -444,7 +445,7 @@ class PdfFileReader:
     ) -> None:
         if PA.KIDS in tree:
             # recurse down the tree
-            for kid in tree[PA.KIDS]:
+            for kid in tree[PA.KIDS]:  # type: ignore
                 self.getFields(kid.getObject(), retval, fileobj)
 
     def _writeField(self, fileobj: Any, field: Any, fieldAttributes: Any) -> None:
@@ -504,10 +505,10 @@ class PdfFileReader:
             catalog = self.trailer[TK.ROOT]
 
             # get the name tree
-            if CA.DESTS in catalog:
-                tree = catalog[CA.DESTS]
-            elif CA.NAMES in catalog:
-                names = catalog[CA.NAMES]
+            if CA.DESTS in catalog:  # type: ignore
+                tree = catalog[CA.DESTS]  # type: ignore
+            elif CA.NAMES in catalog:  # type: ignore
+                names = catalog[CA.NAMES]  # type: ignore
                 if CA.DESTS in names:
                     tree = names[CA.DESTS]
 
@@ -516,7 +517,7 @@ class PdfFileReader:
 
         if PA.KIDS in tree:
             # recurse down the tree
-            for kid in tree[PA.KIDS]:
+            for kid in tree[PA.KIDS]:  # type: ignore
                 self.getNamedDestinations(kid.getObject(), retval)
 
         if CA.NAMES in tree:
@@ -553,9 +554,9 @@ class PdfFileReader:
             catalog = self.trailer[TK.ROOT]
 
             # get the outline dictionary and named destinations
-            if CO.OUTLINES in catalog:
+            if CO.OUTLINES in catalog:  # type: ignore
                 try:
-                    lines = catalog[CO.OUTLINES]
+                    lines = catalog[CO.OUTLINES]  # type: ignore
                 except PdfReadError:
                     # this occurs if the /Outlines object reference is incorrect
                     # for an example of such a file, see https://unglueit-files.s3.amazonaws.com/ebf/7552c42e9280b4476e59e77acc0bc812.pdf
@@ -659,8 +660,8 @@ class PdfFileReader:
             # Action, section 8.5 (only type GoTo supported)
             title = node["/Title"]
             action = node["/A"]
-            if action["/S"] == "/GoTo":
-                dest = action["/D"]
+            if action["/S"] == "/GoTo":  # type: ignore
+                dest = action["/D"]  # type: ignore
         elif "/Dest" in node and "/Title" in node:
             # Destination, section 8.2.1
             title = node["/Title"]
@@ -697,7 +698,7 @@ class PdfFileReader:
         :rtype: ``str``, ``None`` if not specified
         """
         try:
-            return self.trailer[TK.ROOT]["/PageLayout"]
+            return self.trailer[TK.ROOT]["/PageLayout"]  # type: ignore
         except KeyError:
             return None
 
@@ -717,7 +718,7 @@ class PdfFileReader:
         :rtype: ``str``, ``None`` if not specified
         """
         try:
-            return self.trailer[TK.ROOT]["/PageMode"]
+            return self.trailer[TK.ROOT]["/PageMode"]  # type: ignore
         except KeyError:
             return None
 
@@ -745,18 +746,18 @@ class PdfFileReader:
             # Fix issue 327: set flattenedPages attribute only for
             # decrypted file
             catalog = self.trailer[TK.ROOT].getObject()
-            pages = catalog["/Pages"].getObject()
+            pages = catalog["/Pages"].getObject()  # type: ignore
             self.flattenedPages = []
 
         t = "/Pages"
         if PA.TYPE in pages:
-            t = pages[PA.TYPE]
+            t = pages[PA.TYPE]  # type: ignore
 
         if t == "/Pages":
             for attr in inheritablePageAttributes:
                 if attr in pages:
                     inherit[attr] = pages[attr]
-            for page in pages[PA.KIDS]:
+            for page in pages[PA.KIDS]:  # type: ignore
                 addt = {}
                 if isinstance(page, IndirectObject):
                     addt["indirectRef"] = page
@@ -775,7 +776,7 @@ class PdfFileReader:
 
     def _getObjectFromStream(
         self, indirectReference: IndirectObject
-    ) -> Union[int, PdfObject]:
+    ) -> Union[int, PdfObject, str]:
         # indirect reference to object in object stream
         # read the entire object stream into memory
         stmnum, idx = self.xref_objStm[indirectReference.idnum]
@@ -785,7 +786,7 @@ class PdfFileReader:
         # /N is the number of indirect objects in the stream
         assert idx < obj_stm["/N"]
         stream_data = BytesIO(b_(obj_stm.getData()))  # type: ignore
-        for i in range(obj_stm["/N"]):
+        for i in range(obj_stm["/N"]):  # type: ignore
             readNonWhitespace(stream_data)
             stream_data.seek(-1, 1)
             objnum = NumberObject.readFromStream(stream_data)
@@ -799,7 +800,7 @@ class PdfFileReader:
                 continue
             if self.strict and idx != i:
                 raise PdfReadError("Object is in wrong index.")
-            stream_data.seek(obj_stm["/First"] + offset, 0)
+            stream_data.seek(int(obj_stm["/First"] + offset), 0)  # type: ignore
             try:
                 obj = readObject(stream_data, self)
             except PdfStreamError as e:
@@ -1038,7 +1039,7 @@ class PdfFileReader:
                     if key in xrefstream and key not in self.trailer:
                         self.trailer[NameObject(key)] = xrefstream.raw_get(key)
                 if "/Prev" in xrefstream:
-                    startxref = xrefstream["/Prev"]
+                    startxref = cast(int, xrefstream["/Prev"])
                 else:
                     break
             else:
@@ -1408,27 +1409,27 @@ class PdfFileReader:
         # R (number)      : Standard security handler revision number
         # U (string)      : A 32-byte string, based on the user password
         # P (integer)     : Permissions allowed with user access
-        if encrypt["/Filter"] != "/Standard":
+        if encrypt["/Filter"] != "/Standard":  # type: ignore
             raise NotImplementedError(
                 "only Standard PDF encryption handler is available"
             )
-        if not (encrypt["/V"] in (1, 2)):
+        if not (encrypt["/V"] in (1, 2)):  # type: ignore
             raise NotImplementedError(
                 "only algorithm code 1 and 2 are supported. This PDF uses code %s"
-                % encrypt["/V"]
+                % encrypt["/V"]  # type: ignore
             )
         user_password, key = self._authenticateUserPassword(password)
         if user_password:
             self._decryption_key = key
             return 1
         else:
-            rev = encrypt["/R"].getObject()
+            rev = encrypt["/R"].getObject()  # type: ignore
             if rev == 2:
                 keylen = 5
             else:
-                keylen = encrypt[SA.LENGTH].getObject() // 8
+                keylen = encrypt[SA.LENGTH].getObject() // 8  # type: ignore
             key = _alg33_1(password, rev, keylen)
-            real_O = encrypt["/O"].getObject()
+            real_O = encrypt["/O"].getObject()  # type: ignore
             if rev == 2:
                 userpass = utils.RC4_encrypt(key, real_O)
             else:
@@ -1447,9 +1448,13 @@ class PdfFileReader:
 
     def _authenticateUserPassword(self, password: str) -> Tuple[bool, bytes]:
         encrypt = self.trailer[TK.ENCRYPT].getObject()
-        rev = encrypt[ED.R].getObject()
-        owner_entry = encrypt[ED.O].getObject()
-        p_entry = encrypt[ED.P].getObject()
+        if encrypt is None:
+            raise Exception(
+                "_authenticateUserPassword was called on unencrypted document"
+            )
+        rev = encrypt[ED.R].getObject()  # type: ignore
+        owner_entry = encrypt[ED.O].getObject()  # type: ignore
+        p_entry = encrypt[ED.P].getObject()  # type: ignore
         if TK.ID in self.trailer:
             id_entry = self.trailer[TK.ID].getObject()
         else:
@@ -1457,19 +1462,19 @@ class PdfFileReader:
             # byte strings instead. Solves
             # https://github.com/mstamy2/PyPDF2/issues/608
             id_entry = ArrayObject([ByteStringObject(b""), ByteStringObject(b"")])
-        id1_entry = id_entry[0].getObject()
-        real_U = encrypt[ED.U].getObject().original_bytes
+        id1_entry = id_entry[0].getObject()  # type: ignore
+        real_U = encrypt[ED.U].getObject().original_bytes  # type: ignore
         if rev == 2:
             U, key = _alg34(password, owner_entry, p_entry, id1_entry)
         elif rev >= 3:
             U, key = _alg35(
                 password,
                 rev,
-                encrypt[SA.LENGTH].getObject() // 8,
+                encrypt[SA.LENGTH].getObject() // 8,  # type: ignore
                 owner_entry,
                 p_entry,
                 id1_entry,
-                encrypt.get(ED.ENCRYPT_METADATA, BooleanObject(False)).getObject(),
+                encrypt.get(ED.ENCRYPT_METADATA, BooleanObject(False)).getObject(),  # type: ignore
             )
             U, real_U = U[:16], real_U[:16]
         return U == real_U, key

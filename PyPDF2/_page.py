@@ -226,8 +226,8 @@ class PageObject(DictionaryObject):
         # of a content stream.  This isolates it from changes such as
         # transformation matricies.
         stream = ContentStream(contents, pdf)
-        stream.operations.insert(0, [[], "q"])
-        stream.operations.append([[], "Q"])
+        stream.operations.insert(0, ([], "q"))
+        stream.operations.append(([], "Q"))
         return stream
 
     @staticmethod
@@ -324,9 +324,9 @@ class PageObject(DictionaryObject):
         # Combine /ProcSet sets.
         new_resources[NameObject(RES.PROC_SET)] = ArrayObject(
             frozenset(
-                original_resources.get(RES.PROC_SET, ArrayObject()).getObject()
+                original_resources.get(RES.PROC_SET, ArrayObject()).getObject()  # type: ignore
             ).union(
-                frozenset(page2resources.get(RES.PROC_SET, ArrayObject()).getObject())
+                frozenset(page2resources.get(RES.PROC_SET, ArrayObject()).getObject())  # type: ignore
             )
         )
 
@@ -667,7 +667,7 @@ class PageObject(DictionaryObject):
             if isinstance(viewport, ArrayObject):
                 bbox = viewport[0]["/BBox"]
             else:
-                bbox = viewport["/BBox"]
+                bbox = viewport["/BBox"]  # type: ignore
             scaled_bbox = RectangleObject(
                 [
                     float(bbox[0]) * sx,
@@ -677,11 +677,11 @@ class PageObject(DictionaryObject):
                 ]
             )
             if isinstance(viewport, ArrayObject):
-                self[NameObject(PG.VP)][NumberObject(0)][
+                self[NameObject(PG.VP)][NumberObject(0)][  # type: ignore
                     NameObject("/BBox")
                 ] = scaled_bbox
             else:
-                self[NameObject(PG.VP)][NameObject("/BBox")] = scaled_bbox
+                self[NameObject(PG.VP)][NameObject("/BBox")] = scaled_bbox  # type: ignore
 
     def scaleBy(self, factor: float) -> None:
         """

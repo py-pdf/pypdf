@@ -33,6 +33,7 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 import math
 import struct
 from io import StringIO
+from typing import Any, Dict, Optional, Tuple
 
 try:
     from typing import Literal  # type: ignore[attr-defined]
@@ -52,7 +53,7 @@ from PyPDF2.utils import ord_, paethPredictor
 try:
     import zlib
 
-    def decompress(data):
+    def decompress(data: bytes) -> bytes:
         try:
             return zlib.decompress(data)
         except zlib.error:
@@ -65,7 +66,7 @@ try:
                     pass
             return result_str
 
-    def compress(data):
+    def compress(data: bytes) -> bytes:
         return zlib.compress(data)
 
 except ImportError:  # pragma: no cover
@@ -74,19 +75,19 @@ except ImportError:  # pragma: no cover
     import System  # type: ignore[import]
     from System import IO, Array  # type: ignore[import]
 
-    def _string_to_bytearr(buf):
+    def _string_to_bytearr(buf):  # type: ignore[no-untyped-def]
         retval = Array.CreateInstance(System.Byte, len(buf))
         for i in range(len(buf)):
             retval[i] = ord(buf[i])
         return retval
 
-    def _bytearr_to_string(bytes):
+    def _bytearr_to_string(bytes) -> str:  # type: ignore[no-untyped-def]
         retval = ""
         for i in range(bytes.Length):
             retval += chr(bytes[i])
         return retval
 
-    def _read_bytes(stream):
+    def _read_bytes(stream):  # type: ignore[no-untyped-def]
         ms = IO.MemoryStream()
         buf = Array.CreateInstance(System.Byte, 2048)
         while True:
@@ -99,7 +100,7 @@ except ImportError:  # pragma: no cover
         ms.Close()
         return retval
 
-    def decompress(data):
+    def decompress(data):  # type: ignore
         bytes = _string_to_bytearr(data)
         ms = IO.MemoryStream()
         ms.Write(bytes, 0, bytes.Length)
@@ -110,7 +111,7 @@ except ImportError:  # pragma: no cover
         gz.Close()
         return retval
 
-    def compress(data):
+    def compress(data):  # type: ignore
         bytes = _string_to_bytearr(data)
         ms = IO.MemoryStream()
         gz = IO.Compression.DeflateStream(
@@ -127,14 +128,14 @@ except ImportError:  # pragma: no cover
 
 class FlateDecode:
     @staticmethod
-    def decode(data, decodeParms):
+    def decode(data: bytes, decodeParms: Dict[str, Any]) -> str:
         """
         :param data: flate-encoded data.
         :param decodeParms: a dictionary of values, understanding the
             "/Predictor":<int> key only
         :return: the flate-decoded data.
         """
-        data = decompress(data)
+        str_data = decompress(data)
         predictor = 1
 
         if decodeParms:
@@ -157,14 +158,14 @@ class FlateDecode:
 
             # PNG prediction:
             if 10 <= predictor <= 15:
-                data = FlateDecode._decode_png_prediction(data, columns)
+                str_data = FlateDecode._decode_png_prediction(str_data, columns)  # type: ignore
             else:
                 # unsupported predictor
                 raise PdfReadError("Unsupported flatedecode predictor %r" % predictor)
-        return data
+        return str_data  # type: ignore
 
     @staticmethod
-    def _decode_png_prediction(data, columns):
+    def _decode_png_prediction(data: str, columns: int) -> str:
         output = StringIO()
         # PNG prediction can vary from row to row
         rowlength = columns + 1
@@ -198,12 +199,12 @@ class FlateDecode:
             else:
                 # unsupported PNG filter
                 raise PdfReadError("Unsupported PNG filter %r" % filter_byte)
-            prev_rowdata = rowdata
+            prev_rowdata = tuple(rowdata)
             output.write("".join([chr(x) for x in rowdata[1:]]))
         return output.getvalue()
 
     @staticmethod
-    def encode(data):
+    def encode(data: bytes) -> bytes:
         return compress(data)
 
 
@@ -214,7 +215,7 @@ class ASCIIHexDecode:
     """
 
     @staticmethod
-    def decode(data, decodeParms=None):
+    def decode(data: str, decodeParms: Optional[Dict[str, Any]] = None) -> str:
         """
         :param data: a str sequence of hexadecimal-encoded values to be
             converted into a base-7 ASCII string
@@ -249,7 +250,7 @@ class LZWDecode:
     """
 
     class decoder:
-        def __init__(self, data) -> None:
+        def __init__(self, data: bytes) -> None:
             self.STOP = 257
             self.CLEARDICT = 256
             self.data = data
@@ -328,7 +329,7 @@ class LZWDecode:
             return baos
 
     @staticmethod
-    def decode(data, decodeParms=None):
+    def decode(data: bytes, decodeParms: Optional[Dict[str, Any]] = None) -> str:
         """
         :param data: ``bytes`` or ``str`` text to decode.
         :param decodeParms: a dictionary of parameter values.
@@ -342,7 +343,7 @@ class ASCII85Decode:
     """Decodes string ASCII85-encoded data into a byte format."""
 
     @staticmethod
-    def decode(data, decodeParms=None):
+    def decode(data: bytes, decodeParms: Optional[Dict[str, Any]] = None) -> bytes:
         if isinstance(data, str):
             data = data.encode("ascii")
         group_index = b = 0
@@ -368,20 +369,20 @@ class ASCII85Decode:
 
 class DCTDecode:
     @staticmethod
-    def decode(data, decodeParms=None):
+    def decode(data: bytes, decodeParms: Optional[Dict[str, Any]] = None) -> bytes:
         return data
 
 
 class JPXDecode:
     @staticmethod
-    def decode(data, decodeParms=None):
+    def decode(data: bytes, decodeParms: Optional[Dict[str, Any]] = None) -> bytes:
         return data
 
 
 class CCITParameters:
     """TABLE 3.9 Optional parameters for the CCITTFaxDecode filter"""
 
-    def __init__(self, K=0, columns=0, rows=0) -> None:
+    def __init__(self, K: int = 0, columns: int = 0, rows: int = 0) -> None:
         self.K = K
         self.EndOfBlock = None
         self.EndOfLine = None
@@ -412,7 +413,9 @@ class CCITTFaxDecode:
     """
 
     @staticmethod
-    def _get_parameters(parameters, rows):
+    def _get_parameters(
+        parameters: Optional[Dict[str, Any]], rows: int
+    ) -> CCITParameters:
         k = 0
         columns = 0
         if parameters:
@@ -431,7 +434,9 @@ class CCITTFaxDecode:
         return CCITParameters(k, columns, rows)
 
     @staticmethod
-    def decode(data, decodeParms=None, height=0):
+    def decode(
+        data: bytes, decodeParms: Optional[Dict[str, Any]] = None, height: int = 0
+    ) -> bytes:
         parms = CCITTFaxDecode._get_parameters(decodeParms, height)
 
         img_size = len(data)
@@ -482,7 +487,7 @@ class CCITTFaxDecode:
         return tiff_header + data
 
 
-def decodeStreamData(stream):
+def decodeStreamData(stream: Any) -> bytes:  # utils.StreamObject
     from .generic import NameObject
 
     filters = stream.get(SA.FILTER, ())
@@ -523,7 +528,7 @@ def decodeStreamData(stream):
     return data
 
 
-def _xobj_to_image(x_object_obj):
+def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
     """
     Users need to have the pillow package installed.
 
@@ -539,7 +544,7 @@ def _xobj_to_image(x_object_obj):
     from PyPDF2.constants import GraphicsStateParameters as G
 
     size = (x_object_obj[IA.WIDTH], x_object_obj[IA.HEIGHT])
-    data = x_object_obj.getData()
+    data = x_object_obj.getData()  # type: ignore
     if x_object_obj[IA.COLOR_SPACE] == ColorSpaces.DEVICE_RGB:
         mode: Literal["RGB", "P"] = "RGB"
     else:
