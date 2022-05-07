@@ -1094,7 +1094,15 @@ class RectangleObject(ArrayObject):
         * :attr:`trimBox <PyPDF2._page.PageObject.trimBox>`
     """
 
-    def __init__(self, arr: List[Union[float, decimal.Decimal, None]]) -> None:
+    def __init__(
+        self,
+        arr: Tuple[
+            Union[float, decimal.Decimal, None],
+            Union[float, decimal.Decimal, None],
+            Union[float, decimal.Decimal, None],
+            Union[float, decimal.Decimal, None],
+        ],
+    ) -> None:
         # must have four points
         assert len(arr) == 4
         # automatically convert arr[x] into NumberObject(arr[x]) if necessary

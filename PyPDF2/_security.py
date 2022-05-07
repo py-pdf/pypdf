@@ -31,10 +31,10 @@
 
 import struct
 from hashlib import md5
-from typing import Any, Tuple
+from typing import Any, Tuple, Union
 
 from PyPDF2 import utils
-from PyPDF2.generic import ByteStringObject
+from PyPDF2.generic import BooleanObject, ByteStringObject
 from PyPDF2.utils import b_, ord_, str_
 
 # ref: pdf1.8 spec section 3.5.2 algorithm 3.2
@@ -48,13 +48,13 @@ _encryption_padding = (
 # Implementation of algorithm 3.2 of the PDF standard security handler,
 # section 3.5.2 of the PDF 1.6 reference.
 def _alg32(
-    password: str,
+    password: Union[str, bytes],
     rev: Any,
     keylen: Any,
     owner_entry: ByteStringObject,
     p_entry: int,
     id1_entry: ByteStringObject,
-    metadata_encrypt: bool = True,
+    metadata_encrypt: Union[BooleanObject, bool] = True,
 ) -> bytes:
     # 1. Pad or truncate the password string to exactly 32 bytes.  If the
     # password string is more than 32 bytes long, use only its first 32 bytes;
@@ -125,10 +125,12 @@ def _alg33(owner_pwd: str, user_pwd: str, rev: int, keylen: int) -> bytes:
 
 
 # Steps 1-4 of algorithm 3.3
-def _alg33_1(password: str, rev: int, keylen: int) -> bytes:
+def _alg33_1(password: Union[bytes, str], rev: int, keylen: int) -> bytes:
     # 1. Pad or truncate the owner password string as described in step 1 of
     # algorithm 3.2.  If there is no owner password, use the user password
     # instead.
+    if isinstance(password, bytes):
+        password = password.decode()
     password_bytes = b_((password + str_(_encryption_padding))[:32])
     # 2. Initialize the MD5 hash function and pass the result of step 1 as
     # input to this function.
@@ -150,7 +152,7 @@ def _alg33_1(password: str, rev: int, keylen: int) -> bytes:
 # Implementation of algorithm 3.4 of the PDF standard security handler,
 # section 3.5.2 of the PDF 1.6 reference.
 def _alg34(
-    password: str,
+    password: Union[str, bytes],
     owner_entry: ByteStringObject,
     p_entry: int,
     id1_entry: ByteStringObject,
@@ -170,13 +172,13 @@ def _alg34(
 # Implementation of algorithm 3.4 of the PDF standard security handler,
 # section 3.5.2 of the PDF 1.6 reference.
 def _alg35(
-    password: str,
+    password: Union[str, bytes],
     rev: int,
     keylen: int,
     owner_entry: ByteStringObject,
     p_entry: int,
     id1_entry: ByteStringObject,
-    metadata_encrypt: bool,
+    metadata_encrypt: Union[BooleanObject, bool],
 ) -> Tuple[bytes, bytes]:
     # 1. Create an encryption key based on the user password string, as
     # described in Algorithm 3.2.

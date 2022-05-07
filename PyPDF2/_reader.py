@@ -730,7 +730,7 @@ class PdfFileReader:
 
     def _flatten(
         self,
-        pages: Optional[PageObject] = None,
+        pages: Union[None, DictionaryObject, PageObject] = None,
         inherit: Optional[Dict[str, Any]] = None,
         indirectRef: Optional[IndirectObject] = None,
     ) -> None:
@@ -1353,7 +1353,7 @@ class PdfFileReader:
         line_parts.reverse()
         return b"".join(line_parts)
 
-    def decrypt(self, password: str) -> int:
+    def decrypt(self, password: Union[str, bytes]) -> int:
         """
         When using an encrypted / secured PDF file with the PDF Standard
         encryption handler, this function will allow the file to be decrypted.
@@ -1394,7 +1394,7 @@ class PdfFileReader:
         )  # bit 12
         return permissions
 
-    def _decrypt(self, password: str) -> int:
+    def _decrypt(self, password: Union[str, bytes]) -> int:
         # Decrypts data as per Section 3.5 (page 117) of PDF spec v1.7
         # "The security handler defines the use of encryption and decryption in
         # the document, using the rules specified by the CF, StmF, and StrF entries"
@@ -1446,7 +1446,9 @@ class PdfFileReader:
                 return 2
         return 0
 
-    def _authenticateUserPassword(self, password: str) -> Tuple[bool, bytes]:
+    def _authenticateUserPassword(
+        self, password: Union[str, bytes]
+    ) -> Tuple[bool, bytes]:
         encrypt = self.trailer[TK.ENCRYPT].getObject()
         if encrypt is None:
             raise Exception(

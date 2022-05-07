@@ -128,7 +128,7 @@ except ImportError:  # pragma: no cover
 
 class FlateDecode:
     @staticmethod
-    def decode(data: bytes, decodeParms: Optional[Dict[str, Any]]) -> str:
+    def decode(data: bytes, decodeParms: Optional[Dict[str, Any]]) -> bytes:
         """
         :param data: flate-encoded data.
         :param decodeParms: a dictionary of values, understanding the

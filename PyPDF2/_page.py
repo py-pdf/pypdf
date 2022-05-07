@@ -145,7 +145,7 @@ class PageObject(DictionaryObject):
             else:
                 raise PageSizeNotDefinedError()
         page.__setitem__(
-            NameObject(PG.MEDIABOX), RectangleObject([0, 0, width, height])
+            NameObject(PG.MEDIABOX), RectangleObject((0, 0, width, height))
         )
 
         return page
@@ -655,12 +655,12 @@ class PageObject(DictionaryObject):
         """
         self.addTransformation([sx, 0, 0, sy, 0, 0])
         self.mediaBox = RectangleObject(
-            [
+            (
                 float(self.mediaBox.getLowerLeft_x()) * sx,
                 float(self.mediaBox.getLowerLeft_y()) * sy,
                 float(self.mediaBox.getUpperRight_x()) * sx,
                 float(self.mediaBox.getUpperRight_y()) * sy,
-            ]
+            )
         )
         if PG.VP in self:
             viewport = self[PG.VP]
@@ -669,12 +669,12 @@ class PageObject(DictionaryObject):
             else:
                 bbox = viewport["/BBox"]  # type: ignore
             scaled_bbox = RectangleObject(
-                [
+                (
                     float(bbox[0]) * sx,
                     float(bbox[1]) * sy,
                     float(bbox[2]) * sx,
                     float(bbox[3]) * sy,
-                ]
+                )
             )
             if isinstance(viewport, ArrayObject):
                 self[NameObject(PG.VP)][NumberObject(0)][  # type: ignore

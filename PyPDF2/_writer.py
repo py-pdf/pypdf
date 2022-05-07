@@ -801,7 +801,7 @@ class PdfFileWriter:
 
         if "/A" in bookmark:
             action = DictionaryObject()
-            for k, v in list(bookmark["/A"].items()):
+            for k, v in list(bookmark["/A"].items()):  # type: ignore
                 action[NameObject(str(k))] = v
             action_ref = self._addObject(action)
             bookmark_obj[NameObject("/A")] = action_ref
@@ -1234,7 +1234,7 @@ class PdfFileWriter:
         :rtype: str, None if not specified
         """
         try:
-            return self._root_object["/PageLayout"]
+            return self._root_object["/PageLayout"]  # type: ignore
         except KeyError:
             return None
 
@@ -1293,7 +1293,7 @@ class PdfFileWriter:
         :rtype: str, None if not specified.
         """
         try:
-            return self._root_object["/PageMode"]
+            return self._root_object["/PageMode"]  # type: ignore
         except KeyError:
             return None
 
