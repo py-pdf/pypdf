@@ -29,17 +29,19 @@ from io import BytesIO
 from io import FileIO as file
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 
-try:
-    from typing import Literal  # type: ignore[attr-defined]
-except ImportError:
-    from typing_extensions import Literal  # type: ignore[misc]
-
 from PyPDF2._page import PageObject
 from PyPDF2._reader import PdfFileReader
 from PyPDF2._writer import PdfFileWriter
 from PyPDF2.constants import PagesAttributes as PA
 from PyPDF2.generic import *
 from PyPDF2.pagerange import PageRange, PageRangeSpec
+from PyPDF2.types import (
+    BookmarkTypes,
+    LayoutType,
+    PagemodeType,
+    ZoomArgsType,
+    ZoomArgType,
+)
 from PyPDF2.utils import StrByteType, str_
 
 StreamIO = BytesIO
@@ -78,7 +80,7 @@ class PdfFileMerger:
         self.inputs: List[Tuple[Any, PdfFileReader, bool]] = []
         self.pages: List[Any] = []
         self.output: Optional[PdfFileWriter] = PdfFileWriter()
-        self.bookmarks: List[Union[Bookmark, Destination, List[Destination]]] = []
+        self.bookmarks: List[Union[BookmarkTypes, List[Destination]]] = []
         self.named_dests: List[Any] = []
         self.id_count = 0
         self.strict = strict
@@ -293,16 +295,7 @@ class PdfFileMerger:
             raise RuntimeError(ERR_CLOSED_WRITER)
         self.output.addMetadata(infos)
 
-    def setPageLayout(
-        self,
-        layout: Literal[
-            "/NoLayout",
-            "/SinglePage",
-            "/OneColumn",
-            "/TwoColumnLeft",
-            "/TwoColumnRight",
-        ],
-    ) -> None:
+    def setPageLayout(self, layout: LayoutType) -> None:
         """
         Set the page layout
 
@@ -330,12 +323,7 @@ class PdfFileMerger:
             raise RuntimeError(ERR_CLOSED_WRITER)
         self.output.setPageLayout(layout)
 
-    def setPageMode(
-        self,
-        mode: Literal[
-            "/UseNone", "/UseOutlines", "/UseThumbs", "/UseOC", "/UseAttachments"
-        ],
-    ) -> None:
+    def setPageMode(self, mode: PagemodeType) -> None:
         """
         Set the page mode.
 
@@ -562,9 +550,7 @@ class PdfFileMerger:
     def findBookmark(
         self,
         bookmark: Dict[str, Any],
-        root: Optional[
-            Iterable[Union[Bookmark, Destination, List[Destination]]]
-        ] = None,
+        root: Optional[Iterable[Union[BookmarkTypes, List[Destination]]]] = None,
     ) -> Optional[List[int]]:
         if root is None:
             root = self.bookmarks
@@ -588,7 +574,7 @@ class PdfFileMerger:
         bold: bool = False,
         italic: bool = False,
         fit: str = "/Fit",
-        *args: Optional[float]
+        *args: ZoomArgType
     ) -> IndirectObject:
         """
         Add a bookmark to this PDF file.
@@ -613,14 +599,14 @@ class PdfFileMerger:
             page_ref = out_pages
 
         action = DictionaryObject()
-        zoom_args: List[Union[NumberObject, NullObject]] = []
+        zoom_args: ZoomArgsType = []
         for a in args:
             if a is not None:
                 zoom_args.append(NumberObject(a))
             else:
                 zoom_args.append(NullObject())
         dest = Destination(
-            NameObject("/" + title + " bookmark"), page_ref, NameObject(fit), *zoom_args
+            NameObject("/" + title + " bookmark"), page_ref, NameObject(fit), *zoom_args  # type: ignore
         )
         dest_array = dest.getDestArray()
         action.update(

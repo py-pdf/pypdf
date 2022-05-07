@@ -50,7 +50,14 @@ from PyPDF2.errors import (
 )
 
 from . import filters, utils
-from .utils import RC4_encrypt, b_, ord_, readNonWhitespace, skipOverComment
+from .utils import (
+    RC4_encrypt,
+    StreamType,
+    b_,
+    ord_,
+    readNonWhitespace,
+    skipOverComment,
+)
 
 logger = logging.getLogger(__name__)
 ObjectPrefix = b_("/<[tf(n%")
@@ -63,13 +70,20 @@ class PdfObject:
         """Resolve indirect references."""
         return self
 
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Optional[bytes]
+    ) -> None:
+        raise NotImplementedError()
+
 
 class NullObject(PdfObject):
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Optional[bytes]
+    ) -> None:
         stream.write(b_("null"))
 
     @staticmethod
-    def readFromStream(stream):
+    def readFromStream(stream: StreamType):
         nulltxt = stream.read(4)
         if nulltxt != b_("null"):
             raise PdfReadError("Could not read Null object")
@@ -80,7 +94,9 @@ class BooleanObject(PdfObject):
     def __init__(self, value) -> None:
         self.value = value
 
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Optional[bytes]
+    ) -> None:
         if self.value:
             stream.write(b_("true"))
         else:
@@ -99,7 +115,9 @@ class BooleanObject(PdfObject):
 
 
 class ArrayObject(list, PdfObject):
-    def writeToStream(self, stream, encryption_key) -> None:
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Optional[bytes]
+    ) -> None:
         stream.write(b_("["))
         for data in self:
             stream.write(b_(" "))
@@ -152,7 +170,9 @@ class IndirectObject(PdfObject):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Optional[bytes]
+    ) -> None:
         stream.write(b_(f"{self.idnum} {self.generation} R"))
 
     @staticmethod
@@ -211,7 +231,9 @@ class FloatObject(decimal.Decimal, PdfObject):
     def as_numeric(self) -> float:
         return float(b_(repr(self)))
 
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Optional[bytes]
+    ) -> None:
         stream.write(b_(repr(self)))
 
 
@@ -229,7 +251,9 @@ class NumberObject(int, PdfObject):
     def as_numeric(self) -> int:
         return int(b_(repr(self)))
 
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Optional[bytes]
+    ) -> None:
         stream.write(b_(repr(self)))
 
     @staticmethod
@@ -348,7 +372,9 @@ class ByteStringObject(utils.bytes_type, PdfObject):  # type: ignore
         """For compatibility with TextStringObject.original_bytes."""
         return self
 
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Optional[bytes]
+    ) -> None:
         bytearr = self
         if encryption_key:
             bytearr = RC4_encrypt(encryption_key, bytearr)
@@ -391,7 +417,9 @@ class TextStringObject(str, PdfObject):  # type: ignore
         else:
             raise Exception("no information about original bytes")
 
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Optional[bytes]
+    ) -> None:
         # Try to write the string out as a PDFDocEncoding encoded string.  It's
         # nicer to look at in the PDF file.  Sadly, we take a performance hit
         # here for trying...
@@ -417,11 +445,13 @@ class NameObject(str, PdfObject):
     delimiterPattern = re.compile(b_(r"\s+|[\(\)<>\[\]{}/%]"))
     surfix = b_("/")
 
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Optional[bytes]
+    ) -> None:
         stream.write(b_(self))
 
     @staticmethod
-    def readFromStream(stream, pdf):
+    def readFromStream(stream: StreamType, pdf):
         name = stream.read(1)
         if name != NameObject.surfix:
             raise PdfReadError("name read error")
@@ -465,9 +495,7 @@ class DictionaryObject(dict, PdfObject):
     def __getitem__(self, key):
         return dict.__getitem__(self, key).getObject()
 
-    from PyPDF2.xmp import XmpInformation
-
-    def getXmpMetadata(self) -> Optional[XmpInformation]:
+    def getXmpMetadata(self) -> Optional[Any]:  # XmpInformation
         """
         Retrieve XMP (Extensible Metadata Platform) data relevant to the
         this object, if available.
@@ -490,7 +518,7 @@ class DictionaryObject(dict, PdfObject):
         return metadata
 
     @property
-    def xmpMetadata(self) -> Optional[XmpInformation]:
+    def xmpMetadata(self) -> Optional[Any]:  # XmpInformation
         """
         Read-only property that accesses the {@link
         #DictionaryObject.getXmpData getXmpData} function.
@@ -499,7 +527,9 @@ class DictionaryObject(dict, PdfObject):
         """
         return self.getXmpMetadata()
 
-    def writeToStream(self, stream, encryption_key) -> None:
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Optional[bytes]
+    ) -> None:
         stream.write(b_("<<\n"))
         for key, value in list(self.items()):
             key.writeToStream(stream, encryption_key)
@@ -777,7 +807,9 @@ class StreamObject(DictionaryObject):
     def _data(self, value):
         self.__data = value
 
-    def writeToStream(self, stream, encryption_key) -> None:
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Optional[bytes]
+    ) -> None:
         self[NameObject(SA.LENGTH)] = NumberObject(len(self._data))
         DictionaryObject.writeToStream(self, stream, encryption_key)
         del self[SA.LENGTH]
@@ -850,9 +882,14 @@ class EncodedStreamObject(StreamObject):
 
 
 class ContentStream(DecodedStreamObject):
-    def __init__(self, stream, pdf) -> None:
+    def __init__(self, stream: Any, pdf: Any) -> None:
         self.pdf = pdf
-        self.operations: List[Tuple[Any, bytes]] = []
+
+        # The inner list has two elements:
+        #  [0] : List
+        #  [1] : str
+        self.operations: List[List[Any]] = []
+
         # stream may be a StreamObject or an ArrayObject containing
         # multiple StreamObjects to be cat'd together.
         stream = stream.getObject()
@@ -1257,7 +1294,7 @@ class Destination(TreeObject):
         title: str,
         page: Union[NumberObject, IndirectObject, NullObject, DictionaryObject],
         typ: Union[str, NumberObject],
-        *args,
+        *args: Any,  # ZoomArgType
     ) -> None:
         DictionaryObject.__init__(self)
         self[NameObject("/Title")] = title
@@ -1300,7 +1337,9 @@ class Destination(TreeObject):
             ]
         )
 
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Optional[bytes]
+    ) -> None:
         stream.write(b_("<<\n"))
         key = NameObject("/D")
         key.writeToStream(stream, encryption_key)
@@ -1311,8 +1350,8 @@ class Destination(TreeObject):
         key = NameObject("/S")
         key.writeToStream(stream, encryption_key)
         stream.write(b_(" "))
-        value = NameObject("/GoTo")
-        value.writeToStream(stream, encryption_key)
+        value_s = NameObject("/GoTo")
+        value_s.writeToStream(stream, encryption_key)
 
         stream.write(b_("\n"))
         stream.write(b_(">>"))
@@ -1391,7 +1430,9 @@ class Destination(TreeObject):
 
 
 class Bookmark(Destination):
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Optional[bytes]
+    ) -> None:
         stream.write(b_("<<\n"))
         for key in [
             NameObject(x)

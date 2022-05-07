@@ -2,9 +2,11 @@ import datetime
 import decimal
 import re
 from typing import Any, Callable, Dict, Optional, TypeVar
+from xml.dom.minidom import Document
+from xml.dom.minidom import Element as XmlElement
 from xml.dom.minidom import parseString
 
-from PyPDF2.generic import PdfObject
+from PyPDF2.generic import PdfObject, StreamType
 
 RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 DC_NAMESPACE = "http://purl.org/dc/elements/1.1/"
@@ -62,7 +64,7 @@ def _identity(value: K) -> K:
 
 
 def _getter_bag(namespace: str, name: str) -> Optional[Any]:
-    def get(self) -> Optional[Any]:
+    def get(self: Any) -> Optional[Any]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
@@ -81,8 +83,10 @@ def _getter_bag(namespace: str, name: str) -> Optional[Any]:
     return get
 
 
-def _getter_seq(namespace, name, converter=_identity) -> Optional[Any]:
-    def get(self) -> Optional[Any]:
+def _getter_seq(
+    namespace: str, name: str, converter: Callable[[Any], Any] = _identity
+) -> Optional[Any]:
+    def get(self: Any) -> Optional[Any]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
@@ -106,7 +110,7 @@ def _getter_seq(namespace, name, converter=_identity) -> Optional[Any]:
 
 
 def _getter_langalt(namespace: str, name: str) -> Optional[Any]:
-    def get(self) -> Optional[Any]:
+    def get(self: Any) -> Optional[Any]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
@@ -130,7 +134,7 @@ def _getter_langalt(namespace: str, name: str) -> Optional[Any]:
 def _getter_single(
     namespace: str, name: str, converter: Callable[[str], Any] = _identity
 ) -> Optional[Any]:
-    def get(self) -> Optional[Any]:
+    def get(self: Any) -> Optional[Any]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
@@ -156,16 +160,22 @@ class XmpInformation(PdfObject):
     Usually accessed by :meth:`getXmpMetadata()<PyPDF2.PdfFileReader.getXmpMetadata>`
     """
 
-    def __init__(self, stream) -> None:
+    from PyPDF2.generic import ContentStream
+
+    def __init__(self, stream: ContentStream) -> None:
         self.stream = stream
-        doc_root = parseString(self.stream.getData())
-        self.rdfRoot = doc_root.getElementsByTagNameNS(RDF_NAMESPACE, "RDF")[0]
+        doc_root: Document = parseString(self.stream.getData())
+        self.rdfRoot: XmlElement = doc_root.getElementsByTagNameNS(
+            RDF_NAMESPACE, "RDF"
+        )[0]
         self.cache: Dict[Any, Any] = {}
 
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Optional[bytes]
+    ) -> None:
         self.stream.writeToStream(stream, encryption_key)
 
-    def getElement(self, aboutUri, namespace, name):
+    def getElement(self, aboutUri: str, namespace: str, name: str) -> Any:
         for desc in self.rdfRoot.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):
             if desc.getAttributeNS(RDF_NAMESPACE, "about") == aboutUri:
                 attr = desc.getAttributeNodeNS(namespace, name)
@@ -173,7 +183,7 @@ class XmpInformation(PdfObject):
                     yield attr
                 yield from desc.getElementsByTagNameNS(namespace, name)
 
-    def getNodesInNamespace(self, aboutUri, namespace):
+    def getNodesInNamespace(self, aboutUri: str, namespace: str) -> Any:
         for desc in self.rdfRoot.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):
             if desc.getAttributeNS(RDF_NAMESPACE, "about") == aboutUri:
                 for i in range(desc.attributes.length):
@@ -184,7 +194,7 @@ class XmpInformation(PdfObject):
                     if child.namespaceURI == namespace:
                         yield child
 
-    def _getText(self, element):
+    def _getText(self, element: XmlElement) -> str:
         text = ""
         for child in element.childNodes:
             if child.nodeType == child.TEXT_NODE:

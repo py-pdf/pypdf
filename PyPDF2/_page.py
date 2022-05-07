@@ -51,7 +51,7 @@ from PyPDF2.generic import (
 from PyPDF2.utils import b_
 
 
-def getRectangle(self, name: str, defaults: Iterable[str]) -> RectangleObject:
+def getRectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
     retval = self.get(name)
     if isinstance(retval, RectangleObject):
         return retval
@@ -67,13 +67,13 @@ def getRectangle(self, name: str, defaults: Iterable[str]) -> RectangleObject:
     return retval
 
 
-def setRectangle(self, name: str, value: Union[RectangleObject, float]) -> None:
+def setRectangle(self: Any, name: str, value: Union[RectangleObject, float]) -> None:
     if not isinstance(name, NameObject):
         name = NameObject(name)
     self[name] = value
 
 
-def deleteRectangle(self, name: str) -> None:
+def deleteRectangle(self: Any, name: str) -> None:
     del self[name]
 
 
@@ -100,14 +100,18 @@ class PageObject(DictionaryObject):
         this object in its source PDF
     """
 
-    def __init__(self, pdf=None, indirectRef=None) -> None:
+    def __init__(
+        self, pdf: Optional[Any] = None, indirectRef: Optional[IndirectObject] = None
+    ) -> None:
+        from PyPDF2._reader import PdfFileReader
+
         DictionaryObject.__init__(self)
-        self.pdf = pdf
+        self.pdf: Optional[PdfFileReader] = pdf
         self.indirectRef = indirectRef
 
     @staticmethod
     def createBlankPage(
-        pdf=None,
+        pdf: Optional[Any] = None,  # PdfFileReader
         width: Union[float, Decimal, None] = None,
         height: Union[float, Decimal, None] = None,
     ) -> "PageObject":
@@ -178,7 +182,9 @@ class PageObject(DictionaryObject):
         self[NameObject(PG.ROTATE)] = NumberObject(current_angle + angle)
 
     @staticmethod
-    def _mergeResources(res1, res2, resource) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    def _mergeResources(
+        res1: Any, res2: Any, resource: Any
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         new_res = DictionaryObject()
         new_res.update(res1.get(resource, DictionaryObject()).getObject())
         page2res = res2.get(resource, DictionaryObject()).getObject()
@@ -193,7 +199,9 @@ class PageObject(DictionaryObject):
         return new_res, rename_res
 
     @staticmethod
-    def _contentStreamRename(stream: ContentStream, rename, pdf) -> ContentStream:
+    def _contentStreamRename(
+        stream: ContentStream, rename: Dict[Any, Any], pdf: Any  # PdfFileReader
+    ) -> ContentStream:
         if not rename:
             return stream
         stream = ContentStream(stream, pdf)
@@ -213,7 +221,7 @@ class PageObject(DictionaryObject):
         return stream
 
     @staticmethod
-    def _pushPopGS(contents, pdf):
+    def _pushPopGS(contents: Any, pdf: Any) -> ContentStream:  # PdfFileReader
         # adds a graphics state "push" and "pop" to the beginning and end
         # of a content stream.  This isolates it from changes such as
         # transformation matricies.
@@ -223,7 +231,9 @@ class PageObject(DictionaryObject):
         return stream
 
     @staticmethod
-    def _addTransformationMatrix(contents, pdf, ctm) -> ContentStream:
+    def _addTransformationMatrix(
+        contents: Any, pdf: Any, ctm: Iterable[float]
+    ) -> ContentStream:  # PdfFileReader
         # adds transformation matrix at the beginning of the given
         # contents stream.
         a, b, c, d, e, f = ctm
@@ -274,8 +284,8 @@ class PageObject(DictionaryObject):
     def _mergePage(
         self,
         page2: "PageObject",
-        page2transformation=None,
-        ctm=None,
+        page2transformation: Optional[Any] = None,
+        ctm: Optional[Iterable[float]] = None,
         expand: bool = False,
     ) -> None:
         # First we work on merging the resource dictionaries.  This allows us
@@ -401,7 +411,7 @@ class PageObject(DictionaryObject):
         self[NameObject(PG.ANNOTS)] = new_annots
 
     def mergeTransformedPage(
-        self, page2, ctm: List[float], expand: bool = False
+        self, page2: "PageObject", ctm: Iterable[float], expand: bool = False
     ) -> None:
         """
         mergeTransformedPage is similar to mergePage, but a transformation

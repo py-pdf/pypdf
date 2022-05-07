@@ -72,7 +72,7 @@ from PyPDF2.utils import StrByteType, StreamType, b_, readUntilWhitespace
 from PyPDF2.xmp import XmpInformation
 
 
-def convertToInt(d, size: int) -> Union[int, Tuple[Any, ...]]:
+def convertToInt(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:
     if size > 8:
         raise PdfReadError("invalid size in convertToInt")
     d = b_("\x00\x00\x00\x00\x00\x00\x00\x00") + b_(d)
@@ -93,7 +93,7 @@ class _VirtualList:
     def __len__(self) -> int:
         return self.length_function()
 
-    def __getitem__(self, index) -> Any:
+    def __getitem__(self, index: int) -> Any:
         if isinstance(index, slice):
             indices = range(*index.indices(len(self)))
             cls = type(self)
@@ -361,7 +361,10 @@ class PdfFileReader:
     # see section 8.6.2 of the PDF 1.7 reference.
 
     def getFields(
-        self, tree: Optional[TreeObject] = None, retval=None, fileobj=None
+        self,
+        tree: Optional[TreeObject] = None,
+        retval: Optional[Any] = None,
+        fileobj: Optional[Any] = None,
     ) -> Optional[Dict[str, Any]]:
         """
         Extracts field data if this PDF contains interactive form fields.
@@ -410,7 +413,13 @@ class PdfFileReader:
 
         return retval
 
-    def _buildField(self, field, retval, fileobj, fieldAttributes) -> None:
+    def _buildField(
+        self,
+        field: Union[TreeObject, DictionaryObject],
+        retval: Any,
+        fileobj: Any,
+        fieldAttributes: Any,
+    ) -> None:
         self._checkKids(field, retval, fileobj)
         try:
             key = field["/TM"]
@@ -426,14 +435,14 @@ class PdfFileReader:
         retval[key] = Field(field)
 
     def _checkKids(
-        self, tree: Union[TreeObject, DictionaryObject], retval, fileobj
+        self, tree: Union[TreeObject, DictionaryObject], retval: Any, fileobj: Any
     ) -> None:
         if PA.KIDS in tree:
             # recurse down the tree
             for kid in tree[PA.KIDS]:
                 self.getFields(kid.getObject(), retval, fileobj)
 
-    def _writeField(self, fileobj, field, fieldAttributes) -> None:
+    def _writeField(self, fileobj: Any, field: Any, fieldAttributes: Any) -> None:
         order = ["/TM", "/T", "/FT", PA.PARENT, "/TU", "/Ff", "/V", "/DV"]
         for attr in order:
             attr_name = fieldAttributes[attr]
@@ -474,7 +483,9 @@ class PdfFileReader:
         }
 
     def getNamedDestinations(
-        self, tree: Union[TreeObject, DictionaryObject, None] = None, retval=None
+        self,
+        tree: Union[TreeObject, DictionaryObject, None] = None,
+        retval: Optional[Any] = None,
     ) -> Dict[str, Any]:
         """
         Retrieves the named destinations present in the document.
@@ -525,7 +536,7 @@ class PdfFileReader:
         return self.getOutlines()
 
     def getOutlines(
-        self, node=None, outlines=None
+        self, node: Optional[Any] = None, outlines: Optional[Any] = None
     ) -> List[Union[Destination, List[Destination]]]:
         """
         Retrieve the document outline present in the document.
@@ -573,7 +584,7 @@ class PdfFileReader:
         return outlines
 
     def _getPageNumberByIndirect(
-        self, indirectRef: Union[int, NullObject, IndirectObject]
+        self, indirectRef: Union[None, int, NullObject, IndirectObject]
     ) -> int:
         """Generate _pageId2Num"""
         if self._pageId2Num is None:
@@ -582,7 +593,7 @@ class PdfFileReader:
                 id2num[x.indirectRef.idnum] = i
             self._pageId2Num = id2num
 
-        if isinstance(indirectRef, NullObject):
+        if indirectRef is None or isinstance(indirectRef, NullObject):
             return -1
         if isinstance(indirectRef, int):
             idnum = indirectRef
@@ -601,9 +612,7 @@ class PdfFileReader:
         :return: the page number or -1 if page not found
         :rtype: int
         """
-        indirect_ref = page.indirectRef
-        ret = self._getPageNumberByIndirect(indirect_ref)
-        return ret
+        return self._getPageNumberByIndirect(page.indirectRef)
 
     def getDestinationPageNumber(self, destination: Destination) -> int:
         """
@@ -615,27 +624,30 @@ class PdfFileReader:
         :return: the page number or -1 if page not found
         :rtype: int
         """
-        tmp = destination.page
-        indirect_ref: Union[NullObject, int] = NullObject() if tmp is None else tmp
-        ret = self._getPageNumberByIndirect(indirect_ref)
-        return ret
+        return self._getPageNumberByIndirect(destination.page)
 
-    def _buildDestination(self, title: str, array) -> Destination:
+    def _buildDestination(
+        self,
+        title: str,
+        array: List[Union[NumberObject, IndirectObject, NullObject, DictionaryObject]],
+    ) -> Destination:
         page, typ = array[0:2]
         array = array[2:]
         try:
-            return Destination(title, page, typ, *array)
+            return Destination(title, page, typ, *array)  # type: ignore
         except PdfReadError:
             warnings.warn("Unknown destination : " + title + " " + str(array))
             if self.strict:
                 raise
             else:
                 # create a link to first Page
+                tmp = self.getPage(0).indirectRef
+                indirect_ref = NullObject() if tmp is None else tmp
                 return Destination(
-                    title, self.getPage(0).indirectRef, TextStringObject("/Fit")
+                    title, indirect_ref, TextStringObject("/Fit")  # type: ignore
                 )
 
-    def _buildOutline(self, node) -> Optional[Destination]:
+    def _buildOutline(self, node: TreeObject) -> Optional[Destination]:
         dest, title, outline = None, None, None
 
         if "/A" in node and "/Title" in node:
@@ -710,7 +722,12 @@ class PdfFileReader:
         :meth:`getPageMode()<PdfFileReader.getPageMode>` method."""
         return self.getPageMode()
 
-    def _flatten(self, pages=None, inherit=None, indirectRef=None) -> None:
+    def _flatten(
+        self,
+        pages: Optional[PageObject] = None,
+        inherit: Optional[Dict[str, Any]] = None,
+        indirectRef: Optional[IndirectObject] = None,
+    ) -> None:
         inheritablePageAttributes = (
             NameObject(PG.RESOURCES),
             NameObject(PG.MEDIABOX),
@@ -740,11 +757,11 @@ class PdfFileReader:
                     addt["indirectRef"] = page
                 self._flatten(page.getObject(), inherit, **addt)
         elif t == "/Page":
-            for attr, value in list(inherit.items()):
+            for attr_in, value in list(inherit.items()):
                 # if the page has it's own value, it does not inherit the
                 # parent's value:
-                if attr not in pages:
-                    pages[attr] = value
+                if attr_in not in pages:
+                    pages[attr_in] = value
             page_obj = PageObject(self, indirectRef)
             page_obj.update(pages)
 
@@ -1193,7 +1210,7 @@ class PdfFileReader:
             else:
                 return 0
 
-        def used_before(num: int, generation: int) -> bool:
+        def used_before(num: int, generation: Union[int, Tuple[int, ...]]) -> bool:
             # We move backwards through the xrefs, don't replace any.
             return num in self.xref.get(generation, []) or num in self.xref_objStm
 
@@ -1251,7 +1268,12 @@ class PdfFileReader:
             if key not in self.trailer:
                 self.trailer[key] = value
 
-    def _read_xref_subsections(self, idx_pairs, getEntry, used_before) -> None:
+    def _read_xref_subsections(
+        self,
+        idx_pairs: List[int],
+        getEntry: Callable[[int], Union[int, Tuple[int, ...]]],
+        used_before: Callable[[int, Union[int, Tuple[int, ...]]], bool],
+    ) -> None:
         last_end = 0
         for start, size in self._pairs(idx_pairs):
             # The subsections must increase
@@ -1288,7 +1310,7 @@ class PdfFileReader:
             k - self.xrefIndex: v for (k, v) in list(self.xref[generation].items())
         }
 
-    def _pairs(self, array) -> Iterable[Tuple[int, int]]:
+    def _pairs(self, array: List[int]) -> Iterable[Tuple[int, int]]:
         i = 0
         while True:
             yield array[i], array[i + 1]
@@ -1325,7 +1347,7 @@ class PdfFileReader:
         line_parts.reverse()
         return b"".join(line_parts)
 
-    def decrypt(self, password: Union[str, bytes]) -> int:
+    def decrypt(self, password: str) -> int:
         """
         When using an encrypted / secured PDF file with the PDF Standard
         encryption handler, this function will allow the file to be decrypted.
@@ -1366,7 +1388,7 @@ class PdfFileReader:
         )  # bit 12
         return permissions
 
-    def _decrypt(self, password: Union[str, bytes]) -> int:
+    def _decrypt(self, password: str) -> int:
         # Decrypts data as per Section 3.5 (page 117) of PDF spec v1.7
         # "The security handler defines the use of encryption and decryption in
         # the document, using the rules specified by the CF, StmF, and StrF entries"
@@ -1418,9 +1440,7 @@ class PdfFileReader:
                 return 2
         return 0
 
-    def _authenticateUserPassword(
-        self, password: Union[str, bytes]
-    ) -> Tuple[bool, bytes]:
+    def _authenticateUserPassword(self, password: str) -> Tuple[bool, bytes]:
         encrypt = self.trailer[TK.ENCRYPT].getObject()
         rev = encrypt[ED.R].getObject()
         owner_entry = encrypt[ED.O].getObject()
