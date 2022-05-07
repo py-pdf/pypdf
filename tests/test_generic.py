@@ -286,31 +286,50 @@ def test_DictionaryObject_read_from_stream_stream_no_newline():
     assert exc.value.args[0] == "Stream data must be followed by a newline"
 
 
-def test_DictionaryObject_read_from_stream_stream_no_stream_length():
+@pytest.mark.parametrize(("strict"), [(True), (False)])
+def test_DictionaryObject_read_from_stream_stream_no_stream_length(strict):
     stream = BytesIO(b"<< /S /GoTo >>stream\n")
-    pdf = None
+
+    class tst:  # to replace pdf
+        strict = False
+
+    pdf = tst()
+    pdf.strict = strict
     with pytest.raises(PdfReadError) as exc:
         DictionaryObject.readFromStream(stream, pdf)
     assert exc.value.args[0] == "Stream length not defined"
 
 
-def test_DictionaryObject_read_from_stream_stream_stream_missing_endstream2():
-    stream = BytesIO(b"<< /S /GoTo /Length 10 >>stream\n ")
-    pdf = None
+@pytest.mark.parametrize(
+    ("strict", "length", "shouldFail"),
+    [
+        (True, 6, False),
+        (True, 10, False),
+        (True, 4, True),
+        (False, 6, False),
+        (False, 10, False),
+    ],
+)
+def test_DictionaryObject_read_from_stream_stream_stream_valid(
+    strict, length, shouldFail
+):
+    stream = BytesIO(b"<< /S /GoTo /Length %d >>stream\nBT /F1\nendstream\n" % length)
+
+    class tst:  # to replace pdf
+        strict = True
+
+    pdf = tst()
+    pdf.strict = strict
     with pytest.raises(PdfReadError) as exc:
-        DictionaryObject.readFromStream(stream, pdf)
-    assert (
-        exc.value.args[0]
-        == "Unable to find 'endstream' marker after stream at byte 0x21."
-    )
+        do = DictionaryObject.readFromStream(stream, pdf)
+        # TODO: What should happen with the stream?
+        assert do == {"/S": "/GoTo"}
+        if length in (6, 10):
+            assert b"BT /F1" in do._StreamObject__data
+        raise PdfReadError("__ALLGOOD__")
+    print(exc.value)
+    assert shouldFail ^ (exc.value.args[0] == "__ALLGOOD__")
 
-
-def test_DictionaryObject_read_from_stream_stream_stream_valid():
-    stream = BytesIO(b"<< /S /GoTo /Length 10 >>stream\nBT /F1\nendstream\n")
-    pdf = None
-    do = DictionaryObject.readFromStream(stream, pdf)
-    # TODO: What should happen with the stream?
-    assert do == {"/S": "/GoTo"}
 
 
 def test_RectangleObject():

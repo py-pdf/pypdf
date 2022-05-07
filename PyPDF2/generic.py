@@ -507,6 +507,29 @@ class DictionaryObject(dict, PdfObject):
 
     @staticmethod
     def readFromStream(stream, pdf):
+        def getNextObjPos(p, p1, remGens, pdf):
+            l = pdf.xref[remGens[0]]
+            for o in l:
+                if p1 > l[o] and p < l[o]:
+                    p1 = l[o]
+            if len(remGens) == 1:
+                return p1
+            else:
+                return getNextObjPos(p, p1, remGens[1:], pdf)
+
+        def readUnsizedFromSteam(stream, pdf):
+            # we are just pointing at beginning of the stream
+            eon = getNextObjPos(stream.tell(), 2**32, [g for g in pdf.xref], pdf) - 1
+            curr = stream.tell()
+            rw = stream.read(eon - stream.tell())
+            p = rw.find(b_("endstream"))
+            if p < 0:
+                raise PdfReadError(
+                    f"Unable to find 'endstream' marker for obj starting at {curr}."
+                )
+            stream.seek(curr + p + 9)
+            return rw[: p - 1]
+
         tmp = stream.read(2)
         if tmp != b_("<<"):
             raise PdfReadError(
@@ -570,6 +593,7 @@ class DictionaryObject(dict, PdfObject):
                 t = stream.tell()
                 length = pdf.getObject(length)
                 stream.seek(t, 0)
+            pstart = stream.tell()
             data["__streamdata__"] = stream.read(length)
             e = readNonWhitespace(stream)
             ndstream = stream.read(8)
@@ -586,6 +610,10 @@ class DictionaryObject(dict, PdfObject):
                 if end == b_("endstream"):
                     # we found it by looking back one character further.
                     data["__streamdata__"] = data["__streamdata__"][:-1]
+                elif not pdf.strict:
+                    stream.seek(pstart, 0)
+                    data["__streamdata__"] = readUnsizedFromSteam(stream, pdf)
+                    pos = stream.tell()
                 else:
                     stream.seek(pos, 0)
                     raise PdfReadError(
