@@ -35,6 +35,8 @@ import struct
 from io import StringIO
 from typing import Any, Dict, Optional, Tuple, Union
 
+from PyPDF2.generic import ArrayObject, DictionaryObject
+
 try:
     from typing import Literal  # type: ignore[attr-defined]
 except ImportError:
@@ -128,7 +130,7 @@ except ImportError:  # pragma: no cover
 
 class FlateDecode:
     @staticmethod
-    def decode(data: bytes, decodeParms: Optional[Dict[str, Any]]) -> bytes:
+    def decode(data: bytes, decodeParms: Union[None, DictionaryObject]) -> bytes:
         """
         :param data: flate-encoded data.
         :param decodeParms: a dictionary of values, understanding the
@@ -140,8 +142,6 @@ class FlateDecode:
 
         if decodeParms:
             try:
-                from PyPDF2.generic import ArrayObject
-
                 if isinstance(decodeParms, ArrayObject):
                     for decodeParm in decodeParms:
                         if "/Predictor" in decodeParm:
@@ -215,7 +215,9 @@ class ASCIIHexDecode:
     """
 
     @staticmethod
-    def decode(data: str, decodeParms: Optional[Dict[str, Any]] = None) -> str:
+    def decode(
+        data: str, decodeParms: Union[None, ArrayObject, DictionaryObject] = None
+    ) -> str:
         """
         :param data: a str sequence of hexadecimal-encoded values to be
             converted into a base-7 ASCII string
@@ -329,7 +331,9 @@ class LZWDecode:
             return baos
 
     @staticmethod
-    def decode(data: bytes, decodeParms: Optional[Dict[str, Any]] = None) -> str:
+    def decode(
+        data: bytes, decodeParms: Union[None, ArrayObject, DictionaryObject] = None
+    ) -> str:
         """
         :param data: ``bytes`` or ``str`` text to decode.
         :param decodeParms: a dictionary of parameter values.
@@ -343,7 +347,10 @@ class ASCII85Decode:
     """Decodes string ASCII85-encoded data into a byte format."""
 
     @staticmethod
-    def decode(data: bytes, decodeParms: Optional[Dict[str, Any]] = None) -> bytes:
+    def decode(
+        data: Union[str, bytes],
+        decodeParms: Union[None, ArrayObject, DictionaryObject] = None,
+    ) -> bytes:
         if isinstance(data, str):
             data = data.encode("ascii")
         group_index = b = 0
@@ -369,13 +376,17 @@ class ASCII85Decode:
 
 class DCTDecode:
     @staticmethod
-    def decode(data: bytes, decodeParms: Optional[Dict[str, Any]] = None) -> bytes:
+    def decode(
+        data: bytes, decodeParms: Union[None, ArrayObject, DictionaryObject] = None
+    ) -> bytes:
         return data
 
 
 class JPXDecode:
     @staticmethod
-    def decode(data: bytes, decodeParms: Optional[Dict[str, Any]] = None) -> bytes:
+    def decode(
+        data: bytes, decodeParms: Union[None, ArrayObject, DictionaryObject] = None
+    ) -> bytes:
         return data
 
 
@@ -414,7 +425,7 @@ class CCITTFaxDecode:
 
     @staticmethod
     def _get_parameters(
-        parameters: Optional[Dict[str, Any]], rows: int
+        parameters: Union[None, ArrayObject, DictionaryObject], rows: int
     ) -> CCITParameters:
         k = 0
         columns = 0
@@ -428,14 +439,16 @@ class CCITTFaxDecode:
                     if CCITT.K in decodeParm:
                         k = decodeParm[CCITT.K]
             else:
-                columns = parameters[CCITT.COLUMNS]
-                k = parameters[CCITT.K]
+                columns = parameters[CCITT.COLUMNS]  # type: ignore
+                k = parameters[CCITT.K]  # type: ignore
 
         return CCITParameters(k, columns, rows)
 
     @staticmethod
     def decode(
-        data: bytes, decodeParms: Optional[Dict[str, Any]] = None, height: int = 0
+        data: bytes,
+        decodeParms: Union[None, ArrayObject, DictionaryObject] = None,
+        height: int = 0,
     ) -> bytes:
         parms = CCITTFaxDecode._get_parameters(decodeParms, height)
 

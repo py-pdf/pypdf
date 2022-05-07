@@ -49,7 +49,7 @@ from PyPDF2.errors import (
     PdfStreamError,
 )
 
-from . import filters, utils
+from . import utils
 from .utils import (
     RC4_encrypt,
     StreamType,
@@ -850,6 +850,8 @@ class StreamObject(DictionaryObject):
         return retval
 
     def flateEncode(self) -> "EncodedStreamObject":
+        from PyPDF2.filters import FlateDecode
+
         if SA.FILTER in self:
             f = self[SA.FILTER]
             if isinstance(f, ArrayObject):
@@ -863,7 +865,7 @@ class StreamObject(DictionaryObject):
             f = NameObject("/FlateDecode")
         retval = EncodedStreamObject()
         retval[NameObject(SA.FILTER)] = f
-        retval._data = filters.FlateDecode.encode(self._data)
+        retval._data = FlateDecode.encode(self._data)
         return retval
 
 
@@ -880,6 +882,8 @@ class EncodedStreamObject(StreamObject):
         self.decodedSelf: Optional[DecodedStreamObject] = None
 
     def getData(self) -> Union[None, str, bytes]:
+        from PyPDF2.filters import decodeStreamData
+
         if self.decodedSelf:
             # cached version of decoded object
             return self.decodedSelf.getData()
@@ -887,7 +891,7 @@ class EncodedStreamObject(StreamObject):
             # create decoded object
             decoded = DecodedStreamObject()
 
-            decoded._data = filters.decodeStreamData(self)
+            decoded._data = decodeStreamData(self)
             for key, value in list(self.items()):
                 if key not in (SA.LENGTH, SA.FILTER, SA.DECODE_PARMS):
                     decoded[key] = value
