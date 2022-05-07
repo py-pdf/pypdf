@@ -513,14 +513,14 @@ class PageObject(DictionaryObject):
             dimensions of the page to be merged.
         """
 
-        translation = [[1, 0, 0], [0, 1, 0], [-tx, -ty, 1]]
+        translation: List[List[float]] = [[1, 0, 0], [0, 1, 0], [-tx, -ty, 1]]
         rotation = math.radians(rotation)
-        rotating = [
+        rotating: List[List[float]] = [
             [math.cos(rotation), math.sin(rotation), 0],
             [-math.sin(rotation), math.cos(rotation), 0],
             [0, 0, 1],
         ]
-        rtranslation = [[1, 0, 0], [0, 1, 0], [tx, ty, 1]]
+        rtranslation: List[List[float]] = [[1, 0, 0], [0, 1, 0], [tx, ty, 1]]
         ctm = utils.matrixMultiply(translation, rotating)
         ctm = utils.matrixMultiply(ctm, rtranslation)
 
@@ -545,12 +545,12 @@ class PageObject(DictionaryObject):
             dimensions of the page to be merged.
         """
         rotation = math.radians(rotation)
-        rotating = [
+        rotating: List[List[float]] = [
             [math.cos(rotation), math.sin(rotation), 0],
             [-math.sin(rotation), math.cos(rotation), 0],
             [0, 0, 1],
         ]
-        scaling = [[scale, 0, 0], [0, scale, 0], [0, 0, 1]]
+        scaling: List[List[float]] = [[scale, 0, 0], [0, scale, 0], [0, 0, 1]]
         ctm = utils.matrixMultiply(rotating, scaling)
 
         self.mergeTransformedPage(
@@ -580,8 +580,8 @@ class PageObject(DictionaryObject):
             dimensions of the page to be merged.
         """
 
-        translation = [[1, 0, 0], [0, 1, 0], [tx, ty, 1]]
-        scaling = [[scale, 0, 0], [0, scale, 0], [0, 0, 1]]
+        translation: List[List[float]] = [[1, 0, 0], [0, 1, 0], [tx, ty, 1]]
+        scaling: List[List[float]] = [[scale, 0, 0], [0, scale, 0], [0, 0, 1]]
         ctm = utils.matrixMultiply(scaling, translation)
 
         return self.mergeTransformedPage(
@@ -613,14 +613,14 @@ class PageObject(DictionaryObject):
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
-        translation = [[1, 0, 0], [0, 1, 0], [tx, ty, 1]]
+        translation: List[List[float]] = [[1, 0, 0], [0, 1, 0], [tx, ty, 1]]
         rotation = math.radians(rotation)
-        rotating = [
+        rotating: List[List[float]] = [
             [math.cos(rotation), math.sin(rotation), 0],
             [-math.sin(rotation), math.cos(rotation), 0],
             [0, 0, 1],
         ]
-        scaling = [[scale, 0, 0], [0, scale, 0], [0, 0, 1]]
+        scaling: List[List[float]] = [[scale, 0, 0], [0, scale, 0], [0, 0, 1]]
         ctm = utils.matrixMultiply(rotating, scaling)
         ctm = utils.matrixMultiply(ctm, translation)
 

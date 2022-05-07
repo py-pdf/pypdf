@@ -31,9 +31,8 @@ Utility functions for PDF library.
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
-
 from io import BufferedReader, BufferedWriter, BytesIO, FileIO
-from typing import Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union, overload
 
 from PyPDF2.errors import STREAM_TRUNCATED_PREMATURELY, PdfStreamError
 
@@ -58,7 +57,7 @@ def readUntilWhitespace(stream: StreamType, maxchars: Optional[int] = None) -> b
     return txt
 
 
-def readNonWhitespace(stream):
+def readNonWhitespace(stream: StreamType) -> bytes:
     """
     Finds and reads the next non-whitespace character (ignores whitespace).
     """
@@ -68,7 +67,7 @@ def readNonWhitespace(stream):
     return tok
 
 
-def skipOverWhitespace(stream):
+def skipOverWhitespace(stream: StreamType) -> bool:
     """
     Similar to readNonWhitespace, but returns a Boolean if more than
     one whitespace character was read.
@@ -81,7 +80,7 @@ def skipOverWhitespace(stream):
     return cnt > 1
 
 
-def skipOverComment(stream):
+def skipOverComment(stream: StreamType) -> None:
     tok = stream.read(1)
     stream.seek(-1, 1)
     if tok == b_("%"):
@@ -89,11 +88,12 @@ def skipOverComment(stream):
             tok = stream.read(1)
 
 
-def readUntilRegex(stream, regex, ignore_eof=False):
+def readUntilRegex(stream: StreamType, regex: Any, ignore_eof: bool = False) -> bytes:
     """
     Reads until the regular expression pattern matched (ignore the match)
     :raises PdfStreamError: on premature end-of-file
     :param bool ignore_eof: If true, ignore end-of-line and return immediately
+    :param regex: re.Pattern
     """
     name = b_("")
     while True:
@@ -113,7 +113,7 @@ def readUntilRegex(stream, regex, ignore_eof=False):
     return name
 
 
-def RC4_encrypt(key, plaintext):
+def RC4_encrypt(key: bytes, plaintext: bytes) -> bytes:
     S = list(range(256))
     j = 0
     for i in range(256):
@@ -130,14 +130,14 @@ def RC4_encrypt(key, plaintext):
     return b_("").join(retval)
 
 
-def matrixMultiply(a, b):
+def matrixMultiply(a: List[List[float]], b: List[List[float]]) -> List[List[float]]:
     return [
         [sum(float(i) * float(j) for i, j in zip(row, col)) for col in zip(*b)]
         for row in a
     ]
 
 
-def markLocation(stream):
+def markLocation(stream: StreamType) -> None:
     """Creates text file showing current location in context."""
     # Mainly for debugging
     radius = 5000
@@ -149,10 +149,10 @@ def markLocation(stream):
     stream.seek(-radius, 1)
 
 
-B_CACHE = {}  # type: Dict[str, bytes]
+B_CACHE: Dict[Union[str, bytes], bytes] = {}
 
 
-def b_(s) -> bytes:
+def b_(s: Union[str, bytes]) -> bytes:
     bc = B_CACHE
     if s in bc:
         return bc[s]
@@ -160,46 +160,71 @@ def b_(s) -> bytes:
         return s
     else:
         try:
-            r = s.encode("latin-1")
+            r = s.encode("latin-1")  # type: ignore
             if len(s) < 2:
                 bc[s] = r
             return r
         except Exception:
-            r = s.encode("utf-8")
+            r = s.encode("utf-8")  # type: ignore
             if len(s) < 2:
                 bc[s] = r
             return r
 
 
-def str_(b) -> str:
+@overload
+def str_(b: str) -> str:
+    ...
+
+
+@overload
+def str_(b: bytes) -> str:
+    ...
+
+
+def str_(b: Union[str, bytes]) -> str:
     if type(b) == bytes:
-        return b.decode("latin-1")
+        return b.decode("latin-1")  # type: ignore
     else:
-        return b
+        return b  # type: ignore
 
 
-def ord_(b):
+@overload
+def ord_(b: str) -> int:
+    ...
+
+
+@overload
+def ord_(b: bytes) -> bytes:
+    ...
+
+
+@overload
+def ord_(b: int) -> int:
+    ...
+
+
+def ord_(b: Union[int, str, bytes]) -> Union[int, bytes, int]:
     if type(b) == str:
         return ord(b)
     else:
-        return b
+        return b  # type: ignore
 
 
-def hexencode(b):
+def hexencode(b: bytes) -> bytes:
     import codecs
 
     coder = codecs.getencoder("hex_codec")
-    return coder(b)[0]
+    return coder(b)[0]  # type: ignore
 
 
-def hexStr(num):
+def hexStr(num: int) -> str:
     return hex(num).replace("L", "")
 
 
 WHITESPACES = [b_(x) for x in [" ", "\n", "\r", "\t", "\x00"]]
 
 
-def paethPredictor(left, up, up_left):
+def paethPredictor(left: float, up: float, up_left: float) -> float:
     p = left + up - up_left
     dist_left = abs(p - left)
     dist_up = abs(p - up)

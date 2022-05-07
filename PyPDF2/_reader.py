@@ -31,7 +31,17 @@ import struct
 import warnings
 from hashlib import md5
 from io import BytesIO
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 from PyPDF2 import utils
 from PyPDF2._page import PageObject
@@ -93,7 +103,7 @@ class _VirtualList:
     def __len__(self) -> int:
         return self.length_function()
 
-    def __getitem__(self, index: int) -> Any:
+    def __getitem__(self, index: int) -> PageObject:
         if isinstance(index, slice):
             indices = range(*index.indices(len(self)))
             cls = type(self)
@@ -108,14 +118,9 @@ class _VirtualList:
             raise IndexError("sequence index out of range")
         return self.get_function(index)
 
-    # def __iter__(self):
-    #     return self
-
-    # def __next__(self):
-    #     self.current += 1
-    #     if self.current < self.length_function():
-    #         return self.get_function(self.current)
-    #     return
+    def __iter__(self) -> Iterator[PageObject]:
+        for i in range(len(self)):
+            yield self[i]
 
 
 class DocumentInformation(DictionaryObject):
@@ -590,7 +595,7 @@ class PdfFileReader:
         if self._pageId2Num is None:
             id2num = {}
             for i, x in enumerate(self.pages):  # type: ignore
-                id2num[x.indirectRef.idnum] = i
+                id2num[x.indirectRef.idnum] = i  # type: ignore
             self._pageId2Num = id2num
 
         if indirectRef is None or isinstance(indirectRef, NullObject):
@@ -779,7 +784,7 @@ class PdfFileReader:
         assert obj_stm["/Type"] == "/ObjStm"
         # /N is the number of indirect objects in the stream
         assert idx < obj_stm["/N"]
-        stream_data = BytesIO(b_(obj_stm.getData()))
+        stream_data = BytesIO(b_(obj_stm.getData()))  # type: ignore
         for i in range(obj_stm["/N"]):
             readNonWhitespace(stream_data)
             stream_data.seek(-1, 1)
@@ -907,9 +912,9 @@ class PdfFileReader:
         key: Union[str, bytes],
     ) -> PdfObject:
         if isinstance(obj, (ByteStringObject, TextStringObject)):
-            obj = createStringObject(utils.RC4_encrypt(key, obj.original_bytes))
+            obj = createStringObject(utils.RC4_encrypt(key, obj.original_bytes))  # type: ignore
         elif isinstance(obj, StreamObject):
-            obj._data = utils.RC4_encrypt(key, obj._data)
+            obj._data = utils.RC4_encrypt(key, obj._data)  # type: ignore
         elif isinstance(obj, DictionaryObject):
             for dictkey, value in list(obj.items()):
                 obj[dictkey] = self._decryptObject(value, key)
@@ -1434,7 +1439,7 @@ class PdfFileReader:
                         new_key += b_(chr(utils.ord_(key[l]) ^ i))
                     val = utils.RC4_encrypt(new_key, val)
                 userpass = val
-            owner_password, key = self._authenticateUserPassword(userpass)
+            owner_password, key = self._authenticateUserPassword(userpass)  # type: ignore
             if owner_password:
                 self._decryption_key = key
                 return 2

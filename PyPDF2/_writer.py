@@ -33,8 +33,7 @@ import struct
 import uuid
 import warnings
 from hashlib import md5
-from io import BytesIO
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from PyPDF2._page import PageObject
 from PyPDF2._reader import PdfFileReader

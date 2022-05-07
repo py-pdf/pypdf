@@ -377,7 +377,7 @@ class ByteStringObject(utils.bytes_type, PdfObject):  # type: ignore
     ) -> None:
         bytearr = self
         if encryption_key:
-            bytearr = RC4_encrypt(encryption_key, bytearr)
+            bytearr = RC4_encrypt(encryption_key, bytearr)  #  type: ignore
         stream.write(b_("<"))
         stream.write(utils.hexencode(bytearr))
         stream.write(b_(">"))
