@@ -1,4 +1,5 @@
 import os
+from io import BytesIO
 
 import pytest
 
@@ -334,8 +335,6 @@ def test_add_link():
 
 def test_io_streams():
     """This is the example from the docs ("Streaming data")."""
-    # Arrange
-    from io import BytesIO
 
     filepath = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
     with open(filepath, "rb") as fh:
@@ -359,3 +358,14 @@ def test_regression_issue670():
         pdf_writer.addPage(reader.getPage(0))
         with open("dont_commit_issue670.pdf", "wb") as f_pdf:
             pdf_writer.write(f_pdf)
+
+def test_issue301():
+    """
+    Test with invalid stream length object
+    """
+    with open(os.path.join(RESOURCE_ROOT, "issue-301.pdf"), "rb") as f:
+        r = PdfFileReader(f)
+        w = PdfFileWriter()
+        w.appendPagesFromReader(r)
+        o = BytesIO()
+        w.write(o)
