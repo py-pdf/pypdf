@@ -52,7 +52,7 @@ from PyPDF2.utils import b_
 
 
 def getRectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
-    retval = self.get(name)
+    retval: Union[None, RectangleObject, IndirectObject] = self.get(name)
     if isinstance(retval, RectangleObject):
         return retval
     if retval is None:
@@ -62,7 +62,7 @@ def getRectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObje
                 break
     if isinstance(retval, IndirectObject):
         retval = self.pdf.getObject(retval)
-    retval = RectangleObject(retval)
+    retval = RectangleObject(retval)  # type: ignore
     setRectangle(self, name, retval)
     return retval
 

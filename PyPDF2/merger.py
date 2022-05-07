@@ -176,7 +176,7 @@ class PdfFileMerger:
                 NumberObject(self.id_count),
                 NameObject("/Fit"),
             )
-            self.bookmarks += [bookmark_typ, outline]
+            self.bookmarks += [bookmark_typ, outline]  # type: ignore
         else:
             self.bookmarks += outline
 
