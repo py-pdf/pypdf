@@ -38,7 +38,7 @@ import logging
 import re
 import warnings
 from io import BytesIO
-from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from PyPDF2.constants import FilterTypes as FT
 from PyPDF2.constants import StreamAttributes as SA
@@ -292,7 +292,9 @@ def readHexStringFromStream(
     return createStringObject(b_(txt))
 
 
-def readStringFromStream(stream: StreamType) -> str:
+def readStringFromStream(
+    stream: StreamType,
+) -> Union["TextStringObject", "ByteStringObject"]:
     tok = stream.read(1)
     parens = 1
     txt = b_("")

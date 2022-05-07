@@ -33,7 +33,7 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 import math
 import struct
 from io import StringIO
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple, Union
 
 try:
     from typing import Literal  # type: ignore[attr-defined]
@@ -128,7 +128,7 @@ except ImportError:  # pragma: no cover
 
 class FlateDecode:
     @staticmethod
-    def decode(data: bytes, decodeParms: Dict[str, Any]) -> str:
+    def decode(data: bytes, decodeParms: Optional[Dict[str, Any]]) -> str:
         """
         :param data: flate-encoded data.
         :param decodeParms: a dictionary of values, understanding the
@@ -154,7 +154,7 @@ class FlateDecode:
         if predictor != 1:
             # The /Columns param. has 1 as the default value; see ISO 32000,
             # §7.4.4.3 LZWDecode and FlateDecode Parameters, Table 8
-            columns = decodeParms.get(LZW.COLUMNS, 1)
+            columns = 1 if decodeParms is None else decodeParms.get(LZW.COLUMNS, 1)
 
             # PNG prediction:
             if 10 <= predictor <= 15:
@@ -487,7 +487,7 @@ class CCITTFaxDecode:
         return tiff_header + data
 
 
-def decodeStreamData(stream: Any) -> bytes:  # utils.StreamObject
+def decodeStreamData(stream: Any) -> Union[str, bytes]:  # utils.StreamObject
     from .generic import NameObject
 
     filters = stream.get(SA.FILTER, ())
@@ -495,16 +495,16 @@ def decodeStreamData(stream: Any) -> bytes:  # utils.StreamObject
     if len(filters) and not isinstance(filters[0], NameObject):
         # we have a single filter instance
         filters = (filters,)
-    data = stream._data
+    data: bytes = stream._data
     # If there is not data to decode we should not try to decode the data.
     if data:
         for filterType in filters:
             if filterType == FT.FLATE_DECODE or filterType == FTA.FL:
-                data = FlateDecode.decode(data, stream.get(SA.DECODE_PARMS))
+                data = FlateDecode.decode(data, stream.get(SA.DECODE_PARMS))  # type: ignore
             elif filterType == FT.ASCII_HEX_DECODE or filterType == FTA.AHx:
-                data = ASCIIHexDecode.decode(data)
+                data = ASCIIHexDecode.decode(data)  # type: ignore
             elif filterType == FT.LZW_DECODE or filterType == FTA.LZW:
-                data = LZWDecode.decode(data, stream.get(SA.DECODE_PARMS))
+                data = LZWDecode.decode(data, stream.get(SA.DECODE_PARMS))  # type: ignore
             elif filterType == FT.ASCII_85_DECODE or filterType == FTA.A85:
                 data = ASCII85Decode.decode(data)
             elif filterType == FT.DCT_DECODE:
