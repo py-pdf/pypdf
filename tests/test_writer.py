@@ -359,6 +359,7 @@ def test_regression_issue670():
         with open("dont_commit_issue670.pdf", "wb") as f_pdf:
             pdf_writer.write(f_pdf)
 
+
 def test_issue301():
     """
     Test with invalid stream length object

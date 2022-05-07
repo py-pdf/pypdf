@@ -42,7 +42,7 @@ StreamType = Union[BytesIO, BufferedReader, BufferedWriter, FileIO]
 StrByteType = Union[str, StreamType]
 
 
-def readUntilWhitespace(stream: StreamType, maxchars: Optional[int] = None):
+def readUntilWhitespace(stream: StreamType, maxchars: Optional[int] = None) -> bytes:
     """
     Reads non-whitespace characters and returns them.
     Stops upon encountering whitespace or when maxchars is reached.
@@ -111,30 +111,6 @@ def readUntilRegex(stream, regex, ignore_eof=False):
             break
         name += tok
     return name
-
-
-class ConvertFunctionsToVirtualList:
-    def __init__(self, lengthFunction, getFunction) -> None:
-        self.lengthFunction = lengthFunction
-        self.getFunction = getFunction
-
-    def __len__(self):
-        return self.lengthFunction()
-
-    def __getitem__(self, index):
-        if isinstance(index, slice):
-            indices = range(*index.indices(len(self)))
-            cls = type(self)
-            return cls(indices.__len__, lambda idx: self[indices[idx]])
-        if not isinstance(index, int):
-            raise TypeError("sequence indices must be integers")
-        len_self = len(self)
-        if index < 0:
-            # support negative indexes
-            index = len_self + index
-        if index < 0 or index >= len_self:
-            raise IndexError("sequence index out of range")
-        return self.getFunction(index)
 
 
 def RC4_encrypt(key, plaintext):

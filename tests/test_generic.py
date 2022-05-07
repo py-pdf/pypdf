@@ -331,7 +331,6 @@ def test_DictionaryObject_read_from_stream_stream_stream_valid(
     assert shouldFail ^ (exc.value.args[0] == "__ALLGOOD__")
 
 
-
 def test_RectangleObject():
     ro = RectangleObject((1, 2, 3, 4))
     assert ro.lowerLeft == (1, 2)

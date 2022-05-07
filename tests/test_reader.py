@@ -599,3 +599,11 @@ def test_decode_permissions():
     modify = base.copy()
     modify["modify"] = True
     assert reader.decode_permissions(8) == modify
+
+
+def test_VirtualList():
+    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    reader = PdfFileReader(pdf_path)
+
+    # Test if getting as slice throws an error
+    assert len(reader.pages[:]) == 1

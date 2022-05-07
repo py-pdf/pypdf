@@ -90,7 +90,7 @@ class PageRange:
             isinstance(input, str) and bool(re.match(PAGE_RANGE_RE, input))
         )
 
-    def to_slice(self):
+    def to_slice(self) -> slice:
         """Return the slice equivalent of this page range."""
         return self._slice
 

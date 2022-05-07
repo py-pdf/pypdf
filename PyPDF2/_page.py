@@ -193,7 +193,7 @@ class PageObject(DictionaryObject):
         return new_res, rename_res
 
     @staticmethod
-    def _contentStreamRename(stream: ContentStream, rename, pdf):
+    def _contentStreamRename(stream: ContentStream, rename, pdf) -> ContentStream:
         if not rename:
             return stream
         stream = ContentStream(stream, pdf)

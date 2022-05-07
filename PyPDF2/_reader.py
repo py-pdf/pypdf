@@ -31,7 +31,7 @@ import struct
 import warnings
 from hashlib import md5
 from io import BytesIO
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 from PyPDF2 import utils
 from PyPDF2._page import PageObject
@@ -68,13 +68,7 @@ from PyPDF2.generic import (
     readNonWhitespace,
     readObject,
 )
-from PyPDF2.utils import (
-    ConvertFunctionsToVirtualList,
-    StrByteType,
-    StreamType,
-    b_,
-    readUntilWhitespace,
-)
+from PyPDF2.utils import StrByteType, StreamType, b_, readUntilWhitespace
 from PyPDF2.xmp import XmpInformation
 
 
@@ -84,6 +78,44 @@ def convertToInt(d, size: int) -> Union[int, Tuple[Any, ...]]:
     d = b_("\x00\x00\x00\x00\x00\x00\x00\x00") + b_(d)
     d = d[-8:]
     return struct.unpack(">q", d)[0]
+
+
+class _VirtualList:
+    def __init__(
+        self,
+        length_function: Callable[[], int],
+        get_function: Callable[[int], PageObject],
+    ) -> None:
+        self.length_function = length_function
+        self.get_function = get_function
+        self.current = -1
+
+    def __len__(self) -> int:
+        return self.length_function()
+
+    def __getitem__(self, index) -> Any:
+        if isinstance(index, slice):
+            indices = range(*index.indices(len(self)))
+            cls = type(self)
+            return cls(indices.__len__, lambda idx: self[indices[idx]])
+        if not isinstance(index, int):
+            raise TypeError("sequence indices must be integers")
+        len_self = len(self)
+        if index < 0:
+            # support negative indexes
+            index = len_self + index
+        if index < 0 or index >= len_self:
+            raise IndexError("sequence index out of range")
+        return self.get_function(index)
+
+    # def __iter__(self):
+    #     return self
+
+    # def __next__(self):
+    #     self.current += 1
+    #     if self.current < self.length_function():
+    #         return self.get_function(self.current)
+    #     return
 
 
 class DocumentInformation(DictionaryObject):
@@ -540,11 +572,13 @@ class PdfFileReader:
 
         return outlines
 
-    def _getPageNumberByIndirect(self, indirectRef: IndirectObject) -> int:
+    def _getPageNumberByIndirect(
+        self, indirectRef: Union[int, NullObject, IndirectObject]
+    ) -> int:
         """Generate _pageId2Num"""
         if self._pageId2Num is None:
             id2num = {}
-            for i, x in enumerate(self.pages):
+            for i, x in enumerate(self.pages):  # type: ignore
                 id2num[x.indirectRef.idnum] = i
             self._pageId2Num = id2num
 
@@ -581,7 +615,8 @@ class PdfFileReader:
         :return: the page number or -1 if page not found
         :rtype: int
         """
-        indirect_ref = destination.page
+        tmp = destination.page
+        indirect_ref: Union[NullObject, int] = NullObject() if tmp is None else tmp
         ret = self._getPageNumberByIndirect(indirect_ref)
         return ret
 
@@ -626,13 +661,13 @@ class PdfFileReader:
         return outline
 
     @property
-    def pages(self):
+    def pages(self) -> _VirtualList:
         """
         Read-only property that emulates a list based upon the
         :meth:`getNumPages()<PdfFileReader.getNumPages>` and
         :meth:`getPage()<PdfFileReader.getPage>` methods.
         """
-        return ConvertFunctionsToVirtualList(self.getNumPages, self.getPage)
+        return _VirtualList(self.getNumPages, self.getPage)
 
     def getPageLayout(self) -> Optional[str]:
         """
@@ -890,7 +925,7 @@ class PdfFileReader:
         if extra and self.strict:
             warnings.warn(
                 "Superfluous whitespace found in object header %s %s"
-                % (idnum, generation),
+                % (idnum, generation),  # type: ignore
                 PdfReadWarning,
             )
         return int(idnum), int(generation)
@@ -1331,7 +1366,7 @@ class PdfFileReader:
         )  # bit 12
         return permissions
 
-    def _decrypt(self, password: Union[str, bytes]):
+    def _decrypt(self, password: Union[str, bytes]) -> int:
         # Decrypts data as per Section 3.5 (page 117) of PDF spec v1.7
         # "The security handler defines the use of encryption and decryption in
         # the document, using the rules specified by the CF, StmF, and StrF entries"
@@ -1383,7 +1418,9 @@ class PdfFileReader:
                 return 2
         return 0
 
-    def _authenticateUserPassword(self, password: Union[str, bytes]):
+    def _authenticateUserPassword(
+        self, password: Union[str, bytes]
+    ) -> Tuple[bool, bytes]:
         encrypt = self.trailer[TK.ENCRYPT].getObject()
         rev = encrypt[ED.R].getObject()
         owner_entry = encrypt[ED.O].getObject()
@@ -1412,11 +1449,11 @@ class PdfFileReader:
             U, real_U = U[:16], real_U[:16]
         return U == real_U, key
 
-    def getIsEncrypted(self):
+    def getIsEncrypted(self) -> bool:
         return TK.ENCRYPT in self.trailer
 
     @property
-    def isEncrypted(self):
+    def isEncrypted(self) -> bool:
         """
         Read-only boolean property showing whether this PDF file is encrypted.
         Note that this property, if true, will remain true even after the

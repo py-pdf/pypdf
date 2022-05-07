@@ -8,6 +8,7 @@ Deprecations (DEP):
 - PdfFileReader: The "warndest" parameter was removed
 - merger: OutlinesObject was removed.
 - utils:
+  * `ConvertFunctionsToVirtualList` was removed
   * `formatWarning` was removed
   * `isInt(obj)`: Use `instance(obj, int)` instead
   * `u_(s)`: Use `s` directly

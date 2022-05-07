@@ -79,14 +79,6 @@ def test_markLocation():
     os.remove("PyPDF2_pdfLocation.txt")  # cleanup
 
 
-def test_ConvertFunctionsToVirtualList():
-    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
-    reader = PdfFileReader(pdf_path)
-
-    # Test if getting as slice throws an error
-    assert len(reader.pages[:]) == 1
-
-
 def test_hexStr():
     assert PyPDF2.utils.hexStr(10) == "0xa"
 

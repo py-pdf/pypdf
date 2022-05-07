@@ -264,7 +264,7 @@ class LZWDecode:
             self.dictlen = 258
             self.bitspercode = 9
 
-        def nextCode(self):
+        def nextCode(self) -> int:
             fillbits = self.bitspercode
             value = 0
             while fillbits > 0:
@@ -285,7 +285,7 @@ class LZWDecode:
                     self.bytepos = self.bytepos + 1
             return value
 
-        def decode(self):
+        def decode(self) -> str:
             """
             TIFF 6.0 specification explains in sufficient details the steps to
             implement the LZW encode() and decode() algorithms.
@@ -391,7 +391,7 @@ class CCITParameters:
         self.DamagedRowsBeforeError = None
 
     @property
-    def group(self):
+    def group(self) -> int:
         if self.K < 0:
             CCITTgroup = 4
         else:

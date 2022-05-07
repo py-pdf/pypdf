@@ -183,7 +183,7 @@ class PdfFileMerger:
         self.named_dests += trimmed_dests
 
         # Gather all the pages that are going to be merged
-        for i in range(*pages):  # type: ignore
+        for i in range(*pages):
             pg = pdfr.getPage(i)
 
             id = self.id_count

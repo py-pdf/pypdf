@@ -99,7 +99,7 @@ class BooleanObject(PdfObject):
 
 
 class ArrayObject(list, PdfObject):
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(self, stream, encryption_key) -> None:
         stream.write(b_("["))
         for data in self:
             stream.write(b_(" "))
@@ -107,7 +107,7 @@ class ArrayObject(list, PdfObject):
         stream.write(b_(" ]"))
 
     @staticmethod
-    def readFromStream(stream, pdf):
+    def readFromStream(stream, pdf) -> "ArrayObject":
         arr = ArrayObject()
         tmp = stream.read(1)
         if tmp != b_("["):
@@ -226,7 +226,7 @@ class NumberObject(int, PdfObject):
         except OverflowError:
             return int.__new__(cls, 0)
 
-    def as_numeric(self):
+    def as_numeric(self) -> int:
         return int(b_(repr(self)))
 
     def writeToStream(self, stream, encryption_key):
@@ -344,7 +344,7 @@ class ByteStringObject(utils.bytes_type, PdfObject):  # type: ignore
     """
 
     @property
-    def original_bytes(self):
+    def original_bytes(self) -> bytes:
         """For compatibility with TextStringObject.original_bytes."""
         return self
 
@@ -369,7 +369,7 @@ class TextStringObject(str, PdfObject):  # type: ignore
     autodetect_utf16 = False
 
     @property
-    def original_bytes(self):
+    def original_bytes(self) -> bytes:
         """
         It is occasionally possible that a text string object gets created where
         a byte string object was expected due to the autodetection mechanism --
@@ -378,7 +378,7 @@ class TextStringObject(str, PdfObject):  # type: ignore
         """
         return self.get_original_bytes()
 
-    def get_original_bytes(self):
+    def get_original_bytes(self) -> bytes:
         # We're a text string object, but the library is trying to get our raw
         # bytes.  This can happen if we auto-detected this string as text, but
         # we were wrong.  It's pretty common.  Return the original bytes that
@@ -465,7 +465,9 @@ class DictionaryObject(dict, PdfObject):
     def __getitem__(self, key):
         return dict.__getitem__(self, key).getObject()
 
-    def getXmpMetadata(self):
+    from PyPDF2.xmp import XmpInformation
+
+    def getXmpMetadata(self) -> Optional[XmpInformation]:
         """
         Retrieve XMP (Extensible Metadata Platform) data relevant to the
         this object, if available.
@@ -475,19 +477,20 @@ class DictionaryObject(dict, PdfObject):
         that can be used to access XMP metadata from the document.  Can also
         return None if no metadata was found on the document root.
         """
+        from PyPDF2.xmp import XmpInformation
+
         metadata = self.get("/Metadata", None)
         if metadata is None:
             return None
         metadata = metadata.getObject()
-        from . import xmp
 
-        if not isinstance(metadata, xmp.XmpInformation):
-            metadata = xmp.XmpInformation(metadata)
+        if not isinstance(metadata, XmpInformation):
+            metadata = XmpInformation(metadata)
             self[NameObject("/Metadata")] = metadata
         return metadata
 
     @property
-    def xmpMetadata(self):
+    def xmpMetadata(self) -> Optional[XmpInformation]:
         """
         Read-only property that accesses the {@link
         #DictionaryObject.getXmpData getXmpData} function.
@@ -496,7 +499,7 @@ class DictionaryObject(dict, PdfObject):
         """
         return self.getXmpMetadata()
 
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(self, stream, encryption_key) -> None:
         stream.write(b_("<<\n"))
         for key, value in list(self.items()):
             key.writeToStream(stream, encryption_key)
@@ -640,7 +643,7 @@ class TreeObject(DictionaryObject):
     def __iter__(self):
         return self.children()
 
-    def children(self):
+    def children(self) -> Optional[Any]:
         if not self.hasChildren():
             return
 
@@ -764,10 +767,10 @@ class TreeObject(DictionaryObject):
 class StreamObject(DictionaryObject):
     def __init__(self) -> None:
         self.__data: Optional[str] = None
-        self.decodedSelf = None
+        self.decodedSelf: Optional[DecodedStreamObject] = None
 
     @property
-    def _data(self):
+    def _data(self) -> Any:
         return self.__data
 
     @_data.setter
@@ -797,7 +800,7 @@ class StreamObject(DictionaryObject):
         retval.update(data)
         return retval
 
-    def flateEncode(self):
+    def flateEncode(self) -> "EncodedStreamObject":
         if SA.FILTER in self:
             f = self[SA.FILTER]
             if isinstance(f, ArrayObject):
@@ -816,18 +819,18 @@ class StreamObject(DictionaryObject):
 
 
 class DecodedStreamObject(StreamObject):
-    def getData(self):
+    def getData(self) -> Any:
         return self._data
 
-    def setData(self, data):
+    def setData(self, data: Any) -> None:
         self._data = data
 
 
 class EncodedStreamObject(StreamObject):
     def __init__(self) -> None:
-        self.decodedSelf = None
+        self.decodedSelf: Optional[DecodedStreamObject] = None
 
-    def getData(self):
+    def getData(self) -> Union[None, str, bytes]:
         if self.decodedSelf:
             # cached version of decoded object
             return self.decodedSelf.getData()
@@ -956,7 +959,7 @@ class ContentStream(DecodedStreamObject):
         return {"settings": settings, "data": data.getvalue()}
 
     @property
-    def _data(self):
+    def _data(self) -> bytes:
         newdata = BytesIO()
         for operands, operator in self.operations:
             if operator == b_("INLINE IMAGE"):
@@ -1039,50 +1042,50 @@ class RectangleObject(ArrayObject):
         # must have four points
         assert len(arr) == 4
         # automatically convert arr[x] into NumberObject(arr[x]) if necessary
-        ArrayObject.__init__(self, [self.ensureIsNumber(x) for x in arr])
+        ArrayObject.__init__(self, [self.ensureIsNumber(x) for x in arr])  # type: ignore
 
-    def ensureIsNumber(self, value):
+    def ensureIsNumber(self, value) -> Union[NumberObject, FloatObject]:
         if not isinstance(value, (NumberObject, FloatObject)):
-            value = FloatObject(value)
+            return FloatObject(value)
         return value
 
     def __repr__(self):
         return "RectangleObject(%s)" % repr(list(self))
 
-    def getLowerLeft_x(self):
+    def getLowerLeft_x(self) -> float:
         return self[0]
 
-    def getLowerLeft_y(self):
+    def getLowerLeft_y(self) -> float:
         return self[1]
 
-    def getUpperRight_x(self):
+    def getUpperRight_x(self) -> float:
         return self[2]
 
-    def getUpperRight_y(self):
+    def getUpperRight_y(self) -> float:
         return self[3]
 
-    def getUpperLeft_x(self):
+    def getUpperLeft_x(self) -> float:
         return self.getLowerLeft_x()
 
-    def getUpperLeft_y(self):
+    def getUpperLeft_y(self) -> float:
         return self.getUpperRight_y()
 
-    def getLowerRight_x(self):
+    def getLowerRight_x(self) -> float:
         return self.getUpperRight_x()
 
-    def getLowerRight_y(self):
+    def getLowerRight_y(self) -> float:
         return self.getLowerLeft_y()
 
-    def getLowerLeft(self):
+    def getLowerLeft(self) -> Tuple[float, float]:
         return self.getLowerLeft_x(), self.getLowerLeft_y()
 
-    def getLowerRight(self):
+    def getLowerRight(self) -> Tuple[float, float]:
         return self.getLowerRight_x(), self.getLowerRight_y()
 
-    def getUpperLeft(self):
+    def getUpperLeft(self) -> Tuple[float, float]:
         return self.getUpperLeft_x(), self.getUpperLeft_y()
 
-    def getUpperRight(self):
+    def getUpperRight(self) -> Tuple[float, float]:
         return self.getUpperRight_x(), self.getUpperRight_y()
 
     def setLowerLeft(self, value):
@@ -1097,10 +1100,10 @@ class RectangleObject(ArrayObject):
     def setUpperRight(self, value):
         self[2], self[3] = (self.ensureIsNumber(x) for x in value)
 
-    def getWidth(self):
+    def getWidth(self) -> float:
         return self.getUpperRight_x() - self.getLowerLeft_x()
 
-    def getHeight(self):
+    def getHeight(self) -> float:
         return self.getUpperRight_y() - self.getLowerLeft_y()
 
     lowerLeft = property(getLowerLeft, setLowerLeft, None, None)
@@ -1152,32 +1155,32 @@ class Field(TreeObject):
                 pass
 
     @property
-    def fieldType(self):
+    def fieldType(self) -> Optional[Any]:
         """Read-only property accessing the type of this field."""
         return self.get("/FT")
 
     @property
-    def parent(self):
+    def parent(self) -> Optional[Any]:
         """Read-only property accessing the parent of this field."""
         return self.get("/Parent")
 
     @property
-    def kids(self):
+    def kids(self) -> Optional[Any]:
         """Read-only property accessing the kids of this field."""
         return self.get("/Kids")
 
     @property
-    def name(self):
+    def name(self) -> Optional[str]:
         """Read-only property accessing the name of this field."""
         return self.get("/T")
 
     @property
-    def altName(self):
+    def altName(self) -> Optional[Any]:
         """Read-only property accessing the alternate name of this field."""
         return self.get("/TU")
 
     @property
-    def mappingName(self):
+    def mappingName(self) -> Optional[Any]:
         """
         Read-only property accessing the mapping name of this field. This
         name is used by PyPDF2 as a key in the dictionary returned by
@@ -1186,7 +1189,7 @@ class Field(TreeObject):
         return self.get("/TM")
 
     @property
-    def flags(self):
+    def flags(self) -> Optional[Any]:
         """
         Read-only property accessing the field flags, specifying various
         characteristics of the field (see Table 8.70 of the PDF 1.7 reference).
@@ -1194,7 +1197,7 @@ class Field(TreeObject):
         return self.get("/Ff")
 
     @property
-    def value(self):
+    def value(self) -> Optional[Any]:
         """
         Read-only property accessing the value of this field. Format
         varies based on field type.
@@ -1202,7 +1205,7 @@ class Field(TreeObject):
         return self.get("/V")
 
     @property
-    def defaultValue(self):
+    def defaultValue(self) -> Optional[Any]:
         """Read-only property accessing the default value of this field."""
         return self.get("/DV")
 
@@ -1315,7 +1318,7 @@ class Destination(TreeObject):
         stream.write(b_(">>"))
 
     @property
-    def title(self):
+    def title(self) -> Optional[str]:
         """
         Read-only property accessing the destination title.
 
@@ -1324,7 +1327,7 @@ class Destination(TreeObject):
         return self.get("/Title")
 
     @property
-    def page(self):
+    def page(self) -> Optional[int]:
         """
         Read-only property accessing the destination page number.
 
@@ -1333,7 +1336,7 @@ class Destination(TreeObject):
         return self.get("/Page")
 
     @property
-    def typ(self):
+    def typ(self) -> Optional[str]:
         """
         Read-only property accessing the destination type.
 
@@ -1342,7 +1345,7 @@ class Destination(TreeObject):
         return self.get("/Type")
 
     @property
-    def zoom(self):
+    def zoom(self) -> Optional[int]:
         """
         Read-only property accessing the zoom factor.
 
@@ -1351,7 +1354,7 @@ class Destination(TreeObject):
         return self.get("/Zoom", None)
 
     @property
-    def left(self):
+    def left(self) -> Optional[int]:
         """
         Read-only property accessing the left horizontal coordinate.
 
@@ -1360,7 +1363,7 @@ class Destination(TreeObject):
         return self.get("/Left", None)
 
     @property
-    def right(self):
+    def right(self) -> Optional[int]:
         """
         Read-only property accessing the right horizontal coordinate.
 
@@ -1369,7 +1372,7 @@ class Destination(TreeObject):
         return self.get("/Right", None)
 
     @property
-    def top(self):
+    def top(self) -> Optional[int]:
         """
         Read-only property accessing the top vertical coordinate.
 
@@ -1378,7 +1381,7 @@ class Destination(TreeObject):
         return self.get("/Top", None)
 
     @property
-    def bottom(self):
+    def bottom(self) -> Optional[int]:
         """
         Read-only property accessing the bottom vertical coordinate.
 
@@ -1415,6 +1418,10 @@ def createStringObject(
     """
     Given a string, create a ByteStringObject or a TextStringObject to
     represent the string.
+
+    :param string: A string
+
+    :raises TypeError: If string is not of type str or bytes.
     """
     if isinstance(string, str):
         return TextStringObject(string)

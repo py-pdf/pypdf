@@ -194,12 +194,12 @@ class PdfFileWriter:
         # XXX: crude hack
         return pages[PA.KIDS][pageNumber].getObject()
 
-    def getNumPages(self):
+    def getNumPages(self) -> int:
         """
         :return: the number of pages.
         :rtype: int
         """
-        pages = self.getObject(self._pages)
+        pages: Dict[str, Any] = self.getObject(self._pages)  # type: ignore
         return int(pages[NameObject("/Count")])
 
     def addBlankPage(self, width=None, height=None):
@@ -365,7 +365,9 @@ class PdfFileWriter:
         # Update the root
         self._root_object.update({NameObject(CA.NAMES): embeddedFilesDictionary})
 
-    def appendPagesFromReader(self, reader: PdfFileReader, after_page_append=None):
+    def appendPagesFromReader(
+        self, reader: PdfFileReader, after_page_append=None
+    ) -> None:
         """
         Copy pages from reader to writer. Includes an optional callback parameter
         which is invoked after pages are appended to the writer.
@@ -504,7 +506,7 @@ class PdfFileWriter:
         self._encrypt = self._addObject(encrypt)
         self._encrypt_key = key
 
-    def write(self, stream: StreamType):
+    def write(self, stream: StreamType) -> None:
         """
         Write the collection of pages added to this object out as a PDF file.
 
@@ -800,7 +802,7 @@ class PdfFileWriter:
         italic=False,
         fit="/Fit",
         *args,
-    ):
+    ) -> IndirectObject:
         """
         Add a bookmark to this PDF file.
 
@@ -1085,7 +1087,17 @@ class PdfFileWriter:
         else:
             page_ref[NameObject(PG.ANNOTS)] = ArrayObject([lnk_ref])
 
-    def addLink(self, pagenum, pagedest, rect, border=None, fit="/Fit", *args):
+    def addLink(
+        self,
+        pagenum: int,
+        pagedest: int,
+        rect: RectangleObject,
+        border: Optional[ArrayObject] = None,
+        fit: Literal[
+            "/Fit", "/XYZ", "/FitH", "/FitV", "/FitR", "/FitB", "/FitBH", "/FitBV"
+        ] = "/Fit",
+        *args: float,
+    ) -> None:
         """
         Add an internal link from a rectangular area to the specified page.
 
@@ -1120,13 +1132,12 @@ class PdfFileWriter:
            * - /FitBV
              - [left]
         """
+        pages_obj: Dict[str, Any] = self.getObject(self._pages)  # type: ignore
+        page_link = pages_obj[PA.KIDS][pagenum]
+        page_dest = pages_obj[PA.KIDS][pagedest]  # TODO: switch for external link
+        page_ref: Dict[str, Any] = self.getObject(page_link)  # type: ignore
 
-        page_link = self.getObject(self._pages)[PA.KIDS][pagenum]
-        page_dest = self.getObject(self._pages)[PA.KIDS][
-            pagedest
-        ]  # TODO: switch for external link
-        page_ref = self.getObject(page_link)
-
+        border_arr: List[Union[NameObject, NumberObject, ArrayObject]]
         if border is not None:
             border_arr = [NameObject(n) for n in border[:3]]
             if len(border) == 4:

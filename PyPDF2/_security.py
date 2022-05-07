@@ -167,7 +167,7 @@ def _alg35(
     p_entry,
     id1_entry,
     metadata_encrypt,
-):
+) -> Tuple[bytes, bytes]:
     # 1. Create an encryption key based on the user password string, as
     # described in Algorithm 3.2.
     key = _alg32(password, rev, keylen, owner_entry, p_entry, id1_entry)
