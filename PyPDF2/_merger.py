@@ -32,7 +32,20 @@ from PyPDF2._page import PageObject
 from PyPDF2._reader import PdfFileReader
 from PyPDF2._writer import PdfFileWriter
 from PyPDF2.constants import PagesAttributes as PA
-from PyPDF2.generic import *
+from PyPDF2.generic import (
+    ArrayObject,
+    Bookmark,
+    Destination,
+    DictionaryObject,
+    FloatObject,
+    IndirectObject,
+    NameObject,
+    NullObject,
+    NumberObject,
+    TextStringObject,
+    TreeObject,
+    createStringObject,
+)
 from PyPDF2.pagerange import PageRange, PageRangeSpec
 from PyPDF2.types import (
     BookmarkTypes,

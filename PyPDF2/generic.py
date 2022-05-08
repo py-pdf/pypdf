@@ -40,6 +40,7 @@ import warnings
 from io import BytesIO
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
+from PyPDF2 import utils
 from PyPDF2.constants import FilterTypes as FT
 from PyPDF2.constants import StreamAttributes as SA
 from PyPDF2.errors import (
@@ -48,9 +49,7 @@ from PyPDF2.errors import (
     PdfReadWarning,
     PdfStreamError,
 )
-
-from . import utils
-from .utils import (
+from PyPDF2.utils import (
     RC4_encrypt,
     StreamType,
     b_,
