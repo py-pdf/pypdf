@@ -30,7 +30,17 @@
 import math
 import uuid
 from decimal import Decimal
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+)
 
 from PyPDF2 import utils
 from PyPDF2.constants import PageAttributes as PG
@@ -101,7 +111,9 @@ class PageObject(DictionaryObject):
     """
 
     def __init__(
-        self, pdf: Optional[Any] = None, indirectRef: Optional[IndirectObject] = None
+        self,
+        pdf: Optional[Any] = None,  # PdfFileReader
+        indirectRef: Optional[IndirectObject] = None,
     ) -> None:
         from PyPDF2._reader import PdfFileReader
 
@@ -183,11 +195,13 @@ class PageObject(DictionaryObject):
 
     @staticmethod
     def _mergeResources(
-        res1: Any, res2: Any, resource: Any
+        res1: DictionaryObject, res2: DictionaryObject, resource: Any
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         new_res = DictionaryObject()
         new_res.update(res1.get(resource, DictionaryObject()).getObject())
-        page2res = res2.get(resource, DictionaryObject()).getObject()
+        page2res = cast(
+            DictionaryObject, res2.get(resource, DictionaryObject()).getObject()
+        )
         rename_res = {}
         for key in list(page2res.keys()):
             if key in new_res and new_res.raw_get(key) != page2res.raw_get(key):
@@ -254,7 +268,7 @@ class PageObject(DictionaryObject):
         )
         return contents
 
-    def getContents(self) -> Optional[Any]:
+    def getContents(self) -> Optional[ContentStream]:
         """
         Access the page contents.
 
@@ -262,7 +276,7 @@ class PageObject(DictionaryObject):
             ``/Contents`` is optional, as described in PDF Reference  7.7.3.3
         """
         if PG.CONTENTS in self:
-            return self[PG.CONTENTS].getObject()
+            return self[PG.CONTENTS].getObject()  # type: ignore
         else:
             return None
 
@@ -284,7 +298,7 @@ class PageObject(DictionaryObject):
     def _mergePage(
         self,
         page2: "PageObject",
-        page2transformation: Optional[Any] = None,
+        page2transformation: Optional[Callable[[Any], ContentStream]] = None,
         ctm: Optional[Iterable[float]] = None,
         expand: bool = False,
     ) -> None:
@@ -294,8 +308,8 @@ class PageObject(DictionaryObject):
 
         new_resources = DictionaryObject()
         rename = {}
-        original_resources = self[PG.RESOURCES].getObject()
-        page2resources = page2[PG.RESOURCES].getObject()
+        original_resources = cast(DictionaryObject, self[PG.RESOURCES].getObject())
+        page2resources = cast(DictionaryObject, page2[PG.RESOURCES].getObject())
         new_annots = ArrayObject()
 
         for page in (self, page2):
@@ -341,7 +355,7 @@ class PageObject(DictionaryObject):
             page2content = ContentStream(page2content, self.pdf)
             page2content.operations.insert(
                 0,
-                [
+                (
                     map(
                         FloatObject,
                         [
@@ -352,10 +366,10 @@ class PageObject(DictionaryObject):
                         ],
                     ),
                     "re",
-                ],
+                ),
             )
-            page2content.operations.insert(1, [[], "W"])
-            page2content.operations.insert(2, [[], "n"])
+            page2content.operations.insert(1, ([], "W"))
+            page2content.operations.insert(2, ([], "n"))
             if page2transformation is not None:
                 page2content = page2transformation(page2content)
             page2content = PageObject._contentStreamRename(

@@ -177,8 +177,8 @@ class IndirectObject(PdfObject):
 
     @staticmethod
     def readFromStream(
-        stream: StreamType, pdf: Any
-    ) -> "IndirectObject":  # PdfFileReader
+        stream: StreamType, pdf: Any  # PdfFileReader
+    ) -> "IndirectObject":
         idnum = b_("")
         while True:
             tok = stream.read(1)
@@ -548,8 +548,8 @@ class DictionaryObject(dict, PdfObject):
 
     @staticmethod
     def readFromStream(
-        stream: StreamType, pdf: Any
-    ) -> "DictionaryObject":  # PdfFileReader
+        stream: StreamType, pdf: Any  # PdfFileReader
+    ) -> "DictionaryObject":
         def getNextObjPos(
             p: int, p1: int, remGens: List[int], pdf: Any
         ) -> int:  # PdfFileReader
@@ -563,8 +563,8 @@ class DictionaryObject(dict, PdfObject):
                 return getNextObjPos(p, p1, remGens[1:], pdf)
 
         def readUnsizedFromSteam(
-            stream: StreamType, pdf: Any
-        ) -> bytes:  # PdfFileReader
+            stream: StreamType, pdf: Any  # PdfFileReader
+        ) -> bytes:
             # we are just pointing at beginning of the stream
             eon = getNextObjPos(stream.tell(), 2**32, [g for g in pdf.xref], pdf) - 1
             curr = stream.tell()
@@ -1042,8 +1042,8 @@ class ContentStream(DecodedStreamObject):
 
 
 def readObject(
-    stream: StreamType, pdf: Any
-) -> Union[PdfObject, int, str, ContentStream]:  # PdfFileReader
+    stream: StreamType, pdf: Any  # PdfFileReader
+) -> Union[PdfObject, int, str, ContentStream]:
     tok = stream.read(1)
     stream.seek(-1, 1)  # reset to start
     idx = ObjectPrefix.find(tok)
@@ -1225,18 +1225,20 @@ class Field(TreeObject):
             except KeyError:
                 pass
 
+    # TABLE 8.69 Entries common to all field dictionaries
+
     @property
-    def fieldType(self) -> Optional[Any]:
+    def fieldType(self) -> Optional[NameObject]:
         """Read-only property accessing the type of this field."""
         return self.get("/FT")
 
     @property
-    def parent(self) -> Optional[Any]:
+    def parent(self) -> Optional[DictionaryObject]:
         """Read-only property accessing the parent of this field."""
         return self.get("/Parent")
 
     @property
-    def kids(self) -> Optional[Any]:
+    def kids(self) -> Optional[ArrayObject]:
         """Read-only property accessing the kids of this field."""
         return self.get("/Kids")
 
@@ -1246,12 +1248,12 @@ class Field(TreeObject):
         return self.get("/T")
 
     @property
-    def altName(self) -> Optional[Any]:
+    def altName(self) -> Optional[str]:
         """Read-only property accessing the alternate name of this field."""
         return self.get("/TU")
 
     @property
-    def mappingName(self) -> Optional[Any]:
+    def mappingName(self) -> Optional[str]:
         """
         Read-only property accessing the mapping name of this field. This
         name is used by PyPDF2 as a key in the dictionary returned by
@@ -1260,7 +1262,7 @@ class Field(TreeObject):
         return self.get("/TM")
 
     @property
-    def flags(self) -> Optional[Any]:
+    def flags(self) -> Optional[int]:
         """
         Read-only property accessing the field flags, specifying various
         characteristics of the field (see Table 8.70 of the PDF 1.7 reference).
@@ -1281,13 +1283,13 @@ class Field(TreeObject):
         return self.get("/DV")
 
     @property
-    def additionalActions(self) -> None:
+    def additionalActions(self) -> Optional[DictionaryObject]:
         """
         Read-only property accessing the additional actions dictionary.
         This dictionary defines the field's behavior in response to trigger events.
         See Section 8.5.2 of the PDF 1.7 reference.
         """
-        self.get("/AA")
+        return self.get("/AA")
 
 
 class Destination(TreeObject):

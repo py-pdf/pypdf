@@ -376,7 +376,7 @@ class PdfFileReader:
     def getFields(
         self,
         tree: Optional[TreeObject] = None,
-        retval: Optional[Any] = None,
+        retval: Optional[Dict[Any, Any]] = None,
         fileobj: Optional[Any] = None,
     ) -> Optional[Dict[str, Any]]:
         """
@@ -429,7 +429,7 @@ class PdfFileReader:
     def _buildField(
         self,
         field: Union[TreeObject, DictionaryObject],
-        retval: Any,
+        retval: Dict[Any, Any],
         fileobj: Any,
         fieldAttributes: Any,
     ) -> None:
