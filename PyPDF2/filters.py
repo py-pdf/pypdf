@@ -509,7 +509,7 @@ class CCITTFaxDecode:
 
 
 def decodeStreamData(stream: Any) -> Union[str, bytes]:  # utils.StreamObject
-    from .generic import NameObject
+    from PyPDF2.generic import NameObject
 
     filters = stream.get(SA.FILTER, ())
 
