@@ -48,6 +48,7 @@ from PyPDF2 import utils
 from PyPDF2._page import PageObject
 from PyPDF2._security import _alg33_1, _alg34, _alg35
 from PyPDF2.constants import CatalogAttributes as CA
+from PyPDF2.constants import CatalogDictionary as CD
 from PyPDF2.constants import Core as CO
 from PyPDF2.constants import DocumentInformationAttributes as DI
 from PyPDF2.constants import EncryptionDictAttributes as ED
@@ -418,8 +419,8 @@ class PdfFileReader:
                 break
 
         if "/Fields" in tree:
-            fields = tree["/Fields"]
-            for f in fields:  # type: ignore
+            fields = cast(ArrayObject, tree["/Fields"])
+            for f in fields:
                 field = f.getObject()
                 self._buildField(field, retval, fileobj, field_attributes)
 
@@ -496,7 +497,7 @@ class PdfFileReader:
 
     def getNamedDestinations(
         self,
-        tree: Union[TreeObject, DictionaryObject, None] = None,
+        tree: Union[TreeObject, None] = None,
         retval: Optional[Any] = None,
     ) -> Dict[str, Any]:
         """
@@ -508,7 +509,7 @@ class PdfFileReader:
         """
         if retval is None:
             retval = {}
-            catalog: DictionaryObject = self.trailer[TK.ROOT]  # type: ignore
+            catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
 
             # get the name tree
             if CA.DESTS in catalog:
@@ -523,19 +524,20 @@ class PdfFileReader:
 
         if PA.KIDS in tree:
             # recurse down the tree
-            for kid in tree[PA.KIDS]:  # type: ignore
+            for kid in cast(ArrayObject, tree[PA.KIDS]):
                 self.getNamedDestinations(kid.getObject(), retval)
 
+        # TABLE 3.33 Entries in a name tree node dictionary (PDF 1.7 specs)
         if CA.NAMES in tree:
             names = cast(DictionaryObject, tree[CA.NAMES])
             for i in range(0, len(names), 2):
-                title = names[i].getObject()
-                val = names[i + 1].getObject()
-                if isinstance(val, DictionaryObject) and "/D" in val:
-                    val = val["/D"]
-                dest = self._buildDestination(title, val)  # type: ignore
+                key = cast(str, names[i].getObject())
+                value = names[i + 1].getObject()
+                if isinstance(value, DictionaryObject) and "/D" in value:
+                    value = value["/D"]
+                dest = self._buildDestination(key, value)  # type: ignore
                 if dest is not None:
-                    retval[title] = dest
+                    retval[key] = dest
 
         return retval
 
@@ -548,7 +550,7 @@ class PdfFileReader:
         return self.getOutlines()
 
     def getOutlines(
-        self, node: Optional[Any] = None, outlines: Optional[Any] = None
+        self, node: Optional[DictionaryObject] = None, outlines: Optional[Any] = None
     ) -> OutlinesType:
         """
         Retrieve the document outline present in the document.
@@ -557,20 +559,21 @@ class PdfFileReader:
         """
         if outlines is None:
             outlines = []
-            catalog = self.trailer[TK.ROOT]
+            catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
 
             # get the outline dictionary and named destinations
-            if CO.OUTLINES in catalog:  # type: ignore
+            if CO.OUTLINES in catalog:
                 try:
-                    lines = catalog[CO.OUTLINES]  # type: ignore
+                    lines = cast(DictionaryObject, catalog[CO.OUTLINES])
                 except PdfReadError:
                     # this occurs if the /Outlines object reference is incorrect
                     # for an example of such a file, see https://unglueit-files.s3.amazonaws.com/ebf/7552c42e9280b4476e59e77acc0bc812.pdf
                     # so continue to load the file without the Bookmarks
                     return outlines
 
+                # TABLE 8.3 Entries in the outline dictionary
                 if "/First" in lines:
-                    node = lines["/First"]
+                    node = cast(DictionaryObject, lines["/First"])
             self._namedDests = self.getNamedDestinations()
 
         if node is None:
@@ -585,13 +588,13 @@ class PdfFileReader:
             # check for sub-outlines
             if "/First" in node:
                 sub_outlines: List[Any] = []
-                self.getOutlines(node["/First"], sub_outlines)
+                self.getOutlines(cast(DictionaryObject, node["/First"]), sub_outlines)
                 if sub_outlines:
                     outlines.append(sub_outlines)
 
             if "/Next" not in node:
                 break
-            node = node["/Next"]
+            node = cast(DictionaryObject, node["/Next"])
 
         return outlines
 
@@ -659,15 +662,16 @@ class PdfFileReader:
                     title, indirect_ref, TextStringObject("/Fit")  # type: ignore
                 )
 
-    def _buildOutline(self, node: TreeObject) -> Optional[Destination]:
+    def _buildOutline(self, node: DictionaryObject) -> Optional[Destination]:
         dest, title, outline = None, None, None
 
         if "/A" in node and "/Title" in node:
             # Action, section 8.5 (only type GoTo supported)
             title = node["/Title"]
-            action = node["/A"]
-            if action["/S"] == "/GoTo":  # type: ignore
-                dest = action["/D"]  # type: ignore
+            action = cast(DictionaryObject, node["/A"])
+            action_type = cast(NameObject, action["/S"])
+            if action_type == "/GoTo":
+                dest = action["/D"]
         elif "/Dest" in node and "/Title" in node:
             # Destination, section 8.2.1
             title = node["/Title"]
@@ -703,10 +707,10 @@ class PdfFileReader:
         :return: Page layout currently being used.
         :rtype: ``str``, ``None`` if not specified
         """
-        try:
-            return self.trailer[TK.ROOT]["/PageLayout"]  # type: ignore
-        except KeyError:
-            return None
+        trailer = cast(DictionaryObject, self.trailer[TK.ROOT])
+        if CD.PAGE_LAYOUT in trailer:
+            return cast(NameObject, trailer[CD.PAGE_LAYOUT])
+        return None
 
     @property
     def pageLayout(self) -> Optional[str]:
@@ -1023,7 +1027,7 @@ class PdfFileReader:
                 self._read_standard_xref_table(stream)
                 readNonWhitespace(stream)
                 stream.seek(-1, 1)
-                new_trailer: Dict[str, Any] = readObject(stream, self)  # type: ignore
+                new_trailer = cast(Dict[str, Any], readObject(stream, self))
                 for key, value in new_trailer.items():
                     if key not in self.trailer:
                         self.trailer[key] = value
@@ -1128,7 +1132,7 @@ class PdfFileReader:
         stream.seek(-1, 1)
         firsttime = True  # check if the first time looking at the xref table
         while True:
-            num: int = readObject(stream, self)  # type: ignore
+            num = cast(int, readObject(stream, self))
             if firsttime and num != 0:
                 self.xrefIndex = num
                 if self.strict:
@@ -1141,7 +1145,7 @@ class PdfFileReader:
             firsttime = False
             readNonWhitespace(stream)
             stream.seek(-1, 1)
-            size: int = readObject(stream, self)  # type: ignore
+            size = cast(int, readObject(stream, self))
             readNonWhitespace(stream)
             stream.seek(-1, 1)
             cnt = 0
@@ -1196,14 +1200,14 @@ class PdfFileReader:
         # PDF 1.5+ Cross-Reference Stream
         stream.seek(-1, 1)
         idnum, generation = self.readObjectHeader(stream)
-        xrefstream: ContentStream = readObject(stream, self)  # type: ignore
+        xrefstream = cast(ContentStream, readObject(stream, self))
         assert xrefstream["/Type"] == "/XRef"
         self.cacheIndirectObject(generation, idnum, xrefstream)
         stream_data = BytesIO(b_(xrefstream.getData()))
         # Index pairs specify the subsections in the dictionary. If
         # none create one subsection that spans everything.
         idx_pairs = xrefstream.get("/Index", [0, xrefstream.get("/Size")])
-        entry_sizes: Dict[Any, Any] = xrefstream.get("/W")  # type: ignore
+        entry_sizes = cast(Dict[Any, Any], xrefstream.get("/W"))
         assert len(entry_sizes) >= 3
         if self.strict and len(entry_sizes) > 3:
             raise PdfReadError("Too many entry sizes: %s" % entry_sizes)
@@ -1274,7 +1278,7 @@ class PdfFileReader:
         stream.seek(-1, 1)
 
         # there might be something that is not a dict (see #856)
-        new_trailer: Dict[Any, Any] = readObject(stream, self)  # type: ignore
+        new_trailer = cast(Dict[Any, Any], readObject(stream, self))
 
         for key, value in list(new_trailer.items()):
             if key not in self.trailer:
@@ -1415,7 +1419,7 @@ class PdfFileReader:
         # R (number)      : Standard security handler revision number
         # U (string)      : A 32-byte string, based on the user password
         # P (integer)     : Permissions allowed with user access
-        if encrypt["/Filter"] != "/Standard":  # type: ignore
+        if encrypt["/Filter"] != "/Standard":
             raise NotImplementedError(
                 "only Standard PDF encryption handler is available"
             )

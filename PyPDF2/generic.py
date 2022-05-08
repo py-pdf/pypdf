@@ -503,7 +503,7 @@ class DictionaryObject(dict, PdfObject):
     def __getitem__(self, key: Any) -> PdfObject:
         return dict.__getitem__(self, key).getObject()
 
-    def getXmpMetadata(self) -> Optional[Any]:  # XmpInformation
+    def getXmpMetadata(self) -> Optional[PdfObject]:  # XmpInformation
         """
         Retrieve XMP (Extensible Metadata Platform) data relevant to the
         this object, if available.
@@ -526,7 +526,7 @@ class DictionaryObject(dict, PdfObject):
         return metadata
 
     @property
-    def xmpMetadata(self) -> Optional[Any]:  # XmpInformation
+    def xmpMetadata(self) -> Optional[PdfObject]:  # XmpInformation
         """
         Read-only property that accesses the {@link
         #DictionaryObject.getXmpData getXmpData} function.

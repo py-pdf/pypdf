@@ -204,6 +204,21 @@ class TypFitArguments:
     FIT_R = "/FitR"
 
 
+class FieldDistionaryAttributes:
+    """TABLE 8.69 Entries common to all field dictionaries (PDF 1.7 reference)"""
+
+    FT = "/FT"  # name, required for terminal fields
+    Parent = "/Parent"  # dictionary, required for children
+    Kids = "/Kids"  # array, sometimes required
+    T = "/T"  # text string, optional
+    TU = "/TU"  # text string, optional
+    TM = "/TM"  # text string, optional
+    Ff = "/Ff"  # integer, optional
+    V = "/V"  # text string, optional
+    DV = "/DV"  # text string, optional
+    AA = "/AA"  # dictionary, optional
+
+
 class DocumentInformationAttributes:
     """TABLE 10.2 Entries in the document information dictionary"""
 
