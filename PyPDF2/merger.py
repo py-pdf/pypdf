@@ -27,8 +27,8 @@
 
 from sys import version_info
 
-from PyPDF2._reader import PdfFileReader
-from PyPDF2._writer import PdfFileWriter
+from PyPDF2._reader import PdfReader
+from PyPDF2._writer import PdfWriter
 from PyPDF2.constants import PagesAttributes as PA
 from PyPDF2.generic import *
 from PyPDF2.pagerange import PageRange
@@ -47,7 +47,7 @@ else:
 
 class _MergedPage(object):
     """
-    _MergedPage is used internally by PdfFileMerger to collect necessary
+    _MergedPage is used internally by PdfMerger to collect necessary
     information on each page that is being merged.
     """
 
@@ -58,9 +58,9 @@ class _MergedPage(object):
         self.id = id
 
 
-class PdfFileMerger(object):
+class PdfMerger(object):
     """
-    Initializes a ``PdfFileMerger`` object. ``PdfFileMerger`` merges multiple
+    Initializes a ``PdfMerger`` object. ``PdfMerger`` merges multiple
     PDFs into a single PDF. It can concatenate, slice, insert, or any
     combination of the above.
 
@@ -78,7 +78,7 @@ class PdfFileMerger(object):
     def __init__(self, strict=True, overwriteWarnings=True):
         self.inputs = []
         self.pages = []
-        self.output = PdfFileWriter()
+        self.output = PdfWriter()
         self.bookmarks = []
         self.named_dests = []
         self.id_count = 0
@@ -119,7 +119,7 @@ class PdfFileMerger(object):
         # If the fileobj parameter is a string, assume it is a path
         # and create a file object at that location. If it is a file,
         # copy the file's contents into a BytesIO (or StreamIO) stream object; if
-        # it is a PdfFileReader, copy that reader's stream into a
+        # it is a PdfReader, copy that reader's stream into a
         # BytesIO (or StreamIO) stream.
         # If fileobj is none of the above types, it is not modified
         decryption_key = None
@@ -131,7 +131,7 @@ class PdfFileMerger(object):
             filecontent = fileobj.read()
             fileobj = StreamIO(filecontent)
             my_file = True
-        elif isinstance(fileobj, PdfFileReader):
+        elif isinstance(fileobj, PdfReader):
             if hasattr(fileobj, "_decryption_key"):
                 decryption_key = fileobj._decryption_key
             orig_tell = fileobj.stream.tell()
@@ -144,9 +144,9 @@ class PdfFileMerger(object):
             fileobj = filecontent
             my_file = True
 
-        # Create a new PdfFileReader instance using the stream
+        # Create a new PdfReader instance using the stream
         # (either file or BytesIO or StringIO) created above
-        pdfr = PdfFileReader(
+        pdfr = PdfReader(
             fileobj, strict=self.strict, overwriteWarnings=self.overwriteWarnings
         )
         if decryption_key is not None:
@@ -238,9 +238,9 @@ class PdfFileMerger(object):
             fileobj = file(fileobj, "wb")
             my_file = True
 
-        # Add pages to the PdfFileWriter
+        # Add pages to the PdfWriter
         # The commented out line below was replaced with the two lines below it
-        # to allow PdfFileMerger to work with PyPdf 1.13
+        # to allow PdfMerger to work with PyPdf 1.13
         for page in self.pages:
             self.output.addPage(page.pagedata)
             page.out_pagedata = self.output.getReference(
@@ -656,3 +656,15 @@ class OutlinesObject(list):
         for child in self.tree.children():
             self.tree.removeChild(child)
             self.pop()
+
+
+class PdfFileMerger(PdfMerger):
+    def __init__(self, *args, **kwargs):
+        import warnings
+
+        warnings.warn(
+            "PdfFileMerger was renamed to PdfMerger. PdfFileMerger will be deprecated",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(*args, **kwargs)

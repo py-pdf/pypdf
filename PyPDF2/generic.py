@@ -1141,7 +1141,7 @@ class RectangleObject(ArrayObject):
 class Field(TreeObject):
     """
     A class representing a field dictionary. This class is accessed through
-    :meth:`getFields()<PyPDF2.PdfFileReader.getFields>`
+    :meth:`getFields()<PyPDF2.PdfReader.getFields>`
     """
 
     def __init__(self, data):
@@ -1194,7 +1194,7 @@ class Field(TreeObject):
         """
         Read-only property accessing the mapping name of this field. This
         name is used by PyPDF2 as a key in the dictionary returned by
-        :meth:`getFields()<PyPDF2.PdfFileReader.getFields>`
+        :meth:`getFields()<PyPDF2.PdfReader.getFields>`
         """
         return self.get("/TM")
 

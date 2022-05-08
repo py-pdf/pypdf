@@ -22,7 +22,7 @@ def main():
     parser.add_argument("output")
     args = parser.parse_args()
 
-    reader = PyPDF2.PdfFileReader(args.input)
+    reader = PyPDF2.PdfReader(args.input)
     numPages = reader.numPages
     print("Pages in file:", numPages)
 
@@ -35,7 +35,7 @@ def main():
     pageHeight = mb.getHeight()
     print("Medium size:", "{}x{}".format(pageWidth, pageHeight))
 
-    writer = PyPDF2.PdfFileWriter()
+    writer = PyPDF2.PdfWriter()
 
     def scale(page):
         return min(

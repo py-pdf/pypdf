@@ -52,7 +52,7 @@ import traceback
 from collections import defaultdict
 from sys import exit, stderr, stdout
 
-from PyPDF2 import PdfFileMerger, parse_filename_page_ranges
+from PyPDF2 import PdfMerger, parse_filename_page_ranges
 
 if __name__ == "__main__":
     args = parse_args()
@@ -63,7 +63,7 @@ if __name__ == "__main__":
         stdout.flush()
         output = os.fdopen(stdout.fileno(), "wb")
 
-    merger = PdfFileMerger()
+    merger = PdfMerger()
     in_fs = dict()
     try:
         for (filename, page_range) in filename_page_ranges:

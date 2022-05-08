@@ -17,7 +17,7 @@ def test_merge():
     pdf_forms = os.path.join(RESOURCE_ROOT, "pdflatex-forms.pdf")
     pdf_pw = os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf")
 
-    file_merger = PyPDF2.PdfFileMerger()
+    file_merger = PyPDF2.PdfMerger()
 
     # string path:
     file_merger.append(pdf_path)
@@ -26,12 +26,12 @@ def test_merge():
     file_merger.append(pdf_forms)
 
     # Merging an encrypted file
-    pdfr = PyPDF2.PdfFileReader(pdf_pw)
+    pdfr = PyPDF2.PdfReader(pdf_pw)
     pdfr.decrypt("openpassword")
     file_merger.append(pdfr)
 
-    # PdfFileReader object:
-    file_merger.append(PyPDF2.PdfFileReader(pdf_path, "rb"), bookmark=True)
+    # PdfReader object:
+    file_merger.append(PyPDF2.PdfReader(pdf_path, "rb"), bookmark=True)
 
     # File handle
     with open(pdf_path, "rb") as fh:
@@ -49,7 +49,7 @@ def test_merge():
     file_merger.close()
 
     # Check if bookmarks are correct
-    pdfr = PyPDF2.PdfFileReader(tmp_path)
+    pdfr = PyPDF2.PdfReader(tmp_path)
     assert [el.title for el in pdfr.getOutlines() if isinstance(el, Destination)] == [
         "A bookmark",
         "Foo",

@@ -3,9 +3,9 @@
 ## Attachments
 
 ```python
-from PyPDF2 import PdfFileWriter
+from PyPDF2 import PdfWriter
 
-writer = PdfFileWriter()
+writer = PdfWriter()
 writer.addBlankPage(width=200, height=200)
 
 data = b"any bytes - typically read from a file"

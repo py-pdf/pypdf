@@ -3,9 +3,9 @@
 ## Reading form fields
 
 ```python
-from PyPDF2 import PdfFileReader
+from PyPDF2 import PdfReader
 
-reader = PdfFileReader("form.pdf")
+reader = PdfReader("form.pdf")
 fields = reader.getFormTextFields()
 fields == {"key": "value", "key2": "value2"}
 ```
@@ -13,10 +13,10 @@ fields == {"key": "value", "key2": "value2"}
 ## Filling out forms
 
 ```python
-from PyPDF2 import PdfFileReader, PdfFileWriter
+from PyPDF2 import PdfReader, PdfWriter
 
-reader = PdfFileReader("form.pdf")
-writer = PdfFileWriter()
+reader = PdfReader("form.pdf")
+writer = PdfWriter()
 
 page = reader.pages[0]
 fields = reader.getFields()

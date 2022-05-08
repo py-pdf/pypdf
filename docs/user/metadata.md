@@ -3,9 +3,9 @@
 ## Reading metadata
 
 ```python
-from PyPDF2 import PdfFileReader
+from PyPDF2 import PdfReader
 
-reader = PdfFileReader("example.pdf")
+reader = PdfReader("example.pdf")
 
 info = reader.getDocumentInfo()
 
@@ -22,10 +22,10 @@ print(info.title)
 ## Writing metadata
 
 ```python
-from PyPDF2 import PdfFileReader, PdfFileWriter
+from PyPDF2 import PdfReader, PdfWriter
 
-reader = PdfFileReader("example.pdf")
-writer = PdfFileWriter()
+reader = PdfReader("example.pdf")
+writer = PdfWriter()
 
 # Add all pages to the writer
 for i in range(reader.numPages):

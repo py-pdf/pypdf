@@ -1,21 +1,21 @@
 # Adding a Watermark to a PDF
 
 ```python
-from PyPDF2 import PdfFileWriter, PdfFileReader
+from PyPDF2 import PdfWriter, PdfReader
 
 
 # Read the watermark
-watermark = PdfFileReader("watermark.pdf")
+watermark = PdfReader("watermark.pdf")
 
 # Read the page without watermark
-reader = PdfFileReader("example.pdf")
+reader = PdfReader("example.pdf")
 page = reader.pages[0]
 
 # Add the watermark to the page
 page.mergePage(watermark.pages[0])
 
 # Add the page to the writer
-writer = PdfFileWriter()
+writer = PdfWriter()
 writer.addPage(page)
 
 # finally, write the new document with a watermark

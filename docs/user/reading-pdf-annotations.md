@@ -21,9 +21,9 @@ Reading the most common ones is described here.
 ## Text
 
 ```python
-from PyPDF2 import PdfFileReader
+from PyPDF2 import PdfReader
 
-reader = PdfFileReader("example.pdf")
+reader = PdfReader("example.pdf")
 
 for page in reader.pages:
     if "/Annots" in page:
@@ -36,9 +36,9 @@ for page in reader.pages:
 ## Highlights
 
 ```python
-from PyPDF2 import PdfFileReader
+from PyPDF2 import PdfReader
 
-reader = PdfFileReader("commented.pdf")
+reader = PdfReader("commented.pdf")
 
 for page in reader.pages:
     if "/Annots" in page:
@@ -52,9 +52,9 @@ for page in reader.pages:
 ## Attachments
 
 ```python
-from PyPDF2 import PdfFileReader
+from PyPDF2 import PdfReader
 
-reader = PdfFileReader("example.pdf")
+reader = PdfReader("example.pdf")
 
 attachments = {}
 for page in reader.pages:

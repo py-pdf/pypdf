@@ -1,10 +1,10 @@
 # Cropping and Transforming PDFs
 
 ```python
-from PyPDF2 import PdfFileWriter, PdfFileReader
+from PyPDF2 import PdfWriter, PdfReader
 
-reader = PdfFileReader("example.pdf")
-writer = PdfFileWriter()
+reader = PdfReader("example.pdf")
+writer = PdfWriter()
 
 # add page 1 from reader to output document, unchanged:
 writer.addPage(reader.pages[0])

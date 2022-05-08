@@ -69,10 +69,10 @@ from PyPDF2.utils import b_, isString, u_
 logger = logging.getLogger(__name__)
 
 
-class PdfFileWriter(object):
+class PdfWriter(object):
     """
     This class supports writing PDF files out, given pages produced by another
-    class (typically :class:`PdfFileReader<PdfFileReader>`).
+    class (typically :class:`PdfReader<PdfReader>`).
     """
 
     def __init__(self):
@@ -154,7 +154,7 @@ class PdfFileWriter(object):
     def addPage(self, page):
         """
         Add a page to this PDF file.  The page is usually acquired from a
-        :class:`PdfFileReader<PdfFileReader>` instance.
+        :class:`PdfReader<PdfReader>` instance.
 
         :param PageObject page: The page to add to the document. Should be
             an instance of :class:`PageObject<PyPDF2.pdf.PageObject>`
@@ -164,7 +164,7 @@ class PdfFileWriter(object):
     def insertPage(self, page, index=0):
         """
         Insert a page in this PDF file. The page is usually acquired from a
-        :class:`PdfFileReader<PdfFileReader>` instance.
+        :class:`PdfReader<PdfReader>` instance.
 
         :param PageObject page: The page to add to the document.  This
             argument should be an instance of :class:`PageObject<pdf.PageObject>`.
@@ -361,7 +361,7 @@ class PdfFileWriter(object):
         Copy pages from reader to writer. Includes an optional callback parameter
         which is invoked after pages are appended to the writer.
 
-        :param reader: a PdfFileReader object from which to copy page
+        :param reader: a PdfReader object from which to copy page
             annotations to this writer object.  The writer's annots
             will then be updated
         :callback after_page_append (function): Callback function that is invoked after
@@ -419,7 +419,7 @@ class PdfFileWriter(object):
         """
         Copy the reader document root to the writer.
 
-        :param reader:  PdfFileReader from the document root should be copied.
+        :param reader:  PdfReader from the document root should be copied.
         :callback after_page_append:
         """
         self._root_object = reader.trailer[TK.ROOT]
@@ -1155,7 +1155,7 @@ class PdfFileWriter(object):
         """
         Get the page layout.
 
-        See :meth:`setPageLayout()<PdfFileWriter.setPageLayout>` for a description of valid layouts.
+        See :meth:`setPageLayout()<PdfWriter.setPageLayout>` for a description of valid layouts.
 
         :return: Page layout currently being used.
         :rtype: str, None if not specified
@@ -1198,8 +1198,8 @@ class PdfFileWriter(object):
         self._root_object.update({NameObject("/PageLayout"): layout})
 
     pageLayout = property(getPageLayout, setPageLayout)
-    """Read and write property accessing the :meth:`getPageLayout()<PdfFileWriter.getPageLayout>`
-    and :meth:`setPageLayout()<PdfFileWriter.setPageLayout>` methods."""
+    """Read and write property accessing the :meth:`getPageLayout()<PdfWriter.getPageLayout>`
+    and :meth:`setPageLayout()<PdfWriter.setPageLayout>` methods."""
 
     _valid_modes = [
         "/UseNone",
@@ -1213,7 +1213,7 @@ class PdfFileWriter(object):
     def getPageMode(self):
         """
         Get the page mode.
-        See :meth:`setPageMode()<PdfFileWriter.setPageMode>` for a description
+        See :meth:`setPageMode()<PdfWriter.setPageMode>` for a description
         of valid modes.
 
         :return: Page mode currently being used.
@@ -1255,5 +1255,17 @@ class PdfFileWriter(object):
         self._root_object.update({NameObject("/PageMode"): mode})
 
     pageMode = property(getPageMode, setPageMode)
-    """Read and write property accessing the :meth:`getPageMode()<PdfFileWriter.getPageMode>`
-    and :meth:`setPageMode()<PdfFileWriter.setPageMode>` methods."""
+    """Read and write property accessing the :meth:`getPageMode()<PdfWriter.getPageMode>`
+    and :meth:`setPageMode()<PdfWriter.setPageMode>` methods."""
+
+
+class PdfFileWriter(PdfWriter):
+    def __init__(self, *args, **kwargs):
+        import warnings
+
+        warnings.warn(
+            "PdfFileWriter was renamed to PdfWriter. PdfFileWriter will be deprecated",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(*args, **kwargs)

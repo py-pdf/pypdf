@@ -6,7 +6,7 @@ import sys
 
 import pytest
 
-from PyPDF2 import PdfFileReader
+from PyPDF2 import PdfReader
 from PyPDF2.constants import PageAttributes as PG
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -24,7 +24,7 @@ def test_PdfReaderFileLoad():
 
     with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
         # Load PDF file from file
-        reader = PdfFileReader(inputfile)
+        reader = PdfReader(inputfile)
         page = reader.getPage(0)
 
         # Retrieve the text of the PDF
@@ -51,7 +51,7 @@ def test_PdfReaderJpegImage():
 
     with open(os.path.join(RESOURCE_ROOT, "jpeg.pdf"), "rb") as inputfile:
         # Load PDF file from file
-        reader = PdfFileReader(inputfile)
+        reader = PdfReader(inputfile)
 
         # Retrieve the text of the image
         with open(os.path.join(RESOURCE_ROOT, "jpeg.txt"), "r") as pdftext_file:
@@ -72,7 +72,7 @@ def test_decrypt():
     with open(
         os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf"), "rb"
     ) as inputfile:
-        reader = PdfFileReader(inputfile)
+        reader = PdfReader(inputfile)
         assert reader.isEncrypted == True
         reader.decrypt("openpassword")
         assert reader.numPages == 1
@@ -90,14 +90,14 @@ def test_decrypt():
 @pytest.mark.parametrize("degree", [0, 90, 180, 270, 360, -90])
 def test_rotate(degree):
     with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
-        reader = PdfFileReader(inputfile)
+        reader = PdfReader(inputfile)
         page = reader.getPage(0)
         page.rotateCounterClockwise(degree)
 
 
 def test_rotate_45():
     with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
-        reader = PdfFileReader(inputfile)
+        reader = PdfReader(inputfile)
         page = reader.getPage(0)
         with pytest.raises(ValueError) as exc:
             page.rotateCounterClockwise(45)

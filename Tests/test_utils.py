@@ -5,7 +5,7 @@ import os
 import pytest
 
 import PyPDF2.utils
-from PyPDF2 import PdfFileReader
+from PyPDF2 import PdfReader
 from PyPDF2.errors import PdfStreamError
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -94,7 +94,7 @@ def test_markLocation():
 
 def test_ConvertFunctionsToVirtualList():
     pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
-    reader = PdfFileReader(pdf_path)
+    reader = PdfReader(pdf_path)
 
     # Test if getting as slice throws an error
     assert len(reader.pages[:]) == 1

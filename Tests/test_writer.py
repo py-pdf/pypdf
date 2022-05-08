@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from PyPDF2 import PdfFileReader, PdfFileWriter
+from PyPDF2 import PdfReader, PdfWriter
 from PyPDF2.errors import PageSizeNotDefinedError
 from PyPDF2.generic import RectangleObject
 
@@ -14,8 +14,8 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
 def test_writer_clone():
     src = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
 
-    reader = PdfFileReader(src)
-    writer = PdfFileWriter()
+    reader = PdfReader(src)
+    writer = PdfWriter()
 
     writer.cloneDocumentFromReader(reader)
     assert writer.getNumPages() == 4
@@ -31,10 +31,10 @@ def test_writer_operations():
     pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
     pdf_outline_path = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
 
-    reader = PdfFileReader(pdf_path)
-    reader_outline = PdfFileReader(pdf_outline_path)
+    reader = PdfReader(pdf_path)
+    reader_outline = PdfReader(pdf_outline_path)
 
-    writer = PdfFileWriter()
+    writer = PdfWriter()
     page = reader.pages[0]
     with pytest.raises(PageSizeNotDefinedError) as exc:
         writer.addBlankPage()
@@ -81,8 +81,8 @@ def test_writer_operations():
 def test_remove_images(input_path, ignoreByteStringObject):
     pdf_path = os.path.join(RESOURCE_ROOT, input_path)
 
-    reader = PdfFileReader(pdf_path)
-    writer = PdfFileWriter()
+    reader = PdfReader(pdf_path)
+    writer = PdfWriter()
 
     page = reader.pages[0]
     writer.insertPage(page, 0)
@@ -94,7 +94,7 @@ def test_remove_images(input_path, ignoreByteStringObject):
         writer.write(output_stream)
 
     with open(tmp_filename, "rb") as input_stream:
-        reader = PdfFileReader(input_stream)
+        reader = PdfReader(input_stream)
         if input_path == "side-by-side-subfig.pdf":
             extracted_text = reader.getPage(0).extractText()
             assert "Lorem ipsum dolor sit amet" in extracted_text
@@ -115,8 +115,8 @@ def test_remove_images(input_path, ignoreByteStringObject):
 def test_remove_text(input_path, ignoreByteStringObject):
     pdf_path = os.path.join(RESOURCE_ROOT, input_path)
 
-    reader = PdfFileReader(pdf_path)
-    writer = PdfFileWriter()
+    reader = PdfReader(pdf_path)
+    writer = PdfWriter()
 
     page = reader.pages[0]
     writer.insertPage(page, 0)
@@ -134,8 +134,8 @@ def test_remove_text(input_path, ignoreByteStringObject):
 def test_write_metadata():
     pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
 
-    reader = PdfFileReader(pdf_path)
-    writer = PdfFileWriter()
+    reader = PdfReader(pdf_path)
+    writer = PdfWriter()
 
     for page in reader.pages:
         writer.addPage(page)
@@ -151,7 +151,7 @@ def test_write_metadata():
         writer.write(output_stream)
 
     # Check if the title was set
-    reader = PdfFileReader(tmp_filename)
+    reader = PdfReader(tmp_filename)
     metadata = reader.getDocumentInfo()
     assert metadata.get("/Title") == "The Crazy Ones"
 
@@ -160,8 +160,8 @@ def test_write_metadata():
 
 
 def test_fill_form():
-    reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "form.pdf"))
-    writer = PdfFileWriter()
+    reader = PdfReader(os.path.join(RESOURCE_ROOT, "form.pdf"))
+    writer = PdfWriter()
 
     page = reader.pages[0]
 
@@ -178,8 +178,8 @@ def test_fill_form():
 
 
 def test_encrypt():
-    reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "form.pdf"))
-    writer = PdfFileWriter()
+    reader = PdfReader(os.path.join(RESOURCE_ROOT, "form.pdf"))
+    writer = PdfWriter()
 
     page = reader.pages[0]
 
@@ -196,8 +196,8 @@ def test_encrypt():
 
 
 def test_add_bookmark():
-    reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf"))
-    writer = PdfFileWriter()
+    reader = PdfReader(os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf"))
+    writer = PdfWriter()
 
     for page in reader.pages:
         writer.addPage(page)
@@ -217,8 +217,8 @@ def test_add_bookmark():
 
 
 def test_add_named_destination():
-    reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf"))
-    writer = PdfFileWriter()
+    reader = PdfReader(os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf"))
+    writer = PdfWriter()
 
     for page in reader.pages:
         writer.addPage(page)
@@ -247,8 +247,8 @@ def test_add_named_destination():
 
 
 def test_add_uri():
-    reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf"))
-    writer = PdfFileWriter()
+    reader = PdfReader(os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf"))
+    writer = PdfWriter()
 
     for page in reader.pages:
         writer.addPage(page)
@@ -290,8 +290,8 @@ def test_add_uri():
 
 
 def test_add_link():
-    reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf"))
-    writer = PdfFileWriter()
+    reader = PdfReader(os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf"))
+    writer = PdfWriter()
 
     for page in reader.pages:
         writer.addPage(page)
@@ -342,20 +342,20 @@ def test_io_streams():
         bytes_stream = BytesIO(fh.read())
 
     # Read from bytes stream
-    reader = PdfFileReader(bytes_stream)
+    reader = PdfReader(bytes_stream)
     assert reader.numPages == 4
 
     # Write to bytes stream
-    writer = PdfFileWriter()
+    writer = PdfWriter()
     with BytesIO() as output_stream:
         writer.write(output_stream)
 
 
 def test_regression_issue670():
     filepath = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
-    reader = PdfFileReader(filepath, strict=False, overwriteWarnings=False)
+    reader = PdfReader(filepath, strict=False, overwriteWarnings=False)
     for _ in range(2):
-        pdf_writer = PdfFileWriter()
+        pdf_writer = PdfWriter()
         pdf_writer.addPage(reader.getPage(0))
         with open("dont_commit_issue670.pdf", "wb") as f_pdf:
             pdf_writer.write(f_pdf)
