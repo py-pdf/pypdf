@@ -78,6 +78,7 @@ from PyPDF2.generic import (
     createStringObject,
     readObject,
 )
+from PyPDF2.types import OutlinesType
 from PyPDF2.utils import (
     StrByteType,
     StreamType,
@@ -539,7 +540,7 @@ class PdfFileReader:
         return retval
 
     @property
-    def outlines(self) -> List[Union[Destination, List[Destination]]]:
+    def outlines(self) -> OutlinesType:
         """
         Read-only property that accesses the
             :meth:`getOutlines()<PdfFileReader.getOutlines>` function.
@@ -548,7 +549,7 @@ class PdfFileReader:
 
     def getOutlines(
         self, node: Optional[Any] = None, outlines: Optional[Any] = None
-    ) -> List[Union[Destination, List[Destination]]]:
+    ) -> OutlinesType:
         """
         Retrieve the document outline present in the document.
 

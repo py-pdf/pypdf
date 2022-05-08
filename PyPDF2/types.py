@@ -32,6 +32,12 @@ FitType: TypeAlias = Literal[
 ZoomArgType: TypeAlias = Union[NumberObject, NullObject]
 ZoomArgsType: TypeAlias = List[ZoomArgType]
 
+# Recursive types are not yet supported by mypy:
+#    OutlinesType = List[Union[Destination, "OutlinesType"]]
+# See https://github.com/python/mypy/issues/731
+# Hence use this for the moment:
+OutlinesType = List[Union[Destination, List[Union[Destination, List[Destination]]]]]
+
 
 LayoutType: TypeAlias = Literal[
     "/NoLayout",

@@ -37,6 +37,7 @@ from PyPDF2.pagerange import PageRange, PageRangeSpec
 from PyPDF2.types import (
     BookmarkTypes,
     LayoutType,
+    OutlinesType,
     PagemodeType,
     ZoomArgsType,
     ZoomArgType,
@@ -77,7 +78,7 @@ class PdfFileMerger:
         self.inputs: List[Tuple[Any, PdfFileReader, bool]] = []
         self.pages: List[Any] = []
         self.output: Optional[PdfFileWriter] = PdfFileWriter()
-        self.bookmarks: List[Union[BookmarkTypes, List[Destination]]] = []
+        self.bookmarks: OutlinesType = []
         self.named_dests: List[Any] = []
         self.id_count = 0
         self.strict = strict
@@ -135,7 +136,7 @@ class PdfFileMerger:
         outline = []
         if import_bookmarks:
             outline = reader.getOutlines()
-            outline = self._trim_outline(reader, outline, pages)  # type: ignore
+            outline = self._trim_outline(reader, outline, pages)
 
         if bookmark:
             bookmark_typ = Bookmark(
@@ -201,7 +202,7 @@ class PdfFileMerger:
 
             my_file = True
         elif hasattr(fileobj, "seek") and hasattr(fileobj, "read"):
-            fileobj.seek(0)  # type: ignore
+            fileobj.seek(0)
             filecontent = fileobj.read()
             stream = BytesIO(filecontent)
             my_file = True
@@ -377,9 +378,9 @@ class PdfFileMerger:
     def _trim_outline(
         self,
         pdf: PdfFileReader,
-        outline: List[Destination],
+        outline: OutlinesType,
         pages: Union[Tuple[int, int], Tuple[int, int, int]],
-    ) -> List[Destination]:
+    ) -> OutlinesType:
         """
         Removes any outline/bookmark entries that are not a part of the
         specified page set.
@@ -388,11 +389,11 @@ class PdfFileMerger:
         prev_header_added = True
         for i, o in enumerate(outline):
             if isinstance(o, list):
-                sub = self._trim_outline(pdf, o, pages)
+                sub = self._trim_outline(pdf, o, pages)  # type: ignore
                 if sub:
                     if not prev_header_added:
                         new_outline.append(outline[i - 1])
-                    new_outline.append(sub)
+                    new_outline.append(sub)  # type: ignore
             else:
                 prev_header_added = False
                 for j in range(*pages):
@@ -531,7 +532,7 @@ class PdfFileMerger:
         self, pages: List[_MergedPage], bookmarks: Optional[Iterable[Bookmark]] = None
     ) -> None:
         if bookmarks is None:
-            bookmarks = self.bookmarks  # type: ignore # TODO: self.bookmarks can be none!
+            bookmarks = self.bookmarks  # type: ignore # TODO: self.bookmarks can be None!
         assert bookmarks is not None, "hint for mypy"
         for b in bookmarks:
             if isinstance(b, list):
@@ -556,17 +557,20 @@ class PdfFileMerger:
     def findBookmark(
         self,
         bookmark: Dict[str, Any],
-        root: Optional[Iterable[Union[BookmarkTypes, List[Destination]]]] = None,
+        root: Optional[OutlinesType] = None,
     ) -> Optional[List[int]]:
         if root is None:
             root = self.bookmarks
 
         for i, b in enumerate(root):
             if isinstance(b, list):
-                res = self.findBookmark(bookmark, b)
+                # b is still an inner node
+                # (OutlinesType, if recursive types were supported by mypy)
+                res = self.findBookmark(bookmark, b)  # type: ignore
                 if res:
                     return [i] + res
             elif b == bookmark or b["/Title"] == bookmark:
+                # we found a leaf node
                 return [i]
 
         return None
