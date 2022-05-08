@@ -80,3 +80,10 @@ from .utils import (  # noqa: F401
     str_,
     u_,
 )
+
+warnings.warn(
+    "The PyPDF2.pdf module is deprecated. "
+    "Import either from PyPDF2 directly, PyPDF2.errors, or PyPDF2.generic",
+    PendingDeprecationWarning,
+    stacklevel=2,
+)
