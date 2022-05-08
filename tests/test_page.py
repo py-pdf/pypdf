@@ -65,8 +65,6 @@ def test_page_operations(pdf_path, password):
         reader.decrypt(password)
 
     page: PageObject = reader.pages[0]
-    page.mergeRotatedScaledPage(page, 90, 1, expand=True)
-    page.mergeScaledTranslatedPage(page, 1, 1, 1)
     page.mergeRotatedScaledTranslatedPage(page, 90, scale=1, tx=1, ty=1, expand=True)
     page.addTransformation([1, 0, 0, 0, 0, 0])
     page.scale(2, 2)
@@ -74,6 +72,21 @@ def test_page_operations(pdf_path, password):
     page.scaleTo(100, 100)
     page.compressContentStreams()
     page.extractText()
+
+
+def test_page_transformations():
+    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    reader = PdfFileReader(pdf_path)
+
+    page: PageObject = reader.pages[0]
+    page.mergeRotatedPage(page, 90, expand=True)
+    page.mergeRotatedScaledPage(page, 90, 1, expand=True)
+    page.mergeRotatedScaledTranslatedPage(page, 90, scale=1, tx=1, ty=1, expand=True)
+    page.mergeRotatedTranslatedPage(page, 90, 100, 100, expand=False)
+    page.mergeScaledPage(page, 2, expand=False)
+    page.mergeScaledTranslatedPage(page, 1, 1, 1)
+    page.mergeTranslatedPage(page, 100, 100, expand=False)
+    page.addTransformation([1, 0, 0, 0, 0, 0])
 
 
 @pytest.mark.parametrize(
