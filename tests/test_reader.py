@@ -330,9 +330,7 @@ def test_get_page_number(src, page_nb):
 
 @pytest.mark.parametrize(
     ("src", "expected"),
-    [
-        ("form.pdf", None),
-    ],
+    [("form.pdf", None), ("AutoCad_Simple.pdf", "/SinglePage")],
 )
 def test_get_page_layout(src, expected):
     src = os.path.join(RESOURCE_ROOT, src)
