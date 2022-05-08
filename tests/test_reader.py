@@ -493,7 +493,7 @@ def test_read_encrypted_without_decryption():
     assert exc.value.args[0] == "File has not been decrypted"
 
 
-def test_get_destination_age_number():
+def test_get_destination_page_number():
     src = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
     reader = PdfFileReader(src)
     outlines = reader.getOutlines()

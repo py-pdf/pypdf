@@ -35,7 +35,7 @@ def test_FlateDecode(predictor, s):
     codec = FlateDecode()
     s = s.encode()
     encoded = codec.encode(s)
-    assert codec.decode(encoded, {"/Predictor": predictor}) == s
+    assert codec.decode(encoded, DictionaryObject({"/Predictor": predictor})) == s
 
 
 def test_FlateDecode_unsupported_predictor():
@@ -50,7 +50,7 @@ def test_FlateDecode_unsupported_predictor():
     for predictor, s in cartesian_product(predictors, filter_inputs):
         s = s.encode()
         with pytest.raises(PdfReadError):
-            codec.decode(codec.encode(s), {"/Predictor": predictor})
+            codec.decode(codec.encode(s), DictionaryObject({"/Predictor": predictor}))
 
 
 @pytest.mark.parametrize(

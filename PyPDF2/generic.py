@@ -1100,11 +1100,14 @@ class RectangleObject(ArrayObject):
 
     def __init__(
         self,
-        arr: Tuple[
-            Union[float, decimal.Decimal, None],
-            Union[float, decimal.Decimal, None],
-            Union[float, decimal.Decimal, None],
-            Union[float, decimal.Decimal, None],
+        arr: Union[
+            ArrayObject,
+            Tuple[
+                Union[float, decimal.Decimal, None],
+                Union[float, decimal.Decimal, None],
+                Union[float, decimal.Decimal, None],
+                Union[float, decimal.Decimal, None],
+            ],
         ],
     ) -> None:
         # must have four points
