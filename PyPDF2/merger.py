@@ -25,8 +25,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from io import BytesIO
-from io import FileIO as file
+from io import BytesIO, FileIO, IOBase
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 
 from PyPDF2._page import PageObject
@@ -43,8 +42,6 @@ from PyPDF2.types import (
     ZoomArgType,
 )
 from PyPDF2.utils import StrByteType, str_
-
-StreamIO = BytesIO
 
 ERR_CLOSED_WRITER = "close() was called and thus the writer cannot be used anymore"
 
@@ -117,49 +114,19 @@ class PdfFileMerger:
             bookmarks from being imported by specifying this as ``False``.
         """
 
-        # This parameter is passed to self.inputs.append and means
-        # that the stream used was created in this method.
-        my_file = False
-
-        # If the fileobj parameter is a string, assume it is a path
-        # and create a file object at that location. If it is a file,
-        # copy the file's contents into a BytesIO (or StreamIO) stream object; if
-        # it is a PdfFileReader, copy that reader's stream into a
-        # BytesIO (or StreamIO) stream.
-        # If fileobj is none of the above types, it is not modified
-        decryption_key = None
-        if isinstance(fileobj, str):
-            fileobj = file(fileobj, "rb")
-            my_file = True
-        elif hasattr(fileobj, "seek") and hasattr(fileobj, "read"):
-            fileobj.seek(0)  # type: ignore
-            filecontent = fileobj.read()  # type: ignore
-            fileobj = StreamIO(filecontent)  # type: ignore[arg-type]
-            my_file = True
-        elif isinstance(fileobj, PdfFileReader):
-            if hasattr(fileobj, "_decryption_key"):
-                decryption_key = fileobj._decryption_key
-            orig_tell = fileobj.stream.tell()
-            fileobj.stream.seek(0)
-            filecontent = StreamIO(fileobj.stream.read())  # type: ignore[assignment]
-
-            # reset the stream to its original location
-            fileobj.stream.seek(orig_tell)
-
-            fileobj = filecontent  # type: ignore[assignment]
-            my_file = True
+        stream, my_file, decryption_key = self._create_stream(fileobj)
 
         # Create a new PdfFileReader instance using the stream
         # (either file or BytesIO or StringIO) created above
-        pdfr = PdfFileReader(fileobj, strict=self.strict)  # type: ignore[arg-type]
+        reader = PdfFileReader(stream, strict=self.strict)  # type: ignore[arg-type]
         if decryption_key is not None:
-            pdfr._decryption_key = decryption_key
+            reader._decryption_key = decryption_key
 
         # Find the range of pages to merge.
         if pages is None:
-            pages = (0, pdfr.getNumPages())
+            pages = (0, reader.getNumPages())
         elif isinstance(pages, PageRange):
-            pages = pages.indices(pdfr.getNumPages())
+            pages = pages.indices(reader.getNumPages())
         elif not isinstance(pages, tuple):
             raise TypeError('"pages" must be a tuple of (start, stop[, step])')
 
@@ -167,8 +134,8 @@ class PdfFileMerger:
 
         outline = []
         if import_bookmarks:
-            outline = pdfr.getOutlines()
-            outline = self._trim_outline(pdfr, outline, pages)  # type: ignore
+            outline = reader.getOutlines()
+            outline = self._trim_outline(reader, outline, pages)  # type: ignore
 
         if bookmark:
             bookmark_typ = Bookmark(
@@ -180,18 +147,18 @@ class PdfFileMerger:
         else:
             self.bookmarks += outline
 
-        dests = pdfr.namedDestinations
-        trimmed_dests = self._trim_dests(pdfr, dests, pages)
+        dests = reader.namedDestinations
+        trimmed_dests = self._trim_dests(reader, dests, pages)
         self.named_dests += trimmed_dests
 
         # Gather all the pages that are going to be merged
         for i in range(*pages):
-            pg = pdfr.getPage(i)
+            pg = reader.getPage(i)
 
             id = self.id_count
             self.id_count += 1
 
-            mp = _MergedPage(pg, pdfr, id)
+            mp = _MergedPage(pg, reader, id)
 
             srcpages.append(mp)
 
@@ -202,7 +169,45 @@ class PdfFileMerger:
         self.pages[position:position] = srcpages
 
         # Keep track of our input files so we can close them later
-        self.inputs.append((fileobj, pdfr, my_file))
+        self.inputs.append((stream, reader, my_file))
+
+    def _create_stream(
+        self, fileobj: Union[StrByteType, PdfFileReader]
+    ) -> Tuple[IOBase, bool, Optional[bytes]]:
+        # This parameter is passed to self.inputs.append and means
+        # that the stream used was created in this method.
+        my_file = False
+
+        # If the fileobj parameter is a string, assume it is a path
+        # and create a file object at that location. If it is a file,
+        # copy the file's contents into a BytesIO stream object; if
+        # it is a PdfFileReader, copy that reader's stream into a
+        # BytesIO stream.
+        # If fileobj is none of the above types, it is not modified
+        decryption_key = None
+        stream: IOBase
+        if isinstance(fileobj, str):
+            stream = FileIO(fileobj, "rb")
+            my_file = True
+        elif isinstance(fileobj, PdfFileReader):
+            if hasattr(fileobj, "_decryption_key"):
+                decryption_key = fileobj._decryption_key
+            orig_tell = fileobj.stream.tell()
+            fileobj.stream.seek(0)
+            stream = BytesIO(fileobj.stream.read())
+
+            # reset the stream to its original location
+            fileobj.stream.seek(orig_tell)
+
+            my_file = True
+        elif hasattr(fileobj, "seek") and hasattr(fileobj, "read"):
+            fileobj.seek(0)  # type: ignore
+            filecontent = fileobj.read()
+            stream = BytesIO(filecontent)
+            my_file = True
+        else:
+            stream = fileobj
+        return stream, my_file, decryption_key
 
     def append(
         self,
@@ -245,7 +250,7 @@ class PdfFileMerger:
             raise RuntimeError(ERR_CLOSED_WRITER)
         my_file = False
         if isinstance(fileobj, str):
-            fileobj = file(fileobj, "wb")
+            fileobj = FileIO(fileobj, "wb")
             my_file = True
 
         # Add pages to the PdfFileWriter
@@ -253,7 +258,7 @@ class PdfFileMerger:
         # to allow PdfFileMerger to work with PyPdf 1.13
         for page in self.pages:
             self.output.addPage(page.pagedata)
-            pages_obj: Dict[str, Any] = self.output._pages.getObject()  # type: ignore
+            pages_obj = cast(Dict[str, Any], self.output._pages.getObject())
             page.out_pagedata = self.output.getReference(
                 pages_obj[PA.KIDS][-1].getObject()
             )
@@ -593,7 +598,7 @@ class PdfFileMerger:
         """
         if self.output is None:
             raise RuntimeError(ERR_CLOSED_WRITER)
-        out_pages: Dict[str, Any] = self.output.getObject(self.output._pages)  # type: ignore
+        out_pages = cast(Dict[str, Any], self.output.getObject(self.output._pages))
         if len(out_pages["/Kids"]) > 0:
             page_ref = out_pages["/Kids"][pagenum]
         else:

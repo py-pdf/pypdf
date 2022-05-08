@@ -160,8 +160,8 @@ class PdfFileWriter:
             need_appearances = NameObject("/NeedAppearances")
             self._root_object["/AcroForm"][need_appearances] = BooleanObject(True)  # type: ignore
 
-        except Exception as e:
-            logger.error("set_need_appearances_writer() catch : ", repr(e))
+        except Exception as exc:
+            logger.error("set_need_appearances_writer() catch : ", repr(exc))
 
     def addPage(self, page: PageObject) -> None:
         """

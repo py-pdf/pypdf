@@ -252,8 +252,8 @@ class PdfFileReader:
                 PdfReadWarning,
             )
         if isinstance(stream, str):
-            with open(stream, "rb") as fileobj:
-                stream = BytesIO(b_(fileobj.read()))
+            with open(stream, "rb") as fh:
+                stream = BytesIO(b_(fh.read()))
         self.read(stream)
         self.stream = stream
 
@@ -808,17 +808,17 @@ class PdfFileReader:
             stream_data.seek(int(obj_stm["/First"] + offset), 0)  # type: ignore
             try:
                 obj = readObject(stream_data, self)
-            except PdfStreamError as e:
+            except PdfStreamError as exc:
                 # Stream object cannot be read. Normally, a critical error, but
                 # Adobe Reader doesn't complain, so continue (in strict mode?)
                 warnings.warn(
                     "Invalid stream (index %d) within object %d %d: %s"
-                    % (i, indirectReference.idnum, indirectReference.generation, e),
+                    % (i, indirectReference.idnum, indirectReference.generation, exc),
                     PdfReadWarning,
                 )
 
                 if self.strict:
-                    raise PdfReadError("Can't read object stream: %s" % e)
+                    raise PdfReadError("Can't read object stream: %s" % exc)
                 # Replace with null. Hopefully it's nothing important.
                 obj = NullObject()
             return obj
