@@ -19,6 +19,9 @@ clean:
 test:
 	pytest tests --cov --cov-report term-missing -vv --cov-report html --durations=3 --timeout=30
 
+testtype:
+	pytest tests --cov --cov-report term-missing -vv --cov-report html --durations=3 --timeout=30 --typeguard-packages=PyPDF2
+
 mutation-test:
 	mutmut run
 

@@ -1,9 +1,13 @@
 import datetime
 import decimal
 import re
+from typing import Any, Callable, Dict, Optional, TypeVar, Union
+from xml.dom.minidom import Document
+from xml.dom.minidom import Element as XmlElement
 from xml.dom.minidom import parseString
 
-from .generic import PdfObject
+from PyPDF2.generic import PdfObject
+from PyPDF2.utils import StreamType
 
 RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 DC_NAMESPACE = "http://purl.org/dc/elements/1.1/"
@@ -53,8 +57,42 @@ iso8601 = re.compile(
 )
 
 
-def _getter_bag(namespace, name, converter):
-    def get(self):
+K = TypeVar("K")
+
+
+def _identity(value: K) -> K:
+    return value
+
+
+def _converter_date(value: str) -> datetime.datetime:
+    matches = iso8601.match(value)
+    if matches is None:
+        raise ValueError("Invalid date format: %s" % value)
+    year = int(matches.group("year"))
+    month = int(matches.group("month") or "1")
+    day = int(matches.group("day") or "1")
+    hour = int(matches.group("hour") or "0")
+    minute = int(matches.group("minute") or "0")
+    second = decimal.Decimal(matches.group("second") or "0")
+    seconds_dec = second.to_integral(decimal.ROUND_FLOOR)
+    milliseconds_dec = (second - seconds_dec) * 1000000
+
+    seconds = int(seconds_dec)
+    milliseconds = int(milliseconds_dec)
+
+    tzd = matches.group("tzd") or "Z"
+    dt = datetime.datetime(year, month, day, hour, minute, seconds, milliseconds)
+    if tzd != "Z":
+        tzd_hours, tzd_minutes = (int(x) for x in tzd.split(":"))
+        tzd_hours *= -1
+        if tzd_hours < 0:
+            tzd_minutes *= -1
+        dt = dt + datetime.timedelta(hours=tzd_hours, minutes=tzd_minutes)
+    return dt
+
+
+def _getter_bag(namespace: str, name: str) -> Optional[Any]:
+    def get(self: Any) -> Optional[Any]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
@@ -65,7 +103,6 @@ def _getter_bag(namespace, name, converter):
                 for bag in bags:
                     for item in bag.getElementsByTagNameNS(RDF_NAMESPACE, "li"):
                         value = self._getText(item)
-                        value = converter(value)
                         retval.append(value)
         ns_cache = self.cache.setdefault(namespace, {})
         ns_cache[name] = retval
@@ -74,8 +111,10 @@ def _getter_bag(namespace, name, converter):
     return get
 
 
-def _getter_seq(namespace, name, converter):
-    def get(self):
+def _getter_seq(
+    namespace: str, name: str, converter: Callable[[Any], Any] = _identity
+) -> Optional[Any]:
+    def get(self: Any) -> Optional[Any]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
@@ -98,8 +137,8 @@ def _getter_seq(namespace, name, converter):
     return get
 
 
-def _getter_langalt(namespace, name, converter):
-    def get(self):
+def _getter_langalt(namespace: str, name: str) -> Optional[Any]:
+    def get(self: Any) -> Optional[Any]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
@@ -110,10 +149,9 @@ def _getter_langalt(namespace, name, converter):
                 for alt in alts:
                     for item in alt.getElementsByTagNameNS(RDF_NAMESPACE, "li"):
                         value = self._getText(item)
-                        value = converter(value)
                         retval[item.getAttribute("xml:lang")] = value
             else:
-                retval["x-default"] = converter(self._getText(element))
+                retval["x-default"] = self._getText(element)
         ns_cache = self.cache.setdefault(namespace, {})
         ns_cache[name] = retval
         return retval
@@ -121,8 +159,10 @@ def _getter_langalt(namespace, name, converter):
     return get
 
 
-def _getter_single(namespace, name, converter):
-    def get(self):
+def _getter_single(
+    namespace: str, name: str, converter: Callable[[str], Any] = _identity
+) -> Optional[Any]:
+    def get(self: Any) -> Optional[Any]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
@@ -148,16 +188,22 @@ class XmpInformation(PdfObject):
     Usually accessed by :meth:`getXmpMetadata()<PyPDF2.PdfFileReader.getXmpMetadata>`
     """
 
-    def __init__(self, stream):
-        self.stream = stream
-        doc_root = parseString(self.stream.getData())
-        self.rdfRoot = doc_root.getElementsByTagNameNS(RDF_NAMESPACE, "RDF")[0]
-        self.cache = {}
+    from PyPDF2.generic import ContentStream
 
-    def writeToStream(self, stream, encryption_key):
+    def __init__(self, stream: ContentStream) -> None:
+        self.stream = stream
+        doc_root: Document = parseString(self.stream.getData())
+        self.rdfRoot: XmlElement = doc_root.getElementsByTagNameNS(
+            RDF_NAMESPACE, "RDF"
+        )[0]
+        self.cache: Dict[Any, Any] = {}
+
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
         self.stream.writeToStream(stream, encryption_key)
 
-    def getElement(self, aboutUri, namespace, name):
+    def getElement(self, aboutUri: str, namespace: str, name: str) -> Any:
         for desc in self.rdfRoot.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):
             if desc.getAttributeNS(RDF_NAMESPACE, "about") == aboutUri:
                 attr = desc.getAttributeNodeNS(namespace, name)
@@ -165,7 +211,7 @@ class XmpInformation(PdfObject):
                     yield attr
                 yield from desc.getElementsByTagNameNS(namespace, name)
 
-    def getNodesInNamespace(self, aboutUri, namespace):
+    def getNodesInNamespace(self, aboutUri: str, namespace: str) -> Any:
         for desc in self.rdfRoot.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):
             if desc.getAttributeNS(RDF_NAMESPACE, "about") == aboutUri:
                 for i in range(desc.attributes.length):
@@ -176,57 +222,25 @@ class XmpInformation(PdfObject):
                     if child.namespaceURI == namespace:
                         yield child
 
-    def _getText(self, element):
+    def _getText(self, element: XmlElement) -> str:
         text = ""
         for child in element.childNodes:
             if child.nodeType == child.TEXT_NODE:
                 text += child.data
         return text
 
-    def _converter_string(value):
-        return value
-
-    @staticmethod
-    def _converter_date(value):
-        matches = iso8601.match(value)
-        if matches is None:
-            raise ValueError("Invalid date format: %s" % value)
-        year = int(matches.group("year"))
-        month = int(matches.group("month") or "1")
-        day = int(matches.group("day") or "1")
-        hour = int(matches.group("hour") or "0")
-        minute = int(matches.group("minute") or "0")
-        second = decimal.Decimal(matches.group("second") or "0")
-        seconds_dec = second.to_integral(decimal.ROUND_FLOOR)
-        milliseconds_dec = (second - seconds_dec) * 1000000
-
-        seconds = int(seconds_dec)
-        milliseconds = int(milliseconds_dec)
-
-        tzd = matches.group("tzd") or "Z"
-        dt = datetime.datetime(year, month, day, hour, minute, seconds, milliseconds)
-        if tzd != "Z":
-            tzd_hours, tzd_minutes = (int(x) for x in tzd.split(":"))
-            tzd_hours *= -1
-            if tzd_hours < 0:
-                tzd_minutes *= -1
-            dt = dt + datetime.timedelta(hours=tzd_hours, minutes=tzd_minutes)
-        return dt
-
-    dc_contributor = property(
-        _getter_bag(DC_NAMESPACE, "contributor", _converter_string)
-    )
+    dc_contributor = property(_getter_bag(DC_NAMESPACE, "contributor"))
     """
     Contributors to the resource (other than the authors). An unsorted
     array of names.
     """
 
-    dc_coverage = property(_getter_single(DC_NAMESPACE, "coverage", _converter_string))
+    dc_coverage = property(_getter_single(DC_NAMESPACE, "coverage"))
     """
     Text describing the extent or scope of the resource.
     """
 
-    dc_creator = property(_getter_seq(DC_NAMESPACE, "creator", _converter_string))
+    dc_creator = property(_getter_seq(DC_NAMESPACE, "creator"))
     """
     A sorted array of names of the authors of the resource, listed in order
     of precedence.
@@ -238,86 +252,76 @@ class XmpInformation(PdfObject):
     the resource.  The dates and times are in UTC.
     """
 
-    dc_description = property(
-        _getter_langalt(DC_NAMESPACE, "description", _converter_string)
-    )
+    dc_description = property(_getter_langalt(DC_NAMESPACE, "description"))
     """
     A language-keyed dictionary of textual descriptions of the content of the
     resource.
     """
 
-    dc_format = property(_getter_single(DC_NAMESPACE, "format", _converter_string))
+    dc_format = property(_getter_single(DC_NAMESPACE, "format"))
     """
     The mime-type of the resource.
     """
 
-    dc_identifier = property(
-        _getter_single(DC_NAMESPACE, "identifier", _converter_string)
-    )
+    dc_identifier = property(_getter_single(DC_NAMESPACE, "identifier"))
     """
     Unique identifier of the resource.
     """
 
-    dc_language = property(_getter_bag(DC_NAMESPACE, "language", _converter_string))
+    dc_language = property(_getter_bag(DC_NAMESPACE, "language"))
     """
     An unordered array specifying the languages used in the resource.
     """
 
-    dc_publisher = property(_getter_bag(DC_NAMESPACE, "publisher", _converter_string))
+    dc_publisher = property(_getter_bag(DC_NAMESPACE, "publisher"))
     """
     An unordered array of publisher names.
     """
 
-    dc_relation = property(_getter_bag(DC_NAMESPACE, "relation", _converter_string))
+    dc_relation = property(_getter_bag(DC_NAMESPACE, "relation"))
     """
     An unordered array of text descriptions of relationships to other
     documents.
     """
 
-    dc_rights = property(_getter_langalt(DC_NAMESPACE, "rights", _converter_string))
+    dc_rights = property(_getter_langalt(DC_NAMESPACE, "rights"))
     """
     A language-keyed dictionary of textual descriptions of the rights the
     user has to this resource.
     """
 
-    dc_source = property(_getter_single(DC_NAMESPACE, "source", _converter_string))
+    dc_source = property(_getter_single(DC_NAMESPACE, "source"))
     """
     Unique identifier of the work from which this resource was derived.
     """
 
-    dc_subject = property(_getter_bag(DC_NAMESPACE, "subject", _converter_string))
+    dc_subject = property(_getter_bag(DC_NAMESPACE, "subject"))
     """
     An unordered array of descriptive phrases or keywrods that specify the
     topic of the content of the resource.
     """
 
-    dc_title = property(_getter_langalt(DC_NAMESPACE, "title", _converter_string))
+    dc_title = property(_getter_langalt(DC_NAMESPACE, "title"))
     """
     A language-keyed dictionary of the title of the resource.
     """
 
-    dc_type = property(_getter_bag(DC_NAMESPACE, "type", _converter_string))
+    dc_type = property(_getter_bag(DC_NAMESPACE, "type"))
     """
     An unordered array of textual descriptions of the document type.
     """
 
-    pdf_keywords = property(
-        _getter_single(PDF_NAMESPACE, "Keywords", _converter_string)
-    )
+    pdf_keywords = property(_getter_single(PDF_NAMESPACE, "Keywords"))
     """
     An unformatted text string representing document keywords.
     """
 
-    pdf_pdfversion = property(
-        _getter_single(PDF_NAMESPACE, "PDFVersion", _converter_string)
-    )
+    pdf_pdfversion = property(_getter_single(PDF_NAMESPACE, "PDFVersion"))
     """
     The PDF file version, for example 1.0, 1.3.
     """
 
-    pdf_producer = property(
-        _getter_single(PDF_NAMESPACE, "Producer", _converter_string)
-    )
+    pdf_producer = property(_getter_single(PDF_NAMESPACE, "Producer"))
     """
     The name of the tool that created the PDF document.
     """
@@ -347,30 +351,24 @@ class XmpInformation(PdfObject):
     object.
     """
 
-    xmp_creatorTool = property(
-        _getter_single(XMP_NAMESPACE, "CreatorTool", _converter_string)
-    )
+    xmp_creatorTool = property(_getter_single(XMP_NAMESPACE, "CreatorTool"))
     """
     The name of the first known tool used to create the resource.
     """
 
-    xmpmm_documentId = property(
-        _getter_single(XMPMM_NAMESPACE, "DocumentID", _converter_string)
-    )
+    xmpmm_documentId = property(_getter_single(XMPMM_NAMESPACE, "DocumentID"))
     """
     The common identifier for all versions and renditions of this resource.
     """
 
-    xmpmm_instanceId = property(
-        _getter_single(XMPMM_NAMESPACE, "InstanceID", _converter_string)
-    )
+    xmpmm_instanceId = property(_getter_single(XMPMM_NAMESPACE, "InstanceID"))
     """
     An identifier for a specific incarnation of a document, updated each
     time a file is saved.
     """
 
     @property
-    def custom_properties(self):
+    def custom_properties(self) -> Dict[Any, Any]:
         """
         Retrieves custom metadata properties defined in the undocumented pdfx
         metadata schema.

@@ -12,8 +12,6 @@ from PyPDF2.constants import Ressources as RES
 from PyPDF2.errors import PdfReadError
 from PyPDF2.filters import _xobj_to_image
 
-StreamIO = BytesIO
-
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
 RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
@@ -332,9 +330,7 @@ def test_get_page_number(src, page_nb):
 
 @pytest.mark.parametrize(
     ("src", "expected"),
-    [
-        ("form.pdf", None),
-    ],
+    [("form.pdf", None), ("AutoCad_Simple.pdf", "/SinglePage")],
 )
 def test_get_page_layout(src, expected):
     src = os.path.join(RESOURCE_ROOT, src)
@@ -495,7 +491,7 @@ def test_read_encrypted_without_decryption():
     assert exc.value.args[0] == "File has not been decrypted"
 
 
-def test_get_destination_age_number():
+def test_get_destination_page_number():
     src = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
     reader = PdfFileReader(src)
     outlines = reader.getOutlines()
@@ -508,7 +504,7 @@ def test_do_not_get_stuck_on_large_files_without_start_xref():
     """Tests for the absence of a DoS bug, where a large file without an startxref mark
     would cause the library to hang for minutes to hours"""
     start_time = time.time()
-    broken_stream = StreamIO(b"\0" * 5 * 1000 * 1000)
+    broken_stream = BytesIO(b"\0" * 5 * 1000 * 1000)
     with pytest.raises(PdfReadError):
         PdfFileReader(broken_stream)
     parse_duration = time.time() - start_time
@@ -599,3 +595,11 @@ def test_decode_permissions():
     modify = base.copy()
     modify["modify"] = True
     assert reader.decode_permissions(8) == modify
+
+
+def test_VirtualList():
+    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    reader = PdfFileReader(pdf_path)
+
+    # Test if getting as slice throws an error
+    assert len(reader.pages[:]) == 1

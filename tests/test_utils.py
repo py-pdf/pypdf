@@ -4,7 +4,6 @@ import os
 import pytest
 
 import PyPDF2.utils
-from PyPDF2 import PdfFileReader
 from PyPDF2.errors import PdfStreamError
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -77,14 +76,6 @@ def test_markLocation():
     stream = io.BytesIO(b"abde" * 6000)
     PyPDF2.utils.markLocation(stream)
     os.remove("PyPDF2_pdfLocation.txt")  # cleanup
-
-
-def test_ConvertFunctionsToVirtualList():
-    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
-    reader = PdfFileReader(pdf_path)
-
-    # Test if getting as slice throws an error
-    assert len(reader.pages[:]) == 1
 
 
 def test_hexStr():

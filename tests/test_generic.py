@@ -16,7 +16,6 @@ from PyPDF2.generic import (
     NameObject,
     NullObject,
     NumberObject,
-    PdfObject,
     RectangleObject,
     TextStringObject,
     createStringObject,
@@ -39,7 +38,12 @@ def test_number_object_exception():
 def test_createStringObject_exception():
     with pytest.raises(TypeError) as exc:
         createStringObject(123)
-    assert exc.value.args[0] == "createStringObject should have str or unicode arg"
+    assert (  # typeguard is not running
+        exc.value.args[0] == "createStringObject should have str or unicode arg"
+    ) or (  # typeguard is enabled
+        'type of argument "string" must be one of (str, bytes); got int instead'
+        in exc.value.args[0]
+    )
 
 
 @pytest.mark.parametrize(
@@ -142,7 +146,7 @@ def test_NameObject():
 def test_destination_fit_r():
     d = Destination(
         NameObject("title"),
-        PdfObject(),
+        NullObject(),
         NameObject(TF.FIT_R),
         FloatObject(0),
         FloatObject(0),
@@ -161,22 +165,24 @@ def test_destination_fit_r():
 
 
 def test_destination_fit_v():
-    Destination(NameObject("title"), PdfObject(), NameObject(TF.FIT_V), FloatObject(0))
+    Destination(NameObject("title"), NullObject(), NameObject(TF.FIT_V), FloatObject(0))
 
 
 def test_destination_exception():
     with pytest.raises(PdfReadError):
-        Destination(NameObject("title"), PdfObject(), NameObject("foo"), FloatObject(0))
+        Destination(
+            NameObject("title"), NullObject(), NameObject("foo"), FloatObject(0)
+        )
 
 
 def test_bookmark_write_to_stream():
     stream = BytesIO()
     bm = Bookmark(
-        NameObject("title"), NameObject(), NameObject(TF.FIT_V), FloatObject(0)
+        NameObject("title"), NullObject(), NameObject(TF.FIT_V), FloatObject(0)
     )
     bm.writeToStream(stream, None)
     stream.seek(0, 0)
-    assert stream.read() == b"<<\n/Title title\n/Dest [  /FitV 0 ]\n>>"
+    assert stream.read() == b"<<\n/Title title\n/Dest [ null /FitV 0 ]\n>>"
 
 
 def test_encode_pdfdocencoding_keyerror():
@@ -323,7 +329,6 @@ def test_DictionaryObject_read_from_stream_stream_stream_valid(
         raise PdfReadError("__ALLGOOD__")
     print(exc.value)
     assert shouldFail ^ (exc.value.args[0] == "__ALLGOOD__")
-
 
 
 def test_RectangleObject():

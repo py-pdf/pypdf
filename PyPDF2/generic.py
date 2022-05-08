@@ -38,7 +38,7 @@ import logging
 import re
 import warnings
 from io import BytesIO
-from typing import Dict, Optional
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from PyPDF2.constants import FilterTypes as FT
 from PyPDF2.constants import StreamAttributes as SA
@@ -49,8 +49,15 @@ from PyPDF2.errors import (
     PdfStreamError,
 )
 
-from . import filters, utils
-from .utils import RC4_encrypt, b_, ord_, readNonWhitespace, skipOverComment
+from . import utils
+from .utils import (
+    RC4_encrypt,
+    StreamType,
+    b_,
+    ord_,
+    readNonWhitespace,
+    skipOverComment,
+)
 
 logger = logging.getLogger(__name__)
 ObjectPrefix = b_("/<[tf(n%")
@@ -59,61 +66,24 @@ IndirectPattern = re.compile(b_(r"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]"))
 
 
 class PdfObject:
-    def getObject(self):
+    def getObject(self) -> Optional["PdfObject"]:
         """Resolve indirect references."""
         return self
 
-
-def readObject(stream, pdf) -> PdfObject:
-    tok = stream.read(1)
-    stream.seek(-1, 1)  # reset to start
-    idx = ObjectPrefix.find(tok)
-    if idx == 0:
-        return NameObject.readFromStream(stream, pdf)
-    elif idx == 1:
-        # hexadecimal string OR dictionary
-        peek = stream.read(2)
-        stream.seek(-2, 1)  # reset to start
-
-        if peek == b_("<<"):
-            return DictionaryObject.readFromStream(stream, pdf)
-        else:
-            return readHexStringFromStream(stream)
-    elif idx == 2:
-        return ArrayObject.readFromStream(stream, pdf)
-    elif idx == 3 or idx == 4:
-        return BooleanObject.readFromStream(stream)
-    elif idx == 5:
-        return readStringFromStream(stream)
-    elif idx == 6:
-        return NullObject.readFromStream(stream)
-    elif idx == 7:
-        # comment
-        while tok not in (b_("\r"), b_("\n")):
-            tok = stream.read(1)
-            # Prevents an infinite loop by raising an error if the stream is at
-            # the EOF
-            if len(tok) <= 0:
-                raise PdfStreamError("File ended unexpectedly.")
-        tok = readNonWhitespace(stream)
-        stream.seek(-1, 1)
-        return readObject(stream, pdf)
-    else:
-        # number object OR indirect reference
-        peek = stream.read(20)
-        stream.seek(-len(peek), 1)  # reset to start
-        if IndirectPattern.match(peek) is not None:
-            return IndirectObject.readFromStream(stream, pdf)
-        else:
-            return NumberObject.readFromStream(stream)
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
+        raise NotImplementedError()
 
 
 class NullObject(PdfObject):
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
         stream.write(b_("null"))
 
     @staticmethod
-    def readFromStream(stream):
+    def readFromStream(stream: StreamType) -> "NullObject":
         nulltxt = stream.read(4)
         if nulltxt != b_("null"):
             raise PdfReadError("Could not read Null object")
@@ -121,17 +91,19 @@ class NullObject(PdfObject):
 
 
 class BooleanObject(PdfObject):
-    def __init__(self, value):
+    def __init__(self, value: Any) -> None:
         self.value = value
 
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
         if self.value:
             stream.write(b_("true"))
         else:
             stream.write(b_("false"))
 
     @staticmethod
-    def readFromStream(stream):
+    def readFromStream(stream: StreamType) -> "BooleanObject":
         word = stream.read(4)
         if word == b_("true"):
             return BooleanObject(True)
@@ -143,7 +115,9 @@ class BooleanObject(PdfObject):
 
 
 class ArrayObject(list, PdfObject):
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
         stream.write(b_("["))
         for data in self:
             stream.write(b_(" "))
@@ -151,7 +125,7 @@ class ArrayObject(list, PdfObject):
         stream.write(b_(" ]"))
 
     @staticmethod
-    def readFromStream(stream, pdf):
+    def readFromStream(stream: StreamType, pdf: Any) -> "ArrayObject":  # PdfFileReader
         arr = ArrayObject()
         tmp = stream.read(1)
         if tmp != b_("["):
@@ -173,18 +147,18 @@ class ArrayObject(list, PdfObject):
 
 
 class IndirectObject(PdfObject):
-    def __init__(self, idnum, generation, pdf):
+    def __init__(self, idnum: int, generation: int, pdf: Any) -> None:  # PdfFileReader
         self.idnum = idnum
         self.generation = generation
         self.pdf = pdf
 
-    def getObject(self):
+    def getObject(self) -> Optional[PdfObject]:
         return self.pdf.getObject(self).getObject()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"IndirectObject({self.idnum!r}, {self.generation!r})"
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         return (
             other is not None
             and isinstance(other, IndirectObject)
@@ -193,14 +167,18 @@ class IndirectObject(PdfObject):
             and self.pdf is other.pdf
         )
 
-    def __ne__(self, other):
+    def __ne__(self, other: Any) -> bool:
         return not self.__eq__(other)
 
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
         stream.write(b_(f"{self.idnum} {self.generation} R"))
 
     @staticmethod
-    def readFromStream(stream, pdf):
+    def readFromStream(
+        stream: StreamType, pdf: Any  # PdfFileReader
+    ) -> "IndirectObject":
         idnum = b_("")
         while True:
             tok = stream.read(1)
@@ -229,7 +207,9 @@ class IndirectObject(PdfObject):
 
 
 class FloatObject(decimal.Decimal, PdfObject):
-    def __new__(cls, value="0", context=None):
+    def __new__(
+        cls, value: Union[str, Any] = "0", context: Optional[Any] = None
+    ) -> "FloatObject":
         try:
             return decimal.Decimal.__new__(cls, utils.str_(value), context)
         except Exception:
@@ -241,7 +221,7 @@ class FloatObject(decimal.Decimal, PdfObject):
                 logger.warning(f"Invalid FloatObject {value}")
                 return decimal.Decimal.__new__(cls, "0")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         if self == self.to_integral():
             return str(self.quantize(decimal.Decimal(1)))
         else:
@@ -252,10 +232,12 @@ class FloatObject(decimal.Decimal, PdfObject):
                 o = o[:-1]
             return o
 
-    def as_numeric(self):
+    def as_numeric(self) -> float:
         return float(b_(repr(self)))
 
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
         stream.write(b_(repr(self)))
 
 
@@ -263,21 +245,23 @@ class NumberObject(int, PdfObject):
     NumberPattern = re.compile(b_("[^+-.0-9]"))
     ByteDot = b_(".")
 
-    def __new__(cls, value):
+    def __new__(cls, value: Any) -> "NumberObject":
         val = int(value)
         try:
             return int.__new__(cls, val)
         except OverflowError:
             return int.__new__(cls, 0)
 
-    def as_numeric(self):
+    def as_numeric(self) -> int:
         return int(b_(repr(self)))
 
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
         stream.write(b_(repr(self)))
 
     @staticmethod
-    def readFromStream(stream):
+    def readFromStream(stream: StreamType) -> Union["NumberObject", FloatObject]:
         num = utils.readUntilRegex(stream, NumberObject.NumberPattern)
         if num.find(NumberObject.ByteDot) != -1:
             return FloatObject(num)
@@ -285,34 +269,9 @@ class NumberObject(int, PdfObject):
             return NumberObject(num)
 
 
-def createStringObject(string):
-    """
-    Given a string (either a "str" or "unicode"), create a ByteStringObject or a
-    TextStringObject to represent the string.
-    """
-    if isinstance(string, str):
-        return TextStringObject(string)
-    elif isinstance(string, utils.bytes_type):
-        try:
-            if string.startswith(codecs.BOM_UTF16_BE):
-                retval = TextStringObject(string.decode("utf-16"))
-                retval.autodetect_utf16 = True
-                return retval
-            else:
-                # This is probably a big performance hit here, but we need to
-                # convert string objects into the text/unicode-aware version if
-                # possible... and the only way to check if that's possible is
-                # to try.  Some strings are strings, some are just byte arrays.
-                retval = TextStringObject(decode_pdfdocencoding(string))
-                retval.autodetect_pdfdocencoding = True
-                return retval
-        except UnicodeDecodeError:
-            return ByteStringObject(string)
-    else:
-        raise TypeError("createStringObject should have str or unicode arg")
-
-
-def readHexStringFromStream(stream):
+def readHexStringFromStream(
+    stream: StreamType,
+) -> Union["TextStringObject", "ByteStringObject"]:
     stream.read(1)
     txt = ""
     x = b_("")
@@ -333,7 +292,9 @@ def readHexStringFromStream(stream):
     return createStringObject(b_(txt))
 
 
-def readStringFromStream(stream):
+def readStringFromStream(
+    stream: StreamType,
+) -> Union["TextStringObject", "ByteStringObject"]:
     tok = stream.read(1)
     parens = 1
     txt = b_("")
@@ -415,20 +376,22 @@ class ByteStringObject(utils.bytes_type, PdfObject):  # type: ignore
     """
 
     @property
-    def original_bytes(self):
+    def original_bytes(self) -> bytes:
         """For compatibility with TextStringObject.original_bytes."""
         return self
 
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
         bytearr = self
         if encryption_key:
-            bytearr = RC4_encrypt(encryption_key, bytearr)
+            bytearr = RC4_encrypt(encryption_key, bytearr)  #  type: ignore
         stream.write(b_("<"))
         stream.write(utils.hexencode(bytearr))
         stream.write(b_(">"))
 
 
-class TextStringObject(str, PdfObject):  # type: ignore
+class TextStringObject(str, PdfObject):
     """
     Represents a string object that has been decoded into a real unicode string.
     If read from a PDF document, this string appeared to match the
@@ -440,7 +403,7 @@ class TextStringObject(str, PdfObject):  # type: ignore
     autodetect_utf16 = False
 
     @property
-    def original_bytes(self):
+    def original_bytes(self) -> bytes:
         """
         It is occasionally possible that a text string object gets created where
         a byte string object was expected due to the autodetection mechanism --
@@ -449,7 +412,7 @@ class TextStringObject(str, PdfObject):  # type: ignore
         """
         return self.get_original_bytes()
 
-    def get_original_bytes(self):
+    def get_original_bytes(self) -> bytes:
         # We're a text string object, but the library is trying to get our raw
         # bytes.  This can happen if we auto-detected this string as text, but
         # we were wrong.  It's pretty common.  Return the original bytes that
@@ -462,7 +425,9 @@ class TextStringObject(str, PdfObject):  # type: ignore
         else:
             raise Exception("no information about original bytes")
 
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
         # Try to write the string out as a PDFDocEncoding encoded string.  It's
         # nicer to look at in the PDF file.  Sadly, we take a performance hit
         # here for trying...
@@ -488,11 +453,13 @@ class NameObject(str, PdfObject):
     delimiterPattern = re.compile(b_(r"\s+|[\(\)<>\[\]{}/%]"))
     surfix = b_("/")
 
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
         stream.write(b_(self))
 
     @staticmethod
-    def readFromStream(stream, pdf):
+    def readFromStream(stream: StreamType, pdf: Any) -> "NameObject":  # PdfFileReader
         name = stream.read(1)
         if name != NameObject.surfix:
             raise PdfReadError("name read error")
@@ -516,27 +483,27 @@ class NameObject(str, PdfObject):
 
 
 class DictionaryObject(dict, PdfObject):
-    def raw_get(self, key):
+    def raw_get(self, key: Any) -> Any:
         return dict.__getitem__(self, key)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: Any, value: Any) -> Any:
         if not isinstance(key, PdfObject):
             raise ValueError("key must be PdfObject")
         if not isinstance(value, PdfObject):
             raise ValueError("value must be PdfObject")
         return dict.__setitem__(self, key, value)
 
-    def setdefault(self, key, value=None):
+    def setdefault(self, key: Any, value: Optional[Any] = None) -> Any:
         if not isinstance(key, PdfObject):
             raise ValueError("key must be PdfObject")
         if not isinstance(value, PdfObject):
             raise ValueError("value must be PdfObject")
-        return dict.setdefault(self, key, value)
+        return dict.setdefault(self, key, value)  # type: ignore
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: Any) -> PdfObject:
         return dict.__getitem__(self, key).getObject()
 
-    def getXmpMetadata(self):
+    def getXmpMetadata(self) -> Optional[PdfObject]:  # XmpInformation
         """
         Retrieve XMP (Extensible Metadata Platform) data relevant to the
         this object, if available.
@@ -546,19 +513,20 @@ class DictionaryObject(dict, PdfObject):
         that can be used to access XMP metadata from the document.  Can also
         return None if no metadata was found on the document root.
         """
+        from PyPDF2.xmp import XmpInformation
+
         metadata = self.get("/Metadata", None)
         if metadata is None:
             return None
         metadata = metadata.getObject()
-        from . import xmp
 
-        if not isinstance(metadata, xmp.XmpInformation):
-            metadata = xmp.XmpInformation(metadata)
+        if not isinstance(metadata, XmpInformation):
+            metadata = XmpInformation(metadata)
             self[NameObject("/Metadata")] = metadata
         return metadata
 
     @property
-    def xmpMetadata(self):
+    def xmpMetadata(self) -> Optional[PdfObject]:  # XmpInformation
         """
         Read-only property that accesses the {@link
         #DictionaryObject.getXmpData getXmpData} function.
@@ -567,7 +535,9 @@ class DictionaryObject(dict, PdfObject):
         """
         return self.getXmpMetadata()
 
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
         stream.write(b_("<<\n"))
         for key, value in list(self.items()):
             key.writeToStream(stream, encryption_key)
@@ -577,8 +547,12 @@ class DictionaryObject(dict, PdfObject):
         stream.write(b_(">>"))
 
     @staticmethod
-    def readFromStream(stream, pdf):
-        def getNextObjPos(p, p1, remGens, pdf):
+    def readFromStream(
+        stream: StreamType, pdf: Any  # PdfFileReader
+    ) -> "DictionaryObject":
+        def getNextObjPos(
+            p: int, p1: int, remGens: List[int], pdf: Any
+        ) -> int:  # PdfFileReader
             l = pdf.xref[remGens[0]]
             for o in l:
                 if p1 > l[o] and p < l[o]:
@@ -588,7 +562,9 @@ class DictionaryObject(dict, PdfObject):
             else:
                 return getNextObjPos(p, p1, remGens[1:], pdf)
 
-        def readUnsizedFromSteam(stream, pdf):
+        def readUnsizedFromSteam(
+            stream: StreamType, pdf: Any  # PdfFileReader
+        ) -> bytes:
             # we are just pointing at beginning of the stream
             eon = getNextObjPos(stream.tell(), 2**32, [g for g in pdf.xref], pdf) - 1
             curr = stream.tell()
@@ -607,7 +583,7 @@ class DictionaryObject(dict, PdfObject):
                 "Dictionary read error at byte %s: stream must begin with '<<'"
                 % utils.hexStr(stream.tell())
             )
-        data = {}
+        data: Dict[Any, Any] = {}
         while True:
             tok = readNonWhitespace(stream)
             if tok == b_("\x00"):
@@ -702,16 +678,16 @@ class DictionaryObject(dict, PdfObject):
 
 
 class TreeObject(DictionaryObject):
-    def __init__(self):
+    def __init__(self) -> None:
         DictionaryObject.__init__(self)
 
-    def hasChildren(self):
+    def hasChildren(self) -> bool:
         return "/First" in self
 
-    def __iter__(self):
+    def __iter__(self) -> Any:
         return self.children()
 
-    def children(self):
+    def children(self) -> Optional[Any]:
         if not self.hasChildren():
             return
 
@@ -720,9 +696,9 @@ class TreeObject(DictionaryObject):
             yield child
             if child == self["/Last"]:
                 return
-            child = child["/Next"]
+            child = child["/Next"]  # type: ignore
 
-    def addChild(self, child, pdf):
+    def addChild(self, child: Any, pdf: Any) -> None:  # PdfFileReader
         child_obj = child.getObject()
         child = pdf.getReference(child_obj)
         assert isinstance(child, IndirectObject)
@@ -735,19 +711,19 @@ class TreeObject(DictionaryObject):
             prev = self["/Last"]
 
         self[NameObject("/Last")] = child
-        self[NameObject("/Count")] = NumberObject(self[NameObject("/Count")] + 1)
+        self[NameObject("/Count")] = NumberObject(self[NameObject("/Count")] + 1)  # type: ignore
 
         if prev:
             prev_ref = pdf.getReference(prev)
             assert isinstance(prev_ref, IndirectObject)
             child_obj[NameObject("/Prev")] = prev_ref
-            prev[NameObject("/Next")] = child
+            prev[NameObject("/Next")] = child  # type: ignore
 
         parent_ref = pdf.getReference(self)
         assert isinstance(parent_ref, IndirectObject)
         child_obj[NameObject("/Parent")] = parent_ref
 
-    def removeChild(self, child):
+    def removeChild(self, child: Any) -> None:
         child_obj = child.getObject()
 
         if NameObject("/Parent") not in child_obj:
@@ -758,8 +734,8 @@ class TreeObject(DictionaryObject):
         found = False
         prev_ref = None
         prev = None
-        cur_ref = self[NameObject("/First")]
-        cur = cur_ref.getObject()
+        cur_ref: Optional[Any] = self[NameObject("/First")]
+        cur: Optional[Dict[str, Any]] = cur_ref.getObject()  # type: ignore
         last_ref = self[NameObject("/Last")]
         last = last_ref.getObject()
         while cur is not None:
@@ -771,7 +747,7 @@ class TreeObject(DictionaryObject):
                         next = next_ref.getObject()
                         del next[NameObject("/Prev")]
                         self[NameObject("/First")] = next_ref
-                        self[NameObject("/Count")] = self[NameObject("/Count")] - 1
+                        self[NameObject("/Count")] -= 1  # type: ignore
 
                     else:
                         # Removing only tree node
@@ -787,13 +763,13 @@ class TreeObject(DictionaryObject):
                         next = next_ref.getObject()
                         next[NameObject("/Prev")] = prev_ref
                         prev[NameObject("/Next")] = next_ref
-                        self[NameObject("/Count")] = self[NameObject("/Count")] - 1
+                        self[NameObject("/Count")] -= 1
                     else:
                         # Removing last tree node
                         assert cur == last
                         del prev[NameObject("/Next")]
                         self[NameObject("/Last")] = prev_ref
-                        self[NameObject("/Count")] = self[NameObject("/Count")] - 1
+                        self[NameObject("/Count")] -= 1
                 found = True
                 break
 
@@ -815,7 +791,7 @@ class TreeObject(DictionaryObject):
         if NameObject("/Prev") in child_obj:
             del child_obj[NameObject("/Prev")]
 
-    def emptyTree(self):
+    def emptyTree(self) -> None:
         for child in self:
             child_obj = child.getObject()
             del child_obj[NameObject("/Parent")]
@@ -833,19 +809,21 @@ class TreeObject(DictionaryObject):
 
 
 class StreamObject(DictionaryObject):
-    def __init__(self):
+    def __init__(self) -> None:
         self.__data: Optional[str] = None
-        self.decodedSelf = None
+        self.decodedSelf: Optional[DecodedStreamObject] = None
 
     @property
-    def _data(self):
+    def _data(self) -> Any:
         return self.__data
 
     @_data.setter
-    def _data(self, value):
+    def _data(self, value: Any) -> None:
         self.__data = value
 
-    def writeToStream(self, stream, encryption_key) -> None:
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
         self[NameObject(SA.LENGTH)] = NumberObject(len(self._data))
         DictionaryObject.writeToStream(self, stream, encryption_key)
         del self[SA.LENGTH]
@@ -857,7 +835,10 @@ class StreamObject(DictionaryObject):
         stream.write(b_("\nendstream"))
 
     @staticmethod
-    def initializeFromDictionary(data):
+    def initializeFromDictionary(
+        data: Dict[str, Any]
+    ) -> Union["EncodedStreamObject", "DecodedStreamObject"]:
+        retval: Union["EncodedStreamObject", "DecodedStreamObject"]
         if SA.FILTER in data:
             retval = EncodedStreamObject()
         else:
@@ -868,7 +849,9 @@ class StreamObject(DictionaryObject):
         retval.update(data)
         return retval
 
-    def flateEncode(self):
+    def flateEncode(self) -> "EncodedStreamObject":
+        from PyPDF2.filters import FlateDecode
+
         if SA.FILTER in self:
             f = self[SA.FILTER]
             if isinstance(f, ArrayObject):
@@ -882,23 +865,25 @@ class StreamObject(DictionaryObject):
             f = NameObject("/FlateDecode")
         retval = EncodedStreamObject()
         retval[NameObject(SA.FILTER)] = f
-        retval._data = filters.FlateDecode.encode(self._data)
+        retval._data = FlateDecode.encode(self._data)
         return retval
 
 
 class DecodedStreamObject(StreamObject):
-    def getData(self):
+    def getData(self) -> Any:
         return self._data
 
-    def setData(self, data):
+    def setData(self, data: Any) -> None:
         self._data = data
 
 
 class EncodedStreamObject(StreamObject):
-    def __init__(self):
-        self.decodedSelf = None
+    def __init__(self) -> None:
+        self.decodedSelf: Optional[DecodedStreamObject] = None
 
-    def getData(self):
+    def getData(self) -> Union[None, str, bytes]:
+        from PyPDF2.filters import decodeStreamData
+
         if self.decodedSelf:
             # cached version of decoded object
             return self.decodedSelf.getData()
@@ -906,21 +891,26 @@ class EncodedStreamObject(StreamObject):
             # create decoded object
             decoded = DecodedStreamObject()
 
-            decoded._data = filters.decodeStreamData(self)
+            decoded._data = decodeStreamData(self)
             for key, value in list(self.items()):
                 if key not in (SA.LENGTH, SA.FILTER, SA.DECODE_PARMS):
                     decoded[key] = value
             self.decodedSelf = decoded
             return decoded._data
 
-    def setData(self, data):
+    def setData(self, data: Any) -> None:
         raise PdfReadError("Creating EncodedStreamObject is not currently supported")
 
 
 class ContentStream(DecodedStreamObject):
-    def __init__(self, stream, pdf):
+    def __init__(self, stream: Any, pdf: Any) -> None:
         self.pdf = pdf
-        self.operations = []
+
+        # The inner list has two elements:
+        #  [0] : List
+        #  [1] : str
+        self.operations: List[Tuple[Any, Any]] = []
+
         # stream may be a StreamObject or an ArrayObject containing
         # multiple StreamObjects to be cat'd together.
         stream = stream.getObject()
@@ -933,10 +923,10 @@ class ContentStream(DecodedStreamObject):
             stream = BytesIO(b_(stream.getData()))
         self.__parseContentStream(stream)
 
-    def __parseContentStream(self, stream):
+    def __parseContentStream(self, stream: StreamType) -> None:
         # file("f:\\tmp.txt", "w").write(stream.read())
         stream.seek(0, 0)
-        operands = []
+        operands: List[Union[int, str, PdfObject]] = []
         while True:
             peek = readNonWhitespace(stream)
             if peek == b_("") or ord_(peek) == 0:
@@ -966,7 +956,7 @@ class ContentStream(DecodedStreamObject):
             else:
                 operands.append(readObject(stream, None))
 
-    def _readInlineImage(self, stream):
+    def _readInlineImage(self, stream: StreamType) -> Dict[str, Any]:
         # begin reading just after the "BI" - begin image
         # first read the dictionary of settings.
         settings = DictionaryObject()
@@ -1027,7 +1017,7 @@ class ContentStream(DecodedStreamObject):
         return {"settings": settings, "data": data.getvalue()}
 
     @property
-    def _data(self):
+    def _data(self) -> bytes:
         newdata = BytesIO()
         for operands, operator in self.operations:
             if operator == b_("INLINE IMAGE"):
@@ -1047,8 +1037,54 @@ class ContentStream(DecodedStreamObject):
         return newdata.getvalue()
 
     @_data.setter
-    def _data(self, value):
+    def _data(self, value: Union[str, bytes]) -> None:
         self.__parseContentStream(BytesIO(b_(value)))
+
+
+def readObject(
+    stream: StreamType, pdf: Any  # PdfFileReader
+) -> Union[PdfObject, int, str, ContentStream]:
+    tok = stream.read(1)
+    stream.seek(-1, 1)  # reset to start
+    idx = ObjectPrefix.find(tok)
+    if idx == 0:
+        return NameObject.readFromStream(stream, pdf)
+    elif idx == 1:
+        # hexadecimal string OR dictionary
+        peek = stream.read(2)
+        stream.seek(-2, 1)  # reset to start
+
+        if peek == b_("<<"):
+            return DictionaryObject.readFromStream(stream, pdf)
+        else:
+            return readHexStringFromStream(stream)
+    elif idx == 2:
+        return ArrayObject.readFromStream(stream, pdf)
+    elif idx == 3 or idx == 4:
+        return BooleanObject.readFromStream(stream)
+    elif idx == 5:
+        return readStringFromStream(stream)
+    elif idx == 6:
+        return NullObject.readFromStream(stream)
+    elif idx == 7:
+        # comment
+        while tok not in (b_("\r"), b_("\n")):
+            tok = stream.read(1)
+            # Prevents an infinite loop by raising an error if the stream is at
+            # the EOF
+            if len(tok) <= 0:
+                raise PdfStreamError("File ended unexpectedly.")
+        tok = readNonWhitespace(stream)
+        stream.seek(-1, 1)
+        return readObject(stream, pdf)
+    else:
+        # number object OR indirect reference
+        peek = stream.read(20)
+        stream.seek(-len(peek), 1)  # reset to start
+        if IndirectPattern.match(peek) is not None:
+            return IndirectObject.readFromStream(stream, pdf)
+        else:
+            return NumberObject.readFromStream(stream)
 
 
 class RectangleObject(ArrayObject):
@@ -1062,73 +1098,84 @@ class RectangleObject(ArrayObject):
         * :attr:`trimBox <PyPDF2._page.PageObject.trimBox>`
     """
 
-    def __init__(self, arr):
+    def __init__(
+        self,
+        arr: Union[
+            ArrayObject,
+            Tuple[
+                Union[float, decimal.Decimal, None],
+                Union[float, decimal.Decimal, None],
+                Union[float, decimal.Decimal, None],
+                Union[float, decimal.Decimal, None],
+            ],
+        ],
+    ) -> None:
         # must have four points
         assert len(arr) == 4
         # automatically convert arr[x] into NumberObject(arr[x]) if necessary
-        ArrayObject.__init__(self, [self.ensureIsNumber(x) for x in arr])
+        ArrayObject.__init__(self, [self.ensureIsNumber(x) for x in arr])  # type: ignore
 
-    def ensureIsNumber(self, value):
+    def ensureIsNumber(self, value: Any) -> Union[NumberObject, FloatObject]:
         if not isinstance(value, (NumberObject, FloatObject)):
-            value = FloatObject(value)
+            return FloatObject(value)
         return value
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "RectangleObject(%s)" % repr(list(self))
 
-    def getLowerLeft_x(self):
+    def getLowerLeft_x(self) -> FloatObject:
         return self[0]
 
-    def getLowerLeft_y(self):
+    def getLowerLeft_y(self) -> FloatObject:
         return self[1]
 
-    def getUpperRight_x(self):
+    def getUpperRight_x(self) -> FloatObject:
         return self[2]
 
-    def getUpperRight_y(self):
+    def getUpperRight_y(self) -> FloatObject:
         return self[3]
 
-    def getUpperLeft_x(self):
+    def getUpperLeft_x(self) -> FloatObject:
         return self.getLowerLeft_x()
 
-    def getUpperLeft_y(self):
+    def getUpperLeft_y(self) -> FloatObject:
         return self.getUpperRight_y()
 
-    def getLowerRight_x(self):
+    def getLowerRight_x(self) -> FloatObject:
         return self.getUpperRight_x()
 
-    def getLowerRight_y(self):
+    def getLowerRight_y(self) -> FloatObject:
         return self.getLowerLeft_y()
 
-    def getLowerLeft(self):
+    def getLowerLeft(self) -> Tuple[FloatObject, FloatObject]:
         return self.getLowerLeft_x(), self.getLowerLeft_y()
 
-    def getLowerRight(self):
+    def getLowerRight(self) -> Tuple[FloatObject, FloatObject]:
         return self.getLowerRight_x(), self.getLowerRight_y()
 
-    def getUpperLeft(self):
+    def getUpperLeft(self) -> Tuple[FloatObject, FloatObject]:
         return self.getUpperLeft_x(), self.getUpperLeft_y()
 
-    def getUpperRight(self):
+    def getUpperRight(self) -> Tuple[FloatObject, FloatObject]:
         return self.getUpperRight_x(), self.getUpperRight_y()
 
-    def setLowerLeft(self, value):
+    def setLowerLeft(self, value: Iterable[FloatObject]) -> None:
         self[0], self[1] = (self.ensureIsNumber(x) for x in value)
 
-    def setLowerRight(self, value):
+    def setLowerRight(self, value: Iterable[FloatObject]) -> None:
         self[2], self[1] = (self.ensureIsNumber(x) for x in value)
 
-    def setUpperLeft(self, value):
+    def setUpperLeft(self, value: Iterable[FloatObject]) -> None:
         self[0], self[3] = (self.ensureIsNumber(x) for x in value)
 
-    def setUpperRight(self, value):
+    def setUpperRight(self, value: Iterable[FloatObject]) -> None:
         self[2], self[3] = (self.ensureIsNumber(x) for x in value)
 
-    def getWidth(self):
-        return self.getUpperRight_x() - self.getLowerLeft_x()
+    def getWidth(self) -> float:
+        return self.getUpperRight_x() - self.getLowerLeft_x()  # type: ignore
 
-    def getHeight(self):
-        return self.getUpperRight_y() - self.getLowerLeft_y()
+    def getHeight(self) -> float:
+        return self.getUpperRight_y() - self.getLowerLeft_y()  # type: ignore
 
     lowerLeft = property(getLowerLeft, setLowerLeft, None, None)
     """
@@ -1158,7 +1205,7 @@ class Field(TreeObject):
     :meth:`getFields()<PyPDF2.PdfFileReader.getFields>`
     """
 
-    def __init__(self, data):
+    def __init__(self, data: Dict[str, Any]) -> None:
         DictionaryObject.__init__(self)
         attributes = (
             "/FT",
@@ -1178,33 +1225,35 @@ class Field(TreeObject):
             except KeyError:
                 pass
 
+    # TABLE 8.69 Entries common to all field dictionaries
+
     @property
-    def fieldType(self):
+    def fieldType(self) -> Optional[NameObject]:
         """Read-only property accessing the type of this field."""
         return self.get("/FT")
 
     @property
-    def parent(self):
+    def parent(self) -> Optional[DictionaryObject]:
         """Read-only property accessing the parent of this field."""
         return self.get("/Parent")
 
     @property
-    def kids(self):
+    def kids(self) -> Optional[ArrayObject]:
         """Read-only property accessing the kids of this field."""
         return self.get("/Kids")
 
     @property
-    def name(self):
+    def name(self) -> Optional[str]:
         """Read-only property accessing the name of this field."""
         return self.get("/T")
 
     @property
-    def altName(self):
+    def altName(self) -> Optional[str]:
         """Read-only property accessing the alternate name of this field."""
         return self.get("/TU")
 
     @property
-    def mappingName(self):
+    def mappingName(self) -> Optional[str]:
         """
         Read-only property accessing the mapping name of this field. This
         name is used by PyPDF2 as a key in the dictionary returned by
@@ -1213,7 +1262,7 @@ class Field(TreeObject):
         return self.get("/TM")
 
     @property
-    def flags(self):
+    def flags(self) -> Optional[int]:
         """
         Read-only property accessing the field flags, specifying various
         characteristics of the field (see Table 8.70 of the PDF 1.7 reference).
@@ -1221,7 +1270,7 @@ class Field(TreeObject):
         return self.get("/Ff")
 
     @property
-    def value(self):
+    def value(self) -> Optional[Any]:
         """
         Read-only property accessing the value of this field. Format
         varies based on field type.
@@ -1229,18 +1278,18 @@ class Field(TreeObject):
         return self.get("/V")
 
     @property
-    def defaultValue(self):
+    def defaultValue(self) -> Optional[Any]:
         """Read-only property accessing the default value of this field."""
         return self.get("/DV")
 
     @property
-    def additionalActions(self):
+    def additionalActions(self) -> Optional[DictionaryObject]:
         """
         Read-only property accessing the additional actions dictionary.
         This dictionary defines the field's behavior in response to trigger events.
         See Section 8.5.2 of the PDF 1.7 reference.
         """
-        self.get("/AA")
+        return self.get("/AA")
 
 
 class Destination(TreeObject):
@@ -1276,7 +1325,13 @@ class Destination(TreeObject):
          - [left]
     """
 
-    def __init__(self, title, page, typ, *args):
+    def __init__(
+        self,
+        title: str,
+        page: Union[NumberObject, IndirectObject, NullObject, DictionaryObject],
+        typ: Union[str, NumberObject],
+        *args: Any,  # ZoomArgType
+    ) -> None:
         DictionaryObject.__init__(self)
         self[NameObject("/Title")] = title
         self[NameObject("/Page")] = page
@@ -1308,7 +1363,7 @@ class Destination(TreeObject):
         else:
             raise PdfReadError("Unknown Destination Type: %r" % typ)
 
-    def getDestArray(self):
+    def getDestArray(self) -> ArrayObject:
         return ArrayObject(
             [self.raw_get("/Page"), self["/Type"]]
             + [
@@ -1318,7 +1373,9 @@ class Destination(TreeObject):
             ]
         )
 
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
         stream.write(b_("<<\n"))
         key = NameObject("/D")
         key.writeToStream(stream, encryption_key)
@@ -1329,14 +1386,14 @@ class Destination(TreeObject):
         key = NameObject("/S")
         key.writeToStream(stream, encryption_key)
         stream.write(b_(" "))
-        value = NameObject("/GoTo")
-        value.writeToStream(stream, encryption_key)
+        value_s = NameObject("/GoTo")
+        value_s.writeToStream(stream, encryption_key)
 
         stream.write(b_("\n"))
         stream.write(b_(">>"))
 
     @property
-    def title(self):
+    def title(self) -> Optional[str]:
         """
         Read-only property accessing the destination title.
 
@@ -1345,7 +1402,7 @@ class Destination(TreeObject):
         return self.get("/Title")
 
     @property
-    def page(self):
+    def page(self) -> Optional[int]:
         """
         Read-only property accessing the destination page number.
 
@@ -1354,7 +1411,7 @@ class Destination(TreeObject):
         return self.get("/Page")
 
     @property
-    def typ(self):
+    def typ(self) -> Optional[str]:
         """
         Read-only property accessing the destination type.
 
@@ -1363,7 +1420,7 @@ class Destination(TreeObject):
         return self.get("/Type")
 
     @property
-    def zoom(self):
+    def zoom(self) -> Optional[int]:
         """
         Read-only property accessing the zoom factor.
 
@@ -1372,44 +1429,46 @@ class Destination(TreeObject):
         return self.get("/Zoom", None)
 
     @property
-    def left(self):
+    def left(self) -> Optional[FloatObject]:
         """
         Read-only property accessing the left horizontal coordinate.
 
-        :rtype: int, or ``None`` if not available.
+        :rtype: float, or ``None`` if not available.
         """
         return self.get("/Left", None)
 
     @property
-    def right(self):
+    def right(self) -> Optional[FloatObject]:
         """
         Read-only property accessing the right horizontal coordinate.
 
-        :rtype: int, or ``None`` if not available.
+        :rtype: float, or ``None`` if not available.
         """
         return self.get("/Right", None)
 
     @property
-    def top(self):
+    def top(self) -> Optional[FloatObject]:
         """
         Read-only property accessing the top vertical coordinate.
 
-        :rtype: int, or ``None`` if not available.
+        :rtype: float, or ``None`` if not available.
         """
         return self.get("/Top", None)
 
     @property
-    def bottom(self):
+    def bottom(self) -> Optional[FloatObject]:
         """
         Read-only property accessing the bottom vertical coordinate.
 
-        :rtype: int, or ``None`` if not available.
+        :rtype: float, or ``None`` if not available.
         """
         return self.get("/Bottom", None)
 
 
 class Bookmark(Destination):
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
         stream.write(b_("<<\n"))
         for key in [
             NameObject(x)
@@ -1430,7 +1489,40 @@ class Bookmark(Destination):
         stream.write(b_(">>"))
 
 
-def encode_pdfdocencoding(unicode_string):
+def createStringObject(
+    string: Union[str, bytes]
+) -> Union[TextStringObject, ByteStringObject]:
+    """
+    Given a string, create a ByteStringObject or a TextStringObject to
+    represent the string.
+
+    :param string: A string
+
+    :raises TypeError: If string is not of type str or bytes.
+    """
+    if isinstance(string, str):
+        return TextStringObject(string)
+    elif isinstance(string, utils.bytes_type):
+        try:
+            if string.startswith(codecs.BOM_UTF16_BE):
+                retval = TextStringObject(string.decode("utf-16"))
+                retval.autodetect_utf16 = True
+                return retval
+            else:
+                # This is probably a big performance hit here, but we need to
+                # convert string objects into the text/unicode-aware version if
+                # possible... and the only way to check if that's possible is
+                # to try.  Some strings are strings, some are just byte arrays.
+                retval = TextStringObject(decode_pdfdocencoding(string))
+                retval.autodetect_pdfdocencoding = True
+                return retval
+        except UnicodeDecodeError:
+            return ByteStringObject(string)
+    else:
+        raise TypeError("createStringObject should have str or unicode arg")
+
+
+def encode_pdfdocencoding(unicode_string: str) -> bytes:
     retval = b_("")
     for c in unicode_string:
         try:
@@ -1442,7 +1534,7 @@ def encode_pdfdocencoding(unicode_string):
     return retval
 
 
-def decode_pdfdocencoding(byte_array):
+def decode_pdfdocencoding(byte_array: bytes) -> str:
     retval = ""
     for b in byte_array:
         c = _pdfDocEncoding[ord_(b)]

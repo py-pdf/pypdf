@@ -33,8 +33,10 @@ import struct
 import uuid
 import warnings
 from hashlib import md5
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 
 from PyPDF2._page import PageObject
+from PyPDF2._reader import PdfFileReader
 from PyPDF2._security import _alg33, _alg34, _alg35
 from PyPDF2.constants import CatalogAttributes as CA
 from PyPDF2.constants import Core as CO
@@ -56,13 +58,23 @@ from PyPDF2.generic import (
     NameObject,
     NullObject,
     NumberObject,
+    PdfObject,
     RectangleObject,
     StreamObject,
     TextStringObject,
     TreeObject,
     createStringObject,
 )
-from PyPDF2.utils import b_
+from PyPDF2.types import (
+    BookmarkTypes,
+    BorderArrayType,
+    FitType,
+    LayoutType,
+    PagemodeType,
+    ZoomArgsType,
+    ZoomArgType,
+)
+from PyPDF2.utils import StreamType, b_
 
 logger = logging.getLogger(__name__)
 
@@ -73,9 +85,9 @@ class PdfFileWriter:
     class (typically :class:`PdfFileReader<PdfFileReader>`).
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._header = b_("%PDF-1.3")
-        self._objects = []  # array of indirect objects
+        self._objects: List[Optional[PdfObject]] = []  # array of indirect objects
 
         # The root of our page tree node.
         pages = DictionaryObject()
@@ -107,28 +119,31 @@ class PdfFileWriter:
                 NameObject(CO.PAGES): self._pages,
             }
         )
-        self._root = None
+        self._root: Optional[IndirectObject] = None
         self._root_object = root
         self.set_need_appearances_writer()
 
-    def _addObject(self, obj):
+    def _addObject(self, obj: Optional[PdfObject]) -> IndirectObject:
         self._objects.append(obj)
         return IndirectObject(len(self._objects), 0, self)
 
-    def getObject(self, ido):
+    def getObject(self, ido: IndirectObject) -> PdfObject:
         if ido.pdf != self:
             raise ValueError("pdf must be self")
-        return self._objects[ido.idnum - 1]
+        return self._objects[ido.idnum - 1]  # type: ignore
 
-    def _addPage(self, page, action):
+    def _addPage(
+        self, page: PageObject, action: Callable[[Any, IndirectObject], None]
+    ) -> None:
         assert page[PA.TYPE] == CO.PAGE
         page[NameObject(PA.PARENT)] = self._pages
-        page = self._addObject(page)
-        pages = self.getObject(self._pages)
-        action(pages[PA.KIDS], page)
-        pages[NameObject(PA.COUNT)] = NumberObject(pages[PA.COUNT] + 1)
+        page_ind = self._addObject(page)
+        pages = cast(DictionaryObject, self.getObject(self._pages))
+        action(pages[PA.KIDS], page_ind)
+        page_count = cast(int, pages[PA.COUNT])
+        pages[NameObject(PA.COUNT)] = NumberObject(page_count + 1)
 
-    def set_need_appearances_writer(self):
+    def set_need_appearances_writer(self) -> None:
         # See 12.7.2 and 7.7.2 for more information:
         # http://www.adobe.com/content/dam/acom/en/devnet/acrobat/pdfs/PDF32000_2008.pdf
         try:
@@ -144,12 +159,12 @@ class PdfFileWriter:
                 )
 
             need_appearances = NameObject("/NeedAppearances")
-            self._root_object["/AcroForm"][need_appearances] = BooleanObject(True)
+            self._root_object["/AcroForm"][need_appearances] = BooleanObject(True)  # type: ignore
 
-        except Exception as e:
-            logger.error("set_need_appearances_writer() catch : ", repr(e))
+        except Exception as exc:
+            logger.error("set_need_appearances_writer() catch : ", repr(exc))
 
-    def addPage(self, page):
+    def addPage(self, page: PageObject) -> None:
         """
         Add a page to this PDF file.  The page is usually acquired from a
         :class:`PdfFileReader<PdfFileReader>` instance.
@@ -159,7 +174,7 @@ class PdfFileWriter:
         """
         self._addPage(page, list.append)
 
-    def insertPage(self, page, index=0):
+    def insertPage(self, page: PageObject, index: int = 0) -> None:
         """
         Insert a page in this PDF file. The page is usually acquired from a
         :class:`PdfFileReader<PdfFileReader>` instance.
@@ -170,7 +185,7 @@ class PdfFileWriter:
         """
         self._addPage(page, lambda l, p: l.insert(index, p))
 
-    def getPage(self, pageNumber):
+    def getPage(self, pageNumber: int) -> PageObject:
         """
         Retrieve a page by number from this PDF file.
 
@@ -179,19 +194,21 @@ class PdfFileWriter:
         :return: the page at the index given by *pageNumber*
         :rtype: :class:`PageObject<pdf.PageObject>`
         """
-        pages = self.getObject(self._pages)
+        pages = cast(Dict[str, Any], self.getObject(self._pages))
         # XXX: crude hack
         return pages[PA.KIDS][pageNumber].getObject()
 
-    def getNumPages(self):
+    def getNumPages(self) -> int:
         """
         :return: the number of pages.
         :rtype: int
         """
-        pages = self.getObject(self._pages)
+        pages = cast(Dict[str, Any], self.getObject(self._pages))
         return int(pages[NameObject("/Count")])
 
-    def addBlankPage(self, width=None, height=None):
+    def addBlankPage(
+        self, width: Optional[float] = None, height: Optional[float] = None
+    ) -> PageObject:
         """
         Append a blank page to this PDF file and returns it. If no page size
         is specified, use the size of the last page.
@@ -209,7 +226,12 @@ class PdfFileWriter:
         self.addPage(page)
         return page
 
-    def insertBlankPage(self, width=None, height=None, index=0):
+    def insertBlankPage(
+        self,
+        width: Optional[float] = None,
+        height: Optional[float] = None,
+        index: int = 0,
+    ) -> PageObject:
         """
         Insert a blank page to this PDF file and returns it. If no page size
         is specified, use the size of the last page.
@@ -232,7 +254,7 @@ class PdfFileWriter:
         self.insertPage(page, index)
         return page
 
-    def addJS(self, javascript):
+    def addJS(self, javascript: str) -> None:
         """
         Add Javascript which will launch upon opening this PDF.
 
@@ -275,7 +297,7 @@ class PdfFileWriter:
             }
         )
 
-    def addAttachment(self, fname, fdata):
+    def addAttachment(self, fname: str, fdata: Union[str, bytes]) -> None:
         """
         Embed a file inside the PDF.
 
@@ -354,7 +376,11 @@ class PdfFileWriter:
         # Update the root
         self._root_object.update({NameObject(CA.NAMES): embeddedFilesDictionary})
 
-    def appendPagesFromReader(self, reader, after_page_append=None):
+    def appendPagesFromReader(
+        self,
+        reader: PdfFileReader,
+        after_page_append: Optional[Callable[[PageObject], None]] = None,
+    ) -> None:
         """
         Copy pages from reader to writer. Includes an optional callback parameter
         which is invoked after pages are appended to the writer.
@@ -372,7 +398,7 @@ class PdfFileWriter:
         writer_num_pages = self.getNumPages()
 
         # Copy pages from reader to writer
-        for rpagenum in range(0, reader_num_pages):
+        for rpagenum in range(reader_num_pages):
             reader_page = reader.getPage(rpagenum)
             self.addPage(reader_page)
             writer_page = self.getPage(writer_num_pages + rpagenum)
@@ -380,7 +406,9 @@ class PdfFileWriter:
             if callable(after_page_append):
                 after_page_append(writer_page)
 
-    def updatePageFormFieldValues(self, page, fields, flags=0):
+    def updatePageFormFieldValues(
+        self, page: PageObject, fields: Dict[str, Any], flags: int = 0
+    ) -> None:
         """
         Update the form field values for a given page from a fields dictionary.
         Copy field texts and values from fields to page.
@@ -395,8 +423,8 @@ class PdfFileWriter:
             PDF Reference Table 8.70 for details.
         """
         # Iterate through pages, update field values
-        for j in range(len(page[PG.ANNOTS])):
-            writer_annot = page[PG.ANNOTS][j].getObject()
+        for j in range(len(page[PG.ANNOTS])):  # type: ignore
+            writer_annot = page[PG.ANNOTS][j].getObject()  # type: ignore
             # retrieve parent field values, if present
             writer_parent_annot = {}  # fallback if it's not there
             if PG.PARENT in writer_annot:
@@ -413,16 +441,20 @@ class PdfFileWriter:
                         {NameObject("/V"): TextStringObject(fields[field])}
                     )
 
-    def cloneReaderDocumentRoot(self, reader):
+    def cloneReaderDocumentRoot(self, reader: PdfFileReader) -> None:
         """
         Copy the reader document root to the writer.
 
         :param reader:  PdfFileReader from the document root should be copied.
         :callback after_page_append:
         """
-        self._root_object = reader.trailer[TK.ROOT]
+        self._root_object = cast(DictionaryObject, reader.trailer[TK.ROOT])
 
-    def cloneDocumentFromReader(self, reader, after_page_append=None):
+    def cloneDocumentFromReader(
+        self,
+        reader: PdfFileReader,
+        after_page_append: Optional[Callable[[PageObject], None]] = None,
+    ) -> None:
         """
         Create a copy (clone) of a document from a PDF file reader
 
@@ -438,7 +470,13 @@ class PdfFileWriter:
         self.cloneReaderDocumentRoot(reader)
         self.appendPagesFromReader(reader, after_page_append)
 
-    def encrypt(self, user_pwd, owner_pwd=None, use_128bit=True, permissions_flag=-1):
+    def encrypt(
+        self,
+        user_pwd: str,
+        owner_pwd: Optional[str] = None,
+        use_128bit: bool = True,
+        permissions_flag: int = -1,
+    ) -> None:
         """
         Encrypt this PDF file with the PDF Standard encryption handler.
 
@@ -493,7 +531,7 @@ class PdfFileWriter:
         self._encrypt = self._addObject(encrypt)
         self._encrypt_key = key
 
-    def write(self, stream):
+    def write(self, stream: StreamType) -> None:
         """
         Write the collection of pages added to this object out as a PDF file.
 
@@ -502,14 +540,16 @@ class PdfFileWriter:
         """
         if hasattr(stream, "mode") and "b" not in stream.mode:
             warnings.warn(
-                "File <%s> to write to is not in binary mode. It may not be written to correctly."
-                % stream.name
+                (
+                    "File <{}> to write to is not in binary mode. "  # type: ignore
+                    "It may not be written to correctly."
+                ).format(stream.name)
             )
 
         if not self._root:
             self._root = self._addObject(self._root_object)
 
-        external_reference_map = {}
+        external_reference_map: Dict[Any, Any] = {}
 
         # PDF objects sometimes have circular references to their /Page objects
         # inside their object tree (for example, annotations).  Those will be
@@ -531,7 +571,7 @@ class PdfFileWriter:
                     data.idnum
                 ] = IndirectObject(obj_index + 1, 0, self)
 
-        self.stack = []
+        self.stack: List[int] = []
         self._sweepIndirectReferences(external_reference_map, self._root)
         del self.stack
 
@@ -540,7 +580,7 @@ class PdfFileWriter:
         self._write_trailer(stream)
         stream.write(b_("\nstartxref\n%s\n%%%%EOF\n" % (xref_location)))  # eof
 
-    def _write_header(self, stream):
+    def _write_header(self, stream: StreamType) -> List[int]:
         object_positions = []
         stream.write(self._header + b_("\n"))
         stream.write(b_("%\xE2\xE3\xCF\xD3\n"))
@@ -563,7 +603,7 @@ class PdfFileWriter:
                 stream.write(b_("\nendobj\n"))
         return object_positions
 
-    def _write_xref_table(self, stream, object_positions):
+    def _write_xref_table(self, stream: StreamType, object_positions: List[int]) -> int:
         xref_location = stream.tell()
         stream.write(b_("xref\n"))
         stream.write(b_("0 %s\n" % (len(self._objects) + 1)))
@@ -572,7 +612,7 @@ class PdfFileWriter:
             stream.write(b_("%010d %05d n \n" % (offset, 0)))
         return xref_location
 
-    def _write_trailer(self, stream):
+    def _write_trailer(self, stream: StreamType) -> None:
         stream.write(b_("trailer\n"))
         trailer = DictionaryObject()
         trailer.update(
@@ -588,7 +628,7 @@ class PdfFileWriter:
             trailer[NameObject(TK.ENCRYPT)] = self._encrypt
         trailer.writeToStream(stream, None)
 
-    def addMetadata(self, infos):
+    def addMetadata(self, infos: Dict[str, Any]) -> None:
         """
         Add custom metadata to the output.
 
@@ -598,9 +638,24 @@ class PdfFileWriter:
         args = {}
         for key, value in list(infos.items()):
             args[NameObject(key)] = createStringObject(value)
-        self.getObject(self._info).update(args)
+        self.getObject(self._info).update(args)  # type: ignore
 
-    def _sweepIndirectReferences(self, externMap, data):
+    def _sweepIndirectReferences(
+        self,
+        externMap: Dict[Any, Any],
+        data: Union[
+            ArrayObject,
+            BooleanObject,
+            DictionaryObject,
+            FloatObject,
+            IndirectObject,
+            NameObject,
+            PdfObject,
+            NumberObject,
+            TextStringObject,
+            NullObject,
+        ],
+    ) -> Union[Any, StreamObject]:
         if isinstance(data, DictionaryObject):
             for key, value in list(data.items()):
                 value = self._sweepIndirectReferences(externMap, value)
@@ -665,15 +720,16 @@ class PdfFileWriter:
         else:
             return data
 
-    def getReference(self, obj):
+    def getReference(self, obj: PdfObject) -> IndirectObject:
         idnum = self._objects.index(obj) + 1
         ref = IndirectObject(idnum, 0, self)
         assert ref.getObject() == obj
         return ref
 
-    def getOutlineRoot(self):
+    def getOutlineRoot(self) -> TreeObject:
         if CO.OUTLINES in self._root_object:
-            outline = self._root_object[CO.OUTLINES]
+            # TABLE 3.25 Entries in the catalog dictionary
+            outline = cast(TreeObject, self._root_object[CO.OUTLINES])
             idnum = self._objects.index(outline) + 1
             outline_ref = IndirectObject(idnum, 0, self)
             assert outline_ref.getObject() == outline
@@ -685,21 +741,23 @@ class PdfFileWriter:
 
         return outline
 
-    def getNamedDestRoot(self):
+    def getNamedDestRoot(self) -> ArrayObject:
         if CA.NAMES in self._root_object and isinstance(
             self._root_object[CA.NAMES], DictionaryObject
         ):
-            names = self._root_object[CA.NAMES]
+            names = cast(DictionaryObject, self._root_object[CA.NAMES])
             idnum = self._objects.index(names) + 1
             names_ref = IndirectObject(idnum, 0, self)
             assert names_ref.getObject() == names
             if CA.DESTS in names and isinstance(names[CA.DESTS], DictionaryObject):
-                dests = names[CA.DESTS]
+                # 3.6.3 Name Dictionary (PDF spec 1.7)
+                dests = cast(DictionaryObject, names[CA.DESTS])
                 idnum = self._objects.index(dests) + 1
                 dests_ref = IndirectObject(idnum, 0, self)
                 assert dests_ref.getObject() == dests
                 if CA.NAMES in dests:
-                    nd = dests[CA.NAMES]
+                    # TABLE 3.33 Entries in a name tree node dictionary
+                    nd = cast(ArrayObject, dests[CA.NAMES])
                 else:
                     nd = ArrayObject()
                     dests[NameObject(CA.NAMES)] = nd
@@ -722,7 +780,9 @@ class PdfFileWriter:
 
         return nd
 
-    def addBookmarkDestination(self, dest, parent=None):
+    def addBookmarkDestination(
+        self, dest: PageObject, parent: Optional[TreeObject] = None
+    ) -> IndirectObject:
         dest_ref = self._addObject(dest)
 
         outline_ref = self.getOutlineRoot()
@@ -730,12 +790,14 @@ class PdfFileWriter:
         if parent is None:
             parent = outline_ref
 
-        parent = parent.getObject()
+        parent = cast(TreeObject, parent.getObject())
         parent.addChild(dest_ref, self)
 
         return dest_ref
 
-    def addBookmarkDict(self, bookmark, parent=None):
+    def addBookmarkDict(
+        self, bookmark: BookmarkTypes, parent: Optional[TreeObject] = None
+    ) -> IndirectObject:
         bookmark_obj = TreeObject()
         for k, v in list(bookmark.items()):
             bookmark_obj[NameObject(str(k))] = v
@@ -743,7 +805,8 @@ class PdfFileWriter:
 
         if "/A" in bookmark:
             action = DictionaryObject()
-            for k, v in list(bookmark["/A"].items()):
+            a_dict = cast(DictionaryObject, bookmark["/A"])
+            for k, v in list(a_dict.items()):
                 action[NameObject(str(k))] = v
             action_ref = self._addObject(action)
             bookmark_obj[NameObject("/A")] = action_ref
@@ -755,22 +818,23 @@ class PdfFileWriter:
         if parent is None:
             parent = outline_ref
 
-        parent = parent.getObject()
+        parent = parent.getObject()  # type: ignore
+        assert parent is not None, "hint for mypy"
         parent.addChild(bookmark_ref, self)
 
         return bookmark_ref
 
     def addBookmark(
         self,
-        title,
-        pagenum,
-        parent=None,
-        color=None,
-        bold=False,
-        italic=False,
-        fit="/Fit",
-        *args,
-    ):
+        title: str,
+        pagenum: int,
+        parent: Union[None, TreeObject, IndirectObject] = None,
+        color: Optional[Tuple[float, float, float]] = None,
+        bold: bool = False,
+        italic: bool = False,
+        fit: FitType = "/Fit",
+        *args: ZoomArgsType,
+    ) -> IndirectObject:
         """
         Add a bookmark to this PDF file.
 
@@ -785,9 +849,10 @@ class PdfFileWriter:
         :param str fit: The fit of the destination page. See
             :meth:`addLink()<addLink>` for details.
         """
-        page_ref = self.getObject(self._pages)[PA.KIDS][pagenum]
+        pages_obj = cast(Dict[str, Any], self.getObject(self._pages))
+        page_ref = pages_obj[PA.KIDS][pagenum]
         action = DictionaryObject()
-        zoom_args = []
+        zoom_args: ZoomArgsType = []
         for a in args:
             if a is not None:
                 zoom_args.append(NumberObject(a))
@@ -831,21 +896,22 @@ class PdfFileWriter:
 
         bookmark_ref = self._addObject(bookmark)
 
-        parent = parent.getObject()
-        parent.addChild(bookmark_ref, self)
+        assert parent is not None, "hint for mypy"
+        parent_obj = cast(TreeObject, parent.getObject())
+        parent_obj.addChild(bookmark_ref, self)
 
         return bookmark_ref
 
-    def addNamedDestinationObject(self, dest):
+    def addNamedDestinationObject(self, dest: PdfObject) -> IndirectObject:
         dest_ref = self._addObject(dest)
 
         nd = self.getNamedDestRoot()
-        nd.extend([dest["/Title"], dest_ref])
+        nd.extend([dest["/Title"], dest_ref])  # type: ignore
 
         return dest_ref
 
-    def addNamedDestination(self, title, pagenum):
-        page_ref = self.getObject(self._pages)[PA.KIDS][pagenum]
+    def addNamedDestination(self, title: str, pagenum: int) -> IndirectObject:
+        page_ref = self.getObject(self._pages)[PA.KIDS][pagenum]  # type: ignore
         dest = DictionaryObject()
         dest.update(
             {
@@ -863,22 +929,24 @@ class PdfFileWriter:
 
         return dest_ref
 
-    def removeLinks(self):
+    def removeLinks(self) -> None:
         """Remove links and annotations from this output."""
-        pages = self.getObject(self._pages)[PA.KIDS]
+        pg_dict = cast(DictionaryObject, self.getObject(self._pages))
+        pages = cast(ArrayObject, pg_dict[PA.KIDS])
         for page in pages:
-            page_ref = self.getObject(page)
+            page_ref = cast(DictionaryObject, self.getObject(page))
             if PG.ANNOTS in page_ref:
                 del page_ref[PG.ANNOTS]
 
-    def removeImages(self, ignoreByteStringObject=False):
+    def removeImages(self, ignoreByteStringObject: bool = False) -> None:
         """
         Remove images from this output.
 
         :param bool ignoreByteStringObject: optional parameter
             to ignore ByteString Objects.
         """
-        pages = self.getObject(self._pages)[PA.KIDS]
+        pg_dict = cast(DictionaryObject, self.getObject(self._pages))
+        pages = cast(ArrayObject, pg_dict[PA.KIDS])
         jump_operators = [
             b_("cm"),
             b_("w"),
@@ -908,7 +976,7 @@ class PdfFileWriter:
         ]
         for j in range(len(pages)):
             page = pages[j]
-            page_ref = self.getObject(page)
+            page_ref = cast(DictionaryObject, self.getObject(page))
             content = page_ref["/Contents"].getObject()
             if not isinstance(content, ContentStream):
                 content = ContentStream(content, page_ref)
@@ -947,17 +1015,18 @@ class PdfFileWriter:
             content.operations = _operations
             page_ref.__setitem__(NameObject("/Contents"), content)
 
-    def removeText(self, ignoreByteStringObject=False):
+    def removeText(self, ignoreByteStringObject: bool = False) -> None:
         """
         Remove text from this output.
 
         :param bool ignoreByteStringObject: optional parameter
             to ignore ByteString Objects.
         """
-        pages = self.getObject(self._pages)[PA.KIDS]
+        pg_dict = cast(DictionaryObject, self.getObject(self._pages))
+        pages = cast(List[IndirectObject], pg_dict[PA.KIDS])
         for j in range(len(pages)):
             page = pages[j]
-            page_ref = self.getObject(page)
+            page_ref = cast(Dict[str, Any], self.getObject(page))
             content = page_ref["/Contents"].getObject()
             if not isinstance(content, ContentStream):
                 content = ContentStream(content, page_ref)
@@ -991,7 +1060,13 @@ class PdfFileWriter:
 
             page_ref.__setitem__(NameObject("/Contents"), content)
 
-    def addURI(self, pagenum, uri, rect, border=None):
+    def addURI(
+        self,
+        pagenum: int,
+        uri: int,
+        rect: RectangleObject,
+        border: Optional[ArrayObject] = None,
+    ) -> None:
         """
         Add an URI from a rectangular area to the specified page.
         This uses the basic structure of AddLink
@@ -1009,9 +1084,10 @@ class PdfFileWriter:
         -John Mulligan
         """
 
-        page_link = self.getObject(self._pages)[PA.KIDS][pagenum]
-        page_ref = self.getObject(page_link)
+        page_link = self.getObject(self._pages)[PA.KIDS][pagenum]  # type: ignore
+        page_ref = cast(Dict[str, Any], self.getObject(page_link))
 
+        border_arr: BorderArrayType
         if border is not None:
             border_arr = [NameObject(n) for n in border[:3]]
             if len(border) == 4:
@@ -1053,7 +1129,15 @@ class PdfFileWriter:
         else:
             page_ref[NameObject(PG.ANNOTS)] = ArrayObject([lnk_ref])
 
-    def addLink(self, pagenum, pagedest, rect, border=None, fit="/Fit", *args):
+    def addLink(
+        self,
+        pagenum: int,
+        pagedest: int,
+        rect: RectangleObject,
+        border: Optional[ArrayObject] = None,
+        fit: FitType = "/Fit",
+        *args: ZoomArgType,
+    ) -> None:
         """
         Add an internal link from a rectangular area to the specified page.
 
@@ -1088,13 +1172,12 @@ class PdfFileWriter:
            * - /FitBV
              - [left]
         """
+        pages_obj = cast(Dict[str, Any], self.getObject(self._pages))
+        page_link = pages_obj[PA.KIDS][pagenum]
+        page_dest = pages_obj[PA.KIDS][pagedest]  # TODO: switch for external link
+        page_ref = cast(Dict[str, Any], self.getObject(page_link))
 
-        page_link = self.getObject(self._pages)[PA.KIDS][pagenum]
-        page_dest = self.getObject(self._pages)[PA.KIDS][
-            pagedest
-        ]  # TODO: switch for external link
-        page_ref = self.getObject(page_link)
-
+        border_arr: BorderArrayType
         if border is not None:
             border_arr = [NameObject(n) for n in border[:3]]
             if len(border) == 4:
@@ -1110,7 +1193,7 @@ class PdfFileWriter:
         else:
             rect = RectangleObject(rect)
 
-        zoom_args = []
+        zoom_args: ZoomArgsType = []
         for a in args:
             if a is not None:
                 zoom_args.append(NumberObject(a))
@@ -1149,7 +1232,7 @@ class PdfFileWriter:
         "/TwoPageRight",
     ]
 
-    def getPageLayout(self):
+    def getPageLayout(self) -> Optional[LayoutType]:
         """
         Get the page layout.
 
@@ -1159,11 +1242,11 @@ class PdfFileWriter:
         :rtype: str, None if not specified
         """
         try:
-            return self._root_object["/PageLayout"]
+            return cast(LayoutType, self._root_object["/PageLayout"])
         except KeyError:
             return None
 
-    def setPageLayout(self, layout):
+    def setPageLayout(self, layout: Union[NameObject, LayoutType]) -> None:
         """
         Set the page layout.
 
@@ -1208,7 +1291,7 @@ class PdfFileWriter:
         "/UseAttachments",
     ]
 
-    def getPageMode(self):
+    def getPageMode(self) -> Optional[PagemodeType]:
         """
         Get the page mode.
         See :meth:`setPageMode()<PdfFileWriter.setPageMode>` for a description
@@ -1218,11 +1301,11 @@ class PdfFileWriter:
         :rtype: str, None if not specified.
         """
         try:
-            return self._root_object["/PageMode"]
+            return cast(PagemodeType, self._root_object["/PageMode"])
         except KeyError:
             return None
 
-    def setPageMode(self, mode):
+    def setPageMode(self, mode: Union[NameObject, PagemodeType]) -> None:
         """
         Set the page mode.
 
