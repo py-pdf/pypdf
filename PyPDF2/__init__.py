@@ -12,9 +12,9 @@ __all__ = [
     "PaperSize",
     "parse_filename_page_ranges",
     "pdf",
-    "PdfFileMerger",  # will be deprecated soon; use PdfMerger instead
-    "PdfFileReader",  # will be deprecated soon; use PdfReader instead
-    "PdfFileWriter",  # will be deprecated soon; use PdfWriter instead
+    "PdfFileMerger",  # will be removed soon; use PdfMerger instead
+    "PdfFileReader",  # will be removed soon; use PdfReader instead
+    "PdfFileWriter",  # will be removed soon; use PdfWriter instead
     "PdfMerger",
     "PdfReader",
     "PdfWriter",

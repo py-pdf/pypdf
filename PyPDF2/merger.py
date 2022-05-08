@@ -75,7 +75,12 @@ class PdfMerger(object):
         ``True``).
     """
 
-    def __init__(self, strict=True, overwriteWarnings=True):
+    def __init__(self, strict=True, overwriteWarnings="deprecated"):
+        if overwriteWarnings != "deprecated":
+            warnings.warn(
+                "The `overwriteWarnings` argument to PdfReader will be removed with PyPDF2 2.0.0.",
+                PendingDeprecationWarning,
+            )
         self.inputs = []
         self.pages = []
         self.output = PdfWriter()
@@ -617,6 +622,10 @@ class PdfMerger(object):
 
 class OutlinesObject(list):
     def __init__(self, pdf, tree, parent=None):
+        warnings.warn(
+            "The OutlinesObject class will be removed with PyPDF2 2.0.0",
+            PendingDeprecationWarning,
+        )
         list.__init__(self)
         self.tree = tree
         self.pdf = pdf
@@ -663,8 +672,8 @@ class PdfFileMerger(PdfMerger):
         import warnings
 
         warnings.warn(
-            "PdfFileMerger was renamed to PdfMerger. PdfFileMerger will be deprecated",
-            DeprecationWarning,
+            "PdfFileMerger was renamed to PdfMerger. PdfFileMerger will be removed",
+            PendingDeprecationWarning,
             stacklevel=2,
         )
         super().__init__(*args, **kwargs)

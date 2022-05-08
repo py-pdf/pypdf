@@ -704,6 +704,10 @@ class TreeObject(DictionaryObject):
             if sys.version_info >= (3, 5):  # PEP 479
                 return
             else:
+                warnings.warn(
+                    "Python 3.5 and older support will be dropped with PyPDF2 2.0.0",
+                    PendingDeprecationWarning,
+                )
                 raise StopIteration
 
         child = self["/First"]
@@ -713,6 +717,10 @@ class TreeObject(DictionaryObject):
                 if sys.version_info >= (3, 5):  # PEP 479
                     return
                 else:
+                    warnings.warn(
+                        "Python 3.5 and older support will be dropped with PyPDF2 2.0.0",
+                        PendingDeprecationWarning,
+                    )
                     raise StopIteration
             child = child["/Next"]
 

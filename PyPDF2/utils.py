@@ -33,6 +33,7 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 
 
 import sys
+import warnings
 
 # See https://github.com/py-pdf/PyPDF2/issues/779
 from PyPDF2.errors import (  # noqa
@@ -74,12 +75,19 @@ def isBytes(b):
     """Test if arg is a bytes instance. Compatible with Python 2 and 3."""
     import warnings
 
-    warnings.warn("PyPDF2.utils.isBytes will be deprecated", DeprecationWarning)
+    warnings.warn(
+        "PyPDF2.utils.isBytes will be removed with PyPDF2 2.0.0",
+        PendingDeprecationWarning,
+    )
     return isinstance(b, bytes_type)
 
 
 def formatWarning(message, category, filename, lineno, line=None):
     """custom implementation of warnings.formatwarning"""
+    warnings.warn(
+        "formatWarning will be removed with PyPDF2 2.0.0",
+        PendingDeprecationWarning,
+    )
     file = filename.replace("/", "\\").rsplit("\\", 1)[-1]  # find the file name
     return "%s: %s [%s:%s]\n" % (category.__name__, message, file, lineno)
 
@@ -157,6 +165,10 @@ def readUntilRegex(stream, regex, ignore_eof=False):
 
 class ConvertFunctionsToVirtualList(object):
     def __init__(self, lengthFunction, getFunction):
+        warnings.warn(
+            "ConvertFunctionsToVirtualList will be removed with PyPDF2 2.0.0",
+            PendingDeprecationWarning,
+        )
         self.lengthFunction = lengthFunction
         self.getFunction = getFunction
 
@@ -216,6 +228,10 @@ def markLocation(stream):
 
 
 if sys.version_info[0] < 3:
+    warnings.warn(
+        "Python 3.5 and older support will be dropped with PyPDF2 2.0.0",
+        PendingDeprecationWarning,
+    )
 
     def b_(s):
         return s
@@ -244,6 +260,10 @@ else:
 
 def u_(s):
     if sys.version_info[0] < 3:
+        warnings.warn(
+            "Python 3.5 and older support will be dropped with PyPDF2 2.0.0",
+            PendingDeprecationWarning,
+        )
         return unicode(s, "unicode_escape")  # noqa
     else:
         return s
@@ -251,6 +271,10 @@ def u_(s):
 
 def str_(b):
     if sys.version_info[0] < 3:
+        warnings.warn(
+            "Python 3.5 and older support will be dropped with PyPDF2 2.0.0",
+            PendingDeprecationWarning,
+        )
         return b
     else:
         if type(b) == bytes:
@@ -268,6 +292,10 @@ def ord_(b):
 
 def chr_(c):
     if sys.version_info[0] < 3:
+        warnings.warn(
+            "Python 3.5 and older support will be dropped with PyPDF2 2.0.0",
+            PendingDeprecationWarning,
+        )
         return c
     else:
         return chr(c)
@@ -275,6 +303,10 @@ def chr_(c):
 
 def barray(b):
     if sys.version_info[0] < 3:
+        warnings.warn(
+            "Python 3.5 and older support will be dropped with PyPDF2 2.0.0",
+            PendingDeprecationWarning,
+        )
         return b
     else:
         return bytearray(b)
@@ -282,6 +314,10 @@ def barray(b):
 
 def hexencode(b):
     if sys.version_info[0] < 3:
+        warnings.warn(
+            "Python 3.5 and older support will be dropped with PyPDF2 2.0.0",
+            PendingDeprecationWarning,
+        )
         return b.encode("hex")
     else:
         import codecs

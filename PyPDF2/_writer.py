@@ -1264,8 +1264,8 @@ class PdfFileWriter(PdfWriter):
         import warnings
 
         warnings.warn(
-            "PdfFileWriter was renamed to PdfWriter. PdfFileWriter will be deprecated",
-            DeprecationWarning,
+            "PdfFileWriter was renamed to PdfWriter. PdfFileWriter will be removed",
+            PendingDeprecationWarning,
             stacklevel=2,
         )
         super().__init__(*args, **kwargs)

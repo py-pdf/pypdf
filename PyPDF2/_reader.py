@@ -201,8 +201,20 @@ class PdfReader(object):
         ``True``).
     """
 
-    def __init__(self, stream, strict=True, warndest=None, overwriteWarnings=True):
+    def __init__(
+        self, stream, strict=True, warndest=None, overwriteWarnings="deprecated"
+    ):
+        if warndest is not None:
+            warnings.warn(
+                "The `warndest` argument to PdfReader will be removed with PyPDF2 2.0.0.",
+                PendingDeprecationWarning,
+            )
         if overwriteWarnings:
+            if overwriteWarnings != "deprecated":
+                warnings.warn(
+                    "The `overwriteWarnings` argument to PdfReader will be removed with PyPDF2 2.0.0.",
+                    PendingDeprecationWarning,
+                )
             # Have to dynamically override the default showwarning since there
             # are no public methods that specify the 'file' parameter
             def _showwarning(
@@ -1422,8 +1434,8 @@ class PdfFileReader(PdfReader):
         import warnings
 
         warnings.warn(
-            "PdfFileReader was renamed to PdfReader. PdfFileReader will be deprecated",
-            DeprecationWarning,
+            "PdfFileReader was renamed to PdfReader. PdfFileReader will be removed",
+            PendingDeprecationWarning,
             stacklevel=2,
         )
         super().__init__(*args, **kwargs)
