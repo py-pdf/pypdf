@@ -29,8 +29,8 @@ from io import BytesIO, FileIO, IOBase
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 
 from PyPDF2._page import PageObject
-from PyPDF2._reader import PdfFileReader
-from PyPDF2._writer import PdfFileWriter
+from PyPDF2._reader import PdfReader
+from PyPDF2._writer import PdfWriter
 from PyPDF2.constants import PagesAttributes as PA
 from PyPDF2.generic import (
     ArrayObject,
@@ -62,20 +62,20 @@ ERR_CLOSED_WRITER = "close() was called and thus the writer cannot be used anymo
 
 class _MergedPage:
     """
-    _MergedPage is used internally by PdfFileMerger to collect necessary
+    _MergedPage is used internally by PdfMerger to collect necessary
     information on each page that is being merged.
     """
 
-    def __init__(self, pagedata: PageObject, src: PdfFileReader, id: int) -> None:
+    def __init__(self, pagedata: PageObject, src: PdfReader, id: int) -> None:
         self.src = src
         self.pagedata = pagedata
         self.out_pagedata = None
         self.id = id
 
 
-class PdfFileMerger:
+class PdfMerger:
     """
-    Initializes a ``PdfFileMerger`` object. ``PdfFileMerger`` merges multiple
+    Initializes a ``PdfMerger`` object. ``PdfMerger`` merges multiple
     PDFs into a single PDF. It can concatenate, slice, insert, or any
     combination of the above.
 
@@ -88,9 +88,9 @@ class PdfFileMerger:
     """
 
     def __init__(self, strict: bool = False) -> None:
-        self.inputs: List[Tuple[Any, PdfFileReader, bool]] = []
+        self.inputs: List[Tuple[Any, PdfReader, bool]] = []
         self.pages: List[Any] = []
-        self.output: Optional[PdfFileWriter] = PdfFileWriter()
+        self.output: Optional[PdfWriter] = PdfWriter()
         self.bookmarks: OutlinesType = []
         self.named_dests: List[Any] = []
         self.id_count = 0
@@ -99,7 +99,7 @@ class PdfFileMerger:
     def merge(
         self,
         position: int,
-        fileobj: Union[StrByteType, PdfFileReader],
+        fileobj: Union[StrByteType, PdfReader],
         bookmark: Optional[str] = None,
         pages: Optional[PageRangeSpec] = None,
         import_bookmarks: bool = True,
@@ -130,9 +130,9 @@ class PdfFileMerger:
 
         stream, my_file, decryption_key = self._create_stream(fileobj)
 
-        # Create a new PdfFileReader instance using the stream
+        # Create a new PdfReader instance using the stream
         # (either file or BytesIO or StringIO) created above
-        reader = PdfFileReader(stream, strict=self.strict)  # type: ignore[arg-type]
+        reader = PdfReader(stream, strict=self.strict)  # type: ignore[arg-type]
         if decryption_key is not None:
             reader._decryption_key = decryption_key
 
@@ -186,7 +186,7 @@ class PdfFileMerger:
         self.inputs.append((stream, reader, my_file))
 
     def _create_stream(
-        self, fileobj: Union[StrByteType, PdfFileReader]
+        self, fileobj: Union[StrByteType, PdfReader]
     ) -> Tuple[IOBase, bool, Optional[bytes]]:
         # This parameter is passed to self.inputs.append and means
         # that the stream used was created in this method.
@@ -195,7 +195,7 @@ class PdfFileMerger:
         # If the fileobj parameter is a string, assume it is a path
         # and create a file object at that location. If it is a file,
         # copy the file's contents into a BytesIO stream object; if
-        # it is a PdfFileReader, copy that reader's stream into a
+        # it is a PdfReader, copy that reader's stream into a
         # BytesIO stream.
         # If fileobj is none of the above types, it is not modified
         decryption_key = None
@@ -203,7 +203,7 @@ class PdfFileMerger:
         if isinstance(fileobj, str):
             stream = FileIO(fileobj, "rb")
             my_file = True
-        elif isinstance(fileobj, PdfFileReader):
+        elif isinstance(fileobj, PdfReader):
             if hasattr(fileobj, "_decryption_key"):
                 decryption_key = fileobj._decryption_key
             orig_tell = fileobj.stream.tell()
@@ -225,7 +225,7 @@ class PdfFileMerger:
 
     def append(
         self,
-        fileobj: Union[StrByteType, PdfFileReader],
+        fileobj: Union[StrByteType, PdfReader],
         bookmark: Optional[str] = None,
         pages: Union[None, PageRange, Tuple[int, int], Tuple[int, int, int]] = None,
         import_bookmarks: bool = True,
@@ -267,9 +267,9 @@ class PdfFileMerger:
             fileobj = FileIO(fileobj, "wb")
             my_file = True
 
-        # Add pages to the PdfFileWriter
+        # Add pages to the PdfWriter
         # The commented out line below was replaced with the two lines below it
-        # to allow PdfFileMerger to work with PyPdf 1.13
+        # to allow PdfMerger to work with PyPdf 1.13
         for page in self.pages:
             self.output.addPage(page.pagedata)
             pages_obj = cast(Dict[str, Any], self.output._pages.getObject())
@@ -370,7 +370,7 @@ class PdfFileMerger:
 
     def _trim_dests(
         self,
-        pdf: PdfFileReader,
+        pdf: PdfReader,
         dests: Dict[str, Dict[str, Any]],
         pages: Union[Tuple[int, int], Tuple[int, int, int]],
     ) -> List[Dict[str, Any]]:
@@ -390,7 +390,7 @@ class PdfFileMerger:
 
     def _trim_outline(
         self,
-        pdf: PdfFileReader,
+        pdf: PdfReader,
         outline: OutlinesType,
         pages: Union[Tuple[int, int], Tuple[int, int, int]],
     ) -> OutlinesType:
@@ -686,3 +686,15 @@ class PdfFileMerger:
             NumberObject(826),
         )
         self.named_dests.append(dest)
+
+
+class PdfFileMerger(PdfMerger):
+    def __init__(self, *args, **kwargs):
+        import warnings
+
+        warnings.warn(
+            "PdfFileMerger was renamed to PdfMerger. PdfFileMerger will be deprecated",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(*args, **kwargs)

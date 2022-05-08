@@ -61,7 +61,7 @@ from PyPDF2.generic import (
 from PyPDF2.utils import b_
 
 
-def getRectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
+def get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
     retval: Union[None, RectangleObject, IndirectObject] = self.get(name)
     if isinstance(retval, RectangleObject):
         return retval
@@ -73,25 +73,25 @@ def getRectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObje
     if isinstance(retval, IndirectObject):
         retval = self.pdf.getObject(retval)
     retval = RectangleObject(retval)  # type: ignore
-    setRectangle(self, name, retval)
+    set_rectangle(self, name, retval)
     return retval
 
 
-def setRectangle(self: Any, name: str, value: Union[RectangleObject, float]) -> None:
+def set_rectangle(self: Any, name: str, value: Union[RectangleObject, float]) -> None:
     if not isinstance(name, NameObject):
         name = NameObject(name)
     self[name] = value
 
 
-def deleteRectangle(self: Any, name: str) -> None:
+def delete_rectangle(self: Any, name: str) -> None:
     del self[name]
 
 
-def createRectangleAccessor(name: str, fallback: Iterable[str]) -> property:
+def create_rectangle_accessor(name: str, fallback: Iterable[str]) -> property:
     return property(
-        lambda self: getRectangle(self, name, fallback),
-        lambda self, value: setRectangle(self, name, value),
-        lambda self: deleteRectangle(self, name),
+        lambda self: get_rectangle(self, name, fallback),
+        lambda self, value: set_rectangle(self, name, value),
+        lambda self: delete_rectangle(self, name),
     )
 
 
@@ -100,8 +100,8 @@ class PageObject(DictionaryObject):
     PageObject represents a single page within a PDF file.
 
     Typically this object will be created by accessing the
-    :meth:`getPage()<PyPDF2.PdfFileReader.getPage>` method of the
-    :class:`PdfFileReader<PyPDF2.PdfFileReader>` class, but it is
+    :meth:`getPage()<PyPDF2.PdfReader.getPage>` method of the
+    :class:`PdfReader<PyPDF2.PdfReader>` class, but it is
     also possible to create an empty page with the
     :meth:`createBlankPage()<PageObject.createBlankPage>` static method.
 
@@ -112,18 +112,18 @@ class PageObject(DictionaryObject):
 
     def __init__(
         self,
-        pdf: Optional[Any] = None,  # PdfFileReader
+        pdf: Optional[Any] = None,  # PdfReader
         indirectRef: Optional[IndirectObject] = None,
     ) -> None:
-        from PyPDF2._reader import PdfFileReader
+        from PyPDF2._reader import PdfReader
 
         DictionaryObject.__init__(self)
-        self.pdf: Optional[PdfFileReader] = pdf
+        self.pdf: Optional[PdfReader] = pdf
         self.indirectRef = indirectRef
 
     @staticmethod
     def createBlankPage(
-        pdf: Optional[Any] = None,  # PdfFileReader
+        pdf: Optional[Any] = None,  # PdfReader
         width: Union[float, Decimal, None] = None,
         height: Union[float, Decimal, None] = None,
     ) -> "PageObject":
@@ -214,7 +214,7 @@ class PageObject(DictionaryObject):
 
     @staticmethod
     def _contentStreamRename(
-        stream: ContentStream, rename: Dict[Any, Any], pdf: Any  # PdfFileReader
+        stream: ContentStream, rename: Dict[Any, Any], pdf: Any  # PdfReader
     ) -> ContentStream:
         if not rename:
             return stream
@@ -235,7 +235,7 @@ class PageObject(DictionaryObject):
         return stream
 
     @staticmethod
-    def _pushPopGS(contents: Any, pdf: Any) -> ContentStream:  # PdfFileReader
+    def _pushPopGS(contents: Any, pdf: Any) -> ContentStream:  # PdfReader
         # adds a graphics state "push" and "pop" to the beginning and end
         # of a content stream.  This isolates it from changes such as
         # transformation matricies.
@@ -247,7 +247,7 @@ class PageObject(DictionaryObject):
     @staticmethod
     def _addTransformationMatrix(
         contents: Any, pdf: Any, ctm: Iterable[float]
-    ) -> ContentStream:  # PdfFileReader
+    ) -> ContentStream:  # PdfReader
         # adds transformation matrix at the beginning of the given
         # contents stream.
         a, b, c, d, e, f = ctm
@@ -790,14 +790,14 @@ class PageObject(DictionaryObject):
                 text += "\n"
         return text
 
-    mediaBox = createRectangleAccessor(PG.MEDIABOX, ())
+    mediaBox = create_rectangle_accessor(PG.MEDIABOX, ())
     """
     A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
     defining the boundaries of the physical medium on which the page is
     intended to be displayed or printed.
     """
 
-    cropBox = createRectangleAccessor("/CropBox", (PG.MEDIABOX,))
+    cropBox = create_rectangle_accessor("/CropBox", (PG.MEDIABOX,))
     """
     A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
     defining the visible region of default user space.  When the page is
@@ -806,20 +806,20 @@ class PageObject(DictionaryObject):
     implementation-defined manner.  Default value: same as :attr:`mediaBox<mediaBox>`.
     """
 
-    bleedBox = createRectangleAccessor("/BleedBox", ("/CropBox", PG.MEDIABOX))
+    bleedBox = create_rectangle_accessor("/BleedBox", ("/CropBox", PG.MEDIABOX))
     """
     A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
     defining the region to which the contents of the page should be clipped
     when output in a production enviroment.
     """
 
-    trimBox = createRectangleAccessor("/TrimBox", ("/CropBox", PG.MEDIABOX))
+    trimBox = create_rectangle_accessor("/TrimBox", ("/CropBox", PG.MEDIABOX))
     """
     A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
     defining the intended dimensions of the finished page after trimming.
     """
 
-    artBox = createRectangleAccessor("/ArtBox", ("/CropBox", PG.MEDIABOX))
+    artBox = create_rectangle_accessor("/ArtBox", ("/CropBox", PG.MEDIABOX))
     """
     A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
     defining the extent of the page's meaningful content as intended by the

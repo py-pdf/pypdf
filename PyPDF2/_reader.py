@@ -224,9 +224,9 @@ class DocumentInformation(DictionaryObject):
         return self.get(DI.PRODUCER)
 
 
-class PdfFileReader:
+class PdfReader:
     """
-    Initialize a PdfFileReader object.
+    Initialize a PdfReader object.
 
     This operation can take some time, as the PDF stream's cross-reference
     tables are read into memory.
@@ -249,7 +249,7 @@ class PdfFileReader:
         ] = None  # map page IndirectRef number to Page Number
         if hasattr(stream, "mode") and "b" not in stream.mode:  # type: ignore
             warnings.warn(
-                "PdfFileReader stream/file object is not in binary mode. "
+                "PdfReader stream/file object is not in binary mode. "
                 "It may not be read correctly.",
                 PdfReadWarning,
             )
@@ -283,7 +283,7 @@ class PdfFileReader:
     def documentInfo(self) -> Optional[DocumentInformation]:
         """
         Read-only property that accesses the
-        :meth:`getDocumentInfo()<PdfFileReader.getDocumentInfo>` function.
+        :meth:`getDocumentInfo()<PdfReader.getDocumentInfo>` function.
         """
         return self.getDocumentInfo()
 
@@ -307,7 +307,7 @@ class PdfFileReader:
     def xmpMetadata(self) -> Optional[XmpInformation]:
         """
         Read-only property that accesses the
-        :meth:`getXmpMetadata()<PdfFileReader.getXmpMetadata>` function.
+        :meth:`getXmpMetadata()<PdfReader.getXmpMetadata>` function.
         """
         return self.getXmpMetadata()
 
@@ -342,7 +342,7 @@ class PdfFileReader:
     def numPages(self) -> int:
         """
         Read-only property that accesses the
-        :meth:`getNumPages()<PdfFileReader.getNumPages>` function.
+        :meth:`getNumPages()<PdfReader.getNumPages>` function.
         """
         return self.getNumPages()
 
@@ -366,7 +366,7 @@ class PdfFileReader:
     def namedDestinations(self) -> Dict[str, Any]:
         """
         Read-only property that accesses the
-        :meth:`getNamedDestinations()<PdfFileReader.getNamedDestinations>` function.
+        :meth:`getNamedDestinations()<PdfReader.getNamedDestinations>` function.
         """
         return self.getNamedDestinations()
 
@@ -545,7 +545,7 @@ class PdfFileReader:
     def outlines(self) -> OutlinesType:
         """
         Read-only property that accesses the
-            :meth:`getOutlines()<PdfFileReader.getOutlines>` function.
+            :meth:`getOutlines()<PdfReader.getOutlines>` function.
         """
         return self.getOutlines()
 
@@ -692,8 +692,8 @@ class PdfFileReader:
     def pages(self) -> _VirtualList:
         """
         Read-only property that emulates a list based upon the
-        :meth:`getNumPages()<PdfFileReader.getNumPages>` and
-        :meth:`getPage()<PdfFileReader.getPage>` methods.
+        :meth:`getNumPages()<PdfReader.getNumPages>` and
+        :meth:`getPage()<PdfReader.getPage>` methods.
         """
         return _VirtualList(self.getNumPages, self.getPage)
 
@@ -701,7 +701,7 @@ class PdfFileReader:
         """
         Get the page layout.
 
-        See :meth:`setPageLayout()<PdfFileWriter.setPageLayout>`
+        See :meth:`setPageLayout()<PdfWriter.setPageLayout>`
         for a description of valid layouts.
 
         :return: Page layout currently being used.
@@ -715,13 +715,13 @@ class PdfFileReader:
     @property
     def pageLayout(self) -> Optional[str]:
         """Read-only property accessing the
-        :meth:`getPageLayout()<PdfFileReader.getPageLayout>` method."""
+        :meth:`getPageLayout()<PdfReader.getPageLayout>` method."""
         return self.getPageLayout()
 
     def getPageMode(self) -> Optional[str]:
         """
         Get the page mode.
-        See :meth:`setPageMode()<PdfFileWriter.setPageMode>`
+        See :meth:`setPageMode()<PdfWriter.setPageMode>`
         for a description of valid modes.
 
         :return: Page mode currently being used.
@@ -735,7 +735,7 @@ class PdfFileReader:
     @property
     def pageMode(self) -> Optional[str]:
         """Read-only property accessing the
-        :meth:`getPageMode()<PdfFileReader.getPageMode>` method."""
+        :meth:`getPageMode()<PdfReader.getPageMode>` method."""
         return self.getPageMode()
 
     def _flatten(
@@ -1500,6 +1500,18 @@ class PdfFileReader:
         """
         Read-only boolean property showing whether this PDF file is encrypted.
         Note that this property, if true, will remain true even after the
-        :meth:`decrypt()<PdfFileReader.decrypt>` method is called.
+        :meth:`decrypt()<PdfReader.decrypt>` method is called.
         """
         return self.getIsEncrypted()
+
+
+class PdfFileReader(PdfReader):
+    def __init__(self, *args, **kwargs):
+        import warnings
+
+        warnings.warn(
+            "PdfFileReader was renamed to PdfReader. PdfFileReader will be deprecated",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(*args, **kwargs)

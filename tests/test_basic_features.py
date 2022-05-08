@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from PyPDF2 import PdfFileReader, PdfFileWriter
+from PyPDF2 import PdfReader, PdfWriter
 from PyPDF2._reader import convertToInt
 from PyPDF2.errors import PdfReadError
 
@@ -13,8 +13,8 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
 
 def test_basic_features():
     pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
-    reader = PdfFileReader(pdf_path)
-    writer = PdfFileWriter()
+    reader = PdfReader(pdf_path)
+    writer = PdfWriter()
 
     assert reader.numPages == 1
 
@@ -31,7 +31,7 @@ def test_basic_features():
     # add page 4 from input1, but first add a watermark from another PDF:
     page4 = reader.getPage(0)
     watermark_pdf = pdf_path
-    watermark = PdfFileReader(watermark_pdf)
+    watermark = PdfReader(watermark_pdf)
     page4.mergePage(watermark.getPage(0))
     writer.addPage(page4)
 
