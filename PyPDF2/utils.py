@@ -84,10 +84,6 @@ def isBytes(b):
 
 def formatWarning(message, category, filename, lineno, line=None):
     """custom implementation of warnings.formatwarning"""
-    warnings.warn(
-        "formatWarning will be removed with PyPDF2 2.0.0",
-        PendingDeprecationWarning,
-    )
     file = filename.replace("/", "\\").rsplit("\\", 1)[-1]  # find the file name
     return "%s: %s [%s:%s]\n" % (category.__name__, message, file, lineno)
 
