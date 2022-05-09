@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1651518714682,
+  "lastUpdate": 1652127673695,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1885,6 +1885,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.006084210437525165",
             "extra": "mean: 97.57183881818321 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a791ef16c009bcf528fba2e566cc58b5d18dc4f4",
+          "message": "MAINT: Remove IronPython Fallback for zlib (#868)\n\nSee https://github.com/py-pdf/PyPDF2/discussions/863",
+          "timestamp": "2022-05-09T22:20:34+02:00",
+          "tree_id": "e73c854d078a066be3190333e77505b517005268",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/a791ef16c009bcf528fba2e566cc58b5d18dc4f4"
+        },
+        "date": 1652127673196,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.6529593825268383,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004686145907465022",
+            "extra": "mean: 1.531488828800002 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 10.199708238087558,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006640646404993513",
+            "extra": "mean: 98.04202009090996 msec\nrounds: 11"
           }
         ]
       }
