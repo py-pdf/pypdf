@@ -17,20 +17,6 @@ PAGE_RANGE_RE = "^({int}|({int}?(:{int}?(:{int}?)?)))$".format(int=_INT_RE)
 # groups:         12     34     5 6     7 8
 
 
-PAGE_RANGE_HELP = """Remember, page indices start with zero.
-        Page range expression examples:
-            :     all pages.                   -1    last page.
-            22    just the 23rd page.          :-1   all but the last page.
-            0:3   the first three pages.       -2    second-to-last page.
-            :3    the first three pages.       -2:   last two pages.
-            5:    from the sixth page onward.  -3:-1 third & second to last.
-        The third, "stride" or "step" number is also recognized.
-            ::2       0 2 4 ... to the end.    3:0:-1    3 2 1 but not 0.
-            1:10:2    1 3 5 7 9                2::-1     2 1 0.
-            ::-1      all pages in reverse order.
-"""
-
-
 class PageRange:
     """
     A slice-like representation of a range of page indices,
@@ -55,7 +41,17 @@ class PageRange:
         or a string like
             "int", "[int]:[int]" or "[int]:[int]:[int]",
             where the brackets indicate optional ints.
-        {page_range_help}
+        Remember, page indices start with zero.
+        Page range expression examples:
+            :     all pages.                   -1    last page.
+            22    just the 23rd page.          :-1   all but the last page.
+            0:3   the first three pages.       -2    second-to-last page.
+            :3    the first three pages.       -2:   last two pages.
+            5:    from the sixth page onward.  -3:-1 third & second to last.
+        The third, "stride" or "step" number is also recognized.
+            ::2       0 2 4 ... to the end.    3:0:-1    3 2 1 but not 0.
+            1:10:2    1 3 5 7 9                2::-1     2 1 0.
+            ::-1      all pages in reverse order.
         Note the difference between this notation and arguments to slice():
             slice(3) means the first three pages;
             PageRange("3") means the range of only the fourth page.
@@ -79,9 +75,6 @@ class PageRange:
             self._slice = slice(start, stop)
         else:
             self._slice = slice(*[int(g) if g else None for g in m.group(4, 6, 8)])
-
-    if __init__.__doc__:  # see https://github.com/py-pdf/PyPDF2/issues/737
-        __init__.__doc__ = __init__.__doc__.format(page_range_help=PAGE_RANGE_HELP)
 
     @staticmethod
     def valid(input: Any) -> bool:
