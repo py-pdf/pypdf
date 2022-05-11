@@ -35,7 +35,7 @@ import struct
 from io import StringIO
 from typing import Any, Dict, Optional, Tuple, Union
 
-from PyPDF2.generic import ArrayObject, DictionaryObject
+from PyPDF2.generic import ArrayObject, DictionaryObject, NameObject
 
 try:
     from typing import Literal  # type: ignore[attr-defined]
@@ -438,8 +438,6 @@ class CCITTFaxDecode:
         k = 0
         columns = 0
         if parameters:
-            from PyPDF2.generic import ArrayObject
-
             if isinstance(parameters, ArrayObject):
                 for decodeParm in parameters:
                     if CCITT.COLUMNS in decodeParm:
@@ -509,8 +507,6 @@ class CCITTFaxDecode:
 
 
 def decodeStreamData(stream: Any) -> Union[str, bytes]:  # utils.StreamObject
-    from PyPDF2.generic import NameObject
-
     filters = stream.get(SA.FILTER, ())
 
     if len(filters) and not isinstance(filters[0], NameObject):
