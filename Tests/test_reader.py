@@ -536,7 +536,7 @@ def test_PdfReaderDecryptWhenNoID():
     ) as inputfile:
         ipdf = PdfReader(inputfile)
         ipdf.decrypt("")
-        assert ipdf.getDocumentInfo() == {"/Producer": "European Patent Office"}
+        assert ipdf.metadata == {"/Producer": "European Patent Office"}
 
 
 def test_reader_properties():

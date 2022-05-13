@@ -253,7 +253,8 @@ class PdfReader(object):
 
         self._override_encryption = False
 
-    def getDocumentInfo(self):
+    @property
+    def metadata(self):
         """
         Retrieve the PDF file's document information dictionary, if it exists.
         Note that some PDF files use metadata streams instead of docinfo
@@ -271,18 +272,31 @@ class PdfReader(object):
         retval.update(obj)
         return retval
 
+    def getDocumentInfo(self):
+        """Will be deprecated in PyPDF2 2.0.0. Use the `metadata` attribute instead."""
+        warnings.warn(
+            "The `getDocumentInfo` method of PdfReader will be replaced by the "
+            "`metadata` attribute in PyPDF2 2.0.0. You can switch to the "
+            "metadata attribute already.",
+            PendingDeprecationWarning,
+        )
+        return self.metadata
+
     @property
     def documentInfo(self):
-        """
-        Read-only property that accesses the
-        :meth:`getDocumentInfo()<PdfReader.getDocumentInfo>` function.
-        """
-        return self.getDocumentInfo()
+        """Will be deprecated in PyPDF2 2.0.0. Use the `metadata` attribute instead."""
+        warnings.warn(
+            "The `documentInfo` attribute of PdfReader will be replaced by "
+            "`metadata` in PyPDF2 2.0.0. You can switch to the metadata "
+            "attribute already.",
+            PendingDeprecationWarning,
+        )
+        return self.metadata
 
-    def getXmpMetadata(self):
+    @property
+    def xmp_metadata(self):
         """
-        Retrieve XMP (Extensible Metadata Platform) data from the PDF document
-        root.
+        XMP (Extensible Metadata Platform) data
 
         :return: a :class:`XmpInformation<xmp.XmpInformation>`
             instance that can be used to access XMP metadata from the document.
@@ -295,15 +309,28 @@ class PdfReader(object):
         finally:
             self._override_encryption = False
 
+    def getXmpMetadata(self):
+        """Will be deprecated in PyPDF2 2.0.0. Use the `xmp_metadata` attribute instead."""
+        warnings.warn(
+            "The `getXmpMetadata` method of PdfReader will be replaced by the "
+            "`xmp_metadata` attribute in PyPDF2 2.0.0. You can switch to the "
+            "xmp_metadata attribute already.",
+            PendingDeprecationWarning,
+        )
+        return self.xmp_metadata()
+
     @property
     def xmpMetadata(self):
-        """
-        Read-only property that accesses the
-        :meth:`getXmpMetadata()<PdfReader.getXmpMetadata>` function.
-        """
-        return self.getXmpMetadata()
+        """Will be deprecated in PyPDF2 2.0.0. Use the `xmp_metadata` attribute instead."""
+        warnings.warn(
+            "The `xmpMetadata` attribute of PdfReader will be replaced by the "
+            "`xmp_metadata` attribute in PyPDF2 2.0.0. You can switch to the "
+            "xmp_metadata attribute already.",
+            PendingDeprecationWarning,
+        )
+        return self.xmp_metadata
 
-    def getNumPages(self):
+    def _get_num_pages(self):
         """
         Calculates the number of pages in this PDF file.
 
@@ -330,13 +357,17 @@ class PdfReader(object):
                 self._flatten()
             return len(self.flattenedPages)
 
+    def getNumPages(self):
+        # TODO: What would be the recommended way? len(reader.pages)?
+        return self._get_num_pages()
+
     @property
     def numPages(self):
         """
         Read-only property that accesses the
         :meth:`getNumPages()<PdfReader.getNumPages>` function.
         """
-        return self.getNumPages()
+        return self._get_num_pages()
 
     def getPage(self, pageNumber):
         """
@@ -660,7 +691,7 @@ class PdfReader(object):
         :meth:`getNumPages()<PdfReader.getNumPages>` and
         :meth:`getPage()<PdfReader.getPage>` methods.
         """
-        return ConvertFunctionsToVirtualList(self.getNumPages, self.getPage)
+        return ConvertFunctionsToVirtualList(self._get_num_pages, self.getPage)
 
     def getPageLayout(self):
         """

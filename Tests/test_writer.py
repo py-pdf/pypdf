@@ -140,7 +140,7 @@ def test_write_metadata():
     for page in reader.pages:
         writer.addPage(page)
 
-    metadata = reader.getDocumentInfo()
+    metadata = reader.metadata
     writer.addMetadata(metadata)
 
     writer.addMetadata({"/Title": "The Crazy Ones"})
@@ -152,7 +152,7 @@ def test_write_metadata():
 
     # Check if the title was set
     reader = PdfReader(tmp_filename)
-    metadata = reader.getDocumentInfo()
+    metadata = reader.metadata
     assert metadata.get("/Title") == "The Crazy Ones"
 
     # Cleanup
