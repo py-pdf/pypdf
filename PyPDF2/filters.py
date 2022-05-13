@@ -34,7 +34,6 @@ import math
 import struct
 from io import StringIO,BytesIO
 from typing import Any, Dict, Optional, Tuple, Union
-from PIL import Image
 
 from .generic import ArrayObject, DictionaryObject, NameObject
 
@@ -556,6 +555,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
 
     :return: Tuple[file extension, bytes]
     """
+    from PIL import Image
 
     size = (x_object_obj[IA.WIDTH], x_object_obj[IA.HEIGHT])
     data = x_object_obj.getData()  # type: ignore
