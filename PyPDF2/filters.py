@@ -35,22 +35,22 @@ import struct
 from io import StringIO
 from typing import Any, Dict, Optional, Tuple, Union
 
-from PyPDF2.generic import ArrayObject, DictionaryObject, NameObject
+from .generic import ArrayObject, DictionaryObject, NameObject
 
 try:
     from typing import Literal  # type: ignore[attr-defined]
 except ImportError:
     from typing_extensions import Literal  # type: ignore[misc]
 
-from PyPDF2.constants import CcittFaxDecodeParameters as CCITT
-from PyPDF2.constants import ColorSpaces
-from PyPDF2.constants import FilterTypeAbbreviations as FTA
-from PyPDF2.constants import FilterTypes as FT
-from PyPDF2.constants import ImageAttributes as IA
-from PyPDF2.constants import LzwFilterParameters as LZW
-from PyPDF2.constants import StreamAttributes as SA
-from PyPDF2.errors import PdfReadError, PdfStreamError
-from PyPDF2.utils import ord_, paethPredictor
+from .constants import CcittFaxDecodeParameters as CCITT
+from .constants import ColorSpaces
+from .constants import FilterTypeAbbreviations as FTA
+from .constants import FilterTypes as FT
+from .constants import ImageAttributes as IA
+from .constants import LzwFilterParameters as LZW
+from .constants import StreamAttributes as SA
+from .errors import PdfReadError, PdfStreamError
+from .utils import ord_, paethPredictor
 
 try:
     import zlib
@@ -558,7 +558,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
 
     from PIL import Image
 
-    from PyPDF2.constants import GraphicsStateParameters as G
+    from .constants import GraphicsStateParameters as G
 
     size = (x_object_obj[IA.WIDTH], x_object_obj[IA.HEIGHT])
     data = x_object_obj.getData()  # type: ignore
@@ -582,7 +582,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
             [FT.ASCII_85_DECODE],
             [FT.CCITT_FAX_DECODE],
         ):
-            from PyPDF2.utils import b_
+            from .utils import b_
 
             extension = ".png"
             data = b_(data)

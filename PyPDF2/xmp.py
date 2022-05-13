@@ -6,8 +6,8 @@ from xml.dom.minidom import Document
 from xml.dom.minidom import Element as XmlElement
 from xml.dom.minidom import parseString
 
-from PyPDF2.generic import PdfObject
-from PyPDF2.utils import StreamType
+from .generic import PdfObject
+from .utils import StreamType
 
 RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 DC_NAMESPACE = "http://purl.org/dc/elements/1.1/"
@@ -188,7 +188,7 @@ class XmpInformation(PdfObject):
     Usually accessed by :meth:`getXmpMetadata()<PyPDF2.PdfFileReader.getXmpMetadata>`
     """
 
-    from PyPDF2.generic import ContentStream
+    from .generic import ContentStream
 
     def __init__(self, stream: ContentStream) -> None:
         self.stream = stream

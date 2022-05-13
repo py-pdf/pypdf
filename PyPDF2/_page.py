@@ -42,11 +42,10 @@ from typing import (
     cast,
 )
 
-from PyPDF2 import utils
-from PyPDF2.constants import PageAttributes as PG
-from PyPDF2.constants import Ressources as RES
-from PyPDF2.errors import PageSizeNotDefinedError
-from PyPDF2.generic import (
+from .constants import PageAttributes as PG
+from .constants import Ressources as RES
+from .errors import PageSizeNotDefinedError
+from .generic import (
     ArrayObject,
     ContentStream,
     DictionaryObject,
@@ -58,7 +57,7 @@ from PyPDF2.generic import (
     RectangleObject,
     TextStringObject,
 )
-from PyPDF2.utils import b_
+from .utils import b_, matrixMultiply
 
 
 def getRectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
@@ -115,7 +114,7 @@ class PageObject(DictionaryObject):
         pdf: Optional[Any] = None,  # PdfFileReader
         indirectRef: Optional[IndirectObject] = None,
     ) -> None:
-        from PyPDF2._reader import PdfFileReader
+        from ._reader import PdfFileReader
 
         DictionaryObject.__init__(self)
         self.pdf: Optional[PdfFileReader] = pdf
@@ -535,8 +534,8 @@ class PageObject(DictionaryObject):
             [0, 0, 1],
         ]
         rtranslation: List[List[float]] = [[1, 0, 0], [0, 1, 0], [tx, ty, 1]]
-        ctm = utils.matrixMultiply(translation, rotating)
-        ctm = utils.matrixMultiply(ctm, rtranslation)
+        ctm = matrixMultiply(translation, rotating)
+        ctm = matrixMultiply(ctm, rtranslation)
 
         return self.mergeTransformedPage(
             page2,
@@ -565,7 +564,7 @@ class PageObject(DictionaryObject):
             [0, 0, 1],
         ]
         scaling: List[List[float]] = [[scale, 0, 0], [0, scale, 0], [0, 0, 1]]
-        ctm = utils.matrixMultiply(rotating, scaling)
+        ctm = matrixMultiply(rotating, scaling)
 
         self.mergeTransformedPage(
             page2,
@@ -596,7 +595,7 @@ class PageObject(DictionaryObject):
 
         translation: List[List[float]] = [[1, 0, 0], [0, 1, 0], [tx, ty, 1]]
         scaling: List[List[float]] = [[scale, 0, 0], [0, scale, 0], [0, 0, 1]]
-        ctm = utils.matrixMultiply(scaling, translation)
+        ctm = matrixMultiply(scaling, translation)
 
         return self.mergeTransformedPage(
             page2,
@@ -635,8 +634,8 @@ class PageObject(DictionaryObject):
             [0, 0, 1],
         ]
         scaling: List[List[float]] = [[scale, 0, 0], [0, scale, 0], [0, 0, 1]]
-        ctm = utils.matrixMultiply(rotating, scaling)
-        ctm = utils.matrixMultiply(ctm, translation)
+        ctm = matrixMultiply(rotating, scaling)
+        ctm = matrixMultiply(ctm, translation)
 
         self.mergeTransformedPage(
             page2,
