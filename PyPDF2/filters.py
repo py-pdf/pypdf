@@ -34,6 +34,7 @@ import math
 import struct
 from io import StringIO
 from typing import Any, Dict, Optional, Tuple, Union
+import zlib
 
 from PyPDF2.generic import ArrayObject, DictionaryObject, NameObject
 
@@ -52,80 +53,23 @@ from PyPDF2.constants import StreamAttributes as SA
 from PyPDF2.errors import PdfReadError, PdfStreamError
 from PyPDF2.utils import ord_, paethPredictor
 
-try:
-    import zlib
 
-    def decompress(data: bytes) -> bytes:
-        try:
-            return zlib.decompress(data)
-        except zlib.error:
-            d = zlib.decompressobj(zlib.MAX_WBITS | 32)
-            result_str = b""
-            for b in [data[i : i + 1] for i in range(len(data))]:
-                try:
-                    result_str += d.decompress(b)
-                except zlib.error:
-                    pass
-            return result_str
+def decompress(data: bytes) -> bytes:
+    try:
+        return zlib.decompress(data)
+    except zlib.error:
+        d = zlib.decompressobj(zlib.MAX_WBITS | 32)
+        result_str = b""
+        for b in [data[i : i + 1] for i in range(len(data))]:
+            try:
+                result_str += d.decompress(b)
+            except zlib.error:
+                pass
+        return result_str
 
-    def compress(data: bytes) -> bytes:
-        return zlib.compress(data)
 
-except ImportError:  # pragma: no cover
-    # Unable to import zlib.  Attempt to use the System.IO.Compression
-    # library from the .NET framework. (IronPython only)
-    import System  # type: ignore[import]
-    from System import IO, Array
-
-    def _string_to_bytearr(buf):  # type: ignore[no-untyped-def]
-        retval = Array.CreateInstance(System.Byte, len(buf))
-        for i in range(len(buf)):
-            retval[i] = ord(buf[i])
-        return retval
-
-    def _bytearr_to_string(bytes) -> str:  # type: ignore[no-untyped-def]
-        retval = ""
-        for i in range(bytes.Length):
-            retval += chr(bytes[i])
-        return retval
-
-    def _read_bytes(stream):  # type: ignore[no-untyped-def]
-        ms = IO.MemoryStream()
-        buf = Array.CreateInstance(System.Byte, 2048)
-        while True:
-            bytes = stream.Read(buf, 0, buf.Length)
-            if bytes == 0:
-                break
-            else:
-                ms.Write(buf, 0, bytes)
-        retval = ms.ToArray()
-        ms.Close()
-        return retval
-
-    def decompress(data):  # type: ignore
-        bytes = _string_to_bytearr(data)
-        ms = IO.MemoryStream()
-        ms.Write(bytes, 0, bytes.Length)
-        ms.Position = 0  # fseek 0
-        gz = IO.Compression.DeflateStream(ms, IO.Compression.CompressionMode.Decompress)
-        bytes = _read_bytes(gz)
-        retval = _bytearr_to_string(bytes)
-        gz.Close()
-        return retval
-
-    def compress(data):  # type: ignore
-        bytes = _string_to_bytearr(data)
-        ms = IO.MemoryStream()
-        gz = IO.Compression.DeflateStream(
-            ms, IO.Compression.CompressionMode.Compress, True
-        )
-        gz.Write(bytes, 0, bytes.Length)
-        gz.Close()
-        ms.Position = 0  # fseek 0
-        bytes = ms.ToArray()
-        retval = _bytearr_to_string(bytes)
-        ms.Close()
-        return retval
+def compress(data: bytes) -> bytes:
+    return zlib.compress(data)
 
 
 class FlateDecode:
