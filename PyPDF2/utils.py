@@ -31,6 +31,7 @@ Utility functions for PDF library.
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
+from codecs import getencoder
 from io import BufferedReader, BufferedWriter, BytesIO, FileIO
 from typing import Any, Dict, List, Optional, Union, overload
 
@@ -211,9 +212,8 @@ def ord_(b: Union[int, str, bytes]) -> Union[int, bytes]:
 
 
 def hexencode(b: bytes) -> bytes:
-    import codecs
 
-    coder = codecs.getencoder("hex_codec")
+    coder = getencoder("hex_codec")
     coded = coder(b)  # type: ignore
     return coded[0]
 
