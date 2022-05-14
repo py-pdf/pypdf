@@ -138,7 +138,7 @@ def test_get_attachments(src):
 )
 def test_get_outlines(src, outline_elements):
     reader = PdfReader(src)
-    outlines = reader.getOutlines()
+    outlines = reader.get_outlines()
     assert len(outlines) == outline_elements
 
 
@@ -505,10 +505,10 @@ def test_read_encrypted_without_decryption():
 def test_get_destination_age_number():
     src = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
     reader = PdfReader(src)
-    outlines = reader.getOutlines()
+    outlines = reader.get_outlines()
     for outline in outlines:
         if not isinstance(outline, list):
-            reader.getDestinationPageNumber(outline)
+            reader.get_destination_page_number(outline)
 
 
 def test_do_not_get_stuck_on_large_files_without_start_xref():
@@ -562,13 +562,13 @@ def test_issue604(strict):
         if strict:
             with pytest.raises(PdfReadError) as exc:
                 pdf = PdfReader(f, strict=strict)
-                bookmarks = pdf.getOutlines()
+                bookmarks = pdf.get_outlines()
             if "Unknown Destination" not in exc.value.args[0]:
                 raise Exception("Expected exception not raised")
             return  # bookmarks not correct
         else:
             pdf = PdfReader(f, strict=strict)
-            bookmarks = pdf.getOutlines()
+            bookmarks = pdf.get_outlines()
 
         def getDestPages(x):
             # print(x)
@@ -576,7 +576,7 @@ def test_issue604(strict):
                 r = [getDestPages(y) for y in x]
                 return r
             else:
-                return pdf.getDestinationPageNumber(x) + 1
+                return pdf.get_destination_page_number(x) + 1
 
         out = []
         for (

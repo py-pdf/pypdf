@@ -75,7 +75,7 @@ class PdfMerger(object):
         ``True``).
     """
 
-    def __init__(self, strict=False, overwriteWarnings="deprecated"):
+    def __init__(self, strict=True, overwriteWarnings="deprecated"):
         if overwriteWarnings != "deprecated":
             warnings.warn(
                 "The `overwriteWarnings` argument to PdfReader will be removed with PyPDF2 2.0.0.",
@@ -175,7 +175,7 @@ class PdfMerger(object):
 
         outline = []
         if import_bookmarks:
-            outline = pdfr.getOutlines()
+            outline = pdfr.get_outlines()
             outline = self._trim_outline(pdfr, outline, pages)
 
         if bookmark:

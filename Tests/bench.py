@@ -77,7 +77,7 @@ def merge():
 
     # Check if bookmarks are correct
     pdfr = PyPDF2.PdfReader(tmp_path)
-    assert [el.title for el in pdfr.getOutlines() if isinstance(el, Destination)] == [
+    assert [el.title for el in pdfr.get_outlines() if isinstance(el, Destination)] == [
         "A bookmark",
         "Foo",
         "Bar",
