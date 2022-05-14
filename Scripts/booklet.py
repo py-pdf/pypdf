@@ -58,7 +58,7 @@ def main():
         mergePage(dstPage, page, xOffset)
 
     for i in range(virtualPages // 2):
-        page = writer.addBlankPage(width=pageWidth, height=pageHeight)
+        page = writer.add_blank_page(width=pageWidth, height=pageHeight)
         offsets = [0, pageWidth // 2]
         if i % 2 == 0:
             offsets.reverse()

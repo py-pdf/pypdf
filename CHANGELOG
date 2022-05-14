@@ -52,8 +52,11 @@ PdfReader class:
 PdfWriter class:
 
   - addMetadata ➔ add_metadata
-  - addPage ➔ append_page
+  - addPage ➔ append_page : TODO - is this a good idea?
+  - addBlankPage ➔ add_blank_page - is the blank page necessary?
+  - addAttachment(fname, fdata) ➔ add_attachment(filename, data)
   - insertPage ➔ insert_page
+  - insertBlankPage ➔ insert_blank_page : TODO is the Blank page necessary?
   - getPage(pageNumber) ➔ get_page(page_number)
   - getPageLayout / setPageLayout / pageLayout ➔ page_layout attribute
   - getPageMode / setPageMode / pageMode ➔ page_mode attribute

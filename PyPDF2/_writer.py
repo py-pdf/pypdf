@@ -229,7 +229,7 @@ class PdfWriter(object):
         )
         return self.get_num_pages()
 
-    def addBlankPage(self, width=None, height=None):
+    def add_blank_page(self, width=None, height=None):
         """
         Append a blank page to this PDF file and returns it. If no page size
         is specified, use the size of the last page.
@@ -247,7 +247,14 @@ class PdfWriter(object):
         self.append_page(page)
         return page
 
-    def insertBlankPage(self, width=None, height=None, index=0):
+    def addBlankPage(self, width=None, height=None):
+        warnings.warn(
+            DEPR_MSG.format("addBlankPage", "add_blank_page"),
+            PendingDeprecationWarning,
+        )
+        return self.add_blank_page(width, height)
+
+    def insert_blank_page(self, width=None, height=None, index=0):
         """
         Insert a blank page to this PDF file and returns it. If no page size
         is specified, use the size of the last page.
@@ -270,7 +277,14 @@ class PdfWriter(object):
         self.insert_page(page, index)
         return page
 
-    def addJS(self, javascript):
+    def insertBlankPage(self, width=None, height=None, index=0):
+        warnings.warn(
+            DEPR_MSG.format("insertBlankPage", "insert_blank_page"),
+            PendingDeprecationWarning,
+        )
+        return self.insert_blank_page(width, height, index)
+
+    def add_js(self, javascript):
         """
         Add Javascript which will launch upon opening this PDF.
 
@@ -313,12 +327,19 @@ class PdfWriter(object):
             }
         )
 
-    def addAttachment(self, fname, fdata):
+    def addJS(self, javascript):
+        warnings.warn(
+            DEPR_MSG.format("addJS", "add_js"),
+            PendingDeprecationWarning,
+        )
+        return self.add_js(javascript)
+
+    def add_attachment(self, filename, data):
         """
         Embed a file inside the PDF.
 
-        :param str fname: The filename to display.
-        :param str fdata: The data in the file.
+        :param str filename: The filename to display.
+        :param str data: The data in the file.
 
         Reference:
         https://www.adobe.com/content/dam/Adobe/en/devnet/acrobat/pdfs/PDF32000_2008.pdf
@@ -342,7 +363,7 @@ class PdfWriter(object):
         endobj
         """
         file_entry = DecodedStreamObject()
-        file_entry.setData(fdata)
+        file_entry.setData(data)
         file_entry.update({NameObject(PA.TYPE): NameObject("/EmbeddedFile")})
 
         # The Filespec entry
@@ -362,7 +383,7 @@ class PdfWriter(object):
             {
                 NameObject(PA.TYPE): NameObject("/Filespec"),
                 NameObject("/F"): createStringObject(
-                    fname
+                    filename
                 ),  # Perhaps also try TextStringObject
                 NameObject("/EF"): ef_entry,
             }
@@ -382,7 +403,11 @@ class PdfWriter(object):
         """
         embeddedFilesNamesDictionary = DictionaryObject()
         embeddedFilesNamesDictionary.update(
-            {NameObject(CA.NAMES): ArrayObject([createStringObject(fname), filespec])}
+            {
+                NameObject(CA.NAMES): ArrayObject(
+                    [createStringObject(filename), filespec]
+                )
+            }
         )
 
         embeddedFilesDictionary = DictionaryObject()
@@ -391,6 +416,14 @@ class PdfWriter(object):
         )
         # Update the root
         self._root_object.update({NameObject(CA.NAMES): embeddedFilesDictionary})
+
+    def addAttachment(self, fname, fdata):
+        warnings.warn(
+            DEPR_MSG.format(
+                "addAttachment(fname, fdata)", "add_attachment(filename, data)"
+            ),
+        )
+        return self.add_attachment(fname, fdata)
 
     def appendPagesFromReader(self, reader, after_page_append=None):
         """

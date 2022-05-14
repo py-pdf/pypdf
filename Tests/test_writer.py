@@ -37,13 +37,13 @@ def test_writer_operations():
     writer = PdfWriter()
     page = reader.pages[0]
     with pytest.raises(PageSizeNotDefinedError) as exc:
-        writer.addBlankPage()
+        writer.add_blank_page()
     assert exc.value.args == ()
     writer.insert_page(page, 1)
     writer.insert_page(reader_outline.pages[0], 0)
     writer.addBookmarkDestination(page)
     writer.removeLinks()
-    writer.addBlankPage()
+    writer.add_blank_page()
     writer.addURI(2, "https://example.com", RectangleObject([0, 0, 100, 100]))
     writer.addLink(2, 1, RectangleObject([0, 0, 100, 100]))
     assert writer._get_page_layout() is None
@@ -52,15 +52,15 @@ def test_writer_operations():
     assert writer._get_page_mode() is None
     writer.set_page_mode("UseNone")
     assert writer._get_page_mode() == "UseNone"
-    writer.insertBlankPage(width=100, height=100)
-    writer.insertBlankPage()  # without parameters
+    writer.insert_blank_page(width=100, height=100)
+    writer.insert_blank_page()  # without parameters
 
     # TODO: This gives "KeyError: '/Contents'" - is that a bug?
     # writer.removeImages()
 
     writer.add_metadata({"author": "Martin Thoma"})
 
-    writer.addAttachment("foobar.gif", b"foobarcontent")
+    writer.add_attachment("foobar.gif", b"foobarcontent")
 
     # finally, write "output" to PyPDF2-output.pdf
     tmp_path = "dont_commit_writer.pdf"

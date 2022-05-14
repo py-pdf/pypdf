@@ -32,6 +32,7 @@ __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import math
+import warnings
 from sys import version_info
 
 from PyPDF2.constants import CcittFaxDecodeParameters as CCITT
@@ -42,7 +43,7 @@ from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import LzwFilterParameters as LZW
 from PyPDF2.constants import StreamAttributes as SA
 from PyPDF2.errors import PdfReadError, PdfStreamError
-from PyPDF2.utils import ord_, paethPredictor
+from PyPDF2.utils import DEPR_MSG, ord_, paethPredictor
 
 if version_info < (3, 0):
     from cStringIO import StringIO
@@ -194,7 +195,7 @@ class LZWDecode(object):
     http://www.java2s.com/Open-Source/Java-Document/PDF/PDF-Renderer/com/sun/pdfview/decode/LZWDecode.java.htm
     """
 
-    class decoder(object):
+    class Decoder(object):
         def __init__(self, data):
             self.STOP = 257
             self.CLEARDICT = 256
@@ -204,13 +205,13 @@ class LZWDecode(object):
             self.dict = [""] * 4096
             for i in range(256):
                 self.dict[i] = chr(i)
-            self.resetDict()
+            self.reset_dict()
 
-        def resetDict(self):
+        def reset_dict(self):
             self.dictlen = 258
             self.bitspercode = 9
 
-        def nextCode(self):
+        def next_code(self):
             fillbits = self.bitspercode
             value = 0
             while fillbits > 0:
@@ -246,13 +247,13 @@ class LZWDecode(object):
             baos = ""
             while True:
                 pW = cW
-                cW = self.nextCode()
+                cW = self.next_code()
                 if cW == -1:
                     raise PdfReadError("Missed the stop code in LZWDecode!")
                 if cW == self.STOP:
                     break
                 elif cW == self.CLEARDICT:
-                    self.resetDict()
+                    self.reset_dict()
                 elif pW == self.CLEARDICT:
                     baos += self.dict[cW]
                 else:
@@ -281,7 +282,7 @@ class LZWDecode(object):
         :return: decoded data.
         :rtype: bytes
         """
-        return LZWDecode.decoder(data).decode()
+        return LZWDecode.Decoder(data).decode()
 
 
 class ASCII85Decode(object):
@@ -486,7 +487,7 @@ class CCITTFaxDecode(object):
         return tiff_header + data
 
 
-def decodeStreamData(stream):
+def decode_stream_data(stream):
     from .generic import NameObject
 
     filters = stream.get(SA.FILTER, ())
@@ -525,6 +526,14 @@ def decodeStreamData(stream):
                 # Unsupported filter
                 raise NotImplementedError("unsupported filter %s" % filterType)
     return data
+
+
+def decodeStreamData(stream):
+    warnings.warn(
+        DEPR_MSG.format("decodeStreamData", "decode_stream_data"),
+        PendingDeprecationWarning,
+    )
+    return decode_stream_data(stream)
 
 
 def _xobj_to_image(x_object_obj):
