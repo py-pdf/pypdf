@@ -158,7 +158,7 @@ class PdfWriter(object):
         except Exception as e:
             logger.error("set_need_appearances_writer() catch : ", repr(e))
 
-    def addPage(self, page):
+    def append_page(self, page):
         """
         Add a page to this PDF file.  The page is usually acquired from a
         :class:`PdfReader<PdfReader>` instance.
@@ -168,7 +168,14 @@ class PdfWriter(object):
         """
         self._addPage(page, list.append)
 
-    def insertPage(self, page, index=0):
+    def addPage(self, page):
+        warnings.warn(
+            "addPage will be removed in PyPDF2 2.0.0. " "Use append_page instead.",
+            PendingDeprecationWarning,
+        )
+        self.append_page(page)
+
+    def insert_page(self, page, index=0):
         """
         Insert a page in this PDF file. The page is usually acquired from a
         :class:`PdfReader<PdfReader>` instance.
@@ -179,7 +186,14 @@ class PdfWriter(object):
         """
         self._addPage(page, lambda l, p: l.insert(index, p))
 
-    def getPage(self, pageNumber):
+    def insertPage(self, page, index=0):
+        warnings.warn(
+            "insertPage will be removed in PyPDF2 2.0.0. " "Use insert_page instead.",
+            PendingDeprecationWarning,
+        )
+        self.insert_page(page, index)
+
+    def get_page(self, page_umber):
         """
         Retrieve a page by number from this PDF file.
 
@@ -190,15 +204,30 @@ class PdfWriter(object):
         """
         pages = self.get_object(self._pages)
         # XXX: crude hack
-        return pages[PA.KIDS][pageNumber].get_object()
+        return pages[PA.KIDS][page_umber].get_object()
 
-    def getNumPages(self):
+    def getPage(self, pageNumber):
+        warnings.warn(
+            "getPage will be removed in PyPDF2 2.0.0. " "Use get_page instead.",
+            PendingDeprecationWarning,
+        )
+        return self.get_page(pageNumber)
+
+    def get_num_pages(self):
         """
         :return: the number of pages.
         :rtype: int
         """
         pages = self.get_object(self._pages)
         return int(pages[NameObject("/Count")])
+
+    def getNumPages(self):
+        warnings.warn(
+            "getNumPages will be removed in PyPDF2 2.0.0. "
+            "Use get_num_pages instead.",
+            PendingDeprecationWarning,
+        )
+        return self.get_num_pages()
 
     def addBlankPage(self, width=None, height=None):
         """
@@ -215,7 +244,7 @@ class PdfWriter(object):
             and previous page does not exist.
         """
         page = PageObject.createBlankPage(self, width, height)
-        self.addPage(page)
+        self.append_page(page)
         return page
 
     def insertBlankPage(self, width=None, height=None, index=0):
@@ -233,12 +262,12 @@ class PdfWriter(object):
         :raises PageSizeNotDefinedError: if width and height are not defined
             and previous page does not exist.
         """
-        if width is None or height is None and (self.getNumPages() - 1) >= index:
-            oldpage = self.getPage(index)
+        if width is None or height is None and (self.get_num_pages() - 1) >= index:
+            oldpage = self.get_page(index)
             width = oldpage.mediaBox.getWidth()
             height = oldpage.mediaBox.getHeight()
         page = PageObject.createBlankPage(self, width, height)
-        self.insertPage(page, index)
+        self.insert_page(page, index)
         return page
 
     def addJS(self, javascript):
@@ -378,13 +407,13 @@ class PdfWriter(object):
         """
         # Get page count from writer and reader
         reader_num_pages = reader.getNumPages()
-        writer_num_pages = self.getNumPages()
+        writer_num_pages = self.get_num_pages()
 
         # Copy pages from reader to writer
         for rpagenum in range(0, reader_num_pages):
             reader_page = reader.getPage(rpagenum)
-            self.addPage(reader_page)
-            writer_page = self.getPage(writer_num_pages + rpagenum)
+            self.append_page(reader_page)
+            writer_page = self.get_page(writer_num_pages + rpagenum)
             # Trigger callback, pass writer page as parameter
             if callable(after_page_append):
                 after_page_append(writer_page)

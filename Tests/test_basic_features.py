@@ -19,29 +19,29 @@ def test_basic_features():
     assert reader.numPages == 1
 
     # add page 1 from input1 to output document, unchanged
-    writer.addPage(reader.getPage(0))
+    writer.append_page(reader.get_page(0))
 
     # add page 2 from input1, but rotated clockwise 90 degrees
-    writer.addPage(reader.getPage(0).rotateClockwise(90))
+    writer.append_page(reader.get_page(0).rotateClockwise(90))
 
     # add page 3 from input1, rotated the other way:
-    writer.addPage(reader.getPage(0).rotateCounterClockwise(90))
+    writer.append_page(reader.get_page(0).rotateCounterClockwise(90))
     # alt: output.addPage(input1.getPage(0).rotateClockwise(270))
 
     # add page 4 from input1, but first add a watermark from another PDF:
-    page4 = reader.getPage(0)
+    page4 = reader.get_page(0)
     watermark_pdf = pdf_path
     watermark = PdfReader(watermark_pdf)
-    page4.mergePage(watermark.getPage(0))
-    writer.addPage(page4)
+    page4.mergePage(watermark.get_page(0))
+    writer.append_page(page4)
 
     # add page 5 from input1, but crop it to half size:
-    page5 = reader.getPage(0)
+    page5 = reader.get_page(0)
     page5.mediaBox.upperRight = (
         page5.mediaBox.getUpperRight_x() / 2,
         page5.mediaBox.getUpperRight_y() / 2,
     )
-    writer.addPage(page5)
+    writer.append_page(page5)
 
     # add some Javascript to launch the print window on opening this PDF.
     # the password dialog may prevent the print dialog from being shown,

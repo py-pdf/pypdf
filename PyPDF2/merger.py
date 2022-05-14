@@ -189,7 +189,7 @@ class PdfMerger(object):
 
         # Gather all the pages that are going to be merged
         for i in range(*pages):
-            pg = pdfr.getPage(i)
+            pg = pdfr.get_page(i)
 
             id = self.id_count
             self.id_count += 1
@@ -247,7 +247,7 @@ class PdfMerger(object):
         # The commented out line below was replaced with the two lines below it
         # to allow PdfMerger to work with PyPdf 1.13
         for page in self.pages:
-            self.output.addPage(page.pagedata)
+            self.output.append_page(page.pagedata)
             page.out_pagedata = self.output.getReference(
                 self.output._pages.get_object()[PA.KIDS][-1].get_object()
             )

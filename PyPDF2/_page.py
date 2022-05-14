@@ -90,7 +90,7 @@ class PageObject(DictionaryObject):
     PageObject represents a single page within a PDF file.
 
     Typically this object will be created by accessing the
-    :meth:`getPage()<PyPDF2.PdfReader.getPage>` method of the
+    :meth:`get_page()<PyPDF2.PdfReader.get_page>` method of the
     :class:`PdfReader<PyPDF2.PdfReader>` class, but it is
     also possible to create an empty page with the
     :meth:`createBlankPage()<PageObject.createBlankPage>` static method.
@@ -131,7 +131,7 @@ class PageObject(DictionaryObject):
         page.__setitem__(NameObject(PG.RESOURCES), DictionaryObject())
         if width is None or height is None:
             if pdf is not None and pdf.getNumPages() > 0:
-                lastpage = pdf.getPage(pdf.getNumPages() - 1)
+                lastpage = pdf.get_page(pdf.getNumPages() - 1)
                 width = lastpage.mediaBox.getWidth()
                 height = lastpage.mediaBox.getHeight()
             else:

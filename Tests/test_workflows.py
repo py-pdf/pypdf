@@ -25,7 +25,7 @@ def test_PdfReaderFileLoad():
     with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
         # Load PDF file from file
         reader = PdfReader(inputfile)
-        page = reader.getPage(0)
+        page = reader.get_page(0)
 
         # Retrieve the text of the PDF
         with open(os.path.join(RESOURCE_ROOT, "crazyones.txt"), "rb") as pdftext_file:
@@ -57,7 +57,7 @@ def test_PdfReaderJpegImage():
         with open(os.path.join(RESOURCE_ROOT, "jpeg.txt"), "r") as pdftext_file:
             imagetext = pdftext_file.read()
 
-        page = reader.getPage(0)
+        page = reader.get_page(0)
         x_object = page[PG.RESOURCES]["/XObject"].get_object()
         data = x_object["/Im4"].getData()
 
@@ -91,14 +91,14 @@ def test_decrypt():
 def test_rotate(degree):
     with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
         reader = PdfReader(inputfile)
-        page = reader.getPage(0)
+        page = reader.get_page(0)
         page.rotateCounterClockwise(degree)
 
 
 def test_rotate_45():
     with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
         reader = PdfReader(inputfile)
-        page = reader.getPage(0)
+        page = reader.get_page(0)
         with pytest.raises(ValueError) as exc:
             page.rotateCounterClockwise(45)
         assert exc.value.args[0] == "Rotation angle must be a multiple of 90"

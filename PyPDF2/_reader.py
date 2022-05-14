@@ -410,7 +410,7 @@ class PdfReader(object):
         """
         return self._get_num_pages()
 
-    def getPage(self, pageNumber):
+    def get_page(self, page_number):
         """
         Retrieves a page by number from this PDF file.
 
@@ -423,7 +423,15 @@ class PdfReader(object):
         # assert not self.trailer.has_key(TK.ENCRYPT)
         if self.flattened_pages is None:
             self._flatten()
-        return self.flattened_pages[pageNumber]
+        return self.flattened_pages[page_number]
+
+    def getPage(self, pageNumber):
+        warnings.warn(
+            "getPage(pageNumber) will be removed in PyPDF2 2.0.0. "
+            "Use get_page(page_number) instead.",
+            PendingDeprecationWarning,
+        )
+        return self.get_page(pageNumber)
 
     @property
     def namedDestinations(self):
@@ -673,7 +681,7 @@ class PdfReader(object):
         ret = self._page_id2num.get(idnum, -1)
         return ret
 
-    def getPageNumber(self, page):
+    def get_page_number(self, page):
         """
         Retrieve page number of a given PageObject
 
@@ -685,6 +693,14 @@ class PdfReader(object):
         indirect_ref = page.indirectRef
         ret = self._get_page_number_by_indirect(indirect_ref)
         return ret
+
+    def getPageNumber(self, page):
+        warnings.warn(
+            "getPageNumber will be removed in PyPDF2 2.0.0. "
+            "Use get_page_number instead.",
+            PendingDeprecationWarning,
+        )
+        return self.get_page_number(page)
 
     def get_destination_page_number(self, destination):
         """
@@ -720,7 +736,7 @@ class PdfReader(object):
             else:
                 # create a link to first Page
                 return Destination(
-                    title, self.getPage(0).indirectRef, TextStringObject("/Fit")
+                    title, self.get_page(0).indirectRef, TextStringObject("/Fit")
                 )
 
     def _build_outline(self, node):
@@ -753,9 +769,9 @@ class PdfReader(object):
         """
         Read-only property that emulates a list based upon the
         :meth:`getNumPages()<PdfReader.getNumPages>` and
-        :meth:`getPage()<PdfReader.getPage>` methods.
+        :meth:`get_page()<PdfReader.get_page>` methods.
         """
-        return ConvertFunctionsToVirtualList(self._get_num_pages, self.getPage)
+        return ConvertFunctionsToVirtualList(self._get_num_pages, self.get_page)
 
     @property
     def page_layout(self):
@@ -815,9 +831,12 @@ class PdfReader(object):
 
     @property
     def pageMode(self):
-        """Read-only property accessing the
-        :meth:`getPageMode()<PdfReader.getPageMode>` method."""
-        return self.getPageMode()
+        warnings.warn(
+            "pageMode will be removed in PyPDF2 2.0.0. "
+            "Use the attribute 'page_mode' instead.",
+            PendingDeprecationWarning,
+        )
+        return self.page_mode
 
     def _flatten(self, pages=None, inherit=None, indirect_ref=None):
         inheritablePageAttributes = (

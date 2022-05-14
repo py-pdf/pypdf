@@ -119,7 +119,7 @@ def test_get_attachments(src):
 
     attachments = {}
     for i in range(reader.numPages):
-        page = reader.getPage(i)
+        page = reader.get_page(i)
         if PG.ANNOTS in page:
             for annotation in page[PG.ANNOTS]:
                 annotobj = annotation.get_object()
@@ -253,7 +253,7 @@ def test_issue297():
         reader = PdfReader(path, strict=True)
     assert "Broken xref table" in exc.value.args[0]
     reader = PdfReader(path, strict=False)
-    reader.getPage(0)
+    reader.get_page(0)
 
 
 def test_get_page_of_encrypted_file():
@@ -269,7 +269,7 @@ def test_get_page_of_encrypted_file():
     # Password is correct:)
     reader.decrypt("test")
 
-    reader.getPage(0)
+    reader.get_page(0)
 
 
 @pytest.mark.parametrize(
@@ -334,7 +334,7 @@ def test_get_page_number(src, page_nb):
     src = os.path.join(RESOURCE_ROOT, src)
     reader = PdfReader(src)
     page = reader.pages[page_nb]
-    assert reader.getPageNumber(page) == page_nb
+    assert reader.get_page_number(page) == page_nb
 
 
 @pytest.mark.parametrize(

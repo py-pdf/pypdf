@@ -29,7 +29,7 @@ def main():
     pagesPerSheet = 4
     virtualPages = (numPages + pagesPerSheet - 1) // pagesPerSheet * pagesPerSheet
 
-    firstPage = reader.getPage(0)
+    firstPage = reader.get_page(0)
     mb = firstPage.mediaBox
     pageWidth = 2 * mb.getWidth()
     pageHeight = mb.getHeight()
@@ -54,7 +54,7 @@ def main():
         if pageNumber >= numPages:
             return
         print("merging page", pageNumber, "with offset", xOffset)
-        page = reader.getPage(pageNumber)
+        page = reader.get_page(pageNumber)
         mergePage(dstPage, page, xOffset)
 
     for i in range(virtualPages // 2):

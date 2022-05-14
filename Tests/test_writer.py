@@ -18,7 +18,7 @@ def test_writer_clone():
     writer = PdfWriter()
 
     writer.cloneDocumentFromReader(reader)
-    assert writer.getNumPages() == 4
+    assert writer.get_num_pages() == 4
 
 
 def test_writer_operations():
@@ -39,8 +39,8 @@ def test_writer_operations():
     with pytest.raises(PageSizeNotDefinedError) as exc:
         writer.addBlankPage()
     assert exc.value.args == ()
-    writer.insertPage(page, 1)
-    writer.insertPage(reader_outline.pages[0], 0)
+    writer.insert_page(page, 1)
+    writer.insert_page(reader_outline.pages[0], 0)
     writer.addBookmarkDestination(page)
     writer.removeLinks()
     writer.addBlankPage()
@@ -85,7 +85,7 @@ def test_remove_images(input_path, ignoreByteStringObject):
     writer = PdfWriter()
 
     page = reader.pages[0]
-    writer.insertPage(page, 0)
+    writer.insert_page(page, 0)
     writer.removeImages(ignoreByteStringObject=ignoreByteStringObject)
 
     # finally, write "output" to PyPDF2-output.pdf
@@ -96,7 +96,7 @@ def test_remove_images(input_path, ignoreByteStringObject):
     with open(tmp_filename, "rb") as input_stream:
         reader = PdfReader(input_stream)
         if input_path == "side-by-side-subfig.pdf":
-            extracted_text = reader.getPage(0).extractText()
+            extracted_text = reader.get_page(0).extractText()
             assert "Lorem ipsum dolor sit amet" in extracted_text
 
     # Cleanup
@@ -119,7 +119,7 @@ def test_remove_text(input_path, ignoreByteStringObject):
     writer = PdfWriter()
 
     page = reader.pages[0]
-    writer.insertPage(page, 0)
+    writer.insert_page(page, 0)
     writer.removeText(ignoreByteStringObject=ignoreByteStringObject)
 
     # finally, write "output" to PyPDF2-output.pdf
@@ -138,7 +138,7 @@ def test_write_metadata():
     writer = PdfWriter()
 
     for page in reader.pages:
-        writer.addPage(page)
+        writer.append_page(page)
 
     metadata = reader.metadata
     writer.addMetadata(metadata)
@@ -165,10 +165,10 @@ def test_fill_form():
 
     page = reader.pages[0]
 
-    writer.addPage(page)
+    writer.append_page(page)
 
     writer.updatePageFormFieldValues(
-        writer.getPage(0), {"foo": "some filled in text"}, flags=1
+        writer.get_page(0), {"foo": "some filled in text"}, flags=1
     )
 
     # write "output" to PyPDF2-output.pdf
@@ -183,7 +183,7 @@ def test_encrypt():
 
     page = reader.pages[0]
 
-    writer.addPage(page)
+    writer.append_page(page)
     writer.encrypt(user_pwd="userpwd", owner_pwd="ownerpwd", use_128bit=False)
 
     # write "output" to PyPDF2-output.pdf
@@ -200,7 +200,7 @@ def test_add_bookmark():
     writer = PdfWriter()
 
     for page in reader.pages:
-        writer.addPage(page)
+        writer.append_page(page)
 
     bookmark = writer.addBookmark(
         "A bookmark", 1, None, (255, 0, 15), True, True, "/Fit", 200, 0, None
@@ -221,7 +221,7 @@ def test_add_named_destination():
     writer = PdfWriter()
 
     for page in reader.pages:
-        writer.addPage(page)
+        writer.append_page(page)
 
     from PyPDF2.pdf import NameObject
 
@@ -251,7 +251,7 @@ def test_add_uri():
     writer = PdfWriter()
 
     for page in reader.pages:
-        writer.addPage(page)
+        writer.append_page(page)
 
     from PyPDF2.pdf import RectangleObject
 
@@ -294,7 +294,7 @@ def test_add_link():
     writer = PdfWriter()
 
     for page in reader.pages:
-        writer.addPage(page)
+        writer.append_page(page)
 
     from PyPDF2.pdf import RectangleObject
 
@@ -356,6 +356,6 @@ def test_regression_issue670():
     reader = PdfReader(filepath, strict=False, overwriteWarnings=False)
     for _ in range(2):
         pdf_writer = PdfWriter()
-        pdf_writer.addPage(reader.getPage(0))
+        pdf_writer.append_page(reader.get_page(0))
         with open("dont_commit_issue670.pdf", "wb") as f_pdf:
             pdf_writer.write(f_pdf)
