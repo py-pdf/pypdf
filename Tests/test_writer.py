@@ -17,7 +17,7 @@ def test_writer_clone():
     reader = PdfReader(src)
     writer = PdfWriter()
 
-    writer.cloneDocumentFromReader(reader)
+    writer.clone_document_from_reader(reader)
     assert writer.get_num_pages() == 4
 
 
@@ -41,11 +41,11 @@ def test_writer_operations():
     assert exc.value.args == ()
     writer.insert_page(page, 1)
     writer.insert_page(reader_outline.pages[0], 0)
-    writer.addBookmarkDestination(page)
-    writer.removeLinks()
+    writer.add_bookmark_destination(page)
+    writer.remove_links()
     writer.add_blank_page()
-    writer.addURI(2, "https://example.com", RectangleObject([0, 0, 100, 100]))
-    writer.addLink(2, 1, RectangleObject([0, 0, 100, 100]))
+    writer.add_uri(2, "https://example.com", RectangleObject([0, 0, 100, 100]))
+    writer.add_link(2, 1, RectangleObject([0, 0, 100, 100]))
     assert writer._get_page_layout() is None
     writer._set_page_layout("SinglePage")
     assert writer._get_page_layout() == "SinglePage"
@@ -86,7 +86,7 @@ def test_remove_images(input_path, ignoreByteStringObject):
 
     page = reader.pages[0]
     writer.insert_page(page, 0)
-    writer.removeImages(ignoreByteStringObject=ignoreByteStringObject)
+    writer.remove_images(ignore_byte_string_object=ignoreByteStringObject)
 
     # finally, write "output" to PyPDF2-output.pdf
     tmp_filename = "dont_commit_writer_removed_image.pdf"
@@ -120,7 +120,7 @@ def test_remove_text(input_path, ignoreByteStringObject):
 
     page = reader.pages[0]
     writer.insert_page(page, 0)
-    writer.removeText(ignoreByteStringObject=ignoreByteStringObject)
+    writer.remove_text(ignore_byte_string_object=ignoreByteStringObject)
 
     # finally, write "output" to PyPDF2-output.pdf
     tmp_filename = "dont_commit_writer_removed_text.pdf"
@@ -167,7 +167,7 @@ def test_fill_form():
 
     writer.append_page(page)
 
-    writer.updatePageFormFieldValues(
+    writer.update_page_form_field_values(
         writer.get_page(0), {"foo": "some filled in text"}, flags=1
     )
 
@@ -202,10 +202,10 @@ def test_add_bookmark():
     for page in reader.pages:
         writer.append_page(page)
 
-    bookmark = writer.addBookmark(
+    bookmark = writer.add_bookmark(
         "A bookmark", 1, None, (255, 0, 15), True, True, "/Fit", 200, 0, None
     )
-    writer.addBookmark("Another", 2, bookmark, None, False, False, "/Fit", 0, 0, None)
+    writer.add_bookmark("Another", 2, bookmark, None, False, False, "/Fit", 0, 0, None)
 
     # write "output" to PyPDF2-output.pdf
     tmp_filename = "dont_commit_bookmark.pdf"
@@ -225,12 +225,12 @@ def test_add_named_destination():
 
     from PyPDF2.pdf import NameObject
 
-    writer.addNamedDestination(NameObject("A named dest"), 2)
-    writer.addNamedDestination(NameObject("A named dest2"), 2)
+    writer.add_named_destination(NameObject("A named dest"), 2)
+    writer.add_named_destination(NameObject("A named dest2"), 2)
 
     from PyPDF2.pdf import IndirectObject
 
-    assert writer.getNamedDestRoot() == [
+    assert writer.get_named_dest_root() == [
         "A named dest",
         IndirectObject(7, 0, writer),
         "A named dest2",
@@ -255,25 +255,25 @@ def test_add_uri():
 
     from PyPDF2.pdf import RectangleObject
 
-    writer.addURI(
+    writer.add_uri(
         1,
         "http://www.example.com",
         RectangleObject([0, 0, 100, 100]),
         border=[1, 2, 3, [4]],
     )
-    writer.addURI(
+    writer.add_uri(
         2,
         "https://pypdf2.readthedocs.io/en/latest/",
         RectangleObject([20, 30, 50, 80]),
         border=[1, 2, 3],
     )
-    writer.addURI(
+    writer.add_uri(
         3,
         "https://pypdf2.readthedocs.io/en/latest/user/adding-pdf-annotations.html",
         "[ 200 300 250 350 ]",
         border=[0, 0, 0],
     )
-    writer.addURI(
+    writer.add_uri(
         3,
         "https://pypdf2.readthedocs.io/en/latest/user/adding-pdf-annotations.html",
         [100, 200, 150, 250],
@@ -298,15 +298,15 @@ def test_add_link():
 
     from PyPDF2.pdf import RectangleObject
 
-    writer.addLink(
+    writer.add_link(
         1,
         2,
         RectangleObject([0, 0, 100, 100]),
         border=[1, 2, 3, [4]],
         fit="/Fit",
     )
-    writer.addLink(2, 3, RectangleObject([20, 30, 50, 80]), [1, 2, 3], "/FitH", None)
-    writer.addLink(
+    writer.add_link(2, 3, RectangleObject([20, 30, 50, 80]), [1, 2, 3], "/FitH", None)
+    writer.add_link(
         3,
         0,
         "[ 200 300 250 350 ]",
@@ -316,7 +316,7 @@ def test_add_link():
         0,
         2,
     )
-    writer.addLink(
+    writer.add_link(
         3,
         0,
         [100, 200, 150, 250],

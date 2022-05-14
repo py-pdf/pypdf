@@ -425,7 +425,7 @@ class PdfWriter(object):
         )
         return self.add_attachment(fname, fdata)
 
-    def appendPagesFromReader(self, reader, after_page_append=None):
+    def append_pages_from_reader(self, reader, after_page_append=None):
         """
         Copy pages from reader to writer. Includes an optional callback parameter
         which is invoked after pages are appended to the writer.
@@ -451,7 +451,14 @@ class PdfWriter(object):
             if callable(after_page_append):
                 after_page_append(writer_page)
 
-    def updatePageFormFieldValues(self, page, fields, flags=0):
+    def appendPagesFromReader(self, reader, after_page_append=None):
+        warnings.warn(
+            DEPR_MSG.format("appendPagesFromReader", "append_pages_from_reader"),
+            PendingDeprecationWarning,
+        )
+        self.append_pages_from_reader(reader, after_page_append)
+
+    def update_page_form_field_values(self, page, fields, flags=0):
         """
         Update the form field values for a given page from a fields dictionary.
         Copy field texts and values from fields to page.
@@ -484,7 +491,16 @@ class PdfWriter(object):
                         {NameObject("/V"): TextStringObject(fields[field])}
                     )
 
-    def cloneReaderDocumentRoot(self, reader):
+    def updatePageFormFieldValues(self, page, fields, flags=0):
+        warnings.warn(
+            DEPR_MSG.format(
+                "updatePageFormFieldValues", "update_page_form_field_values"
+            ),
+            PendingDeprecationWarning,
+        )
+        return self.update_page_form_field_values(page, fields, flags)
+
+    def clone_reader_document_root(self, reader):
         """
         Copy the reader document root to the writer.
 
@@ -493,7 +509,14 @@ class PdfWriter(object):
         """
         self._root_object = reader.trailer[TK.ROOT]
 
-    def cloneDocumentFromReader(self, reader, after_page_append=None):
+    def cloneReaderDocumentRoot(self, reader):
+        warnings.warn(
+            DEPR_MSG.format("cloneReaderDocumentRoot", "clone_reader_document_root"),
+            PendingDeprecationWarning,
+        )
+        self.clone_reader_document_root(reader)
+
+    def clone_document_from_reader(self, reader, after_page_append=None):
         """
         Create a copy (clone) of a document from a PDF file reader
 
@@ -506,8 +529,15 @@ class PdfWriter(object):
             :param writer_pageref (PDF page reference): Reference to the page just
                 appended to the document.
         """
-        self.cloneReaderDocumentRoot(reader)
-        self.appendPagesFromReader(reader, after_page_append)
+        self.clone_reader_document_root(reader)
+        self.append_pages_from_reader(reader, after_page_append)
+
+    def cloneDocumentFromReader(self, reader, after_page_append=None):
+        warnings.warn(
+            DEPR_MSG.format("cloneDocumentFromReader", "clone_document_from_reader"),
+            PendingDeprecationWarning,
+        )
+        self.clone_document_from_reader(reader, after_page_append)
 
     def encrypt(self, user_pwd, owner_pwd=None, use_128bit=True, permissions_flag=-1):
         """
@@ -677,10 +707,10 @@ class PdfWriter(object):
         )
         self.add_metadata(infos)
 
-    def _sweep_indirect_references(self, externMap, data):
+    def _sweep_indirect_references(self, extern_map, data):
         if isinstance(data, DictionaryObject):
             for key, value in list(data.items()):
-                value = self._sweep_indirect_references(externMap, value)
+                value = self._sweep_indirect_references(extern_map, value)
                 if isinstance(value, StreamObject):
                     # a dictionary value is a stream.  streams must be indirect
                     # objects, so we need to change this value.
@@ -689,7 +719,7 @@ class PdfWriter(object):
             return data
         elif isinstance(data, ArrayObject):
             for i in range(len(data)):
-                value = self._sweep_indirect_references(externMap, data[i])
+                value = self._sweep_indirect_references(extern_map, data[i])
                 if isinstance(value, StreamObject):
                     # an array value is a stream.  streams must be indirect
                     # objects, so we need to change this value
@@ -704,7 +734,7 @@ class PdfWriter(object):
                 else:
                     self.stack.append(data.idnum)
                     realdata = self.get_object(data)
-                    self._sweep_indirect_references(externMap, realdata)
+                    self._sweep_indirect_references(extern_map, realdata)
                     return data
             else:
                 if hasattr(data.pdf, "stream") and data.pdf.stream.closed:
@@ -712,7 +742,7 @@ class PdfWriter(object):
                         "I/O operation on closed file: {}".format(data.pdf.stream.name)
                     )
                 newobj = (
-                    externMap.get(data.pdf, {})
+                    extern_map.get(data.pdf, {})
                     .get(data.generation, {})
                     .get(data.idnum, None)
                 )
@@ -722,12 +752,12 @@ class PdfWriter(object):
                         self._objects.append(None)  # placeholder
                         idnum = len(self._objects)
                         newobj_ido = IndirectObject(idnum, 0, self)
-                        if data.pdf not in externMap:
-                            externMap[data.pdf] = {}
-                        if data.generation not in externMap[data.pdf]:
-                            externMap[data.pdf][data.generation] = {}
-                        externMap[data.pdf][data.generation][data.idnum] = newobj_ido
-                        newobj = self._sweep_indirect_references(externMap, newobj)
+                        if data.pdf not in extern_map:
+                            extern_map[data.pdf] = {}
+                        if data.generation not in extern_map[data.pdf]:
+                            extern_map[data.pdf][data.generation] = {}
+                        extern_map[data.pdf][data.generation][data.idnum] = newobj_ido
+                        newobj = self._sweep_indirect_references(extern_map, newobj)
                         self._objects[idnum - 1] = newobj
                         return newobj_ido
                     except (ValueError, RecursionError):
@@ -742,13 +772,19 @@ class PdfWriter(object):
         else:
             return data
 
-    def getReference(self, obj):
+    def get_reference(self, obj):
         idnum = self._objects.index(obj) + 1
         ref = IndirectObject(idnum, 0, self)
         assert ref.get_object() == obj
         return ref
 
-    def getOutlineRoot(self):
+    def getReference(self, obj):
+        warnings.warn(
+            DEPR_MSG.format("getReference", "get_reference"), PendingDeprecationWarning
+        )
+        return self.get_reference(obj)
+
+    def get_outline_root(self):
         if CO.OUTLINES in self._root_object:
             outline = self._root_object[CO.OUTLINES]
             idnum = self._objects.index(outline) + 1
@@ -762,7 +798,14 @@ class PdfWriter(object):
 
         return outline
 
-    def getNamedDestRoot(self):
+    def getOutlineRoot(self):
+        warnings.warn(
+            DEPR_MSG.format("getOutlineRoot", "get_outline_root"),
+            PendingDeprecationWarning,
+        )
+        return self.get_outline_root()
+
+    def get_named_dest_root(self):
         if CA.NAMES in self._root_object and isinstance(
             self._root_object[CA.NAMES], DictionaryObject
         ):
@@ -799,10 +842,17 @@ class PdfWriter(object):
 
         return nd
 
-    def addBookmarkDestination(self, dest, parent=None):
+    def getNamedDestRoot(self):
+        warnings.warn(
+            DEPR_MSG.format("getNamedDestRoot", "get_named_dest_root"),
+            PendingDeprecationWarning,
+        )
+        return self.get_named_dest_root()
+
+    def add_bookmark_destination(self, dest, parent=None):
         dest_ref = self._add_object(dest)
 
-        outline_ref = self.getOutlineRoot()
+        outline_ref = self.get_outline_root()
 
         if parent is None:
             parent = outline_ref
@@ -812,7 +862,13 @@ class PdfWriter(object):
 
         return dest_ref
 
-    def addBookmarkDict(self, bookmark, parent=None):
+    def addBookmarkDestination(self, dest, parent=None):
+        warnings.warn(
+            DEPR_MSG.format("addBookmarkDestination", "add_bookmark_destination"),
+        )
+        return self.add_bookmark_destination(dest, parent)
+
+    def add_bookmark_dict(self, bookmark, parent=None):
         bookmark_obj = TreeObject()
         for k, v in list(bookmark.items()):
             bookmark_obj[NameObject(str(k))] = v
@@ -827,7 +883,7 @@ class PdfWriter(object):
 
         bookmark_ref = self._add_object(bookmark_obj)
 
-        outline_ref = self.getOutlineRoot()
+        outline_ref = self.get_outline_root()
 
         if parent is None:
             parent = outline_ref
@@ -837,7 +893,13 @@ class PdfWriter(object):
 
         return bookmark_ref
 
-    def addBookmark(
+    def addBookmarkDict(self, bookmark, parent=None):
+        warnings.warn(
+            DEPR_MSG.format("addBookmarkDict", "add_bookmark_dict"),
+        )
+        return self.add_bookmark_dict(bookmark, parent)
+
+    def add_bookmark(
         self,
         title,
         pagenum,
@@ -879,7 +941,7 @@ class PdfWriter(object):
         )
         action_ref = self._add_object(action)
 
-        outline_ref = self.getOutlineRoot()
+        outline_ref = self.get_outline_root()
 
         if parent is None:
             parent = outline_ref
@@ -913,15 +975,32 @@ class PdfWriter(object):
 
         return bookmark_ref
 
-    def addNamedDestinationObject(self, dest):
+    def addBookmark(
+        self,
+        title,
+        pagenum,
+        parent=None,
+        color=None,
+        bold=False,
+        italic=False,
+        fit="/Fit",
+        *args
+    ):
+        return self.add_bookmark(
+            title, pagenum, parent, color, bold, italic, fit, *args
+        )
+
+    def add_named_destination_object(self, dest):
         dest_ref = self._add_object(dest)
 
-        nd = self.getNamedDestRoot()
+        nd = self.get_named_dest_root()
         nd.extend([dest["/Title"], dest_ref])
-
         return dest_ref
 
-    def addNamedDestination(self, title, pagenum):
+    def addNamedDestinationObject(self, dest):
+        return self.add_named_destination_object(dest)
+
+    def add_named_destination(self, title, pagenum):
         page_ref = self.get_object(self._pages)[PA.KIDS][pagenum]
         dest = DictionaryObject()
         dest.update(
@@ -934,13 +1013,17 @@ class PdfWriter(object):
         )
 
         dest_ref = self._add_object(dest)
-        nd = self.getNamedDestRoot()
-
+        nd = self.get_named_dest_root()
         nd.extend([title, dest_ref])
-
         return dest_ref
 
-    def removeLinks(self):
+    def addNamedDestination(self, title, pagenum):
+        warnings.warn(
+            DEPR_MSG.format("addNamedDestination", "add_named_destination"),
+        )
+        return self.add_named_destination(title, pagenum)
+
+    def remove_links(self):
         """Remove links and annotations from this output."""
         pages = self.get_object(self._pages)[PA.KIDS]
         for page in pages:
@@ -948,7 +1031,13 @@ class PdfWriter(object):
             if PG.ANNOTS in page_ref:
                 del page_ref[PG.ANNOTS]
 
-    def removeImages(self, ignoreByteStringObject=False):
+    def removeLinks(self):
+        warnings.warn(
+            DEPR_MSG.format("removeLinks", "remove_links"),
+        )
+        return self.remove_links()
+
+    def remove_images(self, ignore_byte_string_object=False):
         """
         Remove images from this output.
 
@@ -995,18 +1084,18 @@ class PdfWriter(object):
             for operands, operator in content.operations:
                 if operator in [b_("Tj"), b_("'")]:
                     text = operands[0]
-                    if ignoreByteStringObject:
+                    if ignore_byte_string_object:
                         if not isinstance(text, TextStringObject):
                             operands[0] = TextStringObject()
                 elif operator == b_('"'):
                     text = operands[2]
-                    if ignoreByteStringObject and not isinstance(
+                    if ignore_byte_string_object and not isinstance(
                         text, TextStringObject
                     ):
                         operands[2] = TextStringObject()
                 elif operator == b_("TJ"):
                     for i in range(len(operands[0])):
-                        if ignoreByteStringObject and not isinstance(
+                        if ignore_byte_string_object and not isinstance(
                             operands[0][i], TextStringObject
                         ):
                             operands[0][i] = TextStringObject()
@@ -1024,7 +1113,16 @@ class PdfWriter(object):
             content.operations = _operations
             page_ref.__setitem__(NameObject("/Contents"), content)
 
-    def removeText(self, ignoreByteStringObject=False):
+    def removeImages(self, ignoreByteStringObject=False):
+        warnings.warn(
+            DEPR_MSG.format(
+                "removeImages(ignoreByteStringObject=False)",
+                "remove_images(ignore_byte_string_object=False)",
+            ),
+        )
+        return self.remove_images(ignoreByteStringObject)
+
+    def remove_text(self, ignore_byte_string_object=False):
         """
         Remove text from this output.
 
@@ -1041,7 +1139,7 @@ class PdfWriter(object):
             for operands, operator in content.operations:
                 if operator in [b_("Tj"), b_("'")]:
                     text = operands[0]
-                    if not ignoreByteStringObject:
+                    if not ignore_byte_string_object:
                         if isinstance(text, TextStringObject):
                             operands[0] = TextStringObject()
                     else:
@@ -1049,7 +1147,7 @@ class PdfWriter(object):
                             operands[0] = TextStringObject()
                 elif operator == b_('"'):
                     text = operands[2]
-                    if not ignoreByteStringObject:
+                    if not ignore_byte_string_object:
                         if isinstance(text, TextStringObject):
                             operands[2] = TextStringObject()
                     else:
@@ -1057,7 +1155,7 @@ class PdfWriter(object):
                             operands[2] = TextStringObject()
                 elif operator == b_("TJ"):
                     for i in range(len(operands[0])):
-                        if not ignoreByteStringObject:
+                        if not ignore_byte_string_object:
                             if isinstance(operands[0][i], TextStringObject):
                                 operands[0][i] = TextStringObject()
                         else:
@@ -1068,7 +1166,16 @@ class PdfWriter(object):
 
             page_ref.__setitem__(NameObject("/Contents"), content)
 
-    def addURI(self, pagenum, uri, rect, border=None):
+    def removeText(self, ignoreByteStringObject=False):
+        warnings.warn(
+            DEPR_MSG.format(
+                "removeText(ignoreByteStringObject=False)",
+                "remove_text(ignore_byte_string_object=False)",
+            ),
+        )
+        return self.remove_text(ignoreByteStringObject)
+
+    def add_uri(self, pagenum, uri, rect, border=None):
         """
         Add an URI from a rectangular area to the specified page.
         This uses the basic structure of AddLink
@@ -1130,7 +1237,13 @@ class PdfWriter(object):
         else:
             page_ref[NameObject(PG.ANNOTS)] = ArrayObject([lnk_ref])
 
-    def addLink(self, pagenum, pagedest, rect, border=None, fit="/Fit", *args):
+    def saddURI(self, pagenum, uri, rect, border=None):
+        warnings.warn(
+            DEPR_MSG.format("addURI", "add_uri"),
+        )
+        return self.add_uri(pagenum, uri, rect, border)
+
+    def add_link(self, pagenum, pagedest, rect, border=None, fit="/Fit", *args):
         """
         Add an internal link from a rectangular area to the specified page.
 
@@ -1215,6 +1328,14 @@ class PdfWriter(object):
             page_ref[PG.ANNOTS].append(lnk_ref)
         else:
             page_ref[NameObject(PG.ANNOTS)] = ArrayObject([lnk_ref])
+
+    def addLink(
+        self, pagenum, pagedest, rect, border=None, fit="/Fit", *args
+    ):  # todo: args?
+        warnings.warn(
+            DEPR_MSG.format("addLink", "add_link"),
+        )
+        return self.add_link(pagenum, pagedest, rect, border, fit, *args)
 
     _valid_layouts = [
         "/NoLayout",

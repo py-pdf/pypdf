@@ -248,7 +248,7 @@ class PdfMerger(object):
         # to allow PdfMerger to work with PyPdf 1.13
         for page in self.pages:
             self.output.append_page(page.pagedata)
-            page.out_pagedata = self.output.getReference(
+            page.out_pagedata = self.output.get_reference(
                 self.output._pages.get_object()[PA.KIDS][-1].get_object()
             )
             # idnum = self.output._objects.index(self.output._pages.get_object()[PA.KIDS][-1].get_object()) + 1
@@ -389,7 +389,7 @@ class PdfMerger(object):
                         break
 
             if pageno is not None:
-                self.output.addNamedDestinationObject(named_dest)
+                self.output.add_named_destination_object(named_dest)
 
     def _write_bookmarks(self, bookmarks=None, parent=None):
         if bookmarks is None:
@@ -409,7 +409,7 @@ class PdfMerger(object):
                         break
             if page_no is not None:
                 del bookmark["/Page"], bookmark["/Type"]
-                last_added = self.output.addBookmarkDict(bookmark, parent)
+                last_added = self.output.add_bookmark_dict(bookmark, parent)
 
     def _write_bookmark_on_page(self, bookmark, page):
         # b[NameObject('/Page')] = p.out_pagedata
@@ -573,7 +573,7 @@ class PdfMerger(object):
         )
         action_ref = self.output._add_object(action)
 
-        outline_ref = self.output.getOutlineRoot()
+        outline_ref = self.output.get_outline_root()
 
         if parent is None:
             parent = outline_ref

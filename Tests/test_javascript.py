@@ -14,7 +14,7 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
 def pdf_file_writer():
     reader = PdfReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
     writer = PdfWriter()
-    writer.appendPagesFromReader(reader)
+    writer.append_pages_from_reader(reader)
     yield writer
 
 

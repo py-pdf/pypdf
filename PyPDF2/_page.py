@@ -640,7 +640,7 @@ class PageObject(DictionaryObject):
             expand,
         )
 
-    def addTransformation(self, ctm):
+    def add_transformation(self, ctm):
         """
         Apply a transformation matrix to the page.
 
@@ -655,6 +655,13 @@ class PageObject(DictionaryObject):
             new_content = PageObject._push_pop_gs(new_content, self.pdf)
             self[NameObject(PG.CONTENTS)] = new_content
 
+    def addTransformation(self, ctm):
+        warnings.warn(
+            DEPR_MSG.format("addTransformation", "add_transformation"),
+            PendingDeprecationWarning,
+        )
+        self.add_transformation(ctm)
+
     def scale(self, sx, sy):
         """
         Scale a page by the given factors by appling a transformation
@@ -663,7 +670,7 @@ class PageObject(DictionaryObject):
         :param float sx: The scaling factor on horizontal axis.
         :param float sy: The scaling factor on vertical axis.
         """
-        self.addTransformation([sx, 0, 0, sy, 0, 0])
+        self.add_transformation([sx, 0, 0, sy, 0, 0])
         self.mediaBox = RectangleObject(
             [
                 float(self.mediaBox.getLowerLeft_x()) * sx,

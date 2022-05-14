@@ -53,10 +53,27 @@ PdfWriter class:
 
   - addMetadata ➔ add_metadata
   - addPage ➔ append_page : TODO - is this a good idea?
-  - addBlankPage ➔ add_blank_page - is the blank page necessary?
+  - addBlankPage ➔ add_blank_page
   - addAttachment(fname, fdata) ➔ add_attachment(filename, data)
   - insertPage ➔ insert_page
-  - insertBlankPage ➔ insert_blank_page : TODO is the Blank page necessary?
+  - insertBlankPage ➔ insert_blank_page
+  - appendPagesFromReader ➔ append_pages_from_reader
+  - updatePageFormFieldValues ➔ update_page_form_field_values
+  - cloneReaderDocumentRoot ➔ clone_reader_document_root
+  - cloneDocumentFromReader ➔ clone_document_from_reader
+  - getReference ➔ get_reference
+  - getOutlineRoot ➔ get_outline_root
+  - getNamedDestRoot ➔ get_named_dest_root
+  - addBookmarkDestination ➔ add_bookmark_destination
+  - addBookmarkDict ➔ add_bookmark_dict
+  - addBookmark ➔ add_bookmark
+  - addNamedDestinationObject ➔ add_named_destination_object
+  - addNamedDestination ➔ add_named_destination
+  - removeLinks ➔ remove_links
+  - removeImages(ignoreByteStringObject) ➔ remove_images(ignore_byte_string_object)
+  - removeText(ignoreByteStringObject) ➔ remove_text(ignore_byte_string_object)
+  - addURI ➔ add_uri
+  - addLink ➔ add_link
   - getPage(pageNumber) ➔ get_page(page_number)
   - getPageLayout / setPageLayout / pageLayout ➔ page_layout attribute
   - getPageMode / setPageMode / pageMode ➔ page_mode attribute
