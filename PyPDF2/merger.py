@@ -189,7 +189,7 @@ class PdfMerger(object):
 
         # Gather all the pages that are going to be merged
         for i in range(*pages):
-            pg = pdfr.get_page(i)
+            pg = pdfr._get_page(i)
 
             id = self.id_count
             self.id_count += 1

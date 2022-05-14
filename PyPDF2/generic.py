@@ -39,7 +39,6 @@ import logging
 import re
 import sys
 import warnings
-from distutils.log import warn
 from sys import version_info
 
 from PyPDF2.constants import FilterTypes as FT
@@ -134,7 +133,7 @@ class PdfObject(object):
 
     def getObject(self):
         warnings.warn(
-            "getObject will be removed in PyPDF2 2.0.0. " "Use get_object instead.",
+            "getObject will be removed in PyPDF2 2.0.0. Use get_object instead.",
             PendingDeprecationWarning,
         )
         return self.get_object()

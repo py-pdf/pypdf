@@ -96,7 +96,7 @@ def test_remove_images(input_path, ignoreByteStringObject):
     with open(tmp_filename, "rb") as input_stream:
         reader = PdfReader(input_stream)
         if input_path == "side-by-side-subfig.pdf":
-            extracted_text = reader.get_page(0).extractText()
+            extracted_text = reader._get_page(0).extractText()
             assert "Lorem ipsum dolor sit amet" in extracted_text
 
     # Cleanup
@@ -356,6 +356,6 @@ def test_regression_issue670():
     reader = PdfReader(filepath, strict=False, overwriteWarnings=False)
     for _ in range(2):
         pdf_writer = PdfWriter()
-        pdf_writer.append_page(reader.get_page(0))
+        pdf_writer.append_page(reader._get_page(0))
         with open("dont_commit_issue670.pdf", "wb") as f_pdf:
             pdf_writer.write(f_pdf)

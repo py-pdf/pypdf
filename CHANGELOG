@@ -18,10 +18,13 @@ PyPDF2.generic
     This method should typically not be used; please let me know if you need it.
 
 PdfReader class:
+  - `reader.getPage(pageNumber)` ➔ `reader.pages[page_number]`
+  - `reader.getNumPages()` / `reader.numPages` ➔ `len(reader.pages)`
   - flattenedPages attribute ➔ flattened_pages
   - resolvedObjects attribute ➔ resolved_objects
   - xrefIndex attribute ➔ xref_index
   - getNamedDestinations ➔ get_named_destinations
+  - namedDestinations attribute ➔ named_destinations
   - getPageLayout / pageLayout ➔ page_layout attribute
   - getPageMode / pageMode ➔ page_mode attribute
   - getIsEncrypted / isEncrypted ➔ is_encrypted attribute
@@ -31,7 +34,6 @@ PdfReader class:
   - cacheIndirectObject ➔ cache_indirect_object (TODO: public vs private?)
   - getDestinationPageNumber ➔ get_destination_page_number
   - readNextEndLine ➔ read_next_end_line
-  - getPage(pageNumber) ➔ get_page(page_number)
   - _zeroXref ➔ _zero_xref
   - _authenticateUserPassword ➔ _authenticate_user_password
   - _pageId2Num attribute ➔ _page_id2num
@@ -44,6 +46,8 @@ PdfReader class:
   - _buildField ➔ _build_field
   - _checkKids ➔ _check_kids
   - _writeField ➔ _write_field
+  - _write_field(..., fieldAttributes) ➔ _write_field(..., field_attributes)
+  - _read_xref_subsections(..., getEntry, ...) ➔ _read_xref_subsections(..., get_entry, ...)
 
 PdfWriter class:
 

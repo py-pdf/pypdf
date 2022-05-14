@@ -7,16 +7,16 @@ from PyPDF2 import PdfReader
 
 reader = PdfReader("example.pdf")
 
-info = reader.getDocumentInfo()
+meta = reader.metadata
 
-print(reader.numPages)
+print(len(reader.pages))
 
 # All of the following could be None!
-print(info.author)
-print(info.creator)
-print(info.producer)
-print(info.subject)
-print(info.title)
+print(meta.author)
+print(meta.creator)
+print(meta.producer)
+print(meta.subject)
+print(meta.title)
 ```
 
 ## Writing metadata
@@ -28,8 +28,7 @@ reader = PdfReader("example.pdf")
 writer = PdfWriter()
 
 # Add all pages to the writer
-for i in range(reader.numPages):
-    page = reader.pages[i]
+for page in reader.pages:
     writer.addPage(page)
 
 # Add the metadata

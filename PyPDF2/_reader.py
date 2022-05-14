@@ -289,7 +289,7 @@ class PdfReader(object):
     @property
     def xrefIndex(self):
         warnings.warn(
-            "xrefIndex will be removed in PyPDF2 2.0.0. " "Use xref_index instead",
+            "xrefIndex will be removed in PyPDF2 2.0.0. Use xref_index instead",
             PendingDeprecationWarning,
         )
         return self.xref_index
@@ -415,7 +415,7 @@ class PdfReader(object):
         )
         return self._get_num_pages()
 
-    def get_page(self, page_number):
+    def _get_page(self, page_number):
         """
         Retrieves a page by number from this PDF file.
 
@@ -433,23 +433,31 @@ class PdfReader(object):
     def getPage(self, pageNumber):
         warnings.warn(
             "getPage(pageNumber) will be removed in PyPDF2 2.0.0. "
-            "Use get_page(page_number) instead.",
+            "Use reader.pages[pageNumber] instead.",
             PendingDeprecationWarning,
         )
-        return self.get_page(pageNumber)
+        return self._get_page(pageNumber)
 
     @property
     def namedDestinations(self):
+        warnings.warn(
+            "namedDestinations will be removed in PyPDF2 2.0.0. "
+            "Use `named_destinations` instead.",
+        )
+        return self.named_destinations
+
+    @property
+    def named_destinations(self):
         """
         Read-only property that accesses the
-        :meth:`getNamedDestinations()<PdfReader.getNamedDestinations>` function.
+        :meth:`get_named_destinations()<PdfReader.get_named_destinations>` function.
         """
         return self.get_named_destinations()
 
     # A select group of relevant field attributes. For the complete list,
     # see section 8.6.2 of the PDF 1.7 reference.
 
-    def getFields(self, tree=None, retval=None, fileobj=None):
+    def get_fields(self, tree=None, retval=None, fileobj=None):
         """
         Extracts field data if this PDF contains interactive form fields.
         The *tree* and *retval* parameters are for recursive use.
@@ -497,6 +505,14 @@ class PdfReader(object):
 
         return retval
 
+    def getFields(self, tree=None, retval=None, fileobj=None):
+        warnings.warn(
+            "The getFields method of PdfFileReader will be removed in PyPDF2 2.0.0. "
+            "Use the get_fields() method instead.",
+            PendingDeprecationWarning,
+        )
+        return self.get_fields(tree, retval, fileobj)
+
     def _build_field(self, field, retval, fileobj, fieldAttributes):
         self._check_kids(field, retval, fileobj)
         try:
@@ -516,12 +532,12 @@ class PdfReader(object):
         if PA.KIDS in tree:
             # recurse down the tree
             for kid in tree[PA.KIDS]:
-                self.getFields(kid.get_object(), retval, fileobj)
+                self.get_fields(kid.get_object(), retval, fileobj)
 
-    def _write_field(self, fileobj, field, fieldAttributes):
+    def _write_field(self, fileobj, field, field_attributes):
         order = ["/TM", "/T", "/FT", PA.PARENT, "/TU", "/Ff", "/V", "/DV"]
         for attr in order:
-            attr_name = fieldAttributes[attr]
+            attr_name = field_attributes[attr]
             try:
                 if attr == "/FT":
                     # Make the field type value more clear
@@ -546,10 +562,10 @@ class PdfReader(object):
                 # Field attribute is N/A or unknown, so don't write anything
                 pass
 
-    def getFormTextFields(self):
+    def get_form_text_fields(self):
         """Retrieves form fields from the document with textual data (inputs, dropdowns)"""
         # Retrieve document form fields
-        formfields = self.getFields()
+        formfields = self.get_fields()
         if formfields is None:
             return {}
         return {
@@ -557,6 +573,14 @@ class PdfReader(object):
             for field in formfields
             if formfields[field].get("/FT") == "/Tx"
         }
+
+    def getFormTextFields(self):
+        warnings.warn(
+            "The getFormTextFields method of PdfFileReader will be removed in PyPDF2 2.0.0. "
+            "Use the get_form_text_fields() method instead.",
+            PendingDeprecationWarning,
+        )
+        return self.get_form_text_fields()
 
     def get_named_destinations(self, tree=None, retval=None):
         """
@@ -663,7 +687,7 @@ class PdfReader(object):
 
     def getOutlines(self, node=None, outlines=None):
         warnings.warn(
-            "getOutlines will be removed in PyPDF2 2.0.0. " "Use get_outlines instead.",
+            "getOutlines will be removed in PyPDF2 2.0.0. Use get_outlines instead.",
             PendingDeprecationWarning,
         )
         return self.get_outlines(node, outlines)
@@ -741,7 +765,7 @@ class PdfReader(object):
             else:
                 # create a link to first Page
                 return Destination(
-                    title, self.get_page(0).indirectRef, TextStringObject("/Fit")
+                    title, self._get_page(0).indirectRef, TextStringObject("/Fit")
                 )
 
     def _build_outline(self, node):
@@ -776,7 +800,7 @@ class PdfReader(object):
         :meth:`getNumPages()<PdfReader.getNumPages>` and
         :meth:`get_page()<PdfReader.get_page>` methods.
         """
-        return ConvertFunctionsToVirtualList(self._get_num_pages, self.get_page)
+        return ConvertFunctionsToVirtualList(self._get_num_pages, self._get_page)
 
     @property
     def page_layout(self):
@@ -1392,7 +1416,7 @@ class PdfReader(object):
             if key not in self.trailer:
                 self.trailer[key] = value
 
-    def _read_xref_subsections(self, idx_pairs, getEntry, used_before):
+    def _read_xref_subsections(self, idx_pairs, get_entry, used_before):
         last_end = 0
         for start, size in self._pairs(idx_pairs):
             # The subsections must increase
@@ -1400,24 +1424,24 @@ class PdfReader(object):
             last_end = start + size
             for num in range(start, start + size):
                 # The first entry is the type
-                xref_type = getEntry(0)
+                xref_type = get_entry(0)
                 # The rest of the elements depend on the xref_type
                 if xref_type == 0:
                     # linked list of free objects
-                    next_free_object = getEntry(1)  # noqa: F841
-                    next_generation = getEntry(2)  # noqa: F841
+                    next_free_object = get_entry(1)  # noqa: F841
+                    next_generation = get_entry(2)  # noqa: F841
                 elif xref_type == 1:
                     # objects that are in use but are not compressed
-                    byte_offset = getEntry(1)
-                    generation = getEntry(2)
+                    byte_offset = get_entry(1)
+                    generation = get_entry(2)
                     if generation not in self.xref:
                         self.xref[generation] = {}
                     if not used_before(num, generation):
                         self.xref[generation][num] = byte_offset
                 elif xref_type == 2:
                     # compressed objects
-                    objstr_num = getEntry(1)
-                    obstr_idx = getEntry(2)
+                    objstr_num = get_entry(1)
+                    obstr_idx = get_entry(2)
                     generation = 0  # PDF spec table 18, generation is 0
                     if not used_before(num, generation):
                         self.xref_objStm[num] = (objstr_num, obstr_idx)
@@ -1467,6 +1491,11 @@ class PdfReader(object):
         return b"".join(line_parts)
 
     def readNextEndLine(self, stream, limit_offset=0):
+        warnings.warn(
+            "readNextEndLine will be removed in PyPDF2 2.0.0. "
+            "Use read_next_end_line instead.",
+            PendingDeprecationWarning,
+        )
         return self.read_next_end_line(stream, limit_offset)
 
     def decrypt(self, password):

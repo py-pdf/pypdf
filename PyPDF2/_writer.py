@@ -124,7 +124,7 @@ class PdfWriter(object):
 
     def getObject(self, ido):
         warnings.warn(
-            "getObject will be removed in PyPDF2 2.0.0. " "Use get_object instead.",
+            "getObject will be removed in PyPDF2 2.0.0. Use get_object instead.",
             PendingDeprecationWarning,
         )
         return self.get_object(ido)
@@ -170,7 +170,7 @@ class PdfWriter(object):
 
     def addPage(self, page):
         warnings.warn(
-            "addPage will be removed in PyPDF2 2.0.0. " "Use append_page instead.",
+            "addPage will be removed in PyPDF2 2.0.0. Use append_page instead.",
             PendingDeprecationWarning,
         )
         self.append_page(page)
@@ -188,7 +188,7 @@ class PdfWriter(object):
 
     def insertPage(self, page, index=0):
         warnings.warn(
-            "insertPage will be removed in PyPDF2 2.0.0. " "Use insert_page instead.",
+            "insertPage will be removed in PyPDF2 2.0.0. Use insert_page instead.",
             PendingDeprecationWarning,
         )
         self.insert_page(page, index)
@@ -208,7 +208,7 @@ class PdfWriter(object):
 
     def getPage(self, pageNumber):
         warnings.warn(
-            "getPage will be removed in PyPDF2 2.0.0. " "Use get_page instead.",
+            "getPage will be removed in PyPDF2 2.0.0. Use get_page instead.",
             PendingDeprecationWarning,
         )
         return self.get_page(pageNumber)

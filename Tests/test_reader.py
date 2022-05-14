@@ -119,7 +119,7 @@ def test_get_attachments(src):
 
     attachments = {}
     for i in range(reader.numPages):
-        page = reader.get_page(i)
+        page = reader._get_page(i)
         if PG.ANNOTS in page:
             for annotation in page[PG.ANNOTS]:
                 annotobj = annotation.get_object()
@@ -253,7 +253,7 @@ def test_issue297():
         reader = PdfReader(path, strict=True)
     assert "Broken xref table" in exc.value.args[0]
     reader = PdfReader(path, strict=False)
-    reader.get_page(0)
+    reader._get_page(0)
 
 
 def test_get_page_of_encrypted_file():
@@ -269,7 +269,7 @@ def test_get_page_of_encrypted_file():
     # Password is correct:)
     reader.decrypt("test")
 
-    reader.get_page(0)
+    reader._get_page(0)
 
 
 @pytest.mark.parametrize(
@@ -301,10 +301,10 @@ def test_get_form(src, expected, expected_get_fields):
     """Check if we can read out form data."""
     src = os.path.join(RESOURCE_ROOT, src)
     reader = PdfReader(src)
-    fields = reader.getFormTextFields()
+    fields = reader.get_form_text_fields()
     assert fields == expected
 
-    fields = reader.getFields()
+    fields = reader.get_fields()
     assert fields == expected_get_fields
     if fields:
         for field in fields.values():

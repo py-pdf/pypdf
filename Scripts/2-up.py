@@ -19,8 +19,8 @@ def main():
     reader = PdfReader(sys.argv[1])
     writer = PdfWriter()
     for iter in range(0, reader.numPages - 1, 2):
-        lhs = reader.get_page(iter)
-        rhs = reader.get_page(iter + 1)
+        lhs = reader._get_page(iter)
+        rhs = reader._get_page(iter + 1)
         lhs.mergeTranslatedPage(rhs, lhs.mediaBox.getUpperRight_x(), 0, True)
         writer.append_page(lhs)
         print(str(iter) + " "),
