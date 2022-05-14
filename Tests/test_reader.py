@@ -102,9 +102,9 @@ def test_get_annotations(src):
     for page in reader.pages:
         if PG.ANNOTS in page:
             for annot in page[PG.ANNOTS]:
-                subtype = annot.getObject()[IA.SUBTYPE]
+                subtype = annot.get_object()[IA.SUBTYPE]
                 if subtype == "/Text":
-                    annot.getObject()[PG.CONTENTS]
+                    annot.get_object()[PG.CONTENTS]
 
 
 @pytest.mark.parametrize(
@@ -122,7 +122,7 @@ def test_get_attachments(src):
         page = reader.getPage(i)
         if PG.ANNOTS in page:
             for annotation in page[PG.ANNOTS]:
-                annotobj = annotation.getObject()
+                annotobj = annotation.get_object()
                 if annotobj[IA.SUBTYPE] == "/FileAttachment":
                     fileobj = annotobj["/FS"]
                     attachments[fileobj["/F"]] = fileobj["/EF"]["/F"].getData()
@@ -166,7 +166,7 @@ def test_get_images(src, nb_images):
     images_extracted = []
 
     if RES.XOBJECT in page[PG.RESOURCES]:
-        xObject = page[PG.RESOURCES][RES.XOBJECT].getObject()
+        xObject = page[PG.RESOURCES][RES.XOBJECT].get_object()
 
         for obj in xObject:
             if xObject[obj][IA.SUBTYPE] == "/Image":
@@ -491,7 +491,7 @@ def test_read_unknown_zero_pages():
     reader = PdfReader(pdf_stream, strict=False)
     with pytest.raises(AttributeError) as exc:
         reader.numPages
-    assert exc.value.args[0] == "'NoneType' object has no attribute 'getObject'"
+    assert exc.value.args[0] == "'NoneType' object has no attribute 'get_object'"
 
 
 def test_read_encrypted_without_decryption():

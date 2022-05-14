@@ -19,7 +19,7 @@ def main(pdf: str):
     page = reader.pages[30]
 
     if RES.XOBJECT in page[PG.RESOURCES]:
-        xObject = page[PG.RESOURCES][RES.XOBJECT].getObject()
+        xObject = page[PG.RESOURCES][RES.XOBJECT].get_object()
 
         for obj in xObject:
             if xObject[obj][IA.SUBTYPE] == "/Image":

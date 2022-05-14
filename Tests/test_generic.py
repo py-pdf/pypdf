@@ -253,7 +253,7 @@ def test_DictionaryObject_read_from_stream():
     stream = BytesIO(b"<< /S /GoTo >>")
     pdf = None
     out = DictionaryObject.readFromStream(stream, pdf)
-    assert out.getObject() == {NameObject("/S"): NameObject("/GoTo")}
+    assert out.get_object() == {NameObject("/S"): NameObject("/GoTo")}
 
 
 def test_DictionaryObject_read_from_stream_broken():

@@ -127,9 +127,16 @@ def readObject(stream, pdf):
 
 
 class PdfObject(object):
-    def getObject(self):
+    def get_object(self):
         """Resolve indirect references."""
         return self
+
+    def getObject(self):
+        warnings.warn(
+            "getObject will be removed in PyPDF2 2.0.0. " "Use get_object instead.",
+            PendingDeprecationWarning,
+        )
+        return self.get_object()
 
 
 class NullObject(PdfObject):
@@ -202,8 +209,8 @@ class IndirectObject(PdfObject):
         self.generation = generation
         self.pdf = pdf
 
-    def getObject(self):
-        return self.pdf.getObject(self).getObject()
+    def get_object(self):
+        return self.pdf.get_object(self).get_object()
 
     def __repr__(self):
         return "IndirectObject(%r, %r)" % (self.idnum, self.generation)
@@ -558,7 +565,7 @@ class DictionaryObject(dict, PdfObject):
         return dict.setdefault(self, key, value)
 
     def __getitem__(self, key):
-        return dict.__getitem__(self, key).getObject()
+        return dict.__getitem__(self, key).get_object()
 
     def getXmpMetadata(self):
         """
@@ -573,7 +580,7 @@ class DictionaryObject(dict, PdfObject):
         metadata = self.get("/Metadata", None)
         if metadata is None:
             return None
-        metadata = metadata.getObject()
+        metadata = metadata.get_object()
         from . import xmp
 
         if not isinstance(metadata, xmp.XmpInformation):
@@ -663,7 +670,7 @@ class DictionaryObject(dict, PdfObject):
             length = data[SA.LENGTH]
             if isinstance(length, IndirectObject):
                 t = stream.tell()
-                length = pdf.getObject(length)
+                length = pdf.get_object(length)
                 stream.seek(t, 0)
             data["__streamdata__"] = stream.read(length)
             e = readNonWhitespace(stream)
@@ -733,7 +740,7 @@ class TreeObject(DictionaryObject):
             child = child["/Next"]
 
     def addChild(self, child, pdf):
-        child_obj = child.getObject()
+        child_obj = child.get_object()
         child = pdf.getReference(child_obj)
         assert isinstance(child, IndirectObject)
 
@@ -758,7 +765,7 @@ class TreeObject(DictionaryObject):
         child_obj[NameObject("/Parent")] = parent_ref
 
     def removeChild(self, child):
-        child_obj = child.getObject()
+        child_obj = child.get_object()
 
         if NameObject("/Parent") not in child_obj:
             raise ValueError("Removed child does not appear to be a tree item")
@@ -769,16 +776,16 @@ class TreeObject(DictionaryObject):
         prev_ref = None
         prev = None
         cur_ref = self[NameObject("/First")]
-        cur = cur_ref.getObject()
+        cur = cur_ref.get_object()
         last_ref = self[NameObject("/Last")]
-        last = last_ref.getObject()
+        last = last_ref.get_object()
         while cur is not None:
             if cur == child_obj:
                 if prev is None:
                     if NameObject("/Next") in cur:
                         # Removing first tree node
                         next_ref = cur[NameObject("/Next")]
-                        next = next_ref.getObject()
+                        next = next_ref.get_object()
                         del next[NameObject("/Prev")]
                         self[NameObject("/First")] = next_ref
                         self[NameObject("/Count")] = self[NameObject("/Count")] - 1
@@ -794,7 +801,7 @@ class TreeObject(DictionaryObject):
                     if NameObject("/Next") in cur:
                         # Removing middle tree node
                         next_ref = cur[NameObject("/Next")]
-                        next = next_ref.getObject()
+                        next = next_ref.get_object()
                         next[NameObject("/Prev")] = prev_ref
                         prev[NameObject("/Next")] = next_ref
                         self[NameObject("/Count")] = self[NameObject("/Count")] - 1
@@ -811,7 +818,7 @@ class TreeObject(DictionaryObject):
             prev = cur
             if NameObject("/Next") in cur:
                 cur_ref = cur[NameObject("/Next")]
-                cur = cur_ref.getObject()
+                cur = cur_ref.get_object()
             else:
                 cur_ref = None
                 cur = None
@@ -827,7 +834,7 @@ class TreeObject(DictionaryObject):
 
     def emptyTree(self):
         for child in self:
-            child_obj = child.getObject()
+            child_obj = child.get_object()
             del child_obj[NameObject("/Parent")]
             if NameObject("/Next") in child_obj:
                 del child_obj[NameObject("/Next")]
@@ -925,11 +932,11 @@ class ContentStream(DecodedStreamObject):
         self.operations = []
         # stream may be a StreamObject or an ArrayObject containing
         # multiple StreamObjects to be cat'd together.
-        stream = stream.getObject()
+        stream = stream.get_object()
         if isinstance(stream, ArrayObject):
             data = b_("")
             for s in stream:
-                data += b_(s.getObject().getData())
+                data += b_(s.get_object().getData())
             stream = BytesIO(b_(data))
         else:
             stream = BytesIO(b_(stream.getData()))

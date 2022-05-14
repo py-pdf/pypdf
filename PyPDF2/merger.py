@@ -249,9 +249,9 @@ class PdfMerger(object):
         for page in self.pages:
             self.output.addPage(page.pagedata)
             page.out_pagedata = self.output.getReference(
-                self.output._pages.getObject()[PA.KIDS][-1].getObject()
+                self.output._pages.get_object()[PA.KIDS][-1].get_object()
             )
-            # idnum = self.output._objects.index(self.output._pages.getObject()[PA.KIDS][-1].getObject()) + 1
+            # idnum = self.output._objects.index(self.output._pages.get_object()[PA.KIDS][-1].get_object()) + 1
             # page.out_pagedata = IndirectObject(idnum, 0, self.output)
 
         # Once all pages are added, create bookmarks to point at those pages
@@ -345,8 +345,8 @@ class PdfMerger(object):
         new_dests = []
         for k, o in list(dests.items()):
             for j in range(*pages):
-                if pdf.getPage(j).getObject() == o["/Page"].getObject():
-                    o[NameObject("/Page")] = o["/Page"].getObject()
+                if pdf.getPage(j).get_object() == o["/Page"].get_object():
+                    o[NameObject("/Page")] = o["/Page"].get_object()
                     assert str_(k) == str_(o["/Title"])
                     new_dests.append(o)
                     break
@@ -369,8 +369,8 @@ class PdfMerger(object):
             else:
                 prev_header_added = False
                 for j in range(*pages):
-                    if pdf.getPage(j).getObject() == o["/Page"].getObject():
-                        o[NameObject("/Page")] = o["/Page"].getObject()
+                    if pdf.getPage(j).get_object() == o["/Page"].get_object():
+                        o[NameObject("/Page")] = o["/Page"].get_object()
                         new_outline.append(o)
                         prev_header_added = True
                         break
@@ -478,7 +478,7 @@ class PdfMerger(object):
                 continue
 
             for p in pages:
-                if np.getObject() == p.pagedata.getObject():
+                if np.get_object() == p.pagedata.get_object():
                     pageno = p.id
 
             if pageno is not None:
@@ -502,7 +502,7 @@ class PdfMerger(object):
                 continue
 
             for p in pages:
-                if bp.getObject() == p.pagedata.getObject():
+                if bp.get_object() == p.pagedata.get_object():
                     pageno = p.id
 
             if pageno is not None:
@@ -549,10 +549,10 @@ class PdfMerger(object):
         :param str fit: The fit of the destination page. See
             :meth:`addLink()<addLin>` for details.
         """
-        if len(self.output.getObject(self.output._pages)["/Kids"]) > 0:
-            page_ref = self.output.getObject(self.output._pages)["/Kids"][pagenum]
+        if len(self.output.get_object(self.output._pages)["/Kids"]) > 0:
+            page_ref = self.output.get_object(self.output._pages)["/Kids"][pagenum]
         else:
-            page_ref = self.output.getObject(self.output._pages)
+            page_ref = self.output.get_object(self.output._pages)
 
         action = DictionaryObject()
         zoom_args = []
@@ -598,7 +598,7 @@ class PdfMerger(object):
             bookmark.update({NameObject("/F"): NumberObject(format)})
 
         bookmark_ref = self.output._addObject(bookmark)
-        parent = parent.getObject()
+        parent = parent.get_object()
         parent.addChild(bookmark_ref, self.output)
 
         return bookmark_ref
@@ -637,7 +637,7 @@ class OutlinesObject(list):
         self.tree.removeChild(obj)
 
     def add(self, title, pagenum):
-        page_ref = self.pdf.getObject(self.pdf._pages)[PA.KIDS][pagenum]
+        page_ref = self.pdf.get_object(self.pdf._pages)[PA.KIDS][pagenum]
         action = DictionaryObject()
         action.update(
             {

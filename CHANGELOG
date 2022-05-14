@@ -5,13 +5,15 @@ This release adds a lot of deprecation warnings in preparation of the
 PyPDF2 2.0.0 release. The changes are mostly using snake_case function-, method-,
 and variable-names as well as using properties instead of getter-methods.
 
-Deprecations (DEP):
-- PyPDF2.generic
+### Deprecations (DEP)
+PyPDF2.generic
+  - getObject  ➔ get_object (in all classes that had this method)
   - readObject ➔ read_object
   - convertToInt ➔ convert_to_int
   - DocumentInformation.getText ➔ DocumentInformation._get_text :
     This method should typically not be used; please let me know if you need it.
-- PdfReader class:
+
+PdfReader class:
   - flattenedPages attribute ➔ flattened_pages
   - resolvedObjects attribute ➔ resolved_objects
   - xrefIndex attribute ➔ xref_index
@@ -34,7 +36,8 @@ Deprecations (DEP):
   - _getObjectFromStream ➔ _get_object_from_stream
   - _decryptObject ➔ _decrypt_object
   - _flatten(..., indirectRef) ➔ _flatten(..., indirect_ref)
-- PdfMerger class
+
+PdfMerger class
   - `__init__` parameter: strict=True ➔ strict=False (the PdfFileMerger still has the old default): TODO
 
 

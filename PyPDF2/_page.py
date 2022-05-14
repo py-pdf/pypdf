@@ -61,7 +61,7 @@ def getRectangle(self, name, defaults):
             if retval is not None:
                 break
     if isinstance(retval, IndirectObject):
-        retval = self.pdf.getObject(retval)
+        retval = self.pdf.get_object(retval)
     retval = RectangleObject(retval)
     setRectangle(self, name, retval)
     return retval
@@ -169,15 +169,15 @@ class PageObject(DictionaryObject):
     def _rotate(self, angle):
         rotate_obj = self.get(PG.ROTATE, 0)
         current_angle = (
-            rotate_obj if isinstance(rotate_obj, int) else rotate_obj.getObject()
+            rotate_obj if isinstance(rotate_obj, int) else rotate_obj.get_object()
         )
         self[NameObject(PG.ROTATE)] = NumberObject(current_angle + angle)
 
     @staticmethod
     def _mergeResources(res1, res2, resource):
         new_res = DictionaryObject()
-        new_res.update(res1.get(resource, DictionaryObject()).getObject())
-        page2res = res2.get(resource, DictionaryObject()).getObject()
+        new_res.update(res1.get(resource, DictionaryObject()).get_object())
+        page2res = res2.get(resource, DictionaryObject()).get_object()
         rename_res = {}
         for key in list(page2res.keys()):
             if key in new_res and new_res.raw_get(key) != page2res.raw_get(key):
@@ -248,7 +248,7 @@ class PageObject(DictionaryObject):
             ``/Contents`` is optional, as described in PDF Reference  7.7.3.3
         """
         if PG.CONTENTS in self:
-            return self[PG.CONTENTS].getObject()
+            return self[PG.CONTENTS].get_object()
         else:
             return None
 
@@ -274,8 +274,8 @@ class PageObject(DictionaryObject):
 
         new_resources = DictionaryObject()
         rename = {}
-        original_resources = self[PG.RESOURCES].getObject()
-        page2resources = page2[PG.RESOURCES].getObject()
+        original_resources = self[PG.RESOURCES].get_object()
+        page2resources = page2[PG.RESOURCES].get_object()
         new_annots = ArrayObject()
 
         for page in (self, page2):
@@ -304,9 +304,9 @@ class PageObject(DictionaryObject):
         # Combine /ProcSet sets.
         new_resources[NameObject(RES.PROC_SET)] = ArrayObject(
             frozenset(
-                original_resources.get(RES.PROC_SET, ArrayObject()).getObject()
+                original_resources.get(RES.PROC_SET, ArrayObject()).get_object()
             ).union(
-                frozenset(page2resources.get(RES.PROC_SET, ArrayObject()).getObject())
+                frozenset(page2resources.get(RES.PROC_SET, ArrayObject()).get_object())
             )
         )
 
@@ -684,7 +684,7 @@ class PageObject(DictionaryObject):
         :return: a unicode string object.
         """
         text = u_("")
-        content = self[PG.CONTENTS].getObject()
+        content = self[PG.CONTENTS].get_object()
         if not isinstance(content, ContentStream):
             content = ContentStream(content, self.pdf)
         # Note: we check all strings are TextStringObjects.  ByteStringObjects

@@ -133,7 +133,7 @@ class DocumentInformation(DictionaryObject):
         Returns a unicode string (``TextStringObject``) or ``None``
         if the title is not specified."""
         return (
-            self._get_text(DI.TITLE) or self.get(DI.TITLE).getObject()
+            self._get_text(DI.TITLE) or self.get(DI.TITLE).get_object()
             if self.get(DI.TITLE)
             else None
         )
@@ -479,7 +479,7 @@ class PdfReader(object):
         if "/Fields" in tree:
             fields = tree["/Fields"]
             for f in fields:
-                field = f.getObject()
+                field = f.get_object()
                 self._buildField(field, retval, fileobj, field_attributes)
 
         return retval
@@ -503,7 +503,7 @@ class PdfReader(object):
         if PA.KIDS in tree:
             # recurse down the tree
             for kid in tree[PA.KIDS]:
-                self.getFields(kid.getObject(), retval, fileobj)
+                self.getFields(kid.get_object(), retval, fileobj)
 
     def _writeField(self, fileobj, field, fieldAttributes):
         order = ["/TM", "/T", "/FT", PA.PARENT, "/TU", "/Ff", "/V", "/DV"]
@@ -571,13 +571,13 @@ class PdfReader(object):
         if PA.KIDS in tree:
             # recurse down the tree
             for kid in tree[PA.KIDS]:
-                self.get_named_destinations(kid.getObject(), retval)
+                self.get_named_destinations(kid.get_object(), retval)
 
         if CA.NAMES in tree:
             names = tree[CA.NAMES]
             for i in range(0, len(names), 2):
-                key = names[i].getObject()
-                val = names[i + 1].getObject()
+                key = names[i].get_object()
+                val = names[i + 1].get_object()
                 if isinstance(val, DictionaryObject) and "/D" in val:
                     val = val["/D"]
                 dest = self._build_destination(key, val)
@@ -831,8 +831,8 @@ class PdfReader(object):
         if pages is None:
             # Fix issue 327: set flattenedPages attribute only for
             # decrypted file
-            catalog = self.trailer[TK.ROOT].getObject()
-            pages = catalog["/Pages"].getObject()
+            catalog = self.trailer[TK.ROOT].get_object()
+            pages = catalog["/Pages"].get_object()
             self.flattened_pages = []
 
         t = "/Pages"
@@ -847,7 +847,7 @@ class PdfReader(object):
                 addt = {}
                 if isinstance(page, IndirectObject):
                     addt["indirect_ref"] = page
-                self._flatten(page.getObject(), inherit, **addt)
+                self._flatten(page.get_object(), inherit, **addt)
         elif t == "/Page":
             for attr, value in list(inherit.items()):
                 # if the page has it's own value, it does not inherit the
@@ -862,7 +862,7 @@ class PdfReader(object):
         # indirect reference to object in object stream
         # read the entire object stream into memory
         stmnum, idx = self.xref_objStm[indirect_reference.idnum]
-        obj_stm = IndirectObject(stmnum, 0, self).getObject()
+        obj_stm = IndirectObject(stmnum, 0, self).get_object()
         # This is an xref to a stream, so its type better be a stream
         assert obj_stm["/Type"] == "/ObjStm"
         # /N is the number of indirect objects in the stream
@@ -905,51 +905,51 @@ class PdfReader(object):
             raise PdfReadError("This is a fatal error in strict mode.")
         return NullObject()
 
-    def getObject(self, indirectReference):
+    def get_object(self, indirect_reference):
         retval = self.cache_get_indirect_object(
-            indirectReference.generation, indirectReference.idnum
+            indirect_reference.generation, indirect_reference.idnum
         )
         if retval is not None:
             return retval
         if (
-            indirectReference.generation == 0
-            and indirectReference.idnum in self.xref_objStm
+            indirect_reference.generation == 0
+            and indirect_reference.idnum in self.xref_objStm
         ):
-            retval = self._get_object_from_stream(indirectReference)
+            retval = self._get_object_from_stream(indirect_reference)
         elif (
-            indirectReference.generation in self.xref
-            and indirectReference.idnum in self.xref[indirectReference.generation]
+            indirect_reference.generation in self.xref
+            and indirect_reference.idnum in self.xref[indirect_reference.generation]
         ):
-            start = self.xref[indirectReference.generation][indirectReference.idnum]
+            start = self.xref[indirect_reference.generation][indirect_reference.idnum]
             self.stream.seek(start, 0)
             idnum, generation = self.read_object_header(self.stream)
-            if idnum != indirectReference.idnum and self.xref_index:
+            if idnum != indirect_reference.idnum and self.xref_index:
                 # Xref table probably had bad indexes due to not being zero-indexed
                 if self.strict:
                     raise PdfReadError(
                         "Expected object ID (%d %d) does not match actual (%d %d); xref table not zero-indexed."
                         % (
-                            indirectReference.idnum,
-                            indirectReference.generation,
+                            indirect_reference.idnum,
+                            indirect_reference.generation,
                             idnum,
                             generation,
                         )
                     )
                 else:
                     pass  # xref table is corrected in non-strict mode
-            elif idnum != indirectReference.idnum and self.strict:
+            elif idnum != indirect_reference.idnum and self.strict:
                 # some other problem
                 raise PdfReadError(
                     "Expected object ID (%d %d) does not match actual (%d %d)."
                     % (
-                        indirectReference.idnum,
-                        indirectReference.generation,
+                        indirect_reference.idnum,
+                        indirect_reference.generation,
                         idnum,
                         generation,
                     )
                 )
             if self.strict:
-                assert generation == indirectReference.generation
+                assert generation == indirect_reference.generation
             retval = read_object(self.stream, self)
 
             # override encryption is used for the /Encrypt dictionary
@@ -958,8 +958,8 @@ class PdfReader(object):
                 if not hasattr(self, "_decryption_key"):
                     raise PdfReadError("file has not been decrypted")
                 # otherwise, decrypt here...
-                pack1 = struct.pack("<i", indirectReference.idnum)[:3]
-                pack2 = struct.pack("<i", indirectReference.generation)[:2]
+                pack1 = struct.pack("<i", indirect_reference.idnum)[:3]
+                pack2 = struct.pack("<i", indirect_reference.generation)[:2]
                 key = self._decryption_key + pack1 + pack2
                 assert len(key) == (len(self._decryption_key) + 5)
                 md5_hash = md5(key).digest()
@@ -968,15 +968,23 @@ class PdfReader(object):
         else:
             warnings.warn(
                 "Object %d %d not defined."
-                % (indirectReference.idnum, indirectReference.generation),
+                % (indirect_reference.idnum, indirect_reference.generation),
                 PdfReadWarning,
             )
             if self.strict:
                 raise PdfReadError("Could not find object.")
         self.cache_indirect_object(
-            indirectReference.generation, indirectReference.idnum, retval
+            indirect_reference.generation, indirect_reference.idnum, retval
         )
         return retval
+
+    def getObject(self, indirectReference):
+        warnings.warn(
+            "getObject(indirectReference) will be removed in PyPDF2 2.0.0. "
+            "Use get_object(indirect_reference) instead.",
+            PendingDeprecationWarning,
+        )
+        return self.get_object(indirectReference)
 
     def _decrypt_object(self, obj, key):
         if isinstance(obj, (ByteStringObject, TextStringObject)):
@@ -1482,7 +1490,7 @@ class PdfReader(object):
         # Decrypts data as per Section 3.5 (page 117) of PDF spec v1.7
         # "The security handler defines the use of encryption and decryption in
         # the document, using the rules specified by the CF, StmF, and StrF entries"
-        encrypt = self.trailer[TK.ENCRYPT].getObject()
+        encrypt = self.trailer[TK.ENCRYPT].get_object()
         # /Encrypt Keys:
         # Filter (name)   : "name of the preferred security handler "
         # V (number)      : Algorithm Code
@@ -1507,13 +1515,13 @@ class PdfReader(object):
             self._decryption_key = key
             return 1
         else:
-            rev = encrypt["/R"].getObject()
+            rev = encrypt["/R"].get_object()
             if rev == 2:
                 keylen = 5
             else:
-                keylen = encrypt[SA.LENGTH].getObject() // 8
+                keylen = encrypt[SA.LENGTH].get_object() // 8
             key = _alg33_1(password, rev, keylen)
-            real_O = encrypt["/O"].getObject()
+            real_O = encrypt["/O"].get_object()
             if rev == 2:
                 userpass = utils.RC4_encrypt(key, real_O)
             else:
@@ -1531,30 +1539,30 @@ class PdfReader(object):
         return 0
 
     def _authenticate_user_password(self, password):
-        encrypt = self.trailer[TK.ENCRYPT].getObject()
-        rev = encrypt[ED.R].getObject()
-        owner_entry = encrypt[ED.O].getObject()
-        p_entry = encrypt[ED.P].getObject()
+        encrypt = self.trailer[TK.ENCRYPT].get_object()
+        rev = encrypt[ED.R].get_object()
+        owner_entry = encrypt[ED.O].get_object()
+        p_entry = encrypt[ED.P].get_object()
         if TK.ID in self.trailer:
-            id_entry = self.trailer[TK.ID].getObject()
+            id_entry = self.trailer[TK.ID].get_object()
         else:
             # Some documents may not have a /ID, use two empty
             # byte strings instead. Solves
             # https://github.com/mstamy2/PyPDF2/issues/608
             id_entry = ArrayObject([ByteStringObject(b""), ByteStringObject(b"")])
-        id1_entry = id_entry[0].getObject()
-        real_U = encrypt[ED.U].getObject().original_bytes
+        id1_entry = id_entry[0].get_object()
+        real_U = encrypt[ED.U].get_object().original_bytes
         if rev == 2:
             U, key = _alg34(password, owner_entry, p_entry, id1_entry)
         elif rev >= 3:
             U, key = _alg35(
                 password,
                 rev,
-                encrypt[SA.LENGTH].getObject() // 8,
+                encrypt[SA.LENGTH].get_object() // 8,
                 owner_entry,
                 p_entry,
                 id1_entry,
-                encrypt.get(ED.ENCRYPT_METADATA, BooleanObject(False)).getObject(),
+                encrypt.get(ED.ENCRYPT_METADATA, BooleanObject(False)).get_object(),
             )
             U, real_U = U[:16], real_U[:16]
         return U == real_U, key

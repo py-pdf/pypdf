@@ -58,7 +58,7 @@ def test_PdfReaderJpegImage():
             imagetext = pdftext_file.read()
 
         page = reader.getPage(0)
-        x_object = page[PG.RESOURCES]["/XObject"].getObject()
+        x_object = page[PG.RESOURCES]["/XObject"].get_object()
         data = x_object["/Im4"].getData()
 
         # Compare the text of the PDF to a known source
