@@ -277,7 +277,7 @@ class PdfMerger(object):
         self.inputs = []
         self.output = None
 
-    def addMetadata(self, infos):
+    def add_metadata(self, infos):
         """
         Add custom metadata to the output.
 
@@ -285,7 +285,10 @@ class PdfMerger(object):
             and each value is your new metadata.
             Example: ``{u'/Title': u'My title'}``
         """
-        self.output.addMetadata(infos)
+        self.output.add_metadata(infos)
+
+    def addMetadata(self, infos):
+        self.add_metadata(infos)
 
     def setPageLayout(self, layout):
         """

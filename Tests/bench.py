@@ -66,7 +66,7 @@ def merge():
 
     bookmark = file_merger.addBookmark("A bookmark", 0)
     file_merger.addBookmark("deeper", 0, parent=bookmark)
-    file_merger.addMetadata({"author": "Martin Thoma"})
+    file_merger.add_metadata({"author": "Martin Thoma"})
     file_merger.addNamedDestination("title", 0)
     file_merger.setPageLayout("/SinglePage")
     file_merger.setPageMode("/UseThumbs")

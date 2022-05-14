@@ -51,6 +51,7 @@ PdfReader class:
 
 PdfWriter class:
 
+  - addMetadata ➔ add_metadata
   - addPage ➔ append_page
   - insertPage ➔ insert_page
   - getPage(pageNumber) ➔ get_page(page_number)
@@ -61,7 +62,8 @@ PdfWriter class:
   - _sweepIndirectReferences ➔ _sweep_indirect_references
 
 PdfMerger class
-  - `__init__` parameter: strict=True ➔ strict=False (the PdfFileMerger still has the old default): TODO
+  - `__init__` parameter: strict=True ➔ strict=False (the PdfFileMerger still has the old default)
+  - addMetadata ➔ add_metadata
 
 Page class:
   - mergePage ➔ merge_page

@@ -64,7 +64,7 @@ from PyPDF2.generic import (
     TreeObject,
     createStringObject,
 )
-from PyPDF2.utils import b_, isString, u_
+from PyPDF2.utils import DEPR_MSG, b_, isString, u_
 
 logger = logging.getLogger(__name__)
 
@@ -626,7 +626,7 @@ class PdfWriter(object):
             trailer[NameObject(TK.ENCRYPT)] = self._encrypt
         trailer.write_to_stream(stream, None)
 
-    def addMetadata(self, infos):
+    def add_metadata(self, infos):
         """
         Add custom metadata to the output.
 
@@ -637,6 +637,12 @@ class PdfWriter(object):
         for key, value in list(infos.items()):
             args[NameObject(key)] = createStringObject(value)
         self.get_object(self._info).update(args)
+
+    def addMetadata(self, infos):
+        warnings.warn(
+            DEPR_MSG.format("addMetadata", "add_metadata"),
+        )
+        self.add_metadata(infos)
 
     def _sweep_indirect_references(self, externMap, data):
         if isinstance(data, DictionaryObject):

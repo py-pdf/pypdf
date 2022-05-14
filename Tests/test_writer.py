@@ -58,7 +58,7 @@ def test_writer_operations():
     # TODO: This gives "KeyError: '/Contents'" - is that a bug?
     # writer.removeImages()
 
-    writer.addMetadata({"author": "Martin Thoma"})
+    writer.add_metadata({"author": "Martin Thoma"})
 
     writer.addAttachment("foobar.gif", b"foobarcontent")
 
@@ -141,9 +141,9 @@ def test_write_metadata():
         writer.append_page(page)
 
     metadata = reader.metadata
-    writer.addMetadata(metadata)
+    writer.add_metadata(metadata)
 
-    writer.addMetadata({"/Title": "The Crazy Ones"})
+    writer.add_metadata({"/Title": "The Crazy Ones"})
 
     # finally, write data to PyPDF2-output.pdf
     tmp_filename = "dont_commit_writer_added_metadata.pdf"
