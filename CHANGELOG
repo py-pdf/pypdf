@@ -12,17 +12,17 @@ Deprecations (DEP):
   - DocumentInformation.getText ➔ DocumentInformation._get_text :
     This method should typically not be used; please let me know if you need it.
 - PdfReader class:
-  - flattenedPages attribute ➔ flattened_pages : TODO
-  - resolvedObjects attribute ➔ resolved_objects : TODO
-  - xrefIndex attribute ➔ xref_index : TODO
+  - flattenedPages attribute ➔ flattened_pages
+  - resolvedObjects attribute ➔ resolved_objects
+  - xrefIndex attribute ➔ xref_index
   - getNamedDestinations ➔ get_named_destinations
   - getPageLayout / pageLayout ➔ page_layout attribute
   - getPageMode / pageMode ➔ page_mode attribute
   - getIsEncrypted / isEncrypted ➔ is_encrypted attribute
   - getOutlines ➔ get_outlines
-  - readObjectHeader ➔ read_object_header TODO (read vs get?)
-  - cacheGetIndirectObject ➔ cache_get_indirect_object TODO (public vs private?)
-  - cacheIndirectObject ➔ cache_indirect_object TODO (public vs private?)
+  - readObjectHeader ➔ read_object_header (TODO: read vs get?)
+  - cacheGetIndirectObject ➔ cache_get_indirect_object (TODO: public vs private?)
+  - cacheIndirectObject ➔ cache_indirect_object (TODO: public vs private?)
   - getDestinationPageNumber ➔ get_destination_page_number
   - readNextEndLine ➔ read_next_end_line
   - _zeroXref ➔ _zero_xref

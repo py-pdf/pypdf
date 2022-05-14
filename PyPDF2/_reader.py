@@ -90,7 +90,9 @@ def convert_to_int(d, size):
 
 def convertToInt(d, size):
     warnings.warn(
-        "convertToInt is deprecated, use convert_to_int instead", DeprecationWarning
+        "convertToInt will be removed with PyPDF2 2.0.0. "
+        "Use convert_to_int instead.",
+        PendingDeprecationWarning,
     )
     return convert_to_int(d, size)
 
@@ -121,7 +123,7 @@ class DocumentInformation(DictionaryObject):
 
     def getText(self, key):
         warnings.warn(
-            "getText will be deprecated with PyPDF2 2.0.0", DeprecationWarning
+            "getText will be removed in PyPDF2 2.0.0.", PendingDeprecationWarning
         )
         return self._get_text(key)
 
@@ -219,13 +221,13 @@ class PdfReader(object):
     ):
         if warndest is not None:
             warnings.warn(
-                "The `warndest` argument to PdfReader will be removed with PyPDF2 2.0.0.",
+                "The `warndest` argument to PdfReader will be removed in PyPDF2 2.0.0.",
                 PendingDeprecationWarning,
             )
         if overwriteWarnings:
             if overwriteWarnings != "deprecated":
                 warnings.warn(
-                    "The `overwriteWarnings` argument to PdfReader will be removed with PyPDF2 2.0.0.",
+                    "The `overwriteWarnings` argument to PdfReader will be removed in PyPDF2 2.0.0.",
                     PendingDeprecationWarning,
                 )
             # Have to dynamically override the default showwarning since there
@@ -267,6 +269,32 @@ class PdfReader(object):
         self._override_encryption = False
 
     @property
+    def flattenedPages(self):
+        warnings.warn(
+            "flattenedPages will be removed in PyPDF2 2.0.0. "
+            "Use flattened_pages instead",
+            PendingDeprecationWarning,
+        )
+        return self.flattened_pages
+
+    @property
+    def resolvedObjects(self):
+        warnings.warn(
+            "resolvedObjects will be removed in PyPDF2 2.0.0. "
+            "Use resolved_objects instead",
+            PendingDeprecationWarning,
+        )
+        return self.resolved_objects
+
+    @property
+    def xrefIndex(self):
+        warnings.warn(
+            "xrefIndex will be removed in PyPDF2 2.0.0. " "Use xref_index instead",
+            PendingDeprecationWarning,
+        )
+        return self.xref_index
+
+    @property
     def metadata(self):
         """
         Retrieve the PDF file's document information dictionary, if it exists.
@@ -286,7 +314,7 @@ class PdfReader(object):
         return retval
 
     def getDocumentInfo(self):
-        """Will be deprecated in PyPDF2 2.0.0. Use the `metadata` attribute instead."""
+        """will be removed in PyPDF2 2.0.0. Use the `metadata` attribute instead."""
         warnings.warn(
             "The `getDocumentInfo` method of PdfReader will be replaced by the "
             "`metadata` attribute in PyPDF2 2.0.0. You can switch to the "
@@ -297,7 +325,7 @@ class PdfReader(object):
 
     @property
     def documentInfo(self):
-        """Will be deprecated in PyPDF2 2.0.0. Use the `metadata` attribute instead."""
+        """will be removed in PyPDF2 2.0.0. Use the `metadata` attribute instead."""
         warnings.warn(
             "The `documentInfo` attribute of PdfReader will be replaced by "
             "`metadata` in PyPDF2 2.0.0. You can switch to the metadata "
@@ -323,7 +351,7 @@ class PdfReader(object):
             self._override_encryption = False
 
     def getXmpMetadata(self):
-        """Will be deprecated in PyPDF2 2.0.0. Use the `xmp_metadata` attribute instead."""
+        """will be removed in PyPDF2 2.0.0. Use the `xmp_metadata` attribute instead."""
         warnings.warn(
             "The `getXmpMetadata` method of PdfReader will be replaced by the "
             "`xmp_metadata` attribute in PyPDF2 2.0.0. You can switch to the "
@@ -334,7 +362,7 @@ class PdfReader(object):
 
     @property
     def xmpMetadata(self):
-        """Will be deprecated in PyPDF2 2.0.0. Use the `xmp_metadata` attribute instead."""
+        """will be removed in PyPDF2 2.0.0. Use the `xmp_metadata` attribute instead."""
         warnings.warn(
             "The `xmpMetadata` attribute of PdfReader will be replaced by the "
             "`xmp_metadata` attribute in PyPDF2 2.0.0. You can switch to the "
@@ -560,8 +588,8 @@ class PdfReader(object):
 
     def getNamedDestinations(self, tree=None, retval=None):
         warnings.warn(
-            "getNamedDestinations will be deprecated with PyPDF2 2.0.0, "
-            "use get_named_destinations instead",
+            "getNamedDestinations will be removed in PyPDF2 2.0.0. "
+            "Use get_named_destinations instead.",
             PendingDeprecationWarning,
         )
         return self.get_named_destinations(tree, retval)
@@ -622,8 +650,7 @@ class PdfReader(object):
 
     def getOutlines(self, node=None, outlines=None):
         warnings.warn(
-            "getOutlines will be deprecated with PyPDF2 2.0.0, "
-            "use get_outlines instead",
+            "getOutlines will be removed in PyPDF2 2.0.0. " "Use get_outlines instead.",
             PendingDeprecationWarning,
         )
         return self.get_outlines(node, outlines)
@@ -675,8 +702,8 @@ class PdfReader(object):
 
     def getDestinationPageNumber(self, destination):
         warnings.warn(
-            "getDestinationPageNumber will be deprecated with PyPDF2 2.0.0, "
-            "use get_destination_page_number instead",
+            "getDestinationPageNumber will be removed in PyPDF2 2.0.0. "
+            "Use get_destination_page_number instead.",
             PendingDeprecationWarning,
         )
         return self.get_destination_page_number(destination)
@@ -748,8 +775,8 @@ class PdfReader(object):
 
     def getPageLayout(self):
         warnings.warn(
-            "getPageLayout will be deprecated with PyPDF2 2.0.0, "
-            "use the attribute 'page_layout' instead",
+            "getPageLayout will be removed in PyPDF2 2.0.0. "
+            "Use the attribute 'page_layout' instead.",
             PendingDeprecationWarning,
         )
         return self.page_layout
@@ -757,8 +784,8 @@ class PdfReader(object):
     @property
     def pageLayout(self):
         warnings.warn(
-            "pageLayout will be deprecated with PyPDF2 2.0.0, "
-            "use the attribute 'page_layout' instead",
+            "pageLayout will be removed in PyPDF2 2.0.0. "
+            "Use the attribute 'page_layout' instead.",
             PendingDeprecationWarning,
         )
         return self.page_layout
@@ -780,8 +807,8 @@ class PdfReader(object):
 
     def getPageMode(self):
         warnings.warn(
-            "getPageMode will be deprecated with PyPDF2 2.0.0, "
-            "use the attribute 'page_mode' instead",
+            "getPageMode will be removed in PyPDF2 2.0.0. "
+            "Use the attribute 'page_mode' instead.",
             PendingDeprecationWarning,
         )
         return self.page_mode
@@ -879,7 +906,7 @@ class PdfReader(object):
         return NullObject()
 
     def getObject(self, indirectReference):
-        retval = self.cacheGetIndirectObject(
+        retval = self.cache_get_indirect_object(
             indirectReference.generation, indirectReference.idnum
         )
         if retval is not None:
@@ -895,7 +922,7 @@ class PdfReader(object):
         ):
             start = self.xref[indirectReference.generation][indirectReference.idnum]
             self.stream.seek(start, 0)
-            idnum, generation = self.readObjectHeader(self.stream)
+            idnum, generation = self.read_object_header(self.stream)
             if idnum != indirectReference.idnum and self.xref_index:
                 # Xref table probably had bad indexes due to not being zero-indexed
                 if self.strict:
@@ -946,7 +973,7 @@ class PdfReader(object):
             )
             if self.strict:
                 raise PdfReadError("Could not find object.")
-        self.cacheIndirectObject(
+        self.cache_indirect_object(
             indirectReference.generation, indirectReference.idnum, retval
         )
         return retval
@@ -964,7 +991,7 @@ class PdfReader(object):
                 obj[i] = self._decrypt_object(obj[i], key)
         return obj
 
-    def readObjectHeader(self, stream):
+    def read_object_header(self, stream):
         # Should never be necessary to read out whitespace, since the
         # cross-reference table should put us in the right spot to read the
         # object header.  In reality... some files have stupid cross reference
@@ -993,11 +1020,27 @@ class PdfReader(object):
             )
         return int(idnum), int(generation)
 
-    def cacheGetIndirectObject(self, generation, idnum):
+    def readObjectHeader(self, stream):
+        warnings.warn(
+            "readObjectHeader will be removed with PyPDF2 2.0.0. "
+            "Use read_object_header instead.",
+            PendingDeprecationWarning,
+        )
+        return self.read_object_header(stream)
+
+    def cache_get_indirect_object(self, generation, idnum):
         out = self.resolved_objects.get((generation, idnum))
         return out
 
-    def cacheIndirectObject(self, generation, idnum, obj):
+    def cacheGetIndirectObject(self, generation, idnum):
+        warnings.warn(
+            "cacheGetIndirectObject will be removed with PyPDF2 2.0.0. "
+            "Use cache_get_indirect_object instead.",
+            PendingDeprecationWarning,
+        )
+        return self.cache_get_indirect_object(generation, idnum)
+
+    def cache_indirect_object(self, generation, idnum, obj):
         if (generation, idnum) in self.resolved_objects:
             msg = "Overwriting cache for %s %s" % (generation, idnum)
             if self.strict:
@@ -1006,6 +1049,14 @@ class PdfReader(object):
                 warnings.warn(msg)
         self.resolved_objects[(generation, idnum)] = obj
         return obj
+
+    def cacheIndirectObject(self, generation, idnum, obj):
+        warnings.warn(
+            "cacheIndirectObject will be removed with PyPDF2 2.0.0. "
+            "Use cache_indirect_object instead.",
+            PendingDeprecationWarning,
+        )
+        return self.cache_indirect_object(generation, idnum, obj)
 
     def read(self, stream):
         # start at the end:
@@ -1123,7 +1174,7 @@ class PdfReader(object):
                 for id in self.xref[gen]:
                     stream.seek(self.xref[gen][id], 0)
                     try:
-                        pid, pgen = self.readObjectHeader(stream)
+                        pid, pgen = self.read_object_header(stream)
                     except ValueError:
                         break
                     if pid == id - self.xref_index:
@@ -1224,10 +1275,10 @@ class PdfReader(object):
     def _read_pdf15_xref_stream(self, stream):
         # PDF 1.5+ Cross-Reference Stream
         stream.seek(-1, 1)
-        idnum, generation = self.readObjectHeader(stream)
+        idnum, generation = self.read_object_header(stream)
         xrefstream = read_object(stream, self)
         assert xrefstream["/Type"] == "/XRef"
-        self.cacheIndirectObject(generation, idnum, xrefstream)
+        self.cache_indirect_object(generation, idnum, xrefstream)
         stream_data = BytesIO(b_(xrefstream.getData()))
         # Index pairs specify the subsections in the dictionary. If
         # none create one subsection that spans everything.
@@ -1519,8 +1570,8 @@ class PdfReader(object):
 
     def getIsEncrypted(self):
         warnings.warn(
-            "getIsEncrypted() will be deprecated with PyPDF2 2.0.0., use the "
-            "is_encrypted property instead.",
+            "getIsEncrypted() will be removed in PyPDF2 2.0.0. "
+            "Use the is_encrypted property instead.",
             PendingDeprecationWarning,
         )
         return self.is_encrypted
@@ -1528,8 +1579,8 @@ class PdfReader(object):
     @property
     def isEncrypted(self):
         warnings.warn(
-            "isEncrypted will be deprecated with PyPDF2 2.0.0., use the "
-            "is_encrypted property instead.",
+            "isEncrypted will be removed in PyPDF2 2.0.0. "
+            "Use the is_encrypted property instead.",
             PendingDeprecationWarning,
         )
         return self.getIsEncrypted()
