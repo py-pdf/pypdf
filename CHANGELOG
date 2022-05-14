@@ -47,6 +47,8 @@ PdfWriter class:
   - addPage ➔ append_page
   - insertPage ➔ insert_page
   - getPage(pageNumber) ➔ get_page(page_number)
+  - getPageLayout / setPageLayout / pageLayout ➔ page_layout attribute
+  - getPageMode / setPageMode / pageMode ➔ page_mode attribute
 
 PdfMerger class
   - `__init__` parameter: strict=True ➔ strict=False (the PdfFileMerger still has the old default): TODO

@@ -1187,7 +1187,7 @@ class PdfWriter(object):
         "/TwoPageRight",
     ]
 
-    def getPageLayout(self):
+    def _get_page_layout(self):
         """
         Get the page layout.
 
@@ -1201,7 +1201,15 @@ class PdfWriter(object):
         except KeyError:
             return None
 
-    def setPageLayout(self, layout):
+    def getPageLayout(self):
+        warnings.warn(
+            "getPageLayout() will be removed in PyPDF2 2.0.0. "
+            "Use the page_layout attribute instead.",
+            PendingDeprecationWarning,
+        )
+        return self._get_page_layout()
+
+    def _set_page_layout(self, layout):
         """
         Set the page layout.
 
@@ -1233,9 +1241,39 @@ class PdfWriter(object):
             layout = NameObject(layout)
         self._root_object.update({NameObject("/PageLayout"): layout})
 
-    pageLayout = property(getPageLayout, setPageLayout)
-    """Read and write property accessing the :meth:`getPageLayout()<PdfWriter.getPageLayout>`
-    and :meth:`setPageLayout()<PdfWriter.setPageLayout>` methods."""
+    def setPageLayout(self, layout):
+        warnings.warn(
+            "setPageLayout() will be removed in PyPDF2 2.0.0. "
+            "Use the page_layout attribute instead.",
+            PendingDeprecationWarning,
+        )
+        return self._set_page_layout(layout)
+
+    @property
+    def page_layout(self):
+        return self._get_page_layout()
+
+    @page_layout.setter
+    def page_layout(self, layout):
+        self._set_page_layout(layout)
+
+    @property
+    def pageLayout(self):
+        warnings.warn(
+            "pageLayout will be removed in PyPDF2 2.0.0. "
+            "Use the page_layout attribute instead.",
+            PendingDeprecationWarning,
+        )
+        return self.page_layout
+
+    @pageLayout.setter
+    def pageLayout(self, layout):
+        warnings.warn(
+            "pageLayout will be removed in PyPDF2 2.0.0. "
+            "Use the page_layout attribute instead.",
+            PendingDeprecationWarning,
+        )
+        self.page_layout = layout
 
     _valid_modes = [
         "/UseNone",
@@ -1246,7 +1284,7 @@ class PdfWriter(object):
         "/UseAttachments",
     ]
 
-    def getPageMode(self):
+    def _get_page_mode(self):
         """
         Get the page mode.
         See :meth:`setPageMode()<PdfWriter.setPageMode>` for a description
@@ -1260,7 +1298,15 @@ class PdfWriter(object):
         except KeyError:
             return None
 
-    def setPageMode(self, mode):
+    def getPageMode(self):
+        warnings.warn(
+            "getPageMode() will be removed in PyPDF2 2.0.0. "
+            "Use the page_mode attribute instead.",
+            PendingDeprecationWarning,
+        )
+        return self._get_page_mode()
+
+    def set_page_mode(self, mode):
         """
         Set the page mode.
 
@@ -1290,9 +1336,39 @@ class PdfWriter(object):
             mode = NameObject(mode)
         self._root_object.update({NameObject("/PageMode"): mode})
 
-    pageMode = property(getPageMode, setPageMode)
-    """Read and write property accessing the :meth:`getPageMode()<PdfWriter.getPageMode>`
-    and :meth:`setPageMode()<PdfWriter.setPageMode>` methods."""
+    def setPageMode(self, mode):
+        warnings.warn(
+            "setPageMode() will be removed in PyPDF2 2.0.0. "
+            "Use the page_mode attribute instead.",
+            PendingDeprecationWarning,
+        )
+        return self.set_page_mode(mode)
+
+    @property
+    def page_mode(self):
+        return self._get_page_mode()
+
+    @page_mode.setter
+    def page_mode(self, mode):
+        self.set_page_mode(mode)
+
+    @property
+    def pageMode(self):
+        warnings.warn(
+            "pageMode will be removed in PyPDF2 2.0.0. "
+            "Use the page_mode attribute instead.",
+            PendingDeprecationWarning,
+        )
+        return self.page_mode
+
+    @pageMode.setter
+    def pageMode(self, mode):
+        warnings.warn(
+            "pageMode will be removed in PyPDF2 2.0.0. "
+            "Use the page_mode attribute instead.",
+            PendingDeprecationWarning,
+        )
+        self.page_mode = mode
 
 
 class PdfFileWriter(PdfWriter):

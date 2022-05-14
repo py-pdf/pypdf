@@ -46,12 +46,12 @@ def test_writer_operations():
     writer.addBlankPage()
     writer.addURI(2, "https://example.com", RectangleObject([0, 0, 100, 100]))
     writer.addLink(2, 1, RectangleObject([0, 0, 100, 100]))
-    assert writer.getPageLayout() is None
-    writer.setPageLayout("SinglePage")
-    assert writer.getPageLayout() == "SinglePage"
-    assert writer.getPageMode() is None
-    writer.setPageMode("UseNone")
-    assert writer.getPageMode() == "UseNone"
+    assert writer._get_page_layout() is None
+    writer._set_page_layout("SinglePage")
+    assert writer._get_page_layout() == "SinglePage"
+    assert writer._get_page_mode() is None
+    writer.set_page_mode("UseNone")
+    assert writer._get_page_mode() == "UseNone"
     writer.insertBlankPage(width=100, height=100)
     writer.insertBlankPage()  # without parameters
 

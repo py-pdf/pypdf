@@ -311,7 +311,7 @@ class PdfMerger(object):
            * - /TwoPageRight
              - Show two pages at a time, odd-numbered pages on the right
         """
-        self.output.setPageLayout(layout)
+        self.output._set_page_layout(layout)
 
     def setPageMode(self, mode):
         """
@@ -335,7 +335,7 @@ class PdfMerger(object):
            * - /UseAttachments
              - Show attachments panel
         """
-        self.output.setPageMode(mode)
+        self.output.set_page_mode(mode)
 
     def _trim_dests(self, pdf, dests, pages):
         """
