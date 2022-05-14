@@ -243,7 +243,7 @@ class PdfWriter(object):
         :raises PageSizeNotDefinedError: if width and height are not defined
             and previous page does not exist.
         """
-        page = PageObject.createBlankPage(self, width, height)
+        page = PageObject.create_blank_page(self, width, height)
         self.append_page(page)
         return page
 
@@ -266,7 +266,7 @@ class PdfWriter(object):
             oldpage = self.get_page(index)
             width = oldpage.mediaBox.getWidth()
             height = oldpage.mediaBox.getHeight()
-        page = PageObject.createBlankPage(self, width, height)
+        page = PageObject.create_blank_page(self, width, height)
         self.insert_page(page, index)
         return page
 

@@ -64,6 +64,8 @@ PdfMerger class
   - `__init__` parameter: strict=True ➔ strict=False (the PdfFileMerger still has the old default): TODO
 
 Page class:
+  - mergePage ➔ merge_page
+  - rotateClockwise / rotateCounterClockwise ➔ rotate_clockwise
   - _mergeResources ➔ _merge_resources
   - _contentStreamRename ➔ _content_stream_rename
   - _pushPopGS ➔ _push_pop_gs

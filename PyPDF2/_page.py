@@ -31,6 +31,7 @@
 
 import math
 import uuid
+import warnings
 
 from PyPDF2 import utils
 from PyPDF2.constants import PageAttributes as PG
@@ -48,10 +49,10 @@ from PyPDF2.generic import (
     RectangleObject,
     TextStringObject,
 )
-from PyPDF2.utils import b_, u_
+from PyPDF2.utils import DEPR_MSG, DEPR_MSG_NO_REPLACEMENT, b_, u_
 
 
-def getRectangle(self, name, defaults):
+def _get_rectangle(self, name, defaults):
     retval = self.get(name)
     if isinstance(retval, RectangleObject):
         return retval
@@ -63,26 +64,58 @@ def getRectangle(self, name, defaults):
     if isinstance(retval, IndirectObject):
         retval = self.pdf.get_object(retval)
     retval = RectangleObject(retval)
-    setRectangle(self, name, retval)
+    _set_rectangle(self, name, retval)
     return retval
 
 
-def setRectangle(self, name, value):
+def getRectangle(self, name, defaults):
+    warnings.warn(
+        DEPR_MSG_NO_REPLACEMENT.format("getRectangle"),
+        PendingDeprecationWarning,
+    )
+    return _get_rectangle(self, name, defaults)
+
+
+def _set_rectangle(self, name, value):
     if not isinstance(name, NameObject):
         name = NameObject(name)
     self[name] = value
 
 
-def deleteRectangle(self, name):
+def setRectangle(self, name, value):
+    warnings.warn(
+        DEPR_MSG_NO_REPLACEMENT.format("setRectangle"),
+        PendingDeprecationWarning,
+    )
+    _set_rectangle(self, name, value)
+
+
+def _delete_rectangle(self, name):
     del self[name]
 
 
-def createRectangleAccessor(name, fallback):
-    return property(
-        lambda self: getRectangle(self, name, fallback),
-        lambda self, value: setRectangle(self, name, value),
-        lambda self: deleteRectangle(self, name),
+def deleteRectangle(self, name):
+    warnings.warn(
+        DEPR_MSG_NO_REPLACEMENT.format("deleteRectangle"),
+        PendingDeprecationWarning,
     )
+    del self[name]
+
+
+def _create_rectangle_accessor(name, fallback):
+    return property(
+        lambda self: _get_rectangle(self, name, fallback),
+        lambda self, value: _set_rectangle(self, name, value),
+        lambda self: _delete_rectangle(self, name),
+    )
+
+
+def createRectangleAccessor(name, fallback):
+    warnings.warn(
+        DEPR_MSG_NO_REPLACEMENT.format("createRectangleAccessor"),
+        PendingDeprecationWarning,
+    )
+    return _create_rectangle_accessor(name, fallback)
 
 
 class PageObject(DictionaryObject):
@@ -106,7 +139,7 @@ class PageObject(DictionaryObject):
         self.indirectRef = indirectRef
 
     @staticmethod
-    def createBlankPage(pdf=None, width=None, height=None):
+    def create_blank_page(pdf=None, width=None, height=None):
         """
         Return a new blank page.
 
@@ -142,7 +175,15 @@ class PageObject(DictionaryObject):
 
         return page
 
-    def rotateClockwise(self, angle):
+    @staticmethod
+    def createBlankPage(pdf=None, width=None, height=None):
+        warnings.warn(
+            DEPR_MSG.format("createBlankPage", "create_blank_page"),
+            PendingDeprecationWarning,
+        )
+        return PageObject.create_blank_page(pdf, width, height)
+
+    def rotate_clockwise(self, angle):
         """
         Rotate a page clockwise by increments of 90 degrees.
 
@@ -154,13 +195,18 @@ class PageObject(DictionaryObject):
         self._rotate(angle)
         return self
 
-    def rotateCounterClockwise(self, angle):
-        """
-        Rotate a page counter-clockwise by increments of 90 degrees.
+    def rotateClockwise(self, angle):
+        warnings.warn(
+            DEPR_MSG.format("rotateClockwise", "rotate_clockwise"),
+            PendingDeprecationWarning,
+        )
+        return self.rotate_clockwise(angle)
 
-        :param int angle: Angle to rotate the page.  Must be an increment
-            of 90 deg.
-        """
+    def rotateCounterClockwise(self, angle):
+        warnings.warn(
+            DEPR_MSG.format("rotateCounterClockwise", "rotate_clockwise"),
+            PendingDeprecationWarning,
+        )
         if angle % 90 != 0:
             raise ValueError("Rotation angle must be a multiple of 90")
         self._rotate(-angle)
@@ -240,7 +286,7 @@ class PageObject(DictionaryObject):
         )
         return contents
 
-    def getContents(self):
+    def get_contents(self):
         """
         Access the page contents.
 
@@ -252,7 +298,13 @@ class PageObject(DictionaryObject):
         else:
             return None
 
-    def mergePage(self, page2):
+    def getContents(self):
+        warnings.warn(
+            DEPR_MSG.format("getContents", "get_contents"),
+        )
+        return self.get_contents()
+
+    def merge_page(self, page2):
         """
         Merge the content streams of two pages into one.
 
@@ -266,6 +318,12 @@ class PageObject(DictionaryObject):
             an instance of :class:`PageObject<PageObject>`.
         """
         self._merge_page(page2)
+
+    def mergePage(self, page2):
+        warnings.warn(
+            DEPR_MSG.format("mergePage", "merge_page"),
+        )
+        return self.merge_page(page2)
 
     def _merge_page(self, page2, page2transformation=None, ctm=None, expand=False):
         # First we work on merging the resource dictionaries.  This allows us
@@ -312,7 +370,7 @@ class PageObject(DictionaryObject):
 
         new_content_array = ArrayObject()
 
-        original_content = self.getContents()
+        original_content = self.get_contents()
         if original_content is not None:
             new_content_array.append(
                 PageObject._push_pop_gs(original_content, self.pdf)
@@ -589,7 +647,7 @@ class PageObject(DictionaryObject):
         :param tuple ctm: A 6-element tuple containing the operands of the
             transformation matrix.
         """
-        original_content = self.getContents()
+        original_content = self.get_contents()
         if original_content is not None:
             new_content = PageObject._add_transformation_matrix(
                 original_content, self.pdf, ctm
@@ -635,7 +693,7 @@ class PageObject(DictionaryObject):
             else:
                 self[NameObject(PG.VP)][NameObject("/BBox")] = scaled_bbox
 
-    def scaleBy(self, factor):
+    def scale_by(self, factor):
         """
         Scale a page by the given factor by appling a transformation
         matrix to its content and updating the page size.
@@ -644,7 +702,14 @@ class PageObject(DictionaryObject):
         """
         self.scale(factor, factor)
 
-    def scaleTo(self, width, height):
+    def scaleBy(self, factor):
+        warnings.warn(
+            DEPR_MSG.format("Page.scaleBy", "Page.scale_by"),
+            PendingDeprecationWarning,
+        )
+        self.scale(factor, factor)
+
+    def scale_to(self, width, height):
         """
         Scale a page to the specified dimentions by appling a
         transformation matrix to its content and updating the page size.
@@ -660,7 +725,14 @@ class PageObject(DictionaryObject):
         )
         self.scale(sx, sy)
 
-    def compressContentStreams(self):
+    def scaleTo(self, width, height):
+        warnings.warn(
+            DEPR_MSG.format("Page.scaleTo", "Page.scale_to"),
+            PendingDeprecationWarning,
+        )
+        self.scale_to(width, height)
+
+    def compress_content_streams(self):
         """
         Compress the size of this page by joining all content streams and
         applying a FlateDecode filter.
@@ -668,13 +740,22 @@ class PageObject(DictionaryObject):
         However, it is possible that this function will perform no action if
         content stream compression becomes "automatic" for some reason.
         """
-        content = self.getContents()
+        content = self.get_contents()
         if content is not None:
             if not isinstance(content, ContentStream):
                 content = ContentStream(content, self.pdf)
             self[NameObject(PG.CONTENTS)] = content.flateEncode()
 
-    def extractText(self, Tj_sep="", TJ_sep=""):
+    def compressContentStreams(self):
+        warnings.warn(
+            DEPR_MSG.format(
+                "Page.compressContentStreams", "Page.compress_content_streams"
+            ),
+            PendingDeprecationWarning,
+        )
+        self.compress_content_streams()
+
+    def extract_text(self, Tj_sep="", TJ_sep=""):
         """
         Locate all text drawing commands, in the order they are provided in the
         content stream, and extract the text.  This works well for some PDF
@@ -728,14 +809,20 @@ class PageObject(DictionaryObject):
                 text += "\n"
         return text
 
-    mediaBox = createRectangleAccessor(PG.MEDIABOX, ())
+    def extractText(self, Tj_sep="", TJ_sep=""):
+        warnings.warn(
+            DEPR_MSG.format("Page.extractText", "Page.extract_text"),
+        )
+        return self.extract_text(Tj_sep=Tj_sep, TJ_sep=TJ_sep)
+
+    mediaBox = _create_rectangle_accessor(PG.MEDIABOX, ())
     """
     A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
     defining the boundaries of the physical medium on which the page is
     intended to be displayed or printed.
     """
 
-    cropBox = createRectangleAccessor("/CropBox", (PG.MEDIABOX,))
+    cropBox = _create_rectangle_accessor("/CropBox", (PG.MEDIABOX,))
     """
     A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
     defining the visible region of default user space.  When the page is
@@ -744,20 +831,20 @@ class PageObject(DictionaryObject):
     implementation-defined manner.  Default value: same as :attr:`mediaBox<mediaBox>`.
     """
 
-    bleedBox = createRectangleAccessor("/BleedBox", ("/CropBox", PG.MEDIABOX))
+    bleedBox = _create_rectangle_accessor("/BleedBox", ("/CropBox", PG.MEDIABOX))
     """
     A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
     defining the region to which the contents of the page should be clipped
     when output in a production enviroment.
     """
 
-    trimBox = createRectangleAccessor("/TrimBox", ("/CropBox", PG.MEDIABOX))
+    trimBox = _create_rectangle_accessor("/TrimBox", ("/CropBox", PG.MEDIABOX))
     """
     A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
     defining the intended dimensions of the finished page after trimming.
     """
 
-    artBox = createRectangleAccessor("/ArtBox", ("/CropBox", PG.MEDIABOX))
+    artBox = _create_rectangle_accessor("/ArtBox", ("/CropBox", PG.MEDIABOX))
     """
     A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
     defining the extent of the page's meaningful content as intended by the

@@ -59,6 +59,9 @@ bytes_type = type(bytes())  # Works the same in Python 2.X and 3.X
 string_type = getattr(builtins, "unicode", str)
 int_types = (int, long) if sys.version_info[0] < 3 else (int,)  # type: ignore  # noqa
 
+DEPR_MSG_NO_REPLACEMENT = "{} is deprecated and will be removed in PyPDF2 2.0.0."
+DEPR_MSG = "{} is deprecated and will be removed in PyPDF2 2.0.0. Use {} instead."
+
 
 # Make basic type tests more consistent
 def isString(s):
