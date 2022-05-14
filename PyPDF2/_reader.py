@@ -28,6 +28,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import struct
+import re
 import warnings
 from hashlib import md5
 from io import BytesIO
@@ -1266,7 +1267,6 @@ class PdfFileReader:
         self.xref = {}
         stream.seek(0, 0)
         f_ = stream.read(-1)
-        import re
 
         for m in re.finditer(b_(r"[\r\n \t][ \t]*(\d+)[ \t]+(\d+)[ \t]+obj"), f_):
             idnum = int(m.group(1))

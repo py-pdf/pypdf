@@ -32,6 +32,9 @@ import logging
 import struct
 import uuid
 import warnings
+import random
+import time
+
 from hashlib import md5
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 
@@ -496,9 +499,6 @@ class PdfFileWriter:
             control annotations, 9 for form fields, 10 for extraction of
             text and graphics.
         """
-        import random
-        import time
-
         if owner_pwd is None:
             owner_pwd = user_pwd
         if use_128bit:

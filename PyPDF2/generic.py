@@ -42,6 +42,9 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from .constants import FilterTypes as FT
 from .constants import StreamAttributes as SA
+from .constants import TypArguments as TA
+from .constants import TypFitArguments as TF
+
 from .errors import (
     STREAM_TRUNCATED_PREMATURELY,
     PdfReadError,
@@ -515,7 +518,7 @@ class DictionaryObject(dict, PdfObject):
         that can be used to access XMP metadata from the document.  Can also
         return None if no metadata was found on the document root.
         """
-        from PyPDF2.xmp import XmpInformation
+        from .xmp import XmpInformation
 
         metadata = self.get("/Metadata", None)
         if metadata is None:
@@ -852,7 +855,7 @@ class StreamObject(DictionaryObject):
         return retval
 
     def flateEncode(self) -> "EncodedStreamObject":
-        from PyPDF2.filters import FlateDecode
+        from .filters import FlateDecode
 
         if SA.FILTER in self:
             f = self[SA.FILTER]
@@ -884,7 +887,7 @@ class EncodedStreamObject(StreamObject):
         self.decodedSelf: Optional[DecodedStreamObject] = None
 
     def getData(self) -> Union[None, str, bytes]:
-        from PyPDF2.filters import decodeStreamData
+        from .filters import decodeStreamData
 
         if self.decodedSelf:
             # cached version of decoded object
@@ -1337,8 +1340,6 @@ class Destination(TreeObject):
         self[NameObject("/Page")] = page
         self[NameObject("/Type")] = typ
 
-        from PyPDF2.constants import TypArguments as TA
-        from PyPDF2.constants import TypFitArguments as TF
 
         # from table 8.2 of the PDF 1.7 reference.
         if typ == "/XYZ":
