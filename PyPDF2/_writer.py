@@ -188,7 +188,7 @@ class PdfWriter(object):
 
     def insertPage(self, page, index=0):
         warnings.warn(
-            "insertPage will be removed in PyPDF2 2.0.0. Use insert_page instead.",
+            DEPR_MSG.format("insertPage()", "insert_page()"),
             PendingDeprecationWarning,
         )
         self.insert_page(page, index)
@@ -208,12 +208,14 @@ class PdfWriter(object):
 
     def getPage(self, pageNumber):
         warnings.warn(
-            "getPage will be removed in PyPDF2 2.0.0. Use get_page instead.",
+            DEPR_MSG.format("getPage()", "get_page()"),
             PendingDeprecationWarning,
         )
         return self.get_page(pageNumber)
 
-    def get_num_pages(self):
+    def get_num_pages(
+        self,
+    ):  # consistency with reader: should be possible to use the same
         """
         :return: the number of pages.
         :rtype: int
@@ -223,8 +225,7 @@ class PdfWriter(object):
 
     def getNumPages(self):
         warnings.warn(
-            "getNumPages will be removed in PyPDF2 2.0.0. "
-            "Use get_num_pages instead.",
+            DEPR_MSG.format("getNumPages()", "get_num_pages()"),
             PendingDeprecationWarning,
         )
         return self.get_num_pages()
