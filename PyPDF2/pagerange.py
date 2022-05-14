@@ -10,7 +10,7 @@ see https://github.com/py-pdf/PyPDF2/blob/main/LICENSE
 import re
 from typing import Any, List, Tuple, Union
 
-from PyPDF2.errors import ParseError
+from .errors import ParseError
 
 _INT_RE = r"(0|-?[1-9]\d*)"  # A decimal int, don't allow "-0".
 PAGE_RANGE_RE = "^({int}|({int}?(:{int}?(:{int}?)?)))$".format(int=_INT_RE)

@@ -28,11 +28,11 @@
 from io import BytesIO, FileIO, IOBase
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 
-from PyPDF2._page import PageObject
-from PyPDF2._reader import PdfFileReader
-from PyPDF2._writer import PdfFileWriter
-from PyPDF2.constants import PagesAttributes as PA
-from PyPDF2.generic import (
+from ._page import PageObject
+from ._reader import PdfFileReader
+from ._writer import PdfFileWriter
+from .constants import PagesAttributes as PA
+from .generic import (
     ArrayObject,
     Bookmark,
     Destination,
@@ -46,8 +46,8 @@ from PyPDF2.generic import (
     TreeObject,
     createStringObject,
 )
-from PyPDF2.pagerange import PageRange, PageRangeSpec
-from PyPDF2.types import (
+from .pagerange import PageRange, PageRangeSpec
+from .types import (
     BookmarkTypes,
     LayoutType,
     OutlinesType,
@@ -55,7 +55,7 @@ from PyPDF2.types import (
     ZoomArgsType,
     ZoomArgType,
 )
-from PyPDF2.utils import StrByteType, str_
+from .utils import StrByteType, str_
 
 ERR_CLOSED_WRITER = "close() was called and thus the writer cannot be used anymore"
 

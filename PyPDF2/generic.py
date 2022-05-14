@@ -40,22 +40,30 @@ import warnings
 from io import BytesIO
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
-from PyPDF2 import utils
-from PyPDF2.constants import FilterTypes as FT
-from PyPDF2.constants import StreamAttributes as SA
-from PyPDF2.errors import (
+from .constants import FilterTypes as FT
+from .constants import StreamAttributes as SA
+from .constants import TypArguments as TA
+from .constants import TypFitArguments as TF
+
+from .errors import (
     STREAM_TRUNCATED_PREMATURELY,
     PdfReadError,
     PdfReadWarning,
     PdfStreamError,
 )
-from PyPDF2.utils import (
+from .utils import (
+    WHITESPACES,
     RC4_encrypt,
     StreamType,
     b_,
+    bytes_type,
+    hexencode,
+    hexStr,
     ord_,
     readNonWhitespace,
+    readUntilRegex,
     skipOverComment,
+    str_,
 )
 
 logger = logging.getLogger(__name__)
@@ -200,7 +208,7 @@ class IndirectObject(PdfObject):
         if r != b_("R"):
             raise PdfReadError(
                 "Error reading indirect object reference at byte %s"
-                % utils.hexStr(stream.tell())
+                % hexStr(stream.tell())
             )
         return IndirectObject(int(idnum), int(generation), pdf)
 
@@ -210,7 +218,7 @@ class FloatObject(decimal.Decimal, PdfObject):
         cls, value: Union[str, Any] = "0", context: Optional[Any] = None
     ) -> "FloatObject":
         try:
-            return decimal.Decimal.__new__(cls, utils.str_(value), context)
+            return decimal.Decimal.__new__(cls, str_(value), context)
         except Exception:
             try:
                 return decimal.Decimal.__new__(cls, str(value))
@@ -261,7 +269,7 @@ class NumberObject(int, PdfObject):
 
     @staticmethod
     def readFromStream(stream: StreamType) -> Union["NumberObject", FloatObject]:
-        num = utils.readUntilRegex(stream, NumberObject.NumberPattern)
+        num = readUntilRegex(stream, NumberObject.NumberPattern)
         if num.find(NumberObject.ByteDot) != -1:
             return FloatObject(num)
         else:
@@ -366,7 +374,7 @@ def readStringFromStream(
     return createStringObject(txt)
 
 
-class ByteStringObject(utils.bytes_type, PdfObject):  # type: ignore
+class ByteStringObject(bytes_type, PdfObject):  # type: ignore
     """
     Represents a string object where the text encoding could not be determined.
     This occurs quite often, as the PDF spec doesn't provide an alternate way to
@@ -386,7 +394,7 @@ class ByteStringObject(utils.bytes_type, PdfObject):  # type: ignore
         if encryption_key:
             bytearr = RC4_encrypt(encryption_key, bytearr)  #  type: ignore
         stream.write(b_("<"))
-        stream.write(utils.hexencode(bytearr))
+        stream.write(hexencode(bytearr))
         stream.write(b_(">"))
 
 
@@ -462,9 +470,7 @@ class NameObject(str, PdfObject):
         name = stream.read(1)
         if name != NameObject.surfix:
             raise PdfReadError("name read error")
-        name += utils.readUntilRegex(
-            stream, NameObject.delimiterPattern, ignore_eof=True
-        )
+        name += readUntilRegex(stream, NameObject.delimiterPattern, ignore_eof=True)
         try:
             try:
                 ret = name.decode("utf-8")
@@ -512,7 +518,7 @@ class DictionaryObject(dict, PdfObject):
         that can be used to access XMP metadata from the document.  Can also
         return None if no metadata was found on the document root.
         """
-        from PyPDF2.xmp import XmpInformation
+        from .xmp import XmpInformation
 
         metadata = self.get("/Metadata", None)
         if metadata is None:
@@ -580,7 +586,7 @@ class DictionaryObject(dict, PdfObject):
         if tmp != b_("<<"):
             raise PdfReadError(
                 "Dictionary read error at byte %s: stream must begin with '<<'"
-                % utils.hexStr(stream.tell())
+                % hexStr(stream.tell())
             )
         data: Dict[Any, Any] = {}
         while True:
@@ -608,12 +614,12 @@ class DictionaryObject(dict, PdfObject):
                 # multiple definitions of key not permitted
                 raise PdfReadError(
                     "Multiple definitions in dictionary at byte %s for key %s"
-                    % (utils.hexStr(stream.tell()), key)
+                    % (hexStr(stream.tell()), key)
                 )
             else:
                 warnings.warn(
                     "Multiple definitions in dictionary at byte %s for key %s"
-                    % (utils.hexStr(stream.tell()), key),
+                    % (hexStr(stream.tell()), key),
                     PdfReadWarning,
                 )
 
@@ -664,7 +670,7 @@ class DictionaryObject(dict, PdfObject):
                     stream.seek(pos, 0)
                     raise PdfReadError(
                         "Unable to find 'endstream' marker after stream at byte %s."
-                        % utils.hexStr(stream.tell())
+                        % hexStr(stream.tell())
                     )
         else:
             stream.seek(pos, 0)
@@ -849,7 +855,7 @@ class StreamObject(DictionaryObject):
         return retval
 
     def flateEncode(self) -> "EncodedStreamObject":
-        from PyPDF2.filters import FlateDecode
+        from .filters import FlateDecode
 
         if SA.FILTER in self:
             f = self[SA.FILTER]
@@ -881,7 +887,7 @@ class EncodedStreamObject(StreamObject):
         self.decodedSelf: Optional[DecodedStreamObject] = None
 
     def getData(self) -> Union[None, str, bytes]:
-        from PyPDF2.filters import decodeStreamData
+        from .filters import decodeStreamData
 
         if self.decodedSelf:
             # cached version of decoded object
@@ -932,9 +938,7 @@ class ContentStream(DecodedStreamObject):
                 break
             stream.seek(-1, 1)
             if peek.isalpha() or peek == b_("'") or peek == b_('"'):
-                operator = utils.readUntilRegex(
-                    stream, NameObject.delimiterPattern, True
-                )
+                operator = readUntilRegex(stream, NameObject.delimiterPattern, True)
                 if operator == b_("BI"):
                     # begin inline image - a completely different parsing
                     # mechanism is required, of course... thanks buddy...
@@ -1000,7 +1004,7 @@ class ContentStream(DecodedStreamObject):
                     info = tok + tok2
                     # We need to find whitespace between EI and Q.
                     has_q_whitespace = False
-                    while tok3 in utils.WHITESPACES:
+                    while tok3 in WHITESPACES:
                         has_q_whitespace = True
                         info += tok3
                         tok3 = stream.read(1)
@@ -1336,8 +1340,6 @@ class Destination(TreeObject):
         self[NameObject("/Page")] = page
         self[NameObject("/Type")] = typ
 
-        from PyPDF2.constants import TypArguments as TA
-        from PyPDF2.constants import TypFitArguments as TF
 
         # from table 8.2 of the PDF 1.7 reference.
         if typ == "/XYZ":
@@ -1501,7 +1503,7 @@ def createStringObject(
     """
     if isinstance(string, str):
         return TextStringObject(string)
-    elif isinstance(string, utils.bytes_type):
+    elif isinstance(string, bytes_type):
         try:
             if string.startswith(codecs.BOM_UTF16_BE):
                 retval = TextStringObject(string.decode("utf-16"))

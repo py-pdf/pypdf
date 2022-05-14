@@ -32,20 +32,23 @@ import logging
 import struct
 import uuid
 import warnings
+import random
+import time
+
 from hashlib import md5
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 
-from PyPDF2._page import PageObject
-from PyPDF2._reader import PdfFileReader
-from PyPDF2._security import _alg33, _alg34, _alg35
-from PyPDF2.constants import CatalogAttributes as CA
-from PyPDF2.constants import Core as CO
-from PyPDF2.constants import EncryptionDictAttributes as ED
-from PyPDF2.constants import PageAttributes as PG
-from PyPDF2.constants import PagesAttributes as PA
-from PyPDF2.constants import StreamAttributes as SA
-from PyPDF2.constants import TrailerKeys as TK
-from PyPDF2.generic import (
+from ._page import PageObject
+from ._reader import PdfFileReader
+from ._security import _alg33, _alg34, _alg35
+from .constants import CatalogAttributes as CA
+from .constants import Core as CO
+from .constants import EncryptionDictAttributes as ED
+from .constants import PageAttributes as PG
+from .constants import PagesAttributes as PA
+from .constants import StreamAttributes as SA
+from .constants import TrailerKeys as TK
+from .generic import (
     ArrayObject,
     BooleanObject,
     ByteStringObject,
@@ -65,7 +68,7 @@ from PyPDF2.generic import (
     TreeObject,
     createStringObject,
 )
-from PyPDF2.types import (
+from .types import (
     BookmarkTypes,
     BorderArrayType,
     FitType,
@@ -74,7 +77,7 @@ from PyPDF2.types import (
     ZoomArgsType,
     ZoomArgType,
 )
-from PyPDF2.utils import StreamType, b_
+from .utils import StreamType, b_
 
 logger = logging.getLogger(__name__)
 
@@ -496,9 +499,6 @@ class PdfFileWriter:
             control annotations, 9 for form fields, 10 for extraction of
             text and graphics.
         """
-        import random
-        import time
-
         if owner_pwd is None:
             owner_pwd = user_pwd
         if use_128bit:

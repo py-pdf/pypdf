@@ -14,7 +14,7 @@ try:
 except ImportError:
     from typing_extensions import TypeAlias  # type: ignore[misc]
 
-from PyPDF2.generic import (
+from .generic import (
     ArrayObject,
     Bookmark,
     Destination,

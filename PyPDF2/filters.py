@@ -32,26 +32,27 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import math
 import struct
-from io import StringIO
+from io import StringIO,BytesIO
 from typing import Any, Dict, Optional, Tuple, Union
 import zlib
 
-from PyPDF2.generic import ArrayObject, DictionaryObject, NameObject
+from .generic import ArrayObject, DictionaryObject, NameObject
 
 try:
     from typing import Literal  # type: ignore[attr-defined]
 except ImportError:
     from typing_extensions import Literal  # type: ignore[misc]
 
-from PyPDF2.constants import CcittFaxDecodeParameters as CCITT
-from PyPDF2.constants import ColorSpaces
-from PyPDF2.constants import FilterTypeAbbreviations as FTA
-from PyPDF2.constants import FilterTypes as FT
-from PyPDF2.constants import ImageAttributes as IA
-from PyPDF2.constants import LzwFilterParameters as LZW
-from PyPDF2.constants import StreamAttributes as SA
-from PyPDF2.errors import PdfReadError, PdfStreamError
-from PyPDF2.utils import ord_, paethPredictor
+from .constants import CcittFaxDecodeParameters as CCITT
+from .constants import ColorSpaces
+from .constants import FilterTypeAbbreviations as FTA
+from .constants import FilterTypes as FT
+from .constants import ImageAttributes as IA
+from .constants import LzwFilterParameters as LZW
+from .constants import StreamAttributes as SA
+from .constants import GraphicsStateParameters as G
+from .errors import PdfReadError, PdfStreamError
+from .utils import b_,ord_, paethPredictor
 
 
 def decompress(data: bytes) -> bytes:
@@ -498,11 +499,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
 
     :return: Tuple[file extension, bytes]
     """
-    import io
-
     from PIL import Image
-
-    from PyPDF2.constants import GraphicsStateParameters as G
 
     size = (x_object_obj[IA.WIDTH], x_object_obj[IA.HEIGHT])
     data = x_object_obj.getData()  # type: ignore
@@ -518,7 +515,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
             if G.S_MASK in x_object_obj:  # add alpha channel
                 alpha = Image.frombytes("L", size, x_object_obj[G.S_MASK].getData())
                 img.putalpha(alpha)
-            img_byte_arr = io.BytesIO()
+            img_byte_arr = BytesIO()
             img.save(img_byte_arr, format="PNG")
             data = img_byte_arr.getvalue()
         elif x_object_obj[SA.FILTER] in (
@@ -526,8 +523,6 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
             [FT.ASCII_85_DECODE],
             [FT.CCITT_FAX_DECODE],
         ):
-            from PyPDF2.utils import b_
-
             extension = ".png"
             data = b_(data)
         elif x_object_obj[SA.FILTER] == FT.DCT_DECODE:
@@ -539,7 +534,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
     else:
         extension = ".png"
         img = Image.frombytes(mode, size, data)
-        img_byte_arr = io.BytesIO()
+        img_byte_arr = BytesIO()
         img.save(img_byte_arr, format="PNG")
         data = img_byte_arr.getvalue()
 

@@ -28,6 +28,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import struct
+import re
 import warnings
 from hashlib import md5
 from io import BytesIO
@@ -44,20 +45,19 @@ from typing import (
     cast,
 )
 
-from PyPDF2 import utils
-from PyPDF2._page import PageObject
-from PyPDF2._security import _alg33_1, _alg34, _alg35
-from PyPDF2.constants import CatalogAttributes as CA
-from PyPDF2.constants import CatalogDictionary as CD
-from PyPDF2.constants import Core as CO
-from PyPDF2.constants import DocumentInformationAttributes as DI
-from PyPDF2.constants import EncryptionDictAttributes as ED
-from PyPDF2.constants import PageAttributes as PG
-from PyPDF2.constants import PagesAttributes as PA
-from PyPDF2.constants import StreamAttributes as SA
-from PyPDF2.constants import TrailerKeys as TK
-from PyPDF2.errors import PdfReadError, PdfReadWarning, PdfStreamError
-from PyPDF2.generic import (
+from ._page import PageObject
+from ._security import _alg33_1, _alg34, _alg35
+from .constants import CatalogAttributes as CA
+from .constants import CatalogDictionary as CD
+from .constants import Core as CO
+from .constants import DocumentInformationAttributes as DI
+from .constants import EncryptionDictAttributes as ED
+from .constants import PageAttributes as PG
+from .constants import PagesAttributes as PA
+from .constants import StreamAttributes as SA
+from .constants import TrailerKeys as TK
+from .errors import PdfReadError, PdfReadWarning, PdfStreamError
+from .generic import (
     ArrayObject,
     BooleanObject,
     ByteStringObject,
@@ -79,15 +79,19 @@ from PyPDF2.generic import (
     createStringObject,
     readObject,
 )
-from PyPDF2.types import OutlinesType
-from PyPDF2.utils import (
+from .types import OutlinesType
+from .utils import (
+    RC4_encrypt,
     StrByteType,
     StreamType,
     b_,
+    ord_,
     readNonWhitespace,
     readUntilWhitespace,
+    skipOverComment,
+    skipOverWhitespace,
 )
-from PyPDF2.xmp import XmpInformation
+from .xmp import XmpInformation
 
 
 def convertToInt(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:
@@ -923,9 +927,9 @@ class PdfFileReader:
         key: Union[str, bytes],
     ) -> PdfObject:
         if isinstance(obj, (ByteStringObject, TextStringObject)):
-            obj = createStringObject(utils.RC4_encrypt(key, obj.original_bytes))
+            obj = createStringObject(RC4_encrypt(key, obj.original_bytes))
         elif isinstance(obj, StreamObject):
-            obj._data = utils.RC4_encrypt(key, obj._data)
+            obj._data = RC4_encrypt(key, obj._data)
         elif isinstance(obj, DictionaryObject):
             for dictkey, value in list(obj.items()):
                 obj[dictkey] = self._decryptObject(value, key)
@@ -940,14 +944,14 @@ class PdfFileReader:
         # object header.  In reality... some files have stupid cross reference
         # tables that are off by whitespace bytes.
         extra = False
-        utils.skipOverComment(stream)
-        extra |= utils.skipOverWhitespace(stream)
+        skipOverComment(stream)
+        extra |= skipOverWhitespace(stream)
         stream.seek(-1, 1)
         idnum = readUntilWhitespace(stream)
-        extra |= utils.skipOverWhitespace(stream)
+        extra |= skipOverWhitespace(stream)
         stream.seek(-1, 1)
         generation = readUntilWhitespace(stream)
-        extra |= utils.skipOverWhitespace(stream)
+        extra |= skipOverWhitespace(stream)
         stream.seek(-1, 1)
 
         # although it's not used, it might still be necessary to read
@@ -1263,7 +1267,6 @@ class PdfFileReader:
         self.xref = {}
         stream.seek(0, 0)
         f_ = stream.read(-1)
-        import re
 
         for m in re.finditer(b_(r"[\r\n \t][ \t]*(\d+)[ \t]+(\d+)[ \t]+obj"), f_):
             idnum = int(m.group(1))
@@ -1442,14 +1445,14 @@ class PdfFileReader:
             key = _alg33_1(password, rev, keylen)
             real_O = cast(bytes, encrypt["/O"].getObject())
             if rev == 2:
-                userpass = utils.RC4_encrypt(key, real_O)
+                userpass = RC4_encrypt(key, real_O)
             else:
                 val = real_O
                 for i in range(19, -1, -1):
                     new_key = b_("")
                     for l in range(len(key)):
-                        new_key += b_(chr(utils.ord_(key[l]) ^ i))
-                    val = utils.RC4_encrypt(new_key, val)
+                        new_key += b_(chr(ord_(key[l]) ^ i))
+                    val = RC4_encrypt(new_key, val)
                 userpass = val
             owner_password, key = self._authenticateUserPassword(userpass)
             if owner_password:
