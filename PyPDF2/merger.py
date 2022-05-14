@@ -568,7 +568,7 @@ class PdfMerger(object):
         action.update(
             {NameObject("/D"): dest_array, NameObject("/S"): NameObject("/GoTo")}
         )
-        action_ref = self.output._addObject(action)
+        action_ref = self.output._add_object(action)
 
         outline_ref = self.output.getOutlineRoot()
 
@@ -597,7 +597,7 @@ class PdfMerger(object):
         if format:
             bookmark.update({NameObject("/F"): NumberObject(format)})
 
-        bookmark_ref = self.output._addObject(bookmark)
+        bookmark_ref = self.output._add_object(bookmark)
         parent = parent.get_object()
         parent.addChild(bookmark_ref, self.output)
 

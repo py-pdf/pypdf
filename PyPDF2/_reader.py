@@ -399,15 +399,20 @@ class PdfReader(object):
             return len(self.flattened_pages)
 
     def getNumPages(self):
-        # TODO: What would be the recommended way? len(reader.pages)?
+        warnings.warn(
+            "The `getNumPages` method of PdfReader will be removed in PyPDF2 2.0.0. "
+            "Use `len(reader.pages)` instead.",
+            PendingDeprecationWarning,
+        )
         return self._get_num_pages()
 
     @property
     def numPages(self):
-        """
-        Read-only property that accesses the
-        :meth:`getNumPages()<PdfReader.getNumPages>` function.
-        """
+        warnings.warn(
+            "The `numPages` attribute of PdfReader will be removed in PyPDF2 2.0.0. "
+            "Use `len(reader.pages)` instead.",
+            PendingDeprecationWarning,
+        )
         return self._get_num_pages()
 
     def get_page(self, page_number):
@@ -477,23 +482,23 @@ class PdfReader(object):
         if tree is None:
             return retval
 
-        self._checkKids(tree, retval, fileobj)
+        self._check_kids(tree, retval, fileobj)
         for attr in field_attributes:
             if attr in tree:
                 # Tree is a field
-                self._buildField(tree, retval, fileobj, field_attributes)
+                self._build_field(tree, retval, fileobj, field_attributes)
                 break
 
         if "/Fields" in tree:
             fields = tree["/Fields"]
             for f in fields:
                 field = f.get_object()
-                self._buildField(field, retval, fileobj, field_attributes)
+                self._build_field(field, retval, fileobj, field_attributes)
 
         return retval
 
-    def _buildField(self, field, retval, fileobj, fieldAttributes):
-        self._checkKids(field, retval, fileobj)
+    def _build_field(self, field, retval, fileobj, fieldAttributes):
+        self._check_kids(field, retval, fileobj)
         try:
             key = field["/TM"]
         except KeyError:
@@ -503,17 +508,17 @@ class PdfReader(object):
                 # Ignore no-name field for now
                 return
         if fileobj:
-            self._writeField(fileobj, field, fieldAttributes)
+            self._write_field(fileobj, field, fieldAttributes)
             fileobj.write("\n")
         retval[key] = Field(field)
 
-    def _checkKids(self, tree, retval, fileobj):
+    def _check_kids(self, tree, retval, fileobj):
         if PA.KIDS in tree:
             # recurse down the tree
             for kid in tree[PA.KIDS]:
                 self.getFields(kid.get_object(), retval, fileobj)
 
-    def _writeField(self, fileobj, field, fieldAttributes):
+    def _write_field(self, fileobj, field, fieldAttributes):
         order = ["/TM", "/T", "/FT", PA.PARENT, "/TU", "/Ff", "/V", "/DV"]
         for attr in order:
             attr_name = fieldAttributes[attr]
@@ -663,7 +668,7 @@ class PdfReader(object):
         )
         return self.get_outlines(node, outlines)
 
-    def _get_page_number_by_indirect(self, indirectRef):
+    def _get_page_number_by_indirect(self, indirect_ref):
         """Generate _pageId2Num"""
         if self._page_id2num is None:
             id2num = {}
@@ -671,12 +676,12 @@ class PdfReader(object):
                 id2num[x.indirectRef.idnum] = i
             self._page_id2num = id2num
 
-        if isinstance(indirectRef, NullObject):
+        if isinstance(indirect_ref, NullObject):
             return -1
-        if isinstance(indirectRef, int):
-            idnum = indirectRef
+        if isinstance(indirect_ref, int):
+            idnum = indirect_ref
         else:
-            idnum = indirectRef.idnum
+            idnum = indirect_ref.idnum
 
         ret = self._page_id2num.get(idnum, -1)
         return ret

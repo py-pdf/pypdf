@@ -98,7 +98,7 @@ class XmpInformation(PdfObject):
                     if child.namespaceURI == namespace:
                         yield child
 
-    def _getText(self, element):
+    def _get_text(self, element):
         text = ""
         for child in element.childNodes:
             if child.nodeType == child.TEXT_NODE:
@@ -392,7 +392,7 @@ class XmpInformation(PdfObject):
                 if node.nodeType == node.ATTRIBUTE_NODE:
                     value = node.nodeValue
                 else:
-                    value = self._getText(node)
+                    value = self._get_text(node)
                 self._custom_properties[key] = value
         return self._custom_properties
 

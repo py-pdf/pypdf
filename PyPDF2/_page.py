@@ -174,7 +174,7 @@ class PageObject(DictionaryObject):
         self[NameObject(PG.ROTATE)] = NumberObject(current_angle + angle)
 
     @staticmethod
-    def _mergeResources(res1, res2, resource):
+    def _merge_resources(res1, res2, resource):
         new_res = DictionaryObject()
         new_res.update(res1.get(resource, DictionaryObject()).get_object())
         page2res = res2.get(resource, DictionaryObject()).get_object()
@@ -189,7 +189,7 @@ class PageObject(DictionaryObject):
         return new_res, rename_res
 
     @staticmethod
-    def _contentStreamRename(stream, rename, pdf):
+    def _content_stream_rename(stream, rename, pdf):
         if not rename:
             return stream
         stream = ContentStream(stream, pdf)
@@ -209,7 +209,7 @@ class PageObject(DictionaryObject):
         return stream
 
     @staticmethod
-    def _pushPopGS(contents, pdf):
+    def _push_pop_gs(contents, pdf):
         # adds a graphics state "push" and "pop" to the beginning and end
         # of a content stream.  This isolates it from changes such as
         # transformation matricies.
@@ -219,7 +219,7 @@ class PageObject(DictionaryObject):
         return stream
 
     @staticmethod
-    def _addTransformationMatrix(contents, pdf, ctm):
+    def _add_transformation_matrix(contents, pdf, ctm):
         # adds transformation matrix at the beginning of the given
         # contents stream.
         a, b, c, d, e, f = ctm
@@ -265,9 +265,9 @@ class PageObject(DictionaryObject):
         :param PageObject page2: The page to be merged into this one. Should be
             an instance of :class:`PageObject<PageObject>`.
         """
-        self._mergePage(page2)
+        self._merge_page(page2)
 
-    def _mergePage(self, page2, page2transformation=None, ctm=None, expand=False):
+    def _merge_page(self, page2, page2transformation=None, ctm=None, expand=False):
         # First we work on merging the resource dictionaries.  This allows us
         # to find out what symbols in the content streams we might need to
         # rename.
@@ -294,7 +294,7 @@ class PageObject(DictionaryObject):
             RES.SHADING,
             RES.PROPERTIES,
         ):
-            new, newrename = PageObject._mergeResources(
+            new, newrename = PageObject._merge_resources(
                 original_resources, page2resources, res
             )
             if new:
@@ -314,7 +314,9 @@ class PageObject(DictionaryObject):
 
         original_content = self.getContents()
         if original_content is not None:
-            new_content_array.append(PageObject._pushPopGS(original_content, self.pdf))
+            new_content_array.append(
+                PageObject._push_pop_gs(original_content, self.pdf)
+            )
 
         page2content = page2.getContents()
         if page2content is not None:
@@ -338,10 +340,10 @@ class PageObject(DictionaryObject):
             page2content.operations.insert(2, [[], "n"])
             if page2transformation is not None:
                 page2content = page2transformation(page2content)
-            page2content = PageObject._contentStreamRename(
+            page2content = PageObject._content_stream_rename(
                 page2content, rename, self.pdf
             )
-            page2content = PageObject._pushPopGS(page2content, self.pdf)
+            page2content = PageObject._push_pop_gs(page2content, self.pdf)
             new_content_array.append(page2content)
 
         # if expanding the page to fit a new page, calculate the new media box size
@@ -402,9 +404,9 @@ class PageObject(DictionaryObject):
         :param bool expand: Whether the page should be expanded to fit the dimensions
             of the page to be merged.
         """
-        self._mergePage(
+        self._merge_page(
             page2,
-            lambda page2Content: PageObject._addTransformationMatrix(
+            lambda page2Content: PageObject._add_transformation_matrix(
                 page2Content, page2.pdf, ctm
             ),
             ctm,
@@ -589,10 +591,10 @@ class PageObject(DictionaryObject):
         """
         original_content = self.getContents()
         if original_content is not None:
-            new_content = PageObject._addTransformationMatrix(
+            new_content = PageObject._add_transformation_matrix(
                 original_content, self.pdf, ctm
             )
-            new_content = PageObject._pushPopGS(new_content, self.pdf)
+            new_content = PageObject._push_pop_gs(new_content, self.pdf)
             self[NameObject(PG.CONTENTS)] = new_content
 
     def scale(self, sx, sy):

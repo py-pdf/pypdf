@@ -37,10 +37,13 @@ PdfReader class:
   - _pageId2Num attribute ➔ _page_id2num
   - _buildDestination ➔ _build_destination
   - _buildOutline ➔ _build_outline
-  - _getPageNumberByIndirect ➔ _get_page_number_by_indirect
+  - _getPageNumberByIndirect(indirectRef) ➔ _get_page_number_by_indirect(indirect_ref)
   - _getObjectFromStream ➔ _get_object_from_stream
   - _decryptObject ➔ _decrypt_object
   - _flatten(..., indirectRef) ➔ _flatten(..., indirect_ref)
+  - _buildField ➔ _build_field
+  - _checkKids ➔ _check_kids
+  - _writeField ➔ _write_field
 
 PdfWriter class:
 
@@ -49,12 +52,22 @@ PdfWriter class:
   - getPage(pageNumber) ➔ get_page(page_number)
   - getPageLayout / setPageLayout / pageLayout ➔ page_layout attribute
   - getPageMode / setPageMode / pageMode ➔ page_mode attribute
+  - _addObject ➔ _add_object
+  - _addPage ➔ _add_page
+  - _sweepIndirectReferences ➔ _sweep_indirect_references
 
 PdfMerger class
   - `__init__` parameter: strict=True ➔ strict=False (the PdfFileMerger still has the old default): TODO
 
+Page class:
+  - _mergeResources ➔ _merge_resources
+  - _contentStreamRename ➔ _content_stream_rename
+  - _pushPopGS ➔ _push_pop_gs
+  - _addTransformationMatrix ➔ _add_transformation_matrix
+  - _mergePage ➔ _merge_page
 
-
+XmpInformation class:
+  - _getText ➔ _get_text
 
 Version 1.27.12, 2022-05-02
 ---------------------------

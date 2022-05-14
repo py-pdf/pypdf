@@ -88,7 +88,7 @@ class PdfWriter(object):
                 NameObject(PA.KIDS): ArrayObject(),
             }
         )
-        self._pages = self._addObject(pages)
+        self._pages = self._add_object(pages)
 
         # info object
         info = DictionaryObject()
@@ -99,7 +99,7 @@ class PdfWriter(object):
                 )
             }
         )
-        self._info = self._addObject(info)
+        self._info = self._add_object(info)
 
         # root object
         root = DictionaryObject()
@@ -113,7 +113,7 @@ class PdfWriter(object):
         self._root_object = root
         self.set_need_appearances_writer()
 
-    def _addObject(self, obj):
+    def _add_object(self, obj):
         self._objects.append(obj)
         return IndirectObject(len(self._objects), 0, self)
 
@@ -129,10 +129,10 @@ class PdfWriter(object):
         )
         return self.get_object(ido)
 
-    def _addPage(self, page, action):
+    def _add_page(self, page, action):
         assert page[PA.TYPE] == CO.PAGE
         page[NameObject(PA.PARENT)] = self._pages
-        page = self._addObject(page)
+        page = self._add_object(page)
         pages = self.get_object(self._pages)
         action(pages[PA.KIDS], page)
         pages[NameObject(PA.COUNT)] = NumberObject(pages[PA.COUNT] + 1)
@@ -166,7 +166,7 @@ class PdfWriter(object):
         :param PageObject page: The page to add to the document. Should be
             an instance of :class:`PageObject<PyPDF2.pdf.PageObject>`
         """
-        self._addPage(page, list.append)
+        self._add_page(page, list.append)
 
     def addPage(self, page):
         warnings.warn(
@@ -184,7 +184,7 @@ class PdfWriter(object):
             argument should be an instance of :class:`PageObject<pdf.PageObject>`.
         :param int index: Position at which the page will be inserted.
         """
-        self._addPage(page, lambda l, p: l.insert(index, p))
+        self._add_page(page, lambda l, p: l.insert(index, p))
 
     def insertPage(self, page, index=0):
         warnings.warn(
@@ -287,7 +287,7 @@ class PdfWriter(object):
                 NameObject("/JS"): NameObject("(%s)" % javascript),
             }
         )
-        js_indirect_object = self._addObject(js)
+        js_indirect_object = self._add_object(js)
 
         # We need a name for parameterized javascript in the pdf file, but it can be anything.
         js_string_name = str(uuid.uuid4())
@@ -304,7 +304,7 @@ class PdfWriter(object):
                 )
             }
         )
-        self._addObject(js_name_tree)
+        self._add_object(js_name_tree)
 
         self._root_object.update(
             {
@@ -528,7 +528,7 @@ class PdfWriter(object):
         encrypt[NameObject(ED.O)] = ByteStringObject(O)
         encrypt[NameObject(ED.U)] = ByteStringObject(U)
         encrypt[NameObject(ED.P)] = NumberObject(P)
-        self._encrypt = self._addObject(encrypt)
+        self._encrypt = self._add_object(encrypt)
         self._encrypt_key = key
 
     def write(self, stream):
@@ -545,7 +545,7 @@ class PdfWriter(object):
             )
 
         if not self._root:
-            self._root = self._addObject(self._root_object)
+            self._root = self._add_object(self._root_object)
 
         external_reference_map = {}
 
@@ -570,7 +570,7 @@ class PdfWriter(object):
                 ] = IndirectObject(obj_index + 1, 0, self)
 
         self.stack = []
-        self._sweepIndirectReferences(external_reference_map, self._root)
+        self._sweep_indirect_references(external_reference_map, self._root)
         del self.stack
 
         object_positions = self._write_header(stream)
@@ -638,23 +638,23 @@ class PdfWriter(object):
             args[NameObject(key)] = createStringObject(value)
         self.get_object(self._info).update(args)
 
-    def _sweepIndirectReferences(self, externMap, data):
+    def _sweep_indirect_references(self, externMap, data):
         if isinstance(data, DictionaryObject):
             for key, value in list(data.items()):
-                value = self._sweepIndirectReferences(externMap, value)
+                value = self._sweep_indirect_references(externMap, value)
                 if isinstance(value, StreamObject):
                     # a dictionary value is a stream.  streams must be indirect
                     # objects, so we need to change this value.
-                    value = self._addObject(value)
+                    value = self._add_object(value)
                 data[key] = value
             return data
         elif isinstance(data, ArrayObject):
             for i in range(len(data)):
-                value = self._sweepIndirectReferences(externMap, data[i])
+                value = self._sweep_indirect_references(externMap, data[i])
                 if isinstance(value, StreamObject):
                     # an array value is a stream.  streams must be indirect
                     # objects, so we need to change this value
-                    value = self._addObject(value)
+                    value = self._add_object(value)
                 data[i] = value
             return data
         elif isinstance(data, IndirectObject):
@@ -665,7 +665,7 @@ class PdfWriter(object):
                 else:
                     self.stack.append(data.idnum)
                     realdata = self.get_object(data)
-                    self._sweepIndirectReferences(externMap, realdata)
+                    self._sweep_indirect_references(externMap, realdata)
                     return data
             else:
                 if hasattr(data.pdf, "stream") and data.pdf.stream.closed:
@@ -688,7 +688,7 @@ class PdfWriter(object):
                         if data.generation not in externMap[data.pdf]:
                             externMap[data.pdf][data.generation] = {}
                         externMap[data.pdf][data.generation][data.idnum] = newobj_ido
-                        newobj = self._sweepIndirectReferences(externMap, newobj)
+                        newobj = self._sweep_indirect_references(externMap, newobj)
                         self._objects[idnum - 1] = newobj
                         return newobj_ido
                     except (ValueError, RecursionError):
@@ -718,7 +718,7 @@ class PdfWriter(object):
         else:
             outline = TreeObject()
             outline.update({})
-            outline_ref = self._addObject(outline)
+            outline_ref = self._add_object(outline)
             self._root_object[NameObject(CO.OUTLINES)] = outline_ref
 
         return outline
@@ -743,17 +743,17 @@ class PdfWriter(object):
                     dests[NameObject(CA.NAMES)] = nd
             else:
                 dests = DictionaryObject()
-                dests_ref = self._addObject(dests)
+                dests_ref = self._add_object(dests)
                 names[NameObject(CA.DESTS)] = dests_ref
                 nd = ArrayObject()
                 dests[NameObject(CA.NAMES)] = nd
 
         else:
             names = DictionaryObject()
-            names_ref = self._addObject(names)
+            names_ref = self._add_object(names)
             self._root_object[NameObject(CA.NAMES)] = names_ref
             dests = DictionaryObject()
-            dests_ref = self._addObject(dests)
+            dests_ref = self._add_object(dests)
             names[NameObject(CA.DESTS)] = dests_ref
             nd = ArrayObject()
             dests[NameObject(CA.NAMES)] = nd
@@ -761,7 +761,7 @@ class PdfWriter(object):
         return nd
 
     def addBookmarkDestination(self, dest, parent=None):
-        dest_ref = self._addObject(dest)
+        dest_ref = self._add_object(dest)
 
         outline_ref = self.getOutlineRoot()
 
@@ -783,10 +783,10 @@ class PdfWriter(object):
             action = DictionaryObject()
             for k, v in list(bookmark["/A"].items()):
                 action[NameObject(str(k))] = v
-            action_ref = self._addObject(action)
+            action_ref = self._add_object(action)
             bookmark_obj[NameObject("/A")] = action_ref
 
-        bookmark_ref = self._addObject(bookmark_obj)
+        bookmark_ref = self._add_object(bookmark_obj)
 
         outline_ref = self.getOutlineRoot()
 
@@ -838,7 +838,7 @@ class PdfWriter(object):
         action.update(
             {NameObject("/D"): dest_array, NameObject("/S"): NameObject("/GoTo")}
         )
-        action_ref = self._addObject(action)
+        action_ref = self._add_object(action)
 
         outline_ref = self.getOutlineRoot()
 
@@ -867,7 +867,7 @@ class PdfWriter(object):
         if format:
             bookmark.update({NameObject("/F"): NumberObject(format)})
 
-        bookmark_ref = self._addObject(bookmark)
+        bookmark_ref = self._add_object(bookmark)
 
         parent = parent.get_object()
         parent.addChild(bookmark_ref, self)
@@ -875,7 +875,7 @@ class PdfWriter(object):
         return bookmark_ref
 
     def addNamedDestinationObject(self, dest):
-        dest_ref = self._addObject(dest)
+        dest_ref = self._add_object(dest)
 
         nd = self.getNamedDestRoot()
         nd.extend([dest["/Title"], dest_ref])
@@ -894,7 +894,7 @@ class PdfWriter(object):
             }
         )
 
-        dest_ref = self._addObject(dest)
+        dest_ref = self._add_object(dest)
         nd = self.getNamedDestRoot()
 
         nd.extend([title, dest_ref])
@@ -1084,7 +1084,7 @@ class PdfWriter(object):
                 NameObject("/A"): lnk2,
             }
         )
-        lnk_ref = self._addObject(lnk)
+        lnk_ref = self._add_object(lnk)
 
         if PG.ANNOTS in page_ref:
             page_ref[PG.ANNOTS].append(lnk_ref)
@@ -1170,7 +1170,7 @@ class PdfWriter(object):
                 NameObject("/Dest"): dest_array,
             }
         )
-        lnk_ref = self._addObject(lnk)
+        lnk_ref = self._add_object(lnk)
 
         if PG.ANNOTS in page_ref:
             page_ref[PG.ANNOTS].append(lnk_ref)
