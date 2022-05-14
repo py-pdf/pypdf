@@ -41,6 +41,7 @@ import sys
 import warnings
 from sys import version_info
 
+from PyPDF2._security import RC4_encrypt
 from PyPDF2.constants import FilterTypes as FT
 from PyPDF2.constants import StreamAttributes as SA
 from PyPDF2.errors import (
@@ -51,15 +52,7 @@ from PyPDF2.errors import (
 )
 
 from . import filters, utils
-from .utils import (
-    RC4_encrypt,
-    b_,
-    chr_,
-    ord_,
-    readNonWhitespace,
-    skipOverComment,
-    u_,
-)
+from .utils import b_, chr_, ord_, readNonWhitespace, skipOverComment, u_
 
 if version_info < (3, 0):
     from cStringIO import StringIO

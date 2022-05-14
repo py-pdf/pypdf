@@ -101,6 +101,7 @@ XmpInformation class:
 
 utils.py:
   - matrixMultiply ➔ matrix_multiply
+  - RC4_encrypt is moved to the security module
 
 Version 1.27.12, 2022-05-02
 ---------------------------

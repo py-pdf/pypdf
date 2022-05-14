@@ -189,20 +189,13 @@ class ConvertFunctionsToVirtualList(object):
 
 
 def RC4_encrypt(key, plaintext):
-    S = list(range(256))
-    j = 0
-    for i in range(256):
-        j = (j + S[i] + ord_(key[i % len(key)])) % 256
-        S[i], S[j] = S[j], S[i]
-    i, j = 0, 0
-    retval = []
-    for x in range(len(plaintext)):
-        i = (i + 1) % 256
-        j = (j + S[i]) % 256
-        S[i], S[j] = S[j], S[i]
-        t = S[(S[i] + S[j]) % 256]
-        retval.append(b_(chr(ord_(plaintext[x]) ^ t)))
-    return b_("").join(retval)
+    from PyPDF2._security import RC4_encrypt as enc
+
+    warnings.warn(
+        "RC4_encrypt will be moved to the `PyPDF2._security` with PyPDF2 2.0.0",
+        PendingDeprecationWarning,
+    )
+    return enc(key, plaintext)
 
 
 def matrix_multiply(a, b):

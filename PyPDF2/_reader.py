@@ -37,7 +37,7 @@ from sys import version_info
 
 from PyPDF2 import utils
 from PyPDF2._page import PageObject
-from PyPDF2._security import _alg33_1, _alg34, _alg35
+from PyPDF2._security import RC4_encrypt, _alg33_1, _alg34, _alg35
 from PyPDF2.constants import CatalogAttributes as CA
 from PyPDF2.constants import Core as CO
 from PyPDF2.constants import DocumentInformationAttributes as DI
@@ -1036,9 +1036,9 @@ class PdfReader(object):
 
     def _decrypt_object(self, obj, key):
         if isinstance(obj, (ByteStringObject, TextStringObject)):
-            obj = createStringObject(utils.RC4_encrypt(key, obj.original_bytes))
+            obj = createStringObject(RC4_encrypt(key, obj.original_bytes))
         elif isinstance(obj, StreamObject):
-            obj._data = utils.RC4_encrypt(key, obj._data)
+            obj._data = RC4_encrypt(key, obj._data)
         elif isinstance(obj, DictionaryObject):
             for dictkey, value in list(obj.items()):
                 obj[dictkey] = self._decrypt_object(value, key)
@@ -1576,14 +1576,14 @@ class PdfReader(object):
             key = _alg33_1(password, rev, keylen)
             real_O = encrypt["/O"].get_object()
             if rev == 2:
-                userpass = utils.RC4_encrypt(key, real_O)
+                userpass = RC4_encrypt(key, real_O)
             else:
                 val = real_O
                 for i in range(19, -1, -1):
                     new_key = b_("")
                     for l in range(len(key)):
                         new_key += b_(chr(utils.ord_(key[l]) ^ i))
-                    val = utils.RC4_encrypt(new_key, val)
+                    val = RC4_encrypt(new_key, val)
                 userpass = val
             owner_password, key = self._authenticate_user_password(userpass)
             if owner_password:
