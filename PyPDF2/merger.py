@@ -75,7 +75,7 @@ class PdfMerger(object):
         ``True``).
     """
 
-    def __init__(self, strict=True, overwriteWarnings="deprecated"):
+    def __init__(self, strict=False, overwriteWarnings="deprecated"):
         if overwriteWarnings != "deprecated":
             warnings.warn(
                 "The `overwriteWarnings` argument to PdfReader will be removed with PyPDF2 2.0.0.",
@@ -676,4 +676,6 @@ class PdfFileMerger(PdfMerger):
             PendingDeprecationWarning,
             stacklevel=2,
         )
+        if "strict" not in kwargs and len(args) < 1:
+            kwargs["strict"] = True  # maintain the default
         super().__init__(*args, **kwargs)
