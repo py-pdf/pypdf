@@ -34,7 +34,7 @@
 import struct
 from hashlib import md5
 
-from PyPDF2.utils import b_, ord_, str_
+from PyPDF2._utils import b_, ord_, str_
 
 # ref: pdf1.8 spec section 3.5.2 algorithm 3.2
 _encryption_padding = (

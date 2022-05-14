@@ -4,8 +4,8 @@ import re
 import warnings
 from xml.dom.minidom import parseString
 
+from ._utils import DEPR_MSG, u_
 from .generic import PdfObject
-from .utils import DEPR_MSG, u_
 
 RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 DC_NAMESPACE = "http://purl.org/dc/elements/1.1/"

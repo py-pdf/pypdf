@@ -35,9 +35,16 @@ import warnings
 from hashlib import md5
 from sys import version_info
 
-from PyPDF2 import utils
+from PyPDF2 import _utils
 from PyPDF2._page import PageObject
 from PyPDF2._security import RC4_encrypt, _alg33_1, _alg34, _alg35
+from PyPDF2._utils import (
+    ConvertFunctionsToVirtualList,
+    b_,
+    formatWarning,
+    isString,
+    readUntilWhitespace,
+)
 from PyPDF2.constants import CatalogAttributes as CA
 from PyPDF2.constants import Core as CO
 from PyPDF2.constants import DocumentInformationAttributes as DI
@@ -63,13 +70,6 @@ from PyPDF2.generic import (
     createStringObject,
     read_object,
     readNonWhitespace,
-)
-from PyPDF2.utils import (
-    ConvertFunctionsToVirtualList,
-    b_,
-    formatWarning,
-    isString,
-    readUntilWhitespace,
 )
 
 if version_info < (3, 0):
@@ -1053,14 +1053,14 @@ class PdfReader(object):
         # object header.  In reality... some files have stupid cross reference
         # tables that are off by whitespace bytes.
         extra = False
-        utils.skipOverComment(stream)
-        extra |= utils.skipOverWhitespace(stream)
+        _utils.skipOverComment(stream)
+        extra |= _utils.skipOverWhitespace(stream)
         stream.seek(-1, 1)
         idnum = readUntilWhitespace(stream)
-        extra |= utils.skipOverWhitespace(stream)
+        extra |= _utils.skipOverWhitespace(stream)
         stream.seek(-1, 1)
         generation = readUntilWhitespace(stream)
-        extra |= utils.skipOverWhitespace(stream)
+        extra |= _utils.skipOverWhitespace(stream)
         stream.seek(-1, 1)
 
         # although it's not used, it might still be necessary to read
@@ -1085,8 +1085,7 @@ class PdfReader(object):
         return self.read_object_header(stream)
 
     def cache_get_indirect_object(self, generation, idnum):
-        out = self.resolved_objects.get((generation, idnum))
-        return out
+        return self.resolved_objects.get((generation, idnum))
 
     def cacheGetIndirectObject(self, generation, idnum):
         warnings.warn(
@@ -1582,7 +1581,7 @@ class PdfReader(object):
                 for i in range(19, -1, -1):
                     new_key = b_("")
                     for l in range(len(key)):
-                        new_key += b_(chr(utils.ord_(key[l]) ^ i))
+                        new_key += b_(chr(_utils.ord_(key[l]) ^ i))
                     val = RC4_encrypt(new_key, val)
                 userpass = val
             owner_password, key = self._authenticate_user_password(userpass)

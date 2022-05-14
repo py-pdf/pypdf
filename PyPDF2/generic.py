@@ -51,8 +51,8 @@ from PyPDF2.errors import (
     PdfStreamError,
 )
 
-from . import filters, utils
-from .utils import b_, chr_, ord_, readNonWhitespace, skipOverComment, u_
+from . import _utils, filters
+from ._utils import b_, chr_, ord_, readNonWhitespace, skipOverComment, u_
 
 if version_info < (3, 0):
     from cStringIO import StringIO
@@ -306,7 +306,7 @@ class IndirectObject(PdfObject):
         if r != b_("R"):
             raise PdfReadError(
                 "Error reading indirect object reference at byte %s"
-                % utils.hexStr(stream.tell())
+                % _utils.hexStr(stream.tell())
             )
         return IndirectObject(int(idnum), int(generation), pdf)
 
@@ -323,7 +323,7 @@ class IndirectObject(PdfObject):
 class FloatObject(decimal.Decimal, PdfObject):
     def __new__(cls, value="0", context=None):
         try:
-            return decimal.Decimal.__new__(cls, utils.str_(value), context)
+            return decimal.Decimal.__new__(cls, _utils.str_(value), context)
         except Exception:
             try:
                 return decimal.Decimal.__new__(cls, str(value))
@@ -386,7 +386,7 @@ class NumberObject(int, PdfObject):
 
     @staticmethod
     def read_from_stream(stream):
-        num = utils.readUntilRegex(stream, NumberObject.NumberPattern)
+        num = _utils.readUntilRegex(stream, NumberObject.NumberPattern)
         if num.find(NumberObject.ByteDot) != -1:
             return FloatObject(num)
         else:
@@ -407,9 +407,9 @@ def createStringObject(string):
     Given a string (either a "str" or "unicode"), create a ByteStringObject or a
     TextStringObject to represent the string.
     """
-    if isinstance(string, utils.string_type):
+    if isinstance(string, _utils.string_type):
         return TextStringObject(string)
-    elif isinstance(string, utils.bytes_type):
+    elif isinstance(string, _utils.bytes_type):
         try:
             if string.startswith(codecs.BOM_UTF16_BE):
                 retval = TextStringObject(string.decode("utf-16"))
@@ -523,7 +523,7 @@ def readStringFromStream(stream):
     return createStringObject(txt)
 
 
-class ByteStringObject(utils.bytes_type, PdfObject):  # type: ignore
+class ByteStringObject(_utils.bytes_type, PdfObject):  # type: ignore
     """
     Represents a string object where the text encoding could not be determined.
     This occurs quite often, as the PDF spec doesn't provide an alternate way to
@@ -541,7 +541,7 @@ class ByteStringObject(utils.bytes_type, PdfObject):  # type: ignore
         if encryption_key:
             bytearr = RC4_encrypt(encryption_key, bytearr)
         stream.write(b_("<"))
-        stream.write(utils.hexencode(bytearr))
+        stream.write(_utils.hexencode(bytearr))
         stream.write(b_(">"))
 
     def writeToStream(self, stream, encryption_key):
@@ -553,7 +553,7 @@ class ByteStringObject(utils.bytes_type, PdfObject):  # type: ignore
         self.write_to_stream(stream, encryption_key)
 
 
-class TextStringObject(utils.string_type, PdfObject):  # type: ignore
+class TextStringObject(_utils.string_type, PdfObject):  # type: ignore
     """
     Represents a string object that has been decoded into a real unicode string.
     If read from a PDF document, this string appeared to match the
@@ -637,7 +637,7 @@ class NameObject(str, PdfObject):
         name = stream.read(1)
         if name != NameObject.surfix:
             raise PdfReadError("name read error")
-        name += utils.readUntilRegex(
+        name += _utils.readUntilRegex(
             stream, NameObject.delimiterPattern, ignore_eof=True
         )
         try:
@@ -650,7 +650,7 @@ class NameObject(str, PdfObject):
             # Name objects should represent irregular characters
             # with a '#' followed by the symbol's hex number
             if not pdf.strict:
-                warnings.warn("Illegal character in Name Object", utils.PdfReadWarning)
+                warnings.warn("Illegal character in Name Object", _utils.PdfReadWarning)
                 return NameObject(name)
             else:
                 raise PdfReadError("Illegal character in Name Object")
@@ -740,7 +740,7 @@ class DictionaryObject(dict, PdfObject):
         if tmp != b_("<<"):
             raise PdfReadError(
                 "Dictionary read error at byte %s: stream must begin with '<<'"
-                % utils.hexStr(stream.tell())
+                % _utils.hexStr(stream.tell())
             )
         data = {}
         while True:
@@ -768,12 +768,12 @@ class DictionaryObject(dict, PdfObject):
                 # multiple definitions of key not permitted
                 raise PdfReadError(
                     "Multiple definitions in dictionary at byte %s for key %s"
-                    % (utils.hexStr(stream.tell()), key)
+                    % (_utils.hexStr(stream.tell()), key)
                 )
             else:
                 warnings.warn(
                     "Multiple definitions in dictionary at byte %s for key %s"
-                    % (utils.hexStr(stream.tell()), key),
+                    % (_utils.hexStr(stream.tell()), key),
                     PdfReadWarning,
                 )
 
@@ -819,7 +819,7 @@ class DictionaryObject(dict, PdfObject):
                     stream.seek(pos, 0)
                     raise PdfReadError(
                         "Unable to find 'endstream' marker after stream at byte %s."
-                        % utils.hexStr(stream.tell())
+                        % _utils.hexStr(stream.tell())
                     )
         else:
             stream.seek(pos, 0)
@@ -1088,7 +1088,7 @@ class ContentStream(DecodedStreamObject):
                 break
             stream.seek(-1, 1)
             if peek.isalpha() or peek == b_("'") or peek == b_('"'):
-                operator = utils.readUntilRegex(
+                operator = _utils.readUntilRegex(
                     stream, NameObject.delimiterPattern, True
                 )
                 if operator == b_("BI"):
@@ -1156,7 +1156,7 @@ class ContentStream(DecodedStreamObject):
                     info = tok + tok2
                     # We need to find whitespace between EI and Q.
                     has_q_whitespace = False
-                    while tok3 in utils.WHITESPACES:
+                    while tok3 in _utils.WHITESPACES:
                         has_q_whitespace = True
                         info += tok3
                         tok3 = stream.read(1)
@@ -1594,7 +1594,7 @@ def decode_pdfdocencoding(byte_array):
         if c == u_("\u0000"):
             raise UnicodeDecodeError(
                 "pdfdocencoding",
-                utils.barray(b),
+                _utils.barray(b),
                 -1,
                 -1,
                 "does not exist in translation table",

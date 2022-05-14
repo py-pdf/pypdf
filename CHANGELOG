@@ -6,6 +6,17 @@ PyPDF2 2.0.0 release. The changes are mostly using snake_case function-, method-
 and variable-names as well as using properties instead of getter-methods.
 
 ### Deprecations (DEP)
+
+* Make the `PyPDF2.utils` module private
+* Rename of core classes:
+  * PdfFileReader ➔ PdfReader
+  * PdfFileWriter ➔ PdfWriter
+  * PdfFileMerger ➔ PdfMerger
+* Use PEP8 conventions for function names and parameters
+* If a property and a getter-method are both present, use the property
+
+#### Details
+
 In many places:
   - getObject ➔ get_object
   - writeToStream ➔ write_to_stream

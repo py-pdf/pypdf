@@ -38,6 +38,7 @@ from hashlib import md5
 
 from PyPDF2._page import PageObject
 from PyPDF2._security import _alg33, _alg34, _alg35
+from PyPDF2._utils import DEPR_MSG, b_, isString, u_
 from PyPDF2.constants import CatalogAttributes as CA
 from PyPDF2.constants import Core as CO
 from PyPDF2.constants import EncryptionDictAttributes as ED
@@ -64,7 +65,6 @@ from PyPDF2.generic import (
     TreeObject,
     createStringObject,
 )
-from PyPDF2.utils import DEPR_MSG, b_, isString, u_
 
 logger = logging.getLogger(__name__)
 

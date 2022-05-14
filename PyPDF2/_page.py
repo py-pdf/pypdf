@@ -33,7 +33,13 @@ import math
 import uuid
 import warnings
 
-from PyPDF2 import utils
+from PyPDF2._utils import (
+    DEPR_MSG,
+    DEPR_MSG_NO_REPLACEMENT,
+    b_,
+    matrix_multiply,
+    u_,
+)
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.constants import Ressources as RES
 from PyPDF2.errors import PageSizeNotDefinedError
@@ -49,7 +55,6 @@ from PyPDF2.generic import (
     RectangleObject,
     TextStringObject,
 )
-from PyPDF2.utils import DEPR_MSG, DEPR_MSG_NO_REPLACEMENT, b_, u_
 
 
 def _get_rectangle(self, name, defaults):
@@ -546,8 +551,8 @@ class PageObject(DictionaryObject):
             [0, 0, 1],
         ]
         rtranslation = [[1, 0, 0], [0, 1, 0], [tx, ty, 1]]
-        ctm = utils.matrix_multiply(translation, rotating)
-        ctm = utils.matrix_multiply(ctm, rtranslation)
+        ctm = matrix_multiply(translation, rotating)
+        ctm = matrix_multiply(ctm, rtranslation)
 
         return self.mergeTransformedPage(
             page2,
@@ -574,7 +579,7 @@ class PageObject(DictionaryObject):
             [0, 0, 1],
         ]
         scaling = [[scale, 0, 0], [0, scale, 0], [0, 0, 1]]
-        ctm = utils.matrix_multiply(rotating, scaling)
+        ctm = matrix_multiply(rotating, scaling)
 
         return self.mergeTransformedPage(
             page2,
@@ -598,7 +603,7 @@ class PageObject(DictionaryObject):
 
         translation = [[1, 0, 0], [0, 1, 0], [tx, ty, 1]]
         scaling = [[scale, 0, 0], [0, scale, 0], [0, 0, 1]]
-        ctm = utils.matrix_multiply(scaling, translation)
+        ctm = matrix_multiply(scaling, translation)
 
         return self.mergeTransformedPage(
             page2,
@@ -631,8 +636,8 @@ class PageObject(DictionaryObject):
             [0, 0, 1],
         ]
         scaling = [[scale, 0, 0], [0, scale, 0], [0, 0, 1]]
-        ctm = utils.matrix_multiply(rotating, scaling)
-        ctm = utils.matrix_multiply(ctm, translation)
+        ctm = matrix_multiply(rotating, scaling)
+        ctm = matrix_multiply(ctm, translation)
 
         return self.mergeTransformedPage(
             page2,

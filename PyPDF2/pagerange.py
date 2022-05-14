@@ -11,7 +11,7 @@ import re
 
 from PyPDF2.errors import ParseError
 
-from .utils import isString
+from ._utils import isString
 
 _INT_RE = r"(0|-?[1-9]\d*)"  # A decimal int, don't allow "-0".
 PAGE_RANGE_RE = "^({int}|({int}?(:{int}?(:{int}?)?)))$".format(int=_INT_RE)

@@ -35,6 +35,7 @@ import math
 import warnings
 from sys import version_info
 
+from PyPDF2._utils import DEPR_MSG, ord_, paethPredictor
 from PyPDF2.constants import CcittFaxDecodeParameters as CCITT
 from PyPDF2.constants import ColorSpaces
 from PyPDF2.constants import FilterTypeAbbreviations as FTA
@@ -43,7 +44,6 @@ from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import LzwFilterParameters as LZW
 from PyPDF2.constants import StreamAttributes as SA
 from PyPDF2.errors import PdfReadError, PdfStreamError
-from PyPDF2.utils import DEPR_MSG, ord_, paethPredictor
 
 if version_info < (3, 0):
     from cStringIO import StringIO
@@ -573,7 +573,7 @@ def _xobj_to_image(x_object_obj):
             [FT.ASCII_85_DECODE],
             [FT.CCITT_FAX_DECODE],
         ):
-            from PyPDF2.utils import b_
+            from PyPDF2._utils import b_
 
             extension = ".png"
             data = b_(data)
