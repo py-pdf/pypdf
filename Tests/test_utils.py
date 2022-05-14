@@ -83,7 +83,7 @@ def test_readUntilRegex_premature_ending_name():
     ],
 )
 def test_matrixMultiply(a, b, expected):
-    assert PyPDF2.utils.matrixMultiply(a, b) == expected
+    assert PyPDF2.utils.matrix_multiply(a, b) == expected
 
 
 def test_markLocation():

@@ -66,22 +66,19 @@ DEPR_MSG = "{} is deprecated and will be removed in PyPDF2 2.0.0. Use {} instead
 # Make basic type tests more consistent
 def isString(s):
     """Test if arg is a string. Compatible with Python 2 and 3."""
+    warnings.warn(DEPR_MSG_NO_REPLACEMENT.format("isString"))
     return isinstance(s, _basestring)
 
 
 def isInt(n):
     """Test if arg is an int. Compatible with Python 2 and 3."""
+    warnings.warn(DEPR_MSG_NO_REPLACEMENT.format("isInt"))
     return isinstance(n, int_types)
 
 
 def isBytes(b):
     """Test if arg is a bytes instance. Compatible with Python 2 and 3."""
-    import warnings
-
-    warnings.warn(
-        "PyPDF2.utils.isBytes will be removed with PyPDF2 2.0.0",
-        PendingDeprecationWarning,
-    )
+    warnings.warn(DEPR_MSG_NO_REPLACEMENT.format("isBytes"))
     return isinstance(b, bytes_type)
 
 
@@ -168,6 +165,7 @@ class ConvertFunctionsToVirtualList(object):
             "ConvertFunctionsToVirtualList will be removed with PyPDF2 2.0.0",
             PendingDeprecationWarning,
         )
+        warnings.warn(DEPR_MSG_NO_REPLACEMENT.format("ConvertFunctionsToVirtualList"))
         self.lengthFunction = lengthFunction
         self.getFunction = getFunction
 
@@ -207,11 +205,18 @@ def RC4_encrypt(key, plaintext):
     return b_("").join(retval)
 
 
-def matrixMultiply(a, b):
+def matrix_multiply(a, b):
     return [
         [sum([float(i) * float(j) for i, j in zip(row, col)]) for col in zip(*b)]
         for row in a
     ]
+
+
+def matrixMultiply(a, b):
+    warnings.warn(
+        DEPR_MSG.format("matrixMultiply", "matrix_multiply"), PendingDeprecationWarning
+    )
+    return matrix_multiply(a, b)
 
 
 def markLocation(stream):

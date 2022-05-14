@@ -73,7 +73,12 @@ Page class:
   - _mergePage ➔ _merge_page
 
 XmpInformation class:
+  - getElement(..., aboutUri, ...) ➔ get_element(..., about_uri, ...)
+  - getNodesInNamespace(..., aboutUri, ...) ➔ get_nodes_in_namespace(..., aboutUri, ...)
   - _getText ➔ _get_text
+
+utils.py:
+  - matrixMultiply ➔ matrix_multiply
 
 Version 1.27.12, 2022-05-02
 ---------------------------

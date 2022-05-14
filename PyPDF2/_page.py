@@ -546,8 +546,8 @@ class PageObject(DictionaryObject):
             [0, 0, 1],
         ]
         rtranslation = [[1, 0, 0], [0, 1, 0], [tx, ty, 1]]
-        ctm = utils.matrixMultiply(translation, rotating)
-        ctm = utils.matrixMultiply(ctm, rtranslation)
+        ctm = utils.matrix_multiply(translation, rotating)
+        ctm = utils.matrix_multiply(ctm, rtranslation)
 
         return self.mergeTransformedPage(
             page2,
@@ -574,7 +574,7 @@ class PageObject(DictionaryObject):
             [0, 0, 1],
         ]
         scaling = [[scale, 0, 0], [0, scale, 0], [0, 0, 1]]
-        ctm = utils.matrixMultiply(rotating, scaling)
+        ctm = utils.matrix_multiply(rotating, scaling)
 
         return self.mergeTransformedPage(
             page2,
@@ -598,7 +598,7 @@ class PageObject(DictionaryObject):
 
         translation = [[1, 0, 0], [0, 1, 0], [tx, ty, 1]]
         scaling = [[scale, 0, 0], [0, scale, 0], [0, 0, 1]]
-        ctm = utils.matrixMultiply(scaling, translation)
+        ctm = utils.matrix_multiply(scaling, translation)
 
         return self.mergeTransformedPage(
             page2,
@@ -631,8 +631,8 @@ class PageObject(DictionaryObject):
             [0, 0, 1],
         ]
         scaling = [[scale, 0, 0], [0, scale, 0], [0, 0, 1]]
-        ctm = utils.matrixMultiply(rotating, scaling)
-        ctm = utils.matrixMultiply(ctm, translation)
+        ctm = utils.matrix_multiply(rotating, scaling)
+        ctm = utils.matrix_multiply(ctm, translation)
 
         return self.mergeTransformedPage(
             page2,
