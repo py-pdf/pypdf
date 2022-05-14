@@ -39,6 +39,7 @@ import logging
 import re
 import sys
 import warnings
+from distutils.log import warn
 from sys import version_info
 
 from PyPDF2.constants import FilterTypes as FT
@@ -79,24 +80,24 @@ def read_object(stream, pdf):
     stream.seek(-1, 1)  # reset to start
     idx = ObjectPrefix.find(tok)
     if idx == 0:
-        return NameObject.readFromStream(stream, pdf)
+        return NameObject.read_from_stream(stream, pdf)
     elif idx == 1:
         # hexadecimal string OR dictionary
         peek = stream.read(2)
         stream.seek(-2, 1)  # reset to start
 
         if peek == b_("<<"):
-            return DictionaryObject.readFromStream(stream, pdf)
+            return DictionaryObject.read_from_stream(stream, pdf)
         else:
             return readHexStringFromStream(stream)
     elif idx == 2:
-        return ArrayObject.readFromStream(stream, pdf)
+        return ArrayObject.read_from_stream(stream, pdf)
     elif idx == 3 or idx == 4:
-        return BooleanObject.readFromStream(stream)
+        return BooleanObject.read_from_stream(stream)
     elif idx == 5:
         return readStringFromStream(stream)
     elif idx == 6:
-        return NullObject.readFromStream(stream)
+        return NullObject.read_from_stream(stream)
     elif idx == 7:
         # comment
         while tok not in (b_("\r"), b_("\n")):
@@ -113,9 +114,9 @@ def read_object(stream, pdf):
         peek = stream.read(20)
         stream.seek(-len(peek), 1)  # reset to start
         if IndirectPattern.match(peek) is not None:
-            return IndirectObject.readFromStream(stream, pdf)
+            return IndirectObject.read_from_stream(stream, pdf)
         else:
-            return NumberObject.readFromStream(stream)
+            return NumberObject.read_from_stream(stream)
 
 
 def readObject(stream, pdf):
@@ -140,29 +141,54 @@ class PdfObject(object):
 
 
 class NullObject(PdfObject):
-    def writeToStream(self, stream, encryption_key):
+    def write_to_stream(self, stream, encryption_key):
         stream.write(b_("null"))
 
     @staticmethod
-    def readFromStream(stream):
+    def read_from_stream(stream):
         nulltxt = stream.read(4)
         if nulltxt != b_("null"):
             raise PdfReadError("Could not read Null object")
         return NullObject()
+
+    def writeToStream(self, stream, encryption_key):
+        warnings.warn(
+            "writeToStream will be removed in PyPDF2 2.0.0. "
+            "Use write_to_stream instead.",
+            PendingDeprecationWarning,
+        )
+        self.write_to_stream(stream, encryption_key)
+
+    @staticmethod
+    def readFromStream(stream):
+        warnings.warn(
+            "readFromStream will be removed in PyPDF2 2.0.0. "
+            "Use read_from_stream instead.",
+            PendingDeprecationWarning,
+        )
+        return NullObject.read_from_stream(stream)
 
 
 class BooleanObject(PdfObject):
     def __init__(self, value):
         self.value = value
 
-    def writeToStream(self, stream, encryption_key):
+    def write_to_stream(self, stream, encryption_key):
         if self.value:
             stream.write(b_("true"))
         else:
             stream.write(b_("false"))
 
+    def writeToStream(self, stream, encryption_key):
+        warnings.warn(
+            "writeToStream will be removed in PyPDF2 2.0.0. "
+            "Use write_to_stream instead.",
+            PendingDeprecationWarning,
+        )
+        self.write_to_stream(stream, encryption_key)
+
     @staticmethod
-    def readFromStream(stream):
+    def read_from_stream(stream):
         word = stream.read(4)
         if word == b_("true"):
             return BooleanObject(True)
@@ -172,17 +198,34 @@ class BooleanObject(PdfObject):
         else:
             raise PdfReadError("Could not read Boolean object")
 
+    @staticmethod
+    def readFromStream(stream):
+        warnings.warn(
+            "readFromStream will be removed in PyPDF2 2.0.0. "
+            "Use read_from_stream instead.",
+            PendingDeprecationWarning,
+        )
+        return BooleanObject.read_from_stream(stream)
+
 
 class ArrayObject(list, PdfObject):
-    def writeToStream(self, stream, encryption_key):
+    def write_to_stream(self, stream, encryption_key):
         stream.write(b_("["))
         for data in self:
             stream.write(b_(" "))
-            data.writeToStream(stream, encryption_key)
+            data.write_to_stream(stream, encryption_key)
         stream.write(b_(" ]"))
 
+    def writeToStream(self, stream, encryption_key):
+        warnings.warn(
+            "writeToStream will be removed in PyPDF2 2.0.0. "
+            "Use write_to_stream instead.",
+            PendingDeprecationWarning,
+        )
+        self.write_to_stream(stream, encryption_key)
+
     @staticmethod
-    def readFromStream(stream, pdf):
+    def read_from_stream(stream, pdf):
         arr = ArrayObject()
         tmp = stream.read(1)
         if tmp != b_("["):
@@ -201,6 +244,15 @@ class ArrayObject(list, PdfObject):
             # read and append obj
             arr.append(read_object(stream, pdf))
         return arr
+
+    @staticmethod
+    def readFromStream(stream, pdf):
+        warnings.warn(
+            "readFromStream will be removed in PyPDF2 2.0.0. "
+            "Use read_from_stream instead.",
+            PendingDeprecationWarning,
+        )
+        return ArrayObject.read_from_stream(stream, pdf)
 
 
 class IndirectObject(PdfObject):
@@ -227,11 +279,19 @@ class IndirectObject(PdfObject):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def writeToStream(self, stream, encryption_key):
+    def write_to_stream(self, stream, encryption_key):
         stream.write(b_("%s %s R" % (self.idnum, self.generation)))
 
+    def writeToStream(self, stream, encryption_key):
+        warnings.warn(
+            "writeToStream will be removed in PyPDF2 2.0.0. "
+            "Use write_to_stream instead.",
+            PendingDeprecationWarning,
+        )
+        self.write_to_stream(stream, encryption_key)
+
     @staticmethod
-    def readFromStream(stream, pdf):
+    def read_from_stream(stream, pdf):
         idnum = b_("")
         while True:
             tok = stream.read(1)
@@ -257,6 +317,15 @@ class IndirectObject(PdfObject):
                 % utils.hexStr(stream.tell())
             )
         return IndirectObject(int(idnum), int(generation), pdf)
+
+    @staticmethod
+    def readFromStream(stream, pdf):
+        warnings.warn(
+            "readFromStream will be removed in PyPDF2 2.0.0. "
+            "Use read_from_stream instead.",
+            PendingDeprecationWarning,
+        )
+        return IndirectObject.read_from_stream(stream, pdf)
 
 
 class FloatObject(decimal.Decimal, PdfObject):
@@ -286,8 +355,16 @@ class FloatObject(decimal.Decimal, PdfObject):
     def as_numeric(self):
         return float(b_(repr(self)))
 
-    def writeToStream(self, stream, encryption_key):
+    def write_to_stream(self, stream, encryption_key):
         stream.write(b_(repr(self)))
+
+    def writeToStream(self, stream, encryption_key):
+        warnings.warn(
+            "writeToStream will be removed in PyPDF2 2.0.0. "
+            "Use write_to_stream instead.",
+            PendingDeprecationWarning,
+        )
+        self.write_to_stream(stream, encryption_key)
 
 
 class NumberObject(int, PdfObject):
@@ -304,16 +381,33 @@ class NumberObject(int, PdfObject):
     def as_numeric(self):
         return int(b_(repr(self)))
 
-    def writeToStream(self, stream, encryption_key):
+    def write_to_stream(self, stream, encryption_key):
         stream.write(b_(repr(self)))
 
+    def writeToStream(self, stream, encryption_key):
+        warnings.warn(
+            "writeToStream will be removed in PyPDF2 2.0.0. "
+            "Use write_to_stream instead.",
+            PendingDeprecationWarning,
+        )
+        self.write_to_stream(stream, encryption_key)
+
     @staticmethod
-    def readFromStream(stream):
+    def read_from_stream(stream):
         num = utils.readUntilRegex(stream, NumberObject.NumberPattern)
         if num.find(NumberObject.ByteDot) != -1:
             return FloatObject(num)
         else:
             return NumberObject(num)
+
+    @staticmethod
+    def readFromStream(stream):
+        warnings.warn(
+            "readFromStream will be removed in PyPDF2 2.0.0. "
+            "Use read_from_stream instead.",
+            PendingDeprecationWarning,
+        )
+        return NumberObject.read_from_stream(stream)
 
 
 def createStringObject(string):
@@ -450,13 +544,21 @@ class ByteStringObject(utils.bytes_type, PdfObject):  # type: ignore
         """For compatibility with TextStringObject.original_bytes."""
         return self
 
-    def writeToStream(self, stream, encryption_key):
+    def write_to_stream(self, stream, encryption_key):
         bytearr = self
         if encryption_key:
             bytearr = RC4_encrypt(encryption_key, bytearr)
         stream.write(b_("<"))
         stream.write(utils.hexencode(bytearr))
         stream.write(b_(">"))
+
+    def writeToStream(self, stream, encryption_key):
+        warnings.warn(
+            "writeToStream will be removed in PyPDF2 2.0.0. "
+            "Use write_to_stream instead.",
+            PendingDeprecationWarning,
+        )
+        self.write_to_stream(stream, encryption_key)
 
 
 class TextStringObject(utils.string_type, PdfObject):  # type: ignore
@@ -493,7 +595,7 @@ class TextStringObject(utils.string_type, PdfObject):  # type: ignore
         else:
             raise Exception("no information about original bytes")
 
-    def writeToStream(self, stream, encryption_key):
+    def write_to_stream(self, stream, encryption_key):
         # Try to write the string out as a PDFDocEncoding encoded string.  It's
         # nicer to look at in the PDF file.  Sadly, we take a performance hit
         # here for trying...
@@ -504,7 +606,7 @@ class TextStringObject(utils.string_type, PdfObject):  # type: ignore
         if encryption_key:
             bytearr = RC4_encrypt(encryption_key, bytearr)
             obj = ByteStringObject(bytearr)
-            obj.writeToStream(stream, None)
+            obj.write_to_stream(stream, None)
         else:
             stream.write(b_("("))
             for c in bytearr:
@@ -514,16 +616,32 @@ class TextStringObject(utils.string_type, PdfObject):  # type: ignore
                     stream.write(b_(chr_(c)))
             stream.write(b_(")"))
 
+    def writeToStream(self, stream, encryption_key):
+        warnings.warn(
+            "writeToStream will be removed in PyPDF2 2.0.0. "
+            "Use write_to_stream instead.",
+            PendingDeprecationWarning,
+        )
+        self.write_to_stream(stream, encryption_key)
+
 
 class NameObject(str, PdfObject):
     delimiterPattern = re.compile(b_(r"\s+|[\(\)<>\[\]{}/%]"))
     surfix = b_("/")
 
-    def writeToStream(self, stream, encryption_key):
+    def write_to_stream(self, stream, encryption_key):
         stream.write(b_(self))
 
+    def writeToStream(self, stream, encryption_key):
+        warnings.warn(
+            "writeToStream will be removed in PyPDF2 2.0.0. "
+            "Use write_to_stream instead.",
+            PendingDeprecationWarning,
+        )
+        self.write_to_stream(stream, encryption_key)
+
     @staticmethod
-    def readFromStream(stream, pdf):
+    def read_from_stream(stream, pdf):
         name = stream.read(1)
         if name != NameObject.surfix:
             raise PdfReadError("name read error")
@@ -544,6 +662,15 @@ class NameObject(str, PdfObject):
                 return NameObject(name)
             else:
                 raise PdfReadError("Illegal character in Name Object")
+
+    @staticmethod
+    def readFromStream(stream, pdf):
+        warnings.warn(
+            "readFromStream will be removed in PyPDF2 2.0.0. "
+            "Use read_from_stream instead.",
+            PendingDeprecationWarning,
+        )
+        return NameObject.read_from_stream(stream, pdf)
 
 
 class DictionaryObject(dict, PdfObject):
@@ -598,17 +725,25 @@ class DictionaryObject(dict, PdfObject):
         """
         return self.getXmpMetadata()
 
-    def writeToStream(self, stream, encryption_key):
+    def write_to_stream(self, stream, encryption_key):
         stream.write(b_("<<\n"))
         for key, value in list(self.items()):
-            key.writeToStream(stream, encryption_key)
+            key.write_to_stream(stream, encryption_key)
             stream.write(b_(" "))
-            value.writeToStream(stream, encryption_key)
+            value.write_to_stream(stream, encryption_key)
             stream.write(b_("\n"))
         stream.write(b_(">>"))
 
+    def writeToStream(self, stream, encryption_key):
+        warnings.warn(
+            "writeToStream will be removed in PyPDF2 2.0.0. "
+            "Use write_to_stream instead.",
+            PendingDeprecationWarning,
+        )
+        self.write_to_stream(stream, encryption_key)
+
     @staticmethod
-    def readFromStream(stream, pdf):
+    def read_from_stream(stream, pdf):
         tmp = stream.read(2)
         if tmp != b_("<<"):
             raise PdfReadError(
@@ -702,6 +837,15 @@ class DictionaryObject(dict, PdfObject):
             retval = DictionaryObject()
             retval.update(data)
             return retval
+
+    @staticmethod
+    def readFromStream(stream, pdf):
+        warnings.warn(
+            "readFromStream will be removed in PyPDF2 2.0.0. "
+            "Use read_from_stream instead.",
+            PendingDeprecationWarning,
+        )
+        return DictionaryObject.read_from_stream(stream, pdf)
 
 
 class TreeObject(DictionaryObject):
@@ -854,9 +998,9 @@ class StreamObject(DictionaryObject):
         self._data = None
         self.decodedSelf = None
 
-    def writeToStream(self, stream, encryption_key):
+    def write_to_stream(self, stream, encryption_key):
         self[NameObject(SA.LENGTH)] = NumberObject(len(self._data))
-        DictionaryObject.writeToStream(self, stream, encryption_key)
+        DictionaryObject.write_to_stream(self, stream, encryption_key)
         del self[SA.LENGTH]
         stream.write(b_("\nstream\n"))
         data = self._data
@@ -1041,14 +1185,14 @@ class ContentStream(DecodedStreamObject):
             if operator == b_("INLINE IMAGE"):
                 newdata.write(b_("BI"))
                 dicttext = BytesIO()
-                operands["settings"].writeToStream(dicttext, None)
+                operands["settings"].write_to_stream(dicttext, None)
                 newdata.write(dicttext.getvalue()[2:-2])
                 newdata.write(b_("ID "))
                 newdata.write(operands["data"])
                 newdata.write(b_("EI"))
             else:
                 for op in operands:
-                    op.writeToStream(newdata, None)
+                    op.write_to_stream(newdata, None)
                     newdata.write(b_(" "))
                 newdata.write(b_(operator))
             newdata.write(b_("\n"))
@@ -1327,19 +1471,19 @@ class Destination(TreeObject):
             ]
         )
 
-    def writeToStream(self, stream, encryption_key):
+    def write_to_stream(self, stream, encryption_key):
         stream.write(b_("<<\n"))
         key = NameObject("/D")
-        key.writeToStream(stream, encryption_key)
+        key.write_to_stream(stream, encryption_key)
         stream.write(b_(" "))
         value = self.getDestArray()
-        value.writeToStream(stream, encryption_key)
+        value.write_to_stream(stream, encryption_key)
 
         key = NameObject("/S")
-        key.writeToStream(stream, encryption_key)
+        key.write_to_stream(stream, encryption_key)
         stream.write(b_(" "))
         value = NameObject("/GoTo")
-        value.writeToStream(stream, encryption_key)
+        value.write_to_stream(stream, encryption_key)
 
         stream.write(b_("\n"))
         stream.write(b_(">>"))
@@ -1418,23 +1562,23 @@ class Destination(TreeObject):
 
 
 class Bookmark(Destination):
-    def writeToStream(self, stream, encryption_key):
+    def write_to_stream(self, stream, encryption_key):
         stream.write(b_("<<\n"))
         for key in [
             NameObject(x)
             for x in ["/Title", "/Parent", "/First", "/Last", "/Next", "/Prev"]
             if x in self
         ]:
-            key.writeToStream(stream, encryption_key)
+            key.write_to_stream(stream, encryption_key)
             stream.write(b_(" "))
             value = self.raw_get(key)
-            value.writeToStream(stream, encryption_key)
+            value.write_to_stream(stream, encryption_key)
             stream.write(b_("\n"))
         key = NameObject("/Dest")
-        key.writeToStream(stream, encryption_key)
+        key.write_to_stream(stream, encryption_key)
         stream.write(b_(" "))
         value = self.getDestArray()
-        value.writeToStream(stream, encryption_key)
+        value.write_to_stream(stream, encryption_key)
         stream.write(b_("\n"))
         stream.write(b_(">>"))
 

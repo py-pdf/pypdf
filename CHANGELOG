@@ -6,8 +6,12 @@ PyPDF2 2.0.0 release. The changes are mostly using snake_case function-, method-
 and variable-names as well as using properties instead of getter-methods.
 
 ### Deprecations (DEP)
+In many places:
+  - getObject ➔ get_object
+  - writeToStream ➔ write_to_stream
+  - readFromStream ➔ read_from_stream
+
 PyPDF2.generic
-  - getObject  ➔ get_object (in all classes that had this method)
   - readObject ➔ read_object
   - convertToInt ➔ convert_to_int
   - DocumentInformation.getText ➔ DocumentInformation._get_text :

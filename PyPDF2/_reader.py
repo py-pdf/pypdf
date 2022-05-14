@@ -384,7 +384,7 @@ class PdfReader(object):
         # Flattened pages will not work on an Encrypted PDF;
         # the PDF file's page count is used in this case. Otherwise,
         # the original method (flattened page count) is used.
-        if self.isEncrypted:
+        if self.is_encrypted:
             try:
                 self._override_encryption = True
                 self.decrypt("")
@@ -871,10 +871,10 @@ class PdfReader(object):
         for i in range(obj_stm["/N"]):
             readNonWhitespace(stream_data)
             stream_data.seek(-1, 1)
-            objnum = NumberObject.readFromStream(stream_data)
+            objnum = NumberObject.read_from_stream(stream_data)
             readNonWhitespace(stream_data)
             stream_data.seek(-1, 1)
-            offset = NumberObject.readFromStream(stream_data)
+            offset = NumberObject.read_from_stream(stream_data)
             readNonWhitespace(stream_data)
             stream_data.seek(-1, 1)
             if objnum != indirect_reference.idnum:
@@ -953,7 +953,7 @@ class PdfReader(object):
             retval = read_object(self.stream, self)
 
             # override encryption is used for the /Encrypt dictionary
-            if not self._override_encryption and self.isEncrypted:
+            if not self._override_encryption and self.is_encrypted:
                 # if we don't have the encryption key:
                 if not hasattr(self, "_decryption_key"):
                     raise PdfReadError("file has not been decrypted")
@@ -1591,7 +1591,7 @@ class PdfReader(object):
             "Use the is_encrypted property instead.",
             PendingDeprecationWarning,
         )
-        return self.getIsEncrypted()
+        return self.is_encrypted
 
 
 class PdfFileReader(PdfReader):

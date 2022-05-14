@@ -568,7 +568,7 @@ class PdfWriter(object):
                     assert len(key) == (len(self._encrypt_key) + 5)
                     md5_hash = md5(key).digest()
                     key = md5_hash[: min(16, len(self._encrypt_key) + 5)]
-                obj.writeToStream(stream, key)
+                obj.write_to_stream(stream, key)
                 stream.write(b_("\nendobj\n"))
         return object_positions
 
@@ -595,7 +595,7 @@ class PdfWriter(object):
             trailer[NameObject(TK.ID)] = self._ID
         if hasattr(self, "_encrypt"):
             trailer[NameObject(TK.ENCRYPT)] = self._encrypt
-        trailer.writeToStream(stream, None)
+        trailer.write_to_stream(stream, None)
 
     def addMetadata(self, infos):
         """

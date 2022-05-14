@@ -73,10 +73,10 @@ def test_decrypt():
         os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf"), "rb"
     ) as inputfile:
         reader = PdfReader(inputfile)
-        assert reader.isEncrypted == True
+        assert reader.is_encrypted == True
         reader.decrypt("openpassword")
         assert reader.numPages == 1
-        assert reader.isEncrypted == True
+        assert reader.is_encrypted == True
         metadict = reader.metadata
         assert dict(metadict) == {
             "/CreationDate": "D:20220403203552+02'00'",

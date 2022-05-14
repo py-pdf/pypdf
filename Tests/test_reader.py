@@ -543,9 +543,9 @@ def test_reader_properties():
     reader = PdfReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
     assert reader.outlines == []
     assert len(reader.pages) == 1
-    assert reader.pageLayout is None
-    assert reader.pageMode is None
-    assert reader.isEncrypted is False
+    assert reader.page_layout is None
+    assert reader.page_mode is None
+    assert reader.is_encrypted is False
 
 
 @pytest.mark.parametrize(

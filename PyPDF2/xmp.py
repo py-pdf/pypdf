@@ -1,6 +1,7 @@
 import datetime
 import decimal
 import re
+import warnings
 from xml.dom.minidom import parseString
 
 from .generic import PdfObject
@@ -66,8 +67,16 @@ class XmpInformation(PdfObject):
         self.rdfRoot = doc_root.getElementsByTagNameNS(RDF_NAMESPACE, "RDF")[0]
         self.cache = {}
 
+    def write_to_stream(self, stream, encryption_key):
+        self.stream.write_to_stream(stream, encryption_key)
+
     def writeToStream(self, stream, encryption_key):
-        self.stream.writeToStream(stream, encryption_key)
+        warnings.warn(
+            "writeToStream() will be deprecated in PyPDF2 2.0.0. "
+            "Use write_to_stream() instead.",
+            PendingDeprecationWarning,
+        )
+        self.write_to_stream(stream, encryption_key)
 
     def getElement(self, aboutUri, namespace, name):
         for desc in self.rdfRoot.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):
