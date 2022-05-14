@@ -124,7 +124,7 @@ class PdfWriter(object):
 
     def getObject(self, ido):
         warnings.warn(
-            "getObject will be removed in PyPDF2 2.0.0. Use get_object instead.",
+            DEPR_MSG.format("getObject()", "get_object()"),
             PendingDeprecationWarning,
         )
         return self.get_object(ido)
@@ -158,7 +158,7 @@ class PdfWriter(object):
         except Exception as e:
             logger.error("set_need_appearances_writer() catch : ", repr(e))
 
-    def append_page(self, page):
+    def add_page(self, page):
         """
         Add a page to this PDF file.  The page is usually acquired from a
         :class:`PdfReader<PdfReader>` instance.
@@ -170,10 +170,10 @@ class PdfWriter(object):
 
     def addPage(self, page):
         warnings.warn(
-            "addPage will be removed in PyPDF2 2.0.0. Use append_page instead.",
+            DEPR_MSG.format("addPage()", "add_page()"),
             PendingDeprecationWarning,
         )
-        self.append_page(page)
+        self.add_page(page)
 
     def insert_page(self, page, index=0):
         """
@@ -244,7 +244,7 @@ class PdfWriter(object):
             and previous page does not exist.
         """
         page = PageObject.create_blank_page(self, width, height)
-        self.append_page(page)
+        self.add_page(page)
         return page
 
     def addBlankPage(self, width=None, height=None):
@@ -445,7 +445,7 @@ class PdfWriter(object):
         # Copy pages from reader to writer
         for rpagenum in range(0, reader_num_pages):
             reader_page = reader.getPage(rpagenum)
-            self.append_page(reader_page)
+            self.add_page(reader_page)
             writer_page = self.get_page(writer_num_pages + rpagenum)
             # Trigger callback, pass writer page as parameter
             if callable(after_page_append):
@@ -1329,9 +1329,7 @@ class PdfWriter(object):
         else:
             page_ref[NameObject(PG.ANNOTS)] = ArrayObject([lnk_ref])
 
-    def addLink(
-        self, pagenum, pagedest, rect, border=None, fit="/Fit", *args
-    ):  # todo: args?
+    def addLink(self, pagenum, pagedest, rect, border=None, fit="/Fit", *args):
         warnings.warn(
             DEPR_MSG.format("addLink", "add_link"),
         )

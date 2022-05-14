@@ -138,7 +138,7 @@ def test_write_metadata():
     writer = PdfWriter()
 
     for page in reader.pages:
-        writer.append_page(page)
+        writer.add_page(page)
 
     metadata = reader.metadata
     writer.add_metadata(metadata)
@@ -165,7 +165,7 @@ def test_fill_form():
 
     page = reader.pages[0]
 
-    writer.append_page(page)
+    writer.add_page(page)
 
     writer.update_page_form_field_values(
         writer.get_page(0), {"foo": "some filled in text"}, flags=1
@@ -183,7 +183,7 @@ def test_encrypt():
 
     page = reader.pages[0]
 
-    writer.append_page(page)
+    writer.add_page(page)
     writer.encrypt(user_pwd="userpwd", owner_pwd="ownerpwd", use_128bit=False)
 
     # write "output" to PyPDF2-output.pdf
@@ -200,7 +200,7 @@ def test_add_bookmark():
     writer = PdfWriter()
 
     for page in reader.pages:
-        writer.append_page(page)
+        writer.add_page(page)
 
     bookmark = writer.add_bookmark(
         "A bookmark", 1, None, (255, 0, 15), True, True, "/Fit", 200, 0, None
@@ -221,7 +221,7 @@ def test_add_named_destination():
     writer = PdfWriter()
 
     for page in reader.pages:
-        writer.append_page(page)
+        writer.add_page(page)
 
     from PyPDF2.pdf import NameObject
 
@@ -251,7 +251,7 @@ def test_add_uri():
     writer = PdfWriter()
 
     for page in reader.pages:
-        writer.append_page(page)
+        writer.add_page(page)
 
     from PyPDF2.pdf import RectangleObject
 
@@ -294,7 +294,7 @@ def test_add_link():
     writer = PdfWriter()
 
     for page in reader.pages:
-        writer.append_page(page)
+        writer.add_page(page)
 
     from PyPDF2.pdf import RectangleObject
 
@@ -356,6 +356,6 @@ def test_regression_issue670():
     reader = PdfReader(filepath, strict=False, overwriteWarnings=False)
     for _ in range(2):
         pdf_writer = PdfWriter()
-        pdf_writer.append_page(reader._get_page(0))
+        pdf_writer.add_page(reader._get_page(0))
         with open("dont_commit_issue670.pdf", "wb") as f_pdf:
             pdf_writer.write(f_pdf)

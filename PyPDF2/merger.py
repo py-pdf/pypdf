@@ -247,7 +247,7 @@ class PdfMerger(object):
         # The commented out line below was replaced with the two lines below it
         # to allow PdfMerger to work with PyPdf 1.13
         for page in self.pages:
-            self.output.append_page(page.pagedata)
+            self.output.add_page(page.pagedata)
             page.out_pagedata = self.output.get_reference(
                 self.output._pages.get_object()[PA.KIDS][-1].get_object()
             )

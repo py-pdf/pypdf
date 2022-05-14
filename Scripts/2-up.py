@@ -22,7 +22,7 @@ def main():
         lhs = reader._get_page(iter)
         rhs = reader._get_page(iter + 1)
         lhs.mergeTranslatedPage(rhs, lhs.mediaBox.getUpperRight_x(), 0, True)
-        writer.append_page(lhs)
+        writer.add_page(lhs)
         print(str(iter) + " "),
         sys.stdout.flush()
 
