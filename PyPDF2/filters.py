@@ -32,9 +32,9 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import math
 import struct
-from io import StringIO,BytesIO
-from typing import Any, Dict, Optional, Tuple, Union
 import zlib
+from io import BytesIO, StringIO
+from typing import Any, Dict, Optional, Tuple, Union
 
 from .generic import ArrayObject, DictionaryObject, NameObject
 
@@ -47,12 +47,12 @@ from .constants import CcittFaxDecodeParameters as CCITT
 from .constants import ColorSpaces
 from .constants import FilterTypeAbbreviations as FTA
 from .constants import FilterTypes as FT
+from .constants import GraphicsStateParameters as G
 from .constants import ImageAttributes as IA
 from .constants import LzwFilterParameters as LZW
 from .constants import StreamAttributes as SA
-from .constants import GraphicsStateParameters as G
 from .errors import PdfReadError, PdfStreamError
-from .utils import b_,ord_, paethPredictor
+from .utils import b_, ord_, paethPredictor
 
 
 def decompress(data: bytes) -> bytes:

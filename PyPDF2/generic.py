@@ -44,7 +44,6 @@ from .constants import FilterTypes as FT
 from .constants import StreamAttributes as SA
 from .constants import TypArguments as TA
 from .constants import TypFitArguments as TF
-
 from .errors import (
     STREAM_TRUNCATED_PREMATURELY,
     PdfReadError,
@@ -1339,7 +1338,6 @@ class Destination(TreeObject):
         self[NameObject("/Title")] = title
         self[NameObject("/Page")] = page
         self[NameObject("/Type")] = typ
-
 
         # from table 8.2 of the PDF 1.7 reference.
         if typ == "/XYZ":

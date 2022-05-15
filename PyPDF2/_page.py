@@ -30,17 +30,7 @@
 import math
 import uuid
 from decimal import Decimal
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Tuple,
-    Union,
-    cast,
-)
+from typing import Any, Callable, Dict, Iterable, Optional, Tuple, Union, cast
 
 from .constants import PageAttributes as PG
 from .constants import Ressources as RES
@@ -57,6 +47,7 @@ from .generic import (
     RectangleObject,
     TextStringObject,
 )
+from .types import CompressedTransformationMatrix, TransformationMatrixType
 from .utils import b_, matrixMultiply
 
 
@@ -245,7 +236,7 @@ class PageObject(DictionaryObject):
 
     @staticmethod
     def _addTransformationMatrix(
-        contents: Any, pdf: Any, ctm: Iterable[float]
+        contents: Any, pdf: Any, ctm: CompressedTransformationMatrix
     ) -> ContentStream:  # PdfFileReader
         # adds transformation matrix at the beginning of the given
         # contents stream.
@@ -298,7 +289,7 @@ class PageObject(DictionaryObject):
         self,
         page2: "PageObject",
         page2transformation: Optional[Callable[[Any], ContentStream]] = None,
-        ctm: Optional[Iterable[float]] = None,
+        ctm: Optional[CompressedTransformationMatrix] = None,
         expand: bool = False,
     ) -> None:
         # First we work on merging the resource dictionaries.  This allows us
@@ -396,7 +387,7 @@ class PageObject(DictionaryObject):
                 page2.mediaBox.getLowerRight_y().as_numeric(),
             ]
             if ctm is not None:
-                ctm = [float(x) for x in ctm]
+                ctm = tuple(float(x) for x in ctm)
                 new_x = [
                     ctm[0] * corners2[i] + ctm[2] * corners2[i + 1] + ctm[4]
                     for i in range(0, 8, 2)
@@ -424,7 +415,10 @@ class PageObject(DictionaryObject):
         self[NameObject(PG.ANNOTS)] = new_annots
 
     def mergeTransformedPage(
-        self, page2: "PageObject", ctm: Iterable[float], expand: bool = False
+        self,
+        page2: "PageObject",
+        ctm: CompressedTransformationMatrix,
+        expand: bool = False,
     ) -> None:
         """
         mergeTransformedPage is similar to mergePage, but a transformation
@@ -525,23 +519,8 @@ class PageObject(DictionaryObject):
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
-
-        translation: List[List[float]] = [[1, 0, 0], [0, 1, 0], [-tx, -ty, 1]]
-        rotation = math.radians(rotation)
-        rotating: List[List[float]] = [
-            [math.cos(rotation), math.sin(rotation), 0],
-            [-math.sin(rotation), math.cos(rotation), 0],
-            [0, 0, 1],
-        ]
-        rtranslation: List[List[float]] = [[1, 0, 0], [0, 1, 0], [tx, ty, 1]]
-        ctm = matrixMultiply(translation, rotating)
-        ctm = matrixMultiply(ctm, rtranslation)
-
-        return self.mergeTransformedPage(
-            page2,
-            [ctm[0][0], ctm[0][1], ctm[1][0], ctm[1][1], ctm[2][0], ctm[2][1]],
-            expand,
-        )
+        op = Transformation().translate(-tx, -ty).rotate(rotation).translate(tx, ty)
+        return self.mergeTransformedPage(page2, op.ctm, expand)
 
     def mergeRotatedScaledPage(
         self, page2: "PageObject", rotation: float, scale: float, expand: bool = False
@@ -557,20 +536,8 @@ class PageObject(DictionaryObject):
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
-        rotation = math.radians(rotation)
-        rotating: List[List[float]] = [
-            [math.cos(rotation), math.sin(rotation), 0],
-            [-math.sin(rotation), math.cos(rotation), 0],
-            [0, 0, 1],
-        ]
-        scaling: List[List[float]] = [[scale, 0, 0], [0, scale, 0], [0, 0, 1]]
-        ctm = matrixMultiply(rotating, scaling)
-
-        self.mergeTransformedPage(
-            page2,
-            [ctm[0][0], ctm[0][1], ctm[1][0], ctm[1][1], ctm[2][0], ctm[2][1]],
-            expand,
-        )
+        op = Transformation().rotate(rotation).scale(scale, scale)
+        self.mergeTransformedPage(page2, op.ctm, expand)
 
     def mergeScaledTranslatedPage(
         self,
@@ -592,16 +559,8 @@ class PageObject(DictionaryObject):
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
-
-        translation: List[List[float]] = [[1, 0, 0], [0, 1, 0], [tx, ty, 1]]
-        scaling: List[List[float]] = [[scale, 0, 0], [0, scale, 0], [0, 0, 1]]
-        ctm = matrixMultiply(scaling, translation)
-
-        return self.mergeTransformedPage(
-            page2,
-            [ctm[0][0], ctm[0][1], ctm[1][0], ctm[1][1], ctm[2][0], ctm[2][1]],
-            expand,
-        )
+        op = Transformation().scale(scale, scale).translate(tx, ty)
+        return self.mergeTransformedPage(page2, op.ctm, expand)
 
     def mergeRotatedScaledTranslatedPage(
         self,
@@ -626,24 +585,10 @@ class PageObject(DictionaryObject):
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
-        translation: List[List[float]] = [[1, 0, 0], [0, 1, 0], [tx, ty, 1]]
-        rotation = math.radians(rotation)
-        rotating: List[List[float]] = [
-            [math.cos(rotation), math.sin(rotation), 0],
-            [-math.sin(rotation), math.cos(rotation), 0],
-            [0, 0, 1],
-        ]
-        scaling: List[List[float]] = [[scale, 0, 0], [0, scale, 0], [0, 0, 1]]
-        ctm = matrixMultiply(rotating, scaling)
-        ctm = matrixMultiply(ctm, translation)
+        op = Transformation().rotate(rotation).scale(scale, scale).translate(tx, ty)
+        self.mergeTransformedPage(page2, op.ctm, expand)
 
-        self.mergeTransformedPage(
-            page2,
-            [ctm[0][0], ctm[0][1], ctm[1][0], ctm[1][1], ctm[2][0], ctm[2][1]],
-            expand,
-        )
-
-    def addTransformation(self, ctm: List[float]) -> None:
+    def addTransformation(self, ctm: CompressedTransformationMatrix) -> None:
         """
         Apply a transformation matrix to the page.
 
@@ -824,3 +769,67 @@ class PageObject(DictionaryObject):
     defining the extent of the page's meaningful content as intended by the
     page's creator.
     """
+
+
+class Transformation:
+    """
+
+    The transformation between two coordinate systems is represented by a 3-by-3
+    transformation matrix written as follows:
+        a b 0
+        c d 0
+        e f 1
+    Because a transformation matrix has only six elements that can be changed,
+    it is usually specified in PDF as the six-element array [ a b c d e f ].
+
+    Coordinate transformations are expressed as matrix multiplications:
+
+                                 a b 0
+     [ x′ y′ 1 ] = [ x y 1 ] ×   c d 0
+                                 e f 1
+
+    """
+
+    # 9.5.4 Coordinate Systems for 3D
+    # 4.2.2 Common Transformations
+    def __init__(self, ctm: CompressedTransformationMatrix = (1, 0, 0, 1, 0, 0)):
+        self.ctm = ctm
+
+    @property
+    def matrix(self):
+        return (
+            (self.ctm[0], self.ctm[1], 0),
+            (self.ctm[2], self.ctm[3], 0),
+            (self.ctm[4], self.ctm[5], 1),
+        )
+
+    @staticmethod
+    def compress(matrix: TransformationMatrixType) -> CompressedTransformationMatrix:
+        return (
+            matrix[0][0],
+            matrix[0][1],
+            matrix[1][0],
+            matrix[1][1],
+            matrix[0][2],
+            matrix[1][2],
+        )
+
+    def translate(self, tx, ty):
+        op = ((1, 0, 0), (0, 1, 0), (tx, ty, 1))
+        ctm = Transformation.compress(matrixMultiply(self.matrix, op))
+        return Transformation(ctm)
+
+    def scale(self, sx, sy):
+        op: TransformationMatrixType = ((sx, 0, 0), (0, sy, 0), (0, 0, 1))
+        ctm = Transformation.compress(matrixMultiply(self.matrix, op))
+        return Transformation(ctm)
+
+    def rotate(self, rotation):
+        rotation = math.radians(rotation)
+        op: TransformationMatrixType = (
+            (math.cos(rotation), math.sin(rotation), 0),
+            (-math.sin(rotation), math.cos(rotation), 0),
+            (0, 0, 1),
+        )
+        ctm = Transformation.compress(matrixMultiply(self.matrix, op))
+        return Transformation(ctm)

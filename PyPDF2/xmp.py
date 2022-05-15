@@ -6,7 +6,7 @@ from xml.dom.minidom import Document
 from xml.dom.minidom import Element as XmlElement
 from xml.dom.minidom import parseString
 
-from .generic import PdfObject,ContentStream
+from .generic import ContentStream, PdfObject
 from .utils import StreamType
 
 RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"

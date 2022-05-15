@@ -33,9 +33,10 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 
 from codecs import getencoder
 from io import BufferedReader, BufferedWriter, BytesIO, FileIO
-from typing import Any, Dict, List, Optional, Union, overload
+from typing import Any, Dict, Optional, Union, overload
 
 from .errors import STREAM_TRUNCATED_PREMATURELY, PdfStreamError
+from .types import TransformationMatrixType
 
 bytes_type = type(bytes())  # Works the same in Python 2.X and 3.X
 StreamType = Union[BytesIO, BufferedReader, BufferedWriter, FileIO]
@@ -131,11 +132,13 @@ def RC4_encrypt(key: Union[str, bytes], plaintext: bytes) -> bytes:
     return b_("").join(retval)
 
 
-def matrixMultiply(a: List[List[float]], b: List[List[float]]) -> List[List[float]]:
-    return [
-        [sum(float(i) * float(j) for i, j in zip(row, col)) for col in zip(*b)]
+def matrixMultiply(
+    a: TransformationMatrixType, b: TransformationMatrixType
+) -> TransformationMatrixType:
+    return tuple(
+        tuple(sum(float(i) * float(j) for i, j in zip(row, col)) for col in zip(*b))
         for row in a
-    ]
+    )
 
 
 def markLocation(stream: StreamType) -> None:
