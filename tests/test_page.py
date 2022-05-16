@@ -1,9 +1,11 @@
 import json
 import os
+import copy
+import io
 
 import pytest
 
-from PyPDF2 import PdfFileReader
+from PyPDF2 import PdfFileReader,PdfFileWriter
 from PyPDF2._page import PageObject
 from PyPDF2.generic import RectangleObject
 
@@ -128,3 +130,17 @@ def test_page_rotation_non90():
     with pytest.raises(ValueError) as exc:
         page.rotateClockwise(91)
     assert exc.value.args[0] == "Rotation angle must be a multiple of 90"
+
+def test_page_merge_cropped():
+    p = PdfFileReader(os.path.join(RESOURCE_ROOT, "issue-604.pdf"))
+    a=  copy.deepcopy(p.getPage(1))     # crossed to ease test reading
+    b=  copy.deepcopy(p.getPage(2))
+    a.cropBox = RectangleObject([100,100,300,200])
+    w = PdfFileWriter()
+    w.addPage(a)
+    w.addPage(b)
+    c=copy.deepcopy(b)
+    c.mergePage(a)
+    w.addPage(c)
+    o = io.BytesIO()
+    w.write(o)

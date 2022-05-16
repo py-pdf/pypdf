@@ -352,16 +352,21 @@ class PageObject(DictionaryObject):
         page2content = page2.getContents()
         if page2content is not None:
             page2content = ContentStream(page2content, self.pdf)
+            if(page2.cropBox.getWidth()<page2.trimBox.getWidth() or
+               page2.cropBox.getHeight()<page2.trimBox.getHeight()):
+                rect = page2.cropBox
+            else:
+                rect = page2.trimBox
             page2content.operations.insert(
                 0,
                 (
                     map(
                         FloatObject,
                         [
-                            page2.trimBox.getLowerLeft_x(),
-                            page2.trimBox.getLowerLeft_y(),
-                            page2.trimBox.getWidth(),
-                            page2.trimBox.getHeight(),
+                            rect.getLowerLeft_x(),
+                            rect.getLowerLeft_y(),
+                            rect.getWidth(),
+                            rect.getHeight(),
                         ],
                     ),
                     "re",
