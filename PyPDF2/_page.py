@@ -759,8 +759,10 @@ class PageObject(DictionaryObject):
                 if isinstance(_text, TextStringObject):
                     text += Tj_sep
                     text += _text
-                    text += "\n"
-            elif operator == b_("T*"):
+                    #text += "\n"
+            # see Pdf Reference 1.7 page 406
+            elif ((operator in [b_("T*"),b_("ET")]) or
+                 ((operator in [b_("Td"),b_("TD")]) and operands[1] != 0)):
                 text += "\n"
             elif operator == b_("'"):
                 text += "\n"
@@ -773,6 +775,7 @@ class PageObject(DictionaryObject):
                     text += "\n"
                     text += _text
             elif operator == b_("TJ"):
+                pass
                 for i in operands[0]:
                     if isinstance(i, TextStringObject):
                         text += TJ_sep
@@ -786,7 +789,7 @@ class PageObject(DictionaryObject):
                         else:
                             if len(text) > 1 and text[-1] == " ":
                                 text = text[:-1]
-                text += "\n"
+                #text += "\n"
         return text
 
     mediaBox = createRectangleAccessor(PG.MEDIABOX, ())
