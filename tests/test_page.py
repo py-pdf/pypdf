@@ -134,5 +134,7 @@ def test_page_scale():
     op = Transformation()
     with pytest.raises(ValueError) as exc:
         op.scale()
+    assert exc.value.args[0] == "Either sx or sy must be specified"
 
     assert op.scale(sx=2).ctm == (2, 0, 0, 2, 0, 0)
+    assert op.scale(sy=3).ctm == (3, 0, 0, 3, 0, 0)
