@@ -391,7 +391,7 @@ class PageObject(DictionaryObject):
                 page2.mediaBox.getLowerRight_y().as_numeric(),
             ]
             if ctm is not None:
-                ctm = tuple(float(x) for x in ctm)
+                ctm = tuple(float(x) for x in ctm)  # type: ignore[assignment]
                 new_x = [
                     ctm[0] * corners2[i] + ctm[2] * corners2[i + 1] + ctm[4]
                     for i in range(0, 8, 2)
@@ -458,7 +458,7 @@ class PageObject(DictionaryObject):
             dimensions of the page to be merged.
         """
         # CTM to scale : [ sx 0 0 sy 0 0 ]
-        self.mergeTransformedPage(page2, [scale, 0, 0, scale, 0, 0], expand)
+        self.mergeTransformedPage(page2, (scale, 0, 0, scale, 0, 0), expand)
 
     def mergeRotatedPage(
         self, page2: "PageObject", rotation: float, expand: bool = False
@@ -476,14 +476,14 @@ class PageObject(DictionaryObject):
         rotation = math.radians(rotation)
         self.mergeTransformedPage(
             page2,
-            [
+            (
                 math.cos(rotation),
                 math.sin(rotation),
                 -math.sin(rotation),
                 math.cos(rotation),
                 0,
                 0,
-            ],
+            ),
             expand,
         )
 
@@ -501,7 +501,7 @@ class PageObject(DictionaryObject):
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
-        self.mergeTransformedPage(page2, [1, 0, 0, 1, tx, ty], expand)
+        self.mergeTransformedPage(page2, (1, 0, 0, 1, tx, ty), expand)
 
     def mergeRotatedTranslatedPage(
         self,
@@ -615,7 +615,7 @@ class PageObject(DictionaryObject):
         :param float sx: The scaling factor on horizontal axis.
         :param float sy: The scaling factor on vertical axis.
         """
-        self.addTransformation([sx, 0, 0, sy, 0, 0])
+        self.addTransformation((sx, 0, 0, sy, 0, 0))
         self.mediaBox = RectangleObject(
             (
                 float(self.mediaBox.getLowerLeft_x()) * sx,
