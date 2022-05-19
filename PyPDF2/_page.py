@@ -138,12 +138,21 @@ class Transformation:
             matrix[1][2],
         )
 
-    def translate(self, tx: float, ty: float) -> "Transformation":
-        op = ((1, 0, 0), (0, 1, 0), (tx, ty, 1))
-        ctm = Transformation.compress(matrixMultiply(self.matrix, op))
-        return Transformation(ctm)
+    def translate(self, tx: float = 0, ty: float = 0) -> "Transformation":
+        m = self.ctm
+        return Transformation(ctm=(m[0], m[1], m[2], m[3], m[4] + tx, m[5] + ty))
 
-    def scale(self, sx: float, sy: float) -> "Transformation":
+    def scale(
+        self, sx: Optional[float] = None, sy: Optional[float] = None
+    ) -> "Transformation":
+        if sx is None and sy is None:
+            raise ValueError("Either sx or sy must be specified")
+        if sx is None:
+            sx = sy
+        if sy is None:
+            sy = sx
+        assert sx is not None
+        assert sy is not None
         op: TransformationMatrixType = ((sx, 0, 0), (0, sy, 0), (0, 0, 1))
         ctm = Transformation.compress(matrixMultiply(self.matrix, op))
         return Transformation(ctm)
@@ -157,6 +166,9 @@ class Transformation:
         )
         ctm = Transformation.compress(matrixMultiply(self.matrix, op))
         return Transformation(ctm)
+
+    def __repr__(self) -> str:
+        return f"Transformation(ctm={self.ctm})"
 
 
 class PageObject(DictionaryObject):
@@ -511,7 +523,7 @@ class PageObject(DictionaryObject):
         self._mergePage(
             page2,
             lambda page2Content: PageObject._addTransformationMatrix(
-                page2Content, page2.pdf, ctm
+                page2Content, page2.pdf, ctm  # type: ignore[arg-type]
             ),
             ctm,
             expand,
