@@ -3,7 +3,7 @@ import os
 
 import pytest
 
-from PyPDF2 import PdfFileReader
+from PyPDF2 import PdfFileReader, Transformation
 from PyPDF2._page import PageObject
 from PyPDF2.generic import RectangleObject
 
@@ -128,3 +128,11 @@ def test_page_rotation_non90():
     with pytest.raises(ValueError) as exc:
         page.rotateClockwise(91)
     assert exc.value.args[0] == "Rotation angle must be a multiple of 90"
+
+
+def test_page_scale():
+    op = Transformation()
+    with pytest.raises(ValueError) as exc:
+        op.scale()
+
+    assert op.scale(sx=2).ctm == (2, 0, 0, 2, 0, 0)
