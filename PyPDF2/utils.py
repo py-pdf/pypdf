@@ -33,9 +33,22 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 
 from codecs import getencoder
 from io import BufferedReader, BufferedWriter, BytesIO, FileIO
-from typing import Any, Dict, List, Optional, Union, overload
+from typing import Any, Dict, Optional, Tuple, Union, overload
+
+try:
+    # Python 3.10+: https://www.python.org/dev/peps/pep-0484/
+    from typing import TypeAlias  # type: ignore[attr-defined]
+except ImportError:
+    from typing_extensions import TypeAlias  # type: ignore[misc]
 
 from .errors import STREAM_TRUNCATED_PREMATURELY, PdfStreamError
+
+TransformationMatrixType: TypeAlias = Tuple[
+    Tuple[float, float, float], Tuple[float, float, float], Tuple[float, float, float]
+]
+CompressedTransformationMatrix: TypeAlias = Tuple[
+    float, float, float, float, float, float
+]
 
 bytes_type = type(bytes())  # Works the same in Python 2.X and 3.X
 StreamType = Union[BytesIO, BufferedReader, BufferedWriter, FileIO]
@@ -131,11 +144,13 @@ def RC4_encrypt(key: Union[str, bytes], plaintext: bytes) -> bytes:
     return b_("").join(retval)
 
 
-def matrixMultiply(a: List[List[float]], b: List[List[float]]) -> List[List[float]]:
-    return [
-        [sum(float(i) * float(j) for i, j in zip(row, col)) for col in zip(*b)]
+def matrixMultiply(
+    a: TransformationMatrixType, b: TransformationMatrixType
+) -> TransformationMatrixType:
+    return tuple(  # type: ignore[return-value]
+        tuple(sum(float(i) * float(j) for i, j in zip(row, col)) for col in zip(*b))
         for row in a
-    ]
+    )
 
 
 def markLocation(stream: StreamType) -> None:
