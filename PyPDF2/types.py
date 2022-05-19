@@ -1,6 +1,6 @@
 """Helpers for working with PDF types."""
 
-from typing import List, Tuple, Union
+from typing import List, Union
 
 try:
     # Python 3.8+: https://peps.python.org/pep-0586
@@ -31,12 +31,6 @@ FitType: TypeAlias = Literal[
 # Those go with the FitType: They specify values for the fit
 ZoomArgType: TypeAlias = Union[NumberObject, NullObject]
 ZoomArgsType: TypeAlias = List[ZoomArgType]
-TransformationMatrixType: TypeAlias = Tuple[
-    Tuple[float, float, float], Tuple[float, float, float], Tuple[float, float, float]
-]
-CompressedTransformationMatrix: TypeAlias = Tuple[
-    float, float, float, float, float, float
-]
 
 # Recursive types are not yet supported by mypy:
 #    OutlinesType = List[Union[Destination, "OutlinesType"]]

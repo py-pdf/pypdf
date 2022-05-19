@@ -47,8 +47,12 @@ from .generic import (
     RectangleObject,
     TextStringObject,
 )
-from .types import CompressedTransformationMatrix, TransformationMatrixType
-from .utils import b_, matrixMultiply
+from .utils import (
+    CompressedTransformationMatrix,
+    TransformationMatrixType,
+    b_,
+    matrixMultiply,
+)
 
 
 def getRectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
