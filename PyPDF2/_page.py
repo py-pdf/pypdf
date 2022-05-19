@@ -91,7 +91,7 @@ def createRectangleAccessor(name: str, fallback: Iterable[str]) -> property:
 
 class Transformation:
     """
-
+    Specify a 2D transformation.
 
     The transformation between two coordinate systems is represented by a 3-by-3
     transformation matrix written as follows:
@@ -507,6 +507,7 @@ class PageObject(DictionaryObject):
         """
         if isinstance(ctm, Transformation):
             ctm = ctm.ctm
+        ctm = cast(CompressedTransformationMatrix, ctm)
         self._mergePage(
             page2,
             lambda page2Content: PageObject._addTransformationMatrix(
