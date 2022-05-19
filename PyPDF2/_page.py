@@ -800,7 +800,7 @@ class Transformation:
         self.ctm = ctm
 
     @property
-    def matrix(self):
+    def matrix(self) -> TransformationMatrixType:
         return (
             (self.ctm[0], self.ctm[1], 0),
             (self.ctm[2], self.ctm[3], 0),
@@ -818,17 +818,17 @@ class Transformation:
             matrix[1][2],
         )
 
-    def translate(self, tx, ty):
+    def translate(self, tx: float, ty: float) -> "Transformation":
         op = ((1, 0, 0), (0, 1, 0), (tx, ty, 1))
         ctm = Transformation.compress(matrixMultiply(self.matrix, op))
         return Transformation(ctm)
 
-    def scale(self, sx, sy):
+    def scale(self, sx: float, sy: float) -> "Transformation":
         op: TransformationMatrixType = ((sx, 0, 0), (0, sy, 0), (0, 0, 1))
         ctm = Transformation.compress(matrixMultiply(self.matrix, op))
         return Transformation(ctm)
 
-    def rotate(self, rotation):
+    def rotate(self, rotation: float) -> "Transformation":
         rotation = math.radians(rotation)
         op: TransformationMatrixType = (
             (math.cos(rotation), math.sin(rotation), 0),
