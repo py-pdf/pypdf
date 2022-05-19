@@ -457,8 +457,8 @@ class PageObject(DictionaryObject):
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
-        # CTM to scale : [ sx 0 0 sy 0 0 ]
-        self.mergeTransformedPage(page2, (scale, 0, 0, scale, 0, 0), expand)
+        op = Transformation().scale(scale, scale)
+        self.mergeTransformedPage(page2, op.ctm, expand)
 
     def mergeRotatedPage(
         self, page2: "PageObject", rotation: float, expand: bool = False
@@ -473,19 +473,8 @@ class PageObject(DictionaryObject):
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
-        rotation = math.radians(rotation)
-        self.mergeTransformedPage(
-            page2,
-            (
-                math.cos(rotation),
-                math.sin(rotation),
-                -math.sin(rotation),
-                math.cos(rotation),
-                0,
-                0,
-            ),
-            expand,
-        )
+        op = Transformation().rotate(rotation)
+        self.mergeTransformedPage(page2, op.ctm, expand)
 
     def mergeTranslatedPage(
         self, page2: "PageObject", tx: float, ty: float, expand: bool = False
@@ -501,7 +490,8 @@ class PageObject(DictionaryObject):
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
-        self.mergeTransformedPage(page2, (1, 0, 0, 1, tx, ty), expand)
+        op = Transformation().translate(tx, ty)
+        self.mergeTransformedPage(page2, op.ctm, expand)
 
     def mergeRotatedTranslatedPage(
         self,
