@@ -31,7 +31,7 @@ def test_PdfReaderFileLoad():
         with open(os.path.join(RESOURCE_ROOT, "crazyones.txt"), "rb") as pdftext_file:
             pdftext = pdftext_file.read()
 
-        text = page.extractText(Tj_sep="", TJ_sep="").encode("utf-8")
+        text = page.extract_text(Tj_sep="", TJ_sep="").encode("utf-8")
 
         # Compare the text of the PDF to a known source
         for expected_line, actual_line in zip(text.split(b"\n"), pdftext.split(b"\n")):
@@ -83,8 +83,8 @@ def test_decrypt():
             "/Creator": "Writer",
             "/Producer": "LibreOffice 6.4",
         }
-        # Is extractText() broken for encrypted files?
-        # assert reader.getPage(0).extractText().replace('\n', '') == "\n˘\n\u02c7\u02c6˙\n\n\n˘\u02c7\u02c6˙\n\n"
+        # Is extract_text() broken for encrypted files?
+        # assert reader.getPage(0).extract_text().replace('\n', '') == "\n˘\n\u02c7\u02c6˙\n\n\n˘\u02c7\u02c6˙\n\n"
 
 
 @pytest.mark.parametrize("degree", [0, 90, 180, 270, 360, -90])

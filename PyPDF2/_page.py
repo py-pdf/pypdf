@@ -852,7 +852,7 @@ class PageObject(DictionaryObject):
     defining the visible region of default user space.  When the page is
     displayed or printed, its contents are to be clipped (cropped) to this
     rectangle and then imposed on the output medium in some
-    implementation-defined manner.  Default value: same as :attr:`mediaBox<mediaBox>`.
+    implementation-defined manner.  Default value: same as :attr:`mediabox<mediabox>`.
     """
 
     @property

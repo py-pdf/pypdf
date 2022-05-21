@@ -35,7 +35,7 @@ import math
 import warnings
 from sys import version_info
 
-from PyPDF2._utils import DEPR_MSG, ord_, paethPredictor
+from PyPDF2._utils import DEPR_MSG, ord_, paeth_predictor
 from PyPDF2.constants import CcittFaxDecodeParameters as CCITT
 from PyPDF2.constants import ColorSpaces
 from PyPDF2.constants import FilterTypeAbbreviations as FTA
@@ -140,7 +140,7 @@ class FlateDecode(object):
                     left = rowdata[i - 1] if i > 1 else 0
                     up = prev_rowdata[i]
                     up_left = prev_rowdata[i - 1] if i > 1 else 0
-                    paeth = paethPredictor(left, up, up_left)
+                    paeth = paeth_predictor(left, up, up_left)
                     rowdata[i] = (rowdata[i] + paeth) % 256
             else:
                 # unsupported PNG filter

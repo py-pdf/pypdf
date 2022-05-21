@@ -312,22 +312,22 @@ def test_DictionaryObject_read_from_stream_stream_stream_valid():
 
 def test_RectangleObject():
     ro = RectangleObject((1, 2, 3, 4))
-    assert ro.lowerLeft == (1, 2)
-    assert ro.lowerRight == (3, 2)
-    assert ro.upperLeft == (1, 4)
-    assert ro.upperRight == (3, 4)
+    assert ro.lower_left == (1, 2)
+    assert ro.lower_right == (3, 2)
+    assert ro.upper_left == (1, 4)
+    assert ro.upper_right == (3, 4)
 
-    ro.lowerLeft = (5, 6)
-    assert ro.lowerLeft == (5, 6)
+    ro.lower_left = (5, 6)
+    assert ro.lower_left == (5, 6)
 
-    ro.lowerRight = (7, 8)
-    assert ro.lowerRight == (7, 8)
+    ro.lower_right = (7, 8)
+    assert ro.lower_right == (7, 8)
 
-    ro.upperLeft = (9, 11)
-    assert ro.upperLeft == (9, 11)
+    ro.upper_left = (9, 11)
+    assert ro.upper_left == (9, 11)
 
-    ro.upperRight = (13, 17)
-    assert ro.upperRight == (13, 17)
+    ro.upper_right = (13, 17)
+    assert ro.upper_right == (13, 17)
 
 
 def test_TextStringObject_exc():

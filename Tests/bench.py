@@ -21,12 +21,12 @@ def page_ops(pdf_path, password):
     page.mergeRotatedScaledPage(page, 90, 1, 1)
     page.mergeScaledTranslatedPage(page, 1, 1, 1)
     page.mergeRotatedScaledTranslatedPage(page, 90, 1, 1, 1, 1)
-    page.addTransformation([1, 0, 0, 0, 0, 0])
+    page.add_transformation([1, 0, 0, 0, 0, 0])
     page.scale(2, 2)
     page.scaleBy(0.5)
     page.scaleTo(100, 100)
     page.compressContentStreams()
-    page.extractText()
+    page.extract_text()
 
 
 def test_page_operations(benchmark):

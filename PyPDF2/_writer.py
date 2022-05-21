@@ -1253,7 +1253,7 @@ class PdfWriter(object):
         else:
             page_ref[NameObject(PG.ANNOTS)] = ArrayObject([lnk_ref])
 
-    def saddURI(self, pagenum, uri, rect, border=None):
+    def addURI(self, pagenum, uri, rect, border=None):
         warnings.warn(
             DEPR_MSG.format("addURI", "add_uri"),
         )

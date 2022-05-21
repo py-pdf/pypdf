@@ -323,7 +323,7 @@ def hexStr(num):
 WHITESPACES = [b_(x) for x in [" ", "\n", "\r", "\t", "\x00"]]
 
 
-def paethPredictor(left, up, up_left):
+def paeth_predictor(left, up, up_left):
     p = left + up - up_left
     dist_left = abs(p - left)
     dist_up = abs(p - up)
@@ -335,3 +335,10 @@ def paethPredictor(left, up, up_left):
         return up
     else:
         return up_left
+
+
+def paethPredictor(left, up, up_left):
+    warnings.warn(
+        DEPR_MSG.format("paethPredictor", "paeth_predictor"), PendingDeprecationWarning
+    )
+    return paeth_predictor(left, up, up_left)

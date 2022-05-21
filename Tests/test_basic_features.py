@@ -26,7 +26,7 @@ def test_basic_features():
 
     # add page 3 from input1, rotated the other way:
     writer.add_page(reader._get_page(0).rotateCounterClockwise(90))
-    # alt: output.addPage(input1.getPage(0).rotateClockwise(270))
+    # alt: output.add_page(input1.getPage(0).rotateClockwise(270))
 
     # add page 4 from input1, but first add a watermark from another PDF:
     page4 = reader._get_page(0)
@@ -37,9 +37,9 @@ def test_basic_features():
 
     # add page 5 from input1, but crop it to half size:
     page5 = reader._get_page(0)
-    page5.mediaBox.upperRight = (
-        page5.mediaBox.getUpperRight_x() / 2,
-        page5.mediaBox.getUpperRight_y() / 2,
+    page5.mediabox.upper_right = (
+        page5.mediabox.right_x / 2,
+        page5.mediabox.upper_y / 2,
     )
     writer.add_page(page5)
 

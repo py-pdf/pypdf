@@ -32,7 +32,7 @@ from PyPDF2 import PdfReader, PdfWriter
 reader = PdfReader("encrypted-pdf.pdf")
 writer = PdfWriter()
 
-if reader.isEncrypted:
+if reader.is_encrypted:
     reader.decrypt("my-secret-password")
 
 # Add all pages to the writer
