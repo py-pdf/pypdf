@@ -320,6 +320,82 @@ class PageObject(DictionaryObject):
         stream.operations.append(([], "Q"))
         return stream
 
+    def add_transformation(
+        self,
+        ctm: Union[Transformation, CompressedTransformationMatrix],
+        expand: bool = False,
+    ) -> None:
+        if isinstance(ctm, Transformation):
+            ctm = ctm.ctm
+
+        transformation_func = lambda content: PageObject._addTransformationMatrix(
+            content, self.pdf, ctm  # type: ignore[arg-type]
+        )
+
+        new_content_array = ArrayObject()
+
+        content = self.getContents()
+        if content is not None:
+            content = ContentStream(content, self.pdf)
+            content.operations.insert(
+                0,
+                (
+                    map(
+                        FloatObject,
+                        [
+                            self.trimBox.getLowerLeft_x(),
+                            self.trimBox.getLowerLeft_y(),
+                            self.trimBox.getWidth(),
+                            self.trimBox.getHeight(),
+                        ],
+                    ),
+                    "re",
+                ),
+            )
+            content.operations.insert(1, ([], "W"))
+            content.operations.insert(2, ([], "n"))
+            if transformation_func is not None:
+                content = transformation_func(content)
+            content = PageObject._pushPopGS(content, self.pdf)
+            new_content_array.append(content)
+
+        # if expanding the page to fit a new page, calculate the new media box size
+        if expand:
+            corners = [
+                self.mediaBox.getLowerLeft_x().as_numeric(),
+                self.mediaBox.getLowerLeft_y().as_numeric(),
+                self.mediaBox.getUpperLeft_x().as_numeric(),
+                self.mediaBox.getUpperLeft_y().as_numeric(),
+                self.mediaBox.getUpperRight_x().as_numeric(),
+                self.mediaBox.getUpperRight_y().as_numeric(),
+                self.mediaBox.getLowerRight_x().as_numeric(),
+                self.mediaBox.getLowerRight_y().as_numeric(),
+            ]
+            if ctm is not None:
+                ctm = tuple(float(x) for x in ctm)  # type: ignore[assignment]
+                new_x = [
+                    ctm[0] * corners[i] + ctm[2] * corners[i + 1] + ctm[4]
+                    for i in range(0, 8, 2)
+                ]
+                new_y = [
+                    ctm[1] * corners[i] + ctm[3] * corners[i + 1] + ctm[5]
+                    for i in range(0, 8, 2)
+                ]
+            else:
+                new_x = corners[0:8:2]
+                new_y = corners[1:8:2]
+            lowerleft = [min(new_x), min(new_y)]
+            upperright = [max(new_x), max(new_y)]
+            lowerleft = [min(corners[0], lowerleft[0]), min(corners[1], lowerleft[1])]
+            upperright = [
+                max(corners[2], upperright[0]),
+                max(corners[3], upperright[1]),
+            ]
+
+            self.mediaBox.setLowerLeft(lowerleft)
+            self.mediaBox.setUpperRight(upperright)
+        self[NameObject(PG.CONTENTS)] = ContentStream(new_content_array, self.pdf)
+
     @staticmethod
     def _addTransformationMatrix(
         contents: Any, pdf: Any, ctm: CompressedTransformationMatrix
@@ -356,7 +432,7 @@ class PageObject(DictionaryObject):
         else:
             return None
 
-    def mergePage(self, page2: "PageObject") -> None:
+    def mergePage(self, page2: "PageObject", expand: bool = False) -> None:
         """
         Merge the content streams of two pages into one.
 
@@ -369,7 +445,7 @@ class PageObject(DictionaryObject):
         :param PageObject page2: The page to be merged into this one. Should be
             an instance of :class:`PageObject<PageObject>`.
         """
-        self._mergePage(page2)
+        self._mergePage(page2, expand=expand)
 
     def _mergePage(
         self,
