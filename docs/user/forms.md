@@ -6,7 +6,7 @@
 from PyPDF2 import PdfReader
 
 reader = PdfReader("form.pdf")
-fields = reader.getFormTextFields()
+fields = reader.get_form_text_fields()
 fields == {"key": "value", "key2": "value2"}
 ```
 
@@ -19,12 +19,12 @@ reader = PdfReader("form.pdf")
 writer = PdfWriter()
 
 page = reader.pages[0]
-fields = reader.getFields()
+fields = reader.get_fields()
 
-writer.addPage(page)
+writer.add_page(page)
 
-writer.updatePageFormFieldValues(
-    writer.getPage(0), {"fieldname": "some filled in text"}
+writer.update_page_form_field_values(
+    writer.get_page(0), {"fieldname": "some filled in text"}
 )
 
 # write "output" to PyPDF2-output.pdf

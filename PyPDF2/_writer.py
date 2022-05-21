@@ -272,8 +272,8 @@ class PdfWriter(object):
         """
         if width is None or height is None and (self.get_num_pages() - 1) >= index:
             oldpage = self.get_page(index)
-            width = oldpage.mediaBox.getWidth()
-            height = oldpage.mediaBox.getHeight()
+            width = oldpage.mediabox.width
+            height = oldpage.mediabox.height
         page = PageObject.create_blank_page(self, width, height)
         self.insert_page(page, index)
         return page

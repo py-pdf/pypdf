@@ -28,9 +28,9 @@ reader = PdfReader("example.pdf")
 for page in reader.pages:
     if "/Annots" in page:
         for annot in page["/Annots"]:
-            subtype = annot.getObject()["/Subtype"]
+            subtype = annot.get_object()["/Subtype"]
             if subtype == "/Text":
-                print(annot.getObject()["/Contents"])
+                print(annot.get_object()["/Contents"])
 ```
 
 ## Highlights
@@ -43,9 +43,9 @@ reader = PdfReader("commented.pdf")
 for page in reader.pages:
     if "/Annots" in page:
         for annot in page["/Annots"]:
-            subtype = annot.getObject()["/Subtype"]
+            subtype = annot.get_object()["/Subtype"]
             if subtype == "/Highlight":
-                coords = annot.getObject()["/QuadPoints"]
+                coords = annot.get_object()["/QuadPoints"]
                 x1, y1, x2, y2, x3, y3, x4, y4 = coords
 ```
 
@@ -60,7 +60,7 @@ attachments = {}
 for page in reader.pages:
     if "/Annots" in page:
         for annotation in page["/Annots"]:
-            subtype = annot.getObject()["/Subtype"]
+            subtype = annot.get_object()["/Subtype"]
             if subtype == "/FileAttachment":
                 fileobj = annotobj["/FS"]
                 attachments[fileobj["/F"]] = fileobj["/EF"]["/F"].getData()

@@ -42,6 +42,7 @@ import warnings
 from sys import version_info
 
 from PyPDF2._security import RC4_encrypt
+from PyPDF2._utils import DEPR_MSG
 from PyPDF2.constants import FilterTypes as FT
 from PyPDF2.constants import StreamAttributes as SA
 from PyPDF2.errors import (
@@ -1200,11 +1201,11 @@ class RectangleObject(ArrayObject):
     """
     This class is used to represent *page boxes* in PyPDF2. These boxes include:
 
-        * :attr:`artBox <PyPDF2.pdf.PageObject.artBox>`
-        * :attr:`bleedBox <PyPDF2.pdf.PageObject.bleedBox>`
-        * :attr:`cropBox <PyPDF2.pdf.PageObject.cropBox>`
-        * :attr:`mediaBox <PyPDF2.pdf.PageObject.mediaBox>`
-        * :attr:`trimBox <PyPDF2.pdf.PageObject.trimBox>`
+        * :attr:`artbox <PyPDF2.pdf.PageObject.artbox>`
+        * :attr:`bleedbox <PyPDF2.pdf.PageObject.bleedbox>`
+        * :attr:`cropbox <PyPDF2.pdf.PageObject.cropbox>`
+        * :attr:`mediabox <PyPDF2.pdf.PageObject.mediabox>`
+        * :attr:`trimbox <PyPDF2.pdf.PageObject.trimbox>`
     """
 
     def __init__(self, arr):
@@ -1221,80 +1222,261 @@ class RectangleObject(ArrayObject):
     def __repr__(self):
         return "RectangleObject(%s)" % repr(list(self))
 
-    def getLowerLeft_x(self):
+    @property
+    def left_x(self):
         return self[0]
 
-    def getLowerLeft_y(self):
+    @property
+    def lower_y(self):
         return self[1]
 
-    def getUpperRight_x(self):
+    @property
+    def right_x(self):
         return self[2]
 
-    def getUpperRight_y(self):
+    @property
+    def upper_y(self):
         return self[3]
 
+    def getLowerLeft_x(self):
+        warnings.warn(
+            DEPR_MSG.format("getLowerLeft_x", "left_x"),
+            PendingDeprecationWarning,
+        )
+        return self.left_x
+
+    def getLowerLeft_y(self):
+        warnings.warn(
+            DEPR_MSG.format("getLowerLeft_y", "lower_y"),
+            PendingDeprecationWarning,
+        )
+        return self.lower_y
+
+    def getUpperRight_x(self):
+        warnings.warn(
+            DEPR_MSG.format("getUpperRight_x", "right_x"),
+            PendingDeprecationWarning,
+        )
+        return self.right_x
+
+    def getUpperRight_y(self):
+        warnings.warn(
+            DEPR_MSG.format("getUpperRight_y", "upper_y"),
+            PendingDeprecationWarning,
+        )
+        return self.upper_y
+
     def getUpperLeft_x(self):
-        return self.getLowerLeft_x()
+        warnings.warn(
+            DEPR_MSG.format("getUpperLeft_x", "left_x"),
+            PendingDeprecationWarning,
+        )
+        return self.left_x
 
     def getUpperLeft_y(self):
-        return self.getUpperRight_y()
+        warnings.warn(
+            DEPR_MSG.format("getUpperLeft_y", "upper_y"),
+            PendingDeprecationWarning,
+        )
+        return self.upper_y
 
     def getLowerRight_x(self):
-        return self.getUpperRight_x()
+        warnings.warn(
+            DEPR_MSG.format("getLowerRight_x", "right_x"),
+            PendingDeprecationWarning,
+        )
+        return self.right_x
 
     def getLowerRight_y(self):
-        return self.getLowerLeft_y()
+        warnings.warn(
+            DEPR_MSG.format("getLowerRight_y", "lower_y"),
+            PendingDeprecationWarning,
+        )
+        return self.lower_y
 
-    def getLowerLeft(self):
-        return self.getLowerLeft_x(), self.getLowerLeft_y()
+    @property
+    def lower_left(self):
+        """
+        Property to read and modify the lower left coordinate of this box
+        in (x,y) form.
+        """
+        return self.left_x, self.lower_y
 
-    def getLowerRight(self):
-        return self.getLowerRight_x(), self.getLowerRight_y()
-
-    def getUpperLeft(self):
-        return self.getUpperLeft_x(), self.getUpperLeft_y()
-
-    def getUpperRight(self):
-        return self.getUpperRight_x(), self.getUpperRight_y()
-
-    def setLowerLeft(self, value):
+    @lower_left.setter
+    def lower_left(self, value):
         self[0], self[1] = [self.ensureIsNumber(x) for x in value]
 
+    @property
+    def lower_right(self):
+        """
+        Property to read and modify the lower right coordinate of this box
+        in (x,y) form.
+        """
+        return self.right_x, self.lower_y
+
+    @lower_right.setter
+    def lower_right(self, value):
+        self[2], self[1] = [self.ensureIsNumber(x) for x in value]
+
+    @property
+    def upper_left(self):
+        """
+        Property to read and modify the upper left coordinate of this box
+        in (x,y) form.
+        """
+        return self.left_x, self.upper_y
+
+    @upper_left.setter
+    def upper_left(self, value):
+        self[0], self[3] = [self.ensureIsNumber(x) for x in value]
+
+    @property
+    def upper_right(self):
+        """
+        Property to read and modify the upper right coordinate of this box
+        in (x,y) form.
+        """
+        return self.right_x, self.upper_y
+
+    @upper_right.setter
+    def upper_right(self, value):
+        self[2], self[3] = [self.ensureIsNumber(x) for x in value]
+
+    def getLowerLeft(self):
+        warnings.warn(
+            DEPR_MSG.format("getLowerLeft", "lower_left"),
+            PendingDeprecationWarning,
+        )
+        return self.lower_left
+
+    def getLowerRight(self):
+        warnings.warn(
+            DEPR_MSG.format("getLowerRight", "lower_right"),
+            PendingDeprecationWarning,
+        )
+        return self.lower_right
+
+    def getUpperLeft(self):
+        warnings.warn(
+            DEPR_MSG.format("getUpperLeft", "upper_left"),
+            PendingDeprecationWarning,
+        )
+        return self.upper_left
+
+    def getUpperRight(self):
+        warnings.warn(
+            DEPR_MSG.format("getUpperRight", "upper_right"),
+            PendingDeprecationWarning,
+        )
+        return self.upper_right
+
+    def setLowerLeft(self, value):
+        warnings.warn(
+            DEPR_MSG.format("setLowerLeft", "lower_left"),
+            PendingDeprecationWarning,
+        )
+        self.lower_left = value
+
     def setLowerRight(self, value):
+        warnings.warn(
+            DEPR_MSG.format("setLowerRight", "lower_right"),
+            PendingDeprecationWarning,
+        )
         self[2], self[1] = [self.ensureIsNumber(x) for x in value]
 
     def setUpperLeft(self, value):
+        warnings.warn(
+            DEPR_MSG.format("setUpperLeft", "upper_left"),
+            PendingDeprecationWarning,
+        )
         self[0], self[3] = [self.ensureIsNumber(x) for x in value]
 
     def setUpperRight(self, value):
+        warnings.warn(
+            DEPR_MSG.format("setUpperRight", "upper_right"),
+            PendingDeprecationWarning,
+        )
         self[2], self[3] = [self.ensureIsNumber(x) for x in value]
 
+    @property
+    def width(self):
+        return self.right_x - self.left_x
+
     def getWidth(self):
-        return self.getUpperRight_x() - self.getLowerLeft_x()
+        warnings.warn(DEPR_MSG.format("getWidth", "width"), DeprecationWarning)
+        return self.width
+
+    @property
+    def height(self):
+        return self.upper_y - self.lower_y
 
     def getHeight(self):
-        return self.getUpperRight_y() - self.getLowerLeft_y()
+        warnings.warn(DEPR_MSG.format("getHeight", "height"), DeprecationWarning)
+        return self.height
 
-    lowerLeft = property(getLowerLeft, setLowerLeft, None, None)
-    """
-    Property to read and modify the lower left coordinate of this box
-    in (x,y) form.
-    """
-    lowerRight = property(getLowerRight, setLowerRight, None, None)
-    """
-    Property to read and modify the lower right coordinate of this box
-    in (x,y) form.
-    """
-    upperLeft = property(getUpperLeft, setUpperLeft, None, None)
-    """
-    Property to read and modify the upper left coordinate of this box
-    in (x,y) form.
-    """
-    upperRight = property(getUpperRight, setUpperRight, None, None)
-    """
-    Property to read and modify the upper right coordinate of this box
-    in (x,y) form.
-    """
+    @property
+    def lowerLeft(self):
+        warnings.warn(
+            DEPR_MSG.format("lowerLeft", "lower_left"),
+            PendingDeprecationWarning,
+        )
+        return self.lower_left
+
+    @lowerLeft.setter
+    def lowerLeft(self, value):
+        warnings.warn(
+            DEPR_MSG.format("lowerLeft", "lower_left"),
+            PendingDeprecationWarning,
+        )
+        self.lower_left = value
+
+    @property
+    def lowerRight(self):
+        warnings.warn(
+            DEPR_MSG.format("lowerRight", "lower_right"),
+            PendingDeprecationWarning,
+        )
+        return self.lower_right
+
+    @lowerRight.setter
+    def lowerRight(self, value):
+        warnings.warn(
+            DEPR_MSG.format("lowerRight", "lower_right"),
+            PendingDeprecationWarning,
+        )
+        self.lower_right = value
+
+    @property
+    def upperLeft(self):
+        warnings.warn(
+            DEPR_MSG.format("upperLeft", "upper_left"),
+            PendingDeprecationWarning,
+        )
+        return self.upper_left
+
+    @upperLeft.setter
+    def upperLeft(self, value):
+        warnings.warn(
+            DEPR_MSG.format("upperLeft", "upper_left"),
+            PendingDeprecationWarning,
+        )
+        self.upper_left = value
+
+    @property
+    def upperRight(self):
+        warnings.warn(
+            DEPR_MSG.format("upperRight", "upper_right"),
+            PendingDeprecationWarning,
+        )
+        return self.upper_right
+
+    @upperRight.setter
+    def upperRight(self, value):
+        warnings.warn(
+            DEPR_MSG.format("upperRight", "upper_right"),
+            PendingDeprecationWarning,
+        )
+        self.upper_right = value
 
 
 class Field(TreeObject):

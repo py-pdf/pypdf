@@ -12,11 +12,11 @@ reader = PdfReader("example.pdf")
 page = reader.pages[0]
 
 # Add the watermark to the page
-page.mergePage(watermark.pages[0])
+page.merge_page(watermark.pages[0])
 
 # Add the page to the writer
 writer = PdfWriter()
-writer.addPage(page)
+writer.add_page(page)
 
 # finally, write the new document with a watermark
 with open("PyPDF2-output.pdf", "wb") as fp:

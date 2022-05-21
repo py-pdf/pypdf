@@ -168,10 +168,10 @@ class PageObject(DictionaryObject):
         page.__setitem__(NameObject(PG.PARENT), NullObject())
         page.__setitem__(NameObject(PG.RESOURCES), DictionaryObject())
         if width is None or height is None:
-            if pdf is not None and pdf.getNumPages() > 0:
-                lastpage = pdf.get_page(pdf.getNumPages() - 1)
-                width = lastpage.mediaBox.getWidth()
-                height = lastpage.mediaBox.getHeight()
+            if pdf is not None and pdf.get_num_pages() > 0:
+                lastpage = pdf.get_page(pdf.get_num_pages() - 1)
+                width = lastpage.mediabox.width
+                height = lastpage.mediabox.height
             else:
                 raise PageSizeNotDefinedError()
         page.__setitem__(
@@ -390,10 +390,10 @@ class PageObject(DictionaryObject):
                     map(
                         FloatObject,
                         [
-                            page2.trimBox.getLowerLeft_x(),
-                            page2.trimBox.getLowerLeft_y(),
-                            page2.trimBox.getWidth(),
-                            page2.trimBox.getHeight(),
+                            page2.trimbox.left_x,
+                            page2.trimbox.lower_y,
+                            page2.trimbox.width,
+                            page2.trimbox.height,
                         ],
                     ),
                     "re",
@@ -412,20 +412,20 @@ class PageObject(DictionaryObject):
         # if expanding the page to fit a new page, calculate the new media box size
         if expand:
             corners1 = [
-                self.mediaBox.getLowerLeft_x().as_numeric(),
-                self.mediaBox.getLowerLeft_y().as_numeric(),
-                self.mediaBox.getUpperRight_x().as_numeric(),
-                self.mediaBox.getUpperRight_y().as_numeric(),
+                self.mediabox.left_x.as_numeric(),
+                self.mediabox.lower_y.as_numeric(),
+                self.mediabox.right_x.as_numeric(),
+                self.mediabox.upper_y.as_numeric(),
             ]
             corners2 = [
-                page2.mediaBox.getLowerLeft_x().as_numeric(),
-                page2.mediaBox.getLowerLeft_y().as_numeric(),
-                page2.mediaBox.getUpperLeft_x().as_numeric(),
-                page2.mediaBox.getUpperLeft_y().as_numeric(),
-                page2.mediaBox.getUpperRight_x().as_numeric(),
-                page2.mediaBox.getUpperRight_y().as_numeric(),
-                page2.mediaBox.getLowerRight_x().as_numeric(),
-                page2.mediaBox.getLowerRight_y().as_numeric(),
+                page2.mediabox.left_x.as_numeric(),
+                page2.mediabox.lower_y.as_numeric(),
+                page2.mediabox.left_x.as_numeric(),
+                page2.mediabox.upper_y.as_numeric(),
+                page2.mediabox.right_x.as_numeric(),
+                page2.mediabox.upper_y.as_numeric(),
+                page2.mediabox.right_x.as_numeric(),
+                page2.mediabox.lower_y.as_numeric(),
             ]
             if ctm is not None:
                 ctm = [float(x) for x in ctm]
@@ -448,8 +448,8 @@ class PageObject(DictionaryObject):
                 max(corners1[3], upperright[1]),
             ]
 
-            self.mediaBox.setLowerLeft(lowerleft)
-            self.mediaBox.setUpperRight(upperright)
+            self.mediabox.setLowerLeft(lowerleft)
+            self.mediabox.setUpperRight(upperright)
 
         self[NameObject(PG.CONTENTS)] = ContentStream(new_content_array, self.pdf)
         self[NameObject(PG.RESOURCES)] = new_resources
@@ -676,12 +676,12 @@ class PageObject(DictionaryObject):
         :param float sy: The scaling factor on vertical axis.
         """
         self.add_transformation([sx, 0, 0, sy, 0, 0])
-        self.mediaBox = RectangleObject(
+        self.mediabox = RectangleObject(
             [
-                float(self.mediaBox.getLowerLeft_x()) * sx,
-                float(self.mediaBox.getLowerLeft_y()) * sy,
-                float(self.mediaBox.getUpperRight_x()) * sx,
-                float(self.mediaBox.getUpperRight_y()) * sy,
+                float(self.mediabox.left_x) * sx,
+                float(self.mediabox.lower_y) * sy,
+                float(self.mediabox.right_x) * sx,
+                float(self.mediabox.upper_y) * sy,
             ]
         )
         if PG.VP in self:
@@ -729,12 +729,8 @@ class PageObject(DictionaryObject):
         :param float width: The new width.
         :param float height: The new heigth.
         """
-        sx = width / float(
-            self.mediaBox.getUpperRight_x() - self.mediaBox.getLowerLeft_x()
-        )
-        sy = height / float(
-            self.mediaBox.getUpperRight_y() - self.mediaBox.getLowerLeft_y()
-        )
+        sx = width / float(self.mediabox.width)
+        sy = height / float(self.mediabox.height)
         self.scale(sx, sy)
 
     def scaleTo(self, width, height):
@@ -827,14 +823,30 @@ class PageObject(DictionaryObject):
         )
         return self.extract_text(Tj_sep=Tj_sep, TJ_sep=TJ_sep)
 
-    mediaBox = _create_rectangle_accessor(PG.MEDIABOX, ())
+    mediabox = _create_rectangle_accessor(PG.MEDIABOX, ())
     """
     A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
     defining the boundaries of the physical medium on which the page is
     intended to be displayed or printed.
     """
 
-    cropBox = _create_rectangle_accessor("/CropBox", (PG.MEDIABOX,))
+    @property
+    def mediaBox(self):
+        warnings.warn(
+            DEPR_MSG.format("Page.mediaBox", "Page.mediabox"),
+            PendingDeprecationWarning,
+        )
+        return self.mediabox
+
+    @mediaBox.setter
+    def mediaBox(self, value):
+        warnings.warn(
+            DEPR_MSG.format("Page.mediaBox", "Page.mediabox"),
+            PendingDeprecationWarning,
+        )
+        self.mediabox = value
+
+    cropbox = _create_rectangle_accessor("/CropBox", (PG.MEDIABOX,))
     """
     A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
     defining the visible region of default user space.  When the page is
@@ -843,22 +855,86 @@ class PageObject(DictionaryObject):
     implementation-defined manner.  Default value: same as :attr:`mediaBox<mediaBox>`.
     """
 
-    bleedBox = _create_rectangle_accessor("/BleedBox", ("/CropBox", PG.MEDIABOX))
+    @property
+    def cropBox(self):
+        warnings.warn(
+            DEPR_MSG.format("Page.cropBox", "Page.cropbox"),
+            PendingDeprecationWarning,
+        )
+        return self.cropbox
+
+    @cropBox.setter
+    def cropBox(self, value):
+        warnings.warn(
+            DEPR_MSG.format("Page.cropBox", "Page.cropbox"),
+            PendingDeprecationWarning,
+        )
+        self.cropbox = value
+
+    bleedbox = _create_rectangle_accessor("/BleedBox", ("/CropBox", PG.MEDIABOX))
     """
     A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
     defining the region to which the contents of the page should be clipped
     when output in a production enviroment.
     """
 
-    trimBox = _create_rectangle_accessor("/TrimBox", ("/CropBox", PG.MEDIABOX))
+    @property
+    def bleedBox(self):
+        warnings.warn(
+            DEPR_MSG.format("Page.bleedBox", "Page.bleedbox"),
+            PendingDeprecationWarning,
+        )
+        return self.bleedbox
+
+    @bleedBox.setter
+    def bleedBox(self, value):
+        warnings.warn(
+            DEPR_MSG.format("Page.bleedBox", "Page.bleedbox"),
+            PendingDeprecationWarning,
+        )
+        self.bleedbox = value
+
+    trimbox = _create_rectangle_accessor("/TrimBox", ("/CropBox", PG.MEDIABOX))
     """
     A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
     defining the intended dimensions of the finished page after trimming.
     """
 
-    artBox = _create_rectangle_accessor("/ArtBox", ("/CropBox", PG.MEDIABOX))
+    @property
+    def trimBox(self):
+        warnings.warn(
+            DEPR_MSG.format("Page.trimBox", "Page.trimbox"),
+            PendingDeprecationWarning,
+        )
+        return self.trimbox
+
+    @trimBox.setter
+    def trimBox(self, value):
+        warnings.warn(
+            DEPR_MSG.format("Page.trimBox", "Page.trimbox"),
+            PendingDeprecationWarning,
+        )
+        self.trimbox = value
+
+    artbox = _create_rectangle_accessor("/ArtBox", ("/CropBox", PG.MEDIABOX))
     """
     A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
     defining the extent of the page's meaningful content as intended by the
     page's creator.
     """
+
+    @property
+    def artBox(self):
+        warnings.warn(
+            DEPR_MSG.format("Page.artBox", "Page.artbox"),
+            PendingDeprecationWarning,
+        )
+        return self.artbox
+
+    @artBox.setter
+    def artBox(self, value):
+        warnings.warn(
+            DEPR_MSG.format("Page.artBox", "Page.artbox"),
+            PendingDeprecationWarning,
+        )
+        self.artbox = value

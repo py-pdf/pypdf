@@ -28,7 +28,7 @@
 from sys import version_info
 
 from PyPDF2._reader import PdfReader
-from PyPDF2._utils import isString, str_
+from PyPDF2._utils import DEPR_MSG, isString, str_
 from PyPDF2._writer import PdfWriter
 from PyPDF2.constants import PagesAttributes as PA
 from PyPDF2.generic import *
@@ -288,6 +288,9 @@ class PdfMerger(object):
         self.output.add_metadata(infos)
 
     def addMetadata(self, infos):
+        warnings.warn(
+            DEPR_MSG.format("addMetadata", "add_metadata"), PendingDeprecationWarning
+        )
         self.add_metadata(infos)
 
     def setPageLayout(self, layout):

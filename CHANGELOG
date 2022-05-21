@@ -63,7 +63,7 @@ PdfReader class:
 PdfWriter class:
 
   - addMetadata ➔ add_metadata
-  - addPage ➔ append_page : TODO - is this a good idea?
+  - addPage ➔ add_page
   - addBlankPage ➔ add_blank_page
   - addAttachment(fname, fdata) ➔ add_attachment(filename, data)
   - insertPage ➔ insert_page
@@ -97,6 +97,14 @@ PdfMerger class
   - addMetadata ➔ add_metadata
 
 Page class:
+  - artBox / bleedBox/ cropBox/ mediaBox / trimBox ➔ artbox / bleedbox/ cropbox/ mediabox / trimbox
+    - getWidth, getHeight  ➔ width / height
+    - getLowerLeft_x / getUpperLeft_x ➔ left_x
+    - getUpperRight_x / getLowerRight_x ➔ right_x
+    - getLowerLeft_y / getLowerRight_y ➔ lower_y
+    - getUpperRight_y / getUpperLeft_y ➔ upper_y
+    - getLowerLeft / setLowerLeft ➔ lower_left property
+    - upperRight ➔ upper_right
   - mergePage ➔ merge_page
   - rotateClockwise / rotateCounterClockwise ➔ rotate_clockwise
   - _mergeResources ➔ _merge_resources

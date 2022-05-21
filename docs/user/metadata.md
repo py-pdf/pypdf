@@ -29,10 +29,10 @@ writer = PdfWriter()
 
 # Add all pages to the writer
 for page in reader.pages:
-    writer.addPage(page)
+    writer.add_page(page)
 
 # Add the metadata
-writer.addMetadata(
+writer.add_metadata(
     {
         "/Author": "Martin",
         "/Producer": "Libre Writer",
