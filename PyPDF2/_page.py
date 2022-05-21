@@ -337,21 +337,6 @@ class PageObject(DictionaryObject):
         content = self.getContents()
         if content is not None:
             content = ContentStream(content, self.pdf)
-            content.operations.insert(
-                0,
-                (
-                    map(
-                        FloatObject,
-                        [
-                            self.trimBox.getLowerLeft_x(),
-                            self.trimBox.getLowerLeft_y(),
-                            self.trimBox.getWidth(),
-                            self.trimBox.getHeight(),
-                        ],
-                    ),
-                    "re",
-                ),
-            )
             content.operations.insert(1, ([], "W"))
             content.operations.insert(2, ([], "n"))
             if transformation_func is not None:
