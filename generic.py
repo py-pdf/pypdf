@@ -56,8 +56,9 @@ import codecs
 import decimal
 import logging
 import re
+import sys
 import warnings
-from io import BytesIO 
+from io import BytesIO
 
 from PyPDF2.constants import FilterTypes as FT
 from PyPDF2.constants import StreamAttributes as SA
@@ -483,22 +484,19 @@ def createStringObjectOrig(string):
     else:
         raise TypeError("createStringObject should have str or unicode arg")
 
-
 def skipWhitespace(stream):
     WHITESPACES = [b" ", b"\n", b"\r", b"\t", b"\x00", b"%"]
     tok = WHITESPACES[0]
     while tok in WHITESPACES:
         if tok == b"%":  # comment is whitespace
-            tok = readline(stream)
+            tok = stream.readline()
             tok = stream.read(1)
         else:
             tok = stream.read(1)
     stream.seek(-1, 1)
 
-
 def readHexStringFromStream(stream):
 
-    import io
     import codecs
 
     HEX_CODEC = "HEX"
@@ -611,7 +609,7 @@ def readStringFromStream(stream):
 
                 # we have one digit - add the next
 
-                for i in range(2):
+                for _i in range(2):
                     ntok = stream.read(1)
                     if ntok == EOF:
                         break
@@ -1302,8 +1300,6 @@ class ContentStream(DecodedStreamObject):
     _data = property(_getData, _setData)
 
 
-
-
 class RectangleObject(ArrayObject):
     """
     This class is used to represent *page boxes* in PyPDF2.
@@ -1704,7 +1700,6 @@ def decode_builtin(byte_array, encoding, Strict=False):
     elif "ingbat" in encoding:
         decode_table = _dingbat_encoding
     else:
-        print(f"encoding=")
         return byte_array.decode(encoding, errors="replace")
 
     retval = ""
