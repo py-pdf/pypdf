@@ -31,7 +31,8 @@
 
 import math
 import uuid
-
+from PyPDF2.toUnicode import as_text
+from PyPDF2.toUnicode import FetchFontExtended
 from PyPDF2 import utils
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.constants import Ressources as RES
@@ -47,8 +48,9 @@ from PyPDF2.generic import (
     NumberObject,
     RectangleObject,
     TextStringObject,
+    ByteStringObject
 )
-from PyPDF2.utils import b_, u_
+from PyPDF2.utils import u_
 
 
 def getRectangle(self, name, defaults):
@@ -672,7 +674,7 @@ class PageObject(DictionaryObject):
                 content = ContentStream(content, self.pdf)
             self[NameObject(PG.CONTENTS)] = content.flateEncode()
 
-    def extractText(self, Tj_sep="", TJ_sep=""):
+    def extractText(self, Tj_sep="", TJ_sep="\n"):
         """
         Locate all text drawing commands, in the order they are provided in the
         content stream, and extract the text.  This works well for some PDF
@@ -681,49 +683,67 @@ class PageObject(DictionaryObject):
         this function, as it will change if this function is made more
         sophisticated.
 
+        This is a work in progress.  Translation of bytes to unicode should
+        1.  use the encoding for the font being used
+        1.a  standard font encoding using the existing routines
+        1.b  tounicode information if the font uses this
+        1.c  glyph information if the font definition supplies or amends it
+        1.d  cid or glyph information from extenal font ??
+        1.e  some message and fallback (perhaps to user provided lookup)
+
+
+        The translate functions need to be moved to a separate font
+        handler sub-module
+
+
+        Potentially thinking of having  "Basic" and "Decoded" routines adding an extractTextQuick routine
+        with the Basic routine only handling standard and unicode fonts
+
         :return: a unicode string object.
         """
+        DEBUG = False
+
+        word_space_limit = -80
         text = u_("")
         content = self[PG.CONTENTS].getObject()
         if not isinstance(content, ContentStream):
             content = ContentStream(content, self.pdf)
-        # Note: we check all strings are TextStringObjects.  ByteStringObjects
-        # are strings where the byte->string encoding was unknown, so adding
-        # them to the text here would be gibberish.
+
         for operands, operator in content.operations:
-            if operator == b_("Tj"):
-                _text = operands[0]
-                if isinstance(_text, TextStringObject):
-                    text += Tj_sep
-                    text += _text
-                    text += "\n"
-            elif operator == b_("T*"):
+
+            if False:
+                pass
+            elif operator == b'Tf':
+
+                current_font_name = operands[0]
+                current_font, current_font_encoding = FetchFontExtended(self , current_font_name , Debug=DEBUG)
+                assert current_font_encoding is not None
+
+            elif operator == b"Tm":
+                 pass
+            elif operator == b"Tj":
+                nt = as_text( operands[0],encoding=current_font_encoding)
+                text += nt + TJ_sep
+            elif operator == b"T*":
                 text += "\n"
-            elif operator == b_("'"):
-                text += "\n"
-                _text = operands[0]
-                if isinstance(_text, TextStringObject):
-                    text += operands[0]
-            elif operator == b_('"'):
-                _text = operands[2]
-                if isinstance(_text, TextStringObject):
-                    text += "\n"
-                    text += _text
-            elif operator == b_("TJ"):
+            elif operator == b"'":
+                text += "\n" + as_text( operands[0],encoding=current_font_encoding)
+            elif operator == b'"':
+                text += "\n" + as_text( operands[2],encoding=current_font_encoding)
+            elif operator == b"TJ":
+
                 for i in operands[0]:
-                    if isinstance(i, TextStringObject):
-                        text += TJ_sep
-                        text += i
-                    elif isinstance(i, NumberObject):
-                        # a positive value decreases and the negative value increases
-                        # space
-                        if int(i) < 0:
-                            if len(text) == 0 or text[-1] != " ":
-                                text += " "
-                        else:
-                            if len(text) > 1 and text[-1] == " ":
-                                text = text[:-1]
-                text += "\n"
+                    if isinstance(i, (TextStringObject,ByteStringObject,bytes) ):
+                        text += as_text(i,encoding=current_font_encoding)
+                    elif isinstance( i , (NumberObject,FloatObject)) and ( i < word_space_limit ) :
+                        text += " "
+                    elif isinstance( i , (NumberObject,FloatObject)) :
+                        pass
+                    else:
+                        print('TJ operator error' , type(i),i )
+
+                text += TJ_sep
+
         return text
 
     mediaBox = createRectangleAccessor(PG.MEDIABOX, ())

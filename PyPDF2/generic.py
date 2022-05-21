@@ -1,6 +1,10 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2006, Mathieu Fenniak
+# Original Copyright 2006, Mathieu Fenniak
+# Further changes by Chris Johnson and Martin Thoma 2000 onwards
 # All rights reserved.
+#
+# much changed to handle Python 3 - CJ 2019 onwards
+# fixed to handle comment at end of object - CJ December 2021
+# fix Name object to allow x00 delimiter
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
@@ -25,10 +29,25 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-
-
+#
 """
-Implementation of generic PDF objects (dictionary, number, string, and so on).
+Implementation of generic PDF objects (dictionary, number, string, and so on)
+
+
+postscript objects are one of the following types
+
+integer          sign, digits (also radix notation )
+real             allow exponent and decimal point            1
+boolean          'true' or 'false'
+array, packed array   [ ... ]
+string             (... ) also hex <...> and
+name              a word - perhaps with /
+dictionary        <<  >>
+operator          just another word
+mark              stores a position on the operand stack
+null              'null'
+
+
 """
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
@@ -39,10 +58,11 @@ import logging
 import re
 import sys
 import warnings
-from sys import version_info
+from io import BytesIO
 
 from PyPDF2.constants import FilterTypes as FT
 from PyPDF2.constants import StreamAttributes as SA
+
 from PyPDF2.errors import (
     STREAM_TRUNCATED_PREMATURELY,
     PdfReadError,
@@ -61,66 +81,155 @@ from .utils import (
     u_,
 )
 
-if version_info < (3, 0):
-    from cStringIO import StringIO
-
-    BytesIO = StringIO
-else:
-    from io import BytesIO, StringIO
-
+debug = False
 logger = logging.getLogger(__name__)
-ObjectPrefix = b_("/<[tf(n%")
-NumberSigns = b_("+-")
-IndirectPattern = re.compile(b_(r"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]"))
+
+NumberSigns = b"+-"
+NUMBER_CHARS = b"+-.0123456789"
+OCTAL_DIGITS = b"01234567"
+IndirectPattern = re.compile(b_(r"(\d+)\s+(\d+)\s+R[^a-zA-Z]"))
+WHITESPACES = [b" ", b"\n", b"\r", b"\t", b"\x00", b""]  # or end of string
+SEPS = [b"<", b"["]
+
+DICTIONARYSTART = b"<<"
+DICTIONARYEND = b">>"
+
+ARRAYSTART = b"["
+ARRAYEND = b"]"
+
+HEXSTART = b"<"
+HEXEND = b">"
+
+ASCII85START = b"<~"
+ASCII85END = b"~>"
+
+STRINGSTART = b"("
+STRINGEND = b")"
+
+DICTIONARYSTART = b"<<"
+DICTIONARYEND = b">>"
+
+ARRAYSTART = b"["
+ARRAYEND = b"]"
+
+NAMESTART = b"/"
+
+COMMENT = b"%"
+
+CR = b"\r"
+LF = b"\n"
+FF = b"\f"
+BACKSLASH = b"\\"
+TAB = b"\t"
+
+CRLF = CR + LF
+
+EOLS = [CR, LF, CRLF]
+EOL_CHARS = CR + LF
+
+EOF = b""  #  as returned by stream.read()
+
+
+def readWord(stream):
+    result = b""
+    tok = stream.read(1)
+    while tok not in WHITESPACES and tok not in SEPS:
+        result += tok  # appalingly slow
+        tok = stream.read(1)
+    stream.seek(-1, 1)
+    return result
 
 
 def readObject(stream, pdf):
-    tok = stream.read(1)
-    stream.seek(-1, 1)  # reset to start
-    idx = ObjectPrefix.find(tok)
-    if idx == 0:
-        return NameObject.readFromStream(stream, pdf)
-    elif idx == 1:
-        # hexadecimal string OR dictionary
-        peek = stream.read(2)
-        stream.seek(-2, 1)  # reset to start
+    """interpret the passed pdf source bytes calling the  appropriate read routine to return the apropriate
+    pdf object creation code
 
-        if peek == b_("<<"):
-            return DictionaryObject.readFromStream(stream, pdf)
-        else:
-            return readHexStringFromStream(stream)
-    elif idx == 2:
-        return ArrayObject.readFromStream(stream, pdf)
-    elif idx == 3 or idx == 4:
-        return BooleanObject.readFromStream(stream)
-    elif idx == 5:
-        return readStringFromStream(stream)
-    elif idx == 6:
-        return NullObject.readFromStream(stream)
-    elif idx == 7:
-        # comment
-        while tok not in (b_("\r"), b_("\n")):
-            tok = stream.read(1)
-            # Prevents an infinite loop by raising an error if the stream is at
-            # the EOF
+    the routine
+     - reads ahead 20 bytes
+     - examines the first one or more bytes which determine the object            works by examining the first few bytes
+     - calls the appropriate read routine and returns the object
+     - checks for comments and indirect references
+    """
+
+    def hprint(stream, message):
+        """debugging print"""
+        here = stream.tell()
+        stream.seek(here - 40)
+        sample = stream.read(60)
+        marker = "-" * 40 + "/"
+        stream.seek(here)
+        print(here, sample, message)
+        print(here, marker)
+
+    here = stream.tell()
+    stuff = stream.read(20)
+    stream.seek(here)
+
+    if False and stuff[:1] in WHITESPACES:
+        hprint(stream, "whitespace when not expected")
+        import pdb
+
+        pdb.set_trace()
+
+        assert stuff[:1] not in WHITESPACES
+
+    while stuff[:1] == COMMENT:
+
+        # consume the percent and the subsequent comment upto
+        # and including the eol.  Then skip leading whitespace
+        # (not certain that the leading whitespace is always to
+        # be dropped but it seems to work
+
+        tok = stream.read(1)
+
+        while tok not in EOL_CHARS:
             if len(tok) <= 0:
                 raise PdfStreamError("File ended unexpectedly.")
-        tok = readNonWhitespace(stream)
+            tok = stream.read(1)
+
+        while tok in WHITESPACES:
+            if len(tok) <= 0:
+                break
+            tok = stream.read(1)
+
         stream.seek(-1, 1)
-        return readObject(stream, pdf)
-    else:
-        # number object OR indirect reference
-        peek = stream.read(20)
-        stream.seek(-len(peek), 1)  # reset to start
-        if IndirectPattern.match(peek) is not None:
+        here = stream.tell()
+        stuff = stream.read(20)
+        stream.seek(here)
+
+    # name like objects true, false, null
+    if stuff[:4] == b"true":
+        return BooleanObject.readFromStream(stream)
+    elif stuff[:5] == b"false":
+        return BooleanObject.readFromStream(stream)
+    elif stuff[:4] == b"null":
+        return NullObject.readFromStream(stream)
+    elif stuff[:2] == DICTIONARYSTART:
+        return DictionaryObject.readFromStream(stream, pdf)
+    elif stuff[:2] == ASCII85START:
+        raise PdfStreamError("PyPDF2 cannot handle ascii85 encoded strings")
+    elif stuff[:1] == HEXSTART:
+        return readHexStringFromStream(stream)
+    elif stuff[:1] == STRINGSTART:
+        return readStringFromStream(stream)
+    elif stuff[:1] == ARRAYSTART:
+        # parse all items in the list - this is recursive
+        return ArrayObject.readFromStream(stream, pdf)
+    elif stuff[:1] in NUMBER_CHARS:
+        if IndirectPattern.match(stuff) is not None:
             return IndirectObject.readFromStream(stream, pdf)
         else:
             return NumberObject.readFromStream(stream)
+    elif stuff[:1] == NAMESTART:
+        return NameObject.readFromStream(stream, pdf)
+    else:
+
+        return readWord(stream)
 
 
 class PdfObject(object):
     def getObject(self):
-        """Resolve indirect references."""
+        """Resolves indirect references."""
         return self
 
 
@@ -128,17 +237,24 @@ class NullObject(PdfObject):
     def writeToStream(self, stream, encryption_key):
         stream.write(b_("null"))
 
-    @staticmethod
     def readFromStream(stream):
         nulltxt = stream.read(4)
         if nulltxt != b_("null"):
             raise PdfReadError("Could not read Null object")
         return NullObject()
 
+    readFromStream = staticmethod(readFromStream)
+
 
 class BooleanObject(PdfObject):
     def __init__(self, value):
         self.value = value
+
+    def __str__(self):
+        return "PyPDF2 generic boolean {}".format(self.value)
+
+    def __repr__(self):
+        return "PyPDF2 generic boolean {}".format(self.value)
 
     def writeToStream(self, stream, encryption_key):
         if self.value:
@@ -146,7 +262,6 @@ class BooleanObject(PdfObject):
         else:
             stream.write(b_("false"))
 
-    @staticmethod
     def readFromStream(stream):
         word = stream.read(4)
         if word == b_("true"):
@@ -157,6 +272,8 @@ class BooleanObject(PdfObject):
         else:
             raise PdfReadError("Could not read Boolean object")
 
+    readFromStream = staticmethod(readFromStream)
+
 
 class ArrayObject(list, PdfObject):
     def writeToStream(self, stream, encryption_key):
@@ -166,26 +283,51 @@ class ArrayObject(list, PdfObject):
             data.writeToStream(stream, encryption_key)
         stream.write(b_(" ]"))
 
-    @staticmethod
     def readFromStream(stream, pdf):
+        # now skips any whitespace  rather than use tok.isspace
+        # prevents blowing up on x00 sep but may not handle
+        # comments correctly  CJ April 2022
+
         arr = ArrayObject()
-        tmp = stream.read(1)
-        if tmp != b_("["):
-            raise PdfReadError("Could not read array")
-        while True:
-            # skip leading whitespace
-            tok = stream.read(1)
-            while tok.isspace():
-                tok = stream.read(1)
-            stream.seek(-1, 1)
-            # check for array ending
-            peekahead = stream.read(1)
-            if peekahead == b_("]"):
+        tok = stream.read(1)
+        assert tok == ARRAYSTART
+        tok = stream.read(1)
+
+        # position on first element
+        # and then loop through objects and following whitespace
+
+        while tok in WHITESPACES:
+            if len(tok) == 0:
                 break
+            if tok == ARRAYEND:
+                break
+            tok = stream.read(1)
+
+        while True:
+            # process element and subsequent
+            # whitespace
+
+            if tok == ARRAYEND:
+                break
+
+            # token should now be the first char of the first
+            # object.  back up as read_object will do its own read
             stream.seek(-1, 1)
-            # read and append obj
+
             arr.append(readObject(stream, pdf))
+
+            tok = stream.read(1)
+
+            while tok in WHITESPACES:
+                if len(tok) == 0:
+                    break
+                if tok == ARRAYEND:
+                    break
+                tok = stream.read(1)
+
         return arr
+
+    readFromStream = staticmethod(readFromStream)
 
 
 class IndirectObject(PdfObject):
@@ -201,13 +343,11 @@ class IndirectObject(PdfObject):
         return "IndirectObject(%r, %r)" % (self.idnum, self.generation)
 
     def __eq__(self, other):
-        return (
-            other is not None
-            and isinstance(other, IndirectObject)
-            and self.idnum == other.idnum
-            and self.generation == other.generation
-            and self.pdf is other.pdf
-        )
+        return isinstance(other, IndirectObject) and (
+            self.idnum,
+            self.generation,
+            self.pdf,
+        ) == (other.idnum, other.generation, other.pdf)
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -215,7 +355,6 @@ class IndirectObject(PdfObject):
     def writeToStream(self, stream, encryption_key):
         stream.write(b_("%s %s R" % (self.idnum, self.generation)))
 
-    @staticmethod
     def readFromStream(stream, pdf):
         idnum = b_("")
         while True:
@@ -242,6 +381,8 @@ class IndirectObject(PdfObject):
                 % utils.hexStr(stream.tell())
             )
         return IndirectObject(int(idnum), int(generation), pdf)
+
+    readFromStream = staticmethod(readFromStream)
 
 
 class FloatObject(decimal.Decimal, PdfObject):
@@ -292,7 +433,6 @@ class NumberObject(int, PdfObject):
     def writeToStream(self, stream, encryption_key):
         stream.write(b_(repr(self)))
 
-    @staticmethod
     def readFromStream(stream):
         num = utils.readUntilRegex(stream, NumberObject.NumberPattern)
         if num.find(NumberObject.ByteDot) != -1:
@@ -300,12 +440,29 @@ class NumberObject(int, PdfObject):
         else:
             return NumberObject(num)
 
+    readFromStream = staticmethod(readFromStream)
+
 
 def createStringObject(string):
-    """
-    Given a string (either a "str" or "unicode"), create a ByteStringObject or a
-    TextStringObject to represent the string.
-    """
+    # see createStringObjectOrig  -
+    #
+    # now everything is a byte stream unless it is specifically indicated
+    # by a byte order mark or it is already a (unicode) string.
+    #
+    # unfortunatly there are streams starting with bom
+    # which cannot be round tripped back to bytes
+    #
+    if isinstance(string, utils.string_type):
+        return TextStringObject(string)
+    elif string.startswith(codecs.BOM_UTF16_BE):
+        retval = TextStringObject(string.decode("utf-16"))
+        retval.autodetect_utf16 = True
+        return retval
+    else:
+        return ByteStringObject(string)
+
+
+def createStringObjectOrig(string):
     if isinstance(string, utils.string_type):
         return TextStringObject(string)
     elif isinstance(string, utils.bytes_type):
@@ -327,97 +484,162 @@ def createStringObject(string):
     else:
         raise TypeError("createStringObject should have str or unicode arg")
 
+def skipWhitespace(stream):
+    WHITESPACES = [b" ", b"\n", b"\r", b"\t", b"\x00", b"%"]
+    tok = WHITESPACES[0]
+    while tok in WHITESPACES:
+        if tok == b"%":  # comment is whitespace
+            tok = stream.readline()
+            tok = stream.read(1)
+        else:
+            tok = stream.read(1)
+    stream.seek(-1, 1)
 
 def readHexStringFromStream(stream):
-    stream.read(1)
-    txt = ""
-    x = b_("")
-    while True:
-        tok = readNonWhitespace(stream)
-        if not tok:
-            raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
-        if tok == b_(">"):
-            break
-        x += tok
-        if len(x) == 2:
-            txt += chr(int(x, base=16))
-            x = b_("")
-    if len(x) == 1:
-        x += b_("0")
-    if len(x) == 2:
-        txt += chr(int(x, base=16))
-    return createStringObject(b_(txt))
+
+    import codecs
+
+    HEX_CODEC = "HEX"
+    HEXSTART = b"<"
+    HEXEND = b">"
+    HEXCHARS = b"0123456789ABCDEFabcdef"
+    WHITESPACE = b" \00\t\n\r\f"
+    EOF = b""
+
+    tok = stream.read(1)
+    assert tok == HEXSTART
+
+    tok = stream.read(1)
+    run = b""
+
+    while tok not in (HEXEND, EOF):
+
+        if tok in WHITESPACE:
+            pass
+        elif tok in HEXCHARS:
+            run += tok
+        else:
+            error_message = "Bad character {} in hex stream".format(tok)
+            raise PdfReadError(error_message)
+
+        tok = stream.read(1)
+
+    if tok == EOF:  #
+        raise PdfReadError("Stream has ended unexpectedly in hex string")
+
+    if len(run) % 2 == 1:
+        run += b"0"
+
+    return ByteStringObject(codecs.decode(run, HEX_CODEC))
 
 
 def readStringFromStream(stream):
+
+    """
+    parse representation of byte stream (which may or may not represent
+    text)
+
+        starts and ends with STRINGSTART and STRINGEND parenthesis
+        may include parenthesis if nested
+        may include BACKSLASH escape sequences for
+            special characters
+            or for octal defined bytes
+            or for EOLs to be ignored
+        may include EOLs which become LFs unless escaped
+        other chanracters
+
+    """
+
     tok = stream.read(1)
-    parens = 1
-    txt = b_("")
+    assert tok == STRINGSTART
+    parens = 0  # nesting level
+    txt = b""
     while True:
         tok = stream.read(1)
         if not tok:
             raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
-        if tok == b_("("):
+        elif tok == STRINGEND and parens == 0:
+            break
+        elif tok == STRINGSTART:
             parens += 1
-        elif tok == b_(")"):
+        elif tok == STRINGEND:
             parens -= 1
-            if parens == 0:
-                break
-        elif tok == b_("\\"):
+        elif tok == BACKSLASH:
+            # we have an escape sequence
             tok = stream.read(1)
-            escape_dict = {
-                b_("n"): b_("\n"),
-                b_("r"): b_("\r"),
-                b_("t"): b_("\t"),
-                b_("b"): b_("\b"),
-                b_("f"): b_("\f"),
-                b_("c"): b_(r"\c"),
-                b_("("): b_("("),
-                b_(")"): b_(")"),
-                b_("/"): b_("/"),
-                b_("\\"): b_("\\"),
-                b_(" "): b_(" "),
-                b_("/"): b_("/"),
-                b_("%"): b_("%"),
-                b_("<"): b_("<"),
-                b_(">"): b_(">"),
-                b_("["): b_("["),
-                b_("]"): b_("]"),
-                b_("#"): b_("#"),
-                b_("_"): b_("_"),
-                b_("&"): b_("&"),
-                b_("$"): b_("$"),
-            }
-            try:
-                tok = escape_dict[tok]
-            except KeyError:
-                if tok.isdigit():
-                    # "The number ddd may consist of one, two, or three
-                    # octal digits; high-order overflow shall be ignored.
-                    # Three octal digits shall be used, with leading zeros
-                    # as needed, if the next character of the string is also
-                    # a digit." (PDF reference 7.3.4.2, p 16)
-                    for _ in range(2):
-                        ntok = stream.read(1)
-                        if ntok.isdigit():
-                            tok += ntok
-                        else:
-                            break
-                    tok = b_(chr(int(tok, base=8)))
-                elif tok in b_("\n\r"):
-                    # This case is  hit when a backslash followed by a line
-                    # break occurs.  If it's a multi-char EOL, consume the
-                    # second character:
-                    tok = stream.read(1)
-                    if tok not in b_("\n\r"):
+            if tok == b_("n"):
+                tok = b_("\n")
+            elif tok == b_("r"):
+                tok = b_("\r")
+            elif tok == b_("t"):
+                tok = b_("\t")
+            elif tok == b_("b"):
+                tok = b_("\b")
+            elif tok == b_("f"):
+                tok = b_("\f")
+            elif tok == b_("("):
+                tok = b_("(")
+            elif tok == b_(")"):
+                tok = b_(")")
+            elif tok == b_("/"):
+                tok = b_("/")
+            elif tok == b_("\\"):
+                tok = b_("\\")
+            elif tok in (
+                b_(" "),
+                b_("/"),
+                b_("%"),
+                b_("<"),
+                b_(">"),
+                b_("["),
+                b_("]"),
+                b_("#"),
+                b_("_"),
+                b_("&"),
+                b_("$"),
+            ):
+                # odd/unnessecary escape sequences we have encountered
+                tok = b_(tok)
+            elif tok in OCTAL_DIGITS:
+                # "The number ddd may consist of one, two, or three
+                # octal digits; high-order overflow shall be ignored.
+                # Three octal digits shall be used, with leading zeros
+                # as needed, if the next character of the string is also
+                # a digit." (PDF reference 7.3.4.2, p 16)
+
+                # we have one digit - add the next
+
+                for _i in range(2):
+                    ntok = stream.read(1)
+                    if ntok == EOF:
+                        break
+                    if ntok not in OCTAL_DIGITS:
                         stream.seek(-1, 1)
-                    # Then don't add anything to the actual string, since this
-                    # line break was escaped:
-                    tok = b_("")
-                else:
-                    msg = r"Unexpected escaped string: {}".format(tok.decode("utf8"))
-                    # if.strict: PdfReadError(msg)
-                    logger.warning(msg)
+                        break
+                    tok += ntok
+
+                ordinal = int(tok, base=8) % 256
+                tok = bytearray(
+                    [
+                        ordinal,
+                    ]
+                )  # should work on Py2.7 and Py 3
+
+            elif tok in EOL_CHARS:
+
+                # escaped LF, CR and CRLF are dropped by setting tok to null
+                if tok == CR:
+                    tok = stream.read(1)
+                    if tok == EOF:
+                        raise PdfReadError("Stream ended in a string")
+                    elif tok == LF:
+                        pass
+                    else:
+                        stream.seek(-1, 1)
+                tok = b""
+
+            else:
+                raise PdfReadError(r"Unexpected escaped string: %s" % tok)
         txt += tok
     return createStringObject(txt)
 
@@ -458,10 +680,11 @@ class TextStringObject(utils.string_type, PdfObject):  # type: ignore
     @property
     def original_bytes(self):
         """
-        It is occasionally possible that a text string object gets created where
+        It is possible that a text string object gets created where
         a byte string object was expected due to the autodetection mechanism --
         if that occurs, this "original_bytes" property can be used to
-        back-calculate what the original encoded bytes were.
+        back-calculate what the original encoded bytes were.  This will
+        not always work
         """
         return self.get_original_bytes()
 
@@ -501,34 +724,40 @@ class TextStringObject(utils.string_type, PdfObject):  # type: ignore
 
 
 class NameObject(str, PdfObject):
-    delimiterPattern = re.compile(b_(r"\s+|[\(\)<>\[\]{}/%]"))
-    surfix = b_("/")
+    # hex00 added as delimiter as it is  not included in \s
+    # but should allow a run of space bytes including  x00
+
+    delimiterPattern = re.compile(b"\\s+|[\\(\\)<>\\[\\]{}/%\x00]")
+    surfix = b"/"
 
     def writeToStream(self, stream, encryption_key):
         stream.write(b_(self))
 
-    @staticmethod
     def readFromStream(stream, pdf):
+        debug = False
+        if debug:
+            print((stream.tell()))
         name = stream.read(1)
         if name != NameObject.surfix:
             raise PdfReadError("name read error")
         name += utils.readUntilRegex(
             stream, NameObject.delimiterPattern, ignore_eof=True
         )
+
+        if debug:
+            print(name)
         try:
-            try:
-                ret = name.decode("utf-8")
-            except (UnicodeEncodeError, UnicodeDecodeError):
-                ret = name.decode("gbk")
-            return NameObject(ret)
-        except (UnicodeEncodeError, UnicodeDecodeError):
+            return NameObject(name.decode("utf-8"))
+        except (UnicodeEncodeError, UnicodeDecodeError) as e:
             # Name objects should represent irregular characters
             # with a '#' followed by the symbol's hex number
             if not pdf.strict:
-                warnings.warn("Illegal character in Name Object", utils.PdfReadWarning)
+                warnings.warn("Illegal character in Name Object", PdfReadWarning)
                 return NameObject(name)
             else:
                 raise PdfReadError("Illegal character in Name Object")
+
+    readFromStream = staticmethod(readFromStream)
 
 
 class DictionaryObject(dict, PdfObject):
@@ -550,18 +779,12 @@ class DictionaryObject(dict, PdfObject):
         return dict.setdefault(self, key, value)
 
     def __getitem__(self, key):
-        return dict.__getitem__(self, key).getObject()
+        try:
+            return dict.__getitem__(self, key).getObject()
+        except KeyError:
+            return None
 
     def getXmpMetadata(self):
-        """
-        Retrieve XMP (Extensible Metadata Platform) data relevant to the
-        this object, if available.
-
-        Stability: Added in v1.12, will exist for all future v1.x releases.
-        @return Returns a {@link #xmp.XmpInformation XmlInformation} instance
-        that can be used to access XMP metadata from the document.  Can also
-        return None if no metadata was found on the document root.
-        """
         metadata = self.get("/Metadata", None)
         if metadata is None:
             return None
@@ -573,15 +796,12 @@ class DictionaryObject(dict, PdfObject):
             self[NameObject("/Metadata")] = metadata
         return metadata
 
-    @property
-    def xmpMetadata(self):
-        """
-        Read-only property that accesses the {@link
-        #DictionaryObject.getXmpData getXmpData} function.
-        <p>
-        Stability: Added in v1.12, will exist for all future v1.x releases.
-        """
-        return self.getXmpMetadata()
+    ##
+    # Read-only property that accesses the {@link
+    # #DictionaryObject.getXmpData getXmpData} function.
+    # <p>
+    # Stability: Added in v1.12, will exist for all future v1.x releases.
+    xmpMetadata = property(lambda self: self.getXmpMetadata(), None, None)
 
     def writeToStream(self, stream, encryption_key):
         stream.write(b_("<<\n"))
@@ -592,34 +812,49 @@ class DictionaryObject(dict, PdfObject):
             stream.write(b_("\n"))
         stream.write(b_(">>"))
 
-    @staticmethod
     def readFromStream(stream, pdf):
+
+        db_here = stream.tell()
+
+        # Dictionary starts with line <<
         tmp = stream.read(2)
         if tmp != b_("<<"):
             raise PdfReadError(
                 "Dictionary read error at byte %s: stream must begin with '<<'"
                 % utils.hexStr(stream.tell())
             )
+
+        # now bump past any white space or <eol>
         data = {}
+
+        # deal with the dict portion
         while True:
             tok = readNonWhitespace(stream)
+            # cj2019 line below read if not tok
+            if tok is None:
+                raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
+            if tok == b_(">"):
+                stream.read(1)
+                break
             if tok == b_("\x00"):
                 continue
             elif tok == b_("%"):
                 stream.seek(-1, 1)
                 skipOverComment(stream)
                 continue
-            if not tok:
-                raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
 
-            if tok == b_(">"):
-                stream.read(1)
-                break
             stream.seek(-1, 1)
             key = readObject(stream, pdf)
             tok = readNonWhitespace(stream)
             stream.seek(-1, 1)
             value = readObject(stream, pdf)
+            try:
+                new_key = not data.get(key)
+            except Exception:
+                print("problem with key ", type(key), key)
+                print("value ", value)
+                print("data ", data)
+
             if not data.get(key):
                 data[key] = value
             elif pdf.strict:
@@ -635,6 +870,8 @@ class DictionaryObject(dict, PdfObject):
                     PdfReadWarning,
                 )
 
+        db_here = stream.tell()
+
         pos = stream.tell()
         s = readNonWhitespace(stream)
         if s == b_("s") and stream.read(5) == b_("tream"):
@@ -643,21 +880,41 @@ class DictionaryObject(dict, PdfObject):
             # patch provided by Danial Sandler
             while eol == b_(" "):
                 eol = stream.read(1)
-            if eol not in (b_("\n"), b_("\r")):
-                raise PdfStreamError("Stream data must be followed by a newline")
+            assert eol in (b_("\n"), b_("\r"))
             if eol == b_("\r"):
                 # read \n after
                 if stream.read(1) != b_("\n"):
                     stream.seek(-1, 1)
             # this is a stream object, not a dictionary
-            if SA.LENGTH not in data:
-                raise PdfStreamError("Stream length not defined")
+            assert SA.LENGTH in data
             length = data[SA.LENGTH]
+            if debug:
+                print(data)
             if isinstance(length, IndirectObject):
                 t = stream.tell()
                 length = pdf.getObject(length)
                 stream.seek(t, 0)
-            data["__streamdata__"] = stream.read(length)
+            #
+            #
+            if True:
+                data_pos = stream.tell()
+                term_pos = data_pos + length
+                stream.seek(term_pos)
+                terminator = stream.readline(200)
+                # print("Data followed by ", terminator)
+                # print("Data length      ", length)
+                # print(data)
+                if b"endstream" in terminator:
+                    print("OK")
+                else:
+                    more_stuff = stream.read(50)
+                    # print("More stuff", more_stuff)
+                    stream.seek(term_pos - 30)
+                    # less_stuff = stream.read(50)
+                    # print("Less stuff", less_stuff)
+                stream.seek(data_pos)
+
+            data["__streamdata__"] = stream.read(length)  # cj 17 June
             e = readNonWhitespace(stream)
             ndstream = stream.read(8)
             if (e + ndstream) != b_("endstream"):
@@ -667,12 +924,16 @@ class DictionaryObject(dict, PdfObject):
                 # and Python users into PDF files tend to be our audience.
                 # we need to do this to correct the streamdata and chop off
                 # an extra character.
+                print("Logic error - expecting endstream ", e + ndstream)
+                print(pos - 10)
                 pos = stream.tell()
                 stream.seek(-10, 1)
                 end = stream.read(9)
                 if end == b_("endstream"):
                     # we found it by looking back one character further.
                     data["__streamdata__"] = data["__streamdata__"][:-1]
+                elif "/Filter" in data:
+                    print("ignoring endstream mismatch ")
                 else:
                     stream.seek(pos, 0)
                     raise PdfReadError(
@@ -687,6 +948,8 @@ class DictionaryObject(dict, PdfObject):
             retval = DictionaryObject()
             retval.update(data)
             return retval
+
+    readFromStream = staticmethod(readFromStream)
 
 
 class TreeObject(DictionaryObject):
@@ -842,7 +1105,6 @@ class StreamObject(DictionaryObject):
         stream.write(data)
         stream.write(b_("\nendstream"))
 
-    @staticmethod
     def initializeFromDictionary(data):
         if SA.FILTER in data:
             retval = EncodedStreamObject()
@@ -853,6 +1115,8 @@ class StreamObject(DictionaryObject):
         del data[SA.LENGTH]
         retval.update(data)
         return retval
+
+    initializeFromDictionary = staticmethod(initializeFromDictionary)
 
     def flateEncode(self):
         if SA.FILTER in self:
@@ -901,7 +1165,6 @@ class EncodedStreamObject(StreamObject):
 
     def setData(self, data):
         raise PdfReadError("Creating EncodedStreamObject is not currently supported")
-
 
 class ContentStream(DecodedStreamObject):
     def __init__(self, stream, pdf):
@@ -1039,7 +1302,8 @@ class ContentStream(DecodedStreamObject):
 
 class RectangleObject(ArrayObject):
     """
-    This class is used to represent *page boxes* in PyPDF2. These boxes include:
+    This class is used to represent *page boxes* in PyPDF2.
+    These boxes include:
 
         * :attr:`artBox <PyPDF2.pdf.PageObject.artBox>`
         * :attr:`bleedBox <PyPDF2.pdf.PageObject.bleedBox>`
@@ -1235,31 +1499,20 @@ class Destination(TreeObject):
     See section 8.2.1 of the PDF 1.6 reference.
 
     :param str title: Title of this destination.
-    :param IndirectObject page: Reference to the page of this destination. Should
-        be an instance of :class:`IndirectObject<PyPDF2.generic.IndirectObject>`.
+    :param int page: Page number of this destination.
     :param str typ: How the destination is displayed.
     :param args: Additional arguments may be necessary depending on the type.
     :raises PdfReadError: If destination type is invalid.
 
-    .. list-table:: Valid ``typ`` arguments (see PDF spec for details)
-       :widths: 50 50
-
-       * - /Fit
-         - No additional arguments
-       * - /XYZ
-         - [left] [top] [zoomFactor]
-       * - /FitH
-         - [top]
-       * - /FitV
-         - [left]
-       * - /FitR
-         - [left] [bottom] [right] [top]
-       * - /FitB
-         - No additional arguments
-       * - /FitBH
-         - [top]
-       * - /FitBV
-         - [left]
+    Valid ``typ`` arguments (see PDF spec for details):
+             /Fit       No additional arguments
+             /XYZ       [left] [top] [zoomFactor]
+             /FitH      [top]
+             /FitV      [left]
+             /FitR      [left] [bottom] [right] [top]
+             /FitB      No additional arguments
+             /FitBH     [top]
+             /FitBV     [left]
     """
 
     def __init__(self, title, page, typ, *args):
@@ -1416,6 +1669,10 @@ class Bookmark(Destination):
         stream.write(b_(">>"))
 
 
+def decode_pdfdocencoding(byte_array):
+    return decode_builtin(byte_array, "/PDFDocEncoding")
+
+
 def encode_pdfdocencoding(unicode_string):
     retval = b_("")
     for c in unicode_string:
@@ -1428,51 +1685,1091 @@ def encode_pdfdocencoding(unicode_string):
     return retval
 
 
-def decode_pdfdocencoding(byte_array):
-    retval = u_("")
+def decode_builtin(byte_array, encoding, Strict=False):
+
+    if "PDFDoc" in encoding:
+        decode_table = _pdfDocEncoding
+    elif "Standard" in encoding:
+        decode_table = _standard_encoding
+    elif "WinAnsi" in encoding:
+        return byte_array.decode("cp1252", errors="replace")
+    elif "MacRoman" in encoding:
+        decode_table = _roman_encoding
+    elif "Symbol" in encoding:
+        decode_table = _symbol_encoding
+    elif "ingbat" in encoding:
+        decode_table = _dingbat_encoding
+    else:
+        return byte_array.decode(encoding, errors="replace")
+
+    retval = ""
     for b in byte_array:
-        c = _pdfDocEncoding[ord_(b)]
-        if c == u_("\u0000"):
-            raise UnicodeDecodeError(
-                "pdfdocencoding",
-                utils.barray(b),
-                -1,
-                -1,
-                "does not exist in translation table",
-            )
-        retval += c
+        tc = decode_table[b]
+        if (tc == "\u0000") and Strict:
+            message_template = "decoding {} byte {} missing from code table"
+            raise UnicodeDecodeError(message_template.format(encoding, b))
+        retval += tc
     return retval
 
 
-# PDFDocEncoding Character Set: Table D.2 of PDF Reference 1.7
-# C.1 Predefined encodings sorted by character name of another PDF reference
-# Some indices have '\u0000' although they should have something else:
-# 22: should be '\u0017'
+_standard_encoding = [
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u00A0",
+    "\u0021",
+    "\u0022",
+    "\u0023",
+    "\u0024",
+    "\u0025",
+    "\u0026",
+    "\u2019",
+    "\u0028",
+    "\u0029",
+    "\u002A",
+    "\u002B",
+    "\u002C",
+    "\u00AD",
+    "\u002E",
+    "\u002F",
+    "\u0030",
+    "\u0031",
+    "\u0032",
+    "\u0033",
+    "\u0034",
+    "\u0035",
+    "\u0036",
+    "\u0037",
+    "\u0038",
+    "\u0039",
+    "\u003A",
+    "\u003B",
+    "\u003C",
+    "\u003D",
+    "\u003E",
+    "\u003F",
+    "\u0040",
+    "\u0041",
+    "\u0042",
+    "\u0043",
+    "\u0044",
+    "\u0045",
+    "\u0046",
+    "\u0047",
+    "\u0048",
+    "\u0049",
+    "\u004A",
+    "\u004B",
+    "\u004C",
+    "\u004D",
+    "\u004E",
+    "\u004F",
+    "\u0050",
+    "\u0051",
+    "\u0052",
+    "\u0053",
+    "\u0054",
+    "\u0055",
+    "\u0056",
+    "\u0057",
+    "\u0058",
+    "\u0059",
+    "\u005A",
+    "\u005B",
+    "\u005C",
+    "\u005D",
+    "\u005E",
+    "\u005F",
+    "\u2018",
+    "\u0061",
+    "\u0062",
+    "\u0063",
+    "\u0064",
+    "\u0065",
+    "\u0066",
+    "\u0067",
+    "\u0068",
+    "\u0069",
+    "\u006A",
+    "\u006B",
+    "\u006C",
+    "\u006D",
+    "\u006E",
+    "\u006F",
+    "\u0070",
+    "\u0071",
+    "\u0072",
+    "\u0073",
+    "\u0074",
+    "\u0075",
+    "\u0076",
+    "\u0077",
+    "\u0078",
+    "\u0079",
+    "\u007A",
+    "\u007B",
+    "\u007C",
+    "\u007D",
+    "\u007E",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u00A1",
+    "\u00A2",
+    "\u00A3",
+    "\u2215",
+    "\u00A5",
+    "\u0192",
+    "\u00A7",
+    "\u00A4",
+    "\u0027",
+    "\u201C",
+    "\u00AB",
+    "\u2039",
+    "\u203A",
+    "\uFB01",
+    "\uFB02",
+    "\u0000",
+    "\u2013",
+    "\u2020",
+    "\u2021",
+    "\u2219",
+    "\u0000",
+    "\u00B6",
+    "\u2022",
+    "\u201A",
+    "\u201E",
+    "\u201D",
+    "\u00BB",
+    "\u2026",
+    "\u2030",
+    "\u0000",
+    "\u00BF",
+    "\u0000",
+    "\u0060",
+    "\u00B4",
+    "\u02C6",
+    "\u02DC",
+    "\u02C9",
+    "\u02D8",
+    "\u02D9",
+    "\u00A8",
+    "\u0000",
+    "\u02DA",
+    "\u00B8",
+    "\u0000",
+    "\u02DD",
+    "\u02DB",
+    "\u02C7",
+    "\u2014",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u00C6",
+    "\u0000",
+    "\u00AA",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0141",
+    "\u00D8",
+    "\u0152",
+    "\u00BA",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u00E6",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0131",
+    "\u0000",
+    "\u0000",
+    "\u0142",
+    "\u00F8",
+    "\u0153",
+    "\u00DF",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+]
+_symbol_encoding = [
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u00A0",
+    "\u0021",
+    "\u2200",
+    "\u0023",
+    "\u2203",
+    "\u0025",
+    "\u0026",
+    "\u220B",
+    "\u0028",
+    "\u0029",
+    "\u2217",
+    "\u002B",
+    "\u002C",
+    "\u2212",
+    "\u002E",
+    "\u002F",
+    "\u0030",
+    "\u0031",
+    "\u0032",
+    "\u0033",
+    "\u0034",
+    "\u0035",
+    "\u0036",
+    "\u0037",
+    "\u0038",
+    "\u0039",
+    "\u003A",
+    "\u003B",
+    "\u003C",
+    "\u003D",
+    "\u003E",
+    "\u003F",
+    "\u2245",
+    "\u0391",
+    "\u0392",
+    "\u03A7",
+    "\u2206",
+    "\u0395",
+    "\u03A6",
+    "\u0393",
+    "\u0397",
+    "\u0399",
+    "\u03D1",
+    "\u039A",
+    "\u039B",
+    "\u039C",
+    "\u039D",
+    "\u039F",
+    "\u03A0",
+    "\u0398",
+    "\u03A1",
+    "\u03A3",
+    "\u03A4",
+    "\u03A5",
+    "\u03C2",
+    "\u2126",
+    "\u039E",
+    "\u03A8",
+    "\u0396",
+    "\u005B",
+    "\u2234",
+    "\u005D",
+    "\u22A5",
+    "\u005F",
+    "\uF8E5",
+    "\u03B1",
+    "\u03B2",
+    "\u03C7",
+    "\u03B4",
+    "\u03B5",
+    "\u03C6",
+    "\u03B3",
+    "\u03B7",
+    "\u03B9",
+    "\u03D5",
+    "\u03BA",
+    "\u03BB",
+    "\u03BC",
+    "\u03BD",
+    "\u03BF",
+    "\u03C0",
+    "\u03B8",
+    "\u03C1",
+    "\u03C3",
+    "\u03C4",
+    "\u03C5",
+    "\u03D6",
+    "\u03C9",
+    "\u03BE",
+    "\u03C8",
+    "\u03B6",
+    "\u007B",
+    "\u007C",
+    "\u007D",
+    "\u223C",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u20AC",
+    "\u03D2",
+    "\u2032",
+    "\u2264",
+    "\u2215",
+    "\u221E",
+    "\u0192",
+    "\u2663",
+    "\u2666",
+    "\u2665",
+    "\u2660",
+    "\u2194",
+    "\u2190",
+    "\u2191",
+    "\u2192",
+    "\u2193",
+    "\u00B0",
+    "\u00B1",
+    "\u2033",
+    "\u2265",
+    "\u00D7",
+    "\u221D",
+    "\u2202",
+    "\u2022",
+    "\u00F7",
+    "\u2260",
+    "\u2261",
+    "\u2248",
+    "\u2026",
+    "\uF8E6",
+    "\uF8E7",
+    "\u21B5",
+    "\u2135",
+    "\u2111",
+    "\u211C",
+    "\u2118",
+    "\u2297",
+    "\u2295",
+    "\u2205",
+    "\u2229",
+    "\u222A",
+    "\u2283",
+    "\u2287",
+    "\u2284",
+    "\u2282",
+    "\u2286",
+    "\u2208",
+    "\u2209",
+    "\u2220",
+    "\u2207",
+    "\uF6DA",
+    "\uF6D9",
+    "\uF6DB",
+    "\u220F",
+    "\u221A",
+    "\u22C5",
+    "\u00AC",
+    "\u2227",
+    "\u2228",
+    "\u21D4",
+    "\u21D0",
+    "\u21D1",
+    "\u21D2",
+    "\u21D3",
+    "\u25CA",
+    "\u2329",
+    "\uF8E8",
+    "\uF8E9",
+    "\uF8EA",
+    "\u2211",
+    "\uF8EB",
+    "\uF8EC",
+    "\uF8ED",
+    "\uF8EE",
+    "\uF8EF",
+    "\uF8F0",
+    "\uF8F1",
+    "\uF8F2",
+    "\uF8F3",
+    "\uF8F4",
+    "\u0000",
+    "\u232A",
+    "\u222B",
+    "\u2320",
+    "\uF8F5",
+    "\u2321",
+    "\uF8F6",
+    "\uF8F7",
+    "\uF8F8",
+    "\uF8F9",
+    "\uF8FA",
+    "\uF8FB",
+    "\uF8FC",
+    "\uF8FD",
+    "\uF8FE",
+    "\u0000",
+]
+_dingbat_encoding = [
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u00A0",
+    "\u2701",
+    "\u2702",
+    "\u2703",
+    "\u2704",
+    "\u260E",
+    "\u2706",
+    "\u2707",
+    "\u2708",
+    "\u2709",
+    "\u261B",
+    "\u261E",
+    "\u270C",
+    "\u270D",
+    "\u270E",
+    "\u270F",
+    "\u2710",
+    "\u2711",
+    "\u2712",
+    "\u2713",
+    "\u2714",
+    "\u2715",
+    "\u2716",
+    "\u2717",
+    "\u2718",
+    "\u2719",
+    "\u271A",
+    "\u271B",
+    "\u271C",
+    "\u271D",
+    "\u271E",
+    "\u271F",
+    "\u2720",
+    "\u2721",
+    "\u2722",
+    "\u2723",
+    "\u2724",
+    "\u2725",
+    "\u2726",
+    "\u2727",
+    "\u2605",
+    "\u2729",
+    "\u272A",
+    "\u272B",
+    "\u272C",
+    "\u272D",
+    "\u272E",
+    "\u272F",
+    "\u2730",
+    "\u2731",
+    "\u2732",
+    "\u2733",
+    "\u2734",
+    "\u2735",
+    "\u2736",
+    "\u2737",
+    "\u2738",
+    "\u2739",
+    "\u273A",
+    "\u273B",
+    "\u273C",
+    "\u273D",
+    "\u273E",
+    "\u273F",
+    "\u2740",
+    "\u2741",
+    "\u2742",
+    "\u2743",
+    "\u2744",
+    "\u2745",
+    "\u2746",
+    "\u2747",
+    "\u2748",
+    "\u2749",
+    "\u274A",
+    "\u274B",
+    "\u25CF",
+    "\u274D",
+    "\u25A0",
+    "\u274F",
+    "\u2750",
+    "\u2751",
+    "\u2752",
+    "\u25B2",
+    "\u25BC",
+    "\u25C6",
+    "\u2756",
+    "\u25D7",
+    "\u2758",
+    "\u2759",
+    "\u275A",
+    "\u275B",
+    "\u275C",
+    "\u275D",
+    "\u275E",
+    "\u0000",
+    "\uF8D7",
+    "\uF8D8",
+    "\uF8D9",
+    "\uF8DA",
+    "\uF8DB",
+    "\uF8DC",
+    "\uF8DD",
+    "\uF8DE",
+    "\uF8DF",
+    "\uF8E0",
+    "\uF8E1",
+    "\uF8E2",
+    "\uF8E3",
+    "\uF8E4",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u2761",
+    "\u2762",
+    "\u2763",
+    "\u2764",
+    "\u2765",
+    "\u2766",
+    "\u2767",
+    "\u2663",
+    "\u2666",
+    "\u2665",
+    "\u2660",
+    "\u2460",
+    "\u2461",
+    "\u2462",
+    "\u2463",
+    "\u2464",
+    "\u2465",
+    "\u2466",
+    "\u2467",
+    "\u2468",
+    "\u2469",
+    "\u2776",
+    "\u2777",
+    "\u2778",
+    "\u2779",
+    "\u277A",
+    "\u277B",
+    "\u277C",
+    "\u277D",
+    "\u277E",
+    "\u277F",
+    "\u2780",
+    "\u2781",
+    "\u2782",
+    "\u2783",
+    "\u2784",
+    "\u2785",
+    "\u2786",
+    "\u2787",
+    "\u2788",
+    "\u2789",
+    "\u278A",
+    "\u278B",
+    "\u278C",
+    "\u278D",
+    "\u278E",
+    "\u278F",
+    "\u2790",
+    "\u2791",
+    "\u2792",
+    "\u2793",
+    "\u2794",
+    "\u2192",
+    "\u2194",
+    "\u2195",
+    "\u2798",
+    "\u2799",
+    "\u279A",
+    "\u279B",
+    "\u279C",
+    "\u279D",
+    "\u279E",
+    "\u279F",
+    "\u27A0",
+    "\u27A1",
+    "\u27A2",
+    "\u27A3",
+    "\u27A4",
+    "\u27A5",
+    "\u27A6",
+    "\u27A7",
+    "\u27A8",
+    "\u27A9",
+    "\u27AA",
+    "\u27AB",
+    "\u27AC",
+    "\u27AD",
+    "\u27AE",
+    "\u27AF",
+    "\u0000",
+    "\u27B1",
+    "\u27B2",
+    "\u27B3",
+    "\u27B4",
+    "\u27B5",
+    "\u27B6",
+    "\u27B7",
+    "\u27B8",
+    "\u27B9",
+    "\u27BA",
+    "\u27BB",
+    "\u27BC",
+    "\u27BD",
+    "\u27BE",
+    "\u0000",
+]
+_roman_encoding = [
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0000",
+    "\u0020",
+    "\u0021",
+    "\u0022",
+    "\u0023",
+    "\u0024",
+    "\u0025",
+    "\u0026",
+    "\u0027",
+    "\u0028",
+    "\u0029",
+    "\u002A",
+    "\u002B",
+    "\u002C",
+    "\u002D",
+    "\u002E",
+    "\u002F",
+    "\u0030",
+    "\u0031",
+    "\u0032",
+    "\u0033",
+    "\u0034",
+    "\u0035",
+    "\u0036",
+    "\u0037",
+    "\u0038",
+    "\u0039",
+    "\u003A",
+    "\u003B",
+    "\u003C",
+    "\u003D",
+    "\u003E",
+    "\u003F",
+    "\u0040",
+    "\u0041",
+    "\u0042",
+    "\u0043",
+    "\u0044",
+    "\u0045",
+    "\u0046",
+    "\u0047",
+    "\u0048",
+    "\u0049",
+    "\u004A",
+    "\u004B",
+    "\u004C",
+    "\u004D",
+    "\u004E",
+    "\u004F",
+    "\u0050",
+    "\u0051",
+    "\u0052",
+    "\u0053",
+    "\u0054",
+    "\u0055",
+    "\u0056",
+    "\u0057",
+    "\u0058",
+    "\u0059",
+    "\u005A",
+    "\u005B",
+    "\u005C",
+    "\u005D",
+    "\u005E",
+    "\u005F",
+    "\u0060",
+    "\u0061",
+    "\u0062",
+    "\u0063",
+    "\u0064",
+    "\u0065",
+    "\u0066",
+    "\u0067",
+    "\u0068",
+    "\u0069",
+    "\u006A",
+    "\u006B",
+    "\u006C",
+    "\u006D",
+    "\u006E",
+    "\u006F",
+    "\u0070",
+    "\u0071",
+    "\u0072",
+    "\u0073",
+    "\u0074",
+    "\u0075",
+    "\u0076",
+    "\u0077",
+    "\u0078",
+    "\u0079",
+    "\u007A",
+    "\u007B",
+    "\u007C",
+    "\u007D",
+    "\u007E",
+    "\u0000",
+    "\u00C4",
+    "\u00C5",
+    "\u00C7",
+    "\u00C9",
+    "\u00D1",
+    "\u00D6",
+    "\u00DC",
+    "\u00E1",
+    "\u00E0",
+    "\u00E2",
+    "\u00E4",
+    "\u00E3",
+    "\u00E5",
+    "\u00E7",
+    "\u00E9",
+    "\u00E8",
+    "\u00EA",
+    "\u00EB",
+    "\u00ED",
+    "\u00EC",
+    "\u00EE",
+    "\u00EF",
+    "\u00F1",
+    "\u00F3",
+    "\u00F2",
+    "\u00F4",
+    "\u00F6",
+    "\u00F5",
+    "\u00FA",
+    "\u00F9",
+    "\u00FB",
+    "\u00FC",
+    "\u2020",
+    "\u00B0",
+    "\u00A2",
+    "\u00A3",
+    "\u00A7",
+    "\u2022",
+    "\u00B6",
+    "\u00DF",
+    "\u00AE",
+    "\u00A9",
+    "\u2122",
+    "\u00B4",
+    "\u00A8",
+    "\u2260",
+    "\u00C6",
+    "\u00D8",
+    "\u221E",
+    "\u00B1",
+    "\u2264",
+    "\u2265",
+    "\u00A5",
+    "\u00B5",
+    "\u2202",
+    "\u2211",
+    "\u220F",
+    "\u03C0",
+    "\u222B",
+    "\u00AA",
+    "\u00BA",
+    "\u03A9",
+    "\u00E6",
+    "\u00F8",
+    "\u00BF",
+    "\u00A1",
+    "\u00AC",
+    "\u221A",
+    "\u0192",
+    "\u2248",
+    "\u2206",
+    "\u00AB",
+    "\u00BB",
+    "\u2026",
+    "\u00A0",
+    "\u00C0",
+    "\u00C3",
+    "\u00D5",
+    "\u0152",
+    "\u0153",
+    "\u2013",
+    "\u2014",
+    "\u201C",
+    "\u201D",
+    "\u2018",
+    "\u2019",
+    "\u00F7",
+    "\u25CA",
+    "\u00FF",
+    "\u0178",
+    "\u2044",
+    "\u20AC",
+    "\u2039",
+    "\u203A",
+    "\uFB01",
+    "\uFB02",
+    "\u2021",
+    "\u00B7",
+    "\u201A",
+    "\u201E",
+    "\u2030",
+    "\u00C2",
+    "\u00CA",
+    "\u00C1",
+    "\u00CB",
+    "\u00C8",
+    "\u00CD",
+    "\u00CE",
+    "\u00CF",
+    "\u00CC",
+    "\u00D3",
+    "\u00D4",
+    "\uF8FF",
+    "\u00D2",
+    "\u00DA",
+    "\u00DB",
+    "\u00D9",
+    "\u0131",
+    "\u02C6",
+    "\u02DC",
+    "\u00AF",
+    "\u02D8",
+    "\u02D9",
+    "\u02DA",
+    "\u00B8",
+    "\u02DD",
+    "\u02DB",
+    "\u02C7",
+]
+
 _pdfDocEncoding = (
     u_("\u0000"),
-    u_("\u0001"),
-    u_("\u0002"),
-    u_("\u0003"),
-    u_("\u0004"),
-    u_("\u0005"),
-    u_("\u0006"),
-    u_("\u0007"),  #  0 -  7
-    u_("\u0008"),
-    u_("\u0009"),
-    u_("\u000a"),
-    u_("\u000b"),
-    u_("\u000c"),
-    u_("\u000d"),
-    u_("\u000e"),
-    u_("\u000f"),  #  8 - 15
-    u_("\u0010"),
-    u_("\u0011"),
-    u_("\u0012"),
-    u_("\u0013"),
-    u_("\u0014"),
-    u_("\u0015"),
     u_("\u0000"),
-    u_("\u0017"),  # 16 - 23
+    u_("\u0000"),
+    u_("\u0000"),
+    u_("\u0000"),
+    u_("\u0000"),
+    u_("\u0000"),
+    u_("\u0000"),
+    u_("\u0000"),
+    u_("\u0000"),
+    u_("\u0000"),
+    u_("\u0000"),
+    u_("\u0000"),
+    u_("\u0000"),
+    u_("\u0000"),
+    u_("\u0000"),
+    u_("\u0000"),
+    u_("\u0000"),
+    u_("\u0000"),
+    u_("\u0000"),
+    u_("\u0000"),
+    u_("\u0000"),
+    u_("\u0000"),
+    u_("\u0000"),
     u_("\u02d8"),
     u_("\u02c7"),
     u_("\u02c6"),
@@ -1480,7 +2777,7 @@ _pdfDocEncoding = (
     u_("\u02dd"),
     u_("\u02db"),
     u_("\u02da"),
-    u_("\u02dc"),  # 24 - 31
+    u_("\u02dc"),
     u_("\u0020"),
     u_("\u0021"),
     u_("\u0022"),
@@ -1488,7 +2785,7 @@ _pdfDocEncoding = (
     u_("\u0024"),
     u_("\u0025"),
     u_("\u0026"),
-    u_("\u0027"),  # 32 - 39
+    u_("\u0027"),
     u_("\u0028"),
     u_("\u0029"),
     u_("\u002a"),
@@ -1496,7 +2793,7 @@ _pdfDocEncoding = (
     u_("\u002c"),
     u_("\u002d"),
     u_("\u002e"),
-    u_("\u002f"),  # 40 - 47
+    u_("\u002f"),
     u_("\u0030"),
     u_("\u0031"),
     u_("\u0032"),
@@ -1504,7 +2801,7 @@ _pdfDocEncoding = (
     u_("\u0034"),
     u_("\u0035"),
     u_("\u0036"),
-    u_("\u0037"),  # 48 - 55
+    u_("\u0037"),
     u_("\u0038"),
     u_("\u0039"),
     u_("\u003a"),
@@ -1512,7 +2809,7 @@ _pdfDocEncoding = (
     u_("\u003c"),
     u_("\u003d"),
     u_("\u003e"),
-    u_("\u003f"),  # 56 - 63
+    u_("\u003f"),
     u_("\u0040"),
     u_("\u0041"),
     u_("\u0042"),
@@ -1520,7 +2817,7 @@ _pdfDocEncoding = (
     u_("\u0044"),
     u_("\u0045"),
     u_("\u0046"),
-    u_("\u0047"),  # 64 - 71
+    u_("\u0047"),
     u_("\u0048"),
     u_("\u0049"),
     u_("\u004a"),
@@ -1528,7 +2825,7 @@ _pdfDocEncoding = (
     u_("\u004c"),
     u_("\u004d"),
     u_("\u004e"),
-    u_("\u004f"),  # 72 - 79
+    u_("\u004f"),
     u_("\u0050"),
     u_("\u0051"),
     u_("\u0052"),
@@ -1536,7 +2833,7 @@ _pdfDocEncoding = (
     u_("\u0054"),
     u_("\u0055"),
     u_("\u0056"),
-    u_("\u0057"),  # 80 - 87
+    u_("\u0057"),
     u_("\u0058"),
     u_("\u0059"),
     u_("\u005a"),
@@ -1544,7 +2841,7 @@ _pdfDocEncoding = (
     u_("\u005c"),
     u_("\u005d"),
     u_("\u005e"),
-    u_("\u005f"),  # 88 - 95
+    u_("\u005f"),
     u_("\u0060"),
     u_("\u0061"),
     u_("\u0062"),
@@ -1552,7 +2849,7 @@ _pdfDocEncoding = (
     u_("\u0064"),
     u_("\u0065"),
     u_("\u0066"),
-    u_("\u0067"),  # 96 - 103
+    u_("\u0067"),
     u_("\u0068"),
     u_("\u0069"),
     u_("\u006a"),
@@ -1560,7 +2857,7 @@ _pdfDocEncoding = (
     u_("\u006c"),
     u_("\u006d"),
     u_("\u006e"),
-    u_("\u006f"),  # 104 - 111
+    u_("\u006f"),
     u_("\u0070"),
     u_("\u0071"),
     u_("\u0072"),
@@ -1568,7 +2865,7 @@ _pdfDocEncoding = (
     u_("\u0074"),
     u_("\u0075"),
     u_("\u0076"),
-    u_("\u0077"),  # 112 - 119
+    u_("\u0077"),
     u_("\u0078"),
     u_("\u0079"),
     u_("\u007a"),
@@ -1576,7 +2873,7 @@ _pdfDocEncoding = (
     u_("\u007c"),
     u_("\u007d"),
     u_("\u007e"),
-    u_("\u0000"),  # 120 - 127
+    u_("\u0000"),
     u_("\u2022"),
     u_("\u2020"),
     u_("\u2021"),
@@ -1584,7 +2881,7 @@ _pdfDocEncoding = (
     u_("\u2014"),
     u_("\u2013"),
     u_("\u0192"),
-    u_("\u2044"),  # 128 - 135
+    u_("\u2044"),
     u_("\u2039"),
     u_("\u203a"),
     u_("\u2212"),
@@ -1592,7 +2889,7 @@ _pdfDocEncoding = (
     u_("\u201e"),
     u_("\u201c"),
     u_("\u201d"),
-    u_("\u2018"),  # 136 - 143
+    u_("\u2018"),
     u_("\u2019"),
     u_("\u201a"),
     u_("\u2122"),
@@ -1600,7 +2897,7 @@ _pdfDocEncoding = (
     u_("\ufb02"),
     u_("\u0141"),
     u_("\u0152"),
-    u_("\u0160"),  # 144 - 151
+    u_("\u0160"),
     u_("\u0178"),
     u_("\u017d"),
     u_("\u0131"),
@@ -1608,7 +2905,7 @@ _pdfDocEncoding = (
     u_("\u0153"),
     u_("\u0161"),
     u_("\u017e"),
-    u_("\u0000"),  # 152 - 159
+    u_("\u0000"),
     u_("\u20ac"),
     u_("\u00a1"),
     u_("\u00a2"),
@@ -1616,7 +2913,7 @@ _pdfDocEncoding = (
     u_("\u00a4"),
     u_("\u00a5"),
     u_("\u00a6"),
-    u_("\u00a7"),  # 160 - 167
+    u_("\u00a7"),
     u_("\u00a8"),
     u_("\u00a9"),
     u_("\u00aa"),
@@ -1624,7 +2921,7 @@ _pdfDocEncoding = (
     u_("\u00ac"),
     u_("\u0000"),
     u_("\u00ae"),
-    u_("\u00af"),  # 168 - 175
+    u_("\u00af"),
     u_("\u00b0"),
     u_("\u00b1"),
     u_("\u00b2"),
@@ -1632,7 +2929,7 @@ _pdfDocEncoding = (
     u_("\u00b4"),
     u_("\u00b5"),
     u_("\u00b6"),
-    u_("\u00b7"),  # 176 - 183
+    u_("\u00b7"),
     u_("\u00b8"),
     u_("\u00b9"),
     u_("\u00ba"),
@@ -1640,7 +2937,7 @@ _pdfDocEncoding = (
     u_("\u00bc"),
     u_("\u00bd"),
     u_("\u00be"),
-    u_("\u00bf"),  # 184 - 191
+    u_("\u00bf"),
     u_("\u00c0"),
     u_("\u00c1"),
     u_("\u00c2"),
@@ -1648,7 +2945,7 @@ _pdfDocEncoding = (
     u_("\u00c4"),
     u_("\u00c5"),
     u_("\u00c6"),
-    u_("\u00c7"),  # 192 - 199
+    u_("\u00c7"),
     u_("\u00c8"),
     u_("\u00c9"),
     u_("\u00ca"),
@@ -1656,7 +2953,7 @@ _pdfDocEncoding = (
     u_("\u00cc"),
     u_("\u00cd"),
     u_("\u00ce"),
-    u_("\u00cf"),  # 200 - 207
+    u_("\u00cf"),
     u_("\u00d0"),
     u_("\u00d1"),
     u_("\u00d2"),
@@ -1664,7 +2961,7 @@ _pdfDocEncoding = (
     u_("\u00d4"),
     u_("\u00d5"),
     u_("\u00d6"),
-    u_("\u00d7"),  # 208 - 215
+    u_("\u00d7"),
     u_("\u00d8"),
     u_("\u00d9"),
     u_("\u00da"),
@@ -1672,7 +2969,7 @@ _pdfDocEncoding = (
     u_("\u00dc"),
     u_("\u00dd"),
     u_("\u00de"),
-    u_("\u00df"),  # 216 - 223
+    u_("\u00df"),
     u_("\u00e0"),
     u_("\u00e1"),
     u_("\u00e2"),
@@ -1680,7 +2977,7 @@ _pdfDocEncoding = (
     u_("\u00e4"),
     u_("\u00e5"),
     u_("\u00e6"),
-    u_("\u00e7"),  # 224 - 231
+    u_("\u00e7"),
     u_("\u00e8"),
     u_("\u00e9"),
     u_("\u00ea"),
@@ -1688,7 +2985,7 @@ _pdfDocEncoding = (
     u_("\u00ec"),
     u_("\u00ed"),
     u_("\u00ee"),
-    u_("\u00ef"),  # 232 - 239
+    u_("\u00ef"),
     u_("\u00f0"),
     u_("\u00f1"),
     u_("\u00f2"),
@@ -1696,7 +2993,7 @@ _pdfDocEncoding = (
     u_("\u00f4"),
     u_("\u00f5"),
     u_("\u00f6"),
-    u_("\u00f7"),  # 240 - 247
+    u_("\u00f7"),
     u_("\u00f8"),
     u_("\u00f9"),
     u_("\u00fa"),
@@ -1704,7 +3001,7 @@ _pdfDocEncoding = (
     u_("\u00fc"),
     u_("\u00fd"),
     u_("\u00fe"),
-    u_("\u00ff"),  # 248 - 255
+    u_("\u00ff"),
 )
 
 assert len(_pdfDocEncoding) == 256
@@ -1714,7 +3011,5 @@ for i in range(256):
     char = _pdfDocEncoding[i]
     if char == u_("\u0000"):
         continue
-    assert char not in _pdfDocEncoding_rev, (
-        str(char) + " at " + str(i) + " already at " + str(_pdfDocEncoding_rev[char])
-    )
+    assert char not in _pdfDocEncoding_rev
     _pdfDocEncoding_rev[char] = i
