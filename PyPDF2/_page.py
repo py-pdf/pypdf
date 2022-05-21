@@ -123,6 +123,82 @@ def createRectangleAccessor(name, fallback):
     return _create_rectangle_accessor(name, fallback)
 
 
+class Transformation:
+    """
+    Specify a 2D transformation.
+    The transformation between two coordinate systems is represented by a 3-by-3
+    transformation matrix written as follows:
+        a b 0
+        c d 0
+        e f 1
+    Because a transformation matrix has only six elements that can be changed,
+    it is usually specified in PDF as the six-element array [ a b c d e f ].
+    Coordinate transformations are expressed as matrix multiplications:
+                                 a b 0
+     [ x′ y′ 1 ] = [ x y 1 ] ×   c d 0
+                                 e f 1
+    Usage
+    -----
+    >>> from PyPDF2 import Transformation
+    >>> op = Transformation().scale(sx=2, sy=3).translate(tx=10, ty=20)
+    >>> page.mergeTransformedPage(page2, op)
+    """
+
+    # 9.5.4 Coordinate Systems for 3D
+    # 4.2.2 Common Transformations
+    def __init__(self, ctm=(1, 0, 0, 1, 0, 0)):
+        self.ctm = ctm
+
+    @property
+    def matrix(self):
+        return (
+            (self.ctm[0], self.ctm[1], 0),
+            (self.ctm[2], self.ctm[3], 0),
+            (self.ctm[4], self.ctm[5], 1),
+        )
+
+    @staticmethod
+    def compress(matrix):
+        return (
+            matrix[0][0],
+            matrix[0][1],
+            matrix[1][0],
+            matrix[1][1],
+            matrix[0][2],
+            matrix[1][2],
+        )
+
+    def translate(self, tx: float = 0, ty: float = 0) -> "Transformation":
+        m = self.ctm
+        return Transformation(ctm=(m[0], m[1], m[2], m[3], m[4] + tx, m[5] + ty))
+
+    def scale(self, sx=None, sy=None) -> "Transformation":
+        if sx is None and sy is None:
+            raise ValueError("Either sx or sy must be specified")
+        if sx is None:
+            sx = sy
+        if sy is None:
+            sy = sx
+        assert sx is not None
+        assert sy is not None
+        op = ((sx, 0, 0), (0, sy, 0), (0, 0, 1))
+        ctm = Transformation.compress(matrix_multiply(self.matrix, op))
+        return Transformation(ctm)
+
+    def rotate(self, rotation: float) -> "Transformation":
+        rotation = math.radians(rotation)
+        op = (
+            (math.cos(rotation), math.sin(rotation), 0),
+            (-math.sin(rotation), math.cos(rotation), 0),
+            (0, 0, 1),
+        )
+        ctm = Transformation.compress(matrix_multiply(self.matrix, op))
+        return Transformation(ctm)
+
+    def __repr__(self) -> str:
+        return f"Transformation(ctm={self.ctm})"
+
+
 class PageObject(DictionaryObject):
     """
     PageObject represents a single page within a PDF file.
@@ -467,6 +543,8 @@ class PageObject(DictionaryObject):
         :param bool expand: Whether the page should be expanded to fit the dimensions
             of the page to be merged.
         """
+        if isinstance(ctm, Transformation):
+            ctm = ctm.ctm
         self._merge_page(
             page2,
             lambda page2Content: PageObject._add_transformation_matrix(
@@ -487,8 +565,15 @@ class PageObject(DictionaryObject):
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
-        # CTM to scale : [ sx 0 0 sy 0 0 ]
-        return self.mergeTransformedPage(page2, [scale, 0, 0, scale, 0, 0], expand)
+        warnings.warn(
+            "page.mergeScaledPage(page2, scale, expand) method will be deprecated. "
+            "Use "
+            "page.mergeTransformedPage(page2, Transformation().scale(scale), expand) "
+            "instead.",
+            PendingDeprecationWarning,
+        )
+        op = Transformation().scale(scale, scale)
+        return self.mergeTransformedPage(page2, op, expand)
 
     def mergeRotatedPage(self, page2, rotation, expand=False):
         """
@@ -501,19 +586,8 @@ class PageObject(DictionaryObject):
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
-        rotation = math.radians(rotation)
-        return self.mergeTransformedPage(
-            page2,
-            [
-                math.cos(rotation),
-                math.sin(rotation),
-                -math.sin(rotation),
-                math.cos(rotation),
-                0,
-                0,
-            ],
-            expand,
-        )
+        op = Transformation().rotate(rotation)
+        self.mergeTransformedPage(page2, op, expand)
 
     def mergeTranslatedPage(self, page2, tx, ty, expand=False):
         """
@@ -527,7 +601,8 @@ class PageObject(DictionaryObject):
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
-        return self.mergeTransformedPage(page2, [1, 0, 0, 1, tx, ty], expand)
+        op = Transformation().translate(tx, ty)
+        self.mergeTransformedPage(page2, op, expand)
 
     def mergeRotatedTranslatedPage(self, page2, rotation, tx, ty, expand=False):
         """
@@ -542,23 +617,8 @@ class PageObject(DictionaryObject):
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
-
-        translation = [[1, 0, 0], [0, 1, 0], [-tx, -ty, 1]]
-        rotation = math.radians(rotation)
-        rotating = [
-            [math.cos(rotation), math.sin(rotation), 0],
-            [-math.sin(rotation), math.cos(rotation), 0],
-            [0, 0, 1],
-        ]
-        rtranslation = [[1, 0, 0], [0, 1, 0], [tx, ty, 1]]
-        ctm = matrix_multiply(translation, rotating)
-        ctm = matrix_multiply(ctm, rtranslation)
-
-        return self.mergeTransformedPage(
-            page2,
-            [ctm[0][0], ctm[0][1], ctm[1][0], ctm[1][1], ctm[2][0], ctm[2][1]],
-            expand,
-        )
+        op = Transformation().translate(-tx, -ty).rotate(rotation).translate(tx, ty)
+        return self.mergeTransformedPage(page2, op, expand)
 
     def mergeRotatedScaledPage(self, page2, rotation, scale, expand=False):
         """
@@ -572,20 +632,8 @@ class PageObject(DictionaryObject):
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
-        rotation = math.radians(rotation)
-        rotating = [
-            [math.cos(rotation), math.sin(rotation), 0],
-            [-math.sin(rotation), math.cos(rotation), 0],
-            [0, 0, 1],
-        ]
-        scaling = [[scale, 0, 0], [0, scale, 0], [0, 0, 1]]
-        ctm = matrix_multiply(rotating, scaling)
-
-        return self.mergeTransformedPage(
-            page2,
-            [ctm[0][0], ctm[0][1], ctm[1][0], ctm[1][1], ctm[2][0], ctm[2][1]],
-            expand,
-        )
+        op = Transformation().rotate(rotation).scale(scale, scale)
+        self.mergeTransformedPage(page2, op, expand)
 
     def mergeScaledTranslatedPage(self, page2, scale, tx, ty, expand=False):
         """
@@ -600,16 +648,8 @@ class PageObject(DictionaryObject):
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
-
-        translation = [[1, 0, 0], [0, 1, 0], [tx, ty, 1]]
-        scaling = [[scale, 0, 0], [0, scale, 0], [0, 0, 1]]
-        ctm = matrix_multiply(scaling, translation)
-
-        return self.mergeTransformedPage(
-            page2,
-            [ctm[0][0], ctm[0][1], ctm[1][0], ctm[1][1], ctm[2][0], ctm[2][1]],
-            expand,
-        )
+        op = Transformation().scale(scale, scale).translate(tx, ty)
+        return self.mergeTransformedPage(page2, op, expand)
 
     def mergeRotatedScaledTranslatedPage(
         self, page2, rotation, scale, tx, ty, expand=False
@@ -628,22 +668,8 @@ class PageObject(DictionaryObject):
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
-        translation = [[1, 0, 0], [0, 1, 0], [tx, ty, 1]]
-        rotation = math.radians(rotation)
-        rotating = [
-            [math.cos(rotation), math.sin(rotation), 0],
-            [-math.sin(rotation), math.cos(rotation), 0],
-            [0, 0, 1],
-        ]
-        scaling = [[scale, 0, 0], [0, scale, 0], [0, 0, 1]]
-        ctm = matrix_multiply(rotating, scaling)
-        ctm = matrix_multiply(ctm, translation)
-
-        return self.mergeTransformedPage(
-            page2,
-            [ctm[0][0], ctm[0][1], ctm[1][0], ctm[1][1], ctm[2][0], ctm[2][1]],
-            expand,
-        )
+        op = Transformation().rotate(rotation).scale(scale, scale).translate(tx, ty)
+        self.mergeTransformedPage(page2, op, expand)
 
     def add_transformation(self, ctm):
         """

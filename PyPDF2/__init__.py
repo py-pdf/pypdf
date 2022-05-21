@@ -5,6 +5,8 @@ from PyPDF2.merger import PdfFileMerger, PdfMerger
 from PyPDF2.pagerange import PageRange, parse_filename_page_ranges
 from PyPDF2.papersizes import PaperSize
 
+from ._page import Transformation
+
 __all__ = [
     "__version__",
     "PageRange",
@@ -14,6 +16,7 @@ __all__ = [
     "PdfFileReader",  # will be removed soon; use PdfReader instead
     "PdfFileWriter",  # will be removed soon; use PdfWriter instead
     "PdfMerger",
+    "Transformation",
     "PdfReader",
     "PdfWriter",
 ]
