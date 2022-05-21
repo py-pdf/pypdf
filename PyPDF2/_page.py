@@ -168,8 +168,8 @@ class PageObject(DictionaryObject):
         page.__setitem__(NameObject(PG.PARENT), NullObject())
         page.__setitem__(NameObject(PG.RESOURCES), DictionaryObject())
         if width is None or height is None:
-            if pdf is not None and pdf.get_num_pages() > 0:
-                lastpage = pdf.get_page(pdf.get_num_pages() - 1)
+            if pdf is not None and len(pdf.pages) > 0:
+                lastpage = pdf.get_page(len(pdf.pages) - 1)
                 width = lastpage.mediabox.width
                 height = lastpage.mediabox.height
             else:

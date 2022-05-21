@@ -351,7 +351,7 @@ class PdfMerger(object):
         new_dests = []
         for k, o in list(dests.items()):
             for j in range(*pages):
-                if pdf.getPage(j).get_object() == o["/Page"].get_object():
+                if pdf.pages[j].get_object() == o["/Page"].get_object():
                     o[NameObject("/Page")] = o["/Page"].get_object()
                     assert str_(k) == str_(o["/Title"])
                     new_dests.append(o)
@@ -375,7 +375,7 @@ class PdfMerger(object):
             else:
                 prev_header_added = False
                 for j in range(*pages):
-                    if pdf.getPage(j).get_object() == o["/Page"].get_object():
+                    if pdf.pages[j].get_object() == o["/Page"].get_object():
                         o[NameObject("/Page")] = o["/Page"].get_object()
                         new_outline.append(o)
                         prev_header_added = True

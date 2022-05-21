@@ -38,7 +38,13 @@ from hashlib import md5
 
 from PyPDF2._page import PageObject
 from PyPDF2._security import _alg33, _alg34, _alg35
-from PyPDF2._utils import DEPR_MSG, b_, isString, u_
+from PyPDF2._utils import (
+    DEPR_MSG,
+    ConvertFunctionsToVirtualList,
+    b_,
+    isString,
+    u_,
+)
 from PyPDF2.constants import CatalogAttributes as CA
 from PyPDF2.constants import Core as CO
 from PyPDF2.constants import EncryptionDictAttributes as ED
@@ -213,7 +219,7 @@ class PdfWriter(object):
         )
         return self.get_page(pageNumber)
 
-    def get_num_pages(
+    def _get_num_pages(
         self,
     ):  # consistency with reader: should be possible to use the same
         """
@@ -225,10 +231,19 @@ class PdfWriter(object):
 
     def getNumPages(self):
         warnings.warn(
-            DEPR_MSG.format("getNumPages()", "get_num_pages()"),
+            DEPR_MSG.format("getNumPages()", "len(writer.pages)"),
             PendingDeprecationWarning,
         )
-        return self.get_num_pages()
+        return self._get_num_pages()
+
+    @property
+    def pages(self):
+        """
+        Property that emulates a list based upon the
+        :meth:`getNumPages()<PdfWriter.get_num_pages>` and
+        :meth:`get_page()<PdfWriter.get_page>` methods.
+        """
+        return ConvertFunctionsToVirtualList(self._get_num_pages, self.get_page)
 
     def add_blank_page(self, width=None, height=None):
         """
@@ -270,7 +285,7 @@ class PdfWriter(object):
         :raises PageSizeNotDefinedError: if width and height are not defined
             and previous page does not exist.
         """
-        if width is None or height is None and (self.get_num_pages() - 1) >= index:
+        if width is None or height is None and (self._get_num_pages() - 1) >= index:
             oldpage = self.get_page(index)
             width = oldpage.mediabox.width
             height = oldpage.mediabox.height
@@ -440,12 +455,12 @@ class PdfWriter(object):
             appended to the writer.
         """
         # Get page count from writer and reader
-        reader_num_pages = reader.getNumPages()
-        writer_num_pages = self.get_num_pages()
+        reader_num_pages = len(reader.pages)
+        writer_num_pages = len(self.pages)
 
         # Copy pages from reader to writer
         for rpagenum in range(0, reader_num_pages):
-            reader_page = reader.getPage(rpagenum)
+            reader_page = reader.pages[rpagenum]
             self.add_page(reader_page)
             writer_page = self.get_page(writer_num_pages + rpagenum)
             # Trigger callback, pass writer page as parameter

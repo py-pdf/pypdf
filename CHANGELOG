@@ -61,7 +61,8 @@ PdfReader class:
   - _read_xref_subsections(..., getEntry, ...) ➔ _read_xref_subsections(..., get_entry, ...)
 
 PdfWriter class:
-
+  - `writer.getPage(pageNumber)` ➔ `writer.pages[page_number]`
+  - `writer.getNumPages()` ➔ `len(writer.pages)`
   - addMetadata ➔ add_metadata
   - addPage ➔ add_page
   - addBlankPage ➔ add_blank_page

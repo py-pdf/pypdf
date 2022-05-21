@@ -797,8 +797,8 @@ class PdfReader(object):
     def pages(self):
         """
         Read-only property that emulates a list based upon the
-        :meth:`getNumPages()<PdfReader.getNumPages>` and
-        :meth:`get_page()<PdfReader.get_page>` methods.
+        :meth:`getNumPages()<PdfReader._get_num_pages>` and
+        :meth:`get_page()<PdfReader._get_page>` methods.
         """
         return ConvertFunctionsToVirtualList(self._get_num_pages, self._get_page)
 

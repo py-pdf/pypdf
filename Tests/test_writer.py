@@ -18,7 +18,7 @@ def test_writer_clone():
     writer = PdfWriter()
 
     writer.clone_document_from_reader(reader)
-    assert writer.get_num_pages() == 4
+    assert writer._get_num_pages() == 4
 
 
 def test_writer_operations():
