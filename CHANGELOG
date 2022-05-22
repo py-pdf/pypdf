@@ -31,6 +31,7 @@ PyPDF2.generic
 PdfReader class:
   - `reader.getPage(pageNumber)` ➔ `reader.pages[page_number]`
   - `reader.getNumPages()` / `reader.numPages` ➔ `len(reader.pages)`
+  - getDocumentInfo ➔ metadata
   - flattenedPages attribute ➔ flattened_pages
   - resolvedObjects attribute ➔ resolved_objects
   - xrefIndex attribute ➔ xref_index
