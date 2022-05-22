@@ -1805,13 +1805,15 @@ class PdfWriter:
 
             Use :py:attr:`page_mode` instead.
         """
-        if not isinstance(mode, NameObject):
+        if isinstance(mode, NameObject):
+            mode_name: NameObject = mode
+        else:
             if mode not in self._valid_modes:
                 warnings.warn(
                     "Mode should be one of: {}".format(", ".join(self._valid_modes))
                 )
-            mode = NameObject(mode)
-        self._root_object.update({NameObject("/PageMode"): mode})
+            mode_name = NameObject(mode)
+        self._root_object.update({NameObject("/PageMode"): mode_name})
 
     def setPageMode(self, mode: PagemodeType) -> None:
         """
