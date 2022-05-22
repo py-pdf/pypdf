@@ -1851,11 +1851,11 @@ class PdfWriter:
         return self._get_page_mode()
 
     @page_mode.setter
-    def page_mode(self, mode: str) -> None:
+    def page_mode(self, mode: PagemodeType) -> None:
         self.set_page_mode(mode)
 
     @property
-    def pageMode(self) -> Optional[str]:
+    def pageMode(self) -> Optional[PagemodeType]:
         """
         .. deprecated:: 1.28.0
 
@@ -1870,7 +1870,7 @@ class PdfWriter:
         return self.page_mode
 
     @pageMode.setter
-    def pageMode(self, mode: str) -> None:
+    def pageMode(self, mode: PagemodeType) -> None:
         """
         .. deprecated:: 1.28.0
 
