@@ -1,4 +1,4 @@
-from PyPDF2._reader import PdfFileReader, PdfReader
+from PyPDF2._reader import DocumentInformation, PdfFileReader, PdfReader
 from PyPDF2._version import __version__
 from PyPDF2._writer import PdfFileWriter, PdfWriter
 from PyPDF2.merger import PdfFileMerger, PdfMerger
@@ -11,6 +11,7 @@ __all__ = [
     "__version__",
     "PageRange",
     "PaperSize",
+    "DocumentInformation",
     "parse_filename_page_ranges",
     "PdfFileMerger",  # will be removed soon; use PdfMerger instead
     "PdfFileReader",  # will be removed soon; use PdfReader instead
