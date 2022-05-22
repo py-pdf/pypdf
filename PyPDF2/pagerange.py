@@ -11,7 +11,7 @@ import re
 
 from PyPDF2.errors import ParseError
 
-from ._utils import isString
+from ._utils import _isString
 
 _INT_RE = r"(0|-?[1-9]\d*)"  # A decimal int, don't allow "-0".
 PAGE_RANGE_RE = "^({int}|({int}?(:{int}?(:{int}?)?)))$".format(int=_INT_RE)
@@ -71,7 +71,7 @@ class PageRange(object):
             self._slice = arg.to_slice()
             return
 
-        m = isString(arg) and re.match(PAGE_RANGE_RE, arg)
+        m = _isString(arg) and re.match(PAGE_RANGE_RE, arg)
         if not m:
             raise ParseError(arg)
         elif m.group(2):
@@ -89,7 +89,7 @@ class PageRange(object):
     def valid(input):
         """True if input is a valid initializer for a PageRange."""
         return isinstance(input, (slice, PageRange)) or (
-            isString(input) and bool(re.match(PAGE_RANGE_RE, input))
+            _isString(input) and bool(re.match(PAGE_RANGE_RE, input))
         )
 
     def to_slice(self):

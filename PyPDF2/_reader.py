@@ -39,10 +39,10 @@ from PyPDF2 import _utils
 from PyPDF2._page import PageObject
 from PyPDF2._security import RC4_encrypt, _alg33_1, _alg34, _alg35
 from PyPDF2._utils import (
-    ConvertFunctionsToVirtualList,
+    _isString,
+    _VirtualList,
     b_,
     formatWarning,
-    isString,
     readUntilWhitespace,
 )
 from PyPDF2.constants import CatalogAttributes as CA
@@ -267,7 +267,7 @@ class PdfReader(object):
                 "It may not be read correctly.",
                 PdfReadWarning,
             )
-        if isString(stream):
+        if _isString(stream):
             with open(stream, "rb") as fileobj:
                 stream = BytesIO(b_(fileobj.read()))
         self.read(stream)
@@ -873,7 +873,7 @@ class PdfReader(object):
         if dest:
             if isinstance(dest, ArrayObject):
                 outline = self._build_destination(title, dest)
-            elif isString(dest) and dest in self._namedDests:
+            elif _isString(dest) and dest in self._namedDests:
                 outline = self._namedDests[dest]
                 outline[NameObject("/Title")] = title
             else:
@@ -883,7 +883,7 @@ class PdfReader(object):
     @property
     def pages(self):
         """Read-only property that emulates a list of :py:class:`Page<PyPDF2._page.Page>` objects."""
-        return ConvertFunctionsToVirtualList(self._get_num_pages, self._get_page)
+        return _VirtualList(self._get_num_pages, self._get_page)
 
     @property
     def page_layout(self):

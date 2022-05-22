@@ -39,10 +39,10 @@ from hashlib import md5
 from PyPDF2._page import PageObject
 from PyPDF2._security import _alg33, _alg34, _alg35
 from PyPDF2._utils import (
+    _isString,
+    _VirtualList,
     DEPR_MSG,
-    ConvertFunctionsToVirtualList,
     b_,
-    isString,
     u_,
 )
 from PyPDF2.constants import CatalogAttributes as CA
@@ -266,7 +266,7 @@ class PdfWriter(object):
         """
         Property that emulates a list of :class:`PageObject<PyPDF2._page.PageObject>`
         """
-        return ConvertFunctionsToVirtualList(self._get_num_pages, self.get_page)
+        return _VirtualList(self._get_num_pages, self.get_page)
 
     def add_blank_page(self, width=None, height=None):
         """
@@ -1351,7 +1351,7 @@ class PdfWriter(object):
         else:
             border_arr = [NumberObject(2)] * 3
 
-        if isString(rect):
+        if _isString(rect):
             rect = NameObject(rect)
         elif isinstance(rect, RectangleObject):
             pass
@@ -1445,7 +1445,7 @@ class PdfWriter(object):
         else:
             border_arr = [NumberObject(0)] * 3
 
-        if isString(rect):
+        if _isString(rect):
             rect = NameObject(rect)
         elif isinstance(rect, RectangleObject):
             pass

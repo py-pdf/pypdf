@@ -29,7 +29,7 @@ from sys import version_info
 import warnings
 
 from PyPDF2._reader import PdfReader
-from PyPDF2._utils import DEPR_MSG, isString, str_
+from PyPDF2._utils import _isString, DEPR_MSG, str_
 from PyPDF2._writer import PdfWriter
 from PyPDF2.constants import PagesAttributes as PA
 from PyPDF2.generic import *
@@ -129,7 +129,7 @@ class PdfMerger(object):
         # BytesIO (or StreamIO) stream.
         # If fileobj is none of the above types, it is not modified
         decryption_key = None
-        if isString(fileobj):
+        if _isString(fileobj):
             fileobj = file(fileobj, "rb")
             my_file = True
         elif hasattr(fileobj, "seek") and hasattr(fileobj, "read"):
@@ -240,7 +240,7 @@ class PdfMerger(object):
             file-like object.
         """
         my_file = False
-        if isString(fileobj):
+        if _isString(fileobj):
             fileobj = file(fileobj, "wb")
             my_file = True
 

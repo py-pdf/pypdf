@@ -66,23 +66,35 @@ DEPR_MSG_NO_REPLACEMENT = "{} is deprecated and will be removed in PyPDF2 2.0.0.
 DEPR_MSG = "{} is deprecated and will be removed in PyPDF2 2.0.0. Use {} instead."
 
 
+def _isString(s):
+    return isinstance(s, _basestring)
+
+
 # Make basic type tests more consistent
 def isString(s):
     """Test if arg is a string. Compatible with Python 2 and 3."""
     warnings.warn(DEPR_MSG_NO_REPLACEMENT.format("isString"))
-    return isinstance(s, _basestring)
+    return _isString(s)
+
+
+def _isInt(n):
+    return isinstance(n, int_types)
 
 
 def isInt(n):
     """Test if arg is an int. Compatible with Python 2 and 3."""
     warnings.warn(DEPR_MSG_NO_REPLACEMENT.format("isInt"))
-    return isinstance(n, int_types)
+    return _isInt(n)
+
+
+def _isBytes(b):
+    return isinstance(b, bytes_type)
 
 
 def isBytes(b):
     """Test if arg is a bytes instance. Compatible with Python 2 and 3."""
     warnings.warn(DEPR_MSG_NO_REPLACEMENT.format("isBytes"))
-    return isinstance(b, bytes_type)
+    return _isBytes(b)
 
 
 def formatWarning(message, category, filename, lineno, line=None):
@@ -162,13 +174,8 @@ def readUntilRegex(stream, regex, ignore_eof=False):
     return name
 
 
-class ConvertFunctionsToVirtualList(object):
+class _VirtualList(object):
     def __init__(self, lengthFunction, getFunction):
-        warnings.warn(
-            "ConvertFunctionsToVirtualList will be removed with PyPDF2 2.0.0",
-            PendingDeprecationWarning,
-        )
-        warnings.warn(DEPR_MSG_NO_REPLACEMENT.format("ConvertFunctionsToVirtualList"))
         self.lengthFunction = lengthFunction
         self.getFunction = getFunction
 
@@ -180,7 +187,7 @@ class ConvertFunctionsToVirtualList(object):
             indices = xrange_fn(*index.indices(len(self)))
             cls = type(self)
             return cls(indices.__len__, lambda idx: self[indices[idx]])
-        if not isInt(index):
+        if not _isInt(index):
             raise TypeError("sequence indices must be integers")
         len_self = len(self)
         if index < 0:
@@ -189,6 +196,17 @@ class ConvertFunctionsToVirtualList(object):
         if index < 0 or index >= len_self:
             raise IndexError("sequence index out of range")
         return self.getFunction(index)
+
+
+class ConvertFunctionsToVirtualList(_VirtualList):
+    def __init__(self, lengthFunction, getFunction):
+        warnings.warn(
+            "ConvertFunctionsToVirtualList will be removed with PyPDF2 2.0.0",
+            PendingDeprecationWarning,
+        )
+        warnings.warn(DEPR_MSG_NO_REPLACEMENT.format("ConvertFunctionsToVirtualList"))
+        super().__init__(lengthFunction, getFunction)
+
 
 
 def matrix_multiply(a, b):
