@@ -168,11 +168,11 @@ class Transformation:
             matrix[1][2],
         )
 
-    def translate(self, tx: float = 0, ty: float = 0) -> "Transformation":
+    def translate(self, tx=0, ty=0):
         m = self.ctm
         return Transformation(ctm=(m[0], m[1], m[2], m[3], m[4] + tx, m[5] + ty))
 
-    def scale(self, sx=None, sy=None) -> "Transformation":
+    def scale(self, sx=None, sy=None):
         if sx is None and sy is None:
             raise ValueError("Either sx or sy must be specified")
         if sx is None:
@@ -185,7 +185,7 @@ class Transformation:
         ctm = Transformation.compress(matrix_multiply(self.matrix, op))
         return Transformation(ctm)
 
-    def rotate(self, rotation: float) -> "Transformation":
+    def rotate(self, rotation):
         rotation = math.radians(rotation)
         op = (
             (math.cos(rotation), math.sin(rotation), 0),
@@ -195,8 +195,8 @@ class Transformation:
         ctm = Transformation.compress(matrix_multiply(self.matrix, op))
         return Transformation(ctm)
 
-    def __repr__(self) -> str:
-        return f"Transformation(ctm={self.ctm})"
+    def __repr__(self):
+        return "Transformation(ctm={})".format(self.ctm)
 
 
 class PageObject(DictionaryObject):
