@@ -100,10 +100,10 @@ PdfMerger class
 Page class:
   - artBox / bleedBox/ cropBox/ mediaBox / trimBox ➔ artbox / bleedbox/ cropbox/ mediabox / trimbox
     - getWidth, getHeight  ➔ width / height
-    - getLowerLeft_x / getUpperLeft_x ➔ left_x
-    - getUpperRight_x / getLowerRight_x ➔ right_x
-    - getLowerLeft_y / getLowerRight_y ➔ lower_y
-    - getUpperRight_y / getUpperLeft_y ➔ upper_y
+    - getLowerLeft_x / getUpperLeft_x ➔ left
+    - getUpperRight_x / getLowerRight_x ➔ right
+    - getLowerLeft_y / getLowerRight_y ➔ bottom
+    - getUpperRight_y / getUpperLeft_y ➔ top
     - getLowerLeft / setLowerLeft ➔ lower_left property
     - upperRight ➔ upper_right
   - mergePage ➔ merge_page

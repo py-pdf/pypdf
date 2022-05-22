@@ -1223,76 +1223,76 @@ class RectangleObject(ArrayObject):
         return "RectangleObject(%s)" % repr(list(self))
 
     @property
-    def left_x(self):
+    def left(self):
         return self[0]
 
     @property
-    def lower_y(self):
+    def bottom(self):
         return self[1]
 
     @property
-    def right_x(self):
+    def right(self):
         return self[2]
 
     @property
-    def upper_y(self):
+    def top(self):
         return self[3]
 
     def getLowerLeft_x(self):
         warnings.warn(
-            DEPR_MSG.format("getLowerLeft_x", "left_x"),
+            DEPR_MSG.format("getLowerLeft_x", "left"),
             PendingDeprecationWarning,
         )
-        return self.left_x
+        return self.left
 
     def getLowerLeft_y(self):
         warnings.warn(
-            DEPR_MSG.format("getLowerLeft_y", "lower_y"),
+            DEPR_MSG.format("getLowerLeft_y", "bottom"),
             PendingDeprecationWarning,
         )
-        return self.lower_y
+        return self.bottom
 
     def getUpperRight_x(self):
         warnings.warn(
-            DEPR_MSG.format("getUpperRight_x", "right_x"),
+            DEPR_MSG.format("getUpperRight_x", "right"),
             PendingDeprecationWarning,
         )
-        return self.right_x
+        return self.right
 
     def getUpperRight_y(self):
         warnings.warn(
-            DEPR_MSG.format("getUpperRight_y", "upper_y"),
+            DEPR_MSG.format("getUpperRight_y", "top"),
             PendingDeprecationWarning,
         )
-        return self.upper_y
+        return self.top
 
     def getUpperLeft_x(self):
         warnings.warn(
-            DEPR_MSG.format("getUpperLeft_x", "left_x"),
+            DEPR_MSG.format("getUpperLeft_x", "left"),
             PendingDeprecationWarning,
         )
-        return self.left_x
+        return self.left
 
     def getUpperLeft_y(self):
         warnings.warn(
-            DEPR_MSG.format("getUpperLeft_y", "upper_y"),
+            DEPR_MSG.format("getUpperLeft_y", "top"),
             PendingDeprecationWarning,
         )
-        return self.upper_y
+        return self.top
 
     def getLowerRight_x(self):
         warnings.warn(
-            DEPR_MSG.format("getLowerRight_x", "right_x"),
+            DEPR_MSG.format("getLowerRight_x", "right"),
             PendingDeprecationWarning,
         )
-        return self.right_x
+        return self.right
 
     def getLowerRight_y(self):
         warnings.warn(
-            DEPR_MSG.format("getLowerRight_y", "lower_y"),
+            DEPR_MSG.format("getLowerRight_y", "bottom"),
             PendingDeprecationWarning,
         )
-        return self.lower_y
+        return self.bottom
 
     @property
     def lower_left(self):
@@ -1300,7 +1300,7 @@ class RectangleObject(ArrayObject):
         Property to read and modify the lower left coordinate of this box
         in (x,y) form.
         """
-        return self.left_x, self.lower_y
+        return self.left, self.bottom
 
     @lower_left.setter
     def lower_left(self, value):
@@ -1312,7 +1312,7 @@ class RectangleObject(ArrayObject):
         Property to read and modify the lower right coordinate of this box
         in (x,y) form.
         """
-        return self.right_x, self.lower_y
+        return self.right, self.bottom
 
     @lower_right.setter
     def lower_right(self, value):
@@ -1324,7 +1324,7 @@ class RectangleObject(ArrayObject):
         Property to read and modify the upper left coordinate of this box
         in (x,y) form.
         """
-        return self.left_x, self.upper_y
+        return self.left, self.top
 
     @upper_left.setter
     def upper_left(self, value):
@@ -1336,7 +1336,7 @@ class RectangleObject(ArrayObject):
         Property to read and modify the upper right coordinate of this box
         in (x,y) form.
         """
-        return self.right_x, self.upper_y
+        return self.right, self.top
 
     @upper_right.setter
     def upper_right(self, value):
@@ -1400,7 +1400,7 @@ class RectangleObject(ArrayObject):
 
     @property
     def width(self):
-        return self.right_x - self.left_x
+        return self.right - self.left
 
     def getWidth(self):
         warnings.warn(DEPR_MSG.format("getWidth", "width"), DeprecationWarning)
@@ -1408,7 +1408,7 @@ class RectangleObject(ArrayObject):
 
     @property
     def height(self):
-        return self.upper_y - self.lower_y
+        return self.top - self.bottom
 
     def getHeight(self):
         warnings.warn(DEPR_MSG.format("getHeight", "height"), DeprecationWarning)

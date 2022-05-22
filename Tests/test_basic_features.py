@@ -38,8 +38,8 @@ def test_basic_features():
     # add page 5 from input1, but crop it to half size:
     page5 = reader._get_page(0)
     page5.mediabox.upper_right = (
-        page5.mediabox.right_x / 2,
-        page5.mediabox.upper_y / 2,
+        page5.mediabox.right / 2,
+        page5.mediabox.top / 2,
     )
     writer.add_page(page5)
 

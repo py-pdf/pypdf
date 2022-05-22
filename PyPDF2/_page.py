@@ -466,8 +466,8 @@ class PageObject(DictionaryObject):
                     map(
                         FloatObject,
                         [
-                            page2.trimbox.left_x,
-                            page2.trimbox.lower_y,
+                            page2.trimbox.left,
+                            page2.trimbox.bottom,
                             page2.trimbox.width,
                             page2.trimbox.height,
                         ],
@@ -488,20 +488,20 @@ class PageObject(DictionaryObject):
         # if expanding the page to fit a new page, calculate the new media box size
         if expand:
             corners1 = [
-                self.mediabox.left_x.as_numeric(),
-                self.mediabox.lower_y.as_numeric(),
-                self.mediabox.right_x.as_numeric(),
-                self.mediabox.upper_y.as_numeric(),
+                self.mediabox.left.as_numeric(),
+                self.mediabox.bottom.as_numeric(),
+                self.mediabox.right.as_numeric(),
+                self.mediabox.top.as_numeric(),
             ]
             corners2 = [
-                page2.mediabox.left_x.as_numeric(),
-                page2.mediabox.lower_y.as_numeric(),
-                page2.mediabox.left_x.as_numeric(),
-                page2.mediabox.upper_y.as_numeric(),
-                page2.mediabox.right_x.as_numeric(),
-                page2.mediabox.upper_y.as_numeric(),
-                page2.mediabox.right_x.as_numeric(),
-                page2.mediabox.lower_y.as_numeric(),
+                page2.mediabox.left.as_numeric(),
+                page2.mediabox.bottom.as_numeric(),
+                page2.mediabox.left.as_numeric(),
+                page2.mediabox.top.as_numeric(),
+                page2.mediabox.right.as_numeric(),
+                page2.mediabox.top.as_numeric(),
+                page2.mediabox.right.as_numeric(),
+                page2.mediabox.bottom.as_numeric(),
             ]
             if ctm is not None:
                 ctm = [float(x) for x in ctm]
@@ -704,10 +704,10 @@ class PageObject(DictionaryObject):
         self.add_transformation([sx, 0, 0, sy, 0, 0])
         self.mediabox = RectangleObject(
             [
-                float(self.mediabox.left_x) * sx,
-                float(self.mediabox.lower_y) * sy,
-                float(self.mediabox.right_x) * sx,
-                float(self.mediabox.upper_y) * sy,
+                float(self.mediabox.left) * sx,
+                float(self.mediabox.bottom) * sy,
+                float(self.mediabox.right) * sx,
+                float(self.mediabox.top) * sy,
             ]
         )
         if PG.VP in self:

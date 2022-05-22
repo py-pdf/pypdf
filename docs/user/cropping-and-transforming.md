@@ -15,8 +15,8 @@ writer.add_page(reader.pages[1].rotate_clockwise(90))
 # add page 3 from reader, but crop it to half size:
 page3 = reader.pages[2]
 page3.mediabox.upper_right = (
-    page3.mediabox.right_x / 2,
-    page3.mediabox.upper_y / 2,
+    page3.mediabox.right / 2,
+    page3.mediabox.top / 2,
 )
 writer.add_page(page3)
 
