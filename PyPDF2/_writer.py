@@ -1752,8 +1752,6 @@ class PdfWriter(object):
 
 class PdfFileWriter(PdfWriter):
     def __init__(self, *args, **kwargs):
-        import warnings
-
         warnings.warn(
             "PdfFileWriter was renamed to PdfWriter. PdfFileWriter will be removed",
             PendingDeprecationWarning,
