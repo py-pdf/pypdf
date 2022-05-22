@@ -38,13 +38,7 @@ from hashlib import md5
 
 from PyPDF2._page import PageObject
 from PyPDF2._security import _alg33, _alg34, _alg35
-from PyPDF2._utils import (
-    _isString,
-    _VirtualList,
-    DEPR_MSG,
-    b_,
-    u_,
-)
+from PyPDF2._utils import DEPR_MSG, _isString, _VirtualList, b_, u_
 from PyPDF2.constants import CatalogAttributes as CA
 from PyPDF2.constants import Core as CO
 from PyPDF2.constants import EncryptionDictAttributes as ED
@@ -126,7 +120,7 @@ class PdfWriter(object):
     def get_object(self, ido):
         if ido.pdf != self:
             raise ValueError("pdf must be self")
-        return self._objects[ido.idnum - 1]
+        return self._objects[ido.idnum - 1]  # type: ignore
 
     def getObject(self, ido):
         """
@@ -137,6 +131,7 @@ class PdfWriter(object):
         warnings.warn(
             DEPR_MSG.format("getObject()", "get_object()"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.get_object(ido)
 
@@ -164,10 +159,10 @@ class PdfWriter(object):
                 )
 
             need_appearances = NameObject("/NeedAppearances")
-            self._root_object["/AcroForm"][need_appearances] = BooleanObject(True)
+            self._root_object["/AcroForm"][need_appearances] = BooleanObject(True)  # type: ignore
 
-        except Exception as e:
-            logger.error("set_need_appearances_writer() catch : ", repr(e))
+        except Exception as exc:
+            logger.error("set_need_appearances_writer() catch : ", repr(exc))
 
     def add_page(self, page):
         """
@@ -188,6 +183,7 @@ class PdfWriter(object):
         warnings.warn(
             DEPR_MSG.format("addPage()", "add_page()"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.add_page(page)
 
@@ -211,10 +207,11 @@ class PdfWriter(object):
         warnings.warn(
             DEPR_MSG.format("insertPage()", "insert_page()"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.insert_page(page, index)
 
-    def get_page(self, page_umber):
+    def get_page(self, page_number):
         """
         Retrieve a page by number from this PDF file.
 
@@ -225,7 +222,7 @@ class PdfWriter(object):
         """
         pages = self.get_object(self._pages)
         # XXX: crude hack
-        return pages[PA.KIDS][page_umber].get_object()
+        return pages[PA.KIDS][page_number].get_object()
 
     def getPage(self, pageNumber):
         """
@@ -236,6 +233,7 @@ class PdfWriter(object):
         warnings.warn(
             DEPR_MSG.format("getPage()", "writer.pages[page_number]"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.get_page(pageNumber)
 
@@ -258,6 +256,7 @@ class PdfWriter(object):
         warnings.warn(
             DEPR_MSG.format("getNumPages()", "len(writer.pages)"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self._get_num_pages()
 
@@ -295,6 +294,7 @@ class PdfWriter(object):
         warnings.warn(
             DEPR_MSG.format("addBlankPage", "add_blank_page"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.add_blank_page(width, height)
 
@@ -330,6 +330,7 @@ class PdfWriter(object):
         warnings.warn(
             DEPR_MSG.format("insertBlankPage", "insert_blank_page"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.insert_blank_page(width, height, index)
 
@@ -339,7 +340,7 @@ class PdfWriter(object):
 
         :param str javascript: Your Javascript.
 
-        >>> output.addJS("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
+        >>> output.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
         # Example: This will launch the print window when the PDF is opened.
         """
         js = DictionaryObject()
@@ -383,8 +384,7 @@ class PdfWriter(object):
             Use :meth:`add_js` instead.
         """
         warnings.warn(
-            DEPR_MSG.format("addJS", "add_js"),
-            PendingDeprecationWarning,
+            DEPR_MSG.format("addJS", "add_js"), PendingDeprecationWarning, stacklevel=2
         )
         return self.add_js(javascript)
 
@@ -519,6 +519,7 @@ class PdfWriter(object):
         warnings.warn(
             DEPR_MSG.format("appendPagesFromReader", "append_pages_from_reader"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.append_pages_from_reader(reader, after_page_append)
 
@@ -537,8 +538,8 @@ class PdfWriter(object):
             PDF Reference Table 8.70 for details.
         """
         # Iterate through pages, update field values
-        for j in range(len(page[PG.ANNOTS])):
-            writer_annot = page[PG.ANNOTS][j].get_object()
+        for j in range(len(page[PG.ANNOTS])):  # type: ignore
+            writer_annot = page[PG.ANNOTS][j].get_object()  # type: ignore
             # retrieve parent field values, if present
             writer_parent_annot = {}  # fallback if it's not there
             if PG.PARENT in writer_annot:
@@ -566,6 +567,7 @@ class PdfWriter(object):
                 "updatePageFormFieldValues", "update_page_form_field_values"
             ),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.update_page_form_field_values(page, fields, flags)
 
@@ -587,6 +589,7 @@ class PdfWriter(object):
         warnings.warn(
             DEPR_MSG.format("cloneReaderDocumentRoot", "clone_reader_document_root"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.clone_reader_document_root(reader)
 
@@ -615,6 +618,7 @@ class PdfWriter(object):
         warnings.warn(
             DEPR_MSG.format("cloneDocumentFromReader", "clone_document_from_reader"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.clone_document_from_reader(reader, after_page_append)
 
@@ -875,6 +879,7 @@ class PdfWriter(object):
 
     def get_outline_root(self):
         if CO.OUTLINES in self._root_object:
+            # TABLE 3.25 Entries in the catalog dictionary
             outline = self._root_object[CO.OUTLINES]
             idnum = self._objects.index(outline) + 1
             outline_ref = IndirectObject(idnum, 0, self)
@@ -896,6 +901,7 @@ class PdfWriter(object):
         warnings.warn(
             DEPR_MSG.format("getOutlineRoot", "get_outline_root"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.get_outline_root()
 
@@ -908,11 +914,13 @@ class PdfWriter(object):
             names_ref = IndirectObject(idnum, 0, self)
             assert names_ref.get_object() == names
             if CA.DESTS in names and isinstance(names[CA.DESTS], DictionaryObject):
+                # 3.6.3 Name Dictionary (PDF spec 1.7)
                 dests = names[CA.DESTS]
                 idnum = self._objects.index(dests) + 1
                 dests_ref = IndirectObject(idnum, 0, self)
                 assert dests_ref.get_object() == dests
                 if CA.NAMES in dests:
+                    # TABLE 3.33 Entries in a name tree node dictionary
                     nd = dests[CA.NAMES]
                 else:
                     nd = ArrayObject()
@@ -945,6 +953,7 @@ class PdfWriter(object):
         warnings.warn(
             DEPR_MSG.format("getNamedDestRoot", "get_named_dest_root"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.get_named_dest_root()
 
@@ -1526,6 +1535,7 @@ class PdfWriter(object):
             "getPageLayout() will be removed in PyPDF2 2.0.0. "
             "Use the page_layout attribute instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self._get_page_layout()
 
@@ -1571,6 +1581,7 @@ class PdfWriter(object):
             "setPageLayout() will be removed in PyPDF2 2.0.0. "
             "Use the page_layout attribute instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self._set_page_layout(layout)
 
@@ -1614,6 +1625,7 @@ class PdfWriter(object):
             "pageLayout will be removed in PyPDF2 2.0.0. "
             "Use the page_layout attribute instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.page_layout
 
@@ -1628,6 +1640,7 @@ class PdfWriter(object):
             "pageLayout will be removed in PyPDF2 2.0.0. "
             "Use the page_layout attribute instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.page_layout = layout
 
@@ -1664,6 +1677,7 @@ class PdfWriter(object):
             "getPageMode() will be removed in PyPDF2 2.0.0. "
             "Use the page_mode attribute instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self._get_page_mode()
 
@@ -1691,6 +1705,7 @@ class PdfWriter(object):
             "setPageMode() will be removed in PyPDF2 2.0.0. "
             "Use the page_mode attribute instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.set_page_mode(mode)
 
@@ -1732,6 +1747,7 @@ class PdfWriter(object):
             "pageMode will be removed in PyPDF2 2.0.0. "
             "Use the page_mode attribute instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.page_mode
 
@@ -1746,6 +1762,7 @@ class PdfWriter(object):
             "pageMode will be removed in PyPDF2 2.0.0. "
             "Use the page_mode attribute instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.page_mode = mode
 

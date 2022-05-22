@@ -29,6 +29,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import re
 import struct
 import sys
 import warnings
@@ -93,6 +94,7 @@ def convertToInt(d, size):
         "convertToInt will be removed with PyPDF2 2.0.0. "
         "Use convert_to_int instead.",
         PendingDeprecationWarning,
+        stacklevel=2,
     )
     return convert_to_int(d, size)
 
@@ -230,12 +232,14 @@ class PdfReader(object):
             warnings.warn(
                 "The `warndest` argument to PdfReader will be removed in PyPDF2 2.0.0.",
                 PendingDeprecationWarning,
+                stacklevel=2,
             )
         if overwriteWarnings:
             if overwriteWarnings != "deprecated":
                 warnings.warn(
                     "The `overwriteWarnings` argument to PdfReader will be removed in PyPDF2 2.0.0.",
                     PendingDeprecationWarning,
+                    stacklevel=2,
                 )
             # Have to dynamically override the default showwarning since there
             # are no public methods that specify the 'file' parameter
@@ -290,6 +294,7 @@ class PdfReader(object):
             "flattenedPages will be removed in PyPDF2 2.0.0. "
             "Use flattened_pages instead",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.flattened_pages
 
@@ -304,6 +309,7 @@ class PdfReader(object):
             "resolvedObjects will be removed in PyPDF2 2.0.0. "
             "Use resolved_objects instead",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.resolved_objects
 
@@ -317,6 +323,7 @@ class PdfReader(object):
         warnings.warn(
             "xrefIndex will be removed in PyPDF2 2.0.0. Use xref_index instead",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.xref_index
 
@@ -336,7 +343,7 @@ class PdfReader(object):
             return None
         obj = self.trailer[TK.INFO]
         retval = DocumentInformation()
-        retval.update(obj)
+        retval.update(obj)  # type: ignore
         return retval
 
     def getDocumentInfo(self):
@@ -350,6 +357,7 @@ class PdfReader(object):
             "`metadata` attribute in PyPDF2 2.0.0. You can switch to the "
             "metadata attribute already.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.metadata
 
@@ -365,6 +373,7 @@ class PdfReader(object):
             "`metadata` in PyPDF2 2.0.0. You can switch to the metadata "
             "attribute already.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.metadata
 
@@ -395,8 +404,9 @@ class PdfReader(object):
             "`xmp_metadata` attribute in PyPDF2 2.0.0. You can switch to the "
             "xmp_metadata attribute already.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
-        return self.xmp_metadata()
+        return self.xmp_metadata
 
     @property
     def xmpMetadata(self):
@@ -410,6 +420,7 @@ class PdfReader(object):
             "`xmp_metadata` attribute in PyPDF2 2.0.0. You can switch to the "
             "xmp_metadata attribute already.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.xmp_metadata
 
@@ -430,7 +441,7 @@ class PdfReader(object):
             try:
                 self._override_encryption = True
                 self.decrypt("")
-                return self.trailer[TK.ROOT]["/Pages"]["/Count"]
+                return self.trailer[TK.ROOT]["/Pages"]["/Count"]  # type: ignore
             except Exception:
                 raise PdfReadError("File has not been decrypted")
             finally:
@@ -450,6 +461,7 @@ class PdfReader(object):
             "The `getNumPages` method of PdfReader will be removed in PyPDF2 2.0.0. "
             "Use `len(reader.pages)` instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self._get_num_pages()
 
@@ -464,6 +476,7 @@ class PdfReader(object):
             "The `numPages` attribute of PdfReader will be removed in PyPDF2 2.0.0. "
             "Use `len(reader.pages)` instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self._get_num_pages()
 
@@ -492,6 +505,7 @@ class PdfReader(object):
             "getPage(pageNumber) will be removed in PyPDF2 2.0.0. "
             "Use reader.pages[pageNumber] instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self._get_page(pageNumber)
 
@@ -577,6 +591,7 @@ class PdfReader(object):
             "The getFields method of PdfReader will be removed in PyPDF2 2.0.0. "
             "Use the get_fields() method instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.get_fields(tree, retval, fileobj)
 
@@ -598,7 +613,7 @@ class PdfReader(object):
     def _check_kids(self, tree, retval, fileobj):
         if PA.KIDS in tree:
             # recurse down the tree
-            for kid in tree[PA.KIDS]:
+            for kid in tree[PA.KIDS]:  # type: ignore
                 self.get_fields(kid.get_object(), retval, fileobj)
 
     def _write_field(self, fileobj, field, field_attributes):
@@ -651,6 +666,7 @@ class PdfReader(object):
             "The getFormTextFields method of PdfReader will be removed in PyPDF2 2.0.0. "
             "Use the get_form_text_fields() method instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.get_form_text_fields()
 
@@ -682,6 +698,7 @@ class PdfReader(object):
             for kid in tree[PA.KIDS]:
                 self._get_named_destinations(kid.get_object(), retval)
 
+        # TABLE 3.33 Entries in a name tree node dictionary (PDF 1.7 specs)
         if CA.NAMES in tree:
             names = tree[CA.NAMES]
             for i in range(0, len(names), 2):
@@ -705,6 +722,7 @@ class PdfReader(object):
             "getNamedDestinations will be removed in PyPDF2 2.0.0. "
             "Use the named_destinations property instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self._get_named_destinations(tree, retval)
 
@@ -733,6 +751,7 @@ class PdfReader(object):
                     # so continue to load the file without the Bookmarks
                     return outlines
 
+                # TABLE 8.3 Entries in the outline dictionary
                 if "/First" in lines:
                     node = lines["/First"]
             self._namedDests = self._get_named_destinations()
@@ -768,6 +787,7 @@ class PdfReader(object):
         warnings.warn(
             "getOutlines will be removed in PyPDF2 2.0.0. Use get_outlines instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.get_outlines(node, outlines)
 
@@ -812,6 +832,7 @@ class PdfReader(object):
             "getPageNumber will be removed in PyPDF2 2.0.0. "
             "Use get_page_number instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.get_page_number(page)
 
@@ -837,6 +858,7 @@ class PdfReader(object):
             "getDestinationPageNumber will be removed in PyPDF2 2.0.0. "
             "Use get_destination_page_number instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.get_destination_page_number(destination)
 
@@ -926,6 +948,7 @@ class PdfReader(object):
             "getPageLayout will be removed in PyPDF2 2.0.0. "
             "Use the attribute 'page_layout' instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.page_layout
 
@@ -940,6 +963,7 @@ class PdfReader(object):
             "pageLayout will be removed in PyPDF2 2.0.0. "
             "Use the attribute 'page_layout' instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.page_layout
 
@@ -968,7 +992,7 @@ class PdfReader(object):
              - Show attachments panel
         """
         try:
-            return self.trailer[TK.ROOT]["/PageMode"]
+            return self.trailer[TK.ROOT]["/PageMode"]  # type: ignore
         except KeyError:
             return None
 
@@ -982,6 +1006,7 @@ class PdfReader(object):
             "getPageMode will be removed in PyPDF2 2.0.0. "
             "Use the attribute 'page_mode' instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.page_mode
 
@@ -996,6 +1021,7 @@ class PdfReader(object):
             "pageMode will be removed in PyPDF2 2.0.0. "
             "Use the attribute 'page_mode' instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.page_mode
 
@@ -1036,7 +1062,7 @@ class PdfReader(object):
                     pages[attr] = value
             page_obj = PageObject(self, indirect_ref)
             page_obj.update(pages)
-            self.flattened_pages.append(page_obj)
+            self.flattened_pages.append(page_obj)  # type: ignore
 
     def _get_object_from_stream(self, indirect_reference):
         # indirect reference to object in object stream
@@ -1065,18 +1091,17 @@ class PdfReader(object):
             stream_data.seek(obj_stm["/First"] + offset, 0)
             try:
                 obj = read_object(stream_data, self)
-            except PdfStreamError as e:
+            except PdfStreamError as exc:
                 # Stream object cannot be read. Normally, a critical error, but
                 # Adobe Reader doesn't complain, so continue (in strict mode?)
-                e = sys.exc_info()[1]
                 warnings.warn(
                     "Invalid stream (index %d) within object %d %d: %s"
-                    % (i, indirect_reference.idnum, indirect_reference.generation, e),
+                    % (i, indirect_reference.idnum, indirect_reference.generation, exc),
                     PdfReadWarning,
                 )
 
                 if self.strict:
-                    raise PdfReadError("Can't read object stream: %s" % e)
+                    raise PdfReadError("Can't read object stream: %s" % exc)
                 # Replace with null. Hopefully it's nothing important.
                 obj = NullObject()
             return obj
@@ -1168,6 +1193,7 @@ class PdfReader(object):
             "getObject(indirectReference) will be removed in PyPDF2 2.0.0. "
             "Use get_object(indirect_reference) instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.get_object(indirectReference)
 
@@ -1223,6 +1249,7 @@ class PdfReader(object):
             "readObjectHeader will be removed with PyPDF2 2.0.0. "
             "Use read_object_header instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.read_object_header(stream)
 
@@ -1239,6 +1266,7 @@ class PdfReader(object):
             "cacheGetIndirectObject will be removed with PyPDF2 2.0.0. "
             "Use cache_get_indirect_object instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.cache_get_indirect_object(generation, idnum)
 
@@ -1262,6 +1290,7 @@ class PdfReader(object):
             "cacheIndirectObject will be removed with PyPDF2 2.0.0. "
             "Use cache_indirect_object instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.cache_indirect_object(generation, idnum, obj)
 
@@ -1546,7 +1575,6 @@ class PdfReader(object):
         self.xref = {}
         stream.seek(0, 0)
         f_ = stream.read(-1)
-        import re
 
         for m in re.finditer(b_(r"[\r\n \t][ \t]*(\d+)[ \t]+(\d+)[ \t]+obj"), f_):
             idnum = int(m.group(1))
@@ -1651,6 +1679,7 @@ class PdfReader(object):
             "readNextEndLine will be removed in PyPDF2 2.0.0. "
             "Use read_next_end_line instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.read_next_end_line(stream, limit_offset)
 
@@ -1795,6 +1824,7 @@ class PdfReader(object):
             "getIsEncrypted() will be removed in PyPDF2 2.0.0. "
             "Use the is_encrypted property instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.is_encrypted
 
@@ -1809,6 +1839,7 @@ class PdfReader(object):
             "isEncrypted will be removed in PyPDF2 2.0.0. "
             "Use the is_encrypted property instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.is_encrypted
 

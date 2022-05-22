@@ -203,10 +203,10 @@ class ConvertFunctionsToVirtualList(_VirtualList):
         warnings.warn(
             "ConvertFunctionsToVirtualList will be removed with PyPDF2 2.0.0",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         warnings.warn(DEPR_MSG_NO_REPLACEMENT.format("ConvertFunctionsToVirtualList"))
         super().__init__(lengthFunction, getFunction)
-
 
 
 def matrix_multiply(a, b):
@@ -268,10 +268,6 @@ else:
 
 def u_(s):
     if sys.version_info[0] < 3:
-        warnings.warn(
-            "Python 3.5 and older support will be dropped with PyPDF2 2.0.0",
-            PendingDeprecationWarning,
-        )
         return unicode(s, "unicode_escape")  # noqa
     else:
         return s
@@ -279,10 +275,6 @@ def u_(s):
 
 def str_(b):
     if sys.version_info[0] < 3:
-        warnings.warn(
-            "Python 3.5 and older support will be dropped with PyPDF2 2.0.0",
-            PendingDeprecationWarning,
-        )
         return b
     else:
         if type(b) == bytes:
@@ -300,10 +292,6 @@ def ord_(b):
 
 def chr_(c):
     if sys.version_info[0] < 3:
-        warnings.warn(
-            "Python 3.5 and older support will be dropped with PyPDF2 2.0.0",
-            PendingDeprecationWarning,
-        )
         return c
     else:
         return chr(c)
@@ -311,10 +299,6 @@ def chr_(c):
 
 def barray(b):
     if sys.version_info[0] < 3:
-        warnings.warn(
-            "Python 3.5 and older support will be dropped with PyPDF2 2.0.0",
-            PendingDeprecationWarning,
-        )
         return b
     else:
         return bytearray(b)
@@ -322,10 +306,6 @@ def barray(b):
 
 def hexencode(b):
     if sys.version_info[0] < 3:
-        warnings.warn(
-            "Python 3.5 and older support will be dropped with PyPDF2 2.0.0",
-            PendingDeprecationWarning,
-        )
         return b.encode("hex")
     else:
         import codecs

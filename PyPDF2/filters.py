@@ -532,6 +532,7 @@ def decodeStreamData(stream):
     warnings.warn(
         DEPR_MSG.format("decodeStreamData", "decode_stream_data"),
         PendingDeprecationWarning,
+        stacklevel=2,
     )
     return decode_stream_data(stream)
 

@@ -116,6 +116,7 @@ def readObject(stream, pdf):
     warnings.warn(
         "readObject will be deprecated with PyPDF2 2.0.0, use read_object instead",
         PendingDeprecationWarning,
+        stacklevel=2,
     )
     return read_object(stream, pdf)
 
@@ -129,6 +130,7 @@ class PdfObject(object):
         warnings.warn(
             "getObject will be removed in PyPDF2 2.0.0. Use get_object instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.get_object()
 
@@ -149,6 +151,7 @@ class NullObject(PdfObject):
             "writeToStream will be removed in PyPDF2 2.0.0. "
             "Use write_to_stream instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.write_to_stream(stream, encryption_key)
 
@@ -158,6 +161,7 @@ class NullObject(PdfObject):
             "readFromStream will be removed in PyPDF2 2.0.0. "
             "Use read_from_stream instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return NullObject.read_from_stream(stream)
 
@@ -177,6 +181,7 @@ class BooleanObject(PdfObject):
             "writeToStream will be removed in PyPDF2 2.0.0. "
             "Use write_to_stream instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.write_to_stream(stream, encryption_key)
 
@@ -197,6 +202,7 @@ class BooleanObject(PdfObject):
             "readFromStream will be removed in PyPDF2 2.0.0. "
             "Use read_from_stream instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return BooleanObject.read_from_stream(stream)
 
@@ -214,6 +220,7 @@ class ArrayObject(list, PdfObject):
             "writeToStream will be removed in PyPDF2 2.0.0. "
             "Use write_to_stream instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.write_to_stream(stream, encryption_key)
 
@@ -244,6 +251,7 @@ class ArrayObject(list, PdfObject):
             "readFromStream will be removed in PyPDF2 2.0.0. "
             "Use read_from_stream instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return ArrayObject.read_from_stream(stream, pdf)
 
@@ -280,6 +288,7 @@ class IndirectObject(PdfObject):
             "writeToStream will be removed in PyPDF2 2.0.0. "
             "Use write_to_stream instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.write_to_stream(stream, encryption_key)
 
@@ -317,6 +326,7 @@ class IndirectObject(PdfObject):
             "readFromStream will be removed in PyPDF2 2.0.0. "
             "Use read_from_stream instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return IndirectObject.read_from_stream(stream, pdf)
 
@@ -356,6 +366,7 @@ class FloatObject(decimal.Decimal, PdfObject):
             "writeToStream will be removed in PyPDF2 2.0.0. "
             "Use write_to_stream instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.write_to_stream(stream, encryption_key)
 
@@ -382,6 +393,7 @@ class NumberObject(int, PdfObject):
             "writeToStream will be removed in PyPDF2 2.0.0. "
             "Use write_to_stream instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.write_to_stream(stream, encryption_key)
 
@@ -399,6 +411,7 @@ class NumberObject(int, PdfObject):
             "readFromStream will be removed in PyPDF2 2.0.0. "
             "Use read_from_stream instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return NumberObject.read_from_stream(stream)
 
@@ -550,6 +563,7 @@ class ByteStringObject(_utils.bytes_type, PdfObject):  # type: ignore
             "writeToStream will be removed in PyPDF2 2.0.0. "
             "Use write_to_stream instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.write_to_stream(stream, encryption_key)
 
@@ -614,6 +628,7 @@ class TextStringObject(_utils.string_type, PdfObject):  # type: ignore
             "writeToStream will be removed in PyPDF2 2.0.0. "
             "Use write_to_stream instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.write_to_stream(stream, encryption_key)
 
@@ -630,6 +645,7 @@ class NameObject(str, PdfObject):
             "writeToStream will be removed in PyPDF2 2.0.0. "
             "Use write_to_stream instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.write_to_stream(stream, encryption_key)
 
@@ -662,6 +678,7 @@ class NameObject(str, PdfObject):
             "readFromStream will be removed in PyPDF2 2.0.0. "
             "Use read_from_stream instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return NameObject.read_from_stream(stream, pdf)
 
@@ -732,6 +749,7 @@ class DictionaryObject(dict, PdfObject):
             "writeToStream will be removed in PyPDF2 2.0.0. "
             "Use write_to_stream instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.write_to_stream(stream, encryption_key)
 
@@ -837,6 +855,7 @@ class DictionaryObject(dict, PdfObject):
             "readFromStream will be removed in PyPDF2 2.0.0. "
             "Use read_from_stream instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return DictionaryObject.read_from_stream(stream, pdf)
 
@@ -856,10 +875,6 @@ class TreeObject(DictionaryObject):
             if sys.version_info >= (3, 5):  # PEP 479
                 return
             else:
-                warnings.warn(
-                    "Python 3.5 and older support will be dropped with PyPDF2 2.0.0",
-                    PendingDeprecationWarning,
-                )
                 raise StopIteration
 
         child = self["/First"]
@@ -869,10 +884,6 @@ class TreeObject(DictionaryObject):
                 if sys.version_info >= (3, 5):  # PEP 479
                     return
                 else:
-                    warnings.warn(
-                        "Python 3.5 and older support will be dropped with PyPDF2 2.0.0",
-                        PendingDeprecationWarning,
-                    )
                     raise StopIteration
             child = child["/Next"]
 
@@ -1242,6 +1253,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("getLowerLeft_x", "left"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.left
 
@@ -1249,6 +1261,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("getLowerLeft_y", "bottom"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.bottom
 
@@ -1256,6 +1269,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("getUpperRight_x", "right"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.right
 
@@ -1263,6 +1277,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("getUpperRight_y", "top"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.top
 
@@ -1270,6 +1285,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("getUpperLeft_x", "left"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.left
 
@@ -1277,6 +1293,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("getUpperLeft_y", "top"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.top
 
@@ -1284,6 +1301,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("getLowerRight_x", "right"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.right
 
@@ -1291,6 +1309,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("getLowerRight_y", "bottom"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.bottom
 
@@ -1346,6 +1365,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("getLowerLeft", "lower_left"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.lower_left
 
@@ -1353,6 +1373,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("getLowerRight", "lower_right"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.lower_right
 
@@ -1360,6 +1381,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("getUpperLeft", "upper_left"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.upper_left
 
@@ -1367,6 +1389,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("getUpperRight", "upper_right"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.upper_right
 
@@ -1374,6 +1397,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("setLowerLeft", "lower_left"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.lower_left = value
 
@@ -1381,6 +1405,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("setLowerRight", "lower_right"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self[2], self[1] = [self.ensureIsNumber(x) for x in value]
 
@@ -1388,6 +1413,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("setUpperLeft", "upper_left"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self[0], self[3] = [self.ensureIsNumber(x) for x in value]
 
@@ -1395,6 +1421,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("setUpperRight", "upper_right"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self[2], self[3] = [self.ensureIsNumber(x) for x in value]
 
@@ -1419,6 +1446,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("lowerLeft", "lower_left"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.lower_left
 
@@ -1427,6 +1455,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("lowerLeft", "lower_left"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.lower_left = value
 
@@ -1435,6 +1464,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("lowerRight", "lower_right"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.lower_right
 
@@ -1443,6 +1473,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("lowerRight", "lower_right"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.lower_right = value
 
@@ -1451,6 +1482,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("upperLeft", "upper_left"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.upper_left
 
@@ -1459,6 +1491,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("upperLeft", "upper_left"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.upper_left = value
 
@@ -1467,6 +1500,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("upperRight", "upper_right"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.upper_right
 
@@ -1475,6 +1509,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("upperRight", "upper_right"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.upper_right = value
 

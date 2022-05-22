@@ -68,7 +68,7 @@ def _get_rectangle(self, name, defaults):
                 break
     if isinstance(retval, IndirectObject):
         retval = self.pdf.get_object(retval)
-    retval = RectangleObject(retval)
+    retval = RectangleObject(retval)  # type: ignore
     _set_rectangle(self, name, retval)
     return retval
 
@@ -77,6 +77,7 @@ def getRectangle(self, name, defaults):
     warnings.warn(
         DEPR_MSG_NO_REPLACEMENT.format("getRectangle"),
         PendingDeprecationWarning,
+        stacklevel=2,
     )
     return _get_rectangle(self, name, defaults)
 
@@ -91,6 +92,7 @@ def setRectangle(self, name, value):
     warnings.warn(
         DEPR_MSG_NO_REPLACEMENT.format("setRectangle"),
         PendingDeprecationWarning,
+        stacklevel=2,
     )
     _set_rectangle(self, name, value)
 
@@ -103,6 +105,7 @@ def deleteRectangle(self, name):
     warnings.warn(
         DEPR_MSG_NO_REPLACEMENT.format("deleteRectangle"),
         PendingDeprecationWarning,
+        stacklevel=2,
     )
     del self[name]
 
@@ -119,6 +122,7 @@ def createRectangleAccessor(name, fallback):
     warnings.warn(
         DEPR_MSG_NO_REPLACEMENT.format("createRectangleAccessor"),
         PendingDeprecationWarning,
+        stacklevel=2,
     )
     return _create_rectangle_accessor(name, fallback)
 
@@ -126,6 +130,7 @@ def createRectangleAccessor(name, fallback):
 class Transformation:
     """
     Specify a 2D transformation.
+
     The transformation between two coordinate systems is represented by a 3-by-3
     transformation matrix written as follows:
         a b 0
@@ -133,10 +138,13 @@ class Transformation:
         e f 1
     Because a transformation matrix has only six elements that can be changed,
     it is usually specified in PDF as the six-element array [ a b c d e f ].
+
     Coordinate transformations are expressed as matrix multiplications:
+
                                  a b 0
      [ x′ y′ 1 ] = [ x y 1 ] ×   c d 0
                                  e f 1
+
     Usage
     -----
     >>> from PyPDF2 import Transformation
@@ -251,7 +259,7 @@ class PageObject(DictionaryObject):
             else:
                 raise PageSizeNotDefinedError()
         page.__setitem__(
-            NameObject(PG.MEDIABOX), RectangleObject([0, 0, width, height])
+            NameObject(PG.MEDIABOX), RectangleObject((0, 0, width, height))  # type: ignore
         )
 
         return page
@@ -266,6 +274,7 @@ class PageObject(DictionaryObject):
         warnings.warn(
             DEPR_MSG.format("createBlankPage", "create_blank_page"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return PageObject.create_blank_page(pdf, width, height)
 
@@ -290,6 +299,7 @@ class PageObject(DictionaryObject):
         warnings.warn(
             DEPR_MSG.format("rotateClockwise", "rotate_clockwise"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.rotate_clockwise(angle)
 
@@ -302,6 +312,7 @@ class PageObject(DictionaryObject):
         warnings.warn(
             DEPR_MSG.format("rotateCounterClockwise", "rotate_clockwise"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         if angle % 90 != 0:
             raise ValueError("Rotation angle must be a multiple of 90")
@@ -489,7 +500,7 @@ class PageObject(DictionaryObject):
             page2content = ContentStream(page2content, self.pdf)
             page2content.operations.insert(
                 0,
-                [
+                (
                     map(
                         FloatObject,
                         [
@@ -500,10 +511,10 @@ class PageObject(DictionaryObject):
                         ],
                     ),
                     "re",
-                ],
+                ),
             )
-            page2content.operations.insert(1, [[], "W"])
-            page2content.operations.insert(2, [[], "n"])
+            page2content.operations.insert(1, ([], "W"))
+            page2content.operations.insert(2, ([], "n"))
             if page2transformation is not None:
                 page2content = page2transformation(page2content)
             page2content = PageObject._content_stream_rename(
@@ -531,7 +542,7 @@ class PageObject(DictionaryObject):
                 page2.mediabox.bottom.as_numeric(),
             ]
             if ctm is not None:
-                ctm = [float(x) for x in ctm]
+                ctm = tuple(float(x) for x in ctm)  # type: ignore[assignment]
                 new_x = [
                     ctm[0] * corners2[i] + ctm[2] * corners2[i + 1] + ctm[4]
                     for i in range(0, 8, 2)
@@ -543,13 +554,13 @@ class PageObject(DictionaryObject):
             else:
                 new_x = corners2[0:8:2]
                 new_y = corners2[1:8:2]
-            lowerleft = [min(new_x), min(new_y)]
-            upperright = [max(new_x), max(new_y)]
-            lowerleft = [min(corners1[0], lowerleft[0]), min(corners1[1], lowerleft[1])]
-            upperright = [
+            lowerleft = (min(new_x), min(new_y))
+            upperright = (max(new_x), max(new_y))
+            lowerleft = (min(corners1[0], lowerleft[0]), min(corners1[1], lowerleft[1]))
+            upperright = (
                 max(corners1[2], upperright[0]),
                 max(corners1[3], upperright[1]),
-            ]
+            )
 
             self.mediabox.setLowerLeft(lowerleft)
             self.mediabox.setUpperRight(upperright)
@@ -610,6 +621,7 @@ class PageObject(DictionaryObject):
             "page2.add_transformation(Transformation().scale(scale)); "
             "page.merge_page(page2, expand) instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         op = Transformation().scale(scale, scale)
         return self.mergeTransformedPage(page2, op, expand)
@@ -635,6 +647,7 @@ class PageObject(DictionaryObject):
             "page2.add_transformation(Transformation().rotate(rotation)); "
             "page.merge_page(page2, expand) instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         op = Transformation().rotate(rotation)
         self.mergeTransformedPage(page2, op, expand)
@@ -661,6 +674,7 @@ class PageObject(DictionaryObject):
             "page2.add_transformation(Transformation().translate(tx, ty)); "
             "page.merge_page(page2, expand) instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         op = Transformation().translate(tx, ty)
         self.mergeTransformedPage(page2, op, expand)
@@ -688,6 +702,7 @@ class PageObject(DictionaryObject):
             "page2.add_transformation(Transformation().rotate(rotation).translate(tx, ty)); "
             "page.merge_page(page2, expand) instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         op = Transformation().translate(-tx, -ty).rotate(rotation).translate(tx, ty)
         return self.mergeTransformedPage(page2, op, expand)
@@ -714,6 +729,7 @@ class PageObject(DictionaryObject):
             "page2.add_transformation(Transformation().rotate(rotation).scale(scale)); "
             "page.merge_page(page2, expand) instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         op = Transformation().rotate(rotation).scale(scale, scale)
         self.mergeTransformedPage(page2, op, expand)
@@ -741,6 +757,7 @@ class PageObject(DictionaryObject):
             "page2.add_transformation(Transformation().scale(scale).translate(tx, ty)); "
             "page.merge_page(page2, expand) instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         op = Transformation().scale(scale, scale).translate(tx, ty)
         return self.mergeTransformedPage(page2, op, expand)
@@ -772,6 +789,7 @@ class PageObject(DictionaryObject):
             "page2.add_transformation(Transformation().rotate(rotation).scale(scale)); "
             "page.merge_page(page2, expand) instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         op = Transformation().rotate(rotation).scale(scale, scale).translate(tx, ty)
         self.mergeTransformedPage(page2, op, expand)
@@ -789,13 +807,11 @@ class PageObject(DictionaryObject):
         """
         if isinstance(ctm, Transformation):
             ctm = ctm.ctm
-        original_content = self.get_contents()
-        if original_content is not None:
-            new_content = PageObject._add_transformation_matrix(
-                original_content, self.pdf, ctm
-            )
-            new_content = PageObject._push_pop_gs(new_content, self.pdf)
-            self[NameObject(PG.CONTENTS)] = new_content
+        content = self.get_contents()
+        if content is not None:
+            content = PageObject._add_transformation_matrix(content, self.pdf, ctm)
+            content = PageObject._push_pop_gs(content, self.pdf)
+            self[NameObject(PG.CONTENTS)] = content
 
     def addTransformation(self, ctm):
         """
@@ -806,6 +822,7 @@ class PageObject(DictionaryObject):
         warnings.warn(
             DEPR_MSG.format("addTransformation", "add_transformation"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.add_transformation(ctm)
 
@@ -817,35 +834,35 @@ class PageObject(DictionaryObject):
         :param float sx: The scaling factor on horizontal axis.
         :param float sy: The scaling factor on vertical axis.
         """
-        self.add_transformation([sx, 0, 0, sy, 0, 0])
+        self.add_transformation((sx, 0, 0, sy, 0, 0))
         self.mediabox = RectangleObject(
-            [
+            (
                 float(self.mediabox.left) * sx,
                 float(self.mediabox.bottom) * sy,
                 float(self.mediabox.right) * sx,
                 float(self.mediabox.top) * sy,
-            ]
+            )
         )
         if PG.VP in self:
             viewport = self[PG.VP]
             if isinstance(viewport, ArrayObject):
                 bbox = viewport[0]["/BBox"]
             else:
-                bbox = viewport["/BBox"]
+                bbox = viewport["/BBox"]  # type: ignore
             scaled_bbox = RectangleObject(
-                [
+                (
                     float(bbox[0]) * sx,
                     float(bbox[1]) * sy,
                     float(bbox[2]) * sx,
                     float(bbox[3]) * sy,
-                ]
+                )
             )
             if isinstance(viewport, ArrayObject):
-                self[NameObject(PG.VP)][NumberObject(0)][
+                self[NameObject(PG.VP)][NumberObject(0)][  # type: ignore
                     NameObject("/BBox")
                 ] = scaled_bbox
             else:
-                self[NameObject(PG.VP)][NameObject("/BBox")] = scaled_bbox
+                self[NameObject(PG.VP)][NameObject("/BBox")] = scaled_bbox  # type: ignore
 
     def scale_by(self, factor):
         """
@@ -865,6 +882,7 @@ class PageObject(DictionaryObject):
         warnings.warn(
             DEPR_MSG.format("Page.scaleBy", "Page.scale_by"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.scale(factor, factor)
 
@@ -889,6 +907,7 @@ class PageObject(DictionaryObject):
         warnings.warn(
             DEPR_MSG.format("Page.scaleTo", "Page.scale_to"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.scale_to(width, height)
 
@@ -917,6 +936,7 @@ class PageObject(DictionaryObject):
                 "Page.compressContentStreams", "Page.compress_content_streams"
             ),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.compress_content_streams()
 
@@ -1002,6 +1022,7 @@ class PageObject(DictionaryObject):
         warnings.warn(
             DEPR_MSG.format("Page.mediaBox", "Page.mediabox"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.mediabox
 
@@ -1015,6 +1036,7 @@ class PageObject(DictionaryObject):
         warnings.warn(
             DEPR_MSG.format("Page.mediaBox", "Page.mediabox"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.mediabox = value
 
@@ -1037,6 +1059,7 @@ class PageObject(DictionaryObject):
         warnings.warn(
             DEPR_MSG.format("Page.cropBox", "Page.cropbox"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.cropbox
 
@@ -1045,6 +1068,7 @@ class PageObject(DictionaryObject):
         warnings.warn(
             DEPR_MSG.format("Page.cropBox", "Page.cropbox"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.cropbox = value
 
@@ -1065,6 +1089,7 @@ class PageObject(DictionaryObject):
         warnings.warn(
             DEPR_MSG.format("Page.bleedBox", "Page.bleedbox"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.bleedbox
 
@@ -1073,6 +1098,7 @@ class PageObject(DictionaryObject):
         warnings.warn(
             DEPR_MSG.format("Page.bleedBox", "Page.bleedbox"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.bleedbox = value
 
@@ -1092,6 +1118,7 @@ class PageObject(DictionaryObject):
         warnings.warn(
             DEPR_MSG.format("Page.trimBox", "Page.trimbox"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.trimbox
 
@@ -1100,6 +1127,7 @@ class PageObject(DictionaryObject):
         warnings.warn(
             DEPR_MSG.format("Page.trimBox", "Page.trimbox"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.trimbox = value
 
@@ -1120,6 +1148,7 @@ class PageObject(DictionaryObject):
         warnings.warn(
             DEPR_MSG.format("Page.artBox", "Page.artbox"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.artbox
 
@@ -1128,5 +1157,6 @@ class PageObject(DictionaryObject):
         warnings.warn(
             DEPR_MSG.format("Page.artBox", "Page.artbox"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.artbox = value
