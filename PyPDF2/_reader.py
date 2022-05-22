@@ -87,7 +87,7 @@ from .generic import (
     TextStringObject,
     TreeObject,
     createStringObject,
-    readObject,
+    read_object,
 )
 from .types import OutlinesType
 from .xmp import XmpInformation
@@ -853,7 +853,7 @@ class PdfFileReader:
                 raise PdfReadError("Object is in wrong index.")
             stream_data.seek(int(obj_stm["/First"] + offset), 0)  # type: ignore
             try:
-                obj = readObject(stream_data, self)
+                obj = read_object(stream_data, self)
             except PdfStreamError as exc:
                 # Stream object cannot be read. Normally, a critical error, but
                 # Adobe Reader doesn't complain, so continue (in strict mode?)
@@ -890,7 +890,7 @@ class PdfFileReader:
         ):
             start = self.xref[indirectReference.generation][indirectReference.idnum]
             self.stream.seek(start, 0)
-            idnum, generation = self.readObjectHeader(self.stream)
+            idnum, generation = self.read_object_header(self.stream)
             if idnum != indirectReference.idnum and self.xrefIndex:
                 # Xref table probably had bad indexes due to not being zero-indexed
                 if self.strict:
@@ -918,7 +918,7 @@ class PdfFileReader:
                 )
             if self.strict:
                 assert generation == indirectReference.generation
-            retval = readObject(self.stream, self)  # type: ignore
+            retval = read_object(self.stream, self)  # type: ignore
 
             # override encryption is used for the /Encrypt dictionary
             if not self._override_encryption and self.is_encrypted:
@@ -975,7 +975,7 @@ class PdfFileReader:
                 obj[i] = self._decryptObject(obj[i], key)
         return obj
 
-    def readObjectHeader(self, stream: StreamType) -> Tuple[int, int]:
+    def read_object_header(self, stream: StreamType) -> Tuple[int, int]:
         # Should never be necessary to read out whitespace, since the
         # cross-reference table should put us in the right spot to read the
         # object header.  In reality... some files have stupid cross reference
@@ -1042,7 +1042,7 @@ class PdfFileReader:
         while line[:5] != b_("%%EOF"):
             if stream.tell() < last1M:
                 raise PdfReadError("EOF marker not found")
-            line = self.readNextEndLine(stream)
+            line = self.read_next_end_line(stream)
 
         startxref = self._find_startxref_pos(stream)
 
@@ -1068,7 +1068,7 @@ class PdfFileReader:
                 self._read_standard_xref_table(stream)
                 read_non_whitespace(stream)
                 stream.seek(-1, 1)
-                new_trailer = cast(Dict[str, Any], readObject(stream, self))
+                new_trailer = cast(Dict[str, Any], read_object(stream, self))
                 for key, value in new_trailer.items():
                     if key not in self.trailer:
                         self.trailer[key] = value
@@ -1137,7 +1137,7 @@ class PdfFileReader:
                 for id in self.xref[gen]:
                     stream.seek(self.xref[gen][id], 0)
                     try:
-                        pid, pgen = self.readObjectHeader(stream)
+                        pid, pgen = self.read_object_header(stream)
                     except ValueError:
                         break
                     if pid == id - self.xrefIndex:
@@ -1149,7 +1149,7 @@ class PdfFileReader:
 
     def _find_startxref_pos(self, stream: StreamType) -> int:
         """Find startxref entry - the location of the xref table"""
-        line = self.readNextEndLine(stream)
+        line = self.read_next_end_line(stream)
         try:
             startxref = int(line)
         except ValueError:
@@ -1159,7 +1159,7 @@ class PdfFileReader:
             startxref = int(line[9:].strip())
             warnings.warn("startxref on same line as offset")
         else:
-            line = self.readNextEndLine(stream)
+            line = self.read_next_end_line(stream)
             if line[:9] != b_("startxref"):
                 raise PdfReadError("startxref not found")
         return startxref
@@ -1173,7 +1173,7 @@ class PdfFileReader:
         stream.seek(-1, 1)
         firsttime = True  # check if the first time looking at the xref table
         while True:
-            num = cast(int, readObject(stream, self))
+            num = cast(int, read_object(stream, self))
             if firsttime and num != 0:
                 self.xrefIndex = num
                 if self.strict:
@@ -1186,7 +1186,7 @@ class PdfFileReader:
             firsttime = False
             read_non_whitespace(stream)
             stream.seek(-1, 1)
-            size = cast(int, readObject(stream, self))
+            size = cast(int, read_object(stream, self))
             read_non_whitespace(stream)
             stream.seek(-1, 1)
             cnt = 0
@@ -1240,8 +1240,8 @@ class PdfFileReader:
     ) -> Union[ContentStream, EncodedStreamObject, DecodedStreamObject]:
         # PDF 1.5+ Cross-Reference Stream
         stream.seek(-1, 1)
-        idnum, generation = self.readObjectHeader(stream)
-        xrefstream = cast(ContentStream, readObject(stream, self))
+        idnum, generation = self.read_object_header(stream)
+        xrefstream = cast(ContentStream, read_object(stream, self))
         assert xrefstream["/Type"] == "/XRef"
         self.cacheIndirectObject(generation, idnum, xrefstream)
         stream_data = BytesIO(b_(xrefstream.getData()))
@@ -1318,7 +1318,7 @@ class PdfFileReader:
         stream.seek(-1, 1)
 
         # there might be something that is not a dict (see #856)
-        new_trailer = cast(Dict[Any, Any], readObject(stream, self))
+        new_trailer = cast(Dict[Any, Any], read_object(stream, self))
 
         for key, value in list(new_trailer.items()):
             if key not in self.trailer:
@@ -1327,7 +1327,7 @@ class PdfFileReader:
     def _read_xref_subsections(
         self,
         idx_pairs: List[int],
-        getEntry: Callable[[int], Union[int, Tuple[int, ...]]],
+        get_entry: Callable[[int], Union[int, Tuple[int, ...]]],
         used_before: Callable[[int, Union[int, Tuple[int, ...]]], bool],
     ) -> None:
         last_end = 0
@@ -1337,24 +1337,24 @@ class PdfFileReader:
             last_end = start + size
             for num in range(start, start + size):
                 # The first entry is the type
-                xref_type = getEntry(0)
+                xref_type = get_entry(0)
                 # The rest of the elements depend on the xref_type
                 if xref_type == 0:
                     # linked list of free objects
-                    next_free_object = getEntry(1)  # noqa: F841
-                    next_generation = getEntry(2)  # noqa: F841
+                    next_free_object = get_entry(1)  # noqa: F841
+                    next_generation = get_entry(2)  # noqa: F841
                 elif xref_type == 1:
                     # objects that are in use but are not compressed
-                    byte_offset = getEntry(1)
-                    generation = getEntry(2)
+                    byte_offset = get_entry(1)
+                    generation = get_entry(2)
                     if generation not in self.xref:
                         self.xref[generation] = {}
                     if not used_before(num, generation):
                         self.xref[generation][num] = byte_offset
                 elif xref_type == 2:
                     # compressed objects
-                    objstr_num = getEntry(1)
-                    obstr_idx = getEntry(2)
+                    objstr_num = get_entry(1)
+                    obstr_idx = get_entry(2)
                     generation = 0  # PDF spec table 18, generation is 0
                     if not used_before(num, generation):
                         self.xref_objStm[num] = (objstr_num, obstr_idx)
@@ -1374,7 +1374,7 @@ class PdfFileReader:
             if (i + 1) >= len(array):
                 break
 
-    def readNextEndLine(self, stream: StreamType, limit_offset: int = 0) -> bytes:
+    def read_next_end_line(self, stream: StreamType, limit_offset: int = 0) -> bytes:
         line_parts = []
         while True:
             # Prevent infinite loops in malformed PDFs

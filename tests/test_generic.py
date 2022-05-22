@@ -20,8 +20,8 @@ from PyPDF2.generic import (
     TextStringObject,
     createStringObject,
     encode_pdfdocencoding,
+    read_object,
     readHexStringFromStream,
-    readObject,
     readStringFromStream,
 )
 
@@ -203,18 +203,18 @@ def test_encode_pdfdocencoding_keyerror():
     assert exc.value.args[0] == "pdfdocencoding"
 
 
-def test_readObject_comment_exception():
+def test_read_object_comment_exception():
     stream = BytesIO(b"% foobar")
     pdf = None
     with pytest.raises(PdfStreamError) as exc:
-        readObject(stream, pdf)
+        read_object(stream, pdf)
     assert exc.value.args[0] == "File ended unexpectedly."
 
 
-def test_readObject_comment():
+def test_read_object_comment():
     stream = BytesIO(b"% foobar\n1 ")
     pdf = None
-    out = readObject(stream, pdf)
+    out = read_object(stream, pdf)
     assert out == 1
 
 

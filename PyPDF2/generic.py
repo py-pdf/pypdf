@@ -158,7 +158,7 @@ class ArrayObject(list, PdfObject):
                 break
             stream.seek(-1, 1)
             # read and append obj
-            arr.append(readObject(stream, pdf))
+            arr.append(read_object(stream, pdf))
         return arr
 
 
@@ -617,10 +617,10 @@ class DictionaryObject(dict, PdfObject):
                 stream.read(1)
                 break
             stream.seek(-1, 1)
-            key = readObject(stream, pdf)
+            key = read_object(stream, pdf)
             tok = read_non_whitespace(stream)
             stream.seek(-1, 1)
-            value = readObject(stream, pdf)
+            value = read_object(stream, pdf)
             if not data.get(key):
                 data[key] = value
             elif pdf.strict:
@@ -965,14 +965,14 @@ class ContentStream(DecodedStreamObject):
                     operands = []
             elif peek == b_("%"):
                 # If we encounter a comment in the content stream, we have to
-                # handle it here.  Typically, readObject will handle
-                # encountering a comment -- but readObject assumes that
+                # handle it here.  Typically, read_object will handle
+                # encountering a comment -- but read_object assumes that
                 # following the comment must be the object we're trying to
                 # read.  In this case, it could be an operator instead.
                 while peek not in (b_("\r"), b_("\n")):
                     peek = stream.read(1)
             else:
-                operands.append(readObject(stream, None))
+                operands.append(read_object(stream, None))
 
     def _readInlineImage(self, stream: StreamType) -> Dict[str, Any]:
         # begin reading just after the "BI" - begin image
@@ -984,10 +984,10 @@ class ContentStream(DecodedStreamObject):
             if tok == b_("I"):
                 # "ID" - begin of image data
                 break
-            key = readObject(stream, self.pdf)
+            key = read_object(stream, self.pdf)
             tok = read_non_whitespace(stream)
             stream.seek(-1, 1)
-            value = readObject(stream, self.pdf)
+            value = read_object(stream, self.pdf)
             settings[key] = value
         # left at beginning of ID
         tmp = stream.read(3)
@@ -1059,7 +1059,7 @@ class ContentStream(DecodedStreamObject):
         self.__parseContentStream(BytesIO(b_(value)))
 
 
-def readObject(
+def read_object(
     stream: StreamType, pdf: Any  # PdfFileReader
 ) -> Union[PdfObject, int, str, ContentStream]:
     tok = stream.read(1)
@@ -1094,7 +1094,7 @@ def readObject(
                 raise PdfStreamError("File ended unexpectedly.")
         tok = read_non_whitespace(stream)
         stream.seek(-1, 1)
-        return readObject(stream, pdf)
+        return read_object(stream, pdf)
     else:
         # number object OR indirect reference
         peek = stream.read(20)

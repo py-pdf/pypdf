@@ -230,8 +230,8 @@ class PageObject(DictionaryObject):
         if width is None or height is None:
             if pdf is not None and pdf.get_num_pages() > 0:
                 lastpage = pdf.get_page(pdf.get_num_pages() - 1)
-                width = lastpage.mediaBox.getWidth()
-                height = lastpage.mediaBox.getHeight()
+                width = lastpage.mediabox.getWidth()
+                height = lastpage.mediabox.getHeight()
             else:
                 raise PageSizeNotDefinedError()
         page.__setitem__(
@@ -439,10 +439,10 @@ class PageObject(DictionaryObject):
                     map(
                         FloatObject,
                         [
-                            page2.trimBox.getLowerLeft_x(),
-                            page2.trimBox.getLowerLeft_y(),
-                            page2.trimBox.getWidth(),
-                            page2.trimBox.getHeight(),
+                            page2.trimbox.getLowerLeft_x(),
+                            page2.trimbox.getLowerLeft_y(),
+                            page2.trimbox.getWidth(),
+                            page2.trimbox.getHeight(),
                         ],
                     ),
                     "re",
@@ -461,20 +461,20 @@ class PageObject(DictionaryObject):
         # if expanding the page to fit a new page, calculate the new media box size
         if expand:
             corners1 = [
-                self.mediaBox.left.as_numeric(),
-                self.mediaBox.bottom.as_numeric(),
-                self.mediaBox.right.as_numeric(),
-                self.mediaBox.top.as_numeric(),
+                self.mediabox.left.as_numeric(),
+                self.mediabox.bottom.as_numeric(),
+                self.mediabox.right.as_numeric(),
+                self.mediabox.top.as_numeric(),
             ]
             corners2 = [
-                page2.mediaBox.left.as_numeric(),
-                page2.mediaBox.bottom.as_numeric(),
-                page2.mediaBox.getUpperLeft_x().as_numeric(),
-                page2.mediaBox.getUpperLeft_y().as_numeric(),
-                page2.mediaBox.right.as_numeric(),
-                page2.mediaBox.top.as_numeric(),
-                page2.mediaBox.getLowerRight_x().as_numeric(),
-                page2.mediaBox.getLowerRight_y().as_numeric(),
+                page2.mediabox.left.as_numeric(),
+                page2.mediabox.bottom.as_numeric(),
+                page2.mediabox.getUpperLeft_x().as_numeric(),
+                page2.mediabox.getUpperLeft_y().as_numeric(),
+                page2.mediabox.right.as_numeric(),
+                page2.mediabox.top.as_numeric(),
+                page2.mediabox.getLowerRight_x().as_numeric(),
+                page2.mediabox.getLowerRight_y().as_numeric(),
             ]
             if ctm is not None:
                 ctm = tuple(float(x) for x in ctm)  # type: ignore[assignment]
@@ -497,8 +497,8 @@ class PageObject(DictionaryObject):
                 max(corners1[3], upperright[1]),
             )
 
-            self.mediaBox.setLowerLeft(lowerleft)
-            self.mediaBox.setUpperRight(upperright)
+            self.mediabox.setLowerLeft(lowerleft)
+            self.mediabox.setUpperRight(upperright)
 
         self[NameObject(PG.CONTENTS)] = ContentStream(new_content_array, self.pdf)
         self[NameObject(PG.RESOURCES)] = new_resources
@@ -689,14 +689,14 @@ class PageObject(DictionaryObject):
         # if expanding the page to fit a new page, calculate the new media box size
         if expand:
             corners = [
-                self.mediaBox.left.as_numeric(),
-                self.mediaBox.bottom.as_numeric(),
-                self.mediaBox.getUpperLeft_x().as_numeric(),
-                self.mediaBox.getUpperLeft_y().as_numeric(),
-                self.mediaBox.right.as_numeric(),
-                self.mediaBox.top.as_numeric(),
-                self.mediaBox.getLowerRight_x().as_numeric(),
-                self.mediaBox.getLowerRight_y().as_numeric(),
+                self.mediabox.left.as_numeric(),
+                self.mediabox.bottom.as_numeric(),
+                self.mediabox.getUpperLeft_x().as_numeric(),
+                self.mediabox.getUpperLeft_y().as_numeric(),
+                self.mediabox.right.as_numeric(),
+                self.mediabox.top.as_numeric(),
+                self.mediabox.getLowerRight_x().as_numeric(),
+                self.mediabox.getLowerRight_y().as_numeric(),
             ]
 
             ctm = tuple(float(x) for x in ctm)  # type: ignore[assignment]
@@ -717,8 +717,8 @@ class PageObject(DictionaryObject):
                 max(corners[3], upperright[1]),
             )
 
-            self.mediaBox.setLowerLeft(lowerleft)
-            self.mediaBox.setUpperRight(upperright)
+            self.mediabox.setLowerLeft(lowerleft)
+            self.mediabox.setUpperRight(upperright)
         self[NameObject(PG.CONTENTS)] = content
 
     def scale(self, sx: float, sy: float) -> None:
@@ -730,12 +730,12 @@ class PageObject(DictionaryObject):
         :param float sy: The scaling factor on vertical axis.
         """
         self.add_transformation((sx, 0, 0, sy, 0, 0))
-        self.mediaBox = RectangleObject(
+        self.mediabox = RectangleObject(
             (
-                float(self.mediaBox.getLowerLeft_x()) * sx,
-                float(self.mediaBox.getLowerLeft_y()) * sy,
-                float(self.mediaBox.getUpperRight_x()) * sx,
-                float(self.mediaBox.getUpperRight_y()) * sy,
+                float(self.mediabox.getLowerLeft_x()) * sx,
+                float(self.mediabox.getLowerLeft_y()) * sy,
+                float(self.mediabox.getUpperRight_x()) * sx,
+                float(self.mediabox.getUpperRight_y()) * sy,
             )
         )
         if PG.VP in self:
@@ -776,8 +776,8 @@ class PageObject(DictionaryObject):
         :param float width: The new width.
         :param float height: The new heigth.
         """
-        sx = width / float(self.mediaBox.right - self.mediaBox.left)
-        sy = height / float(self.mediaBox.top - self.mediaBox.bottom)
+        sx = width / float(self.mediabox.right - self.mediabox.left)
+        sy = height / float(self.mediabox.top - self.mediabox.bottom)
         self.scale(sx, sy)
 
     def compressContentStreams(self) -> None:
