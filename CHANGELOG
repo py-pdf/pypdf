@@ -5,6 +5,11 @@ This release adds a lot of deprecation warnings in preparation of the
 PyPDF2 2.0.0 release. The changes are mostly using snake_case function-, method-,
 and variable-names as well as using properties instead of getter-methods.
 
+Maintenance (MAINT):
+-  Remove IronPython Fallback for zlib (#868)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.27.12...1.27.13
+
 ### Deprecations (DEP)
 
 * Make the `PyPDF2.utils` module private
