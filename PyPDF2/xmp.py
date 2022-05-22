@@ -1,10 +1,11 @@
 import datetime
 import decimal
 import re
+import warnings
 from xml.dom.minidom import parseString
 
+from ._utils import DEPR_MSG, u_
 from .generic import PdfObject
-from .utils import u_
 
 RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 DC_NAMESPACE = "http://purl.org/dc/elements/1.1/"
@@ -57,7 +58,7 @@ iso8601 = re.compile(
 class XmpInformation(PdfObject):
     """
     An object that represents Adobe XMP metadata.
-    Usually accessed by :meth:`getXmpMetadata()<PyPDF2.PdfFileReader.getXmpMetadata>`
+    Usually accessed by :meth:`getXmpMetadata()<PyPDF2.PdfReader.getXmpMetadata>`
     """
 
     def __init__(self, stream):
@@ -66,21 +67,45 @@ class XmpInformation(PdfObject):
         self.rdfRoot = doc_root.getElementsByTagNameNS(RDF_NAMESPACE, "RDF")[0]
         self.cache = {}
 
-    def writeToStream(self, stream, encryption_key):
-        self.stream.writeToStream(stream, encryption_key)
+    def write_to_stream(self, stream, encryption_key):
+        self.stream.write_to_stream(stream, encryption_key)
 
-    def getElement(self, aboutUri, namespace, name):
+    def writeToStream(self, stream, encryption_key):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`write_to_stream` instead.
+        """
+        warnings.warn(
+            "writeToStream() will be deprecated in PyPDF2 2.0.0. "
+            "Use write_to_stream() instead.",
+            PendingDeprecationWarning,
+        )
+        self.write_to_stream(stream, encryption_key)
+
+    def get_element(self, about_uri, namespace, name):
         for desc in self.rdfRoot.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):
-            if desc.getAttributeNS(RDF_NAMESPACE, "about") == aboutUri:
+            if desc.getAttributeNS(RDF_NAMESPACE, "about") == about_uri:
                 attr = desc.getAttributeNodeNS(namespace, name)
                 if attr is not None:
                     yield attr
                 for element in desc.getElementsByTagNameNS(namespace, name):
                     yield element
 
-    def getNodesInNamespace(self, aboutUri, namespace):
+    def getElement(self, aboutUri, namespace, name):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`get_element` instead.
+        """
+        warnings.warn(
+            DEPR_MSG.format("getElement", "get_element"),
+        )
+        return self.get_element(aboutUri, namespace, name)
+
+    def get_nodes_in_namespace(self, about_uri, namespace):
         for desc in self.rdfRoot.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):
-            if desc.getAttributeNS(RDF_NAMESPACE, "about") == aboutUri:
+            if desc.getAttributeNS(RDF_NAMESPACE, "about") == about_uri:
                 for i in range(desc.attributes.length):
                     attr = desc.attributes.item(i)
                     if attr.namespaceURI == namespace:
@@ -89,7 +114,18 @@ class XmpInformation(PdfObject):
                     if child.namespaceURI == namespace:
                         yield child
 
-    def _getText(self, element):
+    def getNodesInNamespace(self, aboutUri, namespace):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`get_nodes_in_namespace` instead.
+        """
+        warnings.warn(
+            DEPR_MSG.format("getNodesInNamespace", "get_nodes_in_namespace"),
+        )
+        return self.get_nodes_in_namespace(aboutUri, namespace)
+
+    def _get_text(self, element):
         text = ""
         for child in element.childNodes:
             if child.nodeType == child.TEXT_NODE:
@@ -368,7 +404,7 @@ class XmpInformation(PdfObject):
     def custom_properties(self):
         if not hasattr(self, "_custom_properties"):
             self._custom_properties = {}
-            for node in self.getNodesInNamespace("", PDFX_NAMESPACE):
+            for node in self.get_nodes_in_namespace("", PDFX_NAMESPACE):
                 key = node.localName
                 while True:
                     # see documentation about PDFX_NAMESPACE earlier in file
@@ -383,7 +419,7 @@ class XmpInformation(PdfObject):
                 if node.nodeType == node.ATTRIBUTE_NODE:
                     value = node.nodeValue
                 else:
-                    value = self._getText(node)
+                    value = self._get_text(node)
                 self._custom_properties[key] = value
         return self._custom_properties
 

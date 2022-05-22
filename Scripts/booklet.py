@@ -22,20 +22,20 @@ def main():
     parser.add_argument("output")
     args = parser.parse_args()
 
-    reader = PyPDF2.PdfFileReader(args.input)
+    reader = PyPDF2.PdfReader(args.input)
     numPages = reader.numPages
     print("Pages in file:", numPages)
 
     pagesPerSheet = 4
     virtualPages = (numPages + pagesPerSheet - 1) // pagesPerSheet * pagesPerSheet
 
-    firstPage = reader.getPage(0)
+    firstPage = reader._get_page(0)
     mb = firstPage.mediaBox
     pageWidth = 2 * mb.getWidth()
     pageHeight = mb.getHeight()
     print("Medium size:", "{}x{}".format(pageWidth, pageHeight))
 
-    writer = PyPDF2.PdfFileWriter()
+    writer = PyPDF2.PdfWriter()
 
     def scale(page):
         return min(
@@ -54,11 +54,11 @@ def main():
         if pageNumber >= numPages:
             return
         print("merging page", pageNumber, "with offset", xOffset)
-        page = reader.getPage(pageNumber)
+        page = reader._get_page(pageNumber)
         mergePage(dstPage, page, xOffset)
 
     for i in range(virtualPages // 2):
-        page = writer.addBlankPage(width=pageWidth, height=pageHeight)
+        page = writer.add_blank_page(width=pageWidth, height=pageHeight)
         offsets = [0, pageWidth // 2]
         if i % 2 == 0:
             offsets.reverse()

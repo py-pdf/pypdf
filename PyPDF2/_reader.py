@@ -35,9 +35,16 @@ import warnings
 from hashlib import md5
 from sys import version_info
 
-from PyPDF2 import utils
+from PyPDF2 import _utils
 from PyPDF2._page import PageObject
-from PyPDF2._security import _alg33_1, _alg34, _alg35
+from PyPDF2._security import RC4_encrypt, _alg33_1, _alg34, _alg35
+from PyPDF2._utils import (
+    ConvertFunctionsToVirtualList,
+    b_,
+    formatWarning,
+    isString,
+    readUntilWhitespace,
+)
 from PyPDF2.constants import CatalogAttributes as CA
 from PyPDF2.constants import Core as CO
 from PyPDF2.constants import DocumentInformationAttributes as DI
@@ -61,15 +68,8 @@ from PyPDF2.generic import (
     StreamObject,
     TextStringObject,
     createStringObject,
+    read_object,
     readNonWhitespace,
-    readObject,
-)
-from PyPDF2.utils import (
-    ConvertFunctionsToVirtualList,
-    b_,
-    formatWarning,
-    isString,
-    readUntilWhitespace,
 )
 
 if version_info < (3, 0):
@@ -80,12 +80,21 @@ else:
     from io import BytesIO, StringIO
 
 
-def convertToInt(d, size):
+def convert_to_int(d, size):
     if size > 8:
         raise PdfReadError("invalid size in convertToInt")
     d = b_("\x00\x00\x00\x00\x00\x00\x00\x00") + b_(d)
     d = d[-8:]
     return struct.unpack(">q", d)[0]
+
+
+def convertToInt(d, size):
+    warnings.warn(
+        "convertToInt will be removed with PyPDF2 2.0.0. "
+        "Use convert_to_int instead.",
+        PendingDeprecationWarning,
+    )
+    return convert_to_int(d, size)
 
 
 class DocumentInformation(DictionaryObject):
@@ -106,11 +115,24 @@ class DocumentInformation(DictionaryObject):
     def __init__(self):
         DictionaryObject.__init__(self)
 
-    def getText(self, key):
+    def _get_text(self, key):
         retval = self.get(key, None)
         if isinstance(retval, TextStringObject):
             return retval
         return None
+
+    def getText(self, key):
+        """
+        The text value of the specified key or None.
+
+        .. deprecated:: 1.28.0
+
+            Use the attributes (e.g. :py:attr:`title` / :py:attr:`author`).
+        """
+        warnings.warn(
+            "getText will be removed in PyPDF2 2.0.0.", PendingDeprecationWarning
+        )
+        return self._get_text(key)
 
     @property
     def title(self):
@@ -118,7 +140,7 @@ class DocumentInformation(DictionaryObject):
         Returns a unicode string (``TextStringObject``) or ``None``
         if the title is not specified."""
         return (
-            self.getText(DI.TITLE) or self.get(DI.TITLE).getObject()
+            self._get_text(DI.TITLE) or self.get(DI.TITLE).get_object()
             if self.get(DI.TITLE)
             else None
         )
@@ -133,7 +155,7 @@ class DocumentInformation(DictionaryObject):
         """Read-only property accessing the document's **author**.
         Returns a unicode string (``TextStringObject``) or ``None``
         if the author is not specified."""
-        return self.getText(DI.AUTHOR)
+        return self._get_text(DI.AUTHOR)
 
     @property
     def author_raw(self):
@@ -145,7 +167,7 @@ class DocumentInformation(DictionaryObject):
         """Read-only property accessing the document's **subject**.
         Returns a unicode string (``TextStringObject``) or ``None``
         if the subject is not specified."""
-        return self.getText(DI.SUBJECT)
+        return self._get_text(DI.SUBJECT)
 
     @property
     def subject_raw(self):
@@ -159,7 +181,7 @@ class DocumentInformation(DictionaryObject):
         application (e.g. OpenOffice) that created the original document from
         which it was converted. Returns a unicode string (``TextStringObject``)
         or ``None`` if the creator is not specified."""
-        return self.getText(DI.CREATOR)
+        return self._get_text(DI.CREATOR)
 
     @property
     def creator_raw(self):
@@ -173,7 +195,7 @@ class DocumentInformation(DictionaryObject):
         the name of the application (for example, OSX Quartz) that converted
         it to PDF. Returns a unicode string (``TextStringObject``)
         or ``None`` if the producer is not specified."""
-        return self.getText(DI.PRODUCER)
+        return self._get_text(DI.PRODUCER)
 
     @property
     def producer_raw(self):
@@ -181,9 +203,9 @@ class DocumentInformation(DictionaryObject):
         return self.get(DI.PRODUCER)
 
 
-class PdfFileReader(object):
+class PdfReader(object):
     """
-    Initialize a PdfFileReader object.
+    Initialize a PdfReader object.
 
     This operation can take some time, as the PDF stream's cross-reference
     tables are read into memory.
@@ -195,14 +217,26 @@ class PdfFileReader(object):
         problems and also causes some correctable problems to be fatal.
         Defaults to ``True``.
     :param warndest: Destination for logging warnings (defaults to
-        ``sys.stderr``).
+        ``sys.stderr``). This will be removed in PyPDF2 2.0.
     :param bool overwriteWarnings: Determines whether to override Python's
         ``warnings.py`` module with a custom implementation (defaults to
-        ``True``).
+        ``True``). This will be removed in PyPDF2 2.0.0.
     """
 
-    def __init__(self, stream, strict=True, warndest=None, overwriteWarnings=True):
+    def __init__(
+        self, stream, strict=False, warndest=None, overwriteWarnings="deprecated"
+    ):
+        if warndest is not None:
+            warnings.warn(
+                "The `warndest` argument to PdfReader will be removed in PyPDF2 2.0.0.",
+                PendingDeprecationWarning,
+            )
         if overwriteWarnings:
+            if overwriteWarnings != "deprecated":
+                warnings.warn(
+                    "The `overwriteWarnings` argument to PdfReader will be removed in PyPDF2 2.0.0.",
+                    PendingDeprecationWarning,
+                )
             # Have to dynamically override the default showwarning since there
             # are no public methods that specify the 'file' parameter
             def _showwarning(
@@ -223,13 +257,13 @@ class PdfFileReader(object):
 
             warnings.showwarning = _showwarning
         self.strict = strict
-        self.flattenedPages = None
-        self.resolvedObjects = {}
-        self.xrefIndex = 0
-        self._pageId2Num = None  # map page IndirectRef number to Page Number
+        self._flattened_pages = None
+        self.resolved_objects = {}
+        self.xref_index = 0
+        self._page_id2num = None  # map page IndirectRef number to Page Number
         if hasattr(stream, "mode") and "b" not in stream.mode:
             warnings.warn(
-                "PdfFileReader stream/file object is not in binary mode. "
+                "PdfReader stream/file object is not in binary mode. "
                 "It may not be read correctly.",
                 PdfReadWarning,
             )
@@ -241,7 +275,53 @@ class PdfFileReader(object):
 
         self._override_encryption = False
 
-    def getDocumentInfo(self):
+    @property
+    def flattened_pages(self):
+        return self._flattened_pages
+
+    @property
+    def flattenedPages(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use the attribute :py:attr:`flattened_pages` instead.
+        """
+        warnings.warn(
+            "flattenedPages will be removed in PyPDF2 2.0.0. "
+            "Use flattened_pages instead",
+            PendingDeprecationWarning,
+        )
+        return self.flattened_pages
+
+    @property
+    def resolvedObjects(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use the attribute :py:attr:`resolved_objects` instead.
+        """
+        warnings.warn(
+            "resolvedObjects will be removed in PyPDF2 2.0.0. "
+            "Use resolved_objects instead",
+            PendingDeprecationWarning,
+        )
+        return self.resolved_objects
+
+    @property
+    def xrefIndex(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use the attribute :py:attr:`xref_index` instead.
+        """
+        warnings.warn(
+            "xrefIndex will be removed in PyPDF2 2.0.0. Use xref_index instead",
+            PendingDeprecationWarning,
+        )
+        return self.xref_index
+
+    @property
+    def metadata(self):
         """
         Retrieve the PDF file's document information dictionary, if it exists.
         Note that some PDF files use metadata streams instead of docinfo
@@ -259,18 +339,39 @@ class PdfFileReader(object):
         retval.update(obj)
         return retval
 
+    def getDocumentInfo(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use the attribute :py:attr:`metadata` instead.
+        """
+        warnings.warn(
+            "The `getDocumentInfo` method of PdfReader will be replaced by the "
+            "`metadata` attribute in PyPDF2 2.0.0. You can switch to the "
+            "metadata attribute already.",
+            PendingDeprecationWarning,
+        )
+        return self.metadata
+
     @property
     def documentInfo(self):
         """
-        Read-only property that accesses the
-        :meth:`getDocumentInfo()<PdfFileReader.getDocumentInfo>` function.
-        """
-        return self.getDocumentInfo()
+        .. deprecated:: 1.28.0
 
-    def getXmpMetadata(self):
+            Use the attribute :py:attr:`metadata` instead.
         """
-        Retrieve XMP (Extensible Metadata Platform) data from the PDF document
-        root.
+        warnings.warn(
+            "The `documentInfo` attribute of PdfReader will be replaced by "
+            "`metadata` in PyPDF2 2.0.0. You can switch to the metadata "
+            "attribute already.",
+            PendingDeprecationWarning,
+        )
+        return self.metadata
+
+    @property
+    def xmp_metadata(self):
+        """
+        XMP (Extensible Metadata Platform) data
 
         :return: a :class:`XmpInformation<xmp.XmpInformation>`
             instance that can be used to access XMP metadata from the document.
@@ -283,15 +384,36 @@ class PdfFileReader(object):
         finally:
             self._override_encryption = False
 
+    def getXmpMetadata(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use the attribute :py:attr:`xmp_metadata` instead.
+        """
+        warnings.warn(
+            "The `getXmpMetadata` method of PdfReader will be replaced by the "
+            "`xmp_metadata` attribute in PyPDF2 2.0.0. You can switch to the "
+            "xmp_metadata attribute already.",
+            PendingDeprecationWarning,
+        )
+        return self.xmp_metadata()
+
     @property
     def xmpMetadata(self):
         """
-        Read-only property that accesses the
-        :meth:`getXmpMetadata()<PdfFileReader.getXmpMetadata>` function.
-        """
-        return self.getXmpMetadata()
+        .. deprecated:: 1.28.0
 
-    def getNumPages(self):
+            Use the attribute :py:attr:`xmp_metadata` instead.
+        """
+        warnings.warn(
+            "The `xmpMetadata` attribute of PdfReader will be replaced by the "
+            "`xmp_metadata` attribute in PyPDF2 2.0.0. You can switch to the "
+            "xmp_metadata attribute already.",
+            PendingDeprecationWarning,
+        )
+        return self.xmp_metadata
+
+    def _get_num_pages(self):
         """
         Calculates the number of pages in this PDF file.
 
@@ -304,7 +426,7 @@ class PdfFileReader(object):
         # Flattened pages will not work on an Encrypted PDF;
         # the PDF file's page count is used in this case. Otherwise,
         # the original method (flattened page count) is used.
-        if self.isEncrypted:
+        if self.is_encrypted:
             try:
                 self._override_encryption = True
                 self.decrypt("")
@@ -314,45 +436,90 @@ class PdfFileReader(object):
             finally:
                 self._override_encryption = False
         else:
-            if self.flattenedPages is None:
+            if self.flattened_pages is None:
                 self._flatten()
-            return len(self.flattenedPages)
+            return len(self.flattened_pages)
+
+    def getNumPages(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :code:`len(reader.pages)` instead.
+        """
+        warnings.warn(
+            "The `getNumPages` method of PdfReader will be removed in PyPDF2 2.0.0. "
+            "Use `len(reader.pages)` instead.",
+            PendingDeprecationWarning,
+        )
+        return self._get_num_pages()
 
     @property
     def numPages(self):
         """
-        Read-only property that accesses the
-        :meth:`getNumPages()<PdfFileReader.getNumPages>` function.
-        """
-        return self.getNumPages()
+        .. deprecated:: 1.28.0
 
-    def getPage(self, pageNumber):
+            Use :code:`len(reader.pages)` instead.
+        """
+        warnings.warn(
+            "The `numPages` attribute of PdfReader will be removed in PyPDF2 2.0.0. "
+            "Use `len(reader.pages)` instead.",
+            PendingDeprecationWarning,
+        )
+        return self._get_num_pages()
+
+    def _get_page(self, page_number):
         """
         Retrieves a page by number from this PDF file.
 
         :param int pageNumber: The page number to retrieve
             (pages begin at zero)
-        :return: a :class:`PageObject<pdf.PageObject>` instance.
-        :rtype: :class:`PageObject<pdf.PageObject>`
+        :return: a :class:`PageObject<PyPDF2._page.PageObject>` instance.
+        :rtype: :class:`PageObject<PyPDF2._page.PageObject>`
         """
         # ensure that we're not trying to access an encrypted PDF
         # assert not self.trailer.has_key(TK.ENCRYPT)
-        if self.flattenedPages is None:
+        if self.flattened_pages is None:
             self._flatten()
-        return self.flattenedPages[pageNumber]
+        return self.flattened_pages[page_number]
+
+    def getPage(self, pageNumber):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :code:`reader.pages[page_number]` instead.
+        """
+        warnings.warn(
+            "getPage(pageNumber) will be removed in PyPDF2 2.0.0. "
+            "Use reader.pages[pageNumber] instead.",
+            PendingDeprecationWarning,
+        )
+        return self._get_page(pageNumber)
 
     @property
     def namedDestinations(self):
         """
-        Read-only property that accesses the
-        :meth:`getNamedDestinations()<PdfFileReader.getNamedDestinations>` function.
+        .. deprecated:: 1.28.0
+
+            Use :py:attr:`named_destinations` instead.
         """
-        return self.getNamedDestinations()
+        warnings.warn(
+            "namedDestinations will be removed in PyPDF2 2.0.0. "
+            "Use `named_destinations` instead.",
+        )
+        return self.named_destinations
+
+    @property
+    def named_destinations(self):
+        """
+        A read-only dictionary which maps names to
+        :class:`Destinations<PyPDF2.generic.Destination>`
+        """
+        return self._get_named_destinations()
 
     # A select group of relevant field attributes. For the complete list,
     # see section 8.6.2 of the PDF 1.7 reference.
 
-    def getFields(self, tree=None, retval=None, fileobj=None):
+    def get_fields(self, tree=None, retval=None, fileobj=None):
         """
         Extracts field data if this PDF contains interactive form fields.
         The *tree* and *retval* parameters are for recursive use.
@@ -385,23 +552,36 @@ class PdfFileReader(object):
         if tree is None:
             return retval
 
-        self._checkKids(tree, retval, fileobj)
+        self._check_kids(tree, retval, fileobj)
         for attr in field_attributes:
             if attr in tree:
                 # Tree is a field
-                self._buildField(tree, retval, fileobj, field_attributes)
+                self._build_field(tree, retval, fileobj, field_attributes)
                 break
 
         if "/Fields" in tree:
             fields = tree["/Fields"]
             for f in fields:
-                field = f.getObject()
-                self._buildField(field, retval, fileobj, field_attributes)
+                field = f.get_object()
+                self._build_field(field, retval, fileobj, field_attributes)
 
         return retval
 
-    def _buildField(self, field, retval, fileobj, fieldAttributes):
-        self._checkKids(field, retval, fileobj)
+    def getFields(self, tree=None, retval=None, fileobj=None):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`get_fields` instead.
+        """
+        warnings.warn(
+            "The getFields method of PdfReader will be removed in PyPDF2 2.0.0. "
+            "Use the get_fields() method instead.",
+            PendingDeprecationWarning,
+        )
+        return self.get_fields(tree, retval, fileobj)
+
+    def _build_field(self, field, retval, fileobj, fieldAttributes):
+        self._check_kids(field, retval, fileobj)
         try:
             key = field["/TM"]
         except KeyError:
@@ -411,20 +591,20 @@ class PdfFileReader(object):
                 # Ignore no-name field for now
                 return
         if fileobj:
-            self._writeField(fileobj, field, fieldAttributes)
+            self._write_field(fileobj, field, fieldAttributes)
             fileobj.write("\n")
         retval[key] = Field(field)
 
-    def _checkKids(self, tree, retval, fileobj):
+    def _check_kids(self, tree, retval, fileobj):
         if PA.KIDS in tree:
             # recurse down the tree
             for kid in tree[PA.KIDS]:
-                self.getFields(kid.getObject(), retval, fileobj)
+                self.get_fields(kid.get_object(), retval, fileobj)
 
-    def _writeField(self, fileobj, field, fieldAttributes):
+    def _write_field(self, fileobj, field, field_attributes):
         order = ["/TM", "/T", "/FT", PA.PARENT, "/TU", "/Ff", "/V", "/DV"]
         for attr in order:
-            attr_name = fieldAttributes[attr]
+            attr_name = field_attributes[attr]
             try:
                 if attr == "/FT":
                     # Make the field type value more clear
@@ -449,10 +629,10 @@ class PdfFileReader(object):
                 # Field attribute is N/A or unknown, so don't write anything
                 pass
 
-    def getFormTextFields(self):
+    def get_form_text_fields(self):
         """Retrieves form fields from the document with textual data (inputs, dropdowns)"""
         # Retrieve document form fields
-        formfields = self.getFields()
+        formfields = self.get_fields()
         if formfields is None:
             return {}
         return {
@@ -461,7 +641,20 @@ class PdfFileReader(object):
             if formfields[field].get("/FT") == "/Tx"
         }
 
-    def getNamedDestinations(self, tree=None, retval=None):
+    def getFormTextFields(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`get_form_text_fields` instead.
+        """
+        warnings.warn(
+            "The getFormTextFields method of PdfReader will be removed in PyPDF2 2.0.0. "
+            "Use the get_form_text_fields() method instead.",
+            PendingDeprecationWarning,
+        )
+        return self.get_form_text_fields()
+
+    def _get_named_destinations(self, tree=None, retval=None):
         """
         Retrieves the named destinations present in the document.
 
@@ -487,30 +680,40 @@ class PdfFileReader(object):
         if PA.KIDS in tree:
             # recurse down the tree
             for kid in tree[PA.KIDS]:
-                self.getNamedDestinations(kid.getObject(), retval)
+                self._get_named_destinations(kid.get_object(), retval)
 
         if CA.NAMES in tree:
             names = tree[CA.NAMES]
             for i in range(0, len(names), 2):
-                key = names[i].getObject()
-                val = names[i + 1].getObject()
+                key = names[i].get_object()
+                val = names[i + 1].get_object()
                 if isinstance(val, DictionaryObject) and "/D" in val:
                     val = val["/D"]
-                dest = self._buildDestination(key, val)
+                dest = self._build_destination(key, val)
                 if dest is not None:
                     retval[key] = dest
 
         return retval
 
+    def getNamedDestinations(self, tree=None, retval=None):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :py:attr:`named_destinations` instead.
+        """
+        warnings.warn(
+            "getNamedDestinations will be removed in PyPDF2 2.0.0. "
+            "Use the named_destinations property instead.",
+            PendingDeprecationWarning,
+        )
+        return self._get_named_destinations(tree, retval)
+
     @property
     def outlines(self):
-        """
-        Read-only property that accesses the
-            :meth:`getOutlines()<PdfFileReader.getOutlines>` function.
-        """
-        return self.getOutlines()
+        """Read-only property."""
+        return self.get_outlines()
 
-    def getOutlines(self, node=None, outlines=None):
+    def get_outlines(self, node=None, outlines=None):
         """
         Retrieve the document outline present in the document.
 
@@ -532,21 +735,21 @@ class PdfFileReader(object):
 
                 if "/First" in lines:
                     node = lines["/First"]
-            self._namedDests = self.getNamedDestinations()
+            self._namedDests = self._get_named_destinations()
 
         if node is None:
             return outlines
 
         # see if there are any more outlines
         while True:
-            outline = self._buildOutline(node)
+            outline = self._build_outline(node)
             if outline:
                 outlines.append(outline)
 
             # check for sub-outlines
             if "/First" in node:
                 sub_outlines = []
-                self.getOutlines(node["/First"], sub_outlines)
+                self.get_outlines(node["/First"], sub_outlines)
                 if sub_outlines:
                     outlines.append(sub_outlines)
 
@@ -556,52 +759,88 @@ class PdfFileReader(object):
 
         return outlines
 
-    def _getPageNumberByIndirect(self, indirectRef):
+    def getOutlines(self, node=None, outlines=None):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`get_outlines` instead.
+        """
+        warnings.warn(
+            "getOutlines will be removed in PyPDF2 2.0.0. Use get_outlines instead.",
+            PendingDeprecationWarning,
+        )
+        return self.get_outlines(node, outlines)
+
+    def _get_page_number_by_indirect(self, indirect_ref):
         """Generate _pageId2Num"""
-        if self._pageId2Num is None:
+        if self._page_id2num is None:
             id2num = {}
             for i, x in enumerate(self.pages):
                 id2num[x.indirectRef.idnum] = i
-            self._pageId2Num = id2num
+            self._page_id2num = id2num
 
-        if isinstance(indirectRef, NullObject):
+        if isinstance(indirect_ref, NullObject):
             return -1
-        if isinstance(indirectRef, int):
-            idnum = indirectRef
+        if isinstance(indirect_ref, int):
+            idnum = indirect_ref
         else:
-            idnum = indirectRef.idnum
+            idnum = indirect_ref.idnum
 
-        ret = self._pageId2Num.get(idnum, -1)
+        ret = self._page_id2num.get(idnum, -1)
         return ret
 
-    def getPageNumber(self, page):
+    def get_page_number(self, page):
         """
         Retrieve page number of a given PageObject
 
         :param PageObject page: The page to get page number. Should be
-            an instance of :class:`PageObject<PyPDF2.pdf.PageObject>`
+            an instance of :class:`PageObject<PyPDF2._page.PageObject>`
         :return: the page number or -1 if page not found
         :rtype: int
         """
         indirect_ref = page.indirectRef
-        ret = self._getPageNumberByIndirect(indirect_ref)
+        ret = self._get_page_number_by_indirect(indirect_ref)
         return ret
 
-    def getDestinationPageNumber(self, destination):
+    def getPageNumber(self, page):
         """
-        Retrieve page number of a given Destination object
+        .. deprecated:: 1.28.0
+
+            Use :meth:`get_page_number` instead.
+        """
+        warnings.warn(
+            "getPageNumber will be removed in PyPDF2 2.0.0. "
+            "Use get_page_number instead.",
+            PendingDeprecationWarning,
+        )
+        return self.get_page_number(page)
+
+    def get_destination_page_number(self, destination):
+        """
+        Retrieve page number of a given Destination object.
 
         :param Destination destination: The destination to get page number.
-             Should be an instance of
-             :class:`Destination<PyPDF2.pdf.Destination>`
         :return: the page number or -1 if page not found
         :rtype: int
         """
         indirect_ref = destination.page
-        ret = self._getPageNumberByIndirect(indirect_ref)
+        ret = self._get_page_number_by_indirect(indirect_ref)
         return ret
 
-    def _buildDestination(self, title, array):
+    def getDestinationPageNumber(self, destination):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`get_destination_page_number` instead.
+        """
+        warnings.warn(
+            "getDestinationPageNumber will be removed in PyPDF2 2.0.0. "
+            "Use get_destination_page_number instead.",
+            PendingDeprecationWarning,
+        )
+        return self.get_destination_page_number(destination)
+
+    def _build_destination(self, title, array):
         page, typ = array[0:2]
         array = array[2:]
         try:
@@ -613,10 +852,10 @@ class PdfFileReader(object):
             else:
                 # create a link to first Page
                 return Destination(
-                    title, self.getPage(0).indirectRef, TextStringObject("/Fit")
+                    title, self._get_page(0).indirectRef, TextStringObject("/Fit")
                 )
 
-    def _buildOutline(self, node):
+    def _build_outline(self, node):
         dest, title, outline = None, None, None
 
         if "/A" in node and "/Title" in node:
@@ -633,7 +872,7 @@ class PdfFileReader(object):
         # if destination found, then create outline
         if dest:
             if isinstance(dest, ArrayObject):
-                outline = self._buildDestination(title, dest)
+                outline = self._build_destination(title, dest)
             elif isString(dest) and dest in self._namedDests:
                 outline = self._namedDests[dest]
                 outline[NameObject("/Title")] = title
@@ -643,55 +882,124 @@ class PdfFileReader(object):
 
     @property
     def pages(self):
-        """
-        Read-only property that emulates a list based upon the
-        :meth:`getNumPages()<PdfFileReader.getNumPages>` and
-        :meth:`getPage()<PdfFileReader.getPage>` methods.
-        """
-        return ConvertFunctionsToVirtualList(self.getNumPages, self.getPage)
+        """Read-only property that emulates a list of :py:class:`Page<PyPDF2._page.Page>` objects."""
+        return ConvertFunctionsToVirtualList(self._get_num_pages, self._get_page)
 
-    def getPageLayout(self):
+    @property
+    def page_layout(self):
         """
         Get the page layout.
 
-        See :meth:`setPageLayout()<PdfFileWriter.setPageLayout>`
-        for a description of valid layouts.
-
         :return: Page layout currently being used.
         :rtype: ``str``, ``None`` if not specified
+
+        .. list-table:: Valid ``layout`` values
+           :widths: 50 200
+
+           * - /NoLayout
+             - Layout explicitly not specified
+           * - /SinglePage
+             - Show one page at a time
+           * - /OneColumn
+             - Show one column at a time
+           * - /TwoColumnLeft
+             - Show pages in two columns, odd-numbered pages on the left
+           * - /TwoColumnRight
+             - Show pages in two columns, odd-numbered pages on the right
+           * - /TwoPageLeft
+             - Show two pages at a time, odd-numbered pages on the left
+           * - /TwoPageRight
+             - Show two pages at a time, odd-numbered pages on the right
         """
         try:
             return self.trailer[TK.ROOT]["/PageLayout"]
         except KeyError:
             return None
 
+    def getPageLayout(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :py:attr:`page_layout` instead.
+        """
+        warnings.warn(
+            "getPageLayout will be removed in PyPDF2 2.0.0. "
+            "Use the attribute 'page_layout' instead.",
+            PendingDeprecationWarning,
+        )
+        return self.page_layout
+
     @property
     def pageLayout(self):
-        """Read-only property accessing the
-        :meth:`getPageLayout()<PdfFileReader.getPageLayout>` method."""
-        return self.getPageLayout()
+        """
+        .. deprecated:: 1.28.0
 
-    def getPageMode(self):
+            Use :py:attr:`page_layout` instead.
+        """
+        warnings.warn(
+            "pageLayout will be removed in PyPDF2 2.0.0. "
+            "Use the attribute 'page_layout' instead.",
+            PendingDeprecationWarning,
+        )
+        return self.page_layout
+
+    @property
+    def page_mode(self):
         """
         Get the page mode.
-        See :meth:`setPageMode()<PdfFileWriter.setPageMode>`
-        for a description of valid modes.
 
         :return: Page mode currently being used.
         :rtype: ``str``, ``None`` if not specified
+
+        .. list-table:: Valid ``mode`` values
+           :widths: 50 200
+
+           * - /UseNone
+             - Do not show outlines or thumbnails panels
+           * - /UseOutlines
+             - Show outlines (aka bookmarks) panel
+           * - /UseThumbs
+             - Show page thumbnails panel
+           * - /FullScreen
+             - Fullscreen view
+           * - /UseOC
+             - Show Optional Content Group (OCG) panel
+           * - /UseAttachments
+             - Show attachments panel
         """
         try:
             return self.trailer[TK.ROOT]["/PageMode"]
         except KeyError:
             return None
 
+    def getPageMode(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :py:attr:`page_mode` instead.
+        """
+        warnings.warn(
+            "getPageMode will be removed in PyPDF2 2.0.0. "
+            "Use the attribute 'page_mode' instead.",
+            PendingDeprecationWarning,
+        )
+        return self.page_mode
+
     @property
     def pageMode(self):
-        """Read-only property accessing the
-        :meth:`getPageMode()<PdfFileReader.getPageMode>` method."""
-        return self.getPageMode()
+        """
+        .. deprecated:: 1.28.0
 
-    def _flatten(self, pages=None, inherit=None, indirectRef=None):
+            Use :py:attr:`page_mode` instead.
+        """
+        warnings.warn(
+            "pageMode will be removed in PyPDF2 2.0.0. "
+            "Use the attribute 'page_mode' instead.",
+            PendingDeprecationWarning,
+        )
+        return self.page_mode
+
+    def _flatten(self, pages=None, inherit=None, indirect_ref=None):
         inheritablePageAttributes = (
             NameObject(PG.RESOURCES),
             NameObject(PG.MEDIABOX),
@@ -703,9 +1011,9 @@ class PdfFileReader(object):
         if pages is None:
             # Fix issue 327: set flattenedPages attribute only for
             # decrypted file
-            catalog = self.trailer[TK.ROOT].getObject()
-            pages = catalog["/Pages"].getObject()
-            self.flattenedPages = []
+            catalog = self.trailer[TK.ROOT].get_object()
+            pages = catalog["/Pages"].get_object()
+            self._flattened_pages = []
 
         t = "/Pages"
         if PA.TYPE in pages:
@@ -718,23 +1026,23 @@ class PdfFileReader(object):
             for page in pages[PA.KIDS]:
                 addt = {}
                 if isinstance(page, IndirectObject):
-                    addt["indirectRef"] = page
-                self._flatten(page.getObject(), inherit, **addt)
+                    addt["indirect_ref"] = page
+                self._flatten(page.get_object(), inherit, **addt)
         elif t == "/Page":
             for attr, value in list(inherit.items()):
                 # if the page has it's own value, it does not inherit the
                 # parent's value:
                 if attr not in pages:
                     pages[attr] = value
-            page_obj = PageObject(self, indirectRef)
+            page_obj = PageObject(self, indirect_ref)
             page_obj.update(pages)
-            self.flattenedPages.append(page_obj)
+            self.flattened_pages.append(page_obj)
 
-    def _getObjectFromStream(self, indirectReference):
+    def _get_object_from_stream(self, indirect_reference):
         # indirect reference to object in object stream
         # read the entire object stream into memory
-        stmnum, idx = self.xref_objStm[indirectReference.idnum]
-        obj_stm = IndirectObject(stmnum, 0, self).getObject()
+        stmnum, idx = self.xref_objStm[indirect_reference.idnum]
+        obj_stm = IndirectObject(stmnum, 0, self).get_object()
         # This is an xref to a stream, so its type better be a stream
         assert obj_stm["/Type"] == "/ObjStm"
         # /N is the number of indirect objects in the stream
@@ -743,27 +1051,27 @@ class PdfFileReader(object):
         for i in range(obj_stm["/N"]):
             readNonWhitespace(stream_data)
             stream_data.seek(-1, 1)
-            objnum = NumberObject.readFromStream(stream_data)
+            objnum = NumberObject.read_from_stream(stream_data)
             readNonWhitespace(stream_data)
             stream_data.seek(-1, 1)
-            offset = NumberObject.readFromStream(stream_data)
+            offset = NumberObject.read_from_stream(stream_data)
             readNonWhitespace(stream_data)
             stream_data.seek(-1, 1)
-            if objnum != indirectReference.idnum:
+            if objnum != indirect_reference.idnum:
                 # We're only interested in one object
                 continue
             if self.strict and idx != i:
                 raise PdfReadError("Object is in wrong index.")
             stream_data.seek(obj_stm["/First"] + offset, 0)
             try:
-                obj = readObject(stream_data, self)
+                obj = read_object(stream_data, self)
             except PdfStreamError as e:
                 # Stream object cannot be read. Normally, a critical error, but
                 # Adobe Reader doesn't complain, so continue (in strict mode?)
                 e = sys.exc_info()[1]
                 warnings.warn(
                     "Invalid stream (index %d) within object %d %d: %s"
-                    % (i, indirectReference.idnum, indirectReference.generation, e),
+                    % (i, indirect_reference.idnum, indirect_reference.generation, e),
                     PdfReadWarning,
                 )
 
@@ -777,106 +1085,119 @@ class PdfFileReader(object):
             raise PdfReadError("This is a fatal error in strict mode.")
         return NullObject()
 
-    def getObject(self, indirectReference):
-        retval = self.cacheGetIndirectObject(
-            indirectReference.generation, indirectReference.idnum
+    def get_object(self, indirect_reference):
+        retval = self.cache_get_indirect_object(
+            indirect_reference.generation, indirect_reference.idnum
         )
         if retval is not None:
             return retval
         if (
-            indirectReference.generation == 0
-            and indirectReference.idnum in self.xref_objStm
+            indirect_reference.generation == 0
+            and indirect_reference.idnum in self.xref_objStm
         ):
-            retval = self._getObjectFromStream(indirectReference)
+            retval = self._get_object_from_stream(indirect_reference)
         elif (
-            indirectReference.generation in self.xref
-            and indirectReference.idnum in self.xref[indirectReference.generation]
+            indirect_reference.generation in self.xref
+            and indirect_reference.idnum in self.xref[indirect_reference.generation]
         ):
-            start = self.xref[indirectReference.generation][indirectReference.idnum]
+            start = self.xref[indirect_reference.generation][indirect_reference.idnum]
             self.stream.seek(start, 0)
-            idnum, generation = self.readObjectHeader(self.stream)
-            if idnum != indirectReference.idnum and self.xrefIndex:
+            idnum, generation = self.read_object_header(self.stream)
+            if idnum != indirect_reference.idnum and self.xref_index:
                 # Xref table probably had bad indexes due to not being zero-indexed
                 if self.strict:
                     raise PdfReadError(
                         "Expected object ID (%d %d) does not match actual (%d %d); xref table not zero-indexed."
                         % (
-                            indirectReference.idnum,
-                            indirectReference.generation,
+                            indirect_reference.idnum,
+                            indirect_reference.generation,
                             idnum,
                             generation,
                         )
                     )
                 else:
                     pass  # xref table is corrected in non-strict mode
-            elif idnum != indirectReference.idnum and self.strict:
+            elif idnum != indirect_reference.idnum and self.strict:
                 # some other problem
                 raise PdfReadError(
                     "Expected object ID (%d %d) does not match actual (%d %d)."
                     % (
-                        indirectReference.idnum,
-                        indirectReference.generation,
+                        indirect_reference.idnum,
+                        indirect_reference.generation,
                         idnum,
                         generation,
                     )
                 )
             if self.strict:
-                assert generation == indirectReference.generation
-            retval = readObject(self.stream, self)
+                assert generation == indirect_reference.generation
+            retval = read_object(self.stream, self)
 
             # override encryption is used for the /Encrypt dictionary
-            if not self._override_encryption and self.isEncrypted:
+            if not self._override_encryption and self.is_encrypted:
                 # if we don't have the encryption key:
                 if not hasattr(self, "_decryption_key"):
                     raise PdfReadError("file has not been decrypted")
                 # otherwise, decrypt here...
-                pack1 = struct.pack("<i", indirectReference.idnum)[:3]
-                pack2 = struct.pack("<i", indirectReference.generation)[:2]
+                pack1 = struct.pack("<i", indirect_reference.idnum)[:3]
+                pack2 = struct.pack("<i", indirect_reference.generation)[:2]
                 key = self._decryption_key + pack1 + pack2
                 assert len(key) == (len(self._decryption_key) + 5)
                 md5_hash = md5(key).digest()
                 key = md5_hash[: min(16, len(self._decryption_key) + 5)]
-                retval = self._decryptObject(retval, key)
+                retval = self._decrypt_object(retval, key)
         else:
             warnings.warn(
                 "Object %d %d not defined."
-                % (indirectReference.idnum, indirectReference.generation),
+                % (indirect_reference.idnum, indirect_reference.generation),
                 PdfReadWarning,
             )
             if self.strict:
                 raise PdfReadError("Could not find object.")
-        self.cacheIndirectObject(
-            indirectReference.generation, indirectReference.idnum, retval
+        self.cache_indirect_object(
+            indirect_reference.generation, indirect_reference.idnum, retval
         )
         return retval
 
-    def _decryptObject(self, obj, key):
+    def getObject(self, indirectReference):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`get_object` instead.
+        """
+        warnings.warn(
+            "getObject(indirectReference) will be removed in PyPDF2 2.0.0. "
+            "Use get_object(indirect_reference) instead.",
+            PendingDeprecationWarning,
+        )
+        return self.get_object(indirectReference)
+
+    def _decrypt_object(self, obj, key):
         if isinstance(obj, (ByteStringObject, TextStringObject)):
-            obj = createStringObject(utils.RC4_encrypt(key, obj.original_bytes))
+            obj = createStringObject(RC4_encrypt(key, obj.original_bytes))
         elif isinstance(obj, StreamObject):
-            obj._data = utils.RC4_encrypt(key, obj._data)
+            obj._data = RC4_encrypt(key, obj._data)
         elif isinstance(obj, DictionaryObject):
             for dictkey, value in list(obj.items()):
-                obj[dictkey] = self._decryptObject(value, key)
+                obj[dictkey] = self._decrypt_object(value, key)
         elif isinstance(obj, ArrayObject):
             for i in range(len(obj)):
-                obj[i] = self._decryptObject(obj[i], key)
+                obj[i] = self._decrypt_object(obj[i], key)
         return obj
 
-    def readObjectHeader(self, stream):
+    def read_object_header(self, stream):
         # Should never be necessary to read out whitespace, since the
         # cross-reference table should put us in the right spot to read the
         # object header.  In reality... some files have stupid cross reference
         # tables that are off by whitespace bytes.
         extra = False
-        utils.skipOverComment(stream)
-        extra |= utils.skipOverWhitespace(stream)
+        _utils.skipOverComment(stream)
+        extra |= _utils.skipOverWhitespace(stream)
         stream.seek(-1, 1)
         idnum = readUntilWhitespace(stream)
-        extra |= utils.skipOverWhitespace(stream)
+        extra |= _utils.skipOverWhitespace(stream)
         stream.seek(-1, 1)
         generation = readUntilWhitespace(stream)
-        extra |= utils.skipOverWhitespace(stream)
+        extra |= _utils.skipOverWhitespace(stream)
         stream.seek(-1, 1)
 
         # although it's not used, it might still be necessary to read
@@ -892,19 +1213,57 @@ class PdfFileReader(object):
             )
         return int(idnum), int(generation)
 
-    def cacheGetIndirectObject(self, generation, idnum):
-        out = self.resolvedObjects.get((generation, idnum))
-        return out
+    def readObjectHeader(self, stream):
+        """
+        .. deprecated:: 1.28.0
 
-    def cacheIndirectObject(self, generation, idnum, obj):
-        if (generation, idnum) in self.resolvedObjects:
+            Use :meth:`read_object_header` instead.
+        """
+        warnings.warn(
+            "readObjectHeader will be removed with PyPDF2 2.0.0. "
+            "Use read_object_header instead.",
+            PendingDeprecationWarning,
+        )
+        return self.read_object_header(stream)
+
+    def cache_get_indirect_object(self, generation, idnum):
+        return self.resolved_objects.get((generation, idnum))
+
+    def cacheGetIndirectObject(self, generation, idnum):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`cache_get_indirect_object` instead.
+        """
+        warnings.warn(
+            "cacheGetIndirectObject will be removed with PyPDF2 2.0.0. "
+            "Use cache_get_indirect_object instead.",
+            PendingDeprecationWarning,
+        )
+        return self.cache_get_indirect_object(generation, idnum)
+
+    def cache_indirect_object(self, generation, idnum, obj):
+        if (generation, idnum) in self.resolved_objects:
             msg = "Overwriting cache for %s %s" % (generation, idnum)
             if self.strict:
                 raise PdfReadError(msg)
             else:
                 warnings.warn(msg)
-        self.resolvedObjects[(generation, idnum)] = obj
+        self.resolved_objects[(generation, idnum)] = obj
         return obj
+
+    def cacheIndirectObject(self, generation, idnum, obj):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`cache_indirect_object` instead.
+        """
+        warnings.warn(
+            "cacheIndirectObject will be removed with PyPDF2 2.0.0. "
+            "Use cache_indirect_object instead.",
+            PendingDeprecationWarning,
+        )
+        return self.cache_indirect_object(generation, idnum, obj)
 
     def read(self, stream):
         # start at the end:
@@ -926,7 +1285,7 @@ class PdfFileReader(object):
         while line[:5] != b_("%%EOF"):
             if stream.tell() < last1M:
                 raise PdfReadError("EOF marker not found")
-            line = self.readNextEndLine(stream)
+            line = self.read_next_end_line(stream)
 
         startxref = self._find_startxref_pos(stream)
 
@@ -953,7 +1312,7 @@ class PdfFileReader(object):
                 self._read_standard_xref_table(stream)
                 readNonWhitespace(stream)
                 stream.seek(-1, 1)
-                new_trailer = readObject(stream, self)
+                new_trailer = read_object(stream, self)
                 for key, value in list(new_trailer.items()):
                     if key not in self.trailer:
                         self.trailer[key] = value
@@ -1014,7 +1373,7 @@ class PdfFileReader(object):
                 # no xref table found at specified location
                 raise PdfReadError("Could not find xref table at specified location")
         # if not zero-indexed, verify that the table is correct; change it if necessary
-        if self.xrefIndex and not self.strict:
+        if self.xref_index and not self.strict:
             loc = stream.tell()
             for gen in self.xref:
                 if gen == 65535:
@@ -1022,11 +1381,11 @@ class PdfFileReader(object):
                 for id in self.xref[gen]:
                     stream.seek(self.xref[gen][id], 0)
                     try:
-                        pid, pgen = self.readObjectHeader(stream)
+                        pid, pgen = self.read_object_header(stream)
                     except ValueError:
                         break
-                    if pid == id - self.xrefIndex:
-                        self._zeroXref(gen)
+                    if pid == id - self.xref_index:
+                        self._zero_xref(gen)
                         break
                     # if not, then either it's just plain wrong, or the
                     # non-zero-index is actually correct
@@ -1034,7 +1393,7 @@ class PdfFileReader(object):
 
     def _find_startxref_pos(self, stream):
         """Find startxref entry - the location of the xref table"""
-        line = self.readNextEndLine(stream)
+        line = self.read_next_end_line(stream)
         try:
             startxref = int(line)
         except ValueError:
@@ -1044,7 +1403,7 @@ class PdfFileReader(object):
             startxref = int(line[9:].strip())
             warnings.warn("startxref on same line as offset")
         else:
-            line = self.readNextEndLine(stream)
+            line = self.read_next_end_line(stream)
             if line[:9] != b_("startxref"):
                 raise PdfReadError("startxref not found")
         return startxref
@@ -1058,9 +1417,9 @@ class PdfFileReader(object):
         stream.seek(-1, 1)
         firsttime = True  # check if the first time looking at the xref table
         while True:
-            num = readObject(stream, self)
+            num = read_object(stream, self)
             if firsttime and num != 0:
-                self.xrefIndex = num
+                self.xref_index = num
                 if self.strict:
                     warnings.warn(
                         "Xref table not zero-indexed. ID numbers for objects will be corrected.",
@@ -1071,7 +1430,7 @@ class PdfFileReader(object):
             firsttime = False
             readNonWhitespace(stream)
             stream.seek(-1, 1)
-            size = readObject(stream, self)
+            size = read_object(stream, self)
             readNonWhitespace(stream)
             stream.seek(-1, 1)
             cnt = 0
@@ -1123,10 +1482,10 @@ class PdfFileReader(object):
     def _read_pdf15_xref_stream(self, stream):
         # PDF 1.5+ Cross-Reference Stream
         stream.seek(-1, 1)
-        idnum, generation = self.readObjectHeader(stream)
-        xrefstream = readObject(stream, self)
+        idnum, generation = self.read_object_header(stream)
+        xrefstream = read_object(stream, self)
         assert xrefstream["/Type"] == "/XRef"
-        self.cacheIndirectObject(generation, idnum, xrefstream)
+        self.cache_indirect_object(generation, idnum, xrefstream)
         stream_data = BytesIO(b_(xrefstream.getData()))
         # Index pairs specify the subsections in the dictionary. If
         # none create one subsection that spans everything.
@@ -1141,7 +1500,7 @@ class PdfFileReader(object):
             # discussion of the W parameter in PDF spec table 17.
             if entry_sizes[i] > 0:
                 d = stream_data.read(entry_sizes[i])
-                return convertToInt(d, entry_sizes[i])
+                return convert_to_int(d, entry_sizes[i])
 
             # PDF Spec Table 17: A value of zero for an element in the
             # W array indicates...the default value shall be used
@@ -1202,13 +1561,13 @@ class PdfFileReader(object):
         stream.seek(-1, 1)
 
         # there might be something that is not a dict (see #856)
-        new_trailer = readObject(stream, self)
+        new_trailer = read_object(stream, self)
 
         for key, value in list(new_trailer.items()):
             if key not in self.trailer:
                 self.trailer[key] = value
 
-    def _read_xref_subsections(self, idx_pairs, getEntry, used_before):
+    def _read_xref_subsections(self, idx_pairs, get_entry, used_before):
         last_end = 0
         for start, size in self._pairs(idx_pairs):
             # The subsections must increase
@@ -1216,33 +1575,33 @@ class PdfFileReader(object):
             last_end = start + size
             for num in range(start, start + size):
                 # The first entry is the type
-                xref_type = getEntry(0)
+                xref_type = get_entry(0)
                 # The rest of the elements depend on the xref_type
                 if xref_type == 0:
                     # linked list of free objects
-                    next_free_object = getEntry(1)  # noqa: F841
-                    next_generation = getEntry(2)  # noqa: F841
+                    next_free_object = get_entry(1)  # noqa: F841
+                    next_generation = get_entry(2)  # noqa: F841
                 elif xref_type == 1:
                     # objects that are in use but are not compressed
-                    byte_offset = getEntry(1)
-                    generation = getEntry(2)
+                    byte_offset = get_entry(1)
+                    generation = get_entry(2)
                     if generation not in self.xref:
                         self.xref[generation] = {}
                     if not used_before(num, generation):
                         self.xref[generation][num] = byte_offset
                 elif xref_type == 2:
                     # compressed objects
-                    objstr_num = getEntry(1)
-                    obstr_idx = getEntry(2)
+                    objstr_num = get_entry(1)
+                    obstr_idx = get_entry(2)
                     generation = 0  # PDF spec table 18, generation is 0
                     if not used_before(num, generation):
                         self.xref_objStm[num] = (objstr_num, obstr_idx)
                 elif self.strict:
                     raise PdfReadError("Unknown xref type: %s" % xref_type)
 
-    def _zeroXref(self, generation):
+    def _zero_xref(self, generation):
         self.xref[generation] = {
-            k - self.xrefIndex: v for (k, v) in list(self.xref[generation].items())
+            k - self.xref_index: v for (k, v) in list(self.xref[generation].items())
         }
 
     def _pairs(self, array):
@@ -1253,7 +1612,7 @@ class PdfFileReader(object):
             if (i + 1) >= len(array):
                 break
 
-    def readNextEndLine(self, stream, limit_offset=0):
+    def read_next_end_line(self, stream, limit_offset=0):
         line_parts = []
         while True:
             # Prevent infinite loops in malformed PDFs
@@ -1281,6 +1640,19 @@ class PdfFileReader(object):
                 line_parts.append(x)
         line_parts.reverse()
         return b"".join(line_parts)
+
+    def readNextEndLine(self, stream, limit_offset=0):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`read_next_end_line` instead.
+        """
+        warnings.warn(
+            "readNextEndLine will be removed in PyPDF2 2.0.0. "
+            "Use read_next_end_line instead.",
+            PendingDeprecationWarning,
+        )
+        return self.read_next_end_line(stream, limit_offset)
 
     def decrypt(self, password):
         """
@@ -1327,7 +1699,7 @@ class PdfFileReader(object):
         # Decrypts data as per Section 3.5 (page 117) of PDF spec v1.7
         # "The security handler defines the use of encryption and decryption in
         # the document, using the rules specified by the CF, StmF, and StrF entries"
-        encrypt = self.trailer[TK.ENCRYPT].getObject()
+        encrypt = self.trailer[TK.ENCRYPT].get_object()
         # /Encrypt Keys:
         # Filter (name)   : "name of the preferred security handler "
         # V (number)      : Algorithm Code
@@ -1347,71 +1719,109 @@ class PdfFileReader(object):
                 "only algorithm code 1 and 2 are supported. This PDF uses code %s"
                 % encrypt["/V"]
             )
-        user_password, key = self._authenticateUserPassword(password)
+        user_password, key = self._authenticate_user_password(password)
         if user_password:
             self._decryption_key = key
             return 1
         else:
-            rev = encrypt["/R"].getObject()
+            rev = encrypt["/R"].get_object()
             if rev == 2:
                 keylen = 5
             else:
-                keylen = encrypt[SA.LENGTH].getObject() // 8
+                keylen = encrypt[SA.LENGTH].get_object() // 8
             key = _alg33_1(password, rev, keylen)
-            real_O = encrypt["/O"].getObject()
+            real_O = encrypt["/O"].get_object()
             if rev == 2:
-                userpass = utils.RC4_encrypt(key, real_O)
+                userpass = RC4_encrypt(key, real_O)
             else:
                 val = real_O
                 for i in range(19, -1, -1):
                     new_key = b_("")
                     for l in range(len(key)):
-                        new_key += b_(chr(utils.ord_(key[l]) ^ i))
-                    val = utils.RC4_encrypt(new_key, val)
+                        new_key += b_(chr(_utils.ord_(key[l]) ^ i))
+                    val = RC4_encrypt(new_key, val)
                 userpass = val
-            owner_password, key = self._authenticateUserPassword(userpass)
+            owner_password, key = self._authenticate_user_password(userpass)
             if owner_password:
                 self._decryption_key = key
                 return 2
         return 0
 
-    def _authenticateUserPassword(self, password):
-        encrypt = self.trailer[TK.ENCRYPT].getObject()
-        rev = encrypt[ED.R].getObject()
-        owner_entry = encrypt[ED.O].getObject()
-        p_entry = encrypt[ED.P].getObject()
+    def _authenticate_user_password(self, password):
+        encrypt = self.trailer[TK.ENCRYPT].get_object()
+        rev = encrypt[ED.R].get_object()
+        owner_entry = encrypt[ED.O].get_object()
+        p_entry = encrypt[ED.P].get_object()
         if TK.ID in self.trailer:
-            id_entry = self.trailer[TK.ID].getObject()
+            id_entry = self.trailer[TK.ID].get_object()
         else:
             # Some documents may not have a /ID, use two empty
             # byte strings instead. Solves
             # https://github.com/mstamy2/PyPDF2/issues/608
             id_entry = ArrayObject([ByteStringObject(b""), ByteStringObject(b"")])
-        id1_entry = id_entry[0].getObject()
-        real_U = encrypt[ED.U].getObject().original_bytes
+        id1_entry = id_entry[0].get_object()
+        real_U = encrypt[ED.U].get_object().original_bytes
         if rev == 2:
             U, key = _alg34(password, owner_entry, p_entry, id1_entry)
         elif rev >= 3:
             U, key = _alg35(
                 password,
                 rev,
-                encrypt[SA.LENGTH].getObject() // 8,
+                encrypt[SA.LENGTH].get_object() // 8,
                 owner_entry,
                 p_entry,
                 id1_entry,
-                encrypt.get(ED.ENCRYPT_METADATA, BooleanObject(False)).getObject(),
+                encrypt.get(ED.ENCRYPT_METADATA, BooleanObject(False)).get_object(),
             )
             U, real_U = U[:16], real_U[:16]
         return U == real_U, key
 
-    def getIsEncrypted(self):
+    @property
+    def is_encrypted(self):
+        """
+        Read-only boolean property showing whether this PDF file is encrypted.
+        Note that this property, if true, will remain true even after the
+        :meth:`decrypt()<PdfReader.decrypt>` method is called.
+        """
         return TK.ENCRYPT in self.trailer
+
+    def getIsEncrypted(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :py:attr:`is_encrypted` instead.
+        """
+        warnings.warn(
+            "getIsEncrypted() will be removed in PyPDF2 2.0.0. "
+            "Use the is_encrypted property instead.",
+            PendingDeprecationWarning,
+        )
+        return self.is_encrypted
 
     @property
     def isEncrypted(self):
         """
-        Read-only boolean property showing whether this PDF file is encrypted.
-        Note that this property, if true, will remain true even after the
-        :meth:`decrypt()<PdfFileReader.decrypt>` method is called.
+        .. deprecated:: 1.28.0
+
+            Use :py:attr:`is_encrypted` instead.
         """
-        return self.getIsEncrypted()
+        warnings.warn(
+            "isEncrypted will be removed in PyPDF2 2.0.0. "
+            "Use the is_encrypted property instead.",
+            PendingDeprecationWarning,
+        )
+        return self.is_encrypted
+
+
+class PdfFileReader(PdfReader):
+    def __init__(self, *args, **kwargs):
+        import warnings
+
+        warnings.warn(
+            "PdfFileReader was renamed to PdfReader. PdfFileReader will be removed",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        if "strict" not in kwargs and len(args) < 2:
+            kwargs["strict"] = True  # maintain the default
+        super().__init__(*args, **kwargs)

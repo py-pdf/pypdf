@@ -1,7 +1,7 @@
-The PageRange Class
+The PdfReader Class
 -------------------
 
-.. autoclass:: PyPDF2.PageRange
+.. autoclass:: PyPDF2.PdfReader
     :members:
     :undoc-members:
     :show-inheritance:

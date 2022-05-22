@@ -41,6 +41,8 @@ import sys
 import warnings
 from sys import version_info
 
+from PyPDF2._security import RC4_encrypt
+from PyPDF2._utils import DEPR_MSG
 from PyPDF2.constants import FilterTypes as FT
 from PyPDF2.constants import StreamAttributes as SA
 from PyPDF2.errors import (
@@ -50,16 +52,8 @@ from PyPDF2.errors import (
     PdfStreamError,
 )
 
-from . import filters, utils
-from .utils import (
-    RC4_encrypt,
-    b_,
-    chr_,
-    ord_,
-    readNonWhitespace,
-    skipOverComment,
-    u_,
-)
+from . import _utils, filters
+from ._utils import b_, chr_, ord_, readNonWhitespace, skipOverComment, u_
 
 if version_info < (3, 0):
     from cStringIO import StringIO
@@ -74,29 +68,29 @@ NumberSigns = b_("+-")
 IndirectPattern = re.compile(b_(r"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]"))
 
 
-def readObject(stream, pdf):
+def read_object(stream, pdf):
     tok = stream.read(1)
     stream.seek(-1, 1)  # reset to start
     idx = ObjectPrefix.find(tok)
     if idx == 0:
-        return NameObject.readFromStream(stream, pdf)
+        return NameObject.read_from_stream(stream, pdf)
     elif idx == 1:
         # hexadecimal string OR dictionary
         peek = stream.read(2)
         stream.seek(-2, 1)  # reset to start
 
         if peek == b_("<<"):
-            return DictionaryObject.readFromStream(stream, pdf)
+            return DictionaryObject.read_from_stream(stream, pdf)
         else:
             return readHexStringFromStream(stream)
     elif idx == 2:
-        return ArrayObject.readFromStream(stream, pdf)
+        return ArrayObject.read_from_stream(stream, pdf)
     elif idx == 3 or idx == 4:
-        return BooleanObject.readFromStream(stream)
+        return BooleanObject.read_from_stream(stream)
     elif idx == 5:
         return readStringFromStream(stream)
     elif idx == 6:
-        return NullObject.readFromStream(stream)
+        return NullObject.read_from_stream(stream)
     elif idx == 7:
         # comment
         while tok not in (b_("\r"), b_("\n")):
@@ -107,47 +101,87 @@ def readObject(stream, pdf):
                 raise PdfStreamError("File ended unexpectedly.")
         tok = readNonWhitespace(stream)
         stream.seek(-1, 1)
-        return readObject(stream, pdf)
+        return read_object(stream, pdf)
     else:
         # number object OR indirect reference
         peek = stream.read(20)
         stream.seek(-len(peek), 1)  # reset to start
         if IndirectPattern.match(peek) is not None:
-            return IndirectObject.readFromStream(stream, pdf)
+            return IndirectObject.read_from_stream(stream, pdf)
         else:
-            return NumberObject.readFromStream(stream)
+            return NumberObject.read_from_stream(stream)
+
+
+def readObject(stream, pdf):
+    warnings.warn(
+        "readObject will be deprecated with PyPDF2 2.0.0, use read_object instead",
+        PendingDeprecationWarning,
+    )
+    return read_object(stream, pdf)
 
 
 class PdfObject(object):
-    def getObject(self):
+    def get_object(self):
         """Resolve indirect references."""
         return self
 
+    def getObject(self):
+        warnings.warn(
+            "getObject will be removed in PyPDF2 2.0.0. Use get_object instead.",
+            PendingDeprecationWarning,
+        )
+        return self.get_object()
+
 
 class NullObject(PdfObject):
-    def writeToStream(self, stream, encryption_key):
+    def write_to_stream(self, stream, encryption_key):
         stream.write(b_("null"))
 
     @staticmethod
-    def readFromStream(stream):
+    def read_from_stream(stream):
         nulltxt = stream.read(4)
         if nulltxt != b_("null"):
             raise PdfReadError("Could not read Null object")
         return NullObject()
+
+    def writeToStream(self, stream, encryption_key):
+        warnings.warn(
+            "writeToStream will be removed in PyPDF2 2.0.0. "
+            "Use write_to_stream instead.",
+            PendingDeprecationWarning,
+        )
+        self.write_to_stream(stream, encryption_key)
+
+    @staticmethod
+    def readFromStream(stream):
+        warnings.warn(
+            "readFromStream will be removed in PyPDF2 2.0.0. "
+            "Use read_from_stream instead.",
+            PendingDeprecationWarning,
+        )
+        return NullObject.read_from_stream(stream)
 
 
 class BooleanObject(PdfObject):
     def __init__(self, value):
         self.value = value
 
-    def writeToStream(self, stream, encryption_key):
+    def write_to_stream(self, stream, encryption_key):
         if self.value:
             stream.write(b_("true"))
         else:
             stream.write(b_("false"))
 
+    def writeToStream(self, stream, encryption_key):
+        warnings.warn(
+            "writeToStream will be removed in PyPDF2 2.0.0. "
+            "Use write_to_stream instead.",
+            PendingDeprecationWarning,
+        )
+        self.write_to_stream(stream, encryption_key)
+
     @staticmethod
-    def readFromStream(stream):
+    def read_from_stream(stream):
         word = stream.read(4)
         if word == b_("true"):
             return BooleanObject(True)
@@ -157,17 +191,34 @@ class BooleanObject(PdfObject):
         else:
             raise PdfReadError("Could not read Boolean object")
 
+    @staticmethod
+    def readFromStream(stream):
+        warnings.warn(
+            "readFromStream will be removed in PyPDF2 2.0.0. "
+            "Use read_from_stream instead.",
+            PendingDeprecationWarning,
+        )
+        return BooleanObject.read_from_stream(stream)
+
 
 class ArrayObject(list, PdfObject):
-    def writeToStream(self, stream, encryption_key):
+    def write_to_stream(self, stream, encryption_key):
         stream.write(b_("["))
         for data in self:
             stream.write(b_(" "))
-            data.writeToStream(stream, encryption_key)
+            data.write_to_stream(stream, encryption_key)
         stream.write(b_(" ]"))
 
+    def writeToStream(self, stream, encryption_key):
+        warnings.warn(
+            "writeToStream will be removed in PyPDF2 2.0.0. "
+            "Use write_to_stream instead.",
+            PendingDeprecationWarning,
+        )
+        self.write_to_stream(stream, encryption_key)
+
     @staticmethod
-    def readFromStream(stream, pdf):
+    def read_from_stream(stream, pdf):
         arr = ArrayObject()
         tmp = stream.read(1)
         if tmp != b_("["):
@@ -184,8 +235,17 @@ class ArrayObject(list, PdfObject):
                 break
             stream.seek(-1, 1)
             # read and append obj
-            arr.append(readObject(stream, pdf))
+            arr.append(read_object(stream, pdf))
         return arr
+
+    @staticmethod
+    def readFromStream(stream, pdf):
+        warnings.warn(
+            "readFromStream will be removed in PyPDF2 2.0.0. "
+            "Use read_from_stream instead.",
+            PendingDeprecationWarning,
+        )
+        return ArrayObject.read_from_stream(stream, pdf)
 
 
 class IndirectObject(PdfObject):
@@ -194,8 +254,8 @@ class IndirectObject(PdfObject):
         self.generation = generation
         self.pdf = pdf
 
-    def getObject(self):
-        return self.pdf.getObject(self).getObject()
+    def get_object(self):
+        return self.pdf.get_object(self).get_object()
 
     def __repr__(self):
         return "IndirectObject(%r, %r)" % (self.idnum, self.generation)
@@ -212,11 +272,19 @@ class IndirectObject(PdfObject):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def writeToStream(self, stream, encryption_key):
+    def write_to_stream(self, stream, encryption_key):
         stream.write(b_("%s %s R" % (self.idnum, self.generation)))
 
+    def writeToStream(self, stream, encryption_key):
+        warnings.warn(
+            "writeToStream will be removed in PyPDF2 2.0.0. "
+            "Use write_to_stream instead.",
+            PendingDeprecationWarning,
+        )
+        self.write_to_stream(stream, encryption_key)
+
     @staticmethod
-    def readFromStream(stream, pdf):
+    def read_from_stream(stream, pdf):
         idnum = b_("")
         while True:
             tok = stream.read(1)
@@ -239,15 +307,24 @@ class IndirectObject(PdfObject):
         if r != b_("R"):
             raise PdfReadError(
                 "Error reading indirect object reference at byte %s"
-                % utils.hexStr(stream.tell())
+                % _utils.hexStr(stream.tell())
             )
         return IndirectObject(int(idnum), int(generation), pdf)
+
+    @staticmethod
+    def readFromStream(stream, pdf):
+        warnings.warn(
+            "readFromStream will be removed in PyPDF2 2.0.0. "
+            "Use read_from_stream instead.",
+            PendingDeprecationWarning,
+        )
+        return IndirectObject.read_from_stream(stream, pdf)
 
 
 class FloatObject(decimal.Decimal, PdfObject):
     def __new__(cls, value="0", context=None):
         try:
-            return decimal.Decimal.__new__(cls, utils.str_(value), context)
+            return decimal.Decimal.__new__(cls, _utils.str_(value), context)
         except Exception:
             try:
                 return decimal.Decimal.__new__(cls, str(value))
@@ -271,8 +348,16 @@ class FloatObject(decimal.Decimal, PdfObject):
     def as_numeric(self):
         return float(b_(repr(self)))
 
-    def writeToStream(self, stream, encryption_key):
+    def write_to_stream(self, stream, encryption_key):
         stream.write(b_(repr(self)))
+
+    def writeToStream(self, stream, encryption_key):
+        warnings.warn(
+            "writeToStream will be removed in PyPDF2 2.0.0. "
+            "Use write_to_stream instead.",
+            PendingDeprecationWarning,
+        )
+        self.write_to_stream(stream, encryption_key)
 
 
 class NumberObject(int, PdfObject):
@@ -289,16 +374,33 @@ class NumberObject(int, PdfObject):
     def as_numeric(self):
         return int(b_(repr(self)))
 
-    def writeToStream(self, stream, encryption_key):
+    def write_to_stream(self, stream, encryption_key):
         stream.write(b_(repr(self)))
 
+    def writeToStream(self, stream, encryption_key):
+        warnings.warn(
+            "writeToStream will be removed in PyPDF2 2.0.0. "
+            "Use write_to_stream instead.",
+            PendingDeprecationWarning,
+        )
+        self.write_to_stream(stream, encryption_key)
+
     @staticmethod
-    def readFromStream(stream):
-        num = utils.readUntilRegex(stream, NumberObject.NumberPattern)
+    def read_from_stream(stream):
+        num = _utils.readUntilRegex(stream, NumberObject.NumberPattern)
         if num.find(NumberObject.ByteDot) != -1:
             return FloatObject(num)
         else:
             return NumberObject(num)
+
+    @staticmethod
+    def readFromStream(stream):
+        warnings.warn(
+            "readFromStream will be removed in PyPDF2 2.0.0. "
+            "Use read_from_stream instead.",
+            PendingDeprecationWarning,
+        )
+        return NumberObject.read_from_stream(stream)
 
 
 def createStringObject(string):
@@ -306,9 +408,9 @@ def createStringObject(string):
     Given a string (either a "str" or "unicode"), create a ByteStringObject or a
     TextStringObject to represent the string.
     """
-    if isinstance(string, utils.string_type):
+    if isinstance(string, _utils.string_type):
         return TextStringObject(string)
-    elif isinstance(string, utils.bytes_type):
+    elif isinstance(string, _utils.bytes_type):
         try:
             if string.startswith(codecs.BOM_UTF16_BE):
                 retval = TextStringObject(string.decode("utf-16"))
@@ -422,7 +524,7 @@ def readStringFromStream(stream):
     return createStringObject(txt)
 
 
-class ByteStringObject(utils.bytes_type, PdfObject):  # type: ignore
+class ByteStringObject(_utils.bytes_type, PdfObject):  # type: ignore
     """
     Represents a string object where the text encoding could not be determined.
     This occurs quite often, as the PDF spec doesn't provide an alternate way to
@@ -435,16 +537,24 @@ class ByteStringObject(utils.bytes_type, PdfObject):  # type: ignore
         """For compatibility with TextStringObject.original_bytes."""
         return self
 
-    def writeToStream(self, stream, encryption_key):
+    def write_to_stream(self, stream, encryption_key):
         bytearr = self
         if encryption_key:
             bytearr = RC4_encrypt(encryption_key, bytearr)
         stream.write(b_("<"))
-        stream.write(utils.hexencode(bytearr))
+        stream.write(_utils.hexencode(bytearr))
         stream.write(b_(">"))
 
+    def writeToStream(self, stream, encryption_key):
+        warnings.warn(
+            "writeToStream will be removed in PyPDF2 2.0.0. "
+            "Use write_to_stream instead.",
+            PendingDeprecationWarning,
+        )
+        self.write_to_stream(stream, encryption_key)
 
-class TextStringObject(utils.string_type, PdfObject):  # type: ignore
+
+class TextStringObject(_utils.string_type, PdfObject):  # type: ignore
     """
     Represents a string object that has been decoded into a real unicode string.
     If read from a PDF document, this string appeared to match the
@@ -478,7 +588,7 @@ class TextStringObject(utils.string_type, PdfObject):  # type: ignore
         else:
             raise Exception("no information about original bytes")
 
-    def writeToStream(self, stream, encryption_key):
+    def write_to_stream(self, stream, encryption_key):
         # Try to write the string out as a PDFDocEncoding encoded string.  It's
         # nicer to look at in the PDF file.  Sadly, we take a performance hit
         # here for trying...
@@ -489,7 +599,7 @@ class TextStringObject(utils.string_type, PdfObject):  # type: ignore
         if encryption_key:
             bytearr = RC4_encrypt(encryption_key, bytearr)
             obj = ByteStringObject(bytearr)
-            obj.writeToStream(stream, None)
+            obj.write_to_stream(stream, None)
         else:
             stream.write(b_("("))
             for c in bytearr:
@@ -499,20 +609,36 @@ class TextStringObject(utils.string_type, PdfObject):  # type: ignore
                     stream.write(b_(chr_(c)))
             stream.write(b_(")"))
 
+    def writeToStream(self, stream, encryption_key):
+        warnings.warn(
+            "writeToStream will be removed in PyPDF2 2.0.0. "
+            "Use write_to_stream instead.",
+            PendingDeprecationWarning,
+        )
+        self.write_to_stream(stream, encryption_key)
+
 
 class NameObject(str, PdfObject):
     delimiterPattern = re.compile(b_(r"\s+|[\(\)<>\[\]{}/%]"))
     surfix = b_("/")
 
-    def writeToStream(self, stream, encryption_key):
+    def write_to_stream(self, stream, encryption_key):
         stream.write(b_(self))
 
+    def writeToStream(self, stream, encryption_key):
+        warnings.warn(
+            "writeToStream will be removed in PyPDF2 2.0.0. "
+            "Use write_to_stream instead.",
+            PendingDeprecationWarning,
+        )
+        self.write_to_stream(stream, encryption_key)
+
     @staticmethod
-    def readFromStream(stream, pdf):
+    def read_from_stream(stream, pdf):
         name = stream.read(1)
         if name != NameObject.surfix:
             raise PdfReadError("name read error")
-        name += utils.readUntilRegex(
+        name += _utils.readUntilRegex(
             stream, NameObject.delimiterPattern, ignore_eof=True
         )
         try:
@@ -525,10 +651,19 @@ class NameObject(str, PdfObject):
             # Name objects should represent irregular characters
             # with a '#' followed by the symbol's hex number
             if not pdf.strict:
-                warnings.warn("Illegal character in Name Object", utils.PdfReadWarning)
+                warnings.warn("Illegal character in Name Object", _utils.PdfReadWarning)
                 return NameObject(name)
             else:
                 raise PdfReadError("Illegal character in Name Object")
+
+    @staticmethod
+    def readFromStream(stream, pdf):
+        warnings.warn(
+            "readFromStream will be removed in PyPDF2 2.0.0. "
+            "Use read_from_stream instead.",
+            PendingDeprecationWarning,
+        )
+        return NameObject.read_from_stream(stream, pdf)
 
 
 class DictionaryObject(dict, PdfObject):
@@ -550,7 +685,7 @@ class DictionaryObject(dict, PdfObject):
         return dict.setdefault(self, key, value)
 
     def __getitem__(self, key):
-        return dict.__getitem__(self, key).getObject()
+        return dict.__getitem__(self, key).get_object()
 
     def getXmpMetadata(self):
         """
@@ -565,7 +700,7 @@ class DictionaryObject(dict, PdfObject):
         metadata = self.get("/Metadata", None)
         if metadata is None:
             return None
-        metadata = metadata.getObject()
+        metadata = metadata.get_object()
         from . import xmp
 
         if not isinstance(metadata, xmp.XmpInformation):
@@ -583,22 +718,30 @@ class DictionaryObject(dict, PdfObject):
         """
         return self.getXmpMetadata()
 
-    def writeToStream(self, stream, encryption_key):
+    def write_to_stream(self, stream, encryption_key):
         stream.write(b_("<<\n"))
         for key, value in list(self.items()):
-            key.writeToStream(stream, encryption_key)
+            key.write_to_stream(stream, encryption_key)
             stream.write(b_(" "))
-            value.writeToStream(stream, encryption_key)
+            value.write_to_stream(stream, encryption_key)
             stream.write(b_("\n"))
         stream.write(b_(">>"))
 
+    def writeToStream(self, stream, encryption_key):
+        warnings.warn(
+            "writeToStream will be removed in PyPDF2 2.0.0. "
+            "Use write_to_stream instead.",
+            PendingDeprecationWarning,
+        )
+        self.write_to_stream(stream, encryption_key)
+
     @staticmethod
-    def readFromStream(stream, pdf):
+    def read_from_stream(stream, pdf):
         tmp = stream.read(2)
         if tmp != b_("<<"):
             raise PdfReadError(
                 "Dictionary read error at byte %s: stream must begin with '<<'"
-                % utils.hexStr(stream.tell())
+                % _utils.hexStr(stream.tell())
             )
         data = {}
         while True:
@@ -616,22 +759,22 @@ class DictionaryObject(dict, PdfObject):
                 stream.read(1)
                 break
             stream.seek(-1, 1)
-            key = readObject(stream, pdf)
+            key = read_object(stream, pdf)
             tok = readNonWhitespace(stream)
             stream.seek(-1, 1)
-            value = readObject(stream, pdf)
+            value = read_object(stream, pdf)
             if not data.get(key):
                 data[key] = value
             elif pdf.strict:
                 # multiple definitions of key not permitted
                 raise PdfReadError(
                     "Multiple definitions in dictionary at byte %s for key %s"
-                    % (utils.hexStr(stream.tell()), key)
+                    % (_utils.hexStr(stream.tell()), key)
                 )
             else:
                 warnings.warn(
                     "Multiple definitions in dictionary at byte %s for key %s"
-                    % (utils.hexStr(stream.tell()), key),
+                    % (_utils.hexStr(stream.tell()), key),
                     PdfReadWarning,
                 )
 
@@ -655,7 +798,7 @@ class DictionaryObject(dict, PdfObject):
             length = data[SA.LENGTH]
             if isinstance(length, IndirectObject):
                 t = stream.tell()
-                length = pdf.getObject(length)
+                length = pdf.get_object(length)
                 stream.seek(t, 0)
             data["__streamdata__"] = stream.read(length)
             e = readNonWhitespace(stream)
@@ -677,7 +820,7 @@ class DictionaryObject(dict, PdfObject):
                     stream.seek(pos, 0)
                     raise PdfReadError(
                         "Unable to find 'endstream' marker after stream at byte %s."
-                        % utils.hexStr(stream.tell())
+                        % _utils.hexStr(stream.tell())
                     )
         else:
             stream.seek(pos, 0)
@@ -687,6 +830,15 @@ class DictionaryObject(dict, PdfObject):
             retval = DictionaryObject()
             retval.update(data)
             return retval
+
+    @staticmethod
+    def readFromStream(stream, pdf):
+        warnings.warn(
+            "readFromStream will be removed in PyPDF2 2.0.0. "
+            "Use read_from_stream instead.",
+            PendingDeprecationWarning,
+        )
+        return DictionaryObject.read_from_stream(stream, pdf)
 
 
 class TreeObject(DictionaryObject):
@@ -704,6 +856,10 @@ class TreeObject(DictionaryObject):
             if sys.version_info >= (3, 5):  # PEP 479
                 return
             else:
+                warnings.warn(
+                    "Python 3.5 and older support will be dropped with PyPDF2 2.0.0",
+                    PendingDeprecationWarning,
+                )
                 raise StopIteration
 
         child = self["/First"]
@@ -713,11 +869,15 @@ class TreeObject(DictionaryObject):
                 if sys.version_info >= (3, 5):  # PEP 479
                     return
                 else:
+                    warnings.warn(
+                        "Python 3.5 and older support will be dropped with PyPDF2 2.0.0",
+                        PendingDeprecationWarning,
+                    )
                     raise StopIteration
             child = child["/Next"]
 
     def addChild(self, child, pdf):
-        child_obj = child.getObject()
+        child_obj = child.get_object()
         child = pdf.getReference(child_obj)
         assert isinstance(child, IndirectObject)
 
@@ -742,7 +902,7 @@ class TreeObject(DictionaryObject):
         child_obj[NameObject("/Parent")] = parent_ref
 
     def removeChild(self, child):
-        child_obj = child.getObject()
+        child_obj = child.get_object()
 
         if NameObject("/Parent") not in child_obj:
             raise ValueError("Removed child does not appear to be a tree item")
@@ -753,16 +913,16 @@ class TreeObject(DictionaryObject):
         prev_ref = None
         prev = None
         cur_ref = self[NameObject("/First")]
-        cur = cur_ref.getObject()
+        cur = cur_ref.get_object()
         last_ref = self[NameObject("/Last")]
-        last = last_ref.getObject()
+        last = last_ref.get_object()
         while cur is not None:
             if cur == child_obj:
                 if prev is None:
                     if NameObject("/Next") in cur:
                         # Removing first tree node
                         next_ref = cur[NameObject("/Next")]
-                        next = next_ref.getObject()
+                        next = next_ref.get_object()
                         del next[NameObject("/Prev")]
                         self[NameObject("/First")] = next_ref
                         self[NameObject("/Count")] = self[NameObject("/Count")] - 1
@@ -778,7 +938,7 @@ class TreeObject(DictionaryObject):
                     if NameObject("/Next") in cur:
                         # Removing middle tree node
                         next_ref = cur[NameObject("/Next")]
-                        next = next_ref.getObject()
+                        next = next_ref.get_object()
                         next[NameObject("/Prev")] = prev_ref
                         prev[NameObject("/Next")] = next_ref
                         self[NameObject("/Count")] = self[NameObject("/Count")] - 1
@@ -795,7 +955,7 @@ class TreeObject(DictionaryObject):
             prev = cur
             if NameObject("/Next") in cur:
                 cur_ref = cur[NameObject("/Next")]
-                cur = cur_ref.getObject()
+                cur = cur_ref.get_object()
             else:
                 cur_ref = None
                 cur = None
@@ -811,7 +971,7 @@ class TreeObject(DictionaryObject):
 
     def emptyTree(self):
         for child in self:
-            child_obj = child.getObject()
+            child_obj = child.get_object()
             del child_obj[NameObject("/Parent")]
             if NameObject("/Next") in child_obj:
                 del child_obj[NameObject("/Next")]
@@ -831,9 +991,9 @@ class StreamObject(DictionaryObject):
         self._data = None
         self.decodedSelf = None
 
-    def writeToStream(self, stream, encryption_key):
+    def write_to_stream(self, stream, encryption_key):
         self[NameObject(SA.LENGTH)] = NumberObject(len(self._data))
-        DictionaryObject.writeToStream(self, stream, encryption_key)
+        DictionaryObject.write_to_stream(self, stream, encryption_key)
         del self[SA.LENGTH]
         stream.write(b_("\nstream\n"))
         data = self._data
@@ -892,7 +1052,7 @@ class EncodedStreamObject(StreamObject):
             # create decoded object
             decoded = DecodedStreamObject()
 
-            decoded._data = filters.decodeStreamData(self)
+            decoded._data = filters.decode_stream_data(self)
             for key, value in list(self.items()):
                 if key not in (SA.LENGTH, SA.FILTER, SA.DECODE_PARMS):
                     decoded[key] = value
@@ -909,11 +1069,11 @@ class ContentStream(DecodedStreamObject):
         self.operations = []
         # stream may be a StreamObject or an ArrayObject containing
         # multiple StreamObjects to be cat'd together.
-        stream = stream.getObject()
+        stream = stream.get_object()
         if isinstance(stream, ArrayObject):
             data = b_("")
             for s in stream:
-                data += b_(s.getObject().getData())
+                data += b_(s.get_object().getData())
             stream = BytesIO(b_(data))
         else:
             stream = BytesIO(b_(stream.getData()))
@@ -929,7 +1089,7 @@ class ContentStream(DecodedStreamObject):
                 break
             stream.seek(-1, 1)
             if peek.isalpha() or peek == b_("'") or peek == b_('"'):
-                operator = utils.readUntilRegex(
+                operator = _utils.readUntilRegex(
                     stream, NameObject.delimiterPattern, True
                 )
                 if operator == b_("BI"):
@@ -950,7 +1110,7 @@ class ContentStream(DecodedStreamObject):
                 while peek not in (b_("\r"), b_("\n")):
                     peek = stream.read(1)
             else:
-                operands.append(readObject(stream, None))
+                operands.append(read_object(stream, None))
 
     def _readInlineImage(self, stream):
         # begin reading just after the "BI" - begin image
@@ -962,10 +1122,10 @@ class ContentStream(DecodedStreamObject):
             if tok == b_("I"):
                 # "ID" - begin of image data
                 break
-            key = readObject(stream, self.pdf)
+            key = read_object(stream, self.pdf)
             tok = readNonWhitespace(stream)
             stream.seek(-1, 1)
-            value = readObject(stream, self.pdf)
+            value = read_object(stream, self.pdf)
             settings[key] = value
         # left at beginning of ID
         tmp = stream.read(3)
@@ -997,7 +1157,7 @@ class ContentStream(DecodedStreamObject):
                     info = tok + tok2
                     # We need to find whitespace between EI and Q.
                     has_q_whitespace = False
-                    while tok3 in utils.WHITESPACES:
+                    while tok3 in _utils.WHITESPACES:
                         has_q_whitespace = True
                         info += tok3
                         tok3 = stream.read(1)
@@ -1018,14 +1178,14 @@ class ContentStream(DecodedStreamObject):
             if operator == b_("INLINE IMAGE"):
                 newdata.write(b_("BI"))
                 dicttext = BytesIO()
-                operands["settings"].writeToStream(dicttext, None)
+                operands["settings"].write_to_stream(dicttext, None)
                 newdata.write(dicttext.getvalue()[2:-2])
                 newdata.write(b_("ID "))
                 newdata.write(operands["data"])
                 newdata.write(b_("EI"))
             else:
                 for op in operands:
-                    op.writeToStream(newdata, None)
+                    op.write_to_stream(newdata, None)
                     newdata.write(b_(" "))
                 newdata.write(b_(operator))
             newdata.write(b_("\n"))
@@ -1041,11 +1201,11 @@ class RectangleObject(ArrayObject):
     """
     This class is used to represent *page boxes* in PyPDF2. These boxes include:
 
-        * :attr:`artBox <PyPDF2.pdf.PageObject.artBox>`
-        * :attr:`bleedBox <PyPDF2.pdf.PageObject.bleedBox>`
-        * :attr:`cropBox <PyPDF2.pdf.PageObject.cropBox>`
-        * :attr:`mediaBox <PyPDF2.pdf.PageObject.mediaBox>`
-        * :attr:`trimBox <PyPDF2.pdf.PageObject.trimBox>`
+        * :attr:`artbox <PyPDF2._page.PageObject.artbox>`
+        * :attr:`bleedbox <PyPDF2._page.PageObject.bleedbox>`
+        * :attr:`cropbox <PyPDF2._page.PageObject.cropbox>`
+        * :attr:`mediabox <PyPDF2._page.PageObject.mediabox>`
+        * :attr:`trimbox <PyPDF2._page.PageObject.trimbox>`
     """
 
     def __init__(self, arr):
@@ -1062,86 +1222,267 @@ class RectangleObject(ArrayObject):
     def __repr__(self):
         return "RectangleObject(%s)" % repr(list(self))
 
-    def getLowerLeft_x(self):
+    @property
+    def left(self):
         return self[0]
 
-    def getLowerLeft_y(self):
+    @property
+    def bottom(self):
         return self[1]
 
-    def getUpperRight_x(self):
+    @property
+    def right(self):
         return self[2]
 
-    def getUpperRight_y(self):
+    @property
+    def top(self):
         return self[3]
 
+    def getLowerLeft_x(self):
+        warnings.warn(
+            DEPR_MSG.format("getLowerLeft_x", "left"),
+            PendingDeprecationWarning,
+        )
+        return self.left
+
+    def getLowerLeft_y(self):
+        warnings.warn(
+            DEPR_MSG.format("getLowerLeft_y", "bottom"),
+            PendingDeprecationWarning,
+        )
+        return self.bottom
+
+    def getUpperRight_x(self):
+        warnings.warn(
+            DEPR_MSG.format("getUpperRight_x", "right"),
+            PendingDeprecationWarning,
+        )
+        return self.right
+
+    def getUpperRight_y(self):
+        warnings.warn(
+            DEPR_MSG.format("getUpperRight_y", "top"),
+            PendingDeprecationWarning,
+        )
+        return self.top
+
     def getUpperLeft_x(self):
-        return self.getLowerLeft_x()
+        warnings.warn(
+            DEPR_MSG.format("getUpperLeft_x", "left"),
+            PendingDeprecationWarning,
+        )
+        return self.left
 
     def getUpperLeft_y(self):
-        return self.getUpperRight_y()
+        warnings.warn(
+            DEPR_MSG.format("getUpperLeft_y", "top"),
+            PendingDeprecationWarning,
+        )
+        return self.top
 
     def getLowerRight_x(self):
-        return self.getUpperRight_x()
+        warnings.warn(
+            DEPR_MSG.format("getLowerRight_x", "right"),
+            PendingDeprecationWarning,
+        )
+        return self.right
 
     def getLowerRight_y(self):
-        return self.getLowerLeft_y()
+        warnings.warn(
+            DEPR_MSG.format("getLowerRight_y", "bottom"),
+            PendingDeprecationWarning,
+        )
+        return self.bottom
 
-    def getLowerLeft(self):
-        return self.getLowerLeft_x(), self.getLowerLeft_y()
+    @property
+    def lower_left(self):
+        """
+        Property to read and modify the lower left coordinate of this box
+        in (x,y) form.
+        """
+        return self.left, self.bottom
 
-    def getLowerRight(self):
-        return self.getLowerRight_x(), self.getLowerRight_y()
-
-    def getUpperLeft(self):
-        return self.getUpperLeft_x(), self.getUpperLeft_y()
-
-    def getUpperRight(self):
-        return self.getUpperRight_x(), self.getUpperRight_y()
-
-    def setLowerLeft(self, value):
+    @lower_left.setter
+    def lower_left(self, value):
         self[0], self[1] = [self.ensureIsNumber(x) for x in value]
 
+    @property
+    def lower_right(self):
+        """
+        Property to read and modify the lower right coordinate of this box
+        in (x,y) form.
+        """
+        return self.right, self.bottom
+
+    @lower_right.setter
+    def lower_right(self, value):
+        self[2], self[1] = [self.ensureIsNumber(x) for x in value]
+
+    @property
+    def upper_left(self):
+        """
+        Property to read and modify the upper left coordinate of this box
+        in (x,y) form.
+        """
+        return self.left, self.top
+
+    @upper_left.setter
+    def upper_left(self, value):
+        self[0], self[3] = [self.ensureIsNumber(x) for x in value]
+
+    @property
+    def upper_right(self):
+        """
+        Property to read and modify the upper right coordinate of this box
+        in (x,y) form.
+        """
+        return self.right, self.top
+
+    @upper_right.setter
+    def upper_right(self, value):
+        self[2], self[3] = [self.ensureIsNumber(x) for x in value]
+
+    def getLowerLeft(self):
+        warnings.warn(
+            DEPR_MSG.format("getLowerLeft", "lower_left"),
+            PendingDeprecationWarning,
+        )
+        return self.lower_left
+
+    def getLowerRight(self):
+        warnings.warn(
+            DEPR_MSG.format("getLowerRight", "lower_right"),
+            PendingDeprecationWarning,
+        )
+        return self.lower_right
+
+    def getUpperLeft(self):
+        warnings.warn(
+            DEPR_MSG.format("getUpperLeft", "upper_left"),
+            PendingDeprecationWarning,
+        )
+        return self.upper_left
+
+    def getUpperRight(self):
+        warnings.warn(
+            DEPR_MSG.format("getUpperRight", "upper_right"),
+            PendingDeprecationWarning,
+        )
+        return self.upper_right
+
+    def setLowerLeft(self, value):
+        warnings.warn(
+            DEPR_MSG.format("setLowerLeft", "lower_left"),
+            PendingDeprecationWarning,
+        )
+        self.lower_left = value
+
     def setLowerRight(self, value):
+        warnings.warn(
+            DEPR_MSG.format("setLowerRight", "lower_right"),
+            PendingDeprecationWarning,
+        )
         self[2], self[1] = [self.ensureIsNumber(x) for x in value]
 
     def setUpperLeft(self, value):
+        warnings.warn(
+            DEPR_MSG.format("setUpperLeft", "upper_left"),
+            PendingDeprecationWarning,
+        )
         self[0], self[3] = [self.ensureIsNumber(x) for x in value]
 
     def setUpperRight(self, value):
+        warnings.warn(
+            DEPR_MSG.format("setUpperRight", "upper_right"),
+            PendingDeprecationWarning,
+        )
         self[2], self[3] = [self.ensureIsNumber(x) for x in value]
 
+    @property
+    def width(self):
+        return self.right - self.left
+
     def getWidth(self):
-        return self.getUpperRight_x() - self.getLowerLeft_x()
+        warnings.warn(DEPR_MSG.format("getWidth", "width"), DeprecationWarning)
+        return self.width
+
+    @property
+    def height(self):
+        return self.top - self.bottom
 
     def getHeight(self):
-        return self.getUpperRight_y() - self.getLowerLeft_y()
+        warnings.warn(DEPR_MSG.format("getHeight", "height"), DeprecationWarning)
+        return self.height
 
-    lowerLeft = property(getLowerLeft, setLowerLeft, None, None)
-    """
-    Property to read and modify the lower left coordinate of this box
-    in (x,y) form.
-    """
-    lowerRight = property(getLowerRight, setLowerRight, None, None)
-    """
-    Property to read and modify the lower right coordinate of this box
-    in (x,y) form.
-    """
-    upperLeft = property(getUpperLeft, setUpperLeft, None, None)
-    """
-    Property to read and modify the upper left coordinate of this box
-    in (x,y) form.
-    """
-    upperRight = property(getUpperRight, setUpperRight, None, None)
-    """
-    Property to read and modify the upper right coordinate of this box
-    in (x,y) form.
-    """
+    @property
+    def lowerLeft(self):
+        warnings.warn(
+            DEPR_MSG.format("lowerLeft", "lower_left"),
+            PendingDeprecationWarning,
+        )
+        return self.lower_left
+
+    @lowerLeft.setter
+    def lowerLeft(self, value):
+        warnings.warn(
+            DEPR_MSG.format("lowerLeft", "lower_left"),
+            PendingDeprecationWarning,
+        )
+        self.lower_left = value
+
+    @property
+    def lowerRight(self):
+        warnings.warn(
+            DEPR_MSG.format("lowerRight", "lower_right"),
+            PendingDeprecationWarning,
+        )
+        return self.lower_right
+
+    @lowerRight.setter
+    def lowerRight(self, value):
+        warnings.warn(
+            DEPR_MSG.format("lowerRight", "lower_right"),
+            PendingDeprecationWarning,
+        )
+        self.lower_right = value
+
+    @property
+    def upperLeft(self):
+        warnings.warn(
+            DEPR_MSG.format("upperLeft", "upper_left"),
+            PendingDeprecationWarning,
+        )
+        return self.upper_left
+
+    @upperLeft.setter
+    def upperLeft(self, value):
+        warnings.warn(
+            DEPR_MSG.format("upperLeft", "upper_left"),
+            PendingDeprecationWarning,
+        )
+        self.upper_left = value
+
+    @property
+    def upperRight(self):
+        warnings.warn(
+            DEPR_MSG.format("upperRight", "upper_right"),
+            PendingDeprecationWarning,
+        )
+        return self.upper_right
+
+    @upperRight.setter
+    def upperRight(self, value):
+        warnings.warn(
+            DEPR_MSG.format("upperRight", "upper_right"),
+            PendingDeprecationWarning,
+        )
+        self.upper_right = value
 
 
 class Field(TreeObject):
     """
     A class representing a field dictionary. This class is accessed through
-    :meth:`getFields()<PyPDF2.PdfFileReader.getFields>`
+    :meth:`getFields()<PyPDF2.PdfReader.getFields>`
     """
 
     def __init__(self, data):
@@ -1194,7 +1535,7 @@ class Field(TreeObject):
         """
         Read-only property accessing the mapping name of this field. This
         name is used by PyPDF2 as a key in the dictionary returned by
-        :meth:`getFields()<PyPDF2.PdfFileReader.getFields>`
+        :meth:`getFields()<PyPDF2.PdfReader.getFields>`
         """
         return self.get("/TM")
 
@@ -1304,19 +1645,19 @@ class Destination(TreeObject):
             ]
         )
 
-    def writeToStream(self, stream, encryption_key):
+    def write_to_stream(self, stream, encryption_key):
         stream.write(b_("<<\n"))
         key = NameObject("/D")
-        key.writeToStream(stream, encryption_key)
+        key.write_to_stream(stream, encryption_key)
         stream.write(b_(" "))
         value = self.getDestArray()
-        value.writeToStream(stream, encryption_key)
+        value.write_to_stream(stream, encryption_key)
 
         key = NameObject("/S")
-        key.writeToStream(stream, encryption_key)
+        key.write_to_stream(stream, encryption_key)
         stream.write(b_(" "))
         value = NameObject("/GoTo")
-        value.writeToStream(stream, encryption_key)
+        value.write_to_stream(stream, encryption_key)
 
         stream.write(b_("\n"))
         stream.write(b_(">>"))
@@ -1395,23 +1736,23 @@ class Destination(TreeObject):
 
 
 class Bookmark(Destination):
-    def writeToStream(self, stream, encryption_key):
+    def write_to_stream(self, stream, encryption_key):
         stream.write(b_("<<\n"))
         for key in [
             NameObject(x)
             for x in ["/Title", "/Parent", "/First", "/Last", "/Next", "/Prev"]
             if x in self
         ]:
-            key.writeToStream(stream, encryption_key)
+            key.write_to_stream(stream, encryption_key)
             stream.write(b_(" "))
             value = self.raw_get(key)
-            value.writeToStream(stream, encryption_key)
+            value.write_to_stream(stream, encryption_key)
             stream.write(b_("\n"))
         key = NameObject("/Dest")
-        key.writeToStream(stream, encryption_key)
+        key.write_to_stream(stream, encryption_key)
         stream.write(b_(" "))
         value = self.getDestArray()
-        value.writeToStream(stream, encryption_key)
+        value.write_to_stream(stream, encryption_key)
         stream.write(b_("\n"))
         stream.write(b_(">>"))
 
@@ -1435,7 +1776,7 @@ def decode_pdfdocencoding(byte_array):
         if c == u_("\u0000"):
             raise UnicodeDecodeError(
                 "pdfdocencoding",
-                utils.barray(b),
+                _utils.barray(b),
                 -1,
                 -1,
                 "does not exist in translation table",

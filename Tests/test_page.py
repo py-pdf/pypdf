@@ -3,7 +3,7 @@ import os
 
 import pytest
 
-from PyPDF2 import PdfFileReader
+from PyPDF2 import PdfReader
 from PyPDF2.generic import RectangleObject
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -30,7 +30,7 @@ all_files_meta = get_all_sample_files()
 )
 def test_read(meta):
     pdf_path = os.path.join(EXTERNAL_ROOT, meta["path"])
-    reader = PdfFileReader(pdf_path)
+    reader = PdfReader(pdf_path)
     reader.pages[0]
     assert len(reader.pages) == meta["pages"]
 
@@ -58,7 +58,7 @@ def test_page_operations(pdf_path, password):
     output is as expected.
     """
     pdf_path = os.path.join(RESOURCE_ROOT, pdf_path)
-    reader = PdfFileReader(pdf_path)
+    reader = PdfReader(pdf_path)
 
     if password:
         reader.decrypt(password)
@@ -67,12 +67,12 @@ def test_page_operations(pdf_path, password):
     page.mergeRotatedScaledPage(page, 90, 1, 1)
     page.mergeScaledTranslatedPage(page, 1, 1, 1)
     page.mergeRotatedScaledTranslatedPage(page, 90, 1, 1, 1, 1)
-    page.addTransformation([1, 0, 0, 0, 0, 0])
+    page.add_transformation([1, 0, 0, 0, 0, 0])
     page.scale(2, 2)
     page.scaleBy(0.5)
     page.scaleTo(100, 100)
     page.compressContentStreams()
-    page.extractText()
+    page.extract_text()
 
 
 @pytest.mark.parametrize(
@@ -88,7 +88,7 @@ def test_page_operations(pdf_path, password):
     ],
 )
 def test_compress_content_streams(pdf_path, password):
-    reader = PdfFileReader(pdf_path)
+    reader = PdfReader(pdf_path)
     if password:
         reader.decrypt(password)
     for page in reader.pages:
@@ -96,20 +96,20 @@ def test_compress_content_streams(pdf_path, password):
 
 
 def test_page_properties():
-    reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
+    reader = PdfReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
     page = reader.pages[0]
-    assert page.mediaBox == RectangleObject([0, 0, 612, 792])
-    assert page.cropBox == RectangleObject([0, 0, 612, 792])
-    assert page.bleedBox == RectangleObject([0, 0, 612, 792])
-    assert page.trimBox == RectangleObject([0, 0, 612, 792])
-    assert page.artBox == RectangleObject([0, 0, 612, 792])
+    assert page.mediabox == RectangleObject([0, 0, 612, 792])
+    assert page.cropbox == RectangleObject([0, 0, 612, 792])
+    assert page.bleedbox == RectangleObject([0, 0, 612, 792])
+    assert page.trimbox == RectangleObject([0, 0, 612, 792])
+    assert page.artbox == RectangleObject([0, 0, 612, 792])
 
-    page.bleedBox = RectangleObject([0, 1, 100, 101])
-    assert page.bleedBox == RectangleObject([0, 1, 100, 101])
+    page.bleedbox = RectangleObject([0, 1, 100, 101])
+    assert page.bleedbox == RectangleObject([0, 1, 100, 101])
 
 
 def test_page_rotation_non90():
-    reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
+    reader = PdfReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
     page = reader.pages[0]
     with pytest.raises(ValueError) as exc:
         page.rotateClockwise(91)

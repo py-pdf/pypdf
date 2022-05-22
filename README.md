@@ -30,12 +30,12 @@ pip install PyPDF2
 ## Usage
 
 ```python
-from PyPDF2 import PdfFileReader
+from PyPDF2 import PdfReader
 
-reader = PdfFileReader("example.pdf")
-number_of_pages = reader.numPages
+reader = PdfReader("example.pdf")
+number_of_pages = len(reader.pages)
 page = reader.pages[0]
-text = page.extractText()
+text = page.extract_text()
 ```
 
 PyPDF2 can do a lot more, e.g. splitting, merging, reading and creating

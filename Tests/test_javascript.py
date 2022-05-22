@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from PyPDF2 import PdfFileReader, PdfFileWriter
+from PyPDF2 import PdfReader, PdfWriter
 
 # Configure path environment
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -12,9 +12,9 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
 
 @pytest.fixture()
 def pdf_file_writer():
-    reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
-    writer = PdfFileWriter()
-    writer.appendPagesFromReader(reader)
+    reader = PdfReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
+    writer = PdfWriter()
+    writer.append_pages_from_reader(reader)
     yield writer
 
 

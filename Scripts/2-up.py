@@ -8,7 +8,7 @@ usage: python 2-up.py input_file output_file
 
 import sys
 
-from PyPDF2 import PdfFileReader, PdfFileWriter
+from PyPDF2 import PdfReader, PdfWriter
 
 
 def main():
@@ -16,13 +16,13 @@ def main():
         print("usage: python 2-up.py input_file output_file")
         sys.exit(1)
     print("2-up input " + sys.argv[1])
-    reader = PdfFileReader(sys.argv[1])
-    writer = PdfFileWriter()
+    reader = PdfReader(sys.argv[1])
+    writer = PdfWriter()
     for iter in range(0, reader.numPages - 1, 2):
-        lhs = reader.getPage(iter)
-        rhs = reader.getPage(iter + 1)
+        lhs = reader._get_page(iter)
+        rhs = reader._get_page(iter + 1)
         lhs.mergeTranslatedPage(rhs, lhs.mediaBox.getUpperRight_x(), 0, True)
-        writer.addPage(lhs)
+        writer.add_page(lhs)
         print(str(iter) + " "),
         sys.stdout.flush()
 

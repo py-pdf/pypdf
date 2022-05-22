@@ -11,7 +11,7 @@ import re
 
 from PyPDF2.errors import ParseError
 
-from .utils import isString
+from ._utils import isString
 
 _INT_RE = r"(0|-?[1-9]\d*)"  # A decimal int, don't allow "-0".
 PAGE_RANGE_RE = "^({int}|({int}?(:{int}?(:{int}?)?)))$".format(int=_INT_RE)
@@ -34,8 +34,9 @@ PAGE_RANGE_HELP = """Remember, page indices start with zero.
 
 class PageRange(object):
     """
-    A slice-like representation of a range of page indices,
-        i.e. page numbers, only starting at zero.
+    A slice-like representation of a range of page indices.
+
+    For example, page numbers, only starting at zero.
 
     The syntax is like what you would put between brackets [ ].
     The slice is one of the few Python types that can't be subclassed,
