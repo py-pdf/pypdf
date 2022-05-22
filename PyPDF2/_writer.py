@@ -1733,7 +1733,7 @@ class PdfWriter:
         self._set_page_layout(layout)
 
     @property
-    def pageLayout(self) -> Optional[str]:
+    def pageLayout(self) -> Optional[LayoutType]:
         """
         .. deprecated:: 1.28.0
 
@@ -1748,7 +1748,7 @@ class PdfWriter:
         return self.page_layout
 
     @pageLayout.setter
-    def pageLayout(self, layout: str) -> None:
+    def pageLayout(self, layout: LayoutType) -> None:
         """
         .. deprecated:: 1.28.0
 
