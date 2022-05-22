@@ -3,7 +3,7 @@ import os
 
 import pytest
 
-import PyPDF2.utils
+import PyPDF2._utils
 from PyPDF2.errors import PdfStreamError
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -23,11 +23,11 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
     ],
 )
 def test_skipOverWhitespace(stream, expected):
-    assert PyPDF2.utils.skipOverWhitespace(stream) == expected
+    assert PyPDF2._utils.skip_over_whitespace(stream) == expected
 
 
 def test_readUntilWhitespace():
-    assert PyPDF2.utils.readUntilWhitespace(io.BytesIO(b"foo"), maxchars=1) == b"f"
+    assert PyPDF2._utils.read_until_whitespace(io.BytesIO(b"foo"), maxchars=1) == b"f"
 
 
 @pytest.mark.parametrize(
@@ -40,7 +40,7 @@ def test_readUntilWhitespace():
     ],
 )
 def test_skipOverComment(stream, remainder):
-    PyPDF2.utils.skipOverComment(stream)
+    PyPDF2._utils.skip_over_comment(stream)
     assert stream.read() == remainder
 
 
@@ -49,7 +49,7 @@ def test_readUntilRegex_premature_ending_raise():
 
     stream = io.BytesIO(b"")
     with pytest.raises(PdfStreamError) as exc:
-        PyPDF2.utils.readUntilRegex(stream, re.compile(b"."))
+        PyPDF2._utils.read_until_regex(stream, re.compile(b"."))
     assert exc.value.args[0] == "Stream has ended unexpectedly"
 
 
@@ -57,7 +57,9 @@ def test_readUntilRegex_premature_ending_name():
     import re
 
     stream = io.BytesIO(b"")
-    assert PyPDF2.utils.readUntilRegex(stream, re.compile(b"."), ignore_eof=True) == b""
+    assert (
+        PyPDF2._utils.read_until_regex(stream, re.compile(b"."), ignore_eof=True) == b""
+    )
 
 
 @pytest.mark.parametrize(
@@ -69,21 +71,21 @@ def test_readUntilRegex_premature_ending_name():
     ],
 )
 def test_matrixMultiply(a, b, expected):
-    assert PyPDF2.utils.matrixMultiply(a, b) == expected
+    assert PyPDF2._utils.matrix_multiply(a, b) == expected
 
 
 def test_markLocation():
     stream = io.BytesIO(b"abde" * 6000)
-    PyPDF2.utils.markLocation(stream)
+    PyPDF2._utils.mark_location(stream)
     os.remove("PyPDF2_pdfLocation.txt")  # cleanup
 
 
 def test_hexStr():
-    assert PyPDF2.utils.hexStr(10) == "0xa"
+    assert PyPDF2._utils.hex_str(10) == "0xa"
 
 
 def test_b():
-    assert PyPDF2.utils.b_("foo") == b"foo"
-    assert PyPDF2.utils.b_("😀") == "😀".encode()
-    assert PyPDF2.utils.b_("‰") == "‰".encode()
-    assert PyPDF2.utils.b_("▷") == "▷".encode()
+    assert PyPDF2._utils.b_("foo") == b"foo"
+    assert PyPDF2._utils.b_("😀") == "😀".encode()
+    assert PyPDF2._utils.b_("‰") == "‰".encode()
+    assert PyPDF2._utils.b_("▷") == "▷".encode()

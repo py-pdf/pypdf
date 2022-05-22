@@ -30,9 +30,9 @@ pip install PyPDF2
 ## Usage
 
 ```python
-from PyPDF2 import PdfFileReader
+from PyPDF2 import PdfReader
 
-reader = PdfFileReader("example.pdf")
+reader = PdfReader("example.pdf")
 number_of_pages = reader.numPages
 page = reader.pages[0]
 text = page.extractText()

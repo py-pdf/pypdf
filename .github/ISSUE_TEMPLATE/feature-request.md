@@ -15,7 +15,7 @@ Explain briefly what you want to achive.
 How would your feature be used? (Remove this if it is not applicable.)
 
 ```python
-from PyPDF2 import PdfFileReader, PdfFileWriter
+from PyPDF2 import PdfReader, PdfWriter
 
 ...  # your new feature in action!
 ```

@@ -1,10 +1,10 @@
 # Cropping and Transforming PDFs
 
 ```python
-from PyPDF2 import PdfFileWriter, PdfFileReader
+from PyPDF2 import PdfWriter, PdfReader
 
-reader = PdfFileReader("example.pdf")
-writer = PdfFileWriter()
+reader = PdfReader("example.pdf")
+writer = PdfWriter()
 
 # add page 1 from reader to output document, unchanged:
 writer.addPage(reader.pages[0])
@@ -23,7 +23,7 @@ writer.addPage(page3)
 # add some Javascript to launch the print window on opening this PDF.
 # the password dialog may prevent the print dialog from being shown,
 # comment the the encription lines, if that's the case, to try this out:
-writer.addJS("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
+writer.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
 
 # write to document-output.pdf
 with open("PyPDF2-output.pdf", "wb") as fp:
@@ -37,19 +37,19 @@ with open("PyPDF2-output.pdf", "wb") as fp:
 is the result of
 
 ```python
-from PyPDF2 import PdfFileReader, PdfFileWriter, Transformation
+from PyPDF2 import PdfReader, PdfWriter, Transformation
 
 # Get the data
-reader_base = PdfFileReader("labeled-edges-center-image.pdf")
+reader_base = PdfReader("labeled-edges-center-image.pdf")
 page_base = reader_base.pages[0]
 
-reader = PdfFileReader("box.pdf")
+reader = PdfReader("box.pdf")
 page_box = reader.pages[0]
 
-page_base.mergePage(page_box)
+page_base.merge_page(page_box)
 
 # Write the result back
-writer = PdfFileWriter()
+writer = PdfWriter()
 writer.addPage(page_base)
 with open("merged-foo.pdf", "wb") as fp:
     writer.write(fp)
@@ -60,22 +60,22 @@ with open("merged-foo.pdf", "wb") as fp:
 ![](merge-45-deg-rot.png)
 
 ```python
-from PyPDF2 import PdfFileReader, PdfFileWriter, Transformation
+from PyPDF2 import PdfReader, PdfWriter, Transformation
 
 # Get the data
-reader_base = PdfFileReader("labeled-edges-center-image.pdf")
+reader_base = PdfReader("labeled-edges-center-image.pdf")
 page_base = reader_base.pages[0]
 
-reader = PdfFileReader("box.pdf")
+reader = PdfReader("box.pdf")
 page_box = reader.pages[0]
 
 # Apply the transformation
 transformation = Transformation().rotate(45)
 page_box.add_transformation(transformation)
-page_base.mergePage(page_box)
+page_base.merge_page(page_box)
 
 # Write the result back
-writer = PdfFileWriter()
+writer = PdfWriter()
 writer.addPage(page_base)
 with open("merged-foo.pdf", "wb") as fp:
     writer.write(fp)
@@ -86,7 +86,7 @@ If you add the expand parameter:
 ```python
 transformation = Transformation().rotate(45)
 page_box.add_transformation(transformation)
-page_base.mergePage(page_box)
+page_base.merge_page(page_box)
 ```
 
 you get:
