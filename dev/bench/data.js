@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1653246627823,
+  "lastUpdate": 1653248708082,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -2075,6 +2075,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.009266148921254243",
             "extra": "mean: 116.79210929999897 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f74d733ae5e93b2fa73e912754c9158f6018d851",
+          "message": "MAINT: Add stacklevel=2 to deprecation warnings (#889)\n\n* STY: Adjust code/docs in several places to make it more similar to the 2.0.0 branch\r\n* MAINT: Remove excessive <py36 warnings",
+          "timestamp": "2022-05-22T21:44:31+02:00",
+          "tree_id": "d99fa7a659ed8b2e1c4b8c2be88325447fde672c",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/f74d733ae5e93b2fa73e912754c9158f6018d851"
+        },
+        "date": 1653248707485,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.6584098089297077,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007816245602955785",
+            "extra": "mean: 1.5188109084000003 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 9.522844651050827,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009774204855581411",
+            "extra": "mean: 105.0106387999989 msec\nrounds: 10"
           }
         ]
       }
