@@ -203,10 +203,10 @@ class ConvertFunctionsToVirtualList(_VirtualList):
         warnings.warn(
             "ConvertFunctionsToVirtualList will be removed with PyPDF2 2.0.0",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         warnings.warn(DEPR_MSG_NO_REPLACEMENT.format("ConvertFunctionsToVirtualList"))
         super().__init__(lengthFunction, getFunction)
-
 
 
 def matrix_multiply(a, b):

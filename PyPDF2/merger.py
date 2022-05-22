@@ -25,11 +25,11 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from sys import version_info
 import warnings
+from sys import version_info
 
 from PyPDF2._reader import PdfReader
-from PyPDF2._utils import _isString, DEPR_MSG, str_
+from PyPDF2._utils import DEPR_MSG, isString, str_
 from PyPDF2._writer import PdfWriter
 from PyPDF2.constants import PagesAttributes as PA
 from PyPDF2.generic import *
@@ -81,6 +81,7 @@ class PdfMerger(object):
             warnings.warn(
                 "The `overwriteWarnings` argument to PdfReader will be removed with PyPDF2 2.0.0.",
                 PendingDeprecationWarning,
+                stacklevel=2,
             )
         self.inputs = []
         self.pages = []
@@ -129,7 +130,7 @@ class PdfMerger(object):
         # BytesIO (or StreamIO) stream.
         # If fileobj is none of the above types, it is not modified
         decryption_key = None
-        if _isString(fileobj):
+        if isString(fileobj):
             fileobj = file(fileobj, "rb")
             my_file = True
         elif hasattr(fileobj, "seek") and hasattr(fileobj, "read"):
@@ -152,17 +153,17 @@ class PdfMerger(object):
 
         # Create a new PdfReader instance using the stream
         # (either file or BytesIO or StringIO) created above
-        pdfr = PdfReader(
+        reader = PdfReader(
             fileobj, strict=self.strict, overwriteWarnings=self.overwriteWarnings
         )
         if decryption_key is not None:
-            pdfr._decryption_key = decryption_key
+            reader._decryption_key = decryption_key
 
         # Find the range of pages to merge.
         if pages is None:
-            pages = (0, pdfr._get_num_pages())
+            pages = (0, len(reader.pages))
         elif isinstance(pages, PageRange):
-            pages = pages.indices(pdfr._get_num_pages())
+            pages = pages.indices(len(reader.pages))
         elif not isinstance(pages, tuple):
             raise TypeError('"pages" must be a tuple of (start, stop[, step])')
 
@@ -176,26 +177,26 @@ class PdfMerger(object):
 
         outline = []
         if import_bookmarks:
-            outline = pdfr.get_outlines()
-            outline = self._trim_outline(pdfr, outline, pages)
+            outline = reader.get_outlines()
+            outline = self._trim_outline(reader, outline, pages)
 
         if bookmark:
             self.bookmarks += [bookmark, outline]
         else:
             self.bookmarks += outline
 
-        dests = pdfr.namedDestinations
-        dests = self._trim_dests(pdfr, dests, pages)
-        self.named_dests += dests
+        dests = reader.namedDestinations
+        trimmed_dests = self._trim_dests(reader, dests, pages)
+        self.named_dests += trimmed_dests
 
         # Gather all the pages that are going to be merged
         for i in range(*pages):
-            pg = pdfr._get_page(i)
+            pg = reader.pages[i]
 
             id = self.id_count
             self.id_count += 1
 
-            mp = _MergedPage(pg, pdfr, id)
+            mp = _MergedPage(pg, reader, id)
 
             srcpages.append(mp)
 
@@ -206,7 +207,7 @@ class PdfMerger(object):
         self.pages[position:position] = srcpages
 
         # Keep track of our input files so we can close them later
-        self.inputs.append((fileobj, pdfr, my_file))
+        self.inputs.append((fileobj, reader, my_file))
 
     def append(self, fileobj, bookmark=None, pages=None, import_bookmarks=True):
         """
@@ -240,7 +241,7 @@ class PdfMerger(object):
             file-like object.
         """
         my_file = False
-        if _isString(fileobj):
+        if isString(fileobj):
             fileobj = file(fileobj, "wb")
             my_file = True
 
@@ -308,6 +309,7 @@ class PdfMerger(object):
         warnings.warn(
             DEPR_MSG.format("setPageLayout", "set_page_layout"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.set_page_layout(layout)
 
@@ -378,12 +380,12 @@ class PdfMerger(object):
         page set.
         """
         new_dests = []
-        for k, o in list(dests.items()):
+        for key, obj in dests.items():
             for j in range(*pages):
-                if pdf.pages[j].get_object() == o["/Page"].get_object():
-                    o[NameObject("/Page")] = o["/Page"].get_object()
-                    assert str_(k) == str_(o["/Title"])
-                    new_dests.append(o)
+                if pdf.pages[j].get_object() == obj["/Page"].get_object():
+                    obj[NameObject("/Page")] = obj["/Page"].get_object()
+                    assert str_(key) == str_(obj["/Title"])
+                    new_dests.append(obj)
                     break
         return new_dests
 
@@ -396,11 +398,11 @@ class PdfMerger(object):
         prev_header_added = True
         for i, o in enumerate(outline):
             if isinstance(o, list):
-                sub = self._trim_outline(pdf, o, pages)
+                sub = self._trim_outline(pdf, o, pages)  # type: ignore
                 if sub:
                     if not prev_header_added:
                         new_outline.append(outline[i - 1])
-                    new_outline.append(sub)
+                    new_outline.append(sub)  # type: ignore
             else:
                 prev_header_added = False
                 for j in range(*pages):
@@ -553,6 +555,7 @@ class PdfMerger(object):
         warnings.warn(
             "findBookmark is deprecated. Use find_bookmark instead.",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.find_bookmark(bookmark, root=root)
 
@@ -562,10 +565,12 @@ class PdfMerger(object):
 
         for i, b in enumerate(root):
             if isinstance(b, list):
-                res = self.findBookmark(bookmark, b)
+                # b is still an inner node
+                res = self.find_bookmark(bookmark, b)  # type: ignore
                 if res:
                     return [i] + res
             elif b == bookmark or b["/Title"] == bookmark:
+                # we found a leaf node
                 return [i]
 
         return None
@@ -588,6 +593,7 @@ class PdfMerger(object):
         warnings.warn(
             "addBookmark is deprecated. Use add_bookmark instead.",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.add_bookmark(
             title, pagenum, parent, color, bold, italic, fit, *args
@@ -680,6 +686,7 @@ class PdfMerger(object):
         warnings.warn(
             "addNamedDestination is deprecated. Use add_named_destionation instead.",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.add_named_destionation(title, pagenum)
 
@@ -705,6 +712,7 @@ class OutlinesObject(list):
         warnings.warn(
             "The OutlinesObject class will be removed with PyPDF2 2.0.0",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         list.__init__(self)
         self.tree = tree
@@ -749,6 +757,8 @@ class OutlinesObject(list):
 
 class PdfFileMerger(PdfMerger):
     def __init__(self, *args, **kwargs):
+        import warnings
+
         warnings.warn(
             "PdfFileMerger was renamed to PdfMerger. PdfFileMerger will be removed",
             PendingDeprecationWarning,

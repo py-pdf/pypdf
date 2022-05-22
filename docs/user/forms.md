@@ -24,7 +24,7 @@ fields = reader.get_fields()
 writer.add_page(page)
 
 writer.update_page_form_field_values(
-    writer.get_page(0), {"fieldname": "some filled in text"}
+    writer.pages[0], {"fieldname": "some filled in text"}
 )
 
 # write "output" to PyPDF2-output.pdf
