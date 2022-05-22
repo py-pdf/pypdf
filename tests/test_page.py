@@ -1,11 +1,13 @@
 import json
 import os
+from copy import deepcopy
 
 import pytest
 
 from PyPDF2 import PdfFileReader, Transformation
 from PyPDF2._page import PageObject
-from PyPDF2.generic import RectangleObject
+from PyPDF2.constants import PageAttributes as PG
+from PyPDF2.generic import DictionaryObject, NameObject, RectangleObject
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -72,6 +74,47 @@ def test_page_operations(pdf_path, password):
     page.scaleTo(100, 100)
     page.compressContentStreams()
     page.extractText()
+
+
+def test_transformation_equivalence():
+    pdf_path = os.path.join(RESOURCE_ROOT, "labeled-edges-center-image.pdf")
+    reader_base = PdfFileReader(pdf_path)
+    page_base = reader_base.pages[0]
+
+    pdf_path = os.path.join(RESOURCE_ROOT, "box.pdf")
+    reader_add = PdfFileReader(pdf_path)
+    page_box = reader_add.pages[0]
+
+    op = Transformation().scale(2).rotate(45)
+
+    # Option 1: The new way
+    page_box1 = deepcopy(page_box)
+    page_base1 = deepcopy(page_base)
+    page_box1.add_transformation(op, expand=True)
+    page_base1.mergePage(page_box1, expand=False)
+
+    # Option 2: The old way
+    page_box2 = deepcopy(page_box)
+    page_base2 = deepcopy(page_base)
+    page_base2.mergeTransformedPage(page_box2, op, expand=False)
+
+    # Should be the smae
+    assert page_base1[NameObject(PG.CONTENTS)] == page_base2[NameObject(PG.CONTENTS)]
+    assert page_base1.mediaBox == page_base2.mediaBox
+    assert page_base1.trimBox == page_base2.trimBox
+    assert page_base1[NameObject(PG.ANNOTS)] == page_base2[NameObject(PG.ANNOTS)]
+    compare_dict_objects(
+        page_base1[NameObject(PG.RESOURCES)], page_base2[NameObject(PG.RESOURCES)]
+    )
+
+
+def compare_dict_objects(d1, d2):
+    assert sorted(d1.keys()) == sorted(d2.keys())
+    for k in d1.keys():
+        if isinstance(d1[k], DictionaryObject):
+            compare_dict_objects(d1[k], d2[k])
+        else:
+            assert d1[k] == d2[k]
 
 
 def test_page_transformations():
