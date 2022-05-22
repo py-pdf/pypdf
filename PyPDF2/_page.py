@@ -88,6 +88,7 @@ def getRectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObje
     warnings.warn(
         DEPR_MSG_NO_REPLACEMENT.format("getRectangle"),
         PendingDeprecationWarning,
+        stacklevel=2,
     )
     return _get_rectangle(self, name, defaults)
 
@@ -102,6 +103,7 @@ def setRectangle(self: Any, name: str, value: Union[RectangleObject, float]) -> 
     warnings.warn(
         DEPR_MSG_NO_REPLACEMENT.format("setRectangle"),
         PendingDeprecationWarning,
+        stacklevel=2,
     )
     _set_rectangle(self, name, value)
 
@@ -114,6 +116,7 @@ def deleteRectangle(self: Any, name: str) -> None:
     warnings.warn(
         DEPR_MSG_NO_REPLACEMENT.format("deleteRectangle"),
         PendingDeprecationWarning,
+        stacklevel=2,
     )
     del self[name]
 
@@ -130,6 +133,7 @@ def createRectangleAccessor(name: str, fallback: Iterable[str]) -> property:
     warnings.warn(
         DEPR_MSG_NO_REPLACEMENT.format("createRectangleAccessor"),
         PendingDeprecationWarning,
+        stacklevel=2,
     )
     return _create_rectangle_accessor(name, fallback)
 
@@ -272,7 +276,7 @@ class PageObject(DictionaryObject):
         page.__setitem__(NameObject(PG.RESOURCES), DictionaryObject())
         if width is None or height is None:
             if pdf is not None and len(pdf.pages) > 0:
-                lastpage = pdf.get_page(len(pdf.pages) - 1)
+                lastpage = pdf.pages[len(pdf.pages) - 1]
                 width = lastpage.mediabox.width
                 height = lastpage.mediabox.height
             else:
@@ -297,6 +301,7 @@ class PageObject(DictionaryObject):
         warnings.warn(
             DEPR_MSG.format("createBlankPage", "create_blank_page"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return PageObject.create_blank_page(pdf, width, height)
 
@@ -321,6 +326,7 @@ class PageObject(DictionaryObject):
         warnings.warn(
             DEPR_MSG.format("rotateClockwise", "rotate_clockwise"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.rotate_clockwise(angle)
 
@@ -333,6 +339,7 @@ class PageObject(DictionaryObject):
         warnings.warn(
             DEPR_MSG.format("rotateCounterClockwise", "rotate_clockwise"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         if angle % 90 != 0:
             raise ValueError("Rotation angle must be a multiple of 90")
@@ -663,6 +670,7 @@ class PageObject(DictionaryObject):
             "page2.add_transformation(Transformation().scale(scale)); "
             "page.merge_page(page2, expand) instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         op = Transformation().scale(scale, scale)
         self.mergeTransformedPage(page2, op, expand)
@@ -690,6 +698,7 @@ class PageObject(DictionaryObject):
             "page2.add_transformation(Transformation().rotate(rotation)); "
             "page.merge_page(page2, expand) instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         op = Transformation().rotate(rotation)
         self.mergeTransformedPage(page2, op, expand)
@@ -718,6 +727,7 @@ class PageObject(DictionaryObject):
             "page2.add_transformation(Transformation().translate(tx, ty)); "
             "page.merge_page(page2, expand) instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         op = Transformation().translate(tx, ty)
         self.mergeTransformedPage(page2, op, expand)
@@ -752,6 +762,7 @@ class PageObject(DictionaryObject):
             "page2.add_transformation(Transformation().rotate(rotation).translate(tx, ty)); "
             "page.merge_page(page2, expand) instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         op = Transformation().translate(-tx, -ty).rotate(rotation).translate(tx, ty)
         return self.mergeTransformedPage(page2, op, expand)
@@ -780,6 +791,7 @@ class PageObject(DictionaryObject):
             "page2.add_transformation(Transformation().rotate(rotation).scale(scale)); "
             "page.merge_page(page2, expand) instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         op = Transformation().rotate(rotation).scale(scale, scale)
         self.mergeTransformedPage(page2, op, expand)
@@ -814,6 +826,7 @@ class PageObject(DictionaryObject):
             "page2.add_transformation(Transformation().scale(scale).translate(tx, ty)); "
             "page.merge_page(page2, expand) instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         op = Transformation().scale(scale, scale).translate(tx, ty)
         return self.mergeTransformedPage(page2, op, expand)
@@ -851,6 +864,7 @@ class PageObject(DictionaryObject):
             "page2.add_transformation(Transformation().rotate(rotation).scale(scale)); "
             "page.merge_page(page2, expand) instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         op = Transformation().rotate(rotation).scale(scale, scale).translate(tx, ty)
         self.mergeTransformedPage(page2, op, expand)
@@ -870,7 +884,7 @@ class PageObject(DictionaryObject):
         """
         if isinstance(ctm, Transformation):
             ctm = ctm.ctm
-        content = self.getContents()
+        content = self.get_contents()
         if content is not None:
             content = PageObject._add_transformation_matrix(content, self.pdf, ctm)
             content = PageObject._push_pop_gs(content, self.pdf)
@@ -908,6 +922,19 @@ class PageObject(DictionaryObject):
             self.mediabox.setLowerLeft(lowerleft)
             self.mediabox.setUpperRight(upperright)
         self[NameObject(PG.CONTENTS)] = content
+
+    def addTransformation(self, ctm: CompressedTransformationMatrix) -> None:
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`add_transformation` instead.
+        """
+        warnings.warn(
+            DEPR_MSG.format("addTransformation", "add_transformation"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.add_transformation(ctm)
 
     def scale(self, sx: float, sy: float) -> None:
         """
@@ -965,6 +992,7 @@ class PageObject(DictionaryObject):
         warnings.warn(
             DEPR_MSG.format("Page.scaleBy", "Page.scale_by"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.scale(factor, factor)
 
@@ -989,6 +1017,7 @@ class PageObject(DictionaryObject):
         warnings.warn(
             DEPR_MSG.format("Page.scaleTo", "Page.scale_to"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.scale_to(width, height)
 
@@ -1017,6 +1046,7 @@ class PageObject(DictionaryObject):
                 "Page.compressContentStreams", "Page.compress_content_streams"
             ),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.compress_content_streams()
 
@@ -1102,6 +1132,7 @@ class PageObject(DictionaryObject):
         warnings.warn(
             DEPR_MSG.format("Page.mediaBox", "Page.mediabox"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.mediabox
 
@@ -1115,6 +1146,7 @@ class PageObject(DictionaryObject):
         warnings.warn(
             DEPR_MSG.format("Page.mediaBox", "Page.mediabox"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.mediabox = value
 
@@ -1137,6 +1169,7 @@ class PageObject(DictionaryObject):
         warnings.warn(
             DEPR_MSG.format("Page.cropBox", "Page.cropbox"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.cropbox
 
@@ -1145,6 +1178,7 @@ class PageObject(DictionaryObject):
         warnings.warn(
             DEPR_MSG.format("Page.cropBox", "Page.cropbox"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.cropbox = value
 
@@ -1165,6 +1199,7 @@ class PageObject(DictionaryObject):
         warnings.warn(
             DEPR_MSG.format("Page.bleedBox", "Page.bleedbox"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.bleedbox
 
@@ -1173,6 +1208,7 @@ class PageObject(DictionaryObject):
         warnings.warn(
             DEPR_MSG.format("Page.bleedBox", "Page.bleedbox"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.bleedbox = value
 
@@ -1192,6 +1228,7 @@ class PageObject(DictionaryObject):
         warnings.warn(
             DEPR_MSG.format("Page.trimBox", "Page.trimbox"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.trimbox
 
@@ -1200,6 +1237,7 @@ class PageObject(DictionaryObject):
         warnings.warn(
             DEPR_MSG.format("Page.trimBox", "Page.trimbox"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.trimbox = value
 
@@ -1220,6 +1258,7 @@ class PageObject(DictionaryObject):
         warnings.warn(
             DEPR_MSG.format("Page.artBox", "Page.artbox"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.artbox
 
@@ -1228,6 +1267,7 @@ class PageObject(DictionaryObject):
         warnings.warn(
             DEPR_MSG.format("Page.artBox", "Page.artbox"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.artbox = value
 

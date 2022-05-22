@@ -25,12 +25,13 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import warnings
 from io import BytesIO, FileIO, IOBase
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 
 from ._page import PageObject
 from ._reader import PdfReader
-from ._utils import StrByteType, str_
+from ._utils import DEPR_MSG, StrByteType, str_
 from ._writer import PdfWriter
 from .constants import PagesAttributes as PA
 from .generic import (
@@ -148,7 +149,7 @@ class PdfMerger:
 
         outline = []
         if import_bookmarks:
-            outline = reader.getOutlines()
+            outline = reader.get_outlines()
             outline = self._trim_outline(reader, outline, pages)
 
         if bookmark:
@@ -167,7 +168,7 @@ class PdfMerger:
 
         # Gather all the pages that are going to be merged
         for i in range(*pages):
-            pg = reader.get_page(i)
+            pg = reader.pages[i]
 
             id = self.id_count
             self.id_count += 1
@@ -314,6 +315,30 @@ class PdfMerger:
             raise RuntimeError(ERR_CLOSED_WRITER)
         self.output.add_metadata(infos)
 
+    def addMetadata(self, infos: Dict[str, Any]) -> None:
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`add_metadata` instead.
+        """
+        warnings.warn(
+            DEPR_MSG.format("addMetadata", "add_metadata"), PendingDeprecationWarning
+        )
+        self.add_metadata(infos)
+
+    def setPageLayout(self, layout: LayoutType) -> None:
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`set_page_layout` instead.
+        """
+        warnings.warn(
+            DEPR_MSG.format("setPageLayout", "set_page_layout"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.set_page_layout(layout)
+
     def set_page_layout(self, layout: LayoutType) -> None:
         """
         Set the page layout
@@ -341,6 +366,17 @@ class PdfMerger:
         if self.output is None:
             raise RuntimeError(ERR_CLOSED_WRITER)
         self.output._set_page_layout(layout)
+
+    def setPageMode(self, mode: PagemodeType) -> None:
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`set_page_mode` instead.
+        """
+        warnings.warn(
+            DEPR_MSG.format("setPageMode", "set_page_mode"), PendingDeprecationWarning
+        )
+        self.set_page_mode(mode)
 
     def set_page_mode(self, mode: PagemodeType) -> None:
         """
@@ -381,7 +417,7 @@ class PdfMerger:
         new_dests = []
         for key, obj in dests.items():
             for j in range(*pages):
-                if pdf.get_page(j).get_object() == obj["/Page"].get_object():
+                if pdf.pages[j].get_object() == obj["/Page"].get_object():
                     obj[NameObject("/Page")] = obj["/Page"].get_object()
                     assert str_(key) == str_(obj["/Title"])
                     new_dests.append(obj)
@@ -410,7 +446,7 @@ class PdfMerger:
             else:
                 prev_header_added = False
                 for j in range(*pages):
-                    if pdf.get_page(j).get_object() == o["/Page"].get_object():
+                    if pdf.pages[j].get_object() == o["/Page"].get_object():
                         o[NameObject("/Page")] = o["/Page"].get_object()
                         new_outline.append(o)
                         prev_header_added = True
@@ -588,6 +624,29 @@ class PdfMerger:
 
         return None
 
+    def addBookmark(
+        self,
+        title: str,
+        pagenum: int,
+        parent: Union[None, TreeObject, IndirectObject] = None,
+        color: Optional[Tuple[float, float, float]] = None,
+        bold: bool = False,
+        italic: bool = False,
+        fit: str = "/Fit",
+        *args: ZoomArgType,
+    ) -> IndirectObject:
+        """
+        .. deprecated:: 1.28.0
+            Use :meth:`add_bookmark` instead.
+        """
+        warnings.warn(
+            "addBookmark is deprecated. Use add_bookmark instead.",
+            DeprecationWarning,
+        )
+        return self.add_bookmark(
+            title, pagenum, parent, color, bold, italic, fit, *args
+        )
+
     def add_bookmark(
         self,
         title: str,
@@ -670,6 +729,17 @@ class PdfMerger:
         parent.addChild(bookmark_ref, self.output)
 
         return bookmark_ref
+
+    def addNamedDestination(self, title: str, pagenum: int) -> None:
+        """
+        .. deprecated:: 1.28.0
+            Use :meth:`add_named_destination` instead.
+        """
+        warnings.warn(
+            "addNamedDestination is deprecated. Use add_named_destination instead.",
+            DeprecationWarning,
+        )
+        return self.add_named_destination(title, pagenum)
 
     def add_named_destination(self, title: str, pagenum: int) -> None:
         """

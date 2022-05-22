@@ -1143,6 +1143,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("getLowerLeft_x", "left"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.left
 
@@ -1150,6 +1151,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("getLowerLeft_y", "bottom"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.bottom
 
@@ -1157,6 +1159,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("getUpperRight_x", "right"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.right
 
@@ -1164,6 +1167,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("getUpperRight_y", "top"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.top
 
@@ -1171,6 +1175,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("getUpperLeft_x", "left"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.left
 
@@ -1178,6 +1183,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("getUpperLeft_y", "top"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.top
 
@@ -1185,6 +1191,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("getLowerRight_x", "right"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.right
 
@@ -1192,6 +1199,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("getLowerRight_y", "bottom"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.bottom
 
@@ -1247,6 +1255,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("getLowerLeft", "lower_left"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.lower_left
 
@@ -1254,6 +1263,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("getLowerRight", "lower_right"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.lower_right
 
@@ -1261,6 +1271,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("getUpperLeft", "upper_left"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.upper_left
 
@@ -1268,6 +1279,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("getUpperRight", "upper_right"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.upper_right
 
@@ -1275,6 +1287,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("setLowerLeft", "lower_left"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.lower_left = value  # type: ignore
 
@@ -1282,6 +1295,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("setLowerRight", "lower_right"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self[2], self[1] = (self.ensureIsNumber(x) for x in value)
 
@@ -1289,6 +1303,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("setUpperLeft", "upper_left"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self[0], self[3] = (self.ensureIsNumber(x) for x in value)
 
@@ -1296,6 +1311,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("setUpperRight", "upper_right"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self[2], self[3] = (self.ensureIsNumber(x) for x in value)
 
@@ -1320,6 +1336,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("lowerLeft", "lower_left"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.lower_left
 
@@ -1328,6 +1345,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("lowerLeft", "lower_left"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.lower_left = value
 
@@ -1336,6 +1354,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("lowerRight", "lower_right"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.lower_right
 
@@ -1344,6 +1363,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("lowerRight", "lower_right"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.lower_right = value
 
@@ -1352,6 +1372,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("upperLeft", "upper_left"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.upper_left
 
@@ -1360,6 +1381,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("upperLeft", "upper_left"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.upper_left = value
 
@@ -1368,6 +1390,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("upperRight", "upper_right"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.upper_right
 
@@ -1376,6 +1399,7 @@ class RectangleObject(ArrayObject):
         warnings.warn(
             DEPR_MSG.format("upperRight", "upper_right"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.upper_right = value
 

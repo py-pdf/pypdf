@@ -23,7 +23,7 @@ def test_PdfReaderFileLoad():
     with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
         # Load PDF file from file
         reader = PdfReader(inputfile)
-        page = reader.get_page(0)
+        page = reader.pages[0]
 
         # Retrieve the text of the PDF
         with open(os.path.join(RESOURCE_ROOT, "crazyones.txt"), "rb") as pdftext_file:
@@ -55,7 +55,7 @@ def test_PdfReaderJpegImage():
         with open(os.path.join(RESOURCE_ROOT, "jpeg.txt")) as pdftext_file:
             imagetext = pdftext_file.read()
 
-        page = reader.get_page(0)
+        page = reader.pages[0]
         x_object = page[PG.RESOURCES]["/XObject"].get_object()
         data = x_object["/Im4"].getData()
 
@@ -82,21 +82,21 @@ def test_decrypt():
             "/Producer": "LibreOffice 6.4",
         }
         # Is extract_text() broken for encrypted files?
-        # assert reader.get_page(0).extract_text().replace('\n', '') == "\n˘\n\u02c7\u02c6˙\n\n\n˘\u02c7\u02c6˙\n\n"
+        # assert reader.pages[0].extract_text().replace('\n', '') == "\n˘\n\u02c7\u02c6˙\n\n\n˘\u02c7\u02c6˙\n\n"
 
 
 @pytest.mark.parametrize("degree", [0, 90, 180, 270, 360, -90])
 def test_rotate(degree):
     with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
         reader = PdfReader(inputfile)
-        page = reader.get_page(0)
+        page = reader.pages[0]
         page.rotateCounterClockwise(degree)
 
 
 def test_rotate_45():
     with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
         reader = PdfReader(inputfile)
-        page = reader.get_page(0)
+        page = reader.pages[0]
         with pytest.raises(ValueError) as exc:
             page.rotateCounterClockwise(45)
         assert exc.value.args[0] == "Rotation angle must be a multiple of 90"

@@ -144,6 +144,7 @@ class PdfWriter:
         warnings.warn(
             DEPR_MSG.format("getObject()", "get_object()"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.get_object(ido)
 
@@ -198,6 +199,7 @@ class PdfWriter:
         warnings.warn(
             DEPR_MSG.format("addPage()", "add_page()"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.add_page(page)
 
@@ -221,6 +223,7 @@ class PdfWriter:
         warnings.warn(
             DEPR_MSG.format("insertPage()", "insert_page()"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.insert_page(page, index)
 
@@ -246,6 +249,7 @@ class PdfWriter:
         warnings.warn(
             DEPR_MSG.format("getPage()", "writer.pages[page_number]"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.get_page(pageNumber)
 
@@ -266,6 +270,7 @@ class PdfWriter:
         warnings.warn(
             DEPR_MSG.format("getNumPages()", "len(writer.pages)"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self._get_num_pages()
 
@@ -307,6 +312,7 @@ class PdfWriter:
         warnings.warn(
             DEPR_MSG.format("addBlankPage", "add_blank_page"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.add_blank_page(width, height)
 
@@ -331,7 +337,7 @@ class PdfWriter:
             and previous page does not exist.
         """
         if width is None or height is None and (self._get_num_pages() - 1) >= index:
-            oldpage = self.get_page(index)
+            oldpage = self.pages[index]
             width = oldpage.mediabox.width
             height = oldpage.mediabox.height
         page = PageObject.create_blank_page(self, width, height)
@@ -352,6 +358,7 @@ class PdfWriter:
         warnings.warn(
             DEPR_MSG.format("insertBlankPage", "insert_blank_page"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.insert_blank_page(width, height, index)
 
@@ -407,6 +414,7 @@ class PdfWriter:
         warnings.warn(
             DEPR_MSG.format("addJS", "add_js"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.add_js(javascript)
 
@@ -531,7 +539,7 @@ class PdfWriter:
         for rpagenum in range(reader_num_pages):
             reader_page = reader.pages[rpagenum]
             self.add_page(reader_page)
-            writer_page = self.get_page(writer_num_pages + rpagenum)
+            writer_page = self.pages[writer_num_pages + rpagenum]
             # Trigger callback, pass writer page as parameter
             if callable(after_page_append):
                 after_page_append(writer_page)
@@ -549,6 +557,7 @@ class PdfWriter:
         warnings.warn(
             DEPR_MSG.format("appendPagesFromReader", "append_pages_from_reader"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.append_pages_from_reader(reader, after_page_append)
 
@@ -600,6 +609,7 @@ class PdfWriter:
                 "updatePageFormFieldValues", "update_page_form_field_values"
             ),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.update_page_form_field_values(page, fields, flags)
 
@@ -621,6 +631,7 @@ class PdfWriter:
         warnings.warn(
             DEPR_MSG.format("cloneReaderDocumentRoot", "clone_reader_document_root"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.clone_reader_document_root(reader)
 
@@ -657,6 +668,7 @@ class PdfWriter:
         warnings.warn(
             DEPR_MSG.format("cloneDocumentFromReader", "clone_document_from_reader"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.clone_document_from_reader(reader, after_page_append)
 
@@ -931,7 +943,9 @@ class PdfWriter:
             Use :meth:`get_reference` instead.
         """
         warnings.warn(
-            DEPR_MSG.format("getReference", "get_reference"), PendingDeprecationWarning
+            DEPR_MSG.format("getReference", "get_reference"),
+            PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.get_reference(obj)
 
@@ -959,6 +973,7 @@ class PdfWriter:
         warnings.warn(
             DEPR_MSG.format("getOutlineRoot", "get_outline_root"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.get_outline_root()
 
@@ -1010,6 +1025,7 @@ class PdfWriter:
         warnings.warn(
             DEPR_MSG.format("getNamedDestRoot", "get_named_dest_root"),
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.get_named_dest_root()
 
@@ -1178,7 +1194,9 @@ class PdfWriter:
             Use :meth:`add_bookmark` instead.
         """
         warnings.warn(
-            DEPR_MSG.format("addBookmark", "add_bookmark"), PendingDeprecationWarning
+            DEPR_MSG.format("addBookmark", "add_bookmark"),
+            PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.add_bookmark(
             title, pagenum, parent, color, bold, italic, fit, *args
@@ -1625,7 +1643,7 @@ class PdfWriter:
         except KeyError:
             return None
 
-    def getPageLayout(self) -> Optional[str]:
+    def getPageLayout(self) -> Optional[LayoutType]:
         """
         .. deprecated:: 1.28.0
 
@@ -1635,6 +1653,7 @@ class PdfWriter:
             "getPageLayout() will be removed in PyPDF2 2.0.0. "
             "Use the page_layout attribute instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self._get_page_layout()
 
@@ -1670,7 +1689,7 @@ class PdfWriter:
             layout = NameObject(layout)
         self._root_object.update({NameObject("/PageLayout"): layout})
 
-    def setPageLayout(self, layout: str) -> None:
+    def setPageLayout(self, layout: LayoutType) -> None:
         """
         .. deprecated:: 1.28.0
 
@@ -1680,11 +1699,12 @@ class PdfWriter:
             "setPageLayout() will be removed in PyPDF2 2.0.0. "
             "Use the page_layout attribute instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self._set_page_layout(layout)
 
     @property
-    def page_layout(self) -> Optional[str]:
+    def page_layout(self) -> Optional[LayoutType]:
         """
         Page layout property.
 
@@ -1709,7 +1729,7 @@ class PdfWriter:
         return self._get_page_layout()
 
     @page_layout.setter
-    def page_layout(self, layout: str) -> None:
+    def page_layout(self, layout: LayoutType) -> None:
         self._set_page_layout(layout)
 
     @property
@@ -1723,6 +1743,7 @@ class PdfWriter:
             "pageLayout will be removed in PyPDF2 2.0.0. "
             "Use the page_layout attribute instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.page_layout
 
@@ -1737,6 +1758,7 @@ class PdfWriter:
             "pageLayout will be removed in PyPDF2 2.0.0. "
             "Use the page_layout attribute instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.page_layout = layout
 
@@ -1763,7 +1785,7 @@ class PdfWriter:
         except KeyError:
             return None
 
-    def getPageMode(self) -> Optional[str]:
+    def getPageMode(self) -> Optional[PagemodeType]:
         """
         .. deprecated:: 1.28.0
 
@@ -1773,10 +1795,11 @@ class PdfWriter:
             "getPageMode() will be removed in PyPDF2 2.0.0. "
             "Use the page_mode attribute instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self._get_page_mode()
 
-    def set_page_mode(self, mode: str) -> None:
+    def set_page_mode(self, mode: PagemodeType) -> None:
         """
         .. deprecated:: 1.28.0
 
@@ -1790,7 +1813,7 @@ class PdfWriter:
             mode = NameObject(mode)
         self._root_object.update({NameObject("/PageMode"): mode})
 
-    def setPageMode(self, mode: str) -> None:
+    def setPageMode(self, mode: PagemodeType) -> None:
         """
         .. deprecated:: 1.28.0
 
@@ -1800,11 +1823,12 @@ class PdfWriter:
             "setPageMode() will be removed in PyPDF2 2.0.0. "
             "Use the page_mode attribute instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.set_page_mode(mode)
 
     @property
-    def page_mode(self) -> Optional[str]:
+    def page_mode(self) -> Optional[PagemodeType]:
         """
         Page mode property.
 
@@ -1841,6 +1865,7 @@ class PdfWriter:
             "pageMode will be removed in PyPDF2 2.0.0. "
             "Use the page_mode attribute instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.page_mode
 
@@ -1855,6 +1880,7 @@ class PdfWriter:
             "pageMode will be removed in PyPDF2 2.0.0. "
             "Use the page_mode attribute instead.",
             PendingDeprecationWarning,
+            stacklevel=2,
         )
         self.page_mode = mode
 
