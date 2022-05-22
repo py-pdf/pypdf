@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1653233328576,
+  "lastUpdate": 1653246357598,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -1999,6 +1999,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0024678264836649672",
             "extra": "mean: 124.53126912499712 msec\nrounds: 8"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "matt.peveler@gmail.com",
+            "name": "Matthew Peveler",
+            "username": "MasterOdin"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "560d2a7d63d6038b36401af794e1c41187c71710",
+          "message": "MAINT: Remove duplicate warnings imports (#888)",
+          "timestamp": "2022-05-22T21:05:14+02:00",
+          "tree_id": "2cc6ee7eb85291f54ffe2a3b186e11052bec1f14",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/560d2a7d63d6038b36401af794e1c41187c71710"
+        },
+        "date": 1653246357077,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.4807529335221447,
+            "unit": "iter/sec",
+            "range": "stddev: 0.027920571749779174",
+            "extra": "mean: 2.0800705107999873 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 7.218363597837061,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003874427666178201",
+            "extra": "mean: 138.53555400002904 msec\nrounds: 8"
           }
         ]
       }
