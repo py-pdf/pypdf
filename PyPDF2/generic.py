@@ -132,7 +132,7 @@ class ArrayObject(list, PdfObject):
         stream.write(b_(" ]"))
 
     @staticmethod
-    def readFromStream(stream: StreamType, pdf: Any) -> "ArrayObject":  # PdfFileReader
+    def readFromStream(stream: StreamType, pdf: Any, forcedEncoding: Union[None,str,list] = None) -> "ArrayObject":  # PdfFileReader
         arr = ArrayObject()
         tmp = stream.read(1)
         if tmp != b_("["):
@@ -149,7 +149,7 @@ class ArrayObject(list, PdfObject):
                 break
             stream.seek(-1, 1)
             # read and append obj
-            arr.append(readObject(stream, pdf))
+            arr.append(readObject(stream, pdf, forcedEncoding))
         return arr
 
 
@@ -301,6 +301,7 @@ def readHexStringFromStream(
 
 def readStringFromStream(
     stream: StreamType,
+    forceEncoding: Union[None,str,list] = None,
 ) -> Union["TextStringObject", "ByteStringObject"]:
     tok = stream.read(1)
     parens = 1
@@ -371,7 +372,7 @@ def readStringFromStream(
                     # if.strict: PdfReadError(msg)
                     logger.warning(msg)
         txt += tok
-    return createStringObject(txt)
+    return createStringObject(txt,forceEncoding)
 
 
 class ByteStringObject(bytes_type, PdfObject):  # type: ignore
@@ -553,7 +554,8 @@ class DictionaryObject(dict, PdfObject):
 
     @staticmethod
     def readFromStream(
-        stream: StreamType, pdf: Any  # PdfFileReader
+        stream: StreamType, pdf: Any,  # PdfFileReader
+        forcedEncoding: Union[None,str,list] = None
     ) -> "DictionaryObject":
         def getNextObjPos(
             p: int, p1: int, remGens: List[int], pdf: Any
@@ -607,7 +609,7 @@ class DictionaryObject(dict, PdfObject):
             key = readObject(stream, pdf)
             tok = readNonWhitespace(stream)
             stream.seek(-1, 1)
-            value = readObject(stream, pdf)
+            value = readObject(stream, pdf, forcedEncoding)
             if not data.get(key):
                 data[key] = value
             elif pdf.strict:
@@ -908,7 +910,7 @@ class EncodedStreamObject(StreamObject):
 
 
 class ContentStream(DecodedStreamObject):
-    def __init__(self, stream: Any, pdf: Any) -> None:
+    def __init__(self, stream: Any, pdf: Any, forcedEncoding: Union[None,str,list] = None) -> None:
         self.pdf = pdf
 
         # The inner list has two elements:
@@ -926,6 +928,8 @@ class ContentStream(DecodedStreamObject):
             stream = BytesIO(b_(data))
         else:
             stream = BytesIO(b_(stream.getData()))
+        #self.savstream = stream
+        self.forcedEncoding = forcedEncoding
         self.__parseContentStream(stream)
 
     def __parseContentStream(self, stream: StreamType) -> None:
@@ -957,7 +961,7 @@ class ContentStream(DecodedStreamObject):
                 while peek not in (b_("\r"), b_("\n")):
                     peek = stream.read(1)
             else:
-                operands.append(readObject(stream, None))
+                operands.append(readObject(stream, None,self.forcedEncoding))
 
     def _readInlineImage(self, stream: StreamType) -> Dict[str, Any]:
         # begin reading just after the "BI" - begin image
@@ -1045,7 +1049,8 @@ class ContentStream(DecodedStreamObject):
 
 
 def readObject(
-    stream: StreamType, pdf: Any  # PdfFileReader
+    stream: StreamType, pdf: Any,  # PdfFileReader
+    forcedEncoding:  Union[None,str,list] = None
 ) -> Union[PdfObject, int, str, ContentStream]:
     tok = stream.read(1)
     stream.seek(-1, 1)  # reset to start
@@ -1058,15 +1063,15 @@ def readObject(
         stream.seek(-2, 1)  # reset to start
 
         if peek == b_("<<"):
-            return DictionaryObject.readFromStream(stream, pdf)
+            return DictionaryObject.readFromStream(stream, pdf, forcedEncoding)
         else:
             return readHexStringFromStream(stream)
     elif idx == 2:
-        return ArrayObject.readFromStream(stream, pdf)
+        return ArrayObject.readFromStream(stream, pdf, forcedEncoding)
     elif idx == 3 or idx == 4:
         return BooleanObject.readFromStream(stream)
     elif idx == 5:
-        return readStringFromStream(stream)
+        return readStringFromStream(stream, forcedEncoding)
     elif idx == 6:
         return NullObject.readFromStream(stream)
     elif idx == 7:
@@ -1079,7 +1084,7 @@ def readObject(
                 raise PdfStreamError("File ended unexpectedly.")
         tok = readNonWhitespace(stream)
         stream.seek(-1, 1)
-        return readObject(stream, pdf)
+        return readObject(stream, pdf, forcedEncoding)
     else:
         # number object OR indirect reference
         peek = stream.read(20)
@@ -1491,7 +1496,8 @@ class Bookmark(Destination):
 
 
 def createStringObject(
-    string: Union[str, bytes]
+    string: Union[str, bytes],
+    forceEncoding: Union[None,str,list] = None
 ) -> Union[TextStringObject, ByteStringObject]:
     """
     Given a string, create a ByteStringObject or a TextStringObject to
@@ -1501,7 +1507,17 @@ def createStringObject(
 
     :raises TypeError: If string is not of type str or bytes.
     """
-    if isinstance(string, str):
+    if isinstance(forceEncoding,list):
+        out = ""
+        for x in string:
+            try:
+                out += forceEncoding[x]
+            except:
+                out += x
+        return x
+    elif isinstance(forceEncoding,str):
+        return TextStringObject(string.decode(forceEncoding))
+    elif isinstance(string, str):
         return TextStringObject(string)
     elif isinstance(string, bytes_type):
         try:
@@ -1527,7 +1543,7 @@ def encode_pdfdocencoding(unicode_string: str) -> bytes:
     retval = b_("")
     for c in unicode_string:
         try:
-            retval += b_(chr(_pdfDocEncoding_rev[c]))
+            retval += b_(chr(_pdfdoc_encoding_rev[c]))
         except KeyError:
             raise UnicodeEncodeError(
                 "pdfdocencoding", c, -1, -1, "does not exist in translation table"
@@ -1538,7 +1554,7 @@ def encode_pdfdocencoding(unicode_string: str) -> bytes:
 def decode_pdfdocencoding(byte_array: bytes) -> str:
     retval = ""
     for b in byte_array:
-        c = _pdfDocEncoding[ord_(b)]
+        c = _pdfdoc_encoding[ord_(b)]
         if c == "\u0000":
             raise UnicodeDecodeError(
                 "pdfdocencoding",
@@ -1555,7 +1571,7 @@ def decode_pdfdocencoding(byte_array: bytes) -> str:
 # C.1 Predefined encodings sorted by character name of another PDF reference
 # Some indices have '\u0000' although they should have something else:
 # 22: should be '\u0017'
-_pdfDocEncoding = (
+_pdfdoc_encoding = (
     "\u0000",
     "\u0001",
     "\u0002",
@@ -1814,14 +1830,68 @@ _pdfDocEncoding = (
     "\u00ff",  # 248 - 255
 )
 
-assert len(_pdfDocEncoding) == 256
+assert len(_pdfdoc_encoding) == 256
+def fill_from_encoding(enc:str)->list:
+    lst=()
+    for x in range(256):
+        try:
+            lst+=(bytes((x,)).decode(enc),)
+        except:
+            lst+=(chr(x),)
+    return lst
+_win_encoding = fill_from_encoding("cp1252")
+_mac_encoding = fill_from_encoding("mac_roman")
+_std_encoding = ['\x00', '\x01', '\x02', '\x03', '\x04', '\x05', '\x06', '\x07',
+                 '\x08', '\t', '\n', '\x0b', '\x0c', '\r', '\x0e', '\x0f',
+                 '\x10', '\x11', '\x12', '\x13', '\x14', '\x15', '\x16', '\x17',
+                 '\x18', '\x19', '\x1a', '\x1b', '\x1c', '\x1d', '\x1e', '\x1f',
+                 ' ', '!', '"', '#', '$', '%', '&', '’',
+                 '(', ')', '*', '+', ',', '-', '.', '/',
+                 '0', '1', '2', '3', '4', '5', '6', '7',
+                 '8', '9', ':', ';', '<', '=', '>', '?',
+                 '@', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
+                 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+                 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
+                 'X', 'Y', 'Z', '[', '\\', ']', '^', '_',
+                 '‘', 'a', 'b', 'c', 'd', 'e', 'f', 'g',
+                 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
+                 'p', 'q', 'r', 's', 't', 'u', 'v', 'w',
+                 'x', 'y', 'z', '{', '|', '}', '~', '\x7f',
+                 '\x80', '\x81', '\x82', '\x83', '\x84', '\x85', '\x86', '\x87',
+                 '\x88', '\x89', '\x8a', '\x8b', '\x8c', '\x8d', '\x8e', '\x8f',
+                 '\x90', '\x91', '\x92', '\x93', '\x94', '\x95', '\x96', '\x97',
+                 '\x98', '\x99', '\x9a', '\x9b', '\x9c', '\x9d', '\x9e', '\x9f',
+                 '\xa0', '¡', '¢', '£', '⁄', '¥', 'ƒ', '§',
+                 '¤', "'", '“', '«', '‹', '›', 'ﬁ', 'ﬂ',
+                 '°', '–', '†', '‡', '·', 'µ', '¶', '•',
+                 '‚', '„', '”', '»', '…', '‰', '¾', '¿',
+                 'À', '`', '´', 'ˆ', '˜', '¯', '˘', '˙',
+                 '¨', 'É', '˚', '¸', 'Ì', '˝', '˛', 'ˇ',
+                 '—', 'Ñ', 'Ò', 'Ó', 'Ô', 'Õ', 'Ö', '×',
+                 'Ø', 'Ù', 'Ú', 'Û', 'Ü', 'Ý', 'Þ', 'ß',
+                 'à', 'Æ', 'â', 'ª', 'ä', 'å', 'æ', 'ç',
+                 'Ł', 'Ø', 'Œ', 'º', 'ì', 'í', 'î', 'ï',
+                 'ð', 'æ', 'ò', 'ó', 'ô', 'ı', 'ö', '÷',
+                 'ł', 'ø', 'œ', 'ß', 'ü', 'ý', 'þ', 'ÿ']
 
-_pdfDocEncoding_rev: Dict[str, int] = {}
-for i in range(256):
-    char = _pdfDocEncoding[i]
-    if char == "\u0000":
-        continue
-    assert char not in _pdfDocEncoding_rev, (
-        str(char) + " at " + str(i) + " already at " + str(_pdfDocEncoding_rev[char])
-    )
-    _pdfDocEncoding_rev[char] = i
+def rev_encoding(enc : list ) -> Dict[str, int]:
+    rev : Dict[str, int] = {}
+    for i in range(256):
+        char = enc[i]
+        if char == "\u0000":
+            continue
+        assert char not in rev, (
+            str(char) + " at " + str(i) + " already at " + str(rev[char])
+        )
+        rev[char] = i
+    return rev
+
+_pdfdoc_encoding_rev = rev_encoding(_pdfdoc_encoding)
+_win_encoding_rev = rev_encoding(_win_encoding)
+_mac_encoding_rev = rev_encoding(_mac_encoding)
+
+charset_encoding = {"/StandardCoding":_std_encoding,
+                    "/WinAnsiEncoding":_win_encoding,
+                    "/MacRomanEncoding":_mac_encoding,
+                    "/PDFDocEncoding":_pdfdoc_encoding
+                   }

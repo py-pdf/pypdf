@@ -30,6 +30,7 @@
 import math
 import uuid
 from decimal import Decimal
+from binascii import unhexlify
 from typing import (
     Any,
     Callable,
@@ -56,8 +57,10 @@ from .generic import (
     NumberObject,
     RectangleObject,
     TextStringObject,
+    charset_encoding
 )
 from .utils import b_, matrixMultiply
+from ._adglyphs import adobe_glyphs
 
 
 def getRectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
@@ -746,15 +749,90 @@ class PageObject(DictionaryObject):
 
         :return: a string object.
         """
+        # code freely inspired from @twiggy ; see #711
+        def buildCharMap(pdf, font_name="/a"):
+            mapDict = {}
+            processRg = False
+            processChar = False
+            encoding = []
+            fontType = pdf.getPage(0)["/Resources"]["/Font"][font_name]["/Subtype"]
+            if "/Encoding" in pdf.getPage(0)["/Resources"]["/Font"][font_name]:
+                enc= pdf.getPage(0)["/Resources"]["/Font"][font_name]["/Encoding"].getObject()
+                if '/BaseEncoding' in enc:
+                    encoding = list(charset_encoding[enc['/BaseEncoding']])
+                else:
+                    encoding = list(charset_encoding['/StandardCoding'])
+                if '/Differences' in enc:
+                    x=0
+                    for o in enc['/Differences']:
+                        if isinstance(o,int):
+                            x = o
+                        else:
+                            try:
+                                encoding[x] = adobe_glyphs[o]
+                            except:
+                                encoding[x] = o
+                            x += 1
+            if "/ToUnicode" in pdf.getPage(0)["/Resources"]["/Font"][font_name]:
+                cm = pdf.getPage(0)["/Resources"]["/Font"][font_name]["/ToUnicode"].getData().decode('utf-8')
+                for l in cm.strip().replace('<', '').replace('>', '').split('\n'):
+                    #print(l)
+                    if 'beginbfrange' in l:
+                        processRg = True
+                    elif 'endbfrange' in l:
+                        processRg = False
+                    elif 'beginbfchar' in l:
+                        processChar = True
+                    elif 'endbfchar' in l:
+                        processChar = False
+                    elif processRg:
+                        lst=l.split(' ',2)
+                        a=int(lst[0], 16)
+                        b=int(lst[1], 16)
+                        if lst[2] == '[':
+                            lst = lst[2].trim(' []').split(' ')
+                            for sq in lst:
+                                mapDict[a] = unhexlify(sq).decode("utf-16-be")
+                                a += 1
+                                assert a>b
+                        else:
+                            c = int(lst[2],16)
+                            while(a<=b):
+                                mapDict[a] = chr(c)
+                                a += 1
+                                c += 1
+                    elif processChar:
+                        lst=l.split(' ',2)
+                        a=int(lst[0], 16)
+                        mapDict[a] = unhexlify(lst[1]).decode("utf-16-be")
+            return fontType, dict(zip(range(256),encoding)), "".maketrans(mapDict)
+        #------- end of buildCharmap ------
         text = ""
+        output = ""
+        cmap = {}
         content = self[PG.CONTENTS].getObject()
         if not isinstance(content, ContentStream):
-            content = ContentStream(content, self.pdf)
+            content = ContentStream(content, self.pdf,"charmap")
         # Note: we check all strings are TextStringObjects.  ByteStringObjects
         # are strings where the byte->string encoding was unknown, so adding
         # them to the text here would be gibberish.
+
+        #charSize = 1.0
+        #charScale = 1.0
         for operands, operator in content.operations:
-            if operator == b_("Tj"):
+            if operator == b_("Tf"):
+                if text!="":
+                    output += text.translate(cmap)
+                ft,cmap,cmap2 = buildCharMap(self.pdf,operands[0])
+                #print(ft,"\n",cmap,"\n--------------\n",cmap2)
+                #charSize = operands[1] # reserved
+                if output == "":
+                    text = ""
+                else:
+                    text = " "
+            #elif operator == b_("Tc"):
+                #charScale = 1.0 + float(operands[0])
+            elif operator == b_("Tj"):
                 _text = operands[0]
                 if isinstance(_text, TextStringObject):
                     text += Tj_sep
@@ -763,17 +841,24 @@ class PageObject(DictionaryObject):
             # see Pdf Reference 1.7 page 406
             elif ((operator in [b_("T*"),b_("ET")]) or
                  ((operator in [b_("Td"),b_("TD")]) and operands[1] != 0)):
-                text += "\n"
+                if text != "":
+                    output += text.translate(cmap) + "\n"
+                    text = ""
+            elif ((operator in [b_("Td")]) and (operands[1] == 0)):
+                if operands[-1]>0:
+                    print("back ",operands[-1])
+                elif operands[-1]<0:
+                    print("back ",operands[-1])
             elif operator == b_("'"):
-                text += "\n"
+                output += text.translate(cmap) + "\n"
                 _text = operands[0]
                 if isinstance(_text, TextStringObject):
-                    text += operands[0]
+                    text = operands[0]
             elif operator == b_('"'):
+                output += text.translate(cmap) + "\n"
                 _text = operands[2]
                 if isinstance(_text, TextStringObject):
-                    text += "\n"
-                    text += _text
+                    text = _text
             elif operator == b_("TJ"):
                 pass
                 for i in operands[0]:
@@ -783,14 +868,16 @@ class PageObject(DictionaryObject):
                     elif isinstance(i, NumberObject):
                         # a positive value decreases and the negative value increases
                         # space
-                        if int(i) < 0:
+                        if i<-500 or i>500:print("TJ:",text,"*",i)
+                        if int(i) < -200:
                             if len(text) == 0 or text[-1] != " ":
                                 text += " "
                         else:
                             if len(text) > 1 and text[-1] == " ":
                                 text = text[:-1]
                 #text += "\n"
-        return text
+        output += text.translate(cmap)
+        return output
 
     mediaBox = createRectangleAccessor(PG.MEDIABOX, ())
     """
