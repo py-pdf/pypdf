@@ -223,12 +223,12 @@ def test_add_named_destination():
     for page in reader.pages:
         writer.add_page(page)
 
-    from PyPDF2.pdf import NameObject
+    from PyPDF2.generic import NameObject
 
     writer.add_named_destination(NameObject("A named dest"), 2)
     writer.add_named_destination(NameObject("A named dest2"), 2)
 
-    from PyPDF2.pdf import IndirectObject
+    from PyPDF2.generic import IndirectObject
 
     assert writer.get_named_dest_root() == [
         "A named dest",
@@ -253,7 +253,7 @@ def test_add_uri():
     for page in reader.pages:
         writer.add_page(page)
 
-    from PyPDF2.pdf import RectangleObject
+    from PyPDF2.generic import RectangleObject
 
     writer.add_uri(
         1,
@@ -296,7 +296,7 @@ def test_add_link():
     for page in reader.pages:
         writer.add_page(page)
 
-    from PyPDF2.pdf import RectangleObject
+    from PyPDF2.generic import RectangleObject
 
     writer.add_link(
         1,
