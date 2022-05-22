@@ -224,7 +224,7 @@ class PdfReader(object):
     """
 
     def __init__(
-        self, stream, strict=True, warndest=None, overwriteWarnings="deprecated"
+        self, stream, strict=False, warndest=None, overwriteWarnings="deprecated"
     ):
         if warndest is not None:
             warnings.warn(
@@ -574,7 +574,7 @@ class PdfReader(object):
             Use :meth:`get_fields` instead.
         """
         warnings.warn(
-            "The getFields method of PdfFileReader will be removed in PyPDF2 2.0.0. "
+            "The getFields method of PdfReader will be removed in PyPDF2 2.0.0. "
             "Use the get_fields() method instead.",
             PendingDeprecationWarning,
         )
@@ -648,7 +648,7 @@ class PdfReader(object):
             Use :meth:`get_form_text_fields` instead.
         """
         warnings.warn(
-            "The getFormTextFields method of PdfFileReader will be removed in PyPDF2 2.0.0. "
+            "The getFormTextFields method of PdfReader will be removed in PyPDF2 2.0.0. "
             "Use the get_form_text_fields() method instead.",
             PendingDeprecationWarning,
         )
@@ -1822,4 +1822,6 @@ class PdfFileReader(PdfReader):
             PendingDeprecationWarning,
             stacklevel=2,
         )
+        if "strict" not in kwargs and len(args) < 2:
+            kwargs["strict"] = True  # maintain the default
         super().__init__(*args, **kwargs)

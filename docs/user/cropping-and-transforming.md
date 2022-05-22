@@ -38,17 +38,17 @@ with open("PyPDF2-output.pdf", "wb") as fp:
 is the result of
 
 ```python
-from PyPDF2 import PdfFileReader, PdfFileWriter, Transformation
+from PyPDF2 import PdfReader, PdfWriter, Transformation
 
 # Get the data
-reader_base = PdfFileReader("labeled-edges-center-image.pdf")
+reader_base = PdfReader("labeled-edges-center-image.pdf")
 page_base = reader_base.pages[0]
-reader = PdfFileReader("box.pdf")
+reader = PdfReader("box.pdf")
 page_box = reader.pages[0]
 # Apply the transformation: Be aware, that this is an in-place operation
 page_base.mergeTransformedPage(page_box, Transformation())
 # Write the result back
-writer = PdfFileWriter()
+writer = PdfWriter()
 writer.addPage(page_base)
 with open("merged-foo.pdf", "wb") as fp:
     writer.write(fp)
@@ -59,18 +59,18 @@ with open("merged-foo.pdf", "wb") as fp:
 ![](merge-45-deg-rot.png)
 
 ```python
-from PyPDF2 import PdfFileReader, PdfFileWriter, Transformation
+from PyPDF2 import PdfReader, PdfWriter, Transformation
 
 # Get the data
-reader_base = PdfFileReader("labeled-edges-center-image.pdf")
+reader_base = PdfReader("labeled-edges-center-image.pdf")
 page_base = reader_base.pages[0]
-reader = PdfFileReader("box.pdf")
+reader = PdfReader("box.pdf")
 page_box = reader.pages[0]
 # Apply the transformation: Be aware, that this is an in-place operation
 op = Transformation().rotate(45)
 page_base.mergeTransformedPage(page_box, op)
 # Write the result back
-writer = PdfFileWriter()
+writer = PdfWriter()
 writer.addPage(page_base)
 with open("merged-foo.pdf", "wb") as fp:
     writer.write(fp)
