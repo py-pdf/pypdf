@@ -1,5 +1,5 @@
-Version 1.27.13, 2022-05-29 (hopefully)
----------------------------
+Version 1.28.0, 2022-05-22
+--------------------------
 
 This release adds a lot of deprecation warnings in preparation of the
 PyPDF2 2.0.0 release. The changes are mostly using snake_case function-, method-,
@@ -34,8 +34,7 @@ PdfReader class:
   - flattenedPages attribute ➔ flattened_pages
   - resolvedObjects attribute ➔ resolved_objects
   - xrefIndex attribute ➔ xref_index
-  - getNamedDestinations ➔ get_named_destinations
-  - namedDestinations attribute ➔ named_destinations
+  - getNamedDestinations / namedDestinations attribute ➔ named_destinations
   - getPageLayout / pageLayout ➔ page_layout attribute
   - getPageMode / pageMode ➔ page_mode attribute
   - getIsEncrypted / isEncrypted ➔ is_encrypted attribute

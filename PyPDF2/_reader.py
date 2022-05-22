@@ -122,6 +122,13 @@ class DocumentInformation(DictionaryObject):
         return None
 
     def getText(self, key):
+        """
+        The text value of the specified key or None.
+
+        .. deprecated:: 1.28.0
+
+            Use the attributes (e.g. :py:attr:`title` / :py:attr:`author`).
+        """
         warnings.warn(
             "getText will be removed in PyPDF2 2.0.0.", PendingDeprecationWarning
         )
@@ -210,10 +217,10 @@ class PdfReader(object):
         problems and also causes some correctable problems to be fatal.
         Defaults to ``True``.
     :param warndest: Destination for logging warnings (defaults to
-        ``sys.stderr``).
+        ``sys.stderr``). This will be removed in PyPDF2 2.0.
     :param bool overwriteWarnings: Determines whether to override Python's
         ``warnings.py`` module with a custom implementation (defaults to
-        ``True``).
+        ``True``). This will be removed in PyPDF2 2.0.0.
     """
 
     def __init__(
@@ -250,7 +257,7 @@ class PdfReader(object):
 
             warnings.showwarning = _showwarning
         self.strict = strict
-        self.flattened_pages = None
+        self._flattened_pages = None
         self.resolved_objects = {}
         self.xref_index = 0
         self._page_id2num = None  # map page IndirectRef number to Page Number
@@ -269,7 +276,16 @@ class PdfReader(object):
         self._override_encryption = False
 
     @property
+    def flattened_pages(self):
+        return self._flattened_pages
+
+    @property
     def flattenedPages(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use the attribute :py:attr:`flattened_pages` instead.
+        """
         warnings.warn(
             "flattenedPages will be removed in PyPDF2 2.0.0. "
             "Use flattened_pages instead",
@@ -279,6 +295,11 @@ class PdfReader(object):
 
     @property
     def resolvedObjects(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use the attribute :py:attr:`resolved_objects` instead.
+        """
         warnings.warn(
             "resolvedObjects will be removed in PyPDF2 2.0.0. "
             "Use resolved_objects instead",
@@ -288,6 +309,11 @@ class PdfReader(object):
 
     @property
     def xrefIndex(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use the attribute :py:attr:`xref_index` instead.
+        """
         warnings.warn(
             "xrefIndex will be removed in PyPDF2 2.0.0. Use xref_index instead",
             PendingDeprecationWarning,
@@ -314,7 +340,11 @@ class PdfReader(object):
         return retval
 
     def getDocumentInfo(self):
-        """will be removed in PyPDF2 2.0.0. Use the `metadata` attribute instead."""
+        """
+        .. deprecated:: 1.28.0
+
+            Use the attribute :py:attr:`metadata` instead.
+        """
         warnings.warn(
             "The `getDocumentInfo` method of PdfReader will be replaced by the "
             "`metadata` attribute in PyPDF2 2.0.0. You can switch to the "
@@ -325,7 +355,11 @@ class PdfReader(object):
 
     @property
     def documentInfo(self):
-        """will be removed in PyPDF2 2.0.0. Use the `metadata` attribute instead."""
+        """
+        .. deprecated:: 1.28.0
+
+            Use the attribute :py:attr:`metadata` instead.
+        """
         warnings.warn(
             "The `documentInfo` attribute of PdfReader will be replaced by "
             "`metadata` in PyPDF2 2.0.0. You can switch to the metadata "
@@ -351,7 +385,11 @@ class PdfReader(object):
             self._override_encryption = False
 
     def getXmpMetadata(self):
-        """will be removed in PyPDF2 2.0.0. Use the `xmp_metadata` attribute instead."""
+        """
+        .. deprecated:: 1.28.0
+
+            Use the attribute :py:attr:`xmp_metadata` instead.
+        """
         warnings.warn(
             "The `getXmpMetadata` method of PdfReader will be replaced by the "
             "`xmp_metadata` attribute in PyPDF2 2.0.0. You can switch to the "
@@ -362,7 +400,11 @@ class PdfReader(object):
 
     @property
     def xmpMetadata(self):
-        """will be removed in PyPDF2 2.0.0. Use the `xmp_metadata` attribute instead."""
+        """
+        .. deprecated:: 1.28.0
+
+            Use the attribute :py:attr:`xmp_metadata` instead.
+        """
         warnings.warn(
             "The `xmpMetadata` attribute of PdfReader will be replaced by the "
             "`xmp_metadata` attribute in PyPDF2 2.0.0. You can switch to the "
@@ -399,6 +441,11 @@ class PdfReader(object):
             return len(self.flattened_pages)
 
     def getNumPages(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :code:`len(reader.pages)` instead.
+        """
         warnings.warn(
             "The `getNumPages` method of PdfReader will be removed in PyPDF2 2.0.0. "
             "Use `len(reader.pages)` instead.",
@@ -408,6 +455,11 @@ class PdfReader(object):
 
     @property
     def numPages(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :code:`len(reader.pages)` instead.
+        """
         warnings.warn(
             "The `numPages` attribute of PdfReader will be removed in PyPDF2 2.0.0. "
             "Use `len(reader.pages)` instead.",
@@ -431,6 +483,11 @@ class PdfReader(object):
         return self.flattened_pages[page_number]
 
     def getPage(self, pageNumber):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :code:`reader.pages[page_number]` instead.
+        """
         warnings.warn(
             "getPage(pageNumber) will be removed in PyPDF2 2.0.0. "
             "Use reader.pages[pageNumber] instead.",
@@ -440,6 +497,11 @@ class PdfReader(object):
 
     @property
     def namedDestinations(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :py:attr:`named_destinations` instead.
+        """
         warnings.warn(
             "namedDestinations will be removed in PyPDF2 2.0.0. "
             "Use `named_destinations` instead.",
@@ -449,10 +511,10 @@ class PdfReader(object):
     @property
     def named_destinations(self):
         """
-        Read-only property that accesses the
-        :meth:`get_named_destinations()<PdfReader.get_named_destinations>` function.
+        A read-only dictionary which maps names to
+        :class:`Destinations<PyPDF2.generic.Destination>`
         """
-        return self.get_named_destinations()
+        return self._get_named_destinations()
 
     # A select group of relevant field attributes. For the complete list,
     # see section 8.6.2 of the PDF 1.7 reference.
@@ -506,6 +568,11 @@ class PdfReader(object):
         return retval
 
     def getFields(self, tree=None, retval=None, fileobj=None):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`get_fields` instead.
+        """
         warnings.warn(
             "The getFields method of PdfFileReader will be removed in PyPDF2 2.0.0. "
             "Use the get_fields() method instead.",
@@ -575,6 +642,11 @@ class PdfReader(object):
         }
 
     def getFormTextFields(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`get_form_text_fields` instead.
+        """
         warnings.warn(
             "The getFormTextFields method of PdfFileReader will be removed in PyPDF2 2.0.0. "
             "Use the get_form_text_fields() method instead.",
@@ -582,7 +654,7 @@ class PdfReader(object):
         )
         return self.get_form_text_fields()
 
-    def get_named_destinations(self, tree=None, retval=None):
+    def _get_named_destinations(self, tree=None, retval=None):
         """
         Retrieves the named destinations present in the document.
 
@@ -608,7 +680,7 @@ class PdfReader(object):
         if PA.KIDS in tree:
             # recurse down the tree
             for kid in tree[PA.KIDS]:
-                self.get_named_destinations(kid.get_object(), retval)
+                self._get_named_destinations(kid.get_object(), retval)
 
         if CA.NAMES in tree:
             names = tree[CA.NAMES]
@@ -624,19 +696,21 @@ class PdfReader(object):
         return retval
 
     def getNamedDestinations(self, tree=None, retval=None):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :py:attr:`named_destinations` instead.
+        """
         warnings.warn(
             "getNamedDestinations will be removed in PyPDF2 2.0.0. "
-            "Use get_named_destinations instead.",
+            "Use the named_destinations property instead.",
             PendingDeprecationWarning,
         )
-        return self.get_named_destinations(tree, retval)
+        return self._get_named_destinations(tree, retval)
 
     @property
     def outlines(self):
-        """
-        Read-only property that accesses the
-            :meth:`getOutlines()<PdfReader.getOutlines>` function.
-        """
+        """Read-only property."""
         return self.get_outlines()
 
     def get_outlines(self, node=None, outlines=None):
@@ -661,7 +735,7 @@ class PdfReader(object):
 
                 if "/First" in lines:
                     node = lines["/First"]
-            self._namedDests = self.get_named_destinations()
+            self._namedDests = self._get_named_destinations()
 
         if node is None:
             return outlines
@@ -686,6 +760,11 @@ class PdfReader(object):
         return outlines
 
     def getOutlines(self, node=None, outlines=None):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`get_outlines` instead.
+        """
         warnings.warn(
             "getOutlines will be removed in PyPDF2 2.0.0. Use get_outlines instead.",
             PendingDeprecationWarning,
@@ -724,6 +803,11 @@ class PdfReader(object):
         return ret
 
     def getPageNumber(self, page):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`get_page_number` instead.
+        """
         warnings.warn(
             "getPageNumber will be removed in PyPDF2 2.0.0. "
             "Use get_page_number instead.",
@@ -733,11 +817,9 @@ class PdfReader(object):
 
     def get_destination_page_number(self, destination):
         """
-        Retrieve page number of a given Destination object
+        Retrieve page number of a given Destination object.
 
         :param Destination destination: The destination to get page number.
-             Should be an instance of
-             :class:`Destination<PyPDF2.pdf.Destination>`
         :return: the page number or -1 if page not found
         :rtype: int
         """
@@ -746,6 +828,11 @@ class PdfReader(object):
         return ret
 
     def getDestinationPageNumber(self, destination):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`get_destination_page_number` instead.
+        """
         warnings.warn(
             "getDestinationPageNumber will be removed in PyPDF2 2.0.0. "
             "Use get_destination_page_number instead.",
@@ -795,11 +882,7 @@ class PdfReader(object):
 
     @property
     def pages(self):
-        """
-        Read-only property that emulates a list based upon the
-        :meth:`getNumPages()<PdfReader._get_num_pages>` and
-        :meth:`get_page()<PdfReader._get_page>` methods.
-        """
+        """Read-only property that emulates a list of :py:class:`Page<PyPDF2._page.Page>` objects."""
         return ConvertFunctionsToVirtualList(self._get_num_pages, self._get_page)
 
     @property
@@ -807,11 +890,26 @@ class PdfReader(object):
         """
         Get the page layout.
 
-        See :meth:`setPageLayout()<PdfWriter.setPageLayout>`
-        for a description of valid layouts.
-
         :return: Page layout currently being used.
         :rtype: ``str``, ``None`` if not specified
+
+        .. list-table:: Valid ``layout`` values
+           :widths: 50 200
+
+           * - /NoLayout
+             - Layout explicitly not specified
+           * - /SinglePage
+             - Show one page at a time
+           * - /OneColumn
+             - Show one column at a time
+           * - /TwoColumnLeft
+             - Show pages in two columns, odd-numbered pages on the left
+           * - /TwoColumnRight
+             - Show pages in two columns, odd-numbered pages on the right
+           * - /TwoPageLeft
+             - Show two pages at a time, odd-numbered pages on the left
+           * - /TwoPageRight
+             - Show two pages at a time, odd-numbered pages on the right
         """
         try:
             return self.trailer[TK.ROOT]["/PageLayout"]
@@ -819,6 +917,11 @@ class PdfReader(object):
             return None
 
     def getPageLayout(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :py:attr:`page_layout` instead.
+        """
         warnings.warn(
             "getPageLayout will be removed in PyPDF2 2.0.0. "
             "Use the attribute 'page_layout' instead.",
@@ -828,6 +931,11 @@ class PdfReader(object):
 
     @property
     def pageLayout(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :py:attr:`page_layout` instead.
+        """
         warnings.warn(
             "pageLayout will be removed in PyPDF2 2.0.0. "
             "Use the attribute 'page_layout' instead.",
@@ -839,11 +947,25 @@ class PdfReader(object):
     def page_mode(self):
         """
         Get the page mode.
-        See :meth:`setPageMode()<PdfWriter.setPageMode>`
-        for a description of valid modes.
 
         :return: Page mode currently being used.
         :rtype: ``str``, ``None`` if not specified
+
+        .. list-table:: Valid ``mode`` values
+           :widths: 50 200
+
+           * - /UseNone
+             - Do not show outlines or thumbnails panels
+           * - /UseOutlines
+             - Show outlines (aka bookmarks) panel
+           * - /UseThumbs
+             - Show page thumbnails panel
+           * - /FullScreen
+             - Fullscreen view
+           * - /UseOC
+             - Show Optional Content Group (OCG) panel
+           * - /UseAttachments
+             - Show attachments panel
         """
         try:
             return self.trailer[TK.ROOT]["/PageMode"]
@@ -851,6 +973,11 @@ class PdfReader(object):
             return None
 
     def getPageMode(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :py:attr:`page_mode` instead.
+        """
         warnings.warn(
             "getPageMode will be removed in PyPDF2 2.0.0. "
             "Use the attribute 'page_mode' instead.",
@@ -860,6 +987,11 @@ class PdfReader(object):
 
     @property
     def pageMode(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :py:attr:`page_mode` instead.
+        """
         warnings.warn(
             "pageMode will be removed in PyPDF2 2.0.0. "
             "Use the attribute 'page_mode' instead.",
@@ -881,7 +1013,7 @@ class PdfReader(object):
             # decrypted file
             catalog = self.trailer[TK.ROOT].get_object()
             pages = catalog["/Pages"].get_object()
-            self.flattened_pages = []
+            self._flattened_pages = []
 
         t = "/Pages"
         if PA.TYPE in pages:
@@ -1027,6 +1159,11 @@ class PdfReader(object):
         return retval
 
     def getObject(self, indirectReference):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`get_object` instead.
+        """
         warnings.warn(
             "getObject(indirectReference) will be removed in PyPDF2 2.0.0. "
             "Use get_object(indirect_reference) instead.",
@@ -1077,6 +1214,11 @@ class PdfReader(object):
         return int(idnum), int(generation)
 
     def readObjectHeader(self, stream):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`read_object_header` instead.
+        """
         warnings.warn(
             "readObjectHeader will be removed with PyPDF2 2.0.0. "
             "Use read_object_header instead.",
@@ -1088,6 +1230,11 @@ class PdfReader(object):
         return self.resolved_objects.get((generation, idnum))
 
     def cacheGetIndirectObject(self, generation, idnum):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`cache_get_indirect_object` instead.
+        """
         warnings.warn(
             "cacheGetIndirectObject will be removed with PyPDF2 2.0.0. "
             "Use cache_get_indirect_object instead.",
@@ -1106,6 +1253,11 @@ class PdfReader(object):
         return obj
 
     def cacheIndirectObject(self, generation, idnum, obj):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`cache_indirect_object` instead.
+        """
         warnings.warn(
             "cacheIndirectObject will be removed with PyPDF2 2.0.0. "
             "Use cache_indirect_object instead.",
@@ -1490,6 +1642,11 @@ class PdfReader(object):
         return b"".join(line_parts)
 
     def readNextEndLine(self, stream, limit_offset=0):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`read_next_end_line` instead.
+        """
         warnings.warn(
             "readNextEndLine will be removed in PyPDF2 2.0.0. "
             "Use read_next_end_line instead.",
@@ -1629,6 +1786,11 @@ class PdfReader(object):
         return TK.ENCRYPT in self.trailer
 
     def getIsEncrypted(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :py:attr:`is_encrypted` instead.
+        """
         warnings.warn(
             "getIsEncrypted() will be removed in PyPDF2 2.0.0. "
             "Use the is_encrypted property instead.",
@@ -1638,6 +1800,11 @@ class PdfReader(object):
 
     @property
     def isEncrypted(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :py:attr:`is_encrypted` instead.
+        """
         warnings.warn(
             "isEncrypted will be removed in PyPDF2 2.0.0. "
             "Use the is_encrypted property instead.",

@@ -72,7 +72,7 @@ class PdfMerger(object):
             Defaults to ``True``.
     :param bool overwriteWarnings: Determines whether to override Python's
         ``warnings.py`` module with a custom implementation (defaults to
-        ``True``).
+        ``True``). This attribute is deprecated and will be removed.
     """
 
     def __init__(self, strict=False, overwriteWarnings="deprecated"):
@@ -288,6 +288,11 @@ class PdfMerger(object):
         self.output.add_metadata(infos)
 
     def addMetadata(self, infos):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`add_metadata` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("addMetadata", "add_metadata"), PendingDeprecationWarning
         )

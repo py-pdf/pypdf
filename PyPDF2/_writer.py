@@ -129,6 +129,11 @@ class PdfWriter(object):
         return self._objects[ido.idnum - 1]
 
     def getObject(self, ido):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`get_object` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("getObject()", "get_object()"),
             PendingDeprecationWarning,
@@ -175,6 +180,11 @@ class PdfWriter(object):
         self._add_page(page, list.append)
 
     def addPage(self, page):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`add_page` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("addPage()", "add_page()"),
             PendingDeprecationWarning,
@@ -193,6 +203,11 @@ class PdfWriter(object):
         self._add_page(page, lambda l, p: l.insert(index, p))
 
     def insertPage(self, page, index=0):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`insert_page` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("insertPage()", "insert_page()"),
             PendingDeprecationWarning,
@@ -213,8 +228,13 @@ class PdfWriter(object):
         return pages[PA.KIDS][page_umber].get_object()
 
     def getPage(self, pageNumber):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :code:`writer.pages[page_number]` instead.
+        """
         warnings.warn(
-            DEPR_MSG.format("getPage()", "get_page()"),
+            DEPR_MSG.format("getPage()", "writer.pages[page_number]"),
             PendingDeprecationWarning,
         )
         return self.get_page(pageNumber)
@@ -230,6 +250,11 @@ class PdfWriter(object):
         return int(pages[NameObject("/Count")])
 
     def getNumPages(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :code:`len(writer.pages)` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("getNumPages()", "len(writer.pages)"),
             PendingDeprecationWarning,
@@ -264,6 +289,11 @@ class PdfWriter(object):
         return page
 
     def addBlankPage(self, width=None, height=None):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`add_blank_page` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("addBlankPage", "add_blank_page"),
             PendingDeprecationWarning,
@@ -294,6 +324,11 @@ class PdfWriter(object):
         return page
 
     def insertBlankPage(self, width=None, height=None, index=0):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`insertBlankPage` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("insertBlankPage", "insert_blank_page"),
             PendingDeprecationWarning,
@@ -344,6 +379,11 @@ class PdfWriter(object):
         )
 
     def addJS(self, javascript):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`add_js` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("addJS", "add_js"),
             PendingDeprecationWarning,
@@ -434,6 +474,11 @@ class PdfWriter(object):
         self._root_object.update({NameObject(CA.NAMES): embeddedFilesDictionary})
 
     def addAttachment(self, fname, fdata):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`add_attachment` instead.
+        """
         warnings.warn(
             DEPR_MSG.format(
                 "addAttachment(fname, fdata)", "add_attachment(filename, data)"
@@ -468,6 +513,11 @@ class PdfWriter(object):
                 after_page_append(writer_page)
 
     def appendPagesFromReader(self, reader, after_page_append=None):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`append_pages_from_reader` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("appendPagesFromReader", "append_pages_from_reader"),
             PendingDeprecationWarning,
@@ -508,6 +558,11 @@ class PdfWriter(object):
                     )
 
     def updatePageFormFieldValues(self, page, fields, flags=0):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`update_page_form_field_values` instead.
+        """
         warnings.warn(
             DEPR_MSG.format(
                 "updatePageFormFieldValues", "update_page_form_field_values"
@@ -526,6 +581,11 @@ class PdfWriter(object):
         self._root_object = reader.trailer[TK.ROOT]
 
     def cloneReaderDocumentRoot(self, reader):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`clone_reader_document_root` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("cloneReaderDocumentRoot", "clone_reader_document_root"),
             PendingDeprecationWarning,
@@ -549,6 +609,11 @@ class PdfWriter(object):
         self.append_pages_from_reader(reader, after_page_append)
 
     def cloneDocumentFromReader(self, reader, after_page_append=None):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`clone_document_from_reader` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("cloneDocumentFromReader", "clone_document_from_reader"),
             PendingDeprecationWarning,
@@ -718,6 +783,11 @@ class PdfWriter(object):
         self.get_object(self._info).update(args)
 
     def addMetadata(self, infos):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`add_metadata` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("addMetadata", "add_metadata"),
         )
@@ -795,6 +865,11 @@ class PdfWriter(object):
         return ref
 
     def getReference(self, obj):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`get_reference` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("getReference", "get_reference"), PendingDeprecationWarning
         )
@@ -815,6 +890,11 @@ class PdfWriter(object):
         return outline
 
     def getOutlineRoot(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`get_outline_root` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("getOutlineRoot", "get_outline_root"),
             PendingDeprecationWarning,
@@ -859,6 +939,11 @@ class PdfWriter(object):
         return nd
 
     def getNamedDestRoot(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`get_named_dest_root` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("getNamedDestRoot", "get_named_dest_root"),
             PendingDeprecationWarning,
@@ -879,6 +964,11 @@ class PdfWriter(object):
         return dest_ref
 
     def addBookmarkDestination(self, dest, parent=None):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`add_bookmark_destination` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("addBookmarkDestination", "add_bookmark_destination"),
         )
@@ -910,6 +1000,11 @@ class PdfWriter(object):
         return bookmark_ref
 
     def addBookmarkDict(self, bookmark, parent=None):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`add_bookmark_dict` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("addBookmarkDict", "add_bookmark_dict"),
         )
@@ -1002,6 +1097,14 @@ class PdfWriter(object):
         fit="/Fit",
         *args
     ):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`add_bookmark` instead.
+        """
+        warnings.warn(
+            DEPR_MSG.format("addBookmark", "add_bookmark"), PendingDeprecationWarning
+        )
         return self.add_bookmark(
             title, pagenum, parent, color, bold, italic, fit, *args
         )
@@ -1014,6 +1117,16 @@ class PdfWriter(object):
         return dest_ref
 
     def addNamedDestinationObject(self, dest):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`add_named_destination_object` instead.
+        """
+        warnings.warn(
+            DEPR_MSG.format(
+                "addNamedDestinationObject", "add_named_destination_object"
+            ),
+        )
         return self.add_named_destination_object(dest)
 
     def add_named_destination(self, title, pagenum):
@@ -1034,6 +1147,11 @@ class PdfWriter(object):
         return dest_ref
 
     def addNamedDestination(self, title, pagenum):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`add_named_destination` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("addNamedDestination", "add_named_destination"),
         )
@@ -1048,6 +1166,11 @@ class PdfWriter(object):
                 del page_ref[PG.ANNOTS]
 
     def removeLinks(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`remove_links` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("removeLinks", "remove_links"),
         )
@@ -1130,6 +1253,11 @@ class PdfWriter(object):
             page_ref.__setitem__(NameObject("/Contents"), content)
 
     def removeImages(self, ignoreByteStringObject=False):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`remove_images` instead.
+        """
         warnings.warn(
             DEPR_MSG.format(
                 "removeImages(ignoreByteStringObject=False)",
@@ -1183,6 +1311,11 @@ class PdfWriter(object):
             page_ref.__setitem__(NameObject("/Contents"), content)
 
     def removeText(self, ignoreByteStringObject=False):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`remove_text` instead.
+        """
         warnings.warn(
             DEPR_MSG.format(
                 "removeText(ignoreByteStringObject=False)",
@@ -1254,6 +1387,11 @@ class PdfWriter(object):
             page_ref[NameObject(PG.ANNOTS)] = ArrayObject([lnk_ref])
 
     def addURI(self, pagenum, uri, rect, border=None):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`add_uri` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("addURI", "add_uri"),
         )
@@ -1346,6 +1484,11 @@ class PdfWriter(object):
             page_ref[NameObject(PG.ANNOTS)] = ArrayObject([lnk_ref])
 
     def addLink(self, pagenum, pagedest, rect, border=None, fit="/Fit", *args):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`add_link` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("addLink", "add_link"),
         )
@@ -1376,6 +1519,11 @@ class PdfWriter(object):
             return None
 
     def getPageLayout(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :py:attr:`page_layout` instead.
+        """
         warnings.warn(
             "getPageLayout() will be removed in PyPDF2 2.0.0. "
             "Use the page_layout attribute instead.",
@@ -1416,6 +1564,11 @@ class PdfWriter(object):
         self._root_object.update({NameObject("/PageLayout"): layout})
 
     def setPageLayout(self, layout):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :py:attr:`page_layout` instead.
+        """
         warnings.warn(
             "setPageLayout() will be removed in PyPDF2 2.0.0. "
             "Use the page_layout attribute instead.",
@@ -1425,6 +1578,27 @@ class PdfWriter(object):
 
     @property
     def page_layout(self):
+        """
+        Page layout property.
+
+        .. list-table:: Valid ``layout`` values
+           :widths: 50 200
+
+           * - /NoLayout
+             - Layout explicitly not specified
+           * - /SinglePage
+             - Show one page at a time
+           * - /OneColumn
+             - Show one column at a time
+           * - /TwoColumnLeft
+             - Show pages in two columns, odd-numbered pages on the left
+           * - /TwoColumnRight
+             - Show pages in two columns, odd-numbered pages on the right
+           * - /TwoPageLeft
+             - Show two pages at a time, odd-numbered pages on the left
+           * - /TwoPageRight
+             - Show two pages at a time, odd-numbered pages on the right
+        """
         return self._get_page_layout()
 
     @page_layout.setter
@@ -1433,6 +1607,11 @@ class PdfWriter(object):
 
     @property
     def pageLayout(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :py:attr:`page_layout` instead.
+        """
         warnings.warn(
             "pageLayout will be removed in PyPDF2 2.0.0. "
             "Use the page_layout attribute instead.",
@@ -1442,6 +1621,11 @@ class PdfWriter(object):
 
     @pageLayout.setter
     def pageLayout(self, layout):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :py:attr:`page_layout` instead.
+        """
         warnings.warn(
             "pageLayout will be removed in PyPDF2 2.0.0. "
             "Use the page_layout attribute instead.",
@@ -1473,6 +1657,11 @@ class PdfWriter(object):
             return None
 
     def getPageMode(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :py:attr:`page_mode` instead.
+        """
         warnings.warn(
             "getPageMode() will be removed in PyPDF2 2.0.0. "
             "Use the page_mode attribute instead.",
@@ -1482,11 +1671,37 @@ class PdfWriter(object):
 
     def set_page_mode(self, mode):
         """
-        Set the page mode.
+        .. deprecated:: 1.28.0
 
-        :param str mode: The page mode to use.
+            Use :py:attr:`page_mode` instead.
+        """
+        if not isinstance(mode, NameObject):
+            if mode not in self._valid_modes:
+                warnings.warn(
+                    "Mode should be one of: {}".format(", ".join(self._valid_modes))
+                )
+            mode = NameObject(mode)
+        self._root_object.update({NameObject("/PageMode"): mode})
 
-        .. list-table:: Valid ``mode`` arguments
+    def setPageMode(self, mode):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :py:attr:`page_mode` instead.
+        """
+        warnings.warn(
+            "setPageMode() will be removed in PyPDF2 2.0.0. "
+            "Use the page_mode attribute instead.",
+            PendingDeprecationWarning,
+        )
+        return self.set_page_mode(mode)
+
+    @property
+    def page_mode(self):
+        """
+        Page mode property.
+
+        .. list-table:: Valid ``mode`` values
            :widths: 50 200
 
            * - /UseNone
@@ -1502,24 +1717,6 @@ class PdfWriter(object):
            * - /UseAttachments
              - Show attachments panel
         """
-        if not isinstance(mode, NameObject):
-            if mode not in self._valid_modes:
-                warnings.warn(
-                    "Mode should be one of: {}".format(", ".join(self._valid_modes))
-                )
-            mode = NameObject(mode)
-        self._root_object.update({NameObject("/PageMode"): mode})
-
-    def setPageMode(self, mode):
-        warnings.warn(
-            "setPageMode() will be removed in PyPDF2 2.0.0. "
-            "Use the page_mode attribute instead.",
-            PendingDeprecationWarning,
-        )
-        return self.set_page_mode(mode)
-
-    @property
-    def page_mode(self):
         return self._get_page_mode()
 
     @page_mode.setter
@@ -1528,6 +1725,11 @@ class PdfWriter(object):
 
     @property
     def pageMode(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :py:attr:`page_mode` instead.
+        """
         warnings.warn(
             "pageMode will be removed in PyPDF2 2.0.0. "
             "Use the page_mode attribute instead.",
@@ -1537,6 +1739,11 @@ class PdfWriter(object):
 
     @pageMode.setter
     def pageMode(self, mode):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :py:attr:`page_mode` instead.
+        """
         warnings.warn(
             "pageMode will be removed in PyPDF2 2.0.0. "
             "Use the page_mode attribute instead.",

@@ -258,6 +258,11 @@ class PageObject(DictionaryObject):
 
     @staticmethod
     def createBlankPage(pdf=None, width=None, height=None):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`create_blank_page` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("createBlankPage", "create_blank_page"),
             PendingDeprecationWarning,
@@ -277,6 +282,11 @@ class PageObject(DictionaryObject):
         return self
 
     def rotateClockwise(self, angle):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`rotate_clockwise` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("rotateClockwise", "rotate_clockwise"),
             PendingDeprecationWarning,
@@ -284,6 +294,11 @@ class PageObject(DictionaryObject):
         return self.rotate_clockwise(angle)
 
     def rotateCounterClockwise(self, angle):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`rotate_clockwise` with a negative argument instead.
+        """
         warnings.warn(
             DEPR_MSG.format("rotateCounterClockwise", "rotate_clockwise"),
             PendingDeprecationWarning,
@@ -380,6 +395,11 @@ class PageObject(DictionaryObject):
             return None
 
     def getContents(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`get_contents` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("getContents", "get_contents"),
         )
@@ -403,6 +423,11 @@ class PageObject(DictionaryObject):
         self._merge_page(page2, expand=expand)
 
     def mergePage(self, page2):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`merge_page` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("mergePage", "merge_page"),
         )
@@ -544,6 +569,10 @@ class PageObject(DictionaryObject):
             transformation matrix
         :param bool expand: Whether the page should be expanded to fit the dimensions
             of the page to be merged.
+
+        .. deprecated:: 1.28.0
+
+            Use :meth:`add_transformation`  and :meth:`merge_page` instead.
         """
         warnings.warn(
             "page.mergeTransformedPage(page2, ctm) will be removed in PyPDF 2.0.0. "
@@ -570,6 +599,10 @@ class PageObject(DictionaryObject):
         :param float scale: The scaling factor
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
+
+        .. deprecated:: 1.28.0
+
+            Use :meth:`add_transformation` and :meth:`merge_page` instead.
         """
         warnings.warn(
             "page.mergeScaledPage(page2, scale, expand) method will be deprecated. "
@@ -591,6 +624,10 @@ class PageObject(DictionaryObject):
         :param float rotation: The angle of the rotation, in degrees
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
+
+        .. deprecated:: 1.28.0
+
+            Use :meth:`add_transformation` and :meth:`merge_page` instead.
         """
         warnings.warn(
             "page.mergeRotatedPage(page2, rotation, expand) method will be deprecated. "
@@ -613,6 +650,10 @@ class PageObject(DictionaryObject):
         :param float ty: The translation on Y axis
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
+
+        .. deprecated:: 1.28.0
+
+            Use :meth:`add_transformation` and :meth:`merge_page` instead.
         """
         warnings.warn(
             "page.mergeTranslatedPage(page2, tx, ty, expand) method will be deprecated. "
@@ -636,6 +677,10 @@ class PageObject(DictionaryObject):
         :param float rotation: The angle of the rotation, in degrees
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
+
+        .. deprecated:: 1.28.0
+
+            Use :meth:`add_transformation` and :meth:`merge_page` instead.
         """
         warnings.warn(
             "page.mergeRotatedTranslatedPage(page2, rotation, tx, ty, expand) "
@@ -658,6 +703,10 @@ class PageObject(DictionaryObject):
         :param float scale: The scaling factor
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
+
+        .. deprecated:: 1.28.0
+
+            Use :meth:`add_transformation` and :meth:`merge_page` instead.
         """
         warnings.warn(
             "page.mergeRotatedScaledPage(page2, rotation, scale, expand) "
@@ -681,6 +730,10 @@ class PageObject(DictionaryObject):
         :param float ty: The translation on Y axis
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
+
+        .. deprecated:: 1.28.0
+
+            Use :meth:`add_transformation` and :meth:`merge_page` instead.
         """
         warnings.warn(
             "page.mergeScaledTranslatedPage(page2, scale, tx, ty, expand) "
@@ -708,6 +761,10 @@ class PageObject(DictionaryObject):
         :param float scale: The scaling factor
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
+
+        .. deprecated:: 1.28.0
+
+            Use :meth:`add_transformation` and :meth:`merge_page` instead.
         """
         warnings.warn(
             "page.mergeRotatedScaledTranslatedPage(page2, rotation, tx, ty, expand) "
@@ -724,7 +781,11 @@ class PageObject(DictionaryObject):
         Apply a transformation matrix to the page.
 
         :param tuple ctm: A 6-element tuple containing the operands of the
-            transformation matrix.
+            transformation matrix. Alternatively, a
+            :class:`Transformation<PyPDF2._page.Transformation>`
+            object can be passed.
+
+        See :doc:`/user/cropping-and-transforming`.
         """
         if isinstance(ctm, Transformation):
             ctm = ctm.ctm
@@ -737,6 +798,11 @@ class PageObject(DictionaryObject):
             self[NameObject(PG.CONTENTS)] = new_content
 
     def addTransformation(self, ctm):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`add_transformation` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("addTransformation", "add_transformation"),
             PendingDeprecationWarning,
@@ -791,6 +857,11 @@ class PageObject(DictionaryObject):
         self.scale(factor, factor)
 
     def scaleBy(self, factor):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`scale_by` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("Page.scaleBy", "Page.scale_by"),
             PendingDeprecationWarning,
@@ -810,6 +881,11 @@ class PageObject(DictionaryObject):
         self.scale(sx, sy)
 
     def scaleTo(self, width, height):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`scale_to` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("Page.scaleTo", "Page.scale_to"),
             PendingDeprecationWarning,
@@ -831,6 +907,11 @@ class PageObject(DictionaryObject):
             self[NameObject(PG.CONTENTS)] = content.flateEncode()
 
     def compressContentStreams(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`compress_content_streams` instead.
+        """
         warnings.warn(
             DEPR_MSG.format(
                 "Page.compressContentStreams", "Page.compress_content_streams"
@@ -894,6 +975,11 @@ class PageObject(DictionaryObject):
         return text
 
     def extractText(self, Tj_sep="", TJ_sep=""):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`extract_text` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("Page.extractText", "Page.extract_text"),
         )
@@ -908,6 +994,11 @@ class PageObject(DictionaryObject):
 
     @property
     def mediaBox(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :py:attr:`mediabox` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("Page.mediaBox", "Page.mediabox"),
             PendingDeprecationWarning,
@@ -916,6 +1007,11 @@ class PageObject(DictionaryObject):
 
     @mediaBox.setter
     def mediaBox(self, value):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :py:attr:`mediabox` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("Page.mediaBox", "Page.mediabox"),
             PendingDeprecationWarning,
@@ -933,6 +1029,11 @@ class PageObject(DictionaryObject):
 
     @property
     def cropBox(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :py:attr:`cropbox` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("Page.cropBox", "Page.cropbox"),
             PendingDeprecationWarning,
@@ -956,6 +1057,11 @@ class PageObject(DictionaryObject):
 
     @property
     def bleedBox(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :py:attr:`bleedbox` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("Page.bleedBox", "Page.bleedbox"),
             PendingDeprecationWarning,
@@ -978,6 +1084,11 @@ class PageObject(DictionaryObject):
 
     @property
     def trimBox(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :py:attr:`trimbox` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("Page.trimBox", "Page.trimbox"),
             PendingDeprecationWarning,
@@ -1001,6 +1112,11 @@ class PageObject(DictionaryObject):
 
     @property
     def artBox(self):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :py:attr:`artbox` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("Page.artBox", "Page.artbox"),
             PendingDeprecationWarning,
