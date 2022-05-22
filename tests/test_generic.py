@@ -65,6 +65,18 @@ def test_boolean_object_write():
     assert stream.read() == b"false"
 
 
+def test_boolean_eq():
+    boolobj = BooleanObject(True)
+    assert (boolobj == True) is True
+    assert (boolobj == False) is False
+    assert (boolobj == "True") is False
+
+    boolobj = BooleanObject(False)
+    assert (boolobj == True) is False
+    assert (boolobj == False) is True
+    assert (boolobj == "True") is False
+
+
 def test_boolean_object_exception():
     stream = BytesIO(b"False")
     with pytest.raises(PdfReadError) as exc:
