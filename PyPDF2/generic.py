@@ -100,6 +100,14 @@ class BooleanObject(PdfObject):
     def __init__(self, value: Any) -> None:
         self.value = value
 
+    def __eq__(self, __o: object) -> bool:
+        if isinstance(__o, BooleanObject):
+            return self.value == __o.value
+        elif isinstance(__o, bool):
+            return self.value == __o
+        else:
+            return False
+
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
