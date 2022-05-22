@@ -34,8 +34,9 @@ PAGE_RANGE_HELP = """Remember, page indices start with zero.
 
 class PageRange(object):
     """
-    A slice-like representation of a range of page indices,
-        i.e. page numbers, only starting at zero.
+    A slice-like representation of a range of page indices.
+
+    For example, page numbers, only starting at zero.
 
     The syntax is like what you would put between brackets [ ].
     The slice is one of the few Python types that can't be subclassed,

@@ -71,6 +71,11 @@ class XmpInformation(PdfObject):
         self.stream.write_to_stream(stream, encryption_key)
 
     def writeToStream(self, stream, encryption_key):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`write_to_stream` instead.
+        """
         warnings.warn(
             "writeToStream() will be deprecated in PyPDF2 2.0.0. "
             "Use write_to_stream() instead.",
@@ -88,6 +93,11 @@ class XmpInformation(PdfObject):
                     yield element
 
     def getElement(self, aboutUri, namespace, name):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`get_element` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("getElement", "get_element"),
         )
@@ -105,6 +115,11 @@ class XmpInformation(PdfObject):
                         yield child
 
     def getNodesInNamespace(self, aboutUri, namespace):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`get_nodes_in_namespace` instead.
+        """
         warnings.warn(
             DEPR_MSG.format("getNodesInNamespace", "get_nodes_in_namespace"),
         )

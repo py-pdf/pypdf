@@ -473,8 +473,8 @@ class PdfReader(object):
 
         :param int pageNumber: The page number to retrieve
             (pages begin at zero)
-        :return: a :class:`PageObject<pdf.PageObject>` instance.
-        :rtype: :class:`PageObject<pdf.PageObject>`
+        :return: a :class:`PageObject<PyPDF2._page.PageObject>` instance.
+        :rtype: :class:`PageObject<PyPDF2._page.PageObject>`
         """
         # ensure that we're not trying to access an encrypted PDF
         # assert not self.trailer.has_key(TK.ENCRYPT)
@@ -794,7 +794,7 @@ class PdfReader(object):
         Retrieve page number of a given PageObject
 
         :param PageObject page: The page to get page number. Should be
-            an instance of :class:`PageObject<PyPDF2.pdf.PageObject>`
+            an instance of :class:`PageObject<PyPDF2._page.PageObject>`
         :return: the page number or -1 if page not found
         :rtype: int
         """

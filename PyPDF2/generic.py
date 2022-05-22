@@ -1201,11 +1201,11 @@ class RectangleObject(ArrayObject):
     """
     This class is used to represent *page boxes* in PyPDF2. These boxes include:
 
-        * :attr:`artbox <PyPDF2.pdf.PageObject.artbox>`
-        * :attr:`bleedbox <PyPDF2.pdf.PageObject.bleedbox>`
-        * :attr:`cropbox <PyPDF2.pdf.PageObject.cropbox>`
-        * :attr:`mediabox <PyPDF2.pdf.PageObject.mediabox>`
-        * :attr:`trimbox <PyPDF2.pdf.PageObject.trimbox>`
+        * :attr:`artbox <PyPDF2._page.PageObject.artbox>`
+        * :attr:`bleedbox <PyPDF2._page.PageObject.bleedbox>`
+        * :attr:`cropbox <PyPDF2._page.PageObject.cropbox>`
+        * :attr:`mediabox <PyPDF2._page.PageObject.mediabox>`
+        * :attr:`trimbox <PyPDF2._page.PageObject.trimbox>`
     """
 
     def __init__(self, arr):

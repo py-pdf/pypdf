@@ -175,7 +175,7 @@ class PdfWriter(object):
         :class:`PdfReader<PdfReader>` instance.
 
         :param PageObject page: The page to add to the document. Should be
-            an instance of :class:`PageObject<PyPDF2.pdf.PageObject>`
+            an instance of :class:`PageObject<PyPDF2._page.PageObject>`
         """
         self._add_page(page, list.append)
 
@@ -197,7 +197,7 @@ class PdfWriter(object):
         :class:`PdfReader<PdfReader>` instance.
 
         :param PageObject page: The page to add to the document.  This
-            argument should be an instance of :class:`PageObject<pdf.PageObject>`.
+            argument should be an instance of :class:`PageObject<PyPDF2._page.PageObject>`.
         :param int index: Position at which the page will be inserted.
         """
         self._add_page(page, lambda l, p: l.insert(index, p))
@@ -221,7 +221,7 @@ class PdfWriter(object):
         :param int pageNumber: The page number to retrieve
             (pages begin at zero)
         :return: the page at the index given by *pageNumber*
-        :rtype: :class:`PageObject<pdf.PageObject>`
+        :rtype: :class:`PageObject<PyPDF2._page.PageObject>`
         """
         pages = self.get_object(self._pages)
         # XXX: crude hack
@@ -264,9 +264,7 @@ class PdfWriter(object):
     @property
     def pages(self):
         """
-        Property that emulates a list based upon the
-        :meth:`getNumPages()<PdfWriter.get_num_pages>` and
-        :meth:`get_page()<PdfWriter.get_page>` methods.
+        Property that emulates a list of :class:`PageObject<PyPDF2._page.PageObject>`
         """
         return ConvertFunctionsToVirtualList(self._get_num_pages, self.get_page)
 
@@ -280,7 +278,7 @@ class PdfWriter(object):
         :param float height: The height of the new page expressed in default
             user space units.
         :return: the newly appended page
-        :rtype: :class:`PageObject<PyPDF2.pdf.PageObject>`
+        :rtype: :class:`PageObject<PyPDF2._page.PageObject>`
         :raises PageSizeNotDefinedError: if width and height are not defined
             and previous page does not exist.
         """
@@ -311,7 +309,7 @@ class PdfWriter(object):
             user space units.
         :param int index: Position to add the page.
         :return: the newly appended page
-        :rtype: :class:`PageObject<PyPDF2.pdf.PageObject>`
+        :rtype: :class:`PageObject<PyPDF2._page.PageObject>`
         :raises PageSizeNotDefinedError: if width and height are not defined
             and previous page does not exist.
         """
