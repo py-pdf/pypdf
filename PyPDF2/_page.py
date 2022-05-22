@@ -385,7 +385,7 @@ class PageObject(DictionaryObject):
         )
         return self.get_contents()
 
-    def merge_page(self, page2):
+    def merge_page(self, page2, expand=False):
         """
         Merge the content streams of two pages into one.
 
@@ -397,8 +397,10 @@ class PageObject(DictionaryObject):
 
         :param PageObject page2: The page to be merged into this one. Should be
             an instance of :class:`PageObject<PageObject>`.
+        :param bool expand: If true, the current page dimensions will be
+            expanded to accommodate the dimensions of the page to be merged.
         """
-        self._merge_page(page2)
+        self._merge_page(page2, expand=expand)
 
     def mergePage(self, page2):
         warnings.warn(
@@ -543,6 +545,10 @@ class PageObject(DictionaryObject):
         :param bool expand: Whether the page should be expanded to fit the dimensions
             of the page to be merged.
         """
+        warnings.warn(
+            "page.mergeTransformedPage(page2, ctm) will be removed in PyPDF 2.0.0. "
+            "Use page2.add_transformation(ctm); page.merge_page(page2) instead.",
+        )
         if isinstance(ctm, Transformation):
             ctm = ctm.ctm
         self._merge_page(
@@ -568,8 +574,8 @@ class PageObject(DictionaryObject):
         warnings.warn(
             "page.mergeScaledPage(page2, scale, expand) method will be deprecated. "
             "Use "
-            "page.mergeTransformedPage(page2, Transformation().scale(scale), expand) "
-            "instead.",
+            "page2.add_transformation(Transformation().scale(scale)); "
+            "page.merge_page(page2, expand) instead.",
             PendingDeprecationWarning,
         )
         op = Transformation().scale(scale, scale)
@@ -586,6 +592,13 @@ class PageObject(DictionaryObject):
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
+        warnings.warn(
+            "page.mergeRotatedPage(page2, rotation, expand) method will be deprecated. "
+            "Use "
+            "page2.add_transformation(Transformation().rotate(rotation)); "
+            "page.merge_page(page2, expand) instead.",
+            PendingDeprecationWarning,
+        )
         op = Transformation().rotate(rotation)
         self.mergeTransformedPage(page2, op, expand)
 
@@ -601,6 +614,13 @@ class PageObject(DictionaryObject):
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
+        warnings.warn(
+            "page.mergeTranslatedPage(page2, tx, ty, expand) method will be deprecated. "
+            "Use "
+            "page2.add_transformation(Transformation().translate(tx, ty)); "
+            "page.merge_page(page2, expand) instead.",
+            PendingDeprecationWarning,
+        )
         op = Transformation().translate(tx, ty)
         self.mergeTransformedPage(page2, op, expand)
 
@@ -617,6 +637,13 @@ class PageObject(DictionaryObject):
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
+        warnings.warn(
+            "page.mergeRotatedTranslatedPage(page2, rotation, tx, ty, expand) "
+            "method will be deprecated. Use "
+            "page2.add_transformation(Transformation().rotate(rotation).translate(tx, ty)); "
+            "page.merge_page(page2, expand) instead.",
+            PendingDeprecationWarning,
+        )
         op = Transformation().translate(-tx, -ty).rotate(rotation).translate(tx, ty)
         return self.mergeTransformedPage(page2, op, expand)
 
@@ -632,6 +659,13 @@ class PageObject(DictionaryObject):
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
+        warnings.warn(
+            "page.mergeRotatedScaledPage(page2, rotation, scale, expand) "
+            "method will be deprecated. Use "
+            "page2.add_transformation(Transformation().rotate(rotation).scale(scale)); "
+            "page.merge_page(page2, expand) instead.",
+            PendingDeprecationWarning,
+        )
         op = Transformation().rotate(rotation).scale(scale, scale)
         self.mergeTransformedPage(page2, op, expand)
 
@@ -648,6 +682,13 @@ class PageObject(DictionaryObject):
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
+        warnings.warn(
+            "page.mergeScaledTranslatedPage(page2, scale, tx, ty, expand) "
+            "method will be deprecated. Use "
+            "page2.add_transformation(Transformation().scale(scale).translate(tx, ty)); "
+            "page.merge_page(page2, expand) instead.",
+            PendingDeprecationWarning,
+        )
         op = Transformation().scale(scale, scale).translate(tx, ty)
         return self.mergeTransformedPage(page2, op, expand)
 
@@ -668,6 +709,13 @@ class PageObject(DictionaryObject):
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
+        warnings.warn(
+            "page.mergeRotatedScaledTranslatedPage(page2, rotation, tx, ty, expand) "
+            "method will be deprecated. Use "
+            "page2.add_transformation(Transformation().rotate(rotation).scale(scale)); "
+            "page.merge_page(page2, expand) instead.",
+            PendingDeprecationWarning,
+        )
         op = Transformation().rotate(rotation).scale(scale, scale).translate(tx, ty)
         self.mergeTransformedPage(page2, op, expand)
 
@@ -678,6 +726,8 @@ class PageObject(DictionaryObject):
         :param tuple ctm: A 6-element tuple containing the operands of the
             transformation matrix.
         """
+        if isinstance(ctm, Transformation):
+            ctm = ctm.ctm
         original_content = self.get_contents()
         if original_content is not None:
             new_content = PageObject._add_transformation_matrix(
