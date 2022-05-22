@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1653248708082,
+  "lastUpdate": 1653249243914,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -2113,6 +2113,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0009774204855581411",
             "extra": "mean: 105.0106387999989 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "000ac498ecc9343c11b89a785314b72730419818",
+          "message": "REL: 1.28.1\n\nBug Fixes (BUG):\n-  Incorrectly show deprecation warnings on internal usage (#887)\n\nMaintenance (MAINT):\n-  Add stacklevel=2 to deprecation warnings (#889)\n-  Remove duplicate warnings imports (#888)\n\nFull Changelog: https://github.com/py-pdf/PyPDF2/compare/1.28.0...1.28.1",
+          "timestamp": "2022-05-22T21:52:56+02:00",
+          "tree_id": "71669813a6c12b4757f2588a0336cb4336aadc0e",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/000ac498ecc9343c11b89a785314b72730419818"
+        },
+        "date": 1653249243477,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.6625144684497531,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009516052739706142",
+            "extra": "mean: 1.5094009982000003 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 9.558250576948518,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009916151322350054",
+            "extra": "mean: 104.62165559999903 msec\nrounds: 10"
           }
         ]
       }
