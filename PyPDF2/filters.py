@@ -43,6 +43,7 @@ try:
 except ImportError:
     from typing_extensions import Literal  # type: ignore[misc]
 
+from ._utils import b_, ord_, paeth_predictor
 from .constants import CcittFaxDecodeParameters as CCITT
 from .constants import ColorSpaces
 from .constants import FilterTypeAbbreviations as FTA
@@ -52,7 +53,6 @@ from .constants import ImageAttributes as IA
 from .constants import LzwFilterParameters as LZW
 from .constants import StreamAttributes as SA
 from .errors import PdfReadError, PdfStreamError
-from .utils import b_, ord_, paethPredictor
 
 
 def decompress(data: bytes) -> bytes:
@@ -147,7 +147,7 @@ class FlateDecode:
                     left = rowdata[i - 1] if i > 1 else 0
                     up = prev_rowdata[i]
                     up_left = prev_rowdata[i - 1] if i > 1 else 0
-                    paeth = paethPredictor(left, up, up_left)
+                    paeth = paeth_predictor(left, up, up_left)
                     rowdata[i] = (rowdata[i] + paeth) % 256
             else:
                 # unsupported PNG filter
@@ -214,13 +214,13 @@ class LZWDecode:
             self.dict = [""] * 4096
             for i in range(256):
                 self.dict[i] = chr(i)
-            self.resetDict()
+            self.reset_dict()
 
-        def resetDict(self) -> None:
+        def reset_dict(self) -> None:
             self.dictlen = 258
             self.bitspercode = 9
 
-        def nextCode(self) -> int:
+        def next_code(self) -> int:
             fillbits = self.bitspercode
             value = 0
             while fillbits > 0:
@@ -256,13 +256,13 @@ class LZWDecode:
             baos = ""
             while True:
                 pW = cW
-                cW = self.nextCode()
+                cW = self.next_code()
                 if cW == -1:
                     raise PdfReadError("Missed the stop code in LZWDecode!")
                 if cW == self.STOP:
                     break
                 elif cW == self.CLEARDICT:
-                    self.resetDict()
+                    self.reset_dict()
                 elif pW == self.CLEARDICT:
                     baos += self.dict[cW]
                 else:

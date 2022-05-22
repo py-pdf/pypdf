@@ -67,8 +67,10 @@ def test_page_operations(pdf_path, password):
         reader.decrypt(password)
 
     page: PageObject = reader.pages[0]
-    page.mergeRotatedScaledTranslatedPage(page, 90, scale=1, tx=1, ty=1, expand=True)
-    page.addTransformation([1, 0, 0, 0, 0, 0])
+    page.merge_rotated_scaled_translated_page(
+        page, 90, scale=1, tx=1, ty=1, expand=True
+    )
+    page.add_transformation([1, 0, 0, 0, 0, 0])
     page.scale(2, 2)
     page.scaleBy(0.5)
     page.scaleTo(100, 100)
@@ -124,12 +126,14 @@ def test_page_transformations():
     page: PageObject = reader.pages[0]
     page.mergeRotatedPage(page, 90, expand=True)
     page.mergeRotatedScaledPage(page, 90, 1, expand=True)
-    page.mergeRotatedScaledTranslatedPage(page, 90, scale=1, tx=1, ty=1, expand=True)
+    page.merge_rotated_scaled_translated_page(
+        page, 90, scale=1, tx=1, ty=1, expand=True
+    )
     page.mergeRotatedTranslatedPage(page, 90, 100, 100, expand=False)
     page.mergeScaledPage(page, 2, expand=False)
     page.mergeScaledTranslatedPage(page, 1, 1, 1)
     page.mergeTranslatedPage(page, 100, 100, expand=False)
-    page.addTransformation([1, 0, 0, 0, 0, 0])
+    page.add_transformation([1, 0, 0, 0, 0, 0])
 
 
 @pytest.mark.parametrize(

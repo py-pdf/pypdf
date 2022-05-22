@@ -20,8 +20,8 @@ def page_ops(pdf_path, password):
     page = reader.pages[0]
     page.mergeRotatedScaledPage(page, 90, 1, 1)
     page.mergeScaledTranslatedPage(page, 1, 1, 1)
-    page.mergeRotatedScaledTranslatedPage(page, 90, 1, 1, 1, 1)
-    page.addTransformation([1, 0, 0, 0, 0, 0])
+    page.merge_rotated_scaled_translated_page(page, 90, 1, 1, 1, 1)
+    page.add_transformation([1, 0, 0, 0, 0, 0])
     page.scale(2, 2)
     page.scaleBy(0.5)
     page.scaleTo(100, 100)
@@ -64,12 +64,12 @@ def merge():
     with open(pdf_path, "rb") as fh:
         file_merger.append(fh)
 
-    bookmark = file_merger.addBookmark("A bookmark", 0)
-    file_merger.addBookmark("deeper", 0, parent=bookmark)
-    file_merger.addMetadata({"author": "Martin Thoma"})
-    file_merger.addNamedDestination("title", 0)
-    file_merger.setPageLayout("/SinglePage")
-    file_merger.setPageMode("/UseThumbs")
+    bookmark = file_merger.add_bookmark("A bookmark", 0)
+    file_merger.add_bookmark("deeper", 0, parent=bookmark)
+    file_merger.add_metadata({"author": "Martin Thoma"})
+    file_merger.add_named_destination("title", 0)
+    file_merger.set_page_layout("/SinglePage")
+    file_merger.set_page_mode("/UseThumbs")
 
     tmp_path = "dont_commit_merged.pdf"
     file_merger.write(tmp_path)

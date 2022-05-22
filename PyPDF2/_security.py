@@ -33,8 +33,8 @@ import struct
 from hashlib import md5
 from typing import Any, Tuple, Union
 
-from .generic import BooleanObject, ByteStringObject
-from .utils import RC4_encrypt, b_, ord_, str_
+from ._utils import b_, ord_, str_
+from .generic import ByteStringObject
 
 # ref: pdf1.8 spec section 3.5.2 algorithm 3.2
 _encryption_padding = (
@@ -53,7 +53,7 @@ def _alg32(
     owner_entry: ByteStringObject,
     p_entry: int,
     id1_entry: ByteStringObject,
-    metadata_encrypt: Union[BooleanObject, bool] = True,
+    metadata_encrypt: bool = True,
 ) -> bytes:
     # 1. Pad or truncate the password string to exactly 32 bytes.  If the
     # password string is more than 32 bytes long, use only its first 32 bytes;
@@ -177,7 +177,7 @@ def _alg35(
     owner_entry: ByteStringObject,
     p_entry: int,
     id1_entry: ByteStringObject,
-    metadata_encrypt: Union[BooleanObject, bool],
+    metadata_encrypt: bool,
 ) -> Tuple[bytes, bytes]:
     # 1. Create an encryption key based on the user password string, as
     # described in Algorithm 3.2.
@@ -213,3 +213,20 @@ def _alg35(
     # mean, so I have used null bytes.  This seems to match a few other
     # people's implementations)
     return val + (b_("\x00") * 16), key
+
+
+def RC4_encrypt(key: Union[str, bytes], plaintext: bytes) -> bytes:
+    S = list(range(256))
+    j = 0
+    for i in range(256):
+        j = (j + S[i] + ord_(key[i % len(key)])) % 256
+        S[i], S[j] = S[j], S[i]
+    i, j = 0, 0
+    retval = []
+    for x in range(len(plaintext)):
+        i = (i + 1) % 256
+        j = (j + S[i]) % 256
+        S[i], S[j] = S[j], S[i]
+        t = S[(S[i] + S[j]) % 256]
+        retval.append(b_(chr(ord_(plaintext[x]) ^ t)))
+    return b_("").join(retval)

@@ -6,8 +6,8 @@ from xml.dom.minidom import Document
 from xml.dom.minidom import Element as XmlElement
 from xml.dom.minidom import parseString
 
+from ._utils import StreamType
 from .generic import ContentStream, PdfObject
-from .utils import StreamType
 
 RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 DC_NAMESPACE = "http://purl.org/dc/elements/1.1/"
@@ -196,10 +196,10 @@ class XmpInformation(PdfObject):
         )[0]
         self.cache: Dict[Any, Any] = {}
 
-    def writeToStream(
+    def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
-        self.stream.writeToStream(stream, encryption_key)
+        self.stream.write_to_stream(stream, encryption_key)
 
     def getElement(self, aboutUri: str, namespace: str, name: str) -> Any:
         for desc in self.rdfRoot.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):

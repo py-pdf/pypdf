@@ -93,9 +93,9 @@ def test_get_annotations(src):
     for page in reader.pages:
         if PG.ANNOTS in page:
             for annot in page[PG.ANNOTS]:
-                subtype = annot.getObject()[IA.SUBTYPE]
+                subtype = annot.get_object()[IA.SUBTYPE]
                 if subtype == "/Text":
-                    annot.getObject()[PG.CONTENTS]
+                    annot.get_object()[PG.CONTENTS]
 
 
 @pytest.mark.parametrize(
@@ -110,10 +110,10 @@ def test_get_attachments(src):
 
     attachments = {}
     for i in range(reader.numPages):
-        page = reader.getPage(i)
+        page = reader.get_page(i)
         if PG.ANNOTS in page:
             for annotation in page[PG.ANNOTS]:
-                annotobj = annotation.getObject()
+                annotobj = annotation.get_object()
                 if annotobj[IA.SUBTYPE] == "/FileAttachment":
                     fileobj = annotobj["/FS"]
                     attachments[fileobj["/F"]] = fileobj["/EF"]["/F"].getData()
@@ -157,7 +157,7 @@ def test_get_images(src, nb_images):
     images_extracted = []
 
     if RES.XOBJECT in page[PG.RESOURCES]:
-        xObject = page[PG.RESOURCES][RES.XOBJECT].getObject()
+        xObject = page[PG.RESOURCES][RES.XOBJECT].get_object()
 
         for obj in xObject:
             if xObject[obj][IA.SUBTYPE] == "/Image":
@@ -244,7 +244,7 @@ def test_issue297():
         reader = PdfFileReader(path, strict=True)
     assert "Broken xref table" in exc.value.args[0]
     reader = PdfFileReader(path, strict=False)
-    reader.getPage(0)
+    reader.get_page(0)
 
 
 def test_get_page_of_encrypted_file():
@@ -252,7 +252,7 @@ def test_get_page_of_encrypted_file():
     Check if we can read a page of an encrypted file.
 
     This is a regression test for issue 327:
-    IndexError for getPage() of decrypted file
+    IndexError for get_page() of decrypted file
     """
     path = os.path.join(RESOURCE_ROOT, "encrypted-file.pdf")
     reader = PdfFileReader(path)
@@ -260,7 +260,7 @@ def test_get_page_of_encrypted_file():
     # Password is correct:)
     reader.decrypt("test")
 
-    reader.getPage(0)
+    reader.get_page(0)
 
 
 @pytest.mark.parametrize(
@@ -480,7 +480,7 @@ def test_read_unknown_zero_pages():
     reader = PdfFileReader(pdf_stream, strict=False)
     with pytest.raises(AttributeError) as exc:
         reader.numPages
-    assert exc.value.args[0] == "'NoneType' object has no attribute 'getObject'"
+    assert exc.value.args[0] == "'NoneType' object has no attribute 'get_object'"
 
 
 def test_read_encrypted_without_decryption():
@@ -534,7 +534,7 @@ def test_reader_properties():
     assert len(reader.pages) == 1
     assert reader.pageLayout is None
     assert reader.pageMode is None
-    assert reader.isEncrypted is False
+    assert reader.is_encrypted is False
 
 
 @pytest.mark.parametrize(

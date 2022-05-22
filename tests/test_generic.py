@@ -51,7 +51,7 @@ def test_createStringObject_exception():
 )
 def test_boolean_object(value, expected, tell):
     stream = BytesIO(value)
-    assert BooleanObject.readFromStream(stream).value == (expected == b"true")
+    assert BooleanObject.read_from_stream(stream).value == (expected == b"true")
     stream.seek(0, 0)
     assert stream.read() == expected
     assert stream.tell() == tell
@@ -60,7 +60,7 @@ def test_boolean_object(value, expected, tell):
 def test_boolean_object_write():
     stream = BytesIO()
     boolobj = BooleanObject(None)
-    boolobj.writeToStream(stream, encryption_key=None)
+    boolobj.write_to_stream(stream, encryption_key=None)
     stream.seek(0, 0)
     assert stream.read() == b"false"
 
@@ -80,21 +80,21 @@ def test_boolean_eq():
 def test_boolean_object_exception():
     stream = BytesIO(b"False")
     with pytest.raises(PdfReadError) as exc:
-        BooleanObject.readFromStream(stream)
+        BooleanObject.read_from_stream(stream)
     assert exc.value.args[0] == "Could not read Boolean object"
 
 
 def test_array_object_exception():
     stream = BytesIO(b"False")
     with pytest.raises(PdfReadError) as exc:
-        ArrayObject.readFromStream(stream, None)
+        ArrayObject.read_from_stream(stream, None)
     assert exc.value.args[0] == "Could not read array"
 
 
 def test_null_object_exception():
     stream = BytesIO(b"notnull")
     with pytest.raises(PdfReadError) as exc:
-        NullObject.readFromStream(stream)
+        NullObject.read_from_stream(stream)
     assert exc.value.args[0] == "Could not read Null object"
 
 
@@ -102,7 +102,7 @@ def test_null_object_exception():
 def test_indirect_object_premature(value):
     stream = BytesIO(value)
     with pytest.raises(PdfStreamError) as exc:
-        IndirectObject.readFromStream(stream, None)
+        IndirectObject.read_from_stream(stream, None)
     assert exc.value.args[0] == "Stream has ended unexpectedly"
 
 
@@ -151,7 +151,7 @@ def test_readStringFromStream_excape_digit():
 def test_NameObject():
     stream = BytesIO(b"x")
     with pytest.raises(PdfReadError) as exc:
-        NameObject.readFromStream(stream, None)
+        NameObject.read_from_stream(stream, None)
     assert exc.value.args[0] == "name read error"
 
 
@@ -192,7 +192,7 @@ def test_bookmark_write_to_stream():
     bm = Bookmark(
         NameObject("title"), NullObject(), NameObject(TF.FIT_V), FloatObject(0)
     )
-    bm.writeToStream(stream, None)
+    bm.write_to_stream(stream, None)
     stream.seek(0, 0)
     assert stream.read() == b"<<\n/Title title\n/Dest [ null /FitV 0 ]\n>>"
 
@@ -221,7 +221,7 @@ def test_readObject_comment():
 def test_ByteStringObject():
     bo = ByteStringObject("stream", encoding="utf-8")
     stream = BytesIO(b"")
-    bo.writeToStream(stream, encryption_key="foobar")
+    bo.write_to_stream(stream, encryption_key="foobar")
     stream.seek(0, 0)
     assert stream.read() == b"<1cdd628b972e>"  # TODO: how can we verify this?
 
@@ -267,15 +267,15 @@ def test_DictionaryObject_setdefault_value():
 def test_DictionaryObject_read_from_stream():
     stream = BytesIO(b"<< /S /GoTo >>")
     pdf = None
-    out = DictionaryObject.readFromStream(stream, pdf)
-    assert out.getObject() == {NameObject("/S"): NameObject("/GoTo")}
+    out = DictionaryObject.read_from_stream(stream, pdf)
+    assert out.get_object() == {NameObject("/S"): NameObject("/GoTo")}
 
 
 def test_DictionaryObject_read_from_stream_broken():
     stream = BytesIO(b"< /S /GoTo >>")
     pdf = None
     with pytest.raises(PdfReadError) as exc:
-        DictionaryObject.readFromStream(stream, pdf)
+        DictionaryObject.read_from_stream(stream, pdf)
     assert (
         exc.value.args[0]
         == "Dictionary read error at byte 0x2: stream must begin with '<<'"
@@ -286,7 +286,7 @@ def test_DictionaryObject_read_from_stream_unexpected_end():
     stream = BytesIO(b"<< \x00/S /GoTo")
     pdf = None
     with pytest.raises(PdfStreamError) as exc:
-        DictionaryObject.readFromStream(stream, pdf)
+        DictionaryObject.read_from_stream(stream, pdf)
     assert exc.value.args[0] == "Stream has ended unexpectedly"
 
 
@@ -294,7 +294,7 @@ def test_DictionaryObject_read_from_stream_stream_no_newline():
     stream = BytesIO(b"<< /S /GoTo >>stream")
     pdf = None
     with pytest.raises(PdfReadError) as exc:
-        DictionaryObject.readFromStream(stream, pdf)
+        DictionaryObject.read_from_stream(stream, pdf)
     assert exc.value.args[0] == "Stream data must be followed by a newline"
 
 
@@ -308,7 +308,7 @@ def test_DictionaryObject_read_from_stream_stream_no_stream_length(strict):
     pdf = tst()
     pdf.strict = strict
     with pytest.raises(PdfReadError) as exc:
-        DictionaryObject.readFromStream(stream, pdf)
+        DictionaryObject.read_from_stream(stream, pdf)
     assert exc.value.args[0] == "Stream length not defined"
 
 
@@ -333,7 +333,7 @@ def test_DictionaryObject_read_from_stream_stream_stream_valid(
     pdf = tst()
     pdf.strict = strict
     with pytest.raises(PdfReadError) as exc:
-        do = DictionaryObject.readFromStream(stream, pdf)
+        do = DictionaryObject.read_from_stream(stream, pdf)
         # TODO: What should happen with the stream?
         assert do == {"/S": "/GoTo"}
         if length in (6, 10):

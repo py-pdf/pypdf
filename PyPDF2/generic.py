@@ -38,8 +38,22 @@ import logging
 import re
 import warnings
 from io import BytesIO
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
+from ._utils import (
+    DEPR_MSG,
+    WHITESPACES,
+    StreamType,
+    b_,
+    bytes_type,
+    hex_str,
+    hexencode,
+    ord_,
+    read_non_whitespace,
+    read_until_regex,
+    skip_over_comment,
+    str_,
+)
 from .constants import FilterTypes as FT
 from .constants import StreamAttributes as SA
 from .constants import TypArguments as TA
@@ -50,20 +64,6 @@ from .errors import (
     PdfReadWarning,
     PdfStreamError,
 )
-from .utils import (
-    WHITESPACES,
-    RC4_encrypt,
-    StreamType,
-    b_,
-    bytes_type,
-    hexencode,
-    hexStr,
-    ord_,
-    readNonWhitespace,
-    readUntilRegex,
-    skipOverComment,
-    str_,
-)
 
 logger = logging.getLogger(__name__)
 ObjectPrefix = b_("/<[tf(n%")
@@ -72,24 +72,24 @@ IndirectPattern = re.compile(b_(r"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]"))
 
 
 class PdfObject:
-    def getObject(self) -> Optional["PdfObject"]:
+    def get_object(self) -> Optional["PdfObject"]:
         """Resolve indirect references."""
         return self
 
-    def writeToStream(
+    def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         raise NotImplementedError()
 
 
 class NullObject(PdfObject):
-    def writeToStream(
+    def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         stream.write(b_("null"))
 
     @staticmethod
-    def readFromStream(stream: StreamType) -> "NullObject":
+    def read_from_stream(stream: StreamType) -> "NullObject":
         nulltxt = stream.read(4)
         if nulltxt != b_("null"):
             raise PdfReadError("Could not read Null object")
@@ -108,7 +108,7 @@ class BooleanObject(PdfObject):
         else:
             return False
 
-    def writeToStream(
+    def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         if self.value:
@@ -117,7 +117,7 @@ class BooleanObject(PdfObject):
             stream.write(b_("false"))
 
     @staticmethod
-    def readFromStream(stream: StreamType) -> "BooleanObject":
+    def read_from_stream(stream: StreamType) -> "BooleanObject":
         word = stream.read(4)
         if word == b_("true"):
             return BooleanObject(True)
@@ -129,17 +129,19 @@ class BooleanObject(PdfObject):
 
 
 class ArrayObject(list, PdfObject):
-    def writeToStream(
+    def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         stream.write(b_("["))
         for data in self:
             stream.write(b_(" "))
-            data.writeToStream(stream, encryption_key)
+            data.write_to_stream(stream, encryption_key)
         stream.write(b_(" ]"))
 
     @staticmethod
-    def readFromStream(stream: StreamType, pdf: Any) -> "ArrayObject":  # PdfFileReader
+    def read_from_stream(
+        stream: StreamType, pdf: Any
+    ) -> "ArrayObject":  # PdfFileReader
         arr = ArrayObject()
         tmp = stream.read(1)
         if tmp != b_("["):
@@ -166,8 +168,8 @@ class IndirectObject(PdfObject):
         self.generation = generation
         self.pdf = pdf
 
-    def getObject(self) -> Optional[PdfObject]:
-        return self.pdf.getObject(self).getObject()
+    def get_object(self) -> Optional[PdfObject]:
+        return self.pdf.get_object(self).get_object()
 
     def __repr__(self) -> str:
         return f"IndirectObject({self.idnum!r}, {self.generation!r})"
@@ -184,13 +186,13 @@ class IndirectObject(PdfObject):
     def __ne__(self, other: Any) -> bool:
         return not self.__eq__(other)
 
-    def writeToStream(
+    def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         stream.write(b_(f"{self.idnum} {self.generation} R"))
 
     @staticmethod
-    def readFromStream(
+    def read_from_stream(
         stream: StreamType, pdf: Any  # PdfFileReader
     ) -> "IndirectObject":
         idnum = b_("")
@@ -211,11 +213,11 @@ class IndirectObject(PdfObject):
                     continue
                 break
             generation += tok
-        r = readNonWhitespace(stream)
+        r = read_non_whitespace(stream)
         if r != b_("R"):
             raise PdfReadError(
                 "Error reading indirect object reference at byte %s"
-                % hexStr(stream.tell())
+                % hex_str(stream.tell())
             )
         return IndirectObject(int(idnum), int(generation), pdf)
 
@@ -249,7 +251,7 @@ class FloatObject(decimal.Decimal, PdfObject):
     def as_numeric(self) -> float:
         return float(b_(repr(self)))
 
-    def writeToStream(
+    def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         stream.write(b_(repr(self)))
@@ -269,14 +271,14 @@ class NumberObject(int, PdfObject):
     def as_numeric(self) -> int:
         return int(b_(repr(self)))
 
-    def writeToStream(
+    def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         stream.write(b_(repr(self)))
 
     @staticmethod
-    def readFromStream(stream: StreamType) -> Union["NumberObject", FloatObject]:
-        num = readUntilRegex(stream, NumberObject.NumberPattern)
+    def read_from_stream(stream: StreamType) -> Union["NumberObject", FloatObject]:
+        num = read_until_regex(stream, NumberObject.NumberPattern)
         if num.find(NumberObject.ByteDot) != -1:
             return FloatObject(num)
         else:
@@ -290,7 +292,7 @@ def readHexStringFromStream(
     txt = ""
     x = b_("")
     while True:
-        tok = readNonWhitespace(stream)
+        tok = read_non_whitespace(stream)
         if not tok:
             raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
         if tok == b_(">"):
@@ -394,11 +396,13 @@ class ByteStringObject(bytes_type, PdfObject):  # type: ignore
         """For compatibility with TextStringObject.original_bytes."""
         return self
 
-    def writeToStream(
+    def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         bytearr = self
         if encryption_key:
+            from ._security import RC4_encrypt
+
             bytearr = RC4_encrypt(encryption_key, bytearr)  #  type: ignore
         stream.write(b_("<"))
         stream.write(hexencode(bytearr))
@@ -439,7 +443,7 @@ class TextStringObject(str, PdfObject):
         else:
             raise Exception("no information about original bytes")
 
-    def writeToStream(
+    def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         # Try to write the string out as a PDFDocEncoding encoded string.  It's
@@ -450,9 +454,11 @@ class TextStringObject(str, PdfObject):
         except UnicodeEncodeError:
             bytearr = codecs.BOM_UTF16_BE + self.encode("utf-16be")
         if encryption_key:
+            from ._security import RC4_encrypt
+
             bytearr = RC4_encrypt(encryption_key, bytearr)
             obj = ByteStringObject(bytearr)
-            obj.writeToStream(stream, None)
+            obj.write_to_stream(stream, None)
         else:
             stream.write(b_("("))
             for c in bytearr:
@@ -467,17 +473,17 @@ class NameObject(str, PdfObject):
     delimiterPattern = re.compile(b_(r"\s+|[\(\)<>\[\]{}/%]"))
     surfix = b_("/")
 
-    def writeToStream(
+    def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         stream.write(b_(self))
 
     @staticmethod
-    def readFromStream(stream: StreamType, pdf: Any) -> "NameObject":  # PdfFileReader
+    def read_from_stream(stream: StreamType, pdf: Any) -> "NameObject":  # PdfFileReader
         name = stream.read(1)
         if name != NameObject.surfix:
             raise PdfReadError("name read error")
-        name += readUntilRegex(stream, NameObject.delimiterPattern, ignore_eof=True)
+        name += read_until_regex(stream, NameObject.delimiterPattern, ignore_eof=True)
         try:
             try:
                 ret = name.decode("utf-8")
@@ -513,7 +519,7 @@ class DictionaryObject(dict, PdfObject):
         return dict.setdefault(self, key, value)  # type: ignore
 
     def __getitem__(self, key: Any) -> PdfObject:
-        return dict.__getitem__(self, key).getObject()
+        return dict.__getitem__(self, key).get_object()
 
     def getXmpMetadata(self) -> Optional[PdfObject]:  # XmpInformation
         """
@@ -530,7 +536,7 @@ class DictionaryObject(dict, PdfObject):
         metadata = self.get("/Metadata", None)
         if metadata is None:
             return None
-        metadata = metadata.getObject()
+        metadata = metadata.get_object()
 
         if not isinstance(metadata, XmpInformation):
             metadata = XmpInformation(metadata)
@@ -547,19 +553,19 @@ class DictionaryObject(dict, PdfObject):
         """
         return self.getXmpMetadata()
 
-    def writeToStream(
+    def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         stream.write(b_("<<\n"))
         for key, value in list(self.items()):
-            key.writeToStream(stream, encryption_key)
+            key.write_to_stream(stream, encryption_key)
             stream.write(b_(" "))
-            value.writeToStream(stream, encryption_key)
+            value.write_to_stream(stream, encryption_key)
             stream.write(b_("\n"))
         stream.write(b_(">>"))
 
     @staticmethod
-    def readFromStream(
+    def read_from_stream(
         stream: StreamType, pdf: Any  # PdfFileReader
     ) -> "DictionaryObject":
         def getNextObjPos(
@@ -593,16 +599,16 @@ class DictionaryObject(dict, PdfObject):
         if tmp != b_("<<"):
             raise PdfReadError(
                 "Dictionary read error at byte %s: stream must begin with '<<'"
-                % hexStr(stream.tell())
+                % hex_str(stream.tell())
             )
         data: Dict[Any, Any] = {}
         while True:
-            tok = readNonWhitespace(stream)
+            tok = read_non_whitespace(stream)
             if tok == b_("\x00"):
                 continue
             elif tok == b_("%"):
                 stream.seek(-1, 1)
-                skipOverComment(stream)
+                skip_over_comment(stream)
                 continue
             if not tok:
                 raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
@@ -612,7 +618,7 @@ class DictionaryObject(dict, PdfObject):
                 break
             stream.seek(-1, 1)
             key = readObject(stream, pdf)
-            tok = readNonWhitespace(stream)
+            tok = read_non_whitespace(stream)
             stream.seek(-1, 1)
             value = readObject(stream, pdf)
             if not data.get(key):
@@ -621,17 +627,17 @@ class DictionaryObject(dict, PdfObject):
                 # multiple definitions of key not permitted
                 raise PdfReadError(
                     "Multiple definitions in dictionary at byte %s for key %s"
-                    % (hexStr(stream.tell()), key)
+                    % (hex_str(stream.tell()), key)
                 )
             else:
                 warnings.warn(
                     "Multiple definitions in dictionary at byte %s for key %s"
-                    % (hexStr(stream.tell()), key),
+                    % (hex_str(stream.tell()), key),
                     PdfReadWarning,
                 )
 
         pos = stream.tell()
-        s = readNonWhitespace(stream)
+        s = read_non_whitespace(stream)
         if s == b_("s") and stream.read(5) == b_("tream"):
             eol = stream.read(1)
             # odd PDF file output has spaces after 'stream' keyword but before EOL.
@@ -650,11 +656,11 @@ class DictionaryObject(dict, PdfObject):
             length = data[SA.LENGTH]
             if isinstance(length, IndirectObject):
                 t = stream.tell()
-                length = pdf.getObject(length)
+                length = pdf.get_object(length)
                 stream.seek(t, 0)
             pstart = stream.tell()
             data["__streamdata__"] = stream.read(length)
-            e = readNonWhitespace(stream)
+            e = read_non_whitespace(stream)
             ndstream = stream.read(8)
             if (e + ndstream) != b_("endstream"):
                 # (sigh) - the odd PDF file has a length that is too long, so
@@ -677,7 +683,7 @@ class DictionaryObject(dict, PdfObject):
                     stream.seek(pos, 0)
                     raise PdfReadError(
                         "Unable to find 'endstream' marker after stream at byte %s."
-                        % hexStr(stream.tell())
+                        % hex_str(stream.tell())
                     )
         else:
             stream.seek(pos, 0)
@@ -711,8 +717,8 @@ class TreeObject(DictionaryObject):
             child = child["/Next"]  # type: ignore
 
     def addChild(self, child: Any, pdf: Any) -> None:  # PdfFileReader
-        child_obj = child.getObject()
-        child = pdf.getReference(child_obj)
+        child_obj = child.get_object()
+        child = pdf.get_reference(child_obj)
         assert isinstance(child, IndirectObject)
 
         if "/First" not in self:
@@ -726,17 +732,17 @@ class TreeObject(DictionaryObject):
         self[NameObject("/Count")] = NumberObject(self[NameObject("/Count")] + 1)  # type: ignore
 
         if prev:
-            prev_ref = pdf.getReference(prev)
+            prev_ref = pdf.get_reference(prev)
             assert isinstance(prev_ref, IndirectObject)
             child_obj[NameObject("/Prev")] = prev_ref
             prev[NameObject("/Next")] = child  # type: ignore
 
-        parent_ref = pdf.getReference(self)
+        parent_ref = pdf.get_reference(self)
         assert isinstance(parent_ref, IndirectObject)
         child_obj[NameObject("/Parent")] = parent_ref
 
     def removeChild(self, child: Any) -> None:
-        child_obj = child.getObject()
+        child_obj = child.get_object()
 
         if NameObject("/Parent") not in child_obj:
             raise ValueError("Removed child does not appear to be a tree item")
@@ -747,16 +753,16 @@ class TreeObject(DictionaryObject):
         prev_ref = None
         prev = None
         cur_ref: Optional[Any] = self[NameObject("/First")]
-        cur: Optional[Dict[str, Any]] = cur_ref.getObject()  # type: ignore
+        cur: Optional[Dict[str, Any]] = cur_ref.get_object()  # type: ignore
         last_ref = self[NameObject("/Last")]
-        last = last_ref.getObject()
+        last = last_ref.get_object()
         while cur is not None:
             if cur == child_obj:
                 if prev is None:
                     if NameObject("/Next") in cur:
                         # Removing first tree node
                         next_ref = cur[NameObject("/Next")]
-                        next = next_ref.getObject()
+                        next = next_ref.get_object()
                         del next[NameObject("/Prev")]
                         self[NameObject("/First")] = next_ref
                         self[NameObject("/Count")] -= 1  # type: ignore
@@ -772,7 +778,7 @@ class TreeObject(DictionaryObject):
                     if NameObject("/Next") in cur:
                         # Removing middle tree node
                         next_ref = cur[NameObject("/Next")]
-                        next = next_ref.getObject()
+                        next = next_ref.get_object()
                         next[NameObject("/Prev")] = prev_ref
                         prev[NameObject("/Next")] = next_ref
                         self[NameObject("/Count")] -= 1
@@ -789,7 +795,7 @@ class TreeObject(DictionaryObject):
             prev = cur
             if NameObject("/Next") in cur:
                 cur_ref = cur[NameObject("/Next")]
-                cur = cur_ref.getObject()
+                cur = cur_ref.get_object()
             else:
                 cur_ref = None
                 cur = None
@@ -805,7 +811,7 @@ class TreeObject(DictionaryObject):
 
     def emptyTree(self) -> None:
         for child in self:
-            child_obj = child.getObject()
+            child_obj = child.get_object()
             del child_obj[NameObject("/Parent")]
             if NameObject("/Next") in child_obj:
                 del child_obj[NameObject("/Next")]
@@ -833,15 +839,17 @@ class StreamObject(DictionaryObject):
     def _data(self, value: Any) -> None:
         self.__data = value
 
-    def writeToStream(
+    def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         self[NameObject(SA.LENGTH)] = NumberObject(len(self._data))
-        DictionaryObject.writeToStream(self, stream, encryption_key)
+        DictionaryObject.write_to_stream(self, stream, encryption_key)
         del self[SA.LENGTH]
         stream.write(b_("\nstream\n"))
         data = self._data
         if encryption_key:
+            from ._security import RC4_encrypt
+
             data = RC4_encrypt(encryption_key, data)
         stream.write(data)
         stream.write(b_("\nendstream"))
@@ -925,11 +933,11 @@ class ContentStream(DecodedStreamObject):
 
         # stream may be a StreamObject or an ArrayObject containing
         # multiple StreamObjects to be cat'd together.
-        stream = stream.getObject()
+        stream = stream.get_object()
         if isinstance(stream, ArrayObject):
             data = b_("")
             for s in stream:
-                data += b_(s.getObject().getData())
+                data += b_(s.get_object().getData())
             stream = BytesIO(b_(data))
         else:
             stream = BytesIO(b_(stream.getData()))
@@ -940,12 +948,12 @@ class ContentStream(DecodedStreamObject):
         stream.seek(0, 0)
         operands: List[Union[int, str, PdfObject]] = []
         while True:
-            peek = readNonWhitespace(stream)
+            peek = read_non_whitespace(stream)
             if peek == b_("") or ord_(peek) == 0:
                 break
             stream.seek(-1, 1)
             if peek.isalpha() or peek == b_("'") or peek == b_('"'):
-                operator = readUntilRegex(stream, NameObject.delimiterPattern, True)
+                operator = read_until_regex(stream, NameObject.delimiterPattern, True)
                 if operator == b_("BI"):
                     # begin inline image - a completely different parsing
                     # mechanism is required, of course... thanks buddy...
@@ -971,13 +979,13 @@ class ContentStream(DecodedStreamObject):
         # first read the dictionary of settings.
         settings = DictionaryObject()
         while True:
-            tok = readNonWhitespace(stream)
+            tok = read_non_whitespace(stream)
             stream.seek(-1, 1)
             if tok == b_("I"):
                 # "ID" - begin of image data
                 break
             key = readObject(stream, self.pdf)
-            tok = readNonWhitespace(stream)
+            tok = read_non_whitespace(stream)
             stream.seek(-1, 1)
             value = readObject(stream, self.pdf)
             settings[key] = value
@@ -1033,14 +1041,14 @@ class ContentStream(DecodedStreamObject):
             if operator == b_("INLINE IMAGE"):
                 newdata.write(b_("BI"))
                 dicttext = BytesIO()
-                operands["settings"].writeToStream(dicttext, None)
+                operands["settings"].write_to_stream(dicttext, None)
                 newdata.write(dicttext.getvalue()[2:-2])
                 newdata.write(b_("ID "))
                 newdata.write(operands["data"])
                 newdata.write(b_("EI"))
             else:
                 for op in operands:
-                    op.writeToStream(newdata, None)
+                    op.write_to_stream(newdata, None)
                     newdata.write(b_(" "))
                 newdata.write(b_(operator))
             newdata.write(b_("\n"))
@@ -1058,24 +1066,24 @@ def readObject(
     stream.seek(-1, 1)  # reset to start
     idx = ObjectPrefix.find(tok)
     if idx == 0:
-        return NameObject.readFromStream(stream, pdf)
+        return NameObject.read_from_stream(stream, pdf)
     elif idx == 1:
         # hexadecimal string OR dictionary
         peek = stream.read(2)
         stream.seek(-2, 1)  # reset to start
 
         if peek == b_("<<"):
-            return DictionaryObject.readFromStream(stream, pdf)
+            return DictionaryObject.read_from_stream(stream, pdf)
         else:
             return readHexStringFromStream(stream)
     elif idx == 2:
-        return ArrayObject.readFromStream(stream, pdf)
+        return ArrayObject.read_from_stream(stream, pdf)
     elif idx == 3 or idx == 4:
-        return BooleanObject.readFromStream(stream)
+        return BooleanObject.read_from_stream(stream)
     elif idx == 5:
         return readStringFromStream(stream)
     elif idx == 6:
-        return NullObject.readFromStream(stream)
+        return NullObject.read_from_stream(stream)
     elif idx == 7:
         # comment
         while tok not in (b_("\r"), b_("\n")):
@@ -1084,7 +1092,7 @@ def readObject(
             # the EOF
             if len(tok) <= 0:
                 raise PdfStreamError("File ended unexpectedly.")
-        tok = readNonWhitespace(stream)
+        tok = read_non_whitespace(stream)
         stream.seek(-1, 1)
         return readObject(stream, pdf)
     else:
@@ -1092,121 +1100,290 @@ def readObject(
         peek = stream.read(20)
         stream.seek(-len(peek), 1)  # reset to start
         if IndirectPattern.match(peek) is not None:
-            return IndirectObject.readFromStream(stream, pdf)
+            return IndirectObject.read_from_stream(stream, pdf)
         else:
-            return NumberObject.readFromStream(stream)
+            return NumberObject.read_from_stream(stream)
 
 
 class RectangleObject(ArrayObject):
     """
     This class is used to represent *page boxes* in PyPDF2. These boxes include:
-
-        * :attr:`artBox <PyPDF2._page.PageObject.artBox>`
-        * :attr:`bleedBox <PyPDF2._page.PageObject.bleedBox>`
-        * :attr:`cropBox <PyPDF2._page.PageObject.cropBox>`
-        * :attr:`mediaBox <PyPDF2._page.PageObject.mediaBox>`
-        * :attr:`trimBox <PyPDF2._page.PageObject.trimBox>`
+        * :attr:`artbox <PyPDF2._page.PageObject.artbox>`
+        * :attr:`bleedbox <PyPDF2._page.PageObject.bleedbox>`
+        * :attr:`cropbox <PyPDF2._page.PageObject.cropbox>`
+        * :attr:`mediabox <PyPDF2._page.PageObject.mediabox>`
+        * :attr:`trimbox <PyPDF2._page.PageObject.trimbox>`
     """
 
-    def __init__(
-        self,
-        arr: Union[
-            ArrayObject,
-            Tuple[
-                Union[float, decimal.Decimal, None],
-                Union[float, decimal.Decimal, None],
-                Union[float, decimal.Decimal, None],
-                Union[float, decimal.Decimal, None],
-            ],
-        ],
-    ) -> None:
+    def __init__(self, arr: Tuple[float, float, float, float]) -> None:
         # must have four points
         assert len(arr) == 4
         # automatically convert arr[x] into NumberObject(arr[x]) if necessary
         ArrayObject.__init__(self, [self.ensureIsNumber(x) for x in arr])  # type: ignore
 
-    def ensureIsNumber(self, value: Any) -> Union[NumberObject, FloatObject]:
+    def ensureIsNumber(self, value: Any) -> Union[FloatObject, NumberObject]:
         if not isinstance(value, (NumberObject, FloatObject)):
-            return FloatObject(value)
+            value = FloatObject(value)
         return value
 
     def __repr__(self) -> str:
         return "RectangleObject(%s)" % repr(list(self))
 
-    def getLowerLeft_x(self) -> FloatObject:
+    @property
+    def left(self) -> FloatObject:
         return self[0]
 
-    def getLowerLeft_y(self) -> FloatObject:
+    @property
+    def bottom(self) -> FloatObject:
         return self[1]
 
-    def getUpperRight_x(self) -> FloatObject:
+    @property
+    def right(self) -> FloatObject:
         return self[2]
 
-    def getUpperRight_y(self) -> FloatObject:
+    @property
+    def top(self) -> FloatObject:
         return self[3]
 
+    def getLowerLeft_x(self) -> FloatObject:
+        warnings.warn(
+            DEPR_MSG.format("getLowerLeft_x", "left"),
+            PendingDeprecationWarning,
+        )
+        return self.left
+
+    def getLowerLeft_y(self) -> FloatObject:
+        warnings.warn(
+            DEPR_MSG.format("getLowerLeft_y", "bottom"),
+            PendingDeprecationWarning,
+        )
+        return self.bottom
+
+    def getUpperRight_x(self) -> FloatObject:
+        warnings.warn(
+            DEPR_MSG.format("getUpperRight_x", "right"),
+            PendingDeprecationWarning,
+        )
+        return self.right
+
+    def getUpperRight_y(self) -> FloatObject:
+        warnings.warn(
+            DEPR_MSG.format("getUpperRight_y", "top"),
+            PendingDeprecationWarning,
+        )
+        return self.top
+
     def getUpperLeft_x(self) -> FloatObject:
-        return self.getLowerLeft_x()
+        warnings.warn(
+            DEPR_MSG.format("getUpperLeft_x", "left"),
+            PendingDeprecationWarning,
+        )
+        return self.left
 
     def getUpperLeft_y(self) -> FloatObject:
-        return self.getUpperRight_y()
+        warnings.warn(
+            DEPR_MSG.format("getUpperLeft_y", "top"),
+            PendingDeprecationWarning,
+        )
+        return self.top
 
     def getLowerRight_x(self) -> FloatObject:
-        return self.getUpperRight_x()
+        warnings.warn(
+            DEPR_MSG.format("getLowerRight_x", "right"),
+            PendingDeprecationWarning,
+        )
+        return self.right
 
     def getLowerRight_y(self) -> FloatObject:
-        return self.getLowerLeft_y()
+        warnings.warn(
+            DEPR_MSG.format("getLowerRight_y", "bottom"),
+            PendingDeprecationWarning,
+        )
+        return self.bottom
 
-    def getLowerLeft(self) -> Tuple[FloatObject, FloatObject]:
-        return self.getLowerLeft_x(), self.getLowerLeft_y()
+    @property
+    def lower_left(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
+        """
+        Property to read and modify the lower left coordinate of this box
+        in (x,y) form.
+        """
+        return self.left, self.bottom
 
-    def getLowerRight(self) -> Tuple[FloatObject, FloatObject]:
-        return self.getLowerRight_x(), self.getLowerRight_y()
-
-    def getUpperLeft(self) -> Tuple[FloatObject, FloatObject]:
-        return self.getUpperLeft_x(), self.getUpperLeft_y()
-
-    def getUpperRight(self) -> Tuple[FloatObject, FloatObject]:
-        return self.getUpperRight_x(), self.getUpperRight_y()
-
-    def setLowerLeft(self, value: Iterable[FloatObject]) -> None:
+    @lower_left.setter
+    def lower_left(self, value: List[Any]) -> None:
         self[0], self[1] = (self.ensureIsNumber(x) for x in value)
 
-    def setLowerRight(self, value: Iterable[FloatObject]) -> None:
+    @property
+    def lower_right(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
+        """
+        Property to read and modify the lower right coordinate of this box
+        in (x,y) form.
+        """
+        return self.right, self.bottom
+
+    @lower_right.setter
+    def lower_right(self, value: List[Any]) -> None:
         self[2], self[1] = (self.ensureIsNumber(x) for x in value)
 
-    def setUpperLeft(self, value: Iterable[FloatObject]) -> None:
+    @property
+    def upper_left(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
+        """
+        Property to read and modify the upper left coordinate of this box
+        in (x,y) form.
+        """
+        return self.left, self.top
+
+    @upper_left.setter
+    def upper_left(self, value: List[Any]) -> None:
         self[0], self[3] = (self.ensureIsNumber(x) for x in value)
 
-    def setUpperRight(self, value: Iterable[FloatObject]) -> None:
+    @property
+    def upper_right(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
+        """
+        Property to read and modify the upper right coordinate of this box
+        in (x,y) form.
+        """
+        return self.right, self.top
+
+    @upper_right.setter
+    def upper_right(self, value: List[Any]) -> None:
         self[2], self[3] = (self.ensureIsNumber(x) for x in value)
 
-    def getWidth(self) -> float:
-        return self.getUpperRight_x() - self.getLowerLeft_x()  # type: ignore
+    def getLowerLeft(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
+        warnings.warn(
+            DEPR_MSG.format("getLowerLeft", "lower_left"),
+            PendingDeprecationWarning,
+        )
+        return self.lower_left
 
-    def getHeight(self) -> float:
-        return self.getUpperRight_y() - self.getLowerLeft_y()  # type: ignore
+    def getLowerRight(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
+        warnings.warn(
+            DEPR_MSG.format("getLowerRight", "lower_right"),
+            PendingDeprecationWarning,
+        )
+        return self.lower_right
 
-    lowerLeft = property(getLowerLeft, setLowerLeft, None, None)
-    """
-    Property to read and modify the lower left coordinate of this box
-    in (x,y) form.
-    """
-    lowerRight = property(getLowerRight, setLowerRight, None, None)
-    """
-    Property to read and modify the lower right coordinate of this box
-    in (x,y) form.
-    """
-    upperLeft = property(getUpperLeft, setUpperLeft, None, None)
-    """
-    Property to read and modify the upper left coordinate of this box
-    in (x,y) form.
-    """
-    upperRight = property(getUpperRight, setUpperRight, None, None)
-    """
-    Property to read and modify the upper right coordinate of this box
-    in (x,y) form.
-    """
+    def getUpperLeft(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
+        warnings.warn(
+            DEPR_MSG.format("getUpperLeft", "upper_left"),
+            PendingDeprecationWarning,
+        )
+        return self.upper_left
+
+    def getUpperRight(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
+        warnings.warn(
+            DEPR_MSG.format("getUpperRight", "upper_right"),
+            PendingDeprecationWarning,
+        )
+        return self.upper_right
+
+    def setLowerLeft(self, value: Tuple[float, float]) -> None:
+        warnings.warn(
+            DEPR_MSG.format("setLowerLeft", "lower_left"),
+            PendingDeprecationWarning,
+        )
+        self.lower_left = value  # type: ignore
+
+    def setLowerRight(self, value: Tuple[float, float]) -> None:
+        warnings.warn(
+            DEPR_MSG.format("setLowerRight", "lower_right"),
+            PendingDeprecationWarning,
+        )
+        self[2], self[1] = (self.ensureIsNumber(x) for x in value)
+
+    def setUpperLeft(self, value: Tuple[float, float]) -> None:
+        warnings.warn(
+            DEPR_MSG.format("setUpperLeft", "upper_left"),
+            PendingDeprecationWarning,
+        )
+        self[0], self[3] = (self.ensureIsNumber(x) for x in value)
+
+    def setUpperRight(self, value: Tuple[float, float]) -> None:
+        warnings.warn(
+            DEPR_MSG.format("setUpperRight", "upper_right"),
+            PendingDeprecationWarning,
+        )
+        self[2], self[3] = (self.ensureIsNumber(x) for x in value)
+
+    @property
+    def width(self) -> decimal.Decimal:
+        return self.right - self.left
+
+    def getWidth(self) -> decimal.Decimal:
+        warnings.warn(DEPR_MSG.format("getWidth", "width"), DeprecationWarning)
+        return self.width
+
+    @property
+    def height(self) -> decimal.Decimal:
+        return self.top - self.bottom
+
+    def getHeight(self) -> decimal.Decimal:
+        warnings.warn(DEPR_MSG.format("getHeight", "height"), DeprecationWarning)
+        return self.height
+
+    @property
+    def lowerLeft(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
+        warnings.warn(
+            DEPR_MSG.format("lowerLeft", "lower_left"),
+            PendingDeprecationWarning,
+        )
+        return self.lower_left
+
+    @lowerLeft.setter
+    def lowerLeft(self, value: Tuple[decimal.Decimal, decimal.Decimal]) -> None:
+        warnings.warn(
+            DEPR_MSG.format("lowerLeft", "lower_left"),
+            PendingDeprecationWarning,
+        )
+        self.lower_left = value
+
+    @property
+    def lowerRight(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
+        warnings.warn(
+            DEPR_MSG.format("lowerRight", "lower_right"),
+            PendingDeprecationWarning,
+        )
+        return self.lower_right
+
+    @lowerRight.setter
+    def lowerRight(self, value: Tuple[decimal.Decimal, decimal.Decimal]) -> None:
+        warnings.warn(
+            DEPR_MSG.format("lowerRight", "lower_right"),
+            PendingDeprecationWarning,
+        )
+        self.lower_right = value
+
+    @property
+    def upperLeft(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
+        warnings.warn(
+            DEPR_MSG.format("upperLeft", "upper_left"),
+            PendingDeprecationWarning,
+        )
+        return self.upper_left
+
+    @upperLeft.setter
+    def upperLeft(self, value: Tuple[decimal.Decimal, decimal.Decimal]) -> None:
+        warnings.warn(
+            DEPR_MSG.format("upperLeft", "upper_left"),
+            PendingDeprecationWarning,
+        )
+        self.upper_left = value
+
+    @property
+    def upperRight(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
+        warnings.warn(
+            DEPR_MSG.format("upperRight", "upper_right"),
+            PendingDeprecationWarning,
+        )
+        return self.upper_right
+
+    @upperRight.setter
+    def upperRight(self, value: Tuple[decimal.Decimal, decimal.Decimal]) -> None:
+        warnings.warn(
+            DEPR_MSG.format("upperRight", "upper_right"),
+            PendingDeprecationWarning,
+        )
+        self.upper_right = value
 
 
 class Field(TreeObject):
@@ -1380,21 +1557,21 @@ class Destination(TreeObject):
             ]
         )
 
-    def writeToStream(
+    def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         stream.write(b_("<<\n"))
         key = NameObject("/D")
-        key.writeToStream(stream, encryption_key)
+        key.write_to_stream(stream, encryption_key)
         stream.write(b_(" "))
         value = self.getDestArray()
-        value.writeToStream(stream, encryption_key)
+        value.write_to_stream(stream, encryption_key)
 
         key = NameObject("/S")
-        key.writeToStream(stream, encryption_key)
+        key.write_to_stream(stream, encryption_key)
         stream.write(b_(" "))
         value_s = NameObject("/GoTo")
-        value_s.writeToStream(stream, encryption_key)
+        value_s.write_to_stream(stream, encryption_key)
 
         stream.write(b_("\n"))
         stream.write(b_(">>"))
@@ -1473,7 +1650,7 @@ class Destination(TreeObject):
 
 
 class Bookmark(Destination):
-    def writeToStream(
+    def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         stream.write(b_("<<\n"))
@@ -1482,16 +1659,16 @@ class Bookmark(Destination):
             for x in ["/Title", "/Parent", "/First", "/Last", "/Next", "/Prev"]
             if x in self
         ]:
-            key.writeToStream(stream, encryption_key)
+            key.write_to_stream(stream, encryption_key)
             stream.write(b_(" "))
             value = self.raw_get(key)
-            value.writeToStream(stream, encryption_key)
+            value.write_to_stream(stream, encryption_key)
             stream.write(b_("\n"))
         key = NameObject("/Dest")
-        key.writeToStream(stream, encryption_key)
+        key.write_to_stream(stream, encryption_key)
         stream.write(b_(" "))
         value = self.getDestArray()
-        value.writeToStream(stream, encryption_key)
+        value.write_to_stream(stream, encryption_key)
         stream.write(b_("\n"))
         stream.write(b_(">>"))
 

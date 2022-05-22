@@ -18,8 +18,8 @@ def test_writer_clone():
     reader = PdfFileReader(src)
     writer = PdfFileWriter()
 
-    writer.cloneDocumentFromReader(reader)
-    assert writer.getNumPages() == 4
+    writer.clone_document_from_reader(reader)
+    assert writer.get_num_pages() == 4
 
 
 def test_writer_operations():
@@ -38,30 +38,30 @@ def test_writer_operations():
     writer = PdfFileWriter()
     page = reader.pages[0]
     with pytest.raises(PageSizeNotDefinedError) as exc:
-        writer.addBlankPage()
+        writer.add_blank_page()
     assert exc.value.args == ()
-    writer.insertPage(page, 1)
-    writer.insertPage(reader_outline.pages[0], 0)
-    writer.addBookmarkDestination(page)
-    writer.removeLinks()
-    writer.addBlankPage()
-    writer.addURI(2, "https://example.com", RectangleObject([0, 0, 100, 100]))
-    writer.addLink(2, 1, RectangleObject([0, 0, 100, 100]))
-    assert writer.getPageLayout() is None
-    writer.setPageLayout("/SinglePage")
-    assert writer.getPageLayout() == "/SinglePage"
-    assert writer.getPageMode() is None
-    writer.setPageMode("/UseNone")
-    assert writer.getPageMode() == "/UseNone"
-    writer.insertBlankPage(width=100, height=100)
-    writer.insertBlankPage()  # without parameters
+    writer.insert_page(page, 1)
+    writer.insert_page(reader_outline.pages[0], 0)
+    writer.add_bookmark_destination(page)
+    writer.remove_links()
+    writer.add_blank_page()
+    writer.add_uri(2, "https://example.com", RectangleObject([0, 0, 100, 100]))
+    writer.add_link(2, 1, RectangleObject([0, 0, 100, 100]))
+    assert writer.get_page_layout() is None
+    writer.set_page_layout("/SinglePage")
+    assert writer.get_page_layout() == "/SinglePage"
+    assert writer.get_page_mode() is None
+    writer.set_page_mode("/UseNone")
+    assert writer.get_page_mode() == "/UseNone"
+    writer.insert_blank_page(width=100, height=100)
+    writer.insert_blank_page()  # without parameters
 
     # TODO: This gives "KeyError: '/Contents'" - is that a bug?
     # writer.removeImages()
 
-    writer.addMetadata({"author": "Martin Thoma"})
+    writer.add_metadata({"author": "Martin Thoma"})
 
-    writer.addAttachment("foobar.gif", b"foobarcontent")
+    writer.add_attachment("foobar.gif", b"foobarcontent")
 
     # finally, write "output" to PyPDF2-output.pdf
     tmp_path = "dont_commit_writer.pdf"
@@ -86,8 +86,8 @@ def test_remove_images(input_path, ignoreByteStringObject):
     writer = PdfFileWriter()
 
     page = reader.pages[0]
-    writer.insertPage(page, 0)
-    writer.removeImages(ignoreByteStringObject=ignoreByteStringObject)
+    writer.insert_page(page, 0)
+    writer.remove_images(ignoreByteStringObject=ignoreByteStringObject)
 
     # finally, write "output" to PyPDF2-output.pdf
     tmp_filename = "dont_commit_writer_removed_image.pdf"
@@ -97,7 +97,7 @@ def test_remove_images(input_path, ignoreByteStringObject):
     with open(tmp_filename, "rb") as input_stream:
         reader = PdfFileReader(input_stream)
         if input_path == "side-by-side-subfig.pdf":
-            extracted_text = reader.getPage(0).extractText()
+            extracted_text = reader.get_page(0).extractText()
             assert "Lorem ipsum dolor sit amet" in extracted_text
 
     # Cleanup
@@ -120,8 +120,8 @@ def test_remove_text(input_path, ignoreByteStringObject):
     writer = PdfFileWriter()
 
     page = reader.pages[0]
-    writer.insertPage(page, 0)
-    writer.removeText(ignoreByteStringObject=ignoreByteStringObject)
+    writer.insert_page(page, 0)
+    writer.remove_text(ignoreByteStringObject=ignoreByteStringObject)
 
     # finally, write "output" to PyPDF2-output.pdf
     tmp_filename = "dont_commit_writer_removed_text.pdf"
@@ -139,12 +139,12 @@ def test_write_metadata():
     writer = PdfFileWriter()
 
     for page in reader.pages:
-        writer.addPage(page)
+        writer.add_page(page)
 
     metadata = reader.getDocumentInfo()
-    writer.addMetadata(metadata)
+    writer.add_metadata(metadata)
 
-    writer.addMetadata({"/Title": "The Crazy Ones"})
+    writer.add_metadata({"/Title": "The Crazy Ones"})
 
     # finally, write data to PyPDF2-output.pdf
     tmp_filename = "dont_commit_writer_added_metadata.pdf"
@@ -166,10 +166,10 @@ def test_fill_form():
 
     page = reader.pages[0]
 
-    writer.addPage(page)
+    writer.add_page(page)
 
-    writer.updatePageFormFieldValues(
-        writer.getPage(0), {"foo": "some filled in text"}, flags=1
+    writer.update_page_form_field_values(
+        writer.get_page(0), {"foo": "some filled in text"}, flags=1
     )
 
     # write "output" to PyPDF2-output.pdf
@@ -184,7 +184,7 @@ def test_encrypt():
 
     page = reader.pages[0]
 
-    writer.addPage(page)
+    writer.add_page(page)
     writer.encrypt(user_pwd="userpwd", owner_pwd="ownerpwd", use_128bit=False)
 
     # write "output" to PyPDF2-output.pdf
@@ -201,12 +201,12 @@ def test_add_bookmark():
     writer = PdfFileWriter()
 
     for page in reader.pages:
-        writer.addPage(page)
+        writer.add_page(page)
 
-    bookmark = writer.addBookmark(
+    bookmark = writer.add_bookmark(
         "A bookmark", 1, None, (255, 0, 15), True, True, "/Fit", 200, 0, None
     )
-    writer.addBookmark("Another", 2, bookmark, None, False, False, "/Fit", 0, 0, None)
+    writer.add_bookmark("Another", 2, bookmark, None, False, False, "/Fit", 0, 0, None)
 
     # write "output" to PyPDF2-output.pdf
     tmp_filename = "dont_commit_bookmark.pdf"
@@ -222,16 +222,16 @@ def test_add_named_destination():
     writer = PdfFileWriter()
 
     for page in reader.pages:
-        writer.addPage(page)
+        writer.add_page(page)
 
     from PyPDF2.generic import NameObject
 
-    writer.addNamedDestination(NameObject("A named dest"), 2)
-    writer.addNamedDestination(NameObject("A named dest2"), 2)
+    writer.add_named_destination(NameObject("A named dest"), 2)
+    writer.add_named_destination(NameObject("A named dest2"), 2)
 
     from PyPDF2.generic import IndirectObject
 
-    assert writer.getNamedDestRoot() == [
+    assert writer.get_named_dest_root() == [
         "A named dest",
         IndirectObject(7, 0, writer),
         "A named dest2",
@@ -252,29 +252,29 @@ def test_add_uri():
     writer = PdfFileWriter()
 
     for page in reader.pages:
-        writer.addPage(page)
+        writer.add_page(page)
 
     from PyPDF2.generic import RectangleObject
 
-    writer.addURI(
+    writer.add_uri(
         1,
         "http://www.example.com",
         RectangleObject([0, 0, 100, 100]),
         border=[1, 2, 3, [4]],
     )
-    writer.addURI(
+    writer.add_uri(
         2,
         "https://pypdf2.readthedocs.io/en/latest/",
         RectangleObject([20, 30, 50, 80]),
         border=[1, 2, 3],
     )
-    writer.addURI(
+    writer.add_uri(
         3,
         "https://pypdf2.readthedocs.io/en/latest/user/adding-pdf-annotations.html",
         "[ 200 300 250 350 ]",
         border=[0, 0, 0],
     )
-    writer.addURI(
+    writer.add_uri(
         3,
         "https://pypdf2.readthedocs.io/en/latest/user/adding-pdf-annotations.html",
         [100, 200, 150, 250],
@@ -295,19 +295,19 @@ def test_add_link():
     writer = PdfFileWriter()
 
     for page in reader.pages:
-        writer.addPage(page)
+        writer.add_page(page)
 
     from PyPDF2.generic import RectangleObject
 
-    writer.addLink(
+    writer.add_link(
         1,
         2,
         RectangleObject([0, 0, 100, 100]),
         border=[1, 2, 3, [4]],
         fit="/Fit",
     )
-    writer.addLink(2, 3, RectangleObject([20, 30, 50, 80]), [1, 2, 3], "/FitH", None)
-    writer.addLink(
+    writer.add_link(2, 3, RectangleObject([20, 30, 50, 80]), [1, 2, 3], "/FitH", None)
+    writer.add_link(
         3,
         0,
         "[ 200 300 250 350 ]",
@@ -317,7 +317,7 @@ def test_add_link():
         0,
         2,
     )
-    writer.addLink(
+    writer.add_link(
         3,
         0,
         [100, 200, 150, 250],
@@ -355,7 +355,7 @@ def test_regression_issue670():
     reader = PdfFileReader(filepath, strict=False)
     for _ in range(2):
         pdf_writer = PdfFileWriter()
-        pdf_writer.addPage(reader.getPage(0))
+        pdf_writer.add_page(reader.get_page(0))
         with open("dont_commit_issue670.pdf", "wb") as f_pdf:
             pdf_writer.write(f_pdf)
 
@@ -367,6 +367,6 @@ def test_issue301():
     with open(os.path.join(RESOURCE_ROOT, "issue-301.pdf"), "rb") as f:
         r = PdfFileReader(f)
         w = PdfFileWriter()
-        w.appendPagesFromReader(r)
+        w.append_pages_from_reader(r)
         o = BytesIO()
         w.write(o)
