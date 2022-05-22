@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1653246357598,
+  "lastUpdate": 1653246627823,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -2037,6 +2037,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003874427666178201",
             "extra": "mean: 138.53555400002904 msec\nrounds: 8"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "matt.peveler@gmail.com",
+            "name": "Matthew Peveler",
+            "username": "MasterOdin"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ce1cb6697f9db60c5188624e56da1c676b1733f5",
+          "message": "BUG: Incorrectly show deprecation warnings on internal usage (#887)",
+          "timestamp": "2022-05-22T21:09:29+02:00",
+          "tree_id": "4a67d62b70feac3bb3c63c66eded8d307164da7f",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/ce1cb6697f9db60c5188624e56da1c676b1733f5"
+        },
+        "date": 1653246626985,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.5064319620757102,
+            "unit": "iter/sec",
+            "range": "stddev: 0.1197135605168158",
+            "extra": "mean: 1.974598909400001 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 8.56222227677507,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009266148921254243",
+            "extra": "mean: 116.79210929999897 msec\nrounds: 10"
           }
         ]
       }
