@@ -26,6 +26,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from sys import version_info
+import warnings
 
 from PyPDF2._reader import PdfReader
 from PyPDF2._utils import _isString, DEPR_MSG, str_
@@ -748,8 +749,6 @@ class OutlinesObject(list):
 
 class PdfFileMerger(PdfMerger):
     def __init__(self, *args, **kwargs):
-        import warnings
-
         warnings.warn(
             "PdfFileMerger was renamed to PdfMerger. PdfFileMerger will be removed",
             PendingDeprecationWarning,

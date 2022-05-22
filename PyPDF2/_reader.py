@@ -1815,8 +1815,6 @@ class PdfReader(object):
 
 class PdfFileReader(PdfReader):
     def __init__(self, *args, **kwargs):
-        import warnings
-
         warnings.warn(
             "PdfFileReader was renamed to PdfReader. PdfFileReader will be removed",
             PendingDeprecationWarning,
