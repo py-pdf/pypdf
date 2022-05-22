@@ -356,19 +356,17 @@ class PageObject(DictionaryObject):
                 self.mediaBox.getLowerRight_x().as_numeric(),
                 self.mediaBox.getLowerRight_y().as_numeric(),
             ]
-            if ctm is not None:
-                ctm = tuple(float(x) for x in ctm)  # type: ignore[assignment]
-                new_x = [
-                    ctm[0] * corners[i] + ctm[2] * corners[i + 1] + ctm[4]
-                    for i in range(0, 8, 2)
-                ]
-                new_y = [
-                    ctm[1] * corners[i] + ctm[3] * corners[i + 1] + ctm[5]
-                    for i in range(0, 8, 2)
-                ]
-            else:
-                new_x = corners[0:8:2]
-                new_y = corners[1:8:2]
+
+            ctm = tuple(float(x) for x in ctm)  # type: ignore[assignment]
+            new_x = [
+                ctm[0] * corners[i] + ctm[2] * corners[i + 1] + ctm[4]
+                for i in range(0, 8, 2)
+            ]
+            new_y = [
+                ctm[1] * corners[i] + ctm[3] * corners[i + 1] + ctm[5]
+                for i in range(0, 8, 2)
+            ]
+
             lowerleft = [min(new_x), min(new_y)]
             upperright = [max(new_x), max(new_y)]
             lowerleft = [min(corners[0], lowerleft[0]), min(corners[1], lowerleft[1])]
