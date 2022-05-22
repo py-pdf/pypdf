@@ -300,6 +300,18 @@ class PdfMerger(object):
 
     def setPageLayout(self, layout):
         """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`set_page_layout` instead.
+        """
+        warnings.warn(
+            DEPR_MSG.format("setPageLayout", "set_page_layout"),
+            PendingDeprecationWarning,
+        )
+        self.set_page_layout(layout)
+
+    def set_page_layout(self, layout):
+        """
         Set the page layout
 
         :param str layout: The page layout to be used
@@ -325,6 +337,17 @@ class PdfMerger(object):
         self.output._set_page_layout(layout)
 
     def setPageMode(self, mode):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`set_page_mode` instead.
+        """
+        warnings.warn(
+            DEPR_MSG.format("setPageMode", "set_page_mode"), PendingDeprecationWarning
+        )
+        self.set_page_mode(mode)
+
+    def set_page_mode(self, mode):
         """
         Set the page mode.
 
@@ -522,6 +545,17 @@ class PdfMerger(object):
                 raise ValueError("Unresolved bookmark '%s'" % (b["/Title"],))
 
     def findBookmark(self, bookmark, root=None):
+        """
+        .. deprecated:: 1.28.0
+            Use :meth:`find_bookmark` instead.
+        """
+        warnings.warn(
+            "findBookmark is deprecated. Use find_bookmark instead.",
+            DeprecationWarning,
+        )
+        return self.find_bookmark(bookmark, root=root)
+
+    def find_bookmark(self, bookmark, root=None):
         if root is None:
             root = self.bookmarks
 
@@ -536,6 +570,29 @@ class PdfMerger(object):
         return None
 
     def addBookmark(
+        self,
+        title,
+        pagenum,
+        parent=None,
+        color=None,
+        bold=False,
+        italic=False,
+        fit="/Fit",
+        *args
+    ):
+        """
+        .. deprecated:: 1.28.0
+            Use :meth:`add_bookmark` instead.
+        """
+        warnings.warn(
+            "addBookmark is deprecated. Use add_bookmark instead.",
+            DeprecationWarning,
+        )
+        return self.add_bookmark(
+            title, pagenum, parent, color, bold, italic, fit, *args
+        )
+
+    def add_bookmark(
         self,
         title,
         pagenum,
@@ -615,6 +672,17 @@ class PdfMerger(object):
         return bookmark_ref
 
     def addNamedDestination(self, title, pagenum):
+        """
+        .. deprecated:: 1.28.0
+            Use :meth:`add_named_destionation` instead.
+        """
+        warnings.warn(
+            "addNamedDestination is deprecated. Use add_named_destionation instead.",
+            DeprecationWarning,
+        )
+        return self.add_named_destionation(title, pagenum)
+
+    def add_named_destionation(self, title, pagenum):
         """
         Add a destination to the output.
 

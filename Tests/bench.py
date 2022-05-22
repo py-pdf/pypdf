@@ -64,12 +64,12 @@ def merge():
     with open(pdf_path, "rb") as fh:
         file_merger.append(fh)
 
-    bookmark = file_merger.addBookmark("A bookmark", 0)
-    file_merger.addBookmark("deeper", 0, parent=bookmark)
+    bookmark = file_merger.add_bookmark("A bookmark", 0)
+    file_merger.add_bookmark("deeper", 0, parent=bookmark)
     file_merger.add_metadata({"author": "Martin Thoma"})
-    file_merger.addNamedDestination("title", 0)
-    file_merger.setPageLayout("/SinglePage")
-    file_merger.setPageMode("/UseThumbs")
+    file_merger.add_named_destionation("title", 0)
+    file_merger.set_page_layout("/SinglePage")
+    file_merger.set_page_mode("/UseThumbs")
 
     tmp_path = "dont_commit_merged.pdf"
     file_merger.write(tmp_path)

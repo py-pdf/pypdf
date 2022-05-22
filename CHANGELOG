@@ -95,6 +95,9 @@ PdfWriter class:
 PdfMerger class
   - `__init__` parameter: strict=True ➔ strict=False (the PdfFileMerger still has the old default)
   - addMetadata ➔ add_metadata
+  - addNamedDestination ➔ add_named_destination
+  - setPageLayout ➔ set_page_layout
+  - setPageMode ➔ set_page_mode
 
 Page class:
   - artBox / bleedBox/ cropBox/ mediaBox / trimBox ➔ artbox / bleedbox/ cropbox/ mediabox / trimbox
