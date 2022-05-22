@@ -139,9 +139,7 @@ class ArrayObject(list, PdfObject):
         stream.write(b_(" ]"))
 
     @staticmethod
-    def read_from_stream(
-        stream: StreamType, pdf: Any
-    ) -> "ArrayObject":  # PdfFileReader
+    def read_from_stream(stream: StreamType, pdf: Any) -> "ArrayObject":  # PdfReader
         arr = ArrayObject()
         tmp = stream.read(1)
         if tmp != b_("["):
@@ -163,7 +161,7 @@ class ArrayObject(list, PdfObject):
 
 
 class IndirectObject(PdfObject):
-    def __init__(self, idnum: int, generation: int, pdf: Any) -> None:  # PdfFileReader
+    def __init__(self, idnum: int, generation: int, pdf: Any) -> None:  # PdfReader
         self.idnum = idnum
         self.generation = generation
         self.pdf = pdf
@@ -192,9 +190,7 @@ class IndirectObject(PdfObject):
         stream.write(b_(f"{self.idnum} {self.generation} R"))
 
     @staticmethod
-    def read_from_stream(
-        stream: StreamType, pdf: Any  # PdfFileReader
-    ) -> "IndirectObject":
+    def read_from_stream(stream: StreamType, pdf: Any) -> "IndirectObject":  # PdfReader
         idnum = b_("")
         while True:
             tok = stream.read(1)
@@ -479,7 +475,7 @@ class NameObject(str, PdfObject):
         stream.write(b_(self))
 
     @staticmethod
-    def read_from_stream(stream: StreamType, pdf: Any) -> "NameObject":  # PdfFileReader
+    def read_from_stream(stream: StreamType, pdf: Any) -> "NameObject":  # PdfReader
         name = stream.read(1)
         if name != NameObject.surfix:
             raise PdfReadError("name read error")
@@ -566,11 +562,11 @@ class DictionaryObject(dict, PdfObject):
 
     @staticmethod
     def read_from_stream(
-        stream: StreamType, pdf: Any  # PdfFileReader
+        stream: StreamType, pdf: Any  # PdfReader
     ) -> "DictionaryObject":
         def getNextObjPos(
             p: int, p1: int, remGens: List[int], pdf: Any
-        ) -> int:  # PdfFileReader
+        ) -> int:  # PdfReader
             l = pdf.xref[remGens[0]]
             for o in l:
                 if p1 > l[o] and p < l[o]:
@@ -580,9 +576,7 @@ class DictionaryObject(dict, PdfObject):
             else:
                 return getNextObjPos(p, p1, remGens[1:], pdf)
 
-        def readUnsizedFromSteam(
-            stream: StreamType, pdf: Any  # PdfFileReader
-        ) -> bytes:
+        def readUnsizedFromSteam(stream: StreamType, pdf: Any) -> bytes:  # PdfReader
             # we are just pointing at beginning of the stream
             eon = getNextObjPos(stream.tell(), 2**32, [g for g in pdf.xref], pdf) - 1
             curr = stream.tell()
@@ -716,7 +710,7 @@ class TreeObject(DictionaryObject):
                 return
             child = child["/Next"]  # type: ignore
 
-    def addChild(self, child: Any, pdf: Any) -> None:  # PdfFileReader
+    def addChild(self, child: Any, pdf: Any) -> None:  # PdfReader
         child_obj = child.get_object()
         child = pdf.get_reference(child_obj)
         assert isinstance(child, IndirectObject)
@@ -1060,7 +1054,7 @@ class ContentStream(DecodedStreamObject):
 
 
 def read_object(
-    stream: StreamType, pdf: Any  # PdfFileReader
+    stream: StreamType, pdf: Any  # PdfReader
 ) -> Union[PdfObject, int, str, ContentStream]:
     tok = stream.read(1)
     stream.seek(-1, 1)  # reset to start
@@ -1389,7 +1383,7 @@ class RectangleObject(ArrayObject):
 class Field(TreeObject):
     """
     A class representing a field dictionary. This class is accessed through
-    :meth:`getFields()<PyPDF2.PdfFileReader.getFields>`
+    :meth:`getFields()<PyPDF2.PdfReader.getFields>`
     """
 
     def __init__(self, data: Dict[str, Any]) -> None:
@@ -1444,7 +1438,7 @@ class Field(TreeObject):
         """
         Read-only property accessing the mapping name of this field. This
         name is used by PyPDF2 as a key in the dictionary returned by
-        :meth:`getFields()<PyPDF2.PdfFileReader.getFields>`
+        :meth:`getFields()<PyPDF2.PdfReader.getFields>`
         """
         return self.get("/TM")
 

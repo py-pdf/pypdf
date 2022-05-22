@@ -37,7 +37,6 @@ from typing import (
     Callable,
     Dict,
     Iterable,
-    Iterator,
     List,
     Optional,
     Tuple,
@@ -45,7 +44,7 @@ from typing import (
     cast,
 )
 
-from ._page import PageObject
+from ._page import PageObject, _VirtualList
 from ._security import RC4_encrypt, _alg33_1, _alg34, _alg35
 from ._utils import (
     StrByteType,
@@ -101,39 +100,6 @@ def convertToInt(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:
     return struct.unpack(">q", d)[0]
 
 
-class _VirtualList:
-    def __init__(
-        self,
-        length_function: Callable[[], int],
-        get_function: Callable[[int], PageObject],
-    ) -> None:
-        self.length_function = length_function
-        self.get_function = get_function
-        self.current = -1
-
-    def __len__(self) -> int:
-        return self.length_function()
-
-    def __getitem__(self, index: int) -> PageObject:
-        if isinstance(index, slice):
-            indices = range(*index.indices(len(self)))
-            cls = type(self)
-            return cls(indices.__len__, lambda idx: self[indices[idx]])
-        if not isinstance(index, int):
-            raise TypeError("sequence indices must be integers")
-        len_self = len(self)
-        if index < 0:
-            # support negative indexes
-            index = len_self + index
-        if index < 0 or index >= len_self:
-            raise IndexError("sequence index out of range")
-        return self.get_function(index)
-
-    def __iter__(self) -> Iterator[PageObject]:
-        for i in range(len(self)):
-            yield self[i]
-
-
 class DocumentInformation(DictionaryObject):
     """
     A class representing the basic document metadata provided in a PDF File.
@@ -152,11 +118,24 @@ class DocumentInformation(DictionaryObject):
     def __init__(self) -> None:
         DictionaryObject.__init__(self)
 
-    def get_text(self, key: str) -> Optional[str]:
+    def _get_text(self, key: str) -> Optional[str]:
         retval = self.get(key, None)
         if isinstance(retval, TextStringObject):
             return retval
         return None
+
+    def getText(self, key: str) -> Optional[str]:
+        """
+        The text value of the specified key or None.
+
+        .. deprecated:: 1.28.0
+
+            Use the attributes (e.g. :py:attr:`title` / :py:attr:`author`).
+        """
+        warnings.warn(
+            "getText will be removed in PyPDF2 2.0.0.", PendingDeprecationWarning
+        )
+        return self._get_text(key)
 
     @property
     def title(self) -> Optional[str]:
@@ -164,7 +143,7 @@ class DocumentInformation(DictionaryObject):
         Returns a unicode string (``TextStringObject``) or ``None``
         if the title is not specified."""
         return (
-            self.get_text(DI.TITLE) or self.get(DI.TITLE).get_object()  # type: ignore
+            self._get_text(DI.TITLE) or self.get(DI.TITLE).get_object()  # type: ignore
             if self.get(DI.TITLE)
             else None
         )
@@ -179,7 +158,7 @@ class DocumentInformation(DictionaryObject):
         """Read-only property accessing the document's **author**.
         Returns a unicode string (``TextStringObject``) or ``None``
         if the author is not specified."""
-        return self.get_text(DI.AUTHOR)
+        return self._get_text(DI.AUTHOR)
 
     @property
     def author_raw(self) -> Optional[str]:
@@ -191,7 +170,7 @@ class DocumentInformation(DictionaryObject):
         """Read-only property accessing the document's **subject**.
         Returns a unicode string (``TextStringObject``) or ``None``
         if the subject is not specified."""
-        return self.get_text(DI.SUBJECT)
+        return self._get_text(DI.SUBJECT)
 
     @property
     def subject_raw(self) -> Optional[str]:
@@ -205,7 +184,7 @@ class DocumentInformation(DictionaryObject):
         application (e.g. OpenOffice) that created the original document from
         which it was converted. Returns a unicode string (``TextStringObject``)
         or ``None`` if the creator is not specified."""
-        return self.get_text(DI.CREATOR)
+        return self._get_text(DI.CREATOR)
 
     @property
     def creator_raw(self) -> Optional[str]:
@@ -219,7 +198,7 @@ class DocumentInformation(DictionaryObject):
         the name of the application (for example, OSX Quartz) that converted
         it to PDF. Returns a unicode string (``TextStringObject``)
         or ``None`` if the producer is not specified."""
-        return self.get_text(DI.PRODUCER)
+        return self._get_text(DI.PRODUCER)
 
     @property
     def producer_raw(self) -> Optional[str]:
@@ -227,9 +206,9 @@ class DocumentInformation(DictionaryObject):
         return self.get(DI.PRODUCER)
 
 
-class PdfFileReader:
+class PdfReader:
     """
-    Initialize a PdfFileReader object.
+    Initialize a PdfReader object.
 
     This operation can take some time, as the PDF stream's cross-reference
     tables are read into memory.
@@ -252,7 +231,7 @@ class PdfFileReader:
         ] = None  # map page IndirectRef number to Page Number
         if hasattr(stream, "mode") and "b" not in stream.mode:  # type: ignore
             warnings.warn(
-                "PdfFileReader stream/file object is not in binary mode. "
+                "PdfReader stream/file object is not in binary mode. "
                 "It may not be read correctly.",
                 PdfReadWarning,
             )
@@ -286,6 +265,7 @@ class PdfFileReader:
     def getDocumentInfo(self) -> Optional[DocumentInformation]:
         """
         .. deprecated:: 1.28.0
+
             Use the attribute :py:attr:`metadata` instead.
         """
         warnings.warn(
@@ -300,6 +280,7 @@ class PdfFileReader:
     def documentInfo(self) -> Optional[DocumentInformation]:
         """
         .. deprecated:: 1.28.0
+
             Use the attribute :py:attr:`metadata` instead.
         """
         warnings.warn(
@@ -314,6 +295,7 @@ class PdfFileReader:
     def xmp_metadata(self) -> Optional[XmpInformation]:
         """
         XMP (Extensible Metadata Platform) data
+
         :return: a :class:`XmpInformation<xmp.XmpInformation>`
             instance that can be used to access XMP metadata from the document.
         :rtype: :class:`XmpInformation<xmp.XmpInformation>` or
@@ -328,6 +310,7 @@ class PdfFileReader:
     def getXmpMetadata(self) -> Optional[XmpInformation]:
         """
         .. deprecated:: 1.28.0
+
             Use the attribute :py:attr:`xmp_metadata` instead.
         """
         warnings.warn(
@@ -342,6 +325,7 @@ class PdfFileReader:
     def xmpMetadata(self) -> Optional[XmpInformation]:
         """
         .. deprecated:: 1.28.0
+
             Use the attribute :py:attr:`xmp_metadata` instead.
         """
         warnings.warn(
@@ -383,7 +367,7 @@ class PdfFileReader:
     def numPages(self) -> int:
         """
         Read-only property that accesses the
-        :meth:`getNumPages()<PdfFileReader.getNumPages>` function.
+        :meth:`getNumPages()<PdfReader.getNumPages>` function.
         """
         return self.getNumPages()
 
@@ -393,8 +377,8 @@ class PdfFileReader:
 
         :param int pageNumber: The page number to retrieve
             (pages begin at zero)
-        :return: a :class:`PageObject<pdf.PageObject>` instance.
-        :rtype: :class:`PageObject<pdf.PageObject>`
+        :return: a :class:`PageObject<PyPDF2._page.PageObject>` instance.
+        :rtype: :class:`PageObject<PyPDF2._page.PageObject>`
         """
         # ensure that we're not trying to access an encrypted PDF
         # assert not self.trailer.has_key(TK.ENCRYPT)
@@ -407,14 +391,14 @@ class PdfFileReader:
     def namedDestinations(self) -> Dict[str, Any]:
         """
         Read-only property that accesses the
-        :meth:`getNamedDestinations()<PdfFileReader.getNamedDestinations>` function.
+        :meth:`getNamedDestinations()<PdfReader.getNamedDestinations>` function.
         """
-        return self.getNamedDestinations()
+        return self._get_named_destinations()
 
     # A select group of relevant field attributes. For the complete list,
     # see section 8.6.2 of the PDF 1.7 reference.
 
-    def getFields(
+    def get_fields(
         self,
         tree: Optional[TreeObject] = None,
         retval: Optional[Dict[Any, Any]] = None,
@@ -467,6 +451,24 @@ class PdfFileReader:
 
         return retval
 
+    def getFields(
+        self,
+        tree: Optional[TreeObject] = None,
+        retval: Optional[Dict[Any, Any]] = None,
+        fileobj: Optional[Any] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`get_fields` instead.
+        """
+        warnings.warn(
+            "The getFields method of PdfReader will be removed in PyPDF2 2.0.0. "
+            "Use the get_fields() method instead.",
+            PendingDeprecationWarning,
+        )
+        return self.get_fields(tree, retval, fileobj)
+
     def _buildField(
         self,
         field: Union[TreeObject, DictionaryObject],
@@ -484,7 +486,7 @@ class PdfFileReader:
                 # Ignore no-name field for now
                 return
         if fileobj:
-            self._writeField(fileobj, field, fieldAttributes)
+            self._write_field(fileobj, field, fieldAttributes)
             fileobj.write("\n")
         retval[key] = Field(field)
 
@@ -496,10 +498,10 @@ class PdfFileReader:
             for kid in tree[PA.KIDS]:  # type: ignore
                 self.getFields(kid.get_object(), retval, fileobj)
 
-    def _writeField(self, fileobj: Any, field: Any, fieldAttributes: Any) -> None:
+    def _write_field(self, fileobj: Any, field: Any, field_attributes: Any) -> None:
         order = ["/TM", "/T", "/FT", PA.PARENT, "/TU", "/Ff", "/V", "/DV"]
         for attr in order:
-            attr_name = fieldAttributes[attr]
+            attr_name = field_attributes[attr]
             try:
                 if attr == "/FT":
                     # Make the field type value more clear
@@ -524,10 +526,10 @@ class PdfFileReader:
                 # Field attribute is N/A or unknown, so don't write anything
                 pass
 
-    def getFormTextFields(self) -> Dict[str, Any]:
+    def get_form_text_fields(self) -> Dict[str, Any]:
         """Retrieves form fields from the document with textual data (inputs, dropdowns)"""
         # Retrieve document form fields
-        formfields = self.getFields()
+        formfields = self.get_fields()
         if formfields is None:
             return {}
         return {
@@ -536,7 +538,20 @@ class PdfFileReader:
             if formfields[field].get("/FT") == "/Tx"
         }
 
-    def getNamedDestinations(
+    def getFormTextFields(self) -> Dict[str, Any]:
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`get_form_text_fields` instead.
+        """
+        warnings.warn(
+            "The getFormTextFields method of PdfReader will be removed in PyPDF2 2.0.0. "
+            "Use the get_form_text_fields() method instead.",
+            PendingDeprecationWarning,
+        )
+        return self.get_form_text_fields()
+
+    def _get_named_destinations(
         self,
         tree: Union[TreeObject, None] = None,
         retval: Optional[Any] = None,
@@ -566,7 +581,7 @@ class PdfFileReader:
         if PA.KIDS in tree:
             # recurse down the tree
             for kid in cast(ArrayObject, tree[PA.KIDS]):
-                self.getNamedDestinations(kid.get_object(), retval)
+                self._get_named_destinations(kid.get_object(), retval)
 
         # TABLE 3.33 Entries in a name tree node dictionary (PDF 1.7 specs)
         if CA.NAMES in tree:
@@ -586,7 +601,7 @@ class PdfFileReader:
     def outlines(self) -> OutlinesType:
         """
         Read-only property that accesses the
-            :meth:`getOutlines()<PdfFileReader.getOutlines>` function.
+            :meth:`getOutlines()<PdfReader.getOutlines>` function.
         """
         return self.getOutlines()
 
@@ -615,7 +630,7 @@ class PdfFileReader:
                 # TABLE 8.3 Entries in the outline dictionary
                 if "/First" in lines:
                     node = cast(DictionaryObject, lines["/First"])
-            self._namedDests = self.getNamedDestinations()
+            self._namedDests = self._get_named_destinations()
 
         if node is None:
             return outlines
@@ -675,8 +690,6 @@ class PdfFileReader:
         Retrieve page number of a given Destination object
 
         :param Destination destination: The destination to get page number.
-             Should be an instance of
-             :class:`Destination<PyPDF2.generic.Destination>`
         :return: the page number or -1 if page not found
         :rtype: int
         """
@@ -733,8 +746,8 @@ class PdfFileReader:
     def pages(self) -> _VirtualList:
         """
         Read-only property that emulates a list based upon the
-        :meth:`getNumPages()<PdfFileReader.getNumPages>` and
-        :meth:`get_page()<PdfFileReader.get_page>` methods.
+        :meth:`getNumPages()<PdfReader.getNumPages>` and
+        :meth:`get_page()<PdfReader.get_page>` methods.
         """
         return _VirtualList(self.getNumPages, self.get_page)
 
@@ -742,11 +755,26 @@ class PdfFileReader:
         """
         Get the page layout.
 
-        See :meth:`setPageLayout()<PdfFileWriter.setPageLayout>`
-        for a description of valid layouts.
-
         :return: Page layout currently being used.
         :rtype: ``str``, ``None`` if not specified
+
+        .. list-table:: Valid ``layout`` values
+           :widths: 50 200
+
+           * - /NoLayout
+             - Layout explicitly not specified
+           * - /SinglePage
+             - Show one page at a time
+           * - /OneColumn
+             - Show one column at a time
+           * - /TwoColumnLeft
+             - Show pages in two columns, odd-numbered pages on the left
+           * - /TwoColumnRight
+             - Show pages in two columns, odd-numbered pages on the right
+           * - /TwoPageLeft
+             - Show two pages at a time, odd-numbered pages on the left
+           * - /TwoPageRight
+             - Show two pages at a time, odd-numbered pages on the right
         """
         trailer = cast(DictionaryObject, self.trailer[TK.ROOT])
         if CD.PAGE_LAYOUT in trailer:
@@ -754,30 +782,57 @@ class PdfFileReader:
         return None
 
     @property
-    def pageLayout(self) -> Optional[str]:
+    def page_layout(self) -> Optional[str]:
         """Read-only property accessing the
-        :meth:`getPageLayout()<PdfFileReader.getPageLayout>` method."""
+        :meth:`getPageLayout()<PdfReader.getPageLayout>` method."""
         return self.getPageLayout()
 
-    def getPageMode(self) -> Optional[str]:
+    def get_page_mode(self) -> Optional[str]:
         """
         Get the page mode.
-        See :meth:`setPageMode()<PdfFileWriter.setPageMode>`
-        for a description of valid modes.
 
         :return: Page mode currently being used.
         :rtype: ``str``, ``None`` if not specified
+
+        .. list-table:: Valid ``mode`` values
+           :widths: 50 200
+
+           * - /UseNone
+             - Do not show outlines or thumbnails panels
+           * - /UseOutlines
+             - Show outlines (aka bookmarks) panel
+           * - /UseThumbs
+             - Show page thumbnails panel
+           * - /FullScreen
+             - Fullscreen view
+           * - /UseOC
+             - Show Optional Content Group (OCG) panel
+           * - /UseAttachments
+             - Show attachments panel
         """
         try:
             return self.trailer[TK.ROOT]["/PageMode"]  # type: ignore
         except KeyError:
             return None
 
+    def getPageMode(self) -> Optional[str]:
+        """
+        .. deprecated:: 1.28.0
+
+            Use :py:attr:`page_mode` instead.
+        """
+        warnings.warn(
+            "getPageMode will be removed in PyPDF2 2.0.0. "
+            "Use the attribute 'page_mode' instead.",
+            PendingDeprecationWarning,
+        )
+        return self.page_mode
+
     @property
-    def pageMode(self) -> Optional[str]:
+    def page_mode(self) -> Optional[str]:
         """Read-only property accessing the
-        :meth:`getPageMode()<PdfFileReader.getPageMode>` method."""
-        return self.getPageMode()
+        :meth:`getPageMode()<PdfReader.getPageMode>` method."""
+        return self.get_page_mode()
 
     def _flatten(
         self,
@@ -1403,6 +1458,19 @@ class PdfFileReader:
         line_parts.reverse()
         return b"".join(line_parts)
 
+    def readNextEndLine(self, stream: StreamType, limit_offset: int = 0) -> bytes:
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`read_next_end_line` instead.
+        """
+        warnings.warn(
+            "readNextEndLine will be removed in PyPDF2 2.0.0. "
+            "Use read_next_end_line instead.",
+            PendingDeprecationWarning,
+        )
+        return self.read_next_end_line(stream, limit_offset)
+
     def decrypt(self, password: Union[str, bytes]) -> int:
         """
         When using an encrypted / secured PDF file with the PDF Standard
@@ -1534,14 +1602,52 @@ class PdfFileReader:
             U, real_U = U[:16], real_U[:16]
         return U == real_U, key
 
-    def getIsEncrypted(self) -> bool:
-        return TK.ENCRYPT in self.trailer
-
     @property
     def is_encrypted(self) -> bool:
         """
         Read-only boolean property showing whether this PDF file is encrypted.
         Note that this property, if true, will remain true even after the
-        :meth:`decrypt()<PdfFileReader.decrypt>` method is called.
+        :meth:`decrypt()<PdfReader.decrypt>` method is called.
         """
-        return self.getIsEncrypted()
+        return TK.ENCRYPT in self.trailer
+
+    def getIsEncrypted(self) -> bool:
+        """
+        .. deprecated:: 1.28.0
+
+            Use :py:attr:`is_encrypted` instead.
+        """
+        warnings.warn(
+            "getIsEncrypted() will be removed in PyPDF2 2.0.0. "
+            "Use the is_encrypted property instead.",
+            PendingDeprecationWarning,
+        )
+        return self.is_encrypted
+
+    @property
+    def isEncrypted(self) -> bool:
+        """
+        .. deprecated:: 1.28.0
+
+            Use :py:attr:`is_encrypted` instead.
+        """
+        warnings.warn(
+            "isEncrypted will be removed in PyPDF2 2.0.0. "
+            "Use the is_encrypted property instead.",
+            PendingDeprecationWarning,
+        )
+        return self.is_encrypted
+
+
+class PdfFileReader(PdfReader):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        import warnings
+
+        warnings.warn(
+            "PdfFileReader was renamed to PdfReader. PdfFileReader will be removed",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        if "strict" not in kwargs and len(args) < 2:
+            kwargs["strict"] = True  # maintain the default
+        super().__init__(*args, **kwargs)

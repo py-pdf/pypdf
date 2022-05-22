@@ -3,7 +3,7 @@ import os
 import pytest
 
 import PyPDF2.xmp
-from PyPDF2 import PdfFileReader
+from PyPDF2 import PdfReader
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -18,7 +18,7 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
     ],
 )
 def test_read_xmp(src, has_xmp):
-    reader = PdfFileReader(src)
+    reader = PdfReader(src)
     xmp = reader.xmpMetadata
     assert (xmp is None) == (not has_xmp)
     if has_xmp:

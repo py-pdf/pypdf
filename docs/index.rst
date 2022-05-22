@@ -38,9 +38,9 @@ You can contribute to `PyPDF2 on Github <https://github.com/py-pdf/PyPDF2>`_.
    :caption: API Reference
    :maxdepth: 1
 
-   modules/PdfFileReader
-   modules/PdfFileWriter
-   modules/PdfFileMerger
+   modules/PdfReader
+   modules/PdfWriter
+   modules/PdfMerger
    modules/PageObject
    modules/DocumentInformation
    modules/XmpInformation

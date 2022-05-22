@@ -1,7 +1,7 @@
 import os
 
 import PyPDF2
-from PyPDF2 import PdfFileReader
+from PyPDF2 import PdfReader
 from PyPDF2.generic import Destination
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -12,7 +12,7 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
 def page_ops(pdf_path, password):
     pdf_path = os.path.join(RESOURCE_ROOT, pdf_path)
 
-    reader = PdfFileReader(pdf_path)
+    reader = PdfReader(pdf_path)
 
     if password:
         reader.decrypt(password)
@@ -21,12 +21,12 @@ def page_ops(pdf_path, password):
     page.mergeRotatedScaledPage(page, 90, 1, 1)
     page.mergeScaledTranslatedPage(page, 1, 1, 1)
     page.merge_rotated_scaled_translated_page(page, 90, 1, 1, 1, 1)
-    page.add_transformation([1, 0, 0, 0, 0, 0])
+    page.add_transformation((1, 0, 0, 0, 0, 0))
     page.scale(2, 2)
-    page.scaleBy(0.5)
-    page.scaleTo(100, 100)
+    page.scale_by(0.5)
+    page.scale_to(100, 100)
     page.compressContentStreams()
-    page.extractText()
+    page.extract_text()
 
 
 def test_page_operations(benchmark):
@@ -44,7 +44,7 @@ def merge():
     pdf_forms = os.path.join(RESOURCE_ROOT, "pdflatex-forms.pdf")
     pdf_pw = os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf")
 
-    file_merger = PyPDF2.PdfFileMerger()
+    file_merger = PyPDF2.PdfMerger()
 
     # string path:
     file_merger.append(pdf_path)
@@ -53,12 +53,12 @@ def merge():
     file_merger.append(pdf_forms)
 
     # Merging an encrypted file
-    pdfr = PyPDF2.PdfFileReader(pdf_pw)
+    pdfr = PyPDF2.PdfReader(pdf_pw)
     pdfr.decrypt("openpassword")
     file_merger.append(pdfr)
 
-    # PdfFileReader object:
-    file_merger.append(PyPDF2.PdfFileReader(pdf_path, "rb"), bookmark=True)
+    # PdfReader object:
+    file_merger.append(PyPDF2.PdfReader(pdf_path, "rb"), bookmark=True)
 
     # File handle
     with open(pdf_path, "rb") as fh:
@@ -76,7 +76,7 @@ def merge():
     file_merger.close()
 
     # Check if bookmarks are correct
-    pdfr = PyPDF2.PdfFileReader(tmp_path)
+    pdfr = PyPDF2.PdfReader(tmp_path)
     assert [el.title for el in pdfr.getOutlines() if isinstance(el, Destination)] == [
         "A bookmark",
         "Foo",

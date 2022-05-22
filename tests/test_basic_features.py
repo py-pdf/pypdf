@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from PyPDF2 import PdfFileReader, PdfFileWriter
+from PyPDF2 import PdfReader, PdfWriter
 from PyPDF2._reader import convertToInt
 from PyPDF2.errors import PdfReadError
 
@@ -13,30 +13,30 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
 
 def test_basic_features():
     pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
-    reader = PdfFileReader(pdf_path)
-    writer = PdfFileWriter()
+    reader = PdfReader(pdf_path)
+    writer = PdfWriter()
 
     assert reader.numPages == 1
 
     # add page 1 from input1 to output document, unchanged
-    writer.add_page(reader.get_page(0))
+    writer.add_page(reader.pages[0])
 
     # add page 2 from input1, but rotated clockwise 90 degrees
-    writer.add_page(reader.get_page(0).rotateClockwise(90))
+    writer.add_page(reader.pages[0].rotate_clockwise(90))
 
     # add page 3 from input1, rotated the other way:
-    writer.add_page(reader.get_page(0).rotateCounterClockwise(90))
-    # alt: output.addPage(input1.get_page(0).rotateClockwise(270))
+    writer.add_page(reader.pages[0].rotateCounterClockwise(90))
+    # alt: output.addPage(input1.pages[0].rotate_clockwise(270))
 
     # add page 4 from input1, but first add a watermark from another PDF:
-    page4 = reader.get_page(0)
+    page4 = reader.pages[0]
     watermark_pdf = pdf_path
-    watermark = PdfFileReader(watermark_pdf)
-    page4.mergePage(watermark.get_page(0))
+    watermark = PdfReader(watermark_pdf)
+    page4.merge_page(watermark.pages[0])
     writer.add_page(page4)
 
     # add page 5 from input1, but crop it to half size:
-    page5 = reader.get_page(0)
+    page5 = reader.pages[0]
     page5.mediaBox.upperRight = (
         page5.mediaBox.right / 2,
         page5.mediaBox.top / 2,

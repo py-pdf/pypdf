@@ -4,7 +4,7 @@ from copy import deepcopy
 
 import pytest
 
-from PyPDF2 import PdfFileReader, Transformation
+from PyPDF2 import PdfReader, Transformation
 from PyPDF2._page import PageObject
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.generic import DictionaryObject, NameObject, RectangleObject
@@ -33,7 +33,7 @@ all_files_meta = get_all_sample_files()
 )
 def test_read(meta):
     pdf_path = os.path.join(EXTERNAL_ROOT, meta["path"])
-    reader = PdfFileReader(pdf_path)
+    reader = PdfReader(pdf_path)
     reader.pages[0]
     assert len(reader.pages) == meta["pages"]
 
@@ -61,7 +61,7 @@ def test_page_operations(pdf_path, password):
     output is as expected.
     """
     pdf_path = os.path.join(RESOURCE_ROOT, pdf_path)
-    reader = PdfFileReader(pdf_path)
+    reader = PdfReader(pdf_path)
 
     if password:
         reader.decrypt(password)
@@ -80,11 +80,11 @@ def test_page_operations(pdf_path, password):
 
 def test_transformation_equivalence():
     pdf_path = os.path.join(RESOURCE_ROOT, "labeled-edges-center-image.pdf")
-    reader_base = PdfFileReader(pdf_path)
+    reader_base = PdfReader(pdf_path)
     page_base = reader_base.pages[0]
 
     pdf_path = os.path.join(RESOURCE_ROOT, "box.pdf")
-    reader_add = PdfFileReader(pdf_path)
+    reader_add = PdfReader(pdf_path)
     page_box = reader_add.pages[0]
 
     op = Transformation().scale(2).rotate(45)
@@ -93,7 +93,7 @@ def test_transformation_equivalence():
     page_box1 = deepcopy(page_box)
     page_base1 = deepcopy(page_base)
     page_box1.add_transformation(op, expand=True)
-    page_base1.mergePage(page_box1, expand=False)
+    page_base1.merge_page(page_box1, expand=False)
 
     # Option 2: The old way
     page_box2 = deepcopy(page_box)
@@ -121,7 +121,7 @@ def compare_dict_objects(d1, d2):
 
 def test_page_transformations():
     pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
-    reader = PdfFileReader(pdf_path)
+    reader = PdfReader(pdf_path)
 
     page: PageObject = reader.pages[0]
     page.mergeRotatedPage(page, 90, expand=True)
@@ -149,7 +149,7 @@ def test_page_transformations():
     ],
 )
 def test_compress_content_streams(pdf_path, password):
-    reader = PdfFileReader(pdf_path)
+    reader = PdfReader(pdf_path)
     if password:
         reader.decrypt(password)
     for page in reader.pages:
@@ -157,23 +157,23 @@ def test_compress_content_streams(pdf_path, password):
 
 
 def test_page_properties():
-    reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
+    reader = PdfReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
     page = reader.pages[0]
-    assert page.mediabox == RectangleObject([0, 0, 612, 792])
-    assert page.cropbox == RectangleObject([0, 0, 612, 792])
-    assert page.bleedbox == RectangleObject([0, 0, 612, 792])
-    assert page.trimbox == RectangleObject([0, 0, 612, 792])
-    assert page.artbox == RectangleObject([0, 0, 612, 792])
+    assert page.mediabox == RectangleObject((0, 0, 612, 792))
+    assert page.cropbox == RectangleObject((0, 0, 612, 792))
+    assert page.bleedbox == RectangleObject((0, 0, 612, 792))
+    assert page.trimbox == RectangleObject((0, 0, 612, 792))
+    assert page.artbox == RectangleObject((0, 0, 612, 792))
 
-    page.bleedbox = RectangleObject([0, 1, 100, 101])
-    assert page.bleedbox == RectangleObject([0, 1, 100, 101])
+    page.bleedbox = RectangleObject((0, 1, 100, 101))
+    assert page.bleedbox == RectangleObject((0, 1, 100, 101))
 
 
 def test_page_rotation_non90():
-    reader = PdfFileReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
+    reader = PdfReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
     page = reader.pages[0]
     with pytest.raises(ValueError) as exc:
-        page.rotateClockwise(91)
+        page.rotate_clockwise(91)
     assert exc.value.args[0] == "Rotation angle must be a multiple of 90"
 
 

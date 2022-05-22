@@ -31,10 +31,21 @@ import math
 import uuid
 import warnings
 from decimal import Decimal
-from typing import Any, Callable, Dict, Iterable, Optional, Tuple, Union, cast
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    Iterator,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+)
 
 from ._utils import (
     DEPR_MSG,
+    DEPR_MSG_NO_REPLACEMENT,
     CompressedTransformationMatrix,
     TransformationMatrixType,
     b_,
@@ -57,7 +68,7 @@ from .generic import (
 )
 
 
-def getRectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
+def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
     retval: Union[None, RectangleObject, IndirectObject] = self.get(name)
     if isinstance(retval, RectangleObject):
         return retval
@@ -69,26 +80,58 @@ def getRectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObje
     if isinstance(retval, IndirectObject):
         retval = self.pdf.get_object(retval)
     retval = RectangleObject(retval)  # type: ignore
-    setRectangle(self, name, retval)
+    _set_rectangle(self, name, retval)
     return retval
 
 
-def setRectangle(self: Any, name: str, value: Union[RectangleObject, float]) -> None:
+def getRectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
+    warnings.warn(
+        DEPR_MSG_NO_REPLACEMENT.format("getRectangle"),
+        PendingDeprecationWarning,
+    )
+    return _get_rectangle(self, name, defaults)
+
+
+def _set_rectangle(self: Any, name: str, value: Union[RectangleObject, float]) -> None:
     if not isinstance(name, NameObject):
         name = NameObject(name)
     self[name] = value
 
 
+def setRectangle(self: Any, name: str, value: Union[RectangleObject, float]) -> None:
+    warnings.warn(
+        DEPR_MSG_NO_REPLACEMENT.format("setRectangle"),
+        PendingDeprecationWarning,
+    )
+    _set_rectangle(self, name, value)
+
+
+def _delete_rectangle(self: Any, name: str) -> None:
+    del self[name]
+
+
 def deleteRectangle(self: Any, name: str) -> None:
+    warnings.warn(
+        DEPR_MSG_NO_REPLACEMENT.format("deleteRectangle"),
+        PendingDeprecationWarning,
+    )
     del self[name]
 
 
 def _create_rectangle_accessor(name: str, fallback: Iterable[str]) -> property:
     return property(
-        lambda self: getRectangle(self, name, fallback),
-        lambda self, value: setRectangle(self, name, value),
-        lambda self: deleteRectangle(self, name),
+        lambda self: _get_rectangle(self, name, fallback),
+        lambda self, value: _set_rectangle(self, name, value),
+        lambda self: _delete_rectangle(self, name),
     )
+
+
+def createRectangleAccessor(name: str, fallback: Iterable[str]) -> property:
+    warnings.warn(
+        DEPR_MSG_NO_REPLACEMENT.format("createRectangleAccessor"),
+        PendingDeprecationWarning,
+    )
+    return _create_rectangle_accessor(name, fallback)
 
 
 class Transformation:
@@ -178,8 +221,8 @@ class PageObject(DictionaryObject):
     PageObject represents a single page within a PDF file.
 
     Typically this object will be created by accessing the
-    :meth:`get_page()<PyPDF2.PdfFileReader.get_page>` method of the
-    :class:`PdfFileReader<PyPDF2.PdfFileReader>` class, but it is
+    :meth:`get_page()<PyPDF2.PdfReader.get_page>` method of the
+    :class:`PdfReader<PyPDF2.PdfReader>` class, but it is
     also possible to create an empty page with the
     :meth:`createBlankPage()<PageObject.createBlankPage>` static method.
 
@@ -190,18 +233,18 @@ class PageObject(DictionaryObject):
 
     def __init__(
         self,
-        pdf: Optional[Any] = None,  # PdfFileReader
+        pdf: Optional[Any] = None,  # PdfReader
         indirectRef: Optional[IndirectObject] = None,
     ) -> None:
-        from ._reader import PdfFileReader
+        from ._reader import PdfReader
 
         DictionaryObject.__init__(self)
-        self.pdf: Optional[PdfFileReader] = pdf
+        self.pdf: Optional[PdfReader] = pdf
         self.indirectRef = indirectRef
 
     @staticmethod
-    def createBlankPage(
-        pdf: Optional[Any] = None,  # PdfFileReader
+    def create_blank_page(
+        pdf: Optional[Any] = None,  # PdfReader
         width: Union[float, Decimal, None] = None,
         height: Union[float, Decimal, None] = None,
     ) -> "PageObject":
@@ -228,10 +271,10 @@ class PageObject(DictionaryObject):
         page.__setitem__(NameObject(PG.PARENT), NullObject())
         page.__setitem__(NameObject(PG.RESOURCES), DictionaryObject())
         if width is None or height is None:
-            if pdf is not None and pdf.get_num_pages() > 0:
-                lastpage = pdf.get_page(pdf.get_num_pages() - 1)
-                width = lastpage.mediabox.getWidth()
-                height = lastpage.mediabox.getHeight()
+            if pdf is not None and len(pdf.pages) > 0:
+                lastpage = pdf.get_page(len(pdf.pages) - 1)
+                width = lastpage.mediabox.width
+                height = lastpage.mediabox.height
             else:
                 raise PageSizeNotDefinedError()
         page.__setitem__(
@@ -240,7 +283,24 @@ class PageObject(DictionaryObject):
 
         return page
 
-    def rotateClockwise(self, angle: float) -> "PageObject":
+    @staticmethod
+    def createBlankPage(
+        pdf: Optional[Any] = None,  # PdfReader
+        width: Union[float, Decimal, None] = None,
+        height: Union[float, Decimal, None] = None,
+    ) -> "PageObject":
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`create_blank_page` instead.
+        """
+        warnings.warn(
+            DEPR_MSG.format("createBlankPage", "create_blank_page"),
+            PendingDeprecationWarning,
+        )
+        return PageObject.create_blank_page(pdf, width, height)
+
+    def rotate_clockwise(self, angle: float) -> "PageObject":
         """
         Rotate a page clockwise by increments of 90 degrees.
 
@@ -252,13 +312,28 @@ class PageObject(DictionaryObject):
         self._rotate(angle)
         return self
 
+    def rotateClockwise(self, angle: float) -> "PageObject":
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`rotate_clockwise` instead.
+        """
+        warnings.warn(
+            DEPR_MSG.format("rotateClockwise", "rotate_clockwise"),
+            PendingDeprecationWarning,
+        )
+        return self.rotate_clockwise(angle)
+
     def rotateCounterClockwise(self, angle: float) -> "PageObject":
         """
-        Rotate a page counter-clockwise by increments of 90 degrees.
+        .. deprecated:: 1.28.0
 
-        :param int angle: Angle to rotate the page.  Must be an increment
-            of 90 deg.
+            Use :meth:`rotate_clockwise` with a negative argument instead.
         """
+        warnings.warn(
+            DEPR_MSG.format("rotateCounterClockwise", "rotate_clockwise"),
+            PendingDeprecationWarning,
+        )
         if angle % 90 != 0:
             raise ValueError("Rotation angle must be a multiple of 90")
         self._rotate(-angle)
@@ -272,7 +347,7 @@ class PageObject(DictionaryObject):
         self[NameObject(PG.ROTATE)] = NumberObject(current_angle + angle)
 
     @staticmethod
-    def _mergeResources(
+    def _merge_resources(
         res1: DictionaryObject, res2: DictionaryObject, resource: Any
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         new_res = DictionaryObject()
@@ -291,8 +366,8 @@ class PageObject(DictionaryObject):
         return new_res, rename_res
 
     @staticmethod
-    def _contentStreamRename(
-        stream: ContentStream, rename: Dict[Any, Any], pdf: Any  # PdfFileReader
+    def _content_stream_rename(
+        stream: ContentStream, rename: Dict[Any, Any], pdf: Any  # PdfReader
     ) -> ContentStream:
         if not rename:
             return stream
@@ -313,7 +388,7 @@ class PageObject(DictionaryObject):
         return stream
 
     @staticmethod
-    def _push_pop_gs(contents: Any, pdf: Any) -> ContentStream:  # PdfFileReader
+    def _push_pop_gs(contents: Any, pdf: Any) -> ContentStream:  # PdfReader
         # adds a graphics state "push" and "pop" to the beginning and end
         # of a content stream.  This isolates it from changes such as
         # transformation matricies.
@@ -325,7 +400,7 @@ class PageObject(DictionaryObject):
     @staticmethod
     def _add_transformation_matrix(
         contents: Any, pdf: Any, ctm: CompressedTransformationMatrix
-    ) -> ContentStream:  # PdfFileReader
+    ) -> ContentStream:  # PdfReader
         # adds transformation matrix at the beginning of the given
         # contents stream.
         a, b, c, d, e, f = ctm
@@ -346,7 +421,7 @@ class PageObject(DictionaryObject):
         )
         return contents
 
-    def getContents(self) -> Optional[ContentStream]:
+    def get_contents(self) -> Optional[ContentStream]:
         """
         Access the page contents.
 
@@ -358,7 +433,18 @@ class PageObject(DictionaryObject):
         else:
             return None
 
-    def mergePage(self, page2: "PageObject", expand: bool = False) -> None:
+    def getContents(self) -> Optional[ContentStream]:
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`get_contents` instead.
+        """
+        warnings.warn(
+            DEPR_MSG.format("getContents", "get_contents"),
+        )
+        return self.get_contents()
+
+    def merge_page(self, page2: "PageObject", expand: bool = False) -> None:
         """
         Merge the content streams of two pages into one.
 
@@ -370,10 +456,23 @@ class PageObject(DictionaryObject):
 
         :param PageObject page2: The page to be merged into this one. Should be
             an instance of :class:`PageObject<PageObject>`.
+        :param bool expand: If true, the current page dimensions will be
+            expanded to accommodate the dimensions of the page to be merged.
         """
-        self._mergePage(page2, expand=expand)
+        self._merge_page(page2, expand=expand)
 
-    def _mergePage(
+    def mergePage(self, page2: "PageObject") -> None:
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`merge_page` instead.
+        """
+        warnings.warn(
+            DEPR_MSG.format("mergePage", "merge_page"),
+        )
+        return self.merge_page(page2)
+
+    def _merge_page(
         self,
         page2: "PageObject",
         page2transformation: Optional[Callable[[Any], ContentStream]] = None,
@@ -406,7 +505,7 @@ class PageObject(DictionaryObject):
             RES.SHADING,
             RES.PROPERTIES,
         ):
-            new, newrename = PageObject._mergeResources(
+            new, newrename = PageObject._merge_resources(
                 original_resources, page2resources, res
             )
             if new:
@@ -424,7 +523,7 @@ class PageObject(DictionaryObject):
 
         new_content_array = ArrayObject()
 
-        original_content = self.getContents()
+        original_content = self.get_contents()
         if original_content is not None:
             new_content_array.append(
                 PageObject._push_pop_gs(original_content, self.pdf)
@@ -439,10 +538,10 @@ class PageObject(DictionaryObject):
                     map(
                         FloatObject,
                         [
-                            page2.trimbox.getLowerLeft_x(),
-                            page2.trimbox.getLowerLeft_y(),
-                            page2.trimbox.getWidth(),
-                            page2.trimbox.getHeight(),
+                            page2.trimbox.left,
+                            page2.trimbox.bottom,
+                            page2.trimbox.width,
+                            page2.trimbox.height,
                         ],
                     ),
                     "re",
@@ -452,7 +551,7 @@ class PageObject(DictionaryObject):
             page2content.operations.insert(2, ([], "n"))
             if page2transformation is not None:
                 page2content = page2transformation(page2content)
-            page2content = PageObject._contentStreamRename(
+            page2content = PageObject._content_stream_rename(
                 page2content, rename, self.pdf
             )
             page2content = PageObject._push_pop_gs(page2content, self.pdf)
@@ -469,12 +568,12 @@ class PageObject(DictionaryObject):
             corners2 = [
                 page2.mediabox.left.as_numeric(),
                 page2.mediabox.bottom.as_numeric(),
-                page2.mediabox.getUpperLeft_x().as_numeric(),
-                page2.mediabox.getUpperLeft_y().as_numeric(),
+                page2.mediabox.left.as_numeric(),
+                page2.mediabox.top.as_numeric(),
                 page2.mediabox.right.as_numeric(),
                 page2.mediabox.top.as_numeric(),
-                page2.mediabox.getLowerRight_x().as_numeric(),
-                page2.mediabox.getLowerRight_y().as_numeric(),
+                page2.mediabox.right.as_numeric(),
+                page2.mediabox.bottom.as_numeric(),
             ]
             if ctm is not None:
                 ctm = tuple(float(x) for x in ctm)  # type: ignore[assignment]
@@ -511,7 +610,7 @@ class PageObject(DictionaryObject):
         expand: bool = False,
     ) -> None:
         """
-        mergeTransformedPage is similar to mergePage, but a transformation
+        mergeTransformedPage is similar to merge_page, but a transformation
         matrix is applied to the merged stream.
 
         :param PageObject page2: The page to be merged into this one. Should be
@@ -520,11 +619,19 @@ class PageObject(DictionaryObject):
             transformation matrix
         :param bool expand: Whether the page should be expanded to fit the dimensions
             of the page to be merged.
+
+        .. deprecated:: 1.28.0
+
+            Use :meth:`add_transformation`  and :meth:`merge_page` instead.
         """
+        warnings.warn(
+            "page.mergeTransformedPage(page2, ctm) will be removed in PyPDF 2.0.0. "
+            "Use page2.add_transformation(ctm); page.merge_page(page2) instead.",
+        )
         if isinstance(ctm, Transformation):
             ctm = ctm.ctm
         ctm = cast(CompressedTransformationMatrix, ctm)
-        self._mergePage(
+        self._merge_page(
             page2,
             lambda page2Content: PageObject._add_transformation_matrix(
                 page2Content, page2.pdf, ctm  # type: ignore[arg-type]
@@ -537,7 +644,7 @@ class PageObject(DictionaryObject):
         self, page2: "PageObject", scale: float, expand: bool = False
     ) -> None:
         """
-        mergeScaledPage is similar to mergePage, but the stream to be merged
+        mergeScaledPage is similar to merge_page, but the stream to be merged
         is scaled by appling a transformation matrix.
 
         :param PageObject page2: The page to be merged into this one. Should be
@@ -545,7 +652,18 @@ class PageObject(DictionaryObject):
         :param float scale: The scaling factor
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
+
+        .. deprecated:: 1.28.0
+
+            Use :meth:`add_transformation` and :meth:`merge_page` instead.
         """
+        warnings.warn(
+            "page.mergeScaledPage(page2, scale, expand) method will be deprecated. "
+            "Use "
+            "page2.add_transformation(Transformation().scale(scale)); "
+            "page.merge_page(page2, expand) instead.",
+            PendingDeprecationWarning,
+        )
         op = Transformation().scale(scale, scale)
         self.mergeTransformedPage(page2, op, expand)
 
@@ -553,7 +671,7 @@ class PageObject(DictionaryObject):
         self, page2: "PageObject", rotation: float, expand: bool = False
     ) -> None:
         """
-        mergeRotatedPage is similar to mergePage, but the stream to be merged
+        mergeRotatedPage is similar to merge_page, but the stream to be merged
         is rotated by appling a transformation matrix.
 
         :param PageObject page2: the page to be merged into this one. Should be
@@ -561,7 +679,18 @@ class PageObject(DictionaryObject):
         :param float rotation: The angle of the rotation, in degrees
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
+
+        .. deprecated:: 1.28.0
+
+            Use :meth:`add_transformation` and :meth:`merge_page` instead.
         """
+        warnings.warn(
+            "page.mergeRotatedPage(page2, rotation, expand) method will be deprecated. "
+            "Use "
+            "page2.add_transformation(Transformation().rotate(rotation)); "
+            "page.merge_page(page2, expand) instead.",
+            PendingDeprecationWarning,
+        )
         op = Transformation().rotate(rotation)
         self.mergeTransformedPage(page2, op, expand)
 
@@ -569,7 +698,7 @@ class PageObject(DictionaryObject):
         self, page2: "PageObject", tx: float, ty: float, expand: bool = False
     ) -> None:
         """
-        mergeTranslatedPage is similar to mergePage, but the stream to be
+        mergeTranslatedPage is similar to merge_page, but the stream to be
         merged is translated by appling a transformation matrix.
 
         :param PageObject page2: the page to be merged into this one. Should be
@@ -578,7 +707,18 @@ class PageObject(DictionaryObject):
         :param float ty: The translation on Y axis
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
+
+        .. deprecated:: 1.28.0
+
+            Use :meth:`add_transformation` and :meth:`merge_page` instead.
         """
+        warnings.warn(
+            "page.mergeTranslatedPage(page2, tx, ty, expand) method will be deprecated. "
+            "Use "
+            "page2.add_transformation(Transformation().translate(tx, ty)); "
+            "page.merge_page(page2, expand) instead.",
+            PendingDeprecationWarning,
+        )
         op = Transformation().translate(tx, ty)
         self.mergeTransformedPage(page2, op, expand)
 
@@ -591,7 +731,7 @@ class PageObject(DictionaryObject):
         expand: bool = False,
     ) -> None:
         """
-        mergeRotatedTranslatedPage is similar to mergePage, but the stream to
+        mergeRotatedTranslatedPage is similar to merge_page, but the stream to
         be merged is rotated and translated by appling a transformation matrix.
 
         :param PageObject page2: the page to be merged into this one. Should be
@@ -601,7 +741,18 @@ class PageObject(DictionaryObject):
         :param float rotation: The angle of the rotation, in degrees
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
+
+        .. deprecated:: 1.28.0
+
+            Use :meth:`add_transformation` and :meth:`merge_page` instead.
         """
+        warnings.warn(
+            "page.mergeRotatedTranslatedPage(page2, rotation, tx, ty, expand) "
+            "method will be deprecated. Use "
+            "page2.add_transformation(Transformation().rotate(rotation).translate(tx, ty)); "
+            "page.merge_page(page2, expand) instead.",
+            PendingDeprecationWarning,
+        )
         op = Transformation().translate(-tx, -ty).rotate(rotation).translate(tx, ty)
         return self.mergeTransformedPage(page2, op, expand)
 
@@ -609,7 +760,7 @@ class PageObject(DictionaryObject):
         self, page2: "PageObject", rotation: float, scale: float, expand: bool = False
     ) -> None:
         """
-        mergeRotatedScaledPage is similar to mergePage, but the stream to be
+        mergeRotatedScaledPage is similar to merge_page, but the stream to be
         merged is rotated and scaled by appling a transformation matrix.
 
         :param PageObject page2: the page to be merged into this one. Should be
@@ -618,7 +769,18 @@ class PageObject(DictionaryObject):
         :param float scale: The scaling factor
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
+
+        .. deprecated:: 1.28.0
+
+            Use :meth:`add_transformation` and :meth:`merge_page` instead.
         """
+        warnings.warn(
+            "page.mergeRotatedScaledPage(page2, rotation, scale, expand) "
+            "method will be deprecated. Use "
+            "page2.add_transformation(Transformation().rotate(rotation).scale(scale)); "
+            "page.merge_page(page2, expand) instead.",
+            PendingDeprecationWarning,
+        )
         op = Transformation().rotate(rotation).scale(scale, scale)
         self.mergeTransformedPage(page2, op, expand)
 
@@ -631,7 +793,7 @@ class PageObject(DictionaryObject):
         expand: bool = False,
     ) -> None:
         """
-        mergeScaledTranslatedPage is similar to mergePage, but the stream to be
+        mergeScaledTranslatedPage is similar to merge_page, but the stream to be
         merged is translated and scaled by appling a transformation matrix.
 
         :param PageObject page2: the page to be merged into this one. Should be
@@ -641,7 +803,18 @@ class PageObject(DictionaryObject):
         :param float ty: The translation on Y axis
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
+
+        .. deprecated:: 1.28.0
+
+            Use :meth:`add_transformation` and :meth:`merge_page` instead.
         """
+        warnings.warn(
+            "page.mergeScaledTranslatedPage(page2, scale, tx, ty, expand) "
+            "method will be deprecated. Use "
+            "page2.add_transformation(Transformation().scale(scale).translate(tx, ty)); "
+            "page.merge_page(page2, expand) instead.",
+            PendingDeprecationWarning,
+        )
         op = Transformation().scale(scale, scale).translate(tx, ty)
         return self.mergeTransformedPage(page2, op, expand)
 
@@ -655,7 +828,7 @@ class PageObject(DictionaryObject):
         expand: bool = False,
     ) -> None:
         """
-        mergeRotatedScaledTranslatedPage is similar to mergePage, but the
+        mergeRotatedScaledTranslatedPage is similar to merge_page, but the
         stream to be merged is translated, rotated and scaled by appling a
         transformation matrix.
 
@@ -667,7 +840,18 @@ class PageObject(DictionaryObject):
         :param float scale: The scaling factor
         :param bool expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
+
+        .. deprecated:: 1.28.0
+
+            Use :meth:`add_transformation` and :meth:`merge_page` instead.
         """
+        warnings.warn(
+            "page.mergeRotatedScaledTranslatedPage(page2, rotation, tx, ty, expand) "
+            "method will be deprecated. Use "
+            "page2.add_transformation(Transformation().rotate(rotation).scale(scale)); "
+            "page.merge_page(page2, expand) instead.",
+            PendingDeprecationWarning,
+        )
         op = Transformation().rotate(rotation).scale(scale, scale).translate(tx, ty)
         self.mergeTransformedPage(page2, op, expand)
 
@@ -678,7 +862,11 @@ class PageObject(DictionaryObject):
         Apply a transformation matrix to the page.
 
         :param tuple ctm: A 6-element tuple containing the operands of the
-            transformation matrix.
+            transformation matrix. Alternatively, a
+            :class:`Transformation<PyPDF2._page.Transformation>`
+            object can be passed.
+
+        See :doc:`/user/cropping-and-transforming`.
         """
         if isinstance(ctm, Transformation):
             ctm = ctm.ctm
@@ -691,12 +879,12 @@ class PageObject(DictionaryObject):
             corners = [
                 self.mediabox.left.as_numeric(),
                 self.mediabox.bottom.as_numeric(),
-                self.mediabox.getUpperLeft_x().as_numeric(),
-                self.mediabox.getUpperLeft_y().as_numeric(),
+                self.mediabox.left.as_numeric(),
+                self.mediabox.top.as_numeric(),
                 self.mediabox.right.as_numeric(),
                 self.mediabox.top.as_numeric(),
-                self.mediabox.getLowerRight_x().as_numeric(),
-                self.mediabox.getLowerRight_y().as_numeric(),
+                self.mediabox.right.as_numeric(),
+                self.mediabox.bottom.as_numeric(),
             ]
 
             ctm = tuple(float(x) for x in ctm)  # type: ignore[assignment]
@@ -732,10 +920,10 @@ class PageObject(DictionaryObject):
         self.add_transformation((sx, 0, 0, sy, 0, 0))
         self.mediabox = RectangleObject(
             (
-                float(self.mediabox.getLowerLeft_x()) * sx,
-                float(self.mediabox.getLowerLeft_y()) * sy,
-                float(self.mediabox.getUpperRight_x()) * sx,
-                float(self.mediabox.getUpperRight_y()) * sy,
+                float(self.mediabox.left) * sx,
+                float(self.mediabox.bottom) * sy,
+                float(self.mediabox.right) * sx,
+                float(self.mediabox.top) * sy,
             )
         )
         if PG.VP in self:
@@ -759,7 +947,7 @@ class PageObject(DictionaryObject):
             else:
                 self[NameObject(PG.VP)][NameObject("/BBox")] = scaled_bbox  # type: ignore
 
-    def scaleBy(self, factor: float) -> None:
+    def scale_by(self, factor: float) -> None:
         """
         Scale a page by the given factor by appling a transformation
         matrix to its content and updating the page size.
@@ -768,7 +956,19 @@ class PageObject(DictionaryObject):
         """
         self.scale(factor, factor)
 
-    def scaleTo(self, width: float, height: float) -> None:
+    def scaleBy(self, factor: float) -> None:
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`scale_by` instead.
+        """
+        warnings.warn(
+            DEPR_MSG.format("Page.scaleBy", "Page.scale_by"),
+            PendingDeprecationWarning,
+        )
+        self.scale(factor, factor)
+
+    def scale_to(self, width: float, height: float) -> None:
         """
         Scale a page to the specified dimentions by appling a
         transformation matrix to its content and updating the page size.
@@ -776,11 +976,23 @@ class PageObject(DictionaryObject):
         :param float width: The new width.
         :param float height: The new heigth.
         """
-        sx = width / float(self.mediabox.right - self.mediabox.left)
-        sy = height / float(self.mediabox.top - self.mediabox.bottom)
+        sx = width / float(self.mediabox.width)
+        sy = height / float(self.mediabox.height)
         self.scale(sx, sy)
 
-    def compressContentStreams(self) -> None:
+    def scaleTo(self, width: float, height: float) -> None:
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`scale_to` instead.
+        """
+        warnings.warn(
+            DEPR_MSG.format("Page.scaleTo", "Page.scale_to"),
+            PendingDeprecationWarning,
+        )
+        self.scale_to(width, height)
+
+    def compress_content_streams(self) -> None:
         """
         Compress the size of this page by joining all content streams and
         applying a FlateDecode filter.
@@ -788,13 +1000,27 @@ class PageObject(DictionaryObject):
         However, it is possible that this function will perform no action if
         content stream compression becomes "automatic" for some reason.
         """
-        content = self.getContents()
+        content = self.get_contents()
         if content is not None:
             if not isinstance(content, ContentStream):
                 content = ContentStream(content, self.pdf)
             self[NameObject(PG.CONTENTS)] = content.flateEncode()
 
-    def extractText(self, Tj_sep: str = "", TJ_sep: str = "") -> str:
+    def compressContentStreams(self) -> None:
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`compress_content_streams` instead.
+        """
+        warnings.warn(
+            DEPR_MSG.format(
+                "Page.compressContentStreams", "Page.compress_content_streams"
+            ),
+            PendingDeprecationWarning,
+        )
+        self.compress_content_streams()
+
+    def extract_text(self, Tj_sep: str = "", TJ_sep: str = "") -> str:
         """
         Locate all text drawing commands, in the order they are provided in the
         content stream, and extract the text.  This works well for some PDF
@@ -848,6 +1074,17 @@ class PageObject(DictionaryObject):
                 text += "\n"
         return text
 
+    def extractText(self, Tj_sep: str = "", TJ_sep: str = "") -> str:
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`extract_text` instead.
+        """
+        warnings.warn(
+            DEPR_MSG.format("Page.extractText", "Page.extract_text"),
+        )
+        return self.extract_text(Tj_sep=Tj_sep, TJ_sep=TJ_sep)
+
     mediabox = _create_rectangle_accessor(PG.MEDIABOX, ())
     """
     A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
@@ -859,6 +1096,7 @@ class PageObject(DictionaryObject):
     def mediaBox(self) -> RectangleObject:
         """
         .. deprecated:: 1.28.0
+
             Use :py:attr:`mediabox` instead.
         """
         warnings.warn(
@@ -871,6 +1109,7 @@ class PageObject(DictionaryObject):
     def mediaBox(self, value: RectangleObject) -> None:
         """
         .. deprecated:: 1.28.0
+
             Use :py:attr:`mediabox` instead.
         """
         warnings.warn(
@@ -892,6 +1131,7 @@ class PageObject(DictionaryObject):
     def cropBox(self) -> RectangleObject:
         """
         .. deprecated:: 1.28.0
+
             Use :py:attr:`cropbox` instead.
         """
         warnings.warn(
@@ -919,6 +1159,7 @@ class PageObject(DictionaryObject):
     def bleedBox(self) -> RectangleObject:
         """
         .. deprecated:: 1.28.0
+
             Use :py:attr:`bleedbox` instead.
         """
         warnings.warn(
@@ -945,6 +1186,7 @@ class PageObject(DictionaryObject):
     def trimBox(self) -> RectangleObject:
         """
         .. deprecated:: 1.28.0
+
             Use :py:attr:`trimbox` instead.
         """
         warnings.warn(
@@ -972,6 +1214,7 @@ class PageObject(DictionaryObject):
     def artBox(self) -> RectangleObject:
         """
         .. deprecated:: 1.28.0
+
             Use :py:attr:`artbox` instead.
         """
         warnings.warn(
@@ -987,3 +1230,36 @@ class PageObject(DictionaryObject):
             PendingDeprecationWarning,
         )
         self.artbox = value
+
+
+class _VirtualList:
+    def __init__(
+        self,
+        length_function: Callable[[], int],
+        get_function: Callable[[int], PageObject],
+    ) -> None:
+        self.length_function = length_function
+        self.get_function = get_function
+        self.current = -1
+
+    def __len__(self) -> int:
+        return self.length_function()
+
+    def __getitem__(self, index: int) -> PageObject:
+        if isinstance(index, slice):
+            indices = range(*index.indices(len(self)))
+            cls = type(self)
+            return cls(indices.__len__, lambda idx: self[indices[idx]])
+        if not isinstance(index, int):
+            raise TypeError("sequence indices must be integers")
+        len_self = len(self)
+        if index < 0:
+            # support negative indexes
+            index = len_self + index
+        if index < 0 or index >= len_self:
+            raise IndexError("sequence index out of range")
+        return self.get_function(index)
+
+    def __iter__(self) -> Iterator[PageObject]:
+        for i in range(len(self)):
+            yield self[i]
