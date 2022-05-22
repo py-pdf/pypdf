@@ -1,3 +1,15 @@
+Version 1.28.1, 2022-05-22
+--------------------------
+
+Bug Fixes (BUG):
+-  Incorrectly show deprecation warnings on internal usage (#887)
+
+Maintenance (MAINT):
+-  Add stacklevel=2 to deprecation warnings (#889)
+-  Remove duplicate warnings imports (#888)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.28.0...1.28.1
+
 Version 1.28.0, 2022-05-22
 --------------------------
 
