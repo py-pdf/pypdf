@@ -29,9 +29,9 @@ PyPDF2 gives you the option to be strict or not.
 
 PyPDF2 has three core objects and all of them have a `strict` parameter:
 
-* [`PdfFileReader`](https://pypdf2.readthedocs.io/en/latest/modules/PdfFileReader.html)
-* [`PdfFileWriter`](https://pypdf2.readthedocs.io/en/latest/modules/PdfFileWriter.html)
-* [`PdfFileMerger`](https://pypdf2.readthedocs.io/en/latest/modules/PdfFileMerger.html)
+* [`PdfReader`](https://pypdf2.readthedocs.io/en/latest/modules/PdfReader.html)
+* [`PdfWriter`](https://pypdf2.readthedocs.io/en/latest/modules/PdfWriter.html)
+* [`PdfMerger`](https://pypdf2.readthedocs.io/en/latest/modules/PdfMerger.html)
 
 Choosing `strict=True` means that PyPDF2 will raise an exception if a PDF does
 not follow the specification.
