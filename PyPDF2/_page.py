@@ -495,7 +495,7 @@ class PageObject(DictionaryObject):
                 PageObject._push_pop_gs(original_content, self.pdf)
             )
 
-        page2content = page2.getContents()
+        page2content = page2.get_contents()
         if page2content is not None:
             page2content = ContentStream(page2content, self.pdf)
             page2content.operations.insert(
