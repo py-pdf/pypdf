@@ -3,11 +3,11 @@
 You can extract text from a PDF like this:
 
 ```python
-from PyPDF2 import PdfFileReader
+from PyPDF2 import PdfReader
 
-reader = PdfFileReader("example.pdf")
+reader = PdfReader("example.pdf")
 page = reader.pages[0]
-print(page.extractText())
+print(page.extract_text())
 ```
 
 ## Why Text Extraction is hard

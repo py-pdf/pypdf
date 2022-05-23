@@ -33,16 +33,32 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 
 from codecs import getencoder
 from io import BufferedReader, BufferedWriter, BytesIO, FileIO
-from typing import Any, Dict, List, Optional, Union, overload
+from typing import Any, Dict, Optional, Tuple, Union, overload
+
+try:
+    # Python 3.10+: https://www.python.org/dev/peps/pep-0484/
+    from typing import TypeAlias  # type: ignore[attr-defined]
+except ImportError:
+    from typing_extensions import TypeAlias  # type: ignore[misc]
 
 from .errors import STREAM_TRUNCATED_PREMATURELY, PdfStreamError
+
+TransformationMatrixType: TypeAlias = Tuple[
+    Tuple[float, float, float], Tuple[float, float, float], Tuple[float, float, float]
+]
+CompressedTransformationMatrix: TypeAlias = Tuple[
+    float, float, float, float, float, float
+]
 
 bytes_type = type(bytes())  # Works the same in Python 2.X and 3.X
 StreamType = Union[BytesIO, BufferedReader, BufferedWriter, FileIO]
 StrByteType = Union[str, StreamType]
 
+DEPR_MSG_NO_REPLACEMENT = "{} is deprecated and will be removed in PyPDF2 2.0.0."
+DEPR_MSG = "{} is deprecated and will be removed in PyPDF2 2.0.0. Use {} instead."
 
-def readUntilWhitespace(stream: StreamType, maxchars: Optional[int] = None) -> bytes:
+
+def read_until_whitespace(stream: StreamType, maxchars: Optional[int] = None) -> bytes:
     """
     Reads non-whitespace characters and returns them.
     Stops upon encountering whitespace or when maxchars is reached.
@@ -58,7 +74,7 @@ def readUntilWhitespace(stream: StreamType, maxchars: Optional[int] = None) -> b
     return txt
 
 
-def readNonWhitespace(stream: StreamType) -> bytes:
+def read_non_whitespace(stream: StreamType) -> bytes:
     """
     Finds and reads the next non-whitespace character (ignores whitespace).
     """
@@ -68,7 +84,7 @@ def readNonWhitespace(stream: StreamType) -> bytes:
     return tok
 
 
-def skipOverWhitespace(stream: StreamType) -> bool:
+def skip_over_whitespace(stream: StreamType) -> bool:
     """
     Similar to readNonWhitespace, but returns a Boolean if more than
     one whitespace character was read.
@@ -81,7 +97,7 @@ def skipOverWhitespace(stream: StreamType) -> bool:
     return cnt > 1
 
 
-def skipOverComment(stream: StreamType) -> None:
+def skip_over_comment(stream: StreamType) -> None:
     tok = stream.read(1)
     stream.seek(-1, 1)
     if tok == b_("%"):
@@ -89,7 +105,7 @@ def skipOverComment(stream: StreamType) -> None:
             tok = stream.read(1)
 
 
-def readUntilRegex(stream: StreamType, regex: Any, ignore_eof: bool = False) -> bytes:
+def read_until_regex(stream: StreamType, regex: Any, ignore_eof: bool = False) -> bytes:
     """
     Reads until the regular expression pattern matched (ignore the match)
     :raises PdfStreamError: on premature end-of-file
@@ -114,31 +130,16 @@ def readUntilRegex(stream: StreamType, regex: Any, ignore_eof: bool = False) -> 
     return name
 
 
-def RC4_encrypt(key: Union[str, bytes], plaintext: bytes) -> bytes:
-    S = list(range(256))
-    j = 0
-    for i in range(256):
-        j = (j + S[i] + ord_(key[i % len(key)])) % 256
-        S[i], S[j] = S[j], S[i]
-    i, j = 0, 0
-    retval = []
-    for x in range(len(plaintext)):
-        i = (i + 1) % 256
-        j = (j + S[i]) % 256
-        S[i], S[j] = S[j], S[i]
-        t = S[(S[i] + S[j]) % 256]
-        retval.append(b_(chr(ord_(plaintext[x]) ^ t)))
-    return b_("").join(retval)
-
-
-def matrixMultiply(a: List[List[float]], b: List[List[float]]) -> List[List[float]]:
-    return [
-        [sum(float(i) * float(j) for i, j in zip(row, col)) for col in zip(*b)]
+def matrix_multiply(
+    a: TransformationMatrixType, b: TransformationMatrixType
+) -> TransformationMatrixType:
+    return tuple(  # type: ignore[return-value]
+        tuple(sum(float(i) * float(j) for i, j in zip(row, col)) for col in zip(*b))
         for row in a
-    ]
+    )
 
 
-def markLocation(stream: StreamType) -> None:
+def mark_location(stream: StreamType) -> None:
     """Creates text file showing current location in context."""
     # Mainly for debugging
     radius = 5000
@@ -218,14 +219,14 @@ def hexencode(b: bytes) -> bytes:
     return coded[0]
 
 
-def hexStr(num: int) -> str:
+def hex_str(num: int) -> str:
     return hex(num).replace("L", "")
 
 
 WHITESPACES = [b_(x) for x in [" ", "\n", "\r", "\t", "\x00"]]
 
 
-def paethPredictor(left: int, up: int, up_left: int) -> int:
+def paeth_predictor(left: int, up: int, up_left: int) -> int:
     p = left + up - up_left
     dist_left = abs(p - left)
     dist_up = abs(p - up)
