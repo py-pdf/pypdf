@@ -1085,7 +1085,7 @@ class PageObject(DictionaryObject):
                         else:
                             try:
                                 encoding[x] = adobe_glyphs[o]
-                            except:
+                            except Exception:
                                 encoding[x] = o
                             x += 1
             if "/ToUnicode" in pdf.getPage(0)["/Resources"]["/Font"][font_name]:

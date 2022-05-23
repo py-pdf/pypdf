@@ -1713,7 +1713,7 @@ def createStringObject(
         for x in string:
             try:
                 out += forceEncoding[x]
-            except:
+            except Exception:
                 out += x
         return x
     elif isinstance(forceEncoding,str):
@@ -2037,7 +2037,7 @@ def fill_from_encoding(enc:str)->list:
     for x in range(256):
         try:
             lst+=(bytes((x,)).decode(enc),)
-        except:
+        except Exception:
             lst+=(chr(x),)
     return lst
 _win_encoding = fill_from_encoding("cp1252")
