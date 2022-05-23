@@ -18,11 +18,13 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
     [(0, True), (-1, True), (1, True), ("1", False), (1.5, False)],
 )
 def test_isInt(value, expected):
-    assert PyPDF2._utils.isInt(value) == expected
+    with pytest.warns(UserWarning):
+        assert PyPDF2._utils.isInt(value) == expected
 
 
 def test_isBytes():
-    assert PyPDF2._utils.isBytes(b"")
+    with pytest.warns(UserWarning):
+        assert PyPDF2._utils.isBytes(b"")
 
 
 @pytest.mark.parametrize(
