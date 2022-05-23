@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1653305302364,
+  "lastUpdate": 1653305867240,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -2189,6 +2189,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0011029492997410102",
             "extra": "mean: 105.13056250000261 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9947c7b51f9e413458cc91eca2a1250829662fea",
+          "message": "BUG: PendingDeprecationWarning for getContents (#893)",
+          "timestamp": "2022-05-23T13:37:07+02:00",
+          "tree_id": "e8f2a13bff3d852bfc64a168bb13d52f0b3a9eed",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/9947c7b51f9e413458cc91eca2a1250829662fea"
+        },
+        "date": 1653305866099,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.6384252319257784,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0018992346807512022",
+            "extra": "mean: 1.5663541319999978 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 8.974341227663079,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0016946913288356541",
+            "extra": "mean: 111.42879177777824 msec\nrounds: 9"
           }
         ]
       }
