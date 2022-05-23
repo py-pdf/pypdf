@@ -177,7 +177,6 @@ def test_page_rotation_non90():
         page.rotate_clockwise(91)
     assert exc.value.args[0] == "Rotation angle must be a multiple of 90"
 
-    
 def test_page_merge_cropped():
     p = PdfReader(os.path.join(RESOURCE_ROOT, "issue-604.pdf"))
     a = deepcopy(p.page[1])  # crossed to ease test reading
@@ -187,7 +186,7 @@ def test_page_merge_cropped():
     w.add_page(a)
     w.add_page(b)
     c = deepcopy(b)
-    c.mergePage(a)
+    c.merge_page(a)
     w.add_page(c)
     o = io.BytesIO()
     w.write(o)
@@ -201,4 +200,3 @@ def test_page_scale():
 
     assert op.scale(sx=2).ctm == (2, 0, 0, 2, 0, 0)
     assert op.scale(sy=3).ctm == (3, 0, 0, 3, 0, 0)
-
