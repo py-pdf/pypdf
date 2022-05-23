@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1653249243914,
+  "lastUpdate": 1653305302364,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -2151,6 +2151,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0009916151322350054",
             "extra": "mean: 104.62165559999903 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "matt.peveler@gmail.com",
+            "name": "Matthew Peveler",
+            "username": "MasterOdin"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "68c9202a456c0193ab2e4fc8a66b2c3ec70b91e4",
+          "message": "BUG: Fix deprecation warning on using PdfMerger (#891)\n\nFixes a deprecation warning being raised when trying to use the PdfMerger class. This regression of #887 is caused by #889 which reversed the changes done to the PyPDF2/merger.py module so that it once again used the deprecated user-facing isString method as opposed to the internal _isString method.\r\n\r\nAdditionally, this PR fixes the deprecation warning raised by referencing reader.namedDestinations as opposed to reader.named_destinations.\r\n\r\nCloses #890",
+          "timestamp": "2022-05-23T13:27:38+02:00",
+          "tree_id": "550d2e550045da3b18574419d3f540f0221b0de4",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/68c9202a456c0193ab2e4fc8a66b2c3ec70b91e4"
+        },
+        "date": 1653305301488,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.6630140442381052,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005091146774385556",
+            "extra": "mean: 1.5082636766000008 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 9.511981827358483,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0011029492997410102",
+            "extra": "mean: 105.13056250000261 msec\nrounds: 10"
           }
         ]
       }
