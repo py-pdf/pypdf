@@ -1070,9 +1070,9 @@ class PageObject(DictionaryObject):
             processRg = False
             processChar = False
             encoding = []
-            fontType = pdf.getPage(0)["/Resources"]["/Font"][font_name]["/Subtype"]
-            if "/Encoding" in pdf.getPage(0)["/Resources"]["/Font"][font_name]:
-                enc= pdf.getPage(0)["/Resources"]["/Font"][font_name]["/Encoding"].getObject()
+            fontType = pdf.pages[0]["/Resources"]["/Font"][font_name]["/Subtype"]
+            if "/Encoding" in pdf.pages[0]["/Resources"]["/Font"][font_name]:
+                enc= pdf.pages[0]["/Resources"]["/Font"][font_name]["/Encoding"].get_object()
                 if '/BaseEncoding' in enc:
                     encoding = list(charset_encoding[enc['/BaseEncoding']])
                 else:
@@ -1088,8 +1088,8 @@ class PageObject(DictionaryObject):
                             except Exception:
                                 encoding[x] = o
                             x += 1
-            if "/ToUnicode" in pdf.getPage(0)["/Resources"]["/Font"][font_name]:
-                cm = pdf.getPage(0)["/Resources"]["/Font"][font_name]["/ToUnicode"].getData().decode('utf-8')
+            if "/ToUnicode" in pdf.pages[0]["/Resources"]["/Font"][font_name]:
+                cm = pdf.pages[0]["/Resources"]["/Font"][font_name]["/ToUnicode"].getData().decode('utf-8')
                 for l in cm.strip().replace('<', '').replace('>', '').split('\n'):
                     #print(l)
                     if 'beginbfrange' in l:
