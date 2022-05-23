@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1653305867240,
+  "lastUpdate": 1653306254238,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -2227,6 +2227,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0016946913288356541",
             "extra": "mean: 111.42879177777824 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "c68b98d91fe6651215b81a1b1b20fc1a30b9d7e8",
+          "message": "REL: 1.28.2\n\nBug Fixes (BUG):\n-  PendingDeprecationWarning for getContents (#893)\n-  PendingDeprecationWarning on using PdfMerger (#891)",
+          "timestamp": "2022-05-23T13:43:15+02:00",
+          "tree_id": "6df9d2cded070e2146f228642d5b63f6dfd33b71",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/c68b98d91fe6651215b81a1b1b20fc1a30b9d7e8"
+        },
+        "date": 1653306253091,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "Tests/bench.py::test_page_operations",
+            "value": 0.6522020864438595,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004528216613580067",
+            "extra": "mean: 1.5332670973999996 sec\nrounds: 5"
+          },
+          {
+            "name": "Tests/bench.py::test_merge",
+            "value": 9.312115022439992,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009052046268716951",
+            "extra": "mean: 107.38698970000229 msec\nrounds: 10"
           }
         ]
       }
