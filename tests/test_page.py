@@ -179,8 +179,8 @@ def test_page_rotation_non90():
 
 def test_page_merge_cropped():
     p = PdfReader(os.path.join(RESOURCE_ROOT, "issue-604.pdf"))
-    a = deepcopy(p.page[1])  # crossed to ease test reading
-    b = deepcopy(p.page[2])
+    a = deepcopy(p.pages[1])  # crossed to ease test reading
+    b = deepcopy(p.pages[2])
     a.cropbox = RectangleObject([100, 100, 300, 200])
     w = PdfWriter()
     w.add_page(a)
