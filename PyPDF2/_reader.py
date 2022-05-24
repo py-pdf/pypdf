@@ -710,7 +710,7 @@ class PdfReader:
             # check for sub-outlines
             if "/First" in node:
                 sub_outlines: List[Any] = []
-                self.getOutlines(cast(DictionaryObject, node["/First"]), sub_outlines)
+                self.get_outlines(cast(DictionaryObject, node["/First"]), sub_outlines)
                 if sub_outlines:
                     outlines.append(sub_outlines)
 
