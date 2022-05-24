@@ -760,8 +760,8 @@ class PdfWriter:
         # copying in a new copy of the page object.
         for obj_index in range(len(self._objects)):
             obj = self._objects[obj_index]
-            if isinstance(obj, PageObject) and obj.indirectRef is not None:
-                data = obj.indirectRef
+            if isinstance(obj, PageObject) and obj.indirect_ref is not None:
+                data = obj.indirect_ref
                 if data.pdf not in external_reference_map:
                     external_reference_map[data.pdf] = {}
                 if data.generation not in external_reference_map[data.pdf]:
@@ -1207,12 +1207,6 @@ class PdfWriter:
 
         nd = self.get_named_dest_root()
         nd.extend([dest["/Title"], dest_ref])  # type: ignore
-
-    def add_named_destination_object(self, dest):
-        dest_ref = self._add_object(dest)
-
-        nd = self.get_named_dest_root()
-        nd.extend([dest["/Title"], dest_ref])
         return dest_ref
 
     def addNamedDestinationObject(self, dest: PdfObject) -> IndirectObject:
@@ -1276,11 +1270,11 @@ class PdfWriter:
         )
         return self.remove_links()
 
-    def remove_images(self, ignoreByteStringObject: bool = False) -> None:
+    def remove_images(self, ignore_byte_string_object: bool = False) -> None:
         """
         Remove images from this output.
 
-        :param bool ignoreByteStringObject: optional parameter
+        :param bool ignore_byte_string_object: optional parameter
             to ignore ByteString Objects.
         """
         pg_dict = cast(DictionaryObject, self.get_object(self._pages))
@@ -1367,7 +1361,7 @@ class PdfWriter:
         )
         return self.remove_images(ignoreByteStringObject)
 
-    def remove_text(self, ignoreByteStringObject: bool = False) -> None:
+    def remove_text(self, ignore_byte_string_object: bool = False) -> None:
         """
         Remove text from this output.
 

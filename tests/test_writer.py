@@ -73,13 +73,13 @@ def test_writer_operations():
 
 
 @pytest.mark.parametrize(
-    ("input_path", "ignoreByteStringObject"),
+    ("input_path", "ignore_byte_string_object"),
     [
         ("side-by-side-subfig.pdf", False),
         ("reportlab-inline-image.pdf", True),
     ],
 )
-def test_remove_images(input_path, ignoreByteStringObject):
+def test_remove_images(input_path, ignore_byte_string_object):
     pdf_path = os.path.join(RESOURCE_ROOT, input_path)
 
     reader = PdfReader(pdf_path)
@@ -87,7 +87,7 @@ def test_remove_images(input_path, ignoreByteStringObject):
 
     page = reader.pages[0]
     writer.insert_page(page, 0)
-    writer.remove_images(ignoreByteStringObject=ignoreByteStringObject)
+    writer.remove_images(ignore_byte_string_object=ignore_byte_string_object)
 
     # finally, write "output" to PyPDF2-output.pdf
     tmp_filename = "dont_commit_writer_removed_image.pdf"
@@ -105,7 +105,7 @@ def test_remove_images(input_path, ignoreByteStringObject):
 
 
 @pytest.mark.parametrize(
-    ("input_path", "ignoreByteStringObject"),
+    ("input_path", "ignore_byte_string_object"),
     [
         ("side-by-side-subfig.pdf", False),
         ("side-by-side-subfig.pdf", True),
@@ -113,7 +113,7 @@ def test_remove_images(input_path, ignoreByteStringObject):
         ("reportlab-inline-image.pdf", True),
     ],
 )
-def test_remove_text(input_path, ignoreByteStringObject):
+def test_remove_text(input_path, ignore_byte_string_object):
     pdf_path = os.path.join(RESOURCE_ROOT, input_path)
 
     reader = PdfReader(pdf_path)
@@ -121,7 +121,7 @@ def test_remove_text(input_path, ignoreByteStringObject):
 
     page = reader.pages[0]
     writer.insert_page(page, 0)
-    writer.remove_text(ignoreByteStringObject=ignoreByteStringObject)
+    writer.remove_text(ignore_byte_string_object=ignore_byte_string_object)
 
     # finally, write "output" to PyPDF2-output.pdf
     tmp_filename = "dont_commit_writer_removed_text.pdf"
@@ -141,7 +141,7 @@ def test_write_metadata():
     for page in reader.pages:
         writer.add_page(page)
 
-    metadata = reader.getDocumentInfo()
+    metadata = reader.metadata
     writer.add_metadata(metadata)
 
     writer.add_metadata({"/Title": "The Crazy Ones"})
@@ -153,7 +153,7 @@ def test_write_metadata():
 
     # Check if the title was set
     reader = PdfReader(tmp_filename)
-    metadata = reader.getDocumentInfo()
+    metadata = reader.metadata
     assert metadata.get("/Title") == "The Crazy Ones"
 
     # Cleanup
@@ -342,7 +342,7 @@ def test_io_streams():
 
     # Read from bytes stream
     reader = PdfReader(bytes_stream)
-    assert reader.numPages == 4
+    assert len(reader.pages) == 4
 
     # Write to bytes stream
     writer = PdfWriter()

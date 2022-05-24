@@ -1,12 +1,13 @@
 import datetime
 import decimal
 import re
+import warnings
 from typing import Any, Callable, Dict, Optional, TypeVar, Union
 from xml.dom.minidom import Document
 from xml.dom.minidom import Element as XmlElement
 from xml.dom.minidom import parseString
 
-from ._utils import StreamType
+from ._utils import DEPR_MSG, StreamType
 from .generic import ContentStream, PdfObject
 
 RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
@@ -201,7 +202,20 @@ class XmpInformation(PdfObject):
     ) -> None:
         self.stream.write_to_stream(stream, encryption_key)
 
-    def getElement(self, aboutUri: str, namespace: str, name: str) -> Any:
+    def writeToStream(self, stream, encryption_key):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`write_to_stream` instead.
+        """
+        warnings.warn(
+            "writeToStream() will be deprecated in PyPDF2 2.0.0. "
+            "Use write_to_stream() instead.",
+            PendingDeprecationWarning,
+        )
+        self.write_to_stream(stream, encryption_key)
+
+    def get_element(self, about_uri, namespace, name):
         for desc in self.rdfRoot.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):
             if desc.getAttributeNS(RDF_NAMESPACE, "about") == about_uri:
                 attr = desc.getAttributeNodeNS(namespace, name)
@@ -209,7 +223,18 @@ class XmpInformation(PdfObject):
                     yield attr
                 yield from desc.getElementsByTagNameNS(namespace, name)
 
-    def getNodesInNamespace(self, aboutUri: str, namespace: str) -> Any:
+    def getElement(self, aboutUri: str, namespace: str, name: str) -> Any:
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`get_element` instead.
+        """
+        warnings.warn(
+            DEPR_MSG.format("getElement", "get_element"),
+        )
+        return self.get_element(aboutUri, namespace, name)
+
+    def get_nodes_in_namespace(self, about_uri: str, namespace: str) -> Any:
         for desc in self.rdfRoot.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):
             if desc.getAttributeNS(RDF_NAMESPACE, "about") == about_uri:
                 for i in range(desc.attributes.length):
@@ -220,7 +245,18 @@ class XmpInformation(PdfObject):
                     if child.namespaceURI == namespace:
                         yield child
 
-    def _getText(self, element: XmlElement) -> str:
+    def getNodesInNamespace(self, aboutUri, namespace):
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`get_nodes_in_namespace` instead.
+        """
+        warnings.warn(
+            DEPR_MSG.format("getNodesInNamespace", "get_nodes_in_namespace"),
+        )
+        return self.get_nodes_in_namespace(aboutUri, namespace)
+
+    def _get_text(self, element: XmlElement) -> str:
         text = ""
         for child in element.childNodes:
             if child.nodeType == child.TEXT_NODE:

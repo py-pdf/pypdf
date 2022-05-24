@@ -339,19 +339,6 @@ class PdfMerger:
         )
         self.set_page_layout(layout)
 
-    def set_page_layout(self, layout: LayoutType) -> None:
-        """
-        .. deprecated:: 1.28.0
-
-            Use :meth:`set_page_layout` instead.
-        """
-        warnings.warn(
-            DEPR_MSG.format("setPageLayout", "set_page_layout"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
-        self.set_page_layout(layout)
-
     def set_page_layout(self, layout):
         """
         Set the page layout
@@ -381,17 +368,6 @@ class PdfMerger:
         self.output._set_page_layout(layout)
 
     def setPageMode(self, mode: PagemodeType) -> None:
-        """
-        .. deprecated:: 1.28.0
-
-            Use :meth:`set_page_mode` instead.
-        """
-        warnings.warn(
-            DEPR_MSG.format("setPageMode", "set_page_mode"), PendingDeprecationWarning
-        )
-        self.set_page_mode(mode)
-
-    def set_page_mode(self, mode: PagemodeType) -> None:
         """
         .. deprecated:: 1.28.0
 
@@ -682,30 +658,6 @@ class PdfMerger:
         fit: str = "/Fit",
         *args: ZoomArgType,
     ) -> IndirectObject:
-        """
-        .. deprecated:: 1.28.0
-            Use :meth:`add_bookmark` instead.
-        """
-        warnings.warn(
-            "addBookmark is deprecated. Use add_bookmark instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.add_bookmark(
-            title, pagenum, parent, color, bold, italic, fit, *args
-        )
-
-    def add_bookmark(
-        self,
-        title,
-        pagenum,
-        parent=None,
-        color=None,
-        bold=False,
-        italic=False,
-        fit="/Fit",
-        *args,
-    ):
         """
         Add a bookmark to this PDF file.
 

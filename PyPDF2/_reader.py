@@ -237,9 +237,9 @@ class PdfReader:
         self.flattened_pages: Optional[List[PageObject]] = None
         self.resolved_objects: Dict[Tuple[Any, Any], Optional[PdfObject]] = {}
         self.xref_index = 0
-        self._pageId2Num: Optional[
+        self._page_id2num: Optional[
             Dict[Any, Any]
-        ] = None  # map page IndirectRef number to Page Number
+        ] = None  # map page indirect_ref number to Page Number
         if hasattr(stream, "mode") and "b" not in stream.mode:  # type: ignore
             warnings.warn(
                 "PdfReader stream/file object is not in binary mode. "
@@ -736,23 +736,23 @@ class PdfReader:
         return self.get_outlines(node, outlines)
 
     def _get_page_number_by_indirect(
-        self, indirectRef: Union[None, int, NullObject, IndirectObject]
+        self, indirect_ref: Union[None, int, NullObject, IndirectObject]
     ) -> int:
-        """Generate _pageId2Num"""
+        """Generate _page_id2num"""
         if self._page_id2num is None:
             id2num = {}
             for i, x in enumerate(self.pages):
-                id2num[x.indirectRef.idnum] = i  # type: ignore
-            self._pageId2Num = id2num
+                id2num[x.indirect_ref.idnum] = i  # type: ignore
+            self._page_id2num = id2num
 
-        if indirectRef is None or isinstance(indirectRef, NullObject):
+        if indirect_ref is None or isinstance(indirect_ref, NullObject):
             return -1
         if isinstance(indirect_ref, int):
             idnum = indirect_ref
         else:
-            idnum = indirectRef.idnum
-        assert self._pageId2Num is not None, "hint for mypy"
-        ret = self._pageId2Num.get(idnum, -1)
+            idnum = indirect_ref.idnum
+        assert self._page_id2num is not None, "hint for mypy"
+        ret = self._page_id2num.get(idnum, -1)
         return ret
 
     def get_page_number(self, page: PageObject) -> int:
@@ -764,7 +764,7 @@ class PdfReader:
         :return: the page number or -1 if page not found
         :rtype: int
         """
-        return self._get_page_number_by_indirect(page.indirectRef)
+        return self._get_page_number_by_indirect(page.indirect_ref)
 
     def getPageNumber(self, page: PageObject) -> int:
         """
@@ -819,7 +819,7 @@ class PdfReader:
                 raise
             else:
                 # create a link to first Page
-                tmp = self.pages[0].indirectRef
+                tmp = self.pages[0].indirect_ref
                 indirect_ref = NullObject() if tmp is None else tmp
                 return Destination(
                     title, indirect_ref, TextStringObject("/Fit")  # type: ignore
@@ -888,20 +888,6 @@ class PdfReader:
         return None
 
     def getPageLayout(self) -> Optional[str]:
-        """
-        .. deprecated:: 1.28.0
-
-            Use :py:attr:`page_layout` instead.
-        """
-        warnings.warn(
-            "getPageLayout will be removed in PyPDF2 2.0.0. "
-            "Use the attribute 'page_layout' instead.",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
-        return self.page_layout
-
-    def getPageLayout(self):
         """
         .. deprecated:: 1.28.0
 

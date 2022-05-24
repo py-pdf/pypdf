@@ -204,7 +204,7 @@ class LZWDecode:
     http://www.java2s.com/Open-Source/Java-Document/PDF/PDF-Renderer/com/sun/pdfview/decode/LZWDecode.java.htm
     """
 
-    class decoder:
+    class Decoder:
         def __init__(self, data: bytes) -> None:
             self.STOP = 257
             self.CLEARDICT = 256

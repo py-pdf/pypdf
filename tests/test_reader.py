@@ -24,7 +24,7 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
 def test_get_num_pages(src, num_pages):
     src = os.path.join(RESOURCE_ROOT, src)
     reader = PdfReader(src)
-    assert reader.numPages == num_pages
+    assert len(reader.pages) == num_pages
 
 
 @pytest.mark.parametrize(
@@ -109,7 +109,7 @@ def test_get_attachments(src):
     reader = PdfReader(src)
 
     attachments = {}
-    for i in range(reader.numPages):
+    for i in range(len(reader.pages)):
         page = reader.pages[i]
         if PG.ANNOTS in page:
             for annotation in page[PG.ANNOTS]:
@@ -474,12 +474,12 @@ def test_read_unknown_zero_pages():
     pdf_stream = io.BytesIO(pdf_data)
     reader = PdfReader(pdf_stream, strict=True)
     with pytest.raises(PdfReadError) as exc:
-        reader.numPages
+        len(reader.pages)
 
     assert exc.value.args[0] == "Could not find object."
     reader = PdfReader(pdf_stream, strict=False)
     with pytest.raises(AttributeError) as exc:
-        reader.numPages
+        len(reader.pages)
     assert exc.value.args[0] == "'NoneType' object has no attribute 'get_object'"
 
 
@@ -487,7 +487,7 @@ def test_read_encrypted_without_decryption():
     src = os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf")
     reader = PdfReader(src)
     with pytest.raises(PdfReadError) as exc:
-        reader.numPages
+        len(reader.pages)
     assert exc.value.args[0] == "File has not been decrypted"
 
 

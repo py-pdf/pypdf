@@ -16,7 +16,7 @@ def test_basic_features():
     reader = PdfReader(pdf_path)
     writer = PdfWriter()
 
-    assert reader.numPages == 1
+    assert len(reader.pages) == 1
 
     # add page 1 from input1 to output document, unchanged
     writer.add_page(reader.pages[0])
@@ -37,9 +37,9 @@ def test_basic_features():
 
     # add page 5 from input1, but crop it to half size:
     page5 = reader.pages[0]
-    page5.mediaBox.upperRight = (
-        page5.mediaBox.right / 2,
-        page5.mediaBox.top / 2,
+    page5.mediabox.upperRight = (
+        page5.mediabox.right / 2,
+        page5.mediabox.top / 2,
     )
     writer.add_page(page5)
 

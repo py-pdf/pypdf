@@ -231,20 +231,20 @@ class PageObject(DictionaryObject):
     :meth:`createBlankPage()<PageObject.createBlankPage>` static method.
 
     :param pdf: PDF file the page belongs to.
-    :param indirectRef: Stores the original indirect reference to
+    :param indirect_ref: Stores the original indirect reference to
         this object in its source PDF
     """
 
     def __init__(
         self,
         pdf: Optional[Any] = None,  # PdfReader
-        indirectRef: Optional[IndirectObject] = None,
+        indirect_ref: Optional[IndirectObject] = None,
     ) -> None:
         from ._reader import PdfReader
 
         DictionaryObject.__init__(self)
         self.pdf: Optional[PdfReader] = pdf
-        self.indirectRef = indirectRef
+        self.indirect_ref = indirect_ref
 
     @staticmethod
     def create_blank_page(

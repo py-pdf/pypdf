@@ -73,9 +73,9 @@ def test_decrypt():
         reader = PdfReader(inputfile)
         assert reader.is_encrypted == True
         reader.decrypt("openpassword")
-        assert reader.numPages == 1
+        assert len(reader.pages) == 1
         assert reader.is_encrypted == True
-        metadict = reader.getDocumentInfo()
+        metadict = reader.metadata
         assert dict(metadict) == {
             "/CreationDate": "D:20220403203552+02'00'",
             "/Creator": "Writer",
