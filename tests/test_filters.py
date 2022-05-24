@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import string
 from itertools import product as cartesian_product
 
@@ -36,7 +35,7 @@ def test_FlateDecode(predictor, s):
     codec = FlateDecode()
     s = s.encode()
     encoded = codec.encode(s)
-    assert codec.decode(encoded, {"/Predictor": predictor}) == s
+    assert codec.decode(encoded, DictionaryObject({"/Predictor": predictor})) == s
 
 
 def test_FlateDecode_unsupported_predictor():
@@ -51,7 +50,7 @@ def test_FlateDecode_unsupported_predictor():
     for predictor, s in cartesian_product(predictors, filter_inputs):
         s = s.encode()
         with pytest.raises(PdfReadError):
-            codec.decode(codec.encode(s), {"/Predictor": predictor})
+            codec.decode(codec.encode(s), DictionaryObject({"/Predictor": predictor}))
 
 
 @pytest.mark.parametrize(
@@ -89,7 +88,6 @@ def test_FlateDecode_unsupported_predictor():
         "whitespace",
     ],
 )
-@pytest.mark.no_py27()
 def test_ASCIIHexDecode(input, expected):
     """
     Feeds a bunch of values to ASCIIHexDecode.decode() and ensures the
@@ -128,7 +126,6 @@ def test_ASCII85Decode_with_overflow():
         assert exc.value.args[0] == ""
 
 
-@pytest.mark.no_py27()
 def test_ASCII85Decode_five_zero_bytes():
     """
     From ISO 32000 (2008) §7.4.3:

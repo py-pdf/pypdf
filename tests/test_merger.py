@@ -6,7 +6,7 @@ from PyPDF2.generic import Destination
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
-RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
+RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
 
 sys.path.append(PROJECT_ROOT)
 
@@ -31,7 +31,7 @@ def test_merge():
     file_merger.append(pdfr)
 
     # PdfReader object:
-    file_merger.append(PyPDF2.PdfReader(pdf_path, "rb"), bookmark=True)
+    file_merger.append(PyPDF2.PdfReader(pdf_path), bookmark="foo")
 
     # File handle
     with open(pdf_path, "rb") as fh:
@@ -40,7 +40,7 @@ def test_merge():
     bookmark = file_merger.add_bookmark("A bookmark", 0)
     file_merger.add_bookmark("deeper", 0, parent=bookmark)
     file_merger.add_metadata({"author": "Martin Thoma"})
-    file_merger.add_named_destionation("title", 0)
+    file_merger.add_named_destination("title", 0)
     file_merger.set_page_layout("/SinglePage")
     file_merger.set_page_mode("/UseThumbs")
 
@@ -50,7 +50,7 @@ def test_merge():
 
     # Check if bookmarks are correct
     pdfr = PyPDF2.PdfReader(tmp_path)
-    assert [el.title for el in pdfr.get_outlines() if isinstance(el, Destination)] == [
+    assert [el.title for el in pdfr.getOutlines() if isinstance(el, Destination)] == [
         "A bookmark",
         "Foo",
         "Bar",
@@ -61,7 +61,7 @@ def test_merge():
         "Foo",
         "Bar",
         "Baz",
-        "True",
+        "foo",
     ]
 
     # Clean up

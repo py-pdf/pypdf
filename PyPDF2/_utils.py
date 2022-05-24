@@ -26,84 +26,39 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 """
-Utility functions for the internal use of PyPDF2.
-
-Functions in this module might change their signature or get removed at
-any time. They are NOT stable API.
+Utility functions for PDF library.
 """
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
-
-import sys
-import warnings
-
-# See https://github.com/py-pdf/PyPDF2/issues/779
-from PyPDF2.errors import (  # noqa
-    STREAM_TRUNCATED_PREMATURELY,
-    PageSizeNotDefinedError,
-    PdfReadError,
-    PdfReadWarning,
-    PdfStreamError,
-    PyPdfError,
-)
+from codecs import getencoder
+from io import BufferedReader, BufferedWriter, BytesIO, FileIO
+from typing import Any, Dict, Optional, Tuple, Union, overload
 
 try:
-    import builtins
-    from typing import Dict
-except ImportError:  # Py2.7
-    import __builtin__ as builtins  # type: ignore
+    # Python 3.10+: https://www.python.org/dev/peps/pep-0484/
+    from typing import TypeAlias  # type: ignore[attr-defined]
+except ImportError:
+    from typing_extensions import TypeAlias  # type: ignore[misc]
 
+from .errors import STREAM_TRUNCATED_PREMATURELY, PdfStreamError
 
-xrange_fn = getattr(builtins, "xrange", range)
-_basestring = getattr(builtins, "basestring", str)
+TransformationMatrixType: TypeAlias = Tuple[
+    Tuple[float, float, float], Tuple[float, float, float], Tuple[float, float, float]
+]
+CompressedTransformationMatrix: TypeAlias = Tuple[
+    float, float, float, float, float, float
+]
 
 bytes_type = type(bytes())  # Works the same in Python 2.X and 3.X
-string_type = getattr(builtins, "unicode", str)
-int_types = (int, long) if sys.version_info[0] < 3 else (int,)  # type: ignore  # noqa
+StreamType = Union[BytesIO, BufferedReader, BufferedWriter, FileIO]
+StrByteType = Union[str, StreamType]
 
 DEPR_MSG_NO_REPLACEMENT = "{} is deprecated and will be removed in PyPDF2 2.0.0."
 DEPR_MSG = "{} is deprecated and will be removed in PyPDF2 2.0.0. Use {} instead."
 
 
-def _isString(s):
-    return isinstance(s, _basestring)
-
-
-# Make basic type tests more consistent
-def isString(s):
-    """Test if arg is a string. Compatible with Python 2 and 3."""
-    warnings.warn(DEPR_MSG_NO_REPLACEMENT.format("isString"))
-    return _isString(s)
-
-
-def _isInt(n):
-    return isinstance(n, int_types)
-
-
-def isInt(n):
-    """Test if arg is an int. Compatible with Python 2 and 3."""
-    warnings.warn(DEPR_MSG_NO_REPLACEMENT.format("isInt"))
-    return _isInt(n)
-
-
-def _isBytes(b):
-    return isinstance(b, bytes_type)
-
-
-def isBytes(b):
-    """Test if arg is a bytes instance. Compatible with Python 2 and 3."""
-    warnings.warn(DEPR_MSG_NO_REPLACEMENT.format("isBytes"))
-    return _isBytes(b)
-
-
-def formatWarning(message, category, filename, lineno, line=None):
-    """custom implementation of warnings.formatwarning"""
-    file = filename.replace("/", "\\").rsplit("\\", 1)[-1]  # find the file name
-    return "%s: %s [%s:%s]\n" % (category.__name__, message, file, lineno)
-
-
-def readUntilWhitespace(stream, maxchars=None):
+def read_until_whitespace(stream: StreamType, maxchars: Optional[int] = None) -> bytes:
     """
     Reads non-whitespace characters and returns them.
     Stops upon encountering whitespace or when maxchars is reached.
@@ -119,7 +74,7 @@ def readUntilWhitespace(stream, maxchars=None):
     return txt
 
 
-def readNonWhitespace(stream):
+def read_non_whitespace(stream: StreamType) -> bytes:
     """
     Finds and reads the next non-whitespace character (ignores whitespace).
     """
@@ -129,7 +84,7 @@ def readNonWhitespace(stream):
     return tok
 
 
-def skipOverWhitespace(stream):
+def skip_over_whitespace(stream: StreamType) -> bool:
     """
     Similar to readNonWhitespace, but returns a Boolean if more than
     one whitespace character was read.
@@ -142,7 +97,7 @@ def skipOverWhitespace(stream):
     return cnt > 1
 
 
-def skipOverComment(stream):
+def skip_over_comment(stream: StreamType) -> None:
     tok = stream.read(1)
     stream.seek(-1, 1)
     if tok == b_("%"):
@@ -150,11 +105,12 @@ def skipOverComment(stream):
             tok = stream.read(1)
 
 
-def readUntilRegex(stream, regex, ignore_eof=False):
+def read_until_regex(stream: StreamType, regex: Any, ignore_eof: bool = False) -> bytes:
     """
     Reads until the regular expression pattern matched (ignore the match)
     :raises PdfStreamError: on premature end-of-file
     :param bool ignore_eof: If true, ignore end-of-line and return immediately
+    :param regex: re.Pattern
     """
     name = b_("")
     while True:
@@ -174,56 +130,16 @@ def readUntilRegex(stream, regex, ignore_eof=False):
     return name
 
 
-class _VirtualList(object):
-    def __init__(self, lengthFunction, getFunction):
-        self.lengthFunction = lengthFunction
-        self.getFunction = getFunction
-
-    def __len__(self):
-        return self.lengthFunction()
-
-    def __getitem__(self, index):
-        if isinstance(index, slice):
-            indices = xrange_fn(*index.indices(len(self)))
-            cls = type(self)
-            return cls(indices.__len__, lambda idx: self[indices[idx]])
-        if not _isInt(index):
-            raise TypeError("sequence indices must be integers")
-        len_self = len(self)
-        if index < 0:
-            # support negative indexes
-            index = len_self + index
-        if index < 0 or index >= len_self:
-            raise IndexError("sequence index out of range")
-        return self.getFunction(index)
-
-
-class ConvertFunctionsToVirtualList(_VirtualList):
-    def __init__(self, lengthFunction, getFunction):
-        warnings.warn(
-            "ConvertFunctionsToVirtualList will be removed with PyPDF2 2.0.0",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
-        warnings.warn(DEPR_MSG_NO_REPLACEMENT.format("ConvertFunctionsToVirtualList"))
-        super().__init__(lengthFunction, getFunction)
-
-
-def matrix_multiply(a, b):
-    return [
-        [sum([float(i) * float(j) for i, j in zip(row, col)]) for col in zip(*b)]
+def matrix_multiply(
+    a: TransformationMatrixType, b: TransformationMatrixType
+) -> TransformationMatrixType:
+    return tuple(  # type: ignore[return-value]
+        tuple(sum(float(i) * float(j) for i, j in zip(row, col)) for col in zip(*b))
         for row in a
-    ]
-
-
-def matrixMultiply(a, b):
-    warnings.warn(
-        DEPR_MSG.format("matrixMultiply", "matrix_multiply"), PendingDeprecationWarning
     )
-    return matrix_multiply(a, b)
 
 
-def markLocation(stream):
+def mark_location(stream: StreamType) -> None:
     """Creates text file showing current location in context."""
     # Mainly for debugging
     radius = 5000
@@ -235,93 +151,82 @@ def markLocation(stream):
     stream.seek(-radius, 1)
 
 
-if sys.version_info[0] < 3:
-    warnings.warn(
-        "Python 3.5 and older support will be dropped with PyPDF2 2.0.0",
-        PendingDeprecationWarning,
-    )
+B_CACHE: Dict[Union[str, bytes], bytes] = {}
 
-    def b_(s):
+
+def b_(s: Union[str, bytes]) -> bytes:
+    bc = B_CACHE
+    if s in bc:
+        return bc[s]
+    if isinstance(s, bytes):
         return s
-
-else:
-    B_CACHE = {}  # type: Dict[str, bytes]
-
-    def b_(s):
-        bc = B_CACHE
-        if s in bc:
-            return bc[s]
-        if type(s) == bytes:
-            return s
-        else:
-            try:
-                r = s.encode("latin-1")
-                if len(s) < 2:
-                    bc[s] = r
-                return r
-            except Exception:
-                r = s.encode("utf-8")
-                if len(s) < 2:
-                    bc[s] = r
-                return r
-
-
-def u_(s):
-    if sys.version_info[0] < 3:
-        return unicode(s, "unicode_escape")  # noqa
     else:
-        return s
+        try:
+            r = s.encode("latin-1")
+            if len(s) < 2:
+                bc[s] = r
+            return r
+        except Exception:
+            r = s.encode("utf-8")
+            if len(s) < 2:
+                bc[s] = r
+            return r
 
 
-def str_(b):
-    if sys.version_info[0] < 3:
+@overload
+def str_(b: str) -> str:
+    ...
+
+
+@overload
+def str_(b: bytes) -> str:
+    ...
+
+
+def str_(b: Union[str, bytes]) -> str:
+    if isinstance(b, bytes):
+        return b.decode("latin-1")
+    else:
         return b
-    else:
-        if type(b) == bytes:
-            return b.decode("latin-1")
-        else:
-            return b
 
 
-def ord_(b):
-    if sys.version_info[0] < 3 or type(b) == str:
+@overload
+def ord_(b: str) -> int:
+    ...
+
+
+@overload
+def ord_(b: bytes) -> bytes:
+    ...
+
+
+@overload
+def ord_(b: int) -> int:
+    ...
+
+
+def ord_(b: Union[int, str, bytes]) -> Union[int, bytes]:
+    if isinstance(b, str):
         return ord(b)
     else:
         return b
 
 
-def chr_(c):
-    if sys.version_info[0] < 3:
-        return c
-    else:
-        return chr(c)
+def hexencode(b: bytes) -> bytes:
+
+    coder = getencoder("hex_codec")
+    coded = coder(b)  # type: ignore
+    return coded[0]
 
 
-def barray(b):
-    if sys.version_info[0] < 3:
-        return b
-    else:
-        return bytearray(b)
-
-
-def hexencode(b):
-    if sys.version_info[0] < 3:
-        return b.encode("hex")
-    else:
-        import codecs
-
-        coder = codecs.getencoder("hex_codec")
-        return coder(b)[0]
-
-
-def hexStr(num):
+def hex_str(num: int) -> str:
     return hex(num).replace("L", "")
 
 
 WHITESPACES = [b_(x) for x in [" ", "\n", "\r", "\t", "\x00"]]
 
 
-def paeth_predictor(left, up, up_left):
+def paeth_predictor(left: int, up: int, up_left: int) -> int:
     p = left + up - up_left
     dist_left = abs(p - left)
     dist_up = abs(p - up)
@@ -333,10 +238,3 @@ def paeth_predictor(left, up, up_left):
         return up
     else:
         return up_left
-
-
-def paethPredictor(left, up, up_left):
-    warnings.warn(
-        DEPR_MSG.format("paethPredictor", "paeth_predictor"), PendingDeprecationWarning
-    )
-    return paeth_predictor(left, up, up_left)

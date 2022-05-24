@@ -1,7 +1,7 @@
 import io
 import os
 import time
-from sys import version_info
+from io import BytesIO
 
 import pytest
 
@@ -12,18 +12,9 @@ from PyPDF2.constants import Ressources as RES
 from PyPDF2.errors import PdfReadError
 from PyPDF2.filters import _xobj_to_image
 
-if version_info < (3, 0):
-    from cStringIO import StringIO
-
-    StreamIO = StringIO
-else:
-    from io import BytesIO
-
-    StreamIO = BytesIO
-
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
-RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
+RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
 
 
 @pytest.mark.parametrize(
@@ -33,7 +24,7 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
 def test_get_num_pages(src, num_pages):
     src = os.path.join(RESOURCE_ROOT, src)
     reader = PdfReader(src)
-    assert reader.numPages == num_pages
+    assert len(reader.pages) == num_pages
 
 
 @pytest.mark.parametrize(
@@ -118,8 +109,8 @@ def test_get_attachments(src):
     reader = PdfReader(src)
 
     attachments = {}
-    for i in range(reader.numPages):
-        page = reader._get_page(i)
+    for i in range(len(reader.pages)):
+        page = reader.pages[i]
         if PG.ANNOTS in page:
             for annotation in page[PG.ANNOTS]:
                 annotobj = annotation.get_object()
@@ -138,7 +129,7 @@ def test_get_attachments(src):
 )
 def test_get_outlines(src, outline_elements):
     reader = PdfReader(src)
-    outlines = reader.get_outlines()
+    outlines = reader.getOutlines()
     assert len(outlines) == outline_elements
 
 
@@ -253,7 +244,7 @@ def test_issue297():
         reader = PdfReader(path, strict=True)
     assert "Broken xref table" in exc.value.args[0]
     reader = PdfReader(path, strict=False)
-    reader._get_page(0)
+    reader.pages[0]
 
 
 def test_get_page_of_encrypted_file():
@@ -261,7 +252,7 @@ def test_get_page_of_encrypted_file():
     Check if we can read a page of an encrypted file.
 
     This is a regression test for issue 327:
-    IndexError for getPage() of decrypted file
+    IndexError for get_page() of decrypted file
     """
     path = os.path.join(RESOURCE_ROOT, "encrypted-file.pdf")
     reader = PdfReader(path)
@@ -269,7 +260,7 @@ def test_get_page_of_encrypted_file():
     # Password is correct:)
     reader.decrypt("test")
 
-    reader._get_page(0)
+    reader.pages[0]
 
 
 @pytest.mark.parametrize(
@@ -339,9 +330,7 @@ def test_get_page_number(src, page_nb):
 
 @pytest.mark.parametrize(
     ("src", "expected"),
-    [
-        ("form.pdf", None),
-    ],
+    [("form.pdf", None), ("AutoCad_Simple.pdf", "/SinglePage")],
 )
 def test_get_page_layout(src, expected):
     src = os.path.join(RESOURCE_ROOT, src)
@@ -359,7 +348,7 @@ def test_get_page_layout(src, expected):
 def test_get_page_mode(src, expected):
     src = os.path.join(RESOURCE_ROOT, src)
     reader = PdfReader(src)
-    assert reader.getPageMode() == expected
+    assert reader.page_mode == expected
 
 
 def test_read_empty():
@@ -376,7 +365,7 @@ def test_read_malformed_header():
 
 def test_read_malformed_body():
     with pytest.raises(PdfReadError) as exc:
-        PdfReader(io.BytesIO(b"%PDF-"))
+        PdfReader(io.BytesIO(b"%PDF-"), strict=True)
     assert exc.value.args[0] == "Could not read malformed PDF file"
 
 
@@ -485,12 +474,12 @@ def test_read_unknown_zero_pages():
     pdf_stream = io.BytesIO(pdf_data)
     reader = PdfReader(pdf_stream, strict=True)
     with pytest.raises(PdfReadError) as exc:
-        reader.numPages
+        len(reader.pages)
 
     assert exc.value.args[0] == "Could not find object."
     reader = PdfReader(pdf_stream, strict=False)
     with pytest.raises(AttributeError) as exc:
-        reader.numPages
+        len(reader.pages)
     assert exc.value.args[0] == "'NoneType' object has no attribute 'get_object'"
 
 
@@ -498,14 +487,14 @@ def test_read_encrypted_without_decryption():
     src = os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf")
     reader = PdfReader(src)
     with pytest.raises(PdfReadError) as exc:
-        reader.numPages
+        len(reader.pages)
     assert exc.value.args[0] == "File has not been decrypted"
 
 
-def test_get_destination_age_number():
+def test_get_destination_page_number():
     src = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
     reader = PdfReader(src)
-    outlines = reader.get_outlines()
+    outlines = reader.getOutlines()
     for outline in outlines:
         if not isinstance(outline, list):
             reader.get_destination_page_number(outline)
@@ -515,7 +504,7 @@ def test_do_not_get_stuck_on_large_files_without_start_xref():
     """Tests for the absence of a DoS bug, where a large file without an startxref mark
     would cause the library to hang for minutes to hours"""
     start_time = time.time()
-    broken_stream = StreamIO(b"\0" * 5 * 1000 * 1000)
+    broken_stream = BytesIO(b"\0" * 5 * 1000 * 1000)
     with pytest.raises(PdfReadError):
         PdfReader(broken_stream)
     parse_duration = time.time() - start_time
@@ -562,13 +551,13 @@ def test_issue604(strict):
         if strict:
             with pytest.raises(PdfReadError) as exc:
                 pdf = PdfReader(f, strict=strict)
-                bookmarks = pdf.get_outlines()
+                bookmarks = pdf.getOutlines()
             if "Unknown Destination" not in exc.value.args[0]:
                 raise Exception("Expected exception not raised")
             return  # bookmarks not correct
         else:
             pdf = PdfReader(f, strict=strict)
-            bookmarks = pdf.get_outlines()
+            bookmarks = pdf.getOutlines()
 
         def getDestPages(x):
             # print(x)
@@ -606,3 +595,11 @@ def test_decode_permissions():
     modify = base.copy()
     modify["modify"] = True
     assert reader.decode_permissions(8) == modify
+
+
+def test_VirtualList():
+    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    reader = PdfReader(pdf_path)
+
+    # Test if getting as slice throws an error
+    assert len(reader.pages[:]) == 1

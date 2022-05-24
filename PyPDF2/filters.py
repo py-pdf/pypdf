@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2006, Mathieu Fenniak
 # All rights reserved.
 #
@@ -32,29 +31,31 @@ __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import math
-import warnings
-from sys import version_info
-
-from PyPDF2._utils import DEPR_MSG, ord_, paeth_predictor
-from PyPDF2.constants import CcittFaxDecodeParameters as CCITT
-from PyPDF2.constants import ColorSpaces
-from PyPDF2.constants import FilterTypeAbbreviations as FTA
-from PyPDF2.constants import FilterTypes as FT
-from PyPDF2.constants import ImageAttributes as IA
-from PyPDF2.constants import LzwFilterParameters as LZW
-from PyPDF2.constants import StreamAttributes as SA
-from PyPDF2.errors import PdfReadError, PdfStreamError
-
-if version_info < (3, 0):
-    from cStringIO import StringIO
-else:
-    from io import StringIO
-
 import struct
 import zlib
+from io import BytesIO, StringIO
+from typing import Any, Dict, Optional, Tuple, Union
+
+from .generic import ArrayObject, DictionaryObject, NameObject
+
+try:
+    from typing import Literal  # type: ignore[attr-defined]
+except ImportError:
+    from typing_extensions import Literal  # type: ignore[misc]
+
+from ._utils import b_, ord_, paeth_predictor
+from .constants import CcittFaxDecodeParameters as CCITT
+from .constants import ColorSpaces
+from .constants import FilterTypeAbbreviations as FTA
+from .constants import FilterTypes as FT
+from .constants import GraphicsStateParameters as G
+from .constants import ImageAttributes as IA
+from .constants import LzwFilterParameters as LZW
+from .constants import StreamAttributes as SA
+from .errors import PdfReadError, PdfStreamError
 
 
-def decompress(data):
+def decompress(data: bytes) -> bytes:
     try:
         return zlib.decompress(data)
     except zlib.error:
@@ -68,26 +69,26 @@ def decompress(data):
         return result_str
 
 
-def compress(data):
+def compress(data: bytes) -> bytes:
     return zlib.compress(data)
 
 
-class FlateDecode(object):
+class FlateDecode:
     @staticmethod
-    def decode(data, decodeParms):
+    def decode(
+        data: bytes, decodeParms: Union[None, ArrayObject, DictionaryObject]
+    ) -> bytes:
         """
         :param data: flate-encoded data.
         :param decodeParms: a dictionary of values, understanding the
             "/Predictor":<int> key only
         :return: the flate-decoded data.
         """
-        data = decompress(data)
+        str_data = decompress(data)
         predictor = 1
 
         if decodeParms:
             try:
-                from PyPDF2.generic import ArrayObject
-
                 if isinstance(decodeParms, ArrayObject):
                     for decodeParm in decodeParms:
                         if "/Predictor" in decodeParm:
@@ -100,18 +101,24 @@ class FlateDecode(object):
         if predictor != 1:
             # The /Columns param. has 1 as the default value; see ISO 32000,
             # §7.4.4.3 LZWDecode and FlateDecode Parameters, Table 8
-            columns = decodeParms.get(LZW.COLUMNS, 1)
+            if isinstance(decodeParms, ArrayObject):
+                columns = 1
+                for decodeParm in decodeParms:
+                    if "/Columns" in decodeParm:
+                        columns = decodeParm["/Columns"]
+            else:
+                columns = 1 if decodeParms is None else decodeParms.get(LZW.COLUMNS, 1)
 
             # PNG prediction:
             if 10 <= predictor <= 15:
-                data = FlateDecode._decode_png_prediction(data, columns)
+                str_data = FlateDecode._decode_png_prediction(str_data, columns)  # type: ignore
             else:
                 # unsupported predictor
                 raise PdfReadError("Unsupported flatedecode predictor %r" % predictor)
-        return data
+        return str_data
 
     @staticmethod
-    def _decode_png_prediction(data, columns):
+    def _decode_png_prediction(data: str, columns: int) -> str:
         output = StringIO()
         # PNG prediction can vary from row to row
         rowlength = columns + 1
@@ -145,23 +152,25 @@ class FlateDecode(object):
             else:
                 # unsupported PNG filter
                 raise PdfReadError("Unsupported PNG filter %r" % filter_byte)
-            prev_rowdata = rowdata
+            prev_rowdata = tuple(rowdata)
             output.write("".join([chr(x) for x in rowdata[1:]]))
         return output.getvalue()
 
     @staticmethod
-    def encode(data):
+    def encode(data: bytes) -> bytes:
         return compress(data)
 
 
-class ASCIIHexDecode(object):
+class ASCIIHexDecode:
     """
     The ASCIIHexDecode filter decodes data that has been encoded in ASCII
     hexadecimal form into a base-7 ASCII format.
     """
 
     @staticmethod
-    def decode(data, decodeParms=None):
+    def decode(
+        data: str, decodeParms: Union[None, ArrayObject, DictionaryObject] = None
+    ) -> str:
         """
         :param data: a str sequence of hexadecimal-encoded values to be
             converted into a base-7 ASCII string
@@ -190,13 +199,13 @@ class ASCIIHexDecode(object):
         return retval
 
 
-class LZWDecode(object):
+class LZWDecode:
     """Taken from:
     http://www.java2s.com/Open-Source/Java-Document/PDF/PDF-Renderer/com/sun/pdfview/decode/LZWDecode.java.htm
     """
 
-    class Decoder(object):
-        def __init__(self, data):
+    class Decoder:
+        def __init__(self, data: bytes) -> None:
             self.STOP = 257
             self.CLEARDICT = 256
             self.data = data
@@ -207,11 +216,11 @@ class LZWDecode(object):
                 self.dict[i] = chr(i)
             self.reset_dict()
 
-        def reset_dict(self):
+        def reset_dict(self) -> None:
             self.dictlen = 258
             self.bitspercode = 9
 
-        def next_code(self):
+        def next_code(self) -> int:
             fillbits = self.bitspercode
             value = 0
             while fillbits > 0:
@@ -232,7 +241,7 @@ class LZWDecode(object):
                     self.bytepos = self.bytepos + 1
             return value
 
-        def decode(self):
+        def decode(self) -> str:
             """
             TIFF 6.0 specification explains in sufficient details the steps to
             implement the LZW encode() and decode() algorithms.
@@ -275,7 +284,9 @@ class LZWDecode(object):
             return baos
 
     @staticmethod
-    def decode(data, decodeParms=None):
+    def decode(
+        data: bytes, decodeParms: Union[None, ArrayObject, DictionaryObject] = None
+    ) -> str:
         """
         :param data: ``bytes`` or ``str`` text to decode.
         :param decodeParms: a dictionary of parameter values.
@@ -285,108 +296,57 @@ class LZWDecode(object):
         return LZWDecode.Decoder(data).decode()
 
 
-class ASCII85Decode(object):
+class ASCII85Decode:
     """Decodes string ASCII85-encoded data into a byte format."""
 
     @staticmethod
-    def decode(data, decodeParms=None):
-        if version_info < (3, 0):
-            retval = ""
-            group = []
-            index = 0
-            hit_eod = False
-            # remove all whitespace from data
-            data = [y for y in data if y not in " \n\r\t"]
-            while not hit_eod:
-                char = data[index]
-                if len(retval) == 0 and char == "<" and data[index + 1] == "~":
-                    index += 2
-                    continue
-                # elif c.isspace():
-                #    index += 1
-                #    continue
-                elif char == "z":
-                    assert len(group) == 0
-                    retval += "\x00\x00\x00\x00"
-                    index += 1
-                    continue
-                elif char == "~" and data[index + 1] == ">":
-                    if len(group) != 0:
-                        # cannot have a final group of just 1 char
-                        assert len(group) > 1
-                        cnt = len(group) - 1
-                        group += [85, 85, 85]
-                        hit_eod = cnt
-                    else:
-                        break
-                else:
-                    char = ord(char) - 33
-                    assert char >= 0 and char < 85
-                    group += [char]
-                if len(group) >= 5:
-                    b = (
-                        group[0] * (85**4)
-                        + group[1] * (85**3)
-                        + group[2] * (85**2)
-                        + group[3] * 85
-                        + group[4]
-                    )
-                    if b > (2**32 - 1):
-                        raise OverflowError(
-                            "The sum of a ASCII85-encoded 4-byte group shall "
-                            "not exceed 2 ^ 32 - 1. See ISO 32000, 2008, 7.4.3"
-                        )
-                    assert b <= (2**32 - 1)
-                    c4 = chr((b >> 0) % 256)
-                    c3 = chr((b >> 8) % 256)
-                    c2 = chr((b >> 16) % 256)
-                    c1 = chr(b >> 24)
-                    retval += c1 + c2 + c3 + c4
-                    if hit_eod:
-                        retval = retval[: -4 + hit_eod]
-                    group = []
-                index += 1
-            return retval
-        else:
-            if isinstance(data, str):
-                data = data.encode("ascii")
-            group_index = b = 0
-            out = bytearray()
-            for char in data:
-                if ord("!") <= char and char <= ord("u"):
-                    group_index += 1
-                    b = b * 85 + (char - 33)
-                    if group_index == 5:
-                        out += struct.pack(b">L", b)
-                        group_index = b = 0
-                elif char == ord("z"):
-                    assert group_index == 0
-                    out += b"\0\0\0\0"
-                elif char == ord("~"):
-                    if group_index:
-                        for _ in range(5 - group_index):
-                            b = b * 85 + 84
-                        out += struct.pack(b">L", b)[: group_index - 1]
-                    break
-            return bytes(out)
+    def decode(
+        data: Union[str, bytes],
+        decodeParms: Union[None, ArrayObject, DictionaryObject] = None,
+    ) -> bytes:
+        if isinstance(data, str):
+            data = data.encode("ascii")
+        group_index = b = 0
+        out = bytearray()
+        for char in data:
+            if ord("!") <= char and char <= ord("u"):
+                group_index += 1
+                b = b * 85 + (char - 33)
+                if group_index == 5:
+                    out += struct.pack(b">L", b)
+                    group_index = b = 0
+            elif char == ord("z"):
+                assert group_index == 0
+                out += b"\0\0\0\0"
+            elif char == ord("~"):
+                if group_index:
+                    for _ in range(5 - group_index):
+                        b = b * 85 + 84
+                    out += struct.pack(b">L", b)[: group_index - 1]
+                break
+        return bytes(out)
 
 
-class DCTDecode(object):
+class DCTDecode:
     @staticmethod
-    def decode(data, decodeParms=None):
+    def decode(
+        data: bytes, decodeParms: Union[None, ArrayObject, DictionaryObject] = None
+    ) -> bytes:
         return data
 
 
-class JPXDecode(object):
+class JPXDecode:
     @staticmethod
-    def decode(data, decodeParms=None):
+    def decode(
+        data: bytes, decodeParms: Union[None, ArrayObject, DictionaryObject] = None
+    ) -> bytes:
         return data
 
 
-class CCITParameters(object):
+class CCITParameters:
     """TABLE 3.9 Optional parameters for the CCITTFaxDecode filter"""
 
-    def __init__(self, K=0, columns=0, rows=0):
+    def __init__(self, K: int = 0, columns: int = 0, rows: int = 0) -> None:
         self.K = K
         self.EndOfBlock = None
         self.EndOfLine = None
@@ -396,7 +356,7 @@ class CCITParameters(object):
         self.DamagedRowsBeforeError = None
 
     @property
-    def group(self):
+    def group(self) -> int:
         if self.K < 0:
             CCITTgroup = 4
         else:
@@ -406,7 +366,7 @@ class CCITParameters(object):
         return CCITTgroup
 
 
-class CCITTFaxDecode(object):
+class CCITTFaxDecode:
     """
     See 3.3.5 CCITTFaxDecode Filter (PDF 1.7 Standard).
 
@@ -417,12 +377,12 @@ class CCITTFaxDecode(object):
     """
 
     @staticmethod
-    def _get_parameters(parameters, rows):
+    def _get_parameters(
+        parameters: Union[None, ArrayObject, DictionaryObject], rows: int
+    ) -> CCITParameters:
         k = 0
         columns = 0
         if parameters:
-            from PyPDF2.generic import ArrayObject
-
             if isinstance(parameters, ArrayObject):
                 for decodeParm in parameters:
                     if CCITT.COLUMNS in decodeParm:
@@ -430,13 +390,17 @@ class CCITTFaxDecode(object):
                     if CCITT.K in decodeParm:
                         k = decodeParm[CCITT.K]
             else:
-                columns = parameters[CCITT.COLUMNS]
-                k = parameters[CCITT.K]
+                columns = parameters[CCITT.COLUMNS]  # type: ignore
+                k = parameters[CCITT.K]  # type: ignore
 
         return CCITParameters(k, columns, rows)
 
     @staticmethod
-    def decode(data, decodeParms=None, height=0):
+    def decode(
+        data: bytes,
+        decodeParms: Union[None, ArrayObject, DictionaryObject] = None,
+        height: int = 0,
+    ) -> bytes:
         parms = CCITTFaxDecode._get_parameters(decodeParms, height)
 
         img_size = len(data)
@@ -487,24 +451,22 @@ class CCITTFaxDecode(object):
         return tiff_header + data
 
 
-def decode_stream_data(stream):
-    from .generic import NameObject
-
+def decodeStreamData(stream: Any) -> Union[str, bytes]:  # utils.StreamObject
     filters = stream.get(SA.FILTER, ())
 
     if len(filters) and not isinstance(filters[0], NameObject):
         # we have a single filter instance
         filters = (filters,)
-    data = stream._data
+    data: bytes = stream._data
     # If there is not data to decode we should not try to decode the data.
     if data:
         for filterType in filters:
             if filterType == FT.FLATE_DECODE or filterType == FTA.FL:
                 data = FlateDecode.decode(data, stream.get(SA.DECODE_PARMS))
             elif filterType == FT.ASCII_HEX_DECODE or filterType == FTA.AHx:
-                data = ASCIIHexDecode.decode(data)
+                data = ASCIIHexDecode.decode(data)  # type: ignore
             elif filterType == FT.LZW_DECODE or filterType == FTA.LZW:
-                data = LZWDecode.decode(data, stream.get(SA.DECODE_PARMS))
+                data = LZWDecode.decode(data, stream.get(SA.DECODE_PARMS))  # type: ignore
             elif filterType == FT.ASCII_85_DECODE or filterType == FTA.A85:
                 data = ASCII85Decode.decode(data)
             elif filterType == FT.DCT_DECODE:
@@ -528,16 +490,7 @@ def decode_stream_data(stream):
     return data
 
 
-def decodeStreamData(stream):
-    warnings.warn(
-        DEPR_MSG.format("decodeStreamData", "decode_stream_data"),
-        PendingDeprecationWarning,
-        stacklevel=2,
-    )
-    return decode_stream_data(stream)
-
-
-def _xobj_to_image(x_object_obj):
+def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
     """
     Users need to have the pillow package installed.
 
@@ -546,16 +499,12 @@ def _xobj_to_image(x_object_obj):
 
     :return: Tuple[file extension, bytes]
     """
-    import io
-
     from PIL import Image
 
-    from PyPDF2.constants import GraphicsStateParameters as G
-
     size = (x_object_obj[IA.WIDTH], x_object_obj[IA.HEIGHT])
-    data = x_object_obj.getData()
+    data = x_object_obj.getData()  # type: ignore
     if x_object_obj[IA.COLOR_SPACE] == ColorSpaces.DEVICE_RGB:
-        mode = "RGB"
+        mode: Literal["RGB", "P"] = "RGB"
     else:
         mode = "P"
     extension = None
@@ -566,7 +515,7 @@ def _xobj_to_image(x_object_obj):
             if G.S_MASK in x_object_obj:  # add alpha channel
                 alpha = Image.frombytes("L", size, x_object_obj[G.S_MASK].getData())
                 img.putalpha(alpha)
-            img_byte_arr = io.BytesIO()
+            img_byte_arr = BytesIO()
             img.save(img_byte_arr, format="PNG")
             data = img_byte_arr.getvalue()
         elif x_object_obj[SA.FILTER] in (
@@ -574,8 +523,6 @@ def _xobj_to_image(x_object_obj):
             [FT.ASCII_85_DECODE],
             [FT.CCITT_FAX_DECODE],
         ):
-            from PyPDF2._utils import b_
-
             extension = ".png"
             data = b_(data)
         elif x_object_obj[SA.FILTER] == FT.DCT_DECODE:
@@ -587,7 +534,7 @@ def _xobj_to_image(x_object_obj):
     else:
         extension = ".png"
         img = Image.frombytes(mode, size, data)
-        img_byte_arr = io.BytesIO()
+        img_byte_arr = BytesIO()
         img.save(img_byte_arr, format="PNG")
         data = img_byte_arr.getvalue()
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from io import BytesIO
 
 import pytest
@@ -17,7 +16,6 @@ from PyPDF2.generic import (
     NameObject,
     NullObject,
     NumberObject,
-    PdfObject,
     RectangleObject,
     TextStringObject,
     createStringObject,
@@ -40,7 +38,12 @@ def test_number_object_exception():
 def test_createStringObject_exception():
     with pytest.raises(TypeError) as exc:
         createStringObject(123)
-    assert exc.value.args[0] == "createStringObject should have str or unicode arg"
+    assert (  # typeguard is not running
+        exc.value.args[0] == "createStringObject should have str or unicode arg"
+    ) or (  # typeguard is enabled
+        'type of argument "string" must be one of (str, bytes); got int instead'
+        in exc.value.args[0]
+    )
 
 
 @pytest.mark.parametrize(
@@ -60,6 +63,18 @@ def test_boolean_object_write():
     boolobj.write_to_stream(stream, encryption_key=None)
     stream.seek(0, 0)
     assert stream.read() == b"false"
+
+
+def test_boolean_eq():
+    boolobj = BooleanObject(True)
+    assert (boolobj == True) is True
+    assert (boolobj == False) is False
+    assert (boolobj == "True") is False
+
+    boolobj = BooleanObject(False)
+    assert (boolobj == True) is False
+    assert (boolobj == False) is True
+    assert (boolobj == "True") is False
 
 
 def test_boolean_object_exception():
@@ -143,7 +158,7 @@ def test_NameObject():
 def test_destination_fit_r():
     d = Destination(
         NameObject("title"),
-        PdfObject(),
+        NullObject(),
         NameObject(TF.FIT_R),
         FloatObject(0),
         FloatObject(0),
@@ -162,32 +177,33 @@ def test_destination_fit_r():
 
 
 def test_destination_fit_v():
-    Destination(NameObject("title"), PdfObject(), NameObject(TF.FIT_V), FloatObject(0))
+    Destination(NameObject("title"), NullObject(), NameObject(TF.FIT_V), FloatObject(0))
 
 
 def test_destination_exception():
     with pytest.raises(PdfReadError):
-        Destination(NameObject("title"), PdfObject(), NameObject("foo"), FloatObject(0))
+        Destination(
+            NameObject("title"), NullObject(), NameObject("foo"), FloatObject(0)
+        )
 
 
 def test_bookmark_write_to_stream():
     stream = BytesIO()
     bm = Bookmark(
-        NameObject("title"), NameObject(), NameObject(TF.FIT_V), FloatObject(0)
+        NameObject("title"), NullObject(), NameObject(TF.FIT_V), FloatObject(0)
     )
     bm.write_to_stream(stream, None)
     stream.seek(0, 0)
-    assert stream.read() == b"<<\n/Title title\n/Dest [  /FitV 0 ]\n>>"
+    assert stream.read() == b"<<\n/Title title\n/Dest [ null /FitV 0 ]\n>>"
 
 
-@pytest.mark.no_py27()
 def test_encode_pdfdocencoding_keyerror():
     with pytest.raises(UnicodeEncodeError) as exc:
         encode_pdfdocencoding("😀")
     assert exc.value.args[0] == "pdfdocencoding"
 
 
-def test_readObject_comment_exception():
+def test_read_object_comment_exception():
     stream = BytesIO(b"% foobar")
     pdf = None
     with pytest.raises(PdfStreamError) as exc:
@@ -195,14 +211,13 @@ def test_readObject_comment_exception():
     assert exc.value.args[0] == "File ended unexpectedly."
 
 
-def test_readObject_comment():
+def test_read_object_comment():
     stream = BytesIO(b"% foobar\n1 ")
     pdf = None
     out = read_object(stream, pdf)
     assert out == 1
 
 
-@pytest.mark.no_py27()
 def test_ByteStringObject():
     bo = ByteStringObject("stream", encoding="utf-8")
     stream = BytesIO(b"")
@@ -283,31 +298,49 @@ def test_DictionaryObject_read_from_stream_stream_no_newline():
     assert exc.value.args[0] == "Stream data must be followed by a newline"
 
 
-def test_DictionaryObject_read_from_stream_stream_no_stream_length():
+@pytest.mark.parametrize(("strict"), [(True), (False)])
+def test_DictionaryObject_read_from_stream_stream_no_stream_length(strict):
     stream = BytesIO(b"<< /S /GoTo >>stream\n")
-    pdf = None
+
+    class tst:  # to replace pdf
+        strict = False
+
+    pdf = tst()
+    pdf.strict = strict
     with pytest.raises(PdfReadError) as exc:
         DictionaryObject.read_from_stream(stream, pdf)
     assert exc.value.args[0] == "Stream length not defined"
 
 
-def test_DictionaryObject_read_from_stream_stream_stream_missing_endstream2():
-    stream = BytesIO(b"<< /S /GoTo /Length 10 >>stream\n ")
-    pdf = None
+@pytest.mark.parametrize(
+    ("strict", "length", "shouldFail"),
+    [
+        (True, 6, False),
+        (True, 10, False),
+        (True, 4, True),
+        (False, 6, False),
+        (False, 10, False),
+    ],
+)
+def test_DictionaryObject_read_from_stream_stream_stream_valid(
+    strict, length, shouldFail
+):
+    stream = BytesIO(b"<< /S /GoTo /Length %d >>stream\nBT /F1\nendstream\n" % length)
+
+    class tst:  # to replace pdf
+        strict = True
+
+    pdf = tst()
+    pdf.strict = strict
     with pytest.raises(PdfReadError) as exc:
-        DictionaryObject.read_from_stream(stream, pdf)
-    assert (
-        exc.value.args[0]
-        == "Unable to find 'endstream' marker after stream at byte 0x21."
-    )
-
-
-def test_DictionaryObject_read_from_stream_stream_stream_valid():
-    stream = BytesIO(b"<< /S /GoTo /Length 10 >>stream\nBT /F1\nendstream\n")
-    pdf = None
-    do = DictionaryObject.read_from_stream(stream, pdf)
-    # TODO: What should happen with the stream?
-    assert do == {"/S": "/GoTo"}
+        do = DictionaryObject.read_from_stream(stream, pdf)
+        # TODO: What should happen with the stream?
+        assert do == {"/S": "/GoTo"}
+        if length in (6, 10):
+            assert b"BT /F1" in do._StreamObject__data
+        raise PdfReadError("__ALLGOOD__")
+    print(exc.value)
+    assert shouldFail ^ (exc.value.args[0] == "__ALLGOOD__")
 
 
 def test_RectangleObject():
