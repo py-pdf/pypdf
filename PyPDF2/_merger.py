@@ -26,40 +26,55 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import warnings
-from sys import version_info
+from io import BytesIO, FileIO, IOBase
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 
-from PyPDF2._reader import PdfReader
-from PyPDF2._utils import _isString, DEPR_MSG, str_
-from PyPDF2._writer import PdfWriter
-from PyPDF2.constants import PagesAttributes as PA
-from PyPDF2.generic import *
-from PyPDF2.pagerange import PageRange
+from ._page import PageObject
+from ._reader import PdfReader
+from ._utils import DEPR_MSG, StrByteType, str_
+from ._writer import PdfWriter
+from .constants import PagesAttributes as PA
+from .generic import (
+    ArrayObject,
+    Bookmark,
+    Destination,
+    DictionaryObject,
+    FloatObject,
+    IndirectObject,
+    NameObject,
+    NullObject,
+    NumberObject,
+    TextStringObject,
+    TreeObject,
+    createStringObject,
+)
+from .pagerange import PageRange, PageRangeSpec
+from .types import (
+    BookmarkTypes,
+    LayoutType,
+    OutlinesType,
+    PagemodeType,
+    ZoomArgsType,
+    ZoomArgType,
+)
 
-if version_info < (3, 0):
-    from cStringIO import StringIO
-
-    StreamIO = StringIO
-else:
-    from io import BytesIO
-    from io import FileIO as file
-
-    StreamIO = BytesIO
+ERR_CLOSED_WRITER = "close() was called and thus the writer cannot be used anymore"
 
 
-class _MergedPage(object):
+class _MergedPage:
     """
     _MergedPage is used internally by PdfMerger to collect necessary
     information on each page that is being merged.
     """
 
-    def __init__(self, pagedata, src, id):
+    def __init__(self, pagedata: PageObject, src: PdfReader, id: int) -> None:
         self.src = src
         self.pagedata = pagedata
         self.out_pagedata = None
         self.id = id
 
 
-class PdfMerger(object):
+class PdfMerger:
     """
     Initializes a ``PdfMerger`` object. ``PdfMerger`` merges multiple
     PDFs into a single PDF. It can concatenate, slice, insert, or any
@@ -70,31 +85,26 @@ class PdfMerger(object):
 
     :param bool strict: Determines whether user should be warned of all
             problems and also causes some correctable problems to be fatal.
-            Defaults to ``True``.
-    :param bool overwriteWarnings: Determines whether to override Python's
-        ``warnings.py`` module with a custom implementation (defaults to
-        ``True``). This attribute is deprecated and will be removed.
+            Defaults to ``False``.
     """
 
-    def __init__(self, strict=False, overwriteWarnings="deprecated"):
-        if overwriteWarnings != "deprecated":
-            warnings.warn(
-                "The `overwriteWarnings` argument to PdfReader will be removed with PyPDF2 2.0.0.",
-                PendingDeprecationWarning,
-                stacklevel=2,
-            )
-        self.inputs = []
-        self.pages = []
-        self.output = PdfWriter()
-        self.bookmarks = []
-        self.named_dests = []
+    def __init__(self, strict: bool = False) -> None:
+        self.inputs: List[Tuple[Any, PdfReader, bool]] = []
+        self.pages: List[Any] = []
+        self.output: Optional[PdfWriter] = PdfWriter()
+        self.bookmarks: OutlinesType = []
+        self.named_dests: List[Any] = []
         self.id_count = 0
         self.strict = strict
-        self.overwriteWarnings = overwriteWarnings
 
     def merge(
-        self, position, fileobj, bookmark=None, pages=None, import_bookmarks=True
-    ):
+        self,
+        position: int,
+        fileobj: Union[StrByteType, PdfReader],
+        bookmark: Optional[str] = None,
+        pages: Optional[PageRangeSpec] = None,
+        import_bookmarks: bool = True,
+    ) -> None:
         """
         Merges the pages from the given file into the output file at the
         specified page number.
@@ -119,43 +129,11 @@ class PdfMerger(object):
             bookmarks from being imported by specifying this as ``False``.
         """
 
-        # This parameter is passed to self.inputs.append and means
-        # that the stream used was created in this method.
-        my_file = False
-
-        # If the fileobj parameter is a string, assume it is a path
-        # and create a file object at that location. If it is a file,
-        # copy the file's contents into a BytesIO (or StreamIO) stream object; if
-        # it is a PdfReader, copy that reader's stream into a
-        # BytesIO (or StreamIO) stream.
-        # If fileobj is none of the above types, it is not modified
-        decryption_key = None
-        if _isString(fileobj):
-            fileobj = file(fileobj, "rb")
-            my_file = True
-        elif hasattr(fileobj, "seek") and hasattr(fileobj, "read"):
-            fileobj.seek(0)
-            filecontent = fileobj.read()
-            fileobj = StreamIO(filecontent)
-            my_file = True
-        elif isinstance(fileobj, PdfReader):
-            if hasattr(fileobj, "_decryption_key"):
-                decryption_key = fileobj._decryption_key
-            orig_tell = fileobj.stream.tell()
-            fileobj.stream.seek(0)
-            filecontent = StreamIO(fileobj.stream.read())
-
-            # reset the stream to its original location
-            fileobj.stream.seek(orig_tell)
-
-            fileobj = filecontent
-            my_file = True
+        stream, my_file, decryption_key = self._create_stream(fileobj)
 
         # Create a new PdfReader instance using the stream
         # (either file or BytesIO or StringIO) created above
-        reader = PdfReader(
-            fileobj, strict=self.strict, overwriteWarnings=self.overwriteWarnings
-        )
+        reader = PdfReader(stream, strict=self.strict)  # type: ignore[arg-type]
         if decryption_key is not None:
             reader._decryption_key = decryption_key
 
@@ -168,12 +146,6 @@ class PdfMerger(object):
             raise TypeError('"pages" must be a tuple of (start, stop[, step])')
 
         srcpages = []
-        if bookmark:
-            bookmark = Bookmark(
-                TextStringObject(bookmark),
-                NumberObject(self.id_count),
-                NameObject("/Fit"),
-            )
 
         outline = []
         if import_bookmarks:
@@ -181,11 +153,16 @@ class PdfMerger(object):
             outline = self._trim_outline(reader, outline, pages)
 
         if bookmark:
-            self.bookmarks += [bookmark, outline]
+            bookmark_typ = Bookmark(
+                TextStringObject(bookmark),
+                NumberObject(self.id_count),
+                NameObject("/Fit"),
+            )
+            self.bookmarks += [bookmark_typ, outline]  # type: ignore
         else:
             self.bookmarks += outline
 
-        dests = reader.named_destinations
+        dests = reader.namedDestinations
         trimmed_dests = self._trim_dests(reader, dests, pages)
         self.named_dests += trimmed_dests
 
@@ -207,9 +184,53 @@ class PdfMerger(object):
         self.pages[position:position] = srcpages
 
         # Keep track of our input files so we can close them later
-        self.inputs.append((fileobj, reader, my_file))
+        self.inputs.append((stream, reader, my_file))
 
-    def append(self, fileobj, bookmark=None, pages=None, import_bookmarks=True):
+    def _create_stream(
+        self, fileobj: Union[StrByteType, PdfReader]
+    ) -> Tuple[IOBase, bool, Optional[bytes]]:
+        # This parameter is passed to self.inputs.append and means
+        # that the stream used was created in this method.
+        my_file = False
+
+        # If the fileobj parameter is a string, assume it is a path
+        # and create a file object at that location. If it is a file,
+        # copy the file's contents into a BytesIO stream object; if
+        # it is a PdfReader, copy that reader's stream into a
+        # BytesIO stream.
+        # If fileobj is none of the above types, it is not modified
+        decryption_key = None
+        stream: IOBase
+        if isinstance(fileobj, str):
+            stream = FileIO(fileobj, "rb")
+            my_file = True
+        elif isinstance(fileobj, PdfReader):
+            if hasattr(fileobj, "_decryption_key"):
+                decryption_key = fileobj._decryption_key
+            orig_tell = fileobj.stream.tell()
+            fileobj.stream.seek(0)
+            stream = BytesIO(fileobj.stream.read())
+
+            # reset the stream to its original location
+            fileobj.stream.seek(orig_tell)
+
+            my_file = True
+        elif hasattr(fileobj, "seek") and hasattr(fileobj, "read"):
+            fileobj.seek(0)
+            filecontent = fileobj.read()
+            stream = BytesIO(filecontent)
+            my_file = True
+        else:
+            stream = fileobj
+        return stream, my_file, decryption_key
+
+    def append(
+        self,
+        fileobj: Union[StrByteType, PdfReader],
+        bookmark: Optional[str] = None,
+        pages: Union[None, PageRange, Tuple[int, int], Tuple[int, int, int]] = None,
+        import_bookmarks: bool = True,
+    ) -> None:
         """
         Identical to the :meth:`merge()<merge>` method, but assumes you want to
         concatenate all pages onto the end of the file instead of specifying a
@@ -233,16 +254,18 @@ class PdfMerger(object):
         """
         self.merge(len(self.pages), fileobj, bookmark, pages, import_bookmarks)
 
-    def write(self, fileobj):
+    def write(self, fileobj: StrByteType) -> None:
         """
         Writes all data that has been merged to the given output file.
 
         :param fileobj: Output file. Can be a filename or any kind of
             file-like object.
         """
+        if self.output is None:
+            raise RuntimeError(ERR_CLOSED_WRITER)
         my_file = False
-        if _isString(fileobj):
-            fileobj = file(fileobj, "wb")
+        if isinstance(fileobj, str):
+            fileobj = FileIO(fileobj, "wb")
             my_file = True
 
         # Add pages to the PdfWriter
@@ -250,8 +273,9 @@ class PdfMerger(object):
         # to allow PdfMerger to work with PyPdf 1.13
         for page in self.pages:
             self.output.add_page(page.pagedata)
+            pages_obj = cast(Dict[str, Any], self.output._pages.get_object())
             page.out_pagedata = self.output.get_reference(
-                self.output._pages.get_object()[PA.KIDS][-1].get_object()
+                pages_obj[PA.KIDS][-1].get_object()
             )
             # idnum = self.output._objects.index(self.output._pages.get_object()[PA.KIDS][-1].get_object()) + 1
             # page.out_pagedata = IndirectObject(idnum, 0, self.output)
@@ -266,7 +290,7 @@ class PdfMerger(object):
         if my_file:
             fileobj.close()
 
-    def close(self):
+    def close(self) -> None:
         """
         Shuts all file descriptors (input and output) and clears all memory
         usage.
@@ -279,7 +303,7 @@ class PdfMerger(object):
         self.inputs = []
         self.output = None
 
-    def add_metadata(self, infos):
+    def add_metadata(self, infos: Dict[str, Any]) -> None:
         """
         Add custom metadata to the output.
 
@@ -287,9 +311,11 @@ class PdfMerger(object):
             and each value is your new metadata.
             Example: ``{u'/Title': u'My title'}``
         """
+        if self.output is None:
+            raise RuntimeError(ERR_CLOSED_WRITER)
         self.output.add_metadata(infos)
 
-    def addMetadata(self, infos):
+    def addMetadata(self, infos: Dict[str, Any]) -> None:
         """
         .. deprecated:: 1.28.0
 
@@ -300,7 +326,20 @@ class PdfMerger(object):
         )
         self.add_metadata(infos)
 
-    def setPageLayout(self, layout):
+    def setPageLayout(self, layout: LayoutType) -> None:
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`set_page_layout` instead.
+        """
+        warnings.warn(
+            DEPR_MSG.format("setPageLayout", "set_page_layout"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.set_page_layout(layout)
+
+    def set_page_layout(self, layout: LayoutType) -> None:
         """
         .. deprecated:: 1.28.0
 
@@ -337,9 +376,22 @@ class PdfMerger(object):
            * - /TwoPageRight
              - Show two pages at a time, odd-numbered pages on the right
         """
+        if self.output is None:
+            raise RuntimeError(ERR_CLOSED_WRITER)
         self.output._set_page_layout(layout)
 
-    def setPageMode(self, mode):
+    def setPageMode(self, mode: PagemodeType) -> None:
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`set_page_mode` instead.
+        """
+        warnings.warn(
+            DEPR_MSG.format("setPageMode", "set_page_mode"), PendingDeprecationWarning
+        )
+        self.set_page_mode(mode)
+
+    def set_page_mode(self, mode: PagemodeType) -> None:
         """
         .. deprecated:: 1.28.0
 
@@ -372,9 +424,16 @@ class PdfMerger(object):
            * - /UseAttachments
              - Show attachments panel
         """
+        if self.output is None:
+            raise RuntimeError(ERR_CLOSED_WRITER)
         self.output.set_page_mode(mode)
 
-    def _trim_dests(self, pdf, dests, pages):
+    def _trim_dests(
+        self,
+        pdf: PdfReader,
+        dests: Dict[str, Dict[str, Any]],
+        pages: Union[Tuple[int, int], Tuple[int, int, int]],
+    ) -> List[Dict[str, Any]]:
         """
         Removes any named destinations that are not a part of the specified
         page set.
@@ -389,7 +448,12 @@ class PdfMerger(object):
                     break
         return new_dests
 
-    def _trim_outline(self, pdf, outline, pages):
+    def _trim_outline(
+        self,
+        pdf: PdfReader,
+        outline: OutlinesType,
+        pages: Union[Tuple[int, int], Tuple[int, int, int]],
+    ) -> OutlinesType:
         """
         Removes any outline/bookmark entries that are not a part of the
         specified page set.
@@ -413,7 +477,9 @@ class PdfMerger(object):
                         break
         return new_outline
 
-    def _write_dests(self):
+    def _write_dests(self) -> None:
+        if self.output is None:
+            raise RuntimeError(ERR_CLOSED_WRITER)
         for named_dest in self.named_dests:
             pageno = None
             if "/Page" in named_dest:
@@ -425,9 +491,16 @@ class PdfMerger(object):
             if pageno is not None:
                 self.output.add_named_destination_object(named_dest)
 
-    def _write_bookmarks(self, bookmarks=None, parent=None):
+    def _write_bookmarks(
+        self,
+        bookmarks: Optional[Iterable[Bookmark]] = None,
+        parent: Optional[TreeObject] = None,
+    ) -> None:
+        if self.output is None:
+            raise RuntimeError(ERR_CLOSED_WRITER)
         if bookmarks is None:
-            bookmarks = self.bookmarks
+            bookmarks = self.bookmarks  # type: ignore
+        assert bookmarks is not None, "hint for mypy"  # TODO: is that true?
 
         last_added = None
         for bookmark in bookmarks:
@@ -445,24 +518,27 @@ class PdfMerger(object):
                 del bookmark["/Page"], bookmark["/Type"]
                 last_added = self.output.add_bookmark_dict(bookmark, parent)
 
-    def _write_bookmark_on_page(self, bookmark, page):
+    def _write_bookmark_on_page(
+        self, bookmark: Union[Bookmark, Destination], page: _MergedPage
+    ) -> None:
         # b[NameObject('/Page')] = p.out_pagedata
-        args = [NumberObject(page.id), NameObject(bookmark["/Type"])]
+        bm_type = cast(BookmarkTypes, bookmark["/Type"])
+        args = [NumberObject(page.id), NameObject(bm_type)]
         # nothing more to add
         # if b['/Type'] == '/Fit' or b['/Type'] == '/FitB'
-        if bookmark["/Type"] == "/FitH" or bookmark["/Type"] == "/FitBH":
+        if bm_type == "/FitH" or bm_type == "/FitBH":
             if "/Top" in bookmark and not isinstance(bookmark["/Top"], NullObject):
                 args.append(FloatObject(bookmark["/Top"]))
             else:
                 args.append(FloatObject(0))
             del bookmark["/Top"]
-        elif bookmark["/Type"] == "/FitV" or bookmark["/Type"] == "/FitBV":
+        elif bm_type == "/FitV" or bm_type == "/FitBV":
             if "/Left" in bookmark and not isinstance(bookmark["/Left"], NullObject):
                 args.append(FloatObject(bookmark["/Left"]))
             else:
                 args.append(FloatObject(0))
             del bookmark["/Left"]
-        elif bookmark["/Type"] == "/XYZ":
+        elif bm_type == "/XYZ":
             if "/Left" in bookmark and not isinstance(bookmark["/Left"], NullObject):
                 args.append(FloatObject(bookmark["/Left"]))
             else:
@@ -476,7 +552,7 @@ class PdfMerger(object):
             else:
                 args.append(FloatObject(0))
             del bookmark["/Top"], bookmark["/Zoom"], bookmark["/Left"]
-        elif bookmark["/Type"] == "/FitR":
+        elif bm_type == "/FitR":
             if "/Left" in bookmark and not isinstance(bookmark["/Left"], NullObject):
                 args.append(FloatObject(bookmark["/Left"]))
             else:
@@ -506,7 +582,7 @@ class PdfMerger(object):
             {NameObject("/S"): NameObject("/GoTo"), NameObject("/D"): ArrayObject(args)}
         )
 
-    def _associate_dests_to_pages(self, pages):
+    def _associate_dests_to_pages(self, pages: List[_MergedPage]) -> None:
         for nd in self.named_dests:
             pageno = None
             np = nd["/Page"]
@@ -521,12 +597,16 @@ class PdfMerger(object):
             if pageno is not None:
                 nd[NameObject("/Page")] = NumberObject(pageno)
             else:
-                raise ValueError("Unresolved named destination '%s'" % (nd["/Title"],))
+                raise ValueError(
+                    "Unresolved named destination '{}'".format(nd["/Title"])
+                )
 
-    def _associate_bookmarks_to_pages(self, pages, bookmarks=None):
+    def _associate_bookmarks_to_pages(
+        self, pages: List[_MergedPage], bookmarks: Optional[Iterable[Bookmark]] = None
+    ) -> None:
         if bookmarks is None:
-            bookmarks = self.bookmarks
-
+            bookmarks = self.bookmarks  # type: ignore # TODO: self.bookmarks can be None!
+        assert bookmarks is not None, "hint for mypy"
         for b in bookmarks:
             if isinstance(b, list):
                 self._associate_bookmarks_to_pages(pages, b)
@@ -545,27 +625,20 @@ class PdfMerger(object):
             if pageno is not None:
                 b[NameObject("/Page")] = NumberObject(pageno)
             else:
-                raise ValueError("Unresolved bookmark '%s'" % (b["/Title"],))
+                raise ValueError("Unresolved bookmark '{}'".format(b["/Title"]))
 
-    def findBookmark(self, bookmark, root=None):
-        """
-        .. deprecated:: 1.28.0
-            Use :meth:`find_bookmark` instead.
-        """
-        warnings.warn(
-            "findBookmark is deprecated. Use find_bookmark instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.find_bookmark(bookmark, root=root)
-
-    def find_bookmark(self, bookmark, root=None):
+    def find_bookmark(
+        self,
+        bookmark: Dict[str, Any],
+        root: Optional[OutlinesType] = None,
+    ) -> Optional[List[int]]:
         if root is None:
             root = self.bookmarks
 
         for i, b in enumerate(root):
             if isinstance(b, list):
                 # b is still an inner node
+                # (OutlinesType, if recursive types were supported by mypy)
                 res = self.find_bookmark(bookmark, b)  # type: ignore
                 if res:
                     return [i] + res
@@ -577,15 +650,38 @@ class PdfMerger(object):
 
     def addBookmark(
         self,
-        title,
-        pagenum,
-        parent=None,
-        color=None,
-        bold=False,
-        italic=False,
-        fit="/Fit",
-        *args
-    ):
+        title: str,
+        pagenum: int,
+        parent: Union[None, TreeObject, IndirectObject] = None,
+        color: Optional[Tuple[float, float, float]] = None,
+        bold: bool = False,
+        italic: bool = False,
+        fit: str = "/Fit",
+        *args: ZoomArgType,
+    ) -> IndirectObject:
+        """
+        .. deprecated:: 1.28.0
+            Use :meth:`add_bookmark` instead.
+        """
+        warnings.warn(
+            "addBookmark is deprecated. Use add_bookmark instead.",
+            DeprecationWarning,
+        )
+        return self.add_bookmark(
+            title, pagenum, parent, color, bold, italic, fit, *args
+        )
+
+    def add_bookmark(
+        self,
+        title: str,
+        pagenum: int,
+        parent: Union[None, TreeObject, IndirectObject] = None,
+        color: Optional[Tuple[float, float, float]] = None,
+        bold: bool = False,
+        italic: bool = False,
+        fit: str = "/Fit",
+        *args: ZoomArgType,
+    ) -> IndirectObject:
         """
         .. deprecated:: 1.28.0
             Use :meth:`add_bookmark` instead.
@@ -608,7 +704,7 @@ class PdfMerger(object):
         bold=False,
         italic=False,
         fit="/Fit",
-        *args
+        *args,
     ):
         """
         Add a bookmark to this PDF file.
@@ -624,13 +720,16 @@ class PdfMerger(object):
         :param str fit: The fit of the destination page. See
             :meth:`addLink()<addLin>` for details.
         """
-        if len(self.output.get_object(self.output._pages)["/Kids"]) > 0:
-            page_ref = self.output.get_object(self.output._pages)["/Kids"][pagenum]
+        if self.output is None:
+            raise RuntimeError(ERR_CLOSED_WRITER)
+        out_pages = cast(Dict[str, Any], self.output.get_object(self.output._pages))
+        if len(out_pages["/Kids"]) > 0:
+            page_ref = out_pages["/Kids"][pagenum]
         else:
-            page_ref = self.output.get_object(self.output._pages)
+            page_ref = out_pages
 
         action = DictionaryObject()
-        zoom_args = []
+        zoom_args: ZoomArgsType = []
         for a in args:
             if a is not None:
                 zoom_args.append(NumberObject(a))
@@ -673,12 +772,24 @@ class PdfMerger(object):
             bookmark.update({NameObject("/F"): NumberObject(format)})
 
         bookmark_ref = self.output._add_object(bookmark)
-        parent = parent.get_object()
+        parent = cast(Bookmark, parent.get_object())
+        assert parent is not None, "hint for mypy"
         parent.addChild(bookmark_ref, self.output)
 
         return bookmark_ref
 
-    def addNamedDestination(self, title, pagenum):
+    def addNamedDestination(self, title: str, pagenum: int) -> None:
+        """
+        .. deprecated:: 1.28.0
+            Use :meth:`add_named_destination` instead.
+        """
+        warnings.warn(
+            "addNamedDestination is deprecated. Use add_named_destination instead.",
+            DeprecationWarning,
+        )
+        return self.add_named_destination(title, pagenum)
+
+    def add_named_destination(self, title: str, pagenum: int) -> None:
         """
         .. deprecated:: 1.28.0
             Use :meth:`add_named_destionation` instead.
@@ -707,56 +818,8 @@ class PdfMerger(object):
         self.named_dests.append(dest)
 
 
-class OutlinesObject(list):
-    def __init__(self, pdf, tree, parent=None):
-        warnings.warn(
-            "The OutlinesObject class will be removed with PyPDF2 2.0.0",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
-        list.__init__(self)
-        self.tree = tree
-        self.pdf = pdf
-        self.parent = parent
-
-    def remove(self, index):
-        obj = self[index]
-        del self[index]
-        self.tree.removeChild(obj)
-
-    def add(self, title, pagenum):
-        page_ref = self.pdf.get_object(self.pdf._pages)[PA.KIDS][pagenum]
-        action = DictionaryObject()
-        action.update(
-            {
-                NameObject("/D"): ArrayObject(
-                    [page_ref, NameObject("/FitH"), NumberObject(826)]
-                ),
-                NameObject("/S"): NameObject("/GoTo"),
-            }
-        )
-        action_ref = self.pdf._addObject(action)
-        bookmark = TreeObject()
-
-        bookmark.update(
-            {
-                NameObject("/A"): action_ref,
-                NameObject("/Title"): createStringObject(title),
-            }
-        )
-
-        self.pdf._addObject(bookmark)
-
-        self.tree.addChild(bookmark)
-
-    def removeAll(self):
-        for child in self.tree.children():
-            self.tree.removeChild(child)
-            self.pop()
-
-
 class PdfFileMerger(PdfMerger):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         import warnings
 
         warnings.warn(

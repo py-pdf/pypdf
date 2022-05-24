@@ -30,7 +30,6 @@ with open("PyPDF2-output.pdf", "wb") as fp:
     writer.write(fp)
 ```
 
-
 ## Plain Merge
 
 ![](plain-merge.png)
@@ -43,10 +42,12 @@ from PyPDF2 import PdfReader, PdfWriter, Transformation
 # Get the data
 reader_base = PdfReader("labeled-edges-center-image.pdf")
 page_base = reader_base.pages[0]
+
 reader = PdfReader("box.pdf")
 page_box = reader.pages[0]
-# Apply the transformation: Be aware, that this is an in-place operation
-page_base.mergeTransformedPage(page_box, Transformation())
+
+page_base.merge_page(page_box)
+
 # Write the result back
 writer = PdfWriter()
 writer.addPage(page_base)
@@ -64,11 +65,15 @@ from PyPDF2 import PdfReader, PdfWriter, Transformation
 # Get the data
 reader_base = PdfReader("labeled-edges-center-image.pdf")
 page_base = reader_base.pages[0]
+
 reader = PdfReader("box.pdf")
 page_box = reader.pages[0]
-# Apply the transformation: Be aware, that this is an in-place operation
-op = Transformation().rotate(45)
-page_base.mergeTransformedPage(page_box, op)
+
+# Apply the transformation
+transformation = Transformation().rotate(45)
+page_box.add_transformation(transformation)
+page_base.merge_page(page_box)
+
 # Write the result back
 writer = PdfWriter()
 writer.addPage(page_base)
@@ -79,8 +84,9 @@ with open("merged-foo.pdf", "wb") as fp:
 If you add the expand parameter:
 
 ```python
-op = Transformation().rotate(45)
-page_base.mergeTransformedPage(page_box, op, expand=True)
+transformation = Transformation().rotate(45)
+page_box.add_transformation(transformation)
+page_base.merge_page(page_box)
 ```
 
 you get:

@@ -7,7 +7,7 @@ from PyPDF2 import PdfReader
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
-RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
+RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
 
 
 @pytest.mark.parametrize(
@@ -19,13 +19,13 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
 )
 def test_read_xmp(src, has_xmp):
     reader = PdfReader(src)
-    xmp = reader.xmp_metadata
+    xmp = reader.xmpMetadata
     assert (xmp is None) == (not has_xmp)
     if has_xmp:
         for el in xmp.getElement(
             aboutUri="", namespace=PyPDF2.xmp.RDF_NAMESPACE, name="Artist"
         ):
-            print("el={el}".format(el=el))
+            print(f"el={el}")
 
         assert get_all_tiff(xmp) == {"tiff:Artist": ["me"]}
         assert xmp.dc_contributor == []
@@ -45,8 +45,7 @@ def get_all_tiff(xmp):
 
 
 def test_regression_issue774():
-    cls = PyPDF2.xmp.XmpInformation
-    date = cls._converter_date("2021-04-28T12:23:34.123Z")
+    date = PyPDF2.xmp._converter_date("2021-04-28T12:23:34.123Z")
     assert date.year == 2021
     assert date.month == 4
     assert date.day == 28

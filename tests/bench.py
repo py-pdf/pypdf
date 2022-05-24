@@ -6,7 +6,7 @@ from PyPDF2.generic import Destination
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
-RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "Resources")
+RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
 
 
 def page_ops(pdf_path, password):
@@ -20,11 +20,11 @@ def page_ops(pdf_path, password):
     page = reader.pages[0]
     page.mergeRotatedScaledPage(page, 90, 1, 1)
     page.mergeScaledTranslatedPage(page, 1, 1, 1)
-    page.mergeRotatedScaledTranslatedPage(page, 90, 1, 1, 1, 1)
-    page.add_transformation([1, 0, 0, 0, 0, 0])
+    page.merge_rotated_scaled_translated_page(page, 90, 1, 1, 1, 1)
+    page.add_transformation((1, 0, 0, 0, 0, 0))
     page.scale(2, 2)
-    page.scaleBy(0.5)
-    page.scaleTo(100, 100)
+    page.scale_by(0.5)
+    page.scale_to(100, 100)
     page.compressContentStreams()
     page.extract_text()
 
@@ -67,7 +67,7 @@ def merge():
     bookmark = file_merger.add_bookmark("A bookmark", 0)
     file_merger.add_bookmark("deeper", 0, parent=bookmark)
     file_merger.add_metadata({"author": "Martin Thoma"})
-    file_merger.add_named_destionation("title", 0)
+    file_merger.add_named_destination("title", 0)
     file_merger.set_page_layout("/SinglePage")
     file_merger.set_page_mode("/UseThumbs")
 
@@ -77,7 +77,7 @@ def merge():
 
     # Check if bookmarks are correct
     pdfr = PyPDF2.PdfReader(tmp_path)
-    assert [el.title for el in pdfr.get_outlines() if isinstance(el, Destination)] == [
+    assert [el.title for el in pdfr.getOutlines() if isinstance(el, Destination)] == [
         "A bookmark",
         "Foo",
         "Bar",

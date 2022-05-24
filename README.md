@@ -33,7 +33,7 @@ pip install PyPDF2
 from PyPDF2 import PdfReader
 
 reader = PdfReader("example.pdf")
-number_of_pages = len(reader.pages)
+number_of_pages = reader.numPages
 page = reader.pages[0]
 text = page.extract_text()
 ```
@@ -80,21 +80,28 @@ PyPDF2 includes a test suite which can be executed with `pytest`:
 
 ```bash
 $ pytest
-========================= test session starts =========================
+===================== test session starts =====================
 platform linux -- Python 3.6.15, pytest-7.0.1, pluggy-1.0.0
 rootdir: /home/moose/Github/Martin/PyPDF2
 plugins: cov-3.0.0
-collected 57 items
+collected 233 items
 
-Tests/test_basic_features.py ..                                 [  3%]
-Tests/test_merger.py .                                          [  5%]
-Tests/test_page.py .                                            [  7%]
-Tests/test_pagerange.py .......                                 [ 19%]
-Tests/test_reader.py ..........                                 [ 36%]
-Tests/test_utils.py ......................                      [ 75%]
-Tests/test_workflows.py ..........                              [ 92%]
-Tests/test_writer.py ..                                         [ 96%]
-Tests/test_xmp.py ..                                            [100%]
+tests/test_basic_features.py ..                         [  0%]
+tests/test_constants.py .                               [  1%]
+tests/test_filters.py .................x.....           [ 11%]
+tests/test_generic.py ................................. [ 25%]
+.............                                           [ 30%]
+tests/test_javascript.py ..                             [ 31%]
+tests/test_merger.py .                                  [ 32%]
+tests/test_page.py .........................            [ 42%]
+tests/test_pagerange.py ................                [ 49%]
+tests/test_papersizes.py ..................             [ 57%]
+tests/test_reader.py .................................. [ 72%]
+...............                                         [ 78%]
+tests/test_utils.py ....................                [ 87%]
+tests/test_workflows.py ..........                      [ 91%]
+tests/test_writer.py .................                  [ 98%]
+tests/test_xmp.py ...                                   [100%]
 
-========================= 57 passed in 1.06s ==========================
+========== 232 passed, 1 xfailed, 1 warning in 4.52s ==========
 ```
