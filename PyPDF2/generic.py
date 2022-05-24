@@ -95,7 +95,9 @@ class NullObject(PdfObject):
             raise PdfReadError("Could not read Null object")
         return NullObject()
 
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
         warnings.warn(
             "writeToStream will be removed in PyPDF2 2.0.0. "
             "Use write_to_stream instead.",
@@ -105,7 +107,7 @@ class NullObject(PdfObject):
         self.write_to_stream(stream, encryption_key)
 
     @staticmethod
-    def readFromStream(stream):
+    def readFromStream(stream: StreamType) -> "NullObject":
         warnings.warn(
             "readFromStream will be removed in PyPDF2 2.0.0. "
             "Use read_from_stream instead.",
@@ -135,7 +137,9 @@ class BooleanObject(PdfObject):
         else:
             stream.write(b_("false"))
 
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
         warnings.warn(
             "writeToStream will be removed in PyPDF2 2.0.0. "
             "Use write_to_stream instead.",
@@ -156,7 +160,7 @@ class BooleanObject(PdfObject):
             raise PdfReadError("Could not read Boolean object")
 
     @staticmethod
-    def readFromStream(stream):
+    def readFromStream(stream: StreamType) -> "BooleanObject":
         warnings.warn(
             "readFromStream will be removed in PyPDF2 2.0.0. "
             "Use read_from_stream instead.",
@@ -176,7 +180,9 @@ class ArrayObject(list, PdfObject):
             data.write_to_stream(stream, encryption_key)
         stream.write(b_(" ]"))
 
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
         warnings.warn(
             "writeToStream will be removed in PyPDF2 2.0.0. "
             "Use write_to_stream instead.",
@@ -207,7 +213,7 @@ class ArrayObject(list, PdfObject):
         return arr
 
     @staticmethod
-    def readFromStream(stream, pdf):
+    def readFromStream(stream: StreamType, pdf: Any) -> "ArrayObject":  # PdfReader
         warnings.warn(
             "readFromStream will be removed in PyPDF2 2.0.0. "
             "Use read_from_stream instead.",
@@ -246,7 +252,9 @@ class IndirectObject(PdfObject):
     ) -> None:
         stream.write(b_(f"{self.idnum} {self.generation} R"))
 
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
         warnings.warn(
             "writeToStream will be removed in PyPDF2 2.0.0. "
             "Use write_to_stream instead.",
@@ -284,7 +292,7 @@ class IndirectObject(PdfObject):
         return IndirectObject(int(idnum), int(generation), pdf)
 
     @staticmethod
-    def readFromStream(stream, pdf):
+    def readFromStream(stream: StreamType, pdf: Any) -> "IndirectObject":  # PdfReader
         warnings.warn(
             "readFromStream will be removed in PyPDF2 2.0.0. "
             "Use read_from_stream instead.",
@@ -328,7 +336,9 @@ class FloatObject(decimal.Decimal, PdfObject):
     ) -> None:
         stream.write(b_(repr(self)))
 
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
         warnings.warn(
             "writeToStream will be removed in PyPDF2 2.0.0. "
             "Use write_to_stream instead.",
@@ -357,7 +367,9 @@ class NumberObject(int, PdfObject):
     ) -> None:
         stream.write(b_(repr(self)))
 
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
         warnings.warn(
             "writeToStream will be removed in PyPDF2 2.0.0. "
             "Use write_to_stream instead.",
@@ -375,7 +387,7 @@ class NumberObject(int, PdfObject):
             return NumberObject(num)
 
     @staticmethod
-    def readFromStream(stream):
+    def readFromStream(stream: StreamType) -> Union["NumberObject", FloatObject]:
         warnings.warn(
             "readFromStream will be removed in PyPDF2 2.0.0. "
             "Use read_from_stream instead.",
@@ -508,7 +520,9 @@ class ByteStringObject(bytes_type, PdfObject):  # type: ignore
         stream.write(hexencode(bytearr))
         stream.write(b_(">"))
 
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
         warnings.warn(
             "writeToStream will be removed in PyPDF2 2.0.0. "
             "Use write_to_stream instead.",
@@ -577,7 +591,9 @@ class TextStringObject(str, PdfObject):
                     stream.write(b_(chr(c)))
             stream.write(b_(")"))
 
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
         warnings.warn(
             "writeToStream will be removed in PyPDF2 2.0.0. "
             "Use write_to_stream instead.",
@@ -596,7 +612,9 @@ class NameObject(str, PdfObject):
     ) -> None:
         stream.write(b_(self))
 
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
         warnings.warn(
             "writeToStream will be removed in PyPDF2 2.0.0. "
             "Use write_to_stream instead.",
@@ -627,7 +645,7 @@ class NameObject(str, PdfObject):
                 raise PdfReadError("Illegal character in Name Object")
 
     @staticmethod
-    def readFromStream(stream, pdf):
+    def readFromStream(stream: StreamType, pdf: Any) -> "NameObject":  # PdfReader
         warnings.warn(
             "readFromStream will be removed in PyPDF2 2.0.0. "
             "Use read_from_stream instead.",
@@ -701,7 +719,9 @@ class DictionaryObject(dict, PdfObject):
             stream.write(b_("\n"))
         stream.write(b_(">>"))
 
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
         warnings.warn(
             "writeToStream will be removed in PyPDF2 2.0.0. "
             "Use write_to_stream instead.",
@@ -839,7 +859,7 @@ class DictionaryObject(dict, PdfObject):
             return retval
 
     @staticmethod
-    def readFromStream(stream, pdf):
+    def readFromStream(stream: StreamType, pdf: Any) -> "DictionaryObject":  # PdfReader
         warnings.warn(
             "readFromStream will be removed in PyPDF2 2.0.0. "
             "Use read_from_stream instead.",

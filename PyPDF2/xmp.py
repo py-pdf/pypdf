@@ -202,7 +202,9 @@ class XmpInformation(PdfObject):
     ) -> None:
         self.stream.write_to_stream(stream, encryption_key)
 
-    def writeToStream(self, stream, encryption_key):
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
         """
         .. deprecated:: 1.28.0
 
@@ -215,7 +217,7 @@ class XmpInformation(PdfObject):
         )
         self.write_to_stream(stream, encryption_key)
 
-    def get_element(self, about_uri, namespace, name):
+    def get_element(self, about_uri: str, namespace: str, name: str) -> Any:
         for desc in self.rdfRoot.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):
             if desc.getAttributeNS(RDF_NAMESPACE, "about") == about_uri:
                 attr = desc.getAttributeNodeNS(namespace, name)
@@ -245,7 +247,7 @@ class XmpInformation(PdfObject):
                     if child.namespaceURI == namespace:
                         yield child
 
-    def getNodesInNamespace(self, aboutUri, namespace):
+    def getNodesInNamespace(self, aboutUri: str, namespace: str) -> Any:
         """
         .. deprecated:: 1.28.0
 

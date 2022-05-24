@@ -339,7 +339,7 @@ class PdfMerger:
         )
         self.set_page_layout(layout)
 
-    def set_page_layout(self, layout):
+    def set_page_layout(self, layout: LayoutType) -> None:
         """
         Set the page layout
 
@@ -378,7 +378,7 @@ class PdfMerger:
         )
         self.set_page_mode(mode)
 
-    def set_page_mode(self, mode):
+    def set_page_mode(self, mode: PagemodeType) -> None:
         """
         Set the page mode.
 
@@ -753,7 +753,7 @@ class PdfMerger:
         )
         return self.add_named_destionation(title, pagenum)
 
-    def add_named_destionation(self, title, pagenum):
+    def add_named_destionation(self, title: str, pagenum: int) -> None:
         """
         Add a destination to the output.
 
