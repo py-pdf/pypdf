@@ -6,6 +6,7 @@ from io import BytesIO
 import pytest
 
 from PyPDF2 import PdfReader
+from PyPDF2._reader import convert_to_int, convertToInt
 from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.constants import Ressources as RES
@@ -603,3 +604,18 @@ def test_VirtualList():
 
     # Test if getting as slice throws an error
     assert len(reader.pages[:]) == 1
+
+
+def test_convert_to_int():
+    assert convert_to_int(b'\x01') == 1
+
+
+def test_convert_to_int_error():
+    with pytest.raises(PdfReadError) as exc:
+        convert_to_int(b"256", 16)
+    assert exc.value.args[0] == "invalid size in convert_to_int"
+
+
+def test_convertToInt_deprecated():
+    with pytest.warns(PendingDeprecationWarning, "convertToInt will be removed with PyPDF2 2.0.0. Use convert_to_int instead."):
+        assert convertToInt(b'\x01') == 1
