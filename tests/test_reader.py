@@ -117,7 +117,7 @@ def test_get_attachments(src):
                 annotobj = annotation.get_object()
                 if annotobj[IA.SUBTYPE] == "/FileAttachment":
                     fileobj = annotobj["/FS"]
-                    attachments[fileobj["/F"]] = fileobj["/EF"]["/F"].getData()
+                    attachments[fileobj["/F"]] = fileobj["/EF"]["/F"].get_data()
     return attachments
 
 

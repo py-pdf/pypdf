@@ -57,7 +57,7 @@ def test_PdfReaderJpegImage():
 
         page = reader.pages[0]
         x_object = page[PG.RESOURCES]["/XObject"].get_object()
-        data = x_object["/Im4"].getData()
+        data = x_object["/Im4"].get_data()
 
         # Compare the text of the PDF to a known source
         assert binascii.hexlify(data).decode() == imagetext, (

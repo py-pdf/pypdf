@@ -1120,11 +1120,27 @@ class StreamObject(DictionaryObject):
 
 
 class DecodedStreamObject(StreamObject):
+    def get_data(self) -> Any:
+        return self._data
+
+    def set_data(self, data) -> Any:
+        self._data = data
+
     def getData(self) -> Any:
+        warnings.warn(
+            DEPR_MSG.format("decodedSelf", "decoded_self"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
         return self._data
 
     def setData(self, data: Any) -> None:
-        self._data = data
+        warnings.warn(
+            DEPR_MSG.format("decodedSelf", "decoded_self"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.set_data(data)
 
 
 class EncodedStreamObject(StreamObject):
@@ -1149,12 +1165,12 @@ class EncodedStreamObject(StreamObject):
         )
         self.decoded_self = value
 
-    def getData(self) -> Union[None, str, bytes]:
+    def get_data(self) -> Union[None, str, bytes]:
         from .filters import decodeStreamData
 
         if self.decoded_self:
             # cached version of decoded object
-            return self.decoded_self.getData()
+            return self.decoded_self.get_data()
         else:
             # create decoded object
             decoded = DecodedStreamObject()
@@ -1166,7 +1182,7 @@ class EncodedStreamObject(StreamObject):
             self.decoded_self = decoded
             return decoded._data
 
-    def setData(self, data: Any) -> None:
+    def set_data(self, data: Any) -> None:
         raise PdfReadError("Creating EncodedStreamObject is not currently supported")
 
 
@@ -1185,10 +1201,10 @@ class ContentStream(DecodedStreamObject):
         if isinstance(stream, ArrayObject):
             data = b_("")
             for s in stream:
-                data += b_(s.get_object().getData())
+                data += b_(s.get_object().get_data())
             stream = BytesIO(b_(data))
         else:
-            stream = BytesIO(b_(stream.getData()))
+            stream = BytesIO(b_(stream.get_data()))
         self.__parseContentStream(stream)
 
     def __parseContentStream(self, stream: StreamType) -> None:
