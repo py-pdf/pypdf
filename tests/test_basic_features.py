@@ -1,7 +1,5 @@
 import os
 
-import pytest
-
 from PyPDF2 import PdfReader, PdfWriter
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
