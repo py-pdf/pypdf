@@ -1606,7 +1606,7 @@ class RectangleObject(ArrayObject):
 class Field(TreeObject):
     """
     A class representing a field dictionary. This class is accessed through
-    :meth:`getFields()<PyPDF2.PdfReader.getFields>`
+    :meth:`get_fields()<PyPDF2.PdfReader.get_fields>`
     """
 
     def __init__(self, data: Dict[str, Any]) -> None:
@@ -1661,7 +1661,7 @@ class Field(TreeObject):
         """
         Read-only property accessing the mapping name of this field. This
         name is used by PyPDF2 as a key in the dictionary returned by
-        :meth:`getFields()<PyPDF2.PdfReader.getFields>`
+        :meth:`get_fields()<PyPDF2.PdfReader.get_fields>`
         """
         return self.get("/TM")
 
@@ -1764,7 +1764,8 @@ class Destination(TreeObject):
         else:
             raise PdfReadError("Unknown Destination Type: %r" % typ)
 
-    def getDestArray(self) -> ArrayObject:
+    @property
+    def dest_array(self) -> ArrayObject:
         return ArrayObject(
             [self.raw_get("/Page"), self["/Type"]]
             + [
@@ -1774,6 +1775,20 @@ class Destination(TreeObject):
             ]
         )
 
+    def getDestArray(self) -> ArrayObject:
+        """
+        .. deprecated:: 1.28.3
+
+            Use :py:attr:`dest_array` instead.
+        """
+        warnings.warn(
+            "getDestArray will be removed in PyPDF2 2.0.0. "
+            "Use the dest_array property instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.dest_array
+
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
@@ -1781,7 +1796,7 @@ class Destination(TreeObject):
         key = NameObject("/D")
         key.write_to_stream(stream, encryption_key)
         stream.write(b_(" "))
-        value = self.getDestArray()
+        value = self.dest_array
         value.write_to_stream(stream, encryption_key)
 
         key = NameObject("/S")
@@ -1884,7 +1899,7 @@ class Bookmark(Destination):
         key = NameObject("/Dest")
         key.write_to_stream(stream, encryption_key)
         stream.write(b_(" "))
-        value = self.getDestArray()
+        value = self.dest_array
         value.write_to_stream(stream, encryption_key)
         stream.write(b_("\n"))
         stream.write(b_(">>"))

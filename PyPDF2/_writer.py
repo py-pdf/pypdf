@@ -1136,7 +1136,7 @@ class PdfWriter:
         dest = Destination(
             NameObject("/" + title + " bookmark"), page_ref, NameObject(fit), *zoom_args
         )
-        dest_array = dest.getDestArray()
+        dest_array = dest.dest_array
         action.update(
             {NameObject("/D"): dest_array, NameObject("/S"): NameObject("/GoTo")}
         )
@@ -1579,7 +1579,7 @@ class PdfWriter:
         dest = Destination(
             NameObject("/LinkName"), page_dest, NameObject(fit), *zoom_args
         )  # TODO: create a better name for the link
-        dest_array = dest.getDestArray()
+        dest_array = dest.dest_array
 
         lnk = DictionaryObject()
         lnk.update(

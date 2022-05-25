@@ -1805,7 +1805,7 @@ class PdfReader:
         """
         Read-only boolean property showing whether this PDF file is encrypted.
         Note that this property, if true, will remain true even after the
-        :meth:`decrypt()<PdfReader.decrypt>` method is called.
+        :meth:`decrypt()<PyPDF2.PdfReader.decrypt>` method is called.
         """
         return TK.ENCRYPT in self.trailer
 
