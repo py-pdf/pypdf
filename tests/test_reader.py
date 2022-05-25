@@ -617,5 +617,5 @@ def test_convert_to_int_error():
 
 
 def test_convertToInt_deprecated():
-    with pytest.warns(PendingDeprecationWarning, "convertToInt will be removed with PyPDF2 2.0.0. Use convert_to_int instead."):
+    with pytest.warns(PendingDeprecationWarning, match="convertToInt will be removed with PyPDF2 2.0.0. Use convert_to_int instead."):
         assert convertToInt(b'\x01', 8) == 1
