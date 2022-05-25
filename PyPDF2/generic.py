@@ -1036,7 +1036,7 @@ class StreamObject(DictionaryObject):
         self.decoded_self: Optional[DecodedStreamObject] = None
 
     @property
-    def decodedSelf(self):
+    def decodedSelf(self) -> Optional["DecodedStreamObject"]:
         warnings.warn(
             DEPR_MSG.format("decodedSelf", "decoded_self"),
             PendingDeprecationWarning,
@@ -1123,7 +1123,7 @@ class DecodedStreamObject(StreamObject):
     def get_data(self) -> Any:
         return self._data
 
-    def set_data(self, data) -> Any:
+    def set_data(self, data: Any) -> Any:
         self._data = data
 
     def getData(self) -> Any:
@@ -1148,7 +1148,7 @@ class EncodedStreamObject(StreamObject):
         self.decoded_self: Optional[DecodedStreamObject] = None
 
     @property
-    def decodedSelf(self):
+    def decodedSelf(self) -> Optional["DecodedStreamObject"]:
         warnings.warn(
             DEPR_MSG.format("decodedSelf", "decoded_self"),
             PendingDeprecationWarning,
