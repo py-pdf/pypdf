@@ -1040,7 +1040,7 @@ class PdfWriter:
             parent = outline_ref
 
         parent = cast(TreeObject, parent.get_object())
-        parent.addChild(dest_ref, self)
+        parent.add_child(dest_ref, self)
 
         return dest_ref
 
@@ -1082,7 +1082,7 @@ class PdfWriter:
 
         parent = parent.get_object()  # type: ignore
         assert parent is not None, "hint for mypy"
-        parent.addChild(bookmark_ref, self)
+        parent.add_child(bookmark_ref, self)
 
         return bookmark_ref
 
@@ -1173,7 +1173,7 @@ class PdfWriter:
 
         assert parent is not None, "hint for mypy"
         parent_obj = cast(TreeObject, parent.get_object())
-        parent_obj.addChild(bookmark_ref, self)
+        parent_obj.add_child(bookmark_ref, self)
 
         return bookmark_ref
 

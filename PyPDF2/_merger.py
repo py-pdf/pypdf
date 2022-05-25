@@ -726,7 +726,7 @@ class PdfMerger:
         bookmark_ref = self.output._add_object(bookmark)
         parent = cast(Bookmark, parent.get_object())
         assert parent is not None, "hint for mypy"
-        parent.addChild(bookmark_ref, self.output)
+        parent.add_child(bookmark_ref, self.output)
 
         return bookmark_ref
 
