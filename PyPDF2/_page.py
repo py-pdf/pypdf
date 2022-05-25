@@ -1072,7 +1072,7 @@ class PageObject(DictionaryObject):
             encoding = []
             fontType = self["/Resources"]["/Font"][font_name]["/Subtype"]
             if "/Encoding" in self["/Resources"]["/Font"][font_name]:
-                enc = self["/Resources"]["/Font"][font_name]["/Encoding"].getObject()
+                enc = self["/Resources"]["/Font"][font_name]["/Encoding"].get_object()
                 if "/BaseEncoding" in enc:
                     encoding = list(charset_encoding[enc["/BaseEncoding"]])
                 else:
@@ -1140,6 +1140,10 @@ class PageObject(DictionaryObject):
         # ------- end of buildCharmap ------
         text = ""
         output = ""
+        cmaps={}
+        if "/Font" in self["/Resources"]:
+            for f in self["/Resources"]["/Font"]:
+                cmaps[f] = buildCharMap(self.pdf, f)
         cmap = {}
         content = self[PG.CONTENTS].get_object()
         if not isinstance(content, ContentStream):
@@ -1155,7 +1159,8 @@ class PageObject(DictionaryObject):
             if operator == b_("Tf"):
                 if text != "":
                     output += text.translate(cmap)
-                ft, cmap, cmap2 = buildCharMap(self.pdf, operands[0])
+                #ft, cmap, cmap2 = buildCharMap(self.pdf, operands[0])
+                cmap = cmaps[operands[0]][1]
                 # print(ft,"\n",cmap,"\n--------------\n",cmap2)
                 # charSize = operands[1] # reserved
                 if output == "":

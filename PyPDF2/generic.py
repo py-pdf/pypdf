@@ -139,9 +139,6 @@ class ArrayObject(list, PdfObject):
         stream.write(b_(" ]"))
 
     @staticmethod
-    def readFromStream(
-        stream: StreamType, pdf: Any, forcedEncoding: Union[None, str, list[int]] = None
-    ) -> "ArrayObject":  # PdfFileReader
     def read_from_stream(stream: StreamType, pdf: Any, forcedEncoding: Union[None,str,list] = None) -> "ArrayObject":  # PdfReader
         arr = ArrayObject()
         tmp = stream.read(1)

@@ -7,7 +7,7 @@ import urllib.request
 
 import pytest
 
-from PyPDF2 import PdfReader
+from PyPDF2 import PdfFileReader
 from PyPDF2.constants import PageAttributes as PG
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -25,7 +25,7 @@ def test_PdfReaderFileLoad():
 
     with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
         # Load PDF file from file
-        reader = PdfReader(inputfile)
+        reader = PdfFileReader(inputfile)
         page = reader.pages[0]
 
         # Retrieve the text of the PDF
@@ -52,7 +52,7 @@ def test_PdfReaderJpegImage():
 
     with open(os.path.join(RESOURCE_ROOT, "jpeg.pdf"), "rb") as inputfile:
         # Load PDF file from file
-        reader = PdfReader(inputfile)
+        reader = PdfFileReader(inputfile)
 
         # Retrieve the text of the image
         with open(os.path.join(RESOURCE_ROOT, "jpeg.txt")) as pdftext_file:
@@ -73,32 +73,32 @@ def test_decrypt():
     with open(
         os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf"), "rb"
     ) as inputfile:
-        reader = PdfReader(inputfile)
-        assert reader.is_encrypted == True
+        reader = PdfFileReader(inputfile)
+        assert reader.isEncrypted == True
         reader.decrypt("openpassword")
         assert reader.numPages == 1
-        assert reader.is_encrypted == True
+        assert reader.isEncrypted == True
         metadict = reader.getDocumentInfo()
         assert dict(metadict) == {
             "/CreationDate": "D:20220403203552+02'00'",
             "/Creator": "Writer",
             "/Producer": "LibreOffice 6.4",
         }
-        # Is extract_text() broken for encrypted files?
-        # assert reader.pages[0].extract_text().replace('\n', '') == "\n˘\n\u02c7\u02c6˙\n\n\n˘\u02c7\u02c6˙\n\n"
+        # Is extractText() broken for encrypted files?
+        # assert reader.pages(0).extractText().replace('\n', '') == "\n˘\n\u02c7\u02c6˙\n\n\n˘\u02c7\u02c6˙\n\n"
 
 
 @pytest.mark.parametrize("degree", [0, 90, 180, 270, 360, -90])
 def test_rotate(degree):
     with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
-        reader = PdfReader(inputfile)
+        reader = PdfFileReader(inputfile)
         page = reader.pages[0]
         page.rotateCounterClockwise(degree)
 
 
 def test_rotate_45():
     with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
-        reader = PdfReader(inputfile)
+        reader = PdfFileReader(inputfile)
         page = reader.pages[0]
         with pytest.raises(ValueError) as exc:
             page.rotateCounterClockwise(45)
@@ -135,6 +135,6 @@ def test_extract_textbench(enable, url, pages, printResult=False):
     for n in pages:
         if printResult:
             print(f"**************** {url} / page {n} ****************")
-        rst = p.getPage(n).extractText()
+        rst = p.pages[n].extractText()
         if printResult:
             print(f"{rst}\n*****************************\n")
