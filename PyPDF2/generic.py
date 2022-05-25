@@ -1033,7 +1033,25 @@ class TreeObject(DictionaryObject):
 class StreamObject(DictionaryObject):
     def __init__(self) -> None:
         self.__data: Optional[str] = None
-        self.decodedSelf: Optional[DecodedStreamObject] = None
+        self.decoded_self: Optional[DecodedStreamObject] = None
+
+    @property
+    def decodedSelf(self):
+        warnings.warn(
+            DEPR_MSG.format("decodedSelf", "decoded_self"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.decoded_self
+
+    @decodedSelf.setter
+    def decodedSelf(self, value: "DecodedStreamObject") -> None:
+        warnings.warn(
+            DEPR_MSG.format("decodedSelf", "decoded_self"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.decoded_self = value
 
     @property
     def _data(self) -> Any:
@@ -1111,14 +1129,32 @@ class DecodedStreamObject(StreamObject):
 
 class EncodedStreamObject(StreamObject):
     def __init__(self) -> None:
-        self.decodedSelf: Optional[DecodedStreamObject] = None
+        self.decoded_self: Optional[DecodedStreamObject] = None
+
+    @property
+    def decodedSelf(self):
+        warnings.warn(
+            DEPR_MSG.format("decodedSelf", "decoded_self"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.decoded_self
+
+    @decodedSelf.setter
+    def decodedSelf(self, value: DecodedStreamObject) -> None:
+        warnings.warn(
+            DEPR_MSG.format("decodedSelf", "decoded_self"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.decoded_self = value
 
     def getData(self) -> Union[None, str, bytes]:
         from .filters import decodeStreamData
 
-        if self.decodedSelf:
+        if self.decoded_self:
             # cached version of decoded object
-            return self.decodedSelf.getData()
+            return self.decoded_self.getData()
         else:
             # create decoded object
             decoded = DecodedStreamObject()
@@ -1127,7 +1163,7 @@ class EncodedStreamObject(StreamObject):
             for key, value in list(self.items()):
                 if key not in (SA.LENGTH, SA.FILTER, SA.DECODE_PARMS):
                     decoded[key] = value
-            self.decodedSelf = decoded
+            self.decoded_self = decoded
             return decoded._data
 
     def setData(self, data: Any) -> None:
