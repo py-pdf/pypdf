@@ -53,9 +53,9 @@ def merge():
     file_merger.append(pdf_forms)
 
     # Merging an encrypted file
-    pdfr = PyPDF2.PdfReader(pdf_pw)
-    pdfr.decrypt("openpassword")
-    file_merger.append(pdfr)
+    reader = PyPDF2.PdfReader(pdf_pw)
+    reader.decrypt("openpassword")
+    file_merger.append(reader)
 
     # PdfReader object:
     file_merger.append(PyPDF2.PdfReader(pdf_path, "rb"), bookmark=True)
@@ -76,8 +76,10 @@ def merge():
     file_merger.close()
 
     # Check if bookmarks are correct
-    pdfr = PyPDF2.PdfReader(tmp_path)
-    assert [el.title for el in pdfr.get_outlines() if isinstance(el, Destination)] == [
+    reader = PyPDF2.PdfReader(tmp_path)
+    assert [
+        el.title for el in reader._get_outlines() if isinstance(el, Destination)
+    ] == [
         "A bookmark",
         "Foo",
         "Bar",

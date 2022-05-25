@@ -667,17 +667,16 @@ class PdfReader:
 
     @property
     def outlines(self) -> OutlinesType:
-        """Read-only property."""
-        return self.get_outlines()
-
-    def get_outlines(
-        self, node: Optional[DictionaryObject] = None, outlines: Optional[Any] = None
-    ) -> OutlinesType:
         """
-        Retrieve the document outline present in the document.
+        Read-only property for outlines present in the document.
 
         :return: a nested list of :class:`Destinations<PyPDF2.generic.Destination>`.
         """
+        return self._get_outlines()
+
+    def _get_outlines(
+        self, node: Optional[DictionaryObject] = None, outlines: Optional[Any] = None
+    ) -> OutlinesType:
         if outlines is None:
             outlines = []
             catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
@@ -709,7 +708,7 @@ class PdfReader:
             # check for sub-outlines
             if "/First" in node:
                 sub_outlines: List[Any] = []
-                self.get_outlines(cast(DictionaryObject, node["/First"]), sub_outlines)
+                self._get_outlines(cast(DictionaryObject, node["/First"]), sub_outlines)
                 if sub_outlines:
                     outlines.append(sub_outlines)
 
@@ -732,7 +731,7 @@ class PdfReader:
             PendingDeprecationWarning,
             stacklevel=2,
         )
-        return self.get_outlines(node, outlines)
+        return self._get_outlines(node, outlines)
 
     def _get_page_number_by_indirect(
         self, indirect_ref: Union[None, int, NullObject, IndirectObject]

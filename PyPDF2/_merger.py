@@ -149,7 +149,7 @@ class PdfMerger:
 
         outline = []
         if import_bookmarks:
-            outline = reader.get_outlines()
+            outline = reader.outlines
             outline = self._trim_outline(reader, outline, pages)
 
         if bookmark:
@@ -296,7 +296,7 @@ class PdfMerger:
         usage.
         """
         self.pages = []
-        for fo, _pdfr, mine in self.inputs:
+        for fo, _reader, mine in self.inputs:
             if mine:
                 fo.close()
 

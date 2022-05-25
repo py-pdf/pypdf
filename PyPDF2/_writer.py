@@ -85,7 +85,7 @@ logger = logging.getLogger(__name__)
 class PdfWriter:
     """
     This class supports writing PDF files out, given pages produced by another
-    class (typically :class:`PdfReader<PdfReader>`).
+    class (typically :class:`PdfReader<PyPDF2.PdfReader>`).
     """
 
     def __init__(self) -> None:
@@ -183,7 +183,7 @@ class PdfWriter:
     def add_page(self, page: PageObject) -> None:
         """
         Add a page to this PDF file.  The page is usually acquired from a
-        :class:`PdfReader<PdfReader>` instance.
+        :class:`PdfReader<PyPDF2.PdfReader>` instance.
 
         :param PageObject page: The page to add to the document. Should be
             an instance of :class:`PageObject<PyPDF2._page.PageObject>`
@@ -206,7 +206,7 @@ class PdfWriter:
     def insert_page(self, page: PageObject, index: int = 0) -> None:
         """
         Insert a page in this PDF file. The page is usually acquired from a
-        :class:`PdfReader<PdfReader>` instance.
+        :class:`PdfReader<PyPDF2.PdfReader>` instance.
 
         :param PageObject page: The page to add to the document.  This
             argument should be an instance of :class:`PageObject<PyPDF2._page.PageObject>`.
