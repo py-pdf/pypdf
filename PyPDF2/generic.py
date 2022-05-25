@@ -306,7 +306,7 @@ def readHexStringFromStream(
 
 def readStringFromStream(
     stream: StreamType,
-    forcedEncoding: Union[None, str, list[int]] = None,
+    forcedEncoding: Union[None, str, List[int]] = None,
 ) -> Union["TextStringObject", "ByteStringObject"]:
     tok = stream.read(1)
     parens = 1
@@ -920,7 +920,7 @@ class EncodedStreamObject(StreamObject):
 
 class ContentStream(DecodedStreamObject):
     def __init__(
-        self, stream: Any, pdf: Any, forcedEncoding: Union[None, str, list[int]] = None
+        self, stream: Any, pdf: Any, forcedEncoding: Union[None, str, List[int]] = None
     ) -> None:
         self.pdf = pdf
 
@@ -1699,7 +1699,7 @@ class Bookmark(Destination):
 
 
 def createStringObject(
-    string: Union[str, bytes], forcedEncoding: Union[None, str, list[int]] = None
+    string: Union[str, bytes], forcedEncoding: Union[None, str, List[int]] = None
 ) -> Union[TextStringObject, ByteStringObject]:
     """
     Given a string, create a ByteStringObject or a TextStringObject to
