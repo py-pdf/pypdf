@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1653492441750,
+  "lastUpdate": 1653510412595,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -2417,6 +2417,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004374873728489817",
             "extra": "mean: 105.241031300001 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "matt.peveler@gmail.com",
+            "name": "Matthew Peveler",
+            "username": "MasterOdin"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e8513e78fa8b532226e74cfda67e842376853a5e",
+          "message": "TST: Improve tests for convert_to_int (#899)\n\nThis includes testing that convertToInt raises a pending deprecation warning",
+          "timestamp": "2022-05-25T22:26:02+02:00",
+          "tree_id": "1e6ecaf8f61c23b545067180b23ec301a8b7d28e",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/e8513e78fa8b532226e74cfda67e842376853a5e"
+        },
+        "date": 1653510411244,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.5098313065594567,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0639444041788556",
+            "extra": "mean: 1.9614330998000014 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 7.552076659136676,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00879345656556602",
+            "extra": "mean: 132.41391012499548 msec\nrounds: 8"
           }
         ]
       }
