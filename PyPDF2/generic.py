@@ -5,7 +5,7 @@
 # modification, are permitted provided that the following conditions are
 # met:
 #
-# * Redistributions of source code must retain the above copyright notice,
+# * Redistri butions of source code must retain the above copyright notice,
 # this list of conditions and the following disclaimer.
 # * Redistributions in binary form must reproduce the above copyright notice,
 # this list of conditions and the following disclaimer in the documentation
@@ -132,7 +132,9 @@ class ArrayObject(list, PdfObject):
         stream.write(b_(" ]"))
 
     @staticmethod
-    def readFromStream(stream: StreamType, pdf: Any, forcedEncoding: Union[None,str,list] = None) -> "ArrayObject":  # PdfFileReader
+    def readFromStream(
+        stream: StreamType, pdf: Any, forcedEncoding: Union[None, str, list[int]] = None
+    ) -> "ArrayObject":  # PdfFileReader
         arr = ArrayObject()
         tmp = stream.read(1)
         if tmp != b_("["):
@@ -301,7 +303,7 @@ def readHexStringFromStream(
 
 def readStringFromStream(
     stream: StreamType,
-    forceEncoding: Union[None,str,list] = None,
+    forcedEncoding: Union[None, str, list[int]] = None,
 ) -> Union["TextStringObject", "ByteStringObject"]:
     tok = stream.read(1)
     parens = 1
@@ -372,7 +374,7 @@ def readStringFromStream(
                     # if.strict: PdfReadError(msg)
                     logger.warning(msg)
         txt += tok
-    return createStringObject(txt,forceEncoding)
+    return createStringObject(txt, forcedEncoding)
 
 
 class ByteStringObject(bytes_type, PdfObject):  # type: ignore
@@ -554,8 +556,9 @@ class DictionaryObject(dict, PdfObject):
 
     @staticmethod
     def readFromStream(
-        stream: StreamType, pdf: Any,  # PdfFileReader
-        forcedEncoding: Union[None,str,list] = None
+        stream: StreamType,
+        pdf: Any,  # PdfFileReader
+        forcedEncoding: Union[None, str, list[int]] = None,
     ) -> "DictionaryObject":
         def getNextObjPos(
             p: int, p1: int, remGens: List[int], pdf: Any
@@ -910,7 +913,9 @@ class EncodedStreamObject(StreamObject):
 
 
 class ContentStream(DecodedStreamObject):
-    def __init__(self, stream: Any, pdf: Any, forcedEncoding: Union[None,str,list] = None) -> None:
+    def __init__(
+        self, stream: Any, pdf: Any, forcedEncoding: Union[None, str, list[int]] = None
+    ) -> None:
         self.pdf = pdf
 
         # The inner list has two elements:
@@ -928,7 +933,7 @@ class ContentStream(DecodedStreamObject):
             stream = BytesIO(b_(data))
         else:
             stream = BytesIO(b_(stream.getData()))
-        #self.savstream = stream
+        # self.savstream = stream
         self.forcedEncoding = forcedEncoding
         self.__parseContentStream(stream)
 
@@ -961,7 +966,7 @@ class ContentStream(DecodedStreamObject):
                 while peek not in (b_("\r"), b_("\n")):
                     peek = stream.read(1)
             else:
-                operands.append(readObject(stream, None,self.forcedEncoding))
+                operands.append(readObject(stream, None, self.forcedEncoding))
 
     def _readInlineImage(self, stream: StreamType) -> Dict[str, Any]:
         # begin reading just after the "BI" - begin image
@@ -1049,8 +1054,9 @@ class ContentStream(DecodedStreamObject):
 
 
 def readObject(
-    stream: StreamType, pdf: Any,  # PdfFileReader
-    forcedEncoding:  Union[None,str,list] = None
+    stream: StreamType,
+    pdf: Any,  # PdfFileReader
+    forcedEncoding: Union[None, str, list[int]] = None,
 ) -> Union[PdfObject, int, str, ContentStream]:
     tok = stream.read(1)
     stream.seek(-1, 1)  # reset to start
@@ -1345,7 +1351,6 @@ class Destination(TreeObject):
         self[NameObject("/Page")] = page
         self[NameObject("/Type")] = typ
 
-
         # from table 8.2 of the PDF 1.7 reference.
         if typ == "/XYZ":
             (
@@ -1496,8 +1501,7 @@ class Bookmark(Destination):
 
 
 def createStringObject(
-    string: Union[str, bytes],
-    forceEncoding: Union[None,str,list] = None
+    string: Union[str, bytes], forcedEncoding: Union[None, str, list[int]] = None
 ) -> Union[TextStringObject, ByteStringObject]:
     """
     Given a string, create a ByteStringObject or a TextStringObject to
@@ -1507,16 +1511,16 @@ def createStringObject(
 
     :raises TypeError: If string is not of type str or bytes.
     """
-    if isinstance(forceEncoding,list):
+    if isinstance(forcedEncoding, list):
         out = ""
         for x in string:
             try:
-                out += forceEncoding[x]
+                out += forcedEncoding[x]
             except:
-                out += x
+                out += chr(x)
         return x
-    elif isinstance(forceEncoding,str):
-        return TextStringObject(string.decode(forceEncoding))
+    elif isinstance(forcedEncoding, str):
+        return TextStringObject(string.decode(forcedEncoding))
     elif isinstance(string, str):
         return TextStringObject(string)
     elif isinstance(string, bytes_type):
@@ -1831,51 +1835,282 @@ _pdfdoc_encoding = (
 )
 
 assert len(_pdfdoc_encoding) == 256
-def fill_from_encoding(enc:str)->list:
-    lst=()
+
+
+def fill_from_encoding(enc: str) -> list:
+    lst = ()
     for x in range(256):
         try:
-            lst+=(bytes((x,)).decode(enc),)
+            lst += (bytes((x,)).decode(enc),)
         except:
-            lst+=(chr(x),)
+            lst += (chr(x),)
     return lst
+
+
 _win_encoding = fill_from_encoding("cp1252")
 _mac_encoding = fill_from_encoding("mac_roman")
-_std_encoding = ['\x00', '\x01', '\x02', '\x03', '\x04', '\x05', '\x06', '\x07',
-                 '\x08', '\t', '\n', '\x0b', '\x0c', '\r', '\x0e', '\x0f',
-                 '\x10', '\x11', '\x12', '\x13', '\x14', '\x15', '\x16', '\x17',
-                 '\x18', '\x19', '\x1a', '\x1b', '\x1c', '\x1d', '\x1e', '\x1f',
-                 ' ', '!', '"', '#', '$', '%', '&', '’',
-                 '(', ')', '*', '+', ',', '-', '.', '/',
-                 '0', '1', '2', '3', '4', '5', '6', '7',
-                 '8', '9', ':', ';', '<', '=', '>', '?',
-                 '@', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
-                 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
-                 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
-                 'X', 'Y', 'Z', '[', '\\', ']', '^', '_',
-                 '‘', 'a', 'b', 'c', 'd', 'e', 'f', 'g',
-                 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
-                 'p', 'q', 'r', 's', 't', 'u', 'v', 'w',
-                 'x', 'y', 'z', '{', '|', '}', '~', '\x7f',
-                 '\x80', '\x81', '\x82', '\x83', '\x84', '\x85', '\x86', '\x87',
-                 '\x88', '\x89', '\x8a', '\x8b', '\x8c', '\x8d', '\x8e', '\x8f',
-                 '\x90', '\x91', '\x92', '\x93', '\x94', '\x95', '\x96', '\x97',
-                 '\x98', '\x99', '\x9a', '\x9b', '\x9c', '\x9d', '\x9e', '\x9f',
-                 '\xa0', '¡', '¢', '£', '⁄', '¥', 'ƒ', '§',
-                 '¤', "'", '“', '«', '‹', '›', 'ﬁ', 'ﬂ',
-                 '°', '–', '†', '‡', '·', 'µ', '¶', '•',
-                 '‚', '„', '”', '»', '…', '‰', '¾', '¿',
-                 'À', '`', '´', 'ˆ', '˜', '¯', '˘', '˙',
-                 '¨', 'É', '˚', '¸', 'Ì', '˝', '˛', 'ˇ',
-                 '—', 'Ñ', 'Ò', 'Ó', 'Ô', 'Õ', 'Ö', '×',
-                 'Ø', 'Ù', 'Ú', 'Û', 'Ü', 'Ý', 'Þ', 'ß',
-                 'à', 'Æ', 'â', 'ª', 'ä', 'å', 'æ', 'ç',
-                 'Ł', 'Ø', 'Œ', 'º', 'ì', 'í', 'î', 'ï',
-                 'ð', 'æ', 'ò', 'ó', 'ô', 'ı', 'ö', '÷',
-                 'ł', 'ø', 'œ', 'ß', 'ü', 'ý', 'þ', 'ÿ']
+_std_encoding = [
+    "\x00",
+    "\x01",
+    "\x02",
+    "\x03",
+    "\x04",
+    "\x05",
+    "\x06",
+    "\x07",
+    "\x08",
+    "\t",
+    "\n",
+    "\x0b",
+    "\x0c",
+    "\r",
+    "\x0e",
+    "\x0f",
+    "\x10",
+    "\x11",
+    "\x12",
+    "\x13",
+    "\x14",
+    "\x15",
+    "\x16",
+    "\x17",
+    "\x18",
+    "\x19",
+    "\x1a",
+    "\x1b",
+    "\x1c",
+    "\x1d",
+    "\x1e",
+    "\x1f",
+    " ",
+    "!",
+    '"',
+    "#",
+    "$",
+    "%",
+    "&",
+    "’",
+    "(",
+    ")",
+    "*",
+    "+",
+    ",",
+    "-",
+    ".",
+    "/",
+    "0",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    ":",
+    ";",
+    "<",
+    "=",
+    ">",
+    "?",
+    "@",
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "J",
+    "K",
+    "L",
+    "M",
+    "N",
+    "O",
+    "P",
+    "Q",
+    "R",
+    "S",
+    "T",
+    "U",
+    "V",
+    "W",
+    "X",
+    "Y",
+    "Z",
+    "[",
+    "\\",
+    "]",
+    "^",
+    "_",
+    "‘",
+    "a",
+    "b",
+    "c",
+    "d",
+    "e",
+    "f",
+    "g",
+    "h",
+    "i",
+    "j",
+    "k",
+    "l",
+    "m",
+    "n",
+    "o",
+    "p",
+    "q",
+    "r",
+    "s",
+    "t",
+    "u",
+    "v",
+    "w",
+    "x",
+    "y",
+    "z",
+    "{",
+    "|",
+    "}",
+    "~",
+    "\x7f",
+    "\x80",
+    "\x81",
+    "\x82",
+    "\x83",
+    "\x84",
+    "\x85",
+    "\x86",
+    "\x87",
+    "\x88",
+    "\x89",
+    "\x8a",
+    "\x8b",
+    "\x8c",
+    "\x8d",
+    "\x8e",
+    "\x8f",
+    "\x90",
+    "\x91",
+    "\x92",
+    "\x93",
+    "\x94",
+    "\x95",
+    "\x96",
+    "\x97",
+    "\x98",
+    "\x99",
+    "\x9a",
+    "\x9b",
+    "\x9c",
+    "\x9d",
+    "\x9e",
+    "\x9f",
+    "\xa0",
+    "¡",
+    "¢",
+    "£",
+    "⁄",
+    "¥",
+    "ƒ",
+    "§",
+    "¤",
+    "'",
+    "“",
+    "«",
+    "‹",
+    "›",
+    "ﬁ",
+    "ﬂ",
+    "°",
+    "–",
+    "†",
+    "‡",
+    "·",
+    "µ",
+    "¶",
+    "•",
+    "‚",
+    "„",
+    "”",
+    "»",
+    "…",
+    "‰",
+    "¾",
+    "¿",
+    "À",
+    "`",
+    "´",
+    "ˆ",
+    "˜",
+    "¯",
+    "˘",
+    "˙",
+    "¨",
+    "É",
+    "˚",
+    "¸",
+    "Ì",
+    "˝",
+    "˛",
+    "ˇ",
+    "—",
+    "Ñ",
+    "Ò",
+    "Ó",
+    "Ô",
+    "Õ",
+    "Ö",
+    "×",
+    "Ø",
+    "Ù",
+    "Ú",
+    "Û",
+    "Ü",
+    "Ý",
+    "Þ",
+    "ß",
+    "à",
+    "Æ",
+    "â",
+    "ª",
+    "ä",
+    "å",
+    "æ",
+    "ç",
+    "Ł",
+    "Ø",
+    "Œ",
+    "º",
+    "ì",
+    "í",
+    "î",
+    "ï",
+    "ð",
+    "æ",
+    "ò",
+    "ó",
+    "ô",
+    "ı",
+    "ö",
+    "÷",
+    "ł",
+    "ø",
+    "œ",
+    "ß",
+    "ü",
+    "ý",
+    "þ",
+    "ÿ",
+]
 
-def rev_encoding(enc : list ) -> Dict[str, int]:
-    rev : Dict[str, int] = {}
+
+def rev_encoding(enc: list) -> Dict[str, int]:
+    rev: Dict[str, int] = {}
     for i in range(256):
         char = enc[i]
         if char == "\u0000":
@@ -1886,12 +2121,14 @@ def rev_encoding(enc : list ) -> Dict[str, int]:
         rev[char] = i
     return rev
 
+
 _pdfdoc_encoding_rev = rev_encoding(_pdfdoc_encoding)
 _win_encoding_rev = rev_encoding(_win_encoding)
 _mac_encoding_rev = rev_encoding(_mac_encoding)
 
-charset_encoding = {"/StandardCoding":_std_encoding,
-                    "/WinAnsiEncoding":_win_encoding,
-                    "/MacRomanEncoding":_mac_encoding,
-                    "/PDFDocEncoding":_pdfdoc_encoding
-                   }
+charset_encoding = {
+    "/StandardCoding": _std_encoding,
+    "/WinAnsiEncoding": _win_encoding,
+    "/MacRomanEncoding": _mac_encoding,
+    "/PDFDocEncoding": _pdfdoc_encoding,
+}

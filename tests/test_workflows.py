@@ -2,6 +2,9 @@ import binascii
 import os
 import sys
 
+from io import BytesIO
+import urllib.request
+
 import pytest
 
 from PyPDF2 import PdfFileReader
@@ -100,3 +103,38 @@ def test_rotate_45():
         with pytest.raises(ValueError) as exc:
             page.rotateCounterClockwise(45)
         assert exc.value.args[0] == "Rotation angle must be a multiple of 90"
+
+
+@pytest.mark.parametrize(
+    ("enable", "url", "pages"),
+    [
+        (True, "https://arxiv.org/pdf/2201.00214.pdf", [0, 1, 5, 10]),
+        (
+            True,
+            "https://github.com/py-pdf/sample-files/raw/main/009-pdflatex-geotopo/GeoTopo.pdf",
+            [0, 1, 5, 10],
+        ),
+        (True, "https://arxiv.org/pdf/2201.00151.pdf", [0, 1, 5, 10]),
+        (True, "https://arxiv.org/pdf/1707.09725.pdf", [0, 1, 5, 10]),
+        (True, "https://arxiv.org/pdf/2201.00021.pdf", [0, 1, 5, 8]),
+        (True, "https://arxiv.org/pdf/2201.00037.pdf", [0, 1, 5, 10]),
+        (True, "https://arxiv.org/pdf/2201.00069.pdf", [0, 1, 5, 10]),
+        (True, "https://arxiv.org/pdf/2201.00178.pdf", [0, 1, 5, 10]),
+        (True, "https://arxiv.org/pdf/2201.00201.pdf", [0, 1, 5, 8]),
+        (True, "https://arxiv.org/pdf/1602.06541.pdf", [0, 1, 5, 10]),
+        (True, "https://arxiv.org/pdf/2201.00200.pdf", [0, 1, 5, 6]),
+        (True, "https://arxiv.org/pdf/2201.00022.pdf", [0, 1, 5, 10]),
+        (True, "https://arxiv.org/pdf/2201.00029.pdf", [0, 1, 5, 10]),
+        (True, "https://arxiv.org/pdf/1601.03642.pdf", [0, 1, 5, 7]),
+    ],
+)
+def test_extract_textbench(enable, url, pages, printResult=False):
+    if not enable:
+        return
+    p = PdfFileReader(BytesIO(urllib.request.urlopen(url).read()))
+    for n in pages:
+        if printResult:
+            print(f"**************** {url} / page {n} ****************")
+        rst = p.getPage(n).extractText()
+        if printResult:
+            print(f"{rst}\n*****************************\n")
