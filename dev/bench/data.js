@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1653373098748,
+  "lastUpdate": 1653461328441,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -2341,6 +2341,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.007062289635730386",
             "extra": "mean: 104.24088110000014 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "matt.peveler@gmail.com",
+            "name": "Matthew Peveler",
+            "username": "MasterOdin"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "43276ab5002e37cd2c654cdbe67bbfa0b1fe2eb3",
+          "message": "BUG: PendingDeprecationWarning on merge/transform PageObject (#898)",
+          "timestamp": "2022-05-25T08:48:04+02:00",
+          "tree_id": "648b3230b8d3069270401c9372d91118335baba1",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/43276ab5002e37cd2c654cdbe67bbfa0b1fe2eb3"
+        },
+        "date": 1653461327364,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6145136363540324,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020197637681566464",
+            "extra": "mean: 1.6273031887999991 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 8.866059490606984,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004971974635072921",
+            "extra": "mean: 112.7896785555562 msec\nrounds: 9"
           }
         ]
       }
