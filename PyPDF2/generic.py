@@ -1713,7 +1713,7 @@ def createStringObject(
         out = ""
         for x in string:
             try:
-                out += forceEncoding[x]
+                out += forcedEncoding[x]
             except Exception:
                 out += x
         return x
