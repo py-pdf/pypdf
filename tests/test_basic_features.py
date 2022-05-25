@@ -37,7 +37,7 @@ def test_basic_features():
 
     # add page 5 from input1, but crop it to half size:
     page5 = reader.pages[0]
-    page5.mediabox.upperRight = (
+    page5.mediabox.upper_right = (
         page5.mediabox.right / 2,
         page5.mediabox.top / 2,
     )
