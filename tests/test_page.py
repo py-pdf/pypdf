@@ -70,11 +70,11 @@ def test_page_operations(pdf_path, password):
     page.merge_rotated_scaled_translated_page(
         page, 90, scale=1, tx=1, ty=1, expand=True
     )
-    page.add_transformation([1, 0, 0, 0, 0, 0])
+    page.add_transformation((1, 0, 0, 0, 0, 0))
     page.scale(2, 2)
     page.scaleBy(0.5)
     page.scaleTo(100, 100)
-    page.compressContentStreams()
+    page.compress_content_streams()
     page.extractText()
 
 
@@ -153,7 +153,7 @@ def test_compress_content_streams(pdf_path, password):
     if password:
         reader.decrypt(password)
     for page in reader.pages:
-        page.compressContentStreams()
+        page.compress_content_streams()
 
 
 def test_page_properties():

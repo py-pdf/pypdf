@@ -1629,14 +1629,6 @@ class PdfWriter:
     ]
 
     def _get_page_layout(self) -> Optional[LayoutType]:
-        """
-        Get the page layout.
-
-        See :meth:`setPageLayout()<PdfWriter.setPageLayout>` for a description of valid layouts.
-
-        :return: Page layout currently being used.
-        :rtype: str, None if not specified
-        """
         try:
             return cast(LayoutType, self._root_object["/PageLayout"])
         except KeyError:
@@ -1771,14 +1763,6 @@ class PdfWriter:
     ]
 
     def _get_page_mode(self) -> Optional[PagemodeType]:
-        """
-        Get the page mode.
-        See :meth:`setPageMode()<PdfWriter.setPageMode>` for a description
-        of valid modes.
-
-        :return: Page mode currently being used.
-        :rtype: str, None if not specified.
-        """
         try:
             return cast(PagemodeType, self._root_object["/PageMode"])
         except KeyError:

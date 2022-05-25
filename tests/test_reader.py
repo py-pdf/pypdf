@@ -335,7 +335,7 @@ def test_get_page_number(src, page_nb):
 def test_get_page_layout(src, expected):
     src = os.path.join(RESOURCE_ROOT, src)
     reader = PdfReader(src)
-    assert reader.getPageLayout() == expected
+    assert reader.page_layout == expected
 
 
 @pytest.mark.parametrize(

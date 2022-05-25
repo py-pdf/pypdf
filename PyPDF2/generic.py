@@ -676,7 +676,8 @@ class DictionaryObject(dict, PdfObject):
     def __getitem__(self, key: Any) -> PdfObject:
         return dict.__getitem__(self, key).get_object()
 
-    def getXmpMetadata(self) -> Optional[PdfObject]:  # XmpInformation
+    @property
+    def xmp_metadata(self) -> Optional[PdfObject]:
         """
         Retrieve XMP (Extensible Metadata Platform) data relevant to the
         this object, if available.
@@ -698,15 +699,33 @@ class DictionaryObject(dict, PdfObject):
             self[NameObject("/Metadata")] = metadata
         return metadata
 
+    def getXmpMetadata(self) -> Optional[PdfObject]:  # XmpInformation
+        """
+        .. deprecated:: 1.28.3
+
+            Use :meth:`xmp_metadata` instead.
+        """
+        warnings.warn(
+            "getXmpMetadata will be removed in PyPDF2 2.0.0. "
+            "Use xmp_metadata instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.xmp_metadata
+
     @property
     def xmpMetadata(self) -> Optional[PdfObject]:  # XmpInformation
         """
-        Read-only property that accesses the {@link
-        #DictionaryObject.getXmpData getXmpData} function.
-        <p>
-        Stability: Added in v1.12, will exist for all future v1.x releases.
+        .. deprecated:: 1.28.3
+
+            Use :meth:`xmp_metadata` instead.
         """
-        return self.getXmpMetadata()
+        warnings.warn(
+            "xmpMetadata will be removed in PyPDF2 2.0.0. Use xmp_metadata instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.xmp_metadata
 
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]

@@ -25,7 +25,7 @@ def page_ops(pdf_path, password):
     page.scale(2, 2)
     page.scale_by(0.5)
     page.scale_to(100, 100)
-    page.compressContentStreams()
+    page.compress_content_streams()
     page.extract_text()
 
 
