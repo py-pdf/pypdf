@@ -13,10 +13,10 @@ with open("example.pdf", "rb") as fh:
     bytes_stream = BytesIO(fh.read())
 
 # Read from bytes_stream
-reader = PdfFileReader(bytes_stream)
+reader = PdfReader(bytes_stream)
 
 # Write to bytes_stream
-writer = PdfFileWriter()
+writer = PdfWriter()
 with BytesIO() as bytes_stream:
     writer.write(bytes_stream)
 ```

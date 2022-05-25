@@ -7,7 +7,7 @@ import urllib.request
 
 import pytest
 
-from PyPDF2 import PdfFileReader
+from PyPDF2 import PdfReader
 from PyPDF2.constants import PageAttributes as PG
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -25,8 +25,8 @@ def test_PdfReaderFileLoad():
 
     with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
         # Load PDF file from file
-        reader = PdfFileReader(inputfile)
-        page = reader.getPage(0)
+        reader = PdfReader(inputfile)
+        page = reader.pages[0]
 
         # Retrieve the text of the PDF
         with open(os.path.join(RESOURCE_ROOT, "crazyones.txt"), "rb") as pdftext_file:
@@ -52,14 +52,14 @@ def test_PdfReaderJpegImage():
 
     with open(os.path.join(RESOURCE_ROOT, "jpeg.pdf"), "rb") as inputfile:
         # Load PDF file from file
-        reader = PdfFileReader(inputfile)
+        reader = PdfReader(inputfile)
 
         # Retrieve the text of the image
         with open(os.path.join(RESOURCE_ROOT, "jpeg.txt")) as pdftext_file:
             imagetext = pdftext_file.read()
 
-        page = reader.getPage(0)
-        x_object = page[PG.RESOURCES]["/XObject"].getObject()
+        page = reader.pages[0]
+        x_object = page[PG.RESOURCES]["/XObject"].get_object()
         data = x_object["/Im4"].getData()
 
         # Compare the text of the PDF to a known source
@@ -73,33 +73,33 @@ def test_decrypt():
     with open(
         os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf"), "rb"
     ) as inputfile:
-        reader = PdfFileReader(inputfile)
-        assert reader.isEncrypted == True
+        reader = PdfReader(inputfile)
+        assert reader.is_encrypted == True
         reader.decrypt("openpassword")
         assert reader.numPages == 1
-        assert reader.isEncrypted == True
+        assert reader.is_encrypted == True
         metadict = reader.getDocumentInfo()
         assert dict(metadict) == {
             "/CreationDate": "D:20220403203552+02'00'",
             "/Creator": "Writer",
             "/Producer": "LibreOffice 6.4",
         }
-        # Is extractText() broken for encrypted files?
-        # assert reader.getPage(0).extractText().replace('\n', '') == "\n˘\n\u02c7\u02c6˙\n\n\n˘\u02c7\u02c6˙\n\n"
+        # Is extract_text() broken for encrypted files?
+        # assert reader.pages[0].extract_text().replace('\n', '') == "\n˘\n\u02c7\u02c6˙\n\n\n˘\u02c7\u02c6˙\n\n"
 
 
 @pytest.mark.parametrize("degree", [0, 90, 180, 270, 360, -90])
 def test_rotate(degree):
     with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
-        reader = PdfFileReader(inputfile)
-        page = reader.getPage(0)
+        reader = PdfReader(inputfile)
+        page = reader.pages[0]
         page.rotateCounterClockwise(degree)
 
 
 def test_rotate_45():
     with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
-        reader = PdfFileReader(inputfile)
-        page = reader.getPage(0)
+        reader = PdfReader(inputfile)
+        page = reader.pages[0]
         with pytest.raises(ValueError) as exc:
             page.rotateCounterClockwise(45)
         assert exc.value.args[0] == "Rotation angle must be a multiple of 90"

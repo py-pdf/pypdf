@@ -5,10 +5,10 @@
 Add a password to a PDF (encrypt it):
 
 ```python
-from PyPDF2 import PdfFileReader, PdfFileWriter
+from PyPDF2 import PdfReader, PdfWriter
 
-reader = PdfFileReader("example.pdf")
-writer = PdfFileWriter()
+reader = PdfReader("example.pdf")
+writer = PdfWriter()
 
 # Add all pages to the writer
 for i in range(reader.numPages):
@@ -28,12 +28,12 @@ with open("encrypted-pdf.pdf", "wb") as f:
 Remove the password from a PDF (decrypt it):
 
 ```python
-from PyPDF2 import PdfFileReader, PdfFileWriter
+from PyPDF2 import PdfReader, PdfWriter
 
-reader = PdfFileReader("encrypted-pdf.pdf")
-writer = PdfFileWriter()
+reader = PdfReader("encrypted-pdf.pdf")
+writer = PdfWriter()
 
-if reader.isEncrypted:
+if reader.is_encrypted:
     reader.decrypt("my-secret-password")
 
 # Add all pages to the writer
