@@ -724,10 +724,10 @@ class PdfReader:
         """
         .. deprecated:: 1.28.0
 
-            Use :meth:`get_outlines` instead.
+            Use :py:attr:`outlines` instead.
         """
         warnings.warn(
-            "getOutlines will be removed in PyPDF2 2.0.0. Use get_outlines instead.",
+            "getOutlines will be removed in PyPDF2 2.0.0. Use the outlines attribute instead.",
             PendingDeprecationWarning,
             stacklevel=2,
         )
