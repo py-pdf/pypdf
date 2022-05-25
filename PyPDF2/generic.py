@@ -1074,6 +1074,14 @@ class StreamObject(DictionaryObject):
         return retval
 
     def flateEncode(self) -> "EncodedStreamObject":
+        warnings.warn(
+            DEPR_MSG.format("flateEncode", "flate_encode"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.flate_encode()
+
+    def flate_encode(self) -> "EncodedStreamObject":
         from .filters import FlateDecode
 
         if SA.FILTER in self:
