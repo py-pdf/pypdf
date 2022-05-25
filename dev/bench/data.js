@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1653461328441,
+  "lastUpdate": 1653492441750,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -2379,6 +2379,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004971974635072921",
             "extra": "mean: 112.7896785555562 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "matt.peveler@gmail.com",
+            "name": "Matthew Peveler",
+            "username": "MasterOdin"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f2be61f6c9d398c9381c5a2cbc9c7d4424508001",
+          "message": "BUG: Use get_outlines instead of getOutlines (#897)\n\nThis removes a PendingDeprecationWarning",
+          "timestamp": "2022-05-25T17:26:37+02:00",
+          "tree_id": "2deaf5433081c231fa2a09c3c651239fea659396",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/f2be61f6c9d398c9381c5a2cbc9c7d4424508001"
+        },
+        "date": 1653492440764,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6843738934384183,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0109943253786307",
+            "extra": "mean: 1.4611895771999996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.501997345022126,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004374873728489817",
+            "extra": "mean: 105.241031300001 msec\nrounds: 10"
           }
         ]
       }
