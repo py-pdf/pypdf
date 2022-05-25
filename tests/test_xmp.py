@@ -19,7 +19,7 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
 )
 def test_read_xmp(src, has_xmp):
     reader = PdfReader(src)
-    xmp = reader.xmpMetadata
+    xmp = reader.xmp_metadata
     assert (xmp is None) == (not has_xmp)
     if has_xmp:
         for el in xmp.getElement(

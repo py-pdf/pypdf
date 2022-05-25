@@ -162,7 +162,7 @@ class PdfMerger:
         else:
             self.bookmarks += outline
 
-        dests = reader.namedDestinations
+        dests = reader.named_destinations
         trimmed_dests = self._trim_dests(reader, dests, pages)
         self.named_dests += trimmed_dests
 

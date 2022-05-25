@@ -160,7 +160,7 @@ class Transformation:
     -----
     >>> from PyPDF2 import Transformation
     >>> op = Transformation().scale(sx=2, sy=3).translate(tx=10, ty=20)
-    >>> page.mergeTransformedPage(page2, op)
+    >>> page.add_transformation(op)
     """
 
     # 9.5.4 Coordinate Systems for 3D
@@ -228,7 +228,7 @@ class PageObject(DictionaryObject):
     :meth:`get_page()<PyPDF2.PdfReader.get_page>` method of the
     :class:`PdfReader<PyPDF2.PdfReader>` class, but it is
     also possible to create an empty page with the
-    :meth:`createBlankPage()<PageObject.createBlankPage>` static method.
+    :meth:`create_blank_page()<PyPDF2._page.PageObject.create_blank_page>` static method.
 
     :param pdf: PDF file the page belongs to.
     :param indirect_ref: Stores the original indirect reference to

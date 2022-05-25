@@ -1630,11 +1630,25 @@ class Field(TreeObject):
                 pass
 
     # TABLE 8.69 Entries common to all field dictionaries
+    @property
+    def field_type(self) -> Optional[NameObject]:
+        """Read-only property accessing the type of this field."""
+        return self.get("/FT")
 
     @property
     def fieldType(self) -> Optional[NameObject]:
-        """Read-only property accessing the type of this field."""
-        return self.get("/FT")
+        """
+        .. deprecated:: 1.28.3
+
+            Use :py:attr:`field_type` instead.
+        """
+        warnings.warn(
+            "fieldType will be removed in PyPDF2 2.0.0. "
+            "Use the field_type property instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.field_type
 
     @property
     def parent(self) -> Optional[DictionaryObject]:
@@ -1652,18 +1666,48 @@ class Field(TreeObject):
         return self.get("/T")
 
     @property
-    def altName(self) -> Optional[str]:
+    def alternate_name(self) -> Optional[str]:
         """Read-only property accessing the alternate name of this field."""
         return self.get("/TU")
 
     @property
-    def mappingName(self) -> Optional[str]:
+    def altName(self) -> Optional[str]:
+        """
+        .. deprecated:: 1.28.3
+
+            Use :py:attr:`alternate_name` instead.
+        """
+        warnings.warn(
+            "altName will be removed in PyPDF2 2.0.0. "
+            "Use the alternate_name property instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.alternate_name
+
+    @property
+    def mapping_name(self) -> Optional[str]:
         """
         Read-only property accessing the mapping name of this field. This
         name is used by PyPDF2 as a key in the dictionary returned by
         :meth:`get_fields()<PyPDF2.PdfReader.get_fields>`
         """
         return self.get("/TM")
+
+    @property
+    def mappingName(self) -> Optional[str]:
+        """
+        .. deprecated:: 1.28.3
+
+            Use :py:attr:`mapping_name` instead.
+        """
+        warnings.warn(
+            "mappingName will be removed in PyPDF2 2.0.0. "
+            "Use the mapping_name property instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.mapping_name
 
     @property
     def flags(self) -> Optional[int]:
@@ -1682,18 +1726,48 @@ class Field(TreeObject):
         return self.get("/V")
 
     @property
-    def defaultValue(self) -> Optional[Any]:
+    def default_value(self) -> Optional[Any]:
         """Read-only property accessing the default value of this field."""
         return self.get("/DV")
 
     @property
-    def additionalActions(self) -> Optional[DictionaryObject]:
+    def defaultValue(self) -> Optional[Any]:
+        """
+        .. deprecated:: 1.28.3
+
+            Use :py:attr:`default_value` instead.
+        """
+        warnings.warn(
+            "defaultValue will be removed in PyPDF2 2.0.0. "
+            "Use the default_value property instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.default_value
+
+    @property
+    def additional_actions(self) -> Optional[DictionaryObject]:
         """
         Read-only property accessing the additional actions dictionary.
         This dictionary defines the field's behavior in response to trigger events.
         See Section 8.5.2 of the PDF 1.7 reference.
         """
         return self.get("/AA")
+
+    @property
+    def additionalActions(self) -> Optional[DictionaryObject]:
+        """
+        .. deprecated:: 1.28.3
+
+            Use :py:attr:`additional_actions` instead.
+        """
+        warnings.warn(
+            "additionalActions will be removed in PyPDF2 2.0.0. "
+            "Use the additional_actions property instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.additional_actions
 
 
 class Destination(TreeObject):

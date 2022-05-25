@@ -301,16 +301,16 @@ def test_get_form(src, expected, expected_get_fields):
         for field in fields.values():
             # Just access the attributes
             [
-                field.fieldType,
+                field.field_type,
                 field.parent,
                 field.kids,
                 field.name,
-                field.altName,
-                field.mappingName,
+                field.alternate_name,
+                field.mapping_name,
                 field.flags,
                 field.value,
-                field.defaultValue,
-                field.additionalActions,
+                field.default_value,
+                field.additional_actions,
             ]
 
 
