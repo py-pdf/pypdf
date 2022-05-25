@@ -1,10 +1,6 @@
 import os
 
-import pytest
-
 from PyPDF2 import PdfReader, PdfWriter
-from PyPDF2._reader import convertToInt
-from PyPDF2.errors import PdfReadError
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -59,9 +55,3 @@ def test_basic_features():
 
     # cleanup
     os.remove(tmp_path)
-
-
-def test_convertToInt():
-    with pytest.raises(PdfReadError) as exc:
-        convertToInt(b"256", 16)
-    assert exc.value.args[0] == "invalid size in convertToInt"
