@@ -910,6 +910,11 @@ class TreeObject(DictionaryObject):
             child = child["/Next"]  # type: ignore
 
     def addChild(self, child: Any, pdf: Any) -> None:  # PdfReader
+        warnings.warn(
+            DEPR_MSG.format("addChild", "add_child"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
         self.add_child(child, pdf)
 
     def add_child(self, child: Any, pdf: Any) -> None:  # PdfReader
