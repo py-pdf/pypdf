@@ -562,8 +562,8 @@ class PageObject(DictionaryObject):
                 max(corners1[3], upperright[1]),
             )
 
-            self.mediabox.setLowerLeft(lowerleft)
-            self.mediabox.setUpperRight(upperright)
+            self.mediabox.lower_left = lowerleft
+            self.mediabox.upper_right = upperright
 
         self[NameObject(PG.CONTENTS)] = ContentStream(new_content_array, self.pdf)
         self[NameObject(PG.RESOURCES)] = new_resources
