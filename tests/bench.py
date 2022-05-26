@@ -7,6 +7,7 @@ from PyPDF2.generic import Destination
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
 RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
+SAMPLE_ROOT = os.path.join(PROJECT_ROOT, "sample-files")
 
 
 def page_ops(pdf_path, password):
@@ -114,3 +115,16 @@ def test_merge(benchmark):
     Rotation, scaling, translation, content stream compression, text extraction
     """
     benchmark(merge)
+
+
+def text_extraction(pdf_path):
+    reader = PdfReader(pdf_path)
+    text = ""
+    for page in reader.pages:
+        text += page.extract_text()
+    return text
+
+
+def test_text_extraction(benchmark):
+    file = os.path.join(SAMPLE_ROOT, "009-pdflatex-geotopo/GeoTopo.pdf")
+    benchmark(text_extraction, file)
