@@ -125,7 +125,7 @@ def test_get_attachments(src):
                 annotobj = annotation.get_object()
                 if annotobj[IA.SUBTYPE] == "/FileAttachment":
                     fileobj = annotobj["/FS"]
-                    attachments[fileobj["/F"]] = fileobj["/EF"]["/F"].getData()
+                    attachments[fileobj["/F"]] = fileobj["/EF"]["/F"].get_data()
     return attachments
 
 
@@ -138,7 +138,7 @@ def test_get_attachments(src):
 )
 def test_get_outlines(src, outline_elements):
     reader = PdfReader(src)
-    outlines = reader.get_outlines()
+    outlines = reader._get_outlines()
     assert len(outlines) == outline_elements
 
 
@@ -310,16 +310,16 @@ def test_get_form(src, expected, expected_get_fields):
         for field in fields.values():
             # Just access the attributes
             [
-                field.fieldType,
+                field.field_type,
                 field.parent,
                 field.kids,
                 field.name,
                 field.altName,
-                field.mappingName,
+                field.mapping_name,
                 field.flags,
                 field.value,
-                field.defaultValue,
-                field.additionalActions,
+                field.default_value,
+                field.additional_actions,
             ]
 
 
@@ -505,7 +505,7 @@ def test_read_encrypted_without_decryption():
 def test_get_destination_age_number():
     src = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
     reader = PdfReader(src)
-    outlines = reader.get_outlines()
+    outlines = reader._get_outlines()
     for outline in outlines:
         if not isinstance(outline, list):
             reader.get_destination_page_number(outline)
@@ -562,13 +562,13 @@ def test_issue604(strict):
         if strict:
             with pytest.raises(PdfReadError) as exc:
                 pdf = PdfReader(f, strict=strict)
-                bookmarks = pdf.get_outlines()
+                bookmarks = pdf._get_outlines()
             if "Unknown Destination" not in exc.value.args[0]:
                 raise Exception("Expected exception not raised")
             return  # bookmarks not correct
         else:
             pdf = PdfReader(f, strict=strict)
-            bookmarks = pdf.get_outlines()
+            bookmarks = pdf._get_outlines()
 
         def getDestPages(x):
             # print(x)

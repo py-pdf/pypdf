@@ -966,7 +966,7 @@ class PdfWriter(object):
             parent = outline_ref
 
         parent = parent.get_object()
-        parent.addChild(dest_ref, self)
+        parent.add_child(dest_ref, self)
 
         return dest_ref
 
@@ -1002,7 +1002,7 @@ class PdfWriter(object):
             parent = outline_ref
 
         parent = parent.get_object()
-        parent.addChild(bookmark_ref, self)
+        parent.add_child(bookmark_ref, self)
 
         return bookmark_ref
 
@@ -1053,7 +1053,7 @@ class PdfWriter(object):
         dest = Destination(
             NameObject("/" + title + " bookmark"), page_ref, NameObject(fit), *zoom_args
         )
-        dest_array = dest.getDestArray()
+        dest_array = dest.dest_array
         action.update(
             {NameObject("/D"): dest_array, NameObject("/S"): NameObject("/GoTo")}
         )
@@ -1089,7 +1089,7 @@ class PdfWriter(object):
         bookmark_ref = self._add_object(bookmark)
 
         parent = parent.get_object()
-        parent.addChild(bookmark_ref, self)
+        parent.add_child(bookmark_ref, self)
 
         return bookmark_ref
 
@@ -1470,7 +1470,7 @@ class PdfWriter(object):
         dest = Destination(
             NameObject("/LinkName"), page_dest, NameObject(fit), *zoom_args
         )  # TODO: create a better name for the link
-        dest_array = dest.getDestArray()
+        dest_array = dest.dest_array
 
         lnk = DictionaryObject()
         lnk.update(

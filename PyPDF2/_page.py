@@ -923,7 +923,7 @@ class PageObject(DictionaryObject):
         if content is not None:
             if not isinstance(content, ContentStream):
                 content = ContentStream(content, self.pdf)
-            self[NameObject(PG.CONTENTS)] = content.flateEncode()
+            self[NameObject(PG.CONTENTS)] = content.flate_encode()
 
     def compressContentStreams(self):
         """

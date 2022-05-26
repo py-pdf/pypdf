@@ -389,7 +389,7 @@ class PdfReader(object):
         """
         try:
             self._override_encryption = True
-            return self.trailer[TK.ROOT].getXmpMetadata()
+            return self.trailer[TK.ROOT].xmp_metadata
         finally:
             self._override_encryption = False
 
@@ -729,9 +729,9 @@ class PdfReader(object):
     @property
     def outlines(self):
         """Read-only property."""
-        return self.get_outlines()
+        return self._get_outlines()
 
-    def get_outlines(self, node=None, outlines=None):
+    def _get_outlines(self, node=None, outlines=None):
         """
         Retrieve the document outline present in the document.
 
@@ -768,7 +768,7 @@ class PdfReader(object):
             # check for sub-outlines
             if "/First" in node:
                 sub_outlines = []
-                self.get_outlines(node["/First"], sub_outlines)
+                self._get_outlines(node["/First"], sub_outlines)
                 if sub_outlines:
                     outlines.append(sub_outlines)
 
@@ -778,18 +778,33 @@ class PdfReader(object):
 
         return outlines
 
+    def get_outlines(self, node=None, outlines=None):
+        """
+        .. deprecated:: 1.28.0
+
+            Use the property :py:attr:`outlines` instead.
+        """
+        warnings.warn(
+            "get_outlines will be removed in PyPDF2 2.0.0. "
+            "Use the property :py:attr:`outlines` instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self._get_outlines(node, outlines)
+
     def getOutlines(self, node=None, outlines=None):
         """
         .. deprecated:: 1.28.0
 
-            Use :meth:`get_outlines` instead.
+            Use the property :py:attr:`outlines` instead.
         """
         warnings.warn(
-            "getOutlines will be removed in PyPDF2 2.0.0. Use get_outlines instead.",
+            "getOutlines will be removed in PyPDF2 2.0.0. "
+            "Use the property 'outlines' instead.",
             PendingDeprecationWarning,
             stacklevel=2,
         )
-        return self.get_outlines(node, outlines)
+        return self._get_outlines(node, outlines)
 
     def _get_page_number_by_indirect(self, indirect_ref):
         """Generate _pageId2Num"""
@@ -1073,7 +1088,7 @@ class PdfReader(object):
         assert obj_stm["/Type"] == "/ObjStm"
         # /N is the number of indirect objects in the stream
         assert idx < obj_stm["/N"]
-        stream_data = BytesIO(b_(obj_stm.getData()))
+        stream_data = BytesIO(b_(obj_stm.get_data()))
         for i in range(obj_stm["/N"]):
             readNonWhitespace(stream_data)
             stream_data.seek(-1, 1)
@@ -1515,7 +1530,7 @@ class PdfReader(object):
         xrefstream = read_object(stream, self)
         assert xrefstream["/Type"] == "/XRef"
         self.cache_indirect_object(generation, idnum, xrefstream)
-        stream_data = BytesIO(b_(xrefstream.getData()))
+        stream_data = BytesIO(b_(xrefstream.get_data()))
         # Index pairs specify the subsections in the dictionary. If
         # none create one subsection that spans everything.
         idx_pairs = xrefstream.get("/Index", [0, xrefstream.get("/Size")])

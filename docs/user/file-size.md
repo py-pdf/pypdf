@@ -30,8 +30,8 @@ reader = PyPDF2.PdfReader("example.pdf")
 writer = PyPDF2.PdfWriter()
 
 for page in reader.pages:
-    page.compressContentStreams()
-    writer.addPage(page)
+    page.compress_content_streams()
+    writer.add_page(page)
 
 with open("out.pdf", "wb") as f:
     writer.write(f)
