@@ -42,6 +42,7 @@ You can contribute to `PyPDF2 on Github <https://github.com/py-pdf/PyPDF2>`_.
    modules/PdfWriter
    modules/PdfMerger
    modules/PageObject
+   modules/Transformation
    modules/DocumentInformation
    modules/XmpInformation
    modules/Destination
