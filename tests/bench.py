@@ -20,12 +20,12 @@ def page_ops(pdf_path, password):
     page = reader.pages[0]
     page.mergeRotatedScaledPage(page, 90, 1, 1)
     page.mergeScaledTranslatedPage(page, 1, 1, 1)
-    page.merge_rotated_scaled_translated_page(page, 90, 1, 1, 1, 1)
+    page.mergeRotatedScaledTranslatedPage(page, 90, 1, 1, 1, 1)
     page.add_transformation((1, 0, 0, 0, 0, 0))
     page.scale(2, 2)
     page.scale_by(0.5)
     page.scale_to(100, 100)
-    page.compressContentStreams()
+    page.compress_content_streams()
     page.extract_text()
 
 
@@ -53,9 +53,9 @@ def merge():
     file_merger.append(pdf_forms)
 
     # Merging an encrypted file
-    pdfr = PyPDF2.PdfReader(pdf_pw)
-    pdfr.decrypt("openpassword")
-    file_merger.append(pdfr)
+    reader = PyPDF2.PdfReader(pdf_pw)
+    reader.decrypt("openpassword")
+    file_merger.append(reader)
 
     # PdfReader object:
     file_merger.append(PyPDF2.PdfReader(pdf_path, "rb"), bookmark=True)
@@ -76,8 +76,10 @@ def merge():
     file_merger.close()
 
     # Check if bookmarks are correct
-    pdfr = PyPDF2.PdfReader(tmp_path)
-    assert [el.title for el in pdfr.get_outlines() if isinstance(el, Destination)] == [
+    reader = PyPDF2.PdfReader(tmp_path)
+    assert [
+        el.title for el in reader._get_outlines() if isinstance(el, Destination)
+    ] == [
         "A bookmark",
         "Foo",
         "Bar",

@@ -160,7 +160,7 @@ class Transformation:
     -----
     >>> from PyPDF2 import Transformation
     >>> op = Transformation().scale(sx=2, sy=3).translate(tx=10, ty=20)
-    >>> page.mergeTransformedPage(page2, op)
+    >>> page.add_transformation(op)
     """
 
     # 9.5.4 Coordinate Systems for 3D
@@ -228,7 +228,7 @@ class PageObject(DictionaryObject):
     :meth:`get_page()<PyPDF2.PdfReader.get_page>` method of the
     :class:`PdfReader<PyPDF2.PdfReader>` class, but it is
     also possible to create an empty page with the
-    :meth:`createBlankPage()<PageObject.createBlankPage>` static method.
+    :meth:`create_blank_page()<PyPDF2._page.PageObject.create_blank_page>` static method.
 
     :param pdf: PDF file the page belongs to.
     :param indirect_ref: Stores the original indirect reference to
@@ -634,6 +634,8 @@ class PageObject(DictionaryObject):
         warnings.warn(
             "page.mergeTransformedPage(page2, ctm) will be removed in PyPDF 2.0.0. "
             "Use page2.add_transformation(ctm); page.merge_page(page2) instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
         )
         if isinstance(ctm, Transformation):
             ctm = ctm.ctm
@@ -831,7 +833,7 @@ class PageObject(DictionaryObject):
         op = Transformation().scale(scale, scale).translate(tx, ty)
         return self.mergeTransformedPage(page2, op, expand)
 
-    def merge_rotated_scaled_translated_page(
+    def mergeRotatedScaledTranslatedPage(
         self,
         page2: "PageObject",
         rotation: float,
@@ -870,7 +872,9 @@ class PageObject(DictionaryObject):
         self.mergeTransformedPage(page2, op, expand)
 
     def add_transformation(
-        self, ctm: CompressedTransformationMatrix, expand: bool = False
+        self,
+        ctm: Union[Transformation, CompressedTransformationMatrix],
+        expand: bool = False,
     ) -> None:
         """
         Apply a transformation matrix to the page.
@@ -1033,7 +1037,7 @@ class PageObject(DictionaryObject):
         if content is not None:
             if not isinstance(content, ContentStream):
                 content = ContentStream(content, self.pdf)
-            self[NameObject(PG.CONTENTS)] = content.flateEncode()
+            self[NameObject(PG.CONTENTS)] = content.flate_encode()
 
     def compressContentStreams(self) -> None:
         """
@@ -1112,6 +1116,8 @@ class PageObject(DictionaryObject):
         """
         warnings.warn(
             DEPR_MSG.format("Page.extractText", "Page.extract_text"),
+            PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.extract_text(Tj_sep=Tj_sep, TJ_sep=TJ_sep)
 

@@ -63,5 +63,5 @@ for page in reader.pages:
             subtype = annot.get_object()["/Subtype"]
             if subtype == "/FileAttachment":
                 fileobj = annotobj["/FS"]
-                attachments[fileobj["/F"]] = fileobj["/EF"]["/F"].getData()
+                attachments[fileobj["/F"]] = fileobj["/EF"]["/F"].get_data()
 ```

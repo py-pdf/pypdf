@@ -50,7 +50,7 @@ page_base.merge_page(page_box)
 
 # Write the result back
 writer = PdfWriter()
-writer.addPage(page_base)
+writer.add_page(page_base)
 with open("merged-foo.pdf", "wb") as fp:
     writer.write(fp)
 ```
@@ -76,7 +76,7 @@ page_base.merge_page(page_box)
 
 # Write the result back
 writer = PdfWriter()
-writer.addPage(page_base)
+writer.add_page(page_base)
 with open("merged-foo.pdf", "wb") as fp:
     writer.write(fp)
 ```
