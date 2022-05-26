@@ -90,7 +90,8 @@ def test_rotate(degree):
     with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
         reader = PdfReader(inputfile)
         page = reader.pages[0]
-        page.rotateCounterClockwise(degree)
+        with pytest.warns(PendingDeprecationWarning):
+            page.rotateCounterClockwise(degree)
 
 
 def test_rotate_45():
@@ -98,5 +99,6 @@ def test_rotate_45():
         reader = PdfReader(inputfile)
         page = reader.pages[0]
         with pytest.raises(ValueError) as exc:
-            page.rotateCounterClockwise(45)
+            with pytest.warns(PendingDeprecationWarning):
+                page.rotateCounterClockwise(45)
         assert exc.value.args[0] == "Rotation angle must be a multiple of 90"

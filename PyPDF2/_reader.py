@@ -105,6 +105,7 @@ def convertToInt(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:
         "convertToInt will be removed with PyPDF2 2.0.0. "
         "Use convert_to_int instead.",
         PendingDeprecationWarning,
+        stacklevel=2,
     )
     return convert_to_int(d, size)
 
@@ -315,7 +316,7 @@ class PdfReader:
         """
         try:
             self._override_encryption = True
-            return self.trailer[TK.ROOT].getXmpMetadata()  # type: ignore
+            return self.trailer[TK.ROOT].xmp_metadata  # type: ignore
         finally:
             self._override_encryption = False
 
@@ -432,6 +433,8 @@ class PdfReader:
         warnings.warn(
             "namedDestinations will be removed in PyPDF2 2.0.0. "
             "Use `named_destinations` instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.named_destinations
 
@@ -812,7 +815,7 @@ class PdfReader:
         try:
             return Destination(title, page, typ, *array)  # type: ignore
         except PdfReadError:
-            warnings.warn("Unknown destination : " + title + " " + str(array))
+            warnings.warn(f"Unknown destination: {title} {array}", PdfReadWarning)
             if self.strict:
                 raise
             else:
@@ -1409,7 +1412,7 @@ class PdfReader:
             if not line.startswith(b_("startxref")):
                 raise PdfReadError("startxref not found")
             startxref = int(line[9:].strip())
-            warnings.warn("startxref on same line as offset")
+            warnings.warn("startxref on same line as offset", PdfReadWarning)
         else:
             line = self.read_next_end_line(stream)
             if line[:9] != b_("startxref"):

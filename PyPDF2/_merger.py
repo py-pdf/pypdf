@@ -743,18 +743,6 @@ class PdfMerger:
 
     def add_named_destination(self, title: str, pagenum: int) -> None:
         """
-        .. deprecated:: 1.28.0
-            Use :meth:`add_named_destionation` instead.
-        """
-        warnings.warn(
-            "addNamedDestination is deprecated. Use add_named_destionation instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.add_named_destionation(title, pagenum)
-
-    def add_named_destionation(self, title: str, pagenum: int) -> None:
-        """
         Add a destination to the output.
 
         :param str title: Title to use

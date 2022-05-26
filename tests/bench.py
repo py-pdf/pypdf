@@ -20,7 +20,7 @@ def page_ops(pdf_path, password):
     page = reader.pages[0]
     page.mergeRotatedScaledPage(page, 90, 1, 1)
     page.mergeScaledTranslatedPage(page, 1, 1, 1)
-    page.merge_rotated_scaled_translated_page(page, 90, 1, 1, 1, 1)
+    page.mergeRotatedScaledTranslatedPage(page, 90, 1, 1, 1, 1)
     page.add_transformation((1, 0, 0, 0, 0, 0))
     page.scale(2, 2)
     page.scale_by(0.5)

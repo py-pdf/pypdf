@@ -10,7 +10,7 @@ from PyPDF2._reader import convert_to_int, convertToInt
 from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.constants import Ressources as RES
-from PyPDF2.errors import PdfReadError
+from PyPDF2.errors import PdfReadError, PdfReadWarning
 from PyPDF2.filters import _xobj_to_image
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -64,7 +64,9 @@ def test_get_num_pages(src, num_pages):
 def test_read_metadata(pdf_path, expected):
     with open(pdf_path, "rb") as inputfile:
         reader = PdfReader(inputfile)
-        docinfo = reader.documentInfo
+        with pytest.warns(PendingDeprecationWarning):
+            docinfo = reader.documentInfo
+        assert docinfo is not None
         metadict = dict(docinfo)
         assert metadict == expected
         docinfo.title
@@ -228,7 +230,8 @@ def test_get_images_raw(strict, with_prev_0, startx_correction, should_fail):
     pdf_stream = io.BytesIO(pdf_data)
     if should_fail:
         with pytest.raises(PdfReadError) as exc:
-            PdfReader(pdf_stream, strict=strict)
+            with pytest.warns(PdfReadWarning):
+                PdfReader(pdf_stream, strict=strict)
         assert exc.type == PdfReadError
         if startx_correction == -1:
             assert (
@@ -236,15 +239,18 @@ def test_get_images_raw(strict, with_prev_0, startx_correction, should_fail):
                 == "/Prev=0 in the trailer (try opening with strict=False)"
             )
     else:
-        PdfReader(pdf_stream, strict=strict)
+        with pytest.warns(PdfReadWarning):
+            PdfReader(pdf_stream, strict=strict)
 
 
 def test_issue297():
     path = os.path.join(RESOURCE_ROOT, "issue-297.pdf")
     with pytest.raises(PdfReadError) as exc:
-        reader = PdfReader(path, strict=True)
+        with pytest.warns(PdfReadWarning):
+            reader = PdfReader(path, strict=True)
     assert "Broken xref table" in exc.value.args[0]
-    reader = PdfReader(path, strict=False)
+    with pytest.warns(PdfReadWarning):
+        reader = PdfReader(path, strict=False)
     reader.pages[0]
 
 
@@ -403,7 +409,8 @@ def test_read_prev_0_trailer():
     )
     pdf_stream = io.BytesIO(pdf_data)
     with pytest.raises(PdfReadError) as exc:
-        PdfReader(pdf_stream, strict=True)
+        with pytest.warns(PdfReadWarning):
+            PdfReader(pdf_stream, strict=True)
     assert exc.value.args[0] == "/Prev=0 in the trailer (try opening with strict=False)"
 
 
@@ -473,14 +480,18 @@ def test_read_unknown_zero_pages():
         pdf_data.find(b"xref") - 1,
     )
     pdf_stream = io.BytesIO(pdf_data)
-    reader = PdfReader(pdf_stream, strict=True)
+    with pytest.warns(PdfReadWarning):
+        reader = PdfReader(pdf_stream, strict=True)
     with pytest.raises(PdfReadError) as exc:
-        len(reader.pages)
+        with pytest.warns(PdfReadWarning):
+            len(reader.pages)
 
     assert exc.value.args[0] == "Could not find object."
-    reader = PdfReader(pdf_stream, strict=False)
+    with pytest.warns(PdfReadWarning):
+        reader = PdfReader(pdf_stream, strict=False)
     with pytest.raises(AttributeError) as exc:
-        len(reader.pages)
+        with pytest.warns(PdfReadWarning):
+            len(reader.pages)
     assert exc.value.args[0] == "'NoneType' object has no attribute 'get_object'"
 
 
@@ -543,27 +554,27 @@ def test_reader_properties():
     [(True), (False)],
 )
 def test_issue604(strict):
-    """
-    Test with invalid destinations
-    """
+    """Test with invalid destinations"""  # todo
     with open(os.path.join(RESOURCE_ROOT, "issue-604.pdf"), "rb") as f:
         pdf = None
         bookmarks = None
         if strict:
             with pytest.raises(PdfReadError) as exc:
                 pdf = PdfReader(f, strict=strict)
-                bookmarks = pdf._get_outlines()
+                with pytest.warns(PdfReadWarning):
+                    bookmarks = pdf._get_outlines()
             if "Unknown Destination" not in exc.value.args[0]:
                 raise Exception("Expected exception not raised")
             return  # bookmarks not correct
         else:
             pdf = PdfReader(f, strict=strict)
-            bookmarks = pdf._get_outlines()
+            with pytest.warns(PdfReadWarning):
+                bookmarks = pdf._get_outlines()
 
-        def getDestPages(x):
+        def get_dest_pages(x):
             # print(x)
             if isinstance(x, list):
-                r = [getDestPages(y) for y in x]
+                r = [get_dest_pages(y) for y in x]
                 return r
             else:
                 return pdf.get_destination_page_number(x) + 1
@@ -572,7 +583,7 @@ def test_issue604(strict):
         for (
             b
         ) in bookmarks:  # b can be destination or a list:preferred to just print them
-            out.append(getDestPages(b))
+            out.append(get_dest_pages(b))
     # print(out)
 
 

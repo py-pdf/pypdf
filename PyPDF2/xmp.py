@@ -186,7 +186,7 @@ def _getter_single(
 class XmpInformation(PdfObject):
     """
     An object that represents Adobe XMP metadata.
-    Usually accessed by :meth:`getXmpMetadata()<PyPDF2.PdfReader.getXmpMetadata>`
+    Usually accessed by :py:attr:`xmp_metadata()<PyPDF2.PdfReader.xmp_metadata>`
     """
 
     def __init__(self, stream: ContentStream) -> None:
@@ -255,6 +255,8 @@ class XmpInformation(PdfObject):
         """
         warnings.warn(
             DEPR_MSG.format("getNodesInNamespace", "get_nodes_in_namespace"),
+            PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.get_nodes_in_namespace(aboutUri, namespace)
 
