@@ -22,7 +22,7 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.9324214668863358,
             "unit": "iter/sec",
             "range": "stddev: 0.004305996984652197",
@@ -49,14 +49,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.9422550305909239,
             "unit": "iter/sec",
             "range": "stddev: 0.006487516920717905",
             "extra": "mean: 1.0612838005999947 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 10.256656597871526,
             "unit": "iter/sec",
             "range": "stddev: 0.004297642398638799",
@@ -87,14 +87,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 1.0526627229158771,
             "unit": "iter/sec",
             "range": "stddev: 0.0067697065658216754",
             "extra": "mean: 949.9718934000043 msec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 11.38381983307977,
             "unit": "iter/sec",
             "range": "stddev: 0.004719622305106786",
@@ -125,14 +125,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.9530085273748775,
             "unit": "iter/sec",
             "range": "stddev: 0.012098282851842536",
             "extra": "mean: 1.049308554199996 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 10.434029435085847,
             "unit": "iter/sec",
             "range": "stddev: 0.0046057474193716705",
@@ -163,14 +163,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 1.05365515080177,
             "unit": "iter/sec",
             "range": "stddev: 0.005612559551809395",
             "extra": "mean: 949.0771238000008 msec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 11.561522963694742,
             "unit": "iter/sec",
             "range": "stddev: 0.0038475156847702775",
@@ -201,14 +201,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.950078836259226,
             "unit": "iter/sec",
             "range": "stddev: 0.005702058684478769",
             "extra": "mean: 1.0525442330000003 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 10.280940522982494,
             "unit": "iter/sec",
             "range": "stddev: 0.00423528362980359",
@@ -239,14 +239,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.9304874995964462,
             "unit": "iter/sec",
             "range": "stddev: 0.005964200812272813",
             "extra": "mean: 1.0747054640000016 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 10.056596564428304,
             "unit": "iter/sec",
             "range": "stddev: 0.0035597955706618586",
@@ -277,14 +277,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.9236413346619341,
             "unit": "iter/sec",
             "range": "stddev: 0.004035420224873149",
             "extra": "mean: 1.0826713384000015 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 9.939253390400175,
             "unit": "iter/sec",
             "range": "stddev: 0.0038204766514719417",
@@ -315,14 +315,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.8009431525956788,
             "unit": "iter/sec",
             "range": "stddev: 0.03857775783449113",
             "extra": "mean: 1.2485280593999988 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 8.39094445470576,
             "unit": "iter/sec",
             "range": "stddev: 0.006776916663739223",
@@ -353,14 +353,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.5706882244432586,
             "unit": "iter/sec",
             "range": "stddev: 0.014223725815557052",
             "extra": "mean: 1.752270254000004 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 8.80955246084517,
             "unit": "iter/sec",
             "range": "stddev: 0.004528453099679591",
@@ -391,14 +391,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.6484490309962616,
             "unit": "iter/sec",
             "range": "stddev: 0.004707152661956923",
             "extra": "mean: 1.5421412511999961 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 10.089894095260362,
             "unit": "iter/sec",
             "range": "stddev: 0.0007410550961924088",
@@ -429,14 +429,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.5540552761217961,
             "unit": "iter/sec",
             "range": "stddev: 0.0049744553903781135",
             "extra": "mean: 1.804874067800003 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 8.949716349828208,
             "unit": "iter/sec",
             "range": "stddev: 0.0008507589272494641",
@@ -467,14 +467,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.6479789131674737,
             "unit": "iter/sec",
             "range": "stddev: 0.003677746212021266",
             "extra": "mean: 1.543260096399996 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 10.12288684932602,
             "unit": "iter/sec",
             "range": "stddev: 0.006132508373283311",
@@ -505,14 +505,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.5062473877039959,
             "unit": "iter/sec",
             "range": "stddev: 0.020347651861574872",
             "extra": "mean: 1.9753188347999981 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 7.8468491530427995,
             "unit": "iter/sec",
             "range": "stddev: 0.007294014757637078",
@@ -543,14 +543,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.6476011688384089,
             "unit": "iter/sec",
             "range": "stddev: 0.013645267097183788",
             "extra": "mean: 1.5441602765999989 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 10.24335243186828,
             "unit": "iter/sec",
             "range": "stddev: 0.005659092465901196",
@@ -581,14 +581,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.541893603172852,
             "unit": "iter/sec",
             "range": "stddev: 0.019628717523265633",
             "extra": "mean: 1.8453807059999974 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 8.78432658130401,
             "unit": "iter/sec",
             "range": "stddev: 0.0025973099354251743",
@@ -619,14 +619,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.5308827521609454,
             "unit": "iter/sec",
             "range": "stddev: 0.07265480137831483",
             "extra": "mean: 1.8836550932000038 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 8.928300240309044,
             "unit": "iter/sec",
             "range": "stddev: 0.007008704187200776",
@@ -657,14 +657,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.5968691930782724,
             "unit": "iter/sec",
             "range": "stddev: 0.10524568460776369",
             "extra": "mean: 1.6754089700000008 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 9.975065944299576,
             "unit": "iter/sec",
             "range": "stddev: 0.0069488832822520805",
@@ -695,14 +695,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.6580371905513777,
             "unit": "iter/sec",
             "range": "stddev: 0.0040697971114903985",
             "extra": "mean: 1.5196709461999973 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 10.018692922795166,
             "unit": "iter/sec",
             "range": "stddev: 0.00440530782071321",
@@ -733,14 +733,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.5705970637383673,
             "unit": "iter/sec",
             "range": "stddev: 0.006161448737138847",
             "extra": "mean: 1.752550203200002 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 9.321006282639642,
             "unit": "iter/sec",
             "range": "stddev: 0.0016392937995490596",
@@ -771,14 +771,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.5266091808541599,
             "unit": "iter/sec",
             "range": "stddev: 0.04462753547546615",
             "extra": "mean: 1.8989414471999908 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 8.53769833696998,
             "unit": "iter/sec",
             "range": "stddev: 0.006891337436723719",
@@ -809,14 +809,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.49904665714763946,
             "unit": "iter/sec",
             "range": "stddev: 0.016996534436094574",
             "extra": "mean: 2.003820656200001 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 7.91783474963698,
             "unit": "iter/sec",
             "range": "stddev: 0.005104605993043909",
@@ -847,14 +847,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.4993369078003011,
             "unit": "iter/sec",
             "range": "stddev: 0.026954339188757847",
             "extra": "mean: 2.002655891000006 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 8.302262730048474,
             "unit": "iter/sec",
             "range": "stddev: 0.0012979079016196592",
@@ -885,14 +885,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.533021892422493,
             "unit": "iter/sec",
             "range": "stddev: 0.04128214521394912",
             "extra": "mean: 1.8760955491999993 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 8.931744670108035,
             "unit": "iter/sec",
             "range": "stddev: 0.0009845891608524406",
@@ -923,14 +923,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.6455807745487593,
             "unit": "iter/sec",
             "range": "stddev: 0.009333597564409836",
             "extra": "mean: 1.5489928439999914 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 10.110828960054192,
             "unit": "iter/sec",
             "range": "stddev: 0.007821850869459548",
@@ -961,14 +961,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.6541198244177866,
             "unit": "iter/sec",
             "range": "stddev: 0.003829907124529457",
             "extra": "mean: 1.5287718896000002 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 10.085985833131874,
             "unit": "iter/sec",
             "range": "stddev: 0.0006931207886781686",
@@ -999,14 +999,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.652312710979302,
             "unit": "iter/sec",
             "range": "stddev: 0.008901747430670692",
             "extra": "mean: 1.5330070734000003 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 10.376939144749729,
             "unit": "iter/sec",
             "range": "stddev: 0.0060005167688021105",
@@ -1037,14 +1037,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.5339640513290262,
             "unit": "iter/sec",
             "range": "stddev: 0.012493021925103417",
             "extra": "mean: 1.8727852511999998 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 8.75920949734288,
             "unit": "iter/sec",
             "range": "stddev: 0.00284369106426063",
@@ -1075,14 +1075,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.5350829750413725,
             "unit": "iter/sec",
             "range": "stddev: 0.031613512699053894",
             "extra": "mean: 1.8688690289999983 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 8.653130659753275,
             "unit": "iter/sec",
             "range": "stddev: 0.004827429409492978",
@@ -1113,14 +1113,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.6500721455982809,
             "unit": "iter/sec",
             "range": "stddev: 0.006260350447390519",
             "extra": "mean: 1.5382907986000078 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 10.383048126671477,
             "unit": "iter/sec",
             "range": "stddev: 0.005338950545449663",
@@ -1151,14 +1151,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.6534127715275444,
             "unit": "iter/sec",
             "range": "stddev: 0.0030763372688520432",
             "extra": "mean: 1.5304261618 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 10.089517366180937,
             "unit": "iter/sec",
             "range": "stddev: 0.0008623789855637931",
@@ -1189,14 +1189,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.6502136222433015,
             "unit": "iter/sec",
             "range": "stddev: 0.003251982470534682",
             "extra": "mean: 1.5379560897999967 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 10.026016520294906,
             "unit": "iter/sec",
             "range": "stddev: 0.0008580678769596281",
@@ -1227,14 +1227,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.5520707881894535,
             "unit": "iter/sec",
             "range": "stddev: 0.018268466912576466",
             "extra": "mean: 1.811361914800011 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 8.792815022718578,
             "unit": "iter/sec",
             "range": "stddev: 0.0010336042124188555",
@@ -1265,14 +1265,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.6415824680643019,
             "unit": "iter/sec",
             "range": "stddev: 0.006028124875887984",
             "extra": "mean: 1.5586460818000034 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 10.189942048271186,
             "unit": "iter/sec",
             "range": "stddev: 0.006762608643911026",
@@ -1303,14 +1303,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.744978809967256,
             "unit": "iter/sec",
             "range": "stddev: 0.0047688953823038305",
             "extra": "mean: 1.3423200587999986 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 11.643426095476853,
             "unit": "iter/sec",
             "range": "stddev: 0.005384084734819235",
@@ -1341,14 +1341,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.5525941267582756,
             "unit": "iter/sec",
             "range": "stddev: 0.004335068924803803",
             "extra": "mean: 1.8096464503999983 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 8.918099518311225,
             "unit": "iter/sec",
             "range": "stddev: 0.0013836104991058473",
@@ -1379,14 +1379,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.6511333754112755,
             "unit": "iter/sec",
             "range": "stddev: 0.005939225208470314",
             "extra": "mean: 1.5357836623999959 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 10.28649261251013,
             "unit": "iter/sec",
             "range": "stddev: 0.006082521245230465",
@@ -1417,14 +1417,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.6615813811562604,
             "unit": "iter/sec",
             "range": "stddev: 0.0046065495210667684",
             "extra": "mean: 1.5115298412000016 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 10.00428368875864,
             "unit": "iter/sec",
             "range": "stddev: 0.004433978733442472",
@@ -1455,14 +1455,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.6544444290869603,
             "unit": "iter/sec",
             "range": "stddev: 0.0032139339956374427",
             "extra": "mean: 1.5280136182000006 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 10.13957595768099,
             "unit": "iter/sec",
             "range": "stddev: 0.0007348270835737484",
@@ -1493,14 +1493,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.6549521794964375,
             "unit": "iter/sec",
             "range": "stddev: 0.006425753643669064",
             "extra": "mean: 1.5268290286000024 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 10.295506195647757,
             "unit": "iter/sec",
             "range": "stddev: 0.006403111875990784",
@@ -1531,14 +1531,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.7273790759126576,
             "unit": "iter/sec",
             "range": "stddev: 0.0041930713218297855",
             "extra": "mean: 1.3747989640000013 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 11.613264540689384,
             "unit": "iter/sec",
             "range": "stddev: 0.005972794829883468",
@@ -1569,14 +1569,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.6595642448645689,
             "unit": "iter/sec",
             "range": "stddev: 0.0027934216538311064",
             "extra": "mean: 1.5161525322000045 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 10.03107597243035,
             "unit": "iter/sec",
             "range": "stddev: 0.004474913223608447",
@@ -1607,14 +1607,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.5730060597961345,
             "unit": "iter/sec",
             "range": "stddev: 0.018179231162042064",
             "extra": "mean: 1.745182241799995 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 9.116730914362284,
             "unit": "iter/sec",
             "range": "stddev: 0.0012190247077632514",
@@ -1645,14 +1645,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.5648025130939326,
             "unit": "iter/sec",
             "range": "stddev: 0.028904580240274903",
             "extra": "mean: 1.7705303656000013 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 9.228001369841428,
             "unit": "iter/sec",
             "range": "stddev: 0.004177987880058724",
@@ -1683,14 +1683,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.6616531682541348,
             "unit": "iter/sec",
             "range": "stddev: 0.0035949971699881533",
             "extra": "mean: 1.5113658454000016 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 9.943860974640522,
             "unit": "iter/sec",
             "range": "stddev: 0.0047829961485161675",
@@ -1721,14 +1721,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.6619677017339488,
             "unit": "iter/sec",
             "range": "stddev: 0.003690628561990942",
             "extra": "mean: 1.5106477210000038 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 9.986055372417564,
             "unit": "iter/sec",
             "range": "stddev: 0.004534714433574842",
@@ -1759,14 +1759,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.6528417792666815,
             "unit": "iter/sec",
             "range": "stddev: 0.008126007738070226",
             "extra": "mean: 1.531764712000006 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 10.203348666866178,
             "unit": "iter/sec",
             "range": "stddev: 0.006634021469313385",
@@ -1797,14 +1797,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.5549167864033904,
             "unit": "iter/sec",
             "range": "stddev: 0.043146079989043136",
             "extra": "mean: 1.8020719944000063 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 8.942439011681005,
             "unit": "iter/sec",
             "range": "stddev: 0.004484850855279719",
@@ -1835,14 +1835,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.5464325263471695,
             "unit": "iter/sec",
             "range": "stddev: 0.007997181509643857",
             "extra": "mean: 1.830052114000003 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 8.927549861794354,
             "unit": "iter/sec",
             "range": "stddev: 0.0010864594569718394",
@@ -1873,14 +1873,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.6517502234565721,
             "unit": "iter/sec",
             "range": "stddev: 0.011350903544595869",
             "extra": "mean: 1.5343301222000008 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 10.248858811233584,
             "unit": "iter/sec",
             "range": "stddev: 0.006084210437525165",
@@ -1911,14 +1911,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.6529593825268383,
             "unit": "iter/sec",
             "range": "stddev: 0.004686145907465022",
             "extra": "mean: 1.531488828800002 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 10.199708238087558,
             "unit": "iter/sec",
             "range": "stddev: 0.006640646404993513",
@@ -1949,14 +1949,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.6599236178218959,
             "unit": "iter/sec",
             "range": "stddev: 0.010464724886038564",
             "extra": "mean: 1.515326884800001 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 10.119673911318733,
             "unit": "iter/sec",
             "range": "stddev: 0.005340151061360368",
@@ -1987,14 +1987,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.5019163662253934,
             "unit": "iter/sec",
             "range": "stddev: 0.0424229428461148",
             "extra": "mean: 1.9923638026000021 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 8.030111690231465,
             "unit": "iter/sec",
             "range": "stddev: 0.0024678264836649672",
@@ -2025,14 +2025,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.4807529335221447,
             "unit": "iter/sec",
             "range": "stddev: 0.027920571749779174",
             "extra": "mean: 2.0800705107999873 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 7.218363597837061,
             "unit": "iter/sec",
             "range": "stddev: 0.003874427666178201",
@@ -2063,14 +2063,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.5064319620757102,
             "unit": "iter/sec",
             "range": "stddev: 0.1197135605168158",
             "extra": "mean: 1.974598909400001 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 8.56222227677507,
             "unit": "iter/sec",
             "range": "stddev: 0.009266148921254243",
@@ -2101,14 +2101,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.6584098089297077,
             "unit": "iter/sec",
             "range": "stddev: 0.007816245602955785",
             "extra": "mean: 1.5188109084000003 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 9.522844651050827,
             "unit": "iter/sec",
             "range": "stddev: 0.0009774204855581411",
@@ -2139,14 +2139,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.6625144684497531,
             "unit": "iter/sec",
             "range": "stddev: 0.009516052739706142",
             "extra": "mean: 1.5094009982000003 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 9.558250576948518,
             "unit": "iter/sec",
             "range": "stddev: 0.0009916151322350054",
@@ -2177,14 +2177,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.6630140442381052,
             "unit": "iter/sec",
             "range": "stddev: 0.005091146774385556",
             "extra": "mean: 1.5082636766000008 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 9.511981827358483,
             "unit": "iter/sec",
             "range": "stddev: 0.0011029492997410102",
@@ -2215,14 +2215,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.6384252319257784,
             "unit": "iter/sec",
             "range": "stddev: 0.0018992346807512022",
             "extra": "mean: 1.5663541319999978 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 8.974341227663079,
             "unit": "iter/sec",
             "range": "stddev: 0.0016946913288356541",
@@ -2253,14 +2253,14 @@ window.BENCHMARK_DATA = {
         "tool": "pytest",
         "benches": [
           {
-            "name": "Tests/bench.py::test_page_operations",
+            "name": "tests/bench.py::test_page_operations",
             "value": 0.6522020864438595,
             "unit": "iter/sec",
             "range": "stddev: 0.004528216613580067",
             "extra": "mean: 1.5332670973999996 sec\nrounds: 5"
           },
           {
-            "name": "Tests/bench.py::test_merge",
+            "name": "tests/bench.py::test_merge",
             "value": 9.312115022439992,
             "unit": "iter/sec",
             "range": "stddev: 0.0009052046268716951",
