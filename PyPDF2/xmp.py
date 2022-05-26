@@ -98,7 +98,7 @@ def _getter_bag(namespace: str, name: str) -> Optional[Any]:
         if cached:
             return cached
         retval = []
-        for element in self.getElement("", namespace, name):
+        for element in self.get_element("", namespace, name):
             bags = element.getElementsByTagNameNS(RDF_NAMESPACE, "Bag")
             if len(bags):
                 for bag in bags:
@@ -233,6 +233,8 @@ class XmpInformation(PdfObject):
         """
         warnings.warn(
             DEPR_MSG.format("getElement", "get_element"),
+            PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.get_element(aboutUri, namespace, name)
 
