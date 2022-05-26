@@ -1,7 +1,7 @@
 import os
 
 import PyPDF2
-from PyPDF2 import PdfReader
+from PyPDF2 import PdfReader, Transformation
 from PyPDF2.generic import Destination
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -18,9 +18,19 @@ def page_ops(pdf_path, password):
         reader.decrypt(password)
 
     page = reader.pages[0]
-    page.mergeRotatedScaledPage(page, 90, 1, 1)
-    page.mergeScaledTranslatedPage(page, 1, 1, 1)
-    page.mergeRotatedScaledTranslatedPage(page, 90, 1, 1, 1, 1)
+
+    op = Transformation().rotate(90).scale(1.2)
+    page.add_transformation(op)
+    page.merge_page(page)
+
+    op = Transformation().scale(1).translate(tx=1, ty=1)
+    page.add_transformation(op)
+    page.merge_page(page)
+
+    op = Transformation().rotate(90).scale(1).translate(tx=1, ty=1)
+    page.add_transformation(op)
+    page.merge_page(page)
+
     page.add_transformation((1, 0, 0, 0, 0, 0))
     page.scale(2, 2)
     page.scale_by(0.5)
