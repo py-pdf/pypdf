@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1653555807896,
+  "lastUpdate": 1653567219495,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -2493,6 +2493,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00774379559540266",
             "extra": "mean: 119.33333033333484 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "68515c94dab84472ab634e297a8da73d28a0ca6e",
+          "message": "TST: Remove -OO testrun from CI (#901)\n\nWe needed it because we were manipulating a docstring programmatically.\r\n\r\nAs long as we don't rely on assert / docstrings being present, we don't need to test with -OO.",
+          "timestamp": "2022-05-26T14:12:55+02:00",
+          "tree_id": "5d7f931822a7ac707c3a6b15a734b87a2f79a1ba",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/68515c94dab84472ab634e297a8da73d28a0ca6e"
+        },
+        "date": 1653567218638,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6833658274627129,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008813469618698819",
+            "extra": "mean: 1.463345048599996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.791071555138185,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0051502754177186385",
+            "extra": "mean: 102.13386700000342 msec\nrounds: 10"
           }
         ]
       }
