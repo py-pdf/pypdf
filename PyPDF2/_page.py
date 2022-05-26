@@ -143,24 +143,28 @@ class Transformation:
     Specify a 2D transformation.
 
     The transformation between two coordinate systems is represented by a 3-by-3
-    transformation matrix written as follows:
+    transformation matrix written as follows::
+
         a b 0
         c d 0
         e f 1
+
     Because a transformation matrix has only six elements that can be changed,
     it is usually specified in PDF as the six-element array [ a b c d e f ].
 
-    Coordinate transformations are expressed as matrix multiplications:
+    Coordinate transformations are expressed as matrix multiplications::
 
                                  a b 0
      [ x′ y′ 1 ] = [ x y 1 ] ×   c d 0
                                  e f 1
 
+
     Usage
     -----
-    >>> from PyPDF2 import Transformation
-    >>> op = Transformation().scale(sx=2, sy=3).translate(tx=10, ty=20)
-    >>> page.add_transformation(op)
+
+        >>> from PyPDF2 import Transformation
+        >>> op = Transformation().scale(sx=2, sy=3).translate(tx=10, ty=20)
+        >>> page.add_transformation(op)
     """
 
     # 9.5.4 Coordinate Systems for 3D
@@ -881,7 +885,7 @@ class PageObject(DictionaryObject):
 
         :param tuple ctm: A 6-element tuple containing the operands of the
             transformation matrix. Alternatively, a
-            :class:`Transformation<PyPDF2._page.Transformation>`
+            :py:class:`Transformation<PyPDF2.Transformation>`
             object can be passed.
 
         See :doc:`/user/cropping-and-transforming`.
