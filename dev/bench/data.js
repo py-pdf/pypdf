@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1653567219495,
+  "lastUpdate": 1653577928217,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -2531,6 +2531,44 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0051502754177186385",
             "extra": "mean: 102.13386700000342 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ed952f91889fb6acc238ab0368fe93f2d533c1c6",
+          "message": "TST: Use new PyPDF2 API in benchmark (#902)",
+          "timestamp": "2022-05-26T17:11:15+02:00",
+          "tree_id": "13936811568a88831180966ca0e33cb890d02bda",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/ed952f91889fb6acc238ab0368fe93f2d533c1c6"
+        },
+        "date": 1653577926882,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.510090187706591,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0189891174726544",
+            "extra": "mean: 1.9604376326000021 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 7.7421016818198245,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004520191677219272",
+            "extra": "mean: 129.1638938749955 msec\nrounds: 8"
           }
         ]
       }
