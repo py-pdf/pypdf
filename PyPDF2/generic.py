@@ -704,7 +704,8 @@ class DictionaryObject(dict, PdfObject):
     def __getitem__(self, key):
         return dict.__getitem__(self, key).get_object()
 
-    def getXmpMetadata(self):
+    @property
+    def xmp_metadata(self):
         """
         Retrieve XMP (Extensible Metadata Platform) data relevant to the
         this object, if available.
@@ -725,15 +726,31 @@ class DictionaryObject(dict, PdfObject):
             self[NameObject("/Metadata")] = metadata
         return metadata
 
+    def getXmpMetadata(self):  # XmpInformation
+        """
+        .. deprecated:: 1.28.3
+            Use :meth:`xmp_metadata` instead.
+        """
+        warnings.warn(
+            "getXmpMetadata will be removed in PyPDF2 2.0.0. "
+            "Use xmp_metadata instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.xmp_metadata
+
     @property
     def xmpMetadata(self):
         """
-        Read-only property that accesses the {@link
-        #DictionaryObject.getXmpData getXmpData} function.
-        <p>
-        Stability: Added in v1.12, will exist for all future v1.x releases.
+        .. deprecated:: 1.28.3
+            Use :meth:`xmp_metadata` instead.
         """
-        return self.getXmpMetadata()
+        warnings.warn(
+            "xmpMetadata will be removed in PyPDF2 2.0.0. Use xmp_metadata instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.xmp_metadata
 
     def write_to_stream(self, stream, encryption_key):
         stream.write(b_("<<\n"))
@@ -888,6 +905,14 @@ class TreeObject(DictionaryObject):
             child = child["/Next"]
 
     def addChild(self, child, pdf):
+        warnings.warn(
+            DEPR_MSG.format("addChild", "add_child"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.add_child(child, pdf)
+
+    def add_child(self, child, pdf):  # PdfReader
         child_obj = child.get_object()
         child = pdf.getReference(child_obj)
         assert isinstance(child, IndirectObject)
@@ -913,6 +938,14 @@ class TreeObject(DictionaryObject):
         child_obj[NameObject("/Parent")] = parent_ref
 
     def removeChild(self, child):
+        warnings.warn(
+            DEPR_MSG.format("removeChild", "remove_child"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.remove_child(child)
+
+    def remove_child(self, child):
         child_obj = child.get_object()
 
         if NameObject("/Parent") not in child_obj:
@@ -1000,7 +1033,25 @@ class TreeObject(DictionaryObject):
 class StreamObject(DictionaryObject):
     def __init__(self):
         self._data = None
-        self.decodedSelf = None
+        self.decoded_self = None
+
+    @property
+    def decodedSelf(self):
+        warnings.warn(
+            DEPR_MSG.format("decodedSelf", "decoded_self"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.decoded_self
+
+    @decodedSelf.setter
+    def decodedSelf(self, value):
+        warnings.warn(
+            DEPR_MSG.format("decodedSelf", "decoded_self"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.decoded_self = value
 
     def write_to_stream(self, stream, encryption_key):
         self[NameObject(SA.LENGTH)] = NumberObject(len(self._data))
@@ -1026,6 +1077,14 @@ class StreamObject(DictionaryObject):
         return retval
 
     def flateEncode(self):
+        warnings.warn(
+            DEPR_MSG.format("flateEncode", "flate_encode"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.flate_encode()
+
+    def flate_encode(self):
         if SA.FILTER in self:
             f = self[SA.FILTER]
             if isinstance(f, ArrayObject):
@@ -1044,21 +1103,55 @@ class StreamObject(DictionaryObject):
 
 
 class DecodedStreamObject(StreamObject):
+    def get_data(self):
+        return self._data
+
+    def set_data(self, data):
+        self._data = data
+
     def getData(self):
+        warnings.warn(
+            DEPR_MSG.format("decodedSelf", "decoded_self"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
         return self._data
 
     def setData(self, data):
-        self._data = data
+        warnings.warn(
+            DEPR_MSG.format("decodedSelf", "decoded_self"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.set_data(data)
 
 
 class EncodedStreamObject(StreamObject):
     def __init__(self):
-        self.decodedSelf = None
+        self.decoded_self = None
 
-    def getData(self):
-        if self.decodedSelf:
+    @property
+    def decodedSelf(self):
+        warnings.warn(
+            DEPR_MSG.format("decodedSelf", "decoded_self"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.decoded_self
+
+    @decodedSelf.setter
+    def decodedSelf(self, value):
+        warnings.warn(
+            DEPR_MSG.format("decodedSelf", "decoded_self"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.decoded_self = value
+
+    def get_data(self):
+        if self.decoded_self:
             # cached version of decoded object
-            return self.decodedSelf.getData()
+            return self.decoded_self.get_data()
         else:
             # create decoded object
             decoded = DecodedStreamObject()
@@ -1067,10 +1160,10 @@ class EncodedStreamObject(StreamObject):
             for key, value in list(self.items()):
                 if key not in (SA.LENGTH, SA.FILTER, SA.DECODE_PARMS):
                     decoded[key] = value
-            self.decodedSelf = decoded
+            self.decoded_self = decoded
             return decoded._data
 
-    def setData(self, data):
+    def set_data(self, data):
         raise PdfReadError("Creating EncodedStreamObject is not currently supported")
 
 
@@ -1084,10 +1177,10 @@ class ContentStream(DecodedStreamObject):
         if isinstance(stream, ArrayObject):
             data = b_("")
             for s in stream:
-                data += b_(s.get_object().getData())
+                data += b_(s.get_object().get_data())
             stream = BytesIO(b_(data))
         else:
-            stream = BytesIO(b_(stream.getData()))
+            stream = BytesIO(b_(stream.get_data()))
         self.__parseContentStream(stream)
 
     def __parseContentStream(self, stream):
@@ -1223,12 +1316,20 @@ class RectangleObject(ArrayObject):
         # must have four points
         assert len(arr) == 4
         # automatically convert arr[x] into NumberObject(arr[x]) if necessary
-        ArrayObject.__init__(self, [self.ensureIsNumber(x) for x in arr])
+        ArrayObject.__init__(self, [self._ensure_is_number(x) for x in arr])
 
-    def ensureIsNumber(self, value):
+    def _ensure_is_number(self, value):
         if not isinstance(value, (NumberObject, FloatObject)):
             value = FloatObject(value)
         return value
+
+    def ensureIsNumber(self, value):
+        warnings.warn(
+            "ensureIsNumber will be removed in PyPDF2 2.0.0. ",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self._ensure_is_number(value)
 
     def __repr__(self):
         return "RectangleObject(%s)" % repr(list(self))
@@ -1323,7 +1424,7 @@ class RectangleObject(ArrayObject):
 
     @lower_left.setter
     def lower_left(self, value):
-        self[0], self[1] = [self.ensureIsNumber(x) for x in value]
+        self[0], self[1] = [self._ensure_is_number(x) for x in value]
 
     @property
     def lower_right(self):
@@ -1335,7 +1436,7 @@ class RectangleObject(ArrayObject):
 
     @lower_right.setter
     def lower_right(self, value):
-        self[2], self[1] = [self.ensureIsNumber(x) for x in value]
+        self[2], self[1] = [self._ensure_is_number(x) for x in value]
 
     @property
     def upper_left(self):
@@ -1347,7 +1448,7 @@ class RectangleObject(ArrayObject):
 
     @upper_left.setter
     def upper_left(self, value):
-        self[0], self[3] = [self.ensureIsNumber(x) for x in value]
+        self[0], self[3] = [self._ensure_is_number(x) for x in value]
 
     @property
     def upper_right(self):
@@ -1359,7 +1460,7 @@ class RectangleObject(ArrayObject):
 
     @upper_right.setter
     def upper_right(self, value):
-        self[2], self[3] = [self.ensureIsNumber(x) for x in value]
+        self[2], self[3] = [self._ensure_is_number(x) for x in value]
 
     def getLowerLeft(self):
         warnings.warn(
@@ -1407,7 +1508,7 @@ class RectangleObject(ArrayObject):
             PendingDeprecationWarning,
             stacklevel=2,
         )
-        self[2], self[1] = [self.ensureIsNumber(x) for x in value]
+        self[2], self[1] = [self._ensure_is_number(x) for x in value]
 
     def setUpperLeft(self, value):
         warnings.warn(
@@ -1415,7 +1516,7 @@ class RectangleObject(ArrayObject):
             PendingDeprecationWarning,
             stacklevel=2,
         )
-        self[0], self[3] = [self.ensureIsNumber(x) for x in value]
+        self[0], self[3] = [self._ensure_is_number(x) for x in value]
 
     def setUpperRight(self, value):
         warnings.warn(
@@ -1423,7 +1524,7 @@ class RectangleObject(ArrayObject):
             PendingDeprecationWarning,
             stacklevel=2,
         )
-        self[2], self[3] = [self.ensureIsNumber(x) for x in value]
+        self[2], self[3] = [self._ensure_is_number(x) for x in value]
 
     @property
     def width(self):
@@ -1517,7 +1618,7 @@ class RectangleObject(ArrayObject):
 class Field(TreeObject):
     """
     A class representing a field dictionary. This class is accessed through
-    :meth:`getFields()<PyPDF2.PdfReader.getFields>`
+    :meth:`get_fields()<PyPDF2.PdfReader.get_fields>`
     """
 
     def __init__(self, data):
@@ -1541,9 +1642,23 @@ class Field(TreeObject):
                 pass
 
     @property
-    def fieldType(self):
+    def field_type(self):
         """Read-only property accessing the type of this field."""
         return self.get("/FT")
+
+    @property
+    def fieldType(self):
+        """
+        .. deprecated:: 1.28.3
+            Use :py:attr:`field_type` instead.
+        """
+        warnings.warn(
+            "fieldType will be removed in PyPDF2 2.0.0. "
+            "Use the field_type property instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.field_type
 
     @property
     def parent(self):
@@ -1561,18 +1676,46 @@ class Field(TreeObject):
         return self.get("/T")
 
     @property
-    def altName(self):
+    def alternate_name(self):
         """Read-only property accessing the alternate name of this field."""
         return self.get("/TU")
 
     @property
-    def mappingName(self):
+    def altName(self):
+        """
+        .. deprecated:: 1.28.3
+            Use :py:attr:`alternate_name` instead.
+        """
+        warnings.warn(
+            "altName will be removed in PyPDF2 2.0.0. "
+            "Use the alternate_name property instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.alternate_name
+
+    @property
+    def mapping_name(self):
         """
         Read-only property accessing the mapping name of this field. This
         name is used by PyPDF2 as a key in the dictionary returned by
-        :meth:`getFields()<PyPDF2.PdfReader.getFields>`
+        :meth:`get_fields()<PyPDF2.PdfReader.get_fields>`
         """
         return self.get("/TM")
+
+    @property
+    def mappingName(self):
+        """
+        .. deprecated:: 1.28.3
+            Use :py:attr:`mapping_name` instead.
+        """
+        warnings.warn(
+            "mappingName will be removed in PyPDF2 2.0.0. "
+            "Use the mapping_name property instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.mapping_name
 
     @property
     def flags(self):
@@ -1591,18 +1734,46 @@ class Field(TreeObject):
         return self.get("/V")
 
     @property
-    def defaultValue(self):
+    def default_value(self):
         """Read-only property accessing the default value of this field."""
         return self.get("/DV")
 
     @property
-    def additionalActions(self):
+    def defaultValue(self):
+        """
+        .. deprecated:: 1.28.3
+            Use :py:attr:`default_value` instead.
+        """
+        warnings.warn(
+            "defaultValue will be removed in PyPDF2 2.0.0. "
+            "Use the default_value property instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.default_value
+
+    @property
+    def additional_actions(self):
         """
         Read-only property accessing the additional actions dictionary.
         This dictionary defines the field's behavior in response to trigger events.
         See Section 8.5.2 of the PDF 1.7 reference.
         """
         self.get("/AA")
+
+    @property
+    def additionalActions(self):
+        """
+        .. deprecated:: 1.28.3
+            Use :py:attr:`additional_actions` instead.
+        """
+        warnings.warn(
+            "additionalActions will be removed in PyPDF2 2.0.0. "
+            "Use the additional_actions property instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.additional_actions
 
 
 class Destination(TreeObject):
@@ -1670,7 +1841,8 @@ class Destination(TreeObject):
         else:
             raise PdfReadError("Unknown Destination Type: %r" % typ)
 
-    def getDestArray(self):
+    @property
+    def dest_array(self):
         return ArrayObject(
             [self.raw_get("/Page"), self["/Type"]]
             + [
@@ -1680,12 +1852,25 @@ class Destination(TreeObject):
             ]
         )
 
+    def getDestArray(self):
+        """
+        .. deprecated:: 1.28.3
+            Use :py:attr:`dest_array` instead.
+        """
+        warnings.warn(
+            "getDestArray will be removed in PyPDF2 2.0.0. "
+            "Use the dest_array property instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.dest_array
+
     def write_to_stream(self, stream, encryption_key):
         stream.write(b_("<<\n"))
         key = NameObject("/D")
         key.write_to_stream(stream, encryption_key)
         stream.write(b_(" "))
-        value = self.getDestArray()
+        value = self.dest_array
         value.write_to_stream(stream, encryption_key)
 
         key = NameObject("/S")
@@ -1786,7 +1971,7 @@ class Bookmark(Destination):
         key = NameObject("/Dest")
         key.write_to_stream(stream, encryption_key)
         stream.write(b_(" "))
-        value = self.getDestArray()
+        value = self.dest_array
         value.write_to_stream(stream, encryption_key)
         stream.write(b_("\n"))
         stream.write(b_(">>"))

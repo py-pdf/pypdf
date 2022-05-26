@@ -49,7 +49,7 @@ page_box = reader.pages[0]
 page_base.mergeTransformedPage(page_box, Transformation())
 # Write the result back
 writer = PdfWriter()
-writer.addPage(page_base)
+writer.add_page(page_base)
 with open("merged-foo.pdf", "wb") as fp:
     writer.write(fp)
 ```
@@ -71,7 +71,7 @@ op = Transformation().rotate(45)
 page_base.mergeTransformedPage(page_box, op)
 # Write the result back
 writer = PdfWriter()
-writer.addPage(page_base)
+writer.add_page(page_base)
 with open("merged-foo.pdf", "wb") as fp:
     writer.write(fp)
 ```

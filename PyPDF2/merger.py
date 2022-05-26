@@ -29,7 +29,7 @@ import warnings
 from sys import version_info
 
 from PyPDF2._reader import PdfReader
-from PyPDF2._utils import _isString, DEPR_MSG, str_
+from PyPDF2._utils import DEPR_MSG, _isString, str_
 from PyPDF2._writer import PdfWriter
 from PyPDF2.constants import PagesAttributes as PA
 from PyPDF2.generic import *
@@ -177,7 +177,7 @@ class PdfMerger(object):
 
         outline = []
         if import_bookmarks:
-            outline = reader.get_outlines()
+            outline = reader.outlines
             outline = self._trim_outline(reader, outline, pages)
 
         if bookmark:
@@ -272,7 +272,7 @@ class PdfMerger(object):
         usage.
         """
         self.pages = []
-        for fo, _pdfr, mine in self.inputs:
+        for fo, _reader, mine in self.inputs:
             if mine:
                 fo.close()
 
@@ -639,7 +639,7 @@ class PdfMerger(object):
         dest = Destination(
             NameObject("/" + title + " bookmark"), page_ref, NameObject(fit), *zoom_args
         )
-        dest_array = dest.getDestArray()
+        dest_array = dest.dest_array
         action.update(
             {NameObject("/D"): dest_array, NameObject("/S"): NameObject("/GoTo")}
         )
@@ -674,7 +674,7 @@ class PdfMerger(object):
 
         bookmark_ref = self.output._add_object(bookmark)
         parent = parent.get_object()
-        parent.addChild(bookmark_ref, self.output)
+        parent.add_child(bookmark_ref, self.output)
 
         return bookmark_ref
 
@@ -747,7 +747,7 @@ class OutlinesObject(list):
 
         self.pdf._addObject(bookmark)
 
-        self.tree.addChild(bookmark)
+        self.tree.add_child(bookmark)
 
     def removeAll(self):
         for child in self.tree.children():

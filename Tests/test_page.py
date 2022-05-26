@@ -71,7 +71,7 @@ def test_page_operations(pdf_path, password):
     page.scale(2, 2)
     page.scaleBy(0.5)
     page.scaleTo(100, 100)
-    page.compressContentStreams()
+    page.compress_content_streams()
     page.extract_text()
 
 
@@ -92,7 +92,7 @@ def test_compress_content_streams(pdf_path, password):
     if password:
         reader.decrypt(password)
     for page in reader.pages:
-        page.compressContentStreams()
+        page.compress_content_streams()
 
 
 def test_page_properties():
