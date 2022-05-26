@@ -85,7 +85,7 @@ logger = logging.getLogger(__name__)
 class PdfWriter:
     """
     This class supports writing PDF files out, given pages produced by another
-    class (typically :class:`PdfReader<PdfReader>`).
+    class (typically :class:`PdfReader<PyPDF2.PdfReader>`).
     """
 
     def __init__(self) -> None:
@@ -183,7 +183,7 @@ class PdfWriter:
     def add_page(self, page: PageObject) -> None:
         """
         Add a page to this PDF file.  The page is usually acquired from a
-        :class:`PdfReader<PdfReader>` instance.
+        :class:`PdfReader<PyPDF2.PdfReader>` instance.
 
         :param PageObject page: The page to add to the document. Should be
             an instance of :class:`PageObject<PyPDF2._page.PageObject>`
@@ -206,7 +206,7 @@ class PdfWriter:
     def insert_page(self, page: PageObject, index: int = 0) -> None:
         """
         Insert a page in this PDF file. The page is usually acquired from a
-        :class:`PdfReader<PdfReader>` instance.
+        :class:`PdfReader<PyPDF2.PdfReader>` instance.
 
         :param PageObject page: The page to add to the document.  This
             argument should be an instance of :class:`PageObject<PyPDF2._page.PageObject>`.
@@ -447,7 +447,7 @@ class PdfWriter:
         endobj
         """
         file_entry = DecodedStreamObject()
-        file_entry.setData(data)
+        file_entry.set_data(data)
         file_entry.update({NameObject(PA.TYPE): NameObject("/EmbeddedFile")})
 
         # The Filespec entry
@@ -1040,7 +1040,7 @@ class PdfWriter:
             parent = outline_ref
 
         parent = cast(TreeObject, parent.get_object())
-        parent.addChild(dest_ref, self)
+        parent.add_child(dest_ref, self)
 
         return dest_ref
 
@@ -1082,7 +1082,7 @@ class PdfWriter:
 
         parent = parent.get_object()  # type: ignore
         assert parent is not None, "hint for mypy"
-        parent.addChild(bookmark_ref, self)
+        parent.add_child(bookmark_ref, self)
 
         return bookmark_ref
 
@@ -1136,7 +1136,7 @@ class PdfWriter:
         dest = Destination(
             NameObject("/" + title + " bookmark"), page_ref, NameObject(fit), *zoom_args
         )
-        dest_array = dest.getDestArray()
+        dest_array = dest.dest_array
         action.update(
             {NameObject("/D"): dest_array, NameObject("/S"): NameObject("/GoTo")}
         )
@@ -1173,7 +1173,7 @@ class PdfWriter:
 
         assert parent is not None, "hint for mypy"
         parent_obj = cast(TreeObject, parent.get_object())
-        parent_obj.addChild(bookmark_ref, self)
+        parent_obj.add_child(bookmark_ref, self)
 
         return bookmark_ref
 
@@ -1579,7 +1579,7 @@ class PdfWriter:
         dest = Destination(
             NameObject("/LinkName"), page_dest, NameObject(fit), *zoom_args
         )  # TODO: create a better name for the link
-        dest_array = dest.getDestArray()
+        dest_array = dest.dest_array
 
         lnk = DictionaryObject()
         lnk.update(
@@ -1629,14 +1629,6 @@ class PdfWriter:
     ]
 
     def _get_page_layout(self) -> Optional[LayoutType]:
-        """
-        Get the page layout.
-
-        See :meth:`setPageLayout()<PdfWriter.setPageLayout>` for a description of valid layouts.
-
-        :return: Page layout currently being used.
-        :rtype: str, None if not specified
-        """
         try:
             return cast(LayoutType, self._root_object["/PageLayout"])
         except KeyError:
@@ -1771,14 +1763,6 @@ class PdfWriter:
     ]
 
     def _get_page_mode(self) -> Optional[PagemodeType]:
-        """
-        Get the page mode.
-        See :meth:`setPageMode()<PdfWriter.setPageMode>` for a description
-        of valid modes.
-
-        :return: Page mode currently being used.
-        :rtype: str, None if not specified.
-        """
         try:
             return cast(PagemodeType, self._root_object["/PageMode"])
         except KeyError:

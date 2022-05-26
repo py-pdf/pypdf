@@ -98,7 +98,7 @@ def _getter_bag(namespace: str, name: str) -> Optional[Any]:
         if cached:
             return cached
         retval = []
-        for element in self.getElement("", namespace, name):
+        for element in self.get_element("", namespace, name):
             bags = element.getElementsByTagNameNS(RDF_NAMESPACE, "Bag")
             if len(bags):
                 for bag in bags:
@@ -186,12 +186,12 @@ def _getter_single(
 class XmpInformation(PdfObject):
     """
     An object that represents Adobe XMP metadata.
-    Usually accessed by :meth:`getXmpMetadata()<PyPDF2.PdfReader.getXmpMetadata>`
+    Usually accessed by :py:attr:`xmp_metadata()<PyPDF2.PdfReader.xmp_metadata>`
     """
 
     def __init__(self, stream: ContentStream) -> None:
         self.stream = stream
-        doc_root: Document = parseString(self.stream.getData())
+        doc_root: Document = parseString(self.stream.get_data())
         self.rdfRoot: XmlElement = doc_root.getElementsByTagNameNS(
             RDF_NAMESPACE, "RDF"
         )[0]
@@ -233,6 +233,8 @@ class XmpInformation(PdfObject):
         """
         warnings.warn(
             DEPR_MSG.format("getElement", "get_element"),
+            PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.get_element(aboutUri, namespace, name)
 
@@ -255,6 +257,8 @@ class XmpInformation(PdfObject):
         """
         warnings.warn(
             DEPR_MSG.format("getNodesInNamespace", "get_nodes_in_namespace"),
+            PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.get_nodes_in_namespace(aboutUri, namespace)
 

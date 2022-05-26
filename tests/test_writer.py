@@ -354,10 +354,10 @@ def test_regression_issue670():
     filepath = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
     reader = PdfReader(filepath, strict=False)
     for _ in range(2):
-        pdf_writer = PdfWriter()
-        pdf_writer.add_page(reader.pages[0])
+        writer = PdfWriter()
+        writer.add_page(reader.pages[0])
         with open("dont_commit_issue670.pdf", "wb") as f_pdf:
-            pdf_writer.write(f_pdf)
+            writer.write(f_pdf)
 
 
 def test_issue301():
@@ -365,8 +365,8 @@ def test_issue301():
     Test with invalid stream length object
     """
     with open(os.path.join(RESOURCE_ROOT, "issue-301.pdf"), "rb") as f:
-        r = PdfReader(f)
-        w = PdfWriter()
-        w.append_pages_from_reader(r)
+        reader = PdfReader(f)
+        writer = PdfWriter()
+        writer.append_pages_from_reader(reader)
         o = BytesIO()
-        w.write(o)
+        writer.write(o)

@@ -1,5 +1,7 @@
 import os
 
+import pytest
+
 from PyPDF2 import PdfReader, PdfWriter
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -21,7 +23,9 @@ def test_basic_features():
     writer.add_page(reader.pages[0].rotate_clockwise(90))
 
     # add page 3 from input1, rotated the other way:
-    writer.add_page(reader.pages[0].rotateCounterClockwise(90))
+    with pytest.warns(PendingDeprecationWarning):
+        rotated = reader.pages[0].rotateCounterClockwise(90)
+    writer.add_page(rotated)
     # alt: output.addPage(input1.pages[0].rotate_clockwise(270))
 
     # add page 4 from input1, but first add a watermark from another PDF:
