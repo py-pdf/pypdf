@@ -200,3 +200,8 @@ def test_page_scale():
 
     assert op.scale(sx=2).ctm == (2, 0, 0, 2, 0, 0)
     assert op.scale(sy=3).ctm == (3, 0, 0, 3, 0, 0)
+
+
+def test_add_transformation_on_page_without_contents():
+    page = PageObject()
+    page.add_transformation(Transformation())
