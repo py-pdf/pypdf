@@ -200,7 +200,7 @@ class ArrayObject(list, PdfObject):
         self.write_to_stream(stream, encryption_key)
 
     @staticmethod
-    def read_from_stream(stream: StreamType, pdf: Any, forcedEncoding: Union[None,str,List[str],dict[int,str]] = None) -> "ArrayObject":  # PdfReader
+    def read_from_stream(stream: StreamType, pdf: Any, forcedEncoding: Union[None,str,List[str],Dict[int,str]] = None) -> "ArrayObject":  # PdfReader
         arr = ArrayObject()
         tmp = stream.read(1)
         if tmp != b_("["):
@@ -430,7 +430,7 @@ def readHexStringFromStream(
 
 def readStringFromStream(
     stream: StreamType,
-    forcedEncoding: Union[None,str,List[str],dict[int,str]] = None,
+    forcedEncoding: Union[None,str,List[str],Dict[int,str]] = None,
 ) -> Union["TextStringObject", "ByteStringObject"]:
     tok = stream.read(1)
     parens = 1
@@ -761,7 +761,7 @@ class DictionaryObject(dict, PdfObject):
     @staticmethod
     def read_from_stream(
         stream: StreamType, pdf: Any,  # PdfReader
-        forcedEncoding: Union[None,str,List[str],dict[int,str]] = None
+        forcedEncoding: Union[None,str,List[str],Dict[int,str]] = None
     ) -> "DictionaryObject":
         def getNextObjPos(
             p: int, p1: int, remGens: List[int], pdf: Any
@@ -1203,7 +1203,7 @@ class EncodedStreamObject(StreamObject):
 
 class ContentStream(DecodedStreamObject):
     def __init__(
-        self, stream: Any, pdf: Any, forcedEncoding: Union[None,str,List[str],dict[int,str]] = None
+        self, stream: Any, pdf: Any, forcedEncoding: Union[None,str,List[str],Dict[int,str]] = None
     ) -> None:
         self.pdf = pdf
 
@@ -1344,7 +1344,7 @@ class ContentStream(DecodedStreamObject):
 
 def read_object(
     stream: StreamType, pdf: Any,  # PdfReader
-    forcedEncoding:  Union[None,str,List[str],dict[int,str]] = None
+    forcedEncoding:  Union[None,str,List[str],Dict[int,str]] = None
 ) -> Union[PdfObject, int, str, ContentStream]:
     tok = stream.read(1)
     stream.seek(-1, 1)  # reset to start
@@ -2079,7 +2079,7 @@ class Bookmark(Destination):
 
 
 def createStringObject(
-    string: Union[str, bytes], forcedEncoding: Union[None,str,List[str],dict[int,str]] = None
+    string: Union[str, bytes], forcedEncoding: Union[None,str,List[str],Dict[int,str]] = None
 ) -> Union[TextStringObject, ByteStringObject]:
     """
     Given a string, create a ByteStringObject or a TextStringObject to
@@ -2701,11 +2701,11 @@ def rev_encoding(enc: List[str]) -> Dict[str, int]:
     return rev
 
 
-_pdfdoc_encoding_rev : dict[str,int] = rev_encoding(_pdfdoc_encoding)
-_win_encoding_rev : dict[str,int] = rev_encoding(_win_encoding)
-_mac_encoding_rev : dict[str,int] = rev_encoding(_mac_encoding)
+_pdfdoc_encoding_rev : Dict[str,int] = rev_encoding(_pdfdoc_encoding)
+_win_encoding_rev : Dict[str,int] = rev_encoding(_win_encoding)
+_mac_encoding_rev : Dict[str,int] = rev_encoding(_mac_encoding)
 
-charset_encoding : dict[str, List[str] ] = {
+charset_encoding : Dict[str, List[str] ] = {
     "/StandardCoding": _std_encoding,
     "/WinAnsiEncoding": _win_encoding,
     "/MacRomanEncoding": _mac_encoding,
