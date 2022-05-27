@@ -896,6 +896,7 @@ class PageObject(DictionaryObject):
         if content is not None:
             content = PageObject._add_transformation_matrix(content, self.pdf, ctm)
             content = PageObject._push_pop_gs(content, self.pdf)
+            self[NameObject(PG.CONTENTS)] = content
         # if expanding the page to fit a new page, calculate the new media box size
         if expand:
             corners = [
@@ -929,7 +930,6 @@ class PageObject(DictionaryObject):
 
             self.mediabox.lower_left = lowerleft
             self.mediabox.upper_right = upperright
-        self[NameObject(PG.CONTENTS)] = content
 
     def addTransformation(self, ctm: CompressedTransformationMatrix) -> None:
         """
