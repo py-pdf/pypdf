@@ -93,7 +93,7 @@ def _converter_date(value: str) -> datetime.datetime:
 
 
 def _getter_bag(namespace: str, name: str) -> Optional[Any]:
-    def get(self: XmpInformation) -> Optional[Any]:
+    def get(self: Any) -> Optional[Any]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
@@ -115,7 +115,7 @@ def _getter_bag(namespace: str, name: str) -> Optional[Any]:
 def _getter_seq(
     namespace: str, name: str, converter: Callable[[Any], Any] = _identity
 ) -> Optional[Any]:
-    def get(self: XmpInformation) -> Optional[Any]:
+    def get(self: Any) -> Optional[Any]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
@@ -139,7 +139,7 @@ def _getter_seq(
 
 
 def _getter_langalt(namespace: str, name: str) -> Optional[Any]:
-    def get(self: XmpInformation) -> Optional[Any]:
+    def get(self: Any) -> Optional[Any]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
@@ -163,7 +163,7 @@ def _getter_langalt(namespace: str, name: str) -> Optional[Any]:
 def _getter_single(
     namespace: str, name: str, converter: Callable[[str], Any] = _identity
 ) -> Optional[Any]:
-    def get(self: XmpInformation) -> Optional[Any]:
+    def get(self: Any) -> Optional[Any]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
