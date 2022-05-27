@@ -1653,7 +1653,7 @@ class PdfReader:
             if stream.tell() < 2:
                 raise PdfReadError("EOL marker not found")
             stream.seek(-2, 1)
-            if x == b_("\n") or x == b_("\r"):  ## \n = LF; \r = CR
+            if x == b_("\n") or x == b_("\r"):  # \n = LF; \r = CR
                 crlf = False
                 while x == b_("\n") or x == b_("\r"):
                     x = stream.read(1)

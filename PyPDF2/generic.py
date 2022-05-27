@@ -523,7 +523,7 @@ class ByteStringObject(bytes_type, PdfObject):  # type: ignore
         if encryption_key:
             from ._security import RC4_encrypt
 
-            bytearr = RC4_encrypt(encryption_key, bytearr)  #  type: ignore
+            bytearr = RC4_encrypt(encryption_key, bytearr)  # type: ignore
         stream.write(b_("<"))
         stream.write(hexencode(bytearr))
         stream.write(b_(">"))
@@ -2144,7 +2144,7 @@ _pdfDocEncoding = (
     "\u0004",
     "\u0005",
     "\u0006",
-    "\u0007",  #  0 -  7
+    "\u0007",  # 0 -  7
     "\u0008",
     "\u0009",
     "\u000a",
@@ -2152,7 +2152,7 @@ _pdfDocEncoding = (
     "\u000c",
     "\u000d",
     "\u000e",
-    "\u000f",  #  8 - 15
+    "\u000f",  # 8 - 15
     "\u0010",
     "\u0011",
     "\u0012",
