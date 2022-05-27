@@ -1076,7 +1076,7 @@ class PageObject(DictionaryObject):
         :return: a string object.
         """
         # code freely inspired from @twiggy ; see #711
-        def buildCharMap(font_name : str)->tuple[str,Dict,Dict]:
+        def buildCharMap(font_name : str)->Tuple[str,Dict,Dict]:
             mapDict : Any = {}
             processRg : bool = False
             processChar : bool = False
@@ -1178,7 +1178,7 @@ class PageObject(DictionaryObject):
         # ------- end of buildCharmap ------
         text: str = ""
         output: str = ""
-        cmaps: Dict[str, tuple[str, Dict[int,str],Dict[str,str]]]={}
+        cmaps: Dict[str, Tuple[str, Dict[int,str],Dict[str,str]]]={}
         if "/Font" in cast(DictionaryObject,self["/Resources"]):
             for f in cast(DictionaryObject,cast(DictionaryObject,self["/Resources"])["/Font"]):
                 cmaps[f] = buildCharMap(f)
