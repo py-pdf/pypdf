@@ -5,7 +5,7 @@
 # modification, are permitted provided that the following conditions are
 # met:
 #
-# * Redistri butions of source code must retain the above copyright notice,
+# * Redistributions of source code must retain the above copyright notice,
 # this list of conditions and the following disclaimer.
 # * Redistributions in binary form must reproduce the above copyright notice,
 # this list of conditions and the following disclaimer in the documentation
@@ -1221,7 +1221,7 @@ class ContentStream(DecodedStreamObject):
                 data += b_(s.get_object().get_data())
             stream = BytesIO(b_(data))
         else:
-            stream = BytesIO(b_(stream.getData()))
+            stream = BytesIO(b_(stream.get_data()))
         # self.savstream = stream
         self.forcedEncoding = forcedEncoding
         self.__parseContentStream(stream)

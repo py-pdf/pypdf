@@ -1130,7 +1130,7 @@ class PageObject(DictionaryObject):
                                    cast(DictionaryObject,self["/Resources"])["/Font"]
                               )[font_name]
                           )["/ToUnicode"])
-                    .getData()
+                    .get_data()
                     .decode("utf-8")
                 )
                 for l in (
