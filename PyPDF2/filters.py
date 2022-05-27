@@ -204,7 +204,7 @@ class LZWDecode:
     http://www.java2s.com/Open-Source/Java-Document/PDF/PDF-Renderer/com/sun/pdfview/decode/LZWDecode.java.htm
     """
 
-    class decoder:
+    class Decoder:
         def __init__(self, data: bytes) -> None:
             self.STOP = 257
             self.CLEARDICT = 256
@@ -293,7 +293,7 @@ class LZWDecode:
         :return: decoded data.
         :rtype: bytes
         """
-        return LZWDecode.decoder(data).decode()
+        return LZWDecode.Decoder(data).decode()
 
 
 class ASCII85Decode:
@@ -502,7 +502,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
     from PIL import Image
 
     size = (x_object_obj[IA.WIDTH], x_object_obj[IA.HEIGHT])
-    data = x_object_obj.getData()  # type: ignore
+    data = x_object_obj.get_data()  # type: ignore
     if x_object_obj[IA.COLOR_SPACE] == ColorSpaces.DEVICE_RGB:
         mode: Literal["RGB", "P"] = "RGB"
     else:
@@ -513,7 +513,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
             extension = ".png"
             img = Image.frombytes(mode, size, data)
             if G.S_MASK in x_object_obj:  # add alpha channel
-                alpha = Image.frombytes("L", size, x_object_obj[G.S_MASK].getData())
+                alpha = Image.frombytes("L", size, x_object_obj[G.S_MASK].get_data())
                 img.putalpha(alpha)
             img_byte_arr = BytesIO()
             img.save(img_byte_arr, format="PNG")

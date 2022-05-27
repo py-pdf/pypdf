@@ -19,11 +19,11 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
 )
 def test_read_xmp(src, has_xmp):
     reader = PdfReader(src)
-    xmp = reader.xmpMetadata
+    xmp = reader.xmp_metadata
     assert (xmp is None) == (not has_xmp)
     if has_xmp:
-        for el in xmp.getElement(
-            aboutUri="", namespace=PyPDF2.xmp.RDF_NAMESPACE, name="Artist"
+        for el in xmp.get_element(
+            about_uri="", namespace=PyPDF2.xmp.RDF_NAMESPACE, name="Artist"
         ):
             print(f"el={el}")
 
@@ -33,9 +33,10 @@ def test_read_xmp(src, has_xmp):
 
 def get_all_tiff(xmp):
     data = {}
-    tiff_ns = xmp.getNodesInNamespace(
-        aboutUri="", namespace="http://ns.adobe.com/tiff/1.0/"
-    )
+    with pytest.warns(PendingDeprecationWarning):
+        tiff_ns = xmp.getNodesInNamespace(
+            aboutUri="", namespace="http://ns.adobe.com/tiff/1.0/"
+        )
     for tag in tiff_ns:
         contents = []
         for content in tag.childNodes:

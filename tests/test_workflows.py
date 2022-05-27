@@ -32,7 +32,7 @@ def test_PdfReaderFileLoad():
         with open(os.path.join(RESOURCE_ROOT, "crazyones.txt"), "rb") as pdftext_file:
             pdftext = pdftext_file.read()
 
-        text = page.extractText(Tj_sep="", TJ_sep="").encode("utf-8")
+        text = page.extract_text(Tj_sep="", TJ_sep="").encode("utf-8")
 
         # Compare the text of the PDF to a known source
         for expected_line, actual_line in zip(text.split(b"\n"), pdftext.split(b"\n")):
@@ -60,7 +60,7 @@ def test_PdfReaderJpegImage():
 
         page = reader.pages[0]
         x_object = page[PG.RESOURCES]["/XObject"].get_object()
-        data = x_object["/Im4"].getData()
+        data = x_object["/Im4"].get_data()
 
         # Compare the text of the PDF to a known source
         assert binascii.hexlify(data).decode() == imagetext, (
@@ -76,9 +76,9 @@ def test_decrypt():
         reader = PdfFileReader(inputfile)
         assert reader.isEncrypted == True
         reader.decrypt("openpassword")
-        assert reader.numPages == 1
-        assert reader.isEncrypted == True
-        metadict = reader.getDocumentInfo()
+        assert len(reader.pages) == 1
+        assert reader.is_encrypted == True
+        metadict = reader.metadata
         assert dict(metadict) == {
             "/CreationDate": "D:20220403203552+02'00'",
             "/Creator": "Writer",
@@ -93,7 +93,8 @@ def test_rotate(degree):
     with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
         reader = PdfFileReader(inputfile)
         page = reader.pages[0]
-        page.rotateCounterClockwise(degree)
+        with pytest.warns(PendingDeprecationWarning):
+            page.rotateCounterClockwise(degree)
 
 
 def test_rotate_45():
@@ -101,7 +102,8 @@ def test_rotate_45():
         reader = PdfFileReader(inputfile)
         page = reader.pages[0]
         with pytest.raises(ValueError) as exc:
-            page.rotateCounterClockwise(45)
+            with pytest.warns(PendingDeprecationWarning):
+                page.rotateCounterClockwise(45)
         assert exc.value.args[0] == "Rotation angle must be a multiple of 90"
 
 

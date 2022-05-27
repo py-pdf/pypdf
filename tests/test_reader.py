@@ -6,10 +6,11 @@ from io import BytesIO
 import pytest
 
 from PyPDF2 import PdfReader
+from PyPDF2._reader import convert_to_int, convertToInt
 from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.constants import Ressources as RES
-from PyPDF2.errors import PdfReadError
+from PyPDF2.errors import PdfReadError, PdfReadWarning
 from PyPDF2.filters import _xobj_to_image
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -24,7 +25,7 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
 def test_get_num_pages(src, num_pages):
     src = os.path.join(RESOURCE_ROOT, src)
     reader = PdfReader(src)
-    assert reader.numPages == num_pages
+    assert len(reader.pages) == num_pages
 
 
 @pytest.mark.parametrize(
@@ -63,7 +64,9 @@ def test_get_num_pages(src, num_pages):
 def test_read_metadata(pdf_path, expected):
     with open(pdf_path, "rb") as inputfile:
         reader = PdfReader(inputfile)
-        docinfo = reader.documentInfo
+        with pytest.warns(PendingDeprecationWarning):
+            docinfo = reader.documentInfo
+        assert docinfo is not None
         metadict = dict(docinfo)
         assert metadict == expected
         docinfo.title
@@ -109,14 +112,14 @@ def test_get_attachments(src):
     reader = PdfReader(src)
 
     attachments = {}
-    for i in range(reader.numPages):
+    for i in range(len(reader.pages)):
         page = reader.pages[i]
         if PG.ANNOTS in page:
             for annotation in page[PG.ANNOTS]:
                 annotobj = annotation.get_object()
                 if annotobj[IA.SUBTYPE] == "/FileAttachment":
                     fileobj = annotobj["/FS"]
-                    attachments[fileobj["/F"]] = fileobj["/EF"]["/F"].getData()
+                    attachments[fileobj["/F"]] = fileobj["/EF"]["/F"].get_data()
     return attachments
 
 
@@ -129,7 +132,7 @@ def test_get_attachments(src):
 )
 def test_get_outlines(src, outline_elements):
     reader = PdfReader(src)
-    outlines = reader.getOutlines()
+    outlines = reader._get_outlines()
     assert len(outlines) == outline_elements
 
 
@@ -227,7 +230,8 @@ def test_get_images_raw(strict, with_prev_0, startx_correction, should_fail):
     pdf_stream = io.BytesIO(pdf_data)
     if should_fail:
         with pytest.raises(PdfReadError) as exc:
-            PdfReader(pdf_stream, strict=strict)
+            with pytest.warns(PdfReadWarning):
+                PdfReader(pdf_stream, strict=strict)
         assert exc.type == PdfReadError
         if startx_correction == -1:
             assert (
@@ -235,15 +239,18 @@ def test_get_images_raw(strict, with_prev_0, startx_correction, should_fail):
                 == "/Prev=0 in the trailer (try opening with strict=False)"
             )
     else:
-        PdfReader(pdf_stream, strict=strict)
+        with pytest.warns(PdfReadWarning):
+            PdfReader(pdf_stream, strict=strict)
 
 
 def test_issue297():
     path = os.path.join(RESOURCE_ROOT, "issue-297.pdf")
     with pytest.raises(PdfReadError) as exc:
-        reader = PdfReader(path, strict=True)
+        with pytest.warns(PdfReadWarning):
+            reader = PdfReader(path, strict=True)
     assert "Broken xref table" in exc.value.args[0]
-    reader = PdfReader(path, strict=False)
+    with pytest.warns(PdfReadWarning):
+        reader = PdfReader(path, strict=False)
     reader.pages[0]
 
 
@@ -295,22 +302,22 @@ def test_get_form(src, expected, expected_get_fields):
     fields = reader.get_form_text_fields()
     assert fields == expected
 
-    fields = reader.getFields()
+    fields = reader.get_fields()
     assert fields == expected_get_fields
     if fields:
         for field in fields.values():
             # Just access the attributes
             [
-                field.fieldType,
+                field.field_type,
                 field.parent,
                 field.kids,
                 field.name,
-                field.altName,
-                field.mappingName,
+                field.alternate_name,
+                field.mapping_name,
                 field.flags,
                 field.value,
-                field.defaultValue,
-                field.additionalActions,
+                field.default_value,
+                field.additional_actions,
             ]
 
 
@@ -325,7 +332,7 @@ def test_get_page_number(src, page_nb):
     src = os.path.join(RESOURCE_ROOT, src)
     reader = PdfReader(src)
     page = reader.pages[page_nb]
-    assert reader.getPageNumber(page) == page_nb
+    assert reader.get_page_number(page) == page_nb
 
 
 @pytest.mark.parametrize(
@@ -335,7 +342,7 @@ def test_get_page_number(src, page_nb):
 def test_get_page_layout(src, expected):
     src = os.path.join(RESOURCE_ROOT, src)
     reader = PdfReader(src)
-    assert reader.getPageLayout() == expected
+    assert reader.page_layout == expected
 
 
 @pytest.mark.parametrize(
@@ -402,7 +409,8 @@ def test_read_prev_0_trailer():
     )
     pdf_stream = io.BytesIO(pdf_data)
     with pytest.raises(PdfReadError) as exc:
-        PdfReader(pdf_stream, strict=True)
+        with pytest.warns(PdfReadWarning):
+            PdfReader(pdf_stream, strict=True)
     assert exc.value.args[0] == "/Prev=0 in the trailer (try opening with strict=False)"
 
 
@@ -472,14 +480,18 @@ def test_read_unknown_zero_pages():
         pdf_data.find(b"xref") - 1,
     )
     pdf_stream = io.BytesIO(pdf_data)
-    reader = PdfReader(pdf_stream, strict=True)
+    with pytest.warns(PdfReadWarning):
+        reader = PdfReader(pdf_stream, strict=True)
     with pytest.raises(PdfReadError) as exc:
-        reader.numPages
+        with pytest.warns(PdfReadWarning):
+            len(reader.pages)
 
     assert exc.value.args[0] == "Could not find object."
-    reader = PdfReader(pdf_stream, strict=False)
+    with pytest.warns(PdfReadWarning):
+        reader = PdfReader(pdf_stream, strict=False)
     with pytest.raises(AttributeError) as exc:
-        reader.numPages
+        with pytest.warns(PdfReadWarning):
+            len(reader.pages)
     assert exc.value.args[0] == "'NoneType' object has no attribute 'get_object'"
 
 
@@ -487,17 +499,17 @@ def test_read_encrypted_without_decryption():
     src = os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf")
     reader = PdfReader(src)
     with pytest.raises(PdfReadError) as exc:
-        reader.numPages
+        len(reader.pages)
     assert exc.value.args[0] == "File has not been decrypted"
 
 
 def test_get_destination_page_number():
     src = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
     reader = PdfReader(src)
-    outlines = reader.getOutlines()
+    outlines = reader._get_outlines()
     for outline in outlines:
         if not isinstance(outline, list):
-            reader.getDestinationPageNumber(outline)
+            reader.get_destination_page_number(outline)
 
 
 def test_do_not_get_stuck_on_large_files_without_start_xref():
@@ -525,7 +537,7 @@ def test_PdfReaderDecryptWhenNoID():
     ) as inputfile:
         ipdf = PdfReader(inputfile)
         ipdf.decrypt("")
-        assert ipdf.getDocumentInfo() == {"/Producer": "European Patent Office"}
+        assert ipdf.metadata == {"/Producer": "European Patent Office"}
 
 
 def test_reader_properties():
@@ -542,36 +554,36 @@ def test_reader_properties():
     [(True), (False)],
 )
 def test_issue604(strict):
-    """
-    Test with invalid destinations
-    """
+    """Test with invalid destinations"""  # todo
     with open(os.path.join(RESOURCE_ROOT, "issue-604.pdf"), "rb") as f:
         pdf = None
         bookmarks = None
         if strict:
             with pytest.raises(PdfReadError) as exc:
                 pdf = PdfReader(f, strict=strict)
-                bookmarks = pdf.getOutlines()
+                with pytest.warns(PdfReadWarning):
+                    bookmarks = pdf._get_outlines()
             if "Unknown Destination" not in exc.value.args[0]:
                 raise Exception("Expected exception not raised")
             return  # bookmarks not correct
         else:
             pdf = PdfReader(f, strict=strict)
-            bookmarks = pdf.getOutlines()
+            with pytest.warns(PdfReadWarning):
+                bookmarks = pdf._get_outlines()
 
-        def getDestPages(x):
+        def get_dest_pages(x):
             # print(x)
             if isinstance(x, list):
-                r = [getDestPages(y) for y in x]
+                r = [get_dest_pages(y) for y in x]
                 return r
             else:
-                return pdf.getDestinationPageNumber(x) + 1
+                return pdf.get_destination_page_number(x) + 1
 
         out = []
         for (
             b
         ) in bookmarks:  # b can be destination or a list:preferred to just print them
-            out.append(getDestPages(b))
+            out.append(get_dest_pages(b))
     # print(out)
 
 
@@ -603,3 +615,21 @@ def test_VirtualList():
 
     # Test if getting as slice throws an error
     assert len(reader.pages[:]) == 1
+
+
+def test_convert_to_int():
+    assert convert_to_int(b"\x01", 8) == 1
+
+
+def test_convert_to_int_error():
+    with pytest.raises(PdfReadError) as exc:
+        convert_to_int(b"256", 16)
+    assert exc.value.args[0] == "invalid size in convert_to_int"
+
+
+def test_convertToInt_deprecated():
+    with pytest.warns(
+        PendingDeprecationWarning,
+        match="convertToInt will be removed with PyPDF2 2.0.0. Use convert_to_int instead.",
+    ):
+        assert convertToInt(b"\x01", 8) == 1

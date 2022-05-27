@@ -149,7 +149,7 @@ class PdfMerger:
 
         outline = []
         if import_bookmarks:
-            outline = reader.get_outlines()
+            outline = reader.outlines
             outline = self._trim_outline(reader, outline, pages)
 
         if bookmark:
@@ -162,7 +162,7 @@ class PdfMerger:
         else:
             self.bookmarks += outline
 
-        dests = reader.namedDestinations
+        dests = reader.named_destinations
         trimmed_dests = self._trim_dests(reader, dests, pages)
         self.named_dests += trimmed_dests
 
@@ -296,7 +296,7 @@ class PdfMerger:
         usage.
         """
         self.pages = []
-        for fo, _pdfr, mine in self.inputs:
+        for fo, _reader, mine in self.inputs:
             if mine:
                 fo.close()
 
@@ -690,7 +690,7 @@ class PdfMerger:
         dest = Destination(
             NameObject("/" + title + " bookmark"), page_ref, NameObject(fit), *zoom_args
         )
-        dest_array = dest.getDestArray()
+        dest_array = dest.dest_array
         action.update(
             {NameObject("/D"): dest_array, NameObject("/S"): NameObject("/GoTo")}
         )
@@ -726,7 +726,7 @@ class PdfMerger:
         bookmark_ref = self.output._add_object(bookmark)
         parent = cast(Bookmark, parent.get_object())
         assert parent is not None, "hint for mypy"
-        parent.addChild(bookmark_ref, self.output)
+        parent.add_child(bookmark_ref, self.output)
 
         return bookmark_ref
 

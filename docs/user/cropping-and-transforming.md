@@ -7,18 +7,18 @@ reader = PdfReader("example.pdf")
 writer = PdfWriter()
 
 # add page 1 from reader to output document, unchanged:
-writer.addPage(reader.pages[0])
+writer.add_page(reader.pages[0])
 
 # add page 2 from reader, but rotated clockwise 90 degrees:
-writer.addPage(reader.pages[1].rotateClockwise(90))
+writer.add_page(reader.pages[1].rotate_clockwise(90))
 
 # add page 3 from reader, but crop it to half size:
 page3 = reader.pages[2]
-page3.mediaBox.upperRight = (
-    page3.mediaBox.getUpperRight_x() / 2,
-    page3.mediaBox.getUpperRight_y() / 2,
+page3.mediabox.upper_right = (
+    page3.mediabox.right / 2,
+    page3.mediabox.top / 2,
 )
-writer.addPage(page3)
+writer.add_page(page3)
 
 # add some Javascript to launch the print window on opening this PDF.
 # the password dialog may prevent the print dialog from being shown,
@@ -50,7 +50,7 @@ page_base.merge_page(page_box)
 
 # Write the result back
 writer = PdfWriter()
-writer.addPage(page_base)
+writer.add_page(page_base)
 with open("merged-foo.pdf", "wb") as fp:
     writer.write(fp)
 ```
@@ -76,7 +76,7 @@ page_base.merge_page(page_box)
 
 # Write the result back
 writer = PdfWriter()
-writer.addPage(page_base)
+writer.add_page(page_base)
 with open("merged-foo.pdf", "wb") as fp:
     writer.write(fp)
 ```

@@ -11,9 +11,8 @@ reader = PdfReader("example.pdf")
 writer = PdfWriter()
 
 # Add all pages to the writer
-for i in range(reader.numPages):
-    page = reader.pages[i]
-    writer.addPage(page)
+for page in reader.pages:
+    writer.add_page(page)
 
 # Add a password to the new PDF
 writer.encrypt("my-secret-password")
@@ -37,9 +36,8 @@ if reader.is_encrypted:
     reader.decrypt("my-secret-password")
 
 # Add all pages to the writer
-for i in range(reader.numPages):
-    page = reader.pages[i]
-    writer.addPage(page)
+for page in reader.pages:
+    writer.add_page(page)
 
 # Save the new PDF to a file
 with open("decrypted-pdf.pdf", "wb") as f:

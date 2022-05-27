@@ -94,7 +94,7 @@ from .xmp import XmpInformation
 
 def convert_to_int(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:
     if size > 8:
-        raise PdfReadError("invalid size in convertToInt")
+        raise PdfReadError("invalid size in convert_to_int")
     d = b_("\x00\x00\x00\x00\x00\x00\x00\x00") + b_(d)
     d = d[-8:]
     return struct.unpack(">q", d)[0]
@@ -105,6 +105,7 @@ def convertToInt(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:
         "convertToInt will be removed with PyPDF2 2.0.0. "
         "Use convert_to_int instead.",
         PendingDeprecationWarning,
+        stacklevel=2,
     )
     return convert_to_int(d, size)
 
@@ -112,8 +113,7 @@ def convertToInt(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:
 class DocumentInformation(DictionaryObject):
     """
     A class representing the basic document metadata provided in a PDF File.
-    This class is accessible through
-    :meth:`.getDocumentInfo()`
+    This class is accessible through :py:class:`PdfReader.metadata<PyPDF2.PdfReader.metadata>`.
 
     All text properties of the document metadata have
     *two* properties, eg. author and author_raw. The non-raw property will
@@ -237,9 +237,9 @@ class PdfReader:
         self.flattened_pages: Optional[List[PageObject]] = None
         self.resolved_objects: Dict[Tuple[Any, Any], Optional[PdfObject]] = {}
         self.xref_index = 0
-        self._pageId2Num: Optional[
+        self._page_id2num: Optional[
             Dict[Any, Any]
-        ] = None  # map page IndirectRef number to Page Number
+        ] = None  # map page indirect_ref number to Page Number
         if hasattr(stream, "mode") and "b" not in stream.mode:  # type: ignore
             warnings.warn(
                 "PdfReader stream/file object is not in binary mode. "
@@ -316,7 +316,7 @@ class PdfReader:
         """
         try:
             self._override_encryption = True
-            return self.trailer[TK.ROOT].getXmpMetadata()  # type: ignore
+            return self.trailer[TK.ROOT].xmp_metadata  # type: ignore
         finally:
             self._override_encryption = False
 
@@ -407,6 +407,20 @@ class PdfReader:
         )
         return self._get_num_pages()
 
+    def getPage(self, pageNumber: int) -> PageObject:
+        """
+        .. deprecated:: 1.28.0
+
+            Use :code:`reader.pages[pageNumber]` instead.
+        """
+        warnings.warn(
+            "`getPage` of PdfReader will be removed in PyPDF2 2.0.0. "
+            "Use `reader.pages[pageNumber]` instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self._get_page(pageNumber)
+
     def _get_page(self, page_number: int) -> PageObject:
         """
         Retrieves a page by number from this PDF file.
@@ -433,6 +447,8 @@ class PdfReader:
         warnings.warn(
             "namedDestinations will be removed in PyPDF2 2.0.0. "
             "Use `named_destinations` instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.named_destinations
 
@@ -668,17 +684,16 @@ class PdfReader:
 
     @property
     def outlines(self) -> OutlinesType:
-        """Read-only property."""
-        return self.get_outlines()
-
-    def get_outlines(
-        self, node: Optional[DictionaryObject] = None, outlines: Optional[Any] = None
-    ) -> OutlinesType:
         """
-        Retrieve the document outline present in the document.
+        Read-only property for outlines present in the document.
 
         :return: a nested list of :class:`Destinations<PyPDF2.generic.Destination>`.
         """
+        return self._get_outlines()
+
+    def _get_outlines(
+        self, node: Optional[DictionaryObject] = None, outlines: Optional[Any] = None
+    ) -> OutlinesType:
         if outlines is None:
             outlines = []
             catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
@@ -710,7 +725,7 @@ class PdfReader:
             # check for sub-outlines
             if "/First" in node:
                 sub_outlines: List[Any] = []
-                self.getOutlines(cast(DictionaryObject, node["/First"]), sub_outlines)
+                self._get_outlines(cast(DictionaryObject, node["/First"]), sub_outlines)
                 if sub_outlines:
                     outlines.append(sub_outlines)
 
@@ -726,33 +741,33 @@ class PdfReader:
         """
         .. deprecated:: 1.28.0
 
-            Use :meth:`get_outlines` instead.
+            Use :py:attr:`outlines` instead.
         """
         warnings.warn(
-            "getOutlines will be removed in PyPDF2 2.0.0. Use get_outlines instead.",
+            "getOutlines will be removed in PyPDF2 2.0.0. Use the outlines attribute instead.",
             PendingDeprecationWarning,
             stacklevel=2,
         )
-        return self.get_outlines(node, outlines)
+        return self._get_outlines(node, outlines)
 
     def _get_page_number_by_indirect(
-        self, indirectRef: Union[None, int, NullObject, IndirectObject]
+        self, indirect_ref: Union[None, int, NullObject, IndirectObject]
     ) -> int:
-        """Generate _pageId2Num"""
-        if self._pageId2Num is None:
+        """Generate _page_id2num"""
+        if self._page_id2num is None:
             id2num = {}
             for i, x in enumerate(self.pages):
-                id2num[x.indirectRef.idnum] = i  # type: ignore
-            self._pageId2Num = id2num
+                id2num[x.indirect_ref.idnum] = i  # type: ignore
+            self._page_id2num = id2num
 
-        if indirectRef is None or isinstance(indirectRef, NullObject):
+        if indirect_ref is None or isinstance(indirect_ref, NullObject):
             return -1
-        if isinstance(indirectRef, int):
-            idnum = indirectRef
+        if isinstance(indirect_ref, int):
+            idnum = indirect_ref
         else:
-            idnum = indirectRef.idnum
-        assert self._pageId2Num is not None, "hint for mypy"
-        ret = self._pageId2Num.get(idnum, -1)
+            idnum = indirect_ref.idnum
+        assert self._page_id2num is not None, "hint for mypy"
+        ret = self._page_id2num.get(idnum, -1)
         return ret
 
     def get_page_number(self, page: PageObject) -> int:
@@ -764,7 +779,7 @@ class PdfReader:
         :return: the page number or -1 if page not found
         :rtype: int
         """
-        return self._get_page_number_by_indirect(page.indirectRef)
+        return self._get_page_number_by_indirect(page.indirect_ref)
 
     def getPageNumber(self, page: PageObject) -> int:
         """
@@ -814,12 +829,12 @@ class PdfReader:
         try:
             return Destination(title, page, typ, *array)  # type: ignore
         except PdfReadError:
-            warnings.warn("Unknown destination : " + title + " " + str(array))
+            warnings.warn(f"Unknown destination: {title} {array}", PdfReadWarning)
             if self.strict:
                 raise
             else:
                 # create a link to first Page
-                tmp = self.pages[0].indirectRef
+                tmp = self.pages[0].indirect_ref
                 indirect_ref = NullObject() if tmp is None else tmp
                 return Destination(
                     title, indirect_ref, TextStringObject("/Fit")  # type: ignore
@@ -1031,7 +1046,7 @@ class PdfReader:
         assert obj_stm["/Type"] == "/ObjStm"
         # /N is the number of indirect objects in the stream
         assert idx < obj_stm["/N"]
-        stream_data = BytesIO(b_(obj_stm.getData()))  # type: ignore
+        stream_data = BytesIO(b_(obj_stm.get_data()))  # type: ignore
         for i in range(obj_stm["/N"]):  # type: ignore
             read_non_whitespace(stream_data)
             stream_data.seek(-1, 1)
@@ -1411,7 +1426,7 @@ class PdfReader:
             if not line.startswith(b_("startxref")):
                 raise PdfReadError("startxref not found")
             startxref = int(line[9:].strip())
-            warnings.warn("startxref on same line as offset")
+            warnings.warn("startxref on same line as offset", PdfReadWarning)
         else:
             line = self.read_next_end_line(stream)
             if line[:9] != b_("startxref"):
@@ -1497,8 +1512,8 @@ class PdfReader:
         idnum, generation = self.read_object_header(stream)
         xrefstream = cast(ContentStream, read_object(stream, self))
         assert xrefstream["/Type"] == "/XRef"
-        self.cacheIndirectObject(generation, idnum, xrefstream)
-        stream_data = BytesIO(b_(xrefstream.getData()))
+        self.cache_indirect_object(generation, idnum, xrefstream)
+        stream_data = BytesIO(b_(xrefstream.get_data()))
         # Index pairs specify the subsections in the dictionary. If
         # none create one subsection that spans everything.
         idx_pairs = xrefstream.get("/Index", [0, xrefstream.get("/Size")])
@@ -1807,7 +1822,7 @@ class PdfReader:
         """
         Read-only boolean property showing whether this PDF file is encrypted.
         Note that this property, if true, will remain true even after the
-        :meth:`decrypt()<PdfReader.decrypt>` method is called.
+        :meth:`decrypt()<PyPDF2.PdfReader.decrypt>` method is called.
         """
         return TK.ENCRYPT in self.trailer
 

@@ -76,6 +76,14 @@ class PdfObject:
         """Resolve indirect references."""
         return self
 
+    def getObject(self) -> Optional["PdfObject"]:
+        warnings.warn(
+            "getObject will be removed in PyPDF2 2.0.0. Use get_object instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.get_object()
+
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
@@ -94,6 +102,27 @@ class NullObject(PdfObject):
         if nulltxt != b_("null"):
             raise PdfReadError("Could not read Null object")
         return NullObject()
+
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
+        warnings.warn(
+            "writeToStream will be removed in PyPDF2 2.0.0. "
+            "Use write_to_stream instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.write_to_stream(stream, encryption_key)
+
+    @staticmethod
+    def readFromStream(stream: StreamType) -> "NullObject":
+        warnings.warn(
+            "readFromStream will be removed in PyPDF2 2.0.0. "
+            "Use read_from_stream instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return NullObject.read_from_stream(stream)
 
 
 class BooleanObject(PdfObject):
@@ -116,6 +145,17 @@ class BooleanObject(PdfObject):
         else:
             stream.write(b_("false"))
 
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
+        warnings.warn(
+            "writeToStream will be removed in PyPDF2 2.0.0. "
+            "Use write_to_stream instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.write_to_stream(stream, encryption_key)
+
     @staticmethod
     def read_from_stream(stream: StreamType) -> "BooleanObject":
         word = stream.read(4)
@@ -127,6 +167,16 @@ class BooleanObject(PdfObject):
         else:
             raise PdfReadError("Could not read Boolean object")
 
+    @staticmethod
+    def readFromStream(stream: StreamType) -> "BooleanObject":
+        warnings.warn(
+            "readFromStream will be removed in PyPDF2 2.0.0. "
+            "Use read_from_stream instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return BooleanObject.read_from_stream(stream)
+
 
 class ArrayObject(list, PdfObject):
     def write_to_stream(
@@ -137,6 +187,17 @@ class ArrayObject(list, PdfObject):
             stream.write(b_(" "))
             data.write_to_stream(stream, encryption_key)
         stream.write(b_(" ]"))
+
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
+        warnings.warn(
+            "writeToStream will be removed in PyPDF2 2.0.0. "
+            "Use write_to_stream instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.write_to_stream(stream, encryption_key)
 
     @staticmethod
     def read_from_stream(stream: StreamType, pdf: Any, forcedEncoding: Union[None,str,List[str],dict[int,str]] = None) -> "ArrayObject":  # PdfReader
@@ -158,6 +219,16 @@ class ArrayObject(list, PdfObject):
             # read and append obj
             arr.append(read_object(stream, pdf, forcedEncoding))
         return arr
+
+    @staticmethod
+    def readFromStream(stream: StreamType, pdf: Any) -> "ArrayObject":  # PdfReader
+        warnings.warn(
+            "readFromStream will be removed in PyPDF2 2.0.0. "
+            "Use read_from_stream instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return ArrayObject.read_from_stream(stream, pdf)
 
 
 class IndirectObject(PdfObject):
@@ -189,6 +260,17 @@ class IndirectObject(PdfObject):
     ) -> None:
         stream.write(b_(f"{self.idnum} {self.generation} R"))
 
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
+        warnings.warn(
+            "writeToStream will be removed in PyPDF2 2.0.0. "
+            "Use write_to_stream instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.write_to_stream(stream, encryption_key)
+
     @staticmethod
     def read_from_stream(stream: StreamType, pdf: Any) -> "IndirectObject":  # PdfReader
         idnum = b_("")
@@ -216,6 +298,16 @@ class IndirectObject(PdfObject):
                 % hex_str(stream.tell())
             )
         return IndirectObject(int(idnum), int(generation), pdf)
+
+    @staticmethod
+    def readFromStream(stream: StreamType, pdf: Any) -> "IndirectObject":  # PdfReader
+        warnings.warn(
+            "readFromStream will be removed in PyPDF2 2.0.0. "
+            "Use read_from_stream instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return IndirectObject.read_from_stream(stream, pdf)
 
 
 class FloatObject(decimal.Decimal, PdfObject):
@@ -252,6 +344,17 @@ class FloatObject(decimal.Decimal, PdfObject):
     ) -> None:
         stream.write(b_(repr(self)))
 
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
+        warnings.warn(
+            "writeToStream will be removed in PyPDF2 2.0.0. "
+            "Use write_to_stream instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.write_to_stream(stream, encryption_key)
+
 
 class NumberObject(int, PdfObject):
     NumberPattern = re.compile(b_("[^+-.0-9]"))
@@ -272,6 +375,17 @@ class NumberObject(int, PdfObject):
     ) -> None:
         stream.write(b_(repr(self)))
 
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
+        warnings.warn(
+            "writeToStream will be removed in PyPDF2 2.0.0. "
+            "Use write_to_stream instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.write_to_stream(stream, encryption_key)
+
     @staticmethod
     def read_from_stream(stream: StreamType) -> Union["NumberObject", FloatObject]:
         num = read_until_regex(stream, NumberObject.NumberPattern)
@@ -279,6 +393,16 @@ class NumberObject(int, PdfObject):
             return FloatObject(num)
         else:
             return NumberObject(num)
+
+    @staticmethod
+    def readFromStream(stream: StreamType) -> Union["NumberObject", FloatObject]:
+        warnings.warn(
+            "readFromStream will be removed in PyPDF2 2.0.0. "
+            "Use read_from_stream instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return NumberObject.read_from_stream(stream)
 
 
 def readHexStringFromStream(
@@ -405,6 +529,17 @@ class ByteStringObject(bytes_type, PdfObject):  # type: ignore
         stream.write(hexencode(bytearr))
         stream.write(b_(">"))
 
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
+        warnings.warn(
+            "writeToStream will be removed in PyPDF2 2.0.0. "
+            "Use write_to_stream instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.write_to_stream(stream, encryption_key)
+
 
 class TextStringObject(str, PdfObject):
     """
@@ -465,6 +600,17 @@ class TextStringObject(str, PdfObject):
                     stream.write(b_(chr(c)))
             stream.write(b_(")"))
 
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
+        warnings.warn(
+            "writeToStream will be removed in PyPDF2 2.0.0. "
+            "Use write_to_stream instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.write_to_stream(stream, encryption_key)
+
 
 class NameObject(str, PdfObject):
     delimiterPattern = re.compile(b_(r"\s+|[\(\)<>\[\]{}/%]"))
@@ -474,6 +620,17 @@ class NameObject(str, PdfObject):
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         stream.write(b_(self))
+
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
+        warnings.warn(
+            "writeToStream will be removed in PyPDF2 2.0.0. "
+            "Use write_to_stream instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.write_to_stream(stream, encryption_key)
 
     @staticmethod
     def read_from_stream(stream: StreamType, pdf: Any) -> "NameObject":  # PdfReader
@@ -495,6 +652,16 @@ class NameObject(str, PdfObject):
                 return NameObject(name)
             else:
                 raise PdfReadError("Illegal character in Name Object")
+
+    @staticmethod
+    def readFromStream(stream: StreamType, pdf: Any) -> "NameObject":  # PdfReader
+        warnings.warn(
+            "readFromStream will be removed in PyPDF2 2.0.0. "
+            "Use read_from_stream instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return NameObject.read_from_stream(stream, pdf)
 
 
 class DictionaryObject(dict, PdfObject):
@@ -518,7 +685,8 @@ class DictionaryObject(dict, PdfObject):
     def __getitem__(self, key: Any) -> PdfObject:
         return dict.__getitem__(self, key).get_object()
 
-    def getXmpMetadata(self) -> Optional[PdfObject]:  # XmpInformation
+    @property
+    def xmp_metadata(self) -> Optional[PdfObject]:
         """
         Retrieve XMP (Extensible Metadata Platform) data relevant to the
         this object, if available.
@@ -540,15 +708,33 @@ class DictionaryObject(dict, PdfObject):
             self[NameObject("/Metadata")] = metadata
         return metadata
 
+    def getXmpMetadata(self) -> Optional[PdfObject]:  # XmpInformation
+        """
+        .. deprecated:: 1.28.3
+
+            Use :meth:`xmp_metadata` instead.
+        """
+        warnings.warn(
+            "getXmpMetadata will be removed in PyPDF2 2.0.0. "
+            "Use xmp_metadata instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.xmp_metadata
+
     @property
     def xmpMetadata(self) -> Optional[PdfObject]:  # XmpInformation
         """
-        Read-only property that accesses the {@link
-        #DictionaryObject.getXmpData getXmpData} function.
-        <p>
-        Stability: Added in v1.12, will exist for all future v1.x releases.
+        .. deprecated:: 1.28.3
+
+            Use :meth:`xmp_metadata` instead.
         """
-        return self.getXmpMetadata()
+        warnings.warn(
+            "xmpMetadata will be removed in PyPDF2 2.0.0. Use xmp_metadata instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.xmp_metadata
 
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
@@ -560,6 +746,17 @@ class DictionaryObject(dict, PdfObject):
             value.write_to_stream(stream, encryption_key)
             stream.write(b_("\n"))
         stream.write(b_(">>"))
+
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
+        warnings.warn(
+            "writeToStream will be removed in PyPDF2 2.0.0. "
+            "Use write_to_stream instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.write_to_stream(stream, encryption_key)
 
     @staticmethod
     def read_from_stream(
@@ -690,6 +887,16 @@ class DictionaryObject(dict, PdfObject):
             retval.update(data)
             return retval
 
+    @staticmethod
+    def readFromStream(stream: StreamType, pdf: Any) -> "DictionaryObject":  # PdfReader
+        warnings.warn(
+            "readFromStream will be removed in PyPDF2 2.0.0. "
+            "Use read_from_stream instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return DictionaryObject.read_from_stream(stream, pdf)
+
 
 class TreeObject(DictionaryObject):
     def __init__(self) -> None:
@@ -713,6 +920,14 @@ class TreeObject(DictionaryObject):
             child = child["/Next"]  # type: ignore
 
     def addChild(self, child: Any, pdf: Any) -> None:  # PdfReader
+        warnings.warn(
+            DEPR_MSG.format("addChild", "add_child"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.add_child(child, pdf)
+
+    def add_child(self, child: Any, pdf: Any) -> None:  # PdfReader
         child_obj = child.get_object()
         child = pdf.get_reference(child_obj)
         assert isinstance(child, IndirectObject)
@@ -738,6 +953,14 @@ class TreeObject(DictionaryObject):
         child_obj[NameObject("/Parent")] = parent_ref
 
     def removeChild(self, child: Any) -> None:
+        warnings.warn(
+            DEPR_MSG.format("removeChild", "remove_child"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.remove_child(child)
+
+    def remove_child(self, child: Any) -> None:
         child_obj = child.get_object()
 
         if NameObject("/Parent") not in child_obj:
@@ -825,7 +1048,25 @@ class TreeObject(DictionaryObject):
 class StreamObject(DictionaryObject):
     def __init__(self) -> None:
         self.__data: Optional[str] = None
-        self.decodedSelf: Optional[DecodedStreamObject] = None
+        self.decoded_self: Optional[DecodedStreamObject] = None
+
+    @property
+    def decodedSelf(self) -> Optional["DecodedStreamObject"]:
+        warnings.warn(
+            DEPR_MSG.format("decodedSelf", "decoded_self"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.decoded_self
+
+    @decodedSelf.setter
+    def decodedSelf(self, value: "DecodedStreamObject") -> None:
+        warnings.warn(
+            DEPR_MSG.format("decodedSelf", "decoded_self"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.decoded_self = value
 
     @property
     def _data(self) -> Any:
@@ -866,6 +1107,14 @@ class StreamObject(DictionaryObject):
         return retval
 
     def flateEncode(self) -> "EncodedStreamObject":
+        warnings.warn(
+            DEPR_MSG.format("flateEncode", "flate_encode"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.flate_encode()
+
+    def flate_encode(self) -> "EncodedStreamObject":
         from .filters import FlateDecode
 
         if SA.FILTER in self:
@@ -886,23 +1135,57 @@ class StreamObject(DictionaryObject):
 
 
 class DecodedStreamObject(StreamObject):
+    def get_data(self) -> Any:
+        return self._data
+
+    def set_data(self, data: Any) -> Any:
+        self._data = data
+
     def getData(self) -> Any:
+        warnings.warn(
+            DEPR_MSG.format("decodedSelf", "decoded_self"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
         return self._data
 
     def setData(self, data: Any) -> None:
-        self._data = data
+        warnings.warn(
+            DEPR_MSG.format("decodedSelf", "decoded_self"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.set_data(data)
 
 
 class EncodedStreamObject(StreamObject):
     def __init__(self) -> None:
-        self.decodedSelf: Optional[DecodedStreamObject] = None
+        self.decoded_self: Optional[DecodedStreamObject] = None
 
-    def getData(self) -> Union[None, str, bytes]:
+    @property
+    def decodedSelf(self) -> Optional["DecodedStreamObject"]:
+        warnings.warn(
+            DEPR_MSG.format("decodedSelf", "decoded_self"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.decoded_self
+
+    @decodedSelf.setter
+    def decodedSelf(self, value: DecodedStreamObject) -> None:
+        warnings.warn(
+            DEPR_MSG.format("decodedSelf", "decoded_self"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        self.decoded_self = value
+
+    def get_data(self) -> Union[None, str, bytes]:
         from .filters import decodeStreamData
 
-        if self.decodedSelf:
+        if self.decoded_self:
             # cached version of decoded object
-            return self.decodedSelf.getData()
+            return self.decoded_self.get_data()
         else:
             # create decoded object
             decoded = DecodedStreamObject()
@@ -911,10 +1194,10 @@ class EncodedStreamObject(StreamObject):
             for key, value in list(self.items()):
                 if key not in (SA.LENGTH, SA.FILTER, SA.DECODE_PARMS):
                     decoded[key] = value
-            self.decodedSelf = decoded
+            self.decoded_self = decoded
             return decoded._data
 
-    def setData(self, data: Any) -> None:
+    def set_data(self, data: Any) -> None:
         raise PdfReadError("Creating EncodedStreamObject is not currently supported")
 
 
@@ -935,7 +1218,7 @@ class ContentStream(DecodedStreamObject):
         if isinstance(stream, ArrayObject):
             data = b_("")
             for s in stream:
-                data += b_(s.get_object().getData())
+                data += b_(s.get_object().get_data())
             stream = BytesIO(b_(data))
         else:
             stream = BytesIO(b_(stream.getData()))
@@ -1120,12 +1403,20 @@ class RectangleObject(ArrayObject):
         # must have four points
         assert len(arr) == 4
         # automatically convert arr[x] into NumberObject(arr[x]) if necessary
-        ArrayObject.__init__(self, [self.ensureIsNumber(x) for x in arr])  # type: ignore
+        ArrayObject.__init__(self, [self._ensure_is_number(x) for x in arr])  # type: ignore
 
-    def ensureIsNumber(self, value: Any) -> Union[FloatObject, NumberObject]:
+    def _ensure_is_number(self, value: Any) -> Union[FloatObject, NumberObject]:
         if not isinstance(value, (NumberObject, FloatObject)):
             value = FloatObject(value)
         return value
+
+    def ensureIsNumber(self, value: Any) -> Union[FloatObject, NumberObject]:
+        warnings.warn(
+            "ensureIsNumber will be removed in PyPDF2 2.0.0. ",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self._ensure_is_number(value)
 
     def __repr__(self) -> str:
         return "RectangleObject(%s)" % repr(list(self))
@@ -1220,7 +1511,7 @@ class RectangleObject(ArrayObject):
 
     @lower_left.setter
     def lower_left(self, value: List[Any]) -> None:
-        self[0], self[1] = (self.ensureIsNumber(x) for x in value)
+        self[0], self[1] = (self._ensure_is_number(x) for x in value)
 
     @property
     def lower_right(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
@@ -1232,7 +1523,7 @@ class RectangleObject(ArrayObject):
 
     @lower_right.setter
     def lower_right(self, value: List[Any]) -> None:
-        self[2], self[1] = (self.ensureIsNumber(x) for x in value)
+        self[2], self[1] = (self._ensure_is_number(x) for x in value)
 
     @property
     def upper_left(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
@@ -1244,7 +1535,7 @@ class RectangleObject(ArrayObject):
 
     @upper_left.setter
     def upper_left(self, value: List[Any]) -> None:
-        self[0], self[3] = (self.ensureIsNumber(x) for x in value)
+        self[0], self[3] = (self._ensure_is_number(x) for x in value)
 
     @property
     def upper_right(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
@@ -1256,7 +1547,7 @@ class RectangleObject(ArrayObject):
 
     @upper_right.setter
     def upper_right(self, value: List[Any]) -> None:
-        self[2], self[3] = (self.ensureIsNumber(x) for x in value)
+        self[2], self[3] = (self._ensure_is_number(x) for x in value)
 
     def getLowerLeft(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
         warnings.warn(
@@ -1304,7 +1595,7 @@ class RectangleObject(ArrayObject):
             PendingDeprecationWarning,
             stacklevel=2,
         )
-        self[2], self[1] = (self.ensureIsNumber(x) for x in value)
+        self[2], self[1] = (self._ensure_is_number(x) for x in value)
 
     def setUpperLeft(self, value: Tuple[float, float]) -> None:
         warnings.warn(
@@ -1312,7 +1603,7 @@ class RectangleObject(ArrayObject):
             PendingDeprecationWarning,
             stacklevel=2,
         )
-        self[0], self[3] = (self.ensureIsNumber(x) for x in value)
+        self[0], self[3] = (self._ensure_is_number(x) for x in value)
 
     def setUpperRight(self, value: Tuple[float, float]) -> None:
         warnings.warn(
@@ -1320,7 +1611,7 @@ class RectangleObject(ArrayObject):
             PendingDeprecationWarning,
             stacklevel=2,
         )
-        self[2], self[3] = (self.ensureIsNumber(x) for x in value)
+        self[2], self[3] = (self._ensure_is_number(x) for x in value)
 
     @property
     def width(self) -> decimal.Decimal:
@@ -1414,7 +1705,7 @@ class RectangleObject(ArrayObject):
 class Field(TreeObject):
     """
     A class representing a field dictionary. This class is accessed through
-    :meth:`getFields()<PyPDF2.PdfReader.getFields>`
+    :meth:`get_fields()<PyPDF2.PdfReader.get_fields>`
     """
 
     def __init__(self, data: Dict[str, Any]) -> None:
@@ -1438,11 +1729,25 @@ class Field(TreeObject):
                 pass
 
     # TABLE 8.69 Entries common to all field dictionaries
+    @property
+    def field_type(self) -> Optional[NameObject]:
+        """Read-only property accessing the type of this field."""
+        return self.get("/FT")
 
     @property
     def fieldType(self) -> Optional[NameObject]:
-        """Read-only property accessing the type of this field."""
-        return self.get("/FT")
+        """
+        .. deprecated:: 1.28.3
+
+            Use :py:attr:`field_type` instead.
+        """
+        warnings.warn(
+            "fieldType will be removed in PyPDF2 2.0.0. "
+            "Use the field_type property instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.field_type
 
     @property
     def parent(self) -> Optional[DictionaryObject]:
@@ -1460,18 +1765,48 @@ class Field(TreeObject):
         return self.get("/T")
 
     @property
-    def altName(self) -> Optional[str]:
+    def alternate_name(self) -> Optional[str]:
         """Read-only property accessing the alternate name of this field."""
         return self.get("/TU")
 
     @property
-    def mappingName(self) -> Optional[str]:
+    def altName(self) -> Optional[str]:
+        """
+        .. deprecated:: 1.28.3
+
+            Use :py:attr:`alternate_name` instead.
+        """
+        warnings.warn(
+            "altName will be removed in PyPDF2 2.0.0. "
+            "Use the alternate_name property instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.alternate_name
+
+    @property
+    def mapping_name(self) -> Optional[str]:
         """
         Read-only property accessing the mapping name of this field. This
         name is used by PyPDF2 as a key in the dictionary returned by
-        :meth:`getFields()<PyPDF2.PdfReader.getFields>`
+        :meth:`get_fields()<PyPDF2.PdfReader.get_fields>`
         """
         return self.get("/TM")
+
+    @property
+    def mappingName(self) -> Optional[str]:
+        """
+        .. deprecated:: 1.28.3
+
+            Use :py:attr:`mapping_name` instead.
+        """
+        warnings.warn(
+            "mappingName will be removed in PyPDF2 2.0.0. "
+            "Use the mapping_name property instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.mapping_name
 
     @property
     def flags(self) -> Optional[int]:
@@ -1490,18 +1825,48 @@ class Field(TreeObject):
         return self.get("/V")
 
     @property
-    def defaultValue(self) -> Optional[Any]:
+    def default_value(self) -> Optional[Any]:
         """Read-only property accessing the default value of this field."""
         return self.get("/DV")
 
     @property
-    def additionalActions(self) -> Optional[DictionaryObject]:
+    def defaultValue(self) -> Optional[Any]:
+        """
+        .. deprecated:: 1.28.3
+
+            Use :py:attr:`default_value` instead.
+        """
+        warnings.warn(
+            "defaultValue will be removed in PyPDF2 2.0.0. "
+            "Use the default_value property instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.default_value
+
+    @property
+    def additional_actions(self) -> Optional[DictionaryObject]:
         """
         Read-only property accessing the additional actions dictionary.
         This dictionary defines the field's behavior in response to trigger events.
         See Section 8.5.2 of the PDF 1.7 reference.
         """
         return self.get("/AA")
+
+    @property
+    def additionalActions(self) -> Optional[DictionaryObject]:
+        """
+        .. deprecated:: 1.28.3
+
+            Use :py:attr:`additional_actions` instead.
+        """
+        warnings.warn(
+            "additionalActions will be removed in PyPDF2 2.0.0. "
+            "Use the additional_actions property instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.additional_actions
 
 
 class Destination(TreeObject):
@@ -1572,7 +1937,8 @@ class Destination(TreeObject):
         else:
             raise PdfReadError("Unknown Destination Type: %r" % typ)
 
-    def getDestArray(self) -> ArrayObject:
+    @property
+    def dest_array(self) -> ArrayObject:
         return ArrayObject(
             [self.raw_get("/Page"), self["/Type"]]
             + [
@@ -1582,6 +1948,20 @@ class Destination(TreeObject):
             ]
         )
 
+    def getDestArray(self) -> ArrayObject:
+        """
+        .. deprecated:: 1.28.3
+
+            Use :py:attr:`dest_array` instead.
+        """
+        warnings.warn(
+            "getDestArray will be removed in PyPDF2 2.0.0. "
+            "Use the dest_array property instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.dest_array
+
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
@@ -1589,7 +1969,7 @@ class Destination(TreeObject):
         key = NameObject("/D")
         key.write_to_stream(stream, encryption_key)
         stream.write(b_(" "))
-        value = self.getDestArray()
+        value = self.dest_array
         value.write_to_stream(stream, encryption_key)
 
         key = NameObject("/S")
@@ -1692,7 +2072,7 @@ class Bookmark(Destination):
         key = NameObject("/Dest")
         key.write_to_stream(stream, encryption_key)
         stream.write(b_(" "))
-        value = self.getDestArray()
+        value = self.dest_array
         value.write_to_stream(stream, encryption_key)
         stream.write(b_("\n"))
         stream.write(b_(">>"))

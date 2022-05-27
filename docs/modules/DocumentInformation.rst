@@ -1,7 +1,7 @@
 The DocumentInformation Class
 -----------------------------
 
-.. autoclass:: PyPDF2.generic.DocumentInformation
+.. autoclass:: PyPDF2.DocumentInformation
     :members:
     :undoc-members:
     :show-inheritance:

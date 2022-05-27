@@ -19,8 +19,9 @@ PAGE_RANGE_RE = "^({int}|({int}?(:{int}?(:{int}?)?)))$".format(int=_INT_RE)
 
 class PageRange:
     """
-    A slice-like representation of a range of page indices,
-        i.e. page numbers, only starting at zero.
+    A slice-like representation of a range of page indices.
+
+    For example, page numbers, only starting at zero.
 
     The syntax is like what you would put between brackets [ ].
     The slice is one of the few Python types that can't be subclassed,

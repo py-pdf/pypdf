@@ -3,8 +3,6 @@ import os
 import pytest
 
 from PyPDF2 import PdfReader, PdfWriter
-from PyPDF2._reader import convertToInt
-from PyPDF2.errors import PdfReadError
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -16,7 +14,7 @@ def test_basic_features():
     reader = PdfReader(pdf_path)
     writer = PdfWriter()
 
-    assert reader.numPages == 1
+    assert len(reader.pages) == 1
 
     # add page 1 from input1 to output document, unchanged
     writer.add_page(reader.pages[0])
@@ -25,7 +23,9 @@ def test_basic_features():
     writer.add_page(reader.pages[0].rotate_clockwise(90))
 
     # add page 3 from input1, rotated the other way:
-    writer.add_page(reader.pages[0].rotateCounterClockwise(90))
+    with pytest.warns(PendingDeprecationWarning):
+        rotated = reader.pages[0].rotateCounterClockwise(90)
+    writer.add_page(rotated)
     # alt: output.addPage(input1.pages[0].rotate_clockwise(270))
 
     # add page 4 from input1, but first add a watermark from another PDF:
@@ -37,9 +37,9 @@ def test_basic_features():
 
     # add page 5 from input1, but crop it to half size:
     page5 = reader.pages[0]
-    page5.mediaBox.upperRight = (
-        page5.mediaBox.right / 2,
-        page5.mediaBox.top / 2,
+    page5.mediabox.upper_right = (
+        page5.mediabox.right / 2,
+        page5.mediabox.top / 2,
     )
     writer.add_page(page5)
 
@@ -59,9 +59,3 @@ def test_basic_features():
 
     # cleanup
     os.remove(tmp_path)
-
-
-def test_convertToInt():
-    with pytest.raises(PdfReadError) as exc:
-        convertToInt(b"256", 16)
-    assert exc.value.args[0] == "invalid size in convertToInt"

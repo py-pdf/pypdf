@@ -149,24 +149,28 @@ class Transformation:
     Specify a 2D transformation.
 
     The transformation between two coordinate systems is represented by a 3-by-3
-    transformation matrix written as follows:
+    transformation matrix written as follows::
+
         a b 0
         c d 0
         e f 1
+
     Because a transformation matrix has only six elements that can be changed,
     it is usually specified in PDF as the six-element array [ a b c d e f ].
 
-    Coordinate transformations are expressed as matrix multiplications:
+    Coordinate transformations are expressed as matrix multiplications::
 
                                  a b 0
      [ x′ y′ 1 ] = [ x y 1 ] ×   c d 0
                                  e f 1
 
+
     Usage
     -----
-    >>> from PyPDF2 import Transformation
-    >>> op = Transformation().scale(sx=2, sy=3).translate(tx=10, ty=20)
-    >>> page.mergeTransformedPage(page2, op)
+
+        >>> from PyPDF2 import Transformation
+        >>> op = Transformation().scale(sx=2, sy=3).translate(tx=10, ty=20)
+        >>> page.add_transformation(op)
     """
 
     # 9.5.4 Coordinate Systems for 3D
@@ -234,23 +238,23 @@ class PageObject(DictionaryObject):
     :meth:`get_page()<PyPDF2.PdfReader.get_page>` method of the
     :class:`PdfReader<PyPDF2.PdfReader>` class, but it is
     also possible to create an empty page with the
-    :meth:`createBlankPage()<PageObject.createBlankPage>` static method.
+    :meth:`create_blank_page()<PyPDF2._page.PageObject.create_blank_page>` static method.
 
     :param pdf: PDF file the page belongs to.
-    :param indirectRef: Stores the original indirect reference to
+    :param indirect_ref: Stores the original indirect reference to
         this object in its source PDF
     """
 
     def __init__(
         self,
         pdf: Optional[Any] = None,  # PdfReader
-        indirectRef: Optional[IndirectObject] = None,
+        indirect_ref: Optional[IndirectObject] = None,
     ) -> None:
         from ._reader import PdfReader
 
         DictionaryObject.__init__(self)
         self.pdf: Optional[PdfReader] = pdf
-        self.indirectRef = indirectRef
+        self.indirect_ref = indirect_ref
 
     @staticmethod
     def create_blank_page(
@@ -542,7 +546,7 @@ class PageObject(DictionaryObject):
                 PageObject._push_pop_gs(original_content, self.pdf)
             )
 
-        page2content = page2.getContents()
+        page2content = page2.get_contents()
         if page2content is not None:
             page2content = ContentStream(page2content, self.pdf)
             page2content.operations.insert(
@@ -609,8 +613,8 @@ class PageObject(DictionaryObject):
                 max(corners1[3], upperright[1]),
             )
 
-            self.mediabox.setLowerLeft(lowerleft)
-            self.mediabox.setUpperRight(upperright)
+            self.mediabox.lower_left = lowerleft
+            self.mediabox.upper_right = upperright
 
         self[NameObject(PG.CONTENTS)] = ContentStream(new_content_array, self.pdf)
         self[NameObject(PG.RESOURCES)] = new_resources
@@ -640,6 +644,8 @@ class PageObject(DictionaryObject):
         warnings.warn(
             "page.mergeTransformedPage(page2, ctm) will be removed in PyPDF 2.0.0. "
             "Use page2.add_transformation(ctm); page.merge_page(page2) instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
         )
         if isinstance(ctm, Transformation):
             ctm = ctm.ctm
@@ -837,7 +843,7 @@ class PageObject(DictionaryObject):
         op = Transformation().scale(scale, scale).translate(tx, ty)
         return self.mergeTransformedPage(page2, op, expand)
 
-    def merge_rotated_scaled_translated_page(
+    def mergeRotatedScaledTranslatedPage(
         self,
         page2: "PageObject",
         rotation: float,
@@ -876,14 +882,16 @@ class PageObject(DictionaryObject):
         self.mergeTransformedPage(page2, op, expand)
 
     def add_transformation(
-        self, ctm: CompressedTransformationMatrix, expand: bool = False
+        self,
+        ctm: Union[Transformation, CompressedTransformationMatrix],
+        expand: bool = False,
     ) -> None:
         """
         Apply a transformation matrix to the page.
 
         :param tuple ctm: A 6-element tuple containing the operands of the
             transformation matrix. Alternatively, a
-            :class:`Transformation<PyPDF2._page.Transformation>`
+            :py:class:`Transformation<PyPDF2.Transformation>`
             object can be passed.
 
         See :doc:`/user/cropping-and-transforming`.
@@ -894,6 +902,7 @@ class PageObject(DictionaryObject):
         if content is not None:
             content = PageObject._add_transformation_matrix(content, self.pdf, ctm)
             content = PageObject._push_pop_gs(content, self.pdf)
+            self[NameObject(PG.CONTENTS)] = content
         # if expanding the page to fit a new page, calculate the new media box size
         if expand:
             corners = [
@@ -925,9 +934,8 @@ class PageObject(DictionaryObject):
                 max(corners[3], upperright[1]),
             )
 
-            self.mediabox.setLowerLeft(lowerleft)
-            self.mediabox.setUpperRight(upperright)
-        self[NameObject(PG.CONTENTS)] = content
+            self.mediabox.lower_left = lowerleft
+            self.mediabox.upper_right = upperright
 
     def addTransformation(self, ctm: CompressedTransformationMatrix) -> None:
         """
@@ -1039,7 +1047,7 @@ class PageObject(DictionaryObject):
         if content is not None:
             if not isinstance(content, ContentStream):
                 content = ContentStream(content, self.pdf)
-            self[NameObject(PG.CONTENTS)] = content.flateEncode()
+            self[NameObject(PG.CONTENTS)] = content.flate_encode()
 
     def compressContentStreams(self) -> None:
         """
@@ -1258,6 +1266,8 @@ class PageObject(DictionaryObject):
         """
         warnings.warn(
             DEPR_MSG.format("Page.extractText", "Page.extract_text"),
+            PendingDeprecationWarning,
+            stacklevel=2,
         )
         return self.extract_text(Tj_sep=Tj_sep, TJ_sep=TJ_sep)
 

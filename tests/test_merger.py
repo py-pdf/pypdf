@@ -17,40 +17,42 @@ def test_merge():
     pdf_forms = os.path.join(RESOURCE_ROOT, "pdflatex-forms.pdf")
     pdf_pw = os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf")
 
-    file_merger = PyPDF2.PdfMerger()
+    merger = PyPDF2.PdfMerger()
 
     # string path:
-    file_merger.append(pdf_path)
-    file_merger.append(outline)
-    file_merger.append(pdf_path, pages=PyPDF2.pagerange.PageRange(slice(0, 0)))
-    file_merger.append(pdf_forms)
+    merger.append(pdf_path)
+    merger.append(outline)
+    merger.append(pdf_path, pages=PyPDF2.pagerange.PageRange(slice(0, 0)))
+    merger.append(pdf_forms)
 
     # Merging an encrypted file
-    pdfr = PyPDF2.PdfReader(pdf_pw)
-    pdfr.decrypt("openpassword")
-    file_merger.append(pdfr)
+    reader = PyPDF2.PdfReader(pdf_pw)
+    reader.decrypt("openpassword")
+    merger.append(reader)
 
     # PdfReader object:
-    file_merger.append(PyPDF2.PdfReader(pdf_path), bookmark="foo")
+    merger.append(PyPDF2.PdfReader(pdf_path), bookmark="foo")
 
     # File handle
     with open(pdf_path, "rb") as fh:
-        file_merger.append(fh)
+        merger.append(fh)
 
-    bookmark = file_merger.add_bookmark("A bookmark", 0)
-    file_merger.add_bookmark("deeper", 0, parent=bookmark)
-    file_merger.add_metadata({"author": "Martin Thoma"})
-    file_merger.add_named_destination("title", 0)
-    file_merger.set_page_layout("/SinglePage")
-    file_merger.set_page_mode("/UseThumbs")
+    bookmark = merger.add_bookmark("A bookmark", 0)
+    merger.add_bookmark("deeper", 0, parent=bookmark)
+    merger.add_metadata({"author": "Martin Thoma"})
+    merger.add_named_destination("title", 0)
+    merger.set_page_layout("/SinglePage")
+    merger.set_page_mode("/UseThumbs")
 
     tmp_path = "dont_commit_merged.pdf"
-    file_merger.write(tmp_path)
-    file_merger.close()
+    merger.write(tmp_path)
+    merger.close()
 
     # Check if bookmarks are correct
-    pdfr = PyPDF2.PdfReader(tmp_path)
-    assert [el.title for el in pdfr.getOutlines() if isinstance(el, Destination)] == [
+    reader = PyPDF2.PdfReader(tmp_path)
+    assert [
+        el.title for el in reader._get_outlines() if isinstance(el, Destination)
+    ] == [
         "A bookmark",
         "Foo",
         "Bar",
