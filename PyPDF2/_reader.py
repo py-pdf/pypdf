@@ -234,7 +234,7 @@ class PdfReader:
         Defaults to ``None``
     """
 
-    def __init__(self, stream: StrByteType, strict: bool = False, password: Union[None, str, bytes] = None) -> None:
+    def __init__(self, stream: StrByteType, strict: bool = False, password: Optional[str, bytes] = None) -> None:
         self.strict = strict
         self.flattened_pages: Optional[List[PageObject]] = None
         self.resolved_objects: Dict[Tuple[Any, Any], Optional[PdfObject]] = {}
@@ -411,20 +411,6 @@ class PdfReader:
             stacklevel=2,
         )
         return self._get_num_pages()
-
-    def getPage(self, pageNumber: int) -> PageObject:
-        """
-        .. deprecated:: 1.28.0
-
-            Use :code:`reader.pages[pageNumber]` instead.
-        """
-        warnings.warn(
-            "`getPage` of PdfReader will be removed in PyPDF2 2.0.0. "
-            "Use `reader.pages[pageNumber]` instead.",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
-        return self._get_page(pageNumber)
 
     def _get_page(self, page_number: int) -> PageObject:
         """
