@@ -76,6 +76,14 @@ class PdfObject:
         """Resolve indirect references."""
         return self
 
+    def getObject(self) -> Optional["PdfObject"]:
+        warnings.warn(
+            "getObject will be removed in PyPDF2 2.0.0. Use get_object instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.get_object()
+
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
