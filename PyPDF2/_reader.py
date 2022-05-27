@@ -230,9 +230,11 @@ class PdfReader:
     :param bool strict: Determines whether user should be warned of all
         problems and also causes some correctable problems to be fatal.
         Defaults to ``False``.
+    :param None/str/bytes password: Decrypt pdf at initialization. if None, decrypt will be called
+        Defaults to ``None``
     """
 
-    def __init__(self, stream: StrByteType, strict: bool = False) -> None:
+    def __init__(self, stream: StrByteType, strict: bool = False, password: Union[None, str, bytes] = None) -> None:
         self.strict = strict
         self.flattened_pages: Optional[List[PageObject]] = None
         self.resolved_objects: Dict[Tuple[Any, Any], Optional[PdfObject]] = {}
@@ -253,6 +255,9 @@ class PdfReader:
         self.stream = stream
 
         self._override_encryption = False
+        if password != None:
+            if self.decrypt(password) == 0:
+                raise PdfReadError("Wrong Password : Cannot decrypt then:")
 
     @property
     def metadata(self) -> Optional[DocumentInformation]:

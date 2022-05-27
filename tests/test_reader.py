@@ -253,8 +253,11 @@ def test_issue297():
         reader = PdfReader(path, strict=False)
     reader.pages[0]
 
-
-def test_get_page_of_encrypted_file():
+@pytest.mark.parametrize(("password", "shouldFail"),
+    [ ("test", False),
+      ("qwerty", True)
+    ])
+def test_get_page_of_encrypted_file(password, shouldFail):
     """
     Check if we can read a page of an encrypted file.
 
@@ -262,12 +265,11 @@ def test_get_page_of_encrypted_file():
     IndexError for get_page() of decrypted file
     """
     path = os.path.join(RESOURCE_ROOT, "encrypted-file.pdf")
-    reader = PdfReader(path)
-
-    # Password is correct:)
-    reader.decrypt("test")
-
-    reader.pages[0]
+    if shouldFail:
+        with pytest.raises(PdfReadError):
+            PdfReader(path, password = password)
+    else:
+        PdfReader(path, password = password).pages[0]
 
 
 @pytest.mark.parametrize(
