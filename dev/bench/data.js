@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1653631174979,
+  "lastUpdate": 1653635010205,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -2749,6 +2749,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.005789307845957156",
             "extra": "mean: 3.8090655147999994 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "892299cd2404678b796ffa1b8bc4cf17e8f9abeb",
+          "message": "BUG: Add getPage back (#909)\n\nThis is one of the core methods that a lot of people use. It should not\r\nbe removed already.\r\n\r\nIt was removed by accident.",
+          "timestamp": "2022-05-27T09:02:18+02:00",
+          "tree_id": "3fb9279570c19745518623d94bf9580e602295df",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/892299cd2404678b796ffa1b8bc4cf17e8f9abeb"
+        },
+        "date": 1653635008988,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.637461245172277,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004848008414319655",
+            "extra": "mean: 1.568722816600004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.499077246812703,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004065436979686178",
+            "extra": "mean: 105.27338329999765 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2575180535819096,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009681330626451035",
+            "extra": "mean: 3.883222889000001 sec\nrounds: 5"
           }
         ]
       }
