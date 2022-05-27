@@ -93,7 +93,7 @@ def _converter_date(value: str) -> datetime.datetime:
 
 
 def _getter_bag(namespace: str, name: str) -> Optional[Any]:
-    def get(self: Any) -> Optional[Any]:
+    def get(self: XmpInformation) -> Optional[Any]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
@@ -103,7 +103,7 @@ def _getter_bag(namespace: str, name: str) -> Optional[Any]:
             if len(bags):
                 for bag in bags:
                     for item in bag.getElementsByTagNameNS(RDF_NAMESPACE, "li"):
-                        value = self._getText(item)
+                        value = self._get_text(item)
                         retval.append(value)
         ns_cache = self.cache.setdefault(namespace, {})
         ns_cache[name] = retval
@@ -115,21 +115,21 @@ def _getter_bag(namespace: str, name: str) -> Optional[Any]:
 def _getter_seq(
     namespace: str, name: str, converter: Callable[[Any], Any] = _identity
 ) -> Optional[Any]:
-    def get(self: Any) -> Optional[Any]:
+    def get(self: XmpInformation) -> Optional[Any]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
         retval = []
-        for element in self.getElement("", namespace, name):
+        for element in self.get_element("", namespace, name):
             seqs = element.getElementsByTagNameNS(RDF_NAMESPACE, "Seq")
             if len(seqs):
                 for seq in seqs:
                     for item in seq.getElementsByTagNameNS(RDF_NAMESPACE, "li"):
-                        value = self._getText(item)
+                        value = self._get_text(item)
                         value = converter(value)
                         retval.append(value)
             else:
-                value = converter(self._getText(element))
+                value = converter(self._get_text(element))
                 retval.append(value)
         ns_cache = self.cache.setdefault(namespace, {})
         ns_cache[name] = retval
@@ -139,20 +139,20 @@ def _getter_seq(
 
 
 def _getter_langalt(namespace: str, name: str) -> Optional[Any]:
-    def get(self: Any) -> Optional[Any]:
+    def get(self: XmpInformation) -> Optional[Any]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
         retval = {}
-        for element in self.getElement("", namespace, name):
+        for element in self.get_element("", namespace, name):
             alts = element.getElementsByTagNameNS(RDF_NAMESPACE, "Alt")
             if len(alts):
                 for alt in alts:
                     for item in alt.getElementsByTagNameNS(RDF_NAMESPACE, "li"):
-                        value = self._getText(item)
+                        value = self._get_text(item)
                         retval[item.getAttribute("xml:lang")] = value
             else:
-                retval["x-default"] = self._getText(element)
+                retval["x-default"] = self._get_text(element)
         ns_cache = self.cache.setdefault(namespace, {})
         ns_cache[name] = retval
         return retval
@@ -163,16 +163,16 @@ def _getter_langalt(namespace: str, name: str) -> Optional[Any]:
 def _getter_single(
     namespace: str, name: str, converter: Callable[[str], Any] = _identity
 ) -> Optional[Any]:
-    def get(self: Any) -> Optional[Any]:
+    def get(self: XmpInformation) -> Optional[Any]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
         value = None
-        for element in self.getElement("", namespace, name):
+        for element in self.get_element("", namespace, name):
             if element.nodeType == element.ATTRIBUTE_NODE:
                 value = element.nodeValue
             else:
-                value = self._getText(element)
+                value = self._get_text(element)
             break
         if value is not None:
             value = converter(value)
