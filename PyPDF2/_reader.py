@@ -234,7 +234,7 @@ class PdfReader:
         Defaults to ``None``
     """
 
-    def __init__(self, stream: StrByteType, strict: bool = False, password: Optional[str, bytes] = None) -> None:
+    def __init__(self, stream: StrByteType, strict: bool = False, password: Union[None, str, bytes] = None) -> None:
         self.strict = strict
         self.flattened_pages: Optional[List[PageObject]] = None
         self.resolved_objects: Dict[Tuple[Any, Any], Optional[PdfObject]] = {}
@@ -255,7 +255,7 @@ class PdfReader:
         self.stream = stream
 
         self._override_encryption = False
-        if password != None:
+        if isinstance(password, (str, bytes)):
             if self.decrypt(password) == 0:
                 raise PdfReadError("Wrong Password : Cannot decrypt then:")
 
