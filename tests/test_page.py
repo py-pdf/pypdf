@@ -188,7 +188,7 @@ def test_page_rotation_non90():
     reader = PdfReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
     page = reader.pages[0]
     with pytest.raises(ValueError) as exc:
-        page.rotate_clockwise(91)
+        page.rotate(91)
     assert exc.value.args[0] == "Rotation angle must be a multiple of 90"
 
 

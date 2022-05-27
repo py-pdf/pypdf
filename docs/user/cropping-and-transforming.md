@@ -10,7 +10,7 @@ writer = PdfWriter()
 writer.add_page(reader.pages[0])
 
 # add page 2 from reader, but rotated clockwise 90 degrees:
-writer.add_page(reader.pages[1].rotate_clockwise(90))
+writer.add_page(reader.pages[1].rotate(90))
 
 # add page 3 from reader, but crop it to half size:
 page3 = reader.pages[2]
