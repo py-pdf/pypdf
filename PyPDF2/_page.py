@@ -41,9 +41,11 @@ from typing import (
     Optional,
     Tuple,
     Union,
+    List,
     cast,
 )
 
+from .errors import PdfReadWarning #,PdfReadError
 from ._utils import (
     DEPR_MSG,
     DEPR_MSG_NO_REPLACEMENT,
@@ -59,6 +61,7 @@ from .generic import (
     ArrayObject,
     ContentStream,
     DictionaryObject,
+    DecodedStreamObject,
     FloatObject,
     IndirectObject,
     NameObject,
@@ -1065,21 +1068,41 @@ class PageObject(DictionaryObject):
         :return: a string object.
         """
         # code freely inspired from @twiggy ; see #711
-        def buildCharMap(pdf, font_name="/a"):
-            mapDict = {}
-            processRg = False
-            processChar = False
-            encoding = []
-            fontType = self["/Resources"]["/Font"][font_name]["/Subtype"]
-            if "/Encoding" in self["/Resources"]["/Font"][font_name]:
-                enc = self["/Resources"]["/Font"][font_name]["/Encoding"].get_object()
-                if "/BaseEncoding" in enc:
-                    encoding = list(charset_encoding[enc["/BaseEncoding"]])
+        def buildCharMap(font_name : str)->tuple[str,Dict,Dict]:
+            mapDict : Any = {}
+            processRg : bool = False
+            processChar : bool = False
+            encoding : List[str] = []
+            fontType :str = cast(NameObject, cast(DictionaryObject,
+                                 cast(DictionaryObject,
+                                      cast(DictionaryObject, self["/Resources"])["/Font"]
+                                 )[font_name]
+                            )["/Subtype"])
+            if "/Encoding" in cast(DictionaryObject, cast(DictionaryObject, cast(DictionaryObject, self["/Resources"])["/Font"])[font_name]):
+                enc = cast(DictionaryObject,
+                           cast(DictionaryObject,
+                                cast(DictionaryObject,
+                                     cast(DictionaryObject, self["/Resources"])["/Font"]
+                                )[font_name]
+                            )["/Encoding"]
+                        ).get_object()
+                if isinstance(enc,str):
+                    try:
+                        encoding = charset_encoding[enc]
+                    except:
+                        warnings.warn(f"Advanced encoding {encoding} not implemented yet",PdfReadWarning)
+                        encoding = charset_encoding["/StandardCoding"]
+                elif isinstance(enc, DictionaryObject) and "/BaseEncoding" in enc:
+                    try:
+                        encoding = charset_encoding[cast(str,enc["/BaseEncoding"])]
+                    except:
+                        warnings.warn(f"Advanced encoding {encoding} not implemented yet",PdfReadWarning)
+                        encoding = charset_encoding["/StandardCoding"]
                 else:
-                    encoding = list(charset_encoding["/StandardCoding"])
-                if "/Differences" in enc:
+                    encoding = charset_encoding["/StandardCoding"]
+                if "/Differences" in cast(DictionaryObject,enc):
                     x = 0
-                    for o in enc["/Differences"]:
+                    for o in cast(DictionaryObject,cast(DictionaryObject,enc)["/Differences"]):
                         if isinstance(o, int):
                             x = o
                         else:
@@ -1088,9 +1111,17 @@ class PageObject(DictionaryObject):
                             except Exception:
                                 encoding[x] = o
                             x += 1
-            if "/ToUnicode" in self["/Resources"]["/Font"][font_name]:
+            if "/ToUnicode" in cast(DictionaryObject,
+                                    cast(DictionaryObject,
+                                         cast(DictionaryObject,self["/Resources"])["/Font"]
+                                    )[font_name]):
                 cm = (
-                    self["/Resources"]["/Font"][font_name]["/ToUnicode"]
+                    cast(DecodedStreamObject,
+                         cast(DictionaryObject,
+                              cast(DictionaryObject,
+                                   cast(DictionaryObject,self["/Resources"])["/Font"]
+                              )[font_name]
+                          )["/ToUnicode"])
                     .getData()
                     .decode("utf-8")
                 )
@@ -1136,15 +1167,14 @@ class PageObject(DictionaryObject):
                         a = int(lst[0], 16)
                         mapDict[a] = unhexlify(lst[1]).decode("utf-16-be")
             return fontType, dict(zip(range(256), encoding)), "".maketrans(mapDict)
-
         # ------- end of buildCharmap ------
-        text = ""
-        output = ""
-        cmaps={}
-        if "/Font" in self["/Resources"]:
-            for f in self["/Resources"]["/Font"]:
-                cmaps[f] = buildCharMap(self.pdf, f)
-        cmap = {}
+        text: str = ""
+        output: str = ""
+        cmaps: Dict[str, tuple[str, Dict[int,str],Dict[str,str]]]={}
+        if "/Font" in cast(DictionaryObject,self["/Resources"]):
+            for f in cast(DictionaryObject,cast(DictionaryObject,self["/Resources"])["/Font"]):
+                cmaps[f] = buildCharMap(f)
+        cmap: Union[str, Dict[int,str]]= {}
         content = self[PG.CONTENTS].get_object()
         if not isinstance(content, ContentStream):
             content = ContentStream(content, self.pdf, "charmap")

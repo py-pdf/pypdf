@@ -139,7 +139,7 @@ class ArrayObject(list, PdfObject):
         stream.write(b_(" ]"))
 
     @staticmethod
-    def read_from_stream(stream: StreamType, pdf: Any, forcedEncoding: Union[None,str,list] = None) -> "ArrayObject":  # PdfReader
+    def read_from_stream(stream: StreamType, pdf: Any, forcedEncoding: Union[None,str,List[str],dict[int,str]] = None) -> "ArrayObject":  # PdfReader
         arr = ArrayObject()
         tmp = stream.read(1)
         if tmp != b_("["):
@@ -306,7 +306,7 @@ def readHexStringFromStream(
 
 def readStringFromStream(
     stream: StreamType,
-    forcedEncoding: Union[None, str, List[int]] = None,
+    forcedEncoding: Union[None,str,List[str],dict[int,str]] = None,
 ) -> Union["TextStringObject", "ByteStringObject"]:
     tok = stream.read(1)
     parens = 1
@@ -564,7 +564,7 @@ class DictionaryObject(dict, PdfObject):
     @staticmethod
     def read_from_stream(
         stream: StreamType, pdf: Any,  # PdfReader
-        forcedEncoding: Union[None,str,list] = None
+        forcedEncoding: Union[None,str,List[str],dict[int,str]] = None
     ) -> "DictionaryObject":
         def getNextObjPos(
             p: int, p1: int, remGens: List[int], pdf: Any
@@ -920,7 +920,7 @@ class EncodedStreamObject(StreamObject):
 
 class ContentStream(DecodedStreamObject):
     def __init__(
-        self, stream: Any, pdf: Any, forcedEncoding: Union[None, str, List[int]] = None
+        self, stream: Any, pdf: Any, forcedEncoding: Union[None,str,List[str],dict[int,str]] = None
     ) -> None:
         self.pdf = pdf
 
@@ -1061,7 +1061,7 @@ class ContentStream(DecodedStreamObject):
 
 def read_object(
     stream: StreamType, pdf: Any,  # PdfReader
-    forcedEncoding:  Union[None,str,list] = None
+    forcedEncoding:  Union[None,str,List[str],dict[int,str]] = None
 ) -> Union[PdfObject, int, str, ContentStream]:
     tok = stream.read(1)
     stream.seek(-1, 1)  # reset to start
@@ -1699,7 +1699,7 @@ class Bookmark(Destination):
 
 
 def createStringObject(
-    string: Union[str, bytes], forcedEncoding: Union[None, str, List[int]] = None
+    string: Union[str, bytes], forcedEncoding: Union[None,str,List[str],dict[int,str]] = None
 ) -> Union[TextStringObject, ByteStringObject]:
     """
     Given a string, create a ByteStringObject or a TextStringObject to
@@ -1709,34 +1709,35 @@ def createStringObject(
 
     :raises TypeError: If string is not of type str or bytes.
     """
-    if isinstance(forcedEncoding, list):
-        out = ""
-        for x in string:
-            try:
-                out += forcedEncoding[x]
-            except Exception:
-                out += x
-        return x
-    elif isinstance(forcedEncoding, str):
-        return TextStringObject(string.decode(forcedEncoding))
-    elif isinstance(string, str):
+    if isinstance(string, str):
         return TextStringObject(string)
     elif isinstance(string, bytes_type):
-        try:
-            if string.startswith(codecs.BOM_UTF16_BE):
-                retval = TextStringObject(string.decode("utf-16"))
-                retval.autodetect_utf16 = True
-                return retval
-            else:
-                # This is probably a big performance hit here, but we need to
-                # convert string objects into the text/unicode-aware version if
-                # possible... and the only way to check if that's possible is
-                # to try.  Some strings are strings, some are just byte arrays.
-                retval = TextStringObject(decode_pdfdocencoding(string))
-                retval.autodetect_pdfdocencoding = True
-                return retval
-        except UnicodeDecodeError:
-            return ByteStringObject(string)
+        if isinstance(forcedEncoding, (list,dict)):
+            out = ""
+            for x in string:
+                try:
+                    out += forcedEncoding[x]
+                except Exception:
+                    out += bytes((x,)).decode("charmap")
+            return TextStringObject(out)
+        elif isinstance(forcedEncoding, str):
+            return TextStringObject(string.decode(forcedEncoding))
+        else:
+            try:
+                if string.startswith(codecs.BOM_UTF16_BE):
+                    retval = TextStringObject(string.decode("utf-16"))
+                    retval.autodetect_utf16 = True
+                    return retval
+                else:
+                    # This is probably a big performance hit here, but we need to
+                    # convert string objects into the text/unicode-aware version if
+                    # possible... and the only way to check if that's possible is
+                    # to try.  Some strings are strings, some are just byte arrays.
+                    retval = TextStringObject(decode_pdfdocencoding(string))
+                    retval.autodetect_pdfdocencoding = True
+                    return retval
+            except UnicodeDecodeError:
+                return ByteStringObject(string)
     else:
         raise TypeError("createStringObject should have str or unicode arg")
 
@@ -1773,7 +1774,7 @@ def decode_pdfdocencoding(byte_array: bytes) -> str:
 # C.1 Predefined encodings sorted by character name of another PDF reference
 # Some indices have '\u0000' although they should have something else:
 # 22: should be '\u0017'
-_pdfdoc_encoding = (
+_pdfdoc_encoding = [
     "\u0000",
     "\u0001",
     "\u0002",
@@ -2030,13 +2031,13 @@ _pdfdoc_encoding = (
     "\u00fd",
     "\u00fe",
     "\u00ff",  # 248 - 255
-)
+]
 
 assert len(_pdfdoc_encoding) == 256
 
 
-def fill_from_encoding(enc: str) -> list:
-    lst = ()
+def fill_from_encoding(enc: str) -> List[str]:
+    lst : List[str] = []
     for x in range(256):
         try:
             lst+=(bytes((x,)).decode(enc),)
@@ -2307,7 +2308,7 @@ _std_encoding = [
 ]
 
 
-def rev_encoding(enc: list) -> Dict[str, int]:
+def rev_encoding(enc: List[str]) -> Dict[str, int]:
     rev: Dict[str, int] = {}
     for i in range(256):
         char = enc[i]
@@ -2320,11 +2321,11 @@ def rev_encoding(enc: list) -> Dict[str, int]:
     return rev
 
 
-_pdfdoc_encoding_rev = rev_encoding(_pdfdoc_encoding)
-_win_encoding_rev = rev_encoding(_win_encoding)
-_mac_encoding_rev = rev_encoding(_mac_encoding)
+_pdfdoc_encoding_rev : dict[str,int] = rev_encoding(_pdfdoc_encoding)
+_win_encoding_rev : dict[str,int] = rev_encoding(_win_encoding)
+_mac_encoding_rev : dict[str,int] = rev_encoding(_mac_encoding)
 
-charset_encoding = {
+charset_encoding : dict[str, List[str] ] = {
     "/StandardCoding": _std_encoding,
     "/WinAnsiEncoding": _win_encoding,
     "/MacRomanEncoding": _mac_encoding,
