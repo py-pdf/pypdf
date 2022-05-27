@@ -1097,13 +1097,13 @@ class PageObject(DictionaryObject):
                 if isinstance(enc,str):
                     try:
                         encoding = charset_encoding[enc]
-                    except:
+                    except Exception:
                         warnings.warn(f"Advanced encoding {encoding} not implemented yet",PdfReadWarning)
                         encoding = charset_encoding["/StandardCoding"]
                 elif isinstance(enc, DictionaryObject) and "/BaseEncoding" in enc:
                     try:
                         encoding = charset_encoding[cast(str,enc["/BaseEncoding"])]
-                    except:
+                    except Exception:
                         warnings.warn(f"Advanced encoding {encoding} not implemented yet",PdfReadWarning)
                         encoding = charset_encoding["/StandardCoding"]
                 else:
