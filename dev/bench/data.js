@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1653597993216,
+  "lastUpdate": 1653631174979,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -2704,6 +2704,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.020114326419335065",
             "extra": "mean: 3.8181550628000025 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "matt.peveler@gmail.com",
+            "name": "Matthew Peveler",
+            "username": "MasterOdin"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b4d54ed59486abfcd429a281c4d12cc09780636b",
+          "message": "BUG: Fix error adding transformation to page without /Contents (#908)",
+          "timestamp": "2022-05-27T07:58:27+02:00",
+          "tree_id": "0f8292364f95a29f7250bed2e892a8899b71735e",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/b4d54ed59486abfcd429a281c4d12cc09780636b"
+        },
+        "date": 1653631174546,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6328943629802469,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011030135335598736",
+            "extra": "mean: 1.580042513399998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.751811863239821,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004706856007834518",
+            "extra": "mean: 102.54504640000022 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2625315831703426,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005789307845957156",
+            "extra": "mean: 3.8090655147999994 sec\nrounds: 5"
           }
         ]
       }
