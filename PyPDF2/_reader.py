@@ -407,6 +407,20 @@ class PdfReader:
         )
         return self._get_num_pages()
 
+    def getPage(self, pageNumber: int) -> PageObject:
+        """
+        .. deprecated:: 1.28.0
+
+            Use :code:`reader.pages[pageNumber]` instead.
+        """
+        warnings.warn(
+            "`getPage` of PdfReader will be removed in PyPDF2 2.0.0. "
+            "Use `reader.pages[pageNumber]` instead.",
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self._get_page(pageNumber)
+
     def _get_page(self, page_number: int) -> PageObject:
         """
         Retrieves a page by number from this PDF file.
