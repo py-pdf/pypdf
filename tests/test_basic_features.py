@@ -20,13 +20,13 @@ def test_basic_features():
     writer.add_page(reader.pages[0])
 
     # add page 2 from input1, but rotated clockwise 90 degrees
-    writer.add_page(reader.pages[0].rotate_clockwise(90))
+    writer.add_page(reader.pages[0].rotate(90))
 
     # add page 3 from input1, rotated the other way:
     with pytest.warns(PendingDeprecationWarning):
         rotated = reader.pages[0].rotateCounterClockwise(90)
     writer.add_page(rotated)
-    # alt: output.addPage(input1.pages[0].rotate_clockwise(270))
+    # alt: output.addPage(input1.pages[0].rotate(270))
 
     # add page 4 from input1, but first add a watermark from another PDF:
     page4 = reader.pages[0]
