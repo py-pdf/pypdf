@@ -1081,11 +1081,7 @@ class PageObject(DictionaryObject):
             processRg : bool = False
             processChar : bool = False
             encoding : List[str] = []
-            fontType :str = cast(NameObject, cast(DictionaryObject,
-                                 cast(DictionaryObject,
-                                      cast(DictionaryObject, self["/Resources"])["/Font"]
-                                 )[font_name]
-                            )["/Subtype"])
+            fontType :str = cast(NameObject, self["/Resources"]["/Font"][font_name]["/Subtype"])
             if "/Encoding" in cast(DictionaryObject, cast(DictionaryObject, cast(DictionaryObject, self["/Resources"])["/Font"])[font_name]):
                 enc = cast(DictionaryObject,
                            cast(DictionaryObject,
