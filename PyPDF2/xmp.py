@@ -2,7 +2,16 @@ import datetime
 import decimal
 import re
 import warnings
-from typing import Any, Callable, Dict, Optional, TypeVar, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    TypeVar,
+    Union,
+)
 from xml.dom.minidom import Document
 from xml.dom.minidom import Element as XmlElement
 from xml.dom.minidom import parseString
@@ -92,8 +101,10 @@ def _converter_date(value: str) -> datetime.datetime:
     return dt
 
 
-def _getter_bag(namespace: str, name: str) -> Optional[Any]:
-    def get(self: Any) -> Optional[Any]:
+def _getter_bag(
+    namespace: str, name: str
+) -> Callable[["XmpInformation"], Optional[List[str]]]:
+    def get(self: "XmpInformation") -> Optional[List[str]]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
@@ -114,8 +125,8 @@ def _getter_bag(namespace: str, name: str) -> Optional[Any]:
 
 def _getter_seq(
     namespace: str, name: str, converter: Callable[[Any], Any] = _identity
-) -> Optional[Any]:
-    def get(self: Any) -> Optional[Any]:
+) -> Callable[["XmpInformation"], Optional[List[Any]]]:
+    def get(self: "XmpInformation") -> Optional[List[Any]]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
@@ -138,8 +149,10 @@ def _getter_seq(
     return get
 
 
-def _getter_langalt(namespace: str, name: str) -> Optional[Any]:
-    def get(self: Any) -> Optional[Any]:
+def _getter_langalt(
+    namespace: str, name: str
+) -> Callable[["XmpInformation"], Optional[Dict[Any, Any]]]:
+    def get(self: "XmpInformation") -> Optional[Dict[Any, Any]]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
@@ -162,8 +175,8 @@ def _getter_langalt(namespace: str, name: str) -> Optional[Any]:
 
 def _getter_single(
     namespace: str, name: str, converter: Callable[[str], Any] = _identity
-) -> Optional[Any]:
-    def get(self: Any) -> Optional[Any]:
+) -> Callable[["XmpInformation"], Optional[Any]]:
+    def get(self: "XmpInformation") -> Optional[Any]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
@@ -217,7 +230,7 @@ class XmpInformation(PdfObject):
         )
         self.write_to_stream(stream, encryption_key)
 
-    def get_element(self, about_uri: str, namespace: str, name: str) -> Any:
+    def get_element(self, about_uri: str, namespace: str, name: str) -> Iterator[Any]:
         for desc in self.rdfRoot.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):
             if desc.getAttributeNS(RDF_NAMESPACE, "about") == about_uri:
                 attr = desc.getAttributeNodeNS(namespace, name)
@@ -225,7 +238,7 @@ class XmpInformation(PdfObject):
                     yield attr
                 yield from desc.getElementsByTagNameNS(namespace, name)
 
-    def getElement(self, aboutUri: str, namespace: str, name: str) -> Any:
+    def getElement(self, aboutUri: str, namespace: str, name: str) -> Iterator[Any]:
         """
         .. deprecated:: 1.28.0
 
@@ -238,7 +251,7 @@ class XmpInformation(PdfObject):
         )
         return self.get_element(aboutUri, namespace, name)
 
-    def get_nodes_in_namespace(self, about_uri: str, namespace: str) -> Any:
+    def get_nodes_in_namespace(self, about_uri: str, namespace: str) -> Iterator[Any]:
         for desc in self.rdfRoot.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):
             if desc.getAttributeNS(RDF_NAMESPACE, "about") == about_uri:
                 for i in range(desc.attributes.length):
@@ -249,7 +262,7 @@ class XmpInformation(PdfObject):
                     if child.namespaceURI == namespace:
                         yield child
 
-    def getNodesInNamespace(self, aboutUri: str, namespace: str) -> Any:
+    def getNodesInNamespace(self, aboutUri: str, namespace: str) -> Iterator[Any]:
         """
         .. deprecated:: 1.28.0
 
