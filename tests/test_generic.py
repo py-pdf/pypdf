@@ -67,13 +67,13 @@ def test_boolean_object_write():
 
 def test_boolean_eq():
     boolobj = BooleanObject(True)
-    assert (boolobj == True) is True
-    assert (boolobj == False) is False
+    assert (boolobj == True) is True  # noqa: E712
+    assert (boolobj == False) is False  # noqa: E712
     assert (boolobj == "True") is False
 
     boolobj = BooleanObject(False)
-    assert (boolobj == True) is False
-    assert (boolobj == False) is True
+    assert (boolobj == True) is False  # noqa: E712
+    assert (boolobj == False) is True  # noqa: E712
     assert (boolobj == "True") is False
 
 
