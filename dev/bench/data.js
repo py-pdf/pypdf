@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1653732706668,
+  "lastUpdate": 1653765256724,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -3019,6 +3019,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.012933309796893715",
             "extra": "mean: 3.8222920315999986 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "matt.peveler@gmail.com",
+            "name": "Matthew Peveler",
+            "username": "MasterOdin"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "bbfd46ccc9d22b1444e2293943dab5baabab4af6",
+          "message": "DEV: Create flake8 config file (#916)\n\nSigned-off-by: Matthew Peveler <matt.peveler@gmail.com>",
+          "timestamp": "2022-05-28T21:13:08+02:00",
+          "tree_id": "aa186de9291efb7afd30e8ff30051a7b6bda8cf6",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/bbfd46ccc9d22b1444e2293943dab5baabab4af6"
+        },
+        "date": 1653765256179,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6280606999463212,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015485614735069498",
+            "extra": "mean: 1.592202791999989 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.72505636703493,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005130952401877954",
+            "extra": "mean: 102.82716749999565 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26085810797089304,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00583720631038026",
+            "extra": "mean: 3.833501698599997 sec\nrounds: 5"
           }
         ]
       }
