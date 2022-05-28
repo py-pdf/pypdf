@@ -1175,8 +1175,9 @@ class PageObject(DictionaryObject):
         text: str = ""
         output: str = ""
         cmaps: Dict[str, Tuple[str, Dict[int,str],Dict[str,str]]]={}
-        if "/Font" in cast(DictionaryObject,self["/Resources"]):
-            for f in cast(DictionaryObject,cast(DictionaryObject,self["/Resources"])["/Font"]):
+        resources_dict = cast(DictionaryObject,self["/Resources"])
+        if "/Font" in resources_dict:
+            for f in cast(DictionaryObject, resources_dict["/Font"]):
                 cmaps[f] = buildCharMap(f)
         cmap: Union[str, Dict[int,str]]= {}
         content = self[PG.CONTENTS].get_object()
