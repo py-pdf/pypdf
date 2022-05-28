@@ -1,3 +1,15 @@
+Version 1.28.3, 2022-05-28
+--------------------------
+
+Deprecations (DEP):
+-  PEP8 renaming (#905)
+
+Bug Fixes (BUG):
+-  XmpInformation missing method _getText (#917)
+-  Fix PendingDeprecationWarning on _merge_page (#904)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.28.2...1.28.3
+
 Version 1.28.2, 2022-05-23
 --------------------------
 
