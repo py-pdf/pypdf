@@ -61,7 +61,7 @@ def decompress(data: bytes) -> bytes:
     except zlib.error:
         d = zlib.decompressobj(zlib.MAX_WBITS | 32)
         result_str = b""
-        for b in [data[i: i + 1] for i in range(len(data))]:
+        for b in [data[i : i + 1] for i in range(len(data))]:
             try:
                 result_str += d.decompress(b)
             except zlib.error:
@@ -126,7 +126,7 @@ class FlateDecode:
         prev_rowdata = (0,) * rowlength
         for row in range(len(data) // rowlength):
             rowdata = [
-                ord_(x) for x in data[(row * rowlength): ((row + 1) * rowlength)]
+                ord_(x) for x in data[(row * rowlength) : ((row + 1) * rowlength)]
             ]
             filter_byte = rowdata[0]
             if filter_byte == 0:
