@@ -55,8 +55,8 @@ bytes_type = type(bytes())  # Works the same in Python 2.X and 3.X
 StreamType = Union[BytesIO, BufferedReader, BufferedWriter, FileIO]
 StrByteType = Union[str, StreamType]
 
-DEPR_MSG_NO_REPLACEMENT = "{} is deprecated and will be removed in PyPDF2 2.0.0."
-DEPR_MSG = "{} is deprecated and will be removed in PyPDF2 2.0.0. Use {} instead."
+DEPR_MSG_NO_REPLACEMENT = "{} is deprecated and will be removed in PyPDF2 3.0.0."
+DEPR_MSG = "{} is deprecated and will be removed in PyPDF2 3.0.0. Use {} instead."
 
 
 def read_until_whitespace(stream: StreamType, maxchars: Optional[int] = None) -> bytes:

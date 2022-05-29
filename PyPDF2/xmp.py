@@ -224,8 +224,7 @@ class XmpInformation(PdfObject):
             Use :meth:`write_to_stream` instead.
         """
         warnings.warn(
-            "writeToStream() will be deprecated in PyPDF2 2.0.0. "
-            "Use write_to_stream() instead.",
+            DEPR_MSG.format("writeToStream", "write_to_stream"),
             PendingDeprecationWarning,
         )
         self.write_to_stream(stream, encryption_key)

@@ -638,8 +638,10 @@ class PageObject(DictionaryObject):
             Use :meth:`add_transformation`  and :meth:`merge_page` instead.
         """
         warnings.warn(
-            "page.mergeTransformedPage(page2, ctm) will be removed in PyPDF 2.0.0. "
-            "Use page2.add_transformation(ctm); page.merge_page(page2) instead.",
+            DEPR_MSG.format(
+                "page.mergeTransformedPage(page2, ctm)",
+                "page2.add_transformation(ctm); page.merge_page(page2)",
+            ),
             PendingDeprecationWarning,
             stacklevel=2,
         )
