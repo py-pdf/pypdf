@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1653814739445,
+  "lastUpdate": 1653826518044,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -3154,6 +3154,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.007376436019779131",
             "extra": "mean: 4.4657423421999995 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c008b0f448219d4727a8ba07570aba0abf4321e2",
+          "message": "ENH: Improve space setting for text extraction (#922)\n\nFull credit to pubpub-zz who introduced this change in\r\nhttps://github.com/py-pdf/PyPDF2/pull/881\r\n\r\nCo-authored-by: pubpub-zz <4083478+pubpub-zz@users.noreply.github.com>",
+          "timestamp": "2022-05-29T14:14:07+02:00",
+          "tree_id": "6d3f36d7972ccad55ee119863d23366a9f1c55d3",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/c008b0f448219d4727a8ba07570aba0abf4321e2"
+        },
+        "date": 1653826517554,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6377037001130151,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01050493276016348",
+            "extra": "mean: 1.5681263882000025 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.709615217367169,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005795550970974708",
+            "extra": "mean: 102.99069300000099 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22762323826531633,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014775597994005173",
+            "extra": "mean: 4.393224556599998 sec\nrounds: 5"
           }
         ]
       }
