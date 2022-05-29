@@ -231,7 +231,8 @@ class PdfReader:
     :param bool strict: Determines whether user should be warned of all
         problems and also causes some correctable problems to be fatal.
         Defaults to ``False``.
-    :param None/str/bytes password: Decrypt pdf at initialization. if None, decrypt will be called
+    :param None/str/bytes password: Decrypt PDF file at initialization. If the
+        password is None, the file will not be decrypted.
         Defaults to ``None``
     """
 
@@ -261,9 +262,8 @@ class PdfReader:
         self.stream = stream
 
         self._override_encryption = False
-        if password is not None:
-            if self.decrypt(password) == 0:
-                raise PdfReadError("Wrong password")
+        if password is not None and self.decrypt(password) == 0:
+            raise PdfReadError("Wrong password")
 
     @property
     def metadata(self) -> Optional[DocumentInformation]:
