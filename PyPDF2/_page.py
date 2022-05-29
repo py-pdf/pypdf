@@ -1064,7 +1064,7 @@ class PageObject(DictionaryObject):
         )
         self.compress_content_streams()
 
-    def extract_text(self, Tj_sep: str = "", TJ_sep: str = "") -> str:
+    def extract_text(self, Tj_sep: str = "", TJ_sep: str = "",space_width : float = 200.0) -> str:
         """
         Locate all text drawing commands, in the order they are provided in the
         content stream, and extract the text.  This works well for some PDF
@@ -1224,10 +1224,10 @@ class PageObject(DictionaryObject):
                     output += text.translate(cmap) + "\n"
                     text = ""
             elif (operator in [b_("Td")]) and (operands[1] == 0):
-                if operands[-1] > 0:
-                    print("back ", operands[-1])
-                elif operands[-1] < 0:
-                    print("back ", operands[-1])
+                if operands[0] > (space_scale * space_width):
+                    text += " "
+                #elif operands[-1] < 0:
+                #    print("back ", operands[-1])
             elif operator == b_("'"):
                 output += text.translate(cmap) + "\n"
                 _text = operands[0]
@@ -1247,9 +1247,9 @@ class PageObject(DictionaryObject):
                     elif isinstance(i, (NumberObject, FloatObject)):
                         # a positive value decreases and the negative value increases
                         # space
-                        # if abs(i)>spaceScale*1000:print("TJ:",text,"*",i)
+                        # if abs(i)>space_scale*1000:print("TJ:",text,"*",i)
                         # print(text,i)
-                        if int(i) < -spaceScale * 250:
+                        if int(i) < -space_scale * space_width:
                             if len(text) == 0 or text[-1] != " ":
                                 text += " "
                         else:
