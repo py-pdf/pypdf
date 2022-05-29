@@ -1080,8 +1080,15 @@ class PageObject(DictionaryObject):
         # Note: we check all strings are TextStringObjects.  ByteStringObjects
         # are strings where the byte->string encoding was unknown, so adding
         # them to the text here would be gibberish.
+
+        space_scale = 1.0
+
         for operands, operator in content.operations:
-            if operator == b_("Tj"):
+            if operator == b_("Tf"):
+                pass
+            elif operator == b_("Tw"):
+                space_scale = 1.0 + float(operands[0])
+            elif operator == b_("Tj"):
                 _text = operands[0]
                 if isinstance(_text, TextStringObject):
                     text += Tj_sep
@@ -1104,10 +1111,10 @@ class PageObject(DictionaryObject):
                     if isinstance(i, TextStringObject):
                         text += TJ_sep
                         text += i
-                    elif isinstance(i, NumberObject):
+                    elif isinstance(i, (NumberObject, FloatObject)):
                         # a positive value decreases and the negative value increases
                         # space
-                        if int(i) < 0:
+                        if int(i) < -space_scale * 250:
                             if len(text) == 0 or text[-1] != " ":
                                 text += " "
                         else:
