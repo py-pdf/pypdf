@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1653813736140,
+  "lastUpdate": 1653814739445,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -3109,6 +3109,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.07996699178911772",
             "extra": "mean: 4.567449661399996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c59224a423f81adfd16cc471322803dcaabe93e0",
+          "message": "ENH: Allow setting the decryption password in PdfReader.__init__ (#920)\n\nThis is a convenience change. You can still call `reader = PdfReader(\"encrypted.pdf\"); reader.decrypt(password)`.\r\n\r\nFull credit to pubpub-zz; I just made stylistic changes.\r\n\r\nCloses #910 \r\n\r\nCo-authored-by: pubpub-zz <4083478+pubpub-zz@users.noreply.github.com>",
+          "timestamp": "2022-05-29T10:57:37+02:00",
+          "tree_id": "b9df8cfaa87cae9db324394306ded3cd8ab6d404",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/c59224a423f81adfd16cc471322803dcaabe93e0"
+        },
+        "date": 1653814738168,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.5426886180795918,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01200177887464513",
+            "extra": "mean: 1.842677304599998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 8.408381666556158,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005342018483201632",
+            "extra": "mean: 118.92894966666903 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22392693607740943,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007376436019779131",
+            "extra": "mean: 4.4657423421999995 sec\nrounds: 5"
           }
         ]
       }
