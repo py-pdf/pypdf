@@ -28,6 +28,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import math
+import unicodedata
 import uuid
 import warnings
 from decimal import Decimal
@@ -56,6 +57,7 @@ from .constants import Ressources as RES
 from .errors import PageSizeNotDefinedError
 from .generic import (
     ArrayObject,
+    ByteStringObject,
     ContentStream,
     DictionaryObject,
     FloatObject,
@@ -434,10 +436,94 @@ class PageObject(DictionaryObject):
         )
         return contents
 
+    @staticmethod
+    def _searchCID(cidmap: Dict[int, Any], cid: Any) -> str:
+        if isinstance(cid, str) or isinstance(cid, TextStringObject):
+            cid = int.from_bytes(cid.encode("utf-16be"), byteorder="big")
+        char = cidmap.get(cid, cid)
+        if isinstance(char, int):
+            char = char.to_bytes(2, byteorder="big").decode("utf-16be")
+        elif not isinstance(char, str):
+            char = char.decode("utf-16be")
+        return char
+
+    @staticmethod
+    def _contentToInt(value: Any) -> int:
+        if isinstance(value, TextStringObject) or isinstance(value, str):
+            # Removing control characteres.
+            value = "".join(
+                ch for ch in value if unicodedata.category(ch)[0] not in "CcS"
+            )
+            if len(value) > 1:
+                value = value[0]
+            value = int.from_bytes(value.encode("utf-16be"), "big")
+
+        elif isinstance(value, ByteStringObject):
+            value = int.from_bytes(value, "big")
+
+        return value
+
+    def _parseFont(self) -> dict:
+        # Parse font's CMAP to render properly the characters when the
+        # document uses TJ matrix to store the text.
+        resources = self[PG.RESOURCES].get_object()
+        fontcmap: Dict[int, Any] = {}
+        if RES.FONT not in resources:  # type: ignore
+            return {}
+
+        fonts = resources[RES.FONT]  # type: ignore
+        for k, _ in fonts.items():
+            fontcmap.update({k: {}})
+
+        table = {}
+        for k, _ in fontcmap.items():
+            if "/ToUnicode" not in fonts[k]:
+                continue
+
+            to_unicode = fonts[k]["/ToUnicode"].get_object()
+            if not isinstance(to_unicode, ContentStream):
+                to_unicode = ContentStream(to_unicode, self.pdf)
+
+            for operands, operator in to_unicode.operations:
+                if operator == b_("endbfchar"):
+                    for i in range(0, len(operands), 2):
+                        operands[i] = PageObject._contentToInt(operands[i])
+                        table.update({operands[i]: operands[i + 1]})
+                    fontcmap.update({k: table})
+                elif operator == b_("endbfrange"):
+                    for i in range(0, len(operands), 3):
+                        a, b, c = operands[i], operands[i + 1], operands[i + 2]
+                        a = PageObject._contentToInt(a)
+                        b = PageObject._contentToInt(b)
+                        if isinstance(c, list):
+                            # i.e.:
+                            #   2 beginbfrange
+                            #   <005F> <0061> [<00660066> <00660069> <00660066006C>]
+                            # In this case we map the range 005F to 0061 with each
+                            # item from the list.
+                            if len(c) < (b - a):
+                                continue
+                            for j, cid in enumerate(range(a, b)):
+                                char = c[j]
+                                table.update({cid: char})
+                        else:
+                            # We need offset the unicode values.
+                            # i.e.:
+                            #   2 beginbfrange
+                            #   < 0000 > < 005E > < 0020 >
+                            # In this case the < 0000 > to < 005E > will be
+                            # mapped to the Unicode values U+0020 to U+007E.
+                            c = PageObject._contentToInt(c)
+                            total_range = b - a + c + 1
+                            for i, char in enumerate(range(c, total_range)):
+                                cid = a + i
+                                table.update({cid: char.to_bytes(2, "big")})
+                    fontcmap.update({k: table})
+        return fontcmap
+
     def get_contents(self) -> Optional[ContentStream]:
         """
         Access the page contents.
-
         :return: the ``/Contents`` object, or ``None`` if it doesn't exist.
             ``/Contents`` is optional, as described in PDF Reference  7.7.3.3
         """
@@ -1077,15 +1163,18 @@ class PageObject(DictionaryObject):
         content = self[PG.CONTENTS].get_object()
         if not isinstance(content, ContentStream):
             content = ContentStream(content, self.pdf)
+
         # Note: we check all strings are TextStringObjects.  ByteStringObjects
         # are strings where the byte->string encoding was unknown, so adding
         # them to the text here would be gibberish.
 
         space_scale = 1.0
 
+        current_font = ""
+        fontcmap = self._parseFont()
         for operands, operator in content.operations:
             if operator == b_("Tf"):  # text font
-                pass
+                current_font = operands[0].split(" ", 1)[0]
             elif operator == b_("Tfs"):  # text font size
                 pass
             elif operator == b_("Tc"):  # character spacing
@@ -1109,7 +1198,14 @@ class PageObject(DictionaryObject):
             elif operator == b_("Tj"):
                 # See 'TABLE 5.6 Text-showing operators'
                 _text = operands[0]
-                if isinstance(_text, TextStringObject):
+                if current_font and (
+                    isinstance(_text, bytes) or isinstance(_text, TextStringObject)
+                ):
+                    # Tf had informed the font cmap before of TJ operand.
+                    for c in _text:
+                        char = PageObject._searchCID(fontcmap[current_font], c)
+                        text += char
+                elif isinstance(_text, TextStringObject):
                     text += Tj_sep
                     text += _text
                     text += "\n"
@@ -1131,7 +1227,15 @@ class PageObject(DictionaryObject):
             elif operator == b_("TJ"):
                 # See 'TABLE 5.6 Text-showing operators'
                 for i in operands[0]:
-                    if isinstance(i, TextStringObject):
+                    # We need to check if 'i' is a 'bytes' or 'str' instance
+                    # to avoid to try convert float values from TJ matrix.
+                    if current_font and (
+                        isinstance(i, bytes) or isinstance(i, TextStringObject)
+                    ):
+                        for c in i:
+                            char = PageObject._searchCID(fontcmap[current_font], c)
+                            text += char
+                    elif isinstance(i, TextStringObject):
                         text += TJ_sep
                         text += i
                     elif isinstance(i, (NumberObject, FloatObject)):
