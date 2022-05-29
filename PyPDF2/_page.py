@@ -1084,29 +1084,52 @@ class PageObject(DictionaryObject):
         space_scale = 1.0
 
         for operands, operator in content.operations:
-            if operator == b_("Tf"):
+            if operator == b_("Tf"):  # text font
                 pass
-            elif operator == b_("Tw"):
+            elif operator == b_("Tfs"):  # text font size
+                pass
+            elif operator == b_("Tc"):  # character spacing
+                # See '5.2.1 Character Spacing'
+                pass
+            elif operator == b_("Tw"):  # word spacing
+                # See '5.2.2 Word Spacing'
                 space_scale = 1.0 + float(operands[0])
+            elif operator == b_("Th"):  # horizontal scaling
+                # See '5.2.3 Horizontal Scaling'
+                pass
+            elif operator == b_("Tl"):  # leading
+                # See '5.2.4 Leading'
+                pass
+            elif operator == b_("Tmode"):  # text rendering mode
+                # See '5.2.5 Text Rendering Mode'
+                pass
+            elif operator == b_("Trise"):  # text rise
+                # See '5.2.6 Text Rise'
+                pass
             elif operator == b_("Tj"):
+                # See 'TABLE 5.6 Text-showing operators'
                 _text = operands[0]
                 if isinstance(_text, TextStringObject):
                     text += Tj_sep
                     text += _text
                     text += "\n"
             elif operator == b_("T*"):
+                # See 'TABLE 5.5 Text-positioning operators'
                 text += "\n"
             elif operator == b_("'"):
+                # See 'TABLE 5.6 Text-showing operators'
                 text += "\n"
                 _text = operands[0]
                 if isinstance(_text, TextStringObject):
                     text += operands[0]
             elif operator == b_('"'):
+                # See 'TABLE 5.6 Text-showing operators'
                 _text = operands[2]
                 if isinstance(_text, TextStringObject):
                     text += "\n"
                     text += _text
             elif operator == b_("TJ"):
+                # See 'TABLE 5.6 Text-showing operators'
                 for i in operands[0]:
                     if isinstance(i, TextStringObject):
                         text += TJ_sep
