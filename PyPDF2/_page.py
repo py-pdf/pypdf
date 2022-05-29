@@ -30,22 +30,22 @@
 import math
 import uuid
 import warnings
-from decimal import Decimal
 from binascii import unhexlify
+from decimal import Decimal
 from typing import (
     Any,
     Callable,
     Dict,
     Iterable,
     Iterator,
+    List,
     Optional,
     Tuple,
     Union,
-    List,
     cast,
 )
 
-from .errors import PdfReadWarning  # ,PdfReadError
+from ._adobe_glyphs import adobe_glyphs
 from ._utils import (
     DEPR_MSG,
     DEPR_MSG_NO_REPLACEMENT,
@@ -56,12 +56,13 @@ from ._utils import (
 )
 from .constants import PageAttributes as PG
 from .constants import Ressources as RES
+from .errors import PdfReadWarning  # ,PdfReadError
 from .errors import PageSizeNotDefinedError
 from .generic import (
     ArrayObject,
     ContentStream,
-    DictionaryObject,
     DecodedStreamObject,
+    DictionaryObject,
     FloatObject,
     IndirectObject,
     NameObject,
@@ -71,7 +72,6 @@ from .generic import (
     TextStringObject,
     charset_encoding,
 )
-from ._adglyphs import adobe_glyphs
 
 
 def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
@@ -1087,33 +1087,28 @@ class PageObject(DictionaryObject):
             process_rg: bool = False
             process_char: bool = False
             encoding: List[str] = []
+            resources_dict = cast(DictionaryObject, self["/Resources"])
+            font_dict = cast(
+                DictionaryObject,
+                resources_dict["/Font"],
+            )
+            selected_font_dict = cast(
+                DictionaryObject,
+                font_dict[font_name],
+            )
             font_type: str = cast(
                 NameObject,
-                cast(
-                    DictionaryObject,
-                    cast(
-                        DictionaryObject,
-                        cast(DictionaryObject, self["/Resources"])["/Font"],
-                    )[font_name],
-                )["/Subtype"],
+                selected_font_dict["/Subtype"],
             )
             if "/Encoding" in cast(
                 DictionaryObject,
-                cast(
-                    DictionaryObject,
-                    cast(DictionaryObject, self["/Resources"])["/Font"],
-                )[font_name],
+                font_dict[font_name],
             ):
-                enc = cast(
+                enc_dict = cast(
                     DictionaryObject,
-                    cast(
-                        DictionaryObject,
-                        cast(
-                            DictionaryObject,
-                            cast(DictionaryObject, self["/Resources"])["/Font"],
-                        )[font_name],
-                    )["/Encoding"],
-                ).get_object()
+                    selected_font_dict["/Encoding"],
+                )
+                enc = enc_dict.get_object()
                 if isinstance(enc, str):
                     try:
                         encoding = charset_encoding[enc]
@@ -1147,23 +1142,11 @@ class PageObject(DictionaryObject):
                             except Exception:
                                 encoding[x] = o
                             x += 1
-            if "/ToUnicode" in cast(
-                DictionaryObject,
-                cast(
-                    DictionaryObject,
-                    cast(DictionaryObject, self["/Resources"])["/Font"],
-                )[font_name],
-            ):
+            if "/ToUnicode" in selected_font_dict:
                 cm = (
                     cast(
                         DecodedStreamObject,
-                        cast(
-                            DictionaryObject,
-                            cast(
-                                DictionaryObject,
-                                cast(DictionaryObject, self["/Resources"])["/Font"],
-                            )[font_name],
-                        )["/ToUnicode"],
+                        selected_font_dict["/ToUnicode"],
                     )
                     .get_data()
                     .decode("utf-8")

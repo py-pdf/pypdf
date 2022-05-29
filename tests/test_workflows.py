@@ -1,9 +1,8 @@
 import binascii
 import os
 import sys
-
-from io import BytesIO
 import urllib.request
+from io import BytesIO
 
 import pytest
 
