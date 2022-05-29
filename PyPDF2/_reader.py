@@ -235,7 +235,12 @@ class PdfReader:
         Defaults to ``None``
     """
 
-    def __init__(self, stream: StrByteType, strict: bool = False, password: Union[None, str, bytes] = None) -> None:
+    def __init__(
+        self,
+        stream: StrByteType,
+        strict: bool = False,
+        password: Union[None, str, bytes] = None,
+    ) -> None:
         self.strict = strict
         self.flattened_pages: Optional[List[PageObject]] = None
         self.resolved_objects: Dict[Tuple[Any, Any], Optional[PdfObject]] = {}
