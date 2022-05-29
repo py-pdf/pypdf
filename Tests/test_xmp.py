@@ -54,3 +54,9 @@ def test_regression_issue774():
     assert date.minute == 23
     assert date.second == 34
     assert date.microsecond == 123000
+
+
+def test_regression_issue914():
+    path = os.path.join(RESOURCE_ROOT, "issue-914-xmp-data.pdf")
+    reader = PdfReader(path)
+    assert reader.xmp_metadata.xmp_modifyDate == "2020-04-28T12:23:34.123Z"
