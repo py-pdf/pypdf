@@ -1077,11 +1077,15 @@ class PageObject(DictionaryObject):
         """
         # code freely inspired from @twiggy ; see #711
         def buildCharMap(font_name : str)->Tuple[str,Dict,Dict]:
-            mapDict : Any = {}
-            processRg : bool = False
-            processChar : bool = False
+            map_dict : Any = {}
+            process_rg : bool = False
+            process_char : bool = False
             encoding : List[str] = []
-            fontType :str = cast(NameObject, self["/Resources"]["/Font"][font_name]["/Subtype"])
+            font_type: str = cast(NameObject, cast(DictionaryObject,
+                                 cast(DictionaryObject,
+                                      cast(DictionaryObject, self["/Resources"])["/Font"]
+                                 )[font_name]
+                            )["/Subtype"])
             if "/Encoding" in cast(DictionaryObject, cast(DictionaryObject, cast(DictionaryObject, self["/Resources"])["/Font"])[font_name]):
                 enc = cast(DictionaryObject,
                            cast(DictionaryObject,
@@ -1140,14 +1144,14 @@ class PageObject(DictionaryObject):
                     if l == "":
                         continue
                     if "beginbfrange" in l:
-                        processRg = True
+                        process_rg = True
                     elif "endbfrange" in l:
-                        processRg = False
+                        process_rg = False
                     elif "beginbfchar" in l:
-                        processChar = True
+                        process_char = True
                     elif "endbfchar" in l:
-                        processChar = False
-                    elif processRg:
+                        process_char = False
+                    elif process_rg:
                         lst = [x for x in l.split(" ") if x]
                         a = int(lst[0], 16)
                         b = int(lst[1], 16)
@@ -1156,21 +1160,21 @@ class PageObject(DictionaryObject):
                             for sq in lst[3:]:
                                 if "]":
                                     break
-                                mapDict[a] = unhexlify(sq).decode("utf-16-be")
+                                map_dict[a] = unhexlify(sq).decode("utf-16-be")
                                 a += 1
                                 assert a > b
                         else:
                             c = int(lst[2], 16)
                             fmt = b"%%0%dX" % len(lst[2])
                             while a <= b:
-                                mapDict[a] = unhexlify(fmt % c).decode("utf-16-be")
+                                map_dict[a] = unhexlify(fmt % c).decode("utf-16-be")
                                 a += 1
                                 c += 1
-                    elif processChar:
+                    elif process_char:
                         lst = [x for x in l.split(" ") if x]
                         a = int(lst[0], 16)
-                        mapDict[a] = unhexlify(lst[1]).decode("utf-16-be")
-            return fontType, dict(zip(range(256), encoding)), "".maketrans(mapDict)
+                        map_dict[a] = unhexlify(lst[1]).decode("utf-16-be")
+            return font_type, dict(zip(range(256), encoding)), "".maketrans(map_dict)
         # ------- end of buildCharmap ------
         text: str = ""
         output: str = ""
@@ -1189,7 +1193,7 @@ class PageObject(DictionaryObject):
 
         # charSize = 1.0
         # charScale = 0.0
-        spaceScale = 1.0
+        space_scale = 1.0
         for operands, operator in content.operations:
             if operator == b_("Tf"):
                 if text != "":
@@ -1205,7 +1209,7 @@ class PageObject(DictionaryObject):
             # elif operator == b_("Tc"):
             # charScale = 1.0 + float(operands[0])
             elif operator == b_("Tw"):
-                spaceScale = 1.0 + float(operands[0])
+                space_scale = 1.0 + float(operands[0])
             elif operator == b_("Tj"):
                 _text = operands[0]
                 if isinstance(_text, TextStringObject):
