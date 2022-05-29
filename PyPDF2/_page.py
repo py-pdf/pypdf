@@ -309,7 +309,7 @@ class PageObject(DictionaryObject):
         )
         return PageObject.create_blank_page(pdf, width, height)
 
-    def rotate_clockwise(self, angle: float) -> "PageObject":
+    def rotate(self, angle: float) -> "PageObject":
         """
         Rotate a page clockwise by increments of 90 degrees.
 
@@ -318,8 +318,20 @@ class PageObject(DictionaryObject):
         """
         if angle % 90 != 0:
             raise ValueError("Rotation angle must be a multiple of 90")
-        self._rotate(angle)
+        rotate_obj = self.get(PG.ROTATE, 0)
+        current_angle = (
+            rotate_obj if isinstance(rotate_obj, int) else rotate_obj.get_object()
+        )
+        self[NameObject(PG.ROTATE)] = NumberObject(current_angle + angle)
         return self
+
+    def rotate_clockwise(self, angle: float) -> "PageObject":
+        warnings.warn(
+            DEPR_MSG.format("rotate_clockwise", "rotate"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.rotate(angle)
 
     def rotateClockwise(self, angle: float) -> "PageObject":
         """
@@ -328,11 +340,11 @@ class PageObject(DictionaryObject):
             Use :meth:`rotate_clockwise` instead.
         """
         warnings.warn(
-            DEPR_MSG.format("rotateClockwise", "rotate_clockwise"),
+            DEPR_MSG.format("rotateClockwise", "rotate"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
-        return self.rotate_clockwise(angle)
+        return self.rotate(angle)
 
     def rotateCounterClockwise(self, angle: float) -> "PageObject":
         """
@@ -341,21 +353,11 @@ class PageObject(DictionaryObject):
             Use :meth:`rotate_clockwise` with a negative argument instead.
         """
         warnings.warn(
-            DEPR_MSG.format("rotateCounterClockwise", "rotate_clockwise"),
+            DEPR_MSG.format("rotateCounterClockwise", "rotate"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
-        if angle % 90 != 0:
-            raise ValueError("Rotation angle must be a multiple of 90")
-        self._rotate(-angle)
-        return self
-
-    def _rotate(self, angle: float) -> None:
-        rotate_obj = self.get(PG.ROTATE, 0)
-        current_angle = (
-            rotate_obj if isinstance(rotate_obj, int) else rotate_obj.get_object()
-        )
-        self[NameObject(PG.ROTATE)] = NumberObject(current_angle + angle)
+        return self.rotate(-angle)
 
     @staticmethod
     def _merge_resources(
@@ -636,8 +638,10 @@ class PageObject(DictionaryObject):
             Use :meth:`add_transformation`  and :meth:`merge_page` instead.
         """
         warnings.warn(
-            "page.mergeTransformedPage(page2, ctm) will be removed in PyPDF 2.0.0. "
-            "Use page2.add_transformation(ctm); page.merge_page(page2) instead.",
+            DEPR_MSG.format(
+                "page.mergeTransformedPage(page2, ctm)",
+                "page2.add_transformation(ctm); page.merge_page(page2)",
+            ),
             PendingDeprecationWarning,
             stacklevel=2,
         )

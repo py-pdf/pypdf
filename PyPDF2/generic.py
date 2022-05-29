@@ -42,6 +42,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from ._utils import (
     DEPR_MSG,
+    DEPR_MSG_NO_REPLACEMENT,
     WHITESPACES,
     StreamType,
     b_,
@@ -76,6 +77,14 @@ class PdfObject:
         """Resolve indirect references."""
         return self
 
+    def getObject(self) -> Optional["PdfObject"]:
+        warnings.warn(
+            DEPR_MSG.format("getObject", "get_object"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.get_object()
+
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
@@ -99,8 +108,7 @@ class NullObject(PdfObject):
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         warnings.warn(
-            "writeToStream will be removed in PyPDF2 2.0.0. "
-            "Use write_to_stream instead.",
+            DEPR_MSG.format("writeToStream", "write_to_stream"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -109,8 +117,7 @@ class NullObject(PdfObject):
     @staticmethod
     def readFromStream(stream: StreamType) -> "NullObject":
         warnings.warn(
-            "readFromStream will be removed in PyPDF2 2.0.0. "
-            "Use read_from_stream instead.",
+            DEPR_MSG.format("readFromStream", "read_from_stream"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -141,8 +148,7 @@ class BooleanObject(PdfObject):
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         warnings.warn(
-            "writeToStream will be removed in PyPDF2 2.0.0. "
-            "Use write_to_stream instead.",
+            DEPR_MSG.format("writeToStream", "write_to_stream"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -162,8 +168,7 @@ class BooleanObject(PdfObject):
     @staticmethod
     def readFromStream(stream: StreamType) -> "BooleanObject":
         warnings.warn(
-            "readFromStream will be removed in PyPDF2 2.0.0. "
-            "Use read_from_stream instead.",
+            DEPR_MSG.format("readFromStream", "read_from_stream"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -184,8 +189,7 @@ class ArrayObject(list, PdfObject):
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         warnings.warn(
-            "writeToStream will be removed in PyPDF2 2.0.0. "
-            "Use write_to_stream instead.",
+            DEPR_MSG.format("writeToStream", "write_to_stream"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -215,8 +219,7 @@ class ArrayObject(list, PdfObject):
     @staticmethod
     def readFromStream(stream: StreamType, pdf: Any) -> "ArrayObject":  # PdfReader
         warnings.warn(
-            "readFromStream will be removed in PyPDF2 2.0.0. "
-            "Use read_from_stream instead.",
+            DEPR_MSG.format("readFromStream", "read_from_stream"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -256,8 +259,7 @@ class IndirectObject(PdfObject):
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         warnings.warn(
-            "writeToStream will be removed in PyPDF2 2.0.0. "
-            "Use write_to_stream instead.",
+            DEPR_MSG.format("writeToStream", "write_to_stream"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -294,8 +296,7 @@ class IndirectObject(PdfObject):
     @staticmethod
     def readFromStream(stream: StreamType, pdf: Any) -> "IndirectObject":  # PdfReader
         warnings.warn(
-            "readFromStream will be removed in PyPDF2 2.0.0. "
-            "Use read_from_stream instead.",
+            DEPR_MSG.format("readFromStream", "read_from_stream"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -340,8 +341,7 @@ class FloatObject(decimal.Decimal, PdfObject):
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         warnings.warn(
-            "writeToStream will be removed in PyPDF2 2.0.0. "
-            "Use write_to_stream instead.",
+            DEPR_MSG.format("writeToStream", "write_to_stream"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -371,8 +371,7 @@ class NumberObject(int, PdfObject):
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         warnings.warn(
-            "writeToStream will be removed in PyPDF2 2.0.0. "
-            "Use write_to_stream instead.",
+            DEPR_MSG.format("readFromStream", "read_from_stream"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -389,8 +388,7 @@ class NumberObject(int, PdfObject):
     @staticmethod
     def readFromStream(stream: StreamType) -> Union["NumberObject", FloatObject]:
         warnings.warn(
-            "readFromStream will be removed in PyPDF2 2.0.0. "
-            "Use read_from_stream instead.",
+            DEPR_MSG.format("readFromStream", "read_from_stream"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -515,7 +513,7 @@ class ByteStringObject(bytes_type, PdfObject):  # type: ignore
         if encryption_key:
             from ._security import RC4_encrypt
 
-            bytearr = RC4_encrypt(encryption_key, bytearr)  #  type: ignore
+            bytearr = RC4_encrypt(encryption_key, bytearr)  # type: ignore
         stream.write(b_("<"))
         stream.write(hexencode(bytearr))
         stream.write(b_(">"))
@@ -524,8 +522,7 @@ class ByteStringObject(bytes_type, PdfObject):  # type: ignore
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         warnings.warn(
-            "writeToStream will be removed in PyPDF2 2.0.0. "
-            "Use write_to_stream instead.",
+            DEPR_MSG.format("writeToStream", "write_to_stream"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -595,8 +592,7 @@ class TextStringObject(str, PdfObject):
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         warnings.warn(
-            "writeToStream will be removed in PyPDF2 2.0.0. "
-            "Use write_to_stream instead.",
+            DEPR_MSG.format("writeToStream", "write_to_stream"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -616,8 +612,7 @@ class NameObject(str, PdfObject):
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         warnings.warn(
-            "writeToStream will be removed in PyPDF2 2.0.0. "
-            "Use write_to_stream instead.",
+            DEPR_MSG.format("writeToStream", "write_to_stream"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -647,8 +642,7 @@ class NameObject(str, PdfObject):
     @staticmethod
     def readFromStream(stream: StreamType, pdf: Any) -> "NameObject":  # PdfReader
         warnings.warn(
-            "readFromStream will be removed in PyPDF2 2.0.0. "
-            "Use read_from_stream instead.",
+            DEPR_MSG.format("readFromStream", "read_from_stream"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -706,8 +700,7 @@ class DictionaryObject(dict, PdfObject):
             Use :meth:`xmp_metadata` instead.
         """
         warnings.warn(
-            "getXmpMetadata will be removed in PyPDF2 2.0.0. "
-            "Use xmp_metadata instead.",
+            DEPR_MSG.format("getXmpMetadata()", "xmp_metadata"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -721,7 +714,7 @@ class DictionaryObject(dict, PdfObject):
             Use :meth:`xmp_metadata` instead.
         """
         warnings.warn(
-            "xmpMetadata will be removed in PyPDF2 2.0.0. Use xmp_metadata instead.",
+            DEPR_MSG.format("xmpMetadata", "xmp_metadata"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -742,8 +735,7 @@ class DictionaryObject(dict, PdfObject):
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         warnings.warn(
-            "writeToStream will be removed in PyPDF2 2.0.0. "
-            "Use write_to_stream instead.",
+            DEPR_MSG.format("writeToStream", "write_to_stream"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -880,8 +872,7 @@ class DictionaryObject(dict, PdfObject):
     @staticmethod
     def readFromStream(stream: StreamType, pdf: Any) -> "DictionaryObject":  # PdfReader
         warnings.warn(
-            "readFromStream will be removed in PyPDF2 2.0.0. "
-            "Use read_from_stream instead.",
+            DEPR_MSG.format("readFromStream()", "read_from_stream"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -1397,7 +1388,7 @@ class RectangleObject(ArrayObject):
 
     def ensureIsNumber(self, value: Any) -> Union[FloatObject, NumberObject]:
         warnings.warn(
-            "ensureIsNumber will be removed in PyPDF2 2.0.0. ",
+            DEPR_MSG_NO_REPLACEMENT.format("ensureIsNumber"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -1727,8 +1718,7 @@ class Field(TreeObject):
             Use :py:attr:`field_type` instead.
         """
         warnings.warn(
-            "fieldType will be removed in PyPDF2 2.0.0. "
-            "Use the field_type property instead.",
+            DEPR_MSG.format("fieldType", "field_type"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -1762,8 +1752,7 @@ class Field(TreeObject):
             Use :py:attr:`alternate_name` instead.
         """
         warnings.warn(
-            "altName will be removed in PyPDF2 2.0.0. "
-            "Use the alternate_name property instead.",
+            DEPR_MSG.format("altName", "alternate_name"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -1786,8 +1775,7 @@ class Field(TreeObject):
             Use :py:attr:`mapping_name` instead.
         """
         warnings.warn(
-            "mappingName will be removed in PyPDF2 2.0.0. "
-            "Use the mapping_name property instead.",
+            DEPR_MSG.format("mappingName", "mapping_name"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -1822,8 +1810,7 @@ class Field(TreeObject):
             Use :py:attr:`default_value` instead.
         """
         warnings.warn(
-            "defaultValue will be removed in PyPDF2 2.0.0. "
-            "Use the default_value property instead.",
+            DEPR_MSG.format("defaultValue", "default_value"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -1846,8 +1833,7 @@ class Field(TreeObject):
             Use :py:attr:`additional_actions` instead.
         """
         warnings.warn(
-            "additionalActions will be removed in PyPDF2 2.0.0. "
-            "Use the additional_actions property instead.",
+            DEPR_MSG.format("additionalActions", "additional_actions"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -1940,8 +1926,7 @@ class Destination(TreeObject):
             Use :py:attr:`dest_array` instead.
         """
         warnings.warn(
-            "getDestArray will be removed in PyPDF2 2.0.0. "
-            "Use the dest_array property instead.",
+            DEPR_MSG.format("getDestArray", "dest_array"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -2136,7 +2121,7 @@ _pdfDocEncoding = (
     "\u0004",
     "\u0005",
     "\u0006",
-    "\u0007",  #  0 -  7
+    "\u0007",  # 0 -  7
     "\u0008",
     "\u0009",
     "\u000a",
@@ -2144,7 +2129,7 @@ _pdfDocEncoding = (
     "\u000c",
     "\u000d",
     "\u000e",
-    "\u000f",  #  8 - 15
+    "\u000f",  # 8 - 15
     "\u0010",
     "\u0011",
     "\u0012",

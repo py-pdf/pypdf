@@ -2,7 +2,16 @@ import datetime
 import decimal
 import re
 import warnings
-from typing import Any, Callable, Dict, Optional, TypeVar, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    TypeVar,
+    Union,
+)
 from xml.dom.minidom import Document
 from xml.dom.minidom import Element as XmlElement
 from xml.dom.minidom import parseString
@@ -92,8 +101,10 @@ def _converter_date(value: str) -> datetime.datetime:
     return dt
 
 
-def _getter_bag(namespace: str, name: str) -> Optional[Any]:
-    def get(self: Any) -> Optional[Any]:
+def _getter_bag(
+    namespace: str, name: str
+) -> Callable[["XmpInformation"], Optional[List[str]]]:
+    def get(self: "XmpInformation") -> Optional[List[str]]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
@@ -103,7 +114,7 @@ def _getter_bag(namespace: str, name: str) -> Optional[Any]:
             if len(bags):
                 for bag in bags:
                     for item in bag.getElementsByTagNameNS(RDF_NAMESPACE, "li"):
-                        value = self._getText(item)
+                        value = self._get_text(item)
                         retval.append(value)
         ns_cache = self.cache.setdefault(namespace, {})
         ns_cache[name] = retval
@@ -114,22 +125,22 @@ def _getter_bag(namespace: str, name: str) -> Optional[Any]:
 
 def _getter_seq(
     namespace: str, name: str, converter: Callable[[Any], Any] = _identity
-) -> Optional[Any]:
-    def get(self: Any) -> Optional[Any]:
+) -> Callable[["XmpInformation"], Optional[List[Any]]]:
+    def get(self: "XmpInformation") -> Optional[List[Any]]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
         retval = []
-        for element in self.getElement("", namespace, name):
+        for element in self.get_element("", namespace, name):
             seqs = element.getElementsByTagNameNS(RDF_NAMESPACE, "Seq")
             if len(seqs):
                 for seq in seqs:
                     for item in seq.getElementsByTagNameNS(RDF_NAMESPACE, "li"):
-                        value = self._getText(item)
+                        value = self._get_text(item)
                         value = converter(value)
                         retval.append(value)
             else:
-                value = converter(self._getText(element))
+                value = converter(self._get_text(element))
                 retval.append(value)
         ns_cache = self.cache.setdefault(namespace, {})
         ns_cache[name] = retval
@@ -138,21 +149,23 @@ def _getter_seq(
     return get
 
 
-def _getter_langalt(namespace: str, name: str) -> Optional[Any]:
-    def get(self: Any) -> Optional[Any]:
+def _getter_langalt(
+    namespace: str, name: str
+) -> Callable[["XmpInformation"], Optional[Dict[Any, Any]]]:
+    def get(self: "XmpInformation") -> Optional[Dict[Any, Any]]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
         retval = {}
-        for element in self.getElement("", namespace, name):
+        for element in self.get_element("", namespace, name):
             alts = element.getElementsByTagNameNS(RDF_NAMESPACE, "Alt")
             if len(alts):
                 for alt in alts:
                     for item in alt.getElementsByTagNameNS(RDF_NAMESPACE, "li"):
-                        value = self._getText(item)
+                        value = self._get_text(item)
                         retval[item.getAttribute("xml:lang")] = value
             else:
-                retval["x-default"] = self._getText(element)
+                retval["x-default"] = self._get_text(element)
         ns_cache = self.cache.setdefault(namespace, {})
         ns_cache[name] = retval
         return retval
@@ -162,17 +175,17 @@ def _getter_langalt(namespace: str, name: str) -> Optional[Any]:
 
 def _getter_single(
     namespace: str, name: str, converter: Callable[[str], Any] = _identity
-) -> Optional[Any]:
-    def get(self: Any) -> Optional[Any]:
+) -> Callable[["XmpInformation"], Optional[Any]]:
+    def get(self: "XmpInformation") -> Optional[Any]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
         value = None
-        for element in self.getElement("", namespace, name):
+        for element in self.get_element("", namespace, name):
             if element.nodeType == element.ATTRIBUTE_NODE:
                 value = element.nodeValue
             else:
-                value = self._getText(element)
+                value = self._get_text(element)
             break
         if value is not None:
             value = converter(value)
@@ -211,13 +224,12 @@ class XmpInformation(PdfObject):
             Use :meth:`write_to_stream` instead.
         """
         warnings.warn(
-            "writeToStream() will be deprecated in PyPDF2 2.0.0. "
-            "Use write_to_stream() instead.",
+            DEPR_MSG.format("writeToStream", "write_to_stream"),
             PendingDeprecationWarning,
         )
         self.write_to_stream(stream, encryption_key)
 
-    def get_element(self, about_uri: str, namespace: str, name: str) -> Any:
+    def get_element(self, about_uri: str, namespace: str, name: str) -> Iterator[Any]:
         for desc in self.rdfRoot.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):
             if desc.getAttributeNS(RDF_NAMESPACE, "about") == about_uri:
                 attr = desc.getAttributeNodeNS(namespace, name)
@@ -225,7 +237,7 @@ class XmpInformation(PdfObject):
                     yield attr
                 yield from desc.getElementsByTagNameNS(namespace, name)
 
-    def getElement(self, aboutUri: str, namespace: str, name: str) -> Any:
+    def getElement(self, aboutUri: str, namespace: str, name: str) -> Iterator[Any]:
         """
         .. deprecated:: 1.28.0
 
@@ -238,7 +250,7 @@ class XmpInformation(PdfObject):
         )
         return self.get_element(aboutUri, namespace, name)
 
-    def get_nodes_in_namespace(self, about_uri: str, namespace: str) -> Any:
+    def get_nodes_in_namespace(self, about_uri: str, namespace: str) -> Iterator[Any]:
         for desc in self.rdfRoot.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):
             if desc.getAttributeNS(RDF_NAMESPACE, "about") == about_uri:
                 for i in range(desc.attributes.length):
@@ -249,7 +261,7 @@ class XmpInformation(PdfObject):
                     if child.namespaceURI == namespace:
                         yield child
 
-    def getNodesInNamespace(self, aboutUri: str, namespace: str) -> Any:
+    def getNodesInNamespace(self, aboutUri: str, namespace: str) -> Iterator[Any]:
         """
         .. deprecated:: 1.28.0
 

@@ -1641,8 +1641,7 @@ class PdfWriter:
             Use :py:attr:`page_layout` instead.
         """
         warnings.warn(
-            "getPageLayout() will be removed in PyPDF2 2.0.0. "
-            "Use the page_layout attribute instead.",
+            DEPR_MSG.format("writer.getPageLayout", "writer.page_layout"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -1687,8 +1686,7 @@ class PdfWriter:
             Use :py:attr:`page_layout` instead.
         """
         warnings.warn(
-            "setPageLayout() will be removed in PyPDF2 2.0.0. "
-            "Use the page_layout attribute instead.",
+            DEPR_MSG.format("writer.setPageLayout(val)", "writer.page_layout = val"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -1731,8 +1729,7 @@ class PdfWriter:
             Use :py:attr:`page_layout` instead.
         """
         warnings.warn(
-            "pageLayout will be removed in PyPDF2 2.0.0. "
-            "Use the page_layout attribute instead.",
+            DEPR_MSG.format("writer.pageLayout", "writer.page_layout"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -1746,8 +1743,7 @@ class PdfWriter:
             Use :py:attr:`page_layout` instead.
         """
         warnings.warn(
-            "pageLayout will be removed in PyPDF2 2.0.0. "
-            "Use the page_layout attribute instead.",
+            DEPR_MSG.format("writer.pageLayout", "writer.page_layout"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -1775,8 +1771,7 @@ class PdfWriter:
             Use :py:attr:`page_mode` instead.
         """
         warnings.warn(
-            "getPageMode() will be removed in PyPDF2 2.0.0. "
-            "Use the page_mode attribute instead.",
+            DEPR_MSG.format("writer.getPageMode()", "writer.page_mode"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -1805,8 +1800,7 @@ class PdfWriter:
             Use :py:attr:`page_mode` instead.
         """
         warnings.warn(
-            "setPageMode() will be removed in PyPDF2 2.0.0. "
-            "Use the page_mode attribute instead.",
+            DEPR_MSG.format("writer.setPageMode(val)", "writer.page_mode = val"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -1847,8 +1841,7 @@ class PdfWriter:
             Use :py:attr:`page_mode` instead.
         """
         warnings.warn(
-            "pageMode will be removed in PyPDF2 2.0.0. "
-            "Use the page_mode attribute instead.",
+            DEPR_MSG.format("writer.pageMode", "writer.page_mode"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -1862,8 +1855,7 @@ class PdfWriter:
             Use :py:attr:`page_mode` instead.
         """
         warnings.warn(
-            "pageMode will be removed in PyPDF2 2.0.0. "
-            "Use the page_mode attribute instead.",
+            DEPR_MSG.format("writer.pageMode", "writer.page_mode"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
