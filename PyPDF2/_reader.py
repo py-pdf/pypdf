@@ -261,9 +261,9 @@ class PdfReader:
         self.stream = stream
 
         self._override_encryption = False
-        if isinstance(password, (str, bytes)):
+        if password is not None:
             if self.decrypt(password) == 0:
-                raise PdfReadError("Wrong Password : Cannot decrypt then:")
+                raise PdfReadError("Wrong password")
 
     @property
     def metadata(self) -> Optional[DocumentInformation]:
