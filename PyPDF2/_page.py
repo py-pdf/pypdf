@@ -315,7 +315,7 @@ class PageObject(DictionaryObject):
         )
         return PageObject.create_blank_page(pdf, width, height)
 
-    def rotate_clockwise(self, angle: float) -> "PageObject":
+    def rotate(self, angle: float) -> "PageObject":
         """
         Rotate a page clockwise by increments of 90 degrees.
 
@@ -324,8 +324,20 @@ class PageObject(DictionaryObject):
         """
         if angle % 90 != 0:
             raise ValueError("Rotation angle must be a multiple of 90")
-        self._rotate(angle)
+        rotate_obj = self.get(PG.ROTATE, 0)
+        current_angle = (
+            rotate_obj if isinstance(rotate_obj, int) else rotate_obj.get_object()
+        )
+        self[NameObject(PG.ROTATE)] = NumberObject(current_angle + angle)
         return self
+
+    def rotate_clockwise(self, angle: float) -> "PageObject":
+        warnings.warn(
+            DEPR_MSG.format("rotate_clockwise", "rotate"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.rotate(angle)
 
     def rotateClockwise(self, angle: float) -> "PageObject":
         """
@@ -334,11 +346,11 @@ class PageObject(DictionaryObject):
             Use :meth:`rotate_clockwise` instead.
         """
         warnings.warn(
-            DEPR_MSG.format("rotateClockwise", "rotate_clockwise"),
+            DEPR_MSG.format("rotateClockwise", "rotate"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
-        return self.rotate_clockwise(angle)
+        return self.rotate(angle)
 
     def rotateCounterClockwise(self, angle: float) -> "PageObject":
         """
@@ -347,21 +359,11 @@ class PageObject(DictionaryObject):
             Use :meth:`rotate_clockwise` with a negative argument instead.
         """
         warnings.warn(
-            DEPR_MSG.format("rotateCounterClockwise", "rotate_clockwise"),
+            DEPR_MSG.format("rotateCounterClockwise", "rotate"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
-        if angle % 90 != 0:
-            raise ValueError("Rotation angle must be a multiple of 90")
-        self._rotate(-angle)
-        return self
-
-    def _rotate(self, angle: float) -> None:
-        rotate_obj = self.get(PG.ROTATE, 0)
-        current_angle = (
-            rotate_obj if isinstance(rotate_obj, int) else rotate_obj.get_object()
-        )
-        self[NameObject(PG.ROTATE)] = NumberObject(current_angle + angle)
+        return self.rotate(-angle)
 
     @staticmethod
     def _merge_resources(
@@ -642,8 +644,10 @@ class PageObject(DictionaryObject):
             Use :meth:`add_transformation`  and :meth:`merge_page` instead.
         """
         warnings.warn(
-            "page.mergeTransformedPage(page2, ctm) will be removed in PyPDF 2.0.0. "
-            "Use page2.add_transformation(ctm); page.merge_page(page2) instead.",
+            DEPR_MSG.format(
+                "page.mergeTransformedPage(page2, ctm)",
+                "page2.add_transformation(ctm); page.merge_page(page2)",
+            ),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -1226,8 +1230,9 @@ class PageObject(DictionaryObject):
         # charSize = 1.0
         # charScale = 0.0
         space_scale = 1.0
+
         for operands, operator in content.operations:
-            if operator == b_("Tf"):
+            if operator == b_("Tf"):  # text font
                 if text != "":
                     output += text.translate(cmap)
                 # ft, cmap, cmap2 = buildCharMap(self.pdf, operands[0])
@@ -1238,11 +1243,29 @@ class PageObject(DictionaryObject):
                     text = ""
                 else:
                     text = " "
-            # elif operator == b_("Tc"):
-            # charScale = 1.0 + float(operands[0])
-            elif operator == b_("Tw"):
+            elif operator == b_("Tfs"):  # text font size
+                pass
+            elif operator == b_("Tc"):  # character spacing
+                # See '5.2.1 Character Spacing'
+                # charScale = 1.0 + float(operands[0])
+                pass
+            elif operator == b_("Tw"):  # word spacing
+                # See '5.2.2 Word Spacing'
                 space_scale = 1.0 + float(operands[0])
+            elif operator == b_("Th"):  # horizontal scaling
+                # See '5.2.3 Horizontal Scaling'
+                pass
+            elif operator == b_("Tl"):  # leading
+                # See '5.2.4 Leading'
+                pass
+            elif operator == b_("Tmode"):  # text rendering mode
+                # See '5.2.5 Text Rendering Mode'
+                pass
+            elif operator == b_("Trise"):  # text rise
+                # See '5.2.6 Text Rise'
+                pass
             elif operator == b_("Tj"):
+                # See 'TABLE 5.6 Text-showing operators'
                 _text = operands[0]
                 if isinstance(_text, TextStringObject):
                     text += Tj_sep
@@ -1252,6 +1275,7 @@ class PageObject(DictionaryObject):
             elif (operator in [b_("T*"), b_("ET")]) or (
                 (operator in [b_("Td"), b_("TD")]) and operands[1] != 0
             ):
+                # See 'TABLE 5.5 Text-positioning operators'
                 if text != "":
                     output += text.translate(cmap) + "\n"
                     text = ""
@@ -1261,17 +1285,19 @@ class PageObject(DictionaryObject):
                 # elif operands[-1] < 0:
                 #    print("back ", operands[-1])
             elif operator == b_("'"):
+                # See 'TABLE 5.6 Text-showing operators'
                 output += text.translate(cmap) + "\n"
                 _text = operands[0]
                 if isinstance(_text, TextStringObject):
                     text = operands[0]
             elif operator == b_('"'):
+                # See 'TABLE 5.6 Text-showing operators'
                 output += text.translate(cmap) + "\n"
                 _text = operands[2]
                 if isinstance(_text, TextStringObject):
                     text = _text
             elif operator == b_("TJ"):
-                pass
+                # See 'TABLE 5.6 Text-showing operators'
                 for i in operands[0]:
                     if isinstance(i, TextStringObject):
                         text += TJ_sep

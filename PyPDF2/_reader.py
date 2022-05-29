@@ -47,6 +47,8 @@ from typing import (
 from ._page import PageObject, _VirtualList
 from ._security import RC4_encrypt, _alg33_1, _alg34, _alg35
 from ._utils import (
+    DEPR_MSG,
+    DEPR_MSG_NO_REPLACEMENT,
     StrByteType,
     StreamType,
     b_,
@@ -102,8 +104,7 @@ def convert_to_int(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:
 
 def convertToInt(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:
     warnings.warn(
-        "convertToInt will be removed with PyPDF2 2.0.0. "
-        "Use convert_to_int instead.",
+        DEPR_MSG.format("convertToInt", "convert_to_int"),
         PendingDeprecationWarning,
         stacklevel=2,
     )
@@ -142,7 +143,7 @@ class DocumentInformation(DictionaryObject):
             Use the attributes (e.g. :py:attr:`title` / :py:attr:`author`).
         """
         warnings.warn(
-            "getText will be removed in PyPDF2 2.0.0.",
+            DEPR_MSG_NO_REPLACEMENT.format("getText"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -230,9 +231,17 @@ class PdfReader:
     :param bool strict: Determines whether user should be warned of all
         problems and also causes some correctable problems to be fatal.
         Defaults to ``False``.
+    :param None/str/bytes password: Decrypt PDF file at initialization. If the
+        password is None, the file will not be decrypted.
+        Defaults to ``None``
     """
 
-    def __init__(self, stream: StrByteType, strict: bool = False) -> None:
+    def __init__(
+        self,
+        stream: StrByteType,
+        strict: bool = False,
+        password: Union[None, str, bytes] = None,
+    ) -> None:
         self.strict = strict
         self.flattened_pages: Optional[List[PageObject]] = None
         self.resolved_objects: Dict[Tuple[Any, Any], Optional[PdfObject]] = {}
@@ -253,6 +262,8 @@ class PdfReader:
         self.stream = stream
 
         self._override_encryption = False
+        if password is not None and self.decrypt(password) == 0:
+            raise PdfReadError("Wrong password")
 
     @property
     def metadata(self) -> Optional[DocumentInformation]:
@@ -281,7 +292,7 @@ class PdfReader:
         """
         warnings.warn(
             "The `getDocumentInfo` method of PdfReader will be replaced by the "
-            "`metadata` attribute in PyPDF2 2.0.0. You can switch to the "
+            "`metadata` attribute in PyPDF2 3.0.0. You can switch to the "
             "metadata attribute already.",
             PendingDeprecationWarning,
             stacklevel=2,
@@ -297,7 +308,7 @@ class PdfReader:
         """
         warnings.warn(
             "The `documentInfo` attribute of PdfReader will be replaced by "
-            "`metadata` in PyPDF2 2.0.0. You can switch to the metadata "
+            "`metadata` in PyPDF2 3.0.0. You can switch to the metadata "
             "attribute already.",
             PendingDeprecationWarning,
             stacklevel=2,
@@ -328,7 +339,7 @@ class PdfReader:
         """
         warnings.warn(
             "The `getXmpMetadata` method of PdfReader will be replaced by the "
-            "`xmp_metadata` attribute in PyPDF2 2.0.0. You can switch to the "
+            "`xmp_metadata` attribute in PyPDF2 3.0.0. You can switch to the "
             "xmp_metadata attribute already.",
             PendingDeprecationWarning,
             stacklevel=2,
@@ -344,7 +355,7 @@ class PdfReader:
         """
         warnings.warn(
             "The `xmpMetadata` attribute of PdfReader will be replaced by the "
-            "`xmp_metadata` attribute in PyPDF2 2.0.0. You can switch to the "
+            "`xmp_metadata` attribute in PyPDF2 3.0.0. You can switch to the "
             "xmp_metadata attribute already.",
             PendingDeprecationWarning,
             stacklevel=2,
@@ -385,8 +396,7 @@ class PdfReader:
             Use :code:`len(reader.pages)` instead.
         """
         warnings.warn(
-            "The `getNumPages` method of PdfReader will be removed in PyPDF2 2.0.0. "
-            "Use `len(reader.pages)` instead.",
+            DEPR_MSG.format("reader.getNumPages", "len(reader.pages)"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -400,7 +410,7 @@ class PdfReader:
             Use :code:`len(reader.pages)` instead.
         """
         warnings.warn(
-            "The `numPages` attribute of PdfReader will be removed in PyPDF2 2.0.0. "
+            "The `numPages` attribute of PdfReader will be removed in PyPDF2 3.0.0. "
             "Use `len(reader.pages)` instead.",
             PendingDeprecationWarning,
             stacklevel=2,
@@ -414,8 +424,7 @@ class PdfReader:
             Use :code:`reader.pages[pageNumber]` instead.
         """
         warnings.warn(
-            "`getPage` of PdfReader will be removed in PyPDF2 2.0.0. "
-            "Use `reader.pages[pageNumber]` instead.",
+            DEPR_MSG.format("reader.getPage(pageNumber)", "reader.pages[pageNumber]"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -445,8 +454,7 @@ class PdfReader:
             Use :py:attr:`named_destinations` instead.
         """
         warnings.warn(
-            "namedDestinations will be removed in PyPDF2 2.0.0. "
-            "Use `named_destinations` instead.",
+            DEPR_MSG.format("reader.namedDestinations", "reader.named_destinations"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -528,8 +536,7 @@ class PdfReader:
             Use :meth:`get_fields` instead.
         """
         warnings.warn(
-            "The getFields method of PdfReader will be removed in PyPDF2 2.0.0. "
-            "Use the get_fields() method instead.",
+            DEPR_MSG.format("reader.getFields", "reader.get_fields"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -611,8 +618,7 @@ class PdfReader:
             Use :meth:`get_form_text_fields` instead.
         """
         warnings.warn(
-            "The getFormTextFields method of PdfReader will be removed in PyPDF2 2.0.0. "
-            "Use the get_form_text_fields() method instead.",
+            DEPR_MSG.format("reader.getFormTextFields", "reader.get_form_text_fields"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -675,8 +681,7 @@ class PdfReader:
             Use :py:attr:`named_destinations` instead.
         """
         warnings.warn(
-            "getNamedDestinations will be removed in PyPDF2 2.0.0. "
-            "Use the named_destinations property instead.",
+            DEPR_MSG.format("reader.getNamedDestinations", "reader.named_destinations"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -744,7 +749,7 @@ class PdfReader:
             Use :py:attr:`outlines` instead.
         """
         warnings.warn(
-            "getOutlines will be removed in PyPDF2 2.0.0. Use the outlines attribute instead.",
+            DEPR_MSG.format("reader.getOutlines", "reader.outlines"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -788,8 +793,9 @@ class PdfReader:
             Use :meth:`get_page_number` instead.
         """
         warnings.warn(
-            "getPageNumber will be removed in PyPDF2 2.0.0. "
-            "Use get_page_number instead.",
+            DEPR_MSG.format(
+                "reader.getPageNumber(page)", "reader.get_page_number(page)"
+            ),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -812,8 +818,9 @@ class PdfReader:
             Use :meth:`get_destination_page_number` instead.
         """
         warnings.warn(
-            "getDestinationPageNumber will be removed in PyPDF2 2.0.0. "
-            "Use get_destination_page_number instead.",
+            DEPR_MSG.format(
+                "reader.getDestinationPageNumber", "reader.get_destination_page_number"
+            ),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -909,8 +916,7 @@ class PdfReader:
             Use :py:attr:`page_layout` instead.
         """
         warnings.warn(
-            "getPageLayout will be removed in PyPDF2 2.0.0. "
-            "Use the attribute 'page_layout' instead.",
+            DEPR_MSG.format("reader.getPageLayout()", "reader.page_layout"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -924,8 +930,7 @@ class PdfReader:
             Use :py:attr:`page_layout` instead.
         """
         warnings.warn(
-            "pageLayout will be removed in PyPDF2 2.0.0. "
-            "Use the attribute 'page_layout' instead.",
+            DEPR_MSG.format("reader.pageLayout", "reader.page_layout"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -967,8 +972,7 @@ class PdfReader:
             Use :py:attr:`page_mode` instead.
         """
         warnings.warn(
-            "getPageMode will be removed in PyPDF2 2.0.0. "
-            "Use the attribute 'page_mode' instead.",
+            DEPR_MSG.format("reader.getPageMode()", "reader.page_mode"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -982,8 +986,7 @@ class PdfReader:
             Use :py:attr:`page_mode` instead.
         """
         warnings.warn(
-            "pageMode will be removed in PyPDF2 2.0.0. "
-            "Use the attribute 'page_mode' instead.",
+            DEPR_MSG.format("reader.pageMode", "reader.page_mode"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -1163,8 +1166,10 @@ class PdfReader:
             Use :meth:`get_object` instead.
         """
         warnings.warn(
-            "getObject(indirectReference) will be removed in PyPDF2 2.0.0. "
-            "Use get_object(indirect_reference) instead.",
+            DEPR_MSG.format(
+                "reader.getObject(indirectReference)",
+                "reader.get_object(indirect_reference)",
+            ),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -1235,8 +1240,7 @@ class PdfReader:
             Use :meth:`read_object_header` instead.
         """
         warnings.warn(
-            "readObjectHeader will be removed with PyPDF2 2.0.0. "
-            "Use read_object_header instead.",
+            DEPR_MSG.format("reader.readObjectHeader", "reader.read_object_header"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -1256,8 +1260,9 @@ class PdfReader:
             Use :meth:`cache_get_indirect_object` instead.
         """
         warnings.warn(
-            "cacheGetIndirectObject will be removed with PyPDF2 2.0.0. "
-            "Use cache_get_indirect_object instead.",
+            DEPR_MSG.format(
+                "reader.cacheGetIndirectObject", "reader.cache_get_indirect_object"
+            ),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -1284,8 +1289,9 @@ class PdfReader:
             Use :meth:`cache_indirect_object` instead.
         """
         warnings.warn(
-            "cacheIndirectObject will be removed with PyPDF2 2.0.0. "
-            "Use cache_indirect_object instead.",
+            DEPR_MSG.format(
+                "reader.cacheIndirectObject", "reader.cache_indirect_object"
+            ),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -1653,7 +1659,7 @@ class PdfReader:
             if stream.tell() < 2:
                 raise PdfReadError("EOL marker not found")
             stream.seek(-2, 1)
-            if x == b_("\n") or x == b_("\r"):  ## \n = LF; \r = CR
+            if x == b_("\n") or x == b_("\r"):  # \n = LF; \r = CR
                 crlf = False
                 while x == b_("\n") or x == b_("\r"):
                     x = stream.read(1)
@@ -1679,8 +1685,7 @@ class PdfReader:
             Use :meth:`read_next_end_line` instead.
         """
         warnings.warn(
-            "readNextEndLine will be removed in PyPDF2 2.0.0. "
-            "Use read_next_end_line instead.",
+            DEPR_MSG.format("reader.readNextEndLine", "reader.read_next_end_line"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -1833,8 +1838,7 @@ class PdfReader:
             Use :py:attr:`is_encrypted` instead.
         """
         warnings.warn(
-            "getIsEncrypted() will be removed in PyPDF2 2.0.0. "
-            "Use the is_encrypted property instead.",
+            DEPR_MSG.format("reader.getIsEncrypted()", "reader.is_encrypted"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -1848,8 +1852,7 @@ class PdfReader:
             Use :py:attr:`is_encrypted` instead.
         """
         warnings.warn(
-            "isEncrypted will be removed in PyPDF2 2.0.0. "
-            "Use the is_encrypted property instead.",
+            DEPR_MSG.format("reader.isEncrypted", "reader.is_encrypted"),
             PendingDeprecationWarning,
             stacklevel=2,
         )

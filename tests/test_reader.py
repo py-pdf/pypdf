@@ -254,7 +254,10 @@ def test_issue297():
     reader.pages[0]
 
 
-def test_get_page_of_encrypted_file():
+@pytest.mark.parametrize(
+    ("password", "should_fail"), [("test", False), ("qwerty", True)]
+)
+def test_get_page_of_encrypted_file(password, should_fail):
     """
     Check if we can read a page of an encrypted file.
 
@@ -262,12 +265,11 @@ def test_get_page_of_encrypted_file():
     IndexError for get_page() of decrypted file
     """
     path = os.path.join(RESOURCE_ROOT, "encrypted-file.pdf")
-    reader = PdfReader(path)
-
-    # Password is correct:)
-    reader.decrypt("test")
-
-    reader.pages[0]
+    if should_fail:
+        with pytest.raises(PdfReadError):
+            PdfReader(path, password=password)
+    else:
+        PdfReader(path, password=password).pages[0]
 
 
 @pytest.mark.parametrize(
@@ -628,8 +630,12 @@ def test_convert_to_int_error():
 
 
 def test_convertToInt_deprecated():
+    msg = (
+        "convertToInt is deprecated and will be removed in PyPDF2 3.0.0. "
+        "Use convert_to_int instead."
+    )
     with pytest.warns(
         PendingDeprecationWarning,
-        match="convertToInt will be removed with PyPDF2 2.0.0. Use convert_to_int instead.",
+        match=msg,
     ):
         assert convertToInt(b"\x01", 8) == 1
