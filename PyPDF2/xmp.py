@@ -55,6 +55,31 @@ iso8601 = re.compile(
 )
 
 
+def _converter_date(value):
+    matches = iso8601.match(value)
+    year = int(matches.group("year"))
+    month = int(matches.group("month") or "1")
+    day = int(matches.group("day") or "1")
+    hour = int(matches.group("hour") or "0")
+    minute = int(matches.group("minute") or "0")
+    second = decimal.Decimal(matches.group("second") or "0")
+    seconds = second.to_integral(decimal.ROUND_FLOOR)
+    milliseconds = (second - seconds) * 1000000
+
+    seconds = int(seconds)
+    milliseconds = int(milliseconds)
+
+    tzd = matches.group("tzd") or "Z"
+    dt = datetime.datetime(year, month, day, hour, minute, seconds, milliseconds)
+    if tzd != "Z":
+        tzd_hours, tzd_minutes = [int(x) for x in tzd.split(":")]
+        tzd_hours *= -1
+        if tzd_hours < 0:
+            tzd_minutes *= -1
+        dt = dt + datetime.timedelta(hours=tzd_hours, minutes=tzd_minutes)
+    return dt
+
+
 class XmpInformation(PdfObject):
     """
     An object that represents Adobe XMP metadata.
@@ -138,31 +163,6 @@ class XmpInformation(PdfObject):
 
     def _converter_string(value):
         return value
-
-    @staticmethod
-    def _converter_date(value):
-        matches = iso8601.match(value)
-        year = int(matches.group("year"))
-        month = int(matches.group("month") or "1")
-        day = int(matches.group("day") or "1")
-        hour = int(matches.group("hour") or "0")
-        minute = int(matches.group("minute") or "0")
-        second = decimal.Decimal(matches.group("second") or "0")
-        seconds = second.to_integral(decimal.ROUND_FLOOR)
-        milliseconds = (second - seconds) * 1000000
-
-        seconds = int(seconds)
-        milliseconds = int(milliseconds)
-
-        tzd = matches.group("tzd") or "Z"
-        dt = datetime.datetime(year, month, day, hour, minute, seconds, milliseconds)
-        if tzd != "Z":
-            tzd_hours, tzd_minutes = [int(x) for x in tzd.split(":")]
-            tzd_hours *= -1
-            if tzd_hours < 0:
-                tzd_minutes *= -1
-            dt = dt + datetime.timedelta(hours=tzd_hours, minutes=tzd_minutes)
-        return dt
 
     def _getter_bag(namespace, name, converter):
         def get(self):
