@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 
 import pytest
 
@@ -58,4 +59,4 @@ def test_regression_issue774():
 def test_regression_issue914():
     path = os.path.join(RESOURCE_ROOT, "issue-914-xmp-data.pdf")
     reader = PdfReader(path)
-    assert reader.xmp_metadata.xmp_modifyDate == "2020-04-28T12:23:34.123Z"
+    assert reader.xmp_metadata.xmp_modifyDate == datetime(2022, 4, 9, 15, 22, 43)
