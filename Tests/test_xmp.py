@@ -46,7 +46,7 @@ def get_all_tiff(xmp):
 
 def test_regression_issue774():
     cls = PyPDF2.xmp.XmpInformation
-    date = cls._converter_date("2021-04-28T12:23:34.123Z")
+    date = PyPDF2.xmp._converter_date("2021-04-28T12:23:34.123Z")
     assert date.year == 2021
     assert date.month == 4
     assert date.day == 28
