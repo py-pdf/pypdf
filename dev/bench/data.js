@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1653924031279,
+  "lastUpdate": 1653934212332,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -3289,6 +3289,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.016290571847674545",
             "extra": "mean: 4.382817572400006 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "matt.peveler@gmail.com",
+            "name": "Matthew Peveler",
+            "username": "MasterOdin"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1d14a86f975b5b9e06badba5908e26e7a9d33932",
+          "message": "DOC: Fix style of 1.25 and 1.27 patch notes (#927)",
+          "timestamp": "2022-05-30T20:08:40+02:00",
+          "tree_id": "734b059e8b07cb5afcc9502253dcd6287a6d0908",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/1d14a86f975b5b9e06badba5908e26e7a9d33932"
+        },
+        "date": 1653934211418,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.4727539530556145,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03327161361334232",
+            "extra": "mean: 2.1152652316 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 7.172594257553638,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005543246503278477",
+            "extra": "mean: 139.41956899999954 msec\nrounds: 7"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.1682061105658021,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06999002272493746",
+            "extra": "mean: 5.945087230399997 sec\nrounds: 5"
           }
         ]
       }
