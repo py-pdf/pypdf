@@ -30,22 +30,22 @@
 import math
 import uuid
 import warnings
-from binascii import unhexlify
 from decimal import Decimal
+from binascii import unhexlify
 from typing import (
     Any,
     Callable,
     Dict,
     Iterable,
     Iterator,
-    List,
     Optional,
     Tuple,
     Union,
+    List,
     cast,
 )
 
-from ._adobe_glyphs import adobe_glyphs
+from .errors import PdfReadWarning  # ,PdfReadError
 from ._utils import (
     DEPR_MSG,
     DEPR_MSG_NO_REPLACEMENT,
@@ -56,12 +56,10 @@ from ._utils import (
 )
 from .constants import PageAttributes as PG
 from .constants import Ressources as RES
-from .errors import PdfReadWarning  # ,PdfReadError
 from .errors import PageSizeNotDefinedError
 from .generic import (
     ArrayObject,
     ContentStream,
-    DecodedStreamObject,
     DictionaryObject,
     FloatObject,
     IndirectObject,
@@ -72,6 +70,7 @@ from .generic import (
     TextStringObject,
     charset_encoding,
 )
+from ._adobe_glyphs import adobe_glyphs
 
 
 def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
@@ -324,16 +323,17 @@ class PageObject(DictionaryObject):
         """
         if angle % 90 != 0:
             raise ValueError("Rotation angle must be a multiple of 90")
-        rotate_obj = self.get(PG.ROTATE, 0)
-        current_angle = (
-            rotate_obj if isinstance(rotate_obj, int) else rotate_obj.get_object()
-        )
-        self[NameObject(PG.ROTATE)] = NumberObject(current_angle + angle)
+        self._rotate(angle)
         return self
 
     def rotate_clockwise(self, angle: float) -> "PageObject":
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`rotate_clockwise` instead.
+        """
         warnings.warn(
-            DEPR_MSG.format("rotate_clockwise", "rotate"),
+            DEPR_MSG.format("rotateClockwise", "rotate_clockwise"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -346,7 +346,7 @@ class PageObject(DictionaryObject):
             Use :meth:`rotate_clockwise` instead.
         """
         warnings.warn(
-            DEPR_MSG.format("rotateClockwise", "rotate"),
+            DEPR_MSG.format("rotateClockwise", "rotate_clockwise"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -359,11 +359,21 @@ class PageObject(DictionaryObject):
             Use :meth:`rotate_clockwise` with a negative argument instead.
         """
         warnings.warn(
-            DEPR_MSG.format("rotateCounterClockwise", "rotate"),
+            DEPR_MSG.format("rotateCounterClockwise", "rotate_clockwise"),
             PendingDeprecationWarning,
             stacklevel=2,
         )
-        return self.rotate(-angle)
+        if angle % 90 != 0:
+            raise ValueError("Rotation angle must be a multiple of 90")
+        self._rotate(-angle)
+        return self
+
+    def _rotate(self, angle: float) -> None:
+        rotate_obj = self.get(PG.ROTATE, 0)
+        current_angle = (
+            rotate_obj if isinstance(rotate_obj, int) else rotate_obj.get_object()
+        )
+        self[NameObject(PG.ROTATE)] = NumberObject(current_angle + angle)
 
     @staticmethod
     def _merge_resources(
@@ -644,10 +654,8 @@ class PageObject(DictionaryObject):
             Use :meth:`add_transformation`  and :meth:`merge_page` instead.
         """
         warnings.warn(
-            DEPR_MSG.format(
-                "page.mergeTransformedPage(page2, ctm)",
-                "page2.add_transformation(ctm); page.merge_page(page2)",
-            ),
+            "page.mergeTransformedPage(page2, ctm) will be removed in PyPDF 2.0.0. "
+            "Use page2.add_transformation(ctm); page.merge_page(page2) instead.",
             PendingDeprecationWarning,
             stacklevel=2,
         )
@@ -1087,28 +1095,13 @@ class PageObject(DictionaryObject):
             process_rg: bool = False
             process_char: bool = False
             encoding: List[str] = []
-            resources_dict = cast(DictionaryObject, self["/Resources"])
-            font_dict = cast(
-                DictionaryObject,
-                resources_dict["/Font"],
-            )
-            selected_font_dict = cast(
-                DictionaryObject,
-                font_dict[font_name],
-            )
-            font_type: str = cast(
-                NameObject,
-                selected_font_dict["/Subtype"],
-            )
-            if "/Encoding" in cast(
-                DictionaryObject,
-                font_dict[font_name],
-            ):
-                enc_dict = cast(
-                    DictionaryObject,
-                    selected_font_dict["/Encoding"],
-                )
-                enc = enc_dict.get_object()
+            ft : DictionaryObject = self["/Resources"]["/Font"][font_name]         # type: ignore
+            font_type: str = ft["/Subtype"]                                        # type: ignore
+            # compute space widths
+            if "/DW" in ft:
+                pass
+            if "/Encoding" in ft:                                                  # type: ignore
+                enc: Union(str,DictionaryObject) = ft["/Encoding"].get_object()    # type: ignore
                 if isinstance(enc, str):
                     try:
                         encoding = charset_encoding[enc]
@@ -1129,7 +1122,7 @@ class PageObject(DictionaryObject):
                         encoding = charset_encoding["/StandardCoding"]
                 else:
                     encoding = charset_encoding["/StandardCoding"]
-                if "/Differences" in cast(DictionaryObject, enc):
+                if "/Differences" in enc:
                     x = 0
                     for o in cast(
                         DictionaryObject, cast(DictionaryObject, enc)["/Differences"]
@@ -1142,15 +1135,8 @@ class PageObject(DictionaryObject):
                             except Exception:
                                 encoding[x] = o
                             x += 1
-            if "/ToUnicode" in selected_font_dict:
-                cm = (
-                    cast(
-                        DecodedStreamObject,
-                        selected_font_dict["/ToUnicode"],
-                    )
-                    .get_data()
-                    .decode("utf-8")
-                )
+            if "/ToUnicode" in self["/Resources"]["/Font"][font_name]:                    # type: ignore
+                cm : str = ft["/ToUnicode"].get_data().decode("utf-8")    # type: ignore
                 for l in (
                     cm.strip()
                     .replace("<", " ")
@@ -1213,74 +1199,57 @@ class PageObject(DictionaryObject):
         # charSize = 1.0
         # charScale = 0.0
         space_scale = 1.0
-
+        font_size = 12.0 #just in case of
         for operands, operator in content.operations:
-            if operator == b_("Tf"):  # text font
+            if operator == b_("Tf"):
                 if text != "":
                     output += text.translate(cmap)
                 # ft, cmap, cmap2 = buildCharMap(self.pdf, operands[0])
                 cmap = cmaps[operands[0]][1]
+                try:
+                    font_size = operands[1]
+                except Exception:
+                    pass # keep previous size
                 # print(ft,"\n",cmap,"\n--------------\n",cmap2)
                 # charSize = operands[1] # reserved
                 if output == "":
                     text = ""
                 else:
                     text = " "
-            elif operator == b_("Tfs"):  # text font size
-                pass
-            elif operator == b_("Tc"):  # character spacing
-                # See '5.2.1 Character Spacing'
-                # charScale = 1.0 + float(operands[0])
-                pass
-            elif operator == b_("Tw"):  # word spacing
-                # See '5.2.2 Word Spacing'
+            # elif operator == b_("Tc"):
+            # charScale = 1.0 + float(operands[0])
+            elif operator == b_("Tw"):
                 space_scale = 1.0 + float(operands[0])
-            elif operator == b_("Th"):  # horizontal scaling
-                # See '5.2.3 Horizontal Scaling'
-                pass
-            elif operator == b_("Tl"):  # leading
-                # See '5.2.4 Leading'
-                pass
-            elif operator == b_("Tmode"):  # text rendering mode
-                # See '5.2.5 Text Rendering Mode'
-                pass
-            elif operator == b_("Trise"):  # text rise
-                # See '5.2.6 Text Rise'
-                pass
             elif operator == b_("Tj"):
-                # See 'TABLE 5.6 Text-showing operators'
                 _text = operands[0]
                 if isinstance(_text, TextStringObject):
                     text += Tj_sep
                     text += _text
                     # text += "\n"
             # see Pdf Reference 1.7 page 406
-            elif (operator in [b_("T*"), b_("ET")]) or (
-                (operator in [b_("Td"), b_("TD")]) and operands[1] != 0
+            elif (operator in [b_("T*"), b_("ET"),b_("Tm")]) or (
+                (operator in [b_("Td"), b_("TD")]) and operands[1] <= -(float(font_size)/2.0)
             ):
-                # See 'TABLE 5.5 Text-positioning operators'
                 if text != "":
                     output += text.translate(cmap) + "\n"
                     text = ""
-            elif (operator in [b_("Td")]) and (operands[1] == 0):
+            elif (operator in [b_("Td")]) and (operands[1] == 0 ):
                 if operands[0] > (space_scale * space_width):
                     text += " "
                 # elif operands[-1] < 0:
                 #    print("back ", operands[-1])
             elif operator == b_("'"):
-                # See 'TABLE 5.6 Text-showing operators'
                 output += text.translate(cmap) + "\n"
                 _text = operands[0]
                 if isinstance(_text, TextStringObject):
                     text = operands[0]
             elif operator == b_('"'):
-                # See 'TABLE 5.6 Text-showing operators'
                 output += text.translate(cmap) + "\n"
                 _text = operands[2]
                 if isinstance(_text, TextStringObject):
                     text = _text
             elif operator == b_("TJ"):
-                # See 'TABLE 5.6 Text-showing operators'
+                pass
                 for i in operands[0]:
                     if isinstance(i, TextStringObject):
                         text += TJ_sep
