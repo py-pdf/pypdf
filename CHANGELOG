@@ -444,6 +444,41 @@ Miscellaneous:
 
 All changes: https://github.com/py-pdf/PyPDF2/compare/1.27.3...1.27.4
 
+Version 1.27.3, 2022-04-10
+--------------------------
+
+- PKG: Make Tests not a subpackage (#728)
+- BUG: Fix ASCII85Decode.decode assertion (#729)
+- BUG: Error in Chinese character encoding (#463)
+- BUG: Code duplication in Scripts/2-up.py
+- ROBUST: Guard 'obj.writeToStream' with 'if obj is not None'
+- ROBUST: Ignore a /Prev entry with the value 0 in the trailer
+- MAINT: Remove Sample_Code (#726)
+- TST: Close file handle in test_writer (#722)
+- TST: Fix test_get_images (#730)
+- DEV: Make tox use pytest and add more Python versions (#721)
+- DOC: Many (#720, #723-725, #469)
+
+All changes: https://github.com/py-pdf/PyPDF2/compare/1.27.2...1.27.3
+
+Version 1.27.2, 2022-04-09
+--------------------------
+
+- Add Scripts (including `pdfcat`), Resources, Tests, and Sample_Code back to
+  PyPDF2. It was removed by accident in 1.27.0, but might get removed with 2.0.0
+  See https://github.com/py-pdf/PyPDF2/discussions/718 for discussion
+
+All changes: https://github.com/py-pdf/PyPDF2/compare/1.27.1...1.27.2
+
+Version 1.27.1, 2022-04-08
+--------------------------
+
+- Fixed project links on PyPI page after migration from mstamy2
+  to MartinThoma to the py-pdf organization on GitHub
+- Documentation is now at https://pypdf2.readthedocs.io/en/latest/
+
+All changes: https://github.com/py-pdf/PyPDF2/compare/1.27.0...1.27.1
+
 Version 1.27.0, 2022-04-07
 --------------------------
 
@@ -485,32 +520,6 @@ Miscellaneous:
 
 You can see the full changelog at: https://github.com/py-pdf/PyPDF2/compare/1.26.0...1.27.0
 
-Patch release 1.27.1, 2022-04-08
-
-- Fixed project links on PyPI page after migration from mstamy2
-  to MartinThoma to the py-pdf organization on GitHub
-- Documentation is now at https://pypdf2.readthedocs.io/en/latest/
-
-Patch release 1.27.2, 2022-04-09
-
-- Add Scripts (including `pdfcat`), Resources, Tests, and Sample_Code back to
-  PyPDF2. It was removed by accident in 1.27.0, but might get removed with 2.0.0
-  See https://github.com/py-pdf/PyPDF2/discussions/718 for discussion
-
-Patch release 1.27.3, 2022-04-10
-
-- PKG: Make Tests not a subpackage (#728)
-- BUG: Fix ASCII85Decode.decode assertion (#729)
-- BUG: Error in Chinese character encoding (#463)
-- BUG: Code duplication in Scripts/2-up.py
-- ROBUST: Guard 'obj.writeToStream' with 'if obj is not None'
-- ROBUST: Ignore a /Prev entry with the value 0 in the trailer
-- MAINT: Remove Sample_Code (#726)
-- TST: Close file handle in test_writer (#722)
-- TST: Fix test_get_images (#730)
-- DEV: Make tox use pytest and add more Python versions (#721)
-- DOC: Many (#720, #723-725, #469)
-
 Version 1.26.0, 2016-05-18
 --------------------------
 
@@ -537,8 +546,8 @@ Version 1.26.0, 2016-05-18
  - Fix bug where reading an inline image would cut off prematurely
    in certain cases (speedplane)
 
-
-Patch 1.25.1, 2015-07-20
+Version 1.25.1, 2015-07-20
+--------------------------
 
  - Fix bug when parsing inline images. Occurred when merging
    certain pages with inline images
