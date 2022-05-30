@@ -520,15 +520,6 @@ Miscellaneous:
 
 You can see the full changelog at: https://github.com/py-pdf/PyPDF2/compare/1.26.0...1.27.0
 
-Version 1.25.1, 2015-07-20
---------------------------
-
- - Fix bug when parsing inline images. Occurred when merging
-   certain pages with inline images
-
- - Fixed type error when creating outlines by utilizing the
-   isString() test
-
 Version 1.26.0, 2016-05-18
 --------------------------
 
@@ -554,6 +545,15 @@ Version 1.26.0, 2016-05-18
 
  - Fix bug where reading an inline image would cut off prematurely
    in certain cases (speedplane)
+
+Version 1.25.1, 2015-07-20
+--------------------------
+
+ - Fix bug when parsing inline images. Occurred when merging
+   certain pages with inline images
+
+ - Fixed type error when creating outlines by utilizing the
+   isString() test
 
 Version 1.25, 2015-07-07
 ------------------------
