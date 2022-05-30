@@ -29,7 +29,6 @@
 
 import math
 import uuid
-import warnings
 from decimal import Decimal
 from typing import (
     Any,
@@ -44,8 +43,8 @@ from typing import (
 )
 
 from ._utils import (
-    DEPR_MSG,
-    DEPR_MSG_NO_REPLACEMENT,
+    deprecate_no_replacement,
+    deprecate_with_replacement,
     CompressedTransformationMatrix,
     TransformationMatrixType,
     b_,
@@ -85,11 +84,7 @@ def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleOb
 
 
 def getRectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
-    warnings.warn(
-        DEPR_MSG_NO_REPLACEMENT.format("getRectangle"),
-        PendingDeprecationWarning,
-        stacklevel=2,
-    )
+    deprecate_no_replacement("getRectangle")
     return _get_rectangle(self, name, defaults)
 
 
@@ -100,11 +95,7 @@ def _set_rectangle(self: Any, name: str, value: Union[RectangleObject, float]) -
 
 
 def setRectangle(self: Any, name: str, value: Union[RectangleObject, float]) -> None:
-    warnings.warn(
-        DEPR_MSG_NO_REPLACEMENT.format("setRectangle"),
-        PendingDeprecationWarning,
-        stacklevel=2,
-    )
+    deprecate_no_replacement("setRectangle")
     _set_rectangle(self, name, value)
 
 
@@ -113,11 +104,7 @@ def _delete_rectangle(self: Any, name: str) -> None:
 
 
 def deleteRectangle(self: Any, name: str) -> None:
-    warnings.warn(
-        DEPR_MSG_NO_REPLACEMENT.format("deleteRectangle"),
-        PendingDeprecationWarning,
-        stacklevel=2,
-    )
+    deprecate_no_replacement("deleteRectangle")
     del self[name]
 
 
@@ -130,11 +117,7 @@ def _create_rectangle_accessor(name: str, fallback: Iterable[str]) -> property:
 
 
 def createRectangleAccessor(name: str, fallback: Iterable[str]) -> property:
-    warnings.warn(
-        DEPR_MSG_NO_REPLACEMENT.format("createRectangleAccessor"),
-        PendingDeprecationWarning,
-        stacklevel=2,
-    )
+    deprecate_no_replacement("createRectangleAccessor")
     return _create_rectangle_accessor(name, fallback)
 
 
@@ -302,11 +285,7 @@ class PageObject(DictionaryObject):
 
             Use :meth:`create_blank_page` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("createBlankPage", "create_blank_page"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("createBlankPage", "create_blank_page")
         return PageObject.create_blank_page(pdf, width, height)
 
     def rotate(self, angle: float) -> "PageObject":
@@ -326,11 +305,7 @@ class PageObject(DictionaryObject):
         return self
 
     def rotate_clockwise(self, angle: float) -> "PageObject":
-        warnings.warn(
-            DEPR_MSG.format("rotate_clockwise", "rotate"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("rotate_clockwise", "rotate")
         return self.rotate(angle)
 
     def rotateClockwise(self, angle: float) -> "PageObject":
@@ -339,11 +314,7 @@ class PageObject(DictionaryObject):
 
             Use :meth:`rotate_clockwise` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("rotateClockwise", "rotate"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("rotateClockwise", "rotate")
         return self.rotate(angle)
 
     def rotateCounterClockwise(self, angle: float) -> "PageObject":
@@ -352,11 +323,7 @@ class PageObject(DictionaryObject):
 
             Use :meth:`rotate_clockwise` with a negative argument instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("rotateCounterClockwise", "rotate"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("rotateCounterClockwise", "rotate")
         return self.rotate(-angle)
 
     @staticmethod
@@ -452,9 +419,7 @@ class PageObject(DictionaryObject):
 
             Use :meth:`get_contents` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("getContents", "get_contents"),
-        )
+        deprecate_with_replacement("getContents", "get_contents")
         return self.get_contents()
 
     def merge_page(self, page2: "PageObject", expand: bool = False) -> None:
@@ -480,9 +445,7 @@ class PageObject(DictionaryObject):
 
             Use :meth:`merge_page` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("mergePage", "merge_page"),
-        )
+        deprecate_with_replacement("mergePage", "merge_page")
         return self.merge_page(page2)
 
     def _merge_page(
@@ -637,14 +600,7 @@ class PageObject(DictionaryObject):
 
             Use :meth:`add_transformation`  and :meth:`merge_page` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format(
-                "page.mergeTransformedPage(page2, ctm)",
-                "page2.add_transformation(ctm); page.merge_page(page2)",
-            ),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("page.mergeTransformedPage(page2, ctm)", "page2.add_transformation(ctm); page.merge_page(page2)")
         if isinstance(ctm, Transformation):
             ctm = ctm.ctm
         ctm = cast(CompressedTransformationMatrix, ctm)
@@ -674,14 +630,7 @@ class PageObject(DictionaryObject):
 
             Use :meth:`add_transformation` and :meth:`merge_page` instead.
         """
-        warnings.warn(
-            "page.mergeScaledPage(page2, scale, expand) method will be deprecated. "
-            "Use "
-            "page2.add_transformation(Transformation().scale(scale)); "
-            "page.merge_page(page2, expand) instead.",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("page.mergeScaledPage(page2, scale, expand)", "page2.add_transformation(Transformation().scale(scale)); page.merge_page(page2, expand)")
         op = Transformation().scale(scale, scale)
         self.mergeTransformedPage(page2, op, expand)
 
@@ -702,14 +651,7 @@ class PageObject(DictionaryObject):
 
             Use :meth:`add_transformation` and :meth:`merge_page` instead.
         """
-        warnings.warn(
-            "page.mergeRotatedPage(page2, rotation, expand) method will be deprecated. "
-            "Use "
-            "page2.add_transformation(Transformation().rotate(rotation)); "
-            "page.merge_page(page2, expand) instead.",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("page.mergeRotatedPage(page2, rotation, expand)", "page2.add_transformation(Transformation().rotate(rotation)); page.merge_page(page2, expand)")
         op = Transformation().rotate(rotation)
         self.mergeTransformedPage(page2, op, expand)
 
@@ -731,14 +673,7 @@ class PageObject(DictionaryObject):
 
             Use :meth:`add_transformation` and :meth:`merge_page` instead.
         """
-        warnings.warn(
-            "page.mergeTranslatedPage(page2, tx, ty, expand) method will be deprecated. "
-            "Use "
-            "page2.add_transformation(Transformation().translate(tx, ty)); "
-            "page.merge_page(page2, expand) instead.",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("page.mergeTranslatedPage(page2, tx, ty, expand)", "page2.add_transformation(Transformation().translate(tx, ty)); page.merge_page(page2, expand)")
         op = Transformation().translate(tx, ty)
         self.mergeTransformedPage(page2, op, expand)
 
@@ -766,14 +701,7 @@ class PageObject(DictionaryObject):
 
             Use :meth:`add_transformation` and :meth:`merge_page` instead.
         """
-        warnings.warn(
-            "page.mergeRotatedTranslatedPage(page2, rotation, tx, ty, expand) "
-            "method will be deprecated. Use "
-            "page2.add_transformation(Transformation().rotate(rotation).translate(tx, ty)); "
-            "page.merge_page(page2, expand) instead.",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("page.mergeRotatedTranslatedPage(page2, rotation, tx, ty, expand)", "page2.add_transformation(Transformation().rotate(rotation).translate(tx, ty)); page.merge_page(page2, expand)")
         op = Transformation().translate(-tx, -ty).rotate(rotation).translate(tx, ty)
         return self.mergeTransformedPage(page2, op, expand)
 
@@ -795,14 +723,7 @@ class PageObject(DictionaryObject):
 
             Use :meth:`add_transformation` and :meth:`merge_page` instead.
         """
-        warnings.warn(
-            "page.mergeRotatedScaledPage(page2, rotation, scale, expand) "
-            "method will be deprecated. Use "
-            "page2.add_transformation(Transformation().rotate(rotation).scale(scale)); "
-            "page.merge_page(page2, expand) instead.",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("page.mergeRotatedScaledPage(page2, rotation, scale, expand)", "page2.add_transformation(Transformation().rotate(rotation).scale(scale)); page.merge_page(page2, expand)")
         op = Transformation().rotate(rotation).scale(scale, scale)
         self.mergeTransformedPage(page2, op, expand)
 
@@ -830,14 +751,7 @@ class PageObject(DictionaryObject):
 
             Use :meth:`add_transformation` and :meth:`merge_page` instead.
         """
-        warnings.warn(
-            "page.mergeScaledTranslatedPage(page2, scale, tx, ty, expand) "
-            "method will be deprecated. Use "
-            "page2.add_transformation(Transformation().scale(scale).translate(tx, ty)); "
-            "page.merge_page(page2, expand) instead.",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("page.mergeScaledTranslatedPage(page2, scale, tx, ty, expand)", "page2.add_transformation(Transformation().scale(scale).translate(tx, ty)); page.merge_page(page2, expand)")
         op = Transformation().scale(scale, scale).translate(tx, ty)
         return self.mergeTransformedPage(page2, op, expand)
 
@@ -868,14 +782,7 @@ class PageObject(DictionaryObject):
 
             Use :meth:`add_transformation` and :meth:`merge_page` instead.
         """
-        warnings.warn(
-            "page.mergeRotatedScaledTranslatedPage(page2, rotation, tx, ty, expand) "
-            "method will be deprecated. Use "
-            "page2.add_transformation(Transformation().rotate(rotation).scale(scale)); "
-            "page.merge_page(page2, expand) instead.",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("page.mergeRotatedScaledTranslatedPage(page2, rotation, tx, ty, expand)", "page2.add_transformation(Transformation().rotate(rotation).scale(scale)); page.merge_page(page2, expand)")
         op = Transformation().rotate(rotation).scale(scale, scale).translate(tx, ty)
         self.mergeTransformedPage(page2, op, expand)
 
@@ -941,11 +848,7 @@ class PageObject(DictionaryObject):
 
             Use :meth:`add_transformation` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("addTransformation", "add_transformation"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("addTransformation", "add_transformation")
         self.add_transformation(ctm)
 
     def scale(self, sx: float, sy: float) -> None:
@@ -1001,11 +904,7 @@ class PageObject(DictionaryObject):
 
             Use :meth:`scale_by` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("Page.scaleBy", "Page.scale_by"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("scaleBy", "scale_by")
         self.scale(factor, factor)
 
     def scale_to(self, width: float, height: float) -> None:
@@ -1026,11 +925,7 @@ class PageObject(DictionaryObject):
 
             Use :meth:`scale_to` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("Page.scaleTo", "Page.scale_to"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("scaleTo", "scale_to")
         self.scale_to(width, height)
 
     def compress_content_streams(self) -> None:
@@ -1053,13 +948,7 @@ class PageObject(DictionaryObject):
 
             Use :meth:`compress_content_streams` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format(
-                "Page.compressContentStreams", "Page.compress_content_streams"
-            ),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("compressContentStreams", "compress_content_streams")
         self.compress_content_streams()
 
     def extract_text(self, Tj_sep: str = "", TJ_sep: str = "") -> str:
@@ -1152,11 +1041,7 @@ class PageObject(DictionaryObject):
 
             Use :meth:`extract_text` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("Page.extractText", "Page.extract_text"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("extractText", "extract_text")
         return self.extract_text(Tj_sep=Tj_sep, TJ_sep=TJ_sep)
 
     mediabox = _create_rectangle_accessor(PG.MEDIABOX, ())
@@ -1173,11 +1058,7 @@ class PageObject(DictionaryObject):
 
             Use :py:attr:`mediabox` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("Page.mediaBox", "Page.mediabox"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("mediaBox", "mediabox")
         return self.mediabox
 
     @mediaBox.setter
@@ -1187,11 +1068,7 @@ class PageObject(DictionaryObject):
 
             Use :py:attr:`mediabox` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("Page.mediaBox", "Page.mediabox"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("mediaBox", "mediabox")
         self.mediabox = value
 
     cropbox = _create_rectangle_accessor("/CropBox", (PG.MEDIABOX,))
@@ -1210,20 +1087,12 @@ class PageObject(DictionaryObject):
 
             Use :py:attr:`cropbox` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("Page.cropBox", "Page.cropbox"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("cropBox", "cropbox")
         return self.cropbox
 
     @cropBox.setter
     def cropBox(self, value: RectangleObject) -> None:
-        warnings.warn(
-            DEPR_MSG.format("Page.cropBox", "Page.cropbox"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("cropBox", "cropbox")
         self.cropbox = value
 
     bleedbox = _create_rectangle_accessor("/BleedBox", ("/CropBox", PG.MEDIABOX))
@@ -1240,20 +1109,12 @@ class PageObject(DictionaryObject):
 
             Use :py:attr:`bleedbox` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("Page.bleedBox", "Page.bleedbox"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("bleedBox", "bleedbox")
         return self.bleedbox
 
     @bleedBox.setter
     def bleedBox(self, value: RectangleObject) -> None:
-        warnings.warn(
-            DEPR_MSG.format("Page.bleedBox", "Page.bleedbox"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("bleedBox", "bleedbox")
         self.bleedbox = value
 
     trimbox = _create_rectangle_accessor("/TrimBox", ("/CropBox", PG.MEDIABOX))
@@ -1269,20 +1130,12 @@ class PageObject(DictionaryObject):
 
             Use :py:attr:`trimbox` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("Page.trimBox", "Page.trimbox"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("trimBox", "trimbox")
         return self.trimbox
 
     @trimBox.setter
     def trimBox(self, value: RectangleObject) -> None:
-        warnings.warn(
-            DEPR_MSG.format("Page.trimBox", "Page.trimbox"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("trimBox", "trimbox")
         self.trimbox = value
 
     artbox = _create_rectangle_accessor("/ArtBox", ("/CropBox", PG.MEDIABOX))
@@ -1299,20 +1152,12 @@ class PageObject(DictionaryObject):
 
             Use :py:attr:`artbox` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("Page.artBox", "Page.artbox"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("artBox", "artbox")
         return self.artbox
 
     @artBox.setter
     def artBox(self, value: RectangleObject) -> None:
-        warnings.warn(
-            DEPR_MSG.format("Page.artBox", "Page.artbox"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("artBox", "artbox")
         self.artbox = value
 
 
