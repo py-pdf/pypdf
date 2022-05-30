@@ -34,6 +34,14 @@ Breaking Changes(DEP):
   Both are still in the git repository. The `Scripts` are now in
   https://github.com/py-pdf/cpdf. `Sample_Code` was moved to the `docs`.
 
+Version 1.28.4, 2022-05-29
+--------------------------
+
+Bug Fixes (BUG):
+-  XmpInformation._converter_date was unusable (#921)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.28.3...1.28.4
+
 Version 1.28.3, 2022-05-28
 --------------------------
 
