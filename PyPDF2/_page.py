@@ -51,7 +51,6 @@ from ._utils import (
     DEPR_MSG_NO_REPLACEMENT,
     CompressedTransformationMatrix,
     TransformationMatrixType,
-    b_,
     matrix_multiply,
 )
 from .constants import PageAttributes as PG
@@ -60,6 +59,7 @@ from .errors import PageSizeNotDefinedError
 from .generic import (
     ArrayObject,
     ContentStream,
+    DecodedStreamObject,
     DictionaryObject,
     FloatObject,
     IndirectObject,
@@ -67,7 +67,7 @@ from .generic import (
     NullObject,
     NumberObject,
     RectangleObject,
-    TextStringObject,
+#    TextStringObject,
     charset_encoding,
 )
 from ._adobe_glyphs import adobe_glyphs
@@ -1090,17 +1090,54 @@ class PageObject(DictionaryObject):
         :return: a string object.
         """
         # code freely inspired from @twiggy ; see #711
-        def buildCharMap(font_name: str) -> Tuple[str, Dict, Dict]:
+        def buildCharMap(font_name: str) -> Tuple[str, float,Dict, Dict]:
             map_dict: Any = {}
             process_rg: bool = False
             process_char: bool = False
             encoding: List[str] = []
             ft : DictionaryObject = self["/Resources"]["/Font"][font_name]         # type: ignore
-            font_type: str = ft["/Subtype"]                                        # type: ignore
+            font_type: str = cast(str,ft["/Subtype"])
+            sp_width : float = space_width*2         #default value
+            w = []
             # compute space widths
-            if "/DW" in ft:
-                pass
-            if "/Encoding" in ft:                                                  # type: ignore
+            if "/Widths" in ft:
+                w = [x for x in ft["/Widths"]]                      #type: ignore
+                try:
+                    st : int = cast(int, ft["/FirstChar"])
+                    en : int = cast(int, ft["/LastChar"])
+                    if st>32 or en<32:
+                        raise Exception("Not in range")
+                except Exception:
+                    if "/FontDescriptor" in ft and "/MissingWidth" in cast(DictionaryObject,ft["/FontDescriptor"]):
+                        sp_width = ft["/FontDescriptor"]["/MissingWidth"]       # type: ignore
+                    else:
+                        #will consider width of char as avg(width)/2
+                        m=0
+                        for x in w:
+                            m += x
+                        sp_width = m / len(w) / 2
+            if "/W" in ft:
+                if "/DW" in ft:
+                    sp_width = cast(float, ft["/DW"])
+                w = [x for x in ft["/W"]]                           #type: ignore
+                while(len(w)>0):
+                    st = w[0]
+                    second = w[1]
+                    if isinstance(int, second):
+                        if st<=32 and 32<=second:
+                            sp_width = w[2]
+                            break
+                        w = w[3:]
+                    if isinstance(list, second):
+                        if st<=32 and 32<=st+len(second)-1:
+                            sp_width = second[32-st]
+                        w = w[2:]
+                    else:
+                        warnings.warn("unknown widths : \n"+(ft["/W"]).__repr__(),
+                            PdfReadWarning)
+                        break
+            #encoding
+            if "/Encoding" in ft:
                 enc: Union(str,DictionaryObject) = ft["/Encoding"].get_object()    # type: ignore
                 if isinstance(enc, str):
                     try:
@@ -1135,8 +1172,8 @@ class PageObject(DictionaryObject):
                             except Exception:
                                 encoding[x] = o
                             x += 1
-            if "/ToUnicode" in self["/Resources"]["/Font"][font_name]:                    # type: ignore
-                cm : str = ft["/ToUnicode"].get_data().decode("utf-8")    # type: ignore
+            if "/ToUnicode" in ft:
+                cm : str = cast(DecodedStreamObject,ft["/ToUnicode"]).get_data().decode("utf-8")
                 for l in (
                     cm.strip()
                     .replace("<", " ")
@@ -1178,12 +1215,12 @@ class PageObject(DictionaryObject):
                         lst = [x for x in l.split(" ") if x]
                         a = int(lst[0], 16)
                         map_dict[a] = unhexlify(lst[1]).decode("utf-16-be")
-            return font_type, dict(zip(range(256), encoding)), "".maketrans(map_dict)
+            return font_type, float(sp_width/2/2), dict(zip(range(256), encoding)), "".maketrans(map_dict)
 
         # ------- end of buildCharmap ------
         text: str = ""
         output: str = ""
-        cmaps: Dict[str, Tuple[str, Dict[int, str], Dict[str, str]]] = {}
+        cmaps: Dict[str, Tuple[str, float, Dict[int, str], Dict[str, str]]] = {}
         resources_dict = cast(DictionaryObject, self["/Resources"])
         if "/Font" in resources_dict:
             for f in cast(DictionaryObject, resources_dict["/Font"]):
@@ -1196,77 +1233,89 @@ class PageObject(DictionaryObject):
         # are strings where the byte->string encoding was unknown, so adding
         # them to the text here would be gibberish.
 
-        # charSize = 1.0
-        # charScale = 0.0
+        Tm_matrix : List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+        char_scale = 1.0
         space_scale = 1.0
+        _space_width :float = 500.0
+        TL = 0.0
         font_size = 12.0 #just in case of
-        for operands, operator in content.operations:
-            if operator == b_("Tf"):
+
+        ##Tm_matrix: Tuple = Tm_matrix, output: str = output, text: str = text,
+        ##char_scale: float = char_scale,space_scale : float = space_scale, _space_width: float = _space_width,
+        ##TL: float = TL, font_size: float = font_size, cmap = cmap
+
+        def process_operation(operator: bytes, operands:List,
+                              params: Any)-> Any :
+            Tm_matrix, output, text,char_scale, space_scale,_space_width, TL, font_size,cmap = params
+            Tm_prev = list(Tm_matrix)
+            #### Table 5.4 page 405 ####
+            if operator == b"BT":
+                Tm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+                Tm_prev = Tm_matrix
+                output += text
+                if output != "" and output[-1]!="\n":
+                    output += "\n"
+                text = ""
+            elif (operator == b"ET"):
+                output += text
+                text=""
+            #### Table 5.2 page 398 ####
+            elif operator == b"Tz":
+                char_scale = float(operands[0])/100.0
+            elif operator == b"Tw":
+                space_scale = 1.0 + float(operands[0])
+            elif operator == b"TL":
+                TL = float(operands[0])
+            elif operator == b"Tf":
                 if text != "":
                     output += text.translate(cmap)
-                # ft, cmap, cmap2 = buildCharMap(self.pdf, operands[0])
-                cmap = cmaps[operands[0]][1]
+                text = ""
+                _space_width,cmap = cmaps[operands[0]][1],cmaps[operands[0]][2]
                 try:
-                    font_size = operands[1]
+                    font_size = float(operands[1])
                 except Exception:
                     pass # keep previous size
-                # print(ft,"\n",cmap,"\n--------------\n",cmap2)
-                # charSize = operands[1] # reserved
-                if output == "":
-                    text = ""
-                else:
-                    text = " "
-            # elif operator == b_("Tc"):
-            # charScale = 1.0 + float(operands[0])
-            elif operator == b_("Tw"):
-                space_scale = 1.0 + float(operands[0])
-            elif operator == b_("Tj"):
-                _text = operands[0]
-                if isinstance(_text, TextStringObject):
-                    text += Tj_sep
-                    text += _text
-                    # text += "\n"
-            # see Pdf Reference 1.7 page 406
-            elif (operator in [b_("T*"), b_("ET"),b_("Tm")]) or (
-                (operator in [b_("Td"), b_("TD")]) and operands[1] <= -(float(font_size)/2.0)
-            ):
-                if text != "":
-                    output += text.translate(cmap) + "\n"
-                    text = ""
-            elif (operator in [b_("Td")]) and (operands[1] == 0 ):
-                if operands[0] > (space_scale * space_width):
-                    text += " "
-                # elif operands[-1] < 0:
-                #    print("back ", operands[-1])
-            elif operator == b_("'"):
+            #### Table 5.5 page 406 ####
+            elif (operator == b"Td"):
+                Tm_matrix[5] += float(operands[1])
+                Tm_matrix[4] += float(operands[0])
+            elif operator == b"Tm":
+                Tm_matrix = [float(operands[0]), float(operands[1]),
+                             float(operands[2]), float(operands[3]),
+                             float(operands[4]), float(operands[5])]
+            elif (operator == b"T*"):
+                Tm_matrix[5] += TL
+            elif operator == b"Tj":
+                text += operands[0].translate(cmap)
+            # process text changes due to positionchange: " "
+            if Tm_matrix[5] <= (Tm_prev[5] - font_size): # it means that we are moving down by one line
                 output += text.translate(cmap) + "\n"
-                _text = operands[0]
-                if isinstance(_text, TextStringObject):
-                    text = operands[0]
-            elif operator == b_('"'):
-                output += text.translate(cmap) + "\n"
-                _text = operands[2]
-                if isinstance(_text, TextStringObject):
-                    text = _text
-            elif operator == b_("TJ"):
-                pass
-                for i in operands[0]:
-                    if isinstance(i, TextStringObject):
-                        text += TJ_sep
-                        text += i
-                    elif isinstance(i, (NumberObject, FloatObject)):
-                        # a positive value decreases and the negative value increases
-                        # space
-                        # if abs(i)>space_scale*1000:print("TJ:",text,"*",i)
-                        # print(text,i)
-                        if int(i) < -space_scale * space_width:
-                            if len(text) == 0 or text[-1] != " ":
-                                text += " "
-                        else:
-                            if len(text) > 1 and text[-1] == " ":
-                                text = text[:-1]
-                # text += "\n"
-        output += text.translate(cmap)
+                text = ""
+            elif Tm_matrix[4] >= (Tm_prev[4] + space_scale * _space_width * char_scale): # it means that we are moving down by one line
+                text += " "
+            return Tm_matrix, output, text,char_scale, space_scale, _space_width, TL, font_size,cmap
+            # for clarity Operator in (b"g",b"G") : nothing to do
+            ###### end of process_operation ######
+
+        params=(Tm_matrix, output, text,char_scale, space_scale,_space_width, TL, font_size,cmap)
+        for operands, operator in content.operations:
+            #### multiple operators are define inhere ####
+            if operator == b"'":
+                params = process_operation(b"T*",[],params)
+                params = process_operation(b"Tj",operands,params)
+            elif operator == b'"':
+                params = process_operation(b"T*",[],params)
+                params = process_operation(b"TJ",operands,params)
+            elif operator == b"TJ":
+                for op in operands[0]:
+                    if isinstance(op,str):
+                        params = process_operation(b"Tj",[op],params)
+                    if isinstance(op,(int,float)):
+                        params = process_operation(b"Td",[-op,0.0],params)
+            else:
+                params = process_operation(operator,operands,params)
+        Tm_matrix, output, text,char_scale, space_scale,_space_width, TL, font_size,cmap = params
+        output += text   #just in case of
         return output
 
     def extractText(self, Tj_sep: str = "", TJ_sep: str = "") -> str:
