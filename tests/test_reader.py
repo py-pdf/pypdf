@@ -640,8 +640,9 @@ def test_convertToInt_deprecated():
     ):
         assert convertToInt(b"\x01", 8) == 1
 
+
 def test_iss925():
-    reader = PdfReader(os.path.join(RESOURCE_ROOT,"iss_925.pdf"))
+    reader = PdfReader(os.path.join(RESOURCE_ROOT, "iss_925.pdf"))
 
     for page_sliced in reader.pages:
         page_object = page_sliced.get_object()
