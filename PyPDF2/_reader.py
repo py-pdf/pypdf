@@ -1065,6 +1065,8 @@ class PdfReader:
             if self.strict and idx != i:
                 raise PdfReadError("Object is in wrong index.")
             stream_data.seek(int(obj_stm["/First"] + offset), 0)  # type: ignore
+            read_non_whitespace(stream_data)        # to cope with some case where the 'pointer' is on a white space
+            stream_data.seek(-1, 1)
             try:
                 obj = read_object(stream_data, self)
             except PdfStreamError as exc:

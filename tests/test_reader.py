@@ -639,3 +639,14 @@ def test_convertToInt_deprecated():
         match=msg,
     ):
         assert convertToInt(b"\x01", 8) == 1
+
+def test_iss925():
+    reader = PdfReader(os.path.join(RESOURCE_ROOT,"iss_925.pdf"))
+
+    for page_sliced in reader.pages:
+        page_object = page_sliced.get_object()
+        # Extracts the PDF's Annots (Annotations and Commenting):
+        annots = page_object.get("/Annots")
+        if annots is not None:
+            for annot in annots:
+                annot.get_object()
