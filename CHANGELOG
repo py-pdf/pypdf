@@ -1,5 +1,14 @@
-Version 2.0.0
--------------
+Version 2.0.0, 2022-06-01
+-------------------------
+
+The 2.0.0 release of PyPDF2 includes three core changes:
+
+1. Dropping support for Python 3.5 and older.
+2. Introducing type annotations.
+3. Interface changes, mostly to have PEP8-compliant names
+
+We introduced a [deprecation process](https://github.com/py-pdf/PyPDF2/pull/930)
+that hopefully helps users to avoid unexpected breaking changes.
 
 Breaking Changes(DEP):
 - PyPDF2 2.0 requires Python 3.6+. Python 2.7 and 3.5 support were dropped.
@@ -33,6 +42,51 @@ Breaking Changes(DEP):
   `Tests` are renamed to `tests`, the `Resources` are renamed to `resources`.
   Both are still in the git repository. The `Scripts` are now in
   https://github.com/py-pdf/cpdf. `Sample_Code` was moved to the `docs`.
+
+For a full list of deprecated functions, please see the changelog of version
+1.28.0.
+
+New Features (ENH):
+-  Improve space setting for text extraction (#922)
+-  Allow setting the decryption password in PdfReader.__init__ (#920)
+-  Add Page.add_transformation (#883)
+
+Bug Fixes (BUG):
+-  Fix error adding transformation to page without /Contents (#908)
+
+Robustness (ROB):
+-  Cope with invalid length in streams (#861)
+
+Documentation (DOC):
+-  Fix style of 1.25 and 1.27 patch notes (#927)
+-  Transformation (#907)
+
+Developer Experience (DEV):
+-  Create flake8 config file (#916)
+-  Use relative imports (#875)
+
+Maintenance (MAINT):
+-  Use Python 3.6 language features (#849)
+-  Add wrapper function for PendingDeprecationWarnings (#928)
+-  Use new PEP8 compliant names (#884)
+-  Explicitly represent transformation matrix (#878)
+-  Inline PAGE_RANGE_HELP string (#874)
+-  Remove unnecessary generics imports (#873)
+-  Remove star imports (#865)
+-  merger.py ➔ _merger.py (#864)
+-  Type annotations for all functions/methods (#854)
+-  Add initial type support with mypy (#853)
+
+Testing (TST):
+-  Regression test for xmp_metadata converter (#923)
+-  Checkout submodule sample-files for benchmark
+-  Add text extracting performance benchmark
+-  Use new PyPDF2 API in benchmark (#902)
+-  Make test suite fail for uncaught warnings (#892)
+-  Remove -OO testrun from CI (#901)
+-  Improve tests for convert_to_int (#899)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.28.4...2.0.0
 
 Version 1.28.4, 2022-05-29
 --------------------------
