@@ -47,8 +47,8 @@ from typing import (
 from ._page import PageObject, _VirtualList
 from ._security import RC4_encrypt, _alg33_1, _alg34, _alg35
 from ._utils import (
-    DEPR_MSG,
-    DEPR_MSG_NO_REPLACEMENT,
+    deprecate_no_replacement,
+    deprecate_with_replacement,
     StrByteType,
     StreamType,
     b_,
@@ -103,11 +103,7 @@ def convert_to_int(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:
 
 
 def convertToInt(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:
-    warnings.warn(
-        DEPR_MSG.format("convertToInt", "convert_to_int"),
-        PendingDeprecationWarning,
-        stacklevel=2,
-    )
+    deprecate_with_replacement("convertToInt", "convert_to_int")
     return convert_to_int(d, size)
 
 
@@ -142,11 +138,7 @@ class DocumentInformation(DictionaryObject):
 
             Use the attributes (e.g. :py:attr:`title` / :py:attr:`author`).
         """
-        warnings.warn(
-            DEPR_MSG_NO_REPLACEMENT.format("getText"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_no_replacement("getText")
         return self._get_text(key)
 
     @property
@@ -290,13 +282,7 @@ class PdfReader:
 
             Use the attribute :py:attr:`metadata` instead.
         """
-        warnings.warn(
-            "The `getDocumentInfo` method of PdfReader will be replaced by the "
-            "`metadata` attribute in PyPDF2 3.0.0. You can switch to the "
-            "metadata attribute already.",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getDocumentInfo", "metadata")
         return self.metadata
 
     @property
@@ -306,13 +292,7 @@ class PdfReader:
 
             Use the attribute :py:attr:`metadata` instead.
         """
-        warnings.warn(
-            "The `documentInfo` attribute of PdfReader will be replaced by "
-            "`metadata` in PyPDF2 3.0.0. You can switch to the metadata "
-            "attribute already.",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("documentInfo", "metadata")
         return self.metadata
 
     @property
@@ -337,13 +317,7 @@ class PdfReader:
 
             Use the attribute :py:attr:`xmp_metadata` instead.
         """
-        warnings.warn(
-            "The `getXmpMetadata` method of PdfReader will be replaced by the "
-            "`xmp_metadata` attribute in PyPDF2 3.0.0. You can switch to the "
-            "xmp_metadata attribute already.",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getXmpMetadata", "xmp_metadata")
         return self.xmp_metadata
 
     @property
@@ -353,13 +327,7 @@ class PdfReader:
 
             Use the attribute :py:attr:`xmp_metadata` instead.
         """
-        warnings.warn(
-            "The `xmpMetadata` attribute of PdfReader will be replaced by the "
-            "`xmp_metadata` attribute in PyPDF2 3.0.0. You can switch to the "
-            "xmp_metadata attribute already.",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("xmpMetadata", "xmp_metadata")
         return self.xmp_metadata
 
     def _get_num_pages(self) -> int:
@@ -395,11 +363,7 @@ class PdfReader:
 
             Use :code:`len(reader.pages)` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("reader.getNumPages", "len(reader.pages)"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("reader.getNumPages", "len(reader.pages)")
         return self._get_num_pages()
 
     @property
@@ -409,12 +373,7 @@ class PdfReader:
 
             Use :code:`len(reader.pages)` instead.
         """
-        warnings.warn(
-            "The `numPages` attribute of PdfReader will be removed in PyPDF2 3.0.0. "
-            "Use `len(reader.pages)` instead.",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("reader.numPages", "len(reader.pages)")
         return self._get_num_pages()
 
     def getPage(self, pageNumber: int) -> PageObject:
@@ -423,11 +382,7 @@ class PdfReader:
 
             Use :code:`reader.pages[pageNumber]` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("reader.getPage(pageNumber)", "reader.pages[pageNumber]"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("reader.getPage(pageNumber)", "reader.pages[pageNumber]")
         return self._get_page(pageNumber)
 
     def _get_page(self, page_number: int) -> PageObject:
@@ -453,11 +408,7 @@ class PdfReader:
 
             Use :py:attr:`named_destinations` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("reader.namedDestinations", "reader.named_destinations"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("namedDestinations", "named_destinations")
         return self.named_destinations
 
     @property
@@ -535,11 +486,7 @@ class PdfReader:
 
             Use :meth:`get_fields` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("reader.getFields", "reader.get_fields"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getFields", "get_fields")
         return self.get_fields(tree, retval, fileobj)
 
     def _build_field(
@@ -617,11 +564,7 @@ class PdfReader:
 
             Use :meth:`get_form_text_fields` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("reader.getFormTextFields", "reader.get_form_text_fields"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getFormTextFields", "get_form_text_fields")
         return self.get_form_text_fields()
 
     def _get_named_destinations(
@@ -680,11 +623,7 @@ class PdfReader:
 
             Use :py:attr:`named_destinations` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("reader.getNamedDestinations", "reader.named_destinations"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getNamedDestinations", "named_destinations")
         return self._get_named_destinations(tree, retval)
 
     @property
@@ -748,11 +687,7 @@ class PdfReader:
 
             Use :py:attr:`outlines` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("reader.getOutlines", "reader.outlines"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getOutlines", "outlines")
         return self._get_outlines(node, outlines)
 
     def _get_page_number_by_indirect(
@@ -792,13 +727,7 @@ class PdfReader:
 
             Use :meth:`get_page_number` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format(
-                "reader.getPageNumber(page)", "reader.get_page_number(page)"
-            ),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getPageNumber", "get_page_number")
         return self.get_page_number(page)
 
     def get_destination_page_number(self, destination: Destination) -> int:
@@ -817,13 +746,7 @@ class PdfReader:
 
             Use :meth:`get_destination_page_number` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format(
-                "reader.getDestinationPageNumber", "reader.get_destination_page_number"
-            ),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getDestinationPageNumber", "get_destination_page_number")
         return self.get_destination_page_number(destination)
 
     def _build_destination(
@@ -915,11 +838,7 @@ class PdfReader:
 
             Use :py:attr:`page_layout` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("reader.getPageLayout()", "reader.page_layout"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getPageLayout", "page_layout")
         return self.page_layout
 
     @property
@@ -929,11 +848,7 @@ class PdfReader:
 
             Use :py:attr:`page_layout` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("reader.pageLayout", "reader.page_layout"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("pageLayout", "page_layout")
         return self.page_layout
 
     @property
@@ -971,11 +886,7 @@ class PdfReader:
 
             Use :py:attr:`page_mode` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("reader.getPageMode()", "reader.page_mode"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getPageMode", "page_mode")
         return self.page_mode
 
     @property
@@ -985,11 +896,7 @@ class PdfReader:
 
             Use :py:attr:`page_mode` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("reader.pageMode", "reader.page_mode"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("pageMode", "page_mode")
         return self.page_mode
 
     def _flatten(
@@ -1165,14 +1072,7 @@ class PdfReader:
 
             Use :meth:`get_object` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format(
-                "reader.getObject(indirectReference)",
-                "reader.get_object(indirect_reference)",
-            ),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getObject", "get_object")
         return self.get_object(indirectReference)
 
     def _decrypt_object(
@@ -1239,11 +1139,7 @@ class PdfReader:
 
             Use :meth:`read_object_header` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("reader.readObjectHeader", "reader.read_object_header"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("readObjectHeader", "read_object_header")
         return self.read_object_header(stream)
 
     def cache_get_indirect_object(
@@ -1259,13 +1155,7 @@ class PdfReader:
 
             Use :meth:`cache_get_indirect_object` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format(
-                "reader.cacheGetIndirectObject", "reader.cache_get_indirect_object"
-            ),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("cacheGetIndirectObject", "cache_get_indirect_object")
         return self.cache_get_indirect_object(generation, idnum)
 
     def cache_indirect_object(
@@ -1288,13 +1178,7 @@ class PdfReader:
 
             Use :meth:`cache_indirect_object` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format(
-                "reader.cacheIndirectObject", "reader.cache_indirect_object"
-            ),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("cacheIndirectObject", "cache_indirect_object")
         return self.cache_indirect_object(generation, idnum, obj)
 
     def read(self, stream: StreamType) -> None:
@@ -1684,11 +1568,7 @@ class PdfReader:
 
             Use :meth:`read_next_end_line` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("reader.readNextEndLine", "reader.read_next_end_line"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("readNextEndLine", "read_next_end_line")
         return self.read_next_end_line(stream, limit_offset)
 
     def decrypt(self, password: Union[str, bytes]) -> int:
@@ -1837,11 +1717,7 @@ class PdfReader:
 
             Use :py:attr:`is_encrypted` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("reader.getIsEncrypted()", "reader.is_encrypted"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getIsEncrypted", "is_encrypted")
         return self.is_encrypted
 
     @property
@@ -1851,23 +1727,13 @@ class PdfReader:
 
             Use :py:attr:`is_encrypted` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("reader.isEncrypted", "reader.is_encrypted"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("isEncrypted", "is_encrypted")
         return self.is_encrypted
 
 
 class PdfFileReader(PdfReader):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        import warnings
-
-        warnings.warn(
-            "PdfFileReader was renamed to PdfReader. PdfFileReader will be removed",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("PdfFileReader", "PdfReader")
         if "strict" not in kwargs and len(args) < 2:
             kwargs["strict"] = True  # maintain the default
         super().__init__(*args, **kwargs)
