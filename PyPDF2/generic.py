@@ -41,8 +41,8 @@ from io import BytesIO
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from ._utils import (
-    DEPR_MSG,
-    DEPR_MSG_NO_REPLACEMENT,
+    deprecate_no_replacement,
+    deprecate_with_replacement,
     WHITESPACES,
     StreamType,
     b_,
@@ -78,11 +78,7 @@ class PdfObject:
         return self
 
     def getObject(self) -> Optional["PdfObject"]:
-        warnings.warn(
-            DEPR_MSG.format("getObject", "get_object"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getObject", "get_object")
         return self.get_object()
 
     def write_to_stream(
@@ -107,20 +103,12 @@ class NullObject(PdfObject):
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
-        warnings.warn(
-            DEPR_MSG.format("writeToStream", "write_to_stream"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("writeToStream", "write_to_stream")
         self.write_to_stream(stream, encryption_key)
 
     @staticmethod
     def readFromStream(stream: StreamType) -> "NullObject":
-        warnings.warn(
-            DEPR_MSG.format("readFromStream", "read_from_stream"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("readFromStream", "read_from_stream")
         return NullObject.read_from_stream(stream)
 
 
@@ -147,11 +135,7 @@ class BooleanObject(PdfObject):
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
-        warnings.warn(
-            DEPR_MSG.format("writeToStream", "write_to_stream"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("writeToStream", "write_to_stream")
         self.write_to_stream(stream, encryption_key)
 
     @staticmethod
@@ -167,11 +151,7 @@ class BooleanObject(PdfObject):
 
     @staticmethod
     def readFromStream(stream: StreamType) -> "BooleanObject":
-        warnings.warn(
-            DEPR_MSG.format("readFromStream", "read_from_stream"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("readFromStream", "read_from_stream")
         return BooleanObject.read_from_stream(stream)
 
 
@@ -188,11 +168,7 @@ class ArrayObject(list, PdfObject):
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
-        warnings.warn(
-            DEPR_MSG.format("writeToStream", "write_to_stream"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("writeToStream", "write_to_stream")
         self.write_to_stream(stream, encryption_key)
 
     @staticmethod
@@ -218,11 +194,7 @@ class ArrayObject(list, PdfObject):
 
     @staticmethod
     def readFromStream(stream: StreamType, pdf: Any) -> "ArrayObject":  # PdfReader
-        warnings.warn(
-            DEPR_MSG.format("readFromStream", "read_from_stream"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("readFromStream", "read_from_stream")
         return ArrayObject.read_from_stream(stream, pdf)
 
 
@@ -258,11 +230,7 @@ class IndirectObject(PdfObject):
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
-        warnings.warn(
-            DEPR_MSG.format("writeToStream", "write_to_stream"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("writeToStream", "write_to_stream")
         self.write_to_stream(stream, encryption_key)
 
     @staticmethod
@@ -295,11 +263,7 @@ class IndirectObject(PdfObject):
 
     @staticmethod
     def readFromStream(stream: StreamType, pdf: Any) -> "IndirectObject":  # PdfReader
-        warnings.warn(
-            DEPR_MSG.format("readFromStream", "read_from_stream"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("readFromStream", "read_from_stream")
         return IndirectObject.read_from_stream(stream, pdf)
 
 
@@ -340,11 +304,7 @@ class FloatObject(decimal.Decimal, PdfObject):
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
-        warnings.warn(
-            DEPR_MSG.format("writeToStream", "write_to_stream"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("writeToStream", "write_to_stream")
         self.write_to_stream(stream, encryption_key)
 
 
@@ -370,11 +330,7 @@ class NumberObject(int, PdfObject):
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
-        warnings.warn(
-            DEPR_MSG.format("readFromStream", "read_from_stream"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("writeToStream", "write_to_stream")
         self.write_to_stream(stream, encryption_key)
 
     @staticmethod
@@ -387,11 +343,7 @@ class NumberObject(int, PdfObject):
 
     @staticmethod
     def readFromStream(stream: StreamType) -> Union["NumberObject", FloatObject]:
-        warnings.warn(
-            DEPR_MSG.format("readFromStream", "read_from_stream"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("readFromStream", "read_from_stream")
         return NumberObject.read_from_stream(stream)
 
 
@@ -521,11 +473,7 @@ class ByteStringObject(bytes_type, PdfObject):  # type: ignore
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
-        warnings.warn(
-            DEPR_MSG.format("writeToStream", "write_to_stream"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("writeToStream", "write_to_stream")
         self.write_to_stream(stream, encryption_key)
 
 
@@ -591,11 +539,7 @@ class TextStringObject(str, PdfObject):
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
-        warnings.warn(
-            DEPR_MSG.format("writeToStream", "write_to_stream"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("writeToStream", "write_to_stream")
         self.write_to_stream(stream, encryption_key)
 
 
@@ -611,11 +555,7 @@ class NameObject(str, PdfObject):
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
-        warnings.warn(
-            DEPR_MSG.format("writeToStream", "write_to_stream"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("writeToStream", "write_to_stream")
         self.write_to_stream(stream, encryption_key)
 
     @staticmethod
@@ -641,11 +581,7 @@ class NameObject(str, PdfObject):
 
     @staticmethod
     def readFromStream(stream: StreamType, pdf: Any) -> "NameObject":  # PdfReader
-        warnings.warn(
-            DEPR_MSG.format("readFromStream", "read_from_stream"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("readFromStream", "read_from_stream")
         return NameObject.read_from_stream(stream, pdf)
 
 
@@ -699,11 +635,7 @@ class DictionaryObject(dict, PdfObject):
 
             Use :meth:`xmp_metadata` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("getXmpMetadata()", "xmp_metadata"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getXmpMetadata", "xmp_metadata")
         return self.xmp_metadata
 
     @property
@@ -713,11 +645,7 @@ class DictionaryObject(dict, PdfObject):
 
             Use :meth:`xmp_metadata` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("xmpMetadata", "xmp_metadata"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("xmpMetadata", "xmp_metadata")
         return self.xmp_metadata
 
     def write_to_stream(
@@ -734,11 +662,7 @@ class DictionaryObject(dict, PdfObject):
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
-        warnings.warn(
-            DEPR_MSG.format("writeToStream", "write_to_stream"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("writeToStream", "write_to_stream")
         self.write_to_stream(stream, encryption_key)
 
     @staticmethod
@@ -871,11 +795,7 @@ class DictionaryObject(dict, PdfObject):
 
     @staticmethod
     def readFromStream(stream: StreamType, pdf: Any) -> "DictionaryObject":  # PdfReader
-        warnings.warn(
-            DEPR_MSG.format("readFromStream()", "read_from_stream"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("readFromStream", "read_from_stream")
         return DictionaryObject.read_from_stream(stream, pdf)
 
 
@@ -901,11 +821,7 @@ class TreeObject(DictionaryObject):
             child = child["/Next"]  # type: ignore
 
     def addChild(self, child: Any, pdf: Any) -> None:  # PdfReader
-        warnings.warn(
-            DEPR_MSG.format("addChild", "add_child"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("addChild", "add_child")
         self.add_child(child, pdf)
 
     def add_child(self, child: Any, pdf: Any) -> None:  # PdfReader
@@ -934,11 +850,7 @@ class TreeObject(DictionaryObject):
         child_obj[NameObject("/Parent")] = parent_ref
 
     def removeChild(self, child: Any) -> None:
-        warnings.warn(
-            DEPR_MSG.format("removeChild", "remove_child"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("removeChild", "remove_child")
         self.remove_child(child)
 
     def remove_child(self, child: Any) -> None:
@@ -1033,20 +945,12 @@ class StreamObject(DictionaryObject):
 
     @property
     def decodedSelf(self) -> Optional["DecodedStreamObject"]:
-        warnings.warn(
-            DEPR_MSG.format("decodedSelf", "decoded_self"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("decodedSelf", "decoded_self")
         return self.decoded_self
 
     @decodedSelf.setter
     def decodedSelf(self, value: "DecodedStreamObject") -> None:
-        warnings.warn(
-            DEPR_MSG.format("decodedSelf", "decoded_self"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("decodedSelf", "decoded_self")
         self.decoded_self = value
 
     @property
@@ -1088,11 +992,7 @@ class StreamObject(DictionaryObject):
         return retval
 
     def flateEncode(self) -> "EncodedStreamObject":
-        warnings.warn(
-            DEPR_MSG.format("flateEncode", "flate_encode"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("flateEncode", "flate_encode")
         return self.flate_encode()
 
     def flate_encode(self) -> "EncodedStreamObject":
@@ -1123,19 +1023,11 @@ class DecodedStreamObject(StreamObject):
         self._data = data
 
     def getData(self) -> Any:
-        warnings.warn(
-            DEPR_MSG.format("decodedSelf", "decoded_self"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getData", "get_data")
         return self._data
 
     def setData(self, data: Any) -> None:
-        warnings.warn(
-            DEPR_MSG.format("decodedSelf", "decoded_self"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("setData", "set_data")
         self.set_data(data)
 
 
@@ -1145,20 +1037,12 @@ class EncodedStreamObject(StreamObject):
 
     @property
     def decodedSelf(self) -> Optional["DecodedStreamObject"]:
-        warnings.warn(
-            DEPR_MSG.format("decodedSelf", "decoded_self"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("decodedSelf", "decoded_self")
         return self.decoded_self
 
     @decodedSelf.setter
     def decodedSelf(self, value: DecodedStreamObject) -> None:
-        warnings.warn(
-            DEPR_MSG.format("decodedSelf", "decoded_self"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("decodedSelf", "decoded_self")
         self.decoded_self = value
 
     def get_data(self) -> Union[None, str, bytes]:
@@ -1387,11 +1271,7 @@ class RectangleObject(ArrayObject):
         return value
 
     def ensureIsNumber(self, value: Any) -> Union[FloatObject, NumberObject]:
-        warnings.warn(
-            DEPR_MSG_NO_REPLACEMENT.format("ensureIsNumber"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_no_replacement("ensureIsNumber")
         return self._ensure_is_number(value)
 
     def __repr__(self) -> str:
@@ -1414,67 +1294,35 @@ class RectangleObject(ArrayObject):
         return self[3]
 
     def getLowerLeft_x(self) -> FloatObject:
-        warnings.warn(
-            DEPR_MSG.format("getLowerLeft_x", "left"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getLowerLeft_x", "left")
         return self.left
 
     def getLowerLeft_y(self) -> FloatObject:
-        warnings.warn(
-            DEPR_MSG.format("getLowerLeft_y", "bottom"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getLowerLeft_y", "bottom")
         return self.bottom
 
     def getUpperRight_x(self) -> FloatObject:
-        warnings.warn(
-            DEPR_MSG.format("getUpperRight_x", "right"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getUpperRight_x", "right")
         return self.right
 
     def getUpperRight_y(self) -> FloatObject:
-        warnings.warn(
-            DEPR_MSG.format("getUpperRight_y", "top"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getUpperRight_y", "top")
         return self.top
 
     def getUpperLeft_x(self) -> FloatObject:
-        warnings.warn(
-            DEPR_MSG.format("getUpperLeft_x", "left"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getUpperLeft_x", "left")
         return self.left
 
     def getUpperLeft_y(self) -> FloatObject:
-        warnings.warn(
-            DEPR_MSG.format("getUpperLeft_y", "top"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getUpperLeft_y", "top")
         return self.top
 
     def getLowerRight_x(self) -> FloatObject:
-        warnings.warn(
-            DEPR_MSG.format("getLowerRight_x", "right"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getLowerRight_x", "right")
         return self.right
 
     def getLowerRight_y(self) -> FloatObject:
-        warnings.warn(
-            DEPR_MSG.format("getLowerRight_y", "bottom"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getLowerRight_y", "bottom")
         return self.bottom
 
     @property
@@ -1526,67 +1374,35 @@ class RectangleObject(ArrayObject):
         self[2], self[3] = (self._ensure_is_number(x) for x in value)
 
     def getLowerLeft(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
-        warnings.warn(
-            DEPR_MSG.format("getLowerLeft", "lower_left"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getLowerLeft", "lower_left")
         return self.lower_left
 
     def getLowerRight(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
-        warnings.warn(
-            DEPR_MSG.format("getLowerRight", "lower_right"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getLowerRight", "lower_right")
         return self.lower_right
 
     def getUpperLeft(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
-        warnings.warn(
-            DEPR_MSG.format("getUpperLeft", "upper_left"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getUpperLeft", "upper_left")
         return self.upper_left
 
     def getUpperRight(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
-        warnings.warn(
-            DEPR_MSG.format("getUpperRight", "upper_right"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getUpperRight", "upper_right")
         return self.upper_right
 
     def setLowerLeft(self, value: Tuple[float, float]) -> None:
-        warnings.warn(
-            DEPR_MSG.format("setLowerLeft", "lower_left"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("setLowerLeft", "lower_left")
         self.lower_left = value  # type: ignore
 
     def setLowerRight(self, value: Tuple[float, float]) -> None:
-        warnings.warn(
-            DEPR_MSG.format("setLowerRight", "lower_right"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("setLowerRight", "lower_right")
         self[2], self[1] = (self._ensure_is_number(x) for x in value)
 
     def setUpperLeft(self, value: Tuple[float, float]) -> None:
-        warnings.warn(
-            DEPR_MSG.format("setUpperLeft", "upper_left"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("setUpperLeft", "upper_left")
         self[0], self[3] = (self._ensure_is_number(x) for x in value)
 
     def setUpperRight(self, value: Tuple[float, float]) -> None:
-        warnings.warn(
-            DEPR_MSG.format("setUpperRight", "upper_right"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("setUpperRight", "upper_right")
         self[2], self[3] = (self._ensure_is_number(x) for x in value)
 
     @property
@@ -1594,7 +1410,7 @@ class RectangleObject(ArrayObject):
         return self.right - self.left
 
     def getWidth(self) -> decimal.Decimal:
-        warnings.warn(DEPR_MSG.format("getWidth", "width"), DeprecationWarning)
+        deprecate_with_replacement("getWidth", "width")
         return self.width
 
     @property
@@ -1602,79 +1418,47 @@ class RectangleObject(ArrayObject):
         return self.top - self.bottom
 
     def getHeight(self) -> decimal.Decimal:
-        warnings.warn(DEPR_MSG.format("getHeight", "height"), DeprecationWarning)
+        deprecate_with_replacement("getHeight", "height")
         return self.height
 
     @property
     def lowerLeft(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
-        warnings.warn(
-            DEPR_MSG.format("lowerLeft", "lower_left"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("lowerLeft", "lower_left")
         return self.lower_left
 
     @lowerLeft.setter
     def lowerLeft(self, value: Tuple[decimal.Decimal, decimal.Decimal]) -> None:
-        warnings.warn(
-            DEPR_MSG.format("lowerLeft", "lower_left"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("lowerLeft", "lower_left")
         self.lower_left = value
 
     @property
     def lowerRight(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
-        warnings.warn(
-            DEPR_MSG.format("lowerRight", "lower_right"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("lowerRight", "lower_right")
         return self.lower_right
 
     @lowerRight.setter
     def lowerRight(self, value: Tuple[decimal.Decimal, decimal.Decimal]) -> None:
-        warnings.warn(
-            DEPR_MSG.format("lowerRight", "lower_right"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("lowerRight", "lower_right")
         self.lower_right = value
 
     @property
     def upperLeft(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
-        warnings.warn(
-            DEPR_MSG.format("upperLeft", "upper_left"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("upperLeft", "upper_left")
         return self.upper_left
 
     @upperLeft.setter
     def upperLeft(self, value: Tuple[decimal.Decimal, decimal.Decimal]) -> None:
-        warnings.warn(
-            DEPR_MSG.format("upperLeft", "upper_left"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("upperLeft", "upper_left")
         self.upper_left = value
 
     @property
     def upperRight(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
-        warnings.warn(
-            DEPR_MSG.format("upperRight", "upper_right"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("upperRight", "upper_right")
         return self.upper_right
 
     @upperRight.setter
     def upperRight(self, value: Tuple[decimal.Decimal, decimal.Decimal]) -> None:
-        warnings.warn(
-            DEPR_MSG.format("upperRight", "upper_right"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("upperRight", "upper_right")
         self.upper_right = value
 
 
@@ -1717,11 +1501,7 @@ class Field(TreeObject):
 
             Use :py:attr:`field_type` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("fieldType", "field_type"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("fieldType", "field_type")
         return self.field_type
 
     @property
@@ -1751,11 +1531,7 @@ class Field(TreeObject):
 
             Use :py:attr:`alternate_name` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("altName", "alternate_name"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("altName", "alternate_name")
         return self.alternate_name
 
     @property
@@ -1774,11 +1550,7 @@ class Field(TreeObject):
 
             Use :py:attr:`mapping_name` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("mappingName", "mapping_name"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("mappingName", "mapping_name")
         return self.mapping_name
 
     @property
@@ -1809,11 +1581,7 @@ class Field(TreeObject):
 
             Use :py:attr:`default_value` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("defaultValue", "default_value"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("defaultValue", "default_value")
         return self.default_value
 
     @property
@@ -1832,11 +1600,7 @@ class Field(TreeObject):
 
             Use :py:attr:`additional_actions` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("additionalActions", "additional_actions"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("additionalActions", "additional_actions")
         return self.additional_actions
 
 
@@ -1925,11 +1689,7 @@ class Destination(TreeObject):
 
             Use :py:attr:`dest_array` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("getDestArray", "dest_array"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getDestArray", "dest_array")
         return self.dest_array
 
     def write_to_stream(

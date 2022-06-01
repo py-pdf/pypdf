@@ -1,7 +1,6 @@
 import datetime
 import decimal
 import re
-import warnings
 from typing import (
     Any,
     Callable,
@@ -16,7 +15,7 @@ from xml.dom.minidom import Document
 from xml.dom.minidom import Element as XmlElement
 from xml.dom.minidom import parseString
 
-from ._utils import DEPR_MSG, StreamType
+from ._utils import deprecate_with_replacement, StreamType
 from .generic import ContentStream, PdfObject
 
 RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
@@ -223,10 +222,7 @@ class XmpInformation(PdfObject):
 
             Use :meth:`write_to_stream` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("writeToStream", "write_to_stream"),
-            PendingDeprecationWarning,
-        )
+        deprecate_with_replacement("writeToStream", "write_to_stream")
         self.write_to_stream(stream, encryption_key)
 
     def get_element(self, about_uri: str, namespace: str, name: str) -> Iterator[Any]:
@@ -243,11 +239,7 @@ class XmpInformation(PdfObject):
 
             Use :meth:`get_element` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("getElement", "get_element"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getElement", "get_element")
         return self.get_element(aboutUri, namespace, name)
 
     def get_nodes_in_namespace(self, about_uri: str, namespace: str) -> Iterator[Any]:
@@ -267,11 +259,7 @@ class XmpInformation(PdfObject):
 
             Use :meth:`get_nodes_in_namespace` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("getNodesInNamespace", "get_nodes_in_namespace"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getNodesInNamespace", "get_nodes_in_namespace")
         return self.get_nodes_in_namespace(aboutUri, namespace)
 
     def _get_text(self, element: XmlElement) -> str:
