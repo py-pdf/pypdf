@@ -1,10 +1,24 @@
-# Deprecations
+# The Deprecation Process
 
 PyPDF2 strives to be an excellent library for its current users and for new
 ones. We are careful with introducing potentially breaking changes, but we
 will do them if they provide value for the community on the long run.
 
-## How to Deprecate
+We hope and think that deprecations will not happen soon again. If they do,
+users can rely on the following procedure.
+
+## Semantic Versioning
+
+PyPDF2 uses [semantic versioning](https://semver.org/). If you want to avoid
+breaking changes, please use dependency pinning (also known as version pinning).
+In Python, this is done by specifying the exact version you want to use in a
+`requirements.txt` file. A tool that can support you is `pip-compile` from
+[`pip-tools`](https://pypi.org/project/pip-tools/).
+
+If you are using [Poetry](https://pypi.org/project/poetry/) it is done with the
+`poetry.lock` file.
+
+## How PyPDF2 deprecates features
 
 Assume the current version of PyPDF2 is `x.y.z`. After a discussion (e.g. via
 Github issues) we decided to remove a class / function / method. This is how
