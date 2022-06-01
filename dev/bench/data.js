@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1654084488510,
+  "lastUpdate": 1654092176504,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -3469,6 +3469,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.16220470685048596",
             "extra": "mean: 5.068151535999999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "matt.peveler@gmail.com",
+            "name": "Matthew Peveler",
+            "username": "MasterOdin"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2cd9968c346e49d2fbea62cec1df99083f79fc7a",
+          "message": "DOC: Fix typos on robustness page (#935)",
+          "timestamp": "2022-06-01T16:01:43+02:00",
+          "tree_id": "7f4edcc936a8f2790a520a2cc6ccc32b6a01a880",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/2cd9968c346e49d2fbea62cec1df99083f79fc7a"
+        },
+        "date": 1654092175626,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6263377512724683,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006329041894278622",
+            "extra": "mean: 1.5965826712000024 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.354537492966712,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004435092013223816",
+            "extra": "mean: 106.89999379999904 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2193640902761155,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04937498190546385",
+            "extra": "mean: 4.5586312634 sec\nrounds: 5"
           }
         ]
       }
