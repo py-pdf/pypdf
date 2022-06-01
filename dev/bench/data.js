@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1653934212332,
+  "lastUpdate": 1654061924791,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -3334,6 +3334,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.06999002272493746",
             "extra": "mean: 5.945087230399997 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "matt.peveler@gmail.com",
+            "name": "Matthew Peveler",
+            "username": "MasterOdin"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "57301980b8c44273a53d42ea4041ff7d73697f6f",
+          "message": "MAINT: Add wrapper function for PendingDeprecationWarnings (#928)\n\nSigned-off-by: Matthew Peveler <matt.peveler@gmail.com>",
+          "timestamp": "2022-06-01T07:37:32+02:00",
+          "tree_id": "dd2a6428546c94917ab8a65362431d08c3e62add",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/57301980b8c44273a53d42ea4041ff7d73697f6f"
+        },
+        "date": 1654061923923,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6421287187167684,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0034513948440242823",
+            "extra": "mean: 1.557320161600002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.854278467705628,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004465246440355832",
+            "extra": "mean: 101.4787640999991 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22798891273046218,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017851623559301047",
+            "extra": "mean: 4.386178204999998 sec\nrounds: 5"
           }
         ]
       }
