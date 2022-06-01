@@ -67,16 +67,6 @@ You can contribute to `PyPDF2 on Github <https://github.com/py-pdf/PyPDF2>`_.
    meta/comparisons
    meta/faq
 
-
-.. toctree::
-   :caption: Scripts
-   :maxdepth: 1
-
-   user/pdfcat
-
-
-
-
 Indices and tables
 ==================
 
