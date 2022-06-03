@@ -20,3 +20,36 @@ writer = PdfWriter()
 with BytesIO() as bytes_stream:
     writer.write(bytes_stream)
 ```
+
+## Writing a PDF directly to AWS S3
+
+Suppose you want to manipulate a PDF and write it directly to AWS S3 without having
+to write the document to a file first. We have the original PDF in `raw_bytes_data` as `bytes`
+and want to set `my-secret-password`:
+
+```python
+from io import BytesIO
+
+import boto3
+from PyPDF2 import PdfReader, PdfWriter
+
+
+reader = PdfReader(BytesIO(raw_bytes_data))
+writer = PdfWriter()
+
+# Add all pages to the writer
+for page in reader.pages:
+    writer.add_page(page)
+
+# Add a password to the new PDF
+writer.encrypt("my-secret-password")
+
+# Save the new PDF to a file
+with BytesIO() as bytes_stream:
+    writer.write(bytes_stream)
+    bytes_stream.seek(0)
+    s3 = boto3.client("s3")
+    s3.write_get_object_response(
+        Body=bytes_stream, RequestRoute=request_route, RequestToken=request_token
+    )
+```
