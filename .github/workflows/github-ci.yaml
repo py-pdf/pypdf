@@ -5,12 +5,12 @@ name: CI
 
 on:
   push:
-    branches: [ main, 2.0.0-dev ]
+    branches: [ main ]
     paths-ignore:
       - '**/*.md'
       - '**/*.rst'
   pull_request:
-    branches: [ main, 2.0.0-dev ]
+    branches: [ main ]
     paths-ignore:
       - '**/*.md'
       - '**/*.rst'
@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11-dev"]
 
     steps:
     - name: Checkout Code
