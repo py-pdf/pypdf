@@ -1,5 +1,6 @@
 import io
 import os
+import sys
 import time
 from io import BytesIO
 
@@ -136,6 +137,10 @@ def test_get_outlines(src, outline_elements):
     assert len(outlines) == outline_elements
 
 
+@pytest.mark.skipif(
+    sys.version_info == (3, 11),
+    reason="3.11 has no wheels for some packages required by pillow, leading to C dependencies",
+)
 @pytest.mark.parametrize(
     ("src", "nb_images"),
     [
