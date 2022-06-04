@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1654112944421,
+  "lastUpdate": 1654327599662,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -3559,6 +3559,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.10087548857060111",
             "extra": "mean: 5.200288795599988 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "86697bb74248eeb7c58d87210911fd6d3c754dad",
+          "message": "DOC: Example how to use PyPDF2 with AWS S3 (#938)",
+          "timestamp": "2022-06-04T09:25:16+02:00",
+          "tree_id": "ded411dd8811165832641a2b1ebfc1e576e64bac",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/86697bb74248eeb7c58d87210911fd6d3c754dad"
+        },
+        "date": 1654327598769,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.525201298111016,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007935124771440894",
+            "extra": "mean: 1.9040318513999979 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 7.963488559659653,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005670726290716172",
+            "extra": "mean: 125.57310687500234 msec\nrounds: 8"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.18596358303114996,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012239170040795846",
+            "extra": "mean: 5.377396927399997 sec\nrounds: 5"
           }
         ]
       }
