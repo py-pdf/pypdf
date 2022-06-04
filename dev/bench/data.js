@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1654329455814,
+  "lastUpdate": 1654333948769,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -3694,6 +3694,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.013254966845663319",
             "extra": "mean: 3.177144205800005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "christopher.j.donlan@gmail.com",
+            "name": "Christopher Donlan",
+            "username": "chrisdonlan"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "336eae77462f15ed1d6c1490eaed66f53109026b",
+          "message": "BUG: Compare StreamObject.decoded_self with None (#931)\n\nThe 'if self.decoded_self' expression evaluates to 'False', e.g. if decoded_self is an empty dictionary.",
+          "timestamp": "2022-06-04T11:11:17+02:00",
+          "tree_id": "ae23c5b7486b8493fd8cd4d0dd235a86dc2422fc",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/336eae77462f15ed1d6c1490eaed66f53109026b"
+        },
+        "date": 1654333948261,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6284224757609584,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009406395668927502",
+            "extra": "mean: 1.5912861785999894 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.721812692212684,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0055667794414109555",
+            "extra": "mean: 102.86147570000139 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22225392686342357,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014263327690127765",
+            "extra": "mean: 4.499358072600023 sec\nrounds: 5"
           }
         ]
       }
