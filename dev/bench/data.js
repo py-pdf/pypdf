@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1654366599097,
+  "lastUpdate": 1654375060923,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -3964,6 +3964,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.09943470674901421",
             "extra": "mean: 4.642273615399995 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "34919f9e97b276628e5c6f06b8bf61ae9c7b5b52",
+          "message": "TST: Add test for Tree and _security (#945)",
+          "timestamp": "2022-06-04T22:36:28+02:00",
+          "tree_id": "1250ddfd7b24a78778f13375a7d89c5bf8c3259f",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/34919f9e97b276628e5c6f06b8bf61ae9c7b5b52"
+        },
+        "date": 1654375060068,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6353542239595663,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007486306204245972",
+            "extra": "mean: 1.5739251621999757 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.833261978595612,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005285128530493252",
+            "extra": "mean: 101.69565319999947 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2263526516994648,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014375532594736997",
+            "extra": "mean: 4.4178850678 sec\nrounds: 5"
           }
         ]
       }
