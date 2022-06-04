@@ -44,8 +44,6 @@ _encryption_padding = (
 )
 
 
-# Implementation of algorithm 3.2 of the PDF standard security handler,
-# section 3.5.2 of the PDF 1.6 reference.
 def _alg32(
     password: Union[str, bytes],
     rev: Any,
@@ -55,6 +53,10 @@ def _alg32(
     id1_entry: ByteStringObject,
     metadata_encrypt: bool = True,
 ) -> bytes:
+    """
+    Implementation of algorithm 3.2 of the PDF standard security handler,
+    section 3.5.2 of the PDF 1.6 reference.
+    """
     # 1. Pad or truncate the password string to exactly 32 bytes.  If the
     # password string is more than 32 bytes long, use only its first 32 bytes;
     # if it is less than 32 bytes long, pad it by appending the required number
@@ -95,9 +97,11 @@ def _alg32(
     return md5_hash[:keylen]
 
 
-# Implementation of algorithm 3.3 of the PDF standard security handler,
-# section 3.5.2 of the PDF 1.6 reference.
 def _alg33(owner_pwd: str, user_pwd: str, rev: int, keylen: int) -> bytes:
+    """
+    Implementation of algorithm 3.3 of the PDF standard security handler,
+    section 3.5.2 of the PDF 1.6 reference.
+    """
     # steps 1 - 4
     key = _alg33_1(owner_pwd, rev, keylen)
     # 5. Pad or truncate the user password string as described in step 1 of
@@ -123,8 +127,8 @@ def _alg33(owner_pwd: str, user_pwd: str, rev: int, keylen: int) -> bytes:
     return val
 
 
-# Steps 1-4 of algorithm 3.3
 def _alg33_1(password: Union[bytes, str], rev: int, keylen: int) -> bytes:
+    """Steps 1-4 of algorithm 3.3"""
     # 1. Pad or truncate the owner password string as described in step 1 of
     # algorithm 3.2.  If there is no owner password, use the user password
     # instead.
@@ -148,17 +152,21 @@ def _alg33_1(password: Union[bytes, str], rev: int, keylen: int) -> bytes:
     return key
 
 
-# Implementation of algorithm 3.4 of the PDF standard security handler,
-# section 3.5.2 of the PDF 1.6 reference.
 def _alg34(
     password: Union[str, bytes],
     owner_entry: ByteStringObject,
     p_entry: int,
     id1_entry: ByteStringObject,
 ) -> Tuple[bytes, bytes]:
+    """
+    Implementation of algorithm 3.4 of the PDF standard security handler,
+    section 3.5.2 of the PDF 1.6 reference.
+    """
     # 1. Create an encryption key based on the user password string, as
     # described in algorithm 3.2.
-    key = _alg32(password, 2, 5, owner_entry, p_entry, id1_entry)
+    rev = 2
+    keylen = 5
+    key = _alg32(password, rev, keylen, owner_entry, p_entry, id1_entry)
     # 2. Encrypt the 32-byte padding string shown in step 1 of algorithm 3.2,
     # using an RC4 encryption function with the encryption key from the
     # preceding step.
@@ -168,8 +176,6 @@ def _alg34(
     return U, key
 
 
-# Implementation of algorithm 3.4 of the PDF standard security handler,
-# section 3.5.2 of the PDF 1.6 reference.
 def _alg35(
     password: Union[str, bytes],
     rev: int,
@@ -179,6 +185,10 @@ def _alg35(
     id1_entry: ByteStringObject,
     metadata_encrypt: bool,
 ) -> Tuple[bytes, bytes]:
+    """
+    Implementation of algorithm 3.4 of the PDF standard security handler,
+    section 3.5.2 of the PDF 1.6 reference.
+    """
     # 1. Create an encryption key based on the user password string, as
     # described in Algorithm 3.2.
     key = _alg32(password, rev, keylen, owner_entry, p_entry, id1_entry)
