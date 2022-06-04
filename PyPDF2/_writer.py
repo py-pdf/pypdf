@@ -135,7 +135,7 @@ class PdfWriter:
             raise ValueError("pdf must be self")
         return self._objects[ido.idnum - 1]  # type: ignore
 
-    def getObject(self, ido: IndirectObject) -> PdfObject:
+    def getObject(self, ido: IndirectObject) -> PdfObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -186,7 +186,7 @@ class PdfWriter:
         """
         self._add_page(page, list.append)
 
-    def addPage(self, page: PageObject) -> None:
+    def addPage(self, page: PageObject) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -206,7 +206,7 @@ class PdfWriter:
         """
         self._add_page(page, lambda l, p: l.insert(index, p))
 
-    def insertPage(self, page: PageObject, index: int = 0) -> None:
+    def insertPage(self, page: PageObject, index: int = 0) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -228,7 +228,7 @@ class PdfWriter:
         # XXX: crude hack
         return pages[PA.KIDS][pageNumber].get_object()
 
-    def getPage(self, pageNumber: int) -> PageObject:
+    def getPage(self, pageNumber: int) -> PageObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -245,7 +245,7 @@ class PdfWriter:
         pages = cast(Dict[str, Any], self.get_object(self._pages))
         return int(pages[NameObject("/Count")])
 
-    def getNumPages(self) -> int:
+    def getNumPages(self) -> int:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -283,7 +283,7 @@ class PdfWriter:
 
     def addBlankPage(
         self, width: Optional[float] = None, height: Optional[float] = None
-    ) -> PageObject:
+    ) -> PageObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -325,7 +325,7 @@ class PdfWriter:
         width: Optional[decimal.Decimal] = None,
         height: Optional[decimal.Decimal] = None,
         index: int = 0,
-    ) -> PageObject:
+    ) -> PageObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -377,7 +377,7 @@ class PdfWriter:
             }
         )
 
-    def addJS(self, javascript: str) -> None:
+    def addJS(self, javascript: str) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -469,7 +469,9 @@ class PdfWriter:
         # Update the root
         self._root_object.update({NameObject(CA.NAMES): embeddedFilesDictionary})
 
-    def addAttachment(self, fname: str, fdata: Union[str, bytes]) -> None:
+    def addAttachment(
+        self, fname: str, fdata: Union[str, bytes]
+    ) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -512,7 +514,7 @@ class PdfWriter:
         self,
         reader: PdfReader,
         after_page_append: Optional[Callable[[PageObject], None]] = None,
-    ) -> None:
+    ) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -558,7 +560,7 @@ class PdfWriter:
 
     def updatePageFormFieldValues(
         self, page: PageObject, fields: Dict[str, Any], flags: int = 0
-    ) -> None:
+    ) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -578,7 +580,7 @@ class PdfWriter:
         """
         self._root_object = cast(DictionaryObject, reader.trailer[TK.ROOT])
 
-    def cloneReaderDocumentRoot(self, reader: PdfReader) -> None:
+    def cloneReaderDocumentRoot(self, reader: PdfReader) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -613,7 +615,7 @@ class PdfWriter:
         self,
         reader: PdfReader,
         after_page_append: Optional[Callable[[PageObject], None]] = None,
-    ) -> None:
+    ) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -791,7 +793,7 @@ class PdfWriter:
             args[NameObject(key)] = createStringObject(value)
         self.get_object(self._info).update(args)  # type: ignore
 
-    def addMetadata(self, infos: Dict[str, Any]) -> None:
+    def addMetadata(self, infos: Dict[str, Any]) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -886,7 +888,7 @@ class PdfWriter:
         assert ref.get_object() == obj
         return ref
 
-    def getReference(self, obj: PdfObject) -> IndirectObject:
+    def getReference(self, obj: PdfObject) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -910,7 +912,7 @@ class PdfWriter:
 
         return outline
 
-    def getOutlineRoot(self) -> TreeObject:
+    def getOutlineRoot(self) -> TreeObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -958,7 +960,7 @@ class PdfWriter:
 
         return nd
 
-    def getNamedDestRoot(self) -> ArrayObject:
+    def getNamedDestRoot(self) -> ArrayObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -984,7 +986,7 @@ class PdfWriter:
 
     def addBookmarkDestination(
         self, dest: PageObject, parent: Optional[TreeObject] = None
-    ) -> IndirectObject:
+    ) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -1022,7 +1024,7 @@ class PdfWriter:
 
         return bookmark_ref
 
-    def addBookmarkDict(
+    def addBookmarkDict(  # pragma: no cover
         self, bookmark: BookmarkTypes, parent: Optional[TreeObject] = None
     ) -> IndirectObject:
         """
@@ -1121,7 +1123,7 @@ class PdfWriter:
         italic: bool = False,
         fit: FitType = "/Fit",
         *args: ZoomArgsType,
-    ) -> IndirectObject:
+    ) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -1139,7 +1141,9 @@ class PdfWriter:
         nd.extend([dest["/Title"], dest_ref])  # type: ignore
         return dest_ref
 
-    def addNamedDestinationObject(self, dest: PdfObject) -> IndirectObject:
+    def addNamedDestinationObject(
+        self, dest: PdfObject
+    ) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -1167,7 +1171,9 @@ class PdfWriter:
         nd.extend([title, dest_ref])
         return dest_ref
 
-    def addNamedDestination(self, title: str, pagenum: int) -> IndirectObject:
+    def addNamedDestination(
+        self, title: str, pagenum: int
+    ) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -1185,7 +1191,7 @@ class PdfWriter:
             if PG.ANNOTS in page_ref:
                 del page_ref[PG.ANNOTS]
 
-    def removeLinks(self) -> None:
+    def removeLinks(self) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -1271,7 +1277,9 @@ class PdfWriter:
             content.operations = _operations
             page_ref.__setitem__(NameObject("/Contents"), content)
 
-    def removeImages(self, ignoreByteStringObject: bool = False) -> None:
+    def removeImages(
+        self, ignoreByteStringObject: bool = False
+    ) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -1325,7 +1333,9 @@ class PdfWriter:
 
             page_ref.__setitem__(NameObject("/Contents"), content)
 
-    def removeText(self, ignoreByteStringObject: bool = False) -> None:
+    def removeText(
+        self, ignoreByteStringObject: bool = False
+    ) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -1409,7 +1419,7 @@ class PdfWriter:
         uri: int,
         rect: RectangleObject,
         border: Optional[ArrayObject] = None,
-    ) -> None:
+    ) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -1511,7 +1521,7 @@ class PdfWriter:
         else:
             page_ref[NameObject(PG.ANNOTS)] = ArrayObject([lnk_ref])
 
-    def addLink(
+    def addLink(  # pragma: no cover
         self,
         pagenum: int,
         pagedest: int,
@@ -1544,7 +1554,7 @@ class PdfWriter:
         except KeyError:
             return None
 
-    def getPageLayout(self) -> Optional[LayoutType]:
+    def getPageLayout(self) -> Optional[LayoutType]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -1585,7 +1595,7 @@ class PdfWriter:
             layout = NameObject(layout)
         self._root_object.update({NameObject("/PageLayout"): layout})
 
-    def setPageLayout(self, layout: LayoutType) -> None:
+    def setPageLayout(self, layout: LayoutType) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -1626,7 +1636,7 @@ class PdfWriter:
         self._set_page_layout(layout)
 
     @property
-    def pageLayout(self) -> Optional[LayoutType]:
+    def pageLayout(self) -> Optional[LayoutType]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -1636,7 +1646,7 @@ class PdfWriter:
         return self.page_layout
 
     @pageLayout.setter
-    def pageLayout(self, layout: LayoutType) -> None:
+    def pageLayout(self, layout: LayoutType) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -1660,7 +1670,7 @@ class PdfWriter:
         except KeyError:
             return None
 
-    def getPageMode(self) -> Optional[PagemodeType]:
+    def getPageMode(self) -> Optional[PagemodeType]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -1685,7 +1695,7 @@ class PdfWriter:
             mode_name = NameObject(mode)
         self._root_object.update({NameObject("/PageMode"): mode_name})
 
-    def setPageMode(self, mode: PagemodeType) -> None:
+    def setPageMode(self, mode: PagemodeType) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -1722,7 +1732,7 @@ class PdfWriter:
         self.set_page_mode(mode)
 
     @property
-    def pageMode(self) -> Optional[PagemodeType]:
+    def pageMode(self) -> Optional[PagemodeType]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -1732,7 +1742,7 @@ class PdfWriter:
         return self.page_mode
 
     @pageMode.setter
-    def pageMode(self, mode: PagemodeType) -> None:
+    def pageMode(self, mode: PagemodeType) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -1742,7 +1752,7 @@ class PdfWriter:
         self.page_mode = mode
 
 
-class PdfFileWriter(PdfWriter):
+class PdfFileWriter(PdfWriter):  # pragma: no cover
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         deprecate_with_replacement("PdfFileWriter", "PdfWriter")
         super().__init__(*args, **kwargs)

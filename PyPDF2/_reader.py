@@ -102,7 +102,9 @@ def convert_to_int(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:
     return struct.unpack(">q", d)[0]
 
 
-def convertToInt(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:
+def convertToInt(
+    d: bytes, size: int
+) -> Union[int, Tuple[Any, ...]]:  # pragma: no cover
     deprecate_with_replacement("convertToInt", "convert_to_int")
     return convert_to_int(d, size)
 
@@ -130,7 +132,7 @@ class DocumentInformation(DictionaryObject):
             return retval
         return None
 
-    def getText(self, key: str) -> Optional[str]:
+    def getText(self, key: str) -> Optional[str]:  # pragma: no cover
         """
         The text value of the specified key or None.
 
@@ -276,7 +278,7 @@ class PdfReader:
         retval.update(obj)  # type: ignore
         return retval
 
-    def getDocumentInfo(self) -> Optional[DocumentInformation]:
+    def getDocumentInfo(self) -> Optional[DocumentInformation]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -286,7 +288,7 @@ class PdfReader:
         return self.metadata
 
     @property
-    def documentInfo(self) -> Optional[DocumentInformation]:
+    def documentInfo(self) -> Optional[DocumentInformation]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -311,7 +313,7 @@ class PdfReader:
         finally:
             self._override_encryption = False
 
-    def getXmpMetadata(self) -> Optional[XmpInformation]:
+    def getXmpMetadata(self) -> Optional[XmpInformation]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -321,7 +323,7 @@ class PdfReader:
         return self.xmp_metadata
 
     @property
-    def xmpMetadata(self) -> Optional[XmpInformation]:
+    def xmpMetadata(self) -> Optional[XmpInformation]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -357,7 +359,7 @@ class PdfReader:
                 self._flatten()
             return len(self.flattened_pages)  # type: ignore
 
-    def getNumPages(self) -> int:
+    def getNumPages(self) -> int:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -367,7 +369,7 @@ class PdfReader:
         return self._get_num_pages()
 
     @property
-    def numPages(self) -> int:
+    def numPages(self) -> int:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -376,7 +378,7 @@ class PdfReader:
         deprecate_with_replacement("reader.numPages", "len(reader.pages)")
         return self._get_num_pages()
 
-    def getPage(self, pageNumber: int) -> PageObject:
+    def getPage(self, pageNumber: int) -> PageObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -404,7 +406,7 @@ class PdfReader:
         return self.flattened_pages[page_number]
 
     @property
-    def namedDestinations(self) -> Dict[str, Any]:
+    def namedDestinations(self) -> Dict[str, Any]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -482,7 +484,7 @@ class PdfReader:
         tree: Optional[TreeObject] = None,
         retval: Optional[Dict[Any, Any]] = None,
         fileobj: Optional[Any] = None,
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[Dict[str, Any]]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -560,7 +562,7 @@ class PdfReader:
             if formfields[field].get("/FT") == "/Tx"
         }
 
-    def getFormTextFields(self) -> Dict[str, Any]:
+    def getFormTextFields(self) -> Dict[str, Any]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -619,7 +621,7 @@ class PdfReader:
         self,
         tree: Union[TreeObject, None] = None,
         retval: Optional[Any] = None,
-    ) -> Dict[str, Any]:
+    ) -> Dict[str, Any]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -683,7 +685,7 @@ class PdfReader:
 
     def getOutlines(
         self, node: Optional[DictionaryObject] = None, outlines: Optional[Any] = None
-    ) -> OutlinesType:
+    ) -> OutlinesType:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -723,7 +725,7 @@ class PdfReader:
         """
         return self._get_page_number_by_indirect(page.indirect_ref)
 
-    def getPageNumber(self, page: PageObject) -> int:
+    def getPageNumber(self, page: PageObject) -> int:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -742,7 +744,9 @@ class PdfReader:
         """
         return self._get_page_number_by_indirect(destination.page)
 
-    def getDestinationPageNumber(self, destination: Destination) -> int:
+    def getDestinationPageNumber(
+        self, destination: Destination
+    ) -> int:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -836,7 +840,7 @@ class PdfReader:
             return cast(NameObject, trailer[CD.PAGE_LAYOUT])
         return None
 
-    def getPageLayout(self) -> Optional[str]:
+    def getPageLayout(self) -> Optional[str]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -846,7 +850,7 @@ class PdfReader:
         return self.page_layout
 
     @property
-    def pageLayout(self) -> Optional[str]:
+    def pageLayout(self) -> Optional[str]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -884,7 +888,7 @@ class PdfReader:
         except KeyError:
             return None
 
-    def getPageMode(self) -> Optional[PagemodeType]:
+    def getPageMode(self) -> Optional[PagemodeType]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -894,7 +898,7 @@ class PdfReader:
         return self.page_mode
 
     @property
-    def pageMode(self) -> Optional[PagemodeType]:
+    def pageMode(self) -> Optional[PagemodeType]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -1070,7 +1074,9 @@ class PdfReader:
         )
         return retval
 
-    def getObject(self, indirectReference: IndirectObject) -> Optional[PdfObject]:
+    def getObject(
+        self, indirectReference: IndirectObject
+    ) -> Optional[PdfObject]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -1137,7 +1143,9 @@ class PdfReader:
             )
         return int(idnum), int(generation)
 
-    def readObjectHeader(self, stream: StreamType) -> Tuple[int, int]:
+    def readObjectHeader(
+        self, stream: StreamType
+    ) -> Tuple[int, int]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -1153,7 +1161,7 @@ class PdfReader:
 
     def cacheGetIndirectObject(
         self, generation: int, idnum: int
-    ) -> Optional[PdfObject]:
+    ) -> Optional[PdfObject]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -1178,7 +1186,7 @@ class PdfReader:
 
     def cacheIndirectObject(
         self, generation: int, idnum: int, obj: Optional[PdfObject]
-    ) -> Optional[PdfObject]:
+    ) -> Optional[PdfObject]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -1568,7 +1576,9 @@ class PdfReader:
         line_parts.reverse()
         return b"".join(line_parts)
 
-    def readNextEndLine(self, stream: StreamType, limit_offset: int = 0) -> bytes:
+    def readNextEndLine(
+        self, stream: StreamType, limit_offset: int = 0
+    ) -> bytes:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -1717,7 +1727,7 @@ class PdfReader:
         """
         return TK.ENCRYPT in self.trailer
 
-    def getIsEncrypted(self) -> bool:
+    def getIsEncrypted(self) -> bool:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -1727,7 +1737,7 @@ class PdfReader:
         return self.is_encrypted
 
     @property
-    def isEncrypted(self) -> bool:
+    def isEncrypted(self) -> bool:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -1737,7 +1747,7 @@ class PdfReader:
         return self.is_encrypted
 
 
-class PdfFileReader(PdfReader):
+class PdfFileReader(PdfReader):  # pragma: no cover
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         deprecate_with_replacement("PdfFileReader", "PdfReader")
         if "strict" not in kwargs and len(args) < 2:
