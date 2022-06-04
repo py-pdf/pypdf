@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1654350637322,
+  "lastUpdate": 1654358878767,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -3784,6 +3784,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.06491701075134328",
             "extra": "mean: 6.081741950799997 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "98b4739e5a259940877dcd0b467d263d09c4b636",
+          "message": "DOC: Add logo (#942)",
+          "timestamp": "2022-06-04T18:06:30+02:00",
+          "tree_id": "574613507e209a8c43820eabd80a67c900d466ec",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/98b4739e5a259940877dcd0b467d263d09c4b636"
+        },
+        "date": 1654358877680,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.4928239953722949,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022206150464091308",
+            "extra": "mean: 2.0291219774000013 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 7.869002829210174,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0074498502089382565",
+            "extra": "mean: 127.08090487500456 msec\nrounds: 8"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.18304707042218185,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04709477185713704",
+            "extra": "mean: 5.463075687000009 sec\nrounds: 5"
           }
         ]
       }
