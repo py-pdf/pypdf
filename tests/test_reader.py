@@ -255,21 +255,48 @@ def test_issue297():
 
 
 @pytest.mark.parametrize(
-    ("password", "should_fail"), [("test", False), ("qwerty", True)]
+    ("pdffile", "password", "should_fail"),
+    [
+        ("encrypted-file.pdf", "test", False),
+        ("encrypted-file.pdf", "qwerty", True),
+        ("encrypted-file.pdf", b"qwerty", True),
+    ],
 )
-def test_get_page_of_encrypted_file(password, should_fail):
+def test_get_page_of_encrypted_file(pdffile, password, should_fail):
     """
     Check if we can read a page of an encrypted file.
 
     This is a regression test for issue 327:
     IndexError for get_page() of decrypted file
     """
-    path = os.path.join(RESOURCE_ROOT, "encrypted-file.pdf")
+    path = os.path.join(RESOURCE_ROOT, pdffile)
     if should_fail:
         with pytest.raises(PdfReadError):
             PdfReader(path, password=password)
     else:
         PdfReader(path, password=password).pages[0]
+
+
+@pytest.mark.parametrize(
+    ("pdffile", "password"),
+    [
+        ("crazyones-encrypted-256.pdf", "password"),
+    ],
+)
+def test_get_page_of_encrypted_file_new_algorithm(pdffile, password):
+    """
+    Check if we can read a page of an encrypted file.
+
+    This is a regression test for issue 327:
+    IndexError for get_page() of decrypted file
+    """
+    path = os.path.join(RESOURCE_ROOT, pdffile)
+    with pytest.raises(NotImplementedError) as exc:
+        PdfReader(path, password=password).pages[0]
+    assert (
+        exc.value.args[0]
+        == "only algorithm code 1 and 2 are supported. This PDF uses code 5"
+    )
 
 
 @pytest.mark.parametrize(

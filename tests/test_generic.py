@@ -1,7 +1,9 @@
+import os
 from io import BytesIO
 
 import pytest
 
+from PyPDF2 import PdfReader, PdfWriter
 from PyPDF2.constants import TypFitArguments as TF
 from PyPDF2.errors import PdfReadError, PdfStreamError
 from PyPDF2.generic import (
@@ -18,12 +20,17 @@ from PyPDF2.generic import (
     NumberObject,
     RectangleObject,
     TextStringObject,
+    TreeObject,
     createStringObject,
     encode_pdfdocencoding,
     read_object,
     readHexStringFromStream,
     readStringFromStream,
 )
+
+TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
+PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
+RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
 
 
 def test_float_object_exception():
@@ -376,3 +383,30 @@ def test_TextStringObject_autodetect_utf16():
     tso = TextStringObject("foo")
     tso.autodetect_utf16 = True
     assert tso.get_original_bytes() == b"\xfe\xff\x00f\x00o\x00o"
+
+
+def test_remove_child_not_in_tree():
+    tree = TreeObject()
+    with pytest.raises(ValueError) as exc:
+        tree.remove_child(NameObject("foo"))
+    assert exc.value.args[0] == "Removed child does not appear to be a tree item"
+
+
+def test_remove_child_in_tree():
+    pdf = os.path.join(RESOURCE_ROOT, "form.pdf")
+
+    tree = TreeObject()
+    reader = PdfReader(pdf)
+    writer = PdfWriter()
+    writer.add_page(reader.pages[0])
+    writer.add_bookmark("foo", 0)
+    obj = writer._objects[-1]
+    # print(dict)
+    # print(type(dict))
+    # for obj in writer._objects:
+    #     print(obj)
+    #     print(type(obj))
+    tree.add_child(obj, writer)
+    tree.remove_child(obj)
+    tree.add_child(obj, writer)
+    tree.emptyTree()
