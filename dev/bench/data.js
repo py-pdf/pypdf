@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1654366336346,
+  "lastUpdate": 1654366491958,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -3874,6 +3874,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.09187806665658418",
             "extra": "mean: 4.427828095999996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "kim.brose@rwth-aachen.de",
+            "name": "Kim Brose",
+            "username": "HarHarLinks"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0358e20f46ffcd4f2dd97c69d48b29797f1d33e7",
+          "message": "BUG: Delete .python-version file (#944)",
+          "timestamp": "2022-06-04T20:13:24+02:00",
+          "tree_id": "7c921f6e1a304625208ef92a6fc3fd2a05fd4ff0",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/0358e20f46ffcd4f2dd97c69d48b29797f1d33e7"
+        },
+        "date": 1654366491424,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.5584075295029769,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012905612467001691",
+            "extra": "mean: 1.7908067982000033 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 8.631122267925237,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00626699297855934",
+            "extra": "mean: 115.85978844445005 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.19700499690889398,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03156404400092536",
+            "extra": "mean: 5.076013378800008 sec\nrounds: 5"
           }
         ]
       }
