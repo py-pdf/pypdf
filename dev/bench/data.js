@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1654358878767,
+  "lastUpdate": 1654366336346,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -3829,6 +3829,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04709477185713704",
             "extra": "mean: 5.463075687000009 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a5d68957dfdfdced04fb0fed1f1416266c65759e",
+          "message": "DEV: Mark deprecated code with no-cover (#943)\n\nThis allows us to track the blind spots of our unit tests better",
+          "timestamp": "2022-06-04T20:11:06+02:00",
+          "tree_id": "d4d7277db09733654e0fd3082583c092241e072f",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/a5d68957dfdfdced04fb0fed1f1416266c65759e"
+        },
+        "date": 1654366335860,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6472791889144676,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010206067055147278",
+            "extra": "mean: 1.5449283973999997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.96590481255386,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005089665132280091",
+            "extra": "mean: 100.34211833333175 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22584435942835684,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09187806665658418",
+            "extra": "mean: 4.427828095999996 sec\nrounds: 5"
           }
         ]
       }
