@@ -279,7 +279,7 @@ class PageObject(DictionaryObject):
         pdf: Optional[Any] = None,  # PdfReader
         width: Union[float, Decimal, None] = None,
         height: Union[float, Decimal, None] = None,
-    ) -> "PageObject":
+    ) -> "PageObject":  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -304,11 +304,11 @@ class PageObject(DictionaryObject):
         self[NameObject(PG.ROTATE)] = NumberObject(current_angle + angle)
         return self
 
-    def rotate_clockwise(self, angle: float) -> "PageObject":
+    def rotate_clockwise(self, angle: float) -> "PageObject":  # pragma: no cover
         deprecate_with_replacement("rotate_clockwise", "rotate")
         return self.rotate(angle)
 
-    def rotateClockwise(self, angle: float) -> "PageObject":
+    def rotateClockwise(self, angle: float) -> "PageObject":  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -317,7 +317,7 @@ class PageObject(DictionaryObject):
         deprecate_with_replacement("rotateClockwise", "rotate")
         return self.rotate(angle)
 
-    def rotateCounterClockwise(self, angle: float) -> "PageObject":
+    def rotateCounterClockwise(self, angle: float) -> "PageObject":  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -413,7 +413,7 @@ class PageObject(DictionaryObject):
         else:
             return None
 
-    def getContents(self) -> Optional[ContentStream]:
+    def getContents(self) -> Optional[ContentStream]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -439,7 +439,7 @@ class PageObject(DictionaryObject):
         """
         self._merge_page(page2, expand=expand)
 
-    def mergePage(self, page2: "PageObject") -> None:
+    def mergePage(self, page2: "PageObject") -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -584,7 +584,7 @@ class PageObject(DictionaryObject):
         page2: "PageObject",
         ctm: Union[CompressedTransformationMatrix, Transformation],
         expand: bool = False,
-    ) -> None:
+    ) -> None:  # pragma: no cover
         """
         mergeTransformedPage is similar to merge_page, but a transformation
         matrix is applied to the merged stream.
@@ -618,7 +618,7 @@ class PageObject(DictionaryObject):
 
     def mergeScaledPage(
         self, page2: "PageObject", scale: float, expand: bool = False
-    ) -> None:
+    ) -> None:  # pragma: no cover
         """
         mergeScaledPage is similar to merge_page, but the stream to be merged
         is scaled by appling a transformation matrix.
@@ -642,7 +642,7 @@ class PageObject(DictionaryObject):
 
     def mergeRotatedPage(
         self, page2: "PageObject", rotation: float, expand: bool = False
-    ) -> None:
+    ) -> None:  # pragma: no cover
         """
         mergeRotatedPage is similar to merge_page, but the stream to be merged
         is rotated by appling a transformation matrix.
@@ -666,7 +666,7 @@ class PageObject(DictionaryObject):
 
     def mergeTranslatedPage(
         self, page2: "PageObject", tx: float, ty: float, expand: bool = False
-    ) -> None:
+    ) -> None:  # pragma: no cover
         """
         mergeTranslatedPage is similar to merge_page, but the stream to be
         merged is translated by appling a transformation matrix.
@@ -696,7 +696,7 @@ class PageObject(DictionaryObject):
         tx: float,
         ty: float,
         expand: bool = False,
-    ) -> None:
+    ) -> None:  # pragma: no cover
         """
         mergeRotatedTranslatedPage is similar to merge_page, but the stream to
         be merged is rotated and translated by appling a transformation matrix.
@@ -722,7 +722,7 @@ class PageObject(DictionaryObject):
 
     def mergeRotatedScaledPage(
         self, page2: "PageObject", rotation: float, scale: float, expand: bool = False
-    ) -> None:
+    ) -> None:  # pragma: no cover
         """
         mergeRotatedScaledPage is similar to merge_page, but the stream to be
         merged is rotated and scaled by appling a transformation matrix.
@@ -752,7 +752,7 @@ class PageObject(DictionaryObject):
         tx: float,
         ty: float,
         expand: bool = False,
-    ) -> None:
+    ) -> None:  # pragma: no cover
         """
         mergeScaledTranslatedPage is similar to merge_page, but the stream to be
         merged is translated and scaled by appling a transformation matrix.
@@ -784,7 +784,7 @@ class PageObject(DictionaryObject):
         tx: float,
         ty: float,
         expand: bool = False,
-    ) -> None:
+    ) -> None:  # pragma: no cover
         """
         mergeRotatedScaledTranslatedPage is similar to merge_page, but the
         stream to be merged is translated, rotated and scaled by appling a
@@ -866,7 +866,9 @@ class PageObject(DictionaryObject):
             self.mediabox.lower_left = lowerleft
             self.mediabox.upper_right = upperright
 
-    def addTransformation(self, ctm: CompressedTransformationMatrix) -> None:
+    def addTransformation(
+        self, ctm: CompressedTransformationMatrix
+    ) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -922,7 +924,7 @@ class PageObject(DictionaryObject):
         """
         self.scale(factor, factor)
 
-    def scaleBy(self, factor: float) -> None:
+    def scaleBy(self, factor: float) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -943,7 +945,7 @@ class PageObject(DictionaryObject):
         sy = height / float(self.mediabox.height)
         self.scale(sx, sy)
 
-    def scaleTo(self, width: float, height: float) -> None:
+    def scaleTo(self, width: float, height: float) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -966,7 +968,7 @@ class PageObject(DictionaryObject):
                 content = ContentStream(content, self.pdf)
             self[NameObject(PG.CONTENTS)] = content.flate_encode()
 
-    def compressContentStreams(self) -> None:
+    def compressContentStreams(self) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -1059,7 +1061,9 @@ class PageObject(DictionaryObject):
                 text += "\n"
         return text
 
-    def extractText(self, Tj_sep: str = "", TJ_sep: str = "") -> str:
+    def extractText(
+        self, Tj_sep: str = "", TJ_sep: str = ""
+    ) -> str:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -1076,7 +1080,7 @@ class PageObject(DictionaryObject):
     """
 
     @property
-    def mediaBox(self) -> RectangleObject:
+    def mediaBox(self) -> RectangleObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -1086,7 +1090,7 @@ class PageObject(DictionaryObject):
         return self.mediabox
 
     @mediaBox.setter
-    def mediaBox(self, value: RectangleObject) -> None:
+    def mediaBox(self, value: RectangleObject) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -1105,7 +1109,7 @@ class PageObject(DictionaryObject):
     """
 
     @property
-    def cropBox(self) -> RectangleObject:
+    def cropBox(self) -> RectangleObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -1115,7 +1119,7 @@ class PageObject(DictionaryObject):
         return self.cropbox
 
     @cropBox.setter
-    def cropBox(self, value: RectangleObject) -> None:
+    def cropBox(self, value: RectangleObject) -> None:  # pragma: no cover
         deprecate_with_replacement("cropBox", "cropbox")
         self.cropbox = value
 
@@ -1127,7 +1131,7 @@ class PageObject(DictionaryObject):
     """
 
     @property
-    def bleedBox(self) -> RectangleObject:
+    def bleedBox(self) -> RectangleObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -1137,7 +1141,7 @@ class PageObject(DictionaryObject):
         return self.bleedbox
 
     @bleedBox.setter
-    def bleedBox(self, value: RectangleObject) -> None:
+    def bleedBox(self, value: RectangleObject) -> None:  # pragma: no cover
         deprecate_with_replacement("bleedBox", "bleedbox")
         self.bleedbox = value
 
@@ -1148,7 +1152,7 @@ class PageObject(DictionaryObject):
     """
 
     @property
-    def trimBox(self) -> RectangleObject:
+    def trimBox(self) -> RectangleObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -1158,7 +1162,7 @@ class PageObject(DictionaryObject):
         return self.trimbox
 
     @trimBox.setter
-    def trimBox(self, value: RectangleObject) -> None:
+    def trimBox(self, value: RectangleObject) -> None:  # pragma: no cover
         deprecate_with_replacement("trimBox", "trimbox")
         self.trimbox = value
 
@@ -1170,7 +1174,7 @@ class PageObject(DictionaryObject):
     """
 
     @property
-    def artBox(self) -> RectangleObject:
+    def artBox(self) -> RectangleObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -1180,7 +1184,7 @@ class PageObject(DictionaryObject):
         return self.artbox
 
     @artBox.setter
-    def artBox(self, value: RectangleObject) -> None:
+    def artBox(self, value: RectangleObject) -> None:  # pragma: no cover
         deprecate_with_replacement("artBox", "artbox")
         self.artbox = value
 

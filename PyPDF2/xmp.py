@@ -15,7 +15,7 @@ from xml.dom.minidom import Document
 from xml.dom.minidom import Element as XmlElement
 from xml.dom.minidom import parseString
 
-from ._utils import deprecate_with_replacement, StreamType
+from ._utils import StreamType, deprecate_with_replacement
 from .generic import ContentStream, PdfObject
 
 RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
@@ -216,7 +216,7 @@ class XmpInformation(PdfObject):
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:
+    ) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -233,7 +233,9 @@ class XmpInformation(PdfObject):
                     yield attr
                 yield from desc.getElementsByTagNameNS(namespace, name)
 
-    def getElement(self, aboutUri: str, namespace: str, name: str) -> Iterator[Any]:
+    def getElement(
+        self, aboutUri: str, namespace: str, name: str
+    ) -> Iterator[Any]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -253,7 +255,9 @@ class XmpInformation(PdfObject):
                     if child.namespaceURI == namespace:
                         yield child
 
-    def getNodesInNamespace(self, aboutUri: str, namespace: str) -> Iterator[Any]:
+    def getNodesInNamespace(
+        self, aboutUri: str, namespace: str
+    ) -> Iterator[Any]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 

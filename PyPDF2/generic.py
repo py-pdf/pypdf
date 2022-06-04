@@ -41,12 +41,12 @@ from io import BytesIO
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from ._utils import (
-    deprecate_no_replacement,
-    deprecate_with_replacement,
     WHITESPACES,
     StreamType,
     b_,
     bytes_type,
+    deprecate_no_replacement,
+    deprecate_with_replacement,
     hex_str,
     hexencode,
     ord_,
@@ -77,7 +77,7 @@ class PdfObject:
         """Resolve indirect references."""
         return self
 
-    def getObject(self) -> Optional["PdfObject"]:
+    def getObject(self) -> Optional["PdfObject"]:  # pragma: no cover
         deprecate_with_replacement("getObject", "get_object")
         return self.get_object()
 
@@ -102,12 +102,12 @@ class NullObject(PdfObject):
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:
+    ) -> None:  # pragma: no cover
         deprecate_with_replacement("writeToStream", "write_to_stream")
         self.write_to_stream(stream, encryption_key)
 
     @staticmethod
-    def readFromStream(stream: StreamType) -> "NullObject":
+    def readFromStream(stream: StreamType) -> "NullObject":  # pragma: no cover
         deprecate_with_replacement("readFromStream", "read_from_stream")
         return NullObject.read_from_stream(stream)
 
@@ -134,7 +134,7 @@ class BooleanObject(PdfObject):
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:
+    ) -> None:  # pragma: no cover
         deprecate_with_replacement("writeToStream", "write_to_stream")
         self.write_to_stream(stream, encryption_key)
 
@@ -150,7 +150,7 @@ class BooleanObject(PdfObject):
             raise PdfReadError("Could not read Boolean object")
 
     @staticmethod
-    def readFromStream(stream: StreamType) -> "BooleanObject":
+    def readFromStream(stream: StreamType) -> "BooleanObject":  # pragma: no cover
         deprecate_with_replacement("readFromStream", "read_from_stream")
         return BooleanObject.read_from_stream(stream)
 
@@ -167,7 +167,7 @@ class ArrayObject(list, PdfObject):
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:
+    ) -> None:  # pragma: no cover
         deprecate_with_replacement("writeToStream", "write_to_stream")
         self.write_to_stream(stream, encryption_key)
 
@@ -193,7 +193,9 @@ class ArrayObject(list, PdfObject):
         return arr
 
     @staticmethod
-    def readFromStream(stream: StreamType, pdf: Any) -> "ArrayObject":  # PdfReader
+    def readFromStream(
+        stream: StreamType, pdf: Any  # PdfReader
+    ) -> "ArrayObject":  # pragma: no cover
         deprecate_with_replacement("readFromStream", "read_from_stream")
         return ArrayObject.read_from_stream(stream, pdf)
 
@@ -229,7 +231,7 @@ class IndirectObject(PdfObject):
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:
+    ) -> None:  # pragma: no cover
         deprecate_with_replacement("writeToStream", "write_to_stream")
         self.write_to_stream(stream, encryption_key)
 
@@ -262,7 +264,9 @@ class IndirectObject(PdfObject):
         return IndirectObject(int(idnum), int(generation), pdf)
 
     @staticmethod
-    def readFromStream(stream: StreamType, pdf: Any) -> "IndirectObject":  # PdfReader
+    def readFromStream(
+        stream: StreamType, pdf: Any  # PdfReader
+    ) -> "IndirectObject":  # pragma: no cover
         deprecate_with_replacement("readFromStream", "read_from_stream")
         return IndirectObject.read_from_stream(stream, pdf)
 
@@ -303,7 +307,7 @@ class FloatObject(decimal.Decimal, PdfObject):
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:
+    ) -> None:  # pragma: no cover
         deprecate_with_replacement("writeToStream", "write_to_stream")
         self.write_to_stream(stream, encryption_key)
 
@@ -329,7 +333,7 @@ class NumberObject(int, PdfObject):
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:
+    ) -> None:  # pragma: no cover
         deprecate_with_replacement("writeToStream", "write_to_stream")
         self.write_to_stream(stream, encryption_key)
 
@@ -342,7 +346,9 @@ class NumberObject(int, PdfObject):
             return NumberObject(num)
 
     @staticmethod
-    def readFromStream(stream: StreamType) -> Union["NumberObject", FloatObject]:
+    def readFromStream(
+        stream: StreamType,
+    ) -> Union["NumberObject", FloatObject]:  # pragma: no cover
         deprecate_with_replacement("readFromStream", "read_from_stream")
         return NumberObject.read_from_stream(stream)
 
@@ -472,7 +478,7 @@ class ByteStringObject(bytes_type, PdfObject):  # type: ignore
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:
+    ) -> None:  # pragma: no cover
         deprecate_with_replacement("writeToStream", "write_to_stream")
         self.write_to_stream(stream, encryption_key)
 
@@ -538,7 +544,7 @@ class TextStringObject(str, PdfObject):
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:
+    ) -> None:  # pragma: no cover
         deprecate_with_replacement("writeToStream", "write_to_stream")
         self.write_to_stream(stream, encryption_key)
 
@@ -554,7 +560,7 @@ class NameObject(str, PdfObject):
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:
+    ) -> None:  # pragma: no cover
         deprecate_with_replacement("writeToStream", "write_to_stream")
         self.write_to_stream(stream, encryption_key)
 
@@ -580,7 +586,9 @@ class NameObject(str, PdfObject):
                 raise PdfReadError("Illegal character in Name Object")
 
     @staticmethod
-    def readFromStream(stream: StreamType, pdf: Any) -> "NameObject":  # PdfReader
+    def readFromStream(
+        stream: StreamType, pdf: Any  # PdfReader
+    ) -> "NameObject":  # pragma: no cover
         deprecate_with_replacement("readFromStream", "read_from_stream")
         return NameObject.read_from_stream(stream, pdf)
 
@@ -629,7 +637,9 @@ class DictionaryObject(dict, PdfObject):
             self[NameObject("/Metadata")] = metadata
         return metadata
 
-    def getXmpMetadata(self) -> Optional[PdfObject]:  # XmpInformation
+    def getXmpMetadata(
+        self,
+    ) -> Optional[PdfObject]:  # pragma: no cover
         """
         .. deprecated:: 1.28.3
 
@@ -639,7 +649,7 @@ class DictionaryObject(dict, PdfObject):
         return self.xmp_metadata
 
     @property
-    def xmpMetadata(self) -> Optional[PdfObject]:  # XmpInformation
+    def xmpMetadata(self) -> Optional[PdfObject]:  # pragma: no cover
         """
         .. deprecated:: 1.28.3
 
@@ -661,7 +671,7 @@ class DictionaryObject(dict, PdfObject):
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:
+    ) -> None:  # pragma: no cover
         deprecate_with_replacement("writeToStream", "write_to_stream")
         self.write_to_stream(stream, encryption_key)
 
@@ -669,7 +679,7 @@ class DictionaryObject(dict, PdfObject):
     def read_from_stream(
         stream: StreamType, pdf: Any  # PdfReader
     ) -> "DictionaryObject":
-        def getNextObjPos(
+        def get_next_obj_pos(
             p: int, p1: int, remGens: List[int], pdf: Any
         ) -> int:  # PdfReader
             l = pdf.xref[remGens[0]]
@@ -679,11 +689,13 @@ class DictionaryObject(dict, PdfObject):
             if len(remGens) == 1:
                 return p1
             else:
-                return getNextObjPos(p, p1, remGens[1:], pdf)
+                return get_next_obj_pos(p, p1, remGens[1:], pdf)
 
-        def readUnsizedFromSteam(stream: StreamType, pdf: Any) -> bytes:  # PdfReader
+        def read_unsized_from_steam(stream: StreamType, pdf: Any) -> bytes:  # PdfReader
             # we are just pointing at beginning of the stream
-            eon = getNextObjPos(stream.tell(), 2**32, [g for g in pdf.xref], pdf) - 1
+            eon = (
+                get_next_obj_pos(stream.tell(), 2**32, [g for g in pdf.xref], pdf) - 1
+            )
             curr = stream.tell()
             rw = stream.read(eon - stream.tell())
             p = rw.find(b_("endstream"))
@@ -776,7 +788,7 @@ class DictionaryObject(dict, PdfObject):
                     data["__streamdata__"] = data["__streamdata__"][:-1]
                 elif not pdf.strict:
                     stream.seek(pstart, 0)
-                    data["__streamdata__"] = readUnsizedFromSteam(stream, pdf)
+                    data["__streamdata__"] = read_unsized_from_steam(stream, pdf)
                     pos = stream.tell()
                 else:
                     stream.seek(pos, 0)
@@ -794,7 +806,9 @@ class DictionaryObject(dict, PdfObject):
             return retval
 
     @staticmethod
-    def readFromStream(stream: StreamType, pdf: Any) -> "DictionaryObject":  # PdfReader
+    def readFromStream(
+        stream: StreamType, pdf: Any  # PdfReader
+    ) -> "DictionaryObject":  # pragma: no cover
         deprecate_with_replacement("readFromStream", "read_from_stream")
         return DictionaryObject.read_from_stream(stream, pdf)
 
@@ -820,7 +834,7 @@ class TreeObject(DictionaryObject):
                 return
             child = child["/Next"]  # type: ignore
 
-    def addChild(self, child: Any, pdf: Any) -> None:  # PdfReader
+    def addChild(self, child: Any, pdf: Any) -> None:  # pragma: no cover
         deprecate_with_replacement("addChild", "add_child")
         self.add_child(child, pdf)
 
@@ -849,7 +863,7 @@ class TreeObject(DictionaryObject):
         assert isinstance(parent_ref, IndirectObject)
         child_obj[NameObject("/Parent")] = parent_ref
 
-    def removeChild(self, child: Any) -> None:
+    def removeChild(self, child: Any) -> None:  # pragma: no cover
         deprecate_with_replacement("removeChild", "remove_child")
         self.remove_child(child)
 
@@ -922,6 +936,7 @@ class TreeObject(DictionaryObject):
             del child_obj[NameObject("/Prev")]
 
     def emptyTree(self) -> None:
+        # TODO: Missing rename
         for child in self:
             child_obj = child.get_object()
             del child_obj[NameObject("/Parent")]
@@ -944,12 +959,12 @@ class StreamObject(DictionaryObject):
         self.decoded_self: Optional[DecodedStreamObject] = None
 
     @property
-    def decodedSelf(self) -> Optional["DecodedStreamObject"]:
+    def decodedSelf(self) -> Optional["DecodedStreamObject"]:  # pragma: no cover
         deprecate_with_replacement("decodedSelf", "decoded_self")
         return self.decoded_self
 
     @decodedSelf.setter
-    def decodedSelf(self, value: "DecodedStreamObject") -> None:
+    def decodedSelf(self, value: "DecodedStreamObject") -> None:  # pragma: no cover
         deprecate_with_replacement("decodedSelf", "decoded_self")
         self.decoded_self = value
 
@@ -991,7 +1006,7 @@ class StreamObject(DictionaryObject):
         retval.update(data)
         return retval
 
-    def flateEncode(self) -> "EncodedStreamObject":
+    def flateEncode(self) -> "EncodedStreamObject":  # pragma: no cover
         deprecate_with_replacement("flateEncode", "flate_encode")
         return self.flate_encode()
 
@@ -1022,11 +1037,11 @@ class DecodedStreamObject(StreamObject):
     def set_data(self, data: Any) -> Any:
         self._data = data
 
-    def getData(self) -> Any:
+    def getData(self) -> Any:  # pragma: no cover
         deprecate_with_replacement("getData", "get_data")
         return self._data
 
-    def setData(self, data: Any) -> None:
+    def setData(self, data: Any) -> None:  # pragma: no cover
         deprecate_with_replacement("setData", "set_data")
         self.set_data(data)
 
@@ -1036,12 +1051,12 @@ class EncodedStreamObject(StreamObject):
         self.decoded_self: Optional[DecodedStreamObject] = None
 
     @property
-    def decodedSelf(self) -> Optional["DecodedStreamObject"]:
+    def decodedSelf(self) -> Optional["DecodedStreamObject"]:  # pragma: no cover
         deprecate_with_replacement("decodedSelf", "decoded_self")
         return self.decoded_self
 
     @decodedSelf.setter
-    def decodedSelf(self, value: DecodedStreamObject) -> None:
+    def decodedSelf(self, value: DecodedStreamObject) -> None:  # pragma: no cover
         deprecate_with_replacement("decodedSelf", "decoded_self")
         self.decoded_self = value
 
@@ -1270,7 +1285,9 @@ class RectangleObject(ArrayObject):
             value = FloatObject(value)
         return value
 
-    def ensureIsNumber(self, value: Any) -> Union[FloatObject, NumberObject]:
+    def ensureIsNumber(
+        self, value: Any
+    ) -> Union[FloatObject, NumberObject]:  # pragma: no cover
         deprecate_no_replacement("ensureIsNumber")
         return self._ensure_is_number(value)
 
@@ -1293,35 +1310,35 @@ class RectangleObject(ArrayObject):
     def top(self) -> FloatObject:
         return self[3]
 
-    def getLowerLeft_x(self) -> FloatObject:
+    def getLowerLeft_x(self) -> FloatObject:  # pragma: no cover
         deprecate_with_replacement("getLowerLeft_x", "left")
         return self.left
 
-    def getLowerLeft_y(self) -> FloatObject:
+    def getLowerLeft_y(self) -> FloatObject:  # pragma: no cover
         deprecate_with_replacement("getLowerLeft_y", "bottom")
         return self.bottom
 
-    def getUpperRight_x(self) -> FloatObject:
+    def getUpperRight_x(self) -> FloatObject:  # pragma: no cover
         deprecate_with_replacement("getUpperRight_x", "right")
         return self.right
 
-    def getUpperRight_y(self) -> FloatObject:
+    def getUpperRight_y(self) -> FloatObject:  # pragma: no cover
         deprecate_with_replacement("getUpperRight_y", "top")
         return self.top
 
-    def getUpperLeft_x(self) -> FloatObject:
+    def getUpperLeft_x(self) -> FloatObject:  # pragma: no cover
         deprecate_with_replacement("getUpperLeft_x", "left")
         return self.left
 
-    def getUpperLeft_y(self) -> FloatObject:
+    def getUpperLeft_y(self) -> FloatObject:  # pragma: no cover
         deprecate_with_replacement("getUpperLeft_y", "top")
         return self.top
 
-    def getLowerRight_x(self) -> FloatObject:
+    def getLowerRight_x(self) -> FloatObject:  # pragma: no cover
         deprecate_with_replacement("getLowerRight_x", "right")
         return self.right
 
-    def getLowerRight_y(self) -> FloatObject:
+    def getLowerRight_y(self) -> FloatObject:  # pragma: no cover
         deprecate_with_replacement("getLowerRight_y", "bottom")
         return self.bottom
 
@@ -1373,35 +1390,43 @@ class RectangleObject(ArrayObject):
     def upper_right(self, value: List[Any]) -> None:
         self[2], self[3] = (self._ensure_is_number(x) for x in value)
 
-    def getLowerLeft(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
+    def getLowerLeft(
+        self,
+    ) -> Tuple[decimal.Decimal, decimal.Decimal]:  # pragma: no cover
         deprecate_with_replacement("getLowerLeft", "lower_left")
         return self.lower_left
 
-    def getLowerRight(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
+    def getLowerRight(
+        self,
+    ) -> Tuple[decimal.Decimal, decimal.Decimal]:  # pragma: no cover
         deprecate_with_replacement("getLowerRight", "lower_right")
         return self.lower_right
 
-    def getUpperLeft(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
+    def getUpperLeft(
+        self,
+    ) -> Tuple[decimal.Decimal, decimal.Decimal]:  # pragma: no cover
         deprecate_with_replacement("getUpperLeft", "upper_left")
         return self.upper_left
 
-    def getUpperRight(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
+    def getUpperRight(
+        self,
+    ) -> Tuple[decimal.Decimal, decimal.Decimal]:  # pragma: no cover
         deprecate_with_replacement("getUpperRight", "upper_right")
         return self.upper_right
 
-    def setLowerLeft(self, value: Tuple[float, float]) -> None:
+    def setLowerLeft(self, value: Tuple[float, float]) -> None:  # pragma: no cover
         deprecate_with_replacement("setLowerLeft", "lower_left")
         self.lower_left = value  # type: ignore
 
-    def setLowerRight(self, value: Tuple[float, float]) -> None:
+    def setLowerRight(self, value: Tuple[float, float]) -> None:  # pragma: no cover
         deprecate_with_replacement("setLowerRight", "lower_right")
         self[2], self[1] = (self._ensure_is_number(x) for x in value)
 
-    def setUpperLeft(self, value: Tuple[float, float]) -> None:
+    def setUpperLeft(self, value: Tuple[float, float]) -> None:  # pragma: no cover
         deprecate_with_replacement("setUpperLeft", "upper_left")
         self[0], self[3] = (self._ensure_is_number(x) for x in value)
 
-    def setUpperRight(self, value: Tuple[float, float]) -> None:
+    def setUpperRight(self, value: Tuple[float, float]) -> None:  # pragma: no cover
         deprecate_with_replacement("setUpperRight", "upper_right")
         self[2], self[3] = (self._ensure_is_number(x) for x in value)
 
@@ -1409,7 +1434,7 @@ class RectangleObject(ArrayObject):
     def width(self) -> decimal.Decimal:
         return self.right - self.left
 
-    def getWidth(self) -> decimal.Decimal:
+    def getWidth(self) -> decimal.Decimal:  # pragma: no cover
         deprecate_with_replacement("getWidth", "width")
         return self.width
 
@@ -1417,47 +1442,55 @@ class RectangleObject(ArrayObject):
     def height(self) -> decimal.Decimal:
         return self.top - self.bottom
 
-    def getHeight(self) -> decimal.Decimal:
+    def getHeight(self) -> decimal.Decimal:  # pragma: no cover
         deprecate_with_replacement("getHeight", "height")
         return self.height
 
     @property
-    def lowerLeft(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
+    def lowerLeft(self) -> Tuple[decimal.Decimal, decimal.Decimal]:  # pragma: no cover
         deprecate_with_replacement("lowerLeft", "lower_left")
         return self.lower_left
 
     @lowerLeft.setter
-    def lowerLeft(self, value: Tuple[decimal.Decimal, decimal.Decimal]) -> None:
+    def lowerLeft(
+        self, value: Tuple[decimal.Decimal, decimal.Decimal]
+    ) -> None:  # pragma: no cover
         deprecate_with_replacement("lowerLeft", "lower_left")
         self.lower_left = value
 
     @property
-    def lowerRight(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
+    def lowerRight(self) -> Tuple[decimal.Decimal, decimal.Decimal]:  # pragma: no cover
         deprecate_with_replacement("lowerRight", "lower_right")
         return self.lower_right
 
     @lowerRight.setter
-    def lowerRight(self, value: Tuple[decimal.Decimal, decimal.Decimal]) -> None:
+    def lowerRight(
+        self, value: Tuple[decimal.Decimal, decimal.Decimal]
+    ) -> None:  # pragma: no cover
         deprecate_with_replacement("lowerRight", "lower_right")
         self.lower_right = value
 
     @property
-    def upperLeft(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
+    def upperLeft(self) -> Tuple[decimal.Decimal, decimal.Decimal]:  # pragma: no cover
         deprecate_with_replacement("upperLeft", "upper_left")
         return self.upper_left
 
     @upperLeft.setter
-    def upperLeft(self, value: Tuple[decimal.Decimal, decimal.Decimal]) -> None:
+    def upperLeft(
+        self, value: Tuple[decimal.Decimal, decimal.Decimal]
+    ) -> None:  # pragma: no cover
         deprecate_with_replacement("upperLeft", "upper_left")
         self.upper_left = value
 
     @property
-    def upperRight(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
+    def upperRight(self) -> Tuple[decimal.Decimal, decimal.Decimal]:  # pragma: no cover
         deprecate_with_replacement("upperRight", "upper_right")
         return self.upper_right
 
     @upperRight.setter
-    def upperRight(self, value: Tuple[decimal.Decimal, decimal.Decimal]) -> None:
+    def upperRight(
+        self, value: Tuple[decimal.Decimal, decimal.Decimal]
+    ) -> None:  # pragma: no cover
         deprecate_with_replacement("upperRight", "upper_right")
         self.upper_right = value
 
@@ -1495,7 +1528,7 @@ class Field(TreeObject):
         return self.get("/FT")
 
     @property
-    def fieldType(self) -> Optional[NameObject]:
+    def fieldType(self) -> Optional[NameObject]:  # pragma: no cover
         """
         .. deprecated:: 1.28.3
 
@@ -1525,7 +1558,7 @@ class Field(TreeObject):
         return self.get("/TU")
 
     @property
-    def altName(self) -> Optional[str]:
+    def altName(self) -> Optional[str]:  # pragma: no cover
         """
         .. deprecated:: 1.28.3
 
@@ -1544,7 +1577,7 @@ class Field(TreeObject):
         return self.get("/TM")
 
     @property
-    def mappingName(self) -> Optional[str]:
+    def mappingName(self) -> Optional[str]:  # pragma: no cover
         """
         .. deprecated:: 1.28.3
 
@@ -1575,7 +1608,7 @@ class Field(TreeObject):
         return self.get("/DV")
 
     @property
-    def defaultValue(self) -> Optional[Any]:
+    def defaultValue(self) -> Optional[Any]:  # pragma: no cover
         """
         .. deprecated:: 1.28.3
 
@@ -1594,7 +1627,7 @@ class Field(TreeObject):
         return self.get("/AA")
 
     @property
-    def additionalActions(self) -> Optional[DictionaryObject]:
+    def additionalActions(self) -> Optional[DictionaryObject]:  # pragma: no cover
         """
         .. deprecated:: 1.28.3
 
@@ -1683,7 +1716,7 @@ class Destination(TreeObject):
             ]
         )
 
-    def getDestArray(self) -> ArrayObject:
+    def getDestArray(self) -> ArrayObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.3
 

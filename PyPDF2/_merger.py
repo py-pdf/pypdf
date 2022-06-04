@@ -30,7 +30,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 
 from ._page import PageObject
 from ._reader import PdfReader
-from ._utils import deprecate_with_replacement, StrByteType, str_
+from ._utils import StrByteType, deprecate_with_replacement, str_
 from ._writer import PdfWriter
 from .constants import PagesAttributes as PA
 from .generic import (
@@ -314,7 +314,7 @@ class PdfMerger:
             raise RuntimeError(ERR_CLOSED_WRITER)
         self.output.add_metadata(infos)
 
-    def addMetadata(self, infos: Dict[str, Any]) -> None:
+    def addMetadata(self, infos: Dict[str, Any]) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -323,7 +323,7 @@ class PdfMerger:
         deprecate_with_replacement("addMetadata", "add_metadata")
         self.add_metadata(infos)
 
-    def setPageLayout(self, layout: LayoutType) -> None:
+    def setPageLayout(self, layout: LayoutType) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -360,7 +360,7 @@ class PdfMerger:
             raise RuntimeError(ERR_CLOSED_WRITER)
         self.output._set_page_layout(layout)
 
-    def setPageMode(self, mode: PagemodeType) -> None:
+    def setPageMode(self, mode: PagemodeType) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -625,7 +625,7 @@ class PdfMerger:
         italic: bool = False,
         fit: str = "/Fit",
         *args: ZoomArgType,
-    ) -> IndirectObject:
+    ) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
             Use :meth:`add_bookmark` instead.
@@ -718,7 +718,7 @@ class PdfMerger:
 
         return bookmark_ref
 
-    def addNamedDestination(self, title: str, pagenum: int) -> None:
+    def addNamedDestination(self, title: str, pagenum: int) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
             Use :meth:`add_named_destination` instead.
@@ -743,7 +743,7 @@ class PdfMerger:
         self.named_dests.append(dest)
 
 
-class PdfFileMerger(PdfMerger):
+class PdfFileMerger(PdfMerger):  # pragma: no cover
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         deprecate_with_replacement("PdfFileMerger", "PdfMerge")
 
