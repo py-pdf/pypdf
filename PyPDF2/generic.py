@@ -1048,7 +1048,7 @@ class EncodedStreamObject(StreamObject):
     def get_data(self) -> Union[None, str, bytes]:
         from .filters import decodeStreamData
 
-        if self.decoded_self:
+        if self.decoded_self is not None:
             # cached version of decoded object
             return self.decoded_self.get_data()
         else:
