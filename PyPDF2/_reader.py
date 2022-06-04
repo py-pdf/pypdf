@@ -47,11 +47,11 @@ from typing import (
 from ._page import PageObject, _VirtualList
 from ._security import RC4_encrypt, _alg33_1, _alg34, _alg35
 from ._utils import (
-    deprecate_no_replacement,
-    deprecate_with_replacement,
     StrByteType,
     StreamType,
     b_,
+    deprecate_no_replacement,
+    deprecate_with_replacement,
     ord_,
     read_non_whitespace,
     read_until_whitespace,
@@ -382,7 +382,9 @@ class PdfReader:
 
             Use :code:`reader.pages[pageNumber]` instead.
         """
-        deprecate_with_replacement("reader.getPage(pageNumber)", "reader.pages[pageNumber]")
+        deprecate_with_replacement(
+            "reader.getPage(pageNumber)", "reader.pages[pageNumber]"
+        )
         return self._get_page(pageNumber)
 
     def _get_page(self, page_number: int) -> PageObject:
@@ -746,7 +748,9 @@ class PdfReader:
 
             Use :meth:`get_destination_page_number` instead.
         """
-        deprecate_with_replacement("getDestinationPageNumber", "get_destination_page_number")
+        deprecate_with_replacement(
+            "getDestinationPageNumber", "get_destination_page_number"
+        )
         return self.get_destination_page_number(destination)
 
     def _build_destination(
@@ -1155,7 +1159,9 @@ class PdfReader:
 
             Use :meth:`cache_get_indirect_object` instead.
         """
-        deprecate_with_replacement("cacheGetIndirectObject", "cache_get_indirect_object")
+        deprecate_with_replacement(
+            "cacheGetIndirectObject", "cache_get_indirect_object"
+        )
         return self.cache_get_indirect_object(generation, idnum)
 
     def cache_indirect_object(

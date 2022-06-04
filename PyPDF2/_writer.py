@@ -41,7 +41,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 from ._page import PageObject, _VirtualList
 from ._reader import PdfReader
 from ._security import _alg33, _alg34, _alg35
-from ._utils import deprecate_with_replacement, StreamType, b_
+from ._utils import StreamType, b_, deprecate_with_replacement
 from .constants import CatalogAttributes as CA
 from .constants import Core as CO
 from .constants import EncryptionDictAttributes as ED
@@ -564,7 +564,9 @@ class PdfWriter:
 
             Use :meth:`update_page_form_field_values` instead.
         """
-        deprecate_with_replacement("updatePageFormFieldValues", "update_page_form_field_values")
+        deprecate_with_replacement(
+            "updatePageFormFieldValues", "update_page_form_field_values"
+        )
         return self.update_page_form_field_values(page, fields, flags)
 
     def clone_reader_document_root(self, reader: PdfReader) -> None:
@@ -582,7 +584,9 @@ class PdfWriter:
 
             Use :meth:`clone_reader_document_root` instead.
         """
-        deprecate_with_replacement("cloneReaderDocumentRoot", "clone_reader_document_root")
+        deprecate_with_replacement(
+            "cloneReaderDocumentRoot", "clone_reader_document_root"
+        )
         self.clone_reader_document_root(reader)
 
     def clone_document_from_reader(
@@ -615,7 +619,9 @@ class PdfWriter:
 
             Use :meth:`clone_document_from_reader` instead.
         """
-        deprecate_with_replacement("cloneDocumentFromReader", "clone_document_from_reader")
+        deprecate_with_replacement(
+            "cloneDocumentFromReader", "clone_document_from_reader"
+        )
         self.clone_document_from_reader(reader, after_page_append)
 
     def encrypt(
@@ -1139,7 +1145,9 @@ class PdfWriter:
 
             Use :meth:`add_named_destination_object` instead.
         """
-        deprecate_with_replacement("addNamedDestinationObject", "add_named_destination_object")
+        deprecate_with_replacement(
+            "addNamedDestinationObject", "add_named_destination_object"
+        )
         return self.add_named_destination_object(dest)
 
     def add_named_destination(self, title: str, pagenum: int) -> IndirectObject:
@@ -1583,7 +1591,9 @@ class PdfWriter:
 
             Use :py:attr:`page_layout` instead.
         """
-        deprecate_with_replacement("writer.setPageLayout(val)", "writer.page_layout = val")
+        deprecate_with_replacement(
+            "writer.setPageLayout(val)", "writer.page_layout = val"
+        )
         return self._set_page_layout(layout)
 
     @property

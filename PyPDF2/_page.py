@@ -43,11 +43,11 @@ from typing import (
 )
 
 from ._utils import (
-    deprecate_no_replacement,
-    deprecate_with_replacement,
     CompressedTransformationMatrix,
     TransformationMatrixType,
     b_,
+    deprecate_no_replacement,
+    deprecate_with_replacement,
     matrix_multiply,
 )
 from .constants import PageAttributes as PG
@@ -600,7 +600,10 @@ class PageObject(DictionaryObject):
 
             Use :meth:`add_transformation`  and :meth:`merge_page` instead.
         """
-        deprecate_with_replacement("page.mergeTransformedPage(page2, ctm)", "page2.add_transformation(ctm); page.merge_page(page2)")
+        deprecate_with_replacement(
+            "page.mergeTransformedPage(page2, ctm)",
+            "page2.add_transformation(ctm); page.merge_page(page2)",
+        )
         if isinstance(ctm, Transformation):
             ctm = ctm.ctm
         ctm = cast(CompressedTransformationMatrix, ctm)
@@ -630,7 +633,10 @@ class PageObject(DictionaryObject):
 
             Use :meth:`add_transformation` and :meth:`merge_page` instead.
         """
-        deprecate_with_replacement("page.mergeScaledPage(page2, scale, expand)", "page2.add_transformation(Transformation().scale(scale)); page.merge_page(page2, expand)")
+        deprecate_with_replacement(
+            "page.mergeScaledPage(page2, scale, expand)",
+            "page2.add_transformation(Transformation().scale(scale)); page.merge_page(page2, expand)",
+        )
         op = Transformation().scale(scale, scale)
         self.mergeTransformedPage(page2, op, expand)
 
@@ -651,7 +657,10 @@ class PageObject(DictionaryObject):
 
             Use :meth:`add_transformation` and :meth:`merge_page` instead.
         """
-        deprecate_with_replacement("page.mergeRotatedPage(page2, rotation, expand)", "page2.add_transformation(Transformation().rotate(rotation)); page.merge_page(page2, expand)")
+        deprecate_with_replacement(
+            "page.mergeRotatedPage(page2, rotation, expand)",
+            "page2.add_transformation(Transformation().rotate(rotation)); page.merge_page(page2, expand)",
+        )
         op = Transformation().rotate(rotation)
         self.mergeTransformedPage(page2, op, expand)
 
@@ -673,7 +682,10 @@ class PageObject(DictionaryObject):
 
             Use :meth:`add_transformation` and :meth:`merge_page` instead.
         """
-        deprecate_with_replacement("page.mergeTranslatedPage(page2, tx, ty, expand)", "page2.add_transformation(Transformation().translate(tx, ty)); page.merge_page(page2, expand)")
+        deprecate_with_replacement(
+            "page.mergeTranslatedPage(page2, tx, ty, expand)",
+            "page2.add_transformation(Transformation().translate(tx, ty)); page.merge_page(page2, expand)",
+        )
         op = Transformation().translate(tx, ty)
         self.mergeTransformedPage(page2, op, expand)
 
@@ -701,7 +713,10 @@ class PageObject(DictionaryObject):
 
             Use :meth:`add_transformation` and :meth:`merge_page` instead.
         """
-        deprecate_with_replacement("page.mergeRotatedTranslatedPage(page2, rotation, tx, ty, expand)", "page2.add_transformation(Transformation().rotate(rotation).translate(tx, ty)); page.merge_page(page2, expand)")
+        deprecate_with_replacement(
+            "page.mergeRotatedTranslatedPage(page2, rotation, tx, ty, expand)",
+            "page2.add_transformation(Transformation().rotate(rotation).translate(tx, ty)); page.merge_page(page2, expand)",
+        )
         op = Transformation().translate(-tx, -ty).rotate(rotation).translate(tx, ty)
         return self.mergeTransformedPage(page2, op, expand)
 
@@ -723,7 +738,10 @@ class PageObject(DictionaryObject):
 
             Use :meth:`add_transformation` and :meth:`merge_page` instead.
         """
-        deprecate_with_replacement("page.mergeRotatedScaledPage(page2, rotation, scale, expand)", "page2.add_transformation(Transformation().rotate(rotation).scale(scale)); page.merge_page(page2, expand)")
+        deprecate_with_replacement(
+            "page.mergeRotatedScaledPage(page2, rotation, scale, expand)",
+            "page2.add_transformation(Transformation().rotate(rotation).scale(scale)); page.merge_page(page2, expand)",
+        )
         op = Transformation().rotate(rotation).scale(scale, scale)
         self.mergeTransformedPage(page2, op, expand)
 
@@ -751,7 +769,10 @@ class PageObject(DictionaryObject):
 
             Use :meth:`add_transformation` and :meth:`merge_page` instead.
         """
-        deprecate_with_replacement("page.mergeScaledTranslatedPage(page2, scale, tx, ty, expand)", "page2.add_transformation(Transformation().scale(scale).translate(tx, ty)); page.merge_page(page2, expand)")
+        deprecate_with_replacement(
+            "page.mergeScaledTranslatedPage(page2, scale, tx, ty, expand)",
+            "page2.add_transformation(Transformation().scale(scale).translate(tx, ty)); page.merge_page(page2, expand)",
+        )
         op = Transformation().scale(scale, scale).translate(tx, ty)
         return self.mergeTransformedPage(page2, op, expand)
 
@@ -782,7 +803,10 @@ class PageObject(DictionaryObject):
 
             Use :meth:`add_transformation` and :meth:`merge_page` instead.
         """
-        deprecate_with_replacement("page.mergeRotatedScaledTranslatedPage(page2, rotation, tx, ty, expand)", "page2.add_transformation(Transformation().rotate(rotation).scale(scale)); page.merge_page(page2, expand)")
+        deprecate_with_replacement(
+            "page.mergeRotatedScaledTranslatedPage(page2, rotation, tx, ty, expand)",
+            "page2.add_transformation(Transformation().rotate(rotation).scale(scale)); page.merge_page(page2, expand)",
+        )
         op = Transformation().rotate(rotation).scale(scale, scale).translate(tx, ty)
         self.mergeTransformedPage(page2, op, expand)
 
