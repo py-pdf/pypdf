@@ -31,6 +31,7 @@ import math
 import uuid
 import warnings
 from decimal import Decimal
+from math import sqrt
 from binascii import unhexlify
 from typing import (
     Any,
@@ -1207,50 +1208,8 @@ class PageObject(DictionaryObject):
             font_type: str = cast(str,ft["/Subtype"])
             sp_width : float = space_width*2         #default value
             w = []
-            # compute space widths
-            if "/Widths" in ft:
-                w = [x for x in ft["/Widths"]]                      #type: ignore
-                try:
-                    st : int = cast(int, ft["/FirstChar"])
-                    en : int = cast(int, ft["/LastChar"])
-                    if st>32 or en<32:
-                        raise Exception("Not in range")
-                    if w[32-st] == 0:
-                        raise Exception("null width")
-                    sp_width = w[32-st]
-                except Exception:
-                    if "/FontDescriptor" in ft and "/MissingWidth" in cast(DictionaryObject,ft["/FontDescriptor"]):
-                        sp_width = ft["/FontDescriptor"]["/MissingWidth"]       # type: ignore
-                    else:
-                        #will consider width of char as avg(width)/2
-                        m=0
-                        cpt=0
-                        for x in w:
-                            if x>0:
-                                m += x
-                                cpt += 1
-                        sp_width = m / cpt / 2
-            if "/W" in ft:
-                if "/DW" in ft:
-                    sp_width = cast(float, ft["/DW"])
-                w = [x for x in ft["/W"]]                           #type: ignore
-                while(len(w)>0):
-                    st = w[0]
-                    second = w[1]
-                    if isinstance(int, second):
-                        if st<=32 and 32<=second:
-                            sp_width = w[2]
-                            break
-                        w = w[3:]
-                    if isinstance(list, second):
-                        if st<=32 and 32<=st+len(second)-1:
-                            sp_width = second[32-st]
-                        w = w[2:]
-                    else:
-                        warnings.warn("unknown widths : \n"+(ft["/W"]).__repr__(),
-                            PdfReadWarning)
-                        break
             #encoding
+            space_code = 32
             if "/Encoding" in ft:
                 enc: Union(str,DictionaryObject) = ft["/Encoding"].get_object()    # type: ignore
                 if isinstance(enc, str):
@@ -1288,6 +1247,8 @@ class PageObject(DictionaryObject):
                                 encoding[x] = adobe_glyphs[o]
                             except Exception:
                                 encoding[x] = o
+                                if o==" ":
+                                    space_code=x
                             x += 1
             if "/ToUnicode" in ft:
                 cm : str = cast(DecodedStreamObject,ft["/ToUnicode"]).get_data().decode("utf-8")
@@ -1332,7 +1293,58 @@ class PageObject(DictionaryObject):
                         lst = [x for x in l.split(" ") if x]
                         a = int(lst[0], 16)
                         map_dict[a] = unhexlify("".join(lst[1:])).decode("utf-16-be") #join is here as some cases where the code was split
-            return font_type, float(sp_width/2/2), dict(zip(range(256), encoding)), "".maketrans(map_dict)
+
+                # get
+                for a in map_dict:
+                    if map_dict[a] == " ":
+                        space_code = a
+
+            #compute space width
+            if "/W" in ft:
+                if "/DW" in ft:
+                    sp_width = cast(float, ft["/DW"])
+                w = [x for x in ft["/W"]]                           #type: ignore
+                while(len(w)>0):
+                    st = w[0]
+                    second = w[1]
+                    if isinstance(int, second):
+                        if st<=space_code and space_code<=second:
+                            sp_width = w[2]
+                            break
+                        w = w[3:]
+                    if isinstance(list, second):
+                        if st<=space_code and space_code<=st+len(second)-1:
+                            sp_width = second[space_code-st]
+                        w = w[2:]
+                    else:
+                        warnings.warn("unknown widths : \n"+(ft["/W"]).__repr__(),
+                            PdfReadWarning)
+                        break
+            if "/Widths" in ft:
+                w = [x for x in ft["/Widths"]]                      #type: ignore
+                try:
+                    st : int = cast(int, ft["/FirstChar"])
+                    en : int = cast(int, ft["/LastChar"])
+                    if st>space_code or en<space_code:
+                        raise Exception("Not in range")
+                    if w[space_code-st] == 0:
+                        raise Exception("null width")
+                    sp_width = w[space_code-st]
+                except Exception:
+                    if "/FontDescriptor" in ft and "/MissingWidth" in cast(DictionaryObject,ft["/FontDescriptor"]):
+                        sp_width = ft["/FontDescriptor"]["/MissingWidth"]       # type: ignore
+                    else:
+                        #will consider width of char as avg(width)/2
+                        m=0
+                        cpt=0
+                        for x in w:
+                            if x>0:
+                                m += x
+                                cpt += 1
+                        sp_width = m / cpt / 2
+
+
+            return font_type, float(sp_width/2), dict(zip(range(256), encoding)), "".maketrans(map_dict)
             # ------- end of buildCharmap ------
 
         text: str = ""
@@ -1353,6 +1365,7 @@ class PageObject(DictionaryObject):
         # them to the text here would be gibberish.
 
         Tm_matrix : List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+        Tm_prev   : List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
         char_scale = 1.0
         space_scale = 1.0
         _space_width :float = 500.0 # will be set correctly at first Tf
@@ -1364,16 +1377,19 @@ class PageObject(DictionaryObject):
         ##TL: float = TL, font_size: float = font_size, cmap = cmap
 
         def process_operation(operator: bytes, operands:List)-> None :
-            nonlocal Tm_matrix, output, text,char_scale, space_scale,_space_width, TL, font_size,cmap
-            Tm_prev = list(Tm_matrix)
+            nonlocal Tm_matrix, Tm_prev, output, text,char_scale, space_scale,_space_width, TL, font_size,cmap
+            if Tm_matrix[4] != 0  and Tm_matrix[5] != 0:   # o reuse of the 
+                Tm_prev = list(Tm_matrix)
             #### Table 5.4 page 405 ####
             if operator == b"BT":
                 Tm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-                Tm_prev = Tm_matrix
+                #Tm_prev = Tm_matrix
                 output += text
-                if output != "" and output[-1]!="\n":
-                    output += "\n"
+                #based                
+                #if output != "" and output[-1]!="\n":
+                #    output += "\n"
                 text = ""
+                return None
             elif (operator == b"ET"):
                 output += text
                 text=""
@@ -1406,9 +1422,11 @@ class PageObject(DictionaryObject):
                 Tm_matrix[5] -= TL
             elif operator == b"Tj":
                 text += operands[0].translate(cmap)
+            else:
+                return None
             # process text changes due to positionchange: " "
             # print(text,Tm_matrix[4] ,Tm_prev[4],(space_scale * _space_width * char_scale))
-            if Tm_matrix[5] <= (Tm_prev[5] - font_size): # it means that we are moving down by one line
+            if Tm_matrix[5] <= (Tm_prev[5] - font_size*sqrt(Tm_matrix[2]**2+Tm_matrix[3]**2)): # it means that we are moving down by one line                
                 output += text + "\n" #.translate(cmap) + "\n"
                 text = ""
             elif Tm_matrix[4] >= (Tm_prev[4] + space_scale * _space_width * char_scale): # it means that we are moving down by one line
