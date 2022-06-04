@@ -27,3 +27,5 @@ dont_commit_*.pdf
 PyPDF2-output.pdf
 Image9.png
 PyPDF2_pdfLocation.txt
+
+.python-version
