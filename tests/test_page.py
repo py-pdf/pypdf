@@ -68,7 +68,10 @@ def test_page_operations(pdf_path, password):
         reader.decrypt(password)
 
     page: PageObject = reader.pages[0]
-    page.mergeRotatedScaledTranslatedPage(page, 90, scale=1, tx=1, ty=1, expand=True)
+    with pytest.warns(PendingDeprecationWarning):
+        page.mergeRotatedScaledTranslatedPage(
+            page, 90, scale=1, tx=1, ty=1, expand=True
+        )
     page.add_transformation((1, 0, 0, 0, 0, 0))
     page.scale(2, 2)
     page.scale_by(0.5)
