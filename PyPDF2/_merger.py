@@ -25,13 +25,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import warnings
 from io import BytesIO, FileIO, IOBase
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 
 from ._page import PageObject
 from ._reader import PdfReader
-from ._utils import DEPR_MSG, StrByteType, str_
+from ._utils import StrByteType, deprecate_with_replacement, str_
 from ._writer import PdfWriter
 from .constants import PagesAttributes as PA
 from .generic import (
@@ -315,28 +314,22 @@ class PdfMerger:
             raise RuntimeError(ERR_CLOSED_WRITER)
         self.output.add_metadata(infos)
 
-    def addMetadata(self, infos: Dict[str, Any]) -> None:
+    def addMetadata(self, infos: Dict[str, Any]) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`add_metadata` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("addMetadata", "add_metadata"), PendingDeprecationWarning
-        )
+        deprecate_with_replacement("addMetadata", "add_metadata")
         self.add_metadata(infos)
 
-    def setPageLayout(self, layout: LayoutType) -> None:
+    def setPageLayout(self, layout: LayoutType) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`set_page_layout` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("setPageLayout", "set_page_layout"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("setPageLayout", "set_page_layout")
         self.set_page_layout(layout)
 
     def set_page_layout(self, layout: LayoutType) -> None:
@@ -367,15 +360,13 @@ class PdfMerger:
             raise RuntimeError(ERR_CLOSED_WRITER)
         self.output._set_page_layout(layout)
 
-    def setPageMode(self, mode: PagemodeType) -> None:
+    def setPageMode(self, mode: PagemodeType) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`set_page_mode` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("setPageMode", "set_page_mode"), PendingDeprecationWarning
-        )
+        deprecate_with_replacement("setPageMode", "set_page_mode")
         self.set_page_mode(mode)
 
     def set_page_mode(self, mode: PagemodeType) -> None:
@@ -634,15 +625,12 @@ class PdfMerger:
         italic: bool = False,
         fit: str = "/Fit",
         *args: ZoomArgType,
-    ) -> IndirectObject:
+    ) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
             Use :meth:`add_bookmark` instead.
         """
-        warnings.warn(
-            "addBookmark is deprecated. Use add_bookmark instead.",
-            DeprecationWarning,
-        )
+        deprecate_with_replacement("addBookmark", "add_bookmark")
         return self.add_bookmark(
             title, pagenum, parent, color, bold, italic, fit, *args
         )
@@ -730,15 +718,12 @@ class PdfMerger:
 
         return bookmark_ref
 
-    def addNamedDestination(self, title: str, pagenum: int) -> None:
+    def addNamedDestination(self, title: str, pagenum: int) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
             Use :meth:`add_named_destination` instead.
         """
-        warnings.warn(
-            "addNamedDestination is deprecated. Use add_named_destination instead.",
-            DeprecationWarning,
-        )
+        deprecate_with_replacement("addNamedDestination", "add_named_destination")
         return self.add_named_destination(title, pagenum)
 
     def add_named_destination(self, title: str, pagenum: int) -> None:
@@ -758,15 +743,10 @@ class PdfMerger:
         self.named_dests.append(dest)
 
 
-class PdfFileMerger(PdfMerger):
+class PdfFileMerger(PdfMerger):  # pragma: no cover
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        import warnings
+        deprecate_with_replacement("PdfFileMerger", "PdfMerge")
 
-        warnings.warn(
-            "PdfFileMerger was renamed to PdfMerger. PdfFileMerger will be removed",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
         if "strict" not in kwargs and len(args) < 1:
             kwargs["strict"] = True  # maintain the default
         super().__init__(*args, **kwargs)

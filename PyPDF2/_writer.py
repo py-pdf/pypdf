@@ -41,7 +41,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 from ._page import PageObject, _VirtualList
 from ._reader import PdfReader
 from ._security import _alg33, _alg34, _alg35
-from ._utils import DEPR_MSG, StreamType, b_
+from ._utils import StreamType, b_, deprecate_with_replacement
 from .constants import CatalogAttributes as CA
 from .constants import Core as CO
 from .constants import EncryptionDictAttributes as ED
@@ -135,17 +135,13 @@ class PdfWriter:
             raise ValueError("pdf must be self")
         return self._objects[ido.idnum - 1]  # type: ignore
 
-    def getObject(self, ido: IndirectObject) -> PdfObject:
+    def getObject(self, ido: IndirectObject) -> PdfObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`get_object` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("getObject()", "get_object()"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getObject", "get_object")
         return self.get_object(ido)
 
     def _add_page(
@@ -190,17 +186,13 @@ class PdfWriter:
         """
         self._add_page(page, list.append)
 
-    def addPage(self, page: PageObject) -> None:
+    def addPage(self, page: PageObject) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`add_page` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("addPage()", "add_page()"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("addPage", "add_page")
         self.add_page(page)
 
     def insert_page(self, page: PageObject, index: int = 0) -> None:
@@ -214,17 +206,13 @@ class PdfWriter:
         """
         self._add_page(page, lambda l, p: l.insert(index, p))
 
-    def insertPage(self, page: PageObject, index: int = 0) -> None:
+    def insertPage(self, page: PageObject, index: int = 0) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`insert_page` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("insertPage()", "insert_page()"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("insertPage", "insert_page")
         self.insert_page(page, index)
 
     def get_page(self, pageNumber: int) -> PageObject:
@@ -240,17 +228,13 @@ class PdfWriter:
         # XXX: crude hack
         return pages[PA.KIDS][pageNumber].get_object()
 
-    def getPage(self, pageNumber: int) -> PageObject:
+    def getPage(self, pageNumber: int) -> PageObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :code:`writer.pages[page_number]` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("getPage()", "writer.pages[page_number]"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getPage", "writer.pages[page_number]")
         return self.get_page(pageNumber)
 
     def _get_num_pages(self) -> int:
@@ -261,17 +245,13 @@ class PdfWriter:
         pages = cast(Dict[str, Any], self.get_object(self._pages))
         return int(pages[NameObject("/Count")])
 
-    def getNumPages(self) -> int:
+    def getNumPages(self) -> int:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :code:`len(writer.pages)` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("getNumPages()", "len(writer.pages)"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getNumPages", "len(writer.pages)")
         return self._get_num_pages()
 
     @property
@@ -303,17 +283,13 @@ class PdfWriter:
 
     def addBlankPage(
         self, width: Optional[float] = None, height: Optional[float] = None
-    ) -> PageObject:
+    ) -> PageObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`add_blank_page` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("addBlankPage", "add_blank_page"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("addBlankPage", "add_blank_page")
         return self.add_blank_page(width, height)
 
     def insert_blank_page(
@@ -349,17 +325,13 @@ class PdfWriter:
         width: Optional[decimal.Decimal] = None,
         height: Optional[decimal.Decimal] = None,
         index: int = 0,
-    ) -> PageObject:
+    ) -> PageObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`insertBlankPage` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("insertBlankPage", "insert_blank_page"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("insertBlankPage", "insert_blank_page")
         return self.insert_blank_page(width, height, index)
 
     def add_js(self, javascript: str) -> None:
@@ -405,17 +377,13 @@ class PdfWriter:
             }
         )
 
-    def addJS(self, javascript: str) -> None:
+    def addJS(self, javascript: str) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`add_js` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("addJS", "add_js"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("addJS", "add_js")
         return self.add_js(javascript)
 
     def add_attachment(self, filename: str, data: Union[str, bytes]) -> None:
@@ -501,17 +469,15 @@ class PdfWriter:
         # Update the root
         self._root_object.update({NameObject(CA.NAMES): embeddedFilesDictionary})
 
-    def addAttachment(self, fname: str, fdata: Union[str, bytes]) -> None:
+    def addAttachment(
+        self, fname: str, fdata: Union[str, bytes]
+    ) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`add_attachment` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format(
-                "addAttachment(fname, fdata)", "add_attachment(filename, data)"
-            ),
-        )
+        deprecate_with_replacement("addAttachment", "add_attachment")
         return self.add_attachment(fname, fdata)
 
     def append_pages_from_reader(
@@ -548,17 +514,13 @@ class PdfWriter:
         self,
         reader: PdfReader,
         after_page_append: Optional[Callable[[PageObject], None]] = None,
-    ) -> None:
+    ) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`append_pages_from_reader` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("appendPagesFromReader", "append_pages_from_reader"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("appendPagesFromReader", "append_pages_from_reader")
         self.append_pages_from_reader(reader, after_page_append)
 
     def update_page_form_field_values(
@@ -598,18 +560,14 @@ class PdfWriter:
 
     def updatePageFormFieldValues(
         self, page: PageObject, fields: Dict[str, Any], flags: int = 0
-    ) -> None:
+    ) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`update_page_form_field_values` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format(
-                "updatePageFormFieldValues", "update_page_form_field_values"
-            ),
-            PendingDeprecationWarning,
-            stacklevel=2,
+        deprecate_with_replacement(
+            "updatePageFormFieldValues", "update_page_form_field_values"
         )
         return self.update_page_form_field_values(page, fields, flags)
 
@@ -622,16 +580,14 @@ class PdfWriter:
         """
         self._root_object = cast(DictionaryObject, reader.trailer[TK.ROOT])
 
-    def cloneReaderDocumentRoot(self, reader: PdfReader) -> None:
+    def cloneReaderDocumentRoot(self, reader: PdfReader) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`clone_reader_document_root` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("cloneReaderDocumentRoot", "clone_reader_document_root"),
-            PendingDeprecationWarning,
-            stacklevel=2,
+        deprecate_with_replacement(
+            "cloneReaderDocumentRoot", "clone_reader_document_root"
         )
         self.clone_reader_document_root(reader)
 
@@ -659,16 +615,14 @@ class PdfWriter:
         self,
         reader: PdfReader,
         after_page_append: Optional[Callable[[PageObject], None]] = None,
-    ) -> None:
+    ) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`clone_document_from_reader` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("cloneDocumentFromReader", "clone_document_from_reader"),
-            PendingDeprecationWarning,
-            stacklevel=2,
+        deprecate_with_replacement(
+            "cloneDocumentFromReader", "clone_document_from_reader"
         )
         self.clone_document_from_reader(reader, after_page_append)
 
@@ -839,15 +793,13 @@ class PdfWriter:
             args[NameObject(key)] = createStringObject(value)
         self.get_object(self._info).update(args)  # type: ignore
 
-    def addMetadata(self, infos: Dict[str, Any]) -> None:
+    def addMetadata(self, infos: Dict[str, Any]) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`add_metadata` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("addMetadata", "add_metadata"),
-        )
+        deprecate_with_replacement("addMetadata", "add_metadata")
         self.add_metadata(infos)
 
     def _sweep_indirect_references(
@@ -936,17 +888,13 @@ class PdfWriter:
         assert ref.get_object() == obj
         return ref
 
-    def getReference(self, obj: PdfObject) -> IndirectObject:
+    def getReference(self, obj: PdfObject) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`get_reference` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("getReference", "get_reference"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getReference", "get_reference")
         return self.get_reference(obj)
 
     def get_outline_root(self) -> TreeObject:
@@ -964,17 +912,13 @@ class PdfWriter:
 
         return outline
 
-    def getOutlineRoot(self) -> TreeObject:
+    def getOutlineRoot(self) -> TreeObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`get_outline_root` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("getOutlineRoot", "get_outline_root"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getOutlineRoot", "get_outline_root")
         return self.get_outline_root()
 
     def get_named_dest_root(self) -> ArrayObject:
@@ -1016,17 +960,13 @@ class PdfWriter:
 
         return nd
 
-    def getNamedDestRoot(self) -> ArrayObject:
+    def getNamedDestRoot(self) -> ArrayObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`get_named_dest_root` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("getNamedDestRoot", "get_named_dest_root"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getNamedDestRoot", "get_named_dest_root")
         return self.get_named_dest_root()
 
     def add_bookmark_destination(
@@ -1046,15 +986,13 @@ class PdfWriter:
 
     def addBookmarkDestination(
         self, dest: PageObject, parent: Optional[TreeObject] = None
-    ) -> IndirectObject:
+    ) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`add_bookmark_destination` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("addBookmarkDestination", "add_bookmark_destination"),
-        )
+        deprecate_with_replacement("addBookmarkDestination", "add_bookmark_destination")
         return self.add_bookmark_destination(dest, parent)
 
     def add_bookmark_dict(
@@ -1086,7 +1024,7 @@ class PdfWriter:
 
         return bookmark_ref
 
-    def addBookmarkDict(
+    def addBookmarkDict(  # pragma: no cover
         self, bookmark: BookmarkTypes, parent: Optional[TreeObject] = None
     ) -> IndirectObject:
         """
@@ -1094,9 +1032,7 @@ class PdfWriter:
 
             Use :meth:`add_bookmark_dict` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("addBookmarkDict", "add_bookmark_dict"),
-        )
+        deprecate_with_replacement("addBookmarkDict", "add_bookmark_dict")
         return self.add_bookmark_dict(bookmark, parent)
 
     def add_bookmark(
@@ -1187,17 +1123,13 @@ class PdfWriter:
         italic: bool = False,
         fit: FitType = "/Fit",
         *args: ZoomArgsType,
-    ) -> IndirectObject:
+    ) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`add_bookmark` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("addBookmark", "add_bookmark"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("addBookmark", "add_bookmark")
         return self.add_bookmark(
             title, pagenum, parent, color, bold, italic, fit, *args
         )
@@ -1209,16 +1141,16 @@ class PdfWriter:
         nd.extend([dest["/Title"], dest_ref])  # type: ignore
         return dest_ref
 
-    def addNamedDestinationObject(self, dest: PdfObject) -> IndirectObject:
+    def addNamedDestinationObject(
+        self, dest: PdfObject
+    ) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`add_named_destination_object` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format(
-                "addNamedDestinationObject", "add_named_destination_object"
-            ),
+        deprecate_with_replacement(
+            "addNamedDestinationObject", "add_named_destination_object"
         )
         return self.add_named_destination_object(dest)
 
@@ -1239,15 +1171,15 @@ class PdfWriter:
         nd.extend([title, dest_ref])
         return dest_ref
 
-    def addNamedDestination(self, title: str, pagenum: int) -> IndirectObject:
+    def addNamedDestination(
+        self, title: str, pagenum: int
+    ) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`add_named_destination` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("addNamedDestination", "add_named_destination"),
-        )
+        deprecate_with_replacement("addNamedDestination", "add_named_destination")
         return self.add_named_destination(title, pagenum)
 
     def remove_links(self) -> None:
@@ -1259,15 +1191,13 @@ class PdfWriter:
             if PG.ANNOTS in page_ref:
                 del page_ref[PG.ANNOTS]
 
-    def removeLinks(self) -> None:
+    def removeLinks(self) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`remove_links` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("removeLinks", "remove_links"),
-        )
+        deprecate_with_replacement("removeLinks", "remove_links")
         return self.remove_links()
 
     def remove_images(self, ignore_byte_string_object: bool = False) -> None:
@@ -1347,25 +1277,22 @@ class PdfWriter:
             content.operations = _operations
             page_ref.__setitem__(NameObject("/Contents"), content)
 
-    def removeImages(self, ignoreByteStringObject: bool = False) -> None:
+    def removeImages(
+        self, ignoreByteStringObject: bool = False
+    ) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`remove_images` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format(
-                "removeImages(ignoreByteStringObject=False)",
-                "remove_images(ignore_byte_string_object=False)",
-            ),
-        )
+        deprecate_with_replacement("removeImages", "remove_images")
         return self.remove_images(ignoreByteStringObject)
 
     def remove_text(self, ignore_byte_string_object: bool = False) -> None:
         """
         Remove text from this output.
 
-        :param bool ignoreByteStringObject: optional parameter
+        :param bool ignore_byte_string_object: optional parameter
             to ignore ByteString Objects.
         """
         pg_dict = cast(DictionaryObject, self.get_object(self._pages))
@@ -1406,18 +1333,15 @@ class PdfWriter:
 
             page_ref.__setitem__(NameObject("/Contents"), content)
 
-    def removeText(self, ignoreByteStringObject: bool = False) -> None:
+    def removeText(
+        self, ignoreByteStringObject: bool = False
+    ) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`remove_text` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format(
-                "removeText(ignoreByteStringObject=False)",
-                "remove_text(ignore_byte_string_object=False)",
-            ),
-        )
+        deprecate_with_replacement("removeText", "remove_text")
         return self.remove_text(ignoreByteStringObject)
 
     def add_uri(
@@ -1495,15 +1419,13 @@ class PdfWriter:
         uri: int,
         rect: RectangleObject,
         border: Optional[ArrayObject] = None,
-    ) -> None:
+    ) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`add_uri` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("addURI", "add_uri"),
-        )
+        deprecate_with_replacement("addURI", "add_uri")
         return self.add_uri(pagenum, uri, rect, border)
 
     def add_link(
@@ -1599,7 +1521,7 @@ class PdfWriter:
         else:
             page_ref[NameObject(PG.ANNOTS)] = ArrayObject([lnk_ref])
 
-    def addLink(
+    def addLink(  # pragma: no cover
         self,
         pagenum: int,
         pagedest: int,
@@ -1613,9 +1535,7 @@ class PdfWriter:
 
             Use :meth:`add_link` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("addLink", "add_link"),
-        )
+        deprecate_with_replacement("addLink", "add_link")
         return self.add_link(pagenum, pagedest, rect, border, fit, *args)
 
     _valid_layouts = [
@@ -1634,17 +1554,13 @@ class PdfWriter:
         except KeyError:
             return None
 
-    def getPageLayout(self) -> Optional[LayoutType]:
+    def getPageLayout(self) -> Optional[LayoutType]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :py:attr:`page_layout` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("writer.getPageLayout", "writer.page_layout"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getPageLayout", "page_layout")
         return self._get_page_layout()
 
     def _set_page_layout(self, layout: Union[NameObject, LayoutType]) -> None:
@@ -1679,16 +1595,14 @@ class PdfWriter:
             layout = NameObject(layout)
         self._root_object.update({NameObject("/PageLayout"): layout})
 
-    def setPageLayout(self, layout: LayoutType) -> None:
+    def setPageLayout(self, layout: LayoutType) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :py:attr:`page_layout` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("writer.setPageLayout(val)", "writer.page_layout = val"),
-            PendingDeprecationWarning,
-            stacklevel=2,
+        deprecate_with_replacement(
+            "writer.setPageLayout(val)", "writer.page_layout = val"
         )
         return self._set_page_layout(layout)
 
@@ -1722,31 +1636,23 @@ class PdfWriter:
         self._set_page_layout(layout)
 
     @property
-    def pageLayout(self) -> Optional[LayoutType]:
+    def pageLayout(self) -> Optional[LayoutType]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :py:attr:`page_layout` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("writer.pageLayout", "writer.page_layout"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("pageLayout", "page_layout")
         return self.page_layout
 
     @pageLayout.setter
-    def pageLayout(self, layout: LayoutType) -> None:
+    def pageLayout(self, layout: LayoutType) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :py:attr:`page_layout` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("writer.pageLayout", "writer.page_layout"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("pageLayout", "page_layout")
         self.page_layout = layout
 
     _valid_modes = [
@@ -1764,17 +1670,13 @@ class PdfWriter:
         except KeyError:
             return None
 
-    def getPageMode(self) -> Optional[PagemodeType]:
+    def getPageMode(self) -> Optional[PagemodeType]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :py:attr:`page_mode` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("writer.getPageMode()", "writer.page_mode"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getPageMode", "page_mode")
         return self._get_page_mode()
 
     def set_page_mode(self, mode: PagemodeType) -> None:
@@ -1793,17 +1695,13 @@ class PdfWriter:
             mode_name = NameObject(mode)
         self._root_object.update({NameObject("/PageMode"): mode_name})
 
-    def setPageMode(self, mode: PagemodeType) -> None:
+    def setPageMode(self, mode: PagemodeType) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :py:attr:`page_mode` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("writer.setPageMode(val)", "writer.page_mode = val"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("writer.setPageMode(val)", "writer.page_mode = val")
         self.set_page_mode(mode)
 
     @property
@@ -1834,41 +1732,27 @@ class PdfWriter:
         self.set_page_mode(mode)
 
     @property
-    def pageMode(self) -> Optional[PagemodeType]:
+    def pageMode(self) -> Optional[PagemodeType]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :py:attr:`page_mode` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("writer.pageMode", "writer.page_mode"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("pageMode", "page_mode")
         return self.page_mode
 
     @pageMode.setter
-    def pageMode(self, mode: PagemodeType) -> None:
+    def pageMode(self, mode: PagemodeType) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :py:attr:`page_mode` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("writer.pageMode", "writer.page_mode"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("pageMode", "page_mode")
         self.page_mode = mode
 
 
-class PdfFileWriter(PdfWriter):
+class PdfFileWriter(PdfWriter):  # pragma: no cover
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        import warnings
-
-        warnings.warn(
-            "PdfFileWriter was renamed to PdfWriter. PdfFileWriter will be removed",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("PdfFileWriter", "PdfWriter")
         super().__init__(*args, **kwargs)

@@ -241,17 +241,13 @@ def paeth_predictor(left: int, up: int, up_left: int) -> int:
         return up_left
 
 
+def deprecate(msg: str, stacklevel: int = 3) -> None:
+    warnings.warn(msg, PendingDeprecationWarning, stacklevel=stacklevel)
+
+
 def deprecate_with_replacement(old_name: str, new_name: str) -> None:
-    warnings.warn(
-        DEPR_MSG.format(old_name, new_name),
-        PendingDeprecationWarning,
-        stacklevel=2,
-    )
+    deprecate(DEPR_MSG.format(old_name, new_name), 4)
 
 
 def deprecate_no_replacement(name: str) -> None:
-    warnings.warn(
-        DEPR_MSG_NO_REPLACEMENT.format(name),
-        PendingDeprecationWarning,
-        stacklevel=2,
-    )
+    deprecate(DEPR_MSG_NO_REPLACEMENT.format(name), 4)

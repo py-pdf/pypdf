@@ -1,7 +1,6 @@
 import datetime
 import decimal
 import re
-import warnings
 from typing import (
     Any,
     Callable,
@@ -16,7 +15,7 @@ from xml.dom.minidom import Document
 from xml.dom.minidom import Element as XmlElement
 from xml.dom.minidom import parseString
 
-from ._utils import DEPR_MSG, StreamType
+from ._utils import StreamType, deprecate_with_replacement
 from .generic import ContentStream, PdfObject
 
 RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
@@ -217,16 +216,13 @@ class XmpInformation(PdfObject):
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:
+    ) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`write_to_stream` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("writeToStream", "write_to_stream"),
-            PendingDeprecationWarning,
-        )
+        deprecate_with_replacement("writeToStream", "write_to_stream")
         self.write_to_stream(stream, encryption_key)
 
     def get_element(self, about_uri: str, namespace: str, name: str) -> Iterator[Any]:
@@ -237,17 +233,15 @@ class XmpInformation(PdfObject):
                     yield attr
                 yield from desc.getElementsByTagNameNS(namespace, name)
 
-    def getElement(self, aboutUri: str, namespace: str, name: str) -> Iterator[Any]:
+    def getElement(
+        self, aboutUri: str, namespace: str, name: str
+    ) -> Iterator[Any]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`get_element` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("getElement", "get_element"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getElement", "get_element")
         return self.get_element(aboutUri, namespace, name)
 
     def get_nodes_in_namespace(self, about_uri: str, namespace: str) -> Iterator[Any]:
@@ -261,17 +255,15 @@ class XmpInformation(PdfObject):
                     if child.namespaceURI == namespace:
                         yield child
 
-    def getNodesInNamespace(self, aboutUri: str, namespace: str) -> Iterator[Any]:
+    def getNodesInNamespace(
+        self, aboutUri: str, namespace: str
+    ) -> Iterator[Any]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`get_nodes_in_namespace` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("getNodesInNamespace", "get_nodes_in_namespace"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getNodesInNamespace", "get_nodes_in_namespace")
         return self.get_nodes_in_namespace(aboutUri, namespace)
 
     def _get_text(self, element: XmlElement) -> str:

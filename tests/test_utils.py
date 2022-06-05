@@ -89,3 +89,9 @@ def test_b():
     assert PyPDF2._utils.b_("😀") == "😀".encode()
     assert PyPDF2._utils.b_("‰") == "‰".encode()
     assert PyPDF2._utils.b_("▷") == "▷".encode()
+
+
+def test_deprecate_no_replacement():
+    with pytest.raises(PendingDeprecationWarning) as exc:
+        PyPDF2._utils.deprecate_no_replacement("foo")
+    assert exc.value.args[0] == "foo is deprecated and will be removed in PyPDF2 3.0.0."

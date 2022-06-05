@@ -30,6 +30,34 @@ with open("PyPDF2-output.pdf", "wb") as fp:
     writer.write(fp)
 ```
 
+## Page rotation
+
+The most typical rotation is a clockwise rotation of the page by multiples of
+90 degrees. That is done when the orientation of the page is wrong. You can
+do that with the [`rotate` method](https://pypdf2.readthedocs.io/en/latest/modules/PageObject.html#PyPDF2._page.PageObject.rotate)
+of the `PageObject` class:
+
+```python
+from PyPDF2 import PdfWriter, PdfReader
+
+reader = PdfReader("input.pdf")
+writer = PdfWriter()
+
+
+writer.add_page(reader.pages[0])
+writer.pages[0].rotate(90)
+
+with open("output.pdf", "wb") as fp:
+    writer.write(fp)
+```
+
+The rotate method is typically preferred over the `page.add_transformation(Transformation().rotate())`
+method, because `rotate` will ensure that the page is still in the mediabox /
+cropbox. The transformation object operates on the coordinates of the pages
+contents and does not change the mediabox or cropbox.
+
+
+
 ## Plain Merge
 
 ![](plain-merge.png)

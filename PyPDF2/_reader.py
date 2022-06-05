@@ -47,11 +47,11 @@ from typing import (
 from ._page import PageObject, _VirtualList
 from ._security import RC4_encrypt, _alg33_1, _alg34, _alg35
 from ._utils import (
-    DEPR_MSG,
-    DEPR_MSG_NO_REPLACEMENT,
     StrByteType,
     StreamType,
     b_,
+    deprecate_no_replacement,
+    deprecate_with_replacement,
     ord_,
     read_non_whitespace,
     read_until_whitespace,
@@ -102,12 +102,10 @@ def convert_to_int(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:
     return struct.unpack(">q", d)[0]
 
 
-def convertToInt(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:
-    warnings.warn(
-        DEPR_MSG.format("convertToInt", "convert_to_int"),
-        PendingDeprecationWarning,
-        stacklevel=2,
-    )
+def convertToInt(
+    d: bytes, size: int
+) -> Union[int, Tuple[Any, ...]]:  # pragma: no cover
+    deprecate_with_replacement("convertToInt", "convert_to_int")
     return convert_to_int(d, size)
 
 
@@ -134,7 +132,7 @@ class DocumentInformation(DictionaryObject):
             return retval
         return None
 
-    def getText(self, key: str) -> Optional[str]:
+    def getText(self, key: str) -> Optional[str]:  # pragma: no cover
         """
         The text value of the specified key or None.
 
@@ -142,11 +140,7 @@ class DocumentInformation(DictionaryObject):
 
             Use the attributes (e.g. :py:attr:`title` / :py:attr:`author`).
         """
-        warnings.warn(
-            DEPR_MSG_NO_REPLACEMENT.format("getText"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_no_replacement("getText")
         return self._get_text(key)
 
     @property
@@ -284,35 +278,23 @@ class PdfReader:
         retval.update(obj)  # type: ignore
         return retval
 
-    def getDocumentInfo(self) -> Optional[DocumentInformation]:
+    def getDocumentInfo(self) -> Optional[DocumentInformation]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use the attribute :py:attr:`metadata` instead.
         """
-        warnings.warn(
-            "The `getDocumentInfo` method of PdfReader will be replaced by the "
-            "`metadata` attribute in PyPDF2 3.0.0. You can switch to the "
-            "metadata attribute already.",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getDocumentInfo", "metadata")
         return self.metadata
 
     @property
-    def documentInfo(self) -> Optional[DocumentInformation]:
+    def documentInfo(self) -> Optional[DocumentInformation]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use the attribute :py:attr:`metadata` instead.
         """
-        warnings.warn(
-            "The `documentInfo` attribute of PdfReader will be replaced by "
-            "`metadata` in PyPDF2 3.0.0. You can switch to the metadata "
-            "attribute already.",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("documentInfo", "metadata")
         return self.metadata
 
     @property
@@ -331,35 +313,23 @@ class PdfReader:
         finally:
             self._override_encryption = False
 
-    def getXmpMetadata(self) -> Optional[XmpInformation]:
+    def getXmpMetadata(self) -> Optional[XmpInformation]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use the attribute :py:attr:`xmp_metadata` instead.
         """
-        warnings.warn(
-            "The `getXmpMetadata` method of PdfReader will be replaced by the "
-            "`xmp_metadata` attribute in PyPDF2 3.0.0. You can switch to the "
-            "xmp_metadata attribute already.",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getXmpMetadata", "xmp_metadata")
         return self.xmp_metadata
 
     @property
-    def xmpMetadata(self) -> Optional[XmpInformation]:
+    def xmpMetadata(self) -> Optional[XmpInformation]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use the attribute :py:attr:`xmp_metadata` instead.
         """
-        warnings.warn(
-            "The `xmpMetadata` attribute of PdfReader will be replaced by the "
-            "`xmp_metadata` attribute in PyPDF2 3.0.0. You can switch to the "
-            "xmp_metadata attribute already.",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("xmpMetadata", "xmp_metadata")
         return self.xmp_metadata
 
     def _get_num_pages(self) -> int:
@@ -389,44 +359,33 @@ class PdfReader:
                 self._flatten()
             return len(self.flattened_pages)  # type: ignore
 
-    def getNumPages(self) -> int:
+    def getNumPages(self) -> int:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :code:`len(reader.pages)` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("reader.getNumPages", "len(reader.pages)"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("reader.getNumPages", "len(reader.pages)")
         return self._get_num_pages()
 
     @property
-    def numPages(self) -> int:
+    def numPages(self) -> int:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :code:`len(reader.pages)` instead.
         """
-        warnings.warn(
-            "The `numPages` attribute of PdfReader will be removed in PyPDF2 3.0.0. "
-            "Use `len(reader.pages)` instead.",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("reader.numPages", "len(reader.pages)")
         return self._get_num_pages()
 
-    def getPage(self, pageNumber: int) -> PageObject:
+    def getPage(self, pageNumber: int) -> PageObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :code:`reader.pages[pageNumber]` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("reader.getPage(pageNumber)", "reader.pages[pageNumber]"),
-            PendingDeprecationWarning,
-            stacklevel=2,
+        deprecate_with_replacement(
+            "reader.getPage(pageNumber)", "reader.pages[pageNumber]"
         )
         return self._get_page(pageNumber)
 
@@ -447,17 +406,13 @@ class PdfReader:
         return self.flattened_pages[page_number]
 
     @property
-    def namedDestinations(self) -> Dict[str, Any]:
+    def namedDestinations(self) -> Dict[str, Any]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :py:attr:`named_destinations` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("reader.namedDestinations", "reader.named_destinations"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("namedDestinations", "named_destinations")
         return self.named_destinations
 
     @property
@@ -529,17 +484,13 @@ class PdfReader:
         tree: Optional[TreeObject] = None,
         retval: Optional[Dict[Any, Any]] = None,
         fileobj: Optional[Any] = None,
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[Dict[str, Any]]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`get_fields` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("reader.getFields", "reader.get_fields"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getFields", "get_fields")
         return self.get_fields(tree, retval, fileobj)
 
     def _build_field(
@@ -611,17 +562,13 @@ class PdfReader:
             if formfields[field].get("/FT") == "/Tx"
         }
 
-    def getFormTextFields(self) -> Dict[str, Any]:
+    def getFormTextFields(self) -> Dict[str, Any]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`get_form_text_fields` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("reader.getFormTextFields", "reader.get_form_text_fields"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getFormTextFields", "get_form_text_fields")
         return self.get_form_text_fields()
 
     def _get_named_destinations(
@@ -674,17 +621,13 @@ class PdfReader:
         self,
         tree: Union[TreeObject, None] = None,
         retval: Optional[Any] = None,
-    ) -> Dict[str, Any]:
+    ) -> Dict[str, Any]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :py:attr:`named_destinations` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("reader.getNamedDestinations", "reader.named_destinations"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getNamedDestinations", "named_destinations")
         return self._get_named_destinations(tree, retval)
 
     @property
@@ -742,17 +685,13 @@ class PdfReader:
 
     def getOutlines(
         self, node: Optional[DictionaryObject] = None, outlines: Optional[Any] = None
-    ) -> OutlinesType:
+    ) -> OutlinesType:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :py:attr:`outlines` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("reader.getOutlines", "reader.outlines"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getOutlines", "outlines")
         return self._get_outlines(node, outlines)
 
     def _get_page_number_by_indirect(
@@ -786,19 +725,13 @@ class PdfReader:
         """
         return self._get_page_number_by_indirect(page.indirect_ref)
 
-    def getPageNumber(self, page: PageObject) -> int:
+    def getPageNumber(self, page: PageObject) -> int:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`get_page_number` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format(
-                "reader.getPageNumber(page)", "reader.get_page_number(page)"
-            ),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getPageNumber", "get_page_number")
         return self.get_page_number(page)
 
     def get_destination_page_number(self, destination: Destination) -> int:
@@ -811,18 +744,16 @@ class PdfReader:
         """
         return self._get_page_number_by_indirect(destination.page)
 
-    def getDestinationPageNumber(self, destination: Destination) -> int:
+    def getDestinationPageNumber(
+        self, destination: Destination
+    ) -> int:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`get_destination_page_number` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format(
-                "reader.getDestinationPageNumber", "reader.get_destination_page_number"
-            ),
-            PendingDeprecationWarning,
-            stacklevel=2,
+        deprecate_with_replacement(
+            "getDestinationPageNumber", "get_destination_page_number"
         )
         return self.get_destination_page_number(destination)
 
@@ -909,31 +840,23 @@ class PdfReader:
             return cast(NameObject, trailer[CD.PAGE_LAYOUT])
         return None
 
-    def getPageLayout(self) -> Optional[str]:
+    def getPageLayout(self) -> Optional[str]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :py:attr:`page_layout` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("reader.getPageLayout()", "reader.page_layout"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getPageLayout", "page_layout")
         return self.page_layout
 
     @property
-    def pageLayout(self) -> Optional[str]:
+    def pageLayout(self) -> Optional[str]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :py:attr:`page_layout` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("reader.pageLayout", "reader.page_layout"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("pageLayout", "page_layout")
         return self.page_layout
 
     @property
@@ -965,31 +888,23 @@ class PdfReader:
         except KeyError:
             return None
 
-    def getPageMode(self) -> Optional[PagemodeType]:
+    def getPageMode(self) -> Optional[PagemodeType]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :py:attr:`page_mode` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("reader.getPageMode()", "reader.page_mode"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getPageMode", "page_mode")
         return self.page_mode
 
     @property
-    def pageMode(self) -> Optional[PagemodeType]:
+    def pageMode(self) -> Optional[PagemodeType]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :py:attr:`page_mode` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("reader.pageMode", "reader.page_mode"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("pageMode", "page_mode")
         return self.page_mode
 
     def _flatten(
@@ -1159,20 +1074,15 @@ class PdfReader:
         )
         return retval
 
-    def getObject(self, indirectReference: IndirectObject) -> Optional[PdfObject]:
+    def getObject(
+        self, indirectReference: IndirectObject
+    ) -> Optional[PdfObject]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`get_object` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format(
-                "reader.getObject(indirectReference)",
-                "reader.get_object(indirect_reference)",
-            ),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getObject", "get_object")
         return self.get_object(indirectReference)
 
     def _decrypt_object(
@@ -1233,17 +1143,15 @@ class PdfReader:
             )
         return int(idnum), int(generation)
 
-    def readObjectHeader(self, stream: StreamType) -> Tuple[int, int]:
+    def readObjectHeader(
+        self, stream: StreamType
+    ) -> Tuple[int, int]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`read_object_header` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("reader.readObjectHeader", "reader.read_object_header"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("readObjectHeader", "read_object_header")
         return self.read_object_header(stream)
 
     def cache_get_indirect_object(
@@ -1253,18 +1161,14 @@ class PdfReader:
 
     def cacheGetIndirectObject(
         self, generation: int, idnum: int
-    ) -> Optional[PdfObject]:
+    ) -> Optional[PdfObject]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`cache_get_indirect_object` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format(
-                "reader.cacheGetIndirectObject", "reader.cache_get_indirect_object"
-            ),
-            PendingDeprecationWarning,
-            stacklevel=2,
+        deprecate_with_replacement(
+            "cacheGetIndirectObject", "cache_get_indirect_object"
         )
         return self.cache_get_indirect_object(generation, idnum)
 
@@ -1282,19 +1186,13 @@ class PdfReader:
 
     def cacheIndirectObject(
         self, generation: int, idnum: int, obj: Optional[PdfObject]
-    ) -> Optional[PdfObject]:
+    ) -> Optional[PdfObject]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`cache_indirect_object` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format(
-                "reader.cacheIndirectObject", "reader.cache_indirect_object"
-            ),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("cacheIndirectObject", "cache_indirect_object")
         return self.cache_indirect_object(generation, idnum, obj)
 
     def read(self, stream: StreamType) -> None:
@@ -1678,17 +1576,15 @@ class PdfReader:
         line_parts.reverse()
         return b"".join(line_parts)
 
-    def readNextEndLine(self, stream: StreamType, limit_offset: int = 0) -> bytes:
+    def readNextEndLine(
+        self, stream: StreamType, limit_offset: int = 0
+    ) -> bytes:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`read_next_end_line` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("reader.readNextEndLine", "reader.read_next_end_line"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("readNextEndLine", "read_next_end_line")
         return self.read_next_end_line(stream, limit_offset)
 
     def decrypt(self, password: Union[str, bytes]) -> int:
@@ -1831,43 +1727,29 @@ class PdfReader:
         """
         return TK.ENCRYPT in self.trailer
 
-    def getIsEncrypted(self) -> bool:
+    def getIsEncrypted(self) -> bool:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :py:attr:`is_encrypted` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("reader.getIsEncrypted()", "reader.is_encrypted"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getIsEncrypted", "is_encrypted")
         return self.is_encrypted
 
     @property
-    def isEncrypted(self) -> bool:
+    def isEncrypted(self) -> bool:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :py:attr:`is_encrypted` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("reader.isEncrypted", "reader.is_encrypted"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("isEncrypted", "is_encrypted")
         return self.is_encrypted
 
 
-class PdfFileReader(PdfReader):
+class PdfFileReader(PdfReader):  # pragma: no cover
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        import warnings
-
-        warnings.warn(
-            "PdfFileReader was renamed to PdfReader. PdfFileReader will be removed",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("PdfFileReader", "PdfReader")
         if "strict" not in kwargs and len(args) < 2:
             kwargs["strict"] = True  # maintain the default
         super().__init__(*args, **kwargs)

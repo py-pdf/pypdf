@@ -1,5 +1,14 @@
-Version 2.0.0
--------------
+Version 2.0.0, 2022-06-01
+-------------------------
+
+The 2.0.0 release of PyPDF2 includes three core changes:
+
+1. Dropping support for Python 3.5 and older.
+2. Introducing type annotations.
+3. Interface changes, mostly to have PEP8-compliant names
+
+We introduced a [deprecation process](https://github.com/py-pdf/PyPDF2/pull/930)
+that hopefully helps users to avoid unexpected breaking changes.
 
 Breaking Changes(DEP):
 - PyPDF2 2.0 requires Python 3.6+. Python 2.7 and 3.5 support were dropped.
@@ -33,6 +42,59 @@ Breaking Changes(DEP):
   `Tests` are renamed to `tests`, the `Resources` are renamed to `resources`.
   Both are still in the git repository. The `Scripts` are now in
   https://github.com/py-pdf/cpdf. `Sample_Code` was moved to the `docs`.
+
+For a full list of deprecated functions, please see the changelog of version
+1.28.0.
+
+New Features (ENH):
+-  Improve space setting for text extraction (#922)
+-  Allow setting the decryption password in PdfReader.__init__ (#920)
+-  Add Page.add_transformation (#883)
+
+Bug Fixes (BUG):
+-  Fix error adding transformation to page without /Contents (#908)
+
+Robustness (ROB):
+-  Cope with invalid length in streams (#861)
+
+Documentation (DOC):
+-  Fix style of 1.25 and 1.27 patch notes (#927)
+-  Transformation (#907)
+
+Developer Experience (DEV):
+-  Create flake8 config file (#916)
+-  Use relative imports (#875)
+
+Maintenance (MAINT):
+-  Use Python 3.6 language features (#849)
+-  Add wrapper function for PendingDeprecationWarnings (#928)
+-  Use new PEP8 compliant names (#884)
+-  Explicitly represent transformation matrix (#878)
+-  Inline PAGE_RANGE_HELP string (#874)
+-  Remove unnecessary generics imports (#873)
+-  Remove star imports (#865)
+-  merger.py ➔ _merger.py (#864)
+-  Type annotations for all functions/methods (#854)
+-  Add initial type support with mypy (#853)
+
+Testing (TST):
+-  Regression test for xmp_metadata converter (#923)
+-  Checkout submodule sample-files for benchmark
+-  Add text extracting performance benchmark
+-  Use new PyPDF2 API in benchmark (#902)
+-  Make test suite fail for uncaught warnings (#892)
+-  Remove -OO testrun from CI (#901)
+-  Improve tests for convert_to_int (#899)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.28.4...2.0.0
+
+Version 1.28.4, 2022-05-29
+--------------------------
+
+Bug Fixes (BUG):
+-  XmpInformation._converter_date was unusable (#921)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.28.3...1.28.4
 
 Version 1.28.3, 2022-05-28
 --------------------------
@@ -436,6 +498,41 @@ Miscellaneous:
 
 All changes: https://github.com/py-pdf/PyPDF2/compare/1.27.3...1.27.4
 
+Version 1.27.3, 2022-04-10
+--------------------------
+
+- PKG: Make Tests not a subpackage (#728)
+- BUG: Fix ASCII85Decode.decode assertion (#729)
+- BUG: Error in Chinese character encoding (#463)
+- BUG: Code duplication in Scripts/2-up.py
+- ROBUST: Guard 'obj.writeToStream' with 'if obj is not None'
+- ROBUST: Ignore a /Prev entry with the value 0 in the trailer
+- MAINT: Remove Sample_Code (#726)
+- TST: Close file handle in test_writer (#722)
+- TST: Fix test_get_images (#730)
+- DEV: Make tox use pytest and add more Python versions (#721)
+- DOC: Many (#720, #723-725, #469)
+
+All changes: https://github.com/py-pdf/PyPDF2/compare/1.27.2...1.27.3
+
+Version 1.27.2, 2022-04-09
+--------------------------
+
+- Add Scripts (including `pdfcat`), Resources, Tests, and Sample_Code back to
+  PyPDF2. It was removed by accident in 1.27.0, but might get removed with 2.0.0
+  See https://github.com/py-pdf/PyPDF2/discussions/718 for discussion
+
+All changes: https://github.com/py-pdf/PyPDF2/compare/1.27.1...1.27.2
+
+Version 1.27.1, 2022-04-08
+--------------------------
+
+- Fixed project links on PyPI page after migration from mstamy2
+  to MartinThoma to the py-pdf organization on GitHub
+- Documentation is now at https://pypdf2.readthedocs.io/en/latest/
+
+All changes: https://github.com/py-pdf/PyPDF2/compare/1.27.0...1.27.1
+
 Version 1.27.0, 2022-04-07
 --------------------------
 
@@ -477,32 +574,6 @@ Miscellaneous:
 
 You can see the full changelog at: https://github.com/py-pdf/PyPDF2/compare/1.26.0...1.27.0
 
-Patch release 1.27.1, 2022-04-08
-
-- Fixed project links on PyPI page after migration from mstamy2
-  to MartinThoma to the py-pdf organization on GitHub
-- Documentation is now at https://pypdf2.readthedocs.io/en/latest/
-
-Patch release 1.27.2, 2022-04-09
-
-- Add Scripts (including `pdfcat`), Resources, Tests, and Sample_Code back to
-  PyPDF2. It was removed by accident in 1.27.0, but might get removed with 2.0.0
-  See https://github.com/py-pdf/PyPDF2/discussions/718 for discussion
-
-Patch release 1.27.3, 2022-04-10
-
-- PKG: Make Tests not a subpackage (#728)
-- BUG: Fix ASCII85Decode.decode assertion (#729)
-- BUG: Error in Chinese character encoding (#463)
-- BUG: Code duplication in Scripts/2-up.py
-- ROBUST: Guard 'obj.writeToStream' with 'if obj is not None'
-- ROBUST: Ignore a /Prev entry with the value 0 in the trailer
-- MAINT: Remove Sample_Code (#726)
-- TST: Close file handle in test_writer (#722)
-- TST: Fix test_get_images (#730)
-- DEV: Make tox use pytest and add more Python versions (#721)
-- DOC: Many (#720, #723-725, #469)
-
 Version 1.26.0, 2016-05-18
 --------------------------
 
@@ -529,8 +600,8 @@ Version 1.26.0, 2016-05-18
  - Fix bug where reading an inline image would cut off prematurely
    in certain cases (speedplane)
 
-
-Patch 1.25.1, 2015-07-20
+Version 1.25.1, 2015-07-20
+--------------------------
 
  - Fix bug when parsing inline images. Occurred when merging
    certain pages with inline images

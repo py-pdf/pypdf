@@ -132,6 +132,76 @@ def test_remove_text(input_path, ignore_byte_string_object):
     os.remove(tmp_filename)
 
 
+@pytest.mark.parametrize(
+    ("ignore_byte_string_object"),
+    [False, True],
+)
+def test_remove_text_all_operators(ignore_byte_string_object):
+    stream = (
+        b"BT "
+        b"/F0 36 Tf "
+        b"50 706 Td "
+        b"36 TL "
+        b"(The Tj operator) Tj "
+        b'1 2 (The double quote operator) " '
+        b"(The single quote operator) ' "
+        b"ET"
+    )
+    pdf_data = (
+        b"%%PDF-1.7\n"
+        b"1 0 obj << /Count 1 /Kids [5 0 R] /Type /Pages >> endobj\n"
+        b"2 0 obj << >> endobj\n"
+        b"3 0 obj << >> endobj\n"
+        b"4 0 obj << /Length %d >>\n"
+        b"stream\n" + (b"%s\n" % stream) + b"endstream\n"
+        b"endobj\n"
+        b"5 0 obj << /Contents 4 0 R /CropBox [0.0 0.0 2550.0 3508.0]\n"
+        b" /MediaBox [0.0 0.0 2550.0 3508.0] /Parent 1 0 R"
+        b" /Resources << /Font << >> >>"
+        b" /Rotate 0 /Type /Page >> endobj\n"
+        b"6 0 obj << /Pages 1 0 R /Type /Catalog >> endobj\n"
+        b"xref 1 6\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"%010d 00000 n\n"
+        b"trailer << /Root 6 0 R /Size 6 >>\n"
+        b"startxref\n%d\n"
+        b"%%%%EOF"
+    )
+    startx_correction = -1
+    pdf_data = pdf_data % (
+        len(stream),
+        pdf_data.find(b"1 0 obj") + startx_correction,
+        pdf_data.find(b"2 0 obj") + startx_correction,
+        pdf_data.find(b"3 0 obj") + startx_correction,
+        pdf_data.find(b"4 0 obj") + startx_correction,
+        pdf_data.find(b"5 0 obj") + startx_correction,
+        pdf_data.find(b"6 0 obj") + startx_correction,
+        # startx_correction should be -1 due to double % at the beginning indiducing an error on startxref computation
+        pdf_data.find(b"xref"),
+    )
+    print(pdf_data.decode())
+    pdf_stream = BytesIO(pdf_data)
+
+    reader = PdfReader(pdf_stream, strict=False)
+    writer = PdfWriter()
+
+    page = reader.pages[0]
+    writer.insert_page(page, 0)
+    writer.remove_text(ignore_byte_string_object=ignore_byte_string_object)
+
+    # finally, write "output" to PyPDF2-output.pdf
+    tmp_filename = "dont_commit_writer_removed_text.pdf"
+    with open(tmp_filename, "wb") as output_stream:
+        writer.write(output_stream)
+
+    # Cleanup
+    os.remove(tmp_filename)
+
+
 def test_write_metadata():
     pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
 

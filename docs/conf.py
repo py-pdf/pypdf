@@ -59,7 +59,7 @@ html_theme = "sphinx_rtd_theme"
 html_theme_options = {
     "canonical_url": "",
     "analytics_id": "",
-    "logo_only": False,
+    "logo_only": True,
     "display_version": True,
     "prev_next_buttons_location": "bottom",
     "style_external_links": False,
@@ -70,6 +70,8 @@ html_theme_options = {
     "includehidden": True,
     "titles_only": False,
 }
+html_logo = "_static/logo.png"
+
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
