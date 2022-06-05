@@ -1097,10 +1097,13 @@ class ContentStream(DecodedStreamObject):
             data = b_("")
             for s in stream:
                 data += b_(s.get_object().get_data())
-            stream = BytesIO(b_(data))
+            stream_bytes = BytesIO(b_(data))
         else:
-            stream = BytesIO(b_(stream.get_data()))
-        self.__parseContentStream(stream)
+            stream_data = stream.get_data()
+            assert stream_data is not None
+            stream_data_bytes = b_(stream_data)
+            stream_bytes = BytesIO(stream_data_bytes)
+        self.__parseContentStream(stream_bytes)
 
     def __parseContentStream(self, stream: StreamType) -> None:
         # file("f:\\tmp.txt", "w").write(stream.read())
