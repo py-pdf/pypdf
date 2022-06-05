@@ -1,6 +1,8 @@
 import binascii
 import os
 import sys
+import urllib.request
+from io import BytesIO
 
 import pytest
 
@@ -102,3 +104,40 @@ def test_rotate_45():
             with pytest.warns(PendingDeprecationWarning):
                 page.rotateCounterClockwise(45)
         assert exc.value.args[0] == "Rotation angle must be a multiple of 90"
+
+
+@pytest.mark.parametrize(
+    ("enable", "url", "pages"),
+    [
+        (True, "https://arxiv.org/pdf/2201.00214.pdf", [0, 1, 5, 10]),
+        (
+            True,
+            "https://github.com/py-pdf/sample-files/raw/main/009-pdflatex-geotopo/GeoTopo.pdf",
+            [0, 1, 5, 10],
+        ),
+        (True, "https://arxiv.org/pdf/2201.00151.pdf", [0, 1, 5, 10]),
+        (True, "https://arxiv.org/pdf/1707.09725.pdf", [0, 1, 5, 10]),
+        (True, "https://arxiv.org/pdf/2201.00021.pdf", [0, 1, 5, 8]),
+        (True, "https://arxiv.org/pdf/2201.00037.pdf", [0, 1, 5, 10]),
+        (True, "https://arxiv.org/pdf/2201.00069.pdf", [0, 1, 5, 10]),
+        (True, "https://arxiv.org/pdf/2201.00178.pdf", [0, 1, 5, 10]),
+        (True, "https://arxiv.org/pdf/2201.00201.pdf", [0, 1, 5, 8]),
+        (True, "https://arxiv.org/pdf/1602.06541.pdf", [0, 1, 5, 10]),
+        (True, "https://arxiv.org/pdf/2201.00200.pdf", [0, 1, 5, 6]),
+        (True, "https://arxiv.org/pdf/2201.00022.pdf", [0, 1, 5, 10]),
+        (True, "https://arxiv.org/pdf/2201.00029.pdf", [0, 1, 6, 10]),
+        # 6 instead of 5: as there is an issue in page 5 (missing objects)
+        # and too complex to handle the warning without hiding real regressions
+        (True, "https://arxiv.org/pdf/1601.03642.pdf", [0, 1, 5, 7]),
+    ],
+)
+def test_extract_textbench(enable, url, pages, print_result=False):
+    if not enable:
+        return
+    reader = PdfReader(BytesIO(urllib.request.urlopen(url).read()))
+    for page_number in pages:
+        if print_result:
+            print(f"**************** {url} / page {page_number} ****************")
+        rst = reader.pages[page_number].extract_text()
+        if print_result:
+            print(f"{rst}\n*****************************\n")
