@@ -1292,7 +1292,7 @@ class PdfWriter:
         """
         Remove text from this output.
 
-        :param bool ignoreByteStringObject: optional parameter
+        :param bool ignore_byte_string_object: optional parameter
             to ignore ByteString Objects.
         """
         pg_dict = cast(DictionaryObject, self.get_object(self._pages))
