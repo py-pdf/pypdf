@@ -1300,6 +1300,7 @@ class PageObject(DictionaryObject):
                         space_code = a
 
             #compute space width
+            st: int = 0 # declaration for mypy
             if "/W" in ft:
                 if "/DW" in ft:
                     sp_width = cast(float, ft["/DW"])
@@ -1323,8 +1324,8 @@ class PageObject(DictionaryObject):
             if "/Widths" in ft:
                 w = [x for x in ft["/Widths"]]                      #type: ignore
                 try:
-                    st : int = cast(int, ft["/FirstChar"])
-                    en : int = cast(int, ft["/LastChar"])
+                    st = cast(int, ft["/FirstChar"])
+                    en: int = cast(int, ft["/LastChar"])
                     if st>space_code or en<space_code:
                         raise Exception("Not in range")
                     if w[space_code-st] == 0:
@@ -1341,8 +1342,7 @@ class PageObject(DictionaryObject):
                             if x>0:
                                 m += x
                                 cpt += 1
-                        sp_width = m / cpt / 2
-
+                        sp_width = m / max(1,cpt) / 2
 
             return font_type, float(sp_width/2), dict(zip(range(256), encoding)), "".maketrans(map_dict)
             # ------- end of buildCharmap ------
@@ -1355,7 +1355,6 @@ class PageObject(DictionaryObject):
         if "/Font" in resources_dict:
             for f in cast(DictionaryObject, resources_dict["/Font"]):
                 cmaps[f] = buildCharMap(f)
-                #print(f);print(cmaps[f])
         cmap: Union[str, Dict[int, str]] = {}
         content = obj[content_key].get_object() if isinstance(content_key, str) else obj;
         if not isinstance(content, ContentStream):
@@ -1364,28 +1363,28 @@ class PageObject(DictionaryObject):
         # are strings where the byte->string encoding was unknown, so adding
         # them to the text here would be gibberish.
 
-        Tm_matrix : List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-        Tm_prev   : List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+        tm_matrix : List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+        tm_prev   : List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
         char_scale = 1.0
         space_scale = 1.0
         _space_width :float = 500.0 # will be set correctly at first Tf
         TL = 0.0
         font_size = 12.0 #init just in case of
 
-        ##Tm_matrix: Tuple = Tm_matrix, output: str = output, text: str = text,
+        ##tm_matrix: Tuple = tm_matrix, output: str = output, text: str = text,
         ##char_scale: float = char_scale,space_scale : float = space_scale, _space_width: float = _space_width,
         ##TL: float = TL, font_size: float = font_size, cmap = cmap
 
         def process_operation(operator: bytes, operands:List)-> None :
-            nonlocal Tm_matrix, Tm_prev, output, text,char_scale, space_scale,_space_width, TL, font_size,cmap
-            if Tm_matrix[4] != 0  and Tm_matrix[5] != 0:   # o reuse of the 
-                Tm_prev = list(Tm_matrix)
+            nonlocal tm_matrix, tm_prev, output, text,char_scale, space_scale,_space_width, TL, font_size,cmap
+            if tm_matrix[4] != 0  and tm_matrix[5] != 0:   # o reuse of the
+                tm_prev = list(tm_matrix)
             #### Table 5.4 page 405 ####
             if operator == b"BT":
-                Tm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-                #Tm_prev = Tm_matrix
+                tm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+                #tm_prev = tm_matrix
                 output += text
-                #based                
+                #based
                 #if output != "" and output[-1]!="\n":
                 #    output += "\n"
                 text = ""
@@ -1412,24 +1411,23 @@ class PageObject(DictionaryObject):
                     pass # keep previous size
             #### Table 5.5 page 406 ####
             elif (operator == b"Td"):
-                Tm_matrix[5] += float(operands[1])
-                Tm_matrix[4] += float(operands[0])
+                tm_matrix[5] += float(operands[1])
+                tm_matrix[4] += float(operands[0])
             elif operator == b"Tm":
-                Tm_matrix = [float(operands[0]), float(operands[1]),
+                tm_matrix = [float(operands[0]), float(operands[1]),
                              float(operands[2]), float(operands[3]),
                              float(operands[4]), float(operands[5])]
             elif (operator == b"T*"):
-                Tm_matrix[5] -= TL
+                tm_matrix[5] -= TL
             elif operator == b"Tj":
                 text += operands[0].translate(cmap)
             else:
                 return None
             # process text changes due to positionchange: " "
-            # print(text,Tm_matrix[4] ,Tm_prev[4],(space_scale * _space_width * char_scale))
-            if Tm_matrix[5] <= (Tm_prev[5] - font_size*sqrt(Tm_matrix[2]**2+Tm_matrix[3]**2)): # it means that we are moving down by one line                
+            if tm_matrix[5] <= (tm_prev[5] - font_size*sqrt(tm_matrix[2]**2+tm_matrix[3]**2)): # it means that we are moving down by one line
                 output += text + "\n" #.translate(cmap) + "\n"
                 text = ""
-            elif Tm_matrix[4] >= (Tm_prev[4] + space_scale * _space_width * char_scale): # it means that we are moving down by one line
+            elif tm_matrix[4] >= (tm_prev[4] + space_scale * _space_width * char_scale): # it means that we are moving down by one line
                 text += " "
             return None
             # for clarity Operator in (b"g",b"G") : nothing to do
