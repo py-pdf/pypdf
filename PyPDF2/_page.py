@@ -29,6 +29,7 @@
 
 import math
 import uuid
+import warnings
 from binascii import unhexlify
 from decimal import Decimal
 from math import sqrt
@@ -49,7 +50,6 @@ from ._adobe_glyphs import adobe_glyphs
 from ._utils import (
     CompressedTransformationMatrix,
     TransformationMatrixType,
-    b_,
     deprecate_no_replacement,
     deprecate_with_replacement,
     matrix_multiply,
@@ -305,15 +305,14 @@ class PageObject(DictionaryObject):
         """
         if angle % 90 != 0:
             raise ValueError("Rotation angle must be a multiple of 90")
-        self._rotate(angle)
+        rotate_obj = self.get(PG.ROTATE, 0)
+        current_angle = (
+            rotate_obj if isinstance(rotate_obj, int) else rotate_obj.get_object()
+        )
+        self[NameObject(PG.ROTATE)] = NumberObject(current_angle + angle)
         return self
 
-    def rotate_clockwise(self, angle: float) -> "PageObject":
-        """
-        .. deprecated:: 1.28.0
-
-            Use :meth:`rotate_clockwise` instead.
-        """
+    def rotate_clockwise(self, angle: float) -> "PageObject":  # pragma: no cover
         deprecate_with_replacement("rotate_clockwise", "rotate")
         return self.rotate(angle)
 
@@ -986,7 +985,7 @@ class PageObject(DictionaryObject):
         deprecate_with_replacement("compressContentStreams", "compress_content_streams")
         self.compress_content_streams()
 
-    def extract_oldtext(self, Tj_sep: str = "", TJ_sep: str = "") -> str:
+    def _extract_text_old(self, Tj_sep: str = "", TJ_sep: str = "") -> str:
         """
         Locate all text drawing commands, in the order they are provided in the
         content stream, and extract the text.  This works well for some PDF
@@ -1279,13 +1278,11 @@ class PageObject(DictionaryObject):
                 dict(zip(range(256), encoding)),
                 "".maketrans(map_dict),
             )
-            # ------- end of buildCharmap ------
 
         text: str = ""
         output: str = ""
         cmaps: Dict[str, Tuple[str, float, Dict[int, str], Dict[int, str]]] = {}
         resources_dict = cast(DictionaryObject, obj["/Resources"])
-        #####import pdb;pdb.set_trace()
         if "/Font" in resources_dict:
             for f in cast(DictionaryObject, resources_dict["/Font"]):
                 cmaps[f] = buildCharMap(f)
@@ -1305,15 +1302,15 @@ class PageObject(DictionaryObject):
         TL = 0.0
         font_size = 12.0  # init just in case of
 
-        ##tm_matrix: Tuple = tm_matrix, output: str = output, text: str = text,
-        ##char_scale: float = char_scale,space_scale : float = space_scale, _space_width: float = _space_width,
-        ##TL: float = TL, font_size: float = font_size, cmap = cmap
+        # tm_matrix: Tuple = tm_matrix, output: str = output, text: str = text,
+        # char_scale: float = char_scale,space_scale : float = space_scale, _space_width: float = _space_width,
+        # TL: float = TL, font_size: float = font_size, cmap = cmap
 
         def process_operation(operator: bytes, operands: List) -> None:
             nonlocal tm_matrix, tm_prev, output, text, char_scale, space_scale, _space_width, TL, font_size, cmap
             if tm_matrix[4] != 0 and tm_matrix[5] != 0:  # o reuse of the
                 tm_prev = list(tm_matrix)
-            #### Table 5.4 page 405 ####
+            # Table 5.4 page 405
             if operator == b"BT":
                 tm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
                 # tm_prev = tm_matrix
@@ -1326,7 +1323,7 @@ class PageObject(DictionaryObject):
             elif operator == b"ET":
                 output += text
                 text = ""
-            #### Table 5.2 page 398 ####
+            # Table 5.2 page 398
             elif operator == b"Tz":
                 char_scale = float(operands[0]) / 100.0
             elif operator == b"Tw":
@@ -1347,7 +1344,7 @@ class PageObject(DictionaryObject):
                     font_size = float(operands[1])
                 except Exception:
                     pass  # keep previous size
-            #### Table 5.5 page 406 ####
+            # Table 5.5 page 406
             elif operator == b"Td":
                 tm_matrix[5] += float(operands[1])
                 tm_matrix[4] += float(operands[0])
@@ -1378,10 +1375,10 @@ class PageObject(DictionaryObject):
                 text += " "
             return None
             # for clarity Operator in (b"g",b"G") : nothing to do
-            ###### end of process_operation ######
+            # end of process_operation ######
 
         for operands, operator in content.operations:
-            #### multiple operators are define inhere ####
+            # multiple operators are defined in here ####
             if operator == b"'":
                 process_operation(b"T*", [])
                 process_operation(b"Tj", operands)

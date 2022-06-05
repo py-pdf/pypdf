@@ -175,7 +175,7 @@ class ArrayObject(list, PdfObject):
     def read_from_stream(
         stream: StreamType,
         pdf: Any,
-        forcedEncoding: Union[None, str, List[str], Dict[int, str]] = None,
+        forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
     ) -> "ArrayObject":  # PdfReader
         arr = ArrayObject()
         tmp = stream.read(1)
@@ -193,7 +193,7 @@ class ArrayObject(list, PdfObject):
                 break
             stream.seek(-1, 1)
             # read and append obj
-            arr.append(read_object(stream, pdf, forcedEncoding))
+            arr.append(read_object(stream, pdf, forced_encoding))
         return arr
 
     @staticmethod
@@ -382,7 +382,7 @@ def readHexStringFromStream(
 
 def readStringFromStream(
     stream: StreamType,
-    forcedEncoding: Union[None, str, List[str], Dict[int, str]] = None,
+    forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
 ) -> Union["TextStringObject", "ByteStringObject"]:
     tok = stream.read(1)
     parens = 1
@@ -453,7 +453,7 @@ def readStringFromStream(
                     # if.strict: PdfReadError(msg)
                     logger.warning(msg)
         txt += tok
-    return createStringObject(txt, forcedEncoding)
+    return createStringObject(txt, forced_encoding)
 
 
 class ByteStringObject(bytes_type, PdfObject):  # type: ignore
@@ -684,7 +684,7 @@ class DictionaryObject(dict, PdfObject):
     def read_from_stream(
         stream: StreamType,
         pdf: Any,  # PdfReader
-        forcedEncoding: Union[None, str, List[str], Dict[int, str]] = None,
+        forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
     ) -> "DictionaryObject":
         def get_next_obj_pos(
             p: int, p1: int, remGens: List[int], pdf: Any
@@ -738,7 +738,7 @@ class DictionaryObject(dict, PdfObject):
             key = read_object(stream, pdf)
             tok = read_non_whitespace(stream)
             stream.seek(-1, 1)
-            value = read_object(stream, pdf, forcedEncoding)
+            value = read_object(stream, pdf, forced_encoding)
             if not data.get(key):
                 data[key] = value
             elif pdf.strict:
@@ -1093,7 +1093,7 @@ class ContentStream(DecodedStreamObject):
         self,
         stream: Any,
         pdf: Any,
-        forcedEncoding: Union[None, str, List[str], Dict[int, str]] = None,
+        forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
     ) -> None:
         self.pdf = pdf
 
@@ -1111,10 +1111,13 @@ class ContentStream(DecodedStreamObject):
                 data += b_(s.get_object().get_data())
             stream_bytes = BytesIO(b_(data))
         else:
-            stream = BytesIO(b_(stream.get_data()))
+            stream_data = stream.get_data()
+            assert stream_data is not None
+            stream_data_bytes = b_(stream_data)
+            stream_bytes = BytesIO(stream_data_bytes)
         # self.savstream = stream
-        self.forcedEncoding = forcedEncoding
-        self.__parseContentStream(stream)
+        self.forced_encoding = forced_encoding
+        self.__parseContentStream(stream_bytes)
 
     def __parseContentStream(self, stream: StreamType) -> None:
         # file("f:\\tmp.txt", "w").write(stream.read())
@@ -1145,7 +1148,7 @@ class ContentStream(DecodedStreamObject):
                 while peek not in (b_("\r"), b_("\n")):
                     peek = stream.read(1)
             else:
-                operands.append(read_object(stream, None, self.forcedEncoding))
+                operands.append(read_object(stream, None, self.forced_encoding))
 
     def _readInlineImage(self, stream: StreamType) -> Dict[str, Any]:
         # begin reading just after the "BI" - begin image
@@ -1235,7 +1238,7 @@ class ContentStream(DecodedStreamObject):
 def read_object(
     stream: StreamType,
     pdf: Any,  # PdfReader
-    forcedEncoding: Union[None, str, List[str], Dict[int, str]] = None,
+    forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
 ) -> Union[PdfObject, int, str, ContentStream]:
     tok = stream.read(1)
     stream.seek(-1, 1)  # reset to start
@@ -1248,15 +1251,15 @@ def read_object(
         stream.seek(-2, 1)  # reset to start
 
         if peek == b_("<<"):
-            return DictionaryObject.read_from_stream(stream, pdf, forcedEncoding)
+            return DictionaryObject.read_from_stream(stream, pdf, forced_encoding)
         else:
             return readHexStringFromStream(stream)
     elif idx == 2:
-        return ArrayObject.read_from_stream(stream, pdf, forcedEncoding)
+        return ArrayObject.read_from_stream(stream, pdf, forced_encoding)
     elif idx == 3 or idx == 4:
         return BooleanObject.read_from_stream(stream)
     elif idx == 5:
-        return readStringFromStream(stream, forcedEncoding)
+        return readStringFromStream(stream, forced_encoding)
     elif idx == 6:
         return NullObject.read_from_stream(stream)
     elif idx == 7:
@@ -1269,7 +1272,7 @@ def read_object(
                 raise PdfStreamError("File ended unexpectedly.")
         tok = read_non_whitespace(stream)
         stream.seek(-1, 1)
-        return read_object(stream, pdf, forcedEncoding)
+        return read_object(stream, pdf, forced_encoding)
     else:
         # number object OR indirect reference
         peek = stream.read(20)
@@ -1859,7 +1862,7 @@ class Bookmark(Destination):
 
 def createStringObject(
     string: Union[str, bytes],
-    forcedEncoding: Union[None, str, List[str], Dict[int, str]] = None,
+    forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
 ) -> Union[TextStringObject, ByteStringObject]:
     """
     Given a string, create a ByteStringObject or a TextStringObject to
@@ -1872,16 +1875,16 @@ def createStringObject(
     if isinstance(string, str):
         return TextStringObject(string)
     elif isinstance(string, bytes_type):
-        if isinstance(forcedEncoding, (list, dict)):
+        if isinstance(forced_encoding, (list, dict)):
             out = ""
             for x in string:
                 try:
-                    out += forcedEncoding[x]
+                    out += forced_encoding[x]
                 except Exception:
                     out += bytes((x,)).decode("charmap")
             return TextStringObject(out)
-        elif isinstance(forcedEncoding, str):
-            return TextStringObject(string.decode(forcedEncoding))
+        elif isinstance(forced_encoding, str):
+            return TextStringObject(string.decode(forced_encoding))
         else:
             try:
                 if string.startswith(codecs.BOM_UTF16_BE):

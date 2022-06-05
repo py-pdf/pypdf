@@ -54,7 +54,6 @@ def test_read(meta):
         ("PdfWithXForm.pdf", None),
     ],
 )
-@pytest.mark.filterwarnings("ignore::PendingDeprecationWarning")
 def test_page_operations(pdf_path, password):
     """
     This test just checks if the operation throws an exception.
@@ -76,12 +75,14 @@ def test_page_operations(pdf_path, password):
     page.scale_to(100, 100)
     page.compress_content_streams()
     page.extract_text()
-    page.scaleBy(0.5)
-    page.scaleTo(100, 100)
-    page.extractText()
+    with pytest.warns(PendingDeprecationWarning):
+        page.scaleBy(0.5)
+    with pytest.warns(PendingDeprecationWarning):
+        page.scaleTo(100, 100)
+    with pytest.warns(PendingDeprecationWarning):
+        page.extractText()
 
 
-@pytest.mark.filterwarnings("ignore::PendingDeprecationWarning")
 def test_transformation_equivalence():
     pdf_path = os.path.join(RESOURCE_ROOT, "labeled-edges-center-image.pdf")
     reader_base = PdfReader(pdf_path)
@@ -102,7 +103,8 @@ def test_transformation_equivalence():
     # Option 2: The old way
     page_box2 = deepcopy(page_box)
     page_base2 = deepcopy(page_base)
-    page_base2.mergeTransformedPage(page_box2, op, expand=False)
+    with pytest.warns(PendingDeprecationWarning):
+        page_base2.mergeTransformedPage(page_box2, op, expand=False)
 
     # Should be the smae
     assert page_base1[NameObject(PG.CONTENTS)] == page_base2[NameObject(PG.CONTENTS)]
@@ -123,19 +125,27 @@ def compare_dict_objects(d1, d2):
             assert d1[k] == d2[k]
 
 
-@pytest.mark.filterwarnings("ignore::PendingDeprecationWarning")
 def test_page_transformations():
     pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
     reader = PdfReader(pdf_path)
 
     page: PageObject = reader.pages[0]
-    page.mergeRotatedPage(page, 90, expand=True)
-    page.mergeRotatedScaledPage(page, 90, 1, expand=True)
-    page.mergeRotatedScaledTranslatedPage(page, 90, scale=1, tx=1, ty=1, expand=True)
-    page.mergeRotatedTranslatedPage(page, 90, 100, 100, expand=False)
-    page.mergeScaledPage(page, 2, expand=False)
-    page.mergeScaledTranslatedPage(page, 1, 1, 1)
-    page.mergeTranslatedPage(page, 100, 100, expand=False)
+    with pytest.warns(PendingDeprecationWarning):
+        page.mergeRotatedPage(page, 90, expand=True)
+    with pytest.warns(PendingDeprecationWarning):
+        page.mergeRotatedScaledPage(page, 90, 1, expand=True)
+    with pytest.warns(PendingDeprecationWarning):
+        page.mergeRotatedScaledTranslatedPage(
+            page, 90, scale=1, tx=1, ty=1, expand=True
+        )
+    with pytest.warns(PendingDeprecationWarning):
+        page.mergeRotatedTranslatedPage(page, 90, 100, 100, expand=False)
+    with pytest.warns(PendingDeprecationWarning):
+        page.mergeScaledPage(page, 2, expand=False)
+    with pytest.warns(PendingDeprecationWarning):
+        page.mergeScaledTranslatedPage(page, 1, 1, 1)
+    with pytest.warns(PendingDeprecationWarning):
+        page.mergeTranslatedPage(page, 100, 100, expand=False)
     page.add_transformation((1, 0, 0, 0, 0, 0))
 
 
