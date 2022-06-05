@@ -54,7 +54,7 @@ def test_read(meta):
         ("PdfWithXForm.pdf", None),
     ],
 )
-@pytest.mark.filterwarnings('ignore::PendingDeprecationWarning')
+@pytest.mark.filterwarnings("ignore::PendingDeprecationWarning")
 def test_page_operations(pdf_path, password):
     """
     This test just checks if the operation throws an exception.
@@ -69,7 +69,7 @@ def test_page_operations(pdf_path, password):
         reader.decrypt(password)
 
     page: PageObject = reader.pages[0]
-    page.mergeRotatedScaledTranslatedPage( page, 90, scale=1, tx=1, ty=1, expand=True )
+    page.mergeRotatedScaledTranslatedPage(page, 90, scale=1, tx=1, ty=1, expand=True)
     page.add_transformation((1, 0, 0, 0, 0, 0))
     page.scale(2, 2)
     page.scale_by(0.5)
@@ -80,7 +80,8 @@ def test_page_operations(pdf_path, password):
     page.scaleTo(100, 100)
     page.extractText()
 
-@pytest.mark.filterwarnings('ignore::PendingDeprecationWarning')
+
+@pytest.mark.filterwarnings("ignore::PendingDeprecationWarning")
 def test_transformation_equivalence():
     pdf_path = os.path.join(RESOURCE_ROOT, "labeled-edges-center-image.pdf")
     reader_base = PdfReader(pdf_path)
@@ -121,7 +122,8 @@ def compare_dict_objects(d1, d2):
         else:
             assert d1[k] == d2[k]
 
-@pytest.mark.filterwarnings('ignore::PendingDeprecationWarning')
+
+@pytest.mark.filterwarnings("ignore::PendingDeprecationWarning")
 def test_page_transformations():
     pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
     reader = PdfReader(pdf_path)

@@ -29,23 +29,23 @@
 
 import math
 import uuid
+from binascii import unhexlify
 from decimal import Decimal
 from math import sqrt
-from binascii import unhexlify
 from typing import (
     Any,
     Callable,
     Dict,
     Iterable,
     Iterator,
+    List,
     Optional,
     Tuple,
     Union,
-    List,
     cast,
 )
 
-from .errors import PdfReadWarning  # ,PdfReadError
+from ._adobe_glyphs import adobe_glyphs
 from ._utils import (
     CompressedTransformationMatrix,
     TransformationMatrixType,
@@ -56,13 +56,14 @@ from ._utils import (
 )
 from .constants import PageAttributes as PG
 from .constants import Ressources as RES
+from .errors import PdfReadWarning  # ,PdfReadError
 from .errors import PageSizeNotDefinedError
 from .generic import (
     ArrayObject,
     ContentStream,
     DecodedStreamObject,
-    EncodedStreamObject,
     DictionaryObject,
+    EncodedStreamObject,
     FloatObject,
     IndirectObject,
     NameObject,
@@ -72,7 +73,6 @@ from .generic import (
     TextStringObject,
     charset_encoding,
 )
-from ._adobe_glyphs import adobe_glyphs
 
 
 def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
@@ -1070,30 +1070,38 @@ class PageObject(DictionaryObject):
                 text += "\n"
         return text
 
-
-    def debug_for_extract(self)->str:
-        out=""
-        for ope,op in ContentStream(self["/Contents"].getObject(),self.pdf).operations:
-            if op==b'TJ':
-                s = [x for x in ope[0] if isinstance(x,str)]
+    def debug_for_extract(self) -> str:
+        out = ""
+        for ope, op in ContentStream(
+            self["/Contents"].getObject(), self.pdf
+        ).operations:
+            if op == b"TJ":
+                s = [x for x in ope[0] if isinstance(x, str)]
             else:
-                s =[]
-            out+= op.decode("utf-8")+" " +"".join(s) + ope.__repr__()+"\n"
-        out+="\n=============================\n"
+                s = []
+            out += op.decode("utf-8") + " " + "".join(s) + ope.__repr__() + "\n"
+        out += "\n=============================\n"
         try:
-            for fo in self["/Resources"]["/Font"]:                                      #type:ignore
-                out+=fo+"\n"
-                out+=self["/Resources"]["/Font"][fo].__repr__()+"\n"                    #type:ignore
+            for fo in self["/Resources"]["/Font"]:  # type:ignore
+                out += fo + "\n"
+                out += self["/Resources"]["/Font"][fo].__repr__() + "\n"  # type:ignore
                 try:
-                    out+=self["/Resources"]["/Font"][fo]["/Encoding"].__repr__()+"\n"   #type:ignore
+                    out += (
+                        self["/Resources"]["/Font"][fo]["/Encoding"].__repr__() + "\n"
+                    )  # type:ignore
                 except Exception:
                     pass
         except KeyError:
-            out+="No Font\n"
+            out += "No Font\n"
         return out
 
-    def _extract_text(self, obj:Any, pdf:Any, space_width: float = 200.0,content_key: Union[None,str] = PG.CONTENTS
-                     )-> str:
+    def _extract_text(
+        self,
+        obj: Any,
+        pdf: Any,
+        space_width: float = 200.0,
+        content_key: Union[None, str] = PG.CONTENTS,
+    ) -> str:
         """
         Locate all text drawing commands, in the order they are provided in the
         content stream, and extract the text.  This works well for some PDF
@@ -1108,22 +1116,22 @@ class PageObject(DictionaryObject):
         :return: a string object.
         """
         # code freely inspired from @twiggy ; see #711
-        def buildCharMap(font_name: str) -> Tuple[str, float,Dict, Dict]:
+        def buildCharMap(font_name: str) -> Tuple[str, float, Dict, Dict]:
             map_dict: Any = {}
             process_rg: bool = False
             process_char: bool = False
             encoding: List[str] = []
-            ft : DictionaryObject = obj["/Resources"]["/Font"][font_name]         # type: ignore
-            font_type: str = cast(str,ft["/Subtype"])
-            sp_width : float = space_width*2         #default value
+            ft: DictionaryObject = obj["/Resources"]["/Font"][font_name]  # type: ignore
+            font_type: str = cast(str, ft["/Subtype"])
+            sp_width: float = space_width * 2  # default value
             w = []
-            #encoding
+            # encoding
             space_code = 32
             if "/Encoding" in ft:
-                enc: Union(str,DictionaryObject) = ft["/Encoding"].get_object()    # type: ignore
+                enc: Union(str, DictionaryObject) = ft["/Encoding"].get_object()  # type: ignore
                 if isinstance(enc, str):
                     try:
-                        if enc in ("/Identity-H","/Identity-V"):
+                        if enc in ("/Identity-H", "/Identity-V"):
                             encoding = []
                         else:
                             encoding = charset_encoding[enc].copy()
@@ -1135,7 +1143,9 @@ class PageObject(DictionaryObject):
                         encoding = charset_encoding["/StandardCoding"].copy()
                 elif isinstance(enc, DictionaryObject) and "/BaseEncoding" in enc:
                     try:
-                        encoding = charset_encoding[cast(str, enc["/BaseEncoding"])].copy()
+                        encoding = charset_encoding[
+                            cast(str, enc["/BaseEncoding"])
+                        ].copy()
                     except Exception:
                         warnings.warn(
                             f"Advanced encoding {encoding} not implemented yet",
@@ -1156,11 +1166,15 @@ class PageObject(DictionaryObject):
                                 encoding[x] = adobe_glyphs[o]
                             except Exception:
                                 encoding[x] = o
-                                if o==" ":
-                                    space_code=x
+                                if o == " ":
+                                    space_code = x
                             x += 1
             if "/ToUnicode" in ft:
-                cm : str = cast(DecodedStreamObject,ft["/ToUnicode"]).get_data().decode("utf-8")
+                cm: str = (
+                    cast(DecodedStreamObject, ft["/ToUnicode"])
+                    .get_data()
+                    .decode("utf-8")
+                )
                 for l in (
                     cm.strip()
                     .replace("<", " ")
@@ -1201,59 +1215,70 @@ class PageObject(DictionaryObject):
                     elif process_char:
                         lst = [x for x in l.split(" ") if x]
                         a = int(lst[0], 16)
-                        map_dict[a] = unhexlify("".join(lst[1:])).decode("utf-16-be") #join is here as some cases where the code was split
+                        map_dict[a] = unhexlify("".join(lst[1:])).decode(
+                            "utf-16-be"
+                        )  # join is here as some cases where the code was split
 
                 # get
                 for a in map_dict:
                     if map_dict[a] == " ":
                         space_code = a
 
-            #compute space width
-            st: int = 0 # declaration for mypy
+            # compute space width
+            st: int = 0  # declaration for mypy
             if "/W" in ft:
                 if "/DW" in ft:
                     sp_width = cast(float, ft["/DW"])
-                w = [x for x in ft["/W"]]                           #type: ignore
-                while(len(w)>0):
+                w = [x for x in ft["/W"]]  # type: ignore
+                while len(w) > 0:
                     st = w[0]
                     second = w[1]
                     if isinstance(int, second):
-                        if st<=space_code and space_code<=second:
+                        if st <= space_code and space_code <= second:
                             sp_width = w[2]
                             break
                         w = w[3:]
                     if isinstance(list, second):
-                        if st<=space_code and space_code<=st+len(second)-1:
-                            sp_width = second[space_code-st]
+                        if st <= space_code and space_code <= st + len(second) - 1:
+                            sp_width = second[space_code - st]
                         w = w[2:]
                     else:
-                        warnings.warn("unknown widths : \n"+(ft["/W"]).__repr__(),
-                            PdfReadWarning)
+                        warnings.warn(
+                            "unknown widths : \n" + (ft["/W"]).__repr__(),
+                            PdfReadWarning,
+                        )
                         break
             if "/Widths" in ft:
-                w = [x for x in ft["/Widths"]]                      #type: ignore
+                w = [x for x in ft["/Widths"]]  # type: ignore
                 try:
                     st = cast(int, ft["/FirstChar"])
                     en: int = cast(int, ft["/LastChar"])
-                    if st>space_code or en<space_code:
+                    if st > space_code or en < space_code:
                         raise Exception("Not in range")
-                    if w[space_code-st] == 0:
+                    if w[space_code - st] == 0:
                         raise Exception("null width")
-                    sp_width = w[space_code-st]
+                    sp_width = w[space_code - st]
                 except Exception:
-                    if "/FontDescriptor" in ft and "/MissingWidth" in cast(DictionaryObject,ft["/FontDescriptor"]):
-                        sp_width = ft["/FontDescriptor"]["/MissingWidth"]       # type: ignore
+                    if "/FontDescriptor" in ft and "/MissingWidth" in cast(
+                        DictionaryObject, ft["/FontDescriptor"]
+                    ):
+                        sp_width = ft["/FontDescriptor"]["/MissingWidth"]  # type: ignore
                     else:
-                        #will consider width of char as avg(width)/2
-                        m=0
-                        cpt=0
+                        # will consider width of char as avg(width)/2
+                        m = 0
+                        cpt = 0
                         for x in w:
-                            if x>0:
+                            if x > 0:
                                 m += x
                                 cpt += 1
-                        sp_width = m / max(1,cpt) / 2
+                        sp_width = m / max(1, cpt) / 2
 
-            return font_type, float(sp_width/2), dict(zip(range(256), encoding)), "".maketrans(map_dict)
+            return (
+                font_type,
+                float(sp_width / 2),
+                dict(zip(range(256), encoding)),
+                "".maketrans(map_dict),
+            )
             # ------- end of buildCharmap ------
 
         text: str = ""
@@ -1265,78 +1290,91 @@ class PageObject(DictionaryObject):
             for f in cast(DictionaryObject, resources_dict["/Font"]):
                 cmaps[f] = buildCharMap(f)
         cmap: Union[str, Dict[int, str]] = {}
-        content = obj[content_key].get_object() if isinstance(content_key, str) else obj;
+        content = obj[content_key].get_object() if isinstance(content_key, str) else obj
         if not isinstance(content, ContentStream):
             content = ContentStream(content, pdf, "charmap")
         # Note: we check all strings are TextStringObjects.  ByteStringObjects
         # are strings where the byte->string encoding was unknown, so adding
         # them to the text here would be gibberish.
 
-        tm_matrix : List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-        tm_prev   : List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+        tm_matrix: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+        tm_prev: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
         char_scale = 1.0
         space_scale = 1.0
-        _space_width :float = 500.0 # will be set correctly at first Tf
+        _space_width: float = 500.0  # will be set correctly at first Tf
         TL = 0.0
-        font_size = 12.0 #init just in case of
+        font_size = 12.0  # init just in case of
 
         ##tm_matrix: Tuple = tm_matrix, output: str = output, text: str = text,
         ##char_scale: float = char_scale,space_scale : float = space_scale, _space_width: float = _space_width,
         ##TL: float = TL, font_size: float = font_size, cmap = cmap
 
-        def process_operation(operator: bytes, operands:List)-> None :
-            nonlocal tm_matrix, tm_prev, output, text,char_scale, space_scale,_space_width, TL, font_size,cmap
-            if tm_matrix[4] != 0  and tm_matrix[5] != 0:   # o reuse of the
+        def process_operation(operator: bytes, operands: List) -> None:
+            nonlocal tm_matrix, tm_prev, output, text, char_scale, space_scale, _space_width, TL, font_size, cmap
+            if tm_matrix[4] != 0 and tm_matrix[5] != 0:  # o reuse of the
                 tm_prev = list(tm_matrix)
             #### Table 5.4 page 405 ####
             if operator == b"BT":
                 tm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-                #tm_prev = tm_matrix
+                # tm_prev = tm_matrix
                 output += text
-                #based
-                #if output != "" and output[-1]!="\n":
+                # based
+                # if output != "" and output[-1]!="\n":
                 #    output += "\n"
                 text = ""
                 return None
-            elif (operator == b"ET"):
+            elif operator == b"ET":
                 output += text
-                text=""
+                text = ""
             #### Table 5.2 page 398 ####
             elif operator == b"Tz":
-                char_scale = float(operands[0])/100.0
+                char_scale = float(operands[0]) / 100.0
             elif operator == b"Tw":
                 space_scale = 1.0 + float(operands[0])
             elif operator == b"TL":
                 TL = float(operands[0])
             elif operator == b"Tf":
                 if text != "":
-                    output += text #.translate(cmap)
+                    output += text  # .translate(cmap)
                 text = ""
-                _space_width= cmaps[operands[0]][1]
-                cmap = cmaps[operands[0]][2] if len(cmaps[operands[0]][2])>0 else cmaps[operands[0]][3]     #type:ignore
+                _space_width = cmaps[operands[0]][1]
+                cmap = (
+                    cmaps[operands[0]][2]
+                    if len(cmaps[operands[0]][2]) > 0
+                    else cmaps[operands[0]][3]
+                )  # type:ignore
                 try:
                     font_size = float(operands[1])
                 except Exception:
-                    pass # keep previous size
+                    pass  # keep previous size
             #### Table 5.5 page 406 ####
-            elif (operator == b"Td"):
+            elif operator == b"Td":
                 tm_matrix[5] += float(operands[1])
                 tm_matrix[4] += float(operands[0])
             elif operator == b"Tm":
-                tm_matrix = [float(operands[0]), float(operands[1]),
-                             float(operands[2]), float(operands[3]),
-                             float(operands[4]), float(operands[5])]
-            elif (operator == b"T*"):
+                tm_matrix = [
+                    float(operands[0]),
+                    float(operands[1]),
+                    float(operands[2]),
+                    float(operands[3]),
+                    float(operands[4]),
+                    float(operands[5]),
+                ]
+            elif operator == b"T*":
                 tm_matrix[5] -= TL
             elif operator == b"Tj":
                 text += operands[0].translate(cmap)
             else:
                 return None
             # process text changes due to positionchange: " "
-            if tm_matrix[5] <= (tm_prev[5] - font_size*sqrt(tm_matrix[2]**2+tm_matrix[3]**2)): # it means that we are moving down by one line
-                output += text + "\n" #.translate(cmap) + "\n"
+            if tm_matrix[5] <= (
+                tm_prev[5] - font_size * sqrt(tm_matrix[2] ** 2 + tm_matrix[3] ** 2)
+            ):  # it means that we are moving down by one line
+                output += text + "\n"  # .translate(cmap) + "\n"
                 text = ""
-            elif tm_matrix[4] >= (tm_prev[4] + space_scale * _space_width * char_scale): # it means that we are moving down by one line
+            elif tm_matrix[4] >= (
+                tm_prev[4] + space_scale * _space_width * char_scale
+            ):  # it means that we are moving down by one line
                 text += " "
             return None
             # for clarity Operator in (b"g",b"G") : nothing to do
@@ -1345,36 +1383,45 @@ class PageObject(DictionaryObject):
         for operands, operator in content.operations:
             #### multiple operators are define inhere ####
             if operator == b"'":
-                process_operation(b"T*",[])
-                process_operation(b"Tj",operands)
+                process_operation(b"T*", [])
+                process_operation(b"Tj", operands)
             elif operator == b'"':
-                process_operation(b"T*",[])
-                process_operation(b"TJ",operands)
+                process_operation(b"T*", [])
+                process_operation(b"TJ", operands)
             elif operator == b"TJ":
                 for op in operands[0]:
-                    if isinstance(op,str):
-                        process_operation(b"Tj",[op])
-                    if isinstance(op,(int,float,NumberObject,FloatObject)):
-                        process_operation(b"Td",[-op,0.0])
-            elif operator == b'Do':
+                    if isinstance(op, str):
+                        process_operation(b"Tj", [op])
+                    if isinstance(op, (int, float, NumberObject, FloatObject)):
+                        process_operation(b"Td", [-op, 0.0])
+            elif operator == b"Do":
                 output += text
                 if output != "":
                     output += "\n"
                 try:
-                    if self["/Resources"]["/XObject"][operands[0]]["/Subtype"] != "/Image":                         #type:ignore
-                        text = self.extract_xform_text(self["/Resources"]["/XObject"][operands[0]], space_width)    #type:ignore
+                    if (
+                        self["/Resources"]["/XObject"][operands[0]]["/Subtype"]
+                        != "/Image"
+                    ):  # type:ignore
+                        text = self.extract_xform_text(
+                            self["/Resources"]["/XObject"][operands[0]], space_width
+                        )  # type:ignore
                         output += text
                 except Exception:
-                    warnings.warn(f" impossible to decode XFormObject {operands[0]}",PdfReadWarning)
+                    warnings.warn(
+                        f" impossible to decode XFormObject {operands[0]}",
+                        PdfReadWarning,
+                    )
                 finally:
-                    text=""
+                    text = ""
             else:
-                process_operation(operator,operands)
-        output += text   #just in case of
+                process_operation(operator, operands)
+        output += text  # just in case of
         return output
 
     def extract_text(
-        self, Tj_sep: str = "", TJ_sep: str = "", space_width: float = 200.0) -> str:
+        self, Tj_sep: str = "", TJ_sep: str = "", space_width: float = 200.0
+    ) -> str:
         """
         Locate all text drawing commands, in the order they are provided in the
         content stream, and extract the text.  This works well for some PDF
@@ -1386,20 +1433,22 @@ class PageObject(DictionaryObject):
 
         :return: a string object.
         """
-        return self._extract_text(self,self.pdf,space_width, PG.CONTENTS)
+        return self._extract_text(self, self.pdf, space_width, PG.CONTENTS)
 
-    def extract_xform_text( self, xform:EncodedStreamObject, space_width: float = 200.0) -> str:
+    def extract_xform_text(
+        self, xform: EncodedStreamObject, space_width: float = 200.0
+    ) -> str:
         """
         Extraction tet from an XObject.
         space_width : float = force default space width (if not extracted from font (default 200)
 
         :return: a string object.
         """
-        return self._extract_text(xform, self.pdf,space_width, None)
+        return self._extract_text(xform, self.pdf, space_width, None)
 
-
-
-    def extractText(self, Tj_sep: str = "", TJ_sep: str = "") -> str:# pragma: no cover
+    def extractText(
+        self, Tj_sep: str = "", TJ_sep: str = ""
+    ) -> str:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
