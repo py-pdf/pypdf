@@ -131,13 +131,13 @@ def test_rotate_45():
         (True, "https://arxiv.org/pdf/1601.03642.pdf", [0, 1, 5, 7]),
     ],
 )
-def test_extract_textbench(enable, url, pages, printResult=False):
+def test_extract_textbench(enable, url, pages, print_result=False):
     if not enable:
         return
-    p = PdfReader(BytesIO(urllib.request.urlopen(url).read()))
-    for n in pages:
-        if printResult:
-            print(f"**************** {url} / page {n} ****************")
-        rst = p.pages[n].extract_text()
-        if printResult:
+    reader = PdfReader(BytesIO(urllib.request.urlopen(url).read()))
+    for page_number in pages:
+        if print_result:
+            print(f"**************** {url} / page {page_number} ****************")
+        rst = reader.pages[page_number].extract_text()
+        if print_result:
             print(f"{rst}\n*****************************\n")

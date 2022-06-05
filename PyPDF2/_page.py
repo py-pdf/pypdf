@@ -1085,9 +1085,10 @@ class PageObject(DictionaryObject):
                 out += fo + "\n"
                 out += self["/Resources"]["/Font"][fo].__repr__() + "\n"  # type:ignore
                 try:
-                    out += (
-                        self["/Resources"]["/Font"][fo]["/Encoding"].__repr__() + "\n"
-                    )  # type:ignore
+                    enc_repr = self["/Resources"]["/Font"][fo][  # type:ignore
+                        "/Encoding"
+                    ].__repr__()
+                    out += enc_repr + "\n"
                 except Exception:
                     pass
         except KeyError:
@@ -1396,13 +1397,9 @@ class PageObject(DictionaryObject):
                 if output != "":
                     output += "\n"
                 try:
-                    if (
-                        self["/Resources"]["/XObject"][operands[0]]["/Subtype"]
-                        != "/Image"
-                    ):  # type:ignore
-                        text = self.extract_xform_text(
-                            self["/Resources"]["/XObject"][operands[0]], space_width
-                        )  # type:ignore
+                    xobj = self["/Resources"]["/XObject"]  # type: ignore
+                    if xobj[operands[0]]["/Subtype"] != "/Image":
+                        text = self.extract_xform_text(xobj[operands[0]], space_width)
                         output += text
                 except Exception:
                     warnings.warn(
