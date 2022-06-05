@@ -56,8 +56,7 @@ from ._utils import (
 )
 from .constants import PageAttributes as PG
 from .constants import Ressources as RES
-from .errors import PdfReadWarning  # ,PdfReadError
-from .errors import PageSizeNotDefinedError
+from .errors import PageSizeNotDefinedError, PdfReadWarning
 from .generic import (
     ArrayObject,
     ContentStream,
@@ -1069,7 +1068,7 @@ class PageObject(DictionaryObject):
                 text += "\n"
         return text
 
-    def debug_for_extract(self) -> str:
+    def _debug_for_extract(self) -> str:
         out = ""
         for ope, op in ContentStream(
             self["/Contents"].getObject(), self.pdf
@@ -1100,7 +1099,7 @@ class PageObject(DictionaryObject):
         obj: Any,
         pdf: Any,
         space_width: float = 200.0,
-        content_key: Union[None, str] = PG.CONTENTS,
+        content_key: Optional[str] = PG.CONTENTS,
     ) -> str:
         """
         Locate all text drawing commands, in the order they are provided in the
@@ -1109,10 +1108,12 @@ class PageObject(DictionaryObject):
         be refined in the future.  Do not rely on the order of text coming out of
         this function, as it will change if this function is made more
         sophisticated.
-        space_width : float = force default space width (if not extracted from font (default 200)
-        content_key : None/str = indicate the default key where to extract data;
-                                  None = the opbject; this allow to reuse the function on XObject
-                                  default = "/Content"
+
+        :param float space_width: force default space width
+                    (if not extracted from font (default 200)
+        :param Optional[str] content_key: indicate the default key where to extract data
+            None = the opbject; this allow to reuse the function on XObject
+            default = "/Content"
         :return: a string object.
         """
         # code freely inspired from @twiggy ; see #711
