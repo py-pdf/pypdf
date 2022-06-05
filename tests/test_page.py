@@ -1,6 +1,8 @@
 import json
 import os
+import urllib.request
 from copy import deepcopy
+from io import BytesIO
 
 import pytest
 
@@ -51,7 +53,7 @@ def test_read(meta):
         ("imagemagick-images.pdf", None),
         ("imagemagick-lzw.pdf", None),
         ("reportlab-inline-image.pdf", None),
-        ("PdfWithXForm.pdf", None),
+        ("https://arxiv.org/pdf/2201.00029.pdf", None),
     ],
 )
 def test_page_operations(pdf_path, password):
@@ -61,7 +63,10 @@ def test_page_operations(pdf_path, password):
     This should be done way more thoroughly: It should be checked if the
     output is as expected.
     """
-    pdf_path = os.path.join(RESOURCE_ROOT, pdf_path)
+    if pdf_path.startswith("http"):
+        pdf_path = BytesIO(urllib.request.urlopen(pdf_path).read())
+    else:
+        pdf_path = os.path.join(RESOURCE_ROOT, pdf_path)
     reader = PdfReader(pdf_path)
 
     if password:
