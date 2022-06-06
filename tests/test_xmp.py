@@ -32,12 +32,11 @@ def test_read_xmp(src, has_xmp):
         assert xmp.dc_contributor == []
 
 
-def get_all_tiff(xmp):
+def get_all_tiff(xmp: PyPDF2.xmp.XmpInformation):
     data = {}
-    with pytest.warns(PendingDeprecationWarning):
-        tiff_ns = xmp.getNodesInNamespace(
-            aboutUri="", namespace="http://ns.adobe.com/tiff/1.0/"
-        )
+    tiff_ns = xmp.get_nodes_in_namespace(
+        about_uri="", namespace="http://ns.adobe.com/tiff/1.0/"
+    )
     for tag in tiff_ns:
         contents = []
         for content in tag.childNodes:

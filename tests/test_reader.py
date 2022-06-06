@@ -65,8 +65,7 @@ def test_get_num_pages(src, num_pages):
 def test_read_metadata(pdf_path, expected):
     with open(pdf_path, "rb") as inputfile:
         reader = PdfReader(inputfile)
-        with pytest.warns(PendingDeprecationWarning):
-            docinfo = reader.documentInfo
+        docinfo = reader.metadata
         assert docinfo is not None
         metadict = dict(docinfo)
         assert metadict == expected

@@ -22,26 +22,20 @@ def test_basic_features():
     # add page 2 from input1, but rotated clockwise 90 degrees
     writer.add_page(reader.pages[0].rotate(90))
 
-    # add page 3 from input1, rotated the other way:
-    with pytest.warns(PendingDeprecationWarning):
-        rotated = reader.pages[0].rotateCounterClockwise(90)
-    writer.add_page(rotated)
-    # alt: output.addPage(input1.pages[0].rotate(270))
-
-    # add page 4 from input1, but first add a watermark from another PDF:
-    page4 = reader.pages[0]
+    # add page 3 from input1, but first add a watermark from another PDF:
+    page3 = reader.pages[0]
     watermark_pdf = pdf_path
     watermark = PdfReader(watermark_pdf)
-    page4.merge_page(watermark.pages[0])
-    writer.add_page(page4)
+    page3.merge_page(watermark.pages[0])
+    writer.add_page(page3)
 
-    # add page 5 from input1, but crop it to half size:
-    page5 = reader.pages[0]
-    page5.mediabox.upper_right = (
-        page5.mediabox.right / 2,
-        page5.mediabox.top / 2,
+    # add page 4 from input1, but crop it to half size:
+    page4 = reader.pages[0]
+    page4.mediabox.upper_right = (
+        page4.mediabox.right / 2,
+        page4.mediabox.top / 2,
     )
-    writer.add_page(page5)
+    writer.add_page(page4)
 
     # add some Javascript to launch the print window on opening this PDF.
     # the password dialog may prevent the print dialog from being shown,

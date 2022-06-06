@@ -243,8 +243,6 @@ def test_DictionaryObject_key_is_no_pdfobject():
 def test_DictionaryObject_xmp_meta():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
     assert do.xmp_metadata is None
-    with pytest.warns(PendingDeprecationWarning):
-        assert do.xmpMetadata is None
 
 
 def test_DictionaryObject_value_is_no_pdfobject():
