@@ -54,7 +54,7 @@ def test_FlateDecode_unsupported_predictor():
 
 
 @pytest.mark.parametrize(
-    ("input", "expected"),
+    ("data", "expected"),
     [
         (">", ""),
         (
@@ -88,7 +88,7 @@ def test_FlateDecode_unsupported_predictor():
         "whitespace",
     ],
 )
-def test_ASCIIHexDecode(input, expected):
+def test_ASCIIHexDecode(data, expected):
     """
     Feeds a bunch of values to ASCIIHexDecode.decode() and ensures the
     correct output is returned.
@@ -97,7 +97,7 @@ def test_ASCIIHexDecode(input, expected):
     is currently raised.)
     """
 
-    assert ASCIIHexDecode.decode(input) == expected
+    assert ASCIIHexDecode.decode(data) == expected
 
 
 def test_ASCIIHexDecode_no_eod():

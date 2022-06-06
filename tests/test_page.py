@@ -45,7 +45,6 @@ def test_read(meta):
     [
         ("crazyones.pdf", None),
         ("attachment.pdf", None),
-        # ("side-by-side-subfig.pdf", None),
         (
             "libreoffice-writer-password.pdf",
             "openpassword",

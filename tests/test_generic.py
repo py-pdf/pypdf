@@ -137,7 +137,6 @@ def test_readStringFromStream_not_in_escapedict_no_digit():
     with pytest.raises(PdfReadError) as exc:
         readStringFromStream(stream)
     assert exc.value.args[0] == "Stream has ended unexpectedly"
-    # "Unexpected escaped string: y"
 
 
 def test_readStringFromStream_multichar_eol():
@@ -334,10 +333,10 @@ def test_DictionaryObject_read_from_stream_stream_stream_valid(
 ):
     stream = BytesIO(b"<< /S /GoTo /Length %d >>stream\nBT /F1\nendstream\n" % length)
 
-    class tst:  # to replace pdf
+    class Tst:  # to replace pdf
         strict = True
 
-    pdf = tst()
+    pdf = Tst()
     pdf.strict = strict
     with pytest.raises(PdfReadError) as exc:
         do = DictionaryObject.read_from_stream(stream, pdf)
