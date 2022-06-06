@@ -1248,9 +1248,10 @@ class PdfWriter:
             for operands, operator in content.operations:
                 if operator in [b_("Tj"), b_("'")]:
                     text = operands[0]
-                    if ignore_byte_string_object:
-                        if not isinstance(text, TextStringObject):
-                            operands[0] = TextStringObject()
+                    if ignore_byte_string_object and not isinstance(
+                        text, TextStringObject
+                    ):
+                        operands[0] = TextStringObject()
                 elif operator == b_('"'):
                     text = operands[2]
                     if ignore_byte_string_object and not isinstance(

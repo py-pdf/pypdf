@@ -271,7 +271,7 @@ class PageObject(DictionaryObject):
                 width = lastpage.mediabox.width
                 height = lastpage.mediabox.height
             else:
-                raise PageSizeNotDefinedError()
+                raise PageSizeNotDefinedError
         page.__setitem__(
             NameObject(PG.MEDIABOX), RectangleObject((0, 0, width, height))  # type: ignore
         )
@@ -1010,28 +1010,20 @@ class PageObject(DictionaryObject):
         space_scale = 1.0
 
         for operands, operator in content.operations:
-            if operator == b"Tf":  # text font
-                pass
-            elif operator == b"Tfs":  # text font size
-                pass
-            elif operator == b"Tc":  # character spacing
-                # See '5.2.1 Character Spacing'
+            # Missing operators:
+            #   Tf: text font
+            #  Tfs: text font size
+            #   Tc: '5.2.1 Character Spacing'
+            #   Th: '5.2.3 Horizontal Scaling'
+            #   Tl: '5.2.4 Leading'
+            # Tmode: '5.2.5 Text Rendering Mode'
+            # Trise: '5.2.6 Text Rise'
+
+            if operator in [b"Tf", b"Tfs", b"Tc", b"Th", b"Tl", b"Tmode"]:
                 pass
             elif operator == b"Tw":  # word spacing
                 # See '5.2.2 Word Spacing'
                 space_scale = 1.0 + float(operands[0])
-            elif operator == b"Th":  # horizontal scaling
-                # See '5.2.3 Horizontal Scaling'
-                pass
-            elif operator == b"Tl":  # leading
-                # See '5.2.4 Leading'
-                pass
-            elif operator == b"Tmode":  # text rendering mode
-                # See '5.2.5 Text Rendering Mode'
-                pass
-            elif operator == b"Trise":  # text rise
-                # See '5.2.6 Text Rise'
-                pass
             elif operator == b"Tj":
                 # See 'TABLE 5.6 Text-showing operators'
                 _text = operands[0]
