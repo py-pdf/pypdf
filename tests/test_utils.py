@@ -22,11 +22,11 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
         (io.BytesIO(b"    \n"), True),
     ],
 )
-def test_skipOverWhitespace(stream, expected):
+def test_skip_over_whitespace(stream, expected):
     assert PyPDF2._utils.skip_over_whitespace(stream) == expected
 
 
-def test_readUntilWhitespace():
+def test_read_until_whitespace():
     assert PyPDF2._utils.read_until_whitespace(io.BytesIO(b"foo"), maxchars=1) == b"f"
 
 
@@ -39,12 +39,12 @@ def test_readUntilWhitespace():
         (io.BytesIO(b"% foo%\nbar"), b"bar"),
     ],
 )
-def test_skipOverComment(stream, remainder):
+def test_skip_over_comment(stream, remainder):
     PyPDF2._utils.skip_over_comment(stream)
     assert stream.read() == remainder
 
 
-def test_readUntilRegex_premature_ending_raise():
+def test_read_until_regex_premature_ending_raise():
     import re
 
     stream = io.BytesIO(b"")
@@ -53,7 +53,7 @@ def test_readUntilRegex_premature_ending_raise():
     assert exc.value.args[0] == "Stream has ended unexpectedly"
 
 
-def test_readUntilRegex_premature_ending_name():
+def test_read_until_regex_premature_ending_name():
     import re
 
     stream = io.BytesIO(b"")
@@ -70,17 +70,17 @@ def test_readUntilRegex_premature_ending_name():
         (((3,), (7,)), ((5, 13),), ((3 * 5, 3 * 13), (7 * 5, 7 * 13))),
     ],
 )
-def test_matrixMultiply(a, b, expected):
+def test_matrix_multiply(a, b, expected):
     assert PyPDF2._utils.matrix_multiply(a, b) == expected
 
 
-def test_markLocation():
+def test_mark_location():
     stream = io.BytesIO(b"abde" * 6000)
     PyPDF2._utils.mark_location(stream)
     os.remove("PyPDF2_pdfLocation.txt")  # cleanup
 
 
-def test_hexStr():
+def test_hex_str():
     assert PyPDF2._utils.hex_str(10) == "0xa"
 
 

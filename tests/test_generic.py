@@ -320,7 +320,7 @@ def test_DictionaryObject_read_from_stream_stream_no_stream_length(strict):
 
 
 @pytest.mark.parametrize(
-    ("strict", "length", "shouldFail"),
+    ("strict", "length", "should_fail"),
     [
         (True, 6, False),
         (True, 10, False),
@@ -330,7 +330,7 @@ def test_DictionaryObject_read_from_stream_stream_no_stream_length(strict):
     ],
 )
 def test_DictionaryObject_read_from_stream_stream_stream_valid(
-    strict, length, shouldFail
+    strict, length, should_fail
 ):
     stream = BytesIO(b"<< /S /GoTo /Length %d >>stream\nBT /F1\nendstream\n" % length)
 
@@ -347,7 +347,7 @@ def test_DictionaryObject_read_from_stream_stream_stream_valid(
             assert b"BT /F1" in do._StreamObject__data
         raise PdfReadError("__ALLGOOD__")
     print(exc.value)
-    assert shouldFail ^ (exc.value.args[0] == "__ALLGOOD__")
+    assert should_fail ^ (exc.value.args[0] == "__ALLGOOD__")
 
 
 def test_RectangleObject():
