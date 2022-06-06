@@ -84,7 +84,7 @@ class PdfObject:
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class NullObject(PdfObject):
@@ -581,14 +581,14 @@ class NameObject(str, PdfObject):
             except (UnicodeEncodeError, UnicodeDecodeError):
                 ret = name.decode("gbk")
             return NameObject(ret)
-        except (UnicodeEncodeError, UnicodeDecodeError):
+        except (UnicodeEncodeError, UnicodeDecodeError) as e:
             # Name objects should represent irregular characters
             # with a '#' followed by the symbol's hex number
             if not pdf.strict:
                 warnings.warn("Illegal character in Name Object", PdfReadWarning)
                 return NameObject(name)
             else:
-                raise PdfReadError("Illegal character in Name Object")
+                raise PdfReadError("Illegal character in Name Object") from e
 
     @staticmethod
     def readFromStream(
@@ -700,9 +700,7 @@ class DictionaryObject(dict, PdfObject):
 
         def read_unsized_from_steam(stream: StreamType, pdf: Any) -> bytes:  # PdfReader
             # we are just pointing at beginning of the stream
-            eon = (
-                get_next_obj_pos(stream.tell(), 2**32, [g for g in pdf.xref], pdf) - 1
-            )
+            eon = get_next_obj_pos(stream.tell(), 2**32, list(pdf.xref), pdf) - 1
             curr = stream.tell()
             rw = stream.read(eon - stream.tell())
             p = rw.find(b_("endstream"))
