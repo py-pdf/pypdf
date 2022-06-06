@@ -1,8 +1,8 @@
 import io
 import os
 import time
-from io import BytesIO
 import urllib.request
+from io import BytesIO
 
 import pytest
 
@@ -670,8 +670,8 @@ def test_convertToInt_deprecated():
 
 
 def test_iss925():
-    reader = PdfReader(BytesIO(urllib.request.urlopen(
-        "https://github.com/py-pdf/PyPDF2/files/8796328/1.pdf").read()))
+    url = "https://github.com/py-pdf/PyPDF2/files/8796328/1.pdf"
+    reader = PdfReader(BytesIO(urllib.request.urlopen(url).read()))
 
     for page_sliced in reader.pages:
         page_object = page_sliced.get_object()
