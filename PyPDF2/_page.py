@@ -45,7 +45,7 @@ from typing import (
     cast,
 )
 
-from ._cmap import _build_char_map
+from ._cmap import build_char_map
 from ._utils import (
     CompressedTransformationMatrix,
     TransformationMatrixType,
@@ -1122,7 +1122,7 @@ class PageObject(DictionaryObject):
         resources_dict = cast(DictionaryObject, obj["/Resources"])
         if "/Font" in resources_dict:
             for f in cast(DictionaryObject, resources_dict["/Font"]):
-                cmaps[f] = _build_char_map(f, space_width, obj)
+                cmaps[f] = build_char_map(f, space_width, obj)
         cmap: Union[str, Dict[int, str]] = {}
         content = obj[content_key].get_object() if isinstance(content_key, str) else obj
         if not isinstance(content, ContentStream):
