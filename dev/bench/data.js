@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1654515381948,
+  "lastUpdate": 1654519973381,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -4189,6 +4189,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04263352708101484",
             "extra": "mean: 4.2952368358 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "babe32e471c6c0d6ee8dd356432dded225fe69a9",
+          "message": "TST: Text extraction for non-latin alphabets (#954)\n\nSee #591",
+          "timestamp": "2022-06-06T14:51:33+02:00",
+          "tree_id": "609d42cbf4f8f9143f4885c0a83ee8ed7625ab18",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/babe32e471c6c0d6ee8dd356432dded225fe69a9"
+        },
+        "date": 1654519972831,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.49568854269348966,
+            "unit": "iter/sec",
+            "range": "stddev: 0.089218674142686",
+            "extra": "mean: 2.0173958319999996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 8.256144088956997,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007661703360511162",
+            "extra": "mean: 121.12191711110636 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.20322879884227077,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017251143786564296",
+            "extra": "mean: 4.920562468000003 sec\nrounds: 5"
           }
         ]
       }
