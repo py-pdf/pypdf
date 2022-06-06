@@ -396,7 +396,7 @@ def test_remove_child_in_tree():
     reader = PdfReader(pdf)
     writer = PdfWriter()
     writer.add_page(reader.pages[0])
-    writer.add_bookmark("foo", 0)
+    writer.add_bookmark("foo", pagenum=0, italic=True, bold=True)
     obj = writer._objects[-1]
     tree.add_child(obj, writer)
     tree.remove_child(obj)
