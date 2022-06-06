@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Representation and utils for ranges of PDF file pages.
 
