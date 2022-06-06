@@ -76,7 +76,9 @@ def compress(data: bytes) -> bytes:
 class FlateDecode:
     @staticmethod
     def decode(
-        data: bytes, decodeParms: Union[None, ArrayObject, DictionaryObject]
+        # TODO: PEP8
+        data: bytes,
+        decodeParms: Union[None, ArrayObject, DictionaryObject],
     ) -> bytes:
         """
         :param data: flate-encoded data.
@@ -90,9 +92,9 @@ class FlateDecode:
         if decodeParms:
             try:
                 if isinstance(decodeParms, ArrayObject):
-                    for decodeParm in decodeParms:
-                        if "/Predictor" in decodeParm:
-                            predictor = decodeParm["/Predictor"]
+                    for decode_parm in decodeParms:
+                        if "/Predictor" in decode_parm:
+                            predictor = decode_parm["/Predictor"]
                 else:
                     predictor = decodeParms.get("/Predictor", 1)
             except AttributeError:
@@ -103,9 +105,9 @@ class FlateDecode:
             # §7.4.4.3 LZWDecode and FlateDecode Parameters, Table 8
             if isinstance(decodeParms, ArrayObject):
                 columns = 1
-                for decodeParm in decodeParms:
-                    if "/Columns" in decodeParm:
-                        columns = decodeParm["/Columns"]
+                for decode_parm in decodeParms:
+                    if "/Columns" in decode_parm:
+                        columns = decode_parm["/Columns"]
             else:
                 columns = 1 if decodeParms is None else decodeParms.get(LZW.COLUMNS, 1)
 
@@ -169,7 +171,9 @@ class ASCIIHexDecode:
 
     @staticmethod
     def decode(
-        data: str, decodeParms: Union[None, ArrayObject, DictionaryObject] = None
+        # TODO: PEP8
+        data: str,
+        decodeParms: Union[None, ArrayObject, DictionaryObject] = None,
     ) -> str:
         """
         :param data: a str sequence of hexadecimal-encoded values to be
@@ -285,7 +289,9 @@ class LZWDecode:
 
     @staticmethod
     def decode(
-        data: bytes, decodeParms: Union[None, ArrayObject, DictionaryObject] = None
+        # TODO: PEP8
+        data: bytes,
+        decodeParms: Union[None, ArrayObject, DictionaryObject] = None,
     ) -> str:
         """
         :param data: ``bytes`` or ``str`` text to decode.
@@ -384,11 +390,11 @@ class CCITTFaxDecode:
         columns = 0
         if parameters:
             if isinstance(parameters, ArrayObject):
-                for decodeParm in parameters:
-                    if CCITT.COLUMNS in decodeParm:
-                        columns = decodeParm[CCITT.COLUMNS]
-                    if CCITT.K in decodeParm:
-                        k = decodeParm[CCITT.K]
+                for decode_parm in parameters:
+                    if CCITT.COLUMNS in decode_parm:
+                        columns = decode_parm[CCITT.COLUMNS]
+                    if CCITT.K in decode_parm:
+                        k = decode_parm[CCITT.K]
             else:
                 columns = parameters[CCITT.COLUMNS]  # type: ignore
                 k = parameters[CCITT.K]  # type: ignore
@@ -398,6 +404,7 @@ class CCITTFaxDecode:
     @staticmethod
     def decode(
         data: bytes,
+        # TODO: PEP8
         decodeParms: Union[None, ArrayObject, DictionaryObject] = None,
         height: int = 0,
     ) -> bytes:
@@ -460,25 +467,25 @@ def decodeStreamData(stream: Any) -> Union[str, bytes]:  # utils.StreamObject
     data: bytes = stream._data
     # If there is not data to decode we should not try to decode the data.
     if data:
-        for filterType in filters:
-            if filterType == FT.FLATE_DECODE or filterType == FTA.FL:
+        for filter_type in filters:
+            if filter_type == FT.FLATE_DECODE or filter_type == FTA.FL:
                 data = FlateDecode.decode(data, stream.get(SA.DECODE_PARMS))
-            elif filterType == FT.ASCII_HEX_DECODE or filterType == FTA.AHx:
+            elif filter_type == FT.ASCII_HEX_DECODE or filter_type == FTA.AHx:
                 data = ASCIIHexDecode.decode(data)  # type: ignore
-            elif filterType == FT.LZW_DECODE or filterType == FTA.LZW:
+            elif filter_type == FT.LZW_DECODE or filter_type == FTA.LZW:
                 data = LZWDecode.decode(data, stream.get(SA.DECODE_PARMS))  # type: ignore
-            elif filterType == FT.ASCII_85_DECODE or filterType == FTA.A85:
+            elif filter_type == FT.ASCII_85_DECODE or filter_type == FTA.A85:
                 data = ASCII85Decode.decode(data)
-            elif filterType == FT.DCT_DECODE:
+            elif filter_type == FT.DCT_DECODE:
                 data = DCTDecode.decode(data)
-            elif filterType == "/JPXDecode":
+            elif filter_type == "/JPXDecode":
                 data = JPXDecode.decode(data)
-            elif filterType == FT.CCITT_FAX_DECODE:
+            elif filter_type == FT.CCITT_FAX_DECODE:
                 height = stream.get(IA.HEIGHT, ())
                 data = CCITTFaxDecode.decode(data, stream.get(SA.DECODE_PARMS), height)
-            elif filterType == "/Crypt":
-                decodeParms = stream.get(SA.DECODE_PARMS, {})
-                if "/Name" not in decodeParms and "/Type" not in decodeParms:
+            elif filter_type == "/Crypt":
+                decode_parms = stream.get(SA.DECODE_PARMS, {})
+                if "/Name" not in decode_parms and "/Type" not in decode_parms:
                     pass
                 else:
                     raise NotImplementedError(
@@ -486,7 +493,7 @@ def decodeStreamData(stream: Any) -> Union[str, bytes]:  # utils.StreamObject
                     )
             else:
                 # Unsupported filter
-                raise NotImplementedError("unsupported filter %s" % filterType)
+                raise NotImplementedError("unsupported filter %s" % filter_type)
     return data
 
 

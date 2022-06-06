@@ -913,7 +913,7 @@ class PdfReader:
         inherit: Optional[Dict[str, Any]] = None,
         indirect_ref: Optional[IndirectObject] = None,
     ) -> None:
-        inheritablePageAttributes = (
+        inheritable_page_attributes = (
             NameObject(PG.RESOURCES),
             NameObject(PG.MEDIABOX),
             NameObject(PG.CROPBOX),
@@ -933,7 +933,7 @@ class PdfReader:
             t = pages[PA.TYPE]  # type: ignore
 
         if t == "/Pages":
-            for attr in inheritablePageAttributes:
+            for attr in inheritable_page_attributes:
                 if attr in pages:
                     inherit[attr] = pages[attr]
             for page in pages[PA.KIDS]:  # type: ignore

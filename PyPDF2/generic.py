@@ -555,7 +555,7 @@ class TextStringObject(str, PdfObject):
 
 
 class NameObject(str, PdfObject):
-    delimiterPattern = re.compile(b_(r"\s+|[\(\)<>\[\]{}/%]"))
+    delimiter_pattern = re.compile(b_(r"\s+|[\(\)<>\[\]{}/%]"))
     surfix = b_("/")
 
     def write_to_stream(
@@ -574,7 +574,7 @@ class NameObject(str, PdfObject):
         name = stream.read(1)
         if name != NameObject.surfix:
             raise PdfReadError("name read error")
-        name += read_until_regex(stream, NameObject.delimiterPattern, ignore_eof=True)
+        name += read_until_regex(stream, NameObject.delimiter_pattern, ignore_eof=True)
         try:
             try:
                 ret = name.decode("utf-8")
@@ -687,16 +687,16 @@ class DictionaryObject(dict, PdfObject):
         forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
     ) -> "DictionaryObject":
         def get_next_obj_pos(
-            p: int, p1: int, remGens: List[int], pdf: Any
+            p: int, p1: int, rem_gens: List[int], pdf: Any
         ) -> int:  # PdfReader
-            l = pdf.xref[remGens[0]]
+            l = pdf.xref[rem_gens[0]]
             for o in l:
                 if p1 > l[o] and p < l[o]:
                     p1 = l[o]
-            if len(remGens) == 1:
+            if len(rem_gens) == 1:
                 return p1
             else:
-                return get_next_obj_pos(p, p1, remGens[1:], pdf)
+                return get_next_obj_pos(p, p1, rem_gens[1:], pdf)
 
         def read_unsized_from_steam(stream: StreamType, pdf: Any) -> bytes:  # PdfReader
             # we are just pointing at beginning of the stream
@@ -1129,7 +1129,7 @@ class ContentStream(DecodedStreamObject):
                 break
             stream.seek(-1, 1)
             if peek.isalpha() or peek == b_("'") or peek == b_('"'):
-                operator = read_until_regex(stream, NameObject.delimiterPattern, True)
+                operator = read_until_regex(stream, NameObject.delimiter_pattern, True)
                 if operator == b_("BI"):
                     # begin inline image - a completely different parsing
                     # mechanism is required, of course... thanks buddy...

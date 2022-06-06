@@ -703,13 +703,13 @@ class PdfMerger:
                 {NameObject("/C"): ArrayObject([FloatObject(c) for c in color])}
             )
 
-        format = 0
+        format_flag = 0
         if italic:
-            format += 1
+            format_flag += 1
         if bold:
-            format += 2
-        if format:
-            bookmark.update({NameObject("/F"): NumberObject(format)})
+            format_flag += 2
+        if format_flag:
+            bookmark.update({NameObject("/F"): NumberObject(format_flag)})
 
         bookmark_ref = self.output._add_object(bookmark)
         parent = cast(Bookmark, parent.get_object())
