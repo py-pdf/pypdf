@@ -4,6 +4,14 @@ import os
 import pytest
 
 import PyPDF2._utils
+from PyPDF2._utils import (
+    mark_location,
+    matrix_multiply,
+    read_until_regex,
+    read_until_whitespace,
+    skip_over_comment,
+    skip_over_whitespace,
+)
 from PyPDF2.errors import PdfStreamError
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -23,11 +31,11 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
     ],
 )
 def test_skip_over_whitespace(stream, expected):
-    assert PyPDF2._utils.skip_over_whitespace(stream) == expected
+    assert skip_over_whitespace(stream) == expected
 
 
 def test_read_until_whitespace():
-    assert PyPDF2._utils.read_until_whitespace(io.BytesIO(b"foo"), maxchars=1) == b"f"
+    assert read_until_whitespace(io.BytesIO(b"foo"), maxchars=1) == b"f"
 
 
 @pytest.mark.parametrize(
@@ -40,7 +48,7 @@ def test_read_until_whitespace():
     ],
 )
 def test_skip_over_comment(stream, remainder):
-    PyPDF2._utils.skip_over_comment(stream)
+    skip_over_comment(stream)
     assert stream.read() == remainder
 
 
@@ -49,7 +57,7 @@ def test_read_until_regex_premature_ending_raise():
 
     stream = io.BytesIO(b"")
     with pytest.raises(PdfStreamError) as exc:
-        PyPDF2._utils.read_until_regex(stream, re.compile(b"."))
+        read_until_regex(stream, re.compile(b"."))
     assert exc.value.args[0] == "Stream has ended unexpectedly"
 
 
@@ -57,9 +65,7 @@ def test_read_until_regex_premature_ending_name():
     import re
 
     stream = io.BytesIO(b"")
-    assert (
-        PyPDF2._utils.read_until_regex(stream, re.compile(b"."), ignore_eof=True) == b""
-    )
+    assert read_until_regex(stream, re.compile(b"."), ignore_eof=True) == b""
 
 
 @pytest.mark.parametrize(
@@ -71,12 +77,12 @@ def test_read_until_regex_premature_ending_name():
     ],
 )
 def test_matrix_multiply(a, b, expected):
-    assert PyPDF2._utils.matrix_multiply(a, b) == expected
+    assert matrix_multiply(a, b) == expected
 
 
 def test_mark_location():
     stream = io.BytesIO(b"abde" * 6000)
-    PyPDF2._utils.mark_location(stream)
+    mark_location(stream)
     os.remove("PyPDF2_pdfLocation.txt")  # cleanup
 
 
@@ -94,4 +100,5 @@ def test_b():
 def test_deprecate_no_replacement():
     with pytest.raises(PendingDeprecationWarning) as exc:
         PyPDF2._utils.deprecate_no_replacement("foo")
-    assert exc.value.args[0] == "foo is deprecated and will be removed in PyPDF2 3.0.0."
+    error_msg = "foo is deprecated and will be removed in PyPDF2 3.0.0."
+    assert exc.value.args[0] == error_msg

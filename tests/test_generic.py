@@ -309,10 +309,10 @@ def test_DictionaryObject_read_from_stream_stream_no_newline():
 def test_DictionaryObject_read_from_stream_stream_no_stream_length(strict):
     stream = BytesIO(b"<< /S /GoTo >>stream\n")
 
-    class tst:  # to replace pdf
+    class Tst:  # to replace pdf
         strict = False
 
-    pdf = tst()
+    pdf = Tst()
     pdf.strict = strict
     with pytest.raises(PdfReadError) as exc:
         DictionaryObject.read_from_stream(stream, pdf)
@@ -399,11 +399,6 @@ def test_remove_child_in_tree():
     writer.add_page(reader.pages[0])
     writer.add_bookmark("foo", 0)
     obj = writer._objects[-1]
-    # print(dict)
-    # print(type(dict))
-    # for obj in writer._objects:
-    #     print(obj)
-    #     print(type(obj))
     tree.add_child(obj, writer)
     tree.remove_child(obj)
     tree.add_child(obj, writer)
