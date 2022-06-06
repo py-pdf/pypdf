@@ -78,3 +78,45 @@ def test_parse_filename_page_ranges_err():
     assert (
         exc.value.args[0] == "The first argument must be a filename, not a page range."
     )
+
+
+@pytest.mark.parametrize(
+    "a, b, expected",
+    [
+        (PageRange(slice(0, 5)), PageRange(slice(2, 10)), slice(0, 10)),
+        (PageRange(slice(0, 5)), PageRange(slice(2, 3)), slice(0, 5)),
+        (PageRange(slice(0, 5)), PageRange(slice(5, 10)), slice(0, 10)),
+    ],
+)
+def test_addition(a, b, expected):
+    pr1 = PageRange(a)
+    pr2 = PageRange(b)
+    assert pr1 + pr2 == PageRange(expected)
+    assert pr2 + pr1 == PageRange(expected)  # addition is commutative
+
+
+@pytest.mark.parametrize(
+    "a, b",
+    [
+        (PageRange(slice(0, 5)), PageRange(slice(7, 10))),
+        (PageRange(slice(7, 10)), PageRange(slice(0, 5))),
+    ],
+)
+def test_addition_gap(a: PageRange, b: PageRange):
+    with pytest.raises(ValueError) as exc:
+        a + b
+    assert exc.value.args[0] == "Can't add PageRanges with gap"
+
+
+def test_addition_non_page_range():
+    with pytest.raises(TypeError) as exc:
+        PageRange(slice(0, 5)) + "2:7"
+    assert exc.value.args[0] == "Can't add PageRange and <class 'str'>"
+
+
+def test_addition_stride():
+    a = PageRange(slice(0, 5, 2))
+    b = PageRange(slice(7, 9))
+    with pytest.raises(ValueError) as exc:
+        a + b
+    assert exc.value.args[0] == "Can't add PageRange with stride"

@@ -117,6 +117,23 @@ class PageRange:
             return False
         return self._slice == other._slice
 
+    def __add__(self, other: "PageRange") -> "PageRange":
+        if not isinstance(other, PageRange):
+            raise TypeError(f"Can't add PageRange and {type(other)}")
+        if self._slice.step is not None or other._slice.step is not None:
+            raise ValueError("Can't add PageRange with stride")
+        a = self._slice.start, self._slice.stop
+        b = other._slice.start, other._slice.stop
+
+        if a[0] > b[0]:
+            a, b = b, a
+
+        # Now a[0] is the smallest
+        if b[0] > a[1]:
+            # There is a gap between a and b.
+            raise ValueError("Can't add PageRanges with gap")
+        return PageRange(slice(a[0], max(a[1], b[1])))
+
 
 PAGE_RANGE_ALL = PageRange(":")  # The range of all pages.
 
