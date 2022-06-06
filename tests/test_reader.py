@@ -461,7 +461,7 @@ def test_read_missing_startxref():
         b"%010d 00000 n\n"
         b"%010d 00000 n\n"
         b"trailer << /Root 5 0 R /Size 6 >>\n"
-        # b"startxref %d\n"
+        # Removed for this test: b"startxref %d\n"
         b"%%%%EOF"
     )
     pdf_data = pdf_data % (
@@ -470,7 +470,7 @@ def test_read_missing_startxref():
         pdf_data.find(b"3 0 obj"),
         pdf_data.find(b"4 0 obj"),
         pdf_data.find(b"5 0 obj"),
-        # pdf_data.find(b"xref") - 1,
+        # Removed for this test: pdf_data.find(b"xref") - 1,
     )
     pdf_stream = io.BytesIO(pdf_data)
     with pytest.raises(PdfReadError) as exc:
@@ -554,7 +554,7 @@ def test_do_not_get_stuck_on_large_files_without_start_xref():
     assert parse_duration < 60
 
 
-def test_PdfReaderDecryptWhenNoID():
+def test_PdfReader_decrypt_when_no_id():
     """
     Decrypt an encrypted file that's missing the 'ID' value in its
     trailer.
