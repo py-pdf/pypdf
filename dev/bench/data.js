@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1654501057992,
+  "lastUpdate": 1654515019501,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -4099,6 +4099,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00972297056825972",
             "extra": "mean: 4.294475153200006 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4baedb2054648b9db70c2fbed82b6902aea52365",
+          "message": "STY: black, isort, Flake8, splitting buildCharMap (#950)\n\nThis commit contains several small stylistic changes. Most of then were found by Flake8.\r\n\r\nThe biggest single change is moving buildCharMap to its own module. There it was split into several functions to make it easier to understand how it works. This could also make it easier to understand adjustments in future pull requests.\r\n\r\nA caching mechanism for downloaded files was added to speed up local testing",
+          "timestamp": "2022-06-06T13:29:00+02:00",
+          "tree_id": "8d9948d6b3047a6988a32500c7b3a0bee18e1198",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/4baedb2054648b9db70c2fbed82b6902aea52365"
+        },
+        "date": 1654515018997,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.5508708108708029,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018735453331864042",
+            "extra": "mean: 1.8153076552000003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 8.394986291439446,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007699206183961742",
+            "extra": "mean: 119.11871744444922 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.20079559405369718,
+            "unit": "iter/sec",
+            "range": "stddev: 0.038049997881075256",
+            "extra": "mean: 4.980188956399999 sec\nrounds: 5"
           }
         ]
       }
