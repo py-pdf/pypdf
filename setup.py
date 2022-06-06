@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
-from setuptools import setup
 import re
 
+from setuptools import setup
 
 VERSIONFILE = "PyPDF2/_version.py"
-verstrline = open(VERSIONFILE, "rt").read()
+with open(VERSIONFILE) as fh:
+    verstrline = fh.read()
 VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
 mo = re.search(VSRE, verstrline, re.M)
 if mo:
@@ -13,4 +14,4 @@ if mo:
 else:
     raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE))
 
-setup(version=verstr)
+setup(version=verstr, package_data={"PyPDF2": ["*.typed"]})
