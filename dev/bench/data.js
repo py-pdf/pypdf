@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1654515019501,
+  "lastUpdate": 1654515381948,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -4144,6 +4144,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.038049997881075256",
             "extra": "mean: 4.980188956399999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2a1db78ae5b86eb8fe8584889f8ec6787ecee689",
+          "message": "ENH: Allow adding PageRange objects (#948)\n\nNow the following is possible:\r\n\r\n    >>> from PyPDF2 import PageRange\r\n    >>> a = PageRange(\"0:5\")\r\n    >>> b = PageRange(\"2:7\")\r\n    >>> a + b\r\n    PageRange(\"0:7\")\r\n\r\nCloses #759\r\nSee #751\r\nSee #752",
+          "timestamp": "2022-06-06T13:35:12+02:00",
+          "tree_id": "45d682c20c24379d1385d294f56ce01ab8667289",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/2a1db78ae5b86eb8fe8584889f8ec6787ecee689"
+        },
+        "date": 1654515381454,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.623770095271508,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03076975969767426",
+            "extra": "mean: 1.6031547641999908 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.82141339033016,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005797230659974639",
+            "extra": "mean: 101.81833919999406 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23281603278896892,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04263352708101484",
+            "extra": "mean: 4.2952368358 sec\nrounds: 5"
           }
         ]
       }
