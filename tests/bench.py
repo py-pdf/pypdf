@@ -129,5 +129,5 @@ def text_extraction(pdf_path):
 
 @pytest.mark.filterwarnings("ignore::PyPDF2.errors.PdfReadWarning")
 def test_text_extraction(benchmark):
-    file = os.path.join(SAMPLE_ROOT, "009-pdflatex-geotopo/GeoTopo.pdf")
-    benchmark(text_extraction, file)
+    file_path = os.path.join(SAMPLE_ROOT, "009-pdflatex-geotopo/GeoTopo.pdf")
+    benchmark(text_extraction, file_path)

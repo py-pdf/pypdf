@@ -1,13 +1,13 @@
 import binascii
 import os
 import sys
-import urllib.request
 from io import BytesIO
 
 import pytest
 
 from PyPDF2 import PdfReader
 from PyPDF2.constants import PageAttributes as PG
+from tests import get_pdf_from_url
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -83,8 +83,20 @@ def test_decrypt():
             "/Creator": "Writer",
             "/Producer": "LibreOffice 6.4",
         }
-        # Is extract_text() broken for encrypted files?
-        # assert reader.pages[0].extract_text().replace('\n', '') == "\n˘\n\u02c7\u02c6˙\n\n\n˘\u02c7\u02c6˙\n\n"
+
+
+def test_text_extraction_encrypted():
+    inputfile = os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf")
+    reader = PdfReader(inputfile)
+    assert reader.is_encrypted is True
+    reader.decrypt("openpassword")
+    assert (
+        reader.pages[0]
+        .extract_text()
+        .replace("\n", "")
+        .strip()
+        .startswith("Lorem ipsum dolor sit amet")
+    )
 
 
 @pytest.mark.parametrize("degree", [0, 90, 180, 270, 360, -90])
@@ -92,8 +104,7 @@ def test_rotate(degree):
     with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
         reader = PdfReader(inputfile)
         page = reader.pages[0]
-        with pytest.warns(PendingDeprecationWarning):
-            page.rotateCounterClockwise(degree)
+        page.rotate(degree)
 
 
 def test_rotate_45():
@@ -101,8 +112,7 @@ def test_rotate_45():
         reader = PdfReader(inputfile)
         page = reader.pages[0]
         with pytest.raises(ValueError) as exc:
-            with pytest.warns(PendingDeprecationWarning):
-                page.rotateCounterClockwise(45)
+            page.rotate(45)
         assert exc.value.args[0] == "Rotation angle must be a multiple of 90"
 
 
@@ -134,7 +144,7 @@ def test_rotate_45():
 def test_extract_textbench(enable, url, pages, print_result=False):
     if not enable:
         return
-    reader = PdfReader(BytesIO(urllib.request.urlopen(url).read()))
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, url.split("/")[-1])))
     for page_number in pages:
         if print_result:
             print(f"**************** {url} / page {page_number} ****************")

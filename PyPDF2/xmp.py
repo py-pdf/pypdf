@@ -370,6 +370,7 @@ class XmpInformation(PdfObject):
     The name of the tool that created the PDF document.
     """
 
+    # TODO: PEP8
     xmp_createDate = property(
         _getter_single(XMP_NAMESPACE, "CreateDate", _converter_date)
     )
@@ -378,6 +379,7 @@ class XmpInformation(PdfObject):
     time are returned as a UTC datetime.datetime object.
     """
 
+    # TODO: PEP8
     xmp_modifyDate = property(
         _getter_single(XMP_NAMESPACE, "ModifyDate", _converter_date)
     )
@@ -386,6 +388,7 @@ class XmpInformation(PdfObject):
     are returned as a UTC datetime.datetime object.
     """
 
+    # TODO: PEP8
     xmp_metadataDate = property(
         _getter_single(XMP_NAMESPACE, "MetadataDate", _converter_date)
     )
@@ -395,16 +398,19 @@ class XmpInformation(PdfObject):
     object.
     """
 
+    # TODO: PEP8
     xmp_creatorTool = property(_getter_single(XMP_NAMESPACE, "CreatorTool"))
     """
     The name of the first known tool used to create the resource.
     """
 
+    # TODO: PEP8
     xmpmm_documentId = property(_getter_single(XMPMM_NAMESPACE, "DocumentID"))
     """
     The common identifier for all versions and renditions of this resource.
     """
 
+    # TODO: PEP8
     xmpmm_instanceId = property(_getter_single(XMPMM_NAMESPACE, "InstanceID"))
     """
     An identifier for a specific incarnation of a document, updated each

@@ -215,7 +215,7 @@ class PdfWriter:
         deprecate_with_replacement("insertPage", "insert_page")
         self.insert_page(page, index)
 
-    def get_page(self, pageNumber: int) -> PageObject:
+    def get_page(self, pageNumber: int) -> PageObject:  # TODO: PEP8
         """
         Retrieve a page by number from this PDF file.
 
@@ -453,8 +453,8 @@ class PdfWriter:
         endobj
 
         """
-        embeddedFilesNamesDictionary = DictionaryObject()
-        embeddedFilesNamesDictionary.update(
+        embedded_files_names_dictionary = DictionaryObject()
+        embedded_files_names_dictionary.update(
             {
                 NameObject(CA.NAMES): ArrayObject(
                     [createStringObject(filename), filespec]
@@ -462,12 +462,12 @@ class PdfWriter:
             }
         )
 
-        embeddedFilesDictionary = DictionaryObject()
-        embeddedFilesDictionary.update(
-            {NameObject("/EmbeddedFiles"): embeddedFilesNamesDictionary}
+        embedded_files_dictionary = DictionaryObject()
+        embedded_files_dictionary.update(
+            {NameObject("/EmbeddedFiles"): embedded_files_names_dictionary}
         )
         # Update the root
-        self._root_object.update({NameObject(CA.NAMES): embeddedFilesDictionary})
+        self._root_object.update({NameObject(CA.NAMES): embedded_files_dictionary})
 
     def addAttachment(
         self, fname: str, fdata: Union[str, bytes]
@@ -1097,13 +1097,13 @@ class PdfWriter:
                 {NameObject("/C"): ArrayObject([FloatObject(c) for c in color])}
             )
 
-        format = 0
+        format_flag = 0
         if italic:
-            format += 1
+            format_flag += 1
         if bold:
-            format += 2
-        if format:
-            bookmark.update({NameObject("/F"): NumberObject(format)})
+            format_flag += 2
+        if format_flag:
+            bookmark.update({NameObject("/F"): NumberObject(format_flag)})
 
         bookmark_ref = self._add_object(bookmark)
 
@@ -1248,9 +1248,10 @@ class PdfWriter:
             for operands, operator in content.operations:
                 if operator in [b_("Tj"), b_("'")]:
                     text = operands[0]
-                    if ignore_byte_string_object:
-                        if not isinstance(text, TextStringObject):
-                            operands[0] = TextStringObject()
+                    if ignore_byte_string_object and not isinstance(
+                        text, TextStringObject
+                    ):
+                        operands[0] = TextStringObject()
                 elif operator == b_('"'):
                     text = operands[2]
                     if ignore_byte_string_object and not isinstance(
