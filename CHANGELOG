@@ -1,3 +1,77 @@
+Version 2.1.0, 2022-06-06
+-------------------------
+
+The highlight of the 2.1.0 release is the most massive improvement to the
+text extraction capabilities of PyPDF2 since 2016 🥳🎊 A very big thank you goes
+to [pubpub-zz](https://github.com/pubpub-zz) who took a lot of time and
+knowledge about the PDF format to finally get those improvements into PyPDF2.
+Thank you 🤗💚
+
+In case the new function causes any issues, you can use `_extract_text_old`
+for the old functionality. Please also open a bug ticket in that case.
+
+There were several people who have attempted to bring similar improvements to
+PyPDF2. All of those were valuable. The main reason why they didn't get merged
+is the big amount of open PRs / issues. pubpub-zz was the most comprehensive
+PR which also incorporated the latest changes of PyPDF2 2.0.0.
+
+Thank you to [VictorCarlquist](https://github.com/VictorCarlquist) for #858 and
+[asabramo](https://github.com/asabramo) for #464 🤗
+
+New Features (ENH):
+-  Massive text extraction improvement (#924). Closed many open issues:
+    - Exceptions / missing spaces in extract_text() method (#17) 🕺
+      - Whitespace issues in extract_text() (#42) 💃
+      - pypdf2 reads the hifenated words in a new line (#246)
+    - PyPDF2 failing to read unicode character (#37)
+      - Unable to read bullets (#230)
+    - ExtractText yields nothing for apparently good PDF (#168) 🎉
+    - Encoding issue in extract_text() (#235)
+    - extractText() doesn't work on Chinese PDF (#252)
+    - encoding error (#260)
+    - Trouble with apostophes in names in text "O'Doul" (#384)
+    - extract_text works for some PDF files, but not the others (#437)
+    - Euro sign not being recognized by extractText (#443)
+    - Failed extracting text from French texts (#524)
+    - extract_text doesn't extract ligatures correctly (#598)
+    - reading spanish text - mark convert issue (#635)
+    - Read PDF changed from text to random symbols (#654)
+    - .extractText() reads / as 1. (#789)
+-  Update glyphlist (#947) - inspired by #464
+-  Allow adding PageRange objects (#948)
+
+Bug Fixes (BUG):
+-  Delete .python-version file (#944)
+-  Compare StreamObject.decoded_self with None (#931)
+
+Robustness (ROB):
+-  Fix some conversion errors on non conform PDF (#932)
+
+Documentation (DOC):
+-  Elaborate on PDF text extraction difficulties (#939)
+-  Add logo (#942)
+-  rotate vs Transformation().rotate (#937)
+-  Example how to use PyPDF2 with AWS S3 (#938)
+-  How to deprecate (#930)
+-  Fix typos on robustness page (#935)
+-  Remove scripts (pdfcat) from docs (#934)
+
+Developer Experience (DEV):
+-  Ignore .python-version file
+-  Mark deprecated code with no-cover (#943)
+-  Automatically create Github releases from tags (#870)
+
+Testing (TST):
+-  Text extraction for non-latin alphabets (#954)
+-  Ignore PdfReadWarning in benchmark (#949)
+-  writer.remove_text (#946)
+-  Add test for Tree and _security (#945)
+
+Code Style (STY):
+-  black, isort, Flake8, splitting buildCharMap (#950)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.0.0...2.1.0
+
 Version 2.0.0, 2022-06-01
 -------------------------
 
