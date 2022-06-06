@@ -2,6 +2,7 @@ import io
 import os
 import time
 from io import BytesIO
+import urllib.request
 
 import pytest
 
@@ -666,3 +667,16 @@ def test_convertToInt_deprecated():
         match=msg,
     ):
         assert convertToInt(b"\x01", 8) == 1
+
+
+def test_iss925():
+    reader = PdfReader(BytesIO(urllib.request.urlopen(
+        "https://github.com/py-pdf/PyPDF2/files/8796328/1.pdf").read()))
+
+    for page_sliced in reader.pages:
+        page_object = page_sliced.get_object()
+        # Extracts the PDF's Annots (Annotations and Commenting):
+        annots = page_object.get("/Annots")
+        if annots is not None:
+            for annot in annots:
+                annot.get_object()
