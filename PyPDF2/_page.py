@@ -984,7 +984,9 @@ class PageObject(DictionaryObject):
         deprecate_with_replacement("compressContentStreams", "compress_content_streams")
         self.compress_content_streams()
 
-    def _extract_text_old(self, Tj_sep: str = "", TJ_sep: str = "") -> str:
+    def _extract_text_old(
+        self, Tj_sep: str = "", TJ_sep: str = ""
+    ) -> str:  # pragma: no cover
         """
         Locate all text drawing commands, in the order they are provided in the
         content stream, and extract the text.  This works well for some PDF
