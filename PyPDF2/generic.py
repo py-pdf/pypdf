@@ -895,8 +895,8 @@ class TreeObject(DictionaryObject):
                     if NameObject("/Next") in cur:
                         # Removing first tree node
                         next_ref = cur[NameObject("/Next")]
-                        next = next_ref.get_object()
-                        del next[NameObject("/Prev")]
+                        next_obj = next_ref.get_object()
+                        del next_obj[NameObject("/Prev")]
                         self[NameObject("/First")] = next_ref
                         self[NameObject("/Count")] -= 1  # type: ignore
 
@@ -911,8 +911,8 @@ class TreeObject(DictionaryObject):
                     if NameObject("/Next") in cur:
                         # Removing middle tree node
                         next_ref = cur[NameObject("/Next")]
-                        next = next_ref.get_object()
-                        next[NameObject("/Prev")] = prev_ref
+                        next_obj = next_ref.get_object()
+                        next_obj[NameObject("/Prev")] = prev_ref
                         prev[NameObject("/Next")] = next_ref
                         self[NameObject("/Count")] -= 1
                     else:
