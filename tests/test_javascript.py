@@ -15,7 +15,7 @@ def pdf_file_writer():
     reader = PdfReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
     writer = PdfWriter()
     writer.append_pages_from_reader(reader)
-    yield writer
+    return writer
 
 
 def test_add_js(pdf_file_writer):

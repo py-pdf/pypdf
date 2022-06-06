@@ -30,7 +30,6 @@
 import math
 import uuid
 import warnings
-from binascii import unhexlify
 from decimal import Decimal
 from math import sqrt
 from typing import (
@@ -46,7 +45,7 @@ from typing import (
     cast,
 )
 
-from ._adobe_glyphs import adobe_glyphs
+from ._cmap import build_char_map
 from ._utils import (
     CompressedTransformationMatrix,
     TransformationMatrixType,
@@ -60,7 +59,6 @@ from .errors import PageSizeNotDefinedError, PdfReadWarning
 from .generic import (
     ArrayObject,
     ContentStream,
-    DecodedStreamObject,
     DictionaryObject,
     EncodedStreamObject,
     FloatObject,
@@ -70,7 +68,6 @@ from .generic import (
     NumberObject,
     RectangleObject,
     TextStringObject,
-    charset_encoding,
 )
 
 
@@ -274,7 +271,7 @@ class PageObject(DictionaryObject):
                 width = lastpage.mediabox.width
                 height = lastpage.mediabox.height
             else:
-                raise PageSizeNotDefinedError()
+                raise PageSizeNotDefinedError
         page.__setitem__(
             NameObject(PG.MEDIABOX), RectangleObject((0, 0, width, height))  # type: ignore
         )
@@ -542,49 +539,54 @@ class PageObject(DictionaryObject):
 
         # if expanding the page to fit a new page, calculate the new media box size
         if expand:
-            corners1 = [
-                self.mediabox.left.as_numeric(),
-                self.mediabox.bottom.as_numeric(),
-                self.mediabox.right.as_numeric(),
-                self.mediabox.top.as_numeric(),
-            ]
-            corners2 = [
-                page2.mediabox.left.as_numeric(),
-                page2.mediabox.bottom.as_numeric(),
-                page2.mediabox.left.as_numeric(),
-                page2.mediabox.top.as_numeric(),
-                page2.mediabox.right.as_numeric(),
-                page2.mediabox.top.as_numeric(),
-                page2.mediabox.right.as_numeric(),
-                page2.mediabox.bottom.as_numeric(),
-            ]
-            if ctm is not None:
-                ctm = tuple(float(x) for x in ctm)  # type: ignore[assignment]
-                new_x = [
-                    ctm[0] * corners2[i] + ctm[2] * corners2[i + 1] + ctm[4]
-                    for i in range(0, 8, 2)
-                ]
-                new_y = [
-                    ctm[1] * corners2[i] + ctm[3] * corners2[i + 1] + ctm[5]
-                    for i in range(0, 8, 2)
-                ]
-            else:
-                new_x = corners2[0:8:2]
-                new_y = corners2[1:8:2]
-            lowerleft = (min(new_x), min(new_y))
-            upperright = (max(new_x), max(new_y))
-            lowerleft = (min(corners1[0], lowerleft[0]), min(corners1[1], lowerleft[1]))
-            upperright = (
-                max(corners1[2], upperright[0]),
-                max(corners1[3], upperright[1]),
-            )
-
-            self.mediabox.lower_left = lowerleft
-            self.mediabox.upper_right = upperright
+            self._expand_mediabox(page2, ctm)
 
         self[NameObject(PG.CONTENTS)] = ContentStream(new_content_array, self.pdf)
         self[NameObject(PG.RESOURCES)] = new_resources
         self[NameObject(PG.ANNOTS)] = new_annots
+
+    def _expand_mediabox(
+        self, page2: "PageObject", ctm: Optional[CompressedTransformationMatrix]
+    ) -> None:
+        corners1 = [
+            self.mediabox.left.as_numeric(),
+            self.mediabox.bottom.as_numeric(),
+            self.mediabox.right.as_numeric(),
+            self.mediabox.top.as_numeric(),
+        ]
+        corners2 = [
+            page2.mediabox.left.as_numeric(),
+            page2.mediabox.bottom.as_numeric(),
+            page2.mediabox.left.as_numeric(),
+            page2.mediabox.top.as_numeric(),
+            page2.mediabox.right.as_numeric(),
+            page2.mediabox.top.as_numeric(),
+            page2.mediabox.right.as_numeric(),
+            page2.mediabox.bottom.as_numeric(),
+        ]
+        if ctm is not None:
+            ctm = tuple(float(x) for x in ctm)  # type: ignore[assignment]
+            new_x = [
+                ctm[0] * corners2[i] + ctm[2] * corners2[i + 1] + ctm[4]
+                for i in range(0, 8, 2)
+            ]
+            new_y = [
+                ctm[1] * corners2[i] + ctm[3] * corners2[i + 1] + ctm[5]
+                for i in range(0, 8, 2)
+            ]
+        else:
+            new_x = corners2[0:8:2]
+            new_y = corners2[1:8:2]
+        lowerleft = (min(new_x), min(new_y))
+        upperright = (max(new_x), max(new_y))
+        lowerleft = (min(corners1[0], lowerleft[0]), min(corners1[1], lowerleft[1]))
+        upperright = (
+            max(corners1[2], upperright[0]),
+            max(corners1[3], upperright[1]),
+        )
+
+        self.mediabox.lower_left = lowerleft
+        self.mediabox.upper_right = upperright
 
     def mergeTransformedPage(
         self,
@@ -984,7 +986,9 @@ class PageObject(DictionaryObject):
         deprecate_with_replacement("compressContentStreams", "compress_content_streams")
         self.compress_content_streams()
 
-    def _extract_text_old(self, Tj_sep: str = "", TJ_sep: str = "") -> str:
+    def _extract_text_old(
+        self, Tj_sep: str = "", TJ_sep: str = ""
+    ) -> str:  # pragma: no cover
         """
         Locate all text drawing commands, in the order they are provided in the
         content stream, and extract the text.  This works well for some PDF
@@ -1006,28 +1010,20 @@ class PageObject(DictionaryObject):
         space_scale = 1.0
 
         for operands, operator in content.operations:
-            if operator == b"Tf":  # text font
-                pass
-            elif operator == b"Tfs":  # text font size
-                pass
-            elif operator == b"Tc":  # character spacing
-                # See '5.2.1 Character Spacing'
+            # Missing operators:
+            #   Tf: text font
+            #  Tfs: text font size
+            #   Tc: '5.2.1 Character Spacing'
+            #   Th: '5.2.3 Horizontal Scaling'
+            #   Tl: '5.2.4 Leading'
+            # Tmode: '5.2.5 Text Rendering Mode'
+            # Trise: '5.2.6 Text Rise'
+
+            if operator in [b"Tf", b"Tfs", b"Tc", b"Th", b"Tl", b"Tmode"]:
                 pass
             elif operator == b"Tw":  # word spacing
                 # See '5.2.2 Word Spacing'
                 space_scale = 1.0 + float(operands[0])
-            elif operator == b"Th":  # horizontal scaling
-                # See '5.2.3 Horizontal Scaling'
-                pass
-            elif operator == b"Tl":  # leading
-                # See '5.2.4 Leading'
-                pass
-            elif operator == b"Tmode":  # text rendering mode
-                # See '5.2.5 Text Rendering Mode'
-                pass
-            elif operator == b"Trise":  # text rise
-                # See '5.2.6 Text Rise'
-                pass
             elif operator == b"Tj":
                 # See 'TABLE 5.6 Text-showing operators'
                 _text = operands[0]
@@ -1116,170 +1112,6 @@ class PageObject(DictionaryObject):
             default = "/Content"
         :return: a string object.
         """
-        # code freely inspired from @twiggy ; see #711
-        def buildCharMap(font_name: str) -> Tuple[str, float, Dict, Dict]:
-            map_dict: Any = {}
-            process_rg: bool = False
-            process_char: bool = False
-            encoding: List[str] = []
-            ft: DictionaryObject = obj["/Resources"]["/Font"][font_name]  # type: ignore
-            font_type: str = cast(str, ft["/Subtype"])
-            sp_width: float = space_width * 2  # default value
-            w = []
-            # encoding
-            space_code = 32
-            if "/Encoding" in ft:
-                enc: Union(str, DictionaryObject) = ft["/Encoding"].get_object()  # type: ignore
-                if isinstance(enc, str):
-                    try:
-                        if enc in ("/Identity-H", "/Identity-V"):
-                            encoding = []
-                        else:
-                            encoding = charset_encoding[enc].copy()
-                    except Exception:
-                        warnings.warn(
-                            f"Advanced encoding {encoding} not implemented yet",
-                            PdfReadWarning,
-                        )
-                        encoding = charset_encoding["/StandardCoding"].copy()
-                elif isinstance(enc, DictionaryObject) and "/BaseEncoding" in enc:
-                    try:
-                        encoding = charset_encoding[
-                            cast(str, enc["/BaseEncoding"])
-                        ].copy()
-                    except Exception:
-                        warnings.warn(
-                            f"Advanced encoding {encoding} not implemented yet",
-                            PdfReadWarning,
-                        )
-                        encoding = charset_encoding["/StandardCoding"].copy()
-                else:
-                    encoding = charset_encoding["/StandardCoding"].copy()
-                if "/Differences" in enc:
-                    x = 0
-                    for o in cast(
-                        DictionaryObject, cast(DictionaryObject, enc)["/Differences"]
-                    ):
-                        if isinstance(o, int):
-                            x = o
-                        else:
-                            try:
-                                encoding[x] = adobe_glyphs[o]
-                            except Exception:
-                                encoding[x] = o
-                                if o == " ":
-                                    space_code = x
-                            x += 1
-            if "/ToUnicode" in ft:
-                cm: str = (
-                    cast(DecodedStreamObject, ft["/ToUnicode"])
-                    .get_data()
-                    .decode("utf-8")
-                )
-                for l in (
-                    cm.strip()
-                    .replace("<", " ")
-                    .replace(">", "")
-                    .replace("[", " [ ")
-                    .replace("]", " ] ")
-                    .split("\n")
-                ):
-                    if l == "":
-                        continue
-                    if "beginbfrange" in l:
-                        process_rg = True
-                    elif "endbfrange" in l:
-                        process_rg = False
-                    elif "beginbfchar" in l:
-                        process_char = True
-                    elif "endbfchar" in l:
-                        process_char = False
-                    elif process_rg:
-                        lst = [x for x in l.split(" ") if x]
-                        a = int(lst[0], 16)
-                        b = int(lst[1], 16)
-                        if lst[2] == "[":
-                            # lst = lst[3:].trim(' []').split(' ')
-                            for sq in lst[3:]:
-                                if "]":
-                                    break
-                                map_dict[a] = unhexlify(sq).decode("utf-16-be")
-                                a += 1
-                                assert a > b
-                        else:
-                            c = int(lst[2], 16)
-                            fmt = b"%%0%dX" % len(lst[2])
-                            while a <= b:
-                                map_dict[a] = unhexlify(fmt % c).decode("utf-16-be")
-                                a += 1
-                                c += 1
-                    elif process_char:
-                        lst = [x for x in l.split(" ") if x]
-                        a = int(lst[0], 16)
-                        map_dict[a] = unhexlify("".join(lst[1:])).decode(
-                            "utf-16-be"
-                        )  # join is here as some cases where the code was split
-
-                # get
-                for a in map_dict:
-                    if map_dict[a] == " ":
-                        space_code = a
-
-            # compute space width
-            st: int = 0  # declaration for mypy
-            if "/W" in ft:
-                if "/DW" in ft:
-                    sp_width = cast(float, ft["/DW"])
-                w = [x for x in ft["/W"]]  # type: ignore
-                while len(w) > 0:
-                    st = w[0]
-                    second = w[1]
-                    if isinstance(int, second):
-                        if st <= space_code and space_code <= second:
-                            sp_width = w[2]
-                            break
-                        w = w[3:]
-                    if isinstance(list, second):
-                        if st <= space_code and space_code <= st + len(second) - 1:
-                            sp_width = second[space_code - st]
-                        w = w[2:]
-                    else:
-                        warnings.warn(
-                            "unknown widths : \n" + (ft["/W"]).__repr__(),
-                            PdfReadWarning,
-                        )
-                        break
-            if "/Widths" in ft:
-                w = [x for x in ft["/Widths"]]  # type: ignore
-                try:
-                    st = cast(int, ft["/FirstChar"])
-                    en: int = cast(int, ft["/LastChar"])
-                    if st > space_code or en < space_code:
-                        raise Exception("Not in range")
-                    if w[space_code - st] == 0:
-                        raise Exception("null width")
-                    sp_width = w[space_code - st]
-                except Exception:
-                    if "/FontDescriptor" in ft and "/MissingWidth" in cast(
-                        DictionaryObject, ft["/FontDescriptor"]
-                    ):
-                        sp_width = ft["/FontDescriptor"]["/MissingWidth"]  # type: ignore
-                    else:
-                        # will consider width of char as avg(width)/2
-                        m = 0
-                        cpt = 0
-                        for x in w:
-                            if x > 0:
-                                m += x
-                                cpt += 1
-                        sp_width = m / max(1, cpt) / 2
-
-            return (
-                font_type,
-                float(sp_width / 2),
-                dict(zip(range(256), encoding)),
-                "".maketrans(map_dict),
-            )
 
         text: str = ""
         output: str = ""
@@ -1287,7 +1119,7 @@ class PageObject(DictionaryObject):
         resources_dict = cast(DictionaryObject, obj["/Resources"])
         if "/Font" in resources_dict:
             for f in cast(DictionaryObject, resources_dict["/Font"]):
-                cmaps[f] = buildCharMap(f)
+                cmaps[f] = build_char_map(f, space_width, obj)
         cmap: Union[str, Dict[int, str]] = {}
         content = obj[content_key].get_object() if isinstance(content_key, str) else obj
         if not isinstance(content, ContentStream):

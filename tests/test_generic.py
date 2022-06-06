@@ -137,7 +137,6 @@ def test_readStringFromStream_not_in_escapedict_no_digit():
     with pytest.raises(PdfReadError) as exc:
         readStringFromStream(stream)
     assert exc.value.args[0] == "Stream has ended unexpectedly"
-    # "Unexpected escaped string: y"
 
 
 def test_readStringFromStream_multichar_eol():
@@ -243,8 +242,6 @@ def test_DictionaryObject_key_is_no_pdfobject():
 def test_DictionaryObject_xmp_meta():
     do = DictionaryObject({NameObject("/S"): NameObject("/GoTo")})
     assert do.xmp_metadata is None
-    with pytest.warns(PendingDeprecationWarning):
-        assert do.xmpMetadata is None
 
 
 def test_DictionaryObject_value_is_no_pdfobject():
@@ -311,10 +308,10 @@ def test_DictionaryObject_read_from_stream_stream_no_newline():
 def test_DictionaryObject_read_from_stream_stream_no_stream_length(strict):
     stream = BytesIO(b"<< /S /GoTo >>stream\n")
 
-    class tst:  # to replace pdf
+    class Tst:  # to replace pdf
         strict = False
 
-    pdf = tst()
+    pdf = Tst()
     pdf.strict = strict
     with pytest.raises(PdfReadError) as exc:
         DictionaryObject.read_from_stream(stream, pdf)
@@ -322,7 +319,7 @@ def test_DictionaryObject_read_from_stream_stream_no_stream_length(strict):
 
 
 @pytest.mark.parametrize(
-    ("strict", "length", "shouldFail"),
+    ("strict", "length", "should_fail"),
     [
         (True, 6, False),
         (True, 10, False),
@@ -332,14 +329,14 @@ def test_DictionaryObject_read_from_stream_stream_no_stream_length(strict):
     ],
 )
 def test_DictionaryObject_read_from_stream_stream_stream_valid(
-    strict, length, shouldFail
+    strict, length, should_fail
 ):
     stream = BytesIO(b"<< /S /GoTo /Length %d >>stream\nBT /F1\nendstream\n" % length)
 
-    class tst:  # to replace pdf
+    class Tst:  # to replace pdf
         strict = True
 
-    pdf = tst()
+    pdf = Tst()
     pdf.strict = strict
     with pytest.raises(PdfReadError) as exc:
         do = DictionaryObject.read_from_stream(stream, pdf)
@@ -349,7 +346,7 @@ def test_DictionaryObject_read_from_stream_stream_stream_valid(
             assert b"BT /F1" in do._StreamObject__data
         raise PdfReadError("__ALLGOOD__")
     print(exc.value)
-    assert shouldFail ^ (exc.value.args[0] == "__ALLGOOD__")
+    assert should_fail ^ (exc.value.args[0] == "__ALLGOOD__")
 
 
 def test_RectangleObject():
@@ -399,13 +396,8 @@ def test_remove_child_in_tree():
     reader = PdfReader(pdf)
     writer = PdfWriter()
     writer.add_page(reader.pages[0])
-    writer.add_bookmark("foo", 0)
+    writer.add_bookmark("foo", pagenum=0)
     obj = writer._objects[-1]
-    # print(dict)
-    # print(type(dict))
-    # for obj in writer._objects:
-    #     print(obj)
-    #     print(type(obj))
     tree.add_child(obj, writer)
     tree.remove_child(obj)
     tree.add_child(obj, writer)

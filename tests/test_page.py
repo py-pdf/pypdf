@@ -1,6 +1,5 @@
 import json
 import os
-import urllib.request
 from copy import deepcopy
 from io import BytesIO
 
@@ -10,6 +9,7 @@ from PyPDF2 import PdfReader, Transformation
 from PyPDF2._page import PageObject
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.generic import DictionaryObject, NameObject, RectangleObject
+from tests import get_pdf_from_url
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -45,7 +45,6 @@ def test_read(meta):
     [
         ("crazyones.pdf", None),
         ("attachment.pdf", None),
-        # ("side-by-side-subfig.pdf", None),
         (
             "libreoffice-writer-password.pdf",
             "openpassword",
@@ -64,7 +63,7 @@ def test_page_operations(pdf_path, password):
     output is as expected.
     """
     if pdf_path.startswith("http"):
-        pdf_path = BytesIO(urllib.request.urlopen(pdf_path).read())
+        pdf_path = BytesIO(get_pdf_from_url(pdf_path, pdf_path.split("/")[-1]))
     else:
         pdf_path = os.path.join(RESOURCE_ROOT, pdf_path)
     reader = PdfReader(pdf_path)
@@ -73,22 +72,18 @@ def test_page_operations(pdf_path, password):
         reader.decrypt(password)
 
     page: PageObject = reader.pages[0]
-    with pytest.warns(PendingDeprecationWarning):
-        page.mergeRotatedScaledTranslatedPage(
-            page, 90, scale=1, tx=1, ty=1, expand=True
-        )
+
+    transformation = Transformation().rotate(90).scale(1).translate(1, 1)
+    page.add_transformation(transformation, expand=True)
     page.add_transformation((1, 0, 0, 0, 0, 0))
     page.scale(2, 2)
     page.scale_by(0.5)
     page.scale_to(100, 100)
     page.compress_content_streams()
     page.extract_text()
-    with pytest.warns(PendingDeprecationWarning):
-        page.scaleBy(0.5)
-    with pytest.warns(PendingDeprecationWarning):
-        page.scaleTo(100, 100)
-    with pytest.warns(PendingDeprecationWarning):
-        page.extractText()
+    page.scale_by(0.5)
+    page.scale_to(100, 100)
+    page.extract_text()
 
 
 def test_transformation_equivalence():

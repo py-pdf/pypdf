@@ -393,7 +393,7 @@ class PdfReader:
         """
         Retrieves a page by number from this PDF file.
 
-        :param int pageNumber: The page number to retrieve
+        :param int page_number: The page number to retrieve
             (pages begin at zero)
         :return: a :class:`PageObject<PyPDF2._page.PageObject>` instance.
         :rtype: :class:`PageObject<PyPDF2._page.PageObject>`
@@ -498,7 +498,7 @@ class PdfReader:
         field: Union[TreeObject, DictionaryObject],
         retval: Dict[Any, Any],
         fileobj: Any,
-        fieldAttributes: Any,
+        field_attributes: Any,
     ) -> None:
         self._check_kids(field, retval, fileobj)
         try:
@@ -510,7 +510,7 @@ class PdfReader:
                 # Ignore no-name field for now
                 return
         if fileobj:
-            self._write_field(fileobj, field, fieldAttributes)
+            self._write_field(fileobj, field, field_attributes)
             fileobj.write("\n")
         retval[key] = Field(field)
 
@@ -913,7 +913,7 @@ class PdfReader:
         inherit: Optional[Dict[str, Any]] = None,
         indirect_ref: Optional[IndirectObject] = None,
     ) -> None:
-        inheritablePageAttributes = (
+        inheritable_page_attributes = (
             NameObject(PG.RESOURCES),
             NameObject(PG.MEDIABOX),
             NameObject(PG.CROPBOX),
@@ -933,7 +933,7 @@ class PdfReader:
             t = pages[PA.TYPE]  # type: ignore
 
         if t == "/Pages":
-            for attr in inheritablePageAttributes:
+            for attr in inheritable_page_attributes:
                 if attr in pages:
                     inherit[attr] = pages[attr]
             for page in pages[PA.KIDS]:  # type: ignore
@@ -980,8 +980,11 @@ class PdfReader:
             if self.strict and idx != i:
                 raise PdfReadError("Object is in wrong index.")
             stream_data.seek(int(obj_stm["/First"] + offset), 0)  # type: ignore
-            read_non_whitespace(stream_data)        # to cope with some case where the 'pointer' is on a white space
+
+            # to cope with some case where the 'pointer' is on a white space
+            read_non_whitespace(stream_data)
             stream_data.seek(-1, 1)
+
             try:
                 obj = read_object(stream_data, self)
             except PdfStreamError as exc:
@@ -1212,10 +1215,10 @@ class PdfReader:
                     )
                 )
             stream.seek(-1, 2)
-        last1M = stream.tell() - 1024 * 1024 + 1  # offset of last MB of stream
+        last_mb = stream.tell() - 1024 * 1024 + 1  # offset of last MB of stream
         line = b_("")
         while line[:5] != b_("%%EOF"):
-            if stream.tell() < last1M:
+            if stream.tell() < last_mb:
                 raise PdfReadError("EOF marker not found")
             line = self.read_next_end_line(stream)
 

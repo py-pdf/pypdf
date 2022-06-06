@@ -2,7 +2,6 @@ import io
 import os
 import time
 from io import BytesIO
-import urllib.request
 
 import pytest
 
@@ -13,6 +12,7 @@ from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.constants import Ressources as RES
 from PyPDF2.errors import PdfReadError, PdfReadWarning
 from PyPDF2.filters import _xobj_to_image
+from tests import get_pdf_from_url
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -65,8 +65,7 @@ def test_get_num_pages(src, num_pages):
 def test_read_metadata(pdf_path, expected):
     with open(pdf_path, "rb") as inputfile:
         reader = PdfReader(inputfile)
-        with pytest.warns(PendingDeprecationWarning):
-            docinfo = reader.documentInfo
+        docinfo = reader.metadata
         assert docinfo is not None
         metadict = dict(docinfo)
         assert metadict == expected
@@ -161,11 +160,11 @@ def test_get_images(src, nb_images):
     images_extracted = []
 
     if RES.XOBJECT in page[PG.RESOURCES]:
-        xObject = page[PG.RESOURCES][RES.XOBJECT].get_object()
+        x_object = page[PG.RESOURCES][RES.XOBJECT].get_object()
 
-        for obj in xObject:
-            if xObject[obj][IA.SUBTYPE] == "/Image":
-                extension, byte_stream = _xobj_to_image(xObject[obj])
+        for obj in x_object:
+            if x_object[obj][IA.SUBTYPE] == "/Image":
+                extension, byte_stream = _xobj_to_image(x_object[obj])
                 if extension is not None:
                     filename = obj[1:] + ".png"
                     with open(filename, "wb") as img:
@@ -230,9 +229,8 @@ def test_get_images_raw(strict, with_prev_0, startx_correction, should_fail):
     )
     pdf_stream = io.BytesIO(pdf_data)
     if should_fail:
-        with pytest.raises(PdfReadError) as exc:
-            with pytest.warns(PdfReadWarning):
-                PdfReader(pdf_stream, strict=strict)
+        with pytest.raises(PdfReadError) as exc, pytest.warns(PdfReadWarning):
+            PdfReader(pdf_stream, strict=strict)
         assert exc.type == PdfReadError
         if startx_correction == -1:
             assert (
@@ -246,9 +244,8 @@ def test_get_images_raw(strict, with_prev_0, startx_correction, should_fail):
 
 def test_issue297():
     path = os.path.join(RESOURCE_ROOT, "issue-297.pdf")
-    with pytest.raises(PdfReadError) as exc:
-        with pytest.warns(PdfReadWarning):
-            reader = PdfReader(path, strict=True)
+    with pytest.raises(PdfReadError) as exc, pytest.warns(PdfReadWarning):
+        reader = PdfReader(path, strict=True)
     assert "Broken xref table" in exc.value.args[0]
     with pytest.warns(PdfReadWarning):
         reader = PdfReader(path, strict=False)
@@ -438,9 +435,8 @@ def test_read_prev_0_trailer():
         pdf_data.find(b"xref") - 1,
     )
     pdf_stream = io.BytesIO(pdf_data)
-    with pytest.raises(PdfReadError) as exc:
-        with pytest.warns(PdfReadWarning):
-            PdfReader(pdf_stream, strict=True)
+    with pytest.raises(PdfReadError) as exc, pytest.warns(PdfReadWarning):
+        PdfReader(pdf_stream, strict=True)
     assert exc.value.args[0] == "/Prev=0 in the trailer (try opening with strict=False)"
 
 
@@ -462,7 +458,7 @@ def test_read_missing_startxref():
         b"%010d 00000 n\n"
         b"%010d 00000 n\n"
         b"trailer << /Root 5 0 R /Size 6 >>\n"
-        # b"startxref %d\n"
+        # Removed for this test: b"startxref %d\n"
         b"%%%%EOF"
     )
     pdf_data = pdf_data % (
@@ -471,7 +467,7 @@ def test_read_missing_startxref():
         pdf_data.find(b"3 0 obj"),
         pdf_data.find(b"4 0 obj"),
         pdf_data.find(b"5 0 obj"),
-        # pdf_data.find(b"xref") - 1,
+        # Removed for this test: pdf_data.find(b"xref") - 1,
     )
     pdf_stream = io.BytesIO(pdf_data)
     with pytest.raises(PdfReadError) as exc:
@@ -512,16 +508,14 @@ def test_read_unknown_zero_pages():
     pdf_stream = io.BytesIO(pdf_data)
     with pytest.warns(PdfReadWarning):
         reader = PdfReader(pdf_stream, strict=True)
-    with pytest.raises(PdfReadError) as exc:
-        with pytest.warns(PdfReadWarning):
-            len(reader.pages)
+    with pytest.raises(PdfReadError) as exc, pytest.warns(PdfReadWarning):
+        len(reader.pages)
 
     assert exc.value.args[0] == "Could not find object."
     with pytest.warns(PdfReadWarning):
         reader = PdfReader(pdf_stream, strict=False)
-    with pytest.raises(AttributeError) as exc:
-        with pytest.warns(PdfReadWarning):
-            len(reader.pages)
+    with pytest.raises(AttributeError) as exc, pytest.warns(PdfReadWarning):
+        len(reader.pages)
     assert exc.value.args[0] == "'NoneType' object has no attribute 'get_object'"
 
 
@@ -555,7 +549,7 @@ def test_do_not_get_stuck_on_large_files_without_start_xref():
     assert parse_duration < 60
 
 
-def test_PdfReaderDecryptWhenNoID():
+def test_decrypt_when_no_id():
     """
     Decrypt an encrypted file that's missing the 'ID' value in its
     trailer.
@@ -589,10 +583,9 @@ def test_issue604(strict):
         pdf = None
         bookmarks = None
         if strict:
-            with pytest.raises(PdfReadError) as exc:
-                pdf = PdfReader(f, strict=strict)
-                with pytest.warns(PdfReadWarning):
-                    bookmarks = pdf._get_outlines()
+            pdf = PdfReader(f, strict=strict)
+            with pytest.raises(PdfReadError) as exc, pytest.warns(PdfReadWarning):
+                bookmarks = pdf._get_outlines()
             if "Unknown Destination" not in exc.value.args[0]:
                 raise Exception("Expected exception not raised")
             return  # bookmarks not correct
@@ -602,7 +595,6 @@ def test_issue604(strict):
                 bookmarks = pdf._get_outlines()
 
         def get_dest_pages(x):
-            # print(x)
             if isinstance(x, list):
                 r = [get_dest_pages(y) for y in x]
                 return r
@@ -614,7 +606,6 @@ def test_issue604(strict):
             b
         ) in bookmarks:  # b can be destination or a list:preferred to just print them
             out.append(get_dest_pages(b))
-    # print(out)
 
 
 def test_decode_permissions():
@@ -639,7 +630,7 @@ def test_decode_permissions():
     assert reader.decode_permissions(8) == modify
 
 
-def test_VirtualList():
+def test_pages_attribute():
     pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
     reader = PdfReader(pdf_path)
 
@@ -670,8 +661,8 @@ def test_convertToInt_deprecated():
 
 
 def test_iss925():
-    reader = PdfReader(BytesIO(urllib.request.urlopen(
-        "https://github.com/py-pdf/PyPDF2/files/8796328/1.pdf").read()))
+    url = "https://github.com/py-pdf/PyPDF2/files/8796328/1.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name="iss925.pdf")))
 
     for page_sliced in reader.pages:
         page_object = page_sliced.get_object()

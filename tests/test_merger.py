@@ -38,7 +38,7 @@ def test_merge():
         merger.append(fh)
 
     bookmark = merger.add_bookmark("A bookmark", 0)
-    merger.add_bookmark("deeper", 0, parent=bookmark)
+    merger.add_bookmark("deeper", 0, parent=bookmark, italic=True, bold=True)
     merger.add_metadata({"author": "Martin Thoma"})
     merger.add_named_destination("title", 0)
     merger.set_page_layout("/SinglePage")

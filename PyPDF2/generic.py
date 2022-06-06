@@ -84,7 +84,7 @@ class PdfObject:
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class NullObject(PdfObject):
@@ -555,7 +555,7 @@ class TextStringObject(str, PdfObject):
 
 
 class NameObject(str, PdfObject):
-    delimiterPattern = re.compile(b_(r"\s+|[\(\)<>\[\]{}/%]"))
+    delimiter_pattern = re.compile(b_(r"\s+|[\(\)<>\[\]{}/%]"))
     surfix = b_("/")
 
     def write_to_stream(
@@ -574,21 +574,21 @@ class NameObject(str, PdfObject):
         name = stream.read(1)
         if name != NameObject.surfix:
             raise PdfReadError("name read error")
-        name += read_until_regex(stream, NameObject.delimiterPattern, ignore_eof=True)
+        name += read_until_regex(stream, NameObject.delimiter_pattern, ignore_eof=True)
         try:
             try:
                 ret = name.decode("utf-8")
             except (UnicodeEncodeError, UnicodeDecodeError):
                 ret = name.decode("gbk")
             return NameObject(ret)
-        except (UnicodeEncodeError, UnicodeDecodeError):
+        except (UnicodeEncodeError, UnicodeDecodeError) as e:
             # Name objects should represent irregular characters
             # with a '#' followed by the symbol's hex number
             if not pdf.strict:
                 warnings.warn("Illegal character in Name Object", PdfReadWarning)
                 return NameObject(name)
             else:
-                raise PdfReadError("Illegal character in Name Object")
+                raise PdfReadError("Illegal character in Name Object") from e
 
     @staticmethod
     def readFromStream(
@@ -687,22 +687,20 @@ class DictionaryObject(dict, PdfObject):
         forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
     ) -> "DictionaryObject":
         def get_next_obj_pos(
-            p: int, p1: int, remGens: List[int], pdf: Any
+            p: int, p1: int, rem_gens: List[int], pdf: Any
         ) -> int:  # PdfReader
-            l = pdf.xref[remGens[0]]
+            l = pdf.xref[rem_gens[0]]
             for o in l:
                 if p1 > l[o] and p < l[o]:
                     p1 = l[o]
-            if len(remGens) == 1:
+            if len(rem_gens) == 1:
                 return p1
             else:
-                return get_next_obj_pos(p, p1, remGens[1:], pdf)
+                return get_next_obj_pos(p, p1, rem_gens[1:], pdf)
 
         def read_unsized_from_steam(stream: StreamType, pdf: Any) -> bytes:  # PdfReader
             # we are just pointing at beginning of the stream
-            eon = (
-                get_next_obj_pos(stream.tell(), 2**32, [g for g in pdf.xref], pdf) - 1
-            )
+            eon = get_next_obj_pos(stream.tell(), 2**32, list(pdf.xref), pdf) - 1
             curr = stream.tell()
             rw = stream.read(eon - stream.tell())
             p = rw.find(b_("endstream"))
@@ -895,8 +893,8 @@ class TreeObject(DictionaryObject):
                     if NameObject("/Next") in cur:
                         # Removing first tree node
                         next_ref = cur[NameObject("/Next")]
-                        next = next_ref.get_object()
-                        del next[NameObject("/Prev")]
+                        next_obj = next_ref.get_object()
+                        del next_obj[NameObject("/Prev")]
                         self[NameObject("/First")] = next_ref
                         self[NameObject("/Count")] -= 1  # type: ignore
 
@@ -911,8 +909,8 @@ class TreeObject(DictionaryObject):
                     if NameObject("/Next") in cur:
                         # Removing middle tree node
                         next_ref = cur[NameObject("/Next")]
-                        next = next_ref.get_object()
-                        next[NameObject("/Prev")] = prev_ref
+                        next_obj = next_ref.get_object()
+                        next_obj[NameObject("/Prev")] = prev_ref
                         prev[NameObject("/Next")] = next_ref
                         self[NameObject("/Count")] -= 1
                     else:
@@ -1129,7 +1127,7 @@ class ContentStream(DecodedStreamObject):
                 break
             stream.seek(-1, 1)
             if peek.isalpha() or peek == b_("'") or peek == b_('"'):
-                operator = read_until_regex(stream, NameObject.delimiterPattern, True)
+                operator = read_until_regex(stream, NameObject.delimiter_pattern, True)
                 if operator == b_("BI"):
                     # begin inline image - a completely different parsing
                     # mechanism is required, of course... thanks buddy...
