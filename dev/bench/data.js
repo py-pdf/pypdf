@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1654422557209,
+  "lastUpdate": 1654501057992,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -4054,6 +4054,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.009688495615550418",
             "extra": "mean: 4.4759626094 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b0084120b77fe450629fdd5b4a1d25f991074c6a",
+          "message": "TST: Ignore PdfReadWarning in benchmark (#949)\n\nIgnore the PdfReadWarning in the benchmarking code as it is only supposed to be used for performance testing.",
+          "timestamp": "2022-06-06T09:36:23+02:00",
+          "tree_id": "17ebc5973cbcc26c9aa75f4a30ea9fe214f80340",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/b0084120b77fe450629fdd5b4a1d25f991074c6a"
+        },
+        "date": 1654501057110,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6289519903492351,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007449504288683419",
+            "extra": "mean: 1.5899464749999992 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.850370993045722,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005813671722364579",
+            "extra": "mean: 101.51901899999416 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23285732582591734,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00972297056825972",
+            "extra": "mean: 4.294475153200006 sec\nrounds: 5"
           }
         ]
       }
