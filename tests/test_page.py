@@ -1,6 +1,5 @@
 import json
 import os
-import urllib.request
 from copy import deepcopy
 from io import BytesIO
 
@@ -10,6 +9,7 @@ from PyPDF2 import PdfReader, Transformation
 from PyPDF2._page import PageObject
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.generic import DictionaryObject, NameObject, RectangleObject
+from tests import get_pdf_from_url
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -64,7 +64,7 @@ def test_page_operations(pdf_path, password):
     output is as expected.
     """
     if pdf_path.startswith("http"):
-        pdf_path = BytesIO(urllib.request.urlopen(pdf_path).read())
+        pdf_path = BytesIO(get_pdf_from_url(pdf_path, pdf_path.split("/")[-1]))
     else:
         pdf_path = os.path.join(RESOURCE_ROOT, pdf_path)
     reader = PdfReader(pdf_path)

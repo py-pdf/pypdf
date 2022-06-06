@@ -1,7 +1,6 @@
 import io
 import os
 import time
-import urllib.request
 from io import BytesIO
 
 import pytest
@@ -13,6 +12,7 @@ from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.constants import Ressources as RES
 from PyPDF2.errors import PdfReadError, PdfReadWarning
 from PyPDF2.filters import _xobj_to_image
+from tests import get_pdf_from_url
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -554,7 +554,7 @@ def test_do_not_get_stuck_on_large_files_without_start_xref():
     assert parse_duration < 60
 
 
-def test_PdfReader_decrypt_when_no_id():
+def test_decrypt_when_no_id():
     """
     Decrypt an encrypted file that's missing the 'ID' value in its
     trailer.
@@ -638,7 +638,7 @@ def test_decode_permissions():
     assert reader.decode_permissions(8) == modify
 
 
-def test_VirtualList():
+def test_pages_attribute():
     pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
     reader = PdfReader(pdf_path)
 
@@ -670,7 +670,7 @@ def test_convertToInt_deprecated():
 
 def test_iss925():
     url = "https://github.com/py-pdf/PyPDF2/files/8796328/1.pdf"
-    reader = PdfReader(BytesIO(urllib.request.urlopen(url).read()))
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name="iss925.pdf")))
 
     for page_sliced in reader.pages:
         page_object = page_sliced.get_object()
