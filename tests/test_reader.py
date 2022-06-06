@@ -671,3 +671,23 @@ def test_iss925():
         if annots is not None:
             for annot in annots:
                 annot.get_object()
+
+
+@pytest.mark.xfail(reason="#591")
+def test_extract_text_hello_world():
+    reader = PdfReader(os.path.join(RESOURCE_ROOT, "hello-world.pdf"))
+    text = reader.pages[0].extract_text().split("\n")
+    assert text == [
+        "English:",
+        "Hello World",
+        "Arabic:",
+        "مرحبا بالعالم",
+        "Russian:",
+        "Привет, мир",
+        "Chinese (traditional):",
+        "你好世界",
+        "Thai:",
+        "สวัสดีชาวโลก",
+        "Japanese:",
+        "こんにちは世界",
+    ]
