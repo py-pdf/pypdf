@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1654524262665,
+  "lastUpdate": 1654614690420,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -4279,6 +4279,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0310197694492913",
             "extra": "mean: 4.3476210931999955 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "67752638+Kreusada@users.noreply.github.com",
+            "name": "Kreusada",
+            "username": "Kreusada"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9118f030b08a6509163cefc39859f582690bbf92",
+          "message": "DOC: intendet ➔ in robustness page  (#958)",
+          "timestamp": "2022-06-07T17:10:11+02:00",
+          "tree_id": "83373274a3ac68acccfd09c0c7afc221d20f934f",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/9118f030b08a6509163cefc39859f582690bbf92"
+        },
+        "date": 1654614689505,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6193629665163818,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007193108691724643",
+            "extra": "mean: 1.6145621454000036 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.604414019645382,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0065182676808168616",
+            "extra": "mean: 104.1187935000039 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22729789216625307,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01383069473636423",
+            "extra": "mean: 4.399512861599999 sec\nrounds: 5"
           }
         ]
       }
