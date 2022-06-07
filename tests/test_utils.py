@@ -95,6 +95,7 @@ def test_b():
     assert PyPDF2._utils.b_("😀") == "😀".encode()
     assert PyPDF2._utils.b_("‰") == "‰".encode()
     assert PyPDF2._utils.b_("▷") == "▷".encode()
+    assert PyPDF2._utils.b_("世") == "世".encode()
 
 
 def test_deprecate_no_replacement():
@@ -102,3 +103,21 @@ def test_deprecate_no_replacement():
         PyPDF2._utils.deprecate_no_replacement("foo")
     error_msg = "foo is deprecated and will be removed in PyPDF2 3.0.0."
     assert exc.value.args[0] == error_msg
+
+
+@pytest.mark.parametrize(
+    ("left", "up", "upleft", "expected"),
+    [
+        (0, 0, 0, 0),
+        (1, 0, 0, 1),
+        (0, 1, 0, 1),
+        (0, 0, 1, 0),
+        (1, 2, 3, 1),
+        (2, 1, 3, 1),
+        (1, 3, 2, 2),
+        (3, 1, 2, 2),
+        (3, 2, 1, 3),
+    ],
+)
+def test_paeth_predictor(left, up, upleft, expected):
+    assert PyPDF2._utils.paeth_predictor(left, up, upleft) == expected
