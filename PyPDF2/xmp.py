@@ -210,7 +210,7 @@ class XmpInformation(PdfObject):
         self.cache: Dict[Any, Any] = {}
 
     @property
-    def rdfRoot(self) -> XmlElement:
+    def rdfRoot(self) -> XmlElement:  # pragma: no cover
         deprecate_with_replacement("rdfRoot", "rdf_root", "4.0.0")
         return self.rdf_root
 
@@ -384,12 +384,12 @@ class XmpInformation(PdfObject):
     """
 
     @property
-    def xmp_createDate(self) -> datetime.datetime:
+    def xmp_createDate(self) -> datetime.datetime:  # pragma: no cover
         deprecate_with_replacement("xmp_createDate", "xmp_create_date")
         return self.xmp_create_date
 
     @xmp_createDate.setter
-    def xmp_createDate(self, value: datetime.datetime) -> None:
+    def xmp_createDate(self, value: datetime.datetime) -> None:  # pragma: no cover
         deprecate_with_replacement("xmp_createDate", "xmp_create_date")
         self.xmp_create_date = value
 
@@ -402,12 +402,12 @@ class XmpInformation(PdfObject):
     """
 
     @property
-    def xmp_modifyDate(self) -> datetime.datetime:
+    def xmp_modifyDate(self) -> datetime.datetime:  # pragma: no cover
         deprecate_with_replacement("xmp_modifyDate", "xmp_modify_date")
         return self.xmp_modify_date
 
     @xmp_modifyDate.setter
-    def xmp_modifyDate(self, value: datetime.datetime) -> None:
+    def xmp_modifyDate(self, value: datetime.datetime) -> None:  # pragma: no cover
         deprecate_with_replacement("xmp_modifyDate", "xmp_modify_date")
         self.xmp_modify_date = value
 
@@ -421,12 +421,12 @@ class XmpInformation(PdfObject):
     """
 
     @property
-    def xmp_metadataDate(self) -> datetime.datetime:
+    def xmp_metadataDate(self) -> datetime.datetime:  # pragma: no cover
         deprecate_with_replacement("xmp_metadataDate", "xmp_metadata_date")
         return self.xmp_metadata_date
 
     @xmp_metadataDate.setter
-    def xmp_metadataDate(self, value: datetime.datetime) -> None:
+    def xmp_metadataDate(self, value: datetime.datetime) -> None:  # pragma: no cover
         deprecate_with_replacement("xmp_metadataDate", "xmp_metadata_date")
         self.xmp_metadata_date = value
 
@@ -436,12 +436,12 @@ class XmpInformation(PdfObject):
     """
 
     @property
-    def xmp_creatorTool(self) -> str:
+    def xmp_creatorTool(self) -> str:  # pragma: no cover
         deprecate_with_replacement("xmp_creatorTool", "xmp_creator_tool")
         return self.xmp_creator_tool
 
     @xmp_creatorTool.setter
-    def xmp_creatorTool(self, value: str) -> None:
+    def xmp_creatorTool(self, value: str) -> None:  # pragma: no cover
         deprecate_with_replacement("xmp_creatorTool", "xmp_creator_tool")
         self.xmp_creator_tool = value
 
@@ -451,12 +451,12 @@ class XmpInformation(PdfObject):
     """
 
     @property
-    def xmpmm_documentId(self) -> str:
+    def xmpmm_documentId(self) -> str:  # pragma: no cover
         deprecate_with_replacement("xmpmm_documentId", "xmpmm_document_id")
         return self.xmpmm_document_id
 
     @xmpmm_documentId.setter
-    def xmpmm_documentId(self, value: str) -> None:
+    def xmpmm_documentId(self, value: str) -> None:  # pragma: no cover
         deprecate_with_replacement("xmpmm_documentId", "xmpmm_document_id")
         self.xmpmm_document_id = value
 
@@ -467,12 +467,12 @@ class XmpInformation(PdfObject):
     """
 
     @property
-    def xmpmm_instanceId(self) -> str:
+    def xmpmm_instanceId(self) -> str:  # pragma: no cover
         deprecate_with_replacement("xmpmm_instanceId", "xmpmm_instance_id")
         return self.xmpmm_instance_id
 
     @xmpmm_instanceId.setter
-    def xmpmm_instanceId(self, value: str) -> None:
+    def xmpmm_instanceId(self, value: str) -> None:  # pragma: no cover
         deprecate_with_replacement("xmpmm_instanceId", "xmpmm_instance_id")
         self.xmpmm_instance_id = value
 

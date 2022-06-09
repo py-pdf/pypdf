@@ -359,7 +359,7 @@ class NumberObject(int, PdfObject):
 
 def readHexStringFromStream(
     stream: StreamType,
-) -> Union["TextStringObject", "ByteStringObject"]:
+) -> Union["TextStringObject", "ByteStringObject"]:  # pragma: no cover
     deprecate_with_replacement(
         "readHexStringFromStream", "read_hex_string_from_stream", "4.0.0"
     )
@@ -392,7 +392,7 @@ def read_hex_string_from_stream(
 def readStringFromStream(
     stream: StreamType,
     forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
-) -> Union["TextStringObject", "ByteStringObject"]:
+) -> Union["TextStringObject", "ByteStringObject"]:  # pragma: no cover
     deprecate_with_replacement("readStringFromStream", "read_string_from_stream")
     return read_string_from_stream(stream, forced_encoding)
 
@@ -957,7 +957,7 @@ class TreeObject(DictionaryObject):
         if NameObject("/Prev") in child_obj:
             del child_obj[NameObject("/Prev")]
 
-    def emptyTree(self) -> None:
+    def emptyTree(self) -> None:  # pragma: no cover
         deprecate_with_replacement("emptyTree", "empty_tree", "4.0.0")
         self.empty_tree()
 
