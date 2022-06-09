@@ -357,7 +357,7 @@ class NumberObject(int, PdfObject):
         return NumberObject.read_from_stream(stream)
 
 
-def readHexStringFromStream(
+def readHexStringFromStream(  # TODO: PEP8
     stream: StreamType,
 ) -> Union["TextStringObject", "ByteStringObject"]:
     stream.read(1)
@@ -380,7 +380,7 @@ def readHexStringFromStream(
     return createStringObject(b_(txt))
 
 
-def readStringFromStream(
+def readStringFromStream(  # TODO: PEP8
     stream: StreamType,
     forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
 ) -> Union["TextStringObject", "ByteStringObject"]:

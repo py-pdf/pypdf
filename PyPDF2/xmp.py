@@ -204,7 +204,7 @@ class XmpInformation(PdfObject):
     def __init__(self, stream: ContentStream) -> None:
         self.stream = stream
         doc_root: Document = parseString(self.stream.get_data())
-        self.rdfRoot: XmlElement = doc_root.getElementsByTagNameNS(
+        self.rdfRoot: XmlElement = doc_root.getElementsByTagNameNS(  # TODO: PEP8
             RDF_NAMESPACE, "RDF"
         )[0]
         self.cache: Dict[Any, Any] = {}
