@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1654792812998,
+  "lastUpdate": 1654793020116,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -4549,6 +4549,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03354404010116556",
             "extra": "mean: 4.332195161999982 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ztravis@everlaw.com",
+            "name": "ztravis",
+            "username": "ztravis"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8cd0cfe17c34c0fea89a94a92af7f061e67831ec",
+          "message": "PI: Optimize read_next_end_line (#646)\n\nread_next_end_line is inefficient when handling long lines. If the stream is a buffered binary stream, each one-byte \"backwards\" read may trigger a full buffer read, and (more significantly) iteratively building the line we want to return is quadratic in its total length.",
+          "timestamp": "2022-06-09T18:42:21+02:00",
+          "tree_id": "7727a0f290483a6d2ef04ab30feac21033352a98",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/8cd0cfe17c34c0fea89a94a92af7f061e67831ec"
+        },
+        "date": 1654793019286,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6194154725118173,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014989446332443758",
+            "extra": "mean: 1.614425283799997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.668532379833614,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0061301398414162905",
+            "extra": "mean: 103.42831369999601 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22947172717244738,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016271576127717003",
+            "extra": "mean: 4.357835330399996 sec\nrounds: 5"
           }
         ]
       }
