@@ -215,18 +215,30 @@ class PdfWriter:
         deprecate_with_replacement("insertPage", "insert_page")
         self.insert_page(page, index)
 
-    def get_page(self, pageNumber: int) -> PageObject:  # TODO: PEP8
+    def get_page(
+        self, page_number: Optional[int] = None, pageNumber: Optional[int] = None
+    ) -> PageObject:
         """
         Retrieve a page by number from this PDF file.
 
-        :param int pageNumber: The page number to retrieve
+        :param int page_number: The page number to retrieve
             (pages begin at zero)
-        :return: the page at the index given by *pageNumber*
+        :return: the page at the index given by *page_number*
         :rtype: :class:`PageObject<PyPDF2._page.PageObject>`
         """
+        if pageNumber is not None:
+            if page_number is not None:
+                raise ValueError("Please only use the page_number parameter")
+            else:
+                deprecate_with_replacement(
+                    "get_page(pageNumber)", "get_page(page_number)", "4.0.0"
+                )
+                page_number = pageNumber
+        if page_number is None and pageNumber is None:
+            raise ValueError("Please specify the page_number")
         pages = cast(Dict[str, Any], self.get_object(self._pages))
         # XXX: crude hack
-        return pages[PA.KIDS][pageNumber].get_object()
+        return pages[PA.KIDS][page_number].get_object()
 
     def getPage(self, pageNumber: int) -> PageObject:  # pragma: no cover
         """

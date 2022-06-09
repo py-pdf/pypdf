@@ -357,7 +357,16 @@ class NumberObject(int, PdfObject):
         return NumberObject.read_from_stream(stream)
 
 
-def readHexStringFromStream(  # TODO: PEP8
+def readHexStringFromStream(
+    stream: StreamType,
+) -> Union["TextStringObject", "ByteStringObject"]:
+    deprecate_with_replacement(
+        "readHexStringFromStream", "read_hex_string_from_stream", "4.0.0"
+    )
+    return read_hex_string_from_stream(stream)
+
+
+def read_hex_string_from_stream(
     stream: StreamType,
 ) -> Union["TextStringObject", "ByteStringObject"]:
     stream.read(1)
@@ -380,7 +389,15 @@ def readHexStringFromStream(  # TODO: PEP8
     return createStringObject(b_(txt))
 
 
-def readStringFromStream(  # TODO: PEP8
+def readStringFromStream(
+    stream: StreamType,
+    forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
+) -> Union["TextStringObject", "ByteStringObject"]:
+    deprecate_with_replacement("readStringFromStream", "read_string_from_stream")
+    return read_string_from_stream(stream, forced_encoding)
+
+
+def read_string_from_stream(
     stream: StreamType,
     forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
 ) -> Union["TextStringObject", "ByteStringObject"]:
@@ -941,7 +958,10 @@ class TreeObject(DictionaryObject):
             del child_obj[NameObject("/Prev")]
 
     def emptyTree(self) -> None:
-        # TODO: Missing rename
+        deprecate_with_replacement("emptyTree", "empty_tree", "4.0.0")
+        self.empty_tree()
+
+    def empty_tree(self) -> None:
         for child in self:
             child_obj = child.get_object()
             del child_obj[NameObject("/Parent")]
@@ -1251,13 +1271,13 @@ def read_object(
         if peek == b_("<<"):
             return DictionaryObject.read_from_stream(stream, pdf, forced_encoding)
         else:
-            return readHexStringFromStream(stream)
+            return read_hex_string_from_stream(stream)
     elif idx == 2:
         return ArrayObject.read_from_stream(stream, pdf, forced_encoding)
     elif idx == 3 or idx == 4:
         return BooleanObject.read_from_stream(stream)
     elif idx == 5:
-        return readStringFromStream(stream, forced_encoding)
+        return read_string_from_stream(stream, forced_encoding)
     elif idx == 6:
         return NullObject.read_from_stream(stream)
     elif idx == 7:

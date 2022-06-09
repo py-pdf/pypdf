@@ -23,9 +23,9 @@ from PyPDF2.generic import (
     TreeObject,
     createStringObject,
     encode_pdfdocencoding,
+    read_hex_string_from_stream,
     read_object,
-    readHexStringFromStream,
-    readStringFromStream,
+    read_string_from_stream,
 )
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -115,43 +115,43 @@ def test_indirect_object_premature(value):
 
 def test_readHexStringFromStream():
     stream = BytesIO(b"a1>")
-    assert readHexStringFromStream(stream) == "\x10"
+    assert read_hex_string_from_stream(stream) == "\x10"
 
 
 def test_readHexStringFromStream_exception():
     stream = BytesIO(b"")
     with pytest.raises(PdfStreamError) as exc:
-        readHexStringFromStream(stream)
+        read_hex_string_from_stream(stream)
     assert exc.value.args[0] == "Stream has ended unexpectedly"
 
 
 def test_readStringFromStream_exception():
     stream = BytesIO(b"x")
     with pytest.raises(PdfStreamError) as exc:
-        readStringFromStream(stream)
+        read_string_from_stream(stream)
     assert exc.value.args[0] == "Stream has ended unexpectedly"
 
 
 def test_readStringFromStream_not_in_escapedict_no_digit():
     stream = BytesIO(b"x\\y")
     with pytest.raises(PdfReadError) as exc:
-        readStringFromStream(stream)
+        read_string_from_stream(stream)
     assert exc.value.args[0] == "Stream has ended unexpectedly"
 
 
 def test_readStringFromStream_multichar_eol():
     stream = BytesIO(b"x\\\n )")
-    assert readStringFromStream(stream) == " "
+    assert read_string_from_stream(stream) == " "
 
 
 def test_readStringFromStream_multichar_eol2():
     stream = BytesIO(b"x\\\n\n)")
-    assert readStringFromStream(stream) == ""
+    assert read_string_from_stream(stream) == ""
 
 
 def test_readStringFromStream_excape_digit():
     stream = BytesIO(b"x\\1a )")
-    assert readStringFromStream(stream) == "\x01 "
+    assert read_string_from_stream(stream) == "\x01 "
 
 
 def test_NameObject():
@@ -179,7 +179,7 @@ def test_destination_fit_r():
     assert d.top == FloatObject(0)
     assert d.bottom == FloatObject(0)
     assert list(d) == []
-    d.emptyTree()
+    d.empty_tree()
 
 
 def test_destination_fit_v():
@@ -401,4 +401,4 @@ def test_remove_child_in_tree():
     tree.add_child(obj, writer)
     tree.remove_child(obj)
     tree.add_child(obj, writer)
-    tree.emptyTree()
+    tree.empty_tree()

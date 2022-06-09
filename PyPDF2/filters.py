@@ -76,9 +76,8 @@ def compress(data: bytes) -> bytes:
 class FlateDecode:
     @staticmethod
     def decode(
-        # TODO: PEP8
         data: bytes,
-        decodeParms: Union[None, ArrayObject, DictionaryObject],
+        decodeParms: Union[None, ArrayObject, DictionaryObject],  # TODO: PEP8
     ) -> bytes:
         """
         :param data: flate-encoded data.
@@ -171,9 +170,8 @@ class ASCIIHexDecode:
 
     @staticmethod
     def decode(
-        # TODO: PEP8
         data: str,
-        decodeParms: Union[None, ArrayObject, DictionaryObject] = None,
+        decodeParms: Union[None, ArrayObject, DictionaryObject] = None,  # TODO: PEP8
     ) -> str:
         """
         :param data: a str sequence of hexadecimal-encoded values to be
@@ -289,9 +287,8 @@ class LZWDecode:
 
     @staticmethod
     def decode(
-        # TODO: PEP8
         data: bytes,
-        decodeParms: Union[None, ArrayObject, DictionaryObject] = None,
+        decodeParms: Union[None, ArrayObject, DictionaryObject] = None,  # TODO: PEP8
     ) -> str:
         """
         :param data: ``bytes`` or ``str`` text to decode.
@@ -404,8 +401,7 @@ class CCITTFaxDecode:
     @staticmethod
     def decode(
         data: bytes,
-        # TODO: PEP8
-        decodeParms: Union[None, ArrayObject, DictionaryObject] = None,
+        decodeParms: Union[None, ArrayObject, DictionaryObject] = None,  # TODO: PEP8
         height: int = 0,
     ) -> bytes:
         parms = CCITTFaxDecode._get_parameters(decodeParms, height)
