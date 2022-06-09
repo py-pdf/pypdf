@@ -27,11 +27,11 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import os
 import re
 import struct
 import warnings
 from hashlib import md5
-import os
 from io import BytesIO
 from typing import (
     Any,
@@ -55,8 +55,8 @@ from ._utils import (
     deprecate_with_replacement,
     ord_,
     read_non_whitespace,
-    read_until_whitespace,
     read_previous_line,
+    read_until_whitespace,
     skip_over_comment,
     skip_over_whitespace,
 )
@@ -1553,6 +1553,44 @@ class PdfReader:
             i += 2
             if (i + 1) >= len(array):
                 break
+
+    def read_next_end_line(self, stream: StreamType, limit_offset: int = 0) -> bytes:
+        """.. deprecated:: 2.1.0"""
+        deprecate_no_replacement("read_next_end_line", removed_in="4.0.0")
+        line_parts = []
+        while True:
+            # Prevent infinite loops in malformed PDFs
+            if stream.tell() == 0 or stream.tell() == limit_offset:
+                raise PdfReadError("Could not read malformed PDF file")
+            x = stream.read(1)
+            if stream.tell() < 2:
+                raise PdfReadError("EOL marker not found")
+            stream.seek(-2, 1)
+            if x == b_("\n") or x == b_("\r"):  # \n = LF; \r = CR
+                crlf = False
+                while x == b_("\n") or x == b_("\r"):
+                    x = stream.read(1)
+                    if x == b_("\n") or x == b_("\r"):  # account for CR+LF
+                        stream.seek(-1, 1)
+                        crlf = True
+                    if stream.tell() < 2:
+                        raise PdfReadError("EOL marker not found")
+                    stream.seek(-2, 1)
+                stream.seek(
+                    2 if crlf else 1, 1
+                )  # if using CR+LF, go back 2 bytes, else 1
+                break
+            else:
+                line_parts.append(x)
+        line_parts.reverse()
+        return b"".join(line_parts)
+
+    def readNextEndLine(
+        self, stream: StreamType, limit_offset: int = 0
+    ) -> bytes:  # pragma: no cover
+        """.. deprecated:: 1.28.0"""
+        deprecate_no_replacement("readNextEndLine")
+        return self.read_next_end_line(stream, limit_offset)
 
     def decrypt(self, password: Union[str, bytes]) -> int:
         """

@@ -31,10 +31,16 @@ Utility functions for PDF library.
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
+import os
 import warnings
 from codecs import getencoder
-from io import BufferedReader, BufferedWriter, BytesIO, FileIO, DEFAULT_BUFFER_SIZE
-import os
+from io import (
+    DEFAULT_BUFFER_SIZE,
+    BufferedReader,
+    BufferedWriter,
+    BytesIO,
+    FileIO,
+)
 from typing import Any, Dict, Optional, Tuple, Union, overload
 
 try:
@@ -56,7 +62,7 @@ bytes_type = type(bytes())  # Works the same in Python 2.X and 3.X
 StreamType = Union[BytesIO, BufferedReader, BufferedWriter, FileIO]
 StrByteType = Union[str, StreamType]
 
-DEPR_MSG_NO_REPLACEMENT = "{} is deprecated and will be removed in PyPDF2 3.0.0."
+DEPR_MSG_NO_REPLACEMENT = "{} is deprecated and will be removed in PyPDF2 {}."
 DEPR_MSG = "{} is deprecated and will be removed in PyPDF2 3.0.0. Use {} instead."
 
 
@@ -132,7 +138,7 @@ def read_until_regex(stream: StreamType, regex: Any, ignore_eof: bool = False) -
     return name
 
 
-CRLF = b'\r\n'
+CRLF = b"\r\n"
 
 
 def read_block_backwards(stream: StreamType, to_read: int) -> bytes:
@@ -141,14 +147,14 @@ def read_block_backwards(stream: StreamType, to_read: int) -> bytes:
     The stream's position should be unchanged.
     """
     if stream.tell() < to_read:
-        raise PdfStreamError('Could not read malformed PDF file')
+        raise PdfStreamError("Could not read malformed PDF file")
     # Seek to the start of the block we want to read.
     stream.seek(-to_read, os.SEEK_CUR)
     read = stream.read(to_read)
     # Seek to the start of the block we read after reading it.
     stream.seek(-to_read, os.SEEK_CUR)
     if len(read) != to_read:
-        raise PdfStreamError('EOF: read %s, expected %s?' % (len(read), to_read))
+        raise PdfStreamError(f"EOF: read {len(read)}, expected {to_read}?")
     return read
 
 
@@ -184,7 +190,7 @@ def read_previous_line(stream: StreamType) -> bytes:
             # a previous one).
             # Our combined line is the remainder of the block
             # plus any previously read blocks.
-            line_content.append(block[idx + 1:])
+            line_content.append(block[idx + 1 :])
             # Continue to read off any more CRLF characters.
             while idx >= 0 and block[idx] in CRLF:
                 idx -= 1
@@ -198,7 +204,7 @@ def read_previous_line(stream: StreamType) -> bytes:
             stream.seek(idx + 1, os.SEEK_CUR)
             break
     # Join all the blocks in the line (which are in reverse order)
-    return b''.join(line_content[::-1])
+    return b"".join(line_content[::-1])
 
 
 def matrix_multiply(
@@ -315,9 +321,11 @@ def deprecate(msg: str, stacklevel: int = 3) -> None:
     warnings.warn(msg, PendingDeprecationWarning, stacklevel=stacklevel)
 
 
-def deprecate_with_replacement(old_name: str, new_name: str) -> None:
-    deprecate(DEPR_MSG.format(old_name, new_name), 4)
+def deprecate_with_replacement(
+    old_name: str, new_name: str, removed_in: str = "3.0.0"
+) -> None:
+    deprecate(DEPR_MSG.format(old_name, new_name, removed_in), 4)
 
 
-def deprecate_no_replacement(name: str) -> None:
-    deprecate(DEPR_MSG_NO_REPLACEMENT.format(name), 4)
+def deprecate_no_replacement(name: str, removed_in: str = "3.0.0") -> None:
+    deprecate(DEPR_MSG_NO_REPLACEMENT.format(name, removed_in), 4)
