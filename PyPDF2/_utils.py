@@ -131,7 +131,9 @@ def read_until_regex(stream: StreamType, regex: Any, ignore_eof: bool = False) -
         name += tok
     return name
 
+
 CRLF = b'\r\n'
+
 
 def read_block_backwards(stream: StreamType, to_read: int) -> bytes:
     """Given a stream at position X, read a block of size
@@ -148,6 +150,7 @@ def read_block_backwards(stream: StreamType, to_read: int) -> bytes:
     if len(read) != to_read:
         raise PdfStreamError('EOF: read %s, expected %s?' % (len(read), to_read))
     return read
+
 
 def read_previous_line(stream: StreamType) -> bytes:
     """Given a byte stream with current position X, return the previous
@@ -196,6 +199,7 @@ def read_previous_line(stream: StreamType) -> bytes:
             break
     # Join all the blocks in the line (which are in reverse order)
     return b''.join(line_content[::-1])
+
 
 def matrix_multiply(
     a: TransformationMatrixType, b: TransformationMatrixType

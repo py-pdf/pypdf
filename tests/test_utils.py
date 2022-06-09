@@ -134,10 +134,11 @@ def test_paeth_predictor(left, up, upleft, expected):
     ],
 )
 def test_read_block_backwards_errs(dat, pos, to_read):
-    with pytest.raises(PdfStreamError) as exc:
+    with pytest.raises(PdfStreamError) as _:
         s = io.BytesIO(dat)
         s.seek(pos)
         read_block_backwards(s, to_read)
+
 
 @pytest.mark.parametrize(
     ("dat", "pos", "to_read", "expected", "expected_pos"),
@@ -160,8 +161,9 @@ def test_read_block_backwards(dat, pos, to_read, expected, expected_pos):
 
 def test_read_block_backwards_at_start():
     s = io.BytesIO(b'abc')
-    with pytest.raises(PdfStreamError) as exc:
+    with pytest.raises(PdfStreamError) as _:
         read_previous_line(s)
+
 
 @pytest.mark.parametrize(
     ("dat", "pos", "expected", "expected_pos"),
@@ -181,7 +183,7 @@ def test_read_block_backwards_at_start():
         (b'abc\n' + b'd' * (2 * io.DEFAULT_BUFFER_SIZE), 2 * io.DEFAULT_BUFFER_SIZE + 4, b'd' * (2 * io.DEFAULT_BUFFER_SIZE), 3),
         # Both
         (b'abcxyz' + b'\n' * (2 * io.DEFAULT_BUFFER_SIZE) + b'd' * (2 * io.DEFAULT_BUFFER_SIZE),\
-                4 * io.DEFAULT_BUFFER_SIZE + 6, b'd' * (2 * io.DEFAULT_BUFFER_SIZE), 6),
+            4 * io.DEFAULT_BUFFER_SIZE + 6, b'd' * (2 * io.DEFAULT_BUFFER_SIZE), 6),
     ],
 )
 def test_read_previous_line(dat, pos, expected, expected_pos):
