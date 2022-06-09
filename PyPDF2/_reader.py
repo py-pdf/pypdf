@@ -31,6 +31,7 @@ import re
 import struct
 import warnings
 from hashlib import md5
+import os
 from io import BytesIO
 from typing import (
     Any,
@@ -55,6 +56,7 @@ from ._utils import (
     ord_,
     read_non_whitespace,
     read_until_whitespace,
+    read_previous_line,
     skip_over_comment,
     skip_over_whitespace,
 )
@@ -1202,11 +1204,11 @@ class PdfReader:
 
     def read(self, stream: StreamType) -> None:
         # start at the end:
-        stream.seek(-1, 2)
+        stream.seek(0, os.SEEK_END)
         if not stream.tell():
             raise PdfReadError("Cannot read an empty file")
         if self.strict:
-            stream.seek(0, 0)
+            stream.seek(0, os.SEEK_SET)
             header_byte = stream.read(5)
             if header_byte != b"%PDF-":
                 raise PdfReadError(
@@ -1214,13 +1216,13 @@ class PdfReader:
                         header_byte.decode("utf8")
                     )
                 )
-            stream.seek(-1, 2)
+            stream.seek(0, os.SEEK_END)
         last_mb = stream.tell() - 1024 * 1024 + 1  # offset of last MB of stream
         line = b_("")
         while line[:5] != b_("%%EOF"):
             if stream.tell() < last_mb:
                 raise PdfReadError("EOF marker not found")
-            line = self.read_next_end_line(stream)
+            line = read_previous_line(stream)
 
         startxref = self._find_startxref_pos(stream)
 
@@ -1327,7 +1329,7 @@ class PdfReader:
 
     def _find_startxref_pos(self, stream: StreamType) -> int:
         """Find startxref entry - the location of the xref table"""
-        line = self.read_next_end_line(stream)
+        line = read_previous_line(stream)
         try:
             startxref = int(line)
         except ValueError:
@@ -1337,7 +1339,7 @@ class PdfReader:
             startxref = int(line[9:].strip())
             warnings.warn("startxref on same line as offset", PdfReadWarning)
         else:
-            line = self.read_next_end_line(stream)
+            line = read_previous_line(stream)
             if line[:9] != b_("startxref"):
                 raise PdfReadError("startxref not found")
         return startxref
@@ -1551,46 +1553,6 @@ class PdfReader:
             i += 2
             if (i + 1) >= len(array):
                 break
-
-    def read_next_end_line(self, stream: StreamType, limit_offset: int = 0) -> bytes:
-        line_parts = []
-        while True:
-            # Prevent infinite loops in malformed PDFs
-            if stream.tell() == 0 or stream.tell() == limit_offset:
-                raise PdfReadError("Could not read malformed PDF file")
-            x = stream.read(1)
-            if stream.tell() < 2:
-                raise PdfReadError("EOL marker not found")
-            stream.seek(-2, 1)
-            if x == b_("\n") or x == b_("\r"):  # \n = LF; \r = CR
-                crlf = False
-                while x == b_("\n") or x == b_("\r"):
-                    x = stream.read(1)
-                    if x == b_("\n") or x == b_("\r"):  # account for CR+LF
-                        stream.seek(-1, 1)
-                        crlf = True
-                    if stream.tell() < 2:
-                        raise PdfReadError("EOL marker not found")
-                    stream.seek(-2, 1)
-                stream.seek(
-                    2 if crlf else 1, 1
-                )  # if using CR+LF, go back 2 bytes, else 1
-                break
-            else:
-                line_parts.append(x)
-        line_parts.reverse()
-        return b"".join(line_parts)
-
-    def readNextEndLine(
-        self, stream: StreamType, limit_offset: int = 0
-    ) -> bytes:  # pragma: no cover
-        """
-        .. deprecated:: 1.28.0
-
-            Use :meth:`read_next_end_line` instead.
-        """
-        deprecate_with_replacement("readNextEndLine", "read_next_end_line")
-        return self.read_next_end_line(stream, limit_offset)
 
     def decrypt(self, password: Union[str, bytes]) -> int:
         """
