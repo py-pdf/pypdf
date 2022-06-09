@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1654793020116,
+  "lastUpdate": 1654794043607,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -4594,6 +4594,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.016271576127717003",
             "extra": "mean: 4.357835330399996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "336d659c41dca4bce9554f70a8586fb1450dd676",
+          "message": "MAINT: Mark read_next_end_line as deprecated (#965)\n\nread_next_end_line was removed with #646, but we need to keep it in order to keep backwards compatibility.",
+          "timestamp": "2022-06-09T18:59:06+02:00",
+          "tree_id": "ddf76cec034e973d222854955b9b553e9f20e1e8",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/336d659c41dca4bce9554f70a8586fb1450dd676"
+        },
+        "date": 1654794041613,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.4524194119713282,
+            "unit": "iter/sec",
+            "range": "stddev: 0.038223830538036276",
+            "extra": "mean: 2.210338401799997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 7.073713669639708,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004917896143729355",
+            "extra": "mean: 141.36845887500192 msec\nrounds: 8"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.1653321660277516,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07303145213725788",
+            "extra": "mean: 6.048429800600002 sec\nrounds: 5"
           }
         ]
       }
