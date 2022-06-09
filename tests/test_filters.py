@@ -54,6 +54,17 @@ def test_FlateDecode_unsupported_predictor():
 
 
 @pytest.mark.parametrize(
+    "params", [ArrayObject([]), ArrayObject([{"/Predictor": 1}]), "a"]
+)
+def test_FlateDecode_decompress_array_params(params):
+    codec = FlateDecode()
+    s = ""
+    s = s.encode()
+    encoded = codec.encode(s)
+    assert codec.decode(encoded, params) == s
+
+
+@pytest.mark.parametrize(
     ("data", "expected"),
     [
         (">", ""),
