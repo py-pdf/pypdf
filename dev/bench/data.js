@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1654672713658,
+  "lastUpdate": 1654775087469,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -4414,6 +4414,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.011945410740478533",
             "extra": "mean: 4.432871057800003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d1d15f4a151280c9ba07997e4323a5e79d88ed74",
+          "message": "TST: Xmp module (#962)",
+          "timestamp": "2022-06-09T13:43:34+02:00",
+          "tree_id": "ef9bd6101dbdf5216d9c5e5d0da0cbc1ba96fa32",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/d1d15f4a151280c9ba07997e4323a5e79d88ed74"
+        },
+        "date": 1654775086296,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6240095754339279,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004968888497922611",
+            "extra": "mean: 1.6025395111999898 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.566491235330604,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005551767604682683",
+            "extra": "mean: 104.53153359999305 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2294212912967986,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013233585817421805",
+            "extra": "mean: 4.358793354999977 sec\nrounds: 5"
           }
         ]
       }
