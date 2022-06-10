@@ -46,7 +46,7 @@ _predefined_cmap: Dict[str, str] = {
     "/GB-EUC-H": "gbk",  # TBC
     "/GB-EUC-V": "gbk",  # TBC
     "/GBpc-EUC-H": "gb2312",  # TBC
-    "/$WinREAgentGBpc-EUC-V": "gb2312",  # TBC
+    "/GBpc-EUC-V": "gb2312",  # TBC
 }
 
 # manually extracted from http://mirrors.ctan.org/fonts/adobe/afm/Adobe-Core35_AFMs-229.tar.gz
