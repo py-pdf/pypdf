@@ -1116,7 +1116,9 @@ class PageObject(DictionaryObject):
 
         text: str = ""
         output: str = ""
-        cmaps: Dict[str, Tuple[str, float, Dict[int, str], Dict[str, str]]] = {}
+        cmaps: Dict[
+            str, Tuple[str, float, Union[str, Dict[int, str]], Dict[str, str]]
+        ] = {}
         resources_dict = cast(DictionaryObject, obj["/Resources"])
         if "/Font" in resources_dict:
             for f in cast(DictionaryObject, resources_dict["/Font"]):
