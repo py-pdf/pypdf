@@ -7,8 +7,6 @@ import PyPDF2._utils
 from PyPDF2._utils import (
     mark_location,
     matrix_multiply,
-    read_block_backwards,
-    read_previous_line,
     read_until_regex,
     read_until_whitespace,
     skip_over_comment,
