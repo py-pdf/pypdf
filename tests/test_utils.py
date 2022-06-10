@@ -7,6 +7,8 @@ import PyPDF2._utils
 from PyPDF2._utils import (
     mark_location,
     matrix_multiply,
+    read_block_backwards,
+    read_previous_line,
     read_until_regex,
     read_until_whitespace,
     skip_over_comment,
@@ -95,6 +97,7 @@ def test_b():
     assert PyPDF2._utils.b_("😀") == "😀".encode()
     assert PyPDF2._utils.b_("‰") == "‰".encode()
     assert PyPDF2._utils.b_("▷") == "▷".encode()
+    assert PyPDF2._utils.b_("世") == "世".encode()
 
 
 def test_deprecate_no_replacement():
@@ -102,4 +105,3 @@ def test_deprecate_no_replacement():
         PyPDF2._utils.deprecate_no_replacement("foo")
     error_msg = "foo is deprecated and will be removed in PyPDF2 3.0.0."
     assert exc.value.args[0] == error_msg
-# fake line for change

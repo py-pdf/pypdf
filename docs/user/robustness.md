@@ -13,7 +13,7 @@ Python code as an example:
 # Broken
 function (foo, bar):
 
-# Potentially intendet:
+# Potentially intended:
 def function(foo, bar):
     ...
 

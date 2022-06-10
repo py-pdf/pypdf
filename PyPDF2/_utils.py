@@ -31,9 +31,16 @@ Utility functions for PDF library.
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
+import os
 import warnings
 from codecs import getencoder
-from io import BufferedReader, BufferedWriter, BytesIO, FileIO
+from io import (
+    DEFAULT_BUFFER_SIZE,
+    BufferedReader,
+    BufferedWriter,
+    BytesIO,
+    FileIO,
+)
 from typing import Any, Dict, Optional, Tuple, Union, overload
 
 try:
@@ -55,7 +62,7 @@ bytes_type = type(bytes())  # Works the same in Python 2.X and 3.X
 StreamType = Union[BytesIO, BufferedReader, BufferedWriter, FileIO]
 StrByteType = Union[str, StreamType]
 
-DEPR_MSG_NO_REPLACEMENT = "{} is deprecated and will be removed in PyPDF2 3.0.0."
+DEPR_MSG_NO_REPLACEMENT = "{} is deprecated and will be removed in PyPDF2 {}."
 DEPR_MSG = "{} is deprecated and will be removed in PyPDF2 3.0.0. Use {} instead."
 
 
@@ -129,6 +136,75 @@ def read_until_regex(stream: StreamType, regex: Any, ignore_eof: bool = False) -
             break
         name += tok
     return name
+
+
+CRLF = b"\r\n"
+
+
+def read_block_backwards(stream: StreamType, to_read: int) -> bytes:
+    """Given a stream at position X, read a block of size
+    to_read ending at position X.
+    The stream's position should be unchanged.
+    """
+    if stream.tell() < to_read:
+        raise PdfStreamError("Could not read malformed PDF file")
+    # Seek to the start of the block we want to read.
+    stream.seek(-to_read, os.SEEK_CUR)
+    read = stream.read(to_read)
+    # Seek to the start of the block we read after reading it.
+    stream.seek(-to_read, os.SEEK_CUR)
+    if len(read) != to_read:
+        raise PdfStreamError(f"EOF: read {len(read)}, expected {to_read}?")
+    return read
+
+
+def read_previous_line(stream: StreamType) -> bytes:
+    """Given a byte stream with current position X, return the previous
+    line - all characters between the first CR/LF byte found before X
+    (or, the start of the file, if no such byte is found) and position X
+    After this call, the stream will be positioned one byte after the
+    first non-CRLF character found beyond the first CR/LF byte before X,
+    or, if no such byte is found, at the beginning of the stream.
+    """
+    line_content = []
+    found_crlf = False
+    if stream.tell() == 0:
+        raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
+    while True:
+        to_read = min(DEFAULT_BUFFER_SIZE, stream.tell())
+        if to_read == 0:
+            break
+        # Read the block. After this, our stream will be one
+        # beyond the initial position.
+        block = read_block_backwards(stream, to_read)
+        idx = len(block) - 1
+        if not found_crlf:
+            # We haven't found our first CR/LF yet.
+            # Read off characters until we hit one.
+            while idx >= 0 and block[idx] not in CRLF:
+                idx -= 1
+            if idx >= 0:
+                found_crlf = True
+        if found_crlf:
+            # We found our first CR/LF already (on this block or
+            # a previous one).
+            # Our combined line is the remainder of the block
+            # plus any previously read blocks.
+            line_content.append(block[idx + 1 :])
+            # Continue to read off any more CRLF characters.
+            while idx >= 0 and block[idx] in CRLF:
+                idx -= 1
+        else:
+            # Didn't find CR/LF yet - add this block to our
+            # previously read blocks and continue.
+            line_content.append(block)
+        if idx >= 0:
+            # We found the next non-CRLF character.
+            # Set the stream position correctly, then break
+            stream.seek(idx + 1, os.SEEK_CUR)
+            break
+    # Join all the blocks in the line (which are in reverse order)
+    return b"".join(line_content[::-1])
 
 
 def matrix_multiply(
@@ -245,9 +321,11 @@ def deprecate(msg: str, stacklevel: int = 3) -> None:
     warnings.warn(msg, PendingDeprecationWarning, stacklevel=stacklevel)
 
 
-def deprecate_with_replacement(old_name: str, new_name: str) -> None:
-    deprecate(DEPR_MSG.format(old_name, new_name), 4)
+def deprecate_with_replacement(
+    old_name: str, new_name: str, removed_in: str = "3.0.0"
+) -> None:
+    deprecate(DEPR_MSG.format(old_name, new_name, removed_in), 4)
 
 
-def deprecate_no_replacement(name: str) -> None:
-    deprecate(DEPR_MSG_NO_REPLACEMENT.format(name), 4)
+def deprecate_no_replacement(name: str, removed_in: str = "3.0.0") -> None:
+    deprecate(DEPR_MSG_NO_REPLACEMENT.format(name, removed_in), 4)

@@ -1,5 +1,5 @@
 from ._merger import PdfFileMerger, PdfMerger
-from ._page import Transformation
+from ._page import Transformation, PageObject
 from ._reader import DocumentInformation, PdfFileReader, PdfReader
 from ._version import __version__
 from ._writer import PdfFileWriter, PdfWriter
@@ -16,7 +16,8 @@ __all__ = [
     "PdfFileReader",  # will be removed in PyPDF2 3.0.0; use PdfReader instead
     "PdfFileWriter",  # will be removed in PyPDF2 3.0.0; use PdfWriter instead
     "PdfMerger",
-    "Transformation",
     "PdfReader",
     "PdfWriter",
+    "Transformation",
+    "PageObject",
 ]
