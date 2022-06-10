@@ -25,7 +25,7 @@ def build_char_map(
         dict(zip(range(256), encoding)),
         # https://github.com/python/mypy/issues/4374
         "".maketrans(map_dict),  # type: ignore
-    )
+    ) #type: ignore
 
 
 def parse_encoding(ft: DictionaryObject, space_code: int) -> Tuple[List[str], int]:
