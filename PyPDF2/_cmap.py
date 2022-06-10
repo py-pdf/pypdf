@@ -10,41 +10,89 @@ from .generic import DecodedStreamObject, DictionaryObject, charset_encoding
 # code freely inspired from @twiggy ; see #711
 def build_char_map(
     font_name: str, space_width: float, obj: DictionaryObject
-) -> Tuple[str, float, Dict[int, str], Dict]:
+) -> Tuple[str, float, Dict[int, str], Dict]:    #font_type,space_width /2, encoding, cmap
     ft: DictionaryObject = obj["/Resources"]["/Font"][font_name]  # type: ignore
     font_type: str = cast(str, ft["/Subtype"])
 
     space_code = 32
     encoding, space_code = parse_encoding(ft, space_code)
     map_dict, space_code = parse_to_unicode(ft, space_code)
+    # encoding can be either a string for decode (on 1,2 or a variable number of bytes) of a char table (for 1 byte only for me)
+    # if empty string, it means it is than encoding field is not present and we have to select the good encoding from cmap input data
+    if encoding == "":
+        if map_dict[-1] == 1:
+            encoding="charmap"
+        else:
+            encoding="utf-16-be"
+    if font_name in _default_fonts_space_width:
+        #override space_width with new params
+        space_width = _default_fonts_space_width[font_name]
     sp_width = compute_space_width(ft, space_code, space_width)
 
     return (
         font_type,
         float(sp_width / 2),
-        dict(zip(range(256), encoding)),
+        encoding,
         # https://github.com/python/mypy/issues/4374
-        "".maketrans(map_dict),  # type: ignore
+        map_dict,  # type: ignore
     )
 
+_predefined_cmap: Dict[str, str] = {
+    "/Identity-H" : "utf-16-be",
+    "/Identity-V" : "utf-16-be",
+    "/GB-EUC-H"   : "gbk",               #TBC
+    "/GB-EUC-V"   : "gbk",               #TBC
+    "/GBpc-EUC-H" : "gb2312",            #TBC
+    "/$WinREAgentGBpc-EUC-V" : "gb2312",            #TBC
+}
 
-def parse_encoding(ft: DictionaryObject, space_code: int) -> Tuple[List[str], int]:
-    encoding: List[str] = []
+#manually extracted from http://mirrors.ctan.org/fonts/adobe/afm/Adobe-Core35_AFMs-229.tar.gz
+_default_fonts_space_width : Dict[str, int]= {
+    "/Courrier":600,
+    "/Courier-Bold":600,
+    "/Courier-BoldOblique":600,
+    "/Courier-Oblique":600,
+    "/Helvetica":278,
+    "/Helvetica-Bold":278,
+    "/Helvetica-BoldOblique":278,
+    "/Helvetica-Oblique":278,
+    "/Helvetica-Narrow":228,
+    "/Helvetica-NarrowBold":228,
+    "/Helvetica-NarrowBoldOblique":228,
+    "/Helvetica-NarrowOblique":228,
+    "/Times-Roman":250,
+    "/Times-Bold":250,
+    "/Times-BoldItalic":250,
+    "/Times-Italic":250,
+    "/Symbol":250,
+    "/ZapfDingbats":278,
+}
+
+def parse_encoding(ft: DictionaryObject, space_code: int) -> Tuple[Union[str, Dict[int, str]], int]:
+    encoding: Union[str, List[str], Dict[int, str]] = []
     if "/Encoding" not in ft:
-        return encoding, space_code
+        try:
+            return "utf-8",_default_fonts_space_width[cast(str,ft["/BaseFont"])]
+        except Exception:
+            if ft["/Subtype"] == "/Type1":
+                return "charmap", space_code
+            else:
+                return "charmap", space_code
     enc: Union(str, DictionaryObject) = ft["/Encoding"].get_object()  # type: ignore
     if isinstance(enc, str):
         try:
-            if enc in ("/Identity-H", "/Identity-V"):
-                encoding = []
-            else:
+            if enc in charset_encoding:
                 encoding = charset_encoding[enc].copy()
+            elif enc in _predefined_cmap:
+                encoding = _predefined_cmap[enc]
+            else:
+                raise Exception("not found")
         except Exception:
             warnings.warn(
-                f"Advanced encoding {encoding} not implemented yet",
+                f"Advanced encoding {enc} not implemented yet",
                 PdfReadWarning,
             )
-            encoding = charset_encoding["/StandardCoding"].copy()
+            encoding = enc
     elif isinstance(enc, DictionaryObject) and "/BaseEncoding" in enc:
         try:
             encoding = charset_encoding[cast(str, enc["/BaseEncoding"])].copy()
@@ -57,77 +105,80 @@ def parse_encoding(ft: DictionaryObject, space_code: int) -> Tuple[List[str], in
     else:
         encoding = charset_encoding["/StandardCoding"].copy()
     if "/Differences" in enc:
-        x = 0
+        x :int = 0
+        o: Union[int,str]
         for o in cast(DictionaryObject, cast(DictionaryObject, enc)["/Differences"]):
             if isinstance(o, int):
                 x = o
-            else:
+            else: # isinstance(o,str):
                 try:
-                    encoding[x] = adobe_glyphs[o]
+                    encoding[x] = adobe_glyphs[o]   # type: ignore
                 except Exception:
-                    encoding[x] = o
+                    encoding[x] = o                 # type: ignore
                     if o == " ":
                         space_code = x
                 x += 1
+    if isinstance(encoding,list):
+        encoding= dict(zip(range(256), encoding))
     return encoding, space_code
 
-
 def parse_to_unicode(ft: DictionaryObject, space_code: int) -> Tuple[Dict, int]:
-    map_dict: Dict[Any, Any] = {}
+    map_dict: Dict[Any, Any] = {}   #will store all translation code and map_dict[-1] we will have the number of bytes to convert
     if "/ToUnicode" not in ft:
-        return map_dict, space_code
+        return {}, space_code
     process_rg: bool = False
     process_char: bool = False
-    cm: str = cast(DecodedStreamObject, ft["/ToUnicode"]).get_data().decode("utf-8")
+    cm: bytes = cast(DecodedStreamObject, ft["/ToUnicode"]).get_data()
     for l in (
         cm.strip()
-        .replace("<", " ")
-        .replace(">", "")
-        .replace("[", " [ ")
-        .replace("]", " ] ")
-        .split("\n")
+        .replace(b"<", b" ")
+        .replace(b">", b"")
+        .replace(b"[", b" [ ")
+        .replace(b"]", b" ] ")
+        .split(b"\n")
     ):
         if l == "":
             continue
-        if "beginbfrange" in l:
+        if b"beginbfrange" in l:
             process_rg = True
-        elif "endbfrange" in l:
+        elif b"endbfrange" in l:
             process_rg = False
-        elif "beginbfchar" in l:
+        elif b"beginbfchar" in l:
             process_char = True
-        elif "endbfchar" in l:
+        elif b"endbfchar" in l:
             process_char = False
         elif process_rg:
-            lst = [x for x in l.split(" ") if x]
+            lst = [x for x in l.split(b" ") if x]
             a = int(lst[0], 16)
             b = int(lst[1], 16)
+            nbi = len(lst[0])
+            map_dict[-1] = nbi//2
+            fmt = b"%%0%dX" % nbi
             if lst[2] == "[":
                 for sq in lst[3:]:
                     if "]":
                         break
-                    map_dict[a] = unhexlify(sq).decode("utf-16-be")
+                    map_dict[unhexlify(fmt % a).decode("charmap" if map_dict[-1]==1 else "utf-16-be")] = unhexlify(sq).decode("utf-16-be")
                     a += 1
                     assert a > b
             else:
                 c = int(lst[2], 16)
-                fmt = b"%%0%dX" % len(lst[2])
+                fmt2 = b"%%0%dX" % len(lst[2])
                 while a <= b:
-                    map_dict[a] = unhexlify(fmt % c).decode("utf-16-be")
+                    map_dict[unhexlify(fmt % a).decode("charmap" if map_dict[-1]==1 else "utf-16-be")] = unhexlify(fmt2 % c).decode("utf-16-be")
                     a += 1
                     c += 1
         elif process_char:
-            lst = [x for x in l.split(" ") if x]
-            a = int(lst[0], 16)
-            map_dict[a] = unhexlify("".join(lst[1:])).decode(
-                "utf-16-be"
-            )  # join is here as some cases where the code was split
+            lst = [x for x in l.split(b" ") if x]
+            map_dict[-1] = len(lst[0])//2
+            map_dict[unhexlify(lst[0]).decode("charmap" if map_dict[-1]==1 else "utf-16-be" )] = (
+                    unhexlify(b"".join(lst[1:])).decode("utf-16-be"))  # join is here as some cases where the code was split
 
     # get
     for a in map_dict:
         if map_dict[a] == " ":
             space_code = a
     return map_dict, space_code
-
 
 def compute_space_width(
     ft: DictionaryObject, space_code: int, space_width: float

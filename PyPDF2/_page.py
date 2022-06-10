@@ -68,6 +68,7 @@ from .generic import (
     NumberObject,
     RectangleObject,
     TextStringObject,
+    encode_pdfdocencoding,
 )
 
 
@@ -1067,7 +1068,7 @@ class PageObject(DictionaryObject):
     def _debug_for_extract(self) -> str:
         out = ""
         for ope, op in ContentStream(
-            self["/Contents"].getObject(), self.pdf
+            self["/Contents"].getObject(), self.pdf,"bytes"
         ).operations:
             if op == b"TJ":
                 s = [x for x in ope[0] if isinstance(x, str)]
@@ -1115,15 +1116,15 @@ class PageObject(DictionaryObject):
 
         text: str = ""
         output: str = ""
-        cmaps: Dict[str, Tuple[str, float, Dict[int, str], Dict[int, str]]] = {}
+        cmaps: Dict[str, Tuple[str, float, Dict[int, str], Dict[str, str]]] = {}
         resources_dict = cast(DictionaryObject, obj["/Resources"])
         if "/Font" in resources_dict:
             for f in cast(DictionaryObject, resources_dict["/Font"]):
                 cmaps[f] = build_char_map(f, space_width, obj)
-        cmap: Union[str, Dict[int, str]] = {}
+        cmap: Tuple[Union[str, Dict[int, str]],Dict[str, str],str] #(encoding,CMAP,font_name)
         content = obj[content_key].get_object() if isinstance(content_key, str) else obj
         if not isinstance(content, ContentStream):
-            content = ContentStream(content, pdf, "charmap")
+            content = ContentStream(content, pdf, "bytes")
         # Note: we check all strings are TextStringObjects.  ByteStringObjects
         # are strings where the byte->string encoding was unknown, so adding
         # them to the text here would be gibberish.
@@ -1169,11 +1170,7 @@ class PageObject(DictionaryObject):
                     output += text  # .translate(cmap)
                 text = ""
                 _space_width = cmaps[operands[0]][1]
-                cmap = (
-                    cmaps[operands[0]][2]
-                    if len(cmaps[operands[0]][2]) > 0
-                    else cmaps[operands[0]][3]
-                )  # type:ignore
+                cmap = (cmaps[operands[0]][2], cmaps[operands[0]][3],operands[0])  # type:ignore
                 try:
                     font_size = float(operands[1])
                 except Exception:
@@ -1194,7 +1191,14 @@ class PageObject(DictionaryObject):
             elif operator == b"T*":
                 tm_matrix[5] -= TL
             elif operator == b"Tj":
-                text += operands[0].translate(cmap)
+                t: str =  ""
+                tt: bytes = encode_pdfdocencoding(operands[0]) if isinstance(operands[0], str) else operands[0]
+                if isinstance (cmap[0], str):
+                    t = tt.decode(cmap[0])         #apply str encoding
+                else:       #apply dict encoding
+                    t = "".join([cmap[0][x] if x in cmap[0] else bytes((x,)).decode() for x in tt])
+
+                text += "".join([cmap[1][x] if x in cmap[1] else x for x in t])
             else:
                 return None
             # process text changes due to positionchange: " "
@@ -1221,7 +1225,7 @@ class PageObject(DictionaryObject):
                 process_operation(b"TJ", operands)
             elif operator == b"TJ":
                 for op in operands[0]:
-                    if isinstance(op, str):
+                    if isinstance(op, (str,bytes)):
                         process_operation(b"Tj", [op])
                     if isinstance(op, (int, float, NumberObject, FloatObject)):
                         process_operation(b"Td", [-op, 0.0])
