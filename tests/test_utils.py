@@ -106,8 +106,6 @@ def test_deprecate_no_replacement():
     error_msg = "foo is deprecated and will be removed in PyPDF2 3.0.0."
     assert exc.value.args[0] == error_msg
 
-
-
 @pytest.mark.parametrize(
     ("left", "up", "upleft", "expected"),
     [
