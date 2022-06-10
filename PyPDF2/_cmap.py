@@ -37,7 +37,7 @@ def build_char_map(
         encoding,
         # https://github.com/python/mypy/issues/4374
         map_dict,  # type: ignore
-    )
+    )       #type: ignore
 
 
 _predefined_cmap: Dict[str, str] = {
