@@ -139,6 +139,7 @@ def test_rotate_45():
         # 6 instead of 5: as there is an issue in page 5 (missing objects)
         # and too complex to handle the warning without hiding real regressions
         (True, "https://arxiv.org/pdf/1601.03642.pdf", [0, 1, 5, 7]),
+        (True, "https://github.com/mstamy2/PyPDF2/files/3796761/17343_2008_Order_09-Jan-2019.pdf", [0, 1]),
     ],
 )
 def test_extract_textbench(enable, url, pages, print_result=False):
