@@ -124,7 +124,6 @@ class PdfWriter:
         )
         self._root: Optional[IndirectObject] = None
         self._root_object = root
-        self.set_need_appearances_writer()
 
     def _add_object(self, obj: Optional[PdfObject]) -> IndirectObject:
         self._objects.append(obj)
@@ -539,6 +538,7 @@ class PdfWriter:
             second bit sets Required, the third bit sets NoExport. See
             PDF Reference Table 8.70 for details.
         """
+        self.set_need_appearances_writer()
         # Iterate through pages, update field values
         for j in range(len(page[PG.ANNOTS])):  # type: ignore
             writer_annot = page[PG.ANNOTS][j].get_object()  # type: ignore
