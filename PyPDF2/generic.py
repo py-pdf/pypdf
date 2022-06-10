@@ -124,6 +124,9 @@ class BooleanObject(PdfObject):
         else:
             return False
 
+    def __repr__(self) ->  str:
+        return "True" if self.value else "False"
+
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
