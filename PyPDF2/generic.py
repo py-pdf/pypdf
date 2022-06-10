@@ -124,7 +124,7 @@ class BooleanObject(PdfObject):
         else:
             return False
 
-    def __repr__(self) ->  str:
+    def __repr__(self) -> str:
         return "True" if self.value else "False"
 
     def write_to_stream(
@@ -381,7 +381,7 @@ def readHexStringFromStream(
         x += b_("0")
     if len(x) == 2:
         txt += chr(int(x, base=16))
-    return createStringObject(b_(txt),forced_encoding)
+    return createStringObject(b_(txt), forced_encoding)
 
 
 def readStringFromStream(
@@ -1255,7 +1255,7 @@ def read_object(
         if peek == b_("<<"):
             return DictionaryObject.read_from_stream(stream, pdf, forced_encoding)
         else:
-            return readHexStringFromStream(stream,forced_encoding)
+            return readHexStringFromStream(stream, forced_encoding)
     elif idx == 2:
         return ArrayObject.read_from_stream(stream, pdf, forced_encoding)
     elif idx == 3 or idx == 4:
@@ -1886,7 +1886,7 @@ def createStringObject(
                     out += bytes((x,)).decode("charmap")
             return TextStringObject(out)
         elif isinstance(forced_encoding, str):
-            if(forced_encoding == "bytes"):
+            if forced_encoding == "bytes":
                 return ByteStringObject(string)
             else:
                 return TextStringObject(string.decode(forced_encoding))
@@ -2203,7 +2203,7 @@ _pdfdoc_encoding = [
 
 assert len(_pdfdoc_encoding) == 256
 
-#manually generated from https://www.unicode.org/Public/MAPPINGS/VENDORS/ADOBE/symbol.txt
+# manually generated from https://www.unicode.org/Public/MAPPINGS/VENDORS/ADOBE/symbol.txt
 _symbol_encoding = [
     "\u0000",
     "\u0001",
