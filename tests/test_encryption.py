@@ -47,9 +47,9 @@ def test_encryption(src):
     with open(src, "rb") as inputfile:
         ipdf = PyPDF2.PdfReader(inputfile)
         if src.endswith("enc0.pdf"):
-            assert ipdf.is_encrypted == False
+            assert not ipdf.is_encrypted
         else:
-            assert ipdf.is_encrypted == True
+            assert ipdf.is_encrypted
             ipdf.decrypt("asdfzxcv")
         assert len(ipdf.pages) == 1
         dd = dict(ipdf.metadata)

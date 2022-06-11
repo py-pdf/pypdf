@@ -1054,7 +1054,8 @@ class PdfReader:
                 if not hasattr(self, "_encryption"):
                     raise PdfReadError("file has not been decrypted")
                 # otherwise, decrypt here...
-                retval = self._encryption.decryptObject(retval, indirect_reference.idnum, indirect_reference.generation)
+                retval = cast(PdfObject, retval)
+                retval = self._encryption.decrypt_object(retval, indirect_reference.idnum, indirect_reference.generation)
         else:
             warnings.warn(
                 "Object %d %d not defined."
@@ -1067,6 +1068,17 @@ class PdfReader:
             indirect_reference.generation, indirect_reference.idnum, retval
         )
         return retval
+
+    def getObject(
+        self, indirectReference: IndirectObject
+    ) -> Optional[PdfObject]:  # pragma: no cover
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`get_object` instead.
+        """
+        deprecate_with_replacement("getObject", "get_object")
+        return self.get_object(indirectReference)
 
     def read_object_header(self, stream: StreamType) -> Tuple[int, int]:
         # Should never be necessary to read out whitespace, since the
@@ -1590,7 +1602,7 @@ class PdfReader:
         # https://github.com/mstamy2/PyPDF2/issues/608
         id_entry = self.trailer.get(TK.ID)
         id1_entry = id_entry[0].get_object().original_bytes if id_entry else b""
-        encryptEntry = self.trailer[TK.ENCRYPT].get_object()
+        encryptEntry = cast(DictionaryObject, self.trailer[TK.ENCRYPT].get_object())
         encryption = Encryption.read(encryptEntry, id1_entry)
         # maybe password is owner password
         # TODO: add/modify api to set owner password

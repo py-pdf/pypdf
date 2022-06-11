@@ -30,7 +30,13 @@
 import hashlib
 import random
 import struct
-import typing
+from typing import (
+    Dict,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+)
 
 from PyPDF2.errors import DependencyError
 from PyPDF2.generic import (
@@ -41,6 +47,7 @@ from PyPDF2.generic import (
     StreamObject,
     TextStringObject,
     createStringObject,
+
 )
 
 
@@ -107,7 +114,7 @@ try:
 
 except ImportError:
 
-    class CryptRC4(CryptBase):
+    class CryptRC4(CryptBase):  # type: ignore
         def __init__(self, key: bytes) -> None:
             self.S = list(range(256))
             j = 0
@@ -130,7 +137,7 @@ except ImportError:
         def decrypt(self, data: bytes) -> bytes:
             return self.encrypt(data)
 
-    class CryptAES(CryptBase):
+    class CryptAES(CryptBase):  # type: ignore
         def __init__(self, key: bytes) -> None:
             pass
 
@@ -165,11 +172,11 @@ class CryptFilter:
         self.strCrypt = strCrypt
         self.efCrypt = efCrypt
 
-    def encryptObject(self, obj: PdfObject) -> PdfObject:
+    def encrypt_object(self, obj: PdfObject) -> PdfObject:
         # TODO
         return NotImplemented
 
-    def decryptObject(self, obj: PdfObject) -> PdfObject:
+    def decrypt_object(self, obj: PdfObject) -> PdfObject:
         if isinstance(obj, ByteStringObject) or isinstance(obj, TextStringObject):
             data = self.strCrypt.decrypt(obj.original_bytes)
             obj = createStringObject(data)
@@ -177,10 +184,10 @@ class CryptFilter:
             obj._data = self.stmCrypt.decrypt(obj._data)
         elif isinstance(obj, DictionaryObject):
             for dictkey, value in list(obj.items()):
-                obj[dictkey] = self.decryptObject(value)
+                obj[dictkey] = self.decrypt_object(value)
         elif isinstance(obj, ArrayObject):
             for i in range(len(obj)):
-                obj[i] = self.decryptObject(obj[i])
+                obj[i] = self.decrypt_object(obj[i])
         return obj
 
 
@@ -196,7 +203,7 @@ def _padding(data: bytes) -> bytes:
     return (data + _PADDING)[:32]
 
 
-def _bytes(value: typing.Union[bytes, str]) -> bytes:
+def _bytes(value: Union[bytes, str]) -> bytes:
     if isinstance(value, bytes):
         return value
     try:
@@ -444,9 +451,10 @@ class AlgR5:
         tmp_key = hashlib.sha256(password + u_value[40:]).digest()
         return AES_CBC_decrypt(tmp_key, iv, ue_value)
 
-    def verify_perms(key: bytes, perms: bytes, p: int, metadata_encrypted: bool) -> bytes:
+    @staticmethod
+    def verify_perms(key: bytes, perms: bytes, p: int, metadata_encrypted: bool) -> bool:
         """see :func:`verify_owner_password` and :func:`compute_Perms_value`"""
-        b8 = b'T' if metadata_encrypted else 'F'
+        b8 = b'T' if metadata_encrypted else b'F'
         p1 = struct.pack("<I", p) + b"\xff\xff\xff\xff" + b8 + b"adb"
         p2 = AES_ECB_decrypt(key, perms)
         return p1 == p2[:12]
@@ -465,7 +473,7 @@ class AlgR5:
         }
 
     @staticmethod
-    def compute_U_value(password: bytes, key: bytes) -> typing.Tuple[bytes]:
+    def compute_U_value(password: bytes, key: bytes) -> Tuple[bytes, bytes]:
         """
         Algorithm 3.8 Computing the encryption dictionary’s U (user password) and UE (user encryption key) values
 
@@ -488,7 +496,7 @@ class AlgR5:
         return u_value, ue_value
 
     @staticmethod
-    def compute_O_value(password: bytes, key: bytes, u_value: bytes) -> typing.Tuple[bytes]:
+    def compute_O_value(password: bytes, key: bytes, u_value: bytes) -> Tuple[bytes, bytes]:
         """
         Algorithm 3.9 Computing the encryption dictionary’s O (owner password) and OE (owner encryption key) values
 
@@ -527,7 +535,7 @@ class AlgR5:
            encryption key as the key. The result (16 bytes) is stored as the Perms string, and checked for validity
            when the file is opened.
         """
-        b8 = b'T' if metadata_encrypted else 'F'
+        b8 = b'T' if metadata_encrypted else b'F'
         rr = bytes(random.randrange(0, 256) for _ in range(4))
         data = struct.pack("<I", p) + b"\xff\xff\xff\xff" + b8 + b"adb" + rr
         perms = AES_ECB_encrypt(key, data)
@@ -544,12 +552,12 @@ class Encryption:
         self.StrF = StrF
         self.EFF = EFF
 
-        self._key = None
+        self._key: Optional[bytes] = None
         # keep key
-        self._user_keys = {}
-        self._owner_keys = {}
+        self._user_keys: Dict = {}
+        self._owner_keys: Dict = {}
 
-    def decryptObject(self, obj: PdfObject, idnum: int, generation: int) -> PdfObject:
+    def decrypt_object(self, obj: PdfObject, idnum: int, generation: int) -> PdfObject:
         """decrypt object"""
 
         """
@@ -586,6 +594,7 @@ class Encryption:
         pack1 = struct.pack("<i", idnum)[:3]
         pack2 = struct.pack("<i", generation)[:2]
 
+        assert self._key
         key = self._key
         n = 5 if self.algV == 1 else self.key_size // 8
         key_data = key[:n] + pack1 + pack2
@@ -598,15 +607,15 @@ class Encryption:
         # for V=5 use AES-256
         aes256_key = key
 
-        stmCrypt = self._getCrypt(self.StmF, rc4_key, aes128_key, aes256_key)
-        StrCrypt = self._getCrypt(self.StrF, rc4_key, aes128_key, aes256_key)
-        efCrypt = self._getCrypt(self.EFF, rc4_key, aes128_key, aes256_key)
+        stmCrypt = self._get_crypt(self.StmF, rc4_key, aes128_key, aes256_key)
+        StrCrypt = self._get_crypt(self.StrF, rc4_key, aes128_key, aes256_key)
+        efCrypt = self._get_crypt(self.EFF, rc4_key, aes128_key, aes256_key)
 
         cf = CryptFilter(stmCrypt, StrCrypt, efCrypt)
-        return cf.decryptObject(obj)
+        return cf.decrypt_object(obj)
 
     @staticmethod
-    def _getCrypt(method: str, rc4_key: bytes, aes128_key: bytes, aes256_key: bytes) -> CryptBase:
+    def _get_crypt(method: str, rc4_key: bytes, aes128_key: bytes, aes256_key: bytes) -> CryptBase:
         if method == "/AESV3":
             return CryptAES(aes256_key)
         if method == "/AESV2":
@@ -616,7 +625,7 @@ class Encryption:
         else:
             return CryptRC4(rc4_key)
 
-    def verify(self, user_pwd: typing.Union[bytes, str], owner_pwd: typing.Union[bytes, str]) -> int:
+    def verify(self, user_pwd: Union[bytes, str], owner_pwd: Union[bytes, str]) -> int:
         up_bytes = _bytes(user_pwd)
         op_bytes = _bytes(owner_pwd)
 
@@ -645,13 +654,13 @@ class Encryption:
 
         return rc
 
-    def verify_r4(self, user_pwd: bytes, owner_pwd: bytes) -> typing.Tuple[bytes, int]:
-        R = self.entry["/R"]
-        P = self.entry["/P"]
+    def verify_r4(self, user_pwd: bytes, owner_pwd: bytes) -> Tuple[bytes, int]:
+        R = cast(int, self.entry["/R"])
+        P = cast(int, self.entry["/P"])
         P = (P + 0x100000000) % 0x100000000  # maybe < 0
         metadata_encrypted = self.entry.get("/EncryptMetadata", True)
-        o_entry = self.entry["/O"].get_object().original_bytes
-        u_entry = self.entry["/U"].get_object().original_bytes
+        o_entry = cast(ByteStringObject, self.entry["/O"].get_object()).original_bytes
+        u_entry = cast(ByteStringObject, self.entry["/U"].get_object()).original_bytes
 
         key = AlgR4.verify_user_password(user_pwd, R, self.key_size, o_entry, u_entry, P, self.id1_entry, metadata_encrypted)
         if key:
@@ -661,12 +670,12 @@ class Encryption:
             return key, 2
         return b"", 0
 
-    def verify_r5(self, user_pwd: bytes, owner_pwd: bytes) -> typing.Tuple[bytes, int]:
+    def verify_r5(self, user_pwd: bytes, owner_pwd: bytes) -> Tuple[bytes, int]:
         # TODO: use SASLprep process
-        o_entry = self.entry["/O"].get_object().original_bytes
-        u_entry = self.entry["/U"].get_object().original_bytes
-        oe_entry = self.entry["/OE"].get_object().original_bytes
-        ue_entry = self.entry["/UE"].get_object().original_bytes
+        o_entry = cast(ByteStringObject, self.entry["/O"].get_object()).original_bytes
+        u_entry = cast(ByteStringObject, self.entry["/U"].get_object()).original_bytes
+        oe_entry = cast(ByteStringObject, self.entry["/OE"].get_object()).original_bytes
+        ue_entry = cast(ByteStringObject, self.entry["/UE"].get_object()).original_bytes
 
         rc = 0
         key = AlgR5.verify_user_password(user_pwd, u_entry, ue_entry)
@@ -679,8 +688,8 @@ class Encryption:
         if rc == 0:
             return b"", 0
         # verify Perms
-        perms = self.entry["/Perms"].get_object().original_bytes
-        P = self.entry["/P"]
+        perms = cast(ByteStringObject, self.entry["/Perms"].get_object()).original_bytes
+        P = cast(int, self.entry["/P"])
         P = (P + 0x100000000) % 0x100000000  # maybe < 0
         metadata_encrypted = self.entry.get("/EncryptMetadata", True)
         if not AlgR5.verify_perms(key, perms, P, metadata_encrypted):
@@ -688,7 +697,7 @@ class Encryption:
         return key, rc
 
     @staticmethod
-    def read(encryption_entry: DictionaryObject, first_id_entry: bytes = None) -> "Encryption":
+    def read(encryption_entry: DictionaryObject, first_id_entry: bytes) -> "Encryption":
         filter = encryption_entry.get("/Filter")
         if filter != "/Standard":
             raise NotImplementedError("only Standard PDF encryption handler is available")
@@ -710,22 +719,22 @@ class Encryption:
             EFF = encryption_entry.get("/EFF", StmF)
 
             if StmF != "/Identity":
-                StmF = filters[StmF]["/CFM"]
+                StmF = filters[StmF]["/CFM"]  # type: ignore
             if StrF != "/Identity":
-                StrF = filters[StrF]["/CFM"]
+                StrF = filters[StrF]["/CFM"]  # type: ignore
             if EFF != "/Identity":
-                EFF = filters[EFF]["/CFM"]
+                EFF = filters[EFF]["/CFM"]  # type: ignore
 
             allowed_methods = ("/Identity", "/V2", "/AESV2", "/AESV3")
             if StmF not in allowed_methods:
-                raise NotImplementedError("StmF Method %s NOT supported!" % StmF)
+                raise NotImplementedError("StmF Method {StmF} NOT supported!")
             if StrF not in allowed_methods:
-                raise NotImplementedError("StrF Method %s NOT supported!" % StrF)
+                raise NotImplementedError(f"StrF Method {StrF} NOT supported!")
             if EFF not in allowed_methods:
-                raise NotImplementedError("EFF Method %s NOT supported!" % EFF)
+                raise NotImplementedError(f"EFF Method {EFF} NOT supported!")
 
-        R = encryption_entry["/R"]
+        R = cast(int, encryption_entry["/R"])
         if R > 5:
-            raise NotImplementedError("encryption R={} NOT supported!".format(R))
+            raise NotImplementedError(f"encryption R={R} NOT supported!")
 
         return Encryption(V, encryption_entry, first_id_entry, StmF, StrF, EFF)
