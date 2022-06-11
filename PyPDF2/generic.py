@@ -1086,7 +1086,7 @@ class EncodedStreamObject(StreamObject):
         self.decoded_self = value
 
     def get_data(self) -> Union[None, str, bytes]:
-        from .filters import decodeStreamData
+        from .filters import decode_stream_data
 
         if self.decoded_self is not None:
             # cached version of decoded object
@@ -1095,7 +1095,7 @@ class EncodedStreamObject(StreamObject):
             # create decoded object
             decoded = DecodedStreamObject()
 
-            decoded._data = decodeStreamData(self)
+            decoded._data = decode_stream_data(self)
             for key, value in list(self.items()):
                 if key not in (SA.LENGTH, SA.FILTER, SA.DECODE_PARMS):
                     decoded[key] = value

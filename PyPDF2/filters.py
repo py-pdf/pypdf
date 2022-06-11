@@ -89,8 +89,6 @@ class FlateDecode:
         if "decodeParms" in kwargs:
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
             parameters = kwargs["decodeParms"]
-        if parameters is None:
-            raise ValueError("Missing decode parameters")
         str_data = decompress(data)
         predictor = 1
 
@@ -190,8 +188,6 @@ class ASCIIHexDecode:
         if "decodeParms" in kwargs:
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
             parameters = kwargs["decodeParms"]
-        if parameters is None:
-            raise ValueError("Missing decode parameters")
         retval = ""
         hex_pair = ""
         index = 0
@@ -312,8 +308,6 @@ class LZWDecode:
         if "decodeParms" in kwargs:
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
             parameters = kwargs["decodeParms"]
-        if parameters is None:
-            raise ValueError("Missing decode parameters")
         return LZWDecode.Decoder(data).decode()
 
 
@@ -329,8 +323,6 @@ class ASCII85Decode:
         if "decodeParms" in kwargs:
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
             parameters = kwargs["decodeParms"]
-        if parameters is None:
-            raise ValueError("Missing decode parameters")
         if isinstance(data, str):
             data = data.encode("ascii")
         group_index = b = 0
@@ -364,8 +356,6 @@ class DCTDecode:
         if "decodeParms" in kwargs:
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
             parameters = kwargs["decodeParms"]
-        if parameters is None:
-            raise ValueError("Missing decode parameters")
         return data
 
 
@@ -379,8 +369,6 @@ class JPXDecode:
         if "decodeParms" in kwargs:
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
             parameters = kwargs["decodeParms"]
-        if parameters is None:
-            raise ValueError("Missing decode parameters")
         return data
 
 
@@ -446,8 +434,6 @@ class CCITTFaxDecode:
         if "decodeParms" in kwargs:
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
             parameters = kwargs["decodeParms"]
-        if parameters is None:
-            raise ValueError("Missing decode parameters")
         parms = CCITTFaxDecode._get_parameters(parameters, height)
 
         img_size = len(data)
@@ -498,7 +484,7 @@ class CCITTFaxDecode:
         return tiff_header + data
 
 
-def decodeStreamData(stream: Any) -> Union[str, bytes]:  # utils.StreamObject
+def decode_stream_data(stream: Any) -> Union[str, bytes]:  # utils.StreamObject
     filters = stream.get(SA.FILTER, ())
 
     if len(filters) and not isinstance(filters[0], NameObject):
@@ -535,6 +521,11 @@ def decodeStreamData(stream: Any) -> Union[str, bytes]:  # utils.StreamObject
                 # Unsupported filter
                 raise NotImplementedError("unsupported filter %s" % filter_type)
     return data
+
+
+def decodeStreamData(stream: Any) -> Union[str, bytes]:
+    deprecate_with_replacement("decodeStreamData", "decode_stream_data", "4.0.0")
+    return decode_stream_data(stream)
 
 
 def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
