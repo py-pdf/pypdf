@@ -7,6 +7,7 @@ import PyPDF2._utils
 from PyPDF2._utils import (
     mark_location,
     matrix_multiply,
+    read_previous_line,
     read_until_regex,
     read_until_whitespace,
     skip_over_comment,
@@ -106,60 +107,47 @@ def test_deprecate_no_replacement():
     error_msg = "foo is deprecated and will be removed in PyPDF2 3.0.0."
     assert exc.value.args[0] == error_msg
 
-
-@pytest.mark.parametrize(
-    ("left", "up", "upleft", "expected"),
-    [
-        (0, 0, 0, 0),
-        (1, 0, 0, 1),
-        (0, 1, 0, 1),
-        (0, 0, 1, 0),
-        (1, 2, 3, 1),
-        (2, 1, 3, 1),
-        (1, 3, 2, 2),
-        (3, 1, 2, 2),
-        (3, 2, 1, 3),
-    ],
-)
-def test_paeth_predictor(left, up, upleft, expected):
-    assert PyPDF2._utils.paeth_predictor(left, up, upleft) == expected
-
-
-@pytest.mark.parametrize(
-    ("dat", "pos", "to_read"),
-    [
-        (b"", 0, 1),
-        (b"a", 0, 1),
-        (b"abc", 0, 10),
-    ],
-)
-def test_read_block_backwards_errs(dat, pos, to_read):
-    with pytest.raises(PdfStreamError) as _:
-        s = io.BytesIO(dat)
-        s.seek(pos)
         read_block_backwards(s, to_read)
 
-
 @pytest.mark.parametrize(
-    ("dat", "pos", "to_read", "expected", "expected_pos"),
+    ("dat", "pos", "expected", "expected_pos"),
     [
-        (b"abc", 1, 0, b"", 1),
-        (b"abc", 1, 1, b"a", 0),
-        (b"abc", 2, 1, b"b", 1),
-        (b"abc", 2, 2, b"ab", 0),
-        (b"abc", 3, 1, b"c", 2),
-        (b"abc", 3, 2, b"bc", 1),
-        (b"abc", 3, 3, b"abc", 0),
+        (b"abc", 1, b"a", 0),
+        (b"abc", 2, b"ab", 0),
+        (b"abc", 3, b"abc", 0),
+        (b"abc\n", 3, b"abc", 0),
+        (b"abc\n", 4, b"", 3),
+        (b"abc\n\r", 4, b"", 3),
+        (b"abc\nd", 5, b"d", 3),
+        # Skip over multiple CR/LF bytes
+        (b"abc\n\r\ndef", 9, b"def", 3),
+        # Include a block full of newlines...
+        (
+            b"abc" + b"\n" * (2 * io.DEFAULT_BUFFER_SIZE) + b"d",
+            2 * io.DEFAULT_BUFFER_SIZE + 4,
+            b"d",
+            3,
+        ),
+        # Include a block full of non-newline characters
+        (
+            b"abc\n" + b"d" * (2 * io.DEFAULT_BUFFER_SIZE),
+            2 * io.DEFAULT_BUFFER_SIZE + 4,
+            b"d" * (2 * io.DEFAULT_BUFFER_SIZE),
+            3,
+        ),
+        # Both
+        (
+            b"abcxyz"
+            + b"\n" * (2 * io.DEFAULT_BUFFER_SIZE)
+            + b"d" * (2 * io.DEFAULT_BUFFER_SIZE),
+            4 * io.DEFAULT_BUFFER_SIZE + 6,
+            b"d" * (2 * io.DEFAULT_BUFFER_SIZE),
+            6,
+        ),
     ],
 )
-def test_read_block_backwards(dat, pos, to_read, expected, expected_pos):
+def test_read_previous_line(dat, pos, expected, expected_pos):
     s = io.BytesIO(dat)
     s.seek(pos)
-    assert read_block_backwards(s, to_read) == expected
+    assert read_previous_line(s) == expected
     assert s.tell() == expected_pos
-
-
-def test_read_block_backwards_at_start():
-    s = io.BytesIO(b"abc")
-    with pytest.raises(PdfStreamError) as _:
-        read_previous_line(s)
