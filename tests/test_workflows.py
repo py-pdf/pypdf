@@ -156,6 +156,11 @@ def test_rotate_45():
             "https://github.com/py-pdf/PyPDF2/files/8884470/fdocuments.in_sweet-fundamentals-of-crystallography.pdf",
             [0, 1, 34, 35, 36, 118, 119, 120, 121],
         ),
+        (
+            True,
+            "https://github.com/py-pdf/PyPDF2/files/8884493/998167.pdf",
+            [0]
+        ),
     ],
 )
 def test_extract_textbench(enable, url, pages, print_result=False):
