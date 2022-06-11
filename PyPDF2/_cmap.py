@@ -39,6 +39,7 @@ def build_char_map(
         map_dict,  # type: ignore
     )  # type: ignore
 
+unknown_char_map = ( "Unknown",9999,dict(zip(range(256), ["�"]*256)),{})
 
 _predefined_cmap: Dict[str, str] = {
     "/Identity-H": "utf-16-be",

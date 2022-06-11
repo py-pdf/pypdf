@@ -45,7 +45,7 @@ from typing import (
     cast,
 )
 
-from ._cmap import build_char_map
+from ._cmap import build_char_map,unknown_char_map
 from ._utils import (
     CompressedTransformationMatrix,
     TransformationMatrixType,
@@ -1176,12 +1176,20 @@ class PageObject(DictionaryObject):
                 if text != "":
                     output += text  # .translate(cmap)
                 text = ""
-                _space_width = cmaps[operands[0]][1]
-                cmap = (
-                    cmaps[operands[0]][2],
-                    cmaps[operands[0]][3],
-                    operands[0],
-                )  # type:ignore
+                try:
+                    _space_width = cmaps[operands[0]][1]
+                    cmap = (
+                        cmaps[operands[0]][2],
+                        cmaps[operands[0]][3],
+                        operands[0],
+                    )  # type:ignore
+                except KeyError:    #font not found
+                    _space_width=unknown_char_map[1]
+                    cmap = (
+                        unknown_char_map[2],
+                        unknown_char_map[3],
+                        "???"+operands[0]
+                    )
                 try:
                     font_size = float(operands[1])
                 except Exception:
