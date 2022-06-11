@@ -140,15 +140,24 @@ def parse_to_unicode(ft: DictionaryObject, space_code: int) -> Tuple[Dict, int]:
     process_rg: bool = False
     process_char: bool = False
     cm: bytes = cast(DecodedStreamObject, ft["/ToUnicode"]).get_data()
-    for l in (
-        cm.strip()
-        .replace(b"<", b" ")
-        .replace(b">", b"")
-        .replace(b"[", b" [ ")
-        .replace(b"]", b" ] ")
-        .split(b"\n")
-    ):
-        if l == "":
+    #we need to prepare cm before due to missing return line in pdf printed to pdf from word
+    cm = (cm.strip()
+            .replace(b"beginbfchar", b"\nbeginbfchar\n")
+            .replace(b"endbfchar", b"\nendbfchar\n")
+            .replace(b"beginbfrange", b"\nbeginbfrange\n")
+            .replace(b"endbfrange", b"\nendbfrange\n")
+            .replace(b"<<", b"\n{\n")       # text between << and >> not used but 
+            .replace(b">>", b"\n}\n")       # some solution to find it back
+          )
+    ll=cm.split(b"<")
+    for i in range(len(ll)):
+        j = ll[i].find(b">")
+        if j>=0:
+            ll[i] = ll[i][:j].replace(b" ",b"")+b" "+ll[i][j+1:]
+    cm = (b" ".join(ll)).replace(b"[", b" [ ").replace(b"]", b" ]\n ")
+    
+    for l in cm.split(b"\n"):
+        if l == b"":
             continue
         if b"beginbfrange" in l:
             process_rg = True
@@ -190,15 +199,15 @@ def parse_to_unicode(ft: DictionaryObject, space_code: int) -> Tuple[Dict, int]:
         elif process_char:
             lst = [x for x in l.split(b" ") if x]
             map_dict[-1] = len(lst[0]) // 2
-            map_dict[
-                unhexlify(lst[0]).decode(
-                    "charmap" if map_dict[-1] == 1 else "utf-16-be"
-                )
-            ] = unhexlify(b"".join(lst[1:])).decode(
-                "utf-16-be"
-            )  # join is here as some cases where the code was split
-
-    # get
+            while(len(lst)>0):
+                map_dict[
+                    unhexlify(lst[0]).decode(
+                        "charmap" if map_dict[-1] == 1 else "utf-16-be"
+                    )
+                ] = unhexlify(lst[1]).decode(
+                    "utf-16-be"
+                )  # join is here as some cases where the code was split
+                lst = lst[2:]
     for a in map_dict:
         if map_dict[a] == " ":
             space_code = a
