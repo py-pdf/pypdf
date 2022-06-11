@@ -1126,9 +1126,12 @@ class PageObject(DictionaryObject):
         cmap: Tuple[
             Union[str, Dict[int, str]], Dict[str, str], str
         ]  # (encoding,CMAP,font_name)
-        content = obj[content_key].get_object() if isinstance(content_key, str) else obj
-        if not isinstance(content, ContentStream):
-            content = ContentStream(content, pdf, "bytes")
+        try:
+            content = obj[content_key].get_object() if isinstance(content_key, str) else obj
+            if not isinstance(content, ContentStream):
+                content = ContentStream(content, pdf, "bytes")
+        except KeyError:     #it means no content can be extracted(certainly empty page)
+            return ""
         # Note: we check all strings are TextStringObjects.  ByteStringObjects
         # are strings where the byte->string encoding was unknown, so adding
         # them to the text here would be gibberish.
