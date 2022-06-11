@@ -13,7 +13,6 @@ from PyPDF2._utils import (
     skip_over_comment,
     skip_over_whitespace,
     read_block_backwards,
-    read_previous_line,
 )
 from PyPDF2.errors import PdfStreamError
 
