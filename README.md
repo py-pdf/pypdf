@@ -1,14 +1,22 @@
 [![PyPI version](https://badge.fury.io/py/PyPDF2.svg)](https://badge.fury.io/py/PyPDF2)
 [![Python Support](https://img.shields.io/pypi/pyversions/PyPDF2.svg)](https://pypi.org/project/PyPDF2/)
 [![](https://img.shields.io/badge/-documentation-green)](https://pypdf2.readthedocs.io/en/latest/)
-![GitHub last commit](https://img.shields.io/github/last-commit/py-pdf/PyPDF2)
+[![GitHub last commit](https://img.shields.io/github/last-commit/py-pdf/PyPDF2)](https://github.com/py-pdf/PyPDF2)
+[![codecov](https://codecov.io/gh/py-pdf/PyPDF2/branch/main/graph/badge.svg?token=id42cGNZ5Z)](https://codecov.io/gh/py-pdf/PyPDF2)
 
 # PyPDF2
 
 PyPDF2 is a free and open-source pure-python PDF library capable of splitting,
-merging, cropping, and transforming the pages of PDF files. It can also add
-custom data, viewing options, and passwords to PDF files.
-PyPDF2 can retrieve text and metadata from PDFs as well.
+[merging](https://pypdf2.readthedocs.io/en/latest/user/merging-pdfs.html),
+[cropping, and transforming](https://pypdf2.readthedocs.io/en/latest/user/cropping-and-transforming.html)
+the pages of PDF files. It can also add
+custom data, viewing options, and
+[passwords](https://pypdf2.readthedocs.io/en/latest/user/encryption-decryption.html)
+to PDF files. PyPDF2 can
+[retrieve text](https://pypdf2.readthedocs.io/en/latest/user/extract-text.html)
+and
+[metadata](https://pypdf2.readthedocs.io/en/latest/user/metadata.html)
+from PDFs as well.
 
 
 ## Installation
@@ -22,21 +30,19 @@ pip install PyPDF2
 ## Usage
 
 ```python
-from PyPDF2 import PdfFileReader
+from PyPDF2 import PdfReader
 
-with open("Resources/crazyones.pdf", "rb") as fp:
-    reader = PdfFileReader(fp)
-    number_of_pages = reader.getNumPages()
-    page = reader.pages[0]
-    text = page.extractText()
+reader = PdfReader("example.pdf")
+number_of_pages = len(reader.pages)
+page = reader.pages[0]
+text = page.extract_text()
 ```
 
 PyPDF2 can do a lot more, e.g. splitting, merging, reading and creating
 annotations, decrypting and encrypting, and more.
 
-Please see [the documentation](https://pypdf2.readthedocs.io/en/latest/),
-[`Sample_Code`](https://github.com/py-pdf/PyPDF2/tree/master/Sample_Code)
-and [`Scripts`](https://github.com/py-pdf/PyPDF2/tree/master/Scripts) for
+Please see [the documentation](https://pypdf2.readthedocs.io/en/latest/)
+and [`Scripts`](https://github.com/py-pdf/PyPDF2/tree/main/Scripts) for
 more usage examples!
 
 A lot of questions are asked and answered
@@ -74,21 +80,28 @@ PyPDF2 includes a test suite which can be executed with `pytest`:
 
 ```bash
 $ pytest
-========================= test session starts =========================
+===================== test session starts =====================
 platform linux -- Python 3.6.15, pytest-7.0.1, pluggy-1.0.0
 rootdir: /home/moose/Github/Martin/PyPDF2
 plugins: cov-3.0.0
-collected 57 items
+collected 233 items
 
-Tests/test_basic_features.py ..                                 [  3%]
-Tests/test_merger.py .                                          [  5%]
-Tests/test_page.py .                                            [  7%]
-Tests/test_pagerange.py .......                                 [ 19%]
-Tests/test_reader.py ..........                                 [ 36%]
-Tests/test_utils.py ......................                      [ 75%]
-Tests/test_workflows.py ..........                              [ 92%]
-Tests/test_writer.py ..                                         [ 96%]
-Tests/test_xmp.py ..                                            [100%]
+tests/test_basic_features.py ..                         [  0%]
+tests/test_constants.py .                               [  1%]
+tests/test_filters.py .................x.....           [ 11%]
+tests/test_generic.py ................................. [ 25%]
+.............                                           [ 30%]
+tests/test_javascript.py ..                             [ 31%]
+tests/test_merger.py .                                  [ 32%]
+tests/test_page.py .........................            [ 42%]
+tests/test_pagerange.py ................                [ 49%]
+tests/test_papersizes.py ..................             [ 57%]
+tests/test_reader.py .................................. [ 72%]
+...............                                         [ 78%]
+tests/test_utils.py ....................                [ 87%]
+tests/test_workflows.py ..........                      [ 91%]
+tests/test_writer.py .................                  [ 98%]
+tests/test_xmp.py ...                                   [100%]
 
-========================= 57 passed in 1.06s ==========================
+========== 232 passed, 1 xfailed, 1 warning in 4.52s ==========
 ```

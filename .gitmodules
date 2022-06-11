@@ -1,0 +1,3 @@
+[submodule "sample-files"]
+	path = sample-files
+	url = https://github.com/py-pdf/sample-files

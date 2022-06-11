@@ -1,5 +1,10 @@
-pytest
+coverage
 flake8
+flake8_implicit_str_concat
 flake8-bugbear
-pytest-cov
+mypy
 pillow
+pytest
+pytest-benchmark
+typeguard
+types-Pillow

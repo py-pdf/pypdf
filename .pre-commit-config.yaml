@@ -1,7 +1,7 @@
 # pre-commit run --all-files
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.2.0
+    rev: v4.1.0
     hooks:
     -   id: check-ast
     -   id: check-byte-order-marker
@@ -10,6 +10,7 @@ repos:
     -   id: check-yaml
     -   id: debug-statements
     -   id: end-of-file-fixer
+        exclude: "resources/.*"
     -   id: trailing-whitespace
     -   id: mixed-line-ending
     -   id: check-added-large-files
@@ -23,10 +24,19 @@ repos:
 #     rev: v0.942
 #     hooks:
 #     -   id: mypy
-# -   repo: https://github.com/psf/black
-#     rev: 22.3.0
-#     hooks:
-#     -   id: black
+-   repo: https://github.com/asottile/seed-isort-config
+    rev: v2.2.0
+    hooks:
+    -   id: seed-isort-config
+-   repo: https://github.com/pre-commit/mirrors-isort
+    rev: v5.10.1
+    hooks:
+    -   id: isort
+-   repo: https://github.com/psf/black
+    rev: 22.3.0
+    hooks:
+    -   id: black
+        args: [--target-version, py36]
 # -   repo: https://github.com/asottile/pyupgrade
 #     rev: v2.31.1
 #     hooks:
@@ -37,3 +47,8 @@ repos:
     hooks:
     -   id: blacken-docs
         additional_dependencies: [black==22.1.0]
+-   repo: https://github.com/asottile/pyupgrade
+    rev: v2.31.0
+    hooks:
+    -   id: pyupgrade
+        args: [--py36-plus]
