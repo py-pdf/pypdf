@@ -1251,6 +1251,9 @@ class PageObject(DictionaryObject):
             elif operator == b'"':
                 process_operation(b"T*", [])
                 process_operation(b"TJ", operands)
+            elif operator == b'TD':
+                process_operation(b"TL", [ -operands[1] ])
+                process_operation(b"Td", operands)
             elif operator == b"TJ":
                 for op in operands[0]:
                     if isinstance(op, (str, bytes)):
