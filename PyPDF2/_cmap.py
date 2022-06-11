@@ -82,13 +82,13 @@ def parse_encoding(
             if "/BaseFont" in ft and ft["/BaseFont"] in charset_encoding:
                 encoding = dict(zip(range(256), charset_encoding[ft["/BaseFont"]]))
             else:
-                encoding = "utf-8"
+                encoding = "charmap"
             return encoding, _default_fonts_space_width[cast(str, ft["/BaseFont"])]
         except Exception:
             if ft["/Subtype"] == "/Type1":
                 return "charmap", space_code
             else:
-                return "charmap", space_code
+                return "", space_code
     enc: Union(str, DictionaryObject) = ft["/Encoding"].get_object()  # type: ignore
     if isinstance(enc, str):
         try:
