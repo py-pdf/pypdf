@@ -7,6 +7,7 @@ import PyPDF2._utils
 from PyPDF2._utils import (
     mark_location,
     matrix_multiply,
+    read_previous_line,
     read_until_regex,
     read_until_whitespace,
     skip_over_comment,
@@ -103,3 +104,47 @@ def test_deprecate_no_replacement():
         PyPDF2._utils.deprecate_no_replacement("foo")
     error_msg = "foo is deprecated and will be removed in PyPDF2 3.0.0."
     assert exc.value.args[0] == error_msg
+
+
+@pytest.mark.parametrize(
+    ("dat", "pos", "expected", "expected_pos"),
+    [
+        (b"abc", 1, b"a", 0),
+        (b"abc", 2, b"ab", 0),
+        (b"abc", 3, b"abc", 0),
+        (b"abc\n", 3, b"abc", 0),
+        (b"abc\n", 4, b"", 3),
+        (b"abc\n\r", 4, b"", 3),
+        (b"abc\nd", 5, b"d", 3),
+        # Skip over multiple CR/LF bytes
+        (b"abc\n\r\ndef", 9, b"def", 3),
+        # Include a block full of newlines...
+        (
+            b"abc" + b"\n" * (2 * io.DEFAULT_BUFFER_SIZE) + b"d",
+            2 * io.DEFAULT_BUFFER_SIZE + 4,
+            b"d",
+            3,
+        ),
+        # Include a block full of non-newline characters
+        (
+            b"abc\n" + b"d" * (2 * io.DEFAULT_BUFFER_SIZE),
+            2 * io.DEFAULT_BUFFER_SIZE + 4,
+            b"d" * (2 * io.DEFAULT_BUFFER_SIZE),
+            3,
+        ),
+        # Both
+        (
+            b"abcxyz"
+            + b"\n" * (2 * io.DEFAULT_BUFFER_SIZE)
+            + b"d" * (2 * io.DEFAULT_BUFFER_SIZE),
+            4 * io.DEFAULT_BUFFER_SIZE + 6,
+            b"d" * (2 * io.DEFAULT_BUFFER_SIZE),
+            6,
+        ),
+    ],
+)
+def test_read_previous_line(dat, pos, expected, expected_pos):
+    s = io.BytesIO(dat)
+    s.seek(pos)
+    assert read_previous_line(s) == expected
+    assert s.tell() == expected_pos
