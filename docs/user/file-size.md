@@ -9,13 +9,13 @@ one is to remove content (e.g. images) or pages.
 ```python
 import PyPDF2
 
-reader = PyPDF2.PdfFileReader("example.pdf")
-writer = PyPDF2.PdfFileWriter()
+reader = PyPDF2.PdfReader("example.pdf")
+writer = PyPDF2.PdfWriter()
 
 for page in reader.pages:
-    writer.addPage(page)
+    writer.add_page(page)
 
-writer.removeImages()
+writer.remove_images()
 
 with open("out.pdf", "wb") as f:
     writer.write(f)
@@ -26,12 +26,12 @@ with open("out.pdf", "wb") as f:
 ```python
 import PyPDF2
 
-reader = PyPDF2.PdfFileReader("example.pdf")
-writer = PyPDF2.PdfFileWriter()
+reader = PyPDF2.PdfReader("example.pdf")
+writer = PyPDF2.PdfWriter()
 
 for page in reader.pages:
-    page.compressContentStreams()
-    writer.addPage(page)
+    page.compress_content_streams()
+    writer.add_page(page)
 
 with open("out.pdf", "wb") as f:
     writer.write(f)

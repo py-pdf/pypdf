@@ -5,7 +5,7 @@ from collections import namedtuple
 Dimensions = namedtuple("Dimensions", ["width", "height"])
 
 
-class PaperSize(object):
+class PaperSize:
     """(width, height) of the paper in portrait mode in pixels at 72 ppi."""
 
     # Notes how to calculate it:

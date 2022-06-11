@@ -33,15 +33,27 @@ import struct
 import typing
 
 from PyPDF2.errors import DependencyError
-from PyPDF2.generic import *
+from PyPDF2.generic import (
+    PdfObject,
+    ArrayObject,
+    ByteStringObject,
+    DictionaryObject,
+    StreamObject,
+    TextStringObject,
+    createStringObject,
+)
 
 
 class CryptBase:
-    def encrypt(self, data: bytes) -> bytes: return data
-    def decrypt(self, data: bytes) -> bytes: return data
+    def encrypt(self, data: bytes) -> bytes:
+        return data
+
+    def decrypt(self, data: bytes) -> bytes:
+        return data
 
 
-class CryptIdentity(CryptBase): pass
+class CryptIdentity(CryptBase):
+    pass
 
 
 try:
@@ -179,8 +191,10 @@ _PADDING = bytes([
     0x2F, 0x0C, 0xA9, 0xFE, 0x64, 0x53, 0x69, 0x7A
 ])
 
+
 def _padding(data: bytes) -> bytes:
     return (data + _PADDING)[:32]
+
 
 def _bytes(value: typing.Union[bytes, str]) -> bytes:
     if isinstance(value, bytes):
@@ -322,8 +336,10 @@ class AlgR4:
         return _padding(rc4_enc)
 
     @staticmethod
-    def verify_user_password(user_pwd: bytes, rev: int, key_size: int, o_entry: bytes, u_entry: bytes,
-                            P: int, id1_entry: bytes, metadata_encrypted: bool) -> bytes:
+    def verify_user_password(
+        user_pwd: bytes, rev: int, key_size: int, o_entry: bytes, u_entry: bytes,
+        P: int, id1_entry: bytes, metadata_encrypted: bool
+    ) -> bytes:
         """
         Algorithm 6: Authenticating the user password
 
@@ -347,8 +363,10 @@ class AlgR4:
         return key
 
     @staticmethod
-    def verify_owner_password(owner_pwd: bytes, rev: int, key_size: int, o_entry: bytes, u_entry: bytes,
-                            P: int, id1_entry: bytes, metadata_encrypted: bool) -> bytes:
+    def verify_owner_password(
+        owner_pwd: bytes, rev: int, key_size: int, o_entry: bytes, u_entry: bytes,
+        P: int, id1_entry: bytes, metadata_encrypted: bool
+    ) -> bytes:
         """
         Algorithm 7: Authenticating the owner password
 
@@ -632,8 +650,8 @@ class Encryption:
         P = self.entry["/P"]
         P = (P + 0x100000000) % 0x100000000  # maybe < 0
         metadata_encrypted = self.entry.get("/EncryptMetadata", True)
-        o_entry = self.entry["/O"].getObject().original_bytes
-        u_entry = self.entry["/U"].getObject().original_bytes
+        o_entry = self.entry["/O"].get_object().original_bytes
+        u_entry = self.entry["/U"].get_object().original_bytes
 
         key = AlgR4.verify_user_password(user_pwd, R, self.key_size, o_entry, u_entry, P, self.id1_entry, metadata_encrypted)
         if key:
@@ -645,10 +663,10 @@ class Encryption:
 
     def verify_r5(self, user_pwd: bytes, owner_pwd: bytes) -> typing.Tuple[bytes, int]:
         # TODO: use SASLprep process
-        o_entry = self.entry["/O"].getObject().original_bytes
-        u_entry = self.entry["/U"].getObject().original_bytes
-        oe_entry = self.entry["/OE"].getObject().original_bytes
-        ue_entry = self.entry["/UE"].getObject().original_bytes
+        o_entry = self.entry["/O"].get_object().original_bytes
+        u_entry = self.entry["/U"].get_object().original_bytes
+        oe_entry = self.entry["/OE"].get_object().original_bytes
+        ue_entry = self.entry["/UE"].get_object().original_bytes
 
         rc = 0
         key = AlgR5.verify_user_password(user_pwd, u_entry, ue_entry)
@@ -661,7 +679,7 @@ class Encryption:
         if rc == 0:
             return b"", 0
         # verify Perms
-        perms = self.entry["/Perms"].getObject().original_bytes
+        perms = self.entry["/Perms"].get_object().original_bytes
         P = self.entry["/P"]
         P = (P + 0x100000000) % 0x100000000  # maybe < 0
         metadata_encrypted = self.entry.get("/EncryptMetadata", True)
@@ -670,7 +688,7 @@ class Encryption:
         return key, rc
 
     @staticmethod
-    def read(encryption_entry: DictionaryObject, first_id_entry: bytes=None) -> "Encryption":
+    def read(encryption_entry: DictionaryObject, first_id_entry: bytes = None) -> "Encryption":
         filter = encryption_entry.get("/Filter")
         if filter != "/Standard":
             raise NotImplementedError("only Standard PDF encryption handler is available")
@@ -689,7 +707,7 @@ class Encryption:
 
             StmF = encryption_entry.get("/StmF", "/Identity")
             StrF = encryption_entry.get("/StrF", "/Identity")
-            EFF = encryption_entry.get("/EFF",  StmF)
+            EFF = encryption_entry.get("/EFF", StmF)
 
             if StmF != "/Identity":
                 StmF = filters[StmF]["/CFM"]

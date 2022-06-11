@@ -1,18 +1,23 @@
-from PyPDF2 import pdf
-from PyPDF2._reader import PdfFileReader
-from PyPDF2._version import __version__
-from PyPDF2._writer import PdfFileWriter
-from PyPDF2.merger import PdfFileMerger
-from PyPDF2.pagerange import PageRange, parse_filename_page_ranges
-from PyPDF2.papersizes import PaperSize
+from ._merger import PdfFileMerger, PdfMerger
+from ._page import Transformation, PageObject
+from ._reader import DocumentInformation, PdfFileReader, PdfReader
+from ._version import __version__
+from ._writer import PdfFileWriter, PdfWriter
+from .pagerange import PageRange, parse_filename_page_ranges
+from .papersizes import PaperSize
 
 __all__ = [
     "__version__",
     "PageRange",
     "PaperSize",
+    "DocumentInformation",
     "parse_filename_page_ranges",
-    "pdf",
-    "PdfFileMerger",
-    "PdfFileReader",
-    "PdfFileWriter",
+    "PdfFileMerger",  # will be removed in PyPDF2 3.0.0; use PdfMerger instead
+    "PdfFileReader",  # will be removed in PyPDF2 3.0.0; use PdfReader instead
+    "PdfFileWriter",  # will be removed in PyPDF2 3.0.0; use PdfWriter instead
+    "PdfMerger",
+    "PdfReader",
+    "PdfWriter",
+    "Transformation",
+    "PageObject",
 ]

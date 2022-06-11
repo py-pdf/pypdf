@@ -17,7 +17,6 @@ pytest .
 
 We have the following pytest markers defined:
 
-* `no_py27`: Flag for tests that fail under Python 2.7 only
 * `external`: Tests which use files from [the `sample-files` git submodule](https://github.com/py-pdf/sample-files)
 
 You can locally choose not to run those via `pytest -m "not external"`.
@@ -27,7 +26,7 @@ The reason for having the submodule `sample-files` is that we want to keep
 the size of the PyPDF2 repository small while we also want to have an extensive
 test suite. Those two goals contradict each other.
 
-The `Resources` folder should contain a select set of core examples that cover
+The `resources` folder should contain a select set of core examples that cover
 most cases we typically want to test for. The `sample-files` might cover a lot
 more edge cases, the behavior we get when file sizes get bigger, different
 PDF producers.

@@ -25,6 +25,10 @@ mccabe==0.6.1
     # via flake8
 more-itertools==8.12.0
     # via flake8-implicit-str-concat
+mypy==0.950
+    # via -r requirements/ci.in
+mypy-extensions==0.4.3
+    # via mypy
 packaging==21.3
     # via pytest
 pillow==8.4.0
@@ -50,4 +54,18 @@ pytest==7.0.1
 pytest-benchmark==3.4.1
     # via -r requirements/ci.in
 tomli==1.2.3
-    # via pytest
+    # via
+    #   mypy
+    #   pytest
+typed-ast==1.5.3
+    # via mypy
+typeguard==2.13.3
+    # via -r requirements/ci.in
+types-pillow==9.0.14
+    # via -r requirements/ci.in
+typing-extensions==4.1.1
+    # via
+    #   importlib-metadata
+    #   mypy
+zipp==3.6.0
+    # via importlib-metadata

@@ -1,3 +1,341 @@
+Version 2.1.0, 2022-06-06
+-------------------------
+
+The highlight of the 2.1.0 release is the most massive improvement to the
+text extraction capabilities of PyPDF2 since 2016 🥳🎊 A very big thank you goes
+to [pubpub-zz](https://github.com/pubpub-zz) who took a lot of time and
+knowledge about the PDF format to finally get those improvements into PyPDF2.
+Thank you 🤗💚
+
+In case the new function causes any issues, you can use `_extract_text_old`
+for the old functionality. Please also open a bug ticket in that case.
+
+There were several people who have attempted to bring similar improvements to
+PyPDF2. All of those were valuable. The main reason why they didn't get merged
+is the big amount of open PRs / issues. pubpub-zz was the most comprehensive
+PR which also incorporated the latest changes of PyPDF2 2.0.0.
+
+Thank you to [VictorCarlquist](https://github.com/VictorCarlquist) for #858 and
+[asabramo](https://github.com/asabramo) for #464 🤗
+
+New Features (ENH):
+-  Massive text extraction improvement (#924). Closed many open issues:
+    - Exceptions / missing spaces in extract_text() method (#17) 🕺
+      - Whitespace issues in extract_text() (#42) 💃
+      - pypdf2 reads the hifenated words in a new line (#246)
+    - PyPDF2 failing to read unicode character (#37)
+      - Unable to read bullets (#230)
+    - ExtractText yields nothing for apparently good PDF (#168) 🎉
+    - Encoding issue in extract_text() (#235)
+    - extractText() doesn't work on Chinese PDF (#252)
+    - encoding error (#260)
+    - Trouble with apostophes in names in text "O'Doul" (#384)
+    - extract_text works for some PDF files, but not the others (#437)
+    - Euro sign not being recognized by extractText (#443)
+    - Failed extracting text from French texts (#524)
+    - extract_text doesn't extract ligatures correctly (#598)
+    - reading spanish text - mark convert issue (#635)
+    - Read PDF changed from text to random symbols (#654)
+    - .extractText() reads / as 1. (#789)
+-  Update glyphlist (#947) - inspired by #464
+-  Allow adding PageRange objects (#948)
+
+Bug Fixes (BUG):
+-  Delete .python-version file (#944)
+-  Compare StreamObject.decoded_self with None (#931)
+
+Robustness (ROB):
+-  Fix some conversion errors on non conform PDF (#932)
+
+Documentation (DOC):
+-  Elaborate on PDF text extraction difficulties (#939)
+-  Add logo (#942)
+-  rotate vs Transformation().rotate (#937)
+-  Example how to use PyPDF2 with AWS S3 (#938)
+-  How to deprecate (#930)
+-  Fix typos on robustness page (#935)
+-  Remove scripts (pdfcat) from docs (#934)
+
+Developer Experience (DEV):
+-  Ignore .python-version file
+-  Mark deprecated code with no-cover (#943)
+-  Automatically create Github releases from tags (#870)
+
+Testing (TST):
+-  Text extraction for non-latin alphabets (#954)
+-  Ignore PdfReadWarning in benchmark (#949)
+-  writer.remove_text (#946)
+-  Add test for Tree and _security (#945)
+
+Code Style (STY):
+-  black, isort, Flake8, splitting buildCharMap (#950)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.0.0...2.1.0
+
+Version 2.0.0, 2022-06-01
+-------------------------
+
+The 2.0.0 release of PyPDF2 includes three core changes:
+
+1. Dropping support for Python 3.5 and older.
+2. Introducing type annotations.
+3. Interface changes, mostly to have PEP8-compliant names
+
+We introduced a [deprecation process](https://github.com/py-pdf/PyPDF2/pull/930)
+that hopefully helps users to avoid unexpected breaking changes.
+
+Breaking Changes(DEP):
+- PyPDF2 2.0 requires Python 3.6+. Python 2.7 and 3.5 support were dropped.
+- PdfFileReader: The "warndest" parameter was removed
+- PdfFileReader and PdfFileMerger no longer have the `overwriteWarnings`
+  parameter. The new behavior is `overwriteWarnings=False`.
+- merger: OutlinesObject was removed without replacement.
+- merger.py ➔ _merger.py: You must import PdfFileMerger from PyPDF2 directly.
+- utils:
+  * `ConvertFunctionsToVirtualList` was removed
+  * `formatWarning` was removed
+  * `isInt(obj)`: Use `instance(obj, int)` instead
+  * `u_(s)`: Use `s` directly
+  * `chr_(c)`: Use `chr(c)` instead
+  * `barray(b)`: Use `bytearray(b)` instead
+  * `isBytes(b)`: Use `instance(b, type(bytes()))` instead
+  * `xrange_fn`: Use `range` instead
+  * `string_type`: Use `str` instead
+  * `isString(s)`: Use `instance(s, str)` instead
+  * `_basestring`: Use `str` instead
+  * All Exceptions are now in `PyPDF2.errors`:
+    - PageSizeNotDefinedError
+    - PdfReadError
+    - PdfReadWarning
+    - PyPdfError
+- `PyPDF2.pdf` (the `pdf` module) no longer exists. The contents were moved with
+  the library. You should most likely import directly from `PyPDF2` instead.
+  The `RectangleObject` is in `PyPDF2.generic`.
+- The `Resources`, `Scripts`, and `Tests` will no longer be part of the distribution
+  files on PyPI. This should have little to no impact on most people. The
+  `Tests` are renamed to `tests`, the `Resources` are renamed to `resources`.
+  Both are still in the git repository. The `Scripts` are now in
+  https://github.com/py-pdf/cpdf. `Sample_Code` was moved to the `docs`.
+
+For a full list of deprecated functions, please see the changelog of version
+1.28.0.
+
+New Features (ENH):
+-  Improve space setting for text extraction (#922)
+-  Allow setting the decryption password in PdfReader.__init__ (#920)
+-  Add Page.add_transformation (#883)
+
+Bug Fixes (BUG):
+-  Fix error adding transformation to page without /Contents (#908)
+
+Robustness (ROB):
+-  Cope with invalid length in streams (#861)
+
+Documentation (DOC):
+-  Fix style of 1.25 and 1.27 patch notes (#927)
+-  Transformation (#907)
+
+Developer Experience (DEV):
+-  Create flake8 config file (#916)
+-  Use relative imports (#875)
+
+Maintenance (MAINT):
+-  Use Python 3.6 language features (#849)
+-  Add wrapper function for PendingDeprecationWarnings (#928)
+-  Use new PEP8 compliant names (#884)
+-  Explicitly represent transformation matrix (#878)
+-  Inline PAGE_RANGE_HELP string (#874)
+-  Remove unnecessary generics imports (#873)
+-  Remove star imports (#865)
+-  merger.py ➔ _merger.py (#864)
+-  Type annotations for all functions/methods (#854)
+-  Add initial type support with mypy (#853)
+
+Testing (TST):
+-  Regression test for xmp_metadata converter (#923)
+-  Checkout submodule sample-files for benchmark
+-  Add text extracting performance benchmark
+-  Use new PyPDF2 API in benchmark (#902)
+-  Make test suite fail for uncaught warnings (#892)
+-  Remove -OO testrun from CI (#901)
+-  Improve tests for convert_to_int (#899)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.28.4...2.0.0
+
+Version 1.28.4, 2022-05-29
+--------------------------
+
+Bug Fixes (BUG):
+-  XmpInformation._converter_date was unusable (#921)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.28.3...1.28.4
+
+Version 1.28.3, 2022-05-28
+--------------------------
+
+Deprecations (DEP):
+-  PEP8 renaming (#905)
+
+Bug Fixes (BUG):
+-  XmpInformation missing method _getText (#917)
+-  Fix PendingDeprecationWarning on _merge_page (#904)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.28.2...1.28.3
+
+Version 1.28.2, 2022-05-23
+--------------------------
+
+Bug Fixes (BUG):
+-  PendingDeprecationWarning for getContents (#893)
+-  PendingDeprecationWarning on using PdfMerger (#891)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.28.1...1.28.2
+
+Version 1.28.1, 2022-05-22
+--------------------------
+
+Bug Fixes (BUG):
+-  Incorrectly show deprecation warnings on internal usage (#887)
+
+Maintenance (MAINT):
+-  Add stacklevel=2 to deprecation warnings (#889)
+-  Remove duplicate warnings imports (#888)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.28.0...1.28.1
+
+Version 1.28.0, 2022-05-22
+--------------------------
+
+This release adds a lot of deprecation warnings in preparation of the
+PyPDF2 2.0.0 release. The changes are mostly using snake_case function-, method-,
+and variable-names as well as using properties instead of getter-methods.
+
+Maintenance (MAINT):
+-  Remove IronPython Fallback for zlib (#868)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.27.12...1.27.13
+
+### Deprecations (DEP)
+
+* Make the `PyPDF2.utils` module private
+* Rename of core classes:
+  * PdfFileReader ➔ PdfReader
+  * PdfFileWriter ➔ PdfWriter
+  * PdfFileMerger ➔ PdfMerger
+* Use PEP8 conventions for function names and parameters
+* If a property and a getter-method are both present, use the property
+
+#### Details
+
+In many places:
+  - getObject ➔ get_object
+  - writeToStream ➔ write_to_stream
+  - readFromStream ➔ read_from_stream
+
+PyPDF2.generic
+  - readObject ➔ read_object
+  - convertToInt ➔ convert_to_int
+  - DocumentInformation.getText ➔ DocumentInformation._get_text :
+    This method should typically not be used; please let me know if you need it.
+
+PdfReader class:
+  - `reader.getPage(pageNumber)` ➔ `reader.pages[page_number]`
+  - `reader.getNumPages()` / `reader.numPages` ➔ `len(reader.pages)`
+  - getDocumentInfo ➔ metadata
+  - flattenedPages attribute ➔ flattened_pages
+  - resolvedObjects attribute ➔ resolved_objects
+  - xrefIndex attribute ➔ xref_index
+  - getNamedDestinations / namedDestinations attribute ➔ named_destinations
+  - getPageLayout / pageLayout ➔ page_layout attribute
+  - getPageMode / pageMode ➔ page_mode attribute
+  - getIsEncrypted / isEncrypted ➔ is_encrypted attribute
+  - getOutlines ➔ get_outlines
+  - readObjectHeader ➔ read_object_header
+  - cacheGetIndirectObject ➔ cache_get_indirect_object
+  - cacheIndirectObject ➔ cache_indirect_object
+  - getDestinationPageNumber ➔ get_destination_page_number
+  - readNextEndLine ➔ read_next_end_line
+  - _zeroXref ➔ _zero_xref
+  - _authenticateUserPassword ➔ _authenticate_user_password
+  - _pageId2Num attribute ➔ _page_id2num
+  - _buildDestination ➔ _build_destination
+  - _buildOutline ➔ _build_outline
+  - _getPageNumberByIndirect(indirectRef) ➔ _get_page_number_by_indirect(indirect_ref)
+  - _getObjectFromStream ➔ _get_object_from_stream
+  - _decryptObject ➔ _decrypt_object
+  - _flatten(..., indirectRef) ➔ _flatten(..., indirect_ref)
+  - _buildField ➔ _build_field
+  - _checkKids ➔ _check_kids
+  - _writeField ➔ _write_field
+  - _write_field(..., fieldAttributes) ➔ _write_field(..., field_attributes)
+  - _read_xref_subsections(..., getEntry, ...) ➔ _read_xref_subsections(..., get_entry, ...)
+
+PdfWriter class:
+  - `writer.getPage(pageNumber)` ➔ `writer.pages[page_number]`
+  - `writer.getNumPages()` ➔ `len(writer.pages)`
+  - addMetadata ➔ add_metadata
+  - addPage ➔ add_page
+  - addBlankPage ➔ add_blank_page
+  - addAttachment(fname, fdata) ➔ add_attachment(filename, data)
+  - insertPage ➔ insert_page
+  - insertBlankPage ➔ insert_blank_page
+  - appendPagesFromReader ➔ append_pages_from_reader
+  - updatePageFormFieldValues ➔ update_page_form_field_values
+  - cloneReaderDocumentRoot ➔ clone_reader_document_root
+  - cloneDocumentFromReader ➔ clone_document_from_reader
+  - getReference ➔ get_reference
+  - getOutlineRoot ➔ get_outline_root
+  - getNamedDestRoot ➔ get_named_dest_root
+  - addBookmarkDestination ➔ add_bookmark_destination
+  - addBookmarkDict ➔ add_bookmark_dict
+  - addBookmark ➔ add_bookmark
+  - addNamedDestinationObject ➔ add_named_destination_object
+  - addNamedDestination ➔ add_named_destination
+  - removeLinks ➔ remove_links
+  - removeImages(ignoreByteStringObject) ➔ remove_images(ignore_byte_string_object)
+  - removeText(ignoreByteStringObject) ➔ remove_text(ignore_byte_string_object)
+  - addURI ➔ add_uri
+  - addLink ➔ add_link
+  - getPage(pageNumber) ➔ get_page(page_number)
+  - getPageLayout / setPageLayout / pageLayout ➔ page_layout attribute
+  - getPageMode / setPageMode / pageMode ➔ page_mode attribute
+  - _addObject ➔ _add_object
+  - _addPage ➔ _add_page
+  - _sweepIndirectReferences ➔ _sweep_indirect_references
+
+PdfMerger class
+  - `__init__` parameter: strict=True ➔ strict=False (the PdfFileMerger still has the old default)
+  - addMetadata ➔ add_metadata
+  - addNamedDestination ➔ add_named_destination
+  - setPageLayout ➔ set_page_layout
+  - setPageMode ➔ set_page_mode
+
+Page class:
+  - artBox / bleedBox/ cropBox/ mediaBox / trimBox ➔ artbox / bleedbox/ cropbox/ mediabox / trimbox
+    - getWidth, getHeight  ➔ width / height
+    - getLowerLeft_x / getUpperLeft_x ➔ left
+    - getUpperRight_x / getLowerRight_x ➔ right
+    - getLowerLeft_y / getLowerRight_y ➔ bottom
+    - getUpperRight_y / getUpperLeft_y ➔ top
+    - getLowerLeft / setLowerLeft ➔ lower_left property
+    - upperRight ➔ upper_right
+  - mergePage ➔ merge_page
+  - rotateClockwise / rotateCounterClockwise ➔ rotate_clockwise
+  - _mergeResources ➔ _merge_resources
+  - _contentStreamRename ➔ _content_stream_rename
+  - _pushPopGS ➔ _push_pop_gs
+  - _addTransformationMatrix ➔ _add_transformation_matrix
+  - _mergePage ➔ _merge_page
+
+XmpInformation class:
+  - getElement(..., aboutUri, ...) ➔ get_element(..., about_uri, ...)
+  - getNodesInNamespace(..., aboutUri, ...) ➔ get_nodes_in_namespace(..., aboutUri, ...)
+  - _getText ➔ _get_text
+
+utils.py:
+  - matrixMultiply ➔ matrix_multiply
+  - RC4_encrypt is moved to the security module
+
 Version 1.27.12, 2022-05-02
 ---------------------------
 
@@ -234,6 +572,41 @@ Miscellaneous:
 
 All changes: https://github.com/py-pdf/PyPDF2/compare/1.27.3...1.27.4
 
+Version 1.27.3, 2022-04-10
+--------------------------
+
+- PKG: Make Tests not a subpackage (#728)
+- BUG: Fix ASCII85Decode.decode assertion (#729)
+- BUG: Error in Chinese character encoding (#463)
+- BUG: Code duplication in Scripts/2-up.py
+- ROBUST: Guard 'obj.writeToStream' with 'if obj is not None'
+- ROBUST: Ignore a /Prev entry with the value 0 in the trailer
+- MAINT: Remove Sample_Code (#726)
+- TST: Close file handle in test_writer (#722)
+- TST: Fix test_get_images (#730)
+- DEV: Make tox use pytest and add more Python versions (#721)
+- DOC: Many (#720, #723-725, #469)
+
+All changes: https://github.com/py-pdf/PyPDF2/compare/1.27.2...1.27.3
+
+Version 1.27.2, 2022-04-09
+--------------------------
+
+- Add Scripts (including `pdfcat`), Resources, Tests, and Sample_Code back to
+  PyPDF2. It was removed by accident in 1.27.0, but might get removed with 2.0.0
+  See https://github.com/py-pdf/PyPDF2/discussions/718 for discussion
+
+All changes: https://github.com/py-pdf/PyPDF2/compare/1.27.1...1.27.2
+
+Version 1.27.1, 2022-04-08
+--------------------------
+
+- Fixed project links on PyPI page after migration from mstamy2
+  to MartinThoma to the py-pdf organization on GitHub
+- Documentation is now at https://pypdf2.readthedocs.io/en/latest/
+
+All changes: https://github.com/py-pdf/PyPDF2/compare/1.27.0...1.27.1
+
 Version 1.27.0, 2022-04-07
 --------------------------
 
@@ -275,32 +648,6 @@ Miscellaneous:
 
 You can see the full changelog at: https://github.com/py-pdf/PyPDF2/compare/1.26.0...1.27.0
 
-Patch release 1.27.1, 2022-04-08
-
-- Fixed project links on PyPI page after migration from mstamy2
-  to MartinThoma to the py-pdf organization on GitHub
-- Documentation is now at https://pypdf2.readthedocs.io/en/latest/
-
-Patch release 1.27.2, 2022-04-09
-
-- Add Scripts (including `pdfcat`), Resources, Tests, and Sample_Code back to
-  PyPDF2. It was removed by accident in 1.27.0, but might get removed with 2.0.0
-  See https://github.com/py-pdf/PyPDF2/discussions/718 for discussion
-
-Patch release 1.27.3, 2022-04-10
-
-- PKG: Make Tests not a subpackage (#728)
-- BUG: Fix ASCII85Decode.decode assertion (#729)
-- BUG: Error in Chinese character encoding (#463)
-- BUG: Code duplication in Scripts/2-up.py
-- ROBUST: Guard 'obj.writeToStream' with 'if obj is not None'
-- ROBUST: Ignore a /Prev entry with the value 0 in the trailer
-- MAINT: Remove Sample_Code (#726)
-- TST: Close file handle in test_writer (#722)
-- TST: Fix test_get_images (#730)
-- DEV: Make tox use pytest and add more Python versions (#721)
-- DOC: Many (#720, #723-725, #469)
-
 Version 1.26.0, 2016-05-18
 --------------------------
 
@@ -327,8 +674,8 @@ Version 1.26.0, 2016-05-18
  - Fix bug where reading an inline image would cut off prematurely
    in certain cases (speedplane)
 
-
-Patch 1.25.1, 2015-07-20
+Version 1.25.1, 2015-07-20
+--------------------------
 
  - Fix bug when parsing inline images. Occurred when merging
    certain pages with inline images

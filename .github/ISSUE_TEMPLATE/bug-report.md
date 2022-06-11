@@ -13,7 +13,7 @@ Replace this: What happened? What were you trying to achieve?
 
 Which environment were you using when you encountered the problem?
 
-```python
+```bash
 $ python -m platform
 # TODO: Your output goes here
 

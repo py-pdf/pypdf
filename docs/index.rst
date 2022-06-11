@@ -38,10 +38,11 @@ You can contribute to `PyPDF2 on Github <https://github.com/py-pdf/PyPDF2>`_.
    :caption: API Reference
    :maxdepth: 1
 
-   modules/PdfFileReader
-   modules/PdfFileWriter
-   modules/PdfFileMerger
+   modules/PdfReader
+   modules/PdfWriter
+   modules/PdfMerger
    modules/PageObject
+   modules/Transformation
    modules/DocumentInformation
    modules/XmpInformation
    modules/Destination
@@ -56,6 +57,7 @@ You can contribute to `PyPDF2 on Github <https://github.com/py-pdf/PyPDF2>`_.
    dev/intro
    dev/pdf-format
    dev/cmaps
+   dev/deprecations
 
 .. toctree::
    :caption: About PyPDF2
@@ -65,16 +67,6 @@ You can contribute to `PyPDF2 on Github <https://github.com/py-pdf/PyPDF2>`_.
    meta/history
    meta/comparisons
    meta/faq
-
-
-.. toctree::
-   :caption: Scripts
-   :maxdepth: 1
-
-   user/pdfcat
-
-
-
 
 Indices and tables
 ==================

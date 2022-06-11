@@ -18,12 +18,13 @@ jobs:
     steps:
     - name: Checkout Code
       uses: actions/checkout@v3
+      with:
+        submodules: 'recursive'
     - name: Setup Python
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install requirements (Python 3)
-      if: matrix.python-version != '2.7'
       run: |
         pip install -r requirements/ci.txt
     - name: Install PyPDF2
@@ -31,7 +32,7 @@ jobs:
         pip install .
     - name: Run benchmark
       run: |
-        pytest Tests/bench.py --benchmark-json output.json
+        pytest tests/bench.py --benchmark-json output.json
     - name: Store benchmark result
       uses: benchmark-action/github-action-benchmark@v1
       with:
