@@ -26,7 +26,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-"""Implementation of stream filters for PDF."""
+"""
+Implementation of stream filters for PDF.
+
+See TABLE H.1 Abbreviations for standard filter names
+"""
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
@@ -77,42 +81,44 @@ class FlateDecode:
     @staticmethod
     def decode(
         data: bytes,
-        parameters: Union[None, ArrayObject, DictionaryObject] = None,
+        decode_parms: Union[None, ArrayObject, DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
         """
         :param data: flate-encoded data.
-        :param parameters: a dictionary of values, understanding the
+        :param decode_parms: a dictionary of values, understanding the
             "/Predictor":<int> key only
         :return: the flate-decoded data.
         """
         if "decodeParms" in kwargs:
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
-            parameters = kwargs["decodeParms"]
+            decode_parms = kwargs["decodeParms"]
         str_data = decompress(data)
         predictor = 1
 
-        if parameters:
+        if decode_parms:
             try:
-                if isinstance(parameters, ArrayObject):
-                    for decode_parm in parameters:
+                if isinstance(decode_parms, ArrayObject):
+                    for decode_parm in decode_parms:
                         if "/Predictor" in decode_parm:
                             predictor = decode_parm["/Predictor"]
                 else:
-                    predictor = parameters.get("/Predictor", 1)
+                    predictor = decode_parms.get("/Predictor", 1)
             except AttributeError:
                 pass  # Usually an array with a null object was read
         # predictor 1 == no predictor
         if predictor != 1:
             # The /Columns param. has 1 as the default value; see ISO 32000,
             # §7.4.4.3 LZWDecode and FlateDecode Parameters, Table 8
-            if isinstance(parameters, ArrayObject):
+            if isinstance(decode_parms, ArrayObject):
                 columns = 1
-                for decode_parm in parameters:
+                for decode_parm in decode_parms:
                     if "/Columns" in decode_parm:
                         columns = decode_parm["/Columns"]
             else:
-                columns = 1 if parameters is None else parameters.get(LZW.COLUMNS, 1)
+                columns = (
+                    1 if decode_parms is None else decode_parms.get(LZW.COLUMNS, 1)
+                )
 
             # PNG prediction:
             if 10 <= predictor <= 15:
@@ -175,19 +181,19 @@ class ASCIIHexDecode:
     @staticmethod
     def decode(
         data: str,
-        parameters: Union[None, ArrayObject, DictionaryObject] = None,
+        decode_parms: Union[None, ArrayObject, DictionaryObject] = None,  # noqa: F841
         **kwargs: Any,
     ) -> str:
         """
         :param data: a str sequence of hexadecimal-encoded values to be
             converted into a base-7 ASCII string
-        :param parameters:
+        :param decode_parms:
         :return: a string conversion in base-7 ASCII, where each of its values
             v is such that 0 <= ord(v) <= 127.
         """
         if "decodeParms" in kwargs:
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
-            parameters = kwargs["decodeParms"]
+            decode_parms = kwargs["decodeParms"]  # noqa: F841
         retval = ""
         hex_pair = ""
         index = 0
@@ -296,18 +302,18 @@ class LZWDecode:
     @staticmethod
     def decode(
         data: bytes,
-        parameters: Union[None, ArrayObject, DictionaryObject] = None,
+        decode_parms: Union[None, ArrayObject, DictionaryObject] = None,
         **kwargs: Any,
     ) -> str:
         """
         :param data: ``bytes`` or ``str`` text to decode.
-        :param parameters: a dictionary of parameter values.
+        :param decode_parms: a dictionary of parameter values.
         :return: decoded data.
         :rtype: bytes
         """
         if "decodeParms" in kwargs:
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
-            parameters = kwargs["decodeParms"]
+            decode_parms = kwargs["decodeParms"]  # noqa: F841
         return LZWDecode.Decoder(data).decode()
 
 
@@ -317,12 +323,12 @@ class ASCII85Decode:
     @staticmethod
     def decode(
         data: Union[str, bytes],
-        parameters: Union[None, ArrayObject, DictionaryObject] = None,
+        decode_parms: Union[None, ArrayObject, DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
         if "decodeParms" in kwargs:
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
-            parameters = kwargs["decodeParms"]
+            decode_parms = kwargs["decodeParms"]  # noqa: F841
         if isinstance(data, str):
             data = data.encode("ascii")
         group_index = b = 0
@@ -350,12 +356,12 @@ class DCTDecode:
     @staticmethod
     def decode(
         data: bytes,
-        parameters: Union[None, ArrayObject, DictionaryObject] = None,
+        decode_parms: Union[None, ArrayObject, DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
         if "decodeParms" in kwargs:
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
-            parameters = kwargs["decodeParms"]
+            decode_parms = kwargs["decodeParms"]  # noqa: F841
         return data
 
 
@@ -363,12 +369,12 @@ class JPXDecode:
     @staticmethod
     def decode(
         data: bytes,
-        parameters: Union[None, ArrayObject, DictionaryObject] = None,
+        decode_parms: Union[None, ArrayObject, DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
         if "decodeParms" in kwargs:
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
-            parameters = kwargs["decodeParms"]
+            decode_parms = kwargs["decodeParms"]  # noqa: F841
         return data
 
 
@@ -427,14 +433,14 @@ class CCITTFaxDecode:
     @staticmethod
     def decode(
         data: bytes,
-        parameters: Union[None, ArrayObject, DictionaryObject] = None,
+        decode_parms: Union[None, ArrayObject, DictionaryObject] = None,
         height: int = 0,
         **kwargs: Any,
     ) -> bytes:
         if "decodeParms" in kwargs:
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
-            parameters = kwargs["decodeParms"]
-        parms = CCITTFaxDecode._get_parameters(parameters, height)
+            decode_parms = kwargs["decodeParms"]
+        parms = CCITTFaxDecode._get_parameters(decode_parms, height)
 
         img_size = len(data)
         tiff_header_struct = "<2shlh" + "hhll" * 8 + "h"
