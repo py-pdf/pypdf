@@ -141,7 +141,7 @@ def test_rotate_45():
         (True, "https://arxiv.org/pdf/1601.03642.pdf", [0, 1, 5, 7]),
         (
             True,
-            "https://github.com/mstamy2/PyPDF2/files/3796761/17343_2008_Order_09-Jan-2019.pdf",
+            "https://github.com/py-pdf/PyPDF2/files/3796761/17343_2008_Order_09-Jan-2019.pdf",
             [0, 1],
         ),
     ],
