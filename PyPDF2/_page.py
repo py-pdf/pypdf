@@ -31,7 +31,7 @@ import math
 import uuid
 import warnings
 from decimal import Decimal
-from math import sqrt
+# from math import sqrt
 from typing import (
     Any,
     Callable,
@@ -45,7 +45,7 @@ from typing import (
     cast,
 )
 
-from ._cmap import build_char_map,unknown_char_map
+from ._cmap import build_char_map, unknown_char_map
 from ._utils import (
     CompressedTransformationMatrix,
     TransformationMatrixType,
@@ -1127,10 +1127,12 @@ class PageObject(DictionaryObject):
             Union[str, Dict[int, str]], Dict[str, str], str
         ]  # (encoding,CMAP,font_name)
         try:
-            content = obj[content_key].get_object() if isinstance(content_key, str) else obj
+            content = (
+                obj[content_key].get_object() if isinstance(content_key, str) else obj
+            )
             if not isinstance(content, ContentStream):
                 content = ContentStream(content, pdf, "bytes")
-        except KeyError:     #it means no content can be extracted(certainly empty page)
+        except KeyError:  # it means no content can be extracted(certainly empty page)
             return ""
         # Note: we check all strings are TextStringObjects.  ByteStringObjects
         # are strings where the byte->string encoding was unknown, so adding
@@ -1183,12 +1185,12 @@ class PageObject(DictionaryObject):
                         cmaps[operands[0]][3],
                         operands[0],
                     )  # type:ignore
-                except KeyError:    #font not found
-                    _space_width=unknown_char_map[1]
+                except KeyError:  # font not found
+                    _space_width = unknown_char_map[1]
                     cmap = (
                         unknown_char_map[2],
                         unknown_char_map[3],
-                        "???"+operands[0]
+                        "???" + operands[0],
                     )
                 try:
                     font_size = float(operands[1])
@@ -1231,7 +1233,8 @@ class PageObject(DictionaryObject):
                 return None
             # process text changes due to positionchange: " "
             if tm_matrix[5] <= (
-                tm_prev[5] - font_size  # remove scaling * sqrt(tm_matrix[2] ** 2 + tm_matrix[3] ** 2)
+                tm_prev[5]
+                - font_size  # remove scaling * sqrt(tm_matrix[2] ** 2 + tm_matrix[3] ** 2)
             ):  # it means that we are moving down by one line
                 output += text + "\n"  # .translate(cmap) + "\n"
                 text = ""
@@ -1251,8 +1254,8 @@ class PageObject(DictionaryObject):
             elif operator == b'"':
                 process_operation(b"T*", [])
                 process_operation(b"TJ", operands)
-            elif operator == b'TD':
-                process_operation(b"TL", [ -operands[1] ])
+            elif operator == b"TD":
+                process_operation(b"TL", [-operands[1]])
                 process_operation(b"Td", operands)
             elif operator == b"TJ":
                 for op in operands[0]:

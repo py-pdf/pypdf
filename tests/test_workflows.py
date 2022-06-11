@@ -144,10 +144,21 @@ def test_rotate_45():
             "https://github.com/py-pdf/PyPDF2/files/3796761/17343_2008_Order_09-Jan-2019.pdf",
             [0, 1],
         ),
-        (True, "file://"+os.path.join(RESOURCE_ROOT, "ssi_manwaring.pdf"),[0,1]),
-        (True, "file://"+os.path.join(RESOURCE_ROOT, "999092.pdf"),[0,1]),
-        (True, "file://"+os.path.join(RESOURCE_ROOT, "test Orient.pdf"),[0]),           #TODO: preparation of text orientation validation
-        (True, "file://"+os.path.join(RESOURCE_ROOT, "fdocuments.in_sweet-fundamentals-of-crystallography.pdf"),[0,1,34,35,36,118,119,120,121]),
+        (True, "file://" + os.path.join(RESOURCE_ROOT, "ssi_manwaring.pdf"), [0, 1]),
+        (True, "file://" + os.path.join(RESOURCE_ROOT, "999092.pdf"), [0, 1]),
+        (
+            True,
+            "file://" + os.path.join(RESOURCE_ROOT, "test Orient.pdf"),
+            [0],
+        ),  # TODO: preparation of text orientation validation
+        (
+            True,
+            "file://"
+            + os.path.join(
+                RESOURCE_ROOT, "fdocuments.in_sweet-fundamentals-of-crystallography.pdf"
+            ),
+            [0, 1, 34, 35, 36, 118, 119, 120, 121],
+        ),
     ],
 )
 def test_extract_textbench(enable, url, pages, print_result=False):

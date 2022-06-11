@@ -39,7 +39,12 @@ def build_char_map(
         map_dict,  # type: ignore
     )  # type: ignore
 
-unknown_char_map = ( "Unknown",9999,dict(zip(range(256), ["�"]*256)),{})
+
+# used when missing data :eg font def missing
+unknown_char_map : Tuple[str, float, Union[str, Dict[int, str]], Dict] = (
+    "Unknown", 9999, dict(zip(range(256), ["�"] * 256)), {}
+)
+
 
 _predefined_cmap: Dict[str, str] = {
     "/Identity-H": "utf-16-be",
@@ -49,6 +54,7 @@ _predefined_cmap: Dict[str, str] = {
     "/GBpc-EUC-H": "gb2312",  # TBC
     "/GBpc-EUC-V": "gb2312",  # TBC
 }
+
 
 # manually extracted from http://mirrors.ctan.org/fonts/adobe/afm/Adobe-Core35_AFMs-229.tar.gz
 _default_fonts_space_width: Dict[str, int] = {
@@ -80,7 +86,7 @@ def parse_encoding(
     if "/Encoding" not in ft:
         try:
             if "/BaseFont" in ft and ft["/BaseFont"] in charset_encoding:
-                encoding = dict(zip(range(256), charset_encoding[ft["/BaseFont"]]))
+                encoding = dict(zip(range(256), charset_encoding[cast(str, ft["/BaseFont"])]))
             else:
                 encoding = "charmap"
             return encoding, _default_fonts_space_width[cast(str, ft["/BaseFont"])]
@@ -145,22 +151,23 @@ def parse_to_unicode(ft: DictionaryObject, space_code: int) -> Tuple[Dict, int]:
     process_rg: bool = False
     process_char: bool = False
     cm: bytes = cast(DecodedStreamObject, ft["/ToUnicode"]).get_data()
-    #we need to prepare cm before due to missing return line in pdf printed to pdf from word
-    cm = (cm.strip()
-            .replace(b"beginbfchar", b"\nbeginbfchar\n")
-            .replace(b"endbfchar", b"\nendbfchar\n")
-            .replace(b"beginbfrange", b"\nbeginbfrange\n")
-            .replace(b"endbfrange", b"\nendbfrange\n")
-            .replace(b"<<", b"\n{\n")       # text between << and >> not used but 
-            .replace(b">>", b"\n}\n")       # some solution to find it back
-          )
-    ll=cm.split(b"<")
+    # we need to prepare cm before due to missing return line in pdf printed to pdf from word
+    cm = (
+        cm.strip()
+        .replace(b"beginbfchar", b"\nbeginbfchar\n")
+        .replace(b"endbfchar", b"\nendbfchar\n")
+        .replace(b"beginbfrange", b"\nbeginbfrange\n")
+        .replace(b"endbfrange", b"\nendbfrange\n")
+        .replace(b"<<", b"\n{\n")  # text between << and >> not used but
+        .replace(b">>", b"\n}\n")  # some solution to find it back
+    )
+    ll = cm.split(b"<")
     for i in range(len(ll)):
         j = ll[i].find(b">")
-        if j>=0:
-            ll[i] = ll[i][:j].replace(b" ",b"")+b" "+ll[i][j+1:]
+        if j >= 0:
+            ll[i] = ll[i][:j].replace(b" ", b"") + b" " + ll[i][j + 1 :]
     cm = (b" ".join(ll)).replace(b"[", b" [ ").replace(b"]", b" ]\n ")
-    
+
     for l in cm.split(b"\n"):
         if l == b"" or l == b" ":
             continue
@@ -204,7 +211,7 @@ def parse_to_unicode(ft: DictionaryObject, space_code: int) -> Tuple[Dict, int]:
         elif process_char:
             lst = [x for x in l.split(b" ") if x]
             map_dict[-1] = len(lst[0]) // 2
-            while(len(lst)>0):
+            while len(lst) > 0:
                 map_dict[
                     unhexlify(lst[0]).decode(
                         "charmap" if map_dict[-1] == 1 else "utf-16-be"
