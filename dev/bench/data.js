@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1654794043607,
+  "lastUpdate": 1654950235138,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -4639,6 +4639,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.07303145213725788",
             "extra": "mean: 6.048429800600002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "df8f12127aad2c2faa97615e6cd8a766b0ca5ed3",
+          "message": "BUG: Adobe Acrobat 'Would you like to save this file?' (#970)\n\nIssue: When creating files with the current PpdfWriter,\r\nAdobe Acrobat asks 'would you like to save this file'\r\nwhen attempting to close it - although no changes were made.\r\n\r\nFix: Remove 'self.set_need_appearances_writer()' from writers\r\n     __init__ function\r\n\r\nCaused-by: #412 (see #355)\r\n\r\nCloses #963\r\n\r\nCo-authored-by: pubpub-zz <4083478+pubpub-zz@users.noreply.github.com>",
+          "timestamp": "2022-06-11T14:22:23+02:00",
+          "tree_id": "c3a635eb956934db6640f73eb850107a448a10a4",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/df8f12127aad2c2faa97615e6cd8a766b0ca5ed3"
+        },
+        "date": 1654950234256,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.5038315236623337,
+            "unit": "iter/sec",
+            "range": "stddev: 0.041521767402438944",
+            "extra": "mean: 1.9847904567999932 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 7.885847520487757,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008526223833783113",
+            "extra": "mean: 126.80945166666724 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.18588710921600757,
+            "unit": "iter/sec",
+            "range": "stddev: 0.10872839660462243",
+            "extra": "mean: 5.379609184399999 sec\nrounds: 5"
           }
         ]
       }
