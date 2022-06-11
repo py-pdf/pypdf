@@ -1230,7 +1230,7 @@ class PageObject(DictionaryObject):
                 if output != "":
                     output += "\n"
                 try:
-                    xobj = self["/Resources"]["/XObject"]  # type: ignore
+                    xobj = resources_dict["/XObject"]  # type: ignore
                     if xobj[operands[0]]["/Subtype"] != "/Image":
                         text = self.extract_xform_text(xobj[operands[0]], space_width)
                         output += text
