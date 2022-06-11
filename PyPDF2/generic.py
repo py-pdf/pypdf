@@ -386,7 +386,7 @@ def read_hex_string_from_stream(
         x += b_("0")
     if len(x) == 2:
         txt += chr(int(x, base=16))
-    return createStringObject(b_(txt))
+    return create_string_object(b_(txt))
 
 
 def readStringFromStream(
@@ -470,7 +470,7 @@ def read_string_from_stream(
                     # if.strict: PdfReadError(msg)
                     logger.warning(msg)
         txt += tok
-    return createStringObject(txt, forced_encoding)
+    return create_string_object(txt, forced_encoding)
 
 
 class ByteStringObject(bytes_type, PdfObject):  # type: ignore
@@ -821,7 +821,7 @@ class DictionaryObject(dict, PdfObject):
         else:
             stream.seek(pos, 0)
         if "__streamdata__" in data:
-            return StreamObject.initializeFromDictionary(data)
+            return StreamObject.initialize_from_dictionary(data)
         else:
             retval = DictionaryObject()
             retval.update(data)
@@ -840,13 +840,17 @@ class TreeObject(DictionaryObject):
         DictionaryObject.__init__(self)
 
     def hasChildren(self) -> bool:
+        deprecate_with_replacement("hasChildren", "has_children")
+        return self.has_children()
+
+    def has_children(self) -> bool:
         return "/First" in self
 
     def __iter__(self) -> Any:
         return self.children()
 
     def children(self) -> Optional[Any]:
-        if not self.hasChildren():
+        if not self.has_children():
             return
 
         child = self["/First"]
@@ -1018,6 +1022,12 @@ class StreamObject(DictionaryObject):
 
     @staticmethod
     def initializeFromDictionary(
+        data: Dict[str, Any]
+    ) -> Union["EncodedStreamObject", "DecodedStreamObject"]:
+        return StreamObject.initialize_from_dictionary(data)
+
+    @staticmethod
+    def initialize_from_dictionary(
         data: Dict[str, Any]
     ) -> Union["EncodedStreamObject", "DecodedStreamObject"]:
         retval: Union["EncodedStreamObject", "DecodedStreamObject"]
@@ -1882,6 +1892,14 @@ def createStringObject(
     string: Union[str, bytes],
     forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
 ) -> Union[TextStringObject, ByteStringObject]:
+    deprecate_with_replacement("createStringObject", "create_string_object", "4.0.0")
+    return create_string_object(string, forced_encoding)
+
+
+def create_string_object(
+    string: Union[str, bytes],
+    forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
+) -> Union[TextStringObject, ByteStringObject]:
     """
     Given a string, create a ByteStringObject or a TextStringObject to
     represent the string.
@@ -1920,7 +1938,7 @@ def createStringObject(
             except UnicodeDecodeError:
                 return ByteStringObject(string)
     else:
-        raise TypeError("createStringObject should have str or unicode arg")
+        raise TypeError("create_string_object should have str or unicode arg")
 
 
 def encode_pdfdocencoding(unicode_string: str) -> bytes:

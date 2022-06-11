@@ -89,7 +89,7 @@ from .generic import (
     StreamObject,
     TextStringObject,
     TreeObject,
-    createStringObject,
+    create_string_object,
     read_object,
 )
 from .types import OutlinesType, PagemodeType
@@ -1110,7 +1110,7 @@ class PdfReader:
         key: Union[str, bytes],
     ) -> PdfObject:
         if isinstance(obj, (ByteStringObject, TextStringObject)):
-            obj = createStringObject(RC4_encrypt(key, obj.original_bytes))
+            obj = create_string_object(RC4_encrypt(key, obj.original_bytes))
         elif isinstance(obj, StreamObject):
             obj._data = RC4_encrypt(key, obj._data)
         elif isinstance(obj, DictionaryObject):

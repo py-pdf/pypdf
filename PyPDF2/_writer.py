@@ -67,7 +67,7 @@ from .generic import (
     StreamObject,
     TextStringObject,
     TreeObject,
-    createStringObject,
+    create_string_object,
 )
 from .types import (
     BookmarkTypes,
@@ -107,7 +107,7 @@ class PdfWriter:
         info = DictionaryObject()
         info.update(
             {
-                NameObject("/Producer"): createStringObject(
+                NameObject("/Producer"): create_string_object(
                     codecs.BOM_UTF16_BE + "PyPDF2".encode("utf-16be")
                 )
             }
@@ -374,7 +374,7 @@ class PdfWriter:
                 NameObject("/JavaScript"): DictionaryObject(
                     {
                         NameObject(CA.NAMES): ArrayObject(
-                            [createStringObject(js_string_name), js_indirect_object]
+                            [create_string_object(js_string_name), js_indirect_object]
                         )
                     }
                 )
@@ -446,7 +446,7 @@ class PdfWriter:
         filespec.update(
             {
                 NameObject(PA.TYPE): NameObject("/Filespec"),
-                NameObject("/F"): createStringObject(
+                NameObject("/F"): create_string_object(
                     filename
                 ),  # Perhaps also try TextStringObject
                 NameObject("/EF"): ef_entry,
@@ -469,7 +469,7 @@ class PdfWriter:
         embedded_files_names_dictionary.update(
             {
                 NameObject(CA.NAMES): ArrayObject(
-                    [createStringObject(filename), filespec]
+                    [create_string_object(filename), filespec]
                 )
             }
         )
@@ -802,7 +802,7 @@ class PdfWriter:
         """
         args = {}
         for key, value in list(infos.items()):
-            args[NameObject(key)] = createStringObject(value)
+            args[NameObject(key)] = create_string_object(value)
         self.get_object(self._info).update(args)  # type: ignore
 
     def addMetadata(self, infos: Dict[str, Any]) -> None:  # pragma: no cover
@@ -1100,7 +1100,7 @@ class PdfWriter:
         bookmark.update(
             {
                 NameObject("/A"): action_ref,
-                NameObject("/Title"): createStringObject(title),
+                NameObject("/Title"): create_string_object(title),
             }
         )
 

@@ -225,7 +225,7 @@ def _alg35(
     return val + (b_("\x00") * 16), key
 
 
-def RC4_encrypt(key: Union[str, bytes], plaintext: bytes) -> bytes:
+def RC4_encrypt(key: Union[str, bytes], plaintext: bytes) -> bytes:  # TODO
     S = list(range(256))
     j = 0
     for i in range(256):

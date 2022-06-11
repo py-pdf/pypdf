@@ -21,7 +21,7 @@ from PyPDF2.generic import (
     RectangleObject,
     TextStringObject,
     TreeObject,
-    createStringObject,
+    create_string_object,
     encode_pdfdocencoding,
     read_hex_string_from_stream,
     read_object,
@@ -42,11 +42,11 @@ def test_number_object_exception():
         NumberObject(1.5 * 2**10000)
 
 
-def test_createStringObject_exception():
+def test_create_string_object_exception():
     with pytest.raises(TypeError) as exc:
-        createStringObject(123)
+        create_string_object(123)
     assert (  # typeguard is not running
-        exc.value.args[0] == "createStringObject should have str or unicode arg"
+        exc.value.args[0] == "create_string_object should have str or unicode arg"
     ) or (  # typeguard is enabled
         'type of argument "string" must be one of (str, bytes); got int instead'
         in exc.value.args[0]

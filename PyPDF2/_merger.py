@@ -45,7 +45,7 @@ from .generic import (
     NumberObject,
     TextStringObject,
     TreeObject,
-    createStringObject,
+    create_string_object,
 )
 from .pagerange import PageRange, PageRangeSpec
 from .types import (
@@ -694,7 +694,7 @@ class PdfMerger:
         bookmark.update(
             {
                 NameObject("/A"): action_ref,
-                NameObject("/Title"): createStringObject(title),
+                NameObject("/Title"): create_string_object(title),
             }
         )
 
