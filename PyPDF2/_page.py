@@ -1231,7 +1231,7 @@ class PageObject(DictionaryObject):
                 return None
             # process text changes due to positionchange: " "
             if tm_matrix[5] <= (
-                tm_prev[5] - font_size * sqrt(tm_matrix[2] ** 2 + tm_matrix[3] ** 2)
+                tm_prev[5] - font_size  # remove scaling * sqrt(tm_matrix[2] ** 2 + tm_matrix[3] ** 2)
             ):  # it means that we are moving down by one line
                 output += text + "\n"  # .translate(cmap) + "\n"
                 text = ""
