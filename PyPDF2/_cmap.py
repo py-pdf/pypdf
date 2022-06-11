@@ -162,7 +162,7 @@ def parse_to_unicode(ft: DictionaryObject, space_code: int) -> Tuple[Dict, int]:
     cm = (b" ".join(ll)).replace(b"[", b" [ ").replace(b"]", b" ]\n ")
     
     for l in cm.split(b"\n"):
-        if l == b"":
+        if l == b"" or l == b" ":
             continue
         if b"beginbfrange" in l:
             process_rg = True
@@ -179,9 +179,9 @@ def parse_to_unicode(ft: DictionaryObject, space_code: int) -> Tuple[Dict, int]:
             nbi = len(lst[0])
             map_dict[-1] = nbi // 2
             fmt = b"%%0%dX" % nbi
-            if lst[2] == "[":
+            if lst[2] == b"[":
                 for sq in lst[3:]:
-                    if "]":
+                    if sq == b"]":
                         break
                     map_dict[
                         unhexlify(fmt % a).decode(
