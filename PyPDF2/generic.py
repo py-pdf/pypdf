@@ -1135,9 +1135,9 @@ class ContentStream(DecodedStreamObject):
             stream_bytes = BytesIO(stream_data_bytes)
         # self.savstream = stream
         self.forced_encoding = forced_encoding
-        self.__parseContentStream(stream_bytes)
+        self.__parse_content_stream(stream_bytes)
 
-    def __parseContentStream(self, stream: StreamType) -> None:
+    def __parse_content_stream(self, stream: StreamType) -> None:
         # file("f:\\tmp.txt", "w").write(stream.read())
         stream.seek(0, 0)
         operands: List[Union[int, str, PdfObject]] = []
@@ -1152,7 +1152,7 @@ class ContentStream(DecodedStreamObject):
                     # begin inline image - a completely different parsing
                     # mechanism is required, of course... thanks buddy...
                     assert operands == []
-                    ii = self._readInlineImage(stream)
+                    ii = self._read_inline_image(stream)
                     self.operations.append((ii, b_("INLINE IMAGE")))
                 else:
                     self.operations.append((operands, operator))
@@ -1168,7 +1168,7 @@ class ContentStream(DecodedStreamObject):
             else:
                 operands.append(read_object(stream, None, self.forced_encoding))
 
-    def _readInlineImage(self, stream: StreamType) -> Dict[str, Any]:
+    def _read_inline_image(self, stream: StreamType) -> Dict[str, Any]:
         # begin reading just after the "BI" - begin image
         # first read the dictionary of settings.
         settings = DictionaryObject()
@@ -1250,7 +1250,7 @@ class ContentStream(DecodedStreamObject):
 
     @_data.setter
     def _data(self, value: Union[str, bytes]) -> None:
-        self.__parseContentStream(BytesIO(b_(value)))
+        self.__parse_content_stream(BytesIO(b_(value)))
 
 
 def read_object(
