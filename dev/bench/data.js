@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1654950235138,
+  "lastUpdate": 1655021956984,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -4684,6 +4684,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.10872839660462243",
             "extra": "mean: 5.379609184399999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "55f7c7b35be4431336a8c5a769a7c261445bd47a",
+          "message": "STY: Use more tuples and list/dict comprehensions (#976)",
+          "timestamp": "2022-06-12T10:18:09+02:00",
+          "tree_id": "9c98a716e6f8b603596bf4c4a6c4ecbd8b7e84c6",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/55f7c7b35be4431336a8c5a769a7c261445bd47a"
+        },
+        "date": 1655021956495,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6189742283226757,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023772070550596727",
+            "extra": "mean: 1.6155761487999996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.724294582848039,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006230052060353172",
+            "extra": "mean: 102.83522279999886 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22954015042013579,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02353284467230491",
+            "extra": "mean: 4.356536310400003 sec\nrounds: 5"
           }
         ]
       }
