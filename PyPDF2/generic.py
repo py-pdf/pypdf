@@ -3023,5 +3023,5 @@ charset_encoding: Dict[str, List[str]] = {
     "/MacRomanEncoding": _mac_encoding,
     "/PDFDocEncoding": _pdfdoc_encoding,
     "/Symbol": _symbol_encoding,
-    "/ZapfDingbats": _pdfdoc_encoding,
+    "/ZapfDingbats": _zapfding_encoding,
 }
