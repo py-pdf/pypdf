@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1655050183017,
+  "lastUpdate": 1655050296809,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -4954,6 +4954,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.027809929745674297",
             "extra": "mean: 4.294263794799997 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "9c4e7f52fb3c53ed6391d4a96e227116a9473acf",
+          "message": "REL: 2.1.1\n\nNew Features (ENH):\n-  Add support for pathlib as input for PdfReader (#979)\n\nPerformance Improvements (PI):\n-  Optimize read_next_end_line (#646)\n\nBug Fixes (BUG):\n-  Adobe Acrobat \\'Would you like to save this file?\\' (#970)\n\nDocumentation (DOC):\n-  Notes on annotations (#982)\n-  Who uses PyPDF2\n-  intendet \\xe2\\x9e\\x94 in robustness page  (#958)\n\nMaintenance (MAINT):\n-  pre-commit / requirements.txt updates (#977)\n-  Mark read_next_end_line as deprecated (#965)\n-  Export `PageObject` in PyPDF2 root (#960)\n\nTesting (TST):\n-  Add MCVE of issue #416 (#980)\n-  FlateDecode.decode decodeParms (#964)\n-  Xmp module (#962)\n-  utils.paeth_predictor (#959)\n\nCode Style (STY):\n-  Use more tuples and list/dict comprehensions (#976)\n\nFull Changelog: https://github.com/py-pdf/PyPDF2/compare/2.1.0...2.1.1",
+          "timestamp": "2022-06-12T18:09:37+02:00",
+          "tree_id": "b1cd9b621e479f36784f0489bef278e14fe72e65",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/9c4e7f52fb3c53ed6391d4a96e227116a9473acf"
+        },
+        "date": 1655050296219,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.45877601283803277,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023922487203348976",
+            "extra": "mean: 2.1797129143999996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 7.028330257471669,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009814533112778199",
+            "extra": "mean: 142.28130485714172 msec\nrounds: 7"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.17337457224514943,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08641363254316417",
+            "extra": "mean: 5.767858498800001 sec\nrounds: 5"
           }
         ]
       }
