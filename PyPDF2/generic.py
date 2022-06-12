@@ -839,7 +839,7 @@ class TreeObject(DictionaryObject):
     def __init__(self) -> None:
         DictionaryObject.__init__(self)
 
-    def hasChildren(self) -> bool:
+    def hasChildren(self) -> bool:  # pragma: no cover
         deprecate_with_replacement("hasChildren", "has_children")
         return self.has_children()
 
