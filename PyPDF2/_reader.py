@@ -33,6 +33,7 @@ import struct
 import warnings
 from hashlib import md5
 from io import BytesIO
+from pathlib import Path
 from typing import (
     Any,
     Callable,
@@ -234,7 +235,7 @@ class PdfReader:
 
     def __init__(
         self,
-        stream: StrByteType,
+        stream: Union[StrByteType, Path],
         strict: bool = False,
         password: Union[None, str, bytes] = None,
     ) -> None:
@@ -251,7 +252,7 @@ class PdfReader:
                 "It may not be read correctly.",
                 PdfReadWarning,
             )
-        if isinstance(stream, str):
+        if isinstance(stream, (str, Path)):
             with open(stream, "rb") as fh:
                 stream = BytesIO(b_(fh.read()))
         self.read(stream)
