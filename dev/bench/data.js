@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1655022672362,
+  "lastUpdate": 1655032367377,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -4774,6 +4774,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.06653331623091029",
             "extra": "mean: 5.094394215199998 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8149026b0b7e2dbb328aff78fd674bbdc7bbc3b8",
+          "message": "ENH: Add support for pathlib as input for PdfReader (#979)",
+          "timestamp": "2022-06-12T13:11:39+02:00",
+          "tree_id": "f79b8da3c643d507de3019a8adf00d96469d0326",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/8149026b0b7e2dbb328aff78fd674bbdc7bbc3b8"
+        },
+        "date": 1655032366942,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6110192931400946,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04168416050200808",
+            "extra": "mean: 1.6366095329999992 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.710170067025734,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005735377217202816",
+            "extra": "mean: 102.98480800000078 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22997617713071353,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03183254689992185",
+            "extra": "mean: 4.348276471399998 sec\nrounds: 5"
           }
         ]
       }
