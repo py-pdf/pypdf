@@ -19,10 +19,14 @@ def build_char_map(
     space_code = 32
     encoding, space_code = parse_encoding(ft, space_code)
     map_dict, space_code = parse_to_unicode(ft, space_code)
+
+    # apply rule from PDF ref 1.7 §5.9.1, 1st bullet : if cmap not empty encoding should be discarded
     # encoding can be either a string for decode (on 1,2 or a variable number of bytes) of a char table (for 1 byte only for me)
     # if empty string, it means it is than encoding field is not present and we have to select the good encoding from cmap input data
-    if encoding == "":
-        if map_dict[-1] == 1:
+    if encoding == "" or map_dict != {}:
+        if -1 not in map_dict or map_dict[-1] == 1:
+            # I have not been able to find any rule fo no /Encoding nor /ToUnicode
+            # One example shows /Symbol,bold I consider 8 bits encoding default 
             encoding = "charmap"
         else:
             encoding = "utf-16-be"
