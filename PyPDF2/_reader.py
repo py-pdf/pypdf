@@ -525,7 +525,7 @@ class PdfReader:
                 self.get_fields(kid.get_object(), retval, fileobj)
 
     def _write_field(self, fileobj: Any, field: Any, field_attributes: Any) -> None:
-        order = ["/TM", "/T", "/FT", PA.PARENT, "/TU", "/Ff", "/V", "/DV"]
+        order = ("/TM", "/T", "/FT", PA.PARENT, "/TU", "/Ff", "/V", "/DV")
         for attr in order:
             attr_name = field_attributes[attr]
             try:
@@ -701,10 +701,9 @@ class PdfReader:
     ) -> int:
         """Generate _page_id2num"""
         if self._page_id2num is None:
-            id2num = {}
-            for i, x in enumerate(self.pages):
-                id2num[x.indirect_ref.idnum] = i  # type: ignore
-            self._page_id2num = id2num
+            self._page_id2num = {
+                x.indirect_ref.idnum: i for i, x in enumerate(self.pages)  # type: ignore
+            }
 
         if indirect_ref is None or isinstance(indirect_ref, NullObject):
             return -1
