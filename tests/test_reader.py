@@ -704,11 +704,11 @@ def test_read_path():
     assert len(reader.pages) == 1
 
 
-@pytest.mark.xfail(reason="#613")
-def test_read_form_613():
+@pytest.mark.xfail(reason="#416")
+def test_read_form_416():
     url = (
         "https://www.fda.gov/downloads/AboutFDA/ReportsManualsForms/Forms/UCM074728.pdf"
     )
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name="issue_613.pdf")))
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name="issue_416.pdf")))
     fields = reader.get_form_text_fields()
     assert len(fields) > 0
