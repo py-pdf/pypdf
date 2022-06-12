@@ -90,7 +90,7 @@ class FlateDecode:
             "/Predictor":<int> key only
         :return: the flate-decoded data.
         """
-        if "decodeParms" in kwargs:
+        if "decodeParms" in kwargs:  # pragma: no cover
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
             decode_parms = kwargs["decodeParms"]
         str_data = decompress(data)
@@ -191,7 +191,7 @@ class ASCIIHexDecode:
         :return: a string conversion in base-7 ASCII, where each of its values
             v is such that 0 <= ord(v) <= 127.
         """
-        if "decodeParms" in kwargs:
+        if "decodeParms" in kwargs:  # pragma: no cover
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
             decode_parms = kwargs["decodeParms"]  # noqa: F841
         retval = ""
@@ -311,7 +311,7 @@ class LZWDecode:
         :return: decoded data.
         :rtype: bytes
         """
-        if "decodeParms" in kwargs:
+        if "decodeParms" in kwargs:  # pragma: no cover
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
             decode_parms = kwargs["decodeParms"]  # noqa: F841
         return LZWDecode.Decoder(data).decode()
@@ -326,7 +326,7 @@ class ASCII85Decode:
         decode_parms: Union[None, ArrayObject, DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
-        if "decodeParms" in kwargs:
+        if "decodeParms" in kwargs:  # pragma: no cover
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
             decode_parms = kwargs["decodeParms"]  # noqa: F841
         if isinstance(data, str):
@@ -359,7 +359,7 @@ class DCTDecode:
         decode_parms: Union[None, ArrayObject, DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
-        if "decodeParms" in kwargs:
+        if "decodeParms" in kwargs:  # pragma: no cover
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
             decode_parms = kwargs["decodeParms"]  # noqa: F841
         return data
@@ -372,7 +372,7 @@ class JPXDecode:
         decode_parms: Union[None, ArrayObject, DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
-        if "decodeParms" in kwargs:
+        if "decodeParms" in kwargs:  # pragma: no cover
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
             decode_parms = kwargs["decodeParms"]  # noqa: F841
         return data
@@ -437,7 +437,7 @@ class CCITTFaxDecode:
         height: int = 0,
         **kwargs: Any,
     ) -> bytes:
-        if "decodeParms" in kwargs:
+        if "decodeParms" in kwargs:  # pragma: no cover
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
             decode_parms = kwargs["decodeParms"]
         parms = CCITTFaxDecode._get_parameters(decode_parms, height)
@@ -529,7 +529,7 @@ def decode_stream_data(stream: Any) -> Union[str, bytes]:  # utils.StreamObject
     return data
 
 
-def decodeStreamData(stream: Any) -> Union[str, bytes]:
+def decodeStreamData(stream: Any) -> Union[str, bytes]:  # pragma: no cover
     deprecate_with_replacement("decodeStreamData", "decode_stream_data", "4.0.0")
     return decode_stream_data(stream)
 

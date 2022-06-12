@@ -1023,7 +1023,7 @@ class StreamObject(DictionaryObject):
     @staticmethod
     def initializeFromDictionary(
         data: Dict[str, Any]
-    ) -> Union["EncodedStreamObject", "DecodedStreamObject"]:
+    ) -> Union["EncodedStreamObject", "DecodedStreamObject"]:  # pragma: no cover
         return StreamObject.initialize_from_dictionary(data)
 
     @staticmethod
@@ -1891,7 +1891,7 @@ class Bookmark(Destination):
 def createStringObject(
     string: Union[str, bytes],
     forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
-) -> Union[TextStringObject, ByteStringObject]:
+) -> Union[TextStringObject, ByteStringObject]:  # pragma: no cover
     deprecate_with_replacement("createStringObject", "create_string_object", "4.0.0")
     return create_string_object(string, forced_encoding)
 
