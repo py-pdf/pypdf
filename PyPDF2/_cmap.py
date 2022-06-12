@@ -26,7 +26,7 @@ def build_char_map(
     if encoding == "" or map_dict != {}:
         if -1 not in map_dict or map_dict[-1] == 1:
             # I have not been able to find any rule fo no /Encoding nor /ToUnicode
-            # One example shows /Symbol,bold I consider 8 bits encoding default 
+            # One example shows /Symbol,bold I consider 8 bits encoding default
             encoding = "charmap"
         else:
             encoding = "utf-16-be"
@@ -170,10 +170,10 @@ def parse_to_unicode(ft: DictionaryObject, space_code: int) -> Tuple[Dict, int]:
         j = ll[i].find(b">")
         if j >= 0:
             ll[i] = ll[i][:j].replace(b" ", b"") + b" " + ll[i][j + 1 :]
-    cm = (b" ".join(ll)).replace(b"[", b" [ ").replace(b"]", b" ]\n ").replace(b"\r",b"\n")
+    cm = (b" ".join(ll)).replace(b"[", b" [ ").replace(b"]", b" ]\n ").replace(b"\r", b"\n")
 
     for l in cm.split(b"\n"):
-        if l in (b"",b" "):
+        if l in (b"", b" "):
             continue
         if b"beginbfrange" in l:
             process_rg = True
