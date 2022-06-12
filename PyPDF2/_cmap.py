@@ -166,10 +166,10 @@ def parse_to_unicode(ft: DictionaryObject, space_code: int) -> Tuple[Dict, int]:
         j = ll[i].find(b">")
         if j >= 0:
             ll[i] = ll[i][:j].replace(b" ", b"") + b" " + ll[i][j + 1 :]
-    cm = (b" ".join(ll)).replace(b"[", b" [ ").replace(b"]", b" ]\n ")
+    cm = (b" ".join(ll)).replace(b"[", b" [ ").replace(b"]", b" ]\n ").replace(b"\r",b"\n")
 
     for l in cm.split(b"\n"):
-        if l == b"" or l == b" ":
+        if l in (b"",b" "):
             continue
         if b"beginbfrange" in l:
             process_rg = True
