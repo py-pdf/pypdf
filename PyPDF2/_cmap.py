@@ -18,18 +18,23 @@ def build_char_map(
 
     space_code = 32
     encoding, space_code = parse_encoding(ft, space_code)
-    map_dict, space_code = parse_to_unicode(ft, space_code)
+    map_dict, space_code, int_entry = parse_to_unicode(ft, space_code)
 
-    # apply rule from PDF ref 1.7 §5.9.1, 1st bullet : if cmap not empty encoding should be discarded
     # encoding can be either a string for decode (on 1,2 or a variable number of bytes) of a char table (for 1 byte only for me)
     # if empty string, it means it is than encoding field is not present and we have to select the good encoding from cmap input data
-    if encoding == "" or map_dict != {}:
+    if encoding == "":
         if -1 not in map_dict or map_dict[-1] == 1:
             # I have not been able to find any rule fo no /Encoding nor /ToUnicode
             # One example shows /Symbol,bold I consider 8 bits encoding default
             encoding = "charmap"
         else:
             encoding = "utf-16-be"
+    # apply rule from PDF ref 1.7 §5.9.1, 1st bullet : if cmap not empty encoding should be discarded (here transformed into identity for those characters)
+    # if encoding is an str it is expected to be a identity translation
+    elif isinstance(encoding, dict):
+        for x in int_entry:
+            if x <= 255:
+                encoding[x] = chr(x)
     if font_name in _default_fonts_space_width:
         # override space_width with new params
         space_width = _default_fonts_space_width[font_name]
@@ -144,14 +149,15 @@ def parse_encoding(
     return encoding, space_code
 
 
-def parse_to_unicode(ft: DictionaryObject, space_code: int) -> Tuple[Dict, int]:
+def parse_to_unicode(ft: DictionaryObject, space_code: int) -> Tuple[Dict, int, List[int]]:
     map_dict: Dict[
         Any, Any
     ] = (
         {}
     )  # will store all translation code and map_dict[-1] we will have the number of bytes to convert
+    int_entry : List[int] = []  # will provide the list of cmap keys as int to correct encoding
     if "/ToUnicode" not in ft:
-        return {}, space_code
+        return {}, space_code, []
     process_rg: bool = False
     process_char: bool = False
     cm: bytes = cast(DecodedStreamObject, ft["/ToUnicode"]).get_data()
@@ -199,6 +205,7 @@ def parse_to_unicode(ft: DictionaryObject, space_code: int) -> Tuple[Dict, int]:
                             "charmap" if map_dict[-1] == 1 else "utf-16-be"
                         )
                     ] = unhexlify(sq).decode("utf-16-be")
+                    int_entry.append(a)
                     a += 1
                     assert a > b
             else:
@@ -210,6 +217,7 @@ def parse_to_unicode(ft: DictionaryObject, space_code: int) -> Tuple[Dict, int]:
                             "charmap" if map_dict[-1] == 1 else "utf-16-be"
                         )
                     ] = unhexlify(fmt2 % c).decode("utf-16-be")
+                    int_entry.append(a)
                     a += 1
                     c += 1
         elif process_char:
@@ -223,11 +231,12 @@ def parse_to_unicode(ft: DictionaryObject, space_code: int) -> Tuple[Dict, int]:
                 ] = unhexlify(lst[1]).decode(
                     "utf-16-be"
                 )  # join is here as some cases where the code was split
+                int_entry.append(int(lst[0], 16))
                 lst = lst[2:]
     for a in map_dict:
         if map_dict[a] == " ":
             space_code = a
-    return map_dict, space_code
+    return map_dict, space_code, int_entry
 
 
 def compute_space_width(
