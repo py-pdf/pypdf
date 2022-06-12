@@ -2,6 +2,7 @@ import io
 import os
 import time
 from io import BytesIO
+from pathlib import Path
 
 import pytest
 
@@ -10,7 +11,11 @@ from PyPDF2._reader import convert_to_int, convertToInt
 from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.constants import Ressources as RES
-from PyPDF2.errors import PdfReadError, PdfReadWarning, STREAM_TRUNCATED_PREMATURELY
+from PyPDF2.errors import (
+    STREAM_TRUNCATED_PREMATURELY,
+    PdfReadError,
+    PdfReadWarning,
+)
 from PyPDF2.filters import _xobj_to_image
 from tests import get_pdf_from_url
 
@@ -691,3 +696,19 @@ def test_extract_text_hello_world():
         "Japanese:",
         "こんにちは世界",
     ]
+
+
+def test_read_path():
+    path = Path(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
+    reader = PdfReader(path)
+    assert len(reader.pages) == 1
+
+
+@pytest.mark.xfail(reason="#416")
+def test_read_form_416():
+    url = (
+        "https://www.fda.gov/downloads/AboutFDA/ReportsManualsForms/Forms/UCM074728.pdf"
+    )
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name="issue_416.pdf")))
+    fields = reader.get_form_text_fields()
+    assert len(fields) > 0

@@ -548,13 +548,13 @@ class PageObject(DictionaryObject):
     def _expand_mediabox(
         self, page2: "PageObject", ctm: Optional[CompressedTransformationMatrix]
     ) -> None:
-        corners1 = [
+        corners1 = (
             self.mediabox.left.as_numeric(),
             self.mediabox.bottom.as_numeric(),
             self.mediabox.right.as_numeric(),
             self.mediabox.top.as_numeric(),
-        ]
-        corners2 = [
+        )
+        corners2 = (
             page2.mediabox.left.as_numeric(),
             page2.mediabox.bottom.as_numeric(),
             page2.mediabox.left.as_numeric(),
@@ -563,17 +563,17 @@ class PageObject(DictionaryObject):
             page2.mediabox.top.as_numeric(),
             page2.mediabox.right.as_numeric(),
             page2.mediabox.bottom.as_numeric(),
-        ]
+        )
         if ctm is not None:
             ctm = tuple(float(x) for x in ctm)  # type: ignore[assignment]
-            new_x = [
+            new_x = tuple(
                 ctm[0] * corners2[i] + ctm[2] * corners2[i + 1] + ctm[4]
                 for i in range(0, 8, 2)
-            ]
-            new_y = [
+            )
+            new_y = tuple(
                 ctm[1] * corners2[i] + ctm[3] * corners2[i + 1] + ctm[5]
                 for i in range(0, 8, 2)
-            ]
+            )
         else:
             new_x = corners2[0:8:2]
             new_y = corners2[1:8:2]
