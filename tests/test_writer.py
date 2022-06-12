@@ -440,3 +440,17 @@ def test_issue301():
         writer.append_pages_from_reader(reader)
         o = BytesIO()
         writer.write(o)
+
+
+def test_add_free_text_annotation():
+    filepath = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+
+    writer = PdfWriter()
+    reader = PdfReader(filepath)
+
+    writer.add_page(reader.pages[0])
+
+    writer.add_free_text_annotation(0, "Hello World", rect=(0, 0, 100, 100))
+
+    with open("foo.pdf", "wb") as fh:
+        writer.write(fh)

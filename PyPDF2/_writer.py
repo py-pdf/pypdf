@@ -41,7 +41,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 from ._page import PageObject, _VirtualList
 from ._reader import PdfReader
 from ._security import _alg33, _alg34, _alg35
-from ._utils import StreamType, b_, deprecate_with_replacement
+from ._utils import StreamType, b_, deprecate_with_replacement, hex_to_rgb
 from .constants import CatalogAttributes as CA
 from .constants import Core as CO
 from .constants import EncryptionDictAttributes as ED
@@ -142,6 +142,62 @@ class PdfWriter:
         """
         deprecate_with_replacement("getObject", "get_object")
         return self.get_object(ido)
+
+    def add_free_text_annotation(
+        self,
+        page_number: int,
+        text: str,
+        rect: Tuple[float, float, float, float],
+        font: str = "Helvetica",
+        bold: bool = False,
+        italic: bool = False,
+        font_size: str = "14pt",
+        font_color: str = "ff0000",
+        border_color: str = "ff0000",
+        bg_color: str = "ffffff",
+    ) -> None:
+        """Add text in a rectangle to a page."""
+        page_link = self.get_object(self._pages)["/Kids"][page_number]  # type: ignore
+        page_ref = cast(DictionaryObject, self.get_object(page_link))
+
+        font_str = "font: "
+        if bold is True:
+            font_str = font_str + "bold "
+        if italic is True:
+            font_str = font_str + "italic "
+        font_str = font_str + font + " " + font_size
+        font_str = font_str + ";text-align:left;color:#" + font_color
+
+        bg_color_str = ""
+        for st in hex_to_rgb(border_color):
+            bg_color_str = bg_color_str + str(st) + " "
+        bg_color_str = bg_color_str + "rg"
+
+        free_text = DictionaryObject()
+        free_text.update(
+            {
+                NameObject("/Type"): NameObject("/Annot"),
+                NameObject("/Subtype"): NameObject("/FreeText"),
+                NameObject("/P"): page_link,
+                NameObject("/Rect"): RectangleObject(rect),
+                NameObject("/Contents"): TextStringObject(text),
+                # font size color
+                NameObject("/DS"): TextStringObject(font_str),
+                # border color
+                NameObject("/DA"): TextStringObject(bg_color_str),
+                # background color
+                NameObject("/C"): ArrayObject(
+                    [FloatObject(n) for n in hex_to_rgb(bg_color)]
+                ),
+            }
+        )
+
+        link_ref = self._add_object(free_text)
+
+        if "/Annots" in page_ref:
+            page_ref["/Annots"].append(link_ref)  # type: ignore
+        else:
+            page_ref[NameObject("/Annots")] = ArrayObject([link_ref])
 
     def _add_page(
         self, page: PageObject, action: Callable[[Any, IndirectObject], None]
