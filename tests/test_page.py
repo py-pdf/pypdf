@@ -9,7 +9,8 @@ from PyPDF2 import PdfReader, Transformation
 from PyPDF2._page import PageObject
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.generic import DictionaryObject, NameObject, RectangleObject
-from tests import get_pdf_from_url
+
+from . import get_pdf_from_url
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -206,3 +207,14 @@ def test_page_scale():
 def test_add_transformation_on_page_without_contents():
     page = PageObject()
     page.add_transformation(Transformation())
+
+
+def test_multi_language():
+    reader = PdfReader(os.path.join(RESOURCE_ROOT, "multilang.pdf"))
+    txt = reader.pages[0].extract_text()
+    assert "Hello World" in txt, "English not correctly extracted"
+    # Arabic is for the moment left on side
+    assert "Привет, мир" in txt, "Russian not correctly extracted"
+    assert "你好世界" in txt, "Chinese not correctly extracted"
+    assert "สวัสดีชาวโลก" in txt, "Thai not correctly extracted"
+    assert "こんにちは世界" in txt, "Japanese not correctly extracted"

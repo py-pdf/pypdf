@@ -1,5 +1,5 @@
 from ._merger import PdfFileMerger, PdfMerger
-from ._page import Transformation, PageObject
+from ._page import PageObject, Transformation
 from ._reader import DocumentInformation, PdfFileReader, PdfReader
 from ._version import __version__
 from ._writer import PdfFileWriter, PdfWriter

@@ -13,6 +13,9 @@ def get_pdf_from_url(url: str, name: str) -> bytes:
     :param str url: location of the PDF file
     :param str name: unique name accross all files
     """
+    if url.startswith("file://"):
+        with open(url[7:].replace("\\", "/"), "rb") as fp:
+            return fp.read()
     cache_dir = os.path.join(os.path.dirname(__file__), "pdf_cache")
     if not os.path.exists(cache_dir):
         os.mkdir(cache_dir)
