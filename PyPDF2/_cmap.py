@@ -24,7 +24,7 @@ def build_char_map(
     # if empty string, it means it is than encoding field is not present and we have to select the good encoding from cmap input data
     if encoding == "":
         if -1 not in map_dict or map_dict[-1] == 1:
-            # I have not been able to find any rule fo no /Encoding nor /ToUnicode
+            # I have not been able to find any rule for no /Encoding nor /ToUnicode
             # One example shows /Symbol,bold I consider 8 bits encoding default
             encoding = "charmap"
         else:
