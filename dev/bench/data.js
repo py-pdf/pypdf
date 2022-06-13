@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1655050296809,
+  "lastUpdate": 1655149315875,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -4999,6 +4999,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.08641363254316417",
             "extra": "mean: 5.767858498800001 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "72fcaae50e9676ca16346a556c29b688ae2714f8",
+          "message": "ENH: Text Extraction improvements (#969)\n\n* Improvements around /Encoding / /ToUnicode\r\n* Extraction of CMaps improved\r\n* Fallback for font def missing\r\n* Support for /Identity-H and /Identity-V: utf-16-be\r\n* Support for /GB-EUC-H / /GB-EUC-V / GBp/c-EUC-H / /GBpc-EUC-V (beta release for evaluation)\r\n* Arabic (for evaluation)\r\n* Whitespace extraction improvements",
+          "timestamp": "2022-06-13T21:40:43+02:00",
+          "tree_id": "a353ad6f36239580ee0c9f3bbbc6f4f170b08281",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/72fcaae50e9676ca16346a556c29b688ae2714f8"
+        },
+        "date": 1655149314974,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6238667778931499,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011959801989632098",
+            "extra": "mean: 1.6029063181999903 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.613936257398946,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006410231173057463",
+            "extra": "mean: 104.01566780000167 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21691445127493675,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028356942333540334",
+            "extra": "mean: 4.61011239280001 sec\nrounds: 5"
           }
         ]
       }
