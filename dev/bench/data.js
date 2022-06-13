@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1655149315875,
+  "lastUpdate": 1655149649497,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -5044,6 +5044,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.028356942333540334",
             "extra": "mean: 4.61011239280001 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "f0cd8292da2dfe020d4042e16b42b24aa2378dd3",
+          "message": "REL: 2.2.0\n\nThe 2.2.0 release improves text extraction again via (#969):\n\n* Improvements around /Encoding / /ToUnicode\n* Extraction of CMaps improved\n* Fallback for font def missing\n* Support for /Identity-H and /Identity-V: utf-16-be\n* Support for /GB-EUC-H / /GB-EUC-V / GBp/c-EUC-H / /GBpc-EUC-V (beta release for evaluation)\n* Arabic (for evaluation)\n* Whitespace extraction improvements\n\nThose changes should mainly improve the text extraction for non-ASCII alphabets,\ne.g. Russian / Chinese / Japanese / Korean / Arabic.\n\nFull Changelog: https://github.com/py-pdf/PyPDF2/compare/2.1.1...2.2.0",
+          "timestamp": "2022-06-13T21:45:28+02:00",
+          "tree_id": "5c2ecbe33b1f967cc9fd0c7d01894c2e08c64521",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/f0cd8292da2dfe020d4042e16b42b24aa2378dd3"
+        },
+        "date": 1655149647565,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.44268114584711626,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06830016061664344",
+            "extra": "mean: 2.258962256199993 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 7.9581196314600025,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0033557399783245927",
+            "extra": "mean: 125.6578244999993 msec\nrounds: 8"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.1787840061963882,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08493061521811243",
+            "extra": "mean: 5.5933414921999995 sec\nrounds: 5"
           }
         ]
       }
