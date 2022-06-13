@@ -178,6 +178,7 @@ def test_read_block_backwards_at_start():
         # Skip over multiple CR/LF bytes
         (b"abc\n\r\ndef", 9, b"def", 3),
     ],
+    ids=list(range(11)),
 )
 def test_read_previous_line(dat, pos, expected, expected_pos):
     s = io.BytesIO(dat)

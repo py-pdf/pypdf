@@ -1,3 +1,37 @@
+Version 2.1.1, 2022-06-12
+-------------------------
+
+New Features (ENH):
+-  Add support for pathlib as input for PdfReader (#979)
+
+Performance Improvements (PI):
+-  Optimize read_next_end_line (#646)
+
+Bug Fixes (BUG):
+-  Adobe Acrobat \'Would you like to save this file?\' (#970)
+
+Documentation (DOC):
+-  Notes on annotations (#982)
+-  Who uses PyPDF2
+-  intendet \xe2\x9e\x94 in robustness page  (#958)
+
+Maintenance (MAINT):
+-  pre-commit / requirements.txt updates (#977)
+-  Mark read_next_end_line as deprecated (#965)
+-  Export `PageObject` in PyPDF2 root (#960)
+
+Testing (TST):
+-  Add MCVE of issue #416 (#980)
+-  FlateDecode.decode decodeParms (#964)
+-  Xmp module (#962)
+-  utils.paeth_predictor (#959)
+
+Code Style (STY):
+-  Use more tuples and list/dict comprehensions (#976)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.1.0...2.1.1
+
+
 Version 2.1.0, 2022-06-06
 -------------------------
 

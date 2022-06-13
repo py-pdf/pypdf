@@ -285,7 +285,7 @@ class CatalogDictionary:
     NEEDS_RENDERING = "/NeedsRendering"  # boolean, optional
 
 
-PDF_KEYS = [
+PDF_KEYS = (
     PagesAttributes,
     PageAttributes,
     Ressources,
@@ -302,4 +302,4 @@ PDF_KEYS = [
     Core,
     TrailerKeys,
     CatalogAttributes,
-]
+)
