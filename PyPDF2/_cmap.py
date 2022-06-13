@@ -49,7 +49,7 @@ def build_char_map(
     )  # type: ignore
 
 
-# used when missing data :eg font def missing
+# used when missing data, e.g. font def missing
 unknown_char_map : Tuple[str, float, Union[str, Dict[int, str]], Dict] = (
     "Unknown", 9999, dict(zip(range(256), ["�"] * 256)), {}
 )
