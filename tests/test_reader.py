@@ -17,6 +17,7 @@ from PyPDF2.errors import (
     PdfReadWarning,
 )
 from PyPDF2.filters import _xobj_to_image
+
 from . import get_pdf_from_url
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))

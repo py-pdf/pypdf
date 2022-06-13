@@ -50,8 +50,11 @@ def build_char_map(
 
 
 # used when missing data, e.g. font def missing
-unknown_char_map : Tuple[str, float, Union[str, Dict[int, str]], Dict] = (
-    "Unknown", 9999, dict(zip(range(256), ["�"] * 256)), {}
+unknown_char_map: Tuple[str, float, Union[str, Dict[int, str]], Dict] = (
+    "Unknown",
+    9999,
+    dict(zip(range(256), ["�"] * 256)),
+    {},
 )
 
 
@@ -95,7 +98,9 @@ def parse_encoding(
     if "/Encoding" not in ft:
         try:
             if "/BaseFont" in ft and ft["/BaseFont"] in charset_encoding:
-                encoding = dict(zip(range(256), charset_encoding[cast(str, ft["/BaseFont"])]))
+                encoding = dict(
+                    zip(range(256), charset_encoding[cast(str, ft["/BaseFont"])])
+                )
             else:
                 encoding = "charmap"
             return encoding, _default_fonts_space_width[cast(str, ft["/BaseFont"])]
@@ -149,13 +154,17 @@ def parse_encoding(
     return encoding, space_code
 
 
-def parse_to_unicode(ft: DictionaryObject, space_code: int) -> Tuple[Dict, int, List[int]]:
+def parse_to_unicode(
+    ft: DictionaryObject, space_code: int
+) -> Tuple[Dict, int, List[int]]:
     map_dict: Dict[
         Any, Any
     ] = (
         {}
     )  # will store all translation code and map_dict[-1] we will have the number of bytes to convert
-    int_entry : List[int] = []  # will provide the list of cmap keys as int to correct encoding
+    int_entry: List[
+        int
+    ] = []  # will provide the list of cmap keys as int to correct encoding
     if "/ToUnicode" not in ft:
         return {}, space_code, []
     process_rg: bool = False
@@ -176,7 +185,12 @@ def parse_to_unicode(ft: DictionaryObject, space_code: int) -> Tuple[Dict, int, 
         j = ll[i].find(b">")
         if j >= 0:
             ll[i] = ll[i][:j].replace(b" ", b"") + b" " + ll[i][j + 1 :]
-    cm = (b" ".join(ll)).replace(b"[", b" [ ").replace(b"]", b" ]\n ").replace(b"\r", b"\n")
+    cm = (
+        (b" ".join(ll))
+        .replace(b"[", b" [ ")
+        .replace(b"]", b" ]\n ")
+        .replace(b"\r", b"\n")
+    )
 
     for l in cm.split(b"\n"):
         if l in (b"", b" "):
@@ -202,9 +216,10 @@ def parse_to_unicode(ft: DictionaryObject, space_code: int) -> Tuple[Dict, int, 
                         break
                     map_dict[
                         unhexlify(fmt % a).decode(
-                            "charmap" if map_dict[-1] == 1 else "utf-16-be"
+                            "charmap" if map_dict[-1] == 1 else "utf-16-be",
+                            "surrogatepass",
                         )
-                    ] = unhexlify(sq).decode("utf-16-be")
+                    ] = unhexlify(sq).decode("utf-16-be", "surrogatepass")
                     int_entry.append(a)
                     a += 1
                     assert a > b
@@ -214,9 +229,10 @@ def parse_to_unicode(ft: DictionaryObject, space_code: int) -> Tuple[Dict, int, 
                 while a <= b:
                     map_dict[
                         unhexlify(fmt % a).decode(
-                            "charmap" if map_dict[-1] == 1 else "utf-16-be"
+                            "charmap" if map_dict[-1] == 1 else "utf-16-be",
+                            "surrogatepass",
                         )
-                    ] = unhexlify(fmt2 % c).decode("utf-16-be")
+                    ] = unhexlify(fmt2 % c).decode("utf-16-be", "surrogatepass")
                     int_entry.append(a)
                     a += 1
                     c += 1
@@ -226,10 +242,10 @@ def parse_to_unicode(ft: DictionaryObject, space_code: int) -> Tuple[Dict, int, 
             while len(lst) > 0:
                 map_dict[
                     unhexlify(lst[0]).decode(
-                        "charmap" if map_dict[-1] == 1 else "utf-16-be"
+                        "charmap" if map_dict[-1] == 1 else "utf-16-be", "surrogatepass"
                     )
                 ] = unhexlify(lst[1]).decode(
-                    "utf-16-be"
+                    "utf-16-be", "surrogatepass"
                 )  # join is here as some cases where the code was split
                 int_entry.append(int(lst[0], 16))
                 lst = lst[2:]

@@ -31,7 +31,6 @@ import math
 import uuid
 import warnings
 from decimal import Decimal
-# from math import sqrt
 from typing import (
     Any,
     Callable,
@@ -1219,7 +1218,7 @@ class PageObject(DictionaryObject):
                     else operands[0]
                 )
                 if isinstance(cmap[0], str):
-                    t = tt.decode(cmap[0])  # apply str encoding
+                    t = tt.decode(cmap[0], "surrogatepass")  # apply str encoding
                 else:  # apply dict encoding
                     t = "".join(
                         [
@@ -1269,7 +1268,7 @@ class PageObject(DictionaryObject):
                     output += "\n"
                 try:
                     xobj = resources_dict["/XObject"]  # type: ignore
-                    if xobj[operands[0]]["/Subtype"] != "/Image":   # type: ignore
+                    if xobj[operands[0]]["/Subtype"] != "/Image":  # type: ignore
                         output += text
                         text = self.extract_xform_text(xobj[operands[0]], space_width)  # type: ignore
                         output += text
