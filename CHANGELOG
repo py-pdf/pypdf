@@ -1,3 +1,21 @@
+Version 2.2.0, 2022-06-13
+-------------------------
+
+The 2.2.0 release improves text extraction again via (#969):
+
+* Improvements around /Encoding / /ToUnicode
+* Extraction of CMaps improved
+* Fallback for font def missing
+* Support for /Identity-H and /Identity-V: utf-16-be
+* Support for /GB-EUC-H / /GB-EUC-V / GBp/c-EUC-H / /GBpc-EUC-V (beta release for evaluation)
+* Arabic (for evaluation)
+* Whitespace extraction improvements
+
+Those changes should mainly improve the text extraction for non-ASCII alphabets,
+e.g. Russian / Chinese / Japanese / Korean / Arabic.
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.1.1...2.2.0
+
 Version 2.1.1, 2022-06-12
 -------------------------
 
