@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1655149649497,
+  "lastUpdate": 1655203014346,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -5089,6 +5089,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.08493061521811243",
             "extra": "mean: 5.5933414921999995 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8441da42d49551c7fc178b31d516998acff84e83",
+          "message": "PI: Remove b_ calls (#986)\n\nFunction calls are cheap, but not for free in Python.\r\nThe b_ function converts a string to a bytes object. When we have\r\na constant string, we can use the constant byte representation\r\ninstead (a b\"byte literal\" instead of b_(\"string literal\"))",
+          "timestamp": "2022-06-14T12:35:43+02:00",
+          "tree_id": "f419c1304655e296396236af7c130625698b5a63",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/8441da42d49551c7fc178b31d516998acff84e83"
+        },
+        "date": 1655203013478,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6658896852734139,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007111535799373589",
+            "extra": "mean: 1.5017502480000133 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.900811715078332,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00794771558373348",
+            "extra": "mean: 101.00181972727155 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.25487888165050904,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0327202634295768",
+            "extra": "mean: 3.9234321554000076 sec\nrounds: 5"
           }
         ]
       }
