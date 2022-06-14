@@ -89,7 +89,7 @@ class PdfWriter:
     """
 
     def __init__(self) -> None:
-        self._header = b_("%PDF-1.3")
+        self._header = b"%PDF-1.3"
         self._objects: List[Optional[PdfObject]] = []  # array of indirect objects
 
         # The root of our page tree node.
@@ -747,15 +747,15 @@ class PdfWriter:
 
     def _write_header(self, stream: StreamType) -> List[int]:
         object_positions = []
-        stream.write(self._header + b_("\n"))
-        stream.write(b_("%\xE2\xE3\xCF\xD3\n"))
+        stream.write(self._header + b"\n")
+        stream.write(b"%\xE2\xE3\xCF\xD3\n")
         for i in range(len(self._objects)):
             obj = self._objects[i]
             # If the obj is None we can't write anything
             if obj is not None:
                 idnum = i + 1
                 object_positions.append(stream.tell())
-                stream.write(b_(str(idnum) + " 0 obj\n"))
+                stream.write(b_(str(idnum)) + b" 0 obj\n")
                 key = None
                 if hasattr(self, "_encrypt") and idnum != self._encrypt.idnum:
                     pack1 = struct.pack("<i", i + 1)[:3]
@@ -765,12 +765,12 @@ class PdfWriter:
                     md5_hash = md5(key).digest()
                     key = md5_hash[: min(16, len(self._encrypt_key) + 5)]
                 obj.write_to_stream(stream, key)
-                stream.write(b_("\nendobj\n"))
+                stream.write(b"\nendobj\n")
         return object_positions
 
     def _write_xref_table(self, stream: StreamType, object_positions: List[int]) -> int:
         xref_location = stream.tell()
-        stream.write(b_("xref\n"))
+        stream.write(b"xref\n")
         stream.write(b_("0 %s\n" % (len(self._objects) + 1)))
         stream.write(b_("%010d %05d f \n" % (0, 65535)))
         for offset in object_positions:
@@ -778,7 +778,7 @@ class PdfWriter:
         return xref_location
 
     def _write_trailer(self, stream: StreamType) -> None:
-        stream.write(b_("trailer\n"))
+        stream.write(b"trailer\n")
         trailer = DictionaryObject()
         trailer.update(
             {
@@ -1222,31 +1222,31 @@ class PdfWriter:
         pg_dict = cast(DictionaryObject, self.get_object(self._pages))
         pages = cast(ArrayObject, pg_dict[PA.KIDS])
         jump_operators = (
-            b_("cm"),
-            b_("w"),
-            b_("J"),
-            b_("j"),
-            b_("M"),
-            b_("d"),
-            b_("ri"),
-            b_("i"),
-            b_("gs"),
-            b_("W"),
-            b_("b"),
-            b_("s"),
-            b_("S"),
-            b_("f"),
-            b_("F"),
-            b_("n"),
-            b_("m"),
-            b_("l"),
-            b_("c"),
-            b_("v"),
-            b_("y"),
-            b_("h"),
-            b_("B"),
-            b_("Do"),
-            b_("sh"),
+            b"cm",
+            b"w",
+            b"J",
+            b"j",
+            b"M",
+            b"d",
+            b"ri",
+            b"i",
+            b"gs",
+            b"W",
+            b"b",
+            b"s",
+            b"S",
+            b"f",
+            b"F",
+            b"n",
+            b"m",
+            b"l",
+            b"c",
+            b"v",
+            b"y",
+            b"h",
+            b"B",
+            b"Do",
+            b"sh",
         )
         for j in range(len(pages)):
             page = pages[j]
@@ -1258,32 +1258,32 @@ class PdfWriter:
             _operations = []
             seq_graphics = False
             for operands, operator in content.operations:
-                if operator in [b_("Tj"), b_("'")]:
+                if operator in [b"Tj", b"'"]:
                     text = operands[0]
                     if ignore_byte_string_object and not isinstance(
                         text, TextStringObject
                     ):
                         operands[0] = TextStringObject()
-                elif operator == b_('"'):
+                elif operator == b'"':
                     text = operands[2]
                     if ignore_byte_string_object and not isinstance(
                         text, TextStringObject
                     ):
                         operands[2] = TextStringObject()
-                elif operator == b_("TJ"):
+                elif operator == b"TJ":
                     for i in range(len(operands[0])):
                         if ignore_byte_string_object and not isinstance(
                             operands[0][i], TextStringObject
                         ):
                             operands[0][i] = TextStringObject()
 
-                if operator == b_("q"):
+                if operator == b"q":
                     seq_graphics = True
-                if operator == b_("Q"):
+                if operator == b"Q":
                     seq_graphics = False
                 if seq_graphics and operator in jump_operators:
                     continue
-                if operator == b_("re"):
+                if operator == b"re":
                     continue
                 _operations.append((operands, operator))
 
@@ -1317,7 +1317,7 @@ class PdfWriter:
             if not isinstance(content, ContentStream):
                 content = ContentStream(content, page_ref)
             for operands, operator in content.operations:
-                if operator in [b_("Tj"), b_("'")]:
+                if operator in [b"Tj", b"'"]:
                     text = operands[0]
                     if not ignore_byte_string_object:
                         if isinstance(text, TextStringObject):
@@ -1325,7 +1325,7 @@ class PdfWriter:
                     else:
                         if isinstance(text, (TextStringObject, ByteStringObject)):
                             operands[0] = TextStringObject()
-                elif operator == b_('"'):
+                elif operator == b'"':
                     text = operands[2]
                     if not ignore_byte_string_object:
                         if isinstance(text, TextStringObject):
@@ -1333,7 +1333,7 @@ class PdfWriter:
                     else:
                         if isinstance(text, (TextStringObject, ByteStringObject)):
                             operands[2] = TextStringObject()
-                elif operator == b_("TJ"):
+                elif operator == b"TJ":
                     for i in range(len(operands[0])):
                         if not ignore_byte_string_object:
                             if isinstance(operands[0][i], TextStringObject):
