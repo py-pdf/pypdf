@@ -58,7 +58,7 @@ CompressedTransformationMatrix: TypeAlias = Tuple[
     float, float, float, float, float, float
 ]
 
-bytes_type = type(bytes())  # Works the same in Python 2.X and 3.X
+bytes_type = bytes  # Works the same in Python 2.X and 3.X
 StreamType = Union[BytesIO, BufferedReader, BufferedWriter, FileIO]
 StrByteType = Union[str, StreamType]
 
@@ -71,7 +71,7 @@ def read_until_whitespace(stream: StreamType, maxchars: Optional[int] = None) ->
     Reads non-whitespace characters and returns them.
     Stops upon encountering whitespace or when maxchars is reached.
     """
-    txt = b_("")
+    txt = b""
     while True:
         tok = stream.read(1)
         if tok.isspace() or not tok:
@@ -108,7 +108,7 @@ def skip_over_whitespace(stream: StreamType) -> bool:
 def skip_over_comment(stream: StreamType) -> None:
     tok = stream.read(1)
     stream.seek(-1, 1)
-    if tok == b_("%"):
+    if tok == b"%":
         while tok not in (b_("\n"), b_("\r")):
             tok = stream.read(1)
 
@@ -120,15 +120,13 @@ def read_until_regex(stream: StreamType, regex: Any, ignore_eof: bool = False) -
     :param bool ignore_eof: If true, ignore end-of-line and return immediately
     :param regex: re.Pattern
     """
-    name = b_("")
+    name = b""
     while True:
         tok = stream.read(16)
         if not tok:
-            # stream has truncated prematurely
             if ignore_eof:
                 return name
-            else:
-                raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
+            raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
         m = regex.search(tok)
         if m is not None:
             name += tok[: m.start()]

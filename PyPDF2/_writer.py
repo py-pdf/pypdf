@@ -1221,7 +1221,7 @@ class PdfWriter:
         """
         pg_dict = cast(DictionaryObject, self.get_object(self._pages))
         pages = cast(ArrayObject, pg_dict[PA.KIDS])
-        jump_operators = [
+        jump_operators = (
             b_("cm"),
             b_("w"),
             b_("J"),
@@ -1247,7 +1247,7 @@ class PdfWriter:
             b_("B"),
             b_("Do"),
             b_("sh"),
-        ]
+        )
         for j in range(len(pages)):
             page = pages[j]
             page_ref = cast(DictionaryObject, self.get_object(page))
@@ -1551,7 +1551,7 @@ class PdfWriter:
         deprecate_with_replacement("addLink", "add_link")
         return self.add_link(pagenum, pagedest, rect, border, fit, *args)
 
-    _valid_layouts = [
+    _valid_layouts = (
         "/NoLayout",
         "/SinglePage",
         "/OneColumn",
@@ -1559,7 +1559,7 @@ class PdfWriter:
         "/TwoColumnRight",
         "/TwoPageLeft",
         "/TwoPageRight",
-    ]
+    )
 
     def _get_page_layout(self) -> Optional[LayoutType]:
         try:
@@ -1668,14 +1668,14 @@ class PdfWriter:
         deprecate_with_replacement("pageLayout", "page_layout")
         self.page_layout = layout
 
-    _valid_modes = [
+    _valid_modes = (
         "/UseNone",
         "/UseOutlines",
         "/UseThumbs",
         "/FullScreen",
         "/UseOC",
         "/UseAttachments",
-    ]
+    )
 
     def _get_page_mode(self) -> Optional[PagemodeType]:
         try:

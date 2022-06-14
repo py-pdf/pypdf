@@ -35,7 +35,7 @@ class PaperSize:
     C4 = Dimensions(649, 918)
 
 
-_din_a = [
+_din_a = (
     PaperSize.A0,
     PaperSize.A1,
     PaperSize.A2,
@@ -45,4 +45,4 @@ _din_a = [
     PaperSize.A6,
     PaperSize.A7,
     PaperSize.A8,
-]
+)
