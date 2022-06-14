@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1655203014346,
+  "lastUpdate": 1655203168320,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -5134,6 +5134,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0327202634295768",
             "extra": "mean: 3.9234321554000076 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "712c16dd73e1ecacf5afed1da58b5eb2ccffd000",
+          "message": "DOC: Remove reference to Scripts (#987)\n\nCloses #985",
+          "timestamp": "2022-06-14T12:38:08+02:00",
+          "tree_id": "ab2d9d5e49b5a85b7804ae4ffd8679b5f0bfc252",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/712c16dd73e1ecacf5afed1da58b5eb2ccffd000"
+        },
+        "date": 1655203167338,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.5704879013606602,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00795389861735368",
+            "extra": "mean: 1.7528855522 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 8.483493965070943,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007423711667371854",
+            "extra": "mean: 117.875960555556 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21677975953201117,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019266400243769487",
+            "extra": "mean: 4.6129767934 sec\nrounds: 5"
           }
         ]
       }
