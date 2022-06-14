@@ -33,7 +33,6 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import warnings
 from codecs import getencoder
-from copy import copy
 from io import (
     DEFAULT_BUFFER_SIZE,
     BufferedReader,
@@ -42,7 +41,6 @@ from io import (
     FileIO,
 )
 from os import SEEK_CUR
-from string import whitespace
 from typing import Dict, Optional, Pattern, Tuple, Union, overload
 
 try:
