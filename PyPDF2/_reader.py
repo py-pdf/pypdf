@@ -100,7 +100,7 @@ from .xmp import XmpInformation
 def convert_to_int(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:
     if size > 8:
         raise PdfReadError("invalid size in convert_to_int")
-    d = b_("\x00\x00\x00\x00\x00\x00\x00\x00") + b_(d)
+    d = b"\x00\x00\x00\x00\x00\x00\x00\x00" + b_(d)
     d = d[-8:]
     return struct.unpack(">q", d)[0]
 
@@ -1219,7 +1219,7 @@ class PdfReader:
             stream.seek(0, os.SEEK_END)
         last_mb = stream.tell() - 1024 * 1024 + 1  # offset of last MB of stream
         line = b""
-        while line[:5] != b_("%%EOF"):
+        while line[:5] != b"%%EOF":
             if stream.tell() < last_mb:
                 raise PdfReadError("EOF marker not found")
             line = read_previous_line(stream)
@@ -1379,7 +1379,7 @@ class PdfReader:
                 # 21-byte entries (or more) due to the use of \r\n
                 # (CRLF) EOL's. Detect that case, and adjust the line
                 # until it does not begin with a \r (CR) or \n (LF).
-                while line[0] in b_("\x0D\x0A"):
+                while line[0] in b"\x0D\x0A":
                     stream.seek(-20 + 1, 1)
                     line = stream.read(20)
 
@@ -1392,7 +1392,7 @@ class PdfReader:
                 if line[-1] in b"0123456789t":
                     stream.seek(-1, 1)
 
-                offset_b, generation_b = line[:16].split(b_(" "))
+                offset_b, generation_b = line[:16].split(b" ")
                 offset, generation = int(offset_b), int(generation_b)
                 if generation not in self.xref:
                     self.xref[generation] = {}
@@ -1485,7 +1485,7 @@ class PdfReader:
         stream.seek(0, 0)
         f_ = stream.read(-1)
 
-        for m in re.finditer(b_(r"[\r\n \t][ \t]*(\d+)[ \t]+(\d+)[ \t]+obj"), f_):
+        for m in re.finditer(rb"[\r\n \t][ \t]*(\d+)[ \t]+(\d+)[ \t]+obj", f_):
             idnum = int(m.group(1))
             generation = int(m.group(2))
             if generation not in self.xref:
@@ -1566,11 +1566,11 @@ class PdfReader:
             if stream.tell() < 2:
                 raise PdfReadError("EOL marker not found")
             stream.seek(-2, 1)
-            if x == b_("\n") or x == b_("\r"):  # \n = LF; \r = CR
+            if x == b"\n" or x == b"\r":  # \n = LF; \r = CR
                 crlf = False
-                while x == b_("\n") or x == b_("\r"):
+                while x == b"\n" or x == b"\r":
                     x = stream.read(1)
-                    if x == b_("\n") or x == b_("\r"):  # account for CR+LF
+                    if x == b"\n" or x == b"\r":  # account for CR+LF
                         stream.seek(-1, 1)
                         crlf = True
                     if stream.tell() < 2:

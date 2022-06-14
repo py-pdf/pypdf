@@ -109,7 +109,7 @@ def skip_over_comment(stream: StreamType) -> None:
     tok = stream.read(1)
     stream.seek(-1, 1)
     if tok == b"%":
-        while tok not in (b_("\n"), b_("\r")):
+        while tok not in (b"\n", b"\r"):
             tok = stream.read(1)
 
 
@@ -298,7 +298,7 @@ def hex_str(num: int) -> str:
     return hex(num).replace("L", "")
 
 
-WHITESPACES = [b_(x) for x in [" ", "\n", "\r", "\t", "\x00"]]
+WHITESPACES = [b" ", b"\n", b"\r", b"\t", b"\x00"]
 
 
 def paeth_predictor(left: int, up: int, up_left: int) -> int:

@@ -38,9 +38,9 @@ from .generic import ByteStringObject
 
 # ref: pdf1.8 spec section 3.5.2 algorithm 3.2
 _encryption_padding = (
-    b_("\x28\xbf\x4e\x5e\x4e\x75\x8a\x41\x64\x00\x4e\x56")
-    + b_("\xff\xfa\x01\x08\x2e\x2e\x00\xb6\xd0\x68\x3e\x80\x2f\x0c")
-    + b_("\xa9\xfe\x64\x53\x69\x7a")
+    b"\x28\xbf\x4e\x5e\x4e\x75\x8a\x41\x64\x00\x4e\x56"
+    + b"\xff\xfa\x01\x08\x2e\x2e\x00\xb6\xd0\x68\x3e\x80\x2f\x0c"
+    + b"\xa9\xfe\x64\x53\x69\x7a"
 )
 
 
@@ -79,7 +79,7 @@ def _alg32(
     # 6. (Revision 3 or greater) If document metadata is not being encrypted,
     # pass 4 bytes with the value 0xFFFFFFFF to the MD5 hash function.
     if rev >= 3 and not metadata_encrypt:
-        m.update(b_("\xff\xff\xff\xff"))
+        m.update(b"\xff\xff\xff\xff")
     # 7. Finish the hash.
     md5_hash = m.digest()
     # 8. (Revision 3 or greater) Do the following 50 times: Take the output
@@ -222,7 +222,7 @@ def _alg35(
     # (implementator note: I don't know what "arbitrary padding" is supposed to
     # mean, so I have used null bytes.  This seems to match a few other
     # people's implementations)
-    return val + (b_("\x00") * 16), key
+    return val + (b"\x00" * 16), key
 
 
 def RC4_encrypt(key: Union[str, bytes], plaintext: bytes) -> bytes:
@@ -239,4 +239,4 @@ def RC4_encrypt(key: Union[str, bytes], plaintext: bytes) -> bytes:
         S[i], S[j] = S[j], S[i]
         t = S[(S[i] + S[j]) % 256]
         retval.append(b_(chr(ord_(plaintext[x]) ^ t)))
-    return b_("").join(retval)
+    return b"".join(retval)
