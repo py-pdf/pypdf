@@ -31,7 +31,6 @@ Utility functions for PDF library.
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
-import os
 import warnings
 from codecs import getencoder
 from io import (
@@ -41,7 +40,8 @@ from io import (
     BytesIO,
     FileIO,
 )
-from typing import Any, Dict, Optional, Tuple, Union, overload
+from os import SEEK_CUR
+from typing import Dict, Optional, Pattern, Tuple, Union, overload
 
 try:
     # Python 3.10+: https://www.python.org/dev/peps/pep-0484/
@@ -86,7 +86,7 @@ def read_non_whitespace(stream: StreamType) -> bytes:
     """
     Finds and reads the next non-whitespace character (ignores whitespace).
     """
-    tok = WHITESPACES[0]
+    tok = stream.read(1)
     while tok in WHITESPACES:
         tok = stream.read(1)
     return tok
@@ -109,11 +109,13 @@ def skip_over_comment(stream: StreamType) -> None:
     tok = stream.read(1)
     stream.seek(-1, 1)
     if tok == b"%":
-        while tok not in (b_("\n"), b_("\r")):
+        while tok not in (b"\n", b"\r"):
             tok = stream.read(1)
 
 
-def read_until_regex(stream: StreamType, regex: Any, ignore_eof: bool = False) -> bytes:
+def read_until_regex(
+    stream: StreamType, regex: Pattern, ignore_eof: bool = False
+) -> bytes:
     """
     Reads until the regular expression pattern matched (ignore the match)
     :raises PdfStreamError: on premature end-of-file
@@ -136,9 +138,6 @@ def read_until_regex(stream: StreamType, regex: Any, ignore_eof: bool = False) -
     return name
 
 
-CRLF = b"\r\n"
-
-
 def read_block_backwards(stream: StreamType, to_read: int) -> bytes:
     """Given a stream at position X, read a block of size
     to_read ending at position X.
@@ -147,10 +146,10 @@ def read_block_backwards(stream: StreamType, to_read: int) -> bytes:
     if stream.tell() < to_read:
         raise PdfStreamError("Could not read malformed PDF file")
     # Seek to the start of the block we want to read.
-    stream.seek(-to_read, os.SEEK_CUR)
+    stream.seek(-to_read, SEEK_CUR)
     read = stream.read(to_read)
     # Seek to the start of the block we read after reading it.
-    stream.seek(-to_read, os.SEEK_CUR)
+    stream.seek(-to_read, SEEK_CUR)
     if len(read) != to_read:
         raise PdfStreamError(f"EOF: read {len(read)}, expected {to_read}?")
     return read
@@ -179,7 +178,7 @@ def read_previous_line(stream: StreamType) -> bytes:
         if not found_crlf:
             # We haven't found our first CR/LF yet.
             # Read off characters until we hit one.
-            while idx >= 0 and block[idx] not in CRLF:
+            while idx >= 0 and block[idx] not in b"\r\n":
                 idx -= 1
             if idx >= 0:
                 found_crlf = True
@@ -190,7 +189,7 @@ def read_previous_line(stream: StreamType) -> bytes:
             # plus any previously read blocks.
             line_content.append(block[idx + 1 :])
             # Continue to read off any more CRLF characters.
-            while idx >= 0 and block[idx] in CRLF:
+            while idx >= 0 and block[idx] in b"\r\n":
                 idx -= 1
         else:
             # Didn't find CR/LF yet - add this block to our
@@ -199,7 +198,7 @@ def read_previous_line(stream: StreamType) -> bytes:
         if idx >= 0:
             # We found the next non-CRLF character.
             # Set the stream position correctly, then break
-            stream.seek(idx + 1, os.SEEK_CUR)
+            stream.seek(idx + 1, SEEK_CUR)
             break
     # Join all the blocks in the line (which are in reverse order)
     return b"".join(line_content[::-1])
@@ -298,7 +297,7 @@ def hex_str(num: int) -> str:
     return hex(num).replace("L", "")
 
 
-WHITESPACES = [b_(x) for x in [" ", "\n", "\r", "\t", "\x00"]]
+WHITESPACES = (b" ", b"\n", b"\r", b"\t", b"\x00")
 
 
 def paeth_predictor(left: int, up: int, up_left: int) -> int:
