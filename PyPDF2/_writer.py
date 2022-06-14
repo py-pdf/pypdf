@@ -743,7 +743,7 @@ class PdfWriter:
             if obj is not None:
                 idnum = i + 1
                 object_positions.append(stream.tell())
-                stream.write(b_(str(idnum) + " 0 obj\n"))
+                stream.write(b_(str(idnum)) + b" 0 obj\n")
                 key = None
                 if hasattr(self, "_encrypt") and idnum != self._encrypt.idnum:
                     pack1 = struct.pack("<i", i + 1)[:3]

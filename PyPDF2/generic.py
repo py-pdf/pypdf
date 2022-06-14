@@ -1110,7 +1110,7 @@ class ContentStream(DecodedStreamObject):
             data = b""
             for s in stream:
                 data += b_(s.get_object().get_data())
-            stream_bytes = BytesIO(b_(data))
+            stream_bytes = BytesIO(data)
         else:
             stream_data = stream.get_data()
             assert stream_data is not None

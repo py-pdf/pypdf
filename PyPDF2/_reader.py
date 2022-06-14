@@ -100,7 +100,7 @@ from .xmp import XmpInformation
 def convert_to_int(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:
     if size > 8:
         raise PdfReadError("invalid size in convert_to_int")
-    d = b"\x00\x00\x00\x00\x00\x00\x00\x00" + b_(d)
+    d = b"\x00\x00\x00\x00\x00\x00\x00\x00" + d
     d = d[-8:]
     return struct.unpack(">q", d)[0]
 
@@ -254,7 +254,7 @@ class PdfReader:
             )
         if isinstance(stream, (str, Path)):
             with open(stream, "rb") as fh:
-                stream = BytesIO(b_(fh.read()))
+                stream = BytesIO(fh.read())
         self.read(stream)
         self.stream = stream
 
