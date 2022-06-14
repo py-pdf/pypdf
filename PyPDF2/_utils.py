@@ -41,7 +41,7 @@ from io import (
     BytesIO,
     FileIO,
 )
-from typing import Any, Dict, Optional, Tuple, Union, overload
+from typing import Dict, Optional, Pattern, Tuple, Union, overload
 
 try:
     # Python 3.10+: https://www.python.org/dev/peps/pep-0484/
@@ -86,7 +86,7 @@ def read_non_whitespace(stream: StreamType) -> bytes:
     """
     Finds and reads the next non-whitespace character (ignores whitespace).
     """
-    tok = WHITESPACES[0]
+    tok = stream.read(1)
     while tok in WHITESPACES:
         tok = stream.read(1)
     return tok
@@ -109,11 +109,13 @@ def skip_over_comment(stream: StreamType) -> None:
     tok = stream.read(1)
     stream.seek(-1, 1)
     if tok == b"%":
-        while tok not in (b_("\n"), b_("\r")):
+        while tok not in (b"\n", b"\r"):
             tok = stream.read(1)
 
 
-def read_until_regex(stream: StreamType, regex: Any, ignore_eof: bool = False) -> bytes:
+def read_until_regex(
+    stream: StreamType, regex: Pattern, ignore_eof: bool = False
+) -> bytes:
     """
     Reads until the regular expression pattern matched (ignore the match)
     :raises PdfStreamError: on premature end-of-file
@@ -298,7 +300,7 @@ def hex_str(num: int) -> str:
     return hex(num).replace("L", "")
 
 
-WHITESPACES = [b_(x) for x in [" ", "\n", "\r", "\t", "\x00"]]
+WHITESPACES = [b" ", b"\n", b"\r", b"\t", b"\x00"]
 
 
 def paeth_predictor(left: int, up: int, up_left: int) -> int:
