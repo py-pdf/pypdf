@@ -212,7 +212,7 @@ def _alg35(
     # operation between that byte and the single-byte value of the iteration
     # counter (from 1 to 19).
     for i in range(1, 20):
-        new_key = b_("")
+        new_key = b""
         for k in key:
             new_key += b_(chr(ord_(k) ^ i))
         val = RC4_encrypt(new_key, val)

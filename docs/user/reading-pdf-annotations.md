@@ -16,6 +16,21 @@ PDF 1.7 defines 25 different annotation types:
 * Watermark
 * 3D
 
+In general, annotations can be read like this:
+
+```python
+from PyPDF2 import PdfReader
+
+reader = PdfReader("commented.pdf")
+
+for page in reader.pages:
+    if "/Annots" in page:
+        for annot in page["/Annots"]:
+            obj = annot.get_object()
+            annotation = {"subtype": obj["/Subtype"], "location": obj["/Rect"]}
+            print(annotation)
+```
+
 Reading the most common ones is described here.
 
 ## Text

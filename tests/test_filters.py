@@ -103,7 +103,7 @@ def test_ASCIIHexDecode(data, expected):
     """
     Feeds a bunch of values to ASCIIHexDecode.decode() and ensures the
     correct output is returned.
-    TO-DO What is decode() supposed to do for such inputs as ">>", ">>>" or
+    TODO What is decode() supposed to do for such inputs as ">>", ">>>" or
     any other not terminated by ">"? (For the latter case, an exception
     is currently raised.)
     """

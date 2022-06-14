@@ -177,34 +177,38 @@ def test_read_block_backwards_at_start():
         (b"abc\nd", 5, b"d", 3),
         # Skip over multiple CR/LF bytes
         (b"abc\n\r\ndef", 9, b"def", 3),
-        # Include a block full of newlines...
-        (
-            b"abc" + b"\n" * (2 * io.DEFAULT_BUFFER_SIZE) + b"d",
-            2 * io.DEFAULT_BUFFER_SIZE + 4,
-            b"d",
-            3,
-        ),
-        # Include a block full of non-newline characters
-        (
-            b"abc\n" + b"d" * (2 * io.DEFAULT_BUFFER_SIZE),
-            2 * io.DEFAULT_BUFFER_SIZE + 4,
-            b"d" * (2 * io.DEFAULT_BUFFER_SIZE),
-            3,
-        ),
-        # Both
-        (
-            b"abcxyz"
-            + b"\n" * (2 * io.DEFAULT_BUFFER_SIZE)
-            + b"d" * (2 * io.DEFAULT_BUFFER_SIZE),
-            4 * io.DEFAULT_BUFFER_SIZE + 6,
-            b"d" * (2 * io.DEFAULT_BUFFER_SIZE),
-            6,
-        ),
     ],
-    ids=list(range(11)),
+    ids=list(range(8)),
 )
 def test_read_previous_line(dat, pos, expected, expected_pos):
     s = io.BytesIO(dat)
     s.seek(pos)
     assert read_previous_line(s) == expected
     assert s.tell() == expected_pos
+
+
+# for unknown reason if the parameters are passed through pytest, errors are reported
+def test_read_previous_line2():
+    # Include a block full of newlines...
+    test_read_previous_line(
+        b"abc" + b"\n" * (2 * io.DEFAULT_BUFFER_SIZE) + b"d",
+        2 * io.DEFAULT_BUFFER_SIZE + 4,
+        b"d",
+        3,
+    )
+    # Include a block full of non-newline characters
+    test_read_previous_line(
+        b"abc\n" + b"d" * (2 * io.DEFAULT_BUFFER_SIZE),
+        2 * io.DEFAULT_BUFFER_SIZE + 4,
+        b"d" * (2 * io.DEFAULT_BUFFER_SIZE),
+        3,
+    )
+    # Both
+    test_read_previous_line(
+        b"abcxyz"
+        + b"\n" * (2 * io.DEFAULT_BUFFER_SIZE)
+        + b"d" * (2 * io.DEFAULT_BUFFER_SIZE),
+        4 * io.DEFAULT_BUFFER_SIZE + 6,
+        b"d" * (2 * io.DEFAULT_BUFFER_SIZE),
+        6,
+    )

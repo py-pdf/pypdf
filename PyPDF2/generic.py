@@ -68,7 +68,7 @@ from .errors import (
 
 logger = logging.getLogger(__name__)
 ObjectPrefix = b_("/<[tf(n%")
-NumberSigns = b_("+-")
+NumberSigns = b"+-"
 IndirectPattern = re.compile(b_(r"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]"))
 
 
@@ -91,12 +91,12 @@ class NullObject(PdfObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
-        stream.write(b_("null"))
+        stream.write(b"null")
 
     @staticmethod
     def read_from_stream(stream: StreamType) -> "NullObject":
         nulltxt = stream.read(4)
-        if nulltxt != b_("null"):
+        if nulltxt != b"null":
             raise PdfReadError("Could not read Null object")
         return NullObject()
 
@@ -124,13 +124,16 @@ class BooleanObject(PdfObject):
         else:
             return False
 
+    def __repr__(self) -> str:
+        return "True" if self.value else "False"
+
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         if self.value:
-            stream.write(b_("true"))
+            stream.write(b"true")
         else:
-            stream.write(b_("false"))
+            stream.write(b"false")
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
@@ -141,9 +144,9 @@ class BooleanObject(PdfObject):
     @staticmethod
     def read_from_stream(stream: StreamType) -> "BooleanObject":
         word = stream.read(4)
-        if word == b_("true"):
+        if word == b"true":
             return BooleanObject(True)
-        elif word == b_("fals"):
+        elif word == b"fals":
             stream.read(1)
             return BooleanObject(False)
         else:
@@ -159,11 +162,11 @@ class ArrayObject(list, PdfObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
-        stream.write(b_("["))
+        stream.write(b"[")
         for data in self:
-            stream.write(b_(" "))
+            stream.write(b" ")
             data.write_to_stream(stream, encryption_key)
-        stream.write(b_(" ]"))
+        stream.write(b" ]")
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
@@ -179,7 +182,7 @@ class ArrayObject(list, PdfObject):
     ) -> "ArrayObject":  # PdfReader
         arr = ArrayObject()
         tmp = stream.read(1)
-        if tmp != b_("["):
+        if tmp != b"[":
             raise PdfReadError("Could not read array")
         while True:
             # skip leading whitespace
@@ -189,7 +192,7 @@ class ArrayObject(list, PdfObject):
             stream.seek(-1, 1)
             # check for array ending
             peekahead = stream.read(1)
-            if peekahead == b_("]"):
+            if peekahead == b"]":
                 break
             stream.seek(-1, 1)
             # read and append obj
@@ -241,7 +244,7 @@ class IndirectObject(PdfObject):
 
     @staticmethod
     def read_from_stream(stream: StreamType, pdf: Any) -> "IndirectObject":  # PdfReader
-        idnum = b_("")
+        idnum = b""
         while True:
             tok = stream.read(1)
             if not tok:
@@ -249,7 +252,7 @@ class IndirectObject(PdfObject):
             if tok.isspace():
                 break
             idnum += tok
-        generation = b_("")
+        generation = b""
         while True:
             tok = stream.read(1)
             if not tok:
@@ -260,7 +263,7 @@ class IndirectObject(PdfObject):
                 break
             generation += tok
         r = read_non_whitespace(stream)
-        if r != b_("R"):
+        if r != b"R":
             raise PdfReadError(
                 "Error reading indirect object reference at byte %s"
                 % hex_str(stream.tell())
@@ -317,8 +320,8 @@ class FloatObject(decimal.Decimal, PdfObject):
 
 
 class NumberObject(int, PdfObject):
-    NumberPattern = re.compile(b_("[^+-.0-9]"))
-    ByteDot = b_(".")
+    NumberPattern = re.compile(b"[^+-.0-9]")
+    ByteDot = b"."
 
     def __new__(cls, value: Any) -> "NumberObject":
         val = int(value)
@@ -346,8 +349,7 @@ class NumberObject(int, PdfObject):
         num = read_until_regex(stream, NumberObject.NumberPattern)
         if num.find(NumberObject.ByteDot) != -1:
             return FloatObject(num)
-        else:
-            return NumberObject(num)
+        return NumberObject(num)
 
     @staticmethod
     def readFromStream(
@@ -359,25 +361,26 @@ class NumberObject(int, PdfObject):
 
 def readHexStringFromStream(  # TODO: PEP8
     stream: StreamType,
+    forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
 ) -> Union["TextStringObject", "ByteStringObject"]:
     stream.read(1)
     txt = ""
-    x = b_("")
+    x = b""
     while True:
         tok = read_non_whitespace(stream)
         if not tok:
             raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
-        if tok == b_(">"):
+        if tok == b">":
             break
         x += tok
         if len(x) == 2:
             txt += chr(int(x, base=16))
-            x = b_("")
+            x = b""
     if len(x) == 1:
-        x += b_("0")
+        x += b"0"
     if len(x) == 2:
         txt += chr(int(x, base=16))
-    return createStringObject(b_(txt))
+    return createStringObject(b_(txt), forced_encoding)
 
 
 def readStringFromStream(  # TODO: PEP8
@@ -386,18 +389,18 @@ def readStringFromStream(  # TODO: PEP8
 ) -> Union["TextStringObject", "ByteStringObject"]:
     tok = stream.read(1)
     parens = 1
-    txt = b_("")
+    txt = b""
     while True:
         tok = stream.read(1)
         if not tok:
             raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
-        if tok == b_("("):
+        if tok == b"(":
             parens += 1
-        elif tok == b_(")"):
+        elif tok == b")":
             parens -= 1
             if parens == 0:
                 break
-        elif tok == b_("\\"):
+        elif tok == b"\\":
             tok = stream.read(1)
             escape_dict = {
                 b_("n"): b_("\n"),
@@ -1123,27 +1126,27 @@ class ContentStream(DecodedStreamObject):
         operands: List[Union[int, str, PdfObject]] = []
         while True:
             peek = read_non_whitespace(stream)
-            if peek == b_("") or ord_(peek) == 0:
+            if peek == b"" or ord_(peek) == 0:
                 break
             stream.seek(-1, 1)
-            if peek.isalpha() or peek == b_("'") or peek == b_('"'):
+            if peek.isalpha() or peek == b"'" or peek == b'"':
                 operator = read_until_regex(stream, NameObject.delimiter_pattern, True)
-                if operator == b_("BI"):
+                if operator == b"BI":
                     # begin inline image - a completely different parsing
                     # mechanism is required, of course... thanks buddy...
                     assert operands == []
                     ii = self._readInlineImage(stream)
-                    self.operations.append((ii, b_("INLINE IMAGE")))
+                    self.operations.append((ii, b"INLINE IMAGE"))
                 else:
                     self.operations.append((operands, operator))
                     operands = []
-            elif peek == b_("%"):
+            elif peek == b"%":
                 # If we encounter a comment in the content stream, we have to
                 # handle it here.  Typically, read_object will handle
                 # encountering a comment -- but read_object assumes that
                 # following the comment must be the object we're trying to
                 # read.  In this case, it could be an operator instead.
-                while peek not in (b_("\r"), b_("\n")):
+                while peek not in (b"\r", b"\n"):
                     peek = stream.read(1)
             else:
                 operands.append(read_object(stream, None, self.forced_encoding))
@@ -1155,7 +1158,7 @@ class ContentStream(DecodedStreamObject):
         while True:
             tok = read_non_whitespace(stream)
             stream.seek(-1, 1)
-            if tok == b_("I"):
+            if tok == b"I":
                 # "ID" - begin of image data
                 break
             key = read_object(stream, self.pdf)
@@ -1165,7 +1168,7 @@ class ContentStream(DecodedStreamObject):
             settings[key] = value
         # left at beginning of ID
         tmp = stream.read(3)
-        assert tmp[:2] == b_("ID")
+        assert tmp[:2] == b"ID"
         data = BytesIO()
         # Read the inline image, while checking for EI (End Image) operator.
         while True:
@@ -1174,7 +1177,7 @@ class ContentStream(DecodedStreamObject):
             # We have reached the end of the stream, but haven't found the EI operator.
             if not buf:
                 raise PdfReadError("Unexpected end of stream")
-            loc = buf.find(b_("E"))
+            loc = buf.find(b"E")
 
             if loc == -1:
                 data.write(buf)
@@ -1187,7 +1190,7 @@ class ContentStream(DecodedStreamObject):
                 tok = stream.read(1)
                 # Check for End Image
                 tok2 = stream.read(1)
-                if tok2 == b_("I"):
+                if tok2 == b"I":
                     # Data can contain EI, so check for the Q operator.
                     tok3 = stream.read(1)
                     info = tok + tok2
@@ -1197,7 +1200,7 @@ class ContentStream(DecodedStreamObject):
                         has_q_whitespace = True
                         info += tok3
                         tok3 = stream.read(1)
-                    if tok3 == b_("Q") and has_q_whitespace:
+                    if tok3 == b"Q" and has_q_whitespace:
                         stream.seek(-1, 1)
                         break
                     else:
@@ -1212,20 +1215,20 @@ class ContentStream(DecodedStreamObject):
     def _data(self) -> bytes:
         newdata = BytesIO()
         for operands, operator in self.operations:
-            if operator == b_("INLINE IMAGE"):
-                newdata.write(b_("BI"))
+            if operator == b"INLINE IMAGE":
+                newdata.write(b"BI")
                 dicttext = BytesIO()
                 operands["settings"].write_to_stream(dicttext, None)
                 newdata.write(dicttext.getvalue()[2:-2])
-                newdata.write(b_("ID "))
+                newdata.write(b"ID ")
                 newdata.write(operands["data"])
-                newdata.write(b_("EI"))
+                newdata.write(b"EI")
             else:
                 for op in operands:
                     op.write_to_stream(newdata, None)
-                    newdata.write(b_(" "))
+                    newdata.write(b" ")
                 newdata.write(b_(operator))
-            newdata.write(b_("\n"))
+            newdata.write(b"\n")
         return newdata.getvalue()
 
     @_data.setter
@@ -1248,10 +1251,10 @@ def read_object(
         peek = stream.read(2)
         stream.seek(-2, 1)  # reset to start
 
-        if peek == b_("<<"):
+        if peek == b"<<":
             return DictionaryObject.read_from_stream(stream, pdf, forced_encoding)
         else:
-            return readHexStringFromStream(stream)
+            return readHexStringFromStream(stream, forced_encoding)
     elif idx == 2:
         return ArrayObject.read_from_stream(stream, pdf, forced_encoding)
     elif idx == 3 or idx == 4:
@@ -1882,7 +1885,10 @@ def createStringObject(
                     out += bytes((x,)).decode("charmap")
             return TextStringObject(out)
         elif isinstance(forced_encoding, str):
-            return TextStringObject(string.decode(forced_encoding))
+            if forced_encoding == "bytes":
+                return ByteStringObject(string)
+            else:
+                return TextStringObject(string.decode(forced_encoding))
         else:
             try:
                 if string.startswith(codecs.BOM_UTF16_BE):
@@ -2196,6 +2202,528 @@ _pdfdoc_encoding = [
 
 assert len(_pdfdoc_encoding) == 256
 
+# manually generated from https://www.unicode.org/Public/MAPPINGS/VENDORS/ADOBE/symbol.txt
+_symbol_encoding = [
+    "\u0000",
+    "\u0001",
+    "\u0002",
+    "\u0003",
+    "\u0004",
+    "\u0005",
+    "\u0006",
+    "\u0007",
+    "\u0008",
+    "\u0009",
+    "\u000A",
+    "\u000B",
+    "\u000C",
+    "\u000D",
+    "\u000E",
+    "\u000F",
+    "\u0010",
+    "\u0011",
+    "\u0012",
+    "\u0013",
+    "\u0014",
+    "\u0015",
+    "\u0016",
+    "\u0017",
+    "\u0018",
+    "\u0019",
+    "\u001A",
+    "\u001B",
+    "\u001C",
+    "\u001D",
+    "\u001E",
+    "\u001F",
+    "\u0020",
+    "\u0021",
+    "\u2200",
+    "\u0023",
+    "\u2203",
+    "\u0025",
+    "\u0026",
+    "\u220B",
+    "\u0028",
+    "\u0029",
+    "\u2217",
+    "\u002B",
+    "\u002C",
+    "\u2212",
+    "\u002E",
+    "\u002F",
+    "\u0030",
+    "\u0031",
+    "\u0032",
+    "\u0033",
+    "\u0034",
+    "\u0035",
+    "\u0036",
+    "\u0037",
+    "\u0038",
+    "\u0039",
+    "\u003A",
+    "\u003B",
+    "\u003C",
+    "\u003D",
+    "\u003E",
+    "\u003F",
+    "\u2245",
+    "\u0391",
+    "\u0392",
+    "\u03A7",
+    "\u0394",
+    "\u0395",
+    "\u03A6",
+    "\u0393",
+    "\u0397",
+    "\u0399",
+    "\u03D1",
+    "\u039A",
+    "\u039B",
+    "\u039C",
+    "\u039D",
+    "\u039F",
+    "\u03A0",
+    "\u0398",
+    "\u03A1",
+    "\u03A3",
+    "\u03A4",
+    "\u03A5",
+    "\u03C2",
+    "\u03A9",
+    "\u039E",
+    "\u03A8",
+    "\u0396",
+    "\u005B",
+    "\u2234",
+    "\u005D",
+    "\u22A5",
+    "\u005F",
+    "\uF8E5",
+    "\u03B1",
+    "\u03B2",
+    "\u03C7",
+    "\u03B4",
+    "\u03B5",
+    "\u03C6",
+    "\u03B3",
+    "\u03B7",
+    "\u03B9",
+    "\u03D5",
+    "\u03BA",
+    "\u03BB",
+    "\u00B5",
+    "\u03BD",
+    "\u03BF",
+    "\u03C0",
+    "\u03B8",
+    "\u03C1",
+    "\u03C3",
+    "\u03C4",
+    "\u03C5",
+    "\u03D6",
+    "\u03C9",
+    "\u03BE",
+    "\u03C8",
+    "\u03B6",
+    "\u007B",
+    "\u007C",
+    "\u007D",
+    "\u223C",
+    "\u007F",
+    "\u0080",
+    "\u0081",
+    "\u0082",
+    "\u0083",
+    "\u0084",
+    "\u0085",
+    "\u0086",
+    "\u0087",
+    "\u0088",
+    "\u0089",
+    "\u008A",
+    "\u008B",
+    "\u008C",
+    "\u008D",
+    "\u008E",
+    "\u008F",
+    "\u0090",
+    "\u0091",
+    "\u0092",
+    "\u0093",
+    "\u0094",
+    "\u0095",
+    "\u0096",
+    "\u0097",
+    "\u0098",
+    "\u0099",
+    "\u009A",
+    "\u009B",
+    "\u009C",
+    "\u009D",
+    "\u009E",
+    "\u009F",
+    "\u20AC",
+    "\u03D2",
+    "\u2032",
+    "\u2264",
+    "\u2044",
+    "\u221E",
+    "\u0192",
+    "\u2663",
+    "\u2666",
+    "\u2665",
+    "\u2660",
+    "\u2194",
+    "\u2190",
+    "\u2191",
+    "\u2192",
+    "\u2193",
+    "\u00B0",
+    "\u00B1",
+    "\u2033",
+    "\u2265",
+    "\u00D7",
+    "\u221D",
+    "\u2202",
+    "\u2022",
+    "\u00F7",
+    "\u2260",
+    "\u2261",
+    "\u2248",
+    "\u2026",
+    "\uF8E6",
+    "\uF8E7",
+    "\u21B5",
+    "\u2135",
+    "\u2111",
+    "\u211C",
+    "\u2118",
+    "\u2297",
+    "\u2295",
+    "\u2205",
+    "\u2229",
+    "\u222A",
+    "\u2283",
+    "\u2287",
+    "\u2284",
+    "\u2282",
+    "\u2286",
+    "\u2208",
+    "\u2209",
+    "\u2220",
+    "\u2207",
+    "\uF6DA",
+    "\uF6D9",
+    "\uF6DB",
+    "\u220F",
+    "\u221A",
+    "\u22C5",
+    "\u00AC",
+    "\u2227",
+    "\u2228",
+    "\u21D4",
+    "\u21D0",
+    "\u21D1",
+    "\u21D2",
+    "\u21D3",
+    "\u25CA",
+    "\u2329",
+    "\uF8E8",
+    "\uF8E9",
+    "\uF8EA",
+    "\u2211",
+    "\uF8EB",
+    "\uF8EC",
+    "\uF8ED",
+    "\uF8EE",
+    "\uF8EF",
+    "\uF8F0",
+    "\uF8F1",
+    "\uF8F2",
+    "\uF8F3",
+    "\uF8F4",
+    "\u00F0",
+    "\u232A",
+    "\u222B",
+    "\u2320",
+    "\uF8F5",
+    "\u2321",
+    "\uF8F6",
+    "\uF8F7",
+    "\uF8F8",
+    "\uF8F9",
+    "\uF8FA",
+    "\uF8FB",
+    "\uF8FC",
+    "\uF8FD",
+    "\uF8FE",
+    "\u00FF",
+]
+assert len(_symbol_encoding) == 256
+
+#  manually generated from https://www.unicode.org/Public/MAPPINGS/VENDORS/ADOBE/zdingbat.txt
+_zapfding_encoding = [
+    "\u0000",
+    "\u0001",
+    "\u0002",
+    "\u0003",
+    "\u0004",
+    "\u0005",
+    "\u0006",
+    "\u0007",
+    "\u0008",
+    "\u0009",
+    "\u000A",
+    "\u000B",
+    "\u000C",
+    "\u000D",
+    "\u000E",
+    "\u000F",
+    "\u0010",
+    "\u0011",
+    "\u0012",
+    "\u0013",
+    "\u0014",
+    "\u0015",
+    "\u0016",
+    "\u0017",
+    "\u0018",
+    "\u0019",
+    "\u001A",
+    "\u001B",
+    "\u001C",
+    "\u001D",
+    "\u001E",
+    "\u001F",
+    "\u0020",
+    "\u2701",
+    "\u2702",
+    "\u2703",
+    "\u2704",
+    "\u260E",
+    "\u2706",
+    "\u2707",
+    "\u2708",
+    "\u2709",
+    "\u261B",
+    "\u261E",
+    "\u270C",
+    "\u270D",
+    "\u270E",
+    "\u270F",
+    "\u2710",
+    "\u2711",
+    "\u2712",
+    "\u2713",
+    "\u2714",
+    "\u2715",
+    "\u2716",
+    "\u2717",
+    "\u2718",
+    "\u2719",
+    "\u271A",
+    "\u271B",
+    "\u271C",
+    "\u271D",
+    "\u271E",
+    "\u271F",
+    "\u2720",
+    "\u2721",
+    "\u2722",
+    "\u2723",
+    "\u2724",
+    "\u2725",
+    "\u2726",
+    "\u2727",
+    "\u2605",
+    "\u2729",
+    "\u272A",
+    "\u272B",
+    "\u272C",
+    "\u272D",
+    "\u272E",
+    "\u272F",
+    "\u2730",
+    "\u2731",
+    "\u2732",
+    "\u2733",
+    "\u2734",
+    "\u2735",
+    "\u2736",
+    "\u2737",
+    "\u2738",
+    "\u2739",
+    "\u273A",
+    "\u273B",
+    "\u273C",
+    "\u273D",
+    "\u273E",
+    "\u273F",
+    "\u2740",
+    "\u2741",
+    "\u2742",
+    "\u2743",
+    "\u2744",
+    "\u2745",
+    "\u2746",
+    "\u2747",
+    "\u2748",
+    "\u2749",
+    "\u274A",
+    "\u274B",
+    "\u25CF",
+    "\u274D",
+    "\u25A0",
+    "\u274F",
+    "\u2750",
+    "\u2751",
+    "\u2752",
+    "\u25B2",
+    "\u25BC",
+    "\u25C6",
+    "\u2756",
+    "\u25D7",
+    "\u2758",
+    "\u2759",
+    "\u275A",
+    "\u275B",
+    "\u275C",
+    "\u275D",
+    "\u275E",
+    "\u007F",
+    "\uF8D7",
+    "\uF8D8",
+    "\uF8D9",
+    "\uF8DA",
+    "\uF8DB",
+    "\uF8DC",
+    "\uF8DD",
+    "\uF8DE",
+    "\uF8DF",
+    "\uF8E0",
+    "\uF8E1",
+    "\uF8E2",
+    "\uF8E3",
+    "\uF8E4",
+    "\u008E",
+    "\u008F",
+    "\u0090",
+    "\u0091",
+    "\u0092",
+    "\u0093",
+    "\u0094",
+    "\u0095",
+    "\u0096",
+    "\u0097",
+    "\u0098",
+    "\u0099",
+    "\u009A",
+    "\u009B",
+    "\u009C",
+    "\u009D",
+    "\u009E",
+    "\u009F",
+    "\u00A0",
+    "\u2761",
+    "\u2762",
+    "\u2763",
+    "\u2764",
+    "\u2765",
+    "\u2766",
+    "\u2767",
+    "\u2663",
+    "\u2666",
+    "\u2665",
+    "\u2660",
+    "\u2460",
+    "\u2461",
+    "\u2462",
+    "\u2463",
+    "\u2464",
+    "\u2465",
+    "\u2466",
+    "\u2467",
+    "\u2468",
+    "\u2469",
+    "\u2776",
+    "\u2777",
+    "\u2778",
+    "\u2779",
+    "\u277A",
+    "\u277B",
+    "\u277C",
+    "\u277D",
+    "\u277E",
+    "\u277F",
+    "\u2780",
+    "\u2781",
+    "\u2782",
+    "\u2783",
+    "\u2784",
+    "\u2785",
+    "\u2786",
+    "\u2787",
+    "\u2788",
+    "\u2789",
+    "\u278A",
+    "\u278B",
+    "\u278C",
+    "\u278D",
+    "\u278E",
+    "\u278F",
+    "\u2790",
+    "\u2791",
+    "\u2792",
+    "\u2793",
+    "\u2794",
+    "\u2192",
+    "\u2194",
+    "\u2195",
+    "\u2798",
+    "\u2799",
+    "\u279A",
+    "\u279B",
+    "\u279C",
+    "\u279D",
+    "\u279E",
+    "\u279F",
+    "\u27A0",
+    "\u27A1",
+    "\u27A2",
+    "\u27A3",
+    "\u27A4",
+    "\u27A5",
+    "\u27A6",
+    "\u27A7",
+    "\u27A8",
+    "\u27A9",
+    "\u27AA",
+    "\u27AB",
+    "\u27AC",
+    "\u27AD",
+    "\u27AE",
+    "\u27AF",
+    "\u00F0",
+    "\u27B1",
+    "\u27B2",
+    "\u27B3",
+    "\u27B4",
+    "\u27B5",
+    "\u27B6",
+    "\u27B7",
+    "\u27B8",
+    "\u27B9",
+    "\u27BA",
+    "\u27BB",
+    "\u27BC",
+    "\u27BD",
+    "\u27BE",
+    "\u00FF",
+]
+assert len(_zapfding_encoding) == 256
+
 
 def fill_from_encoding(enc: str) -> List[str]:
     lst: List[str] = []
@@ -2485,10 +3013,14 @@ def rev_encoding(enc: List[str]) -> Dict[str, int]:
 _pdfdoc_encoding_rev: Dict[str, int] = rev_encoding(_pdfdoc_encoding)
 _win_encoding_rev: Dict[str, int] = rev_encoding(_win_encoding)
 _mac_encoding_rev: Dict[str, int] = rev_encoding(_mac_encoding)
+_symbol_encoding_rev: Dict[str, int] = rev_encoding(_symbol_encoding)
+_zapfding_encoding_rev: Dict[str, int] = rev_encoding(_zapfding_encoding)
 
 charset_encoding: Dict[str, List[str]] = {
     "/StandardCoding": _std_encoding,
     "/WinAnsiEncoding": _win_encoding,
     "/MacRomanEncoding": _mac_encoding,
     "/PDFDocEncoding": _pdfdoc_encoding,
+    "/Symbol": _symbol_encoding,
+    "/ZapfDingbats": _zapfding_encoding,
 }
