@@ -1218,7 +1218,7 @@ class PdfReader:
                 )
             stream.seek(0, os.SEEK_END)
         last_mb = stream.tell() - 1024 * 1024 + 1  # offset of last MB of stream
-        line = b_("")
+        line = b""
         while line[:5] != b_("%%EOF"):
             if stream.tell() < last_mb:
                 raise PdfReadError("EOF marker not found")
@@ -1244,7 +1244,7 @@ class PdfReader:
             # load the xref table
             stream.seek(startxref, 0)
             x = stream.read(1)
-            if x == b_("x"):
+            if x == b"x":
                 self._read_standard_xref_table(stream)
                 read_non_whitespace(stream)
                 stream.seek(-1, 1)
@@ -1291,7 +1291,7 @@ class PdfReader:
                 # off-by-one before.
                 stream.seek(-11, 1)
                 tmp = stream.read(20)
-                xref_loc = tmp.find(b_("xref"))
+                xref_loc = tmp.find(b"xref")
                 if xref_loc != -1:
                     startxref -= 10 - xref_loc
                     continue
@@ -1334,20 +1334,20 @@ class PdfReader:
             startxref = int(line)
         except ValueError:
             # 'startxref' may be on the same line as the location
-            if not line.startswith(b_("startxref")):
+            if not line.startswith(b"startxref"):
                 raise PdfReadError("startxref not found")
             startxref = int(line[9:].strip())
             warnings.warn("startxref on same line as offset", PdfReadWarning)
         else:
             line = read_previous_line(stream)
-            if line[:9] != b_("startxref"):
+            if line[:9] != b"startxref":
                 raise PdfReadError("startxref not found")
         return startxref
 
     def _read_standard_xref_table(self, stream: StreamType) -> None:
         # standard cross-reference table
         ref = stream.read(4)
-        if ref[:3] != b_("ref"):
+        if ref[:3] != b"ref":
             raise PdfReadError("xref table read error")
         read_non_whitespace(stream)
         stream.seek(-1, 1)
@@ -1389,7 +1389,7 @@ class PdfReader:
                 # back one character.  (0-9 means we've bled into
                 # the next xref entry, t means we've bled into the
                 # text "trailer"):
-                if line[-1] in b_("0123456789t"):
+                if line[-1] in b"0123456789t":
                     stream.seek(-1, 1)
 
                 offset_b, generation_b = line[:16].split(b_(" "))
@@ -1409,7 +1409,7 @@ class PdfReader:
             read_non_whitespace(stream)
             stream.seek(-1, 1)
             trailertag = stream.read(7)
-            if trailertag != b_("trailer"):
+            if trailertag != b"trailer":
                 # more xrefs!
                 stream.seek(-7, 1)
             else:
@@ -1460,23 +1460,23 @@ class PdfReader:
         """Return an int which indicates an issue. 0 means there is no issue."""
         stream.seek(startxref - 1, 0)  # -1 to check character before
         line = stream.read(1)
-        if line not in b_("\r\n \t"):
+        if line not in b"\r\n \t":
             return 1
         line = stream.read(4)
-        if line != b_("xref"):
+        if line != b"xref":
             # not an xref so check if it is an XREF object
-            line = b_("")
-            while line in b_("0123456789 \t"):
+            line = b""
+            while line in b"0123456789 \t":
                 line = stream.read(1)
-                if line == b_(""):
+                if line == b"":
                     return 2
             line += stream.read(2)  # 1 char already read, +2 to check "obj"
-            if line.lower() != b_("obj"):
+            if line.lower() != b"obj":
                 return 3
-            # while stream.read(1) in b_(" \t\r\n"):
+            # while stream.read(1) in b" \t\r\n":
             #     pass
             # line = stream.read(256)  # check that it is xref obj
-            # if b_("/xref") not in line.lower():
+            # if b"/xref" not in line.lower():
             #     return 4
         return 0
 
@@ -1675,7 +1675,7 @@ class PdfReader:
             else:
                 val = real_O
                 for i in range(19, -1, -1):
-                    new_key = b_("")
+                    new_key = b""
                     for l in range(len(key)):
                         new_key += b_(chr(ord_(key[l]) ^ i))
                     val = RC4_encrypt(new_key, val)

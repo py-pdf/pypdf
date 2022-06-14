@@ -68,7 +68,7 @@ from .errors import (
 
 logger = logging.getLogger(__name__)
 ObjectPrefix = b_("/<[tf(n%")
-NumberSigns = b_("+-")
+NumberSigns = b"+-"
 IndirectPattern = re.compile(b_(r"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]"))
 
 
@@ -91,12 +91,12 @@ class NullObject(PdfObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
-        stream.write(b_("null"))
+        stream.write(b"null")
 
     @staticmethod
     def read_from_stream(stream: StreamType) -> "NullObject":
         nulltxt = stream.read(4)
-        if nulltxt != b_("null"):
+        if nulltxt != b"null":
             raise PdfReadError("Could not read Null object")
         return NullObject()
 
@@ -131,9 +131,9 @@ class BooleanObject(PdfObject):
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         if self.value:
-            stream.write(b_("true"))
+            stream.write(b"true")
         else:
-            stream.write(b_("false"))
+            stream.write(b"false")
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
@@ -144,9 +144,9 @@ class BooleanObject(PdfObject):
     @staticmethod
     def read_from_stream(stream: StreamType) -> "BooleanObject":
         word = stream.read(4)
-        if word == b_("true"):
+        if word == b"true":
             return BooleanObject(True)
-        elif word == b_("fals"):
+        elif word == b"fals":
             stream.read(1)
             return BooleanObject(False)
         else:
@@ -162,11 +162,11 @@ class ArrayObject(list, PdfObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
-        stream.write(b_("["))
+        stream.write(b"[")
         for data in self:
-            stream.write(b_(" "))
+            stream.write(b" ")
             data.write_to_stream(stream, encryption_key)
-        stream.write(b_(" ]"))
+        stream.write(b" ]")
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
@@ -182,7 +182,7 @@ class ArrayObject(list, PdfObject):
     ) -> "ArrayObject":  # PdfReader
         arr = ArrayObject()
         tmp = stream.read(1)
-        if tmp != b_("["):
+        if tmp != b"[":
             raise PdfReadError("Could not read array")
         while True:
             # skip leading whitespace
@@ -192,7 +192,7 @@ class ArrayObject(list, PdfObject):
             stream.seek(-1, 1)
             # check for array ending
             peekahead = stream.read(1)
-            if peekahead == b_("]"):
+            if peekahead == b"]":
                 break
             stream.seek(-1, 1)
             # read and append obj
@@ -244,7 +244,7 @@ class IndirectObject(PdfObject):
 
     @staticmethod
     def read_from_stream(stream: StreamType, pdf: Any) -> "IndirectObject":  # PdfReader
-        idnum = b_("")
+        idnum = b""
         while True:
             tok = stream.read(1)
             if not tok:
@@ -252,7 +252,7 @@ class IndirectObject(PdfObject):
             if tok.isspace():
                 break
             idnum += tok
-        generation = b_("")
+        generation = b""
         while True:
             tok = stream.read(1)
             if not tok:
@@ -263,7 +263,7 @@ class IndirectObject(PdfObject):
                 break
             generation += tok
         r = read_non_whitespace(stream)
-        if r != b_("R"):
+        if r != b"R":
             raise PdfReadError(
                 "Error reading indirect object reference at byte %s"
                 % hex_str(stream.tell())
@@ -320,8 +320,8 @@ class FloatObject(decimal.Decimal, PdfObject):
 
 
 class NumberObject(int, PdfObject):
-    NumberPattern = re.compile(b_("[^+-.0-9]"))
-    ByteDot = b_(".")
+    NumberPattern = re.compile(b"[^+-.0-9]")
+    ByteDot = b"."
 
     def __new__(cls, value: Any) -> "NumberObject":
         val = int(value)
@@ -349,8 +349,7 @@ class NumberObject(int, PdfObject):
         num = read_until_regex(stream, NumberObject.NumberPattern)
         if num.find(NumberObject.ByteDot) != -1:
             return FloatObject(num)
-        else:
-            return NumberObject(num)
+        return NumberObject(num)
 
     @staticmethod
     def readFromStream(
@@ -366,19 +365,19 @@ def readHexStringFromStream(  # TODO: PEP8
 ) -> Union["TextStringObject", "ByteStringObject"]:
     stream.read(1)
     txt = ""
-    x = b_("")
+    x = b""
     while True:
         tok = read_non_whitespace(stream)
         if not tok:
             raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
-        if tok == b_(">"):
+        if tok == b">":
             break
         x += tok
         if len(x) == 2:
             txt += chr(int(x, base=16))
-            x = b_("")
+            x = b""
     if len(x) == 1:
-        x += b_("0")
+        x += b"0"
     if len(x) == 2:
         txt += chr(int(x, base=16))
     return createStringObject(b_(txt), forced_encoding)
@@ -390,18 +389,18 @@ def readStringFromStream(  # TODO: PEP8
 ) -> Union["TextStringObject", "ByteStringObject"]:
     tok = stream.read(1)
     parens = 1
-    txt = b_("")
+    txt = b""
     while True:
         tok = stream.read(1)
         if not tok:
             raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
-        if tok == b_("("):
+        if tok == b"(":
             parens += 1
-        elif tok == b_(")"):
+        elif tok == b")":
             parens -= 1
             if parens == 0:
                 break
-        elif tok == b_("\\"):
+        elif tok == b"\\":
             tok = stream.read(1)
             escape_dict = {
                 b_("n"): b_("\n"),
@@ -1127,27 +1126,27 @@ class ContentStream(DecodedStreamObject):
         operands: List[Union[int, str, PdfObject]] = []
         while True:
             peek = read_non_whitespace(stream)
-            if peek == b_("") or ord_(peek) == 0:
+            if peek == b"" or ord_(peek) == 0:
                 break
             stream.seek(-1, 1)
-            if peek.isalpha() or peek == b_("'") or peek == b_('"'):
+            if peek.isalpha() or peek == b"'" or peek == b'"':
                 operator = read_until_regex(stream, NameObject.delimiter_pattern, True)
-                if operator == b_("BI"):
+                if operator == b"BI":
                     # begin inline image - a completely different parsing
                     # mechanism is required, of course... thanks buddy...
                     assert operands == []
                     ii = self._readInlineImage(stream)
-                    self.operations.append((ii, b_("INLINE IMAGE")))
+                    self.operations.append((ii, b"INLINE IMAGE"))
                 else:
                     self.operations.append((operands, operator))
                     operands = []
-            elif peek == b_("%"):
+            elif peek == b"%":
                 # If we encounter a comment in the content stream, we have to
                 # handle it here.  Typically, read_object will handle
                 # encountering a comment -- but read_object assumes that
                 # following the comment must be the object we're trying to
                 # read.  In this case, it could be an operator instead.
-                while peek not in (b_("\r"), b_("\n")):
+                while peek not in (b"\r", b"\n"):
                     peek = stream.read(1)
             else:
                 operands.append(read_object(stream, None, self.forced_encoding))
@@ -1159,7 +1158,7 @@ class ContentStream(DecodedStreamObject):
         while True:
             tok = read_non_whitespace(stream)
             stream.seek(-1, 1)
-            if tok == b_("I"):
+            if tok == b"I":
                 # "ID" - begin of image data
                 break
             key = read_object(stream, self.pdf)
@@ -1169,7 +1168,7 @@ class ContentStream(DecodedStreamObject):
             settings[key] = value
         # left at beginning of ID
         tmp = stream.read(3)
-        assert tmp[:2] == b_("ID")
+        assert tmp[:2] == b"ID"
         data = BytesIO()
         # Read the inline image, while checking for EI (End Image) operator.
         while True:
@@ -1178,7 +1177,7 @@ class ContentStream(DecodedStreamObject):
             # We have reached the end of the stream, but haven't found the EI operator.
             if not buf:
                 raise PdfReadError("Unexpected end of stream")
-            loc = buf.find(b_("E"))
+            loc = buf.find(b"E")
 
             if loc == -1:
                 data.write(buf)
@@ -1191,7 +1190,7 @@ class ContentStream(DecodedStreamObject):
                 tok = stream.read(1)
                 # Check for End Image
                 tok2 = stream.read(1)
-                if tok2 == b_("I"):
+                if tok2 == b"I":
                     # Data can contain EI, so check for the Q operator.
                     tok3 = stream.read(1)
                     info = tok + tok2
@@ -1201,7 +1200,7 @@ class ContentStream(DecodedStreamObject):
                         has_q_whitespace = True
                         info += tok3
                         tok3 = stream.read(1)
-                    if tok3 == b_("Q") and has_q_whitespace:
+                    if tok3 == b"Q" and has_q_whitespace:
                         stream.seek(-1, 1)
                         break
                     else:
@@ -1216,20 +1215,20 @@ class ContentStream(DecodedStreamObject):
     def _data(self) -> bytes:
         newdata = BytesIO()
         for operands, operator in self.operations:
-            if operator == b_("INLINE IMAGE"):
-                newdata.write(b_("BI"))
+            if operator == b"INLINE IMAGE":
+                newdata.write(b"BI")
                 dicttext = BytesIO()
                 operands["settings"].write_to_stream(dicttext, None)
                 newdata.write(dicttext.getvalue()[2:-2])
-                newdata.write(b_("ID "))
+                newdata.write(b"ID ")
                 newdata.write(operands["data"])
-                newdata.write(b_("EI"))
+                newdata.write(b"EI")
             else:
                 for op in operands:
                     op.write_to_stream(newdata, None)
-                    newdata.write(b_(" "))
+                    newdata.write(b" ")
                 newdata.write(b_(operator))
-            newdata.write(b_("\n"))
+            newdata.write(b"\n")
         return newdata.getvalue()
 
     @_data.setter
@@ -1252,7 +1251,7 @@ def read_object(
         peek = stream.read(2)
         stream.seek(-2, 1)  # reset to start
 
-        if peek == b_("<<"):
+        if peek == b"<<":
             return DictionaryObject.read_from_stream(stream, pdf, forced_encoding)
         else:
             return readHexStringFromStream(stream, forced_encoding)
