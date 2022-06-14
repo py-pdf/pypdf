@@ -67,9 +67,9 @@ from .errors import (
 )
 
 logger = logging.getLogger(__name__)
-ObjectPrefix = b_("/<[tf(n%")
+ObjectPrefix = b"/<[tf(n%"
 NumberSigns = b"+-"
-IndirectPattern = re.compile(b_(r"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]"))
+IndirectPattern = re.compile(rb"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]")
 
 
 class PdfObject:
@@ -403,27 +403,27 @@ def readStringFromStream(  # TODO: PEP8
         elif tok == b"\\":
             tok = stream.read(1)
             escape_dict = {
-                b_("n"): b_("\n"),
-                b_("r"): b_("\r"),
-                b_("t"): b_("\t"),
-                b_("b"): b_("\b"),
-                b_("f"): b_("\f"),
-                b_("c"): b_(r"\c"),
-                b_("("): b_("("),
-                b_(")"): b_(")"),
-                b_("/"): b_("/"),
-                b_("\\"): b_("\\"),
-                b_(" "): b_(" "),
-                b_("/"): b_("/"),
-                b_("%"): b_("%"),
-                b_("<"): b_("<"),
-                b_(">"): b_(">"),
-                b_("["): b_("["),
-                b_("]"): b_("]"),
-                b_("#"): b_("#"),
-                b_("_"): b_("_"),
-                b_("&"): b_("&"),
-                b_("$"): b_("$"),
+                b"n": b"\n",
+                b"r": b"\r",
+                b"t": b"\t",
+                b"b": b"\b",
+                b"f": b"\f",
+                b"c": rb"\c",
+                b"(": b"(",
+                b")": b")",
+                b"/": b"/",
+                b"\\": b"\\",
+                b" ": b" ",
+                b"/": b"/",
+                b"%": b"%",
+                b"<": b"<",
+                b">": b">",
+                b"[": b"[",
+                b"]": b"]",
+                b"#": b"#",
+                b"_": b"_",
+                b"&": b"&",
+                b"$": b"$",
             }
             try:
                 tok = escape_dict[tok]
@@ -441,16 +441,16 @@ def readStringFromStream(  # TODO: PEP8
                         else:
                             break
                     tok = b_(chr(int(tok, base=8)))
-                elif tok in b_("\n\r"):
+                elif tok in b"\n\r":
                     # This case is  hit when a backslash followed by a line
                     # break occurs.  If it's a multi-char EOL, consume the
                     # second character:
                     tok = stream.read(1)
-                    if tok not in b_("\n\r"):
+                    if tok not in b"\n\r":
                         stream.seek(-1, 1)
                     # Then don't add anything to the actual string, since this
                     # line break was escaped:
-                    tok = b_("")
+                    tok = b""
                 else:
                     msg = r"Unexpected escaped string: {}".format(tok.decode("utf8"))
                     # if.strict: PdfReadError(msg)
@@ -480,9 +480,9 @@ class ByteStringObject(bytes_type, PdfObject):  # type: ignore
             from ._security import RC4_encrypt
 
             bytearr = RC4_encrypt(encryption_key, bytearr)  # type: ignore
-        stream.write(b_("<"))
+        stream.write(b"<")
         stream.write(hexencode(bytearr))
-        stream.write(b_(">"))
+        stream.write(b">")
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
@@ -542,13 +542,13 @@ class TextStringObject(str, PdfObject):
             obj = ByteStringObject(bytearr)
             obj.write_to_stream(stream, None)
         else:
-            stream.write(b_("("))
+            stream.write(b"(")
             for c in bytearr:
-                if not chr(c).isalnum() and c != b_(" "):
+                if not chr(c).isalnum() and c != b" ":
                     stream.write(b_("\\%03o" % ord_(c)))
                 else:
                     stream.write(b_(chr(c)))
-            stream.write(b_(")"))
+            stream.write(b")")
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
@@ -558,8 +558,8 @@ class TextStringObject(str, PdfObject):
 
 
 class NameObject(str, PdfObject):
-    delimiter_pattern = re.compile(b_(r"\s+|[\(\)<>\[\]{}/%]"))
-    surfix = b_("/")
+    delimiter_pattern = re.compile(rb"\s+|[\(\)<>\[\]{}/%]")
+    surfix = b"/"
 
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
@@ -669,13 +669,13 @@ class DictionaryObject(dict, PdfObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
-        stream.write(b_("<<\n"))
+        stream.write(b"<<\n")
         for key, value in list(self.items()):
             key.write_to_stream(stream, encryption_key)
-            stream.write(b_(" "))
+            stream.write(b" ")
             value.write_to_stream(stream, encryption_key)
-            stream.write(b_("\n"))
-        stream.write(b_(">>"))
+            stream.write(b"\n")
+        stream.write(b">>")
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
@@ -706,7 +706,7 @@ class DictionaryObject(dict, PdfObject):
             eon = get_next_obj_pos(stream.tell(), 2**32, list(pdf.xref), pdf) - 1
             curr = stream.tell()
             rw = stream.read(eon - stream.tell())
-            p = rw.find(b_("endstream"))
+            p = rw.find(b"endstream")
             if p < 0:
                 raise PdfReadError(
                     f"Unable to find 'endstream' marker for obj starting at {curr}."
@@ -715,7 +715,7 @@ class DictionaryObject(dict, PdfObject):
             return rw[: p - 1]
 
         tmp = stream.read(2)
-        if tmp != b_("<<"):
+        if tmp != b"<<":
             raise PdfReadError(
                 "Dictionary read error at byte %s: stream must begin with '<<'"
                 % hex_str(stream.tell())
@@ -723,16 +723,16 @@ class DictionaryObject(dict, PdfObject):
         data: Dict[Any, Any] = {}
         while True:
             tok = read_non_whitespace(stream)
-            if tok == b_("\x00"):
+            if tok == b"\x00":
                 continue
-            elif tok == b_("%"):
+            elif tok == b"%":
                 stream.seek(-1, 1)
                 skip_over_comment(stream)
                 continue
             if not tok:
                 raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
 
-            if tok == b_(">"):
+            if tok == b">":
                 stream.read(1)
                 break
             stream.seek(-1, 1)
@@ -757,17 +757,17 @@ class DictionaryObject(dict, PdfObject):
 
         pos = stream.tell()
         s = read_non_whitespace(stream)
-        if s == b_("s") and stream.read(5) == b_("tream"):
+        if s == b"s" and stream.read(5) == b"tream":
             eol = stream.read(1)
             # odd PDF file output has spaces after 'stream' keyword but before EOL.
             # patch provided by Danial Sandler
-            while eol == b_(" "):
+            while eol == b" ":
                 eol = stream.read(1)
-            if eol not in (b_("\n"), b_("\r")):
+            if eol not in (b"\n", b"\r"):
                 raise PdfStreamError("Stream data must be followed by a newline")
-            if eol == b_("\r"):
+            if eol == b"\r":
                 # read \n after
-                if stream.read(1) != b_("\n"):
+                if stream.read(1) != b"\n":
                     stream.seek(-1, 1)
             # this is a stream object, not a dictionary
             if SA.LENGTH not in data:
@@ -781,7 +781,7 @@ class DictionaryObject(dict, PdfObject):
             data["__streamdata__"] = stream.read(length)
             e = read_non_whitespace(stream)
             ndstream = stream.read(8)
-            if (e + ndstream) != b_("endstream"):
+            if (e + ndstream) != b"endstream":
                 # (sigh) - the odd PDF file has a length that is too long, so
                 # we need to read backwards to find the "endstream" ending.
                 # ReportLab (unknown version) generates files with this bug,
@@ -791,7 +791,7 @@ class DictionaryObject(dict, PdfObject):
                 pos = stream.tell()
                 stream.seek(-10, 1)
                 end = stream.read(9)
-                if end == b_("endstream"):
+                if end == b"endstream":
                     # we found it by looking back one character further.
                     data["__streamdata__"] = data["__streamdata__"][:-1]
                 elif not pdf.strict:
@@ -990,14 +990,14 @@ class StreamObject(DictionaryObject):
         self[NameObject(SA.LENGTH)] = NumberObject(len(self._data))
         DictionaryObject.write_to_stream(self, stream, encryption_key)
         del self[SA.LENGTH]
-        stream.write(b_("\nstream\n"))
+        stream.write(b"\nstream\n")
         data = self._data
         if encryption_key:
             from ._security import RC4_encrypt
 
             data = RC4_encrypt(encryption_key, data)
         stream.write(data)
-        stream.write(b_("\nendstream"))
+        stream.write(b"\nendstream")
 
     @staticmethod
     def initializeFromDictionary(
@@ -1107,10 +1107,10 @@ class ContentStream(DecodedStreamObject):
         # multiple StreamObjects to be cat'd together.
         stream = stream.get_object()
         if isinstance(stream, ArrayObject):
-            data = b_("")
+            data = b""
             for s in stream:
                 data += b_(s.get_object().get_data())
-            stream_bytes = BytesIO(b_(data))
+            stream_bytes = BytesIO(data)
         else:
             stream_data = stream.get_data()
             assert stream_data is not None
@@ -1265,7 +1265,7 @@ def read_object(
         return NullObject.read_from_stream(stream)
     elif idx == 7:
         # comment
-        while tok not in (b_("\r"), b_("\n")):
+        while tok not in (b"\r", b"\n"):
             tok = stream.read(1)
             # Prevents an infinite loop by raising an error if the stream is at
             # the EOF
@@ -1748,21 +1748,21 @@ class Destination(TreeObject):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
-        stream.write(b_("<<\n"))
+        stream.write(b"<<\n")
         key = NameObject("/D")
         key.write_to_stream(stream, encryption_key)
-        stream.write(b_(" "))
+        stream.write(b" ")
         value = self.dest_array
         value.write_to_stream(stream, encryption_key)
 
         key = NameObject("/S")
         key.write_to_stream(stream, encryption_key)
-        stream.write(b_(" "))
+        stream.write(b" ")
         value_s = NameObject("/GoTo")
         value_s.write_to_stream(stream, encryption_key)
 
-        stream.write(b_("\n"))
-        stream.write(b_(">>"))
+        stream.write(b"\n")
+        stream.write(b">>")
 
     @property
     def title(self) -> Optional[str]:
@@ -1841,24 +1841,24 @@ class Bookmark(Destination):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
-        stream.write(b_("<<\n"))
+        stream.write(b"<<\n")
         for key in [
             NameObject(x)
             for x in ["/Title", "/Parent", "/First", "/Last", "/Next", "/Prev"]
             if x in self
         ]:
             key.write_to_stream(stream, encryption_key)
-            stream.write(b_(" "))
+            stream.write(b" ")
             value = self.raw_get(key)
             value.write_to_stream(stream, encryption_key)
-            stream.write(b_("\n"))
+            stream.write(b"\n")
         key = NameObject("/Dest")
         key.write_to_stream(stream, encryption_key)
-        stream.write(b_(" "))
+        stream.write(b" ")
         value = self.dest_array
         value.write_to_stream(stream, encryption_key)
-        stream.write(b_("\n"))
-        stream.write(b_(">>"))
+        stream.write(b"\n")
+        stream.write(b">>")
 
 
 def createStringObject(
@@ -1910,7 +1910,7 @@ def createStringObject(
 
 
 def encode_pdfdocencoding(unicode_string: str) -> bytes:
-    retval = b_("")
+    retval = b""
     for c in unicode_string:
         try:
             retval += b_(chr(_pdfdoc_encoding_rev[c]))
