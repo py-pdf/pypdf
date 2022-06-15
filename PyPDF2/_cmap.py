@@ -222,7 +222,6 @@ def parse_to_unicode(
                     ] = unhexlify(sq).decode("utf-16-be", "surrogatepass")
                     int_entry.append(a)
                     a += 1
-                    assert a > b
             else:
                 c = int(lst[2], 16)
                 fmt2 = b"%%0%dX" % len(lst[2])

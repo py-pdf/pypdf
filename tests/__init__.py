@@ -1,4 +1,5 @@
 import os
+import ssl
 import urllib.request
 
 
@@ -21,6 +22,7 @@ def get_pdf_from_url(url: str, name: str) -> bytes:
         os.mkdir(cache_dir)
     cache_path = os.path.join(cache_dir, name)
     if not os.path.exists(cache_path):
+        ssl._create_default_https_context = ssl._create_unverified_context
         with urllib.request.urlopen(url) as response, open(
             cache_path, "wb"
         ) as out_file:

@@ -1218,7 +1218,13 @@ class PageObject(DictionaryObject):
                     else operands[0]
                 )
                 if isinstance(cmap[0], str):
-                    t = tt.decode(cmap[0], "surrogatepass")  # apply str encoding
+                    try:
+                        t = tt.decode(cmap[0], "surrogatepass")  # apply str encoding
+                    except Exception:  # the data does not match the expectation, we use the alternative ; text extraction may not be good
+                        t = tt.decode(
+                            "utf-16-be" if cmap[0] == "charmap" else "charmap",
+                            "surrogatepass",
+                        )  # apply str encoding
                 else:  # apply dict encoding
                     t = "".join(
                         [
