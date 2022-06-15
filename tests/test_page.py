@@ -218,3 +218,17 @@ def test_multi_language():
     assert "你好世界" in txt, "Chinese not correctly extracted"
     assert "สวัสดีชาวโลก" in txt, "Thai not correctly extracted"
     assert "こんにちは世界" in txt, "Japanese not correctly extracted"
+
+
+def test_extract_text_single_quote_op():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/964/964029.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-964029.pdf")))
+    for page in reader.pages:
+        page.extract_text()
+
+
+def test_extract_text_keyerror_potentially_empty_page():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/964/964029.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-964029.pdf")))
+    for page in reader.pages:
+        page.extract_text()
