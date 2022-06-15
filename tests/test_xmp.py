@@ -1,11 +1,14 @@
 import os
 from datetime import datetime
+from io import BytesIO
 
 import pytest
 
 import PyPDF2.generic
 import PyPDF2.xmp
 from PyPDF2 import PdfReader
+
+from . import get_pdf_from_url
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -81,6 +84,88 @@ def test_regression_issue914():
 )
 def test_identity(x):
     assert PyPDF2.xmp._identity(x) == x
+
+
+@pytest.mark.parametrize(
+    ("url", "name", "xmpmm_instance_id"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/955/955562.pdf",
+            "tika-955562.pdf",
+            "uuid:ca96e032-c2af-49bd-a71c-95889bafbf1d",
+        )
+    ],
+)
+def test_xmpmm(url, name, xmpmm_instance_id):
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    xmp_metadata = reader.xmp_metadata
+    assert xmp_metadata.xmpmm_instanceId == xmpmm_instance_id
+    # cache hit:
+    assert xmp_metadata.xmpmm_instanceId == xmpmm_instance_id
+
+
+def test_dc_description():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/953/953770.pdf"
+    name = "tika-953770.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    xmp_metadata = reader.xmp_metadata
+    assert xmp_metadata.dc_description == {
+        "x-default": "U.S. Title 50 Certification Form"
+    }
+    # cache hit:
+    assert xmp_metadata.dc_description == {
+        "x-default": "U.S. Title 50 Certification Form"
+    }
+
+
+def test_dc_creator():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/953/953770.pdf"
+    name = "tika-953770.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    xmp_metadata = reader.xmp_metadata
+    assert xmp_metadata.dc_creator == ["U.S. Fish and Wildlife Service"]
+    # cache hit:
+    assert xmp_metadata.dc_creator == ["U.S. Fish and Wildlife Service"]
+
+
+def test_custom_properties():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/986/986065.pdf"
+    name = "tika-986065.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    xmp_metadata = reader.xmp_metadata
+    assert xmp_metadata.custom_properties == {"Style": "Searchable Image (Exact)"}
+    # cache hit:
+    assert xmp_metadata.custom_properties == {"Style": "Searchable Image (Exact)"}
+
+
+def test_dc_subject():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/959/959519.pdf"
+    name = "tika-959519.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    xmp_metadata = reader.xmp_metadata
+    assert xmp_metadata.dc_subject == [
+        "P&P",
+        "manual",
+        "1240.2325",
+        "CVM",
+        "PROCEDURES ON MEDIA INQUIRIES",
+        "animal",
+        "media",
+        "procedures",
+        "inquiries",
+    ]
+    # Cache hit:
+    assert xmp_metadata.dc_subject == [
+        "P&P",
+        "manual",
+        "1240.2325",
+        "CVM",
+        "PROCEDURES ON MEDIA INQUIRIES",
+        "animal",
+        "media",
+        "procedures",
+        "inquiries",
+    ]
 
 
 # def test_getter_bag():
