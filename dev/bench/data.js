@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1655272303256,
+  "lastUpdate": 1655318274673,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -5314,6 +5314,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.10390335577635496",
             "extra": "mean: 5.0532832982000055 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "034d7a9aaf48432fad0970edd5a59841702203f5",
+          "message": "ROB : utf-16-be' codec can't decode (...) (#995)\n\nCloses #988",
+          "timestamp": "2022-06-15T20:36:51+02:00",
+          "tree_id": "a1bd85177086f2f1918ac2abc606dcffd0268436",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/034d7a9aaf48432fad0970edd5a59841702203f5"
+        },
+        "date": 1655318273539,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.974164880828896,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005609308836243069",
+            "extra": "mean: 1.0265202736000105 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.332738508888722,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00511675707445432",
+            "extra": "mean: 96.7797645454544 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26722496095069176,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02259375460058008",
+            "extra": "mean: 3.7421653891999993 sec\nrounds: 5"
           }
         ]
       }
