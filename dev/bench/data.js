@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1655232258665,
+  "lastUpdate": 1655272303256,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -5269,6 +5269,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.014565427472591501",
             "extra": "mean: 3.793340445800004 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e292822ad9e481ef17384e69769dc7b4d1681870",
+          "message": "TST: Add tests for XMP information (#996)",
+          "timestamp": "2022-06-15T07:50:21+02:00",
+          "tree_id": "f257cfef83c723a12341e9aa9c0491fbb84afb05",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/e292822ad9e481ef17384e69769dc7b4d1681870"
+        },
+        "date": 1655272301383,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7251356543029497,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009204115854784626",
+            "extra": "mean: 1.3790523111999904 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 7.924500337372118,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002387837390621819",
+            "extra": "mean: 126.19092149999389 msec\nrounds: 8"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.19789114145969272,
+            "unit": "iter/sec",
+            "range": "stddev: 0.10390335577635496",
+            "extra": "mean: 5.0532832982000055 sec\nrounds: 5"
           }
         ]
       }
