@@ -433,3 +433,12 @@ def test_read_inline_image_no_has_q():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     for page in reader.pages:
         page.extract_text()
+
+
+def test_read_inline_image_loc_neg_1():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/935/935066.pdf"
+    name = "tika-935066.pdf"
+
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for page in reader.pages:
+        page.extract_text()

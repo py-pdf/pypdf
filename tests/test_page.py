@@ -8,6 +8,7 @@ import pytest
 from PyPDF2 import PdfReader, Transformation
 from PyPDF2._page import PageObject
 from PyPDF2.constants import PageAttributes as PG
+from PyPDF2.errors import PdfReadWarning
 from PyPDF2.generic import DictionaryObject, NameObject, RectangleObject
 
 from . import get_pdf_from_url
@@ -245,14 +246,20 @@ def test_extract_text_single_quote_op():
             "https://corpora.tika.apache.org/base/docs/govdocs1/932/932446.pdf",
             "tika-932446.pdf",
         ),
-        # Impossible decode xform:
-        (
-            "https://corpora.tika.apache.org/base/docs/govdocs1/972/972962.pdf",
-            "tika-972962.pdf",
-        ),
     ],
 )
 def test_extract_text_page_pdf(url, name):
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     for page in reader.pages:
         page.extract_text()
+
+
+def test_extract_text_page_pdf_impossible_decode_xform():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/972/972962.pdf"
+    name = "tika-972962.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    with pytest.warns(
+        PdfReadWarning, match="impossible to decode XFormObject /Meta203"
+    ):
+        for page in reader.pages:
+            page.extract_text()
