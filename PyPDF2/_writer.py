@@ -67,6 +67,7 @@ from .generic import (
     StreamObject,
     TextStringObject,
     TreeObject,
+    _create_bookmark,
     createStringObject,
 )
 from .types import (
@@ -1078,27 +1079,7 @@ class PdfWriter:
         if parent is None:
             parent = outline_ref
 
-        bookmark = TreeObject()
-
-        bookmark.update(
-            {
-                NameObject("/A"): action_ref,
-                NameObject("/Title"): createStringObject(title),
-            }
-        )
-
-        if color is not None:
-            bookmark.update(
-                {NameObject("/C"): ArrayObject([FloatObject(c) for c in color])}
-            )
-
-        format_flag = 0
-        if italic:
-            format_flag += 1
-        if bold:
-            format_flag += 2
-        if format_flag:
-            bookmark.update({NameObject("/F"): NumberObject(format_flag)})
+        bookmark = _create_bookmark(action_ref, title, color, italic, bold)
 
         bookmark_ref = self._add_object(bookmark)
 

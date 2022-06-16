@@ -153,7 +153,7 @@ class FlateDecode:
                     rowdata[i] = (rowdata[i] + paeth) % 256
             else:
                 # unsupported PNG filter
-                raise PdfReadError("Unsupported PNG filter %r" % filter_byte)
+                raise PdfReadError(f"Unsupported PNG filter {filter_byte!r}")
             prev_rowdata = tuple(rowdata)
             output.write("".join([chr(x) for x in rowdata[1:]]))
         return output.getvalue()

@@ -1904,6 +1904,37 @@ def createStringObject(
         raise TypeError("createStringObject should have str or unicode arg")
 
 
+def _create_bookmark(
+    action_ref: IndirectObject,
+    title: str,
+    color: Optional[Tuple[float, float, float]],
+    italic: bool,
+    bold: bool,
+) -> TreeObject:
+    bookmark = TreeObject()
+
+    bookmark.update(
+        {
+            NameObject("/A"): action_ref,
+            NameObject("/Title"): createStringObject(title),
+        }
+    )
+
+    if color is not None:
+        bookmark.update(
+            {NameObject("/C"): ArrayObject([FloatObject(c) for c in color])}
+        )
+
+    format_flag = 0
+    if italic:
+        format_flag += 1
+    if bold:
+        format_flag += 2
+    if format_flag:
+        bookmark.update({NameObject("/F"): NumberObject(format_flag)})
+    return bookmark
+
+
 def encode_pdfdocencoding(unicode_string: str) -> bytes:
     retval = b""
     for c in unicode_string:

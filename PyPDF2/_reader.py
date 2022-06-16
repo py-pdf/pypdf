@@ -1228,8 +1228,8 @@ class PdfReader:
                 )
 
         # read all cross reference tables and their trailers
-        self.xref: Dict[Any, Any] = {}
-        self.xref_objStm: Dict[Any, Any] = {}
+        self.xref: Dict[int, Dict[Any, Any]] = {}
+        self.xref_objStm: Dict[int, Tuple[Any, Any]] = {}
         self.trailer = DictionaryObject()
         while True:
             # load the xref table
@@ -1302,11 +1302,11 @@ class PdfReader:
         # if not zero-indexed, verify that the table is correct; change it if necessary
         if self.xref_index and not self.strict:
             loc = stream.tell()
-            for gen in self.xref:
+            for gen, xref_entry in self.xref.items():
                 if gen == 65535:
                     continue
-                for id in self.xref[gen]:
-                    stream.seek(self.xref[gen][id], 0)
+                for id in xref_entry:
+                    stream.seek(xref_entry[id], 0)
                     try:
                         pid, _pgen = self.read_object_header(stream)
                     except ValueError:
@@ -1440,7 +1440,7 @@ class PdfReader:
 
         def used_before(num: int, generation: Union[int, Tuple[int, ...]]) -> bool:
             # We move backwards through the xrefs, don't replace any.
-            return num in self.xref.get(generation, []) or num in self.xref_objStm
+            return num in self.xref.get(generation, []) or num in self.xref_objStm  # type: ignore
 
         # Iterate through each subsection
         self._read_xref_subsections(idx_pairs, get_entry, used_before)
@@ -1519,9 +1519,9 @@ class PdfReader:
                     byte_offset = get_entry(1)
                     generation = get_entry(2)
                     if generation not in self.xref:
-                        self.xref[generation] = {}
+                        self.xref[generation] = {}  # type: ignore
                     if not used_before(num, generation):
-                        self.xref[generation][num] = byte_offset
+                        self.xref[generation][num] = byte_offset  # type: ignore
                 elif xref_type == 2:
                     # compressed objects
                     objstr_num = get_entry(1)
