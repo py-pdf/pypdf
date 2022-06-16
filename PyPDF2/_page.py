@@ -374,7 +374,7 @@ class PageObject(DictionaryObject):
                     if isinstance(op, NameObject):
                         operands[i] = rename.get(op, op)
             else:
-                raise KeyError("type of operands is %s" % type(operands))
+                raise KeyError(f"type of operands is {type(operands)}")
         return stream
 
     @staticmethod

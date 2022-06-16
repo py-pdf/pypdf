@@ -803,7 +803,7 @@ class PdfReader:
                 outline = self._namedDests[dest]
                 outline[NameObject("/Title")] = title  # type: ignore
             else:
-                raise PdfReadError("Unexpected destination %r" % dest)
+                raise PdfReadError(f"Unexpected destination {dest!r}")
         return outline
 
     @property
@@ -993,13 +993,14 @@ class PdfReader:
                 # Stream object cannot be read. Normally, a critical error, but
                 # Adobe Reader doesn't complain, so continue (in strict mode?)
                 warnings.warn(
-                    "Invalid stream (index %d) within object %d %d: %s"
-                    % (i, indirect_reference.idnum, indirect_reference.generation, exc),
+                    f"Invalid stream (index {i}) within object "
+                    f"{indirect_reference.idnum} {indirect_reference.generation}: "
+                    f"{exc}",
                     PdfReadWarning,
                 )
 
                 if self.strict:
-                    raise PdfReadError("Can't read object stream: %s" % exc)
+                    raise PdfReadError(f"Can't read object stream: {exc}")
                 # Replace with null. Hopefully it's nothing important.
                 obj = NullObject()
             return obj
@@ -1030,26 +1031,18 @@ class PdfReader:
                 # Xref table probably had bad indexes due to not being zero-indexed
                 if self.strict:
                     raise PdfReadError(
-                        "Expected object ID (%d %d) does not match actual (%d %d); xref table not zero-indexed."
-                        % (
-                            indirect_reference.idnum,
-                            indirect_reference.generation,
-                            idnum,
-                            generation,
-                        )
+                        f"Expected object ID ({indirect_reference.idnum} {indirect_reference.generation}) "
+                        f"does not match actual ({idnum} {generation}); "
+                        "xref table not zero-indexed."
                     )
                 else:
                     pass  # xref table is corrected in non-strict mode
             elif idnum != indirect_reference.idnum and self.strict:
                 # some other problem
                 raise PdfReadError(
-                    "Expected object ID (%d %d) does not match actual (%d %d)."
-                    % (
-                        indirect_reference.idnum,
-                        indirect_reference.generation,
-                        idnum,
-                        generation,
-                    )
+                    f"Expected object ID ({indirect_reference.idnum} "
+                    f"{indirect_reference.generation}) does not match actual "
+                    f"({idnum} {generation})."
                 )
             if self.strict:
                 assert generation == indirect_reference.generation
@@ -1070,8 +1063,8 @@ class PdfReader:
                 retval = self._decrypt_object(retval, key)  # type: ignore
         else:
             warnings.warn(
-                "Object %d %d not defined."
-                % (indirect_reference.idnum, indirect_reference.generation),
+                f"Object {indirect_reference.idnum} {indirect_reference.generation} "
+                "not defined.",
                 PdfReadWarning,
             )
             if self.strict:
@@ -1144,8 +1137,7 @@ class PdfReader:
         stream.seek(-1, 1)
         if extra and self.strict:
             warnings.warn(
-                "Superfluous whitespace found in object header %s %s"
-                % (idnum, generation),  # type: ignore
+                f"Superfluous whitespace found in object header {idnum} {generation}",  # type: ignore
                 PdfReadWarning,
             )
         return int(idnum), int(generation)
@@ -1212,9 +1204,8 @@ class PdfReader:
             header_byte = stream.read(5)
             if header_byte != b"%PDF-":
                 raise PdfReadError(
-                    "PDF starts with '{}', but '%PDF-' expected".format(
-                        header_byte.decode("utf8")
-                    )
+                    f"PDF starts with '{header_byte.decode('utf8')}', "
+                    "but '%PDF-' expected"
                 )
             stream.seek(0, os.SEEK_END)
         last_mb = stream.tell() - 1024 * 1024 + 1  # offset of last MB of stream
@@ -1431,7 +1422,7 @@ class PdfReader:
         entry_sizes = cast(Dict[Any, Any], xrefstream.get("/W"))
         assert len(entry_sizes) >= 3
         if self.strict and len(entry_sizes) > 3:
-            raise PdfReadError("Too many entry sizes: %s" % entry_sizes)
+            raise PdfReadError(f"Too many entry sizes: {entry_sizes}")
 
         def get_entry(i: int) -> Union[int, Tuple[int, ...]]:
             # Reads the correct number of bytes for each entry. See the
@@ -1539,7 +1530,7 @@ class PdfReader:
                     if not used_before(num, generation):
                         self.xref_objStm[num] = (objstr_num, obstr_idx)
                 elif self.strict:
-                    raise PdfReadError("Unknown xref type: %s" % xref_type)
+                    raise PdfReadError(f"Unknown xref type: {xref_type}")
 
     def _zero_xref(self, generation: int) -> None:
         self.xref[generation] = {
@@ -1568,11 +1559,11 @@ class PdfReader:
             if stream.tell() < 2:
                 raise PdfReadError("EOL marker not found")
             stream.seek(-2, 1)
-            if x == b"\n" or x == b"\r":  # \n = LF; \r = CR
+            if x in (b"\n", b"\r"):  # \n = LF; \r = CR
                 crlf = False
-                while x == b"\n" or x == b"\r":
+                while x in (b"\n", b"\r"):
                     x = stream.read(1)
-                    if x == b"\n" or x == b"\r":  # account for CR+LF
+                    if x in (b"\n", b"\r"):  # account for CR+LF
                         stream.seek(-1, 1)
                         crlf = True
                     if stream.tell() < 2:
@@ -1657,8 +1648,7 @@ class PdfReader:
         encrypt_v = cast(int, encrypt["/V"])
         if encrypt_v not in (1, 2):
             raise NotImplementedError(
-                "only algorithm code 1 and 2 are supported. This PDF uses code %s"
-                % encrypt_v
+                f"only algorithm code 1 and 2 are supported. This PDF uses code {encrypt_v}"
             )
         user_password, key = self._authenticate_user_password(password)
         if user_password:

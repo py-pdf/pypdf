@@ -564,9 +564,7 @@ class PdfMerger:
             if pageno is not None:
                 nd[NameObject("/Page")] = NumberObject(pageno)
             else:
-                raise ValueError(
-                    "Unresolved named destination '{}'".format(nd["/Title"])
-                )
+                raise ValueError(f"Unresolved named destination '{nd['/Title']}'")
 
     def _associate_bookmarks_to_pages(
         self, pages: List[_MergedPage], bookmarks: Optional[Iterable[Bookmark]] = None

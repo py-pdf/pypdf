@@ -234,17 +234,16 @@ def b_(s: Union[str, bytes]) -> bytes:
         return bc[s]
     if isinstance(s, bytes):
         return s
-    else:
-        try:
-            r = s.encode("latin-1")
-            if len(s) < 2:
-                bc[s] = r
-            return r
-        except Exception:
-            r = s.encode("utf-8")
-            if len(s) < 2:
-                bc[s] = r
-            return r
+    try:
+        r = s.encode("latin-1")
+        if len(s) < 2:
+            bc[s] = r
+        return r
+    except Exception:
+        r = s.encode("utf-8")
+        if len(s) < 2:
+            bc[s] = r
+        return r
 
 
 @overload
@@ -282,8 +281,7 @@ def ord_(b: int) -> int:
 def ord_(b: Union[int, str, bytes]) -> Union[int, bytes]:
     if isinstance(b, str):
         return ord(b)
-    else:
-        return b
+    return b
 
 
 def hexencode(b: bytes) -> bytes:

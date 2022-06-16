@@ -76,7 +76,7 @@ def _identity(value: K) -> K:
 def _converter_date(value: str) -> datetime.datetime:
     matches = iso8601.match(value)
     if matches is None:
-        raise ValueError("Invalid date format: %s" % value)
+        raise ValueError(f"Invalid date format: {value}")
     year = int(matches.group("year"))
     month = int(matches.group("month") or "1")
     day = int(matches.group("day") or "1")

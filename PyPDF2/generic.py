@@ -265,8 +265,7 @@ class IndirectObject(PdfObject):
         r = read_non_whitespace(stream)
         if r != b"R":
             raise PdfReadError(
-                "Error reading indirect object reference at byte %s"
-                % hex_str(stream.tell())
+                f"Error reading indirect object reference at byte {hex_str(stream.tell())}"
             )
         return IndirectObject(int(idnum), int(generation), pdf)
 
@@ -298,7 +297,7 @@ class FloatObject(decimal.Decimal, PdfObject):
             return str(self.quantize(decimal.Decimal(1)))
         else:
             # Standard formatting adds useless extraneous zeros.
-            o = "%.5f" % self
+            o = f"{self:.5f}"
             # Remove the zeros.
             while o and o[-1] == "0":
                 o = o[:-1]
@@ -414,7 +413,6 @@ def readStringFromStream(  # TODO: PEP8
                 b"/": b"/",
                 b"\\": b"\\",
                 b" ": b" ",
-                b"/": b"/",
                 b"%": b"%",
                 b"<": b"<",
                 b">": b">",
@@ -452,7 +450,7 @@ def readStringFromStream(  # TODO: PEP8
                     # line break was escaped:
                     tok = b""
                 else:
-                    msg = r"Unexpected escaped string: {}".format(tok.decode("utf8"))
+                    msg = rf"Unexpected escaped string: {tok.decode('utf8')}"
                     # if.strict: PdfReadError(msg)
                     logger.warning(msg)
         txt += tok
@@ -545,7 +543,7 @@ class TextStringObject(str, PdfObject):
             stream.write(b"(")
             for c in bytearr:
                 if not chr(c).isalnum() and c != b" ":
-                    stream.write(b_("\\%03o" % ord_(c)))
+                    stream.write(b_(rf"\{ord_(c):0>3o}"))
                 else:
                     stream.write(b_(chr(c)))
             stream.write(b")")
@@ -717,8 +715,8 @@ class DictionaryObject(dict, PdfObject):
         tmp = stream.read(2)
         if tmp != b"<<":
             raise PdfReadError(
-                "Dictionary read error at byte %s: stream must begin with '<<'"
-                % hex_str(stream.tell())
+                f"Dictionary read error at byte {hex_str(stream.tell())}: "
+                "stream must begin with '<<'"
             )
         data: Dict[Any, Any] = {}
         while True:
@@ -742,18 +740,16 @@ class DictionaryObject(dict, PdfObject):
             value = read_object(stream, pdf, forced_encoding)
             if not data.get(key):
                 data[key] = value
-            elif pdf.strict:
-                # multiple definitions of key not permitted
-                raise PdfReadError(
-                    "Multiple definitions in dictionary at byte %s for key %s"
-                    % (hex_str(stream.tell()), key)
-                )
             else:
-                warnings.warn(
-                    "Multiple definitions in dictionary at byte %s for key %s"
-                    % (hex_str(stream.tell()), key),
-                    PdfReadWarning,
+                # multiple definitions of key not permitted
+                msg = (
+                    f"Multiple definitions in dictionary at byte "
+                    f"{hex_str(stream.tell())} for key {key}"
                 )
+                if pdf.strict:
+                    raise PdfReadError(msg)
+                else:
+                    warnings.warn(msg, PdfReadWarning)
 
         pos = stream.tell()
         s = read_non_whitespace(stream)
@@ -801,8 +797,8 @@ class DictionaryObject(dict, PdfObject):
                 else:
                     stream.seek(pos, 0)
                     raise PdfReadError(
-                        "Unable to find 'endstream' marker after stream at byte %s."
-                        % hex_str(stream.tell())
+                        "Unable to find 'endstream' marker after stream at byte "
+                        f"{hex_str(stream.tell())}."
                     )
         else:
             stream.seek(pos, 0)
@@ -1723,7 +1719,7 @@ class Destination(TreeObject):
         elif typ in [TF.FIT, TF.FIT_B]:
             pass
         else:
-            raise PdfReadError("Unknown Destination Type: %r" % typ)
+            raise PdfReadError(f"Unknown Destination Type: {typ!r}")
 
     @property
     def dest_array(self) -> ArrayObject:

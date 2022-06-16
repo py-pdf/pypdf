@@ -116,7 +116,7 @@ class FlateDecode:
                 str_data = FlateDecode._decode_png_prediction(str_data, columns)  # type: ignore
             else:
                 # unsupported predictor
-                raise PdfReadError("Unsupported flatedecode predictor %r" % predictor)
+                raise PdfReadError(f"Unsupported flatedecode predictor {predictor!r}")
         return str_data
 
     @staticmethod
@@ -492,7 +492,7 @@ def decodeStreamData(stream: Any) -> Union[str, bytes]:  # utils.StreamObject
                     )
             else:
                 # Unsupported filter
-                raise NotImplementedError("unsupported filter %s" % filter_type)
+                raise NotImplementedError(f"unsupported filter {filter_type}")
     return data
 
 
