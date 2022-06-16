@@ -1020,9 +1020,9 @@ class PdfWriter:
 
         return bookmark_ref
 
-    def addBookmarkDict(  # pragma: no cover
+    def addBookmarkDict(
         self, bookmark: BookmarkTypes, parent: Optional[TreeObject] = None
-    ) -> IndirectObject:
+    ) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
