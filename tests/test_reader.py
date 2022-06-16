@@ -118,8 +118,7 @@ def test_get_attachments(src):
     reader = PdfReader(src)
 
     attachments = {}
-    for i in range(len(reader.pages)):
-        page = reader.pages[i]
+    for page in reader.pages:
         if PG.ANNOTS in page:
             for annotation in page[PG.ANNOTS]:
                 annotobj = annotation.get_object()
@@ -705,6 +704,15 @@ def test_read_path():
     assert len(reader.pages) == 1
 
 
+def test_read_not_binary_mode():
+    with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf")) as f:
+        msg = "PdfReader stream/file object is not in binary mode. It may not be read correctly."
+        with pytest.warns(PdfReadWarning, match=msg), pytest.raises(
+            io.UnsupportedOperation
+        ):
+            PdfReader(f)
+
+
 @pytest.mark.xfail(reason="#416")
 def test_read_form_416():
     url = (
@@ -713,3 +721,31 @@ def test_read_form_416():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name="issue_416.pdf")))
     fields = reader.get_form_text_fields()
     assert len(fields) > 0
+
+
+def test_extract_text_xref_issue_2():
+    # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/981/981961.pdf"
+    msg = r"incorrect startxref pointer\(2\)"
+    with pytest.warns(PdfReadWarning, match=msg):
+        reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-981961.pdf")))
+    for page in reader.pages:
+        page.extract_text()
+
+
+def test_extract_text_xref_issue_3():
+    # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/977/977774.pdf"
+    msg = r"incorrect startxref pointer\(3\)"
+    with pytest.warns(PdfReadWarning, match=msg):
+        reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-977774.pdf")))
+    for page in reader.pages:
+        page.extract_text()
+
+
+def test_extract_text_pdf15():
+    # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/976/976030.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-976030.pdf")))
+    for page in reader.pages:
+        page.extract_text()

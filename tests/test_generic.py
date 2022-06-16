@@ -5,7 +5,7 @@ import pytest
 
 from PyPDF2 import PdfReader, PdfWriter
 from PyPDF2.constants import TypFitArguments as TF
-from PyPDF2.errors import PdfReadError, PdfStreamError
+from PyPDF2.errors import PdfReadError, PdfReadWarning, PdfStreamError
 from PyPDF2.generic import (
     ArrayObject,
     Bookmark,
@@ -27,6 +27,8 @@ from PyPDF2.generic import (
     readHexStringFromStream,
     readStringFromStream,
 )
+
+from . import get_pdf_from_url
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -402,3 +404,41 @@ def test_remove_child_in_tree():
     tree.remove_child(obj)
     tree.add_child(obj, writer)
     tree.emptyTree()
+
+
+def test_dict_read_from_stream():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/984/984877.pdf"
+    name = "tika-984877.pdf"
+
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for page in reader.pages:
+        with pytest.warns(PdfReadWarning):
+            page.extract_text()
+
+
+def test_parse_content_stream_peek_percentage():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/985/985770.pdf"
+    name = "tika-985770.pdf"
+
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for page in reader.pages:
+        page.extract_text()
+
+
+def test_read_inline_image_no_has_q():
+    # pdf/df7e1add3156af17a372bc165e47a244.pdf
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/998/998719.pdf"
+    name = "tika-998719.pdf"
+
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for page in reader.pages:
+        page.extract_text()
+
+
+def test_read_inline_image_loc_neg_1():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/935/935066.pdf"
+    name = "tika-935066.pdf"
+
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for page in reader.pages:
+        page.extract_text()

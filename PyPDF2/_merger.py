@@ -46,16 +46,16 @@ from .generic import (
     NumberObject,
     TextStringObject,
     TreeObject,
-    createStringObject,
+    _create_bookmark,
 )
 from .pagerange import PageRange, PageRangeSpec
 from .types import (
     BookmarkTypes,
+    FitType,
     LayoutType,
     OutlinesType,
     PagemodeType,
     ZoomArgsType,
-    ZoomArgType,
 )
 
 ERR_CLOSED_WRITER = "close() was called and thus the writer cannot be used anymore"
@@ -168,12 +168,12 @@ class PdfMerger:
 
         # Gather all the pages that are going to be merged
         for i in range(*pages):
-            pg = reader.pages[i]
+            page = reader.pages[i]
 
             id = self.id_count
             self.id_count += 1
 
-            mp = _MergedPage(pg, reader, id)
+            mp = _MergedPage(page, reader, id)
 
             srcpages.append(mp)
 
@@ -565,9 +565,7 @@ class PdfMerger:
             if pageno is not None:
                 nd[NameObject("/Page")] = NumberObject(pageno)
             else:
-                raise ValueError(
-                    "Unresolved named destination '{}'".format(nd["/Title"])
-                )
+                raise ValueError(f"Unresolved named destination '{nd['/Title']}'")
 
     def _associate_bookmarks_to_pages(
         self, pages: List[_MergedPage], bookmarks: Optional[Iterable[Bookmark]] = None
@@ -593,7 +591,7 @@ class PdfMerger:
             if pageno is not None:
                 b[NameObject("/Page")] = NumberObject(pageno)
             else:
-                raise ValueError("Unresolved bookmark '{}'".format(b["/Title"]))
+                raise ValueError(f"Unresolved bookmark '{b['/Title']}'")
 
     def find_bookmark(
         self,
@@ -624,8 +622,8 @@ class PdfMerger:
         color: Optional[Tuple[float, float, float]] = None,
         bold: bool = False,
         italic: bool = False,
-        fit: str = "/Fit",
-        *args: ZoomArgType,
+        fit: FitType = "/Fit",
+        *args: ZoomArgsType,
     ) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
@@ -644,8 +642,8 @@ class PdfMerger:
         color: Optional[Tuple[float, float, float]] = None,
         bold: bool = False,
         italic: bool = False,
-        fit: str = "/Fit",
-        *args: ZoomArgType,
+        fit: FitType = "/Fit",
+        *args: ZoomArgsType,
     ) -> IndirectObject:
         """
         Add a bookmark to this PDF file.
@@ -659,7 +657,7 @@ class PdfMerger:
         :param bool bold: Bookmark is bold
         :param bool italic: Bookmark is italic
         :param str fit: The fit of the destination page. See
-            :meth:`addLink()<addLin>` for details.
+            :meth:`addLink()<addLink>` for details.
         """
         if self.output is None:
             raise RuntimeError(ERR_CLOSED_WRITER)
@@ -690,32 +688,13 @@ class PdfMerger:
         if parent is None:
             parent = outline_ref
 
-        bookmark = TreeObject()
+        bookmark = _create_bookmark(action_ref, title, color, italic, bold)
 
-        bookmark.update(
-            {
-                NameObject("/A"): action_ref,
-                NameObject("/Title"): createStringObject(title),
-            }
-        )
-
-        if color is not None:
-            bookmark.update(
-                {NameObject("/C"): ArrayObject([FloatObject(c) for c in color])}
-            )
-
-        format_flag = 0
-        if italic:
-            format_flag += 1
-        if bold:
-            format_flag += 2
-        if format_flag:
-            bookmark.update({NameObject("/F"): NumberObject(format_flag)})
-
-        bookmark_ref = self.output._add_object(bookmark)
-        parent = cast(Bookmark, parent.get_object())
         assert parent is not None, "hint for mypy"
-        parent.add_child(bookmark_ref, self.output)
+        bookmark_ref = self.output._add_object(bookmark)
+        parent_obj = cast(Bookmark, parent.get_object())
+        assert parent_obj is not None, "hint for mypy"
+        parent_obj.add_child(bookmark_ref, self.output)
 
         return bookmark_ref
 
