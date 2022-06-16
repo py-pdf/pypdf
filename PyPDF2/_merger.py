@@ -55,6 +55,7 @@ from .types import (
     OutlinesType,
     PagemodeType,
     ZoomArgsType,
+    ZoomArgType,
 )
 
 ERR_CLOSED_WRITER = "close() was called and thus the writer cannot be used anymore"
@@ -622,7 +623,7 @@ class PdfMerger:
         bold: bool = False,
         italic: bool = False,
         fit: FitType = "/Fit",
-        *args: ZoomArgsType,
+        *args: ZoomArgType,
     ) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
@@ -642,7 +643,7 @@ class PdfMerger:
         bold: bool = False,
         italic: bool = False,
         fit: FitType = "/Fit",
-        *args: ZoomArgsType,
+        *args: ZoomArgType,
     ) -> IndirectObject:
         """
         Add a bookmark to this PDF file.
