@@ -423,3 +423,13 @@ def test_parse_content_stream_peek_percentage():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     for page in reader.pages:
         page.extract_text()
+
+
+def test_read_inline_image_no_has_q():
+    # pdf/df7e1add3156af17a372bc165e47a244.pdf
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/998/998719.pdf"
+    name = "tika-998719.pdf"
+
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for page in reader.pages:
+        page.extract_text()
