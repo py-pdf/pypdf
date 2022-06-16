@@ -749,3 +749,37 @@ def test_extract_text_pdf15():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-976030.pdf")))
     for page in reader.pages:
         page.extract_text()
+
+
+def test_get_fields():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/972/972486.pdf"
+    name = "tika-972486.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    fields = reader.get_fields()
+    assert fields is not None
+    assert "c1-1" in fields
+    assert dict(fields["c1-1"]) == ({"/FT": "/Btn", "/T": "c1-1"})
+
+
+def test_get_fields_read_else_block():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/934/934771.pdf"
+    name = "tika-934771.pdf"
+    with pytest.raises(PdfReadError) as exc:
+        PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    assert exc.value.args[0] == "Could not find xref table at specified location"
+
+
+def test_get_fields_read_else_block2():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/914/914902.pdf"
+    name = "tika-914902.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    fields = reader.get_fields()
+    assert fields is None
+
+
+def test_get_fields_read_else_block3():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/957/957721.pdf"
+    name = "tika-957721.pdf"
+    with pytest.raises(PdfReadError) as exc:
+        PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    assert exc.value.args[0] == "Could not find xref table at specified location"

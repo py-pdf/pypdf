@@ -442,3 +442,12 @@ def test_read_inline_image_loc_neg_1():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     for page in reader.pages:
         page.extract_text()
+
+
+def test_text_string_write_to_stream():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924562.pdf"
+    name = "tika-924562.pdf"
+
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for page in reader.pages:
+        page.compress_content_streams()
