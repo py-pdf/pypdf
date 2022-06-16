@@ -1317,7 +1317,7 @@ class PdfReader:
                 for id in self.xref[gen]:
                     stream.seek(self.xref[gen][id], 0)
                     try:
-                        pid, pgen = self.read_object_header(stream)
+                        pid, _pgen = self.read_object_header(stream)
                     except ValueError:
                         break
                     if pid == id - self.xref_index:
@@ -1678,8 +1678,8 @@ class PdfReader:
                 val = real_O
                 for i in range(19, -1, -1):
                     new_key = b""
-                    for l in range(len(key)):
-                        new_key += b_(chr(ord_(key[l]) ^ i))
+                    for key_char in key:
+                        new_key += b_(chr(ord_(key_char) ^ i))
                     val = RC4_encrypt(new_key, val)
                 userpass = val
             owner_password, key = self._authenticate_user_password(userpass)

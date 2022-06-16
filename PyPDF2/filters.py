@@ -232,8 +232,7 @@ class LZWDecode:
                     return -1
                 nextbits = ord_(self.data[self.bytepos])
                 bitsfromhere = 8 - self.bitpos
-                if bitsfromhere > fillbits:
-                    bitsfromhere = fillbits
+                bitsfromhere = min(bitsfromhere, fillbits)
                 value |= (
                     (nextbits >> (8 - self.bitpos - bitsfromhere))
                     & (0xFF >> (8 - bitsfromhere))
