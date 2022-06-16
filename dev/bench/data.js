@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1655318274673,
+  "lastUpdate": 1655369792132,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -5359,6 +5359,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02259375460058008",
             "extra": "mean: 3.7421653891999993 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6ce36f7ab6a66a7fce83e7c101dd5167e45e5613",
+          "message": "TST: Improve test coverage by extracting texts (#998)",
+          "timestamp": "2022-06-16T10:55:15+02:00",
+          "tree_id": "edccd54346f15bca621a89051ea7d7b13fd784f3",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/6ce36f7ab6a66a7fce83e7c101dd5167e45e5613"
+        },
+        "date": 1655369790897,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9506659352798031,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0094299572614412",
+            "extra": "mean: 1.051894217400013 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.162170437914352,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007548943347155935",
+            "extra": "mean: 98.40417518181641 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2574983527266455,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01548085819896498",
+            "extra": "mean: 3.883519989199999 sec\nrounds: 5"
           }
         ]
       }
