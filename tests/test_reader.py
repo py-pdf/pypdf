@@ -724,10 +724,21 @@ def test_read_form_416():
     assert len(fields) > 0
 
 
+def test_extract_text_xref_issue_2():
+    # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/981/981961.pdf"
+    msg = r"incorrect startxref pointer\(2\)"
+    with pytest.warns(PdfReadWarning, match=msg):
+        reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-981961.pdf")))
+    for page in reader.pages:
+        page.extract_text()
+
+
 def test_extract_text_xref_issue_3():
     # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/977/977774.pdf"
-    with pytest.warns(PdfReadWarning):
+    msg = r"incorrect startxref pointer\(3\)"
+    with pytest.warns(PdfReadWarning, match=msg):
         reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-977774.pdf")))
     for page in reader.pages:
         page.extract_text()

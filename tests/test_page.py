@@ -230,8 +230,24 @@ def test_extract_text_single_quote_op():
 # pdf/e1512b63dcad45a4f65412b5a325fc37.pdf
 # pdf/bfbcd4668ac65235661d151bd05cf983.pdf
 # pdf/51428e864483552ed49f8722632cb4cd.pdf
-def test_extract_text_keyerror_potentially_empty_page():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/964/964029.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-964029.pdf")))
+
+
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        # keyerror_potentially_empty_page
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/964/964029.pdf",
+            "tika-964029.pdf",
+        ),
+        # 1140 / 1141:
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/932/932446.pdf",
+            "tika-932446.pdf",
+        ),
+    ],
+)
+def test_extract_text_page_pdf(url, name):
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     for page in reader.pages:
         page.extract_text()
