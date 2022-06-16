@@ -769,7 +769,7 @@ def test_get_fields_read_else_block():
     assert exc.value.args[0] == "Could not find xref table at specified location"
 
 
-def test_get_fields_read_else_block():
+def test_get_fields_read_else_block2():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/914/914902.pdf"
     name = "tika-914902.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
@@ -777,7 +777,7 @@ def test_get_fields_read_else_block():
     assert fields is None
 
 
-def test_get_fields_read_else_block():
+def test_get_fields_read_else_block3():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/957/957721.pdf"
     name = "tika-957721.pdf"
     with pytest.raises(PdfReadError) as exc:
