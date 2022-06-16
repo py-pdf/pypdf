@@ -222,7 +222,6 @@ def parse_to_unicode(
                     ] = unhexlify(sq).decode("utf-16-be", "surrogatepass")
                     int_entry.append(a)
                     a += 1
-                    assert a > b
             else:
                 c = int(lst[2], 16)
                 fmt2 = b"%%0%dX" % len(lst[2])
@@ -249,8 +248,8 @@ def parse_to_unicode(
                 )  # join is here as some cases where the code was split
                 int_entry.append(int(lst[0], 16))
                 lst = lst[2:]
-    for a in map_dict:
-        if map_dict[a] == " ":
+    for a, value in map_dict.items():
+        if value == " ":
             space_code = a
     return map_dict, space_code, int_entry
 

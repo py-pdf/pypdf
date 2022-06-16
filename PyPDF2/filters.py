@@ -125,7 +125,7 @@ class FlateDecode:
                 str_data = FlateDecode._decode_png_prediction(str_data, columns)  # type: ignore
             else:
                 # unsupported predictor
-                raise PdfReadError("Unsupported flatedecode predictor %r" % predictor)
+                raise PdfReadError(f"Unsupported flatedecode predictor {predictor!r}")
         return str_data
 
     @staticmethod
@@ -162,7 +162,7 @@ class FlateDecode:
                     rowdata[i] = (rowdata[i] + paeth) % 256
             else:
                 # unsupported PNG filter
-                raise PdfReadError("Unsupported PNG filter %r" % filter_byte)
+                raise PdfReadError(f"Unsupported PNG filter {filter_byte!r}")
             prev_rowdata = tuple(rowdata)
             output.write("".join([chr(x) for x in rowdata[1:]]))
         return output.getvalue()
@@ -244,8 +244,7 @@ class LZWDecode:
                     return -1
                 nextbits = ord_(self.data[self.bytepos])
                 bitsfromhere = 8 - self.bitpos
-                if bitsfromhere > fillbits:
-                    bitsfromhere = fillbits
+                bitsfromhere = min(bitsfromhere, fillbits)
                 value |= (
                     (nextbits >> (8 - self.bitpos - bitsfromhere))
                     & (0xFF >> (8 - bitsfromhere))
@@ -525,7 +524,7 @@ def decode_stream_data(stream: Any) -> Union[str, bytes]:  # utils.StreamObject
                     )
             else:
                 # Unsupported filter
-                raise NotImplementedError("unsupported filter %s" % filter_type)
+                raise NotImplementedError(f"unsupported filter {filter_type}")
     return data
 
 

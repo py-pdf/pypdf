@@ -87,7 +87,9 @@ def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleOb
     return retval
 
 
-def getRectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
+def getRectangle(
+    self: Any, name: str, defaults: Iterable[str]
+) -> RectangleObject:  # pragma: no cover
     deprecate_no_replacement("getRectangle")
     return _get_rectangle(self, name, defaults)
 
@@ -98,7 +100,9 @@ def _set_rectangle(self: Any, name: str, value: Union[RectangleObject, float]) -
     self[name] = value
 
 
-def setRectangle(self: Any, name: str, value: Union[RectangleObject, float]) -> None:
+def setRectangle(
+    self: Any, name: str, value: Union[RectangleObject, float]
+) -> None:  # pragma: no cover
     deprecate_no_replacement("setRectangle")
     _set_rectangle(self, name, value)
 
@@ -107,7 +111,7 @@ def _delete_rectangle(self: Any, name: str) -> None:
     del self[name]
 
 
-def deleteRectangle(self: Any, name: str) -> None:
+def deleteRectangle(self: Any, name: str) -> None:  # pragma: no cover
     deprecate_no_replacement("deleteRectangle")
     del self[name]
 
@@ -120,7 +124,9 @@ def _create_rectangle_accessor(name: str, fallback: Iterable[str]) -> property:
     )
 
 
-def createRectangleAccessor(name: str, fallback: Iterable[str]) -> property:
+def createRectangleAccessor(
+    name: str, fallback: Iterable[str]
+) -> property:  # pragma: no cover
     deprecate_no_replacement("createRectangleAccessor")
     return _create_rectangle_accessor(name, fallback)
 
@@ -368,7 +374,7 @@ class PageObject(DictionaryObject):
                     if isinstance(op, NameObject):
                         operands[i] = rename.get(op, op)
             else:
-                raise KeyError("type of operands is %s" % type(operands))
+                raise KeyError(f"type of operands is {type(operands)}")
         return stream
 
     @staticmethod
@@ -1064,7 +1070,7 @@ class PageObject(DictionaryObject):
                 text += "\n"
         return text
 
-    def _debug_for_extract(self) -> str:
+    def _debug_for_extract(self) -> str:  # pragma: no cover
         out = ""
         for ope, op in ContentStream(
             self["/Contents"].getObject(), self.pdf, "bytes"
@@ -1218,7 +1224,13 @@ class PageObject(DictionaryObject):
                     else operands[0]
                 )
                 if isinstance(cmap[0], str):
-                    t = tt.decode(cmap[0], "surrogatepass")  # apply str encoding
+                    try:
+                        t = tt.decode(cmap[0], "surrogatepass")  # apply str encoding
+                    except Exception:  # the data does not match the expectation, we use the alternative ; text extraction may not be good
+                        t = tt.decode(
+                            "utf-16-be" if cmap[0] == "charmap" else "charmap",
+                            "surrogatepass",
+                        )  # apply str encoding
                 else:  # apply dict encoding
                     t = "".join(
                         [

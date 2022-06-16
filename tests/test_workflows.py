@@ -162,6 +162,11 @@ def test_rotate_45():
             [0, 1, 34, 35, 36, 118, 119, 120, 121],
         ),
         (True, "https://github.com/py-pdf/PyPDF2/files/8884493/998167.pdf", [0]),
+        (
+            True,
+            "https://corpora.tika.apache.org/base/docs/govdocs1/971/971703.pdf",
+            [0, 1, 5, 8, 14],
+        ),
     ],
 )
 def test_extract_textbench(enable, url, pages, print_result=False):

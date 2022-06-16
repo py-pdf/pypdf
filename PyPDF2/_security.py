@@ -119,8 +119,8 @@ def _alg33(owner_pwd: str, user_pwd: str, rev: int, keylen: int) -> bytes:
     if rev >= 3:
         for i in range(1, 20):
             new_key = ""
-            for l in range(len(key)):
-                new_key += chr(ord_(key[l]) ^ i)
+            for key_char in key:
+                new_key += chr(ord_(key_char) ^ i)
             val = RC4_encrypt(new_key, val)
     # 8. Store the output from the final invocation of the RC4 as the value of
     # the /O entry in the encryption dictionary.
@@ -233,10 +233,10 @@ def RC4_encrypt(key: Union[str, bytes], plaintext: bytes) -> bytes:  # TODO
         S[i], S[j] = S[j], S[i]
     i, j = 0, 0
     retval = []
-    for x in range(len(plaintext)):
+    for plaintext_char in plaintext:
         i = (i + 1) % 256
         j = (j + S[i]) % 256
         S[i], S[j] = S[j], S[i]
         t = S[(S[i] + S[j]) % 256]
-        retval.append(b_(chr(ord_(plaintext[x]) ^ t)))
+        retval.append(b_(chr(ord_(plaintext_char) ^ t)))
     return b"".join(retval)
