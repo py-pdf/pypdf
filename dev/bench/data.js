@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1655380772336,
+  "lastUpdate": 1655391404895,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -5449,6 +5449,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.018917795994089735",
             "extra": "mean: 4.449564504 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1ccf4849f0933b34d6f1e1d8f1c360e7620bba42",
+          "message": "DEV: Fix type annotations for add_bookmarks (#1000)",
+          "timestamp": "2022-06-16T16:55:17+02:00",
+          "tree_id": "57a68406792715c6d95a73f24a7a663c832addc2",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/1ccf4849f0933b34d6f1e1d8f1c360e7620bba42"
+        },
+        "date": 1655391404326,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6890046159660322,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024292111102718283",
+            "extra": "mean: 1.4513690863999955 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 7.424477118994786,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006788092505252368",
+            "extra": "mean: 134.68961975000227 msec\nrounds: 8"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.19152049000576207,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08468760655479031",
+            "extra": "mean: 5.221373441399999 sec\nrounds: 5"
           }
         ]
       }
