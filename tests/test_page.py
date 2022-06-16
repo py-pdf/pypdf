@@ -245,6 +245,11 @@ def test_extract_text_single_quote_op():
             "https://corpora.tika.apache.org/base/docs/govdocs1/932/932446.pdf",
             "tika-932446.pdf",
         ),
+        # Impossible decode xform:
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/972/972962.pdf",
+            "tika-972962.pdf",
+        ),
     ],
 )
 def test_extract_text_page_pdf(url, name):
