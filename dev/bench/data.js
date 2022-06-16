@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1655391404895,
+  "lastUpdate": 1655407517461,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -5494,6 +5494,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.08468760655479031",
             "extra": "mean: 5.221373441399999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "bb93367f95c9db76bb759e1b0a9d24aa1c10bf90",
+          "message": "TST: Add test for PdfMerger (#1001)\n\nBUG: Add file handles of reader early to list so that it can be closed in case of a catched exception",
+          "timestamp": "2022-06-16T21:24:03+02:00",
+          "tree_id": "48d61e2d8066750770e75cef9ce815f76f1c3b80",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/bb93367f95c9db76bb759e1b0a9d24aa1c10bf90"
+        },
+        "date": 1655407515579,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8185114761045884,
+            "unit": "iter/sec",
+            "range": "stddev: 0.050185769451911395",
+            "extra": "mean: 1.2217299686000018 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 8.683329721111537,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010115184473849527",
+            "extra": "mean: 115.16319570000064 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22963236061463574,
+            "unit": "iter/sec",
+            "range": "stddev: 0.10751637486912834",
+            "extra": "mean: 4.354786918199997 sec\nrounds: 5"
           }
         ]
       }
