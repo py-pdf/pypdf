@@ -55,6 +55,7 @@ from .types import (
     OutlinesType,
     PagemodeType,
     ZoomArgsType,
+    ZoomArgType,
 )
 
 ERR_CLOSED_WRITER = "close() was called and thus the writer cannot be used anymore"
@@ -133,6 +134,9 @@ class PdfMerger:
         # Create a new PdfReader instance using the stream
         # (either file or BytesIO or StringIO) created above
         reader = PdfReader(stream, strict=self.strict)  # type: ignore[arg-type]
+
+        # Keep track of our input files so we can close them later
+        self.inputs.append((stream, reader, my_file))
         if decryption_key is not None:
             reader._decryption_key = decryption_key
 
@@ -181,9 +185,6 @@ class PdfMerger:
 
         # Slice to insert the pages at the specified position
         self.pages[position:position] = srcpages
-
-        # Keep track of our input files so we can close them later
-        self.inputs.append((stream, reader, my_file))
 
     def _create_stream(
         self, fileobj: Union[StrByteType, PdfReader]
@@ -622,7 +623,7 @@ class PdfMerger:
         bold: bool = False,
         italic: bool = False,
         fit: FitType = "/Fit",
-        *args: ZoomArgsType,
+        *args: ZoomArgType,
     ) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
@@ -642,7 +643,7 @@ class PdfMerger:
         bold: bool = False,
         italic: bool = False,
         fit: FitType = "/Fit",
-        *args: ZoomArgsType,
+        *args: ZoomArgType,
     ) -> IndirectObject:
         """
         Add a bookmark to this PDF file.

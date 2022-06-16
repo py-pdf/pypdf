@@ -1052,7 +1052,7 @@ class PdfWriter:
         bold: bool = False,
         italic: bool = False,
         fit: FitType = "/Fit",
-        *args: ZoomArgsType,
+        *args: ZoomArgType,
     ) -> IndirectObject:
         """
         Add a bookmark to this PDF file.
@@ -1110,7 +1110,7 @@ class PdfWriter:
         bold: bool = False,
         italic: bool = False,
         fit: FitType = "/Fit",
-        *args: ZoomArgsType,
+        *args: ZoomArgType,
     ) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0

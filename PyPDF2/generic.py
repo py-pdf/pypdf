@@ -38,7 +38,7 @@ import logging
 import re
 import warnings
 from io import BytesIO
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from ._utils import (
     WHITESPACES,
@@ -868,12 +868,15 @@ class TreeObject(DictionaryObject):
         child = pdf.get_reference(child_obj)
         assert isinstance(child, IndirectObject)
 
+        prev: Optional[DictionaryObject]
         if "/First" not in self:
             self[NameObject("/First")] = child
             self[NameObject("/Count")] = NumberObject(0)
             prev = None
         else:
-            prev = self["/Last"]
+            prev = cast(
+                DictionaryObject, self["/Last"]
+            )  # TABLE 8.3 Entries in the outline dictionary
 
         self[NameObject("/Last")] = child
         self[NameObject("/Count")] = NumberObject(self[NameObject("/Count")] + 1)  # type: ignore
@@ -882,7 +885,7 @@ class TreeObject(DictionaryObject):
             prev_ref = pdf.get_reference(prev)
             assert isinstance(prev_ref, IndirectObject)
             child_obj[NameObject("/Prev")] = prev_ref
-            prev[NameObject("/Next")] = child  # type: ignore
+            prev[NameObject("/Next")] = child
 
         parent_ref = pdf.get_reference(self)
         assert isinstance(parent_ref, IndirectObject)
