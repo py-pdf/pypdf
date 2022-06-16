@@ -110,12 +110,14 @@ def test_merge_page_exception():
     with pytest.raises(TypeError) as exc:
         merger.merge(0, pdf_path, pages="a:b")
     assert exc.value.args[0] == '"pages" must be a tuple of (start, stop[, step])'
+    merger.close()
 
 
 def test_merge_page_tuple():
     merger = PyPDF2.PdfMerger()
     pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
     merger.merge(0, pdf_path, pages=(0, 1))
+    merger.close()
 
 
 def test_merge_write_closed_fh():
