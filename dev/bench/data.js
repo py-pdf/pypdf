@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1655369792132,
+  "lastUpdate": 1655380772336,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -5404,6 +5404,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01548085819896498",
             "extra": "mean: 3.883519989199999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "faebc9da1567af676edf69803e31fc61396fab93",
+          "message": "STY: Apply fixes suggested by pylint (#999)\n\n* Use f-strings: They are IMHO more readable and faster than other formatting options\r\n* Reduce code duplication\r\n* Improvements in type annotations\r\n* Add PyPDF2 module docstring for help text",
+          "timestamp": "2022-06-16T13:58:14+02:00",
+          "tree_id": "10dffcda58da3e06f463d7327f5c9988c420a7e6",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/faebc9da1567af676edf69803e31fc61396fab93"
+        },
+        "date": 1655380770482,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8225766710837669,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008314234669688064",
+            "extra": "mean: 1.2156921478000016 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 8.812169592107175,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00768160558077237",
+            "extra": "mean: 113.4794320000007 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22474109524674507,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018917795994089735",
+            "extra": "mean: 4.449564504 sec\nrounds: 5"
           }
         ]
       }
