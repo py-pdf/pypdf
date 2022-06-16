@@ -1554,7 +1554,9 @@ class PdfReader:
             if (i + 1) >= len(array):
                 break
 
-    def read_next_end_line(self, stream: StreamType, limit_offset: int = 0) -> bytes:
+    def read_next_end_line(
+        self, stream: StreamType, limit_offset: int = 0
+    ) -> bytes:  # pragma: no cover
         """.. deprecated:: 2.1.0"""
         deprecate_no_replacement("read_next_end_line", removed_in="4.0.0")
         line_parts = []

@@ -167,12 +167,12 @@ class PdfMerger:
 
         # Gather all the pages that are going to be merged
         for i in range(*pages):
-            pg = reader.pages[i]
+            page = reader.pages[i]
 
             id = self.id_count
             self.id_count += 1
 
-            mp = _MergedPage(pg, reader, id)
+            mp = _MergedPage(page, reader, id)
 
             srcpages.append(mp)
 
