@@ -44,6 +44,21 @@ def test_writer_operations():
     writer.insert_page(reader_outline.pages[0], 0)
     writer.add_bookmark_destination(page)
     writer.remove_links()
+    writer.add_bookmark_destination(page)
+    bm = writer.add_bookmark(
+        "A bookmark", 0, None, (255, 0, 15), True, True, "/FitBV", 10
+    )
+    writer.add_bookmark(
+        "The XYZ fit", 0, bm, (255, 0, 15), True, True, "/XYZ", 10, 20, 3
+    )
+    writer.add_bookmark("The FitH fit", 0, bm, (255, 0, 15), True, True, "/FitH", 10)
+    writer.add_bookmark("The FitV fit", 0, bm, (255, 0, 15), True, True, "/FitV", 10)
+    writer.add_bookmark(
+        "The FitR fit", 0, bm, (255, 0, 15), True, True, "/FitR", 10, 20, 30, 40
+    )
+    writer.add_bookmark("The FitB fit", 0, bm, (255, 0, 15), True, True, "/FitB")
+    writer.add_bookmark("The FitBH fit", 0, bm, (255, 0, 15), True, True, "/FitBH", 10)
+    writer.add_bookmark("The FitBV fit", 0, bm, (255, 0, 15), True, True, "/FitBV", 10)
     writer.add_blank_page()
     writer.add_uri(2, "https://example.com", RectangleObject([0, 0, 100, 100]))
     writer.add_link(2, 1, RectangleObject([0, 0, 100, 100]))
