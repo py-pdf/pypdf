@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1655413166680,
+  "lastUpdate": 1655452582035,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -5584,6 +5584,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.015089571938094447",
             "extra": "mean: 4.453386842200004 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "bf8ad456e534b46583ebbfed41b10b4889bf95fa",
+          "message": "TST: reader.get_fields / zlib issue / LZW decode issue (#1004)",
+          "timestamp": "2022-06-17T09:55:18+02:00",
+          "tree_id": "fb03fc63d732053e2c3dc1e222e22ee99ed77711",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/bf8ad456e534b46583ebbfed41b10b4889bf95fa"
+        },
+        "date": 1655452580964,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9631382068728982,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006535924326639555",
+            "extra": "mean: 1.038272589400003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.402483589552036,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006205210737651507",
+            "extra": "mean: 96.13088945455027 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2652156873560553,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028587863919452786",
+            "extra": "mean: 3.7705160277999994 sec\nrounds: 5"
           }
         ]
       }
