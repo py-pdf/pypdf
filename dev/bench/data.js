@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1655452582035,
+  "lastUpdate": 1655464939049,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -5629,6 +5629,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.028587863919452786",
             "extra": "mean: 3.7705160277999994 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "91b3e8a89487fe64dad73beff2b2c96e88f8c83d",
+          "message": "REL: 2.2.1\n\nPerformance Improvements (PI):\n-  Remove b_ calls (#992, #986)\n-  Apply improvements to _utils suggested by perflint (#993)\n\nRobustness (ROB):\n-  utf-16-be\\' codec can\\'t decode (...) (#995)\n\nDocumentation (DOC):\n-  Remove reference to Scripts (#987)\n\nDeveloper Experience (DEV):\n-  Fix type annotations for add_bookmarks (#1000)\n\nTesting (TST):\n-  Add test for PdfMerger (#1001)\n-  Add tests for XMP information (#996)\n-  reader.get_fields / zlib issue / LZW decode issue (#1004)\n-  reader.get_fields with report generation (#1002)\n-  Improve test coverage by extracting texts (#998)\n\nCode Style (STY):\n-  Apply fixes suggested by pylint (#999)\n\nFull Changelog: https://github.com/py-pdf/PyPDF2/compare/2.2.0...2.2.1",
+          "timestamp": "2022-06-17T13:20:49+02:00",
+          "tree_id": "9f5f5771693eab9c87db2228453913eecf6b746a",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/91b3e8a89487fe64dad73beff2b2c96e88f8c83d"
+        },
+        "date": 1655464938519,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.831175827657207,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03477858025420831",
+            "extra": "mean: 1.2031148725999998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.201466145421007,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006466518673642589",
+            "extra": "mean: 108.67833280000028 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23204174436104527,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04918283833400809",
+            "extra": "mean: 4.309569395600002 sec\nrounds: 5"
           }
         ]
       }
