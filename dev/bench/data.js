@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1655464939049,
+  "lastUpdate": 1655481610730,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -5674,6 +5674,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04918283833400809",
             "extra": "mean: 4.309569395600002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "c540896a349587addfd172344db3b504569f0545",
+          "message": "TST: Add mutmut config",
+          "timestamp": "2022-06-17T17:58:49+02:00",
+          "tree_id": "667df526ce6a90b9599578e9b80f1ea56f75db3c",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/c540896a349587addfd172344db3b504569f0545"
+        },
+        "date": 1655481609790,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8549551538771368,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010425898139371509",
+            "extra": "mean: 1.1696519934000036 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.199865362914256,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007744396943551764",
+            "extra": "mean: 108.69724290000136 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23480566119798402,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029709252514727873",
+            "extra": "mean: 4.258841098200003 sec\nrounds: 5"
           }
         ]
       }
