@@ -258,3 +258,11 @@ def test_extract_text_page_pdf_impossible_decode_xform():
     ):
         for page in reader.pages:
             page.extract_text()
+
+
+def test_extract_text_operator_t_star():  # L1266, L1267
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/967/967943.pdf"
+    name = "tika-967943.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for page in reader.pages:
+        page.extract_text()

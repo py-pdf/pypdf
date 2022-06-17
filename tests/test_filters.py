@@ -1,9 +1,11 @@
 import string
+from io import BytesIO
 from itertools import product as cartesian_product
 
 import pytest
 
-from PyPDF2.errors import PdfReadError, PdfStreamError
+from PyPDF2 import PdfReader
+from PyPDF2.errors import PdfReadError, PdfReadWarning, PdfStreamError
 from PyPDF2.filters import (
     ASCII85Decode,
     ASCIIHexDecode,
@@ -12,6 +14,8 @@ from PyPDF2.filters import (
     FlateDecode,
 )
 from PyPDF2.generic import ArrayObject, DictionaryObject, NumberObject
+
+from . import get_pdf_from_url
 
 filter_inputs = (
     # "", '', """""",
@@ -192,3 +196,23 @@ def test_CCITTFaxDecode():
         b"\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x17\x01\x04\x00\x01\x00"
         b"\x00\x00\x00\x00\x00\x00\x00\x00"
     )
+
+
+def test_decompress_zlib_error():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/952/952445.pdf"
+    name = "tika-952445.pdf"
+    with pytest.warns(PdfReadWarning, match=r"incorrect startxref pointer\(3\)"):
+        reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for page in reader.pages:
+        page.extract_text()
+    # assert exc.value.args[0] == "Could not find xref table at specified location"
+
+
+def test_lzw_decode_neg1():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/921/921632.pdf"
+    name = "tika-921632.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    with pytest.raises(PdfReadError) as exc:
+        for page in reader.pages:
+            page.extract_text()
+    assert exc.value.args[0] == "Missed the stop code in LZWDecode!"

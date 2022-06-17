@@ -334,7 +334,8 @@ def test_get_form(src, expected, expected_get_fields):
     fields = reader.get_form_text_fields()
     assert fields == expected
 
-    fields = reader.get_fields()
+    with open("tmp-fields-report.txt", "w") as f:
+        fields = reader.get_fields(fileobj=f)
     assert fields == expected_get_fields
     if fields:
         for field in fields.values():
@@ -351,6 +352,9 @@ def test_get_form(src, expected, expected_get_fields):
                 field.default_value,
                 field.additional_actions,
             ]
+
+    # cleanup
+    os.remove("tmp-fields-report.txt")
 
 
 @pytest.mark.parametrize(
@@ -751,6 +755,14 @@ def test_extract_text_pdf15():
         page.extract_text()
 
 
+def test_extract_text_xref_table_21_bytes_clrf():
+    # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/956/956939.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-956939.pdf")))
+    for page in reader.pages:
+        page.extract_text()
+
+
 def test_get_fields():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/972/972486.pdf"
     name = "tika-972486.pdf"
@@ -783,3 +795,22 @@ def test_get_fields_read_else_block3():
     with pytest.raises(PdfReadError) as exc:
         PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     assert exc.value.args[0] == "Could not find xref table at specified location"
+
+
+def test_metadata_is_none():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/963/963692.pdf"
+    name = "tika-963692.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    assert reader.metadata is None
+
+
+def test_get_fields_read_write_report():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/909/909655.pdf"
+    name = "tika-909655.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    with open("tmp-fields-report.txt", "w") as fp:
+        fields = reader.get_fields(fileobj=fp)
+    assert fields
+
+    # cleanup
+    os.remove("tmp-fields-report.txt")
