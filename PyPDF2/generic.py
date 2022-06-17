@@ -451,7 +451,6 @@ def readStringFromStream(  # TODO: PEP8
                     tok = b""
                 else:
                     msg = rf"Unexpected escaped string: {tok.decode('utf8')}"
-                    # if.strict: PdfReadError(msg)
                     logger.warning(msg)
         txt += tok
     return createStringObject(txt, forced_encoding)
