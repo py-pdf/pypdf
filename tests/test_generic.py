@@ -442,3 +442,34 @@ def test_read_inline_image_loc_neg_1():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     for page in reader.pages:
         page.extract_text()
+
+
+def test_text_string_write_to_stream():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924562.pdf"
+    name = "tika-924562.pdf"
+
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for page in reader.pages:
+        page.compress_content_streams()
+
+
+def test_name_object_read_from_stream_unicode_error():  # L588
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/974/974966.pdf"
+    name = "tika-974966.pdf"
+
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for page in reader.pages:
+        page.extract_text()
+
+
+def test_bool_repr():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/932/932449.pdf"
+    name = "tika-932449.pdf"
+
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    with open("tmp-fields-report.txt", "w") as fp:
+        fields = reader.get_fields(fileobj=fp)
+    assert fields
+
+    # cleanup
+    os.remove("tmp-fields-report.txt")

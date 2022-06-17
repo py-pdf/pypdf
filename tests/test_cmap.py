@@ -38,3 +38,11 @@ def test_parse_encoding_advanced_encoding_not_implemented():
     with pytest.warns(PdfReadWarning, match="Advanced encoding .* not implemented yet"):
         for page in reader.pages:
             page.extract_text()
+
+
+def test_get_font_width_from_default():  # L40
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/908/908104.pdf"
+    name = "tika-908104.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for page in reader.pages:
+        page.extract_text()
