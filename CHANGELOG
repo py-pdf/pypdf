@@ -1,3 +1,31 @@
+Version 2.2.1, 2022-06-17
+-------------------------
+
+Performance Improvements (PI):
+-  Remove b_ calls (#992, #986)
+-  Apply improvements to _utils suggested by perflint (#993)
+
+Robustness (ROB):
+-  utf-16-be\' codec can\'t decode (...) (#995)
+
+Documentation (DOC):
+-  Remove reference to Scripts (#987)
+
+Developer Experience (DEV):
+-  Fix type annotations for add_bookmarks (#1000)
+
+Testing (TST):
+-  Add test for PdfMerger (#1001)
+-  Add tests for XMP information (#996)
+-  reader.get_fields / zlib issue / LZW decode issue (#1004)
+-  reader.get_fields with report generation (#1002)
+-  Improve test coverage by extracting texts (#998)
+
+Code Style (STY):
+-  Apply fixes suggested by pylint (#999)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.2.0...2.2.1
+
 Version 2.2.0, 2022-06-13
 -------------------------
 
