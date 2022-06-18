@@ -98,7 +98,7 @@ def test_merge():
         "foo",
     ]
 
-    # TODO: There seem to be no destionations for those links?
+    # TODO: There seem to be no destinations for those links?
 
     # Clean up
     os.remove(tmp_path)
