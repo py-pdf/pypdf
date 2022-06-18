@@ -167,6 +167,11 @@ def test_rotate_45():
             "https://corpora.tika.apache.org/base/docs/govdocs1/971/971703.pdf",
             [0, 1, 5, 8, 14],
         ),
+        (  # faulty PDF, wrongly linearized and with 2 trailer, second with /Root
+            True,
+            "https://corpora.tika.apache.org/base/docs/govdocs1/989/989691.pdf",
+            [0],
+        ),
     ],
 )
 def test_extract_textbench(enable, url, pages, print_result=False):

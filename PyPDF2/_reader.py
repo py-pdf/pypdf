@@ -1482,17 +1482,12 @@ class PdfReader:
             if generation not in self.xref:
                 self.xref[generation] = {}
             self.xref[generation][idnum] = m.start(1)
-        trailer_pos = f_.rfind(b"trailer") - len(f_) + 7
-        stream.seek(trailer_pos, 2)
-        # code below duplicated
-        read_non_whitespace(stream)
-        stream.seek(-1, 1)
-
-        # there might be something that is not a dict (see #856)
-        new_trailer = cast(Dict[Any, Any], read_object(stream, self))
-
-        for key, value in list(new_trailer.items()):
-            if key not in self.trailer:
+        stream.seek(0, 0)
+        for m in re.finditer(rb"[\r\n \t][ \t]*trailer[\r\n \t]*(<<)", f_):
+            stream.seek(m.start(1), 0)
+            new_trailer = cast(Dict[Any, Any], read_object(stream, self))
+            # Here, we are parsing the file from start to end, the new data have to erase the existing.
+            for key, value in list(new_trailer.items()):
                 self.trailer[key] = value
 
     def _read_xref_subsections(
