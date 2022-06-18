@@ -185,6 +185,18 @@ def test_zoom():
     os.remove("tmp-merger-do-not-commit.pdf")
 
 
+def test_zoom_xyz_no_left():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/933/933322.pdf"
+    name = "tika-933322.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    merger = PdfMerger()
+    merger.append(reader)
+    merger.write("tmp-merger-do-not-commit.pdf")
+
+    # cleanup
+    os.remove("tmp-merger-do-not-commit.pdf")
+
+
 def test_bookmark():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/997/997511.pdf"
     name = "tika-997511.pdf"
