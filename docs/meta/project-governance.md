@@ -7,7 +7,7 @@ different actors, their roles, and the responsibilities they have.
 
 * The **project** is PyPDF2 - a free and open-source pure-python PDF library
 capable of splitting, merging, cropping, and transforming the pages of PDF files.
-  It includes the [code, issues, and disscussions on GitHub](https://github.com/py-pdf/PyPDF2),
+  It includes the [code, issues, and discussions on GitHub](https://github.com/py-pdf/PyPDF2),
   and [the documentation on ReadTheDocs](https://pypdf2.readthedocs.io/en/latest/),
   [the package on PyPI](https://pypi.org/project/PyPDF2/), and
   [the website on GitHub](https://py-pdf.github.io/PyPDF2/dev/bench/).
