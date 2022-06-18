@@ -1,10 +1,14 @@
 import os
 import sys
+from io import BytesIO
 
 import pytest
 
 import PyPDF2
+from PyPDF2 import PdfMerger, PdfReader
 from PyPDF2.generic import Destination
+
+from . import get_pdf_from_url
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -155,3 +159,39 @@ def test_merge_write_closed_fh():
     with pytest.raises(RuntimeError) as exc:
         merger._write_dests()
     assert exc.value.args[0] == err_closed
+
+
+def test_trim_outline_list():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/995/995175.pdf"
+    name = "tika-995175.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    merger = PdfMerger()
+    merger.append(reader)
+    merger.write("tmp-merger-do-not-commit.pdf")
+
+    # cleanup
+    os.remove("tmp-merger-do-not-commit.pdf")
+
+
+def test_zoom():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/994/994759.pdf"
+    name = "tika-994759.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    merger = PdfMerger()
+    merger.append(reader)
+    merger.write("tmp-merger-do-not-commit.pdf")
+
+    # cleanup
+    os.remove("tmp-merger-do-not-commit.pdf")
+
+
+def test_bookmark():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/997/997511.pdf"
+    name = "tika-997511.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    merger = PdfMerger()
+    merger.append(reader)
+    merger.write("tmp-merger-do-not-commit.pdf")
+
+    # cleanup
+    os.remove("tmp-merger-do-not-commit.pdf")
