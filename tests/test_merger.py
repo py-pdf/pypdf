@@ -207,3 +207,39 @@ def test_bookmark():
 
     # cleanup
     os.remove("tmp-merger-do-not-commit.pdf")
+
+
+def test_trim_outline():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/982/982336.pdf"
+    name = "tika-982336.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    merger = PdfMerger()
+    merger.append(reader)
+    merger.write("tmp-merger-do-not-commit.pdf")
+
+    # cleanup
+    os.remove("tmp-merger-do-not-commit.pdf")
+
+
+def test1():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/923/923621.pdf"
+    name = "tika-923621.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    merger = PdfMerger()
+    merger.append(reader)
+    merger.write("tmp-merger-do-not-commit.pdf")
+
+    # cleanup
+    os.remove("tmp-merger-do-not-commit.pdf")
+
+
+def test2():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
+    name = "tika-924546.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    merger = PdfMerger()
+    merger.append(reader)
+    merger.write("tmp-merger-do-not-commit.pdf")
+
+    # cleanup
+    os.remove("tmp-merger-do-not-commit.pdf")

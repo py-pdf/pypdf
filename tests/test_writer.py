@@ -471,3 +471,15 @@ def test_sweep_indirect_references_nullobject_exception():
 
     # cleanup
     os.remove("tmp-merger-do-not-commit.pdf")
+
+
+def test_write_bookmark_on_page_fitv():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/922/922840.pdf"
+    name = "tika-922840.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    merger = PdfMerger()
+    merger.append(reader)
+    merger.write("tmp-merger-do-not-commit.pdf")
+
+    # cleanup
+    os.remove("tmp-merger-do-not-commit.pdf")
