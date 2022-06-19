@@ -55,12 +55,7 @@ from ._utils import (
     skip_over_comment,
     str_,
 )
-from .codecs import (
-    _pdfdoc_encoding,
-    _std_encoding,
-    _symbol_encoding,
-    _zapfding_encoding,
-)
+from .codecs import _pdfdoc_encoding, _pdfdoc_encoding_rev, rev_encoding
 from .constants import FilterTypes as FT
 from .constants import StreamAttributes as SA
 from .constants import TypArguments as TA
@@ -2009,46 +2004,3 @@ def decode_pdfdocencoding(byte_array: bytes) -> str:
             )
         retval += c
     return retval
-
-
-def fill_from_encoding(enc: str) -> List[str]:
-    lst: List[str] = []
-    for x in range(256):
-        try:
-            lst += (bytes((x,)).decode(enc),)
-        except Exception:
-            lst += (chr(x),)
-    return lst
-
-
-_win_encoding = fill_from_encoding("cp1252")
-_mac_encoding = fill_from_encoding("mac_roman")
-
-
-def rev_encoding(enc: List[str]) -> Dict[str, int]:
-    rev: Dict[str, int] = {}
-    for i in range(256):
-        char = enc[i]
-        if char == "\u0000":
-            continue
-        assert char not in rev, (
-            str(char) + " at " + str(i) + " already at " + str(rev[char])
-        )
-        rev[char] = i
-    return rev
-
-
-_pdfdoc_encoding_rev: Dict[str, int] = rev_encoding(_pdfdoc_encoding)
-_win_encoding_rev: Dict[str, int] = rev_encoding(_win_encoding)
-_mac_encoding_rev: Dict[str, int] = rev_encoding(_mac_encoding)
-_symbol_encoding_rev: Dict[str, int] = rev_encoding(_symbol_encoding)
-_zapfding_encoding_rev: Dict[str, int] = rev_encoding(_zapfding_encoding)
-
-charset_encoding: Dict[str, List[str]] = {
-    "/StandardCoding": _std_encoding,
-    "/WinAnsiEncoding": _win_encoding,
-    "/MacRomanEncoding": _mac_encoding,
-    "/PDFDocEncoding": _pdfdoc_encoding,
-    "/Symbol": _symbol_encoding,
-    "/ZapfDingbats": _zapfding_encoding,
-}
