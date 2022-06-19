@@ -219,13 +219,13 @@ def _alg35(
     # 6. Append 16 bytes of arbitrary padding to the output from the final
     # invocation of the RC4 function and store the 32-byte result as the value
     # of the U entry in the encryption dictionary.
-    # (implementator note: I don't know what "arbitrary padding" is supposed to
+    # (implementer note: I don't know what "arbitrary padding" is supposed to
     # mean, so I have used null bytes.  This seems to match a few other
     # people's implementations)
     return val + (b"\x00" * 16), key
 
 
-def RC4_encrypt(key: Union[str, bytes], plaintext: bytes) -> bytes:
+def RC4_encrypt(key: Union[str, bytes], plaintext: bytes) -> bytes:  # TODO
     S = list(range(256))
     j = 0
     for i in range(256):

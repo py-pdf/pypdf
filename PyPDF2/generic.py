@@ -364,7 +364,16 @@ class NumberObject(int, PdfObject):
         return NumberObject.read_from_stream(stream)
 
 
-def readHexStringFromStream(  # TODO: PEP8
+def readHexStringFromStream(
+    stream: StreamType,
+) -> Union["TextStringObject", "ByteStringObject"]:  # pragma: no cover
+    deprecate_with_replacement(
+        "readHexStringFromStream", "read_hex_string_from_stream", "4.0.0"
+    )
+    return read_hex_string_from_stream(stream)
+
+
+def read_hex_string_from_stream(
     stream: StreamType,
     forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
 ) -> Union["TextStringObject", "ByteStringObject"]:
@@ -385,10 +394,20 @@ def readHexStringFromStream(  # TODO: PEP8
         x += b"0"
     if len(x) == 2:
         txt += chr(int(x, base=16))
-    return createStringObject(b_(txt), forced_encoding)
+    return create_string_object(b_(txt), forced_encoding)
 
 
-def readStringFromStream(  # TODO: PEP8
+def readStringFromStream(
+    stream: StreamType,
+    forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
+) -> Union["TextStringObject", "ByteStringObject"]:  # pragma: no cover
+    deprecate_with_replacement(
+        "readStringFromStream", "read_string_from_stream", "4.0.0"
+    )
+    return read_string_from_stream(stream, forced_encoding)
+
+
+def read_string_from_stream(
     stream: StreamType,
     forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
 ) -> Union["TextStringObject", "ByteStringObject"]:
@@ -459,7 +478,7 @@ def readStringFromStream(  # TODO: PEP8
                     msg = rf"Unexpected escaped string: {tok.decode('utf8')}"
                     logger.warning(msg)
         txt += tok
-    return createStringObject(txt, forced_encoding)
+    return create_string_object(txt, forced_encoding)
 
 
 class ByteStringObject(bytes_type, PdfObject):  # type: ignore
@@ -808,7 +827,7 @@ class DictionaryObject(dict, PdfObject):
         else:
             stream.seek(pos, 0)
         if "__streamdata__" in data:
-            return StreamObject.initializeFromDictionary(data)
+            return StreamObject.initialize_from_dictionary(data)
         else:
             retval = DictionaryObject()
             retval.update(data)
@@ -826,14 +845,18 @@ class TreeObject(DictionaryObject):
     def __init__(self) -> None:
         DictionaryObject.__init__(self)
 
-    def hasChildren(self) -> bool:
+    def hasChildren(self) -> bool:  # pragma: no cover
+        deprecate_with_replacement("hasChildren", "has_children", "4.0.0")
+        return self.has_children()
+
+    def has_children(self) -> bool:
         return "/First" in self
 
     def __iter__(self) -> Any:
         return self.children()
 
     def children(self) -> Optional[Any]:
-        if not self.hasChildren():
+        if not self.has_children():
             return
 
         child = self["/First"]
@@ -947,8 +970,11 @@ class TreeObject(DictionaryObject):
         if NameObject("/Prev") in child_obj:
             del child_obj[NameObject("/Prev")]
 
-    def emptyTree(self) -> None:
-        # TODO: Missing rename
+    def emptyTree(self) -> None:  # pragma: no cover
+        deprecate_with_replacement("emptyTree", "empty_tree", "4.0.0")
+        self.empty_tree()
+
+    def empty_tree(self) -> None:
         for child in self:
             child_obj = child.get_object()
             del child_obj[NameObject("/Parent")]
@@ -1005,6 +1031,12 @@ class StreamObject(DictionaryObject):
 
     @staticmethod
     def initializeFromDictionary(
+        data: Dict[str, Any]
+    ) -> Union["EncodedStreamObject", "DecodedStreamObject"]:  # pragma: no cover
+        return StreamObject.initialize_from_dictionary(data)
+
+    @staticmethod
+    def initialize_from_dictionary(
         data: Dict[str, Any]
     ) -> Union["EncodedStreamObject", "DecodedStreamObject"]:
         retval: Union["EncodedStreamObject", "DecodedStreamObject"]
@@ -1073,7 +1105,7 @@ class EncodedStreamObject(StreamObject):
         self.decoded_self = value
 
     def get_data(self) -> Union[None, str, bytes]:
-        from .filters import decodeStreamData
+        from .filters import decode_stream_data
 
         if self.decoded_self is not None:
             # cached version of decoded object
@@ -1082,7 +1114,7 @@ class EncodedStreamObject(StreamObject):
             # create decoded object
             decoded = DecodedStreamObject()
 
-            decoded._data = decodeStreamData(self)
+            decoded._data = decode_stream_data(self)
             for key, value in list(self.items()):
                 if key not in (SA.LENGTH, SA.FILTER, SA.DECODE_PARMS):
                     decoded[key] = value
@@ -1122,9 +1154,9 @@ class ContentStream(DecodedStreamObject):
             stream_bytes = BytesIO(stream_data_bytes)
         # self.savstream = stream
         self.forced_encoding = forced_encoding
-        self.__parseContentStream(stream_bytes)
+        self.__parse_content_stream(stream_bytes)
 
-    def __parseContentStream(self, stream: StreamType) -> None:
+    def __parse_content_stream(self, stream: StreamType) -> None:
         # file("f:\\tmp.txt", "w").write(stream.read())
         stream.seek(0, 0)
         operands: List[Union[int, str, PdfObject]] = []
@@ -1139,7 +1171,7 @@ class ContentStream(DecodedStreamObject):
                     # begin inline image - a completely different parsing
                     # mechanism is required, of course... thanks buddy...
                     assert operands == []
-                    ii = self._readInlineImage(stream)
+                    ii = self._read_inline_image(stream)
                     self.operations.append((ii, b"INLINE IMAGE"))
                 else:
                     self.operations.append((operands, operator))
@@ -1155,7 +1187,7 @@ class ContentStream(DecodedStreamObject):
             else:
                 operands.append(read_object(stream, None, self.forced_encoding))
 
-    def _readInlineImage(self, stream: StreamType) -> Dict[str, Any]:
+    def _read_inline_image(self, stream: StreamType) -> Dict[str, Any]:
         # begin reading just after the "BI" - begin image
         # first read the dictionary of settings.
         settings = DictionaryObject()
@@ -1237,7 +1269,7 @@ class ContentStream(DecodedStreamObject):
 
     @_data.setter
     def _data(self, value: Union[str, bytes]) -> None:
-        self.__parseContentStream(BytesIO(b_(value)))
+        self.__parse_content_stream(BytesIO(b_(value)))
 
 
 def read_object(
@@ -1258,13 +1290,13 @@ def read_object(
         if peek == b"<<":
             return DictionaryObject.read_from_stream(stream, pdf, forced_encoding)
         else:
-            return readHexStringFromStream(stream, forced_encoding)
+            return read_hex_string_from_stream(stream, forced_encoding)
     elif idx == 2:
         return ArrayObject.read_from_stream(stream, pdf, forced_encoding)
     elif idx == 3 or idx == 4:
         return BooleanObject.read_from_stream(stream)
     elif idx == 5:
-        return readStringFromStream(stream, forced_encoding)
+        return read_string_from_stream(stream, forced_encoding)
     elif idx == 6:
         return NullObject.read_from_stream(stream)
     elif idx == 7:
@@ -1868,6 +1900,14 @@ class Bookmark(Destination):
 def createStringObject(
     string: Union[str, bytes],
     forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
+) -> Union[TextStringObject, ByteStringObject]:  # pragma: no cover
+    deprecate_with_replacement("createStringObject", "create_string_object", "4.0.0")
+    return create_string_object(string, forced_encoding)
+
+
+def create_string_object(
+    string: Union[str, bytes],
+    forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
 ) -> Union[TextStringObject, ByteStringObject]:
     """
     Given a string, create a ByteStringObject or a TextStringObject to
@@ -1909,7 +1949,7 @@ def createStringObject(
             except UnicodeDecodeError:
                 return ByteStringObject(string)
     else:
-        raise TypeError("createStringObject should have str or unicode arg")
+        raise TypeError("create_string_object should have str or unicode arg")
 
 
 def _create_bookmark(
@@ -1924,7 +1964,7 @@ def _create_bookmark(
     bookmark.update(
         {
             NameObject("/A"): action_ref,
-            NameObject("/Title"): createStringObject(title),
+            NameObject("/Title"): create_string_object(title),
         }
     )
 

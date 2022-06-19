@@ -6,5 +6,6 @@ mypy
 pillow
 pytest
 pytest-benchmark
+pycryptodome
 typeguard
 types-Pillow

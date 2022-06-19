@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from PyPDF2 import PdfReader
+from PyPDF2 import PdfMerger, PdfReader
 from PyPDF2._reader import convert_to_int, convertToInt
 from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import PageAttributes as PG
@@ -296,10 +296,7 @@ def test_get_page_of_encrypted_file_new_algorithm(pdffile, password):
     path = os.path.join(RESOURCE_ROOT, pdffile)
     with pytest.raises(NotImplementedError) as exc:
         PdfReader(path, password=password).pages[0]
-    assert (
-        exc.value.args[0]
-        == "only algorithm code 1 and 2 are supported. This PDF uses code 5"
-    )
+    assert exc.value.args[0] == "encryption R=6 NOT supported!"
 
 
 @pytest.mark.parametrize(
@@ -814,3 +811,13 @@ def test_get_fields_read_write_report():
 
     # cleanup
     os.remove("tmp-fields-report.txt")
+
+
+def test_unexpected_destination():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/913/913678.pdf"
+    name = "tika-913678.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    merger = PdfMerger()
+    with pytest.raises(PdfReadError) as exc:
+        merger.append(reader)
+    assert exc.value.args[0] == "Unexpected destination '/1'"
