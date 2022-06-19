@@ -1,3 +1,53 @@
+Version 2.3.0, 2022-06-19
+-------------------------
+
+The highlight of this release is improved support for file encryption
+(AES-128 and AES-256, R5 only). See #749 for the amazing work of
+@exiledkingcc 🎊 Thank you 🤗
+
+Deprecations (DEP):
+-  Rename names to be PEP8-compliant (#967)
+  - `PdfWriter.get_page`: the pageNumber parameter is renamed to page_number
+  - `PyPDF2.filters`:
+    * For all classes, a parameter rename: decodeParms ➔ decode_parms
+    * decodeStreamData ➔ decode_stream_data
+  - `PyPDF2.xmp`:
+    * XmpInformation.rdfRoot ➔ XmpInformation.rdf_root
+    * XmpInformation.xmp_createDate ➔ XmpInformation.xmp_create_date
+    * XmpInformation.xmp_creatorTool ➔ XmpInformation.xmp_creator_tool
+    * XmpInformation.xmp_metadataDate ➔ XmpInformation.xmp_metadata_date
+    * XmpInformation.xmp_modifyDate ➔ XmpInformation.xmp_modify_date
+    * XmpInformation.xmpMetadata ➔ XmpInformation.xmp_metadata
+    * XmpInformation.xmpmm_documentId ➔ XmpInformation.xmpmm_document_id
+    * XmpInformation.xmpmm_instanceId ➔ XmpInformation.xmpmm_instance_id
+  - `PyPDF2.generic`:
+    * readHexStringFromStream ➔ read_hex_string_from_stream
+    * initializeFromDictionary ➔ initialize_from_dictionary
+    * createStringObject ➔ create_string_object
+    * TreeObject.hasChildren ➔ TreeObject.has_children
+    * TreeObject.emptyTree ➔ TreeObject.empty_tree
+
+New Features (ENH):
+-  Add decrypt support for V5 and AES-128, AES-256 (R5 only) (#749)
+
+Robustness (ROB):
+-  Fix corrupted (wrongly) linear PDF (#1008)
+
+Maintenance (MAINT):
+-  Move PDF_Samples folder into ressources
+-  Fix typos (#1007)
+
+Testing (TST):
+-  Improve encryption/decryption test (#1009)
+-  Add merger test cases with real PDFs (#1006)
+-  Add mutmut config
+
+Code Style (STY):
+-  Put pure data mappings in separate files (#1005)
+-  Make encryption module private, apply pre-commit (#1010)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.2.1...2.3.0
+
 Version 2.2.1, 2022-06-17
 -------------------------
 
