@@ -1334,7 +1334,7 @@ class PdfReader:
                     line = stream.read(20)
 
                 # On the other hand, some malformed PDF files
-                # use a single character EOL without a preceeding
+                # use a single character EOL without a preceding
                 # space.  Detect that case, and seek the stream
                 # back one character.  (0-9 means we've bled into
                 # the next xref entry, t means we've bled into the

@@ -13,7 +13,7 @@ install PyPDF2:
 pip install PyPDF2
 ```
 
-If you are not a super-user (a system adminstrator / root), you can also just
+If you are not a super-user (a system administrator / root), you can also just
 install PyPDF2 for your current user:
 
 ```bash

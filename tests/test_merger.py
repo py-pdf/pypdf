@@ -1,10 +1,14 @@
 import os
 import sys
+from io import BytesIO
 
 import pytest
 
 import PyPDF2
+from PyPDF2 import PdfMerger, PdfReader
 from PyPDF2.generic import Destination
+
+from . import get_pdf_from_url
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -98,7 +102,7 @@ def test_merge():
         "foo",
     ]
 
-    # TODO: There seem to be no destionations for those links?
+    # TODO: There seem to be no destinations for those links?
 
     # Clean up
     os.remove(tmp_path)
@@ -155,3 +159,103 @@ def test_merge_write_closed_fh():
     with pytest.raises(RuntimeError) as exc:
         merger._write_dests()
     assert exc.value.args[0] == err_closed
+
+
+def test_trim_outline_list():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/995/995175.pdf"
+    name = "tika-995175.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    merger = PdfMerger()
+    merger.append(reader)
+    merger.write("tmp-merger-do-not-commit.pdf")
+
+    # cleanup
+    os.remove("tmp-merger-do-not-commit.pdf")
+
+
+def test_zoom():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/994/994759.pdf"
+    name = "tika-994759.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    merger = PdfMerger()
+    merger.append(reader)
+    merger.write("tmp-merger-do-not-commit.pdf")
+
+    # cleanup
+    os.remove("tmp-merger-do-not-commit.pdf")
+
+
+def test_zoom_xyz_no_left():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/933/933322.pdf"
+    name = "tika-933322.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    merger = PdfMerger()
+    merger.append(reader)
+    merger.write("tmp-merger-do-not-commit.pdf")
+
+    # cleanup
+    os.remove("tmp-merger-do-not-commit.pdf")
+
+
+def test_bookmark():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/997/997511.pdf"
+    name = "tika-997511.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    merger = PdfMerger()
+    merger.append(reader)
+    merger.write("tmp-merger-do-not-commit.pdf")
+
+    # cleanup
+    os.remove("tmp-merger-do-not-commit.pdf")
+
+
+def test_trim_outline():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/982/982336.pdf"
+    name = "tika-982336.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    merger = PdfMerger()
+    merger.append(reader)
+    merger.write("tmp-merger-do-not-commit.pdf")
+
+    # cleanup
+    os.remove("tmp-merger-do-not-commit.pdf")
+
+
+def test1():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/923/923621.pdf"
+    name = "tika-923621.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    merger = PdfMerger()
+    merger.append(reader)
+    merger.write("tmp-merger-do-not-commit.pdf")
+
+    # cleanup
+    os.remove("tmp-merger-do-not-commit.pdf")
+
+
+def test_sweep_recursion1():
+    # TODO: This test looks like an infinite loop.
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
+    name = "tika-924546.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    merger = PdfMerger()
+    merger.append(reader)
+    with pytest.warns(UserWarning, match="returning NullObject instead"):
+        merger.write("tmp-merger-do-not-commit.pdf")
+
+    # cleanup
+    os.remove("tmp-merger-do-not-commit.pdf")
+
+
+def test_sweep_recursion2():
+    # TODO: This test looks like an infinite loop.
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924794.pdf"
+    name = "tika-924794.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    merger = PdfMerger()
+    merger.append(reader)
+    with pytest.warns(UserWarning, match="returning NullObject instead"):
+        merger.write("tmp-merger-do-not-commit.pdf")
+
+    # cleanup
+    os.remove("tmp-merger-do-not-commit.pdf")

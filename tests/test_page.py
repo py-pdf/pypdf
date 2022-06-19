@@ -111,7 +111,7 @@ def test_transformation_equivalence():
     with pytest.warns(PendingDeprecationWarning):
         page_base2.mergeTransformedPage(page_box2, op, expand=False)
 
-    # Should be the smae
+    # Should be the same
     assert page_base1[NameObject(PG.CONTENTS)] == page_base2[NameObject(PG.CONTENTS)]
     assert page_base1.mediabox == page_base2.mediabox
     assert page_base1.trimbox == page_base2.trimbox

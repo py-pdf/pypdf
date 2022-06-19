@@ -3,9 +3,11 @@ from io import BytesIO
 
 import pytest
 
-from PyPDF2 import PdfReader, PdfWriter
+from PyPDF2 import PdfMerger, PdfReader, PdfWriter
 from PyPDF2.errors import PageSizeNotDefinedError
 from PyPDF2.generic import RectangleObject
+
+from . import get_pdf_from_url
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -455,3 +457,29 @@ def test_issue301():
         writer.append_pages_from_reader(reader)
         o = BytesIO()
         writer.write(o)
+
+
+def test_sweep_indirect_references_nullobject_exception():
+    # TODO: Check this more closely... this looks weird
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
+    name = "tika-924666.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    merger = PdfMerger()
+    merger.append(reader)
+    with pytest.warns(UserWarning, match="returning NullObject instead"):
+        merger.write("tmp-merger-do-not-commit.pdf")
+
+    # cleanup
+    os.remove("tmp-merger-do-not-commit.pdf")
+
+
+def test_write_bookmark_on_page_fitv():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/922/922840.pdf"
+    name = "tika-922840.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    merger = PdfMerger()
+    merger.append(reader)
+    merger.write("tmp-merger-do-not-commit.pdf")
+
+    # cleanup
+    os.remove("tmp-merger-do-not-commit.pdf")

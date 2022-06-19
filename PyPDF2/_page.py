@@ -636,7 +636,7 @@ class PageObject(DictionaryObject):
     ) -> None:  # pragma: no cover
         """
         mergeScaledPage is similar to merge_page, but the stream to be merged
-        is scaled by appling a transformation matrix.
+        is scaled by applying a transformation matrix.
 
         :param PageObject page2: The page to be merged into this one. Should be
             an instance of :class:`PageObject<PageObject>`.
@@ -660,7 +660,7 @@ class PageObject(DictionaryObject):
     ) -> None:  # pragma: no cover
         """
         mergeRotatedPage is similar to merge_page, but the stream to be merged
-        is rotated by appling a transformation matrix.
+        is rotated by applying a transformation matrix.
 
         :param PageObject page2: the page to be merged into this one. Should be
             an instance of :class:`PageObject<PageObject>`.
@@ -684,7 +684,7 @@ class PageObject(DictionaryObject):
     ) -> None:  # pragma: no cover
         """
         mergeTranslatedPage is similar to merge_page, but the stream to be
-        merged is translated by appling a transformation matrix.
+        merged is translated by applying a transformation matrix.
 
         :param PageObject page2: the page to be merged into this one. Should be
             an instance of :class:`PageObject<PageObject>`.
@@ -714,7 +714,7 @@ class PageObject(DictionaryObject):
     ) -> None:  # pragma: no cover
         """
         mergeRotatedTranslatedPage is similar to merge_page, but the stream to
-        be merged is rotated and translated by appling a transformation matrix.
+        be merged is rotated and translated by applying a transformation matrix.
 
         :param PageObject page2: the page to be merged into this one. Should be
             an instance of :class:`PageObject<PageObject>`.
@@ -740,7 +740,7 @@ class PageObject(DictionaryObject):
     ) -> None:  # pragma: no cover
         """
         mergeRotatedScaledPage is similar to merge_page, but the stream to be
-        merged is rotated and scaled by appling a transformation matrix.
+        merged is rotated and scaled by applying a transformation matrix.
 
         :param PageObject page2: the page to be merged into this one. Should be
             an instance of :class:`PageObject<PageObject>`.
@@ -770,7 +770,7 @@ class PageObject(DictionaryObject):
     ) -> None:  # pragma: no cover
         """
         mergeScaledTranslatedPage is similar to merge_page, but the stream to be
-        merged is translated and scaled by appling a transformation matrix.
+        merged is translated and scaled by applying a transformation matrix.
 
         :param PageObject page2: the page to be merged into this one. Should be
             an instance of :class:`PageObject<PageObject>`.
@@ -802,7 +802,7 @@ class PageObject(DictionaryObject):
     ) -> None:  # pragma: no cover
         """
         mergeRotatedScaledTranslatedPage is similar to merge_page, but the
-        stream to be merged is translated, rotated and scaled by appling a
+        stream to be merged is translated, rotated and scaled by applying a
         transformation matrix.
 
         :param PageObject page2: the page to be merged into this one. Should be
@@ -894,7 +894,7 @@ class PageObject(DictionaryObject):
 
     def scale(self, sx: float, sy: float) -> None:
         """
-        Scale a page by the given factors by appling a transformation
+        Scale a page by the given factors by applying a transformation
         matrix to its content and updating the page size.
 
         :param float sx: The scaling factor on horizontal axis.
@@ -932,7 +932,7 @@ class PageObject(DictionaryObject):
 
     def scale_by(self, factor: float) -> None:
         """
-        Scale a page by the given factor by appling a transformation
+        Scale a page by the given factor by applying a transformation
         matrix to its content and updating the page size.
 
         :param float factor: The scaling factor (for both X and Y axis).
@@ -950,11 +950,11 @@ class PageObject(DictionaryObject):
 
     def scale_to(self, width: float, height: float) -> None:
         """
-        Scale a page to the specified dimentions by appling a
+        Scale a page to the specified dimensions by applying a
         transformation matrix to its content and updating the page size.
 
         :param float width: The new width.
-        :param float height: The new heigth.
+        :param float height: The new height.
         """
         sx = width / float(self.mediabox.width)
         sy = height / float(self.mediabox.height)
@@ -1114,7 +1114,7 @@ class PageObject(DictionaryObject):
         :param float space_width: force default space width
                     (if not extracted from font (default 200)
         :param Optional[str] content_key: indicate the default key where to extract data
-            None = the opbject; this allow to reuse the function on XObject
+            None = the object; this allow to reuse the function on XObject
             default = "/Content"
         :return: a string object.
         """
@@ -1389,7 +1389,7 @@ class PageObject(DictionaryObject):
     """
     A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
     defining the region to which the contents of the page should be clipped
-    when output in a production enviroment.
+    when output in a production environment.
     """
 
     @property
