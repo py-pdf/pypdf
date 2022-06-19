@@ -2,17 +2,23 @@ import io
 import os
 import time
 from io import BytesIO
+from pathlib import Path
 
 import pytest
 
-from PyPDF2 import PdfReader
+from PyPDF2 import PdfMerger, PdfReader
 from PyPDF2._reader import convert_to_int, convertToInt
 from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.constants import Ressources as RES
-from PyPDF2.errors import PdfReadError, PdfReadWarning
+from PyPDF2.errors import (
+    STREAM_TRUNCATED_PREMATURELY,
+    PdfReadError,
+    PdfReadWarning,
+)
 from PyPDF2.filters import _xobj_to_image
-from tests import get_pdf_from_url
+
+from . import get_pdf_from_url
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -112,8 +118,7 @@ def test_get_attachments(src):
     reader = PdfReader(src)
 
     attachments = {}
-    for i in range(len(reader.pages)):
-        page = reader.pages[i]
+    for page in reader.pages:
         if PG.ANNOTS in page:
             for annotation in page[PG.ANNOTS]:
                 annotobj = annotation.get_object()
@@ -291,10 +296,7 @@ def test_get_page_of_encrypted_file_new_algorithm(pdffile, password):
     path = os.path.join(RESOURCE_ROOT, pdffile)
     with pytest.raises(NotImplementedError) as exc:
         PdfReader(path, password=password).pages[0]
-    assert (
-        exc.value.args[0]
-        == "only algorithm code 1 and 2 are supported. This PDF uses code 5"
-    )
+    assert exc.value.args[0] == "encryption R=6 NOT supported!"
 
 
 @pytest.mark.parametrize(
@@ -329,7 +331,8 @@ def test_get_form(src, expected, expected_get_fields):
     fields = reader.get_form_text_fields()
     assert fields == expected
 
-    fields = reader.get_fields()
+    with open("tmp-fields-report.txt", "w") as f:
+        fields = reader.get_fields(fileobj=f)
     assert fields == expected_get_fields
     if fields:
         for field in fields.values():
@@ -346,6 +349,9 @@ def test_get_form(src, expected, expected_get_fields):
                 field.default_value,
                 field.additional_actions,
             ]
+
+    # cleanup
+    os.remove("tmp-fields-report.txt")
 
 
 @pytest.mark.parametrize(
@@ -400,7 +406,7 @@ def test_read_malformed_header():
 def test_read_malformed_body():
     with pytest.raises(PdfReadError) as exc:
         PdfReader(io.BytesIO(b"%PDF-"), strict=True)
-    assert exc.value.args[0] == "Could not read malformed PDF file"
+    assert exc.value.args[0] == STREAM_TRUNCATED_PREMATURELY
 
 
 def test_read_prev_0_trailer():
@@ -671,3 +677,147 @@ def test_iss925():
         if annots is not None:
             for annot in annots:
                 annot.get_object()
+
+
+@pytest.mark.xfail(reason="#591")
+def test_extract_text_hello_world():
+    reader = PdfReader(os.path.join(RESOURCE_ROOT, "hello-world.pdf"))
+    text = reader.pages[0].extract_text().split("\n")
+    assert text == [
+        "English:",
+        "Hello World",
+        "Arabic:",
+        "مرحبا بالعالم",
+        "Russian:",
+        "Привет, мир",
+        "Chinese (traditional):",
+        "你好世界",
+        "Thai:",
+        "สวัสดีชาวโลก",
+        "Japanese:",
+        "こんにちは世界",
+    ]
+
+
+def test_read_path():
+    path = Path(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
+    reader = PdfReader(path)
+    assert len(reader.pages) == 1
+
+
+def test_read_not_binary_mode():
+    with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf")) as f:
+        msg = "PdfReader stream/file object is not in binary mode. It may not be read correctly."
+        with pytest.warns(PdfReadWarning, match=msg), pytest.raises(
+            io.UnsupportedOperation
+        ):
+            PdfReader(f)
+
+
+@pytest.mark.xfail(reason="#416")
+def test_read_form_416():
+    url = (
+        "https://www.fda.gov/downloads/AboutFDA/ReportsManualsForms/Forms/UCM074728.pdf"
+    )
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name="issue_416.pdf")))
+    fields = reader.get_form_text_fields()
+    assert len(fields) > 0
+
+
+def test_extract_text_xref_issue_2():
+    # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/981/981961.pdf"
+    msg = r"incorrect startxref pointer\(2\)"
+    with pytest.warns(PdfReadWarning, match=msg):
+        reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-981961.pdf")))
+    for page in reader.pages:
+        page.extract_text()
+
+
+def test_extract_text_xref_issue_3():
+    # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/977/977774.pdf"
+    msg = r"incorrect startxref pointer\(3\)"
+    with pytest.warns(PdfReadWarning, match=msg):
+        reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-977774.pdf")))
+    for page in reader.pages:
+        page.extract_text()
+
+
+def test_extract_text_pdf15():
+    # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/976/976030.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-976030.pdf")))
+    for page in reader.pages:
+        page.extract_text()
+
+
+def test_extract_text_xref_table_21_bytes_clrf():
+    # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/956/956939.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-956939.pdf")))
+    for page in reader.pages:
+        page.extract_text()
+
+
+def test_get_fields():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/972/972486.pdf"
+    name = "tika-972486.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    fields = reader.get_fields()
+    assert fields is not None
+    assert "c1-1" in fields
+    assert dict(fields["c1-1"]) == ({"/FT": "/Btn", "/T": "c1-1"})
+
+
+def test_get_fields_read_else_block():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/934/934771.pdf"
+    name = "tika-934771.pdf"
+    with pytest.raises(PdfReadError) as exc:
+        PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    assert exc.value.args[0] == "Could not find xref table at specified location"
+
+
+def test_get_fields_read_else_block2():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/914/914902.pdf"
+    name = "tika-914902.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    fields = reader.get_fields()
+    assert fields is None
+
+
+def test_get_fields_read_else_block3():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/957/957721.pdf"
+    name = "tika-957721.pdf"
+    with pytest.raises(PdfReadError) as exc:
+        PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    assert exc.value.args[0] == "Could not find xref table at specified location"
+
+
+def test_metadata_is_none():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/963/963692.pdf"
+    name = "tika-963692.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    assert reader.metadata is None
+
+
+def test_get_fields_read_write_report():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/909/909655.pdf"
+    name = "tika-909655.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    with open("tmp-fields-report.txt", "w") as fp:
+        fields = reader.get_fields(fileobj=fp)
+    assert fields
+
+    # cleanup
+    os.remove("tmp-fields-report.txt")
+
+
+def test_unexpected_destination():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/913/913678.pdf"
+    name = "tika-913678.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    merger = PdfMerger()
+    with pytest.raises(PdfReadError) as exc:
+        merger.append(reader)
+    assert exc.value.args[0] == "Unexpected destination '/1'"

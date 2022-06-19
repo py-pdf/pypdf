@@ -1,3 +1,212 @@
+Version 2.3.1, 2022-06-19
+-------------------------
+
+BUG: Forgot to add the interal `_codecs` subpackage.
+
+Version 2.3.0, 2022-06-19
+-------------------------
+
+The highlight of this release is improved support for file encryption
+(AES-128 and AES-256, R5 only). See #749 for the amazing work of
+@exiledkingcc 🎊 Thank you 🤗
+
+Deprecations (DEP):
+-  Rename names to be PEP8-compliant (#967)
+  - `PdfWriter.get_page`: the pageNumber parameter is renamed to page_number
+  - `PyPDF2.filters`:
+    * For all classes, a parameter rename: decodeParms ➔ decode_parms
+    * decodeStreamData ➔ decode_stream_data
+  - `PyPDF2.xmp`:
+    * XmpInformation.rdfRoot ➔ XmpInformation.rdf_root
+    * XmpInformation.xmp_createDate ➔ XmpInformation.xmp_create_date
+    * XmpInformation.xmp_creatorTool ➔ XmpInformation.xmp_creator_tool
+    * XmpInformation.xmp_metadataDate ➔ XmpInformation.xmp_metadata_date
+    * XmpInformation.xmp_modifyDate ➔ XmpInformation.xmp_modify_date
+    * XmpInformation.xmpMetadata ➔ XmpInformation.xmp_metadata
+    * XmpInformation.xmpmm_documentId ➔ XmpInformation.xmpmm_document_id
+    * XmpInformation.xmpmm_instanceId ➔ XmpInformation.xmpmm_instance_id
+  - `PyPDF2.generic`:
+    * readHexStringFromStream ➔ read_hex_string_from_stream
+    * initializeFromDictionary ➔ initialize_from_dictionary
+    * createStringObject ➔ create_string_object
+    * TreeObject.hasChildren ➔ TreeObject.has_children
+    * TreeObject.emptyTree ➔ TreeObject.empty_tree
+
+New Features (ENH):
+-  Add decrypt support for V5 and AES-128, AES-256 (R5 only) (#749)
+
+Robustness (ROB):
+-  Fix corrupted (wrongly) linear PDF (#1008)
+
+Maintenance (MAINT):
+-  Move PDF_Samples folder into ressources
+-  Fix typos (#1007)
+
+Testing (TST):
+-  Improve encryption/decryption test (#1009)
+-  Add merger test cases with real PDFs (#1006)
+-  Add mutmut config
+
+Code Style (STY):
+-  Put pure data mappings in separate files (#1005)
+-  Make encryption module private, apply pre-commit (#1010)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.2.1...2.3.0
+
+Version 2.2.1, 2022-06-17
+-------------------------
+
+Performance Improvements (PI):
+-  Remove b_ calls (#992, #986)
+-  Apply improvements to _utils suggested by perflint (#993)
+
+Robustness (ROB):
+-  utf-16-be\' codec can\'t decode (...) (#995)
+
+Documentation (DOC):
+-  Remove reference to Scripts (#987)
+
+Developer Experience (DEV):
+-  Fix type annotations for add_bookmarks (#1000)
+
+Testing (TST):
+-  Add test for PdfMerger (#1001)
+-  Add tests for XMP information (#996)
+-  reader.get_fields / zlib issue / LZW decode issue (#1004)
+-  reader.get_fields with report generation (#1002)
+-  Improve test coverage by extracting texts (#998)
+
+Code Style (STY):
+-  Apply fixes suggested by pylint (#999)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.2.0...2.2.1
+
+Version 2.2.0, 2022-06-13
+-------------------------
+
+The 2.2.0 release improves text extraction again via (#969):
+
+* Improvements around /Encoding / /ToUnicode
+* Extraction of CMaps improved
+* Fallback for font def missing
+* Support for /Identity-H and /Identity-V: utf-16-be
+* Support for /GB-EUC-H / /GB-EUC-V / GBp/c-EUC-H / /GBpc-EUC-V (beta release for evaluation)
+* Arabic (for evaluation)
+* Whitespace extraction improvements
+
+Those changes should mainly improve the text extraction for non-ASCII alphabets,
+e.g. Russian / Chinese / Japanese / Korean / Arabic.
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.1.1...2.2.0
+
+Version 2.1.1, 2022-06-12
+-------------------------
+
+New Features (ENH):
+-  Add support for pathlib as input for PdfReader (#979)
+
+Performance Improvements (PI):
+-  Optimize read_next_end_line (#646)
+
+Bug Fixes (BUG):
+-  Adobe Acrobat \'Would you like to save this file?\' (#970)
+
+Documentation (DOC):
+-  Notes on annotations (#982)
+-  Who uses PyPDF2
+-  intendet \xe2\x9e\x94 in robustness page  (#958)
+
+Maintenance (MAINT):
+-  pre-commit / requirements.txt updates (#977)
+-  Mark read_next_end_line as deprecated (#965)
+-  Export `PageObject` in PyPDF2 root (#960)
+
+Testing (TST):
+-  Add MCVE of issue #416 (#980)
+-  FlateDecode.decode decodeParms (#964)
+-  Xmp module (#962)
+-  utils.paeth_predictor (#959)
+
+Code Style (STY):
+-  Use more tuples and list/dict comprehensions (#976)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.1.0...2.1.1
+
+
+Version 2.1.0, 2022-06-06
+-------------------------
+
+The highlight of the 2.1.0 release is the most massive improvement to the
+text extraction capabilities of PyPDF2 since 2016 🥳🎊 A very big thank you goes
+to [pubpub-zz](https://github.com/pubpub-zz) who took a lot of time and
+knowledge about the PDF format to finally get those improvements into PyPDF2.
+Thank you 🤗💚
+
+In case the new function causes any issues, you can use `_extract_text_old`
+for the old functionality. Please also open a bug ticket in that case.
+
+There were several people who have attempted to bring similar improvements to
+PyPDF2. All of those were valuable. The main reason why they didn't get merged
+is the big amount of open PRs / issues. pubpub-zz was the most comprehensive
+PR which also incorporated the latest changes of PyPDF2 2.0.0.
+
+Thank you to [VictorCarlquist](https://github.com/VictorCarlquist) for #858 and
+[asabramo](https://github.com/asabramo) for #464 🤗
+
+New Features (ENH):
+-  Massive text extraction improvement (#924). Closed many open issues:
+    - Exceptions / missing spaces in extract_text() method (#17) 🕺
+      - Whitespace issues in extract_text() (#42) 💃
+      - pypdf2 reads the hifenated words in a new line (#246)
+    - PyPDF2 failing to read unicode character (#37)
+      - Unable to read bullets (#230)
+    - ExtractText yields nothing for apparently good PDF (#168) 🎉
+    - Encoding issue in extract_text() (#235)
+    - extractText() doesn't work on Chinese PDF (#252)
+    - encoding error (#260)
+    - Trouble with apostophes in names in text "O'Doul" (#384)
+    - extract_text works for some PDF files, but not the others (#437)
+    - Euro sign not being recognized by extractText (#443)
+    - Failed extracting text from French texts (#524)
+    - extract_text doesn't extract ligatures correctly (#598)
+    - reading spanish text - mark convert issue (#635)
+    - Read PDF changed from text to random symbols (#654)
+    - .extractText() reads / as 1. (#789)
+-  Update glyphlist (#947) - inspired by #464
+-  Allow adding PageRange objects (#948)
+
+Bug Fixes (BUG):
+-  Delete .python-version file (#944)
+-  Compare StreamObject.decoded_self with None (#931)
+
+Robustness (ROB):
+-  Fix some conversion errors on non conform PDF (#932)
+
+Documentation (DOC):
+-  Elaborate on PDF text extraction difficulties (#939)
+-  Add logo (#942)
+-  rotate vs Transformation().rotate (#937)
+-  Example how to use PyPDF2 with AWS S3 (#938)
+-  How to deprecate (#930)
+-  Fix typos on robustness page (#935)
+-  Remove scripts (pdfcat) from docs (#934)
+
+Developer Experience (DEV):
+-  Ignore .python-version file
+-  Mark deprecated code with no-cover (#943)
+-  Automatically create Github releases from tags (#870)
+
+Testing (TST):
+-  Text extraction for non-latin alphabets (#954)
+-  Ignore PdfReadWarning in benchmark (#949)
+-  writer.remove_text (#946)
+-  Add test for Tree and _security (#945)
+
+Code Style (STY):
+-  black, isort, Flake8, splitting buildCharMap (#950)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.0.0...2.1.0
+
 Version 2.0.0, 2022-06-01
 -------------------------
 

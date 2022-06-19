@@ -49,7 +49,7 @@ you `git commit`.
 ## Commit Messages
 
 Having a clean commit message helps people to quickly understand what the commit
-was about, witout actually looking at the changes. The first line of the
+was about, without actually looking at the changes. The first line of the
 commit message is used to [auto-generate the CHANGELOG](https://github.com/py-pdf/PyPDF2/blob/main/make_changelog.py). For this reason, the format should be:
 
 ```

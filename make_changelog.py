@@ -1,10 +1,9 @@
 """Internal tool to update the changelog."""
 
 import subprocess
+from dataclasses import dataclass
 from datetime import datetime
 from typing import List
-
-from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
@@ -20,7 +19,7 @@ def main(changelog_path: str):
     changes = get_formatted_changes(git_tag)
     print("-" * 80)
     print(changes)
-    # TODO: Write changes to changelog
+
     new_version = version_bump(git_tag)
     today = datetime.now()
     header = f"Version {new_version}, {today:%Y-%m-%d}\n"
@@ -63,7 +62,7 @@ def get_formatted_changes(git_tag: str) -> str:
         grouped[commit.prefix].append({"msg": commit.message})
 
     # Order prefixes
-    order = ["DEP", "ENH", "BUG", "ROB", "DOC", "DEV", "MAINT", "TST", "STY"]
+    order = ["DEP", "ENH", "PI", "BUG", "ROB", "DOC", "DEV", "MAINT", "TST", "STY"]
     abbrev2long = {
         "DEP": "Deprecations",
         "ENH": "New Features",
@@ -74,6 +73,7 @@ def get_formatted_changes(git_tag: str) -> str:
         "MAINT": "Maintenance",
         "TST": "Testing",
         "STY": "Code Style",
+        "PI": "Performance Improvements",
     }
 
     # Create output

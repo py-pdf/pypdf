@@ -28,6 +28,7 @@
 from io import BytesIO, FileIO, IOBase
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 
+from ._encryption import Encryption
 from ._page import PageObject
 from ._reader import PdfReader
 from ._utils import StrByteType, deprecate_with_replacement, str_
@@ -45,11 +46,12 @@ from .generic import (
     NumberObject,
     TextStringObject,
     TreeObject,
-    createStringObject,
+    _create_bookmark,
 )
 from .pagerange import PageRange, PageRangeSpec
 from .types import (
     BookmarkTypes,
+    FitType,
     LayoutType,
     OutlinesType,
     PagemodeType,
@@ -128,13 +130,14 @@ class PdfMerger:
             bookmarks from being imported by specifying this as ``False``.
         """
 
-        stream, my_file, decryption_key = self._create_stream(fileobj)
+        stream, my_file, encryption_obj = self._create_stream(fileobj)
 
         # Create a new PdfReader instance using the stream
         # (either file or BytesIO or StringIO) created above
         reader = PdfReader(stream, strict=self.strict)  # type: ignore[arg-type]
-        if decryption_key is not None:
-            reader._decryption_key = decryption_key
+        self.inputs.append((stream, reader, my_file))
+        if encryption_obj is not None:
+            reader._encryption = encryption_obj
 
         # Find the range of pages to merge.
         if pages is None:
@@ -167,12 +170,12 @@ class PdfMerger:
 
         # Gather all the pages that are going to be merged
         for i in range(*pages):
-            pg = reader.pages[i]
+            page = reader.pages[i]
 
             id = self.id_count
             self.id_count += 1
 
-            mp = _MergedPage(pg, reader, id)
+            mp = _MergedPage(page, reader, id)
 
             srcpages.append(mp)
 
@@ -182,12 +185,9 @@ class PdfMerger:
         # Slice to insert the pages at the specified position
         self.pages[position:position] = srcpages
 
-        # Keep track of our input files so we can close them later
-        self.inputs.append((stream, reader, my_file))
-
     def _create_stream(
         self, fileobj: Union[StrByteType, PdfReader]
-    ) -> Tuple[IOBase, bool, Optional[bytes]]:
+    ) -> Tuple[IOBase, bool, Optional[Encryption]]:
         # This parameter is passed to self.inputs.append and means
         # that the stream used was created in this method.
         my_file = False
@@ -198,14 +198,14 @@ class PdfMerger:
         # it is a PdfReader, copy that reader's stream into a
         # BytesIO stream.
         # If fileobj is none of the above types, it is not modified
-        decryption_key = None
+        encryption_obj = None
         stream: IOBase
         if isinstance(fileobj, str):
             stream = FileIO(fileobj, "rb")
             my_file = True
         elif isinstance(fileobj, PdfReader):
-            if hasattr(fileobj, "_decryption_key"):
-                decryption_key = fileobj._decryption_key
+            if hasattr(fileobj, "_encryption"):
+                encryption_obj = fileobj._encryption
             orig_tell = fileobj.stream.tell()
             fileobj.stream.seek(0)
             stream = BytesIO(fileobj.stream.read())
@@ -221,7 +221,7 @@ class PdfMerger:
             my_file = True
         else:
             stream = fileobj
-        return stream, my_file, decryption_key
+        return stream, my_file, encryption_obj
 
     def append(
         self,
@@ -564,9 +564,7 @@ class PdfMerger:
             if pageno is not None:
                 nd[NameObject("/Page")] = NumberObject(pageno)
             else:
-                raise ValueError(
-                    "Unresolved named destination '{}'".format(nd["/Title"])
-                )
+                raise ValueError(f"Unresolved named destination '{nd['/Title']}'")
 
     def _associate_bookmarks_to_pages(
         self, pages: List[_MergedPage], bookmarks: Optional[Iterable[Bookmark]] = None
@@ -592,7 +590,7 @@ class PdfMerger:
             if pageno is not None:
                 b[NameObject("/Page")] = NumberObject(pageno)
             else:
-                raise ValueError("Unresolved bookmark '{}'".format(b["/Title"]))
+                raise ValueError(f"Unresolved bookmark '{b['/Title']}'")
 
     def find_bookmark(
         self,
@@ -623,7 +621,7 @@ class PdfMerger:
         color: Optional[Tuple[float, float, float]] = None,
         bold: bool = False,
         italic: bool = False,
-        fit: str = "/Fit",
+        fit: FitType = "/Fit",
         *args: ZoomArgType,
     ) -> IndirectObject:  # pragma: no cover
         """
@@ -643,7 +641,7 @@ class PdfMerger:
         color: Optional[Tuple[float, float, float]] = None,
         bold: bool = False,
         italic: bool = False,
-        fit: str = "/Fit",
+        fit: FitType = "/Fit",
         *args: ZoomArgType,
     ) -> IndirectObject:
         """
@@ -658,7 +656,7 @@ class PdfMerger:
         :param bool bold: Bookmark is bold
         :param bool italic: Bookmark is italic
         :param str fit: The fit of the destination page. See
-            :meth:`addLink()<addLin>` for details.
+            :meth:`addLink()<addLink>` for details.
         """
         if self.output is None:
             raise RuntimeError(ERR_CLOSED_WRITER)
@@ -689,32 +687,13 @@ class PdfMerger:
         if parent is None:
             parent = outline_ref
 
-        bookmark = TreeObject()
+        bookmark = _create_bookmark(action_ref, title, color, italic, bold)
 
-        bookmark.update(
-            {
-                NameObject("/A"): action_ref,
-                NameObject("/Title"): createStringObject(title),
-            }
-        )
-
-        if color is not None:
-            bookmark.update(
-                {NameObject("/C"): ArrayObject([FloatObject(c) for c in color])}
-            )
-
-        format_flag = 0
-        if italic:
-            format_flag += 1
-        if bold:
-            format_flag += 2
-        if format_flag:
-            bookmark.update({NameObject("/F"): NumberObject(format_flag)})
-
-        bookmark_ref = self.output._add_object(bookmark)
-        parent = cast(Bookmark, parent.get_object())
         assert parent is not None, "hint for mypy"
-        parent.add_child(bookmark_ref, self.output)
+        bookmark_ref = self.output._add_object(bookmark)
+        parent_obj = cast(Bookmark, parent.get_object())
+        assert parent_obj is not None, "hint for mypy"
+        parent_obj.add_child(bookmark_ref, self.output)
 
         return bookmark_ref
 

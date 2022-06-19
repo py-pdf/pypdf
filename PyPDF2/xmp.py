@@ -76,7 +76,7 @@ def _identity(value: K) -> K:
 def _converter_date(value: str) -> datetime.datetime:
     matches = iso8601.match(value)
     if matches is None:
-        raise ValueError("Invalid date format: %s" % value)
+        raise ValueError(f"Invalid date format: {value}")
     year = int(matches.group("year"))
     month = int(matches.group("month") or "1")
     day = int(matches.group("day") or "1")
@@ -204,10 +204,15 @@ class XmpInformation(PdfObject):
     def __init__(self, stream: ContentStream) -> None:
         self.stream = stream
         doc_root: Document = parseString(self.stream.get_data())
-        self.rdfRoot: XmlElement = doc_root.getElementsByTagNameNS(
+        self.rdf_root: XmlElement = doc_root.getElementsByTagNameNS(
             RDF_NAMESPACE, "RDF"
         )[0]
         self.cache: Dict[Any, Any] = {}
+
+    @property
+    def rdfRoot(self) -> XmlElement:  # pragma: no cover
+        deprecate_with_replacement("rdfRoot", "rdf_root", "4.0.0")
+        return self.rdf_root
 
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
@@ -226,7 +231,7 @@ class XmpInformation(PdfObject):
         self.write_to_stream(stream, encryption_key)
 
     def get_element(self, about_uri: str, namespace: str, name: str) -> Iterator[Any]:
-        for desc in self.rdfRoot.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):
+        for desc in self.rdf_root.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):
             if desc.getAttributeNS(RDF_NAMESPACE, "about") == about_uri:
                 attr = desc.getAttributeNodeNS(namespace, name)
                 if attr is not None:
@@ -245,7 +250,7 @@ class XmpInformation(PdfObject):
         return self.get_element(aboutUri, namespace, name)
 
     def get_nodes_in_namespace(self, about_uri: str, namespace: str) -> Iterator[Any]:
-        for desc in self.rdfRoot.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):
+        for desc in self.rdf_root.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):
             if desc.getAttributeNS(RDF_NAMESPACE, "about") == about_uri:
                 for i in range(desc.attributes.length):
                     attr = desc.attributes.item(i)
@@ -370,8 +375,7 @@ class XmpInformation(PdfObject):
     The name of the tool that created the PDF document.
     """
 
-    # TODO: PEP8
-    xmp_createDate = property(
+    xmp_create_date = property(
         _getter_single(XMP_NAMESPACE, "CreateDate", _converter_date)
     )
     """
@@ -379,8 +383,17 @@ class XmpInformation(PdfObject):
     time are returned as a UTC datetime.datetime object.
     """
 
-    # TODO: PEP8
-    xmp_modifyDate = property(
+    @property
+    def xmp_createDate(self) -> datetime.datetime:  # pragma: no cover
+        deprecate_with_replacement("xmp_createDate", "xmp_create_date", "4.0.0")
+        return self.xmp_create_date
+
+    @xmp_createDate.setter
+    def xmp_createDate(self, value: datetime.datetime) -> None:  # pragma: no cover
+        deprecate_with_replacement("xmp_createDate", "xmp_create_date", "4.0.0")
+        self.xmp_create_date = value
+
+    xmp_modify_date = property(
         _getter_single(XMP_NAMESPACE, "ModifyDate", _converter_date)
     )
     """
@@ -388,8 +401,17 @@ class XmpInformation(PdfObject):
     are returned as a UTC datetime.datetime object.
     """
 
-    # TODO: PEP8
-    xmp_metadataDate = property(
+    @property
+    def xmp_modifyDate(self) -> datetime.datetime:  # pragma: no cover
+        deprecate_with_replacement("xmp_modifyDate", "xmp_modify_date", "4.0.0")
+        return self.xmp_modify_date
+
+    @xmp_modifyDate.setter
+    def xmp_modifyDate(self, value: datetime.datetime) -> None:  # pragma: no cover
+        deprecate_with_replacement("xmp_modifyDate", "xmp_modify_date", "4.0.0")
+        self.xmp_modify_date = value
+
+    xmp_metadata_date = property(
         _getter_single(XMP_NAMESPACE, "MetadataDate", _converter_date)
     )
     """
@@ -398,24 +420,61 @@ class XmpInformation(PdfObject):
     object.
     """
 
-    # TODO: PEP8
-    xmp_creatorTool = property(_getter_single(XMP_NAMESPACE, "CreatorTool"))
+    @property
+    def xmp_metadataDate(self) -> datetime.datetime:  # pragma: no cover
+        deprecate_with_replacement("xmp_metadataDate", "xmp_metadata_date", "4.0.0")
+        return self.xmp_metadata_date
+
+    @xmp_metadataDate.setter
+    def xmp_metadataDate(self, value: datetime.datetime) -> None:  # pragma: no cover
+        deprecate_with_replacement("xmp_metadataDate", "xmp_metadata_date", "4.0.0")
+        self.xmp_metadata_date = value
+
+    xmp_creator_tool = property(_getter_single(XMP_NAMESPACE, "CreatorTool"))
     """
     The name of the first known tool used to create the resource.
     """
 
-    # TODO: PEP8
-    xmpmm_documentId = property(_getter_single(XMPMM_NAMESPACE, "DocumentID"))
+    @property
+    def xmp_creatorTool(self) -> str:  # pragma: no cover
+        deprecate_with_replacement("xmp_creatorTool", "xmp_creator_tool")
+        return self.xmp_creator_tool
+
+    @xmp_creatorTool.setter
+    def xmp_creatorTool(self, value: str) -> None:  # pragma: no cover
+        deprecate_with_replacement("xmp_creatorTool", "xmp_creator_tool")
+        self.xmp_creator_tool = value
+
+    xmpmm_document_id = property(_getter_single(XMPMM_NAMESPACE, "DocumentID"))
     """
     The common identifier for all versions and renditions of this resource.
     """
 
-    # TODO: PEP8
-    xmpmm_instanceId = property(_getter_single(XMPMM_NAMESPACE, "InstanceID"))
+    @property
+    def xmpmm_documentId(self) -> str:  # pragma: no cover
+        deprecate_with_replacement("xmpmm_documentId", "xmpmm_document_id")
+        return self.xmpmm_document_id
+
+    @xmpmm_documentId.setter
+    def xmpmm_documentId(self, value: str) -> None:  # pragma: no cover
+        deprecate_with_replacement("xmpmm_documentId", "xmpmm_document_id")
+        self.xmpmm_document_id = value
+
+    xmpmm_instance_id = property(_getter_single(XMPMM_NAMESPACE, "InstanceID"))
     """
     An identifier for a specific incarnation of a document, updated each
     time a file is saved.
     """
+
+    @property
+    def xmpmm_instanceId(self) -> str:  # pragma: no cover
+        deprecate_with_replacement("xmpmm_instanceId", "xmpmm_instance_id")
+        return self.xmpmm_instance_id
+
+    @xmpmm_instanceId.setter
+    def xmpmm_instanceId(self, value: str) -> None:  # pragma: no cover
+        deprecate_with_replacement("xmpmm_instanceId", "xmpmm_instance_id")
+        self.xmpmm_instance_id = value
 
     @property
     def custom_properties(self) -> Dict[Any, Any]:
