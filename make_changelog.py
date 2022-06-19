@@ -19,7 +19,7 @@ def main(changelog_path: str):
     changes = get_formatted_changes(git_tag)
     print("-" * 80)
     print(changes)
-    # TODO: Write changes to changelog
+
     new_version = version_bump(git_tag)
     today = datetime.now()
     header = f"Version {new_version}, {today:%Y-%m-%d}\n"

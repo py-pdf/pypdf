@@ -75,7 +75,7 @@ def test_regression_issue774():
 def test_regression_issue914():
     path = os.path.join(RESOURCE_ROOT, "issue-914-xmp-data.pdf")
     reader = PdfReader(path)
-    assert reader.xmp_metadata.xmp_modifyDate == datetime(2022, 4, 9, 15, 22, 43)
+    assert reader.xmp_metadata.xmp_modify_date == datetime(2022, 4, 9, 15, 22, 43)
 
 
 @pytest.mark.parametrize(
@@ -99,9 +99,9 @@ def test_identity(x):
 def test_xmpmm(url, name, xmpmm_instance_id):
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     xmp_metadata = reader.xmp_metadata
-    assert xmp_metadata.xmpmm_instanceId == xmpmm_instance_id
+    assert xmp_metadata.xmpmm_instance_id == xmpmm_instance_id
     # cache hit:
-    assert xmp_metadata.xmpmm_instanceId == xmpmm_instance_id
+    assert xmp_metadata.xmpmm_instance_id == xmpmm_instance_id
 
 
 def test_dc_description():

@@ -38,7 +38,7 @@ from PyPDF2.generic import (
     PdfObject,
     StreamObject,
     TextStringObject,
-    createStringObject,
+    create_string_object,
 )
 
 
@@ -172,7 +172,7 @@ class CryptFilter:
     def decrypt_object(self, obj: PdfObject) -> PdfObject:
         if isinstance(obj, ByteStringObject) or isinstance(obj, TextStringObject):
             data = self.strCrypt.decrypt(obj.original_bytes)
-            obj = createStringObject(data)
+            obj = create_string_object(data)
         elif isinstance(obj, StreamObject):
             obj._data = self.stmCrypt.decrypt(obj._data)
         elif isinstance(obj, DictionaryObject):
