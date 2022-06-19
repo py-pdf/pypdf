@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1655619382588,
+  "lastUpdate": 1655620340295,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -5854,6 +5854,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.013273875092311831",
             "extra": "mean: 3.798133173799988 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "exiledkingcc@gmail.com",
+            "name": "exiledkingcc",
+            "username": "exiledkingcc"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "868f977bb93b2b00ffee7cd849a2bc07f33e5c64",
+          "message": "ENH: Add decrypt support for V5 and AES-128, AES-256 (R5 only) (#749)\n\nThis is a rewrite of the encryption part to support V4 and AES-128 encryption (ONLY decrypt for now)\r\nPyCryptodome was added as an optional dependency for AES.\r\n\r\nIt does NOT add support for encryption R=6 as introduced by PDF 2.0\r\n\r\nCloses #528",
+          "timestamp": "2022-06-19T08:31:18+02:00",
+          "tree_id": "ad1134ccf7d062d3cce88f40de34e59d1d793b31",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/868f977bb93b2b00ffee7cd849a2bc07f33e5c64"
+        },
+        "date": 1655620339780,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9826516066225652,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005781554300131366",
+            "extra": "mean: 1.0176546735999978 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 14.408359061379997,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005693879034509232",
+            "extra": "mean: 69.40415599999785 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26415829090824966,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008063422854579054",
+            "extra": "mean: 3.7856089868000056 sec\nrounds: 5"
           }
         ]
       }
