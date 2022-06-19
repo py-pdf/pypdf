@@ -1,4 +1,3 @@
-#
 # Copyright (c) 2022, exiledkingcc
 # All rights reserved.
 #
@@ -610,6 +609,7 @@ class Encryption:
         StrF: str,
         EFF: str,
     ) -> None:
+        # See TABLE 3.18 Entries common to all encryption dictionaries
         self.algV = algV
         self.entry = entry
         self.key_size = entry.get("/Length", 40)
@@ -624,8 +624,6 @@ class Encryption:
         self._owner_keys: Dict = {}
 
     def decrypt_object(self, obj: PdfObject, idnum: int, generation: int) -> PdfObject:
-        """decrypt object"""
-
         """
         Algorithm 1: Encryption of data using the RC4 or AES algorithms
 
@@ -646,9 +644,7 @@ class Encryption:
            If using the AES algorithm, the Cipher Block Chaining (CBC) mode, which requires an initialization vector,
            is used. The block size parameter is set to 16 bytes, and the initialization vector is a 16-byte random
            number that is stored as the first 16 bytes of the encrypted stream or string.
-        """
 
-        """
         Algorithm 3.1a Encryption of data using the AES algorithm
         1. Use the 32-byte file encryption key for the AES-256 symmetric key algorithm, along with the string or
            stream data to be encrypted.
