@@ -298,7 +298,7 @@ def test_get_page_of_encrypted_file_new_algorithm(pdffile, password):
         PdfReader(path, password=password).pages[0]
     assert (
         exc.value.args[0]
-        == "only algorithm code 1 and 2 are supported. This PDF uses code 5"
+        == "encryption R=6 NOT supported!"
     )
 
 

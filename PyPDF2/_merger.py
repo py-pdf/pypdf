@@ -33,6 +33,7 @@ from ._reader import PdfReader
 from ._utils import StrByteType, deprecate_with_replacement, str_
 from ._writer import PdfWriter
 from .constants import PagesAttributes as PA
+from .encryption import Encryption
 from .generic import (
     ArrayObject,
     Bookmark,
@@ -129,16 +130,14 @@ class PdfMerger:
             bookmarks from being imported by specifying this as ``False``.
         """
 
-        stream, my_file, decryption_key = self._create_stream(fileobj)
+        stream, my_file, encryption_obj = self._create_stream(fileobj)
 
         # Create a new PdfReader instance using the stream
         # (either file or BytesIO or StringIO) created above
         reader = PdfReader(stream, strict=self.strict)  # type: ignore[arg-type]
-
-        # Keep track of our input files so we can close them later
         self.inputs.append((stream, reader, my_file))
-        if decryption_key is not None:
-            reader._decryption_key = decryption_key
+        if encryption_obj is not None:
+            reader._encryption = encryption_obj
 
         # Find the range of pages to merge.
         if pages is None:
@@ -188,7 +187,7 @@ class PdfMerger:
 
     def _create_stream(
         self, fileobj: Union[StrByteType, PdfReader]
-    ) -> Tuple[IOBase, bool, Optional[bytes]]:
+    ) -> Tuple[IOBase, bool, Optional[Encryption]]:
         # This parameter is passed to self.inputs.append and means
         # that the stream used was created in this method.
         my_file = False
@@ -199,14 +198,14 @@ class PdfMerger:
         # it is a PdfReader, copy that reader's stream into a
         # BytesIO stream.
         # If fileobj is none of the above types, it is not modified
-        decryption_key = None
+        encryption_obj = None
         stream: IOBase
         if isinstance(fileobj, str):
             stream = FileIO(fileobj, "rb")
             my_file = True
         elif isinstance(fileobj, PdfReader):
-            if hasattr(fileobj, "_decryption_key"):
-                decryption_key = fileobj._decryption_key
+            if hasattr(fileobj, "_encryption"):
+                encryption_obj = fileobj._encryption
             orig_tell = fileobj.stream.tell()
             fileobj.stream.seek(0)
             stream = BytesIO(fileobj.stream.read())
@@ -222,7 +221,7 @@ class PdfMerger:
             my_file = True
         else:
             stream = fileobj
-        return stream, my_file, decryption_key
+        return stream, my_file, encryption_obj
 
     def append(
         self,
