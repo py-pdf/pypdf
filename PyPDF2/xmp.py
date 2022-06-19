@@ -385,12 +385,12 @@ class XmpInformation(PdfObject):
 
     @property
     def xmp_createDate(self) -> datetime.datetime:  # pragma: no cover
-        deprecate_with_replacement("xmp_createDate", "xmp_create_date")
+        deprecate_with_replacement("xmp_createDate", "xmp_create_date", "4.0.0")
         return self.xmp_create_date
 
     @xmp_createDate.setter
     def xmp_createDate(self, value: datetime.datetime) -> None:  # pragma: no cover
-        deprecate_with_replacement("xmp_createDate", "xmp_create_date")
+        deprecate_with_replacement("xmp_createDate", "xmp_create_date", "4.0.0")
         self.xmp_create_date = value
 
     xmp_modify_date = property(
@@ -403,12 +403,12 @@ class XmpInformation(PdfObject):
 
     @property
     def xmp_modifyDate(self) -> datetime.datetime:  # pragma: no cover
-        deprecate_with_replacement("xmp_modifyDate", "xmp_modify_date")
+        deprecate_with_replacement("xmp_modifyDate", "xmp_modify_date", "4.0.0")
         return self.xmp_modify_date
 
     @xmp_modifyDate.setter
     def xmp_modifyDate(self, value: datetime.datetime) -> None:  # pragma: no cover
-        deprecate_with_replacement("xmp_modifyDate", "xmp_modify_date")
+        deprecate_with_replacement("xmp_modifyDate", "xmp_modify_date", "4.0.0")
         self.xmp_modify_date = value
 
     xmp_metadata_date = property(
@@ -422,12 +422,12 @@ class XmpInformation(PdfObject):
 
     @property
     def xmp_metadataDate(self) -> datetime.datetime:  # pragma: no cover
-        deprecate_with_replacement("xmp_metadataDate", "xmp_metadata_date")
+        deprecate_with_replacement("xmp_metadataDate", "xmp_metadata_date", "4.0.0")
         return self.xmp_metadata_date
 
     @xmp_metadataDate.setter
     def xmp_metadataDate(self, value: datetime.datetime) -> None:  # pragma: no cover
-        deprecate_with_replacement("xmp_metadataDate", "xmp_metadata_date")
+        deprecate_with_replacement("xmp_metadataDate", "xmp_metadata_date", "4.0.0")
         self.xmp_metadata_date = value
 
     xmp_creator_tool = property(_getter_single(XMP_NAMESPACE, "CreatorTool"))

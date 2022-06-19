@@ -395,7 +395,9 @@ def readStringFromStream(
     stream: StreamType,
     forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
 ) -> Union["TextStringObject", "ByteStringObject"]:  # pragma: no cover
-    deprecate_with_replacement("readStringFromStream", "read_string_from_stream")
+    deprecate_with_replacement(
+        "readStringFromStream", "read_string_from_stream", "4.0.0"
+    )
     return read_string_from_stream(stream, forced_encoding)
 
 
@@ -838,7 +840,7 @@ class TreeObject(DictionaryObject):
         DictionaryObject.__init__(self)
 
     def hasChildren(self) -> bool:  # pragma: no cover
-        deprecate_with_replacement("hasChildren", "has_children")
+        deprecate_with_replacement("hasChildren", "has_children", "4.0.0")
         return self.has_children()
 
     def has_children(self) -> bool:
