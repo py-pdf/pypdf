@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1655620340295,
+  "lastUpdate": 1655622084809,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -5899,6 +5899,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.008063422854579054",
             "extra": "mean: 3.7856089868000056 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "797963abdf71d3e184a11871ec0e95943ddfbea5",
+          "message": "STY: Make encryption module private, apply pre-commit (#1010)\n\nRelated to #749",
+          "timestamp": "2022-06-19T08:59:57+02:00",
+          "tree_id": "352ff3cf982f0108f6abadeb4cf4247cd6978826",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/797963abdf71d3e184a11871ec0e95943ddfbea5"
+        },
+        "date": 1655622082878,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6798115085216335,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024750233276590178",
+            "extra": "mean: 1.4709959855999954 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.179822294562625,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008799753894850666",
+            "extra": "mean: 98.23354190908938 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.19006333827410843,
+            "unit": "iter/sec",
+            "range": "stddev: 0.10764334450528514",
+            "extra": "mean: 5.261403956600009 sec\nrounds: 5"
           }
         ]
       }
