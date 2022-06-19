@@ -68,7 +68,7 @@ from .generic import (
     TextStringObject,
     TreeObject,
     _create_bookmark,
-    createStringObject,
+    create_string_object,
 )
 from .types import (
     BookmarkTypes,
@@ -108,7 +108,7 @@ class PdfWriter:
         info = DictionaryObject()
         info.update(
             {
-                NameObject("/Producer"): createStringObject(
+                NameObject("/Producer"): create_string_object(
                     codecs.BOM_UTF16_BE + "PyPDF2".encode("utf-16be")
                 )
             }
@@ -215,18 +215,30 @@ class PdfWriter:
         deprecate_with_replacement("insertPage", "insert_page")
         self.insert_page(page, index)
 
-    def get_page(self, pageNumber: int) -> PageObject:  # TODO: PEP8
+    def get_page(
+        self, page_number: Optional[int] = None, pageNumber: Optional[int] = None
+    ) -> PageObject:
         """
         Retrieve a page by number from this PDF file.
 
-        :param int pageNumber: The page number to retrieve
+        :param int page_number: The page number to retrieve
             (pages begin at zero)
-        :return: the page at the index given by *pageNumber*
+        :return: the page at the index given by *page_number*
         :rtype: :class:`PageObject<PyPDF2._page.PageObject>`
         """
+        if pageNumber is not None:  # pragma: no cover
+            if page_number is not None:
+                raise ValueError("Please only use the page_number parameter")
+            else:
+                deprecate_with_replacement(
+                    "get_page(pageNumber)", "get_page(page_number)", "4.0.0"
+                )
+                page_number = pageNumber
+        if page_number is None and pageNumber is None:  # pragma: no cover
+            raise ValueError("Please specify the page_number")
         pages = cast(Dict[str, Any], self.get_object(self._pages))
         # TODO: crude hack
-        return pages[PA.KIDS][pageNumber].get_object()
+        return pages[PA.KIDS][page_number].get_object()
 
     def getPage(self, pageNumber: int) -> PageObject:  # pragma: no cover
         """
@@ -362,7 +374,7 @@ class PdfWriter:
                 NameObject("/JavaScript"): DictionaryObject(
                     {
                         NameObject(CA.NAMES): ArrayObject(
-                            [createStringObject(js_string_name), js_indirect_object]
+                            [create_string_object(js_string_name), js_indirect_object]
                         )
                     }
                 )
@@ -434,7 +446,7 @@ class PdfWriter:
         filespec.update(
             {
                 NameObject(PA.TYPE): NameObject("/Filespec"),
-                NameObject("/F"): createStringObject(
+                NameObject("/F"): create_string_object(
                     filename
                 ),  # Perhaps also try TextStringObject
                 NameObject("/EF"): ef_entry,
@@ -456,7 +468,7 @@ class PdfWriter:
         embedded_files_names_dictionary.update(
             {
                 NameObject(CA.NAMES): ArrayObject(
-                    [createStringObject(filename), filespec]
+                    [create_string_object(filename), filespec]
                 )
             }
         )
@@ -787,7 +799,7 @@ class PdfWriter:
         """
         args = {}
         for key, value in list(infos.items()):
-            args[NameObject(key)] = createStringObject(value)
+            args[NameObject(key)] = create_string_object(value)
         self.get_object(self._info).update(args)  # type: ignore
 
     def addMetadata(self, infos: Dict[str, Any]) -> None:  # pragma: no cover
