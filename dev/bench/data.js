@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1655631301682,
+  "lastUpdate": 1655634377966,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -6124,6 +6124,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.015091388255829608",
             "extra": "mean: 3.8129726833999995 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "d5bc2788a8d37e4b4a508eba37df0889003c37f7",
+          "message": "REL: 2.3.0\n\nThe highlight of this release is improved support for file encryption\n(AES-128 and AES-256, R5 only). See #749 for the amazing work of\n@exiledkingcc 🎊 Thank you 🤗\n\nDeprecations (DEP):\n-  Rename names to be PEP8-compliant (#967)\n  - `PdfWriter.get_page`: the pageNumber parameter is renamed to page_number\n  - `PyPDF2.filters`:\n    * For all classes, a parameter rename: decodeParms ➔ decode_parms\n    * decodeStreamData ➔ decode_stream_data\n  - `PyPDF2.xmp`:\n    * XmpInformation.rdfRoot ➔ XmpInformation.rdf_root\n    * XmpInformation.xmp_createDate ➔ XmpInformation.xmp_create_date\n    * XmpInformation.xmp_creatorTool ➔ XmpInformation.xmp_creator_tool\n    * XmpInformation.xmp_metadataDate ➔ XmpInformation.xmp_metadata_date\n    * XmpInformation.xmp_modifyDate ➔ XmpInformation.xmp_modify_date\n    * XmpInformation.xmpMetadata ➔ XmpInformation.xmp_metadata\n    * XmpInformation.xmpmm_documentId ➔ XmpInformation.xmpmm_document_id\n    * XmpInformation.xmpmm_instanceId ➔ XmpInformation.xmpmm_instance_id\n  - `PyPDF2.generic`:\n    * readHexStringFromStream ➔ read_hex_string_from_stream\n    * initializeFromDictionary ➔ initialize_from_dictionary\n    * createStringObject ➔ create_string_object\n    * TreeObject.hasChildren ➔ TreeObject.has_children\n    * TreeObject.emptyTree ➔ TreeObject.empty_tree\n\nNew Features (ENH):\n-  Add decrypt support for V5 and AES-128, AES-256 (R5 only) (#749)\n\nRobustness (ROB):\n-  Fix corrupted (wrongly) linear PDF (#1008)\n\nMaintenance (MAINT):\n-  Move PDF_Samples folder into ressources\n-  Fix typos (#1007)\n\nTesting (TST):\n-  Improve encryption/decryption test (#1009)\n-  Add merger test cases with real PDFs (#1006)\n-  Add mutmut config\n\nCode Style (STY):\n-  Put pure data mappings in separate files (#1005)\n-  Make encryption module private, apply pre-commit (#1010)\n\nFull Changelog: https://github.com/py-pdf/PyPDF2/compare/2.2.1...2.3.0",
+          "timestamp": "2022-06-19T12:24:49+02:00",
+          "tree_id": "34c0a8d4dd81a5d74b09f7779850b696d44d4ad2",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/d5bc2788a8d37e4b4a508eba37df0889003c37f7"
+        },
+        "date": 1655634377504,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.970368542075278,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01683671611273076",
+            "extra": "mean: 1.0305362928000021 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 14.38871593615071,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006408496772547005",
+            "extra": "mean: 69.49890486666467 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2654517970276444,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021913973484801574",
+            "extra": "mean: 3.7671622916000045 sec\nrounds: 5"
           }
         ]
       }
