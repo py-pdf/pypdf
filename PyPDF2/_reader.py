@@ -31,7 +31,6 @@ import os
 import re
 import struct
 import warnings
-from hashlib import md5
 from io import BytesIO
 from pathlib import Path
 from typing import (
@@ -47,14 +46,12 @@ from typing import (
 )
 
 from ._page import PageObject, _VirtualList
-from ._security import RC4_encrypt, _alg33_1, _alg34, _alg35
 from ._utils import (
     StrByteType,
     StreamType,
     b_,
     deprecate_no_replacement,
     deprecate_with_replacement,
-    ord_,
     read_non_whitespace,
     read_previous_line,
     read_until_whitespace,
@@ -65,32 +62,25 @@ from .constants import CatalogAttributes as CA
 from .constants import CatalogDictionary as CD
 from .constants import Core as CO
 from .constants import DocumentInformationAttributes as DI
-from .constants import EncryptionDictAttributes as ED
 from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
-from .constants import StreamAttributes as SA
 from .constants import TrailerKeys as TK
-from .errors import PdfReadError, PdfReadWarning, PdfStreamError
+from .errors import DependencyError, PdfReadError, PdfReadWarning, PdfStreamError
 from .generic import (
     ArrayObject,
-    BooleanObject,
-    ByteStringObject,
     ContentStream,
     DecodedStreamObject,
     Destination,
     DictionaryObject,
     EncodedStreamObject,
     Field,
-    FloatObject,
     IndirectObject,
     NameObject,
     NullObject,
     NumberObject,
     PdfObject,
-    StreamObject,
     TextStringObject,
     TreeObject,
-    create_string_object,
     read_object,
 )
 from .types import OutlinesType, PagemodeType
@@ -353,6 +343,9 @@ class PdfReader:
                 self._override_encryption = True
                 self.decrypt("")
                 return self.trailer[TK.ROOT]["/Pages"]["/Count"]  # type: ignore
+            except DependencyError as e:
+                # make dependency error clear to users
+                raise e
             except Exception:
                 raise PdfReadError("File has not been decrypted")
             finally:
@@ -1051,16 +1044,11 @@ class PdfReader:
             # override encryption is used for the /Encrypt dictionary
             if not self._override_encryption and self.is_encrypted:
                 # if we don't have the encryption key:
-                if not hasattr(self, "_decryption_key"):
+                if not hasattr(self, "_encryption"):
                     raise PdfReadError("file has not been decrypted")
                 # otherwise, decrypt here...
-                pack1 = struct.pack("<i", indirect_reference.idnum)[:3]
-                pack2 = struct.pack("<i", indirect_reference.generation)[:2]
-                key = self._decryption_key + pack1 + pack2
-                assert len(key) == (len(self._decryption_key) + 5)
-                md5_hash = md5(key).digest()
-                key = md5_hash[: min(16, len(self._decryption_key) + 5)]
-                retval = self._decrypt_object(retval, key)  # type: ignore
+                retval = cast(PdfObject, retval)
+                retval = self._encryption.decrypt_object(retval, indirect_reference.idnum, indirect_reference.generation)
         else:
             warnings.warn(
                 f"Object {indirect_reference.idnum} {indirect_reference.generation} "
@@ -1084,35 +1072,6 @@ class PdfReader:
         """
         deprecate_with_replacement("getObject", "get_object")
         return self.get_object(indirectReference)
-
-    def _decrypt_object(
-        self,
-        obj: Union[
-            ArrayObject,
-            BooleanObject,
-            ByteStringObject,
-            DictionaryObject,
-            FloatObject,
-            IndirectObject,
-            NameObject,
-            NullObject,
-            NumberObject,
-            StreamObject,
-            TextStringObject,
-        ],
-        key: Union[str, bytes],
-    ) -> PdfObject:
-        if isinstance(obj, (ByteStringObject, TextStringObject)):
-            obj = create_string_object(RC4_encrypt(key, obj.original_bytes))
-        elif isinstance(obj, StreamObject):
-            obj._data = RC4_encrypt(key, obj._data)
-        elif isinstance(obj, DictionaryObject):
-            for dictkey, value in list(obj.items()):
-                obj[dictkey] = self._decrypt_object(value, key)
-        elif isinstance(obj, ArrayObject):
-            for i in range(len(obj)):
-                obj[i] = self._decrypt_object(obj[i], key)
-        return obj
 
     def read_object_header(self, stream: StreamType) -> Tuple[int, int]:
         # Should never be necessary to read out whitespace, since the
@@ -1375,7 +1334,7 @@ class PdfReader:
                     line = stream.read(20)
 
                 # On the other hand, some malformed PDF files
-                # use a single character EOL without a preceeding
+                # use a single character EOL without a preceding
                 # space.  Detect that case, and seek the stream
                 # back one character.  (0-9 means we've bled into
                 # the next xref entry, t means we've bled into the
@@ -1627,93 +1586,23 @@ class PdfReader:
         return permissions
 
     def _decrypt(self, password: Union[str, bytes]) -> int:
-        # Decrypts data as per Section 3.5 (page 117) of PDF spec v1.7
-        # "The security handler defines the use of encryption and decryption in
-        # the document, using the rules specified by the CF, StmF, and StrF entries"
-        encrypt = cast(DictionaryObject, self.trailer[TK.ENCRYPT].get_object())
-        # /Encrypt Keys:
-        # Filter (name)   : "name of the preferred security handler "
-        # V (number)      : Algorithm Code
-        # Length (integer): Length of encryption key, in bits
-        # CF (dictionary) : Crypt filter
-        # StmF (name)     : Name of the crypt filter that is used by default when decrypting streams
-        # StrF (name)     : The name of the crypt filter that is used when decrypting all strings in the document
-        # R (number)      : Standard security handler revision number
-        # U (string)      : A 32-byte string, based on the user password
-        # P (integer)     : Permissions allowed with user access
-        if encrypt["/Filter"] != "/Standard":
-            raise NotImplementedError(
-                "only Standard PDF encryption handler is available"
-            )
-        encrypt_v = cast(int, encrypt["/V"])
-        if encrypt_v not in (1, 2):
-            raise NotImplementedError(
-                f"only algorithm code 1 and 2 are supported. This PDF uses code {encrypt_v}"
-            )
-        user_password, key = self._authenticate_user_password(password)
-        if user_password:
-            self._decryption_key = key
-            return 1
-        else:
-            rev = cast(int, encrypt["/R"].get_object())
-            if rev == 2:
-                keylen = 5
-            else:
-                keylen = cast(int, encrypt[SA.LENGTH].get_object()) // 8
-            key = _alg33_1(password, rev, keylen)
-            real_O = cast(bytes, encrypt["/O"].get_object())
-            if rev == 2:
-                userpass = RC4_encrypt(key, real_O)
-            else:
-                val = real_O
-                for i in range(19, -1, -1):
-                    new_key = b""
-                    for key_char in key:
-                        new_key += b_(chr(ord_(key_char) ^ i))
-                    val = RC4_encrypt(new_key, val)
-                userpass = val
-            owner_password, key = self._authenticate_user_password(userpass)
-            if owner_password:
-                self._decryption_key = key
-                return 2
-        return 0
-
-    def _authenticate_user_password(
-        self, password: Union[str, bytes]
-    ) -> Tuple[bool, bytes]:
-        encrypt = cast(
-            Optional[DictionaryObject], self.trailer[TK.ENCRYPT].get_object()
-        )
-        if encrypt is None:
-            raise Exception(
-                "_authenticateUserPassword was called on unencrypted document"
-            )
-        rev = cast(int, encrypt[ED.R].get_object())
-        owner_entry = cast(ByteStringObject, encrypt[ED.O].get_object())
-        p_entry = cast(int, encrypt[ED.P].get_object())
-        if TK.ID in self.trailer:
-            id_entry = cast(ArrayObject, self.trailer[TK.ID].get_object())
-        else:
-            # Some documents may not have a /ID, use two empty
-            # byte strings instead. Solves
-            # https://github.com/mstamy2/PyPDF2/issues/608
-            id_entry = ArrayObject([ByteStringObject(b""), ByteStringObject(b"")])
-        id1_entry = id_entry[0].get_object()
-        real_U = encrypt[ED.U].get_object().original_bytes  # type: ignore
-        if rev == 2:
-            U, key = _alg34(password, owner_entry, p_entry, id1_entry)
-        elif rev >= 3:
-            U, key = _alg35(
-                password,
-                rev,
-                encrypt[SA.LENGTH].get_object() // 8,  # type: ignore
-                owner_entry,
-                p_entry,
-                id1_entry,
-                encrypt.get(ED.ENCRYPT_METADATA, BooleanObject(False)).get_object(),  # type: ignore
-            )
-            U, real_U = U[:16], real_U[:16]
-        return U == real_U, key
+        # already got the KEY
+        if hasattr(self, "_encryption"):
+            return 3
+        from PyPDF2.encryption import Encryption
+        # Some documents may not have a /ID, use two empty
+        # byte strings instead. Solves
+        # https://github.com/mstamy2/PyPDF2/issues/608
+        id_entry = self.trailer.get(TK.ID)
+        id1_entry = id_entry[0].get_object().original_bytes if id_entry else b""
+        encryptEntry = cast(DictionaryObject, self.trailer[TK.ENCRYPT].get_object())
+        encryption = Encryption.read(encryptEntry, id1_entry)
+        # maybe password is owner password
+        # TODO: add/modify api to set owner password
+        rr = encryption.verify(password, password)
+        if rr > 0:
+            self._encryption = encryption
+        return rr
 
     @property
     def is_encrypted(self) -> bool:

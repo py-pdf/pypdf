@@ -1,6 +1,6 @@
 # https://raw.githubusercontent.com/adobe-type-tools/agl-aglfn/master/glyphlist.txt
 
-# converted manualy to python
+# converted manually to python
 # Extended with data from GlyphNameFormatter:
 #    https://github.com/LettError/glyphNameFormatter
 
