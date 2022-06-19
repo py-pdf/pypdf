@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1655622084809,
+  "lastUpdate": 1655623734553,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -5944,6 +5944,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.10764334450528514",
             "extra": "mean: 5.261403956600009 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "953a11d9bedd49cedff17dd39e3ea5051fb15496",
+          "message": "DEP: Rename names to be PEP8-compliant (#967)\n\nAll of the following get in [the deprecation process](https://pypdf2.readthedocs.io/en/latest/dev/deprecations.html). This means the old parameters will work for a while to give users a chance to migrate without service disruptions.\r\n\r\n`PdfWriter.get_page`: the pageNumber parameter is renamed to page_number\r\n\r\n`PyPDF2.filters`:\r\n\r\n* For all classes, a parameter rename: decodeParms ➔ decode_parms\r\n* decodeStreamData ➔ decode_stream_data\r\n\r\n`PyPDF2.xmp`:\r\n\r\n* XmpInformation.rdfRoot ➔ XmpInformation.rdf_root\r\n* XmpInformation.xmp_createDate ➔ XmpInformation.xmp_create_date\r\n* XmpInformation.xmp_creatorTool ➔ XmpInformation.xmp_creator_tool\r\n* XmpInformation.xmp_metadataDate ➔ XmpInformation.xmp_metadata_date\r\n* XmpInformation.xmp_modifyDate ➔ XmpInformation.xmp_modify_date\r\n* XmpInformation.xmpMetadata ➔ XmpInformation.xmp_metadata\r\n* XmpInformation.xmpmm_documentId ➔ XmpInformation.xmpmm_document_id\r\n* XmpInformation.xmpmm_instanceId ➔ XmpInformation.xmpmm_instance_id\r\n\r\n`PyPDF2.generic`:\r\n\r\n* readHexStringFromStream ➔ read_hex_string_from_stream\r\n* initializeFromDictionary ➔ initialize_from_dictionary\r\n* createStringObject ➔ create_string_object\r\n* TreeObject.hasChildren ➔ TreeObject.has_children\r\n* TreeObject.emptyTree ➔ TreeObject.empty_tree",
+          "timestamp": "2022-06-19T09:27:53+02:00",
+          "tree_id": "ac6039f86dd4d9e34f795a3c93e7872813f086c7",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/953a11d9bedd49cedff17dd39e3ea5051fb15496"
+        },
+        "date": 1655623734050,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9797980134951144,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007248612437250133",
+            "extra": "mean: 1.0206185215999994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 14.337240005025006,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005830414175252306",
+            "extra": "mean: 69.7484313333329 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26382525186151445,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011562182403087784",
+            "extra": "mean: 3.790387739399995 sec\nrounds: 5"
           }
         ]
       }
