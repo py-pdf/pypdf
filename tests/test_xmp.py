@@ -99,9 +99,9 @@ def test_identity(x):
 def test_xmpmm(url, name, xmpmm_instance_id):
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     xmp_metadata = reader.xmp_metadata
-    assert xmp_metadata.xmpmm_instanceId == xmpmm_instance_id
+    assert xmp_metadata.xmpmm_instance_id == xmpmm_instance_id
     # cache hit:
-    assert xmp_metadata.xmpmm_instanceId == xmpmm_instance_id
+    assert xmp_metadata.xmpmm_instance_id == xmpmm_instance_id
 
 
 def test_dc_description():

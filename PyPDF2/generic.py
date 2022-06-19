@@ -1956,7 +1956,7 @@ def _create_bookmark(
     bookmark.update(
         {
             NameObject("/A"): action_ref,
-            NameObject("/Title"): createStringObject(title),
+            NameObject("/Title"): create_string_object(title),
         }
     )
 
