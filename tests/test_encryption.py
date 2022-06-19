@@ -1,5 +1,7 @@
 import os
+
 import pytest
+
 import PyPDF2
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -12,7 +14,6 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
     [
         # unencrypted pdf
         (os.path.join(RESOURCE_ROOT, "encryption", "enc0.pdf")),
-
         # created by `qpdf --encrypt "" "" 40 -- enc0.pdf enc1.pdf`
         (os.path.join(RESOURCE_ROOT, "encryption", "enc1.pdf")),
         # created by `qpdf --encrypt "" "" 128 -- enc0.pdf enc2.pdf`
@@ -21,13 +22,11 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
         (os.path.join(RESOURCE_ROOT, "encryption", "enc3.pdf")),
         # created by `qpdf --encrypt "asdfzxcv" "" 128 -- enc0.pdf enc4.pdf`
         (os.path.join(RESOURCE_ROOT, "encryption", "enc4.pdf")),
-
         # V=4 and AES128
         # created by `qpdf --encrypt "asdfzxcv" "" 128 --force-V4 -- enc0.pdf enc5.pdf`
         (os.path.join(RESOURCE_ROOT, "encryption", "enc5.pdf")),
         # created by `qpdf --encrypt "asdfzxcv" "" 128 --use-aes=y -- enc0.pdf enc6.pdf`
         (os.path.join(RESOURCE_ROOT, "encryption", "enc6.pdf")),
-
         # # V=5 and R=5 use AES-256
         # # created by `qpdf --encrypt "" "" 256 --force-R5 -- enc0.pdf enc7.pdf`
         (os.path.join(RESOURCE_ROOT, "encryption", "enc7.pdf")),
@@ -35,7 +34,6 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
         (os.path.join(RESOURCE_ROOT, "encryption", "enc8.pdf")),
         # # created by `qpdf --encrypt "" "asdfzxcv" 256 --force-R5 -- enc0.pdf enc9.pdf`
         (os.path.join(RESOURCE_ROOT, "encryption", "enc9.pdf")),
-
         # asdfzxcv is owner password
         # created by `qpdf --encrypt "" "asdfzxcv" 128 --use-aes=y -- enc0.pdf enca.pdf`
         (os.path.join(RESOURCE_ROOT, "encryption", "enca.pdf")),
@@ -56,12 +54,12 @@ def test_encryption(src):
         # remove empty value entry
         dd = {x[0]: x[1] for x in dd.items() if x[1]}
         assert dd == {
-            '/Author': 'cheng',
-            '/CreationDate': "D:20220414132421+05'24'",
-            '/Creator': 'WPS Writer',
-            '/ModDate': "D:20220414132421+05'24'",
-            '/SourceModified': "D:20220414132421+05'24'",
-            '/Trapped': '/False'
+            "/Author": "cheng",
+            "/CreationDate": "D:20220414132421+05'24'",
+            "/Creator": "WPS Writer",
+            "/ModDate": "D:20220414132421+05'24'",
+            "/SourceModified": "D:20220414132421+05'24'",
+            "/Trapped": "/False",
         }
 
 

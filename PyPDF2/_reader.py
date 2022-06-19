@@ -65,7 +65,12 @@ from .constants import DocumentInformationAttributes as DI
 from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
 from .constants import TrailerKeys as TK
-from .errors import DependencyError, PdfReadError, PdfReadWarning, PdfStreamError
+from .errors import (
+    DependencyError,
+    PdfReadError,
+    PdfReadWarning,
+    PdfStreamError,
+)
 from .generic import (
     ArrayObject,
     ContentStream,
@@ -1048,7 +1053,9 @@ class PdfReader:
                     raise PdfReadError("file has not been decrypted")
                 # otherwise, decrypt here...
                 retval = cast(PdfObject, retval)
-                retval = self._encryption.decrypt_object(retval, indirect_reference.idnum, indirect_reference.generation)
+                retval = self._encryption.decrypt_object(
+                    retval, indirect_reference.idnum, indirect_reference.generation
+                )
         else:
             warnings.warn(
                 f"Object {indirect_reference.idnum} {indirect_reference.generation} "
@@ -1589,7 +1596,8 @@ class PdfReader:
         # already got the KEY
         if hasattr(self, "_encryption"):
             return 3
-        from PyPDF2.encryption import Encryption
+        from PyPDF2._encryption import Encryption
+
         # Some documents may not have a /ID, use two empty
         # byte strings instead. Solves
         # https://github.com/mstamy2/PyPDF2/issues/608
