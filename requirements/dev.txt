@@ -10,7 +10,7 @@ black==22.3.0
     # via -r requirements/dev.in
 bleach==4.1.0
     # via readme-renderer
-certifi==2022.5.18.1
+certifi==2022.6.15
     # via requests
 cffi==1.15.0
     # via cryptography
@@ -22,7 +22,7 @@ click==8.0.4
     # via
     #   black
     #   pip-tools
-colorama==0.4.4
+colorama==0.4.5
     # via twine
 coverage[toml]==6.2
     # via pytest-cov
