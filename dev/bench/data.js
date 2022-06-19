@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1655624285845,
+  "lastUpdate": 1655626376335,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -6034,6 +6034,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01710465099960888",
             "extra": "mean: 3.8130146233999938 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2c53813dfac9791f639a2e6517cba1feb2671c32",
+          "message": "STY: Put pure data mappings in separate files (#1005)\n\nCreated a private codecs module",
+          "timestamp": "2022-06-19T10:11:31+02:00",
+          "tree_id": "02d50b8c43a9236acf43d6fd00f51fd0c0d0e892",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/2c53813dfac9791f639a2e6517cba1feb2671c32"
+        },
+        "date": 1655626374428,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6949554600585487,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04782707844780199",
+            "extra": "mean: 1.438941137200004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.582839220182525,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011102814924503306",
+            "extra": "mean: 104.35320649999937 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.20112849738056496,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09260031943155554",
+            "extra": "mean: 4.971945860600011 sec\nrounds: 5"
           }
         ]
       }
