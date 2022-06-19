@@ -40,6 +40,11 @@ import warnings
 from io import BytesIO
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
+from ._codecs import (  # noqa: rev_encoding
+    _pdfdoc_encoding,
+    _pdfdoc_encoding_rev,
+    rev_encoding,
+)
 from ._utils import (
     WHITESPACES,
     StreamType,
@@ -54,11 +59,6 @@ from ._utils import (
     read_until_regex,
     skip_over_comment,
     str_,
-)
-from .codecs import (  # noqa: rev_encoding
-    _pdfdoc_encoding,
-    _pdfdoc_encoding_rev,
-    rev_encoding,
 )
 from .constants import FilterTypes as FT
 from .constants import StreamAttributes as SA

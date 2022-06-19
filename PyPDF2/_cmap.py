@@ -2,7 +2,7 @@ import warnings
 from binascii import unhexlify
 from typing import Any, Dict, List, Tuple, Union, cast
 
-from .codecs import adobe_glyphs, charset_encoding
+from ._codecs import adobe_glyphs, charset_encoding
 from .errors import PdfReadWarning
 from .generic import DecodedStreamObject, DictionaryObject
 
