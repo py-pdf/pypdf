@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from PyPDF2 import PdfReader
+from PyPDF2 import PdfMerger, PdfReader
 from PyPDF2._reader import convert_to_int, convertToInt
 from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import PageAttributes as PG
@@ -814,3 +814,13 @@ def test_get_fields_read_write_report():
 
     # cleanup
     os.remove("tmp-fields-report.txt")
+
+
+def test_unexpected_destination():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/913/913678.pdf"
+    name = "tika-913678.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    merger = PdfMerger()
+    with pytest.raises(PdfReadError) as exc:
+        merger.append(reader)
+    assert exc.value.args[0] == "Unexpected destination '/1'"
