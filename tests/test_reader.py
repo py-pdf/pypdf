@@ -296,10 +296,7 @@ def test_get_page_of_encrypted_file_new_algorithm(pdffile, password):
     path = os.path.join(RESOURCE_ROOT, pdffile)
     with pytest.raises(NotImplementedError) as exc:
         PdfReader(path, password=password).pages[0]
-    assert (
-        exc.value.args[0]
-        == "encryption R=6 NOT supported!"
-    )
+    assert exc.value.args[0] == "encryption R=6 NOT supported!"
 
 
 @pytest.mark.parametrize(

@@ -28,12 +28,12 @@
 from io import BytesIO, FileIO, IOBase
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 
+from ._encryption import Encryption
 from ._page import PageObject
 from ._reader import PdfReader
 from ._utils import StrByteType, deprecate_with_replacement, str_
 from ._writer import PdfWriter
 from .constants import PagesAttributes as PA
-from .encryption import Encryption
 from .generic import (
     ArrayObject,
     Bookmark,
