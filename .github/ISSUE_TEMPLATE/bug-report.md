@@ -1,9 +1,9 @@
 ---
 name: Report a bug
 about: Something broke!
-title: ""
+title: ''
 labels: Bug
-assignees: MartinThoma
+assignees: ''
 
 ---
 
@@ -21,7 +21,7 @@ $ python -c "import PyPDF2;print(PyPDF2.__version__)"
 # TODO: Your output goes here
 ```
 
-## Code
+## Code + PDF
 
 This is a minimal, complete example that shows the issue:
 
@@ -29,7 +29,11 @@ This is a minimal, complete example that shows the issue:
 # TODO: Your code goes here
 ```
 
-## PDF
-
 Share here the PDF file(s) that cause the issue. The smaller they are, the
 better. Let us know if we may add them to our tests!
+
+## Traceback
+
+This is the complete Traceback I see:
+
+TODO
