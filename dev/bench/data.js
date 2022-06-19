@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1655623734553,
+  "lastUpdate": 1655624285845,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -5989,6 +5989,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.011562182403087784",
             "extra": "mean: 3.790387739399995 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f62e05150eab36cf70770d1e0711e29612e9e479",
+          "message": "ROB: Fix corrupted (wrongly) linear PDF (#1008)\n\nFix: Rescan the whole PDF and update/rebuild the trailer\r\n\r\nCloses #989",
+          "timestamp": "2022-06-19T09:36:59+02:00",
+          "tree_id": "9ab5adcc0bdf78ed73427cbee9c8392cac26b436",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/f62e05150eab36cf70770d1e0711e29612e9e479"
+        },
+        "date": 1655624285387,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.969716317570971,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005946170806177808",
+            "extra": "mean: 1.0312294244 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 14.252918618605316,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0065794167301786634",
+            "extra": "mean: 70.16106853333402 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2622596813196375,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01710465099960888",
+            "extra": "mean: 3.8130146233999938 sec\nrounds: 5"
           }
         ]
       }
