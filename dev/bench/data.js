@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1655617061388,
+  "lastUpdate": 1655619382588,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -5809,6 +5809,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.017121044815713807",
             "extra": "mean: 3.7355551753999863 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6d426a05c941229452dfd9eab8b04b7ae5bc03a0",
+          "message": "TST: Improve encryption/decryption test (#1009)",
+          "timestamp": "2022-06-19T08:15:19+02:00",
+          "tree_id": "fe4f8fe4950f07a92f59a1047ca60a602805bcfb",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/6d426a05c941229452dfd9eab8b04b7ae5bc03a0"
+        },
+        "date": 1655619381366,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9561526997738262,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011564527342700298",
+            "extra": "mean: 1.0458580520000056 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.32561262777248,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006089213127626411",
+            "extra": "mean: 96.84655390909504 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2632872398730326,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013273875092311831",
+            "extra": "mean: 3.798133173799988 sec\nrounds: 5"
           }
         ]
       }
