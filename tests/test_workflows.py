@@ -7,6 +7,7 @@ import pytest
 
 from PyPDF2 import PdfReader
 from PyPDF2.constants import PageAttributes as PG
+from PyPDF2.errors import PdfReadWarning
 
 from . import get_pdf_from_url
 
@@ -167,15 +168,23 @@ def test_rotate_45():
             "https://corpora.tika.apache.org/base/docs/govdocs1/971/971703.pdf",
             [0, 1, 5, 8, 14],
         ),
+        (  # faulty PDF, wrongly linearized and with 2 trailer, second with /Root
+            True,
+            "https://corpora.tika.apache.org/base/docs/govdocs1/989/989691.pdf",
+            [0],
+        ),
     ],
 )
 def test_extract_textbench(enable, url, pages, print_result=False):
     if not enable:
         return
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, url.split("/")[-1])))
-    for page_number in pages:
-        if print_result:
-            print(f"**************** {url} / page {page_number} ****************")
-        rst = reader.pages[page_number].extract_text()
-        if print_result:
-            print(f"{rst}\n*****************************\n")
+    try:
+        reader = PdfReader(BytesIO(get_pdf_from_url(url, url.split("/")[-1])))
+        for page_number in pages:
+            if print_result:
+                print(f"**************** {url} / page {page_number} ****************")
+            rst = reader.pages[page_number].extract_text()
+            if print_result:
+                print(f"{rst}\n*****************************\n")
+    except PdfReadWarning:
+        pass
