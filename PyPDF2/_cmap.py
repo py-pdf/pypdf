@@ -2,9 +2,9 @@ import warnings
 from binascii import unhexlify
 from typing import Any, Dict, List, Tuple, Union, cast
 
-from ._adobe_glyphs import adobe_glyphs
+from ._codecs import adobe_glyphs, charset_encoding
 from .errors import PdfReadWarning
-from .generic import DecodedStreamObject, DictionaryObject, charset_encoding
+from .generic import DecodedStreamObject, DictionaryObject
 
 
 # code freely inspired from @twiggy ; see #711
