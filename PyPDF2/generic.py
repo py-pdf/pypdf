@@ -55,7 +55,11 @@ from ._utils import (
     skip_over_comment,
     str_,
 )
-from .codecs import _pdfdoc_encoding, _pdfdoc_encoding_rev, rev_encoding
+from .codecs import (  # noqa: rev_encoding
+    _pdfdoc_encoding,
+    _pdfdoc_encoding_rev,
+    rev_encoding,
+)
 from .constants import FilterTypes as FT
 from .constants import StreamAttributes as SA
 from .constants import TypArguments as TA
