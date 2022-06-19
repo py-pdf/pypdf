@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1655634377966,
+  "lastUpdate": 1655643242378,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -6169,6 +6169,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.021913973484801574",
             "extra": "mean: 3.7671622916000045 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "6b9f472d10fa1355612f9a8063a3b902a1db077d",
+          "message": "REL: 2.3.1\n\nBUG: Add _codecs subpackage to distribution\n\nThank you @nyanpasu64 for reporting it!\n\nCloses #1011\n\nCo-authored-by: nyanpasu64 <nyanpasu64@tuta.io>",
+          "timestamp": "2022-06-19T14:50:17+02:00",
+          "tree_id": "7796988bdc6783bbceeaffce757e27be0d0d331b",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/6b9f472d10fa1355612f9a8063a3b902a1db077d"
+        },
+        "date": 1655643241148,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9884793004422833,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007503590918017239",
+            "extra": "mean: 1.011654973000003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 14.273160212105111,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0042718063289290936",
+            "extra": "mean: 70.0615690666666 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2695782110540451,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015477909058436072",
+            "extra": "mean: 3.709498612999994 sec\nrounds: 5"
           }
         ]
       }
