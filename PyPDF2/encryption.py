@@ -52,10 +52,10 @@ from PyPDF2.generic import (
 
 
 class CryptBase:
-    def encrypt(self, data: bytes) -> bytes:
+    def encrypt(self, data: bytes) -> bytes:  # pragma: no cover
         return data
 
-    def decrypt(self, data: bytes) -> bytes:
+    def decrypt(self, data: bytes) -> bytes:  # pragma: no cover
         return data
 
 
