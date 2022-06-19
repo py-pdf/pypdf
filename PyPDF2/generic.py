@@ -54,7 +54,6 @@ from ._utils import (
     deprecate_with_replacement,
     hex_str,
     hexencode,
-    ord_,
     read_non_whitespace,
     read_until_regex,
     skip_over_comment,
@@ -566,7 +565,7 @@ class TextStringObject(str, PdfObject):
             stream.write(b"(")
             for c in bytearr:
                 if not chr(c).isalnum() and c != b" ":
-                    stream.write(b_(rf"\{ord_(c):0>3o}"))
+                    stream.write(b_(rf"\{c:0>3o}"))
                 else:
                     stream.write(b_(chr(c)))
             stream.write(b")")
@@ -1161,10 +1160,10 @@ class ContentStream(DecodedStreamObject):
         operands: List[Union[int, str, PdfObject]] = []
         while True:
             peek = read_non_whitespace(stream)
-            if peek == b"" or ord_(peek) == 0:
+            if peek == b"" or peek == 0:
                 break
             stream.seek(-1, 1)
-            if peek.isalpha() or peek == b"'" or peek == b'"':
+            if peek.isalpha() or peek in (b"'", b'"'):
                 operator = read_until_regex(stream, NameObject.delimiter_pattern, True)
                 if operator == b"BI":
                     # begin inline image - a completely different parsing
@@ -1997,7 +1996,7 @@ def encode_pdfdocencoding(unicode_string: str) -> bytes:
 def decode_pdfdocencoding(byte_array: bytes) -> str:
     retval = ""
     for b in byte_array:
-        c = _pdfdoc_encoding[ord_(b)]
+        c = _pdfdoc_encoding[b]
         if c == "\u0000":
             raise UnicodeDecodeError(
                 "pdfdocencoding",
