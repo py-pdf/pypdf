@@ -39,6 +39,12 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
         (os.path.join(RESOURCE_ROOT, "encryption", "enca.pdf")),
         # created by `qpdf --encrypt "1234" "asdfzxcv" 128 --use-aes=y -- enc0.pdf encb.pdf`
         (os.path.join(RESOURCE_ROOT, "encryption", "encb.pdf")),
+        # created by `qpdf --encrypt "" "" 256 -- unencrypted.pdf v5-r6-empty-password.pdf`
+        (os.path.join(RESOURCE_ROOT, "encryption", "v5-r6-empty-password.pdf")),
+        # created by `qpdf --encrypt "asdfzxcv" "" 256 -- unencrypted.pdf v5-r6-owner-password.pdf`
+        (os.path.join(RESOURCE_ROOT, "encryption", "v5-r6-owner-password.pdf")),
+        # created by `qpdf --encrypt "" "asdfzxcv" 256 -- unencrypted.pdf v5-r6-user-password.pdf`
+        (os.path.join(RESOURCE_ROOT, "encryption", "v5-r6-user-password.pdf")),
     ],
 )
 def test_encryption(src):
