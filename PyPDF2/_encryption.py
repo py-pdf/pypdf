@@ -28,7 +28,7 @@
 import hashlib
 import random
 import struct
-from typing import Dict, Optional, Tuple, Union, cast
+from typing import Optional, Tuple, Union, cast
 
 from PyPDF2.errors import DependencyError
 from PyPDF2.generic import (
@@ -224,15 +224,6 @@ _PADDING = bytes(
 
 def _padding(data: bytes) -> bytes:
     return (data + _PADDING)[:32]
-
-
-def _bytes(value: Union[bytes, str]) -> bytes:
-    if isinstance(value, bytes):
-        return value
-    try:
-        return value.encode("latin-1")
-    except Exception:  # noqa
-        return value.encode("utf-8")
 
 
 class AlgV4:
@@ -642,10 +633,13 @@ class Encryption:
         self.StrF = StrF
         self.EFF = EFF
 
+        # 1 => owner password
+        # 2 => user password
+        self._password_type = 0
         self._key: Optional[bytes] = None
-        # keep key
-        self._user_keys: Dict = {}
-        self._owner_keys: Dict = {}
+
+    def verified(self) -> bool:
+        return self._password_type != 0
 
     def decrypt_object(self, obj: PdfObject, idnum: int, generation: int) -> PdfObject:
         """
@@ -690,7 +684,7 @@ class Encryption:
         key_hash.update(b"sAlT")
         aes128_key = key_hash.digest()[: min(n + 5, 16)]
 
-        # for V=5 use AES-256
+        # for AES-256
         aes256_key = key
 
         stmCrypt = self._get_crypt(self.StmF, rc4_key, aes128_key, aes256_key)
@@ -713,36 +707,22 @@ class Encryption:
         else:
             return CryptRC4(rc4_key)
 
-    def verify(self, user_pwd: Union[bytes, str], owner_pwd: Union[bytes, str]) -> int:
-        up_bytes = _bytes(user_pwd)
-        op_bytes = _bytes(owner_pwd)
-
-        key = self._user_keys.get(up_bytes)
-        if key:
-            self._key = key
-            return 1
-
-        key = self._owner_keys.get(op_bytes)
-        if key:
-            self._key = key
-            return 2
-
-        rc = 0
-        if self.algV <= 4:
-            key, rc = self.verify_v4(up_bytes, op_bytes)
+    def verify(self, password: Union[bytes, str]) -> int:
+        if isinstance(password, str):
+            try:
+                pwd = password.encode("latin-1")
+            except Exception:  # noqa
+                pwd = password.encode("utf-8")
         else:
-            key, rc = self.verify_v5(up_bytes, op_bytes)
+            pwd = password
 
-        if rc == 1:
+        key, rc = self.verify_v4(pwd) if self.algV <= 4 else self.verify_v5(pwd)
+        if rc != 0:
+            self._password_type = rc
             self._key = key
-            self._user_keys[up_bytes] = key
-        elif rc == 2:
-            self._key = key
-            self._owner_keys[op_bytes] = key
-
         return rc
 
-    def verify_v4(self, user_pwd: bytes, owner_pwd: bytes) -> Tuple[bytes, int]:
+    def verify_v4(self, password: bytes) -> Tuple[bytes, int]:
         R = cast(int, self.entry["/R"])
         P = cast(int, self.entry["/P"])
         P = (P + 0x100000000) % 0x100000000  # maybe < 0
@@ -750,20 +730,9 @@ class Encryption:
         o_entry = cast(ByteStringObject, self.entry["/O"].get_object()).original_bytes
         u_entry = cast(ByteStringObject, self.entry["/U"].get_object()).original_bytes
 
-        key = AlgV4.verify_user_password(
-            user_pwd,
-            R,
-            self.key_size,
-            o_entry,
-            u_entry,
-            P,
-            self.id1_entry,
-            metadata_encrypted,
-        )
-        if key:
-            return key, 1
+        # verify owner password first
         key = AlgV4.verify_owner_password(
-            owner_pwd,
+            password,
             R,
             self.key_size,
             o_entry,
@@ -774,25 +743,36 @@ class Encryption:
         )
         if key:
             return key, 2
+        key = AlgV4.verify_user_password(
+            password,
+            R,
+            self.key_size,
+            o_entry,
+            u_entry,
+            P,
+            self.id1_entry,
+            metadata_encrypted,
+        )
+        if key:
+            return key, 1
         return b"", 0
 
-    def verify_v5(self, user_pwd: bytes, owner_pwd: bytes) -> Tuple[bytes, int]:
+    def verify_v5(self, password: bytes) -> Tuple[bytes, int]:
         # TODO: use SASLprep process
         o_entry = cast(ByteStringObject, self.entry["/O"].get_object()).original_bytes
         u_entry = cast(ByteStringObject, self.entry["/U"].get_object()).original_bytes
         oe_entry = cast(ByteStringObject, self.entry["/OE"].get_object()).original_bytes
         ue_entry = cast(ByteStringObject, self.entry["/UE"].get_object()).original_bytes
 
-        rc = 0
-        key = AlgV5.verify_user_password(self.algR, user_pwd, u_entry, ue_entry)
-        if key:
+        # verify owner password first
+        key = AlgV5.verify_owner_password(self.algR, password, o_entry, oe_entry, u_entry)
+        rc = 2
+        if not key:
+            key = AlgV5.verify_user_password(self.algR, password, u_entry, ue_entry)
             rc = 1
-        else:
-            key = AlgV5.verify_owner_password(self.algR, owner_pwd, o_entry, oe_entry, u_entry)
-            if key:
-                rc = 2
-        if rc == 0:
+        if not key:
             return b"", 0
+
         # verify Perms
         perms = cast(ByteStringObject, self.entry["/Perms"].get_object()).original_bytes
         P = cast(int, self.entry["/P"])
