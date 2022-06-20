@@ -10,69 +10,62 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
 
 
 @pytest.mark.parametrize(
-    "src",
+    "name",
     [
         # unencrypted pdf
-        (os.path.join(RESOURCE_ROOT, "encryption", "enc0.pdf")),
-        # created by `qpdf --encrypt "" "" 40 -- enc0.pdf enc1.pdf`
-        (os.path.join(RESOURCE_ROOT, "encryption", "enc1.pdf")),
-        # created by `qpdf --encrypt "" "" 128 -- enc0.pdf enc2.pdf`
-        (os.path.join(RESOURCE_ROOT, "encryption", "enc2.pdf")),
-        # created by `qpdf --encrypt "asdfzxcv" "" 40 -- enc0.pdf enc3.pdf`
-        (os.path.join(RESOURCE_ROOT, "encryption", "enc3.pdf")),
-        # created by `qpdf --encrypt "asdfzxcv" "" 128 -- enc0.pdf enc4.pdf`
-        (os.path.join(RESOURCE_ROOT, "encryption", "enc4.pdf")),
-        # V=4 and AES128
-        # created by `qpdf --encrypt "asdfzxcv" "" 128 --force-V4 -- enc0.pdf enc5.pdf`
-        (os.path.join(RESOURCE_ROOT, "encryption", "enc5.pdf")),
-        # created by `qpdf --encrypt "asdfzxcv" "" 128 --use-aes=y -- enc0.pdf enc6.pdf`
-        (os.path.join(RESOURCE_ROOT, "encryption", "enc6.pdf")),
-        # # V=5 and R=5 use AES-256
-        # # created by `qpdf --encrypt "" "" 256 --force-R5 -- enc0.pdf enc7.pdf`
-        (os.path.join(RESOURCE_ROOT, "encryption", "enc7.pdf")),
-        # # created by `qpdf --encrypt "asdfzxcv" "" 256 --force-R5 -- enc0.pdf enc8.pdf`
-        (os.path.join(RESOURCE_ROOT, "encryption", "enc8.pdf")),
-        # # created by `qpdf --encrypt "" "asdfzxcv" 256 --force-R5 -- enc0.pdf enc9.pdf`
-        (os.path.join(RESOURCE_ROOT, "encryption", "enc9.pdf")),
-        # asdfzxcv is owner password
-        # created by `qpdf --encrypt "" "asdfzxcv" 128 --use-aes=y -- enc0.pdf enca.pdf`
-        (os.path.join(RESOURCE_ROOT, "encryption", "enca.pdf")),
-        # created by `qpdf --encrypt "1234" "asdfzxcv" 128 --use-aes=y -- enc0.pdf encb.pdf`
-        (os.path.join(RESOURCE_ROOT, "encryption", "encb.pdf")),
-        # created by `qpdf --encrypt "" "" 256 -- unencrypted.pdf v5-r6-empty-password.pdf`
-        (os.path.join(RESOURCE_ROOT, "encryption", "v5-r6-empty-password.pdf")),
-        # created by `qpdf --encrypt "asdfzxcv" "" 256 -- unencrypted.pdf v5-r6-owner-password.pdf`
-        (os.path.join(RESOURCE_ROOT, "encryption", "v5-r6-owner-password.pdf")),
-        # created by `qpdf --encrypt "" "asdfzxcv" 256 -- unencrypted.pdf v5-r6-user-password.pdf`
-        (os.path.join(RESOURCE_ROOT, "encryption", "v5-r6-user-password.pdf")),
+        "unencrypted.pdf",
+        # created by `qpdf --encrypt "" "" 40 -- unencrypted.pdf r2-empty-password.pdf`
+        "r2-empty-password.pdf",
+        # created by `qpdf --encrypt "" "" 128 -- unencrypted.pdf r3-empty-password.pdf`
+        "r3-empty-password.pdf",
+        # created by `qpdf --encrypt "asdfzxcv" "" 40 -- unencrypted.pdf r2-user-password.pdf`
+        "r2-user-password.pdf",
+        # created by `qpdf --encrypt "asdfzxcv" "" 128 -- unencrypted.pdf r3-user-password.pdf`
+        "r3-user-password.pdf",
+        # created by `qpdf --encrypt "asdfzxcv" "" 128 --force-V4 -- unencrypted.pdf r4-user-password.pdf`
+        "r4-user-password.pdf",
+        # created by `qpdf --encrypt "asdfzxcv" "" 128 --use-aes=y -- unencrypted.pdf r4-aes-user-password.pdf`
+        "r4-aes-user-password.pdf",
+        # # created by `qpdf --encrypt "" "" 256 --force-R5 -- unencrypted.pdf r5-empty-password.pdf`
+        "r5-empty-password.pdf",
+        # # created by `qpdf --encrypt "asdfzxcv" "" 256 --force-R5 -- unencrypted.pdf r5-user-password.pdf`
+        "r5-user-password.pdf",
+        # # created by `qpdf --encrypt "" "asdfzxcv" 256 --force-R5 -- unencrypted.pdf r5-owner-password.pdf`
+        "r5-owner-password.pdf",
+        # created by `qpdf --encrypt "" "" 256 -- unencrypted.pdf r6-empty-password.pdf`
+        "r6-empty-password.pdf",
+        # created by `qpdf --encrypt "asdfzxcv" "" 256 -- unencrypted.pdf r6-user-password.pdf`
+        "r6-user-password.pdf",
+        # created by `qpdf --encrypt "" "asdfzxcv" 256 -- unencrypted.pdf r6-owner-password.pdf`
+        "r6-owner-password.pdf",
     ],
 )
-def test_encryption(src):
-    with open(src, "rb") as inputfile:
-        ipdf = PyPDF2.PdfReader(inputfile)
-        if src.endswith("enc0.pdf"):
-            assert not ipdf.is_encrypted
-        else:
-            assert ipdf.is_encrypted
-            ipdf.decrypt("asdfzxcv")
-        assert len(ipdf.pages) == 1
-        dd = dict(ipdf.metadata)
-        # remove empty value entry
-        dd = {x[0]: x[1] for x in dd.items() if x[1]}
-        assert dd == {
-            "/Author": "cheng",
-            "/CreationDate": "D:20220414132421+05'24'",
-            "/Creator": "WPS Writer",
-            "/ModDate": "D:20220414132421+05'24'",
-            "/SourceModified": "D:20220414132421+05'24'",
-            "/Trapped": "/False",
-        }
+def test_encryption(name):
+    inputfile = os.path.join(RESOURCE_ROOT, "encryption", name)
+    ipdf = PyPDF2.PdfReader(inputfile)
+    if inputfile.endswith("unencrypted.pdf"):
+        assert not ipdf.is_encrypted
+    else:
+        assert ipdf.is_encrypted
+        ipdf.decrypt("asdfzxcv")
+    assert len(ipdf.pages) == 1
+    dd = dict(ipdf.metadata)
+    # remove empty value entry
+    dd = {x[0]: x[1] for x in dd.items() if x[1]}
+    assert dd == {
+        "/Author": "cheng",
+        "/CreationDate": "D:20220414132421+05'24'",
+        "/Creator": "WPS Writer",
+        "/ModDate": "D:20220414132421+05'24'",
+        "/SourceModified": "D:20220414132421+05'24'",
+        "/Trapped": "/False",
+    }
 
 
 @pytest.mark.parametrize(
     "names",
     [
-        (["enc0.pdf", "enc4.pdf", "enc5.pdf", "enc6.pdf"]),
+        (["unencrypted.pdf", "r3-user-password.pdf", "r4-aes-user-password.pdf", "r5-user-password.pdf"]),
     ],
 )
 def test_encryption_merge(names):
