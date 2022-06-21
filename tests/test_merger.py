@@ -46,9 +46,7 @@ def test_merge():
 
     bookmark = merger.add_bookmark("A bookmark", 0)
     bm2 = merger.add_bookmark("deeper", 1, parent=bookmark, italic=True, bold=True)
-    merger.add_bookmark(
-        "Let's see", merger.pages[2], bm2, (255, 255, 0), True, True, "/FitBV", 12
-    )
+    merger.add_bookmark("Let's see", 2, bm2, (255, 255, 0), True, True, "/FitBV", 12)
     merger.add_bookmark(
         "The XYZ fit", 0, bookmark, (255, 0, 15), True, True, "/XYZ", 10, 20, 3
     )

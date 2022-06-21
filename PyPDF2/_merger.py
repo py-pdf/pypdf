@@ -660,11 +660,6 @@ class PdfMerger:
         """
         if self.output is None:
             raise RuntimeError(ERR_CLOSED_WRITER)
-        out_pages = cast(Dict[str, Any], self.output.get_object(self.output._pages))
-        if len(out_pages["/Kids"]) > 0:
-            page_ref = out_pages["/Kids"][pagenum]
-        else:
-            page_ref = out_pages
 
         action = DictionaryObject()
         zoom_args: ZoomArgsType = []
@@ -673,8 +668,9 @@ class PdfMerger:
                 zoom_args.append(NumberObject(a))
             else:
                 zoom_args.append(NullObject())
-        dest = Destination(
-            NameObject("/" + title + " bookmark"), page_ref, NameObject(fit), *zoom_args
+
+        dest = Bookmark(
+            TextStringObject(title), NumberObject(pagenum), NameObject(fit), *zoom_args
         )
         dest_array = dest.dest_array
         action.update(
