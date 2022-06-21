@@ -1068,8 +1068,7 @@ class PdfWriter:
         :param str fit: The fit of the destination page. See
             :meth:`addLink()<addLink>` for details.
         """
-        pages_obj = cast(Dict[str, Any], self.get_object(self._pages))
-        page_ref = pages_obj[PA.KIDS][pagenum]
+        page_ref = NumberObject(pagenum)
         action = DictionaryObject()
         zoom_args: ZoomArgsType = []
         for a in args:
