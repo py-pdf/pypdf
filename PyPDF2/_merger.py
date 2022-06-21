@@ -46,7 +46,6 @@ from .generic import (
     NumberObject,
     TextStringObject,
     TreeObject,
-    _create_bookmark,
 )
 from .pagerange import PageRange, PageRangeSpec
 from .types import (
@@ -55,7 +54,6 @@ from .types import (
     LayoutType,
     OutlinesType,
     PagemodeType,
-    ZoomArgsType,
     ZoomArgType,
 )
 
