@@ -1,5 +1,9 @@
 # Encryption and Decryption of PDFs
 
+Please see the note in the
+[Installation doc](https://pypdf2.readthedocs.io/en/latest/user/installation.html)
+for installing the extra dependencies if interacting with PDFs that use AES.
+
 ## Encrypt
 
 Add a password to a PDF (encrypt it):
