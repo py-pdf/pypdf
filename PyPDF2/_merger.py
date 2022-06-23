@@ -50,14 +50,7 @@ from .generic import (
     TreeObject,
 )
 from .pagerange import PageRange, PageRangeSpec
-from .types import (
-    BookmarkTypes,
-    FitType,
-    LayoutType,
-    OutlinesType,
-    PagemodeType,
-    ZoomArgType,
-)
+from .types import FitType, LayoutType, OutlinesType, PagemodeType, ZoomArgType
 
 ERR_CLOSED_WRITER = "close() was called and thus the writer cannot be used anymore"
 
