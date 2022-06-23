@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1656009040628,
+  "lastUpdate": 1656012435706,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -6439,6 +6439,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02201908622077705",
             "extra": "mean: 3.3359092752000037 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a412e2606c768b1b6af23b689025027e828ae850",
+          "message": "BUG: Fix missing page for bookmark (#1016)\n\nRemove code duplication\r\n\r\nCloses #968 (introduced with #339)",
+          "timestamp": "2022-06-23T21:26:09+02:00",
+          "tree_id": "9abc4ac7a0b4867f30c20eb2c5ae37707bf3b857",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/a412e2606c768b1b6af23b689025027e828ae850"
+        },
+        "date": 1656012435157,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9990275603593304,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006161241369827674",
+            "extra": "mean: 1.000973386199996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 14.258959304094551,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006712363415944278",
+            "extra": "mean: 70.1313454000001 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26998509436970625,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01744498293439069",
+            "extra": "mean: 3.7039081818 sec\nrounds: 5"
           }
         ]
       }
