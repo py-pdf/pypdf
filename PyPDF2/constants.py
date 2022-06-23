@@ -229,15 +229,15 @@ class FieldDictionaryAttributes:
     @classmethod
     def attributes(cls) -> Tuple[str, ...]:
         return (
+            cls.TM,
+            cls.T,
             cls.FT,
             cls.Parent,
-            cls.Kids,
-            cls.T,
             cls.TU,
-            cls.TM,
             cls.Ff,
             cls.V,
             cls.DV,
+            cls.Kids,
             cls.AA,
         )
 

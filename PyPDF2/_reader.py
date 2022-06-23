@@ -516,17 +516,7 @@ class PdfReader:
                 self.get_fields(kid.get_object(), retval, fileobj)
 
     def _write_field(self, fileobj: Any, field: Any, field_attributes: Any) -> None:
-        order = (
-            FieldDictionaryAttributes.TM,
-            FieldDictionaryAttributes.T,
-            FieldDictionaryAttributes.FT,
-            FieldDictionaryAttributes.Parent,
-            FieldDictionaryAttributes.TU,
-            FieldDictionaryAttributes.Ff,
-            FieldDictionaryAttributes.V,
-            FieldDictionaryAttributes.DV,
-        )
-        for attr in order:
+        for attr in FieldDictionaryAttributes.attributes():
             attr_name = field_attributes[attr]
             try:
                 if attr == FieldDictionaryAttributes.FT:
@@ -542,14 +532,15 @@ class PdfReader:
                 elif attr == FieldDictionaryAttributes.Parent:
                     # Let's just write the name of the parent
                     try:
-                        name = field[FieldDictionaryAttributes.Parent][
-                            FieldDictionaryAttributes.TM
-                        ]
+                        name = field[attr][FieldDictionaryAttributes.TM]
                     except KeyError:
-                        name = field[FieldDictionaryAttributes.Parent][
-                            FieldDictionaryAttributes.T
-                        ]
+                        name = field[attr][FieldDictionaryAttributes.T]
                     fileobj.write(attr_name + ": " + name + "\n")
+                elif attr in (
+                    FieldDictionaryAttributes.Kids,
+                    FieldDictionaryAttributes.AA,
+                ):
+                    pass
                 else:
                     fileobj.write(attr_name + ": " + str(field[attr]) + "\n")
             except KeyError:
