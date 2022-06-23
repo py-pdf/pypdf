@@ -46,7 +46,6 @@ from .generic import (
     NumberObject,
     TextStringObject,
     TreeObject,
-    _create_bookmark,
 )
 from .pagerange import PageRange, PageRangeSpec
 from .types import (
@@ -55,7 +54,6 @@ from .types import (
     LayoutType,
     OutlinesType,
     PagemodeType,
-    ZoomArgsType,
     ZoomArgType,
 )
 
@@ -658,44 +656,12 @@ class PdfMerger:
         :param str fit: The fit of the destination page. See
             :meth:`addLink()<addLink>` for details.
         """
-        if self.output is None:
+        writer = self.output
+        if writer is None:
             raise RuntimeError(ERR_CLOSED_WRITER)
-        out_pages = cast(Dict[str, Any], self.output.get_object(self.output._pages))
-        if len(out_pages["/Kids"]) > 0:
-            page_ref = out_pages["/Kids"][pagenum]
-        else:
-            page_ref = out_pages
-
-        action = DictionaryObject()
-        zoom_args: ZoomArgsType = []
-        for a in args:
-            if a is not None:
-                zoom_args.append(NumberObject(a))
-            else:
-                zoom_args.append(NullObject())
-        dest = Destination(
-            NameObject("/" + title + " bookmark"), page_ref, NameObject(fit), *zoom_args
+        return writer.add_bookmark(
+            title, pagenum, parent, color, bold, italic, fit, *args
         )
-        dest_array = dest.dest_array
-        action.update(
-            {NameObject("/D"): dest_array, NameObject("/S"): NameObject("/GoTo")}
-        )
-        action_ref = self.output._add_object(action)
-
-        outline_ref = self.output.get_outline_root()
-
-        if parent is None:
-            parent = outline_ref
-
-        bookmark = _create_bookmark(action_ref, title, color, italic, bold)
-
-        assert parent is not None, "hint for mypy"
-        bookmark_ref = self.output._add_object(bookmark)
-        parent_obj = cast(Bookmark, parent.get_object())
-        assert parent_obj is not None, "hint for mypy"
-        parent_obj.add_child(bookmark_ref, self.output)
-
-        return bookmark_ref
 
     def addNamedDestination(self, title: str, pagenum: int) -> None:  # pragma: no cover
         """
