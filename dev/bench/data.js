@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1655931125836,
+  "lastUpdate": 1656009040628,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -6394,6 +6394,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.023027537481113143",
             "extra": "mean: 4.617374269200002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7d820f043ad56e0cc9dabb3921f1d64416777452",
+          "message": "DEV: Adjust string formatting to be able to use mutmut (#1020)\n\nRelates to https://github.com/davidhalter/parso/issues/207\r\n\r\nAdditionally, make Makefile more consistent",
+          "timestamp": "2022-06-23T20:27:15+02:00",
+          "tree_id": "446bda930cd860f557a7176e8224f0d9dfc77db8",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/7d820f043ad56e0cc9dabb3921f1d64416777452"
+        },
+        "date": 1656009040122,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.1177823776370903,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009965719155220187",
+            "extra": "mean: 894.6285251999825 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.997578169926758,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006213659726971437",
+            "extra": "mean: 62.50946170588885 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.299768344251522,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02201908622077705",
+            "extra": "mean: 3.3359092752000037 sec\nrounds: 5"
           }
         ]
       }
