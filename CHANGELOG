@@ -214,7 +214,7 @@ The 2.0.0 release of PyPDF2 includes three core changes:
 We introduced a [deprecation process](https://github.com/py-pdf/PyPDF2/pull/930)
 that hopefully helps users to avoid unexpected breaking changes.
 
-### Breaking Changes(DEP)
+### Breaking Changes (DEP)
 - PyPDF2 2.0 requires Python 3.6+. Python 2.7 and 3.5 support were dropped.
 - PdfFileReader: The "warndest" parameter was removed
 - PdfFileReader and PdfFileMerger no longer have the `overwriteWarnings`
