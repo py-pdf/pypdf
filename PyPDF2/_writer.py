@@ -1067,7 +1067,7 @@ class PdfWriter:
         color: Optional[Tuple[float, float, float]] = None,
         bold: bool = False,
         italic: bool = False,
-        fit: FitType = TypFitArguments.FIT,
+        fit: FitType = "/Fit",
         *args: ZoomArgType,
     ) -> IndirectObject:
         """
