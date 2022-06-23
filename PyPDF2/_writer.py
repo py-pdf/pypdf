@@ -45,10 +45,12 @@ from ._utils import StreamType, b_, deprecate_with_replacement
 from .constants import CatalogAttributes as CA
 from .constants import Core as CO
 from .constants import EncryptionDictAttributes as ED
+from .constants import FieldDictionaryAttributes, GoToActionArguments
 from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
 from .constants import StreamAttributes as SA
 from .constants import TrailerKeys as TK
+from .constants import TypFitArguments
 from .generic import (
     ArrayObject,
     BooleanObject,
@@ -559,15 +561,29 @@ class PdfWriter:
             if PG.PARENT in writer_annot:
                 writer_parent_annot = writer_annot[PG.PARENT]
             for field in fields:
-                if writer_annot.get("/T") == field:
+                if writer_annot.get(FieldDictionaryAttributes.T) == field:
                     writer_annot.update(
-                        {NameObject("/V"): TextStringObject(fields[field])}
+                        {
+                            NameObject(FieldDictionaryAttributes.V): TextStringObject(
+                                fields[field]
+                            )
+                        }
                     )
                     if flags:
-                        writer_annot.update({NameObject("/Ff"): NumberObject(flags)})
-                elif writer_parent_annot.get("/T") == field:
+                        writer_annot.update(
+                            {
+                                NameObject(FieldDictionaryAttributes.Ff): NumberObject(
+                                    flags
+                                )
+                            }
+                        )
+                elif writer_parent_annot.get(FieldDictionaryAttributes.T) == field:
                     writer_parent_annot.update(
-                        {NameObject("/V"): TextStringObject(fields[field])}
+                        {
+                            NameObject(FieldDictionaryAttributes.V): TextStringObject(
+                                fields[field]
+                            )
+                        }
                     )
 
     def updatePageFormFieldValues(
@@ -1051,7 +1067,7 @@ class PdfWriter:
         color: Optional[Tuple[float, float, float]] = None,
         bold: bool = False,
         italic: bool = False,
-        fit: FitType = "/Fit",
+        fit: FitType = TypFitArguments.FIT,
         *args: ZoomArgType,
     ) -> IndirectObject:
         """
@@ -1082,7 +1098,10 @@ class PdfWriter:
         )
         dest_array = dest.dest_array
         action.update(
-            {NameObject("/D"): dest_array, NameObject("/S"): NameObject("/GoTo")}
+            {
+                NameObject(GoToActionArguments.D): dest_array,
+                NameObject(GoToActionArguments.S): NameObject("/GoTo"),
+            }
         )
         action_ref = self._add_object(action)
 
@@ -1147,10 +1166,10 @@ class PdfWriter:
         dest = DictionaryObject()
         dest.update(
             {
-                NameObject("/D"): ArrayObject(
-                    [page_ref, NameObject("/FitH"), NumberObject(826)]
+                NameObject(GoToActionArguments.D): ArrayObject(
+                    [page_ref, NameObject(TypFitArguments.FIT_H), NumberObject(826)]
                 ),
-                NameObject("/S"): NameObject("/GoTo"),
+                NameObject(GoToActionArguments.S): NameObject("/GoTo"),
             }
         )
 

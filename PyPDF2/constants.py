@@ -8,6 +8,8 @@ PDF Reference, third edition, Version 1.4, 2001. ISBN 0-201-75839-3.
 PDF Reference, sixth edition, Version 1.7, 2006.
 """
 
+from typing import Dict, Tuple
+
 
 class Core:
     """Keywords that don't quite belong anywhere else"""
@@ -202,9 +204,15 @@ class TypFitArguments:
     FIT_H = "/FitH"
     FIT_BH = "/FitBH"
     FIT_R = "/FitR"
+    XYZ = "/XYZ"
 
 
-class FieldDistionaryAttributes:
+class GoToActionArguments:
+    S = "/S"  # name, required: type of action
+    D = "/D"  # name / byte string /array, required: Destination to jump to
+
+
+class FieldDictionaryAttributes:
     """TABLE 8.69 Entries common to all field dictionaries (PDF 1.7 reference)"""
 
     FT = "/FT"  # name, required for terminal fields
@@ -217,6 +225,34 @@ class FieldDistionaryAttributes:
     V = "/V"  # text string, optional
     DV = "/DV"  # text string, optional
     AA = "/AA"  # dictionary, optional
+
+    @classmethod
+    def attributes(cls) -> Tuple[str, ...]:
+        return (
+            cls.FT,
+            cls.Parent,
+            cls.Kids,
+            cls.T,
+            cls.TU,
+            cls.TM,
+            cls.Ff,
+            cls.V,
+            cls.DV,
+            cls.AA,
+        )
+
+    @classmethod
+    def attributes_dict(cls) -> Dict[str, str]:
+        return {
+            cls.FT: "Field Type",
+            cls.Parent: "Parent",
+            cls.T: "Field Name",
+            cls.TU: "Alternate Field Name",
+            cls.TM: "Mapping Name",
+            cls.Ff: "Field Flags",
+            cls.V: "Value",
+            cls.DV: "Default Value",
+        }
 
 
 class DocumentInformationAttributes:

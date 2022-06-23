@@ -59,6 +59,7 @@ from ._utils import (
     skip_over_comment,
     str_,
 )
+from .constants import FieldDictionaryAttributes
 from .constants import FilterTypes as FT
 from .constants import StreamAttributes as SA
 from .constants import TypArguments as TA
@@ -1561,19 +1562,8 @@ class Field(TreeObject):
 
     def __init__(self, data: Dict[str, Any]) -> None:
         DictionaryObject.__init__(self)
-        attributes = (
-            "/FT",
-            "/Parent",
-            "/Kids",
-            "/T",
-            "/TU",
-            "/TM",
-            "/Ff",
-            "/V",
-            "/DV",
-            "/AA",
-        )
-        for attr in attributes:
+
+        for attr in FieldDictionaryAttributes.attributes():
             try:
                 self[NameObject(attr)] = data[attr]
             except KeyError:
@@ -1583,7 +1573,7 @@ class Field(TreeObject):
     @property
     def field_type(self) -> Optional[NameObject]:
         """Read-only property accessing the type of this field."""
-        return self.get("/FT")
+        return self.get(FieldDictionaryAttributes.FT)
 
     @property
     def fieldType(self) -> Optional[NameObject]:  # pragma: no cover
@@ -1598,22 +1588,22 @@ class Field(TreeObject):
     @property
     def parent(self) -> Optional[DictionaryObject]:
         """Read-only property accessing the parent of this field."""
-        return self.get("/Parent")
+        return self.get(FieldDictionaryAttributes.Parent)
 
     @property
     def kids(self) -> Optional[ArrayObject]:
         """Read-only property accessing the kids of this field."""
-        return self.get("/Kids")
+        return self.get(FieldDictionaryAttributes.Kids)
 
     @property
     def name(self) -> Optional[str]:
         """Read-only property accessing the name of this field."""
-        return self.get("/T")
+        return self.get(FieldDictionaryAttributes.T)
 
     @property
     def alternate_name(self) -> Optional[str]:
         """Read-only property accessing the alternate name of this field."""
-        return self.get("/TU")
+        return self.get(FieldDictionaryAttributes.TU)
 
     @property
     def altName(self) -> Optional[str]:  # pragma: no cover
@@ -1632,7 +1622,7 @@ class Field(TreeObject):
         name is used by PyPDF2 as a key in the dictionary returned by
         :meth:`get_fields()<PyPDF2.PdfReader.get_fields>`
         """
-        return self.get("/TM")
+        return self.get(FieldDictionaryAttributes.TM)
 
     @property
     def mappingName(self) -> Optional[str]:  # pragma: no cover
@@ -1650,7 +1640,7 @@ class Field(TreeObject):
         Read-only property accessing the field flags, specifying various
         characteristics of the field (see Table 8.70 of the PDF 1.7 reference).
         """
-        return self.get("/Ff")
+        return self.get(FieldDictionaryAttributes.Ff)
 
     @property
     def value(self) -> Optional[Any]:
@@ -1658,12 +1648,12 @@ class Field(TreeObject):
         Read-only property accessing the value of this field. Format
         varies based on field type.
         """
-        return self.get("/V")
+        return self.get(FieldDictionaryAttributes.V)
 
     @property
     def default_value(self) -> Optional[Any]:
         """Read-only property accessing the default value of this field."""
-        return self.get("/DV")
+        return self.get(FieldDictionaryAttributes.DV)
 
     @property
     def defaultValue(self) -> Optional[Any]:  # pragma: no cover
@@ -1682,7 +1672,7 @@ class Field(TreeObject):
         This dictionary defines the field's behavior in response to trigger events.
         See Section 8.5.2 of the PDF 1.7 reference.
         """
-        return self.get("/AA")
+        return self.get(FieldDictionaryAttributes.AA)
 
     @property
     def additionalActions(self) -> Optional[DictionaryObject]:  # pragma: no cover

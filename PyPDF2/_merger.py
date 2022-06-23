@@ -33,7 +33,9 @@ from ._page import PageObject
 from ._reader import PdfReader
 from ._utils import StrByteType, deprecate_with_replacement, str_
 from ._writer import PdfWriter
+from .constants import GoToActionArguments
 from .constants import PagesAttributes as PA
+from .constants import TypArguments, TypFitArguments
 from .generic import (
     ArrayObject,
     Bookmark,
@@ -158,7 +160,7 @@ class PdfMerger:
             bookmark_typ = Bookmark(
                 TextStringObject(bookmark),
                 NumberObject(self.id_count),
-                NameObject("/Fit"),
+                NameObject(TypFitArguments.FIT),
             )
             self.bookmarks += [bookmark_typ, outline]  # type: ignore
         else:
@@ -488,65 +490,33 @@ class PdfMerger:
     def _write_bookmark_on_page(
         self, bookmark: Union[Bookmark, Destination], page: _MergedPage
     ) -> None:
-        # b[NameObject('/Page')] = p.out_pagedata
-        bm_type = cast(BookmarkTypes, bookmark["/Type"])
+        bm_type = cast(str, bookmark["/Type"])
         args = [NumberObject(page.id), NameObject(bm_type)]
-        # nothing more to add
-        # if b['/Type'] == '/Fit' or b['/Type'] == '/FitB'
-        if bm_type == "/FitH" or bm_type == "/FitBH":
-            if "/Top" in bookmark and not isinstance(bookmark["/Top"], NullObject):
-                args.append(FloatObject(bookmark["/Top"]))
+        fit2arg_keys: Dict[str, Tuple[str, ...]] = {
+            TypFitArguments.FIT_H: (TypArguments.TOP,),
+            TypFitArguments.FIT_BH: (TypArguments.TOP,),
+            TypFitArguments.FIT_V: (TypArguments.LEFT,),
+            TypFitArguments.FIT_BV: (TypArguments.LEFT,),
+            TypFitArguments.XYZ: (TypArguments.LEFT, TypArguments.TOP, "/Zoom"),
+            TypFitArguments.FIT_R: (
+                TypArguments.LEFT,
+                TypArguments.BOTTOM,
+                TypArguments.RIGHT,
+                TypArguments.TOP,
+            ),
+        }
+        for arg_key in fit2arg_keys.get(bm_type, tuple()):
+            if arg_key in bookmark and not isinstance(bookmark[arg_key], NullObject):
+                args.append(FloatObject(bookmark[arg_key]))
             else:
                 args.append(FloatObject(0))
-            del bookmark["/Top"]
-        elif bm_type == "/FitV" or bm_type == "/FitBV":
-            if "/Left" in bookmark and not isinstance(bookmark["/Left"], NullObject):
-                args.append(FloatObject(bookmark["/Left"]))
-            else:
-                args.append(FloatObject(0))
-            del bookmark["/Left"]
-        elif bm_type == "/XYZ":
-            if "/Left" in bookmark and not isinstance(bookmark["/Left"], NullObject):
-                args.append(FloatObject(bookmark["/Left"]))
-            else:
-                args.append(FloatObject(0))
-            if "/Top" in bookmark and not isinstance(bookmark["/Top"], NullObject):
-                args.append(FloatObject(bookmark["/Top"]))
-            else:
-                args.append(FloatObject(0))
-            if "/Zoom" in bookmark and not isinstance(bookmark["/Zoom"], NullObject):
-                args.append(FloatObject(bookmark["/Zoom"]))
-            else:
-                args.append(FloatObject(0))
-            del bookmark["/Top"], bookmark["/Zoom"], bookmark["/Left"]
-        elif bm_type == "/FitR":
-            if "/Left" in bookmark and not isinstance(bookmark["/Left"], NullObject):
-                args.append(FloatObject(bookmark["/Left"]))
-            else:
-                args.append(FloatObject(0))
-            if "/Bottom" in bookmark and not isinstance(
-                bookmark["/Bottom"], NullObject
-            ):
-                args.append(FloatObject(bookmark["/Bottom"]))
-            else:
-                args.append(FloatObject(0))
-            if "/Right" in bookmark and not isinstance(bookmark["/Right"], NullObject):
-                args.append(FloatObject(bookmark["/Right"]))
-            else:
-                args.append(FloatObject(0))
-            if "/Top" in bookmark and not isinstance(bookmark["/Top"], NullObject):
-                args.append(FloatObject(bookmark["/Top"]))
-            else:
-                args.append(FloatObject(0))
-            del (
-                bookmark["/Left"],
-                bookmark["/Right"],
-                bookmark["/Bottom"],
-                bookmark["/Top"],
-            )
+            del bookmark[arg_key]
 
         bookmark[NameObject("/A")] = DictionaryObject(
-            {NameObject("/S"): NameObject("/GoTo"), NameObject("/D"): ArrayObject(args)}
+            {
+                NameObject(GoToActionArguments.S): NameObject("/GoTo"),
+                NameObject(GoToActionArguments.D): ArrayObject(args),
+            }
         )
 
     def _associate_dests_to_pages(self, pages: List[_MergedPage]) -> None:
@@ -621,7 +591,7 @@ class PdfMerger:
         color: Optional[Tuple[float, float, float]] = None,
         bold: bool = False,
         italic: bool = False,
-        fit: FitType = "/Fit",
+        fit: FitType = TypFitArguments.FIT,
         *args: ZoomArgType,
     ) -> IndirectObject:  # pragma: no cover
         """
@@ -641,7 +611,7 @@ class PdfMerger:
         color: Optional[Tuple[float, float, float]] = None,
         bold: bool = False,
         italic: bool = False,
-        fit: FitType = "/Fit",
+        fit: FitType = TypFitArguments.FIT,
         *args: ZoomArgType,
     ) -> IndirectObject:
         """
@@ -678,7 +648,10 @@ class PdfMerger:
         )
         dest_array = dest.dest_array
         action.update(
-            {NameObject("/D"): dest_array, NameObject("/S"): NameObject("/GoTo")}
+            {
+                NameObject(GoToActionArguments.D): dest_array,
+                NameObject(GoToActionArguments.S): NameObject("/GoTo"),
+            }
         )
         action_ref = self.output._add_object(action)
 
@@ -716,7 +689,7 @@ class PdfMerger:
         dest = Destination(
             TextStringObject(title),
             NumberObject(pagenum),
-            NameObject("/FitH"),
+            NameObject(TypFitArguments.FIT_H),
             NumberObject(826),
         )
         self.named_dests.append(dest)
