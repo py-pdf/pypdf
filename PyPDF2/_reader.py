@@ -517,6 +517,11 @@ class PdfReader:
 
     def _write_field(self, fileobj: Any, field: Any, field_attributes: Any) -> None:
         for attr in FieldDictionaryAttributes.attributes():
+            if attr in (
+                FieldDictionaryAttributes.Kids,
+                FieldDictionaryAttributes.AA,
+            ):
+                continue
             attr_name = field_attributes[attr]
             try:
                 if attr == FieldDictionaryAttributes.FT:
@@ -536,11 +541,6 @@ class PdfReader:
                     except KeyError:
                         name = field[attr][FieldDictionaryAttributes.T]
                     fileobj.write(attr_name + ": " + name + "\n")
-                elif attr in (
-                    FieldDictionaryAttributes.Kids,
-                    FieldDictionaryAttributes.AA,
-                ):
-                    pass
                 else:
                     fileobj.write(attr_name + ": " + str(field[attr]) + "\n")
             except KeyError:
