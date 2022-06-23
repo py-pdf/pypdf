@@ -298,7 +298,7 @@ class PageObject(DictionaryObject):
         deprecate_with_replacement("createBlankPage", "create_blank_page")
         return PageObject.create_blank_page(pdf, width, height)
 
-    def rotate(self, angle: float) -> "PageObject":
+    def rotate(self, angle: int) -> "PageObject":
         """
         Rotate a page clockwise by increments of 90 degrees.
 
