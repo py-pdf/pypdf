@@ -25,7 +25,7 @@ testtype:
 mutation-test:
 	mutmut run
 
-mutmut-results:
+mutation-results:
 	mutmut junitxml --suspicious-policy=ignore --untested-policy=ignore > mutmut-results.xml
 	junit2html mutmut-results.xml mutmut-results.html
 

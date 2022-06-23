@@ -1339,7 +1339,7 @@ class PdfWriter:
     ) -> None:
         """
         Add an URI from a rectangular area to the specified page.
-        This uses the basic structure of AddLink
+        This uses the basic structure of :meth:`add_link`
 
         :param int pagenum: index of the page on which to place the URI action.
         :param int uri: string -- uri of resource to link to.
@@ -1349,9 +1349,6 @@ class PdfWriter:
         :param border: if provided, an array describing border-drawing
             properties. See the PDF spec for details. No border will be
             drawn if this argument is omitted.
-
-        REMOVED FIT/ZOOM ARG
-        -John Mulligan
         """
 
         page_link = self.get_object(self._pages)[PA.KIDS][pagenum]  # type: ignore
