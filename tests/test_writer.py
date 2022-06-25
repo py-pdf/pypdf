@@ -291,6 +291,7 @@ def test_encrypt(use_128bit):
 
     reader = PdfReader(tmp_filename, password="userpwd")
     new_text = reader.pages[0].extract_text()
+    assert reader.metadata.get("/Producer") == "PyPDF2"
 
     assert new_text == orig_text
 
