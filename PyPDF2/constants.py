@@ -240,6 +240,17 @@ class AnnotationDictionaryAttributes:
     OC = "/OC"
 
 
+class InteractiveFormDictEntries:
+    Fields = "/Fields"
+    NeedAppearances = "/NeedAppearances"
+    SigFlags = "/SigFlags"
+    CO = "/CO"
+    DR = "/DR"
+    DA = "/DA"
+    Q = "/Q"
+    XFA = "/XFA"
+
+
 class FieldDictionaryAttributes:
     """TABLE 8.69 Entries common to all field dictionaries (PDF 1.7 reference)"""
 

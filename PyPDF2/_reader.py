@@ -59,6 +59,7 @@ from ._utils import (
     skip_over_whitespace,
 )
 from .constants import CatalogAttributes as CA
+from .constants import CatalogDictionary
 from .constants import CatalogDictionary as CD
 from .constants import Core as CO
 from .constants import DocumentInformationAttributes as DI
@@ -450,8 +451,8 @@ class PdfReader:
             retval = {}
             catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
             # get the AcroForm tree
-            if "/AcroForm" in catalog:
-                tree = cast(Optional[TreeObject], catalog["/AcroForm"])
+            if CatalogDictionary.ACRO_FORM in catalog:
+                tree = cast(Optional[TreeObject], catalog[CatalogDictionary.ACRO_FORM])
             else:
                 return None
         if tree is None:

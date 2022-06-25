@@ -44,12 +44,14 @@ from ._security import _alg33, _alg34, _alg35
 from ._utils import StreamType, b_, deprecate_with_replacement
 from .constants import AnnotationDictionaryAttributes
 from .constants import CatalogAttributes as CA
+from .constants import CatalogDictionary
 from .constants import Core as CO
 from .constants import EncryptionDictAttributes as ED
 from .constants import (
     FieldDictionaryAttributes,
     FileSpecificationDictionaryEntries,
     GoToActionArguments,
+    InteractiveFormDictEntries,
 )
 from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
@@ -168,17 +170,17 @@ class PdfWriter:
         try:
             catalog = self._root_object
             # get the AcroForm tree
-            if "/AcroForm" not in catalog:
+            if CatalogDictionary.ACRO_FORM not in catalog:
                 self._root_object.update(
                     {
-                        NameObject("/AcroForm"): IndirectObject(
+                        NameObject(CatalogDictionary.ACRO_FORM): IndirectObject(
                             len(self._objects), 0, self
                         )
                     }
                 )
 
-            need_appearances = NameObject("/NeedAppearances")
-            self._root_object["/AcroForm"][need_appearances] = BooleanObject(True)  # type: ignore
+            need_appearances = NameObject(InteractiveFormDictEntries.NeedAppearances)
+            self._root_object[CatalogDictionary.ACRO_FORM][need_appearances] = BooleanObject(True)  # type: ignore
 
         except Exception as exc:
             logger.error("set_need_appearances_writer() catch : ", repr(exc))
