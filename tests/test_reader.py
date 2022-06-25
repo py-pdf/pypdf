@@ -832,7 +832,7 @@ def test_unexpected_destination():
 )
 def test_xfa(src):
     reader = PdfReader(src)
-    assert reader.xfa == {}
+    assert reader.xfa is None
 
 
 def test_xfa_non_empty():
