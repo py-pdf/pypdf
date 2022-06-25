@@ -42,10 +42,15 @@ from ._page import PageObject, _VirtualList
 from ._reader import PdfReader
 from ._security import _alg33, _alg34, _alg35
 from ._utils import StreamType, b_, deprecate_with_replacement
+from .constants import AnnotationDictionaryAttributes
 from .constants import CatalogAttributes as CA
 from .constants import Core as CO
 from .constants import EncryptionDictAttributes as ED
-from .constants import FieldDictionaryAttributes, GoToActionArguments
+from .constants import (
+    FieldDictionaryAttributes,
+    FileSpecificationDictionaryEntries,
+    GoToActionArguments,
+)
 from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
 from .constants import StreamAttributes as SA
@@ -448,10 +453,10 @@ class PdfWriter:
         filespec.update(
             {
                 NameObject(PA.TYPE): NameObject("/Filespec"),
-                NameObject("/F"): create_string_object(
+                NameObject(FileSpecificationDictionaryEntries.F): create_string_object(
                     filename
                 ),  # Perhaps also try TextStringObject
-                NameObject("/EF"): ef_entry,
+                NameObject(FileSpecificationDictionaryEntries.EF): ef_entry,
             }
         )
 
@@ -1399,12 +1404,14 @@ class PdfWriter:
         lnk = DictionaryObject()
         lnk.update(
             {
-                NameObject("/Type"): NameObject(PG.ANNOTS),
-                NameObject("/Subtype"): NameObject("/Link"),
-                NameObject("/P"): page_link,
-                NameObject("/Rect"): rect,
+                NameObject(AnnotationDictionaryAttributes.Type): NameObject(PG.ANNOTS),
+                NameObject(AnnotationDictionaryAttributes.Subtype): NameObject("/Link"),
+                NameObject(AnnotationDictionaryAttributes.P): page_link,
+                NameObject(AnnotationDictionaryAttributes.Rect): rect,
                 NameObject("/H"): NameObject("/I"),
-                NameObject("/Border"): ArrayObject(border_arr),
+                NameObject(AnnotationDictionaryAttributes.Border): ArrayObject(
+                    border_arr
+                ),
                 NameObject("/A"): lnk2,
             }
         )

@@ -105,6 +105,15 @@ class PageAttributes:
     VP = "/VP"  # dictionary, optional
 
 
+class FileSpecificationDictionaryEntries:
+    """TABLE 3.41 Entries in a file specification dictionary"""
+
+    Type = "/Type"
+    FS = "/FS"  # The name of the file system to be used to interpret this file specification
+    F = "/F"  # A file specification string of the form described in Section 3.10.1
+    EF = "/EF"  # dictionary, containing a subset of the keys F , UF , DOS , Mac , and Unix
+
+
 class StreamAttributes:
     """Table 4.2"""
 
@@ -210,6 +219,25 @@ class TypFitArguments:
 class GoToActionArguments:
     S = "/S"  # name, required: type of action
     D = "/D"  # name / byte string /array, required: Destination to jump to
+
+
+class AnnotationDictionaryAttributes:
+    """TABLE 8.15 Entries common to all annotation dictionaries"""
+
+    Type = "/Type"
+    Subtype = "/Subtype"
+    Rect = "/Rect"
+    Contents = "/Contents"
+    P = "/P"
+    NM = "/NM"
+    M = "/M"
+    F = "/F"
+    AP = "/AP"
+    AS = "/AS"
+    Border = "/Border"
+    C = "/C"
+    StructParent = "/StructParent"
+    OC = "/OC"
 
 
 class FieldDictionaryAttributes:
@@ -322,20 +350,28 @@ class CatalogDictionary:
 
 
 PDF_KEYS = (
-    PagesAttributes,
-    PageAttributes,
-    Ressources,
+    AnnotationDictionaryAttributes,
+    CatalogAttributes,
+    CatalogDictionary,
+    CcittFaxDecodeParameters,
+    ColorSpaces,
+    Core,
+    DocumentInformationAttributes,
     EncryptionDictAttributes,
-    ImageAttributes,
-    StreamAttributes,
+    FieldDictionaryAttributes,
+    FilterTypeAbbreviations,
     FilterTypes,
+    GoToActionArguments,
+    GraphicsStateParameters,
+    ImageAttributes,
+    FileSpecificationDictionaryEntries,
     LzwFilterParameters,
+    PageAttributes,
+    PageLayouts,
+    PagesAttributes,
+    Ressources,
+    StreamAttributes,
+    TrailerKeys,
     TypArguments,
     TypFitArguments,
-    PageLayouts,
-    GraphicsStateParameters,
-    CatalogDictionary,
-    Core,
-    TrailerKeys,
-    CatalogAttributes,
 )
