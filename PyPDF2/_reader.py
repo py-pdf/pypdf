@@ -31,6 +31,7 @@ import os
 import re
 import struct
 import warnings
+import zlib
 from io import BytesIO
 from pathlib import Path
 from typing import (
@@ -1637,19 +1638,14 @@ class PdfReader:
 
     @property
     def xfa(self) -> Optional[Dict[str, Any]]:
-        tree = None
-        retval: Optional[Dict[str, Any]] = None
-        if retval is None:
-            retval = {}
-            catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
-            # get the AcroForm tree
-            if "/AcroForm" in catalog:
-                tree = cast(Optional[TreeObject], catalog["/AcroForm"])
-            else:
-                return None
-        if tree is None:
-            return retval
-        import zlib
+        tree: Optional[TreeObject] = None
+        retval: Dict[str, Any] = {}
+        catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
+
+        if "/AcroForm" not in catalog or not catalog["/AcroForm"]:
+            return None
+
+        tree = cast(TreeObject, catalog["/AcroForm"])
 
         if "/XFA" in tree:
             fields = cast(ArrayObject, tree["/XFA"])
