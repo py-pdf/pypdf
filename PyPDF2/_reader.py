@@ -1658,8 +1658,6 @@ class PdfReader:
                     if field:
                         es = zlib.decompress(field._data)
                         retval[tag] = es
-                else:
-                    print((f, type(f)))
         return retval
 
 
