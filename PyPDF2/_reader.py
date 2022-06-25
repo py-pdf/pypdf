@@ -1658,7 +1658,7 @@ class PdfReader:
                 tag = f
                 f = next(i)
                 if isinstance(f, IndirectObject):
-                    field = f.getObject()
+                    field = f.get_object()
                     if field:
                         es = zlib.decompress(field._data)
                         retval[tag] = es
