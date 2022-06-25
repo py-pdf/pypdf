@@ -1638,7 +1638,7 @@ class PdfReader:
     @property
     def xfa(self) -> Optional[Dict[str, Any]]:
         tree = None
-        retval = None
+        retval: Optional[Dict[str, Any]] = None
         if retval is None:
             retval = {}
             catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
@@ -1652,7 +1652,7 @@ class PdfReader:
         import zlib
 
         if "/XFA" in tree:
-            fields = tree["/XFA"]
+            fields = cast(ArrayObject, tree["/XFA"])
             i = iter(fields)
             for f in i:
                 tag = f
@@ -1662,6 +1662,8 @@ class PdfReader:
                     if field:
                         es = zlib.decompress(field._data)
                         retval[tag] = es
+                else:
+                    print((f, type(f)))
         return retval
 
 
