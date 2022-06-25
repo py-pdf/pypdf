@@ -145,4 +145,4 @@ def parse_commit_line(line) -> Change:
 
 
 if __name__ == "__main__":
-    main("CHANGELOG")
+    main("CHANGELOG.md")
