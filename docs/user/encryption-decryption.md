@@ -1,19 +1,22 @@
 # Encryption and Decryption of PDFs
 
+Please see the note in the
+[Installation doc](https://pypdf2.readthedocs.io/en/latest/user/installation.html)
+for installing the extra dependencies if interacting with PDFs that use AES.
+
 ## Encrypt
 
 Add a password to a PDF (encrypt it):
 
 ```python
-from PyPDF2 import PdfFileReader, PdfFileWriter
+from PyPDF2 import PdfReader, PdfWriter
 
-reader = PdfFileReader("example.pdf")
-writer = PdfFileWriter()
+reader = PdfReader("example.pdf")
+writer = PdfWriter()
 
 # Add all pages to the writer
-for i in range(reader.numPages):
-    page = reader.pages[i]
-    writer.addPage(page)
+for page in reader.pages:
+    writer.add_page(page)
 
 # Add a password to the new PDF
 writer.encrypt("my-secret-password")
@@ -28,18 +31,17 @@ with open("encrypted-pdf.pdf", "wb") as f:
 Remove the password from a PDF (decrypt it):
 
 ```python
-from PyPDF2 import PdfFileReader, PdfFileWriter
+from PyPDF2 import PdfReader, PdfWriter
 
-reader = PdfFileReader("encrypted-pdf.pdf")
-writer = PdfFileWriter()
+reader = PdfReader("encrypted-pdf.pdf")
+writer = PdfWriter()
 
-if reader.isEncrypted:
+if reader.is_encrypted:
     reader.decrypt("my-secret-password")
 
 # Add all pages to the writer
-for i in range(reader.numPages):
-    page = reader.pages[i]
-    writer.addPage(page)
+for page in reader.pages:
+    writer.add_page(page)
 
 # Save the new PDF to a file
 with open("decrypted-pdf.pdf", "wb") as f:

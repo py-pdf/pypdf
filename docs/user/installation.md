@@ -4,8 +4,7 @@ There are several ways to install PyPDF2. The most common option is to use pip.
 
 ## pip
 
-PyPDF2 requires Python 2.7+ to run, but [Python 2 is dead](https://pythonclock.org/).
-Please use a recent version of Python 3 instead.
+PyPDF2 requires Python 3.6+ to run.
 
 Typically Python comes with `pip`, a package installer. Using it you can
 install PyPDF2:
@@ -14,11 +13,19 @@ install PyPDF2:
 pip install PyPDF2
 ```
 
-If you are not a super-user (a system adminstrator / root), you can also just
+If you are not a super-user (a system administrator / root), you can also just
 install PyPDF2 for your current user:
 
 ```bash
 pip install --user PyPDF2
+```
+
+If you plan to use PyPDF2 for encrypting or decrypting PDFs that use AES, you
+will need to install some extra dependencies. Encryption using RC4 is supported
+using the regular installation.
+
+```
+pip install PyPDF2[crypto]
 ```
 
 ## Anaconda

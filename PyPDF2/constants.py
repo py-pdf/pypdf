@@ -31,6 +31,33 @@ class CatalogAttributes:
     DESTS = "/Dests"
 
 
+class EncryptionDictAttributes:
+    """
+    Additional encryption dictionary entries for the standard security handler
+
+    TABLE 3.19, Page 122
+    """
+
+    R = "/R"  # number, required; revision of the standard security handler
+    O = "/O"  # 32-byte string, required
+    U = "/U"  # 32-byte string, required
+    P = "/P"  # integer flag, required; permitted operations
+    ENCRYPT_METADATA = "/EncryptMetadata"  # boolean flag, optional
+
+
+class Ressources:
+    """TABLE 3.30 Entries in a resource dictionary"""
+
+    EXT_G_STATE = "/ExtGState"  # dictionary, optional
+    COLOR_SPACE = "/ColorSpace"  # dictionary, optional
+    PATTERN = "/Pattern"  # dictionary, optional
+    SHADING = "/Shading"  # dictionary, optional
+    XOBJECT = "/XObject"  # dictionary, optional
+    FONT = "/Font"  # dictionary, optional
+    PROC_SET = "/ProcSet"  # array, optional
+    PROPERTIES = "/Properties"  # dictionary, optional
+
+
 class PagesAttributes:
     """Page Attributes, Table 6.2, Page 52"""
 
@@ -41,26 +68,39 @@ class PagesAttributes:
 
 
 class PageAttributes:
-    """Page attributes, Table 6.3, Page 53"""
+    """TABLE 3.27 Entries in a page object"""
 
     TYPE = "/Type"  # name, required; must be /Page
-    MEDIABOX = "/MediaBox"  # array, required; rectangle specifying page size
     PARENT = "/Parent"  # dictionary, required; a pages object
+    LAST_MODIFIED = (
+        "/LastModified"  # date, optional; date and time of last modification
+    )
     RESOURCES = "/Resources"  # dictionary, required if there are any
+    MEDIABOX = "/MediaBox"  # rectangle, required; rectangle specifying page size
+    CROPBOX = "/CropBox"  # rectangle, optional; rectangle
+    BLEEDBOX = "/BleedBox"  # rectangle, optional; rectangle
+    TRIMBOX = "/TrimBox"  # rectangle, optional; rectangle
+    ARTBOX = "/ArtBox"  # rectangle, optional; rectangle
+    BOX_COLOR_INFO = "/BoxColorInfo"  # dictionary, optional
     CONTENTS = "/Contents"  # stream or array, optional
-    CROPBOX = "/CropBox"  # array, optional; rectangle
     ROTATE = "/Rotate"  # integer, optional; page rotation in degrees
+    GROUP = "/Group"  # dictionary, optional; page group
     THUMB = "/Thumb"  # stream, optional; indirect reference to image of the page
+    B = "/B"  # array, optional
+    DUR = "/Dur"  # number, optional
+    TRANS = "/Trans"  # dictionary, optional
     ANNOTS = "/Annots"  # array, optional; an array of annotations
-
-
-class Ressources:
-    PROCSET = "/ProcSet"  # Chapter 6.8.1
-    FONT = "/Font"  # Chapter 6.8.2
-    # encoding
-    # font descriptors : 6.8.4
-    COLOR_SPACE = "/ColorSpace"  # Chapter 6.8.5
-    XOBJECT = "/XObject"  # Chapter 6.8.6
+    AA = "/AA"  # dictionary, optional
+    METADATA = "/Metadata"  # stream, optional
+    PIECE_INFO = "/PieceInfo"  # dictionary, optional
+    STRUCT_PARENTS = "/StructParents"  # integer, optional
+    ID = "/ID"  # byte string, optional
+    PZ = "/PZ"  # number, optional
+    TABS = "/Tabs"  # name, optional
+    TEMPLATE_INSTANTIATED = "/TemplateInstantiated"  # name, optional
+    PRES_STEPS = "/PresSteps"  # dictionary, optional
+    USER_UNIT = "/UserUnit"  # number, optional
+    VP = "/VP"  # dictionary, optional
 
 
 class StreamAttributes:
@@ -88,9 +128,7 @@ class FilterTypes:
 
 
 class FilterTypeAbbreviations:
-    """
-    Table 4.44 of the 1.7 Manual (page 353ff)
-    """
+    """Table 4.44 of the 1.7 Manual (page 353ff)"""
 
     AHx = "/AHx"
     A85 = "/A85"
@@ -166,6 +204,35 @@ class TypFitArguments:
     FIT_R = "/FitR"
 
 
+class FieldDistionaryAttributes:
+    """TABLE 8.69 Entries common to all field dictionaries (PDF 1.7 reference)"""
+
+    FT = "/FT"  # name, required for terminal fields
+    Parent = "/Parent"  # dictionary, required for children
+    Kids = "/Kids"  # array, sometimes required
+    T = "/T"  # text string, optional
+    TU = "/TU"  # text string, optional
+    TM = "/TM"  # text string, optional
+    Ff = "/Ff"  # integer, optional
+    V = "/V"  # text string, optional
+    DV = "/DV"  # text string, optional
+    AA = "/AA"  # dictionary, optional
+
+
+class DocumentInformationAttributes:
+    """TABLE 10.2 Entries in the document information dictionary"""
+
+    TITLE = "/Title"  # text string, optional
+    AUTHOR = "/Author"  # text string, optional
+    SUBJECT = "/Subject"  # text string, optional
+    KEYWORDS = "/Keywords"  # text string, optional
+    CREATOR = "/Creator"  # text string, optional
+    PRODUCER = "/Producer"  # text string, optional
+    CREATION_DATE = "/CreationDate"  # date, optional
+    MOD_DATE = "/ModDate"  # date, optional
+    TRAPPED = "/Trapped"  # name, optional
+
+
 class PageLayouts:
     """Page 84, PDF 1.4 reference"""
 
@@ -189,13 +256,40 @@ class CatalogDictionary:
     """Table 3.25 in the 1.7 reference"""
 
     TYPE = "/Type"  # name, required; must be /Catalog
-    # TODO: Many more!
+    VERSION = "/Version"  # name
+    PAGES = "/Pages"  # dictionary, required
+    PAGE_LABELS = "/PageLabels"  # number tree, optional
+    NAMES = "/Names"  # dictionary, optional
+    DESTS = "/Dests"  # dictionary, optional
+    VIEWER_PREFERENCES = "/ViewerPreferences"  # dictionary, optional
+    PAGE_LAYOUT = "/PageLayout"  # name, optional
+    PAGE_MODE = "/PageMode"  # name, optional
+    OUTLINES = "/Outlines"  # dictionary, optional
+    THREADS = "/Threads"  # array, optional
+    OPEN_ACTION = "/OpenAction"  # array or dictionary or name, optional
+    AA = "/AA"  # dictionary, optional
+    URI = "/URI"  # dictionary, optional
+    ACRO_FORM = "/AcroForm"  # dictionary, optional
+    METADATA = "/Metadata"  # stream, optional
+    STRUCT_TREE_ROOT = "/StructTreeRoot"  # dictionary, optional
+    MARK_INFO = "/MarkInfo"  # dictionary, optional
+    LANG = "/Lang"  # text string, optional
+    SPIDER_INFO = "/SpiderInfo"  # dictionary, optional
+    OUTPUT_INTENTS = "/OutputIntents"  # array, optional
+    PIECE_INFO = "/PieceInfo"  # dictionary, optional
+    OC_PROPERTIES = "/OCProperties"  # dictionary, optional
+    PERMS = "/Perms"  # dictionary, optional
+    LEGAL = "/Legal"  # dictionary, optional
+    REQUIREMENTS = "/Requirements"  # array, optional
+    COLLECTION = "/Collection"  # dictionary, optional
+    NEEDS_RENDERING = "/NeedsRendering"  # boolean, optional
 
 
-PDF_KEYS = [
+PDF_KEYS = (
     PagesAttributes,
     PageAttributes,
     Ressources,
+    EncryptionDictAttributes,
     ImageAttributes,
     StreamAttributes,
     FilterTypes,
@@ -208,4 +302,4 @@ PDF_KEYS = [
     Core,
     TrailerKeys,
     CatalogAttributes,
-]
+)

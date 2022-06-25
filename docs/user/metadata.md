@@ -3,37 +3,36 @@
 ## Reading metadata
 
 ```python
-from PyPDF2 import PdfFileReader
+from PyPDF2 import PdfReader
 
-reader = PdfFileReader("example.pdf")
+reader = PdfReader("example.pdf")
 
-info = reader.getDocumentInfo()
+meta = reader.metadata
 
-print(reader.numPages)
+print(len(reader.pages))
 
 # All of the following could be None!
-print(info.author)
-print(info.creator)
-print(info.producer)
-print(info.subject)
-print(info.title)
+print(meta.author)
+print(meta.creator)
+print(meta.producer)
+print(meta.subject)
+print(meta.title)
 ```
 
 ## Writing metadata
 
 ```python
-from PyPDF2 import PdfFileReader, PdfFileWriter
+from PyPDF2 import PdfReader, PdfWriter
 
-reader = PdfFileReader("example.pdf")
-writer = PdfFileWriter()
+reader = PdfReader("example.pdf")
+writer = PdfWriter()
 
 # Add all pages to the writer
-for i in range(reader.numPages):
-    page = reader.pages[i]
-    writer.addPage(page)
+for page in reader.pages:
+    writer.add_page(page)
 
 # Add the metadata
-writer.addMetadata(
+writer.add_metadata(
     {
         "/Author": "Martin",
         "/Producer": "Libre Writer",
@@ -43,5 +42,4 @@ writer.addMetadata(
 # Save the new PDF to a file
 with open("meta-pdf.pdf", "wb") as f:
     writer.write(f)
-
 ```

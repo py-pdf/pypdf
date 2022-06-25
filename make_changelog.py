@@ -19,12 +19,12 @@ def main(changelog_path: str):
     changes = get_formatted_changes(git_tag)
     print("-" * 80)
     print(changes)
-    # TODO: Write changes to changelog
+
     new_version = version_bump(git_tag)
     today = datetime.now()
     header = f"Version {new_version}, {today:%Y-%m-%d}\n"
     header = header + "-" * (len(header) - 1) + "\n"
-    trailer = f"All changes: https://github.com/py-pdf/PyPDF2/compare/{git_tag}...{new_version}"
+    trailer = f"\nFull Changelog: https://github.com/py-pdf/PyPDF2/compare/{git_tag}...{new_version}\n\n"
     new_entry = header + changes + trailer
     print(new_entry)
 
@@ -41,7 +41,7 @@ def version_bump(git_tag: str) -> str:
 
 
 def get_changelog(changelog_path: str) -> str:
-    with open(changelog_path, "r") as fh:
+    with open(changelog_path) as fh:
         changelog = fh.read()
     return changelog
 
@@ -62,7 +62,7 @@ def get_formatted_changes(git_tag: str) -> str:
         grouped[commit.prefix].append({"msg": commit.message})
 
     # Order prefixes
-    order = ["DEP", "ENH", "BUG", "ROB", "DOC", "DEV", "MAINT", "TST", "STY"]
+    order = ["DEP", "ENH", "PI", "BUG", "ROB", "DOC", "DEV", "MAINT", "TST", "STY"]
     abbrev2long = {
         "DEP": "Deprecations",
         "ENH": "New Features",
@@ -73,6 +73,7 @@ def get_formatted_changes(git_tag: str) -> str:
         "MAINT": "Maintenance",
         "TST": "Testing",
         "STY": "Code Style",
+        "PI": "Performance Improvements",
     }
 
     # Create output
@@ -107,7 +108,13 @@ def get_most_recent_git_tag():
 def get_git_commits_since_tag(git_tag) -> List[Change]:
     commits = str(
         subprocess.check_output(
-            ["git", "--no-pager", "log", f"{git_tag}..HEAD", "--oneline"],
+            [
+                "git",
+                "--no-pager",
+                "log",
+                f"{git_tag}..HEAD",
+                '--pretty=format:"%h%x09%s"',
+            ],
             stderr=subprocess.STDOUT,
         )
     ).strip("'b\\n")
@@ -115,7 +122,9 @@ def get_git_commits_since_tag(git_tag) -> List[Change]:
 
 
 def parse_commit_line(line) -> Change:
-    commit_hash, rest = line[: len("d5a5eea")], line[len("d5a5eea") :]
+    if "\\t" not in line:
+        raise ValueError(f"Invalid commit line: {line}")
+    commit_hash, rest = line.split("\\t", 1)
     if ":" in rest:
         prefix, message = rest.split(":", 1)
     else:
@@ -124,6 +133,9 @@ def parse_commit_line(line) -> Change:
 
     # Standardize
     message.strip()
+
+    if message.endswith('"'):
+        message = message[:-1]
 
     prefix = prefix.strip()
     if prefix == "DOCS":
