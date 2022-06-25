@@ -821,3 +821,29 @@ def test_unexpected_destination():
     with pytest.raises(PdfReadError) as exc:
         merger.append(reader)
     assert exc.value.args[0] == "Unexpected destination '/1'"
+
+
+@pytest.mark.parametrize(
+    "src",
+    [
+        (os.path.join(RESOURCE_ROOT, "crazyones.pdf")),
+        (os.path.join(RESOURCE_ROOT, "commented.pdf")),
+    ],
+)
+def test_xfa(src):
+    reader = PdfReader(src)
+    assert reader.xfa == {}
+
+
+def test_xfa_non_empty():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/942/942050.pdf"
+    name = "tika-942050.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    assert list(reader.xfa.keys()) == [
+        "preamble",
+        "config",
+        "template",
+        "PDFSecurity",
+        "datasets",
+        "postamble",
+    ]

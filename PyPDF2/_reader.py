@@ -1635,6 +1635,35 @@ class PdfReader:
         deprecate_with_replacement("isEncrypted", "is_encrypted")
         return self.is_encrypted
 
+    @property
+    def xfa(self):
+        tree = None
+        retval = None
+        if retval is None:
+            retval = {}
+            catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
+            # get the AcroForm tree
+            if "/AcroForm" in catalog:
+                tree = cast(Optional[TreeObject], catalog["/AcroForm"])
+            else:
+                return None
+        if tree is None:
+            return retval
+        import zlib
+
+        if "/XFA" in tree:
+            fields = tree["/XFA"]
+            i = iter(fields)
+            for f in i:
+                tag = f
+                f = next(i)
+                if isinstance(f, IndirectObject):
+                    field = f.getObject()
+                    if field:
+                        es = zlib.decompress(field._data)
+                        retval[tag] = es
+        return retval
+
 
 class PdfFileReader(PdfReader):  # pragma: no cover
     def __init__(self, *args: Any, **kwargs: Any) -> None:
