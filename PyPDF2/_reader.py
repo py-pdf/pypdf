@@ -1636,7 +1636,7 @@ class PdfReader:
         return self.is_encrypted
 
     @property
-    def xfa(self):
+    def xfa(self) -> Optional[Dict[str, Any]]:
         tree = None
         retval = None
         if retval is None:
