@@ -218,7 +218,10 @@ class IndirectObject(PdfObject):
         self.pdf = pdf
 
     def get_object(self) -> Optional[PdfObject]:
-        return self.pdf.get_object(self).get_object()
+        obj = self.pdf.get_object(self)
+        if obj is None:
+            return None
+        return obj.get_object()
 
     def __repr__(self) -> str:
         return f"IndirectObject({self.idnum!r}, {self.generation!r})"
