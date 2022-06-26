@@ -560,7 +560,15 @@ class PdfReader:
                 pass
 
     def get_form_text_fields(self) -> Dict[str, Any]:
-        """Retrieves form fields from the document with textual data (inputs, dropdowns)"""
+        """
+        Retrieves form fields from the document with textual data.
+
+        The key is the name of the form field, the value is the content of the
+        field.
+
+        If the document contains multiple form fields with the same name, the
+        second and following will get the suffix _2, _3, ...
+        """
         # Retrieve document form fields
         formfields = self.get_fields()
         if formfields is None:
