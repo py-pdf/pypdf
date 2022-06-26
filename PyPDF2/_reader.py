@@ -267,7 +267,7 @@ class PdfReader:
 
             # try empty password if no password provided
             pwd = password if password is not None else b""
-            if self._encryption.verify(pwd) == 0 and password is not None:
+            if self._encryption.verify(pwd) == PasswordType.NOT_DECRYPTED and password is not None:
                 # raise if password provided
                 raise PdfReadError("Wrong password")
             self._override_encryption = False

@@ -25,7 +25,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from enum import Enum
+from enum import IntEnum
 import hashlib
 import random
 import struct
@@ -612,7 +612,7 @@ class AlgV5:
         return perms
 
 
-class PasswordType(Enum):
+class PasswordType(IntEnum):
     NOT_DECRYPTED = 0
     USER_PASSWORD = 1
     OWNER_PASSWORD = 2
