@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1656265186723,
+  "lastUpdate": 1656271501637,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -6709,6 +6709,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.006827447296995757",
             "extra": "mean: 3.2170534310000023 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "53efd73431775ab1d3eeaf546ccf73244869fb72",
+          "message": "REL: 2.4.0\n\nNew Features (ENH):\n-  Support R6 decrypting (#1015)\n-  Add PdfReader.pdf_header (#1013)\n\nPerformance Improvements (PI):\n-  Remove ord_ calls (#1014)\n\nBug Fixes (BUG):\n-  Fix missing page for bookmark (#1016)\n\nRobustness (ROB):\n-  Deal with invalid Destinations (#1028)\n\nDocumentation (DOC):\n-  get_form_text_fields does not extract dropdown data (#1029)\n-  Adjust PdfWriter.add_uri docstring\n-  Mention crypto extra_requires for installation (#1017)\n\nDeveloper Experience (DEV):\n-  Use /n line endings everywhere (#1027)\n-  Adjust string formatting to be able to use mutmut (#1020)\n-  Update Bug report template\n\nFull Changelog: https://github.com/py-pdf/PyPDF2/compare/2.3.1...2.4.0",
+          "timestamp": "2022-06-26T21:24:02+02:00",
+          "tree_id": "2d3aab105edd67d922e353cd65b733e697dabbe4",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/53efd73431775ab1d3eeaf546ccf73244869fb72"
+        },
+        "date": 1656271501092,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.1719093686226723,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010889952088712698",
+            "extra": "mean: 853.3083076000025 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 16.21055379503692,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004957855265430124",
+            "extra": "mean: 61.688207117647245 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.3169960438870894,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012915675499338955",
+            "extra": "mean: 3.154613501600005 sec\nrounds: 5"
           }
         ]
       }
