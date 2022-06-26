@@ -821,3 +821,16 @@ def test_unexpected_destination():
     with pytest.raises(PdfReadError) as exc:
         merger.append(reader)
     assert exc.value.args[0] == "Unexpected destination '/1'"
+
+
+@pytest.mark.parametrize(
+    "src,pdf_header",
+    [
+        (os.path.join(RESOURCE_ROOT, "attachment.pdf"), "%PDF-1.5"),
+        (os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "%PDF-1.5"),
+    ],
+)
+def test_header(src, pdf_header):
+    reader = PdfReader(src)
+
+    assert reader.pdf_header == pdf_header
