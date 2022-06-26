@@ -1,3 +1,31 @@
+Version 2.4.0, 2022-06-26
+-------------------------
+
+New Features (ENH):
+-  Support R6 decrypting (#1015)
+-  Add PdfReader.pdf_header (#1013)
+
+Performance Improvements (PI):
+-  Remove ord_ calls (#1014)
+
+Bug Fixes (BUG):
+-  Fix missing page for bookmark (#1016)
+
+Robustness (ROB):
+-  Deal with invalid Destinations (#1028)
+
+Documentation (DOC):
+-  get_form_text_fields does not extract dropdown data (#1029)
+-  Adjust PdfWriter.add_uri docstring
+-  Mention crypto extra_requires for installation (#1017)
+
+Developer Experience (DEV):
+-  Use /n line endings everywhere (#1027)
+-  Adjust string formatting to be able to use mutmut (#1020)
+-  Update Bug report template
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.3.1...2.4.0
+
 Version 2.3.1, 2022-06-19
 -------------------------
 
