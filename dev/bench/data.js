@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1656225554684,
+  "lastUpdate": 1656228617035,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -6574,6 +6574,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.056585051987500454",
             "extra": "mean: 3.6840938542000004 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "595739faff13ba94f6d298798699db4301ebd3cd",
+          "message": "ROB: Deal with invalid Destinations (#1028)\n\nIssue: An\r\n        AttributeError: 'NoneType' object has no attribute 'get_object'\r\n    was raised when trying to write a page that was merged.\r\n\r\nFix: Guard IndirectObject.get_object access\r\n\r\nCloses #997",
+          "timestamp": "2022-06-26T09:29:11+02:00",
+          "tree_id": "344cb3f835de5ee6c3244726b3f3a00a3efbf0c0",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/595739faff13ba94f6d298798699db4301ebd3cd"
+        },
+        "date": 1656228616557,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0234472577316578,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006483203371674798",
+            "extra": "mean: 977.0899207999975 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 14.594254733055925,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005065133531328095",
+            "extra": "mean: 68.52011413333798 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2769250542889588,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010892202134586451",
+            "extra": "mean: 3.6110853262000093 sec\nrounds: 5"
           }
         ]
       }
