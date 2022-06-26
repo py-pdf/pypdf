@@ -435,6 +435,8 @@ class PdfMerger:
             else:
                 prev_header_added = False
                 for j in range(*pages):
+                    if o["/Page"] is None:
+                        continue
                     if pdf.pages[j].get_object() == o["/Page"].get_object():
                         o[NameObject("/Page")] = o["/Page"].get_object()
                         new_outline.append(o)
