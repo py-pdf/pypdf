@@ -1,12 +1,21 @@
 import datetime
 import decimal
 import re
-from typing import Any, Callable, Dict, Optional, TypeVar, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    TypeVar,
+    Union,
+)
 from xml.dom.minidom import Document
 from xml.dom.minidom import Element as XmlElement
 from xml.dom.minidom import parseString
 
-from ._utils import StreamType
+from ._utils import StreamType, deprecate_with_replacement
 from .generic import ContentStream, PdfObject
 
 RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
@@ -67,7 +76,7 @@ def _identity(value: K) -> K:
 def _converter_date(value: str) -> datetime.datetime:
     matches = iso8601.match(value)
     if matches is None:
-        raise ValueError("Invalid date format: %s" % value)
+        raise ValueError(f"Invalid date format: {value}")
     year = int(matches.group("year"))
     month = int(matches.group("month") or "1")
     day = int(matches.group("day") or "1")
@@ -91,18 +100,20 @@ def _converter_date(value: str) -> datetime.datetime:
     return dt
 
 
-def _getter_bag(namespace: str, name: str) -> Optional[Any]:
-    def get(self: Any) -> Optional[Any]:
+def _getter_bag(
+    namespace: str, name: str
+) -> Callable[["XmpInformation"], Optional[List[str]]]:
+    def get(self: "XmpInformation") -> Optional[List[str]]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
         retval = []
-        for element in self.getElement("", namespace, name):
+        for element in self.get_element("", namespace, name):
             bags = element.getElementsByTagNameNS(RDF_NAMESPACE, "Bag")
             if len(bags):
                 for bag in bags:
                     for item in bag.getElementsByTagNameNS(RDF_NAMESPACE, "li"):
-                        value = self._getText(item)
+                        value = self._get_text(item)
                         retval.append(value)
         ns_cache = self.cache.setdefault(namespace, {})
         ns_cache[name] = retval
@@ -113,22 +124,22 @@ def _getter_bag(namespace: str, name: str) -> Optional[Any]:
 
 def _getter_seq(
     namespace: str, name: str, converter: Callable[[Any], Any] = _identity
-) -> Optional[Any]:
-    def get(self: Any) -> Optional[Any]:
+) -> Callable[["XmpInformation"], Optional[List[Any]]]:
+    def get(self: "XmpInformation") -> Optional[List[Any]]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
         retval = []
-        for element in self.getElement("", namespace, name):
+        for element in self.get_element("", namespace, name):
             seqs = element.getElementsByTagNameNS(RDF_NAMESPACE, "Seq")
             if len(seqs):
                 for seq in seqs:
                     for item in seq.getElementsByTagNameNS(RDF_NAMESPACE, "li"):
-                        value = self._getText(item)
+                        value = self._get_text(item)
                         value = converter(value)
                         retval.append(value)
             else:
-                value = converter(self._getText(element))
+                value = converter(self._get_text(element))
                 retval.append(value)
         ns_cache = self.cache.setdefault(namespace, {})
         ns_cache[name] = retval
@@ -137,21 +148,23 @@ def _getter_seq(
     return get
 
 
-def _getter_langalt(namespace: str, name: str) -> Optional[Any]:
-    def get(self: Any) -> Optional[Any]:
+def _getter_langalt(
+    namespace: str, name: str
+) -> Callable[["XmpInformation"], Optional[Dict[Any, Any]]]:
+    def get(self: "XmpInformation") -> Optional[Dict[Any, Any]]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
         retval = {}
-        for element in self.getElement("", namespace, name):
+        for element in self.get_element("", namespace, name):
             alts = element.getElementsByTagNameNS(RDF_NAMESPACE, "Alt")
             if len(alts):
                 for alt in alts:
                     for item in alt.getElementsByTagNameNS(RDF_NAMESPACE, "li"):
-                        value = self._getText(item)
+                        value = self._get_text(item)
                         retval[item.getAttribute("xml:lang")] = value
             else:
-                retval["x-default"] = self._getText(element)
+                retval["x-default"] = self._get_text(element)
         ns_cache = self.cache.setdefault(namespace, {})
         ns_cache[name] = retval
         return retval
@@ -161,17 +174,17 @@ def _getter_langalt(namespace: str, name: str) -> Optional[Any]:
 
 def _getter_single(
     namespace: str, name: str, converter: Callable[[str], Any] = _identity
-) -> Optional[Any]:
-    def get(self: Any) -> Optional[Any]:
+) -> Callable[["XmpInformation"], Optional[Any]]:
+    def get(self: "XmpInformation") -> Optional[Any]:
         cached = self.cache.get(namespace, {}).get(name)
         if cached:
             return cached
         value = None
-        for element in self.getElement("", namespace, name):
+        for element in self.get_element("", namespace, name):
             if element.nodeType == element.ATTRIBUTE_NODE:
                 value = element.nodeValue
             else:
-                value = self._getText(element)
+                value = self._get_text(element)
             break
         if value is not None:
             value = converter(value)
@@ -185,33 +198,60 @@ def _getter_single(
 class XmpInformation(PdfObject):
     """
     An object that represents Adobe XMP metadata.
-    Usually accessed by :meth:`getXmpMetadata()<PyPDF2.PdfReader.getXmpMetadata>`
+    Usually accessed by :py:attr:`xmp_metadata()<PyPDF2.PdfReader.xmp_metadata>`
     """
 
     def __init__(self, stream: ContentStream) -> None:
         self.stream = stream
-        doc_root: Document = parseString(self.stream.getData())
-        self.rdfRoot: XmlElement = doc_root.getElementsByTagNameNS(
+        doc_root: Document = parseString(self.stream.get_data())
+        self.rdf_root: XmlElement = doc_root.getElementsByTagNameNS(
             RDF_NAMESPACE, "RDF"
         )[0]
         self.cache: Dict[Any, Any] = {}
+
+    @property
+    def rdfRoot(self) -> XmlElement:  # pragma: no cover
+        deprecate_with_replacement("rdfRoot", "rdf_root", "4.0.0")
+        return self.rdf_root
 
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
         self.stream.write_to_stream(stream, encryption_key)
 
-    def getElement(self, aboutUri: str, namespace: str, name: str) -> Any:
-        for desc in self.rdfRoot.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):
-            if desc.getAttributeNS(RDF_NAMESPACE, "about") == aboutUri:
+    def writeToStream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:  # pragma: no cover
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`write_to_stream` instead.
+        """
+        deprecate_with_replacement("writeToStream", "write_to_stream")
+        self.write_to_stream(stream, encryption_key)
+
+    def get_element(self, about_uri: str, namespace: str, name: str) -> Iterator[Any]:
+        for desc in self.rdf_root.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):
+            if desc.getAttributeNS(RDF_NAMESPACE, "about") == about_uri:
                 attr = desc.getAttributeNodeNS(namespace, name)
                 if attr is not None:
                     yield attr
                 yield from desc.getElementsByTagNameNS(namespace, name)
 
-    def getNodesInNamespace(self, aboutUri: str, namespace: str) -> Any:
-        for desc in self.rdfRoot.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):
-            if desc.getAttributeNS(RDF_NAMESPACE, "about") == aboutUri:
+    def getElement(
+        self, aboutUri: str, namespace: str, name: str
+    ) -> Iterator[Any]:  # pragma: no cover
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`get_element` instead.
+        """
+        deprecate_with_replacement("getElement", "get_element")
+        return self.get_element(aboutUri, namespace, name)
+
+    def get_nodes_in_namespace(self, about_uri: str, namespace: str) -> Iterator[Any]:
+        for desc in self.rdf_root.getElementsByTagNameNS(RDF_NAMESPACE, "Description"):
+            if desc.getAttributeNS(RDF_NAMESPACE, "about") == about_uri:
                 for i in range(desc.attributes.length):
                     attr = desc.attributes.item(i)
                     if attr.namespaceURI == namespace:
@@ -220,7 +260,18 @@ class XmpInformation(PdfObject):
                     if child.namespaceURI == namespace:
                         yield child
 
-    def _getText(self, element: XmlElement) -> str:
+    def getNodesInNamespace(
+        self, aboutUri: str, namespace: str
+    ) -> Iterator[Any]:  # pragma: no cover
+        """
+        .. deprecated:: 1.28.0
+
+            Use :meth:`get_nodes_in_namespace` instead.
+        """
+        deprecate_with_replacement("getNodesInNamespace", "get_nodes_in_namespace")
+        return self.get_nodes_in_namespace(aboutUri, namespace)
+
+    def _get_text(self, element: XmlElement) -> str:
         text = ""
         for child in element.childNodes:
             if child.nodeType == child.TEXT_NODE:
@@ -324,7 +375,7 @@ class XmpInformation(PdfObject):
     The name of the tool that created the PDF document.
     """
 
-    xmp_createDate = property(
+    xmp_create_date = property(
         _getter_single(XMP_NAMESPACE, "CreateDate", _converter_date)
     )
     """
@@ -332,7 +383,17 @@ class XmpInformation(PdfObject):
     time are returned as a UTC datetime.datetime object.
     """
 
-    xmp_modifyDate = property(
+    @property
+    def xmp_createDate(self) -> datetime.datetime:  # pragma: no cover
+        deprecate_with_replacement("xmp_createDate", "xmp_create_date", "4.0.0")
+        return self.xmp_create_date
+
+    @xmp_createDate.setter
+    def xmp_createDate(self, value: datetime.datetime) -> None:  # pragma: no cover
+        deprecate_with_replacement("xmp_createDate", "xmp_create_date", "4.0.0")
+        self.xmp_create_date = value
+
+    xmp_modify_date = property(
         _getter_single(XMP_NAMESPACE, "ModifyDate", _converter_date)
     )
     """
@@ -340,7 +401,17 @@ class XmpInformation(PdfObject):
     are returned as a UTC datetime.datetime object.
     """
 
-    xmp_metadataDate = property(
+    @property
+    def xmp_modifyDate(self) -> datetime.datetime:  # pragma: no cover
+        deprecate_with_replacement("xmp_modifyDate", "xmp_modify_date", "4.0.0")
+        return self.xmp_modify_date
+
+    @xmp_modifyDate.setter
+    def xmp_modifyDate(self, value: datetime.datetime) -> None:  # pragma: no cover
+        deprecate_with_replacement("xmp_modifyDate", "xmp_modify_date", "4.0.0")
+        self.xmp_modify_date = value
+
+    xmp_metadata_date = property(
         _getter_single(XMP_NAMESPACE, "MetadataDate", _converter_date)
     )
     """
@@ -349,21 +420,61 @@ class XmpInformation(PdfObject):
     object.
     """
 
-    xmp_creatorTool = property(_getter_single(XMP_NAMESPACE, "CreatorTool"))
+    @property
+    def xmp_metadataDate(self) -> datetime.datetime:  # pragma: no cover
+        deprecate_with_replacement("xmp_metadataDate", "xmp_metadata_date", "4.0.0")
+        return self.xmp_metadata_date
+
+    @xmp_metadataDate.setter
+    def xmp_metadataDate(self, value: datetime.datetime) -> None:  # pragma: no cover
+        deprecate_with_replacement("xmp_metadataDate", "xmp_metadata_date", "4.0.0")
+        self.xmp_metadata_date = value
+
+    xmp_creator_tool = property(_getter_single(XMP_NAMESPACE, "CreatorTool"))
     """
     The name of the first known tool used to create the resource.
     """
 
-    xmpmm_documentId = property(_getter_single(XMPMM_NAMESPACE, "DocumentID"))
+    @property
+    def xmp_creatorTool(self) -> str:  # pragma: no cover
+        deprecate_with_replacement("xmp_creatorTool", "xmp_creator_tool")
+        return self.xmp_creator_tool
+
+    @xmp_creatorTool.setter
+    def xmp_creatorTool(self, value: str) -> None:  # pragma: no cover
+        deprecate_with_replacement("xmp_creatorTool", "xmp_creator_tool")
+        self.xmp_creator_tool = value
+
+    xmpmm_document_id = property(_getter_single(XMPMM_NAMESPACE, "DocumentID"))
     """
     The common identifier for all versions and renditions of this resource.
     """
 
-    xmpmm_instanceId = property(_getter_single(XMPMM_NAMESPACE, "InstanceID"))
+    @property
+    def xmpmm_documentId(self) -> str:  # pragma: no cover
+        deprecate_with_replacement("xmpmm_documentId", "xmpmm_document_id")
+        return self.xmpmm_document_id
+
+    @xmpmm_documentId.setter
+    def xmpmm_documentId(self, value: str) -> None:  # pragma: no cover
+        deprecate_with_replacement("xmpmm_documentId", "xmpmm_document_id")
+        self.xmpmm_document_id = value
+
+    xmpmm_instance_id = property(_getter_single(XMPMM_NAMESPACE, "InstanceID"))
     """
     An identifier for a specific incarnation of a document, updated each
     time a file is saved.
     """
+
+    @property
+    def xmpmm_instanceId(self) -> str:  # pragma: no cover
+        deprecate_with_replacement("xmpmm_instanceId", "xmpmm_instance_id")
+        return self.xmpmm_instance_id
+
+    @xmpmm_instanceId.setter
+    def xmpmm_instanceId(self, value: str) -> None:  # pragma: no cover
+        deprecate_with_replacement("xmpmm_instanceId", "xmpmm_instance_id")
+        self.xmpmm_instance_id = value
 
     @property
     def custom_properties(self) -> Dict[Any, Any]:
@@ -376,7 +487,7 @@ class XmpInformation(PdfObject):
         """
         if not hasattr(self, "_custom_properties"):
             self._custom_properties = {}
-            for node in self.getNodesInNamespace("", PDFX_NAMESPACE):
+            for node in self.get_nodes_in_namespace("", PDFX_NAMESPACE):
                 key = node.localName
                 while True:
                     # see documentation about PDFX_NAMESPACE earlier in file
@@ -391,6 +502,6 @@ class XmpInformation(PdfObject):
                 if node.nodeType == node.ATTRIBUTE_NODE:
                     value = node.nodeValue
                 else:
-                    value = self._getText(node)
+                    value = self._get_text(node)
                 self._custom_properties[key] = value
         return self._custom_properties

@@ -25,13 +25,13 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import warnings
 from io import BytesIO, FileIO, IOBase
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 
+from ._encryption import Encryption
 from ._page import PageObject
 from ._reader import PdfReader
-from ._utils import DEPR_MSG, StrByteType, str_
+from ._utils import StrByteType, deprecate_with_replacement, str_
 from ._writer import PdfWriter
 from .constants import PagesAttributes as PA
 from .generic import (
@@ -46,15 +46,14 @@ from .generic import (
     NumberObject,
     TextStringObject,
     TreeObject,
-    createStringObject,
 )
 from .pagerange import PageRange, PageRangeSpec
 from .types import (
     BookmarkTypes,
+    FitType,
     LayoutType,
     OutlinesType,
     PagemodeType,
-    ZoomArgsType,
     ZoomArgType,
 )
 
@@ -129,13 +128,14 @@ class PdfMerger:
             bookmarks from being imported by specifying this as ``False``.
         """
 
-        stream, my_file, decryption_key = self._create_stream(fileobj)
+        stream, my_file, encryption_obj = self._create_stream(fileobj)
 
         # Create a new PdfReader instance using the stream
         # (either file or BytesIO or StringIO) created above
         reader = PdfReader(stream, strict=self.strict)  # type: ignore[arg-type]
-        if decryption_key is not None:
-            reader._decryption_key = decryption_key
+        self.inputs.append((stream, reader, my_file))
+        if encryption_obj is not None:
+            reader._encryption = encryption_obj
 
         # Find the range of pages to merge.
         if pages is None:
@@ -149,7 +149,7 @@ class PdfMerger:
 
         outline = []
         if import_bookmarks:
-            outline = reader.get_outlines()
+            outline = reader.outlines
             outline = self._trim_outline(reader, outline, pages)
 
         if bookmark:
@@ -162,18 +162,18 @@ class PdfMerger:
         else:
             self.bookmarks += outline
 
-        dests = reader.namedDestinations
+        dests = reader.named_destinations
         trimmed_dests = self._trim_dests(reader, dests, pages)
         self.named_dests += trimmed_dests
 
         # Gather all the pages that are going to be merged
         for i in range(*pages):
-            pg = reader.pages[i]
+            page = reader.pages[i]
 
             id = self.id_count
             self.id_count += 1
 
-            mp = _MergedPage(pg, reader, id)
+            mp = _MergedPage(page, reader, id)
 
             srcpages.append(mp)
 
@@ -183,12 +183,9 @@ class PdfMerger:
         # Slice to insert the pages at the specified position
         self.pages[position:position] = srcpages
 
-        # Keep track of our input files so we can close them later
-        self.inputs.append((stream, reader, my_file))
-
     def _create_stream(
         self, fileobj: Union[StrByteType, PdfReader]
-    ) -> Tuple[IOBase, bool, Optional[bytes]]:
+    ) -> Tuple[IOBase, bool, Optional[Encryption]]:
         # This parameter is passed to self.inputs.append and means
         # that the stream used was created in this method.
         my_file = False
@@ -199,14 +196,14 @@ class PdfMerger:
         # it is a PdfReader, copy that reader's stream into a
         # BytesIO stream.
         # If fileobj is none of the above types, it is not modified
-        decryption_key = None
+        encryption_obj = None
         stream: IOBase
         if isinstance(fileobj, str):
             stream = FileIO(fileobj, "rb")
             my_file = True
         elif isinstance(fileobj, PdfReader):
-            if hasattr(fileobj, "_decryption_key"):
-                decryption_key = fileobj._decryption_key
+            if hasattr(fileobj, "_encryption"):
+                encryption_obj = fileobj._encryption
             orig_tell = fileobj.stream.tell()
             fileobj.stream.seek(0)
             stream = BytesIO(fileobj.stream.read())
@@ -222,7 +219,7 @@ class PdfMerger:
             my_file = True
         else:
             stream = fileobj
-        return stream, my_file, decryption_key
+        return stream, my_file, encryption_obj
 
     def append(
         self,
@@ -296,7 +293,7 @@ class PdfMerger:
         usage.
         """
         self.pages = []
-        for fo, _pdfr, mine in self.inputs:
+        for fo, _reader, mine in self.inputs:
             if mine:
                 fo.close()
 
@@ -315,28 +312,22 @@ class PdfMerger:
             raise RuntimeError(ERR_CLOSED_WRITER)
         self.output.add_metadata(infos)
 
-    def addMetadata(self, infos: Dict[str, Any]) -> None:
+    def addMetadata(self, infos: Dict[str, Any]) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`add_metadata` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("addMetadata", "add_metadata"), PendingDeprecationWarning
-        )
+        deprecate_with_replacement("addMetadata", "add_metadata")
         self.add_metadata(infos)
 
-    def setPageLayout(self, layout: LayoutType) -> None:
+    def setPageLayout(self, layout: LayoutType) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`set_page_layout` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("setPageLayout", "set_page_layout"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("setPageLayout", "set_page_layout")
         self.set_page_layout(layout)
 
     def set_page_layout(self, layout: LayoutType) -> None:
@@ -367,15 +358,13 @@ class PdfMerger:
             raise RuntimeError(ERR_CLOSED_WRITER)
         self.output._set_page_layout(layout)
 
-    def setPageMode(self, mode: PagemodeType) -> None:
+    def setPageMode(self, mode: PagemodeType) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`set_page_mode` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("setPageMode", "set_page_mode"), PendingDeprecationWarning
-        )
+        deprecate_with_replacement("setPageMode", "set_page_mode")
         self.set_page_mode(mode)
 
     def set_page_mode(self, mode: PagemodeType) -> None:
@@ -573,9 +562,7 @@ class PdfMerger:
             if pageno is not None:
                 nd[NameObject("/Page")] = NumberObject(pageno)
             else:
-                raise ValueError(
-                    "Unresolved named destination '{}'".format(nd["/Title"])
-                )
+                raise ValueError(f"Unresolved named destination '{nd['/Title']}'")
 
     def _associate_bookmarks_to_pages(
         self, pages: List[_MergedPage], bookmarks: Optional[Iterable[Bookmark]] = None
@@ -601,7 +588,7 @@ class PdfMerger:
             if pageno is not None:
                 b[NameObject("/Page")] = NumberObject(pageno)
             else:
-                raise ValueError("Unresolved bookmark '{}'".format(b["/Title"]))
+                raise ValueError(f"Unresolved bookmark '{b['/Title']}'")
 
     def find_bookmark(
         self,
@@ -632,17 +619,14 @@ class PdfMerger:
         color: Optional[Tuple[float, float, float]] = None,
         bold: bool = False,
         italic: bool = False,
-        fit: str = "/Fit",
+        fit: FitType = "/Fit",
         *args: ZoomArgType,
-    ) -> IndirectObject:
+    ) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
             Use :meth:`add_bookmark` instead.
         """
-        warnings.warn(
-            "addBookmark is deprecated. Use add_bookmark instead.",
-            DeprecationWarning,
-        )
+        deprecate_with_replacement("addBookmark", "add_bookmark")
         return self.add_bookmark(
             title, pagenum, parent, color, bold, italic, fit, *args
         )
@@ -655,7 +639,7 @@ class PdfMerger:
         color: Optional[Tuple[float, float, float]] = None,
         bold: bool = False,
         italic: bool = False,
-        fit: str = "/Fit",
+        fit: FitType = "/Fit",
         *args: ZoomArgType,
     ) -> IndirectObject:
         """
@@ -670,75 +654,21 @@ class PdfMerger:
         :param bool bold: Bookmark is bold
         :param bool italic: Bookmark is italic
         :param str fit: The fit of the destination page. See
-            :meth:`addLink()<addLin>` for details.
+            :meth:`addLink()<addLink>` for details.
         """
-        if self.output is None:
+        writer = self.output
+        if writer is None:
             raise RuntimeError(ERR_CLOSED_WRITER)
-        out_pages = cast(Dict[str, Any], self.output.get_object(self.output._pages))
-        if len(out_pages["/Kids"]) > 0:
-            page_ref = out_pages["/Kids"][pagenum]
-        else:
-            page_ref = out_pages
-
-        action = DictionaryObject()
-        zoom_args: ZoomArgsType = []
-        for a in args:
-            if a is not None:
-                zoom_args.append(NumberObject(a))
-            else:
-                zoom_args.append(NullObject())
-        dest = Destination(
-            NameObject("/" + title + " bookmark"), page_ref, NameObject(fit), *zoom_args
-        )
-        dest_array = dest.getDestArray()
-        action.update(
-            {NameObject("/D"): dest_array, NameObject("/S"): NameObject("/GoTo")}
-        )
-        action_ref = self.output._add_object(action)
-
-        outline_ref = self.output.get_outline_root()
-
-        if parent is None:
-            parent = outline_ref
-
-        bookmark = TreeObject()
-
-        bookmark.update(
-            {
-                NameObject("/A"): action_ref,
-                NameObject("/Title"): createStringObject(title),
-            }
+        return writer.add_bookmark(
+            title, pagenum, parent, color, bold, italic, fit, *args
         )
 
-        if color is not None:
-            bookmark.update(
-                {NameObject("/C"): ArrayObject([FloatObject(c) for c in color])}
-            )
-
-        format = 0
-        if italic:
-            format += 1
-        if bold:
-            format += 2
-        if format:
-            bookmark.update({NameObject("/F"): NumberObject(format)})
-
-        bookmark_ref = self.output._add_object(bookmark)
-        parent = cast(Bookmark, parent.get_object())
-        assert parent is not None, "hint for mypy"
-        parent.addChild(bookmark_ref, self.output)
-
-        return bookmark_ref
-
-    def addNamedDestination(self, title: str, pagenum: int) -> None:
+    def addNamedDestination(self, title: str, pagenum: int) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
             Use :meth:`add_named_destination` instead.
         """
-        warnings.warn(
-            "addNamedDestination is deprecated. Use add_named_destination instead.",
-            DeprecationWarning,
-        )
+        deprecate_with_replacement("addNamedDestination", "add_named_destination")
         return self.add_named_destination(title, pagenum)
 
     def add_named_destination(self, title: str, pagenum: int) -> None:
@@ -758,15 +688,10 @@ class PdfMerger:
         self.named_dests.append(dest)
 
 
-class PdfFileMerger(PdfMerger):
+class PdfFileMerger(PdfMerger):  # pragma: no cover
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        import warnings
+        deprecate_with_replacement("PdfFileMerger", "PdfMerge")
 
-        warnings.warn(
-            "PdfFileMerger was renamed to PdfMerger. PdfFileMerger will be removed",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
         if "strict" not in kwargs and len(args) < 1:
             kwargs["strict"] = True  # maintain the default
         super().__init__(*args, **kwargs)

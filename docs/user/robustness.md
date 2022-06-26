@@ -2,7 +2,7 @@
 
 PDF is [specified in various versions](https://www.pdfa.org/resource/pdf-specification-index/).
 The specification of PDF 1.7 has 978 pages. This length makes it hard to get
-everything right. As a consequence, a lot of PDF are not strictly following the
+everything right. As a consequence, a lot of PDF files are not strictly following the
 specification.
 
 If a PDF file does not follow the specification, it is not always possible to
@@ -13,7 +13,7 @@ Python code as an example:
 # Broken
 function (foo, bar):
 
-# Potentially intendet:
+# Potentially intended:
 def function(foo, bar):
     ...
 
@@ -22,7 +22,7 @@ function = (foo, bar)
 ```
 
 Writing a parser you can go two paths: Either you try to be forgiving and try
-to figure out what the user intendet, or you are strict and just tell the user
+to figure out what the user intended, or you are strict and just tell the user
 that they should fix their stuff.
 
 PyPDF2 gives you the option to be strict or not.

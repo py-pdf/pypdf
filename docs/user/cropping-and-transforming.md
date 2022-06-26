@@ -7,18 +7,18 @@ reader = PdfReader("example.pdf")
 writer = PdfWriter()
 
 # add page 1 from reader to output document, unchanged:
-writer.addPage(reader.pages[0])
+writer.add_page(reader.pages[0])
 
 # add page 2 from reader, but rotated clockwise 90 degrees:
-writer.addPage(reader.pages[1].rotateClockwise(90))
+writer.add_page(reader.pages[1].rotate(90))
 
 # add page 3 from reader, but crop it to half size:
 page3 = reader.pages[2]
-page3.mediaBox.upperRight = (
-    page3.mediaBox.getUpperRight_x() / 2,
-    page3.mediaBox.getUpperRight_y() / 2,
+page3.mediabox.upper_right = (
+    page3.mediabox.right / 2,
+    page3.mediabox.top / 2,
 )
-writer.addPage(page3)
+writer.add_page(page3)
 
 # add some Javascript to launch the print window on opening this PDF.
 # the password dialog may prevent the print dialog from being shown,
@@ -29,6 +29,34 @@ writer.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
 with open("PyPDF2-output.pdf", "wb") as fp:
     writer.write(fp)
 ```
+
+## Page rotation
+
+The most typical rotation is a clockwise rotation of the page by multiples of
+90 degrees. That is done when the orientation of the page is wrong. You can
+do that with the [`rotate` method](https://pypdf2.readthedocs.io/en/latest/modules/PageObject.html#PyPDF2._page.PageObject.rotate)
+of the `PageObject` class:
+
+```python
+from PyPDF2 import PdfWriter, PdfReader
+
+reader = PdfReader("input.pdf")
+writer = PdfWriter()
+
+
+writer.add_page(reader.pages[0])
+writer.pages[0].rotate(90)
+
+with open("output.pdf", "wb") as fp:
+    writer.write(fp)
+```
+
+The rotate method is typically preferred over the `page.add_transformation(Transformation().rotate())`
+method, because `rotate` will ensure that the page is still in the mediabox /
+cropbox. The transformation object operates on the coordinates of the pages
+contents and does not change the mediabox or cropbox.
+
+
 
 ## Plain Merge
 
@@ -50,7 +78,7 @@ page_base.merge_page(page_box)
 
 # Write the result back
 writer = PdfWriter()
-writer.addPage(page_base)
+writer.add_page(page_base)
 with open("merged-foo.pdf", "wb") as fp:
     writer.write(fp)
 ```
@@ -76,7 +104,7 @@ page_base.merge_page(page_box)
 
 # Write the result back
 writer = PdfWriter()
-writer.addPage(page_base)
+writer.add_page(page_base)
 with open("merged-foo.pdf", "wb") as fp:
     writer.write(fp)
 ```

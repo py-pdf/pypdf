@@ -1,5 +1,5 @@
 The PdfWriter Class
------------------------
+-------------------
 
 .. autoclass:: PyPDF2.PdfWriter
     :members:

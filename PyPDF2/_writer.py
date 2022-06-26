@@ -41,7 +41,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 from ._page import PageObject, _VirtualList
 from ._reader import PdfReader
 from ._security import _alg33, _alg34, _alg35
-from ._utils import DEPR_MSG, StreamType, b_
+from ._utils import StreamType, b_, deprecate_with_replacement
 from .constants import CatalogAttributes as CA
 from .constants import Core as CO
 from .constants import EncryptionDictAttributes as ED
@@ -67,7 +67,8 @@ from .generic import (
     StreamObject,
     TextStringObject,
     TreeObject,
-    createStringObject,
+    _create_bookmark,
+    create_string_object,
 )
 from .types import (
     BookmarkTypes,
@@ -85,11 +86,11 @@ logger = logging.getLogger(__name__)
 class PdfWriter:
     """
     This class supports writing PDF files out, given pages produced by another
-    class (typically :class:`PdfReader<PdfReader>`).
+    class (typically :class:`PdfReader<PyPDF2.PdfReader>`).
     """
 
     def __init__(self) -> None:
-        self._header = b_("%PDF-1.3")
+        self._header = b"%PDF-1.3"
         self._objects: List[Optional[PdfObject]] = []  # array of indirect objects
 
         # The root of our page tree node.
@@ -107,7 +108,7 @@ class PdfWriter:
         info = DictionaryObject()
         info.update(
             {
-                NameObject("/Producer"): createStringObject(
+                NameObject("/Producer"): create_string_object(
                     codecs.BOM_UTF16_BE + "PyPDF2".encode("utf-16be")
                 )
             }
@@ -124,7 +125,6 @@ class PdfWriter:
         )
         self._root: Optional[IndirectObject] = None
         self._root_object = root
-        self.set_need_appearances_writer()
 
     def _add_object(self, obj: Optional[PdfObject]) -> IndirectObject:
         self._objects.append(obj)
@@ -135,17 +135,13 @@ class PdfWriter:
             raise ValueError("pdf must be self")
         return self._objects[ido.idnum - 1]  # type: ignore
 
-    def getObject(self, ido: IndirectObject) -> PdfObject:
+    def getObject(self, ido: IndirectObject) -> PdfObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`get_object` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("getObject()", "get_object()"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getObject", "get_object")
         return self.get_object(ido)
 
     def _add_page(
@@ -183,30 +179,26 @@ class PdfWriter:
     def add_page(self, page: PageObject) -> None:
         """
         Add a page to this PDF file.  The page is usually acquired from a
-        :class:`PdfReader<PdfReader>` instance.
+        :class:`PdfReader<PyPDF2.PdfReader>` instance.
 
         :param PageObject page: The page to add to the document. Should be
             an instance of :class:`PageObject<PyPDF2._page.PageObject>`
         """
         self._add_page(page, list.append)
 
-    def addPage(self, page: PageObject) -> None:
+    def addPage(self, page: PageObject) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`add_page` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("addPage()", "add_page()"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("addPage", "add_page")
         self.add_page(page)
 
     def insert_page(self, page: PageObject, index: int = 0) -> None:
         """
         Insert a page in this PDF file. The page is usually acquired from a
-        :class:`PdfReader<PdfReader>` instance.
+        :class:`PdfReader<PyPDF2.PdfReader>` instance.
 
         :param PageObject page: The page to add to the document.  This
             argument should be an instance of :class:`PageObject<PyPDF2._page.PageObject>`.
@@ -214,43 +206,47 @@ class PdfWriter:
         """
         self._add_page(page, lambda l, p: l.insert(index, p))
 
-    def insertPage(self, page: PageObject, index: int = 0) -> None:
+    def insertPage(self, page: PageObject, index: int = 0) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`insert_page` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("insertPage()", "insert_page()"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("insertPage", "insert_page")
         self.insert_page(page, index)
 
-    def get_page(self, pageNumber: int) -> PageObject:
+    def get_page(
+        self, page_number: Optional[int] = None, pageNumber: Optional[int] = None
+    ) -> PageObject:
         """
         Retrieve a page by number from this PDF file.
 
-        :param int pageNumber: The page number to retrieve
+        :param int page_number: The page number to retrieve
             (pages begin at zero)
-        :return: the page at the index given by *pageNumber*
+        :return: the page at the index given by *page_number*
         :rtype: :class:`PageObject<PyPDF2._page.PageObject>`
         """
+        if pageNumber is not None:  # pragma: no cover
+            if page_number is not None:
+                raise ValueError("Please only use the page_number parameter")
+            else:
+                deprecate_with_replacement(
+                    "get_page(pageNumber)", "get_page(page_number)", "4.0.0"
+                )
+                page_number = pageNumber
+        if page_number is None and pageNumber is None:  # pragma: no cover
+            raise ValueError("Please specify the page_number")
         pages = cast(Dict[str, Any], self.get_object(self._pages))
-        # XXX: crude hack
-        return pages[PA.KIDS][pageNumber].get_object()
+        # TODO: crude hack
+        return pages[PA.KIDS][page_number].get_object()
 
-    def getPage(self, pageNumber: int) -> PageObject:
+    def getPage(self, pageNumber: int) -> PageObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :code:`writer.pages[page_number]` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("getPage()", "writer.pages[page_number]"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getPage", "writer.pages[page_number]")
         return self.get_page(pageNumber)
 
     def _get_num_pages(self) -> int:
@@ -261,17 +257,13 @@ class PdfWriter:
         pages = cast(Dict[str, Any], self.get_object(self._pages))
         return int(pages[NameObject("/Count")])
 
-    def getNumPages(self) -> int:
+    def getNumPages(self) -> int:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :code:`len(writer.pages)` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("getNumPages()", "len(writer.pages)"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getNumPages", "len(writer.pages)")
         return self._get_num_pages()
 
     @property
@@ -303,17 +295,13 @@ class PdfWriter:
 
     def addBlankPage(
         self, width: Optional[float] = None, height: Optional[float] = None
-    ) -> PageObject:
+    ) -> PageObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`add_blank_page` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("addBlankPage", "add_blank_page"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("addBlankPage", "add_blank_page")
         return self.add_blank_page(width, height)
 
     def insert_blank_page(
@@ -349,17 +337,13 @@ class PdfWriter:
         width: Optional[decimal.Decimal] = None,
         height: Optional[decimal.Decimal] = None,
         index: int = 0,
-    ) -> PageObject:
+    ) -> PageObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`insertBlankPage` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("insertBlankPage", "insert_blank_page"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("insertBlankPage", "insert_blank_page")
         return self.insert_blank_page(width, height, index)
 
     def add_js(self, javascript: str) -> None:
@@ -376,7 +360,7 @@ class PdfWriter:
             {
                 NameObject(PA.TYPE): NameObject("/Action"),
                 NameObject("/S"): NameObject("/JavaScript"),
-                NameObject("/JS"): NameObject("(%s)" % javascript),
+                NameObject("/JS"): NameObject(f"({javascript})"),
             }
         )
         js_indirect_object = self._add_object(js)
@@ -390,7 +374,7 @@ class PdfWriter:
                 NameObject("/JavaScript"): DictionaryObject(
                     {
                         NameObject(CA.NAMES): ArrayObject(
-                            [createStringObject(js_string_name), js_indirect_object]
+                            [create_string_object(js_string_name), js_indirect_object]
                         )
                     }
                 )
@@ -405,17 +389,13 @@ class PdfWriter:
             }
         )
 
-    def addJS(self, javascript: str) -> None:
+    def addJS(self, javascript: str) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`add_js` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("addJS", "add_js"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("addJS", "add_js")
         return self.add_js(javascript)
 
     def add_attachment(self, filename: str, data: Union[str, bytes]) -> None:
@@ -435,30 +415,30 @@ class PdfWriter:
         # * The file's name, which goes in the Catalog
 
         # The entry for the file
-        """ Sample:
-        8 0 obj
-        <<
-         /Length 12
-         /Type /EmbeddedFile
-        >>
-        stream
-        Hello world!
-        endstream
-        endobj
-        """
+        # Sample:
+        # 8 0 obj
+        # <<
+        #  /Length 12
+        #  /Type /EmbeddedFile
+        # >>
+        # stream
+        # Hello world!
+        # endstream
+        # endobj
+
         file_entry = DecodedStreamObject()
-        file_entry.setData(data)
+        file_entry.set_data(data)
         file_entry.update({NameObject(PA.TYPE): NameObject("/EmbeddedFile")})
 
         # The Filespec entry
-        """ Sample:
-        7 0 obj
-        <<
-         /Type /Filespec
-         /F (hello.txt)
-         /EF << /F 8 0 R >>
-        >>
-        """
+        # Sample:
+        # 7 0 obj
+        # <<
+        #  /Type /Filespec
+        #  /F (hello.txt)
+        #  /EF << /F 8 0 R >>
+        # >>
+
         ef_entry = DictionaryObject()
         ef_entry.update({NameObject("/F"): file_entry})
 
@@ -466,7 +446,7 @@ class PdfWriter:
         filespec.update(
             {
                 NameObject(PA.TYPE): NameObject("/Filespec"),
-                NameObject("/F"): createStringObject(
+                NameObject("/F"): create_string_object(
                     filename
                 ),  # Perhaps also try TextStringObject
                 NameObject("/EF"): ef_entry,
@@ -474,44 +454,41 @@ class PdfWriter:
         )
 
         # Then create the entry for the root, as it needs a reference to the Filespec
-        """ Sample:
-        1 0 obj
-        <<
-         /Type /Catalog
-         /Outlines 2 0 R
-         /Pages 3 0 R
-         /Names << /EmbeddedFiles << /Names [(hello.txt) 7 0 R] >> >>
-        >>
-        endobj
+        # Sample:
+        # 1 0 obj
+        # <<
+        #  /Type /Catalog
+        #  /Outlines 2 0 R
+        #  /Pages 3 0 R
+        #  /Names << /EmbeddedFiles << /Names [(hello.txt) 7 0 R] >> >>
+        # >>
+        # endobj
 
-        """
-        embeddedFilesNamesDictionary = DictionaryObject()
-        embeddedFilesNamesDictionary.update(
+        embedded_files_names_dictionary = DictionaryObject()
+        embedded_files_names_dictionary.update(
             {
                 NameObject(CA.NAMES): ArrayObject(
-                    [createStringObject(filename), filespec]
+                    [create_string_object(filename), filespec]
                 )
             }
         )
 
-        embeddedFilesDictionary = DictionaryObject()
-        embeddedFilesDictionary.update(
-            {NameObject("/EmbeddedFiles"): embeddedFilesNamesDictionary}
+        embedded_files_dictionary = DictionaryObject()
+        embedded_files_dictionary.update(
+            {NameObject("/EmbeddedFiles"): embedded_files_names_dictionary}
         )
         # Update the root
-        self._root_object.update({NameObject(CA.NAMES): embeddedFilesDictionary})
+        self._root_object.update({NameObject(CA.NAMES): embedded_files_dictionary})
 
-    def addAttachment(self, fname: str, fdata: Union[str, bytes]) -> None:
+    def addAttachment(
+        self, fname: str, fdata: Union[str, bytes]
+    ) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`add_attachment` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format(
-                "addAttachment(fname, fdata)", "add_attachment(filename, data)"
-            ),
-        )
+        deprecate_with_replacement("addAttachment", "add_attachment")
         return self.add_attachment(fname, fdata)
 
     def append_pages_from_reader(
@@ -548,17 +525,13 @@ class PdfWriter:
         self,
         reader: PdfReader,
         after_page_append: Optional[Callable[[PageObject], None]] = None,
-    ) -> None:
+    ) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`append_pages_from_reader` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("appendPagesFromReader", "append_pages_from_reader"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("appendPagesFromReader", "append_pages_from_reader")
         self.append_pages_from_reader(reader, after_page_append)
 
     def update_page_form_field_values(
@@ -577,6 +550,7 @@ class PdfWriter:
             second bit sets Required, the third bit sets NoExport. See
             PDF Reference Table 8.70 for details.
         """
+        self.set_need_appearances_writer()
         # Iterate through pages, update field values
         for j in range(len(page[PG.ANNOTS])):  # type: ignore
             writer_annot = page[PG.ANNOTS][j].get_object()  # type: ignore
@@ -598,18 +572,14 @@ class PdfWriter:
 
     def updatePageFormFieldValues(
         self, page: PageObject, fields: Dict[str, Any], flags: int = 0
-    ) -> None:
+    ) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`update_page_form_field_values` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format(
-                "updatePageFormFieldValues", "update_page_form_field_values"
-            ),
-            PendingDeprecationWarning,
-            stacklevel=2,
+        deprecate_with_replacement(
+            "updatePageFormFieldValues", "update_page_form_field_values"
         )
         return self.update_page_form_field_values(page, fields, flags)
 
@@ -622,16 +592,14 @@ class PdfWriter:
         """
         self._root_object = cast(DictionaryObject, reader.trailer[TK.ROOT])
 
-    def cloneReaderDocumentRoot(self, reader: PdfReader) -> None:
+    def cloneReaderDocumentRoot(self, reader: PdfReader) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`clone_reader_document_root` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("cloneReaderDocumentRoot", "clone_reader_document_root"),
-            PendingDeprecationWarning,
-            stacklevel=2,
+        deprecate_with_replacement(
+            "cloneReaderDocumentRoot", "clone_reader_document_root"
         )
         self.clone_reader_document_root(reader)
 
@@ -659,16 +627,14 @@ class PdfWriter:
         self,
         reader: PdfReader,
         after_page_append: Optional[Callable[[PageObject], None]] = None,
-    ) -> None:
+    ) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`clone_document_from_reader` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("cloneDocumentFromReader", "clone_document_from_reader"),
-            PendingDeprecationWarning,
-            stacklevel=2,
+        deprecate_with_replacement(
+            "cloneDocumentFromReader", "clone_document_from_reader"
         )
         self.clone_document_from_reader(reader, after_page_append)
 
@@ -739,10 +705,8 @@ class PdfWriter:
         """
         if hasattr(stream, "mode") and "b" not in stream.mode:
             warnings.warn(
-                (
-                    "File <{}> to write to is not in binary mode. "  # type: ignore
-                    "It may not be written to correctly."
-                ).format(stream.name)
+                f"File <{stream.name}> to write to is not in binary mode. "  # type: ignore
+                "It may not be written to correctly."
             )
 
         if not self._root:
@@ -758,10 +722,9 @@ class PdfWriter:
         # we sweep for indirect references.  This forces self-page-referencing
         # trees to reference the correct new object location, rather than
         # copying in a new copy of the page object.
-        for obj_index in range(len(self._objects)):
-            obj = self._objects[obj_index]
-            if isinstance(obj, PageObject) and obj.indirectRef is not None:
-                data = obj.indirectRef
+        for obj_index, obj in enumerate(self._objects):
+            if isinstance(obj, PageObject) and obj.indirect_ref is not None:
+                data = obj.indirect_ref
                 if data.pdf not in external_reference_map:
                     external_reference_map[data.pdf] = {}
                 if data.generation not in external_reference_map[data.pdf]:
@@ -777,19 +740,19 @@ class PdfWriter:
         object_positions = self._write_header(stream)
         xref_location = self._write_xref_table(stream, object_positions)
         self._write_trailer(stream)
-        stream.write(b_("\nstartxref\n%s\n%%%%EOF\n" % (xref_location)))  # eof
+        stream.write(b_(f"\nstartxref\n{xref_location}\n%%EOF\n"))  # eof
 
     def _write_header(self, stream: StreamType) -> List[int]:
         object_positions = []
-        stream.write(self._header + b_("\n"))
-        stream.write(b_("%\xE2\xE3\xCF\xD3\n"))
-        for i in range(len(self._objects)):
+        stream.write(self._header + b"\n")
+        stream.write(b"%\xE2\xE3\xCF\xD3\n")
+        for i, obj in enumerate(self._objects):
             obj = self._objects[i]
             # If the obj is None we can't write anything
             if obj is not None:
                 idnum = i + 1
                 object_positions.append(stream.tell())
-                stream.write(b_(str(idnum) + " 0 obj\n"))
+                stream.write(b_(str(idnum)) + b" 0 obj\n")
                 key = None
                 if hasattr(self, "_encrypt") and idnum != self._encrypt.idnum:
                     pack1 = struct.pack("<i", i + 1)[:3]
@@ -799,20 +762,20 @@ class PdfWriter:
                     md5_hash = md5(key).digest()
                     key = md5_hash[: min(16, len(self._encrypt_key) + 5)]
                 obj.write_to_stream(stream, key)
-                stream.write(b_("\nendobj\n"))
+                stream.write(b"\nendobj\n")
         return object_positions
 
     def _write_xref_table(self, stream: StreamType, object_positions: List[int]) -> int:
         xref_location = stream.tell()
-        stream.write(b_("xref\n"))
-        stream.write(b_("0 %s\n" % (len(self._objects) + 1)))
-        stream.write(b_("%010d %05d f \n" % (0, 65535)))
+        stream.write(b"xref\n")
+        stream.write(b_(f"0 {len(self._objects) + 1}\n"))
+        stream.write(b_(f"{0:0>10} {65535:0>5} f \n"))
         for offset in object_positions:
-            stream.write(b_("%010d %05d n \n" % (offset, 0)))
+            stream.write(b_(f"{offset:0>10} {0:0>5} n \n"))
         return xref_location
 
     def _write_trailer(self, stream: StreamType) -> None:
-        stream.write(b_("trailer\n"))
+        stream.write(b"trailer\n")
         trailer = DictionaryObject()
         trailer.update(
             {
@@ -836,18 +799,16 @@ class PdfWriter:
         """
         args = {}
         for key, value in list(infos.items()):
-            args[NameObject(key)] = createStringObject(value)
+            args[NameObject(key)] = create_string_object(value)
         self.get_object(self._info).update(args)  # type: ignore
 
-    def addMetadata(self, infos: Dict[str, Any]) -> None:
+    def addMetadata(self, infos: Dict[str, Any]) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`add_metadata` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("addMetadata", "add_metadata"),
-        )
+        deprecate_with_replacement("addMetadata", "add_metadata")
         self.add_metadata(infos)
 
     def _sweep_indirect_references(
@@ -921,9 +882,8 @@ class PdfWriter:
                     except (ValueError, RecursionError):
                         # Unable to resolve the Object, returning NullObject instead.
                         warnings.warn(
-                            "Unable to resolve [{}: {}], returning NullObject instead".format(
-                                data.__class__.__name__, data
-                            )
+                            f"Unable to resolve [{data.__class__.__name__}: {data}], "
+                            "returning NullObject instead"
                         )
                         return NullObject()
                 return newobj
@@ -936,17 +896,13 @@ class PdfWriter:
         assert ref.get_object() == obj
         return ref
 
-    def getReference(self, obj: PdfObject) -> IndirectObject:
+    def getReference(self, obj: PdfObject) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`get_reference` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("getReference", "get_reference"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getReference", "get_reference")
         return self.get_reference(obj)
 
     def get_outline_root(self) -> TreeObject:
@@ -964,17 +920,13 @@ class PdfWriter:
 
         return outline
 
-    def getOutlineRoot(self) -> TreeObject:
+    def getOutlineRoot(self) -> TreeObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`get_outline_root` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("getOutlineRoot", "get_outline_root"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getOutlineRoot", "get_outline_root")
         return self.get_outline_root()
 
     def get_named_dest_root(self) -> ArrayObject:
@@ -1016,17 +968,13 @@ class PdfWriter:
 
         return nd
 
-    def getNamedDestRoot(self) -> ArrayObject:
+    def getNamedDestRoot(self) -> ArrayObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`get_named_dest_root` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("getNamedDestRoot", "get_named_dest_root"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getNamedDestRoot", "get_named_dest_root")
         return self.get_named_dest_root()
 
     def add_bookmark_destination(
@@ -1040,21 +988,19 @@ class PdfWriter:
             parent = outline_ref
 
         parent = cast(TreeObject, parent.get_object())
-        parent.addChild(dest_ref, self)
+        parent.add_child(dest_ref, self)
 
         return dest_ref
 
     def addBookmarkDestination(
         self, dest: PageObject, parent: Optional[TreeObject] = None
-    ) -> IndirectObject:
+    ) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`add_bookmark_destination` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("addBookmarkDestination", "add_bookmark_destination"),
-        )
+        deprecate_with_replacement("addBookmarkDestination", "add_bookmark_destination")
         return self.add_bookmark_destination(dest, parent)
 
     def add_bookmark_dict(
@@ -1082,21 +1028,19 @@ class PdfWriter:
 
         parent = parent.get_object()  # type: ignore
         assert parent is not None, "hint for mypy"
-        parent.addChild(bookmark_ref, self)
+        parent.add_child(bookmark_ref, self)
 
         return bookmark_ref
 
     def addBookmarkDict(
         self, bookmark: BookmarkTypes, parent: Optional[TreeObject] = None
-    ) -> IndirectObject:
+    ) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`add_bookmark_dict` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("addBookmarkDict", "add_bookmark_dict"),
-        )
+        deprecate_with_replacement("addBookmarkDict", "add_bookmark_dict")
         return self.add_bookmark_dict(bookmark, parent)
 
     def add_bookmark(
@@ -1108,7 +1052,7 @@ class PdfWriter:
         bold: bool = False,
         italic: bool = False,
         fit: FitType = "/Fit",
-        *args: ZoomArgsType,
+        *args: ZoomArgType,
     ) -> IndirectObject:
         """
         Add a bookmark to this PDF file.
@@ -1124,8 +1068,7 @@ class PdfWriter:
         :param str fit: The fit of the destination page. See
             :meth:`addLink()<addLink>` for details.
         """
-        pages_obj = cast(Dict[str, Any], self.get_object(self._pages))
-        page_ref = pages_obj[PA.KIDS][pagenum]
+        page_ref = NumberObject(pagenum)
         action = DictionaryObject()
         zoom_args: ZoomArgsType = []
         for a in args:
@@ -1136,7 +1079,7 @@ class PdfWriter:
         dest = Destination(
             NameObject("/" + title + " bookmark"), page_ref, NameObject(fit), *zoom_args
         )
-        dest_array = dest.getDestArray()
+        dest_array = dest.dest_array
         action.update(
             {NameObject("/D"): dest_array, NameObject("/S"): NameObject("/GoTo")}
         )
@@ -1147,33 +1090,13 @@ class PdfWriter:
         if parent is None:
             parent = outline_ref
 
-        bookmark = TreeObject()
-
-        bookmark.update(
-            {
-                NameObject("/A"): action_ref,
-                NameObject("/Title"): createStringObject(title),
-            }
-        )
-
-        if color is not None:
-            bookmark.update(
-                {NameObject("/C"): ArrayObject([FloatObject(c) for c in color])}
-            )
-
-        format = 0
-        if italic:
-            format += 1
-        if bold:
-            format += 2
-        if format:
-            bookmark.update({NameObject("/F"): NumberObject(format)})
+        bookmark = _create_bookmark(action_ref, title, color, italic, bold)
 
         bookmark_ref = self._add_object(bookmark)
 
         assert parent is not None, "hint for mypy"
         parent_obj = cast(TreeObject, parent.get_object())
-        parent_obj.addChild(bookmark_ref, self)
+        parent_obj.add_child(bookmark_ref, self)
 
         return bookmark_ref
 
@@ -1186,18 +1109,14 @@ class PdfWriter:
         bold: bool = False,
         italic: bool = False,
         fit: FitType = "/Fit",
-        *args: ZoomArgsType,
-    ) -> IndirectObject:
+        *args: ZoomArgType,
+    ) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`add_bookmark` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("addBookmark", "add_bookmark"),
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("addBookmark", "add_bookmark")
         return self.add_bookmark(
             title, pagenum, parent, color, bold, italic, fit, *args
         )
@@ -1207,19 +1126,18 @@ class PdfWriter:
 
         nd = self.get_named_dest_root()
         nd.extend([dest["/Title"], dest_ref])  # type: ignore
-
         return dest_ref
 
-    def addNamedDestinationObject(self, dest: PdfObject) -> IndirectObject:
+    def addNamedDestinationObject(
+        self, dest: PdfObject
+    ) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`add_named_destination_object` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format(
-                "addNamedDestinationObject", "add_named_destination_object"
-            ),
+        deprecate_with_replacement(
+            "addNamedDestinationObject", "add_named_destination_object"
         )
         return self.add_named_destination_object(dest)
 
@@ -1240,15 +1158,15 @@ class PdfWriter:
         nd.extend([title, dest_ref])
         return dest_ref
 
-    def addNamedDestination(self, title: str, pagenum: int) -> IndirectObject:
+    def addNamedDestination(
+        self, title: str, pagenum: int
+    ) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`add_named_destination` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("addNamedDestination", "add_named_destination"),
-        )
+        deprecate_with_replacement("addNamedDestination", "add_named_destination")
         return self.add_named_destination(title, pagenum)
 
     def remove_links(self) -> None:
@@ -1260,55 +1178,52 @@ class PdfWriter:
             if PG.ANNOTS in page_ref:
                 del page_ref[PG.ANNOTS]
 
-    def removeLinks(self) -> None:
+    def removeLinks(self) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`remove_links` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("removeLinks", "remove_links"),
-        )
+        deprecate_with_replacement("removeLinks", "remove_links")
         return self.remove_links()
 
-    def remove_images(self, ignoreByteStringObject: bool = False) -> None:
+    def remove_images(self, ignore_byte_string_object: bool = False) -> None:
         """
         Remove images from this output.
 
-        :param bool ignoreByteStringObject: optional parameter
+        :param bool ignore_byte_string_object: optional parameter
             to ignore ByteString Objects.
         """
         pg_dict = cast(DictionaryObject, self.get_object(self._pages))
         pages = cast(ArrayObject, pg_dict[PA.KIDS])
-        jump_operators = [
-            b_("cm"),
-            b_("w"),
-            b_("J"),
-            b_("j"),
-            b_("M"),
-            b_("d"),
-            b_("ri"),
-            b_("i"),
-            b_("gs"),
-            b_("W"),
-            b_("b"),
-            b_("s"),
-            b_("S"),
-            b_("f"),
-            b_("F"),
-            b_("n"),
-            b_("m"),
-            b_("l"),
-            b_("c"),
-            b_("v"),
-            b_("y"),
-            b_("h"),
-            b_("B"),
-            b_("Do"),
-            b_("sh"),
-        ]
-        for j in range(len(pages)):
-            page = pages[j]
+        jump_operators = (
+            b"cm",
+            b"w",
+            b"J",
+            b"j",
+            b"M",
+            b"d",
+            b"ri",
+            b"i",
+            b"gs",
+            b"W",
+            b"b",
+            b"s",
+            b"S",
+            b"f",
+            b"F",
+            b"n",
+            b"m",
+            b"l",
+            b"c",
+            b"v",
+            b"y",
+            b"h",
+            b"B",
+            b"Do",
+            b"sh",
+        )
+        for page in pages:
             page_ref = cast(DictionaryObject, self.get_object(page))
             content = page_ref["/Contents"].get_object()
             if not isinstance(content, ContentStream):
@@ -1317,86 +1232,83 @@ class PdfWriter:
             _operations = []
             seq_graphics = False
             for operands, operator in content.operations:
-                if operator in [b_("Tj"), b_("'")]:
+                if operator in [b"Tj", b"'"]:
                     text = operands[0]
-                    if ignoreByteStringObject:
-                        if not isinstance(text, TextStringObject):
-                            operands[0] = TextStringObject()
-                elif operator == b_('"'):
+                    if ignore_byte_string_object and not isinstance(
+                        text, TextStringObject
+                    ):
+                        operands[0] = TextStringObject()
+                elif operator == b'"':
                     text = operands[2]
-                    if ignoreByteStringObject and not isinstance(
+                    if ignore_byte_string_object and not isinstance(
                         text, TextStringObject
                     ):
                         operands[2] = TextStringObject()
-                elif operator == b_("TJ"):
+                elif operator == b"TJ":
                     for i in range(len(operands[0])):
-                        if ignoreByteStringObject and not isinstance(
+                        if ignore_byte_string_object and not isinstance(
                             operands[0][i], TextStringObject
                         ):
                             operands[0][i] = TextStringObject()
 
-                if operator == b_("q"):
+                if operator == b"q":
                     seq_graphics = True
-                if operator == b_("Q"):
+                if operator == b"Q":
                     seq_graphics = False
                 if seq_graphics and operator in jump_operators:
                     continue
-                if operator == b_("re"):
+                if operator == b"re":
                     continue
                 _operations.append((operands, operator))
 
             content.operations = _operations
             page_ref.__setitem__(NameObject("/Contents"), content)
 
-    def removeImages(self, ignoreByteStringObject: bool = False) -> None:
+    def removeImages(
+        self, ignoreByteStringObject: bool = False
+    ) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`remove_images` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format(
-                "removeImages(ignoreByteStringObject=False)",
-                "remove_images(ignore_byte_string_object=False)",
-            ),
-        )
+        deprecate_with_replacement("removeImages", "remove_images")
         return self.remove_images(ignoreByteStringObject)
 
-    def remove_text(self, ignoreByteStringObject: bool = False) -> None:
+    def remove_text(self, ignore_byte_string_object: bool = False) -> None:
         """
         Remove text from this output.
 
-        :param bool ignoreByteStringObject: optional parameter
+        :param bool ignore_byte_string_object: optional parameter
             to ignore ByteString Objects.
         """
         pg_dict = cast(DictionaryObject, self.get_object(self._pages))
         pages = cast(List[IndirectObject], pg_dict[PA.KIDS])
-        for j in range(len(pages)):
-            page = pages[j]
+        for page in pages:
             page_ref = cast(Dict[str, Any], self.get_object(page))
             content = page_ref["/Contents"].get_object()
             if not isinstance(content, ContentStream):
                 content = ContentStream(content, page_ref)
             for operands, operator in content.operations:
-                if operator in [b_("Tj"), b_("'")]:
+                if operator in [b"Tj", b"'"]:
                     text = operands[0]
-                    if not ignoreByteStringObject:
+                    if not ignore_byte_string_object:
                         if isinstance(text, TextStringObject):
                             operands[0] = TextStringObject()
                     else:
                         if isinstance(text, (TextStringObject, ByteStringObject)):
                             operands[0] = TextStringObject()
-                elif operator == b_('"'):
+                elif operator == b'"':
                     text = operands[2]
-                    if not ignoreByteStringObject:
+                    if not ignore_byte_string_object:
                         if isinstance(text, TextStringObject):
                             operands[2] = TextStringObject()
                     else:
                         if isinstance(text, (TextStringObject, ByteStringObject)):
                             operands[2] = TextStringObject()
-                elif operator == b_("TJ"):
+                elif operator == b"TJ":
                     for i in range(len(operands[0])):
-                        if not ignoreByteStringObject:
+                        if not ignore_byte_string_object:
                             if isinstance(operands[0][i], TextStringObject):
                                 operands[0][i] = TextStringObject()
                         else:
@@ -1407,18 +1319,15 @@ class PdfWriter:
 
             page_ref.__setitem__(NameObject("/Contents"), content)
 
-    def removeText(self, ignoreByteStringObject: bool = False) -> None:
+    def removeText(
+        self, ignoreByteStringObject: bool = False
+    ) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`remove_text` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format(
-                "removeText(ignoreByteStringObject=False)",
-                "remove_text(ignore_byte_string_object=False)",
-            ),
-        )
+        deprecate_with_replacement("removeText", "remove_text")
         return self.remove_text(ignoreByteStringObject)
 
     def add_uri(
@@ -1430,7 +1339,7 @@ class PdfWriter:
     ) -> None:
         """
         Add an URI from a rectangular area to the specified page.
-        This uses the basic structure of AddLink
+        This uses the basic structure of :meth:`add_link`
 
         :param int pagenum: index of the page on which to place the URI action.
         :param int uri: string -- uri of resource to link to.
@@ -1440,9 +1349,6 @@ class PdfWriter:
         :param border: if provided, an array describing border-drawing
             properties. See the PDF spec for details. No border will be
             drawn if this argument is omitted.
-
-        REMOVED FIT/ZOOM ARG
-        -John Mulligan
         """
 
         page_link = self.get_object(self._pages)[PA.KIDS][pagenum]  # type: ignore
@@ -1496,15 +1402,13 @@ class PdfWriter:
         uri: int,
         rect: RectangleObject,
         border: Optional[ArrayObject] = None,
-    ) -> None:
+    ) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`add_uri` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("addURI", "add_uri"),
-        )
+        deprecate_with_replacement("addURI", "add_uri")
         return self.add_uri(pagenum, uri, rect, border)
 
     def add_link(
@@ -1580,7 +1484,7 @@ class PdfWriter:
         dest = Destination(
             NameObject("/LinkName"), page_dest, NameObject(fit), *zoom_args
         )  # TODO: create a better name for the link
-        dest_array = dest.getDestArray()
+        dest_array = dest.dest_array
 
         lnk = DictionaryObject()
         lnk.update(
@@ -1600,7 +1504,7 @@ class PdfWriter:
         else:
             page_ref[NameObject(PG.ANNOTS)] = ArrayObject([lnk_ref])
 
-    def addLink(
+    def addLink(  # pragma: no cover
         self,
         pagenum: int,
         pagedest: int,
@@ -1614,12 +1518,10 @@ class PdfWriter:
 
             Use :meth:`add_link` instead.
         """
-        warnings.warn(
-            DEPR_MSG.format("addLink", "add_link"),
-        )
+        deprecate_with_replacement("addLink", "add_link")
         return self.add_link(pagenum, pagedest, rect, border, fit, *args)
 
-    _valid_layouts = [
+    _valid_layouts = (
         "/NoLayout",
         "/SinglePage",
         "/OneColumn",
@@ -1627,34 +1529,21 @@ class PdfWriter:
         "/TwoColumnRight",
         "/TwoPageLeft",
         "/TwoPageRight",
-    ]
+    )
 
     def _get_page_layout(self) -> Optional[LayoutType]:
-        """
-        Get the page layout.
-
-        See :meth:`setPageLayout()<PdfWriter.setPageLayout>` for a description of valid layouts.
-
-        :return: Page layout currently being used.
-        :rtype: str, None if not specified
-        """
         try:
             return cast(LayoutType, self._root_object["/PageLayout"])
         except KeyError:
             return None
 
-    def getPageLayout(self) -> Optional[LayoutType]:
+    def getPageLayout(self) -> Optional[LayoutType]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :py:attr:`page_layout` instead.
         """
-        warnings.warn(
-            "getPageLayout() will be removed in PyPDF2 2.0.0. "
-            "Use the page_layout attribute instead.",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getPageLayout", "page_layout")
         return self._get_page_layout()
 
     def _set_page_layout(self, layout: Union[NameObject, LayoutType]) -> None:
@@ -1684,22 +1573,19 @@ class PdfWriter:
         if not isinstance(layout, NameObject):
             if layout not in self._valid_layouts:
                 warnings.warn(
-                    "Layout should be one of: {}".format(", ".join(self._valid_layouts))
+                    f"Layout should be one of: {'', ''.join(self._valid_layouts)}"
                 )
             layout = NameObject(layout)
         self._root_object.update({NameObject("/PageLayout"): layout})
 
-    def setPageLayout(self, layout: LayoutType) -> None:
+    def setPageLayout(self, layout: LayoutType) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :py:attr:`page_layout` instead.
         """
-        warnings.warn(
-            "setPageLayout() will be removed in PyPDF2 2.0.0. "
-            "Use the page_layout attribute instead.",
-            PendingDeprecationWarning,
-            stacklevel=2,
+        deprecate_with_replacement(
+            "writer.setPageLayout(val)", "writer.page_layout = val"
         )
         return self._set_page_layout(layout)
 
@@ -1733,70 +1619,47 @@ class PdfWriter:
         self._set_page_layout(layout)
 
     @property
-    def pageLayout(self) -> Optional[LayoutType]:
+    def pageLayout(self) -> Optional[LayoutType]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :py:attr:`page_layout` instead.
         """
-        warnings.warn(
-            "pageLayout will be removed in PyPDF2 2.0.0. "
-            "Use the page_layout attribute instead.",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("pageLayout", "page_layout")
         return self.page_layout
 
     @pageLayout.setter
-    def pageLayout(self, layout: LayoutType) -> None:
+    def pageLayout(self, layout: LayoutType) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :py:attr:`page_layout` instead.
         """
-        warnings.warn(
-            "pageLayout will be removed in PyPDF2 2.0.0. "
-            "Use the page_layout attribute instead.",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("pageLayout", "page_layout")
         self.page_layout = layout
 
-    _valid_modes = [
+    _valid_modes = (
         "/UseNone",
         "/UseOutlines",
         "/UseThumbs",
         "/FullScreen",
         "/UseOC",
         "/UseAttachments",
-    ]
+    )
 
     def _get_page_mode(self) -> Optional[PagemodeType]:
-        """
-        Get the page mode.
-        See :meth:`setPageMode()<PdfWriter.setPageMode>` for a description
-        of valid modes.
-
-        :return: Page mode currently being used.
-        :rtype: str, None if not specified.
-        """
         try:
             return cast(PagemodeType, self._root_object["/PageMode"])
         except KeyError:
             return None
 
-    def getPageMode(self) -> Optional[PagemodeType]:
+    def getPageMode(self) -> Optional[PagemodeType]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :py:attr:`page_mode` instead.
         """
-        warnings.warn(
-            "getPageMode() will be removed in PyPDF2 2.0.0. "
-            "Use the page_mode attribute instead.",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("getPageMode", "page_mode")
         return self._get_page_mode()
 
     def set_page_mode(self, mode: PagemodeType) -> None:
@@ -1809,24 +1672,17 @@ class PdfWriter:
             mode_name: NameObject = mode
         else:
             if mode not in self._valid_modes:
-                warnings.warn(
-                    "Mode should be one of: {}".format(", ".join(self._valid_modes))
-                )
+                warnings.warn(f"Mode should be one of: {', '.join(self._valid_modes)}")
             mode_name = NameObject(mode)
         self._root_object.update({NameObject("/PageMode"): mode_name})
 
-    def setPageMode(self, mode: PagemodeType) -> None:
+    def setPageMode(self, mode: PagemodeType) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :py:attr:`page_mode` instead.
         """
-        warnings.warn(
-            "setPageMode() will be removed in PyPDF2 2.0.0. "
-            "Use the page_mode attribute instead.",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("writer.setPageMode(val)", "writer.page_mode = val")
         self.set_page_mode(mode)
 
     @property
@@ -1857,43 +1713,27 @@ class PdfWriter:
         self.set_page_mode(mode)
 
     @property
-    def pageMode(self) -> Optional[PagemodeType]:
+    def pageMode(self) -> Optional[PagemodeType]:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :py:attr:`page_mode` instead.
         """
-        warnings.warn(
-            "pageMode will be removed in PyPDF2 2.0.0. "
-            "Use the page_mode attribute instead.",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("pageMode", "page_mode")
         return self.page_mode
 
     @pageMode.setter
-    def pageMode(self, mode: PagemodeType) -> None:
+    def pageMode(self, mode: PagemodeType) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :py:attr:`page_mode` instead.
         """
-        warnings.warn(
-            "pageMode will be removed in PyPDF2 2.0.0. "
-            "Use the page_mode attribute instead.",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("pageMode", "page_mode")
         self.page_mode = mode
 
 
-class PdfFileWriter(PdfWriter):
+class PdfFileWriter(PdfWriter):  # pragma: no cover
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        import warnings
-
-        warnings.warn(
-            "PdfFileWriter was renamed to PdfWriter. PdfFileWriter will be removed",
-            PendingDeprecationWarning,
-            stacklevel=2,
-        )
+        deprecate_with_replacement("PdfFileWriter", "PdfWriter")
         super().__init__(*args, **kwargs)

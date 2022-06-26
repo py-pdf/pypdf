@@ -2,15 +2,23 @@ import io
 import os
 import time
 from io import BytesIO
+from pathlib import Path
 
 import pytest
 
-from PyPDF2 import PdfReader
+from PyPDF2 import PdfMerger, PdfReader
+from PyPDF2._reader import convert_to_int, convertToInt
 from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.constants import Ressources as RES
-from PyPDF2.errors import PdfReadError
+from PyPDF2.errors import (
+    STREAM_TRUNCATED_PREMATURELY,
+    PdfReadError,
+    PdfReadWarning,
+)
 from PyPDF2.filters import _xobj_to_image
+
+from . import get_pdf_from_url
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -24,7 +32,7 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
 def test_get_num_pages(src, num_pages):
     src = os.path.join(RESOURCE_ROOT, src)
     reader = PdfReader(src)
-    assert reader.numPages == num_pages
+    assert len(reader.pages) == num_pages
 
 
 @pytest.mark.parametrize(
@@ -63,7 +71,8 @@ def test_get_num_pages(src, num_pages):
 def test_read_metadata(pdf_path, expected):
     with open(pdf_path, "rb") as inputfile:
         reader = PdfReader(inputfile)
-        docinfo = reader.documentInfo
+        docinfo = reader.metadata
+        assert docinfo is not None
         metadict = dict(docinfo)
         assert metadict == expected
         docinfo.title
@@ -109,14 +118,13 @@ def test_get_attachments(src):
     reader = PdfReader(src)
 
     attachments = {}
-    for i in range(reader.numPages):
-        page = reader.pages[i]
+    for page in reader.pages:
         if PG.ANNOTS in page:
             for annotation in page[PG.ANNOTS]:
                 annotobj = annotation.get_object()
                 if annotobj[IA.SUBTYPE] == "/FileAttachment":
                     fileobj = annotobj["/FS"]
-                    attachments[fileobj["/F"]] = fileobj["/EF"]["/F"].getData()
+                    attachments[fileobj["/F"]] = fileobj["/EF"]["/F"].get_data()
     return attachments
 
 
@@ -129,7 +137,7 @@ def test_get_attachments(src):
 )
 def test_get_outlines(src, outline_elements):
     reader = PdfReader(src)
-    outlines = reader.getOutlines()
+    outlines = reader._get_outlines()
     assert len(outlines) == outline_elements
 
 
@@ -157,11 +165,11 @@ def test_get_images(src, nb_images):
     images_extracted = []
 
     if RES.XOBJECT in page[PG.RESOURCES]:
-        xObject = page[PG.RESOURCES][RES.XOBJECT].get_object()
+        x_object = page[PG.RESOURCES][RES.XOBJECT].get_object()
 
-        for obj in xObject:
-            if xObject[obj][IA.SUBTYPE] == "/Image":
-                extension, byte_stream = _xobj_to_image(xObject[obj])
+        for obj in x_object:
+            if x_object[obj][IA.SUBTYPE] == "/Image":
+                extension, byte_stream = _xobj_to_image(x_object[obj])
                 if extension is not None:
                     filename = obj[1:] + ".png"
                     with open(filename, "wb") as img:
@@ -226,7 +234,7 @@ def test_get_images_raw(strict, with_prev_0, startx_correction, should_fail):
     )
     pdf_stream = io.BytesIO(pdf_data)
     if should_fail:
-        with pytest.raises(PdfReadError) as exc:
+        with pytest.raises(PdfReadError) as exc, pytest.warns(PdfReadWarning):
             PdfReader(pdf_stream, strict=strict)
         assert exc.type == PdfReadError
         if startx_correction == -1:
@@ -235,32 +243,60 @@ def test_get_images_raw(strict, with_prev_0, startx_correction, should_fail):
                 == "/Prev=0 in the trailer (try opening with strict=False)"
             )
     else:
-        PdfReader(pdf_stream, strict=strict)
+        with pytest.warns(PdfReadWarning):
+            PdfReader(pdf_stream, strict=strict)
 
 
 def test_issue297():
     path = os.path.join(RESOURCE_ROOT, "issue-297.pdf")
-    with pytest.raises(PdfReadError) as exc:
+    with pytest.raises(PdfReadError) as exc, pytest.warns(PdfReadWarning):
         reader = PdfReader(path, strict=True)
     assert "Broken xref table" in exc.value.args[0]
-    reader = PdfReader(path, strict=False)
+    with pytest.warns(PdfReadWarning):
+        reader = PdfReader(path, strict=False)
     reader.pages[0]
 
 
-def test_get_page_of_encrypted_file():
+@pytest.mark.parametrize(
+    ("pdffile", "password", "should_fail"),
+    [
+        ("encrypted-file.pdf", "test", False),
+        ("encrypted-file.pdf", "qwerty", True),
+        ("encrypted-file.pdf", b"qwerty", True),
+    ],
+)
+def test_get_page_of_encrypted_file(pdffile, password, should_fail):
     """
     Check if we can read a page of an encrypted file.
 
     This is a regression test for issue 327:
     IndexError for get_page() of decrypted file
     """
-    path = os.path.join(RESOURCE_ROOT, "encrypted-file.pdf")
-    reader = PdfReader(path)
+    path = os.path.join(RESOURCE_ROOT, pdffile)
+    if should_fail:
+        with pytest.raises(PdfReadError):
+            PdfReader(path, password=password)
+    else:
+        PdfReader(path, password=password).pages[0]
 
-    # Password is correct:)
-    reader.decrypt("test")
 
-    reader.pages[0]
+@pytest.mark.parametrize(
+    ("pdffile", "password"),
+    [
+        ("crazyones-encrypted-256.pdf", "password"),
+    ],
+)
+def test_get_page_of_encrypted_file_new_algorithm(pdffile, password):
+    """
+    Check if we can read a page of an encrypted file.
+
+    This is a regression test for issue 327:
+    IndexError for get_page() of decrypted file
+    """
+    path = os.path.join(RESOURCE_ROOT, pdffile)
+    with pytest.raises(NotImplementedError) as exc:
+        PdfReader(path, password=password).pages[0]
+    assert exc.value.args[0] == "encryption R=6 NOT supported!"
 
 
 @pytest.mark.parametrize(
@@ -295,23 +331,27 @@ def test_get_form(src, expected, expected_get_fields):
     fields = reader.get_form_text_fields()
     assert fields == expected
 
-    fields = reader.getFields()
+    with open("tmp-fields-report.txt", "w") as f:
+        fields = reader.get_fields(fileobj=f)
     assert fields == expected_get_fields
     if fields:
         for field in fields.values():
             # Just access the attributes
             [
-                field.fieldType,
+                field.field_type,
                 field.parent,
                 field.kids,
                 field.name,
-                field.altName,
-                field.mappingName,
+                field.alternate_name,
+                field.mapping_name,
                 field.flags,
                 field.value,
-                field.defaultValue,
-                field.additionalActions,
+                field.default_value,
+                field.additional_actions,
             ]
+
+    # cleanup
+    os.remove("tmp-fields-report.txt")
 
 
 @pytest.mark.parametrize(
@@ -325,7 +365,7 @@ def test_get_page_number(src, page_nb):
     src = os.path.join(RESOURCE_ROOT, src)
     reader = PdfReader(src)
     page = reader.pages[page_nb]
-    assert reader.getPageNumber(page) == page_nb
+    assert reader.get_page_number(page) == page_nb
 
 
 @pytest.mark.parametrize(
@@ -335,7 +375,7 @@ def test_get_page_number(src, page_nb):
 def test_get_page_layout(src, expected):
     src = os.path.join(RESOURCE_ROOT, src)
     reader = PdfReader(src)
-    assert reader.getPageLayout() == expected
+    assert reader.page_layout == expected
 
 
 @pytest.mark.parametrize(
@@ -366,7 +406,7 @@ def test_read_malformed_header():
 def test_read_malformed_body():
     with pytest.raises(PdfReadError) as exc:
         PdfReader(io.BytesIO(b"%PDF-"), strict=True)
-    assert exc.value.args[0] == "Could not read malformed PDF file"
+    assert exc.value.args[0] == STREAM_TRUNCATED_PREMATURELY
 
 
 def test_read_prev_0_trailer():
@@ -401,7 +441,7 @@ def test_read_prev_0_trailer():
         pdf_data.find(b"xref") - 1,
     )
     pdf_stream = io.BytesIO(pdf_data)
-    with pytest.raises(PdfReadError) as exc:
+    with pytest.raises(PdfReadError) as exc, pytest.warns(PdfReadWarning):
         PdfReader(pdf_stream, strict=True)
     assert exc.value.args[0] == "/Prev=0 in the trailer (try opening with strict=False)"
 
@@ -424,7 +464,7 @@ def test_read_missing_startxref():
         b"%010d 00000 n\n"
         b"%010d 00000 n\n"
         b"trailer << /Root 5 0 R /Size 6 >>\n"
-        # b"startxref %d\n"
+        # Removed for this test: b"startxref %d\n"
         b"%%%%EOF"
     )
     pdf_data = pdf_data % (
@@ -433,7 +473,7 @@ def test_read_missing_startxref():
         pdf_data.find(b"3 0 obj"),
         pdf_data.find(b"4 0 obj"),
         pdf_data.find(b"5 0 obj"),
-        # pdf_data.find(b"xref") - 1,
+        # Removed for this test: pdf_data.find(b"xref") - 1,
     )
     pdf_stream = io.BytesIO(pdf_data)
     with pytest.raises(PdfReadError) as exc:
@@ -472,14 +512,16 @@ def test_read_unknown_zero_pages():
         pdf_data.find(b"xref") - 1,
     )
     pdf_stream = io.BytesIO(pdf_data)
-    reader = PdfReader(pdf_stream, strict=True)
-    with pytest.raises(PdfReadError) as exc:
-        reader.numPages
+    with pytest.warns(PdfReadWarning):
+        reader = PdfReader(pdf_stream, strict=True)
+    with pytest.raises(PdfReadError) as exc, pytest.warns(PdfReadWarning):
+        len(reader.pages)
 
     assert exc.value.args[0] == "Could not find object."
-    reader = PdfReader(pdf_stream, strict=False)
-    with pytest.raises(AttributeError) as exc:
-        reader.numPages
+    with pytest.warns(PdfReadWarning):
+        reader = PdfReader(pdf_stream, strict=False)
+    with pytest.raises(AttributeError) as exc, pytest.warns(PdfReadWarning):
+        len(reader.pages)
     assert exc.value.args[0] == "'NoneType' object has no attribute 'get_object'"
 
 
@@ -487,17 +529,17 @@ def test_read_encrypted_without_decryption():
     src = os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf")
     reader = PdfReader(src)
     with pytest.raises(PdfReadError) as exc:
-        reader.numPages
+        len(reader.pages)
     assert exc.value.args[0] == "File has not been decrypted"
 
 
 def test_get_destination_page_number():
     src = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
     reader = PdfReader(src)
-    outlines = reader.getOutlines()
+    outlines = reader._get_outlines()
     for outline in outlines:
         if not isinstance(outline, list):
-            reader.getDestinationPageNumber(outline)
+            reader.get_destination_page_number(outline)
 
 
 def test_do_not_get_stuck_on_large_files_without_start_xref():
@@ -513,7 +555,7 @@ def test_do_not_get_stuck_on_large_files_without_start_xref():
     assert parse_duration < 60
 
 
-def test_PdfReaderDecryptWhenNoID():
+def test_decrypt_when_no_id():
     """
     Decrypt an encrypted file that's missing the 'ID' value in its
     trailer.
@@ -525,7 +567,7 @@ def test_PdfReaderDecryptWhenNoID():
     ) as inputfile:
         ipdf = PdfReader(inputfile)
         ipdf.decrypt("")
-        assert ipdf.getDocumentInfo() == {"/Producer": "European Patent Office"}
+        assert ipdf.metadata == {"/Producer": "European Patent Office"}
 
 
 def test_reader_properties():
@@ -542,37 +584,34 @@ def test_reader_properties():
     [(True), (False)],
 )
 def test_issue604(strict):
-    """
-    Test with invalid destinations
-    """
+    """Test with invalid destinations"""  # todo
     with open(os.path.join(RESOURCE_ROOT, "issue-604.pdf"), "rb") as f:
         pdf = None
         bookmarks = None
         if strict:
-            with pytest.raises(PdfReadError) as exc:
-                pdf = PdfReader(f, strict=strict)
-                bookmarks = pdf.getOutlines()
+            pdf = PdfReader(f, strict=strict)
+            with pytest.raises(PdfReadError) as exc, pytest.warns(PdfReadWarning):
+                bookmarks = pdf._get_outlines()
             if "Unknown Destination" not in exc.value.args[0]:
                 raise Exception("Expected exception not raised")
             return  # bookmarks not correct
         else:
             pdf = PdfReader(f, strict=strict)
-            bookmarks = pdf.getOutlines()
+            with pytest.warns(PdfReadWarning):
+                bookmarks = pdf._get_outlines()
 
-        def getDestPages(x):
-            # print(x)
+        def get_dest_pages(x):
             if isinstance(x, list):
-                r = [getDestPages(y) for y in x]
+                r = [get_dest_pages(y) for y in x]
                 return r
             else:
-                return pdf.getDestinationPageNumber(x) + 1
+                return pdf.get_destination_page_number(x) + 1
 
         out = []
         for (
             b
         ) in bookmarks:  # b can be destination or a list:preferred to just print them
-            out.append(getDestPages(b))
-    # print(out)
+            out.append(get_dest_pages(b))
 
 
 def test_decode_permissions():
@@ -597,9 +636,201 @@ def test_decode_permissions():
     assert reader.decode_permissions(8) == modify
 
 
-def test_VirtualList():
+def test_pages_attribute():
     pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
     reader = PdfReader(pdf_path)
 
     # Test if getting as slice throws an error
     assert len(reader.pages[:]) == 1
+
+
+def test_convert_to_int():
+    assert convert_to_int(b"\x01", 8) == 1
+
+
+def test_convert_to_int_error():
+    with pytest.raises(PdfReadError) as exc:
+        convert_to_int(b"256", 16)
+    assert exc.value.args[0] == "invalid size in convert_to_int"
+
+
+def test_convertToInt_deprecated():
+    msg = (
+        "convertToInt is deprecated and will be removed in PyPDF2 3.0.0. "
+        "Use convert_to_int instead."
+    )
+    with pytest.warns(
+        PendingDeprecationWarning,
+        match=msg,
+    ):
+        assert convertToInt(b"\x01", 8) == 1
+
+
+def test_iss925():
+    url = "https://github.com/py-pdf/PyPDF2/files/8796328/1.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name="iss925.pdf")))
+
+    for page_sliced in reader.pages:
+        page_object = page_sliced.get_object()
+        # Extracts the PDF's Annots (Annotations and Commenting):
+        annots = page_object.get("/Annots")
+        if annots is not None:
+            for annot in annots:
+                annot.get_object()
+
+
+@pytest.mark.xfail(reason="#591")
+def test_extract_text_hello_world():
+    reader = PdfReader(os.path.join(RESOURCE_ROOT, "hello-world.pdf"))
+    text = reader.pages[0].extract_text().split("\n")
+    assert text == [
+        "English:",
+        "Hello World",
+        "Arabic:",
+        "مرحبا بالعالم",
+        "Russian:",
+        "Привет, мир",
+        "Chinese (traditional):",
+        "你好世界",
+        "Thai:",
+        "สวัสดีชาวโลก",
+        "Japanese:",
+        "こんにちは世界",
+    ]
+
+
+def test_read_path():
+    path = Path(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
+    reader = PdfReader(path)
+    assert len(reader.pages) == 1
+
+
+def test_read_not_binary_mode():
+    with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf")) as f:
+        msg = "PdfReader stream/file object is not in binary mode. It may not be read correctly."
+        with pytest.warns(PdfReadWarning, match=msg), pytest.raises(
+            io.UnsupportedOperation
+        ):
+            PdfReader(f)
+
+
+@pytest.mark.xfail(reason="#416")
+def test_read_form_416():
+    url = (
+        "https://www.fda.gov/downloads/AboutFDA/ReportsManualsForms/Forms/UCM074728.pdf"
+    )
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name="issue_416.pdf")))
+    fields = reader.get_form_text_fields()
+    assert len(fields) > 0
+
+
+def test_extract_text_xref_issue_2():
+    # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/981/981961.pdf"
+    msg = r"incorrect startxref pointer\(2\)"
+    with pytest.warns(PdfReadWarning, match=msg):
+        reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-981961.pdf")))
+    for page in reader.pages:
+        page.extract_text()
+
+
+def test_extract_text_xref_issue_3():
+    # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/977/977774.pdf"
+    msg = r"incorrect startxref pointer\(3\)"
+    with pytest.warns(PdfReadWarning, match=msg):
+        reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-977774.pdf")))
+    for page in reader.pages:
+        page.extract_text()
+
+
+def test_extract_text_pdf15():
+    # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/976/976030.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-976030.pdf")))
+    for page in reader.pages:
+        page.extract_text()
+
+
+def test_extract_text_xref_table_21_bytes_clrf():
+    # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/956/956939.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-956939.pdf")))
+    for page in reader.pages:
+        page.extract_text()
+
+
+def test_get_fields():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/972/972486.pdf"
+    name = "tika-972486.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    fields = reader.get_fields()
+    assert fields is not None
+    assert "c1-1" in fields
+    assert dict(fields["c1-1"]) == ({"/FT": "/Btn", "/T": "c1-1"})
+
+
+def test_get_fields_read_else_block():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/934/934771.pdf"
+    name = "tika-934771.pdf"
+    with pytest.raises(PdfReadError) as exc:
+        PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    assert exc.value.args[0] == "Could not find xref table at specified location"
+
+
+def test_get_fields_read_else_block2():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/914/914902.pdf"
+    name = "tika-914902.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    fields = reader.get_fields()
+    assert fields is None
+
+
+def test_get_fields_read_else_block3():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/957/957721.pdf"
+    name = "tika-957721.pdf"
+    with pytest.raises(PdfReadError) as exc:
+        PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    assert exc.value.args[0] == "Could not find xref table at specified location"
+
+
+def test_metadata_is_none():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/963/963692.pdf"
+    name = "tika-963692.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    assert reader.metadata is None
+
+
+def test_get_fields_read_write_report():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/909/909655.pdf"
+    name = "tika-909655.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    with open("tmp-fields-report.txt", "w") as fp:
+        fields = reader.get_fields(fileobj=fp)
+    assert fields
+
+    # cleanup
+    os.remove("tmp-fields-report.txt")
+
+
+def test_unexpected_destination():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/913/913678.pdf"
+    name = "tika-913678.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    merger = PdfMerger()
+    with pytest.raises(PdfReadError) as exc:
+        merger.append(reader)
+    assert exc.value.args[0] == "Unexpected destination '/1'"
+
+
+@pytest.mark.parametrize(
+    "src,pdf_header",
+    [
+        (os.path.join(RESOURCE_ROOT, "attachment.pdf"), "%PDF-1.5"),
+        (os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "%PDF-1.5"),
+    ],
+)
+def test_header(src, pdf_header):
+    reader = PdfReader(src)
+
+    assert reader.pdf_header == pdf_header

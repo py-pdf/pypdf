@@ -1,12 +1,15 @@
 import os
 
+import pytest
+
 import PyPDF2
-from PyPDF2 import PdfReader
+from PyPDF2 import PdfReader, Transformation
 from PyPDF2.generic import Destination
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
 RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
+SAMPLE_ROOT = os.path.join(PROJECT_ROOT, "sample-files")
 
 
 def page_ops(pdf_path, password):
@@ -18,14 +21,24 @@ def page_ops(pdf_path, password):
         reader.decrypt(password)
 
     page = reader.pages[0]
-    page.mergeRotatedScaledPage(page, 90, 1, 1)
-    page.mergeScaledTranslatedPage(page, 1, 1, 1)
-    page.merge_rotated_scaled_translated_page(page, 90, 1, 1, 1, 1)
+
+    op = Transformation().rotate(90).scale(1.2)
+    page.add_transformation(op)
+    page.merge_page(page)
+
+    op = Transformation().scale(1).translate(tx=1, ty=1)
+    page.add_transformation(op)
+    page.merge_page(page)
+
+    op = Transformation().rotate(90).scale(1).translate(tx=1, ty=1)
+    page.add_transformation(op)
+    page.merge_page(page)
+
     page.add_transformation((1, 0, 0, 0, 0, 0))
     page.scale(2, 2)
     page.scale_by(0.5)
     page.scale_to(100, 100)
-    page.compressContentStreams()
+    page.compress_content_streams()
     page.extract_text()
 
 
@@ -53,9 +66,9 @@ def merge():
     file_merger.append(pdf_forms)
 
     # Merging an encrypted file
-    pdfr = PyPDF2.PdfReader(pdf_pw)
-    pdfr.decrypt("openpassword")
-    file_merger.append(pdfr)
+    reader = PyPDF2.PdfReader(pdf_pw)
+    reader.decrypt("openpassword")
+    file_merger.append(reader)
 
     # PdfReader object:
     file_merger.append(PyPDF2.PdfReader(pdf_path, "rb"), bookmark=True)
@@ -76,8 +89,10 @@ def merge():
     file_merger.close()
 
     # Check if bookmarks are correct
-    pdfr = PyPDF2.PdfReader(tmp_path)
-    assert [el.title for el in pdfr.getOutlines() if isinstance(el, Destination)] == [
+    reader = PyPDF2.PdfReader(tmp_path)
+    assert [
+        el.title for el in reader._get_outlines() if isinstance(el, Destination)
+    ] == [
         "A bookmark",
         "Foo",
         "Bar",
@@ -102,3 +117,17 @@ def test_merge(benchmark):
     Rotation, scaling, translation, content stream compression, text extraction
     """
     benchmark(merge)
+
+
+def text_extraction(pdf_path):
+    reader = PdfReader(pdf_path)
+    text = ""
+    for page in reader.pages:
+        text += page.extract_text()
+    return text
+
+
+@pytest.mark.filterwarnings("ignore::PyPDF2.errors.PdfReadWarning")
+def test_text_extraction(benchmark):
+    file_path = os.path.join(SAMPLE_ROOT, "009-pdflatex-geotopo/GeoTopo.pdf")
+    benchmark(text_extraction, file_path)

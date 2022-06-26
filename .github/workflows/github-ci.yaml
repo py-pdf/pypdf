@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.6", "3.7", "3.10.1", "3.8", "3.9", "3.10"]
+        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10"]
 
     steps:
     - name: Checkout Code
@@ -43,15 +43,10 @@ jobs:
         pip install .
     - name: Test with flake8
       run: |
-        flake8 . --ignore=E203,W503,W504,E,F403,F405 --exclude build,sample-files
+        flake8 .
     - name: Test with pytest
       run: |
         python -m coverage run --parallel-mode -m pytest tests -vv
-      if: matrix.python-version != '3.10.1'
-    - name: Test with pytest (OO flag)
-      run: |
-        python -OO -m coverage run --parallel-mode -m pytest tests -vv
-      if: matrix.python-version == '3.10.1'
     - name: Test with mypy
       run : |
         mypy PyPDF2 --show-error-codes --disallow-untyped-defs --disallow-incomplete-defs
@@ -78,6 +73,16 @@ jobs:
       - run: check-wheel-contents dist/*.whl
       - name: Check long_description
         run: python -m twine check dist/*
+
+      # - name: Release to pypi if tagged.
+      #   if: startsWith(github.ref, 'refs/tags')
+      #   uses: pypa/gh-action-pypi-publish@release/v1
+      #   with:
+      #     user: __token__
+      #     password: ${{ secrets.PYPI_API_TOKEN }}
+      - name: Create Github release if tagged.
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
 
   coverage:
     name: Combine & check coverage.
