@@ -67,7 +67,8 @@ from .generic import (
     StreamObject,
     TextStringObject,
     TreeObject,
-    createStringObject,
+    _create_bookmark,
+    create_string_object,
 )
 from .types import (
     BookmarkTypes,
@@ -89,7 +90,7 @@ class PdfWriter:
     """
 
     def __init__(self) -> None:
-        self._header = b_("%PDF-1.3")
+        self._header = b"%PDF-1.3"
         self._objects: List[Optional[PdfObject]] = []  # array of indirect objects
 
         # The root of our page tree node.
@@ -107,7 +108,7 @@ class PdfWriter:
         info = DictionaryObject()
         info.update(
             {
-                NameObject("/Producer"): createStringObject(
+                NameObject("/Producer"): create_string_object(
                     codecs.BOM_UTF16_BE + "PyPDF2".encode("utf-16be")
                 )
             }
@@ -214,18 +215,30 @@ class PdfWriter:
         deprecate_with_replacement("insertPage", "insert_page")
         self.insert_page(page, index)
 
-    def get_page(self, pageNumber: int) -> PageObject:  # TODO: PEP8
+    def get_page(
+        self, page_number: Optional[int] = None, pageNumber: Optional[int] = None
+    ) -> PageObject:
         """
         Retrieve a page by number from this PDF file.
 
-        :param int pageNumber: The page number to retrieve
+        :param int page_number: The page number to retrieve
             (pages begin at zero)
-        :return: the page at the index given by *pageNumber*
+        :return: the page at the index given by *page_number*
         :rtype: :class:`PageObject<PyPDF2._page.PageObject>`
         """
+        if pageNumber is not None:  # pragma: no cover
+            if page_number is not None:
+                raise ValueError("Please only use the page_number parameter")
+            else:
+                deprecate_with_replacement(
+                    "get_page(pageNumber)", "get_page(page_number)", "4.0.0"
+                )
+                page_number = pageNumber
+        if page_number is None and pageNumber is None:  # pragma: no cover
+            raise ValueError("Please specify the page_number")
         pages = cast(Dict[str, Any], self.get_object(self._pages))
-        # XXX: crude hack
-        return pages[PA.KIDS][pageNumber].get_object()
+        # TODO: crude hack
+        return pages[PA.KIDS][page_number].get_object()
 
     def getPage(self, pageNumber: int) -> PageObject:  # pragma: no cover
         """
@@ -347,7 +360,7 @@ class PdfWriter:
             {
                 NameObject(PA.TYPE): NameObject("/Action"),
                 NameObject("/S"): NameObject("/JavaScript"),
-                NameObject("/JS"): NameObject("(%s)" % javascript),
+                NameObject("/JS"): NameObject(f"({javascript})"),
             }
         )
         js_indirect_object = self._add_object(js)
@@ -361,7 +374,7 @@ class PdfWriter:
                 NameObject("/JavaScript"): DictionaryObject(
                     {
                         NameObject(CA.NAMES): ArrayObject(
-                            [createStringObject(js_string_name), js_indirect_object]
+                            [create_string_object(js_string_name), js_indirect_object]
                         )
                     }
                 )
@@ -402,30 +415,30 @@ class PdfWriter:
         # * The file's name, which goes in the Catalog
 
         # The entry for the file
-        """ Sample:
-        8 0 obj
-        <<
-         /Length 12
-         /Type /EmbeddedFile
-        >>
-        stream
-        Hello world!
-        endstream
-        endobj
-        """
+        # Sample:
+        # 8 0 obj
+        # <<
+        #  /Length 12
+        #  /Type /EmbeddedFile
+        # >>
+        # stream
+        # Hello world!
+        # endstream
+        # endobj
+
         file_entry = DecodedStreamObject()
         file_entry.set_data(data)
         file_entry.update({NameObject(PA.TYPE): NameObject("/EmbeddedFile")})
 
         # The Filespec entry
-        """ Sample:
-        7 0 obj
-        <<
-         /Type /Filespec
-         /F (hello.txt)
-         /EF << /F 8 0 R >>
-        >>
-        """
+        # Sample:
+        # 7 0 obj
+        # <<
+        #  /Type /Filespec
+        #  /F (hello.txt)
+        #  /EF << /F 8 0 R >>
+        # >>
+
         ef_entry = DictionaryObject()
         ef_entry.update({NameObject("/F"): file_entry})
 
@@ -433,7 +446,7 @@ class PdfWriter:
         filespec.update(
             {
                 NameObject(PA.TYPE): NameObject("/Filespec"),
-                NameObject("/F"): createStringObject(
+                NameObject("/F"): create_string_object(
                     filename
                 ),  # Perhaps also try TextStringObject
                 NameObject("/EF"): ef_entry,
@@ -441,22 +454,21 @@ class PdfWriter:
         )
 
         # Then create the entry for the root, as it needs a reference to the Filespec
-        """ Sample:
-        1 0 obj
-        <<
-         /Type /Catalog
-         /Outlines 2 0 R
-         /Pages 3 0 R
-         /Names << /EmbeddedFiles << /Names [(hello.txt) 7 0 R] >> >>
-        >>
-        endobj
+        # Sample:
+        # 1 0 obj
+        # <<
+        #  /Type /Catalog
+        #  /Outlines 2 0 R
+        #  /Pages 3 0 R
+        #  /Names << /EmbeddedFiles << /Names [(hello.txt) 7 0 R] >> >>
+        # >>
+        # endobj
 
-        """
         embedded_files_names_dictionary = DictionaryObject()
         embedded_files_names_dictionary.update(
             {
                 NameObject(CA.NAMES): ArrayObject(
-                    [createStringObject(filename), filespec]
+                    [create_string_object(filename), filespec]
                 )
             }
         )
@@ -693,10 +705,8 @@ class PdfWriter:
         """
         if hasattr(stream, "mode") and "b" not in stream.mode:
             warnings.warn(
-                (
-                    "File <{}> to write to is not in binary mode. "  # type: ignore
-                    "It may not be written to correctly."
-                ).format(stream.name)
+                f"File <{stream.name}> to write to is not in binary mode. "  # type: ignore
+                "It may not be written to correctly."
             )
 
         if not self._root:
@@ -712,8 +722,7 @@ class PdfWriter:
         # we sweep for indirect references.  This forces self-page-referencing
         # trees to reference the correct new object location, rather than
         # copying in a new copy of the page object.
-        for obj_index in range(len(self._objects)):
-            obj = self._objects[obj_index]
+        for obj_index, obj in enumerate(self._objects):
             if isinstance(obj, PageObject) and obj.indirect_ref is not None:
                 data = obj.indirect_ref
                 if data.pdf not in external_reference_map:
@@ -731,19 +740,19 @@ class PdfWriter:
         object_positions = self._write_header(stream)
         xref_location = self._write_xref_table(stream, object_positions)
         self._write_trailer(stream)
-        stream.write(b_("\nstartxref\n%s\n%%%%EOF\n" % (xref_location)))  # eof
+        stream.write(b_(f"\nstartxref\n{xref_location}\n%%EOF\n"))  # eof
 
     def _write_header(self, stream: StreamType) -> List[int]:
         object_positions = []
-        stream.write(self._header + b_("\n"))
-        stream.write(b_("%\xE2\xE3\xCF\xD3\n"))
-        for i in range(len(self._objects)):
+        stream.write(self._header + b"\n")
+        stream.write(b"%\xE2\xE3\xCF\xD3\n")
+        for i, obj in enumerate(self._objects):
             obj = self._objects[i]
             # If the obj is None we can't write anything
             if obj is not None:
                 idnum = i + 1
                 object_positions.append(stream.tell())
-                stream.write(b_(str(idnum) + " 0 obj\n"))
+                stream.write(b_(str(idnum)) + b" 0 obj\n")
                 key = None
                 if hasattr(self, "_encrypt") and idnum != self._encrypt.idnum:
                     pack1 = struct.pack("<i", i + 1)[:3]
@@ -753,20 +762,20 @@ class PdfWriter:
                     md5_hash = md5(key).digest()
                     key = md5_hash[: min(16, len(self._encrypt_key) + 5)]
                 obj.write_to_stream(stream, key)
-                stream.write(b_("\nendobj\n"))
+                stream.write(b"\nendobj\n")
         return object_positions
 
     def _write_xref_table(self, stream: StreamType, object_positions: List[int]) -> int:
         xref_location = stream.tell()
-        stream.write(b_("xref\n"))
-        stream.write(b_("0 %s\n" % (len(self._objects) + 1)))
-        stream.write(b_("%010d %05d f \n" % (0, 65535)))
+        stream.write(b"xref\n")
+        stream.write(b_(f"0 {len(self._objects) + 1}\n"))
+        stream.write(b_(f"{0:0>10} {65535:0>5} f \n"))
         for offset in object_positions:
-            stream.write(b_("%010d %05d n \n" % (offset, 0)))
+            stream.write(b_(f"{offset:0>10} {0:0>5} n \n"))
         return xref_location
 
     def _write_trailer(self, stream: StreamType) -> None:
-        stream.write(b_("trailer\n"))
+        stream.write(b"trailer\n")
         trailer = DictionaryObject()
         trailer.update(
             {
@@ -790,7 +799,7 @@ class PdfWriter:
         """
         args = {}
         for key, value in list(infos.items()):
-            args[NameObject(key)] = createStringObject(value)
+            args[NameObject(key)] = create_string_object(value)
         self.get_object(self._info).update(args)  # type: ignore
 
     def addMetadata(self, infos: Dict[str, Any]) -> None:  # pragma: no cover
@@ -873,9 +882,8 @@ class PdfWriter:
                     except (ValueError, RecursionError):
                         # Unable to resolve the Object, returning NullObject instead.
                         warnings.warn(
-                            "Unable to resolve [{}: {}], returning NullObject instead".format(
-                                data.__class__.__name__, data
-                            )
+                            f"Unable to resolve [{data.__class__.__name__}: {data}], "
+                            "returning NullObject instead"
                         )
                         return NullObject()
                 return newobj
@@ -1024,9 +1032,9 @@ class PdfWriter:
 
         return bookmark_ref
 
-    def addBookmarkDict(  # pragma: no cover
+    def addBookmarkDict(
         self, bookmark: BookmarkTypes, parent: Optional[TreeObject] = None
-    ) -> IndirectObject:
+    ) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -1044,7 +1052,7 @@ class PdfWriter:
         bold: bool = False,
         italic: bool = False,
         fit: FitType = "/Fit",
-        *args: ZoomArgsType,
+        *args: ZoomArgType,
     ) -> IndirectObject:
         """
         Add a bookmark to this PDF file.
@@ -1060,8 +1068,7 @@ class PdfWriter:
         :param str fit: The fit of the destination page. See
             :meth:`addLink()<addLink>` for details.
         """
-        pages_obj = cast(Dict[str, Any], self.get_object(self._pages))
-        page_ref = pages_obj[PA.KIDS][pagenum]
+        page_ref = NumberObject(pagenum)
         action = DictionaryObject()
         zoom_args: ZoomArgsType = []
         for a in args:
@@ -1083,27 +1090,7 @@ class PdfWriter:
         if parent is None:
             parent = outline_ref
 
-        bookmark = TreeObject()
-
-        bookmark.update(
-            {
-                NameObject("/A"): action_ref,
-                NameObject("/Title"): createStringObject(title),
-            }
-        )
-
-        if color is not None:
-            bookmark.update(
-                {NameObject("/C"): ArrayObject([FloatObject(c) for c in color])}
-            )
-
-        format_flag = 0
-        if italic:
-            format_flag += 1
-        if bold:
-            format_flag += 2
-        if format_flag:
-            bookmark.update({NameObject("/F"): NumberObject(format_flag)})
+        bookmark = _create_bookmark(action_ref, title, color, italic, bold)
 
         bookmark_ref = self._add_object(bookmark)
 
@@ -1122,7 +1109,7 @@ class PdfWriter:
         bold: bool = False,
         italic: bool = False,
         fit: FitType = "/Fit",
-        *args: ZoomArgsType,
+        *args: ZoomArgType,
     ) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
@@ -1209,35 +1196,34 @@ class PdfWriter:
         """
         pg_dict = cast(DictionaryObject, self.get_object(self._pages))
         pages = cast(ArrayObject, pg_dict[PA.KIDS])
-        jump_operators = [
-            b_("cm"),
-            b_("w"),
-            b_("J"),
-            b_("j"),
-            b_("M"),
-            b_("d"),
-            b_("ri"),
-            b_("i"),
-            b_("gs"),
-            b_("W"),
-            b_("b"),
-            b_("s"),
-            b_("S"),
-            b_("f"),
-            b_("F"),
-            b_("n"),
-            b_("m"),
-            b_("l"),
-            b_("c"),
-            b_("v"),
-            b_("y"),
-            b_("h"),
-            b_("B"),
-            b_("Do"),
-            b_("sh"),
-        ]
-        for j in range(len(pages)):
-            page = pages[j]
+        jump_operators = (
+            b"cm",
+            b"w",
+            b"J",
+            b"j",
+            b"M",
+            b"d",
+            b"ri",
+            b"i",
+            b"gs",
+            b"W",
+            b"b",
+            b"s",
+            b"S",
+            b"f",
+            b"F",
+            b"n",
+            b"m",
+            b"l",
+            b"c",
+            b"v",
+            b"y",
+            b"h",
+            b"B",
+            b"Do",
+            b"sh",
+        )
+        for page in pages:
             page_ref = cast(DictionaryObject, self.get_object(page))
             content = page_ref["/Contents"].get_object()
             if not isinstance(content, ContentStream):
@@ -1246,32 +1232,32 @@ class PdfWriter:
             _operations = []
             seq_graphics = False
             for operands, operator in content.operations:
-                if operator in [b_("Tj"), b_("'")]:
+                if operator in [b"Tj", b"'"]:
                     text = operands[0]
                     if ignore_byte_string_object and not isinstance(
                         text, TextStringObject
                     ):
                         operands[0] = TextStringObject()
-                elif operator == b_('"'):
+                elif operator == b'"':
                     text = operands[2]
                     if ignore_byte_string_object and not isinstance(
                         text, TextStringObject
                     ):
                         operands[2] = TextStringObject()
-                elif operator == b_("TJ"):
+                elif operator == b"TJ":
                     for i in range(len(operands[0])):
                         if ignore_byte_string_object and not isinstance(
                             operands[0][i], TextStringObject
                         ):
                             operands[0][i] = TextStringObject()
 
-                if operator == b_("q"):
+                if operator == b"q":
                     seq_graphics = True
-                if operator == b_("Q"):
+                if operator == b"Q":
                     seq_graphics = False
                 if seq_graphics and operator in jump_operators:
                     continue
-                if operator == b_("re"):
+                if operator == b"re":
                     continue
                 _operations.append((operands, operator))
 
@@ -1298,14 +1284,13 @@ class PdfWriter:
         """
         pg_dict = cast(DictionaryObject, self.get_object(self._pages))
         pages = cast(List[IndirectObject], pg_dict[PA.KIDS])
-        for j in range(len(pages)):
-            page = pages[j]
+        for page in pages:
             page_ref = cast(Dict[str, Any], self.get_object(page))
             content = page_ref["/Contents"].get_object()
             if not isinstance(content, ContentStream):
                 content = ContentStream(content, page_ref)
             for operands, operator in content.operations:
-                if operator in [b_("Tj"), b_("'")]:
+                if operator in [b"Tj", b"'"]:
                     text = operands[0]
                     if not ignore_byte_string_object:
                         if isinstance(text, TextStringObject):
@@ -1313,7 +1298,7 @@ class PdfWriter:
                     else:
                         if isinstance(text, (TextStringObject, ByteStringObject)):
                             operands[0] = TextStringObject()
-                elif operator == b_('"'):
+                elif operator == b'"':
                     text = operands[2]
                     if not ignore_byte_string_object:
                         if isinstance(text, TextStringObject):
@@ -1321,7 +1306,7 @@ class PdfWriter:
                     else:
                         if isinstance(text, (TextStringObject, ByteStringObject)):
                             operands[2] = TextStringObject()
-                elif operator == b_("TJ"):
+                elif operator == b"TJ":
                     for i in range(len(operands[0])):
                         if not ignore_byte_string_object:
                             if isinstance(operands[0][i], TextStringObject):
@@ -1354,7 +1339,7 @@ class PdfWriter:
     ) -> None:
         """
         Add an URI from a rectangular area to the specified page.
-        This uses the basic structure of AddLink
+        This uses the basic structure of :meth:`add_link`
 
         :param int pagenum: index of the page on which to place the URI action.
         :param int uri: string -- uri of resource to link to.
@@ -1364,9 +1349,6 @@ class PdfWriter:
         :param border: if provided, an array describing border-drawing
             properties. See the PDF spec for details. No border will be
             drawn if this argument is omitted.
-
-        REMOVED FIT/ZOOM ARG
-        -John Mulligan
         """
 
         page_link = self.get_object(self._pages)[PA.KIDS][pagenum]  # type: ignore
@@ -1539,7 +1521,7 @@ class PdfWriter:
         deprecate_with_replacement("addLink", "add_link")
         return self.add_link(pagenum, pagedest, rect, border, fit, *args)
 
-    _valid_layouts = [
+    _valid_layouts = (
         "/NoLayout",
         "/SinglePage",
         "/OneColumn",
@@ -1547,7 +1529,7 @@ class PdfWriter:
         "/TwoColumnRight",
         "/TwoPageLeft",
         "/TwoPageRight",
-    ]
+    )
 
     def _get_page_layout(self) -> Optional[LayoutType]:
         try:
@@ -1591,7 +1573,7 @@ class PdfWriter:
         if not isinstance(layout, NameObject):
             if layout not in self._valid_layouts:
                 warnings.warn(
-                    "Layout should be one of: {}".format(", ".join(self._valid_layouts))
+                    f"Layout should be one of: {'', ''.join(self._valid_layouts)}"
                 )
             layout = NameObject(layout)
         self._root_object.update({NameObject("/PageLayout"): layout})
@@ -1656,14 +1638,14 @@ class PdfWriter:
         deprecate_with_replacement("pageLayout", "page_layout")
         self.page_layout = layout
 
-    _valid_modes = [
+    _valid_modes = (
         "/UseNone",
         "/UseOutlines",
         "/UseThumbs",
         "/FullScreen",
         "/UseOC",
         "/UseAttachments",
-    ]
+    )
 
     def _get_page_mode(self) -> Optional[PagemodeType]:
         try:
@@ -1690,9 +1672,7 @@ class PdfWriter:
             mode_name: NameObject = mode
         else:
             if mode not in self._valid_modes:
-                warnings.warn(
-                    "Mode should be one of: {}".format(", ".join(self._valid_modes))
-                )
+                warnings.warn(f"Mode should be one of: {', '.join(self._valid_modes)}")
             mode_name = NameObject(mode)
         self._root_object.update({NameObject("/PageMode"): mode_name})
 

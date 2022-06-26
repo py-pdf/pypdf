@@ -13,11 +13,19 @@ install PyPDF2:
 pip install PyPDF2
 ```
 
-If you are not a super-user (a system adminstrator / root), you can also just
+If you are not a super-user (a system administrator / root), you can also just
 install PyPDF2 for your current user:
 
 ```bash
 pip install --user PyPDF2
+```
+
+If you plan to use PyPDF2 for encrypting or decrypting PDFs that use AES, you
+will need to install some extra dependencies. Encryption using RC4 is supported
+using the regular installation.
+
+```
+pip install PyPDF2[crypto]
 ```
 
 ## Anaconda

@@ -3,9 +3,11 @@ from io import BytesIO
 
 import pytest
 
-from PyPDF2 import PdfReader, PdfWriter
+from PyPDF2 import PdfMerger, PdfReader, PdfWriter
 from PyPDF2.errors import PageSizeNotDefinedError
 from PyPDF2.generic import RectangleObject
+
+from . import get_pdf_from_url
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -44,6 +46,21 @@ def test_writer_operations():
     writer.insert_page(reader_outline.pages[0], 0)
     writer.add_bookmark_destination(page)
     writer.remove_links()
+    writer.add_bookmark_destination(page)
+    bm = writer.add_bookmark(
+        "A bookmark", 0, None, (255, 0, 15), True, True, "/FitBV", 10
+    )
+    writer.add_bookmark(
+        "The XYZ fit", 0, bm, (255, 0, 15), True, True, "/XYZ", 10, 20, 3
+    )
+    writer.add_bookmark("The FitH fit", 0, bm, (255, 0, 15), True, True, "/FitH", 10)
+    writer.add_bookmark("The FitV fit", 0, bm, (255, 0, 15), True, True, "/FitV", 10)
+    writer.add_bookmark(
+        "The FitR fit", 0, bm, (255, 0, 15), True, True, "/FitR", 10, 20, 30, 40
+    )
+    writer.add_bookmark("The FitB fit", 0, bm, (255, 0, 15), True, True, "/FitB")
+    writer.add_bookmark("The FitBH fit", 0, bm, (255, 0, 15), True, True, "/FitBH", 10)
+    writer.add_bookmark("The FitBV fit", 0, bm, (255, 0, 15), True, True, "/FitBV", 10)
     writer.add_blank_page()
     writer.add_uri(2, "https://example.com", RectangleObject([0, 0, 100, 100]))
     writer.add_link(2, 1, RectangleObject([0, 0, 100, 100]))
@@ -248,19 +265,35 @@ def test_fill_form():
         writer.write(output_stream)
 
 
-def test_encrypt():
+@pytest.mark.parametrize(
+    "use_128bit",
+    [(True), (False)],
+)
+def test_encrypt(use_128bit):
     reader = PdfReader(os.path.join(RESOURCE_ROOT, "form.pdf"))
     writer = PdfWriter()
 
     page = reader.pages[0]
+    orig_text = page.extract_text()
 
     writer.add_page(page)
-    writer.encrypt(user_pwd="userpwd", owner_pwd="ownerpwd", use_128bit=False)
+    writer.encrypt(user_pwd="userpwd", owner_pwd="ownerpwd", use_128bit=use_128bit)
 
     # write "output" to PyPDF2-output.pdf
     tmp_filename = "dont_commit_encrypted.pdf"
     with open(tmp_filename, "wb") as output_stream:
         writer.write(output_stream)
+
+    with open(tmp_filename, "rb") as input_stream:
+        data = input_stream.read()
+
+    assert b"foo" not in data
+
+    reader = PdfReader(tmp_filename, password="userpwd")
+    new_text = reader.pages[0].extract_text()
+    assert reader.metadata.get("/Producer") == "PyPDF2"
+
+    assert new_text == orig_text
 
     # Cleanup
     os.remove(tmp_filename)
@@ -440,3 +473,29 @@ def test_issue301():
         writer.append_pages_from_reader(reader)
         o = BytesIO()
         writer.write(o)
+
+
+def test_sweep_indirect_references_nullobject_exception():
+    # TODO: Check this more closely... this looks weird
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
+    name = "tika-924666.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    merger = PdfMerger()
+    merger.append(reader)
+    with pytest.warns(UserWarning, match="returning NullObject instead"):
+        merger.write("tmp-merger-do-not-commit.pdf")
+
+    # cleanup
+    os.remove("tmp-merger-do-not-commit.pdf")
+
+
+def test_write_bookmark_on_page_fitv():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/922/922840.pdf"
+    name = "tika-922840.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    merger = PdfMerger()
+    merger.append(reader)
+    merger.write("tmp-merger-do-not-commit.pdf")
+
+    # cleanup
+    os.remove("tmp-merger-do-not-commit.pdf")

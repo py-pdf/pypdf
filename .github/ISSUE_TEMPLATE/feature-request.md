@@ -1,9 +1,10 @@
 ---
 name: Request a Feature
 about: What do you think is missing in PyPDF2?
-title: ""
+title: ''
 labels: Feature Request
 assignees: MartinThoma
+
 ---
 
 ## Explanation

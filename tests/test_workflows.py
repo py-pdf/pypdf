@@ -7,7 +7,9 @@ import pytest
 
 from PyPDF2 import PdfReader
 from PyPDF2.constants import PageAttributes as PG
-from tests import get_pdf_from_url
+from PyPDF2.errors import PdfReadWarning
+
+from . import get_pdf_from_url
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -139,15 +141,50 @@ def test_rotate_45():
         # 6 instead of 5: as there is an issue in page 5 (missing objects)
         # and too complex to handle the warning without hiding real regressions
         (True, "https://arxiv.org/pdf/1601.03642.pdf", [0, 1, 5, 7]),
+        (
+            True,
+            "https://github.com/py-pdf/PyPDF2/files/3796761/17343_2008_Order_09-Jan-2019.pdf",
+            [0, 1],
+        ),
+        (
+            True,
+            "https://github.com/py-pdf/PyPDF2/files/8884471/ssi_manwaring.pdf",
+            [0, 1],
+        ),
+        (True, "https://github.com/py-pdf/PyPDF2/files/8884469/999092.pdf", [0, 1]),
+        (
+            True,
+            "file://" + os.path.join(RESOURCE_ROOT, "test Orient.pdf"),
+            [0],
+        ),  # TODO: preparation of text orientation validation
+        (
+            True,
+            "https://github.com/py-pdf/PyPDF2/files/8884470/fdocuments.in_sweet-fundamentals-of-crystallography.pdf",
+            [0, 1, 34, 35, 36, 118, 119, 120, 121],
+        ),
+        (True, "https://github.com/py-pdf/PyPDF2/files/8884493/998167.pdf", [0]),
+        (
+            True,
+            "https://corpora.tika.apache.org/base/docs/govdocs1/971/971703.pdf",
+            [0, 1, 5, 8, 14],
+        ),
+        (  # faulty PDF, wrongly linearized and with 2 trailer, second with /Root
+            True,
+            "https://corpora.tika.apache.org/base/docs/govdocs1/989/989691.pdf",
+            [0],
+        ),
     ],
 )
 def test_extract_textbench(enable, url, pages, print_result=False):
     if not enable:
         return
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, url.split("/")[-1])))
-    for page_number in pages:
-        if print_result:
-            print(f"**************** {url} / page {page_number} ****************")
-        rst = reader.pages[page_number].extract_text()
-        if print_result:
-            print(f"{rst}\n*****************************\n")
+    try:
+        reader = PdfReader(BytesIO(get_pdf_from_url(url, url.split("/")[-1])))
+        for page_number in pages:
+            if print_result:
+                print(f"**************** {url} / page {page_number} ****************")
+            rst = reader.pages[page_number].extract_text()
+            if print_result:
+                print(f"{rst}\n*****************************\n")
+    except PdfReadWarning:
+        pass
