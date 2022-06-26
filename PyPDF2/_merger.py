@@ -202,7 +202,7 @@ class PdfMerger:
             stream = FileIO(fileobj, "rb")
             my_file = True
         elif isinstance(fileobj, PdfReader):
-            if hasattr(fileobj, "_encryption"):
+            if fileobj._encryption:
                 encryption_obj = fileobj._encryption
             orig_tell = fileobj.stream.tell()
             fileobj.stream.seek(0)
