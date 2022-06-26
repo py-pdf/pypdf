@@ -29,7 +29,7 @@ FitType: TypeAlias = Literal[
     "/Fit", "/XYZ", "/FitH", "/FitV", "/FitR", "/FitB", "/FitBH", "/FitBV"
 ]
 # Those go with the FitType: They specify values for the fit
-ZoomArgType: TypeAlias = Union[NumberObject, NullObject]
+ZoomArgType: TypeAlias = Union[NumberObject, NullObject, float]
 ZoomArgsType: TypeAlias = List[ZoomArgType]
 
 # Recursive types are not yet supported by mypy:

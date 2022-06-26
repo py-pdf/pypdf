@@ -5,7 +5,7 @@ import pytest
 
 from PyPDF2 import PdfReader, PdfWriter
 from PyPDF2.constants import TypFitArguments as TF
-from PyPDF2.errors import PdfReadError, PdfStreamError
+from PyPDF2.errors import PdfReadError, PdfReadWarning, PdfStreamError
 from PyPDF2.generic import (
     ArrayObject,
     Bookmark,
@@ -21,12 +21,14 @@ from PyPDF2.generic import (
     RectangleObject,
     TextStringObject,
     TreeObject,
-    createStringObject,
+    create_string_object,
     encode_pdfdocencoding,
+    read_hex_string_from_stream,
     read_object,
-    readHexStringFromStream,
-    readStringFromStream,
+    read_string_from_stream,
 )
+
+from . import get_pdf_from_url
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -42,11 +44,11 @@ def test_number_object_exception():
         NumberObject(1.5 * 2**10000)
 
 
-def test_createStringObject_exception():
+def test_create_string_object_exception():
     with pytest.raises(TypeError) as exc:
-        createStringObject(123)
+        create_string_object(123)
     assert (  # typeguard is not running
-        exc.value.args[0] == "createStringObject should have str or unicode arg"
+        exc.value.args[0] == "create_string_object should have str or unicode arg"
     ) or (  # typeguard is enabled
         'type of argument "string" must be one of (str, bytes); got int instead'
         in exc.value.args[0]
@@ -115,43 +117,43 @@ def test_indirect_object_premature(value):
 
 def test_readHexStringFromStream():
     stream = BytesIO(b"a1>")
-    assert readHexStringFromStream(stream) == "\x10"
+    assert read_hex_string_from_stream(stream) == "\x10"
 
 
 def test_readHexStringFromStream_exception():
     stream = BytesIO(b"")
     with pytest.raises(PdfStreamError) as exc:
-        readHexStringFromStream(stream)
+        read_hex_string_from_stream(stream)
     assert exc.value.args[0] == "Stream has ended unexpectedly"
 
 
 def test_readStringFromStream_exception():
     stream = BytesIO(b"x")
     with pytest.raises(PdfStreamError) as exc:
-        readStringFromStream(stream)
+        read_string_from_stream(stream)
     assert exc.value.args[0] == "Stream has ended unexpectedly"
 
 
 def test_readStringFromStream_not_in_escapedict_no_digit():
     stream = BytesIO(b"x\\y")
     with pytest.raises(PdfReadError) as exc:
-        readStringFromStream(stream)
+        read_string_from_stream(stream)
     assert exc.value.args[0] == "Stream has ended unexpectedly"
 
 
 def test_readStringFromStream_multichar_eol():
     stream = BytesIO(b"x\\\n )")
-    assert readStringFromStream(stream) == " "
+    assert read_string_from_stream(stream) == " "
 
 
 def test_readStringFromStream_multichar_eol2():
     stream = BytesIO(b"x\\\n\n)")
-    assert readStringFromStream(stream) == ""
+    assert read_string_from_stream(stream) == ""
 
 
 def test_readStringFromStream_excape_digit():
     stream = BytesIO(b"x\\1a )")
-    assert readStringFromStream(stream) == "\x01 "
+    assert read_string_from_stream(stream) == "\x01 "
 
 
 def test_NameObject():
@@ -179,7 +181,7 @@ def test_destination_fit_r():
     assert d.top == FloatObject(0)
     assert d.bottom == FloatObject(0)
     assert list(d) == []
-    d.emptyTree()
+    d.empty_tree()
 
 
 def test_destination_fit_v():
@@ -401,4 +403,73 @@ def test_remove_child_in_tree():
     tree.add_child(obj, writer)
     tree.remove_child(obj)
     tree.add_child(obj, writer)
-    tree.emptyTree()
+    tree.empty_tree()
+
+
+def test_dict_read_from_stream():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/984/984877.pdf"
+    name = "tika-984877.pdf"
+
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for page in reader.pages:
+        with pytest.warns(PdfReadWarning):
+            page.extract_text()
+
+
+def test_parse_content_stream_peek_percentage():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/985/985770.pdf"
+    name = "tika-985770.pdf"
+
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for page in reader.pages:
+        page.extract_text()
+
+
+def test_read_inline_image_no_has_q():
+    # pdf/df7e1add3156af17a372bc165e47a244.pdf
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/998/998719.pdf"
+    name = "tika-998719.pdf"
+
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for page in reader.pages:
+        page.extract_text()
+
+
+def test_read_inline_image_loc_neg_1():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/935/935066.pdf"
+    name = "tika-935066.pdf"
+
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for page in reader.pages:
+        page.extract_text()
+
+
+def test_text_string_write_to_stream():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924562.pdf"
+    name = "tika-924562.pdf"
+
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for page in reader.pages:
+        page.compress_content_streams()
+
+
+def test_name_object_read_from_stream_unicode_error():  # L588
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/974/974966.pdf"
+    name = "tika-974966.pdf"
+
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for page in reader.pages:
+        page.extract_text()
+
+
+def test_bool_repr():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/932/932449.pdf"
+    name = "tika-932449.pdf"
+
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    with open("tmp-fields-report.txt", "w") as fp:
+        fields = reader.get_fields(fileobj=fp)
+    assert fields
+
+    # cleanup
+    os.remove("tmp-fields-report.txt")

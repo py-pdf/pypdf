@@ -27,6 +27,14 @@ You can install PyPDF2 via pip:
 pip install PyPDF2
 ```
 
+If you plan to use PyPDF2 for encrypting or decrypting PDFs that use AES, you
+will need to install some extra dependencies. Encryption using RC4 is supported
+using the regular installation.
+
+```
+pip install PyPDF2[crypto]
+```
+
 ## Usage
 
 ```python
@@ -42,8 +50,7 @@ PyPDF2 can do a lot more, e.g. splitting, merging, reading and creating
 annotations, decrypting and encrypting, and more.
 
 Please see [the documentation](https://pypdf2.readthedocs.io/en/latest/)
-and [`Scripts`](https://github.com/py-pdf/PyPDF2/tree/main/Scripts) for
-more usage examples!
+for more usage examples!
 
 A lot of questions are asked and answered
 [on StackOverflow](https://stackoverflow.com/questions/tagged/pypdf2).

@@ -46,6 +46,8 @@ py-cpuinfo==8.0.0
     # via pytest-benchmark
 pycodestyle==2.8.0
     # via flake8
+pycryptodome==3.14.1
+    # via -r requirements/ci.in
 pyflakes==2.4.0
     # via flake8
 pyparsing==3.0.9
@@ -64,7 +66,7 @@ typed-ast==1.5.4
     # via mypy
 typeguard==2.13.3
     # via -r requirements/ci.in
-types-pillow==9.0.19
+types-pillow==9.0.20
     # via -r requirements/ci.in
 typing-extensions==4.1.1
     # via

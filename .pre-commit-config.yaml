@@ -13,6 +13,7 @@ repos:
         exclude: "resources/.*"
     -   id: trailing-whitespace
     -   id: mixed-line-ending
+        args: ['--fix=lf']
     -   id: check-added-large-files
         args: ['--maxkb=1000']
 -   repo: https://gitlab.com/pycqa/flake8
@@ -33,11 +34,6 @@ repos:
     hooks:
     -   id: black
         args: [--target-version, py36]
-# -   repo: https://github.com/asottile/pyupgrade
-#     rev: v2.31.1
-#     hooks:
-#     -   id: pyupgrade
-#         args: [--py36-plus]
 -   repo: https://github.com/asottile/blacken-docs
     rev: v1.12.1
     hooks:
