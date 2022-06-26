@@ -260,6 +260,14 @@ class PdfReader:
             raise PdfReadError("Wrong password")
 
     @property
+    def pdf_header(self) -> str:
+        loc = self.stream.tell()
+        self.stream.seek(0, 0)
+        pdf_file_version = self.stream.read(8).decode("utf-8")
+        self.stream.seek(loc, 0)  # return to where it was
+        return pdf_file_version
+
+    @property
     def metadata(self) -> Optional[DocumentInformation]:
         """
         Retrieve the PDF file's document information dictionary, if it exists.
