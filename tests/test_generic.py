@@ -3,7 +3,7 @@ from io import BytesIO
 
 import pytest
 
-from PyPDF2 import PdfReader, PdfWriter
+from PyPDF2 import PdfMerger, PdfReader, PdfWriter
 from PyPDF2.constants import TypFitArguments as TF
 from PyPDF2.errors import PdfReadError, PdfReadWarning, PdfStreamError
 from PyPDF2.generic import (
@@ -473,3 +473,21 @@ def test_bool_repr():
 
     # cleanup
     os.remove("tmp-fields-report.txt")
+
+
+def test_issue_997():
+    url = "https://github.com/py-pdf/PyPDF2/files/8908874/Exhibit_A-2_930_Enterprise_Zone_Tax_Credits_final.pdf"
+    name = "gh-issue-997.pdf"
+
+    merger = PdfMerger()
+    merged_filename = "tmp-out.pdf"
+    with pytest.warns(PdfReadWarning, match="not defined"):
+        merger.append(
+            BytesIO(get_pdf_from_url(url, name=name))
+        )  # here the error raises
+    with open(merged_filename, "wb") as f:
+        merger.write(f)
+    merger.close()
+
+    # cleanup
+    os.remove(merged_filename)

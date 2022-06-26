@@ -276,6 +276,14 @@ class PdfReader:
                 raise PdfReadError("Not encrypted file")
 
     @property
+    def pdf_header(self) -> str:
+        loc = self.stream.tell()
+        self.stream.seek(0, 0)
+        pdf_file_version = self.stream.read(8).decode("utf-8")
+        self.stream.seek(loc, 0)  # return to where it was
+        return pdf_file_version
+
+    @property
     def metadata(self) -> Optional[DocumentInformation]:
         """
         Retrieve the PDF file's document information dictionary, if it exists.
@@ -560,7 +568,15 @@ class PdfReader:
                 pass
 
     def get_form_text_fields(self) -> Dict[str, Any]:
-        """Retrieves form fields from the document with textual data (inputs, dropdowns)"""
+        """
+        Retrieves form fields from the document with textual data.
+
+        The key is the name of the form field, the value is the content of the
+        field.
+
+        If the document contains multiple form fields with the same name, the
+        second and following will get the suffix _2, _3, ...
+        """
         # Retrieve document form fields
         formfields = self.get_fields()
         if formfields is None:
