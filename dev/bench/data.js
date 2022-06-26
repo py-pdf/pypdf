@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1656228617035,
+  "lastUpdate": 1656235176338,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -6619,6 +6619,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.010892202134586451",
             "extra": "mean: 3.6110853262000093 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a40946c28841746ae848fb31158b5763afd2b943",
+          "message": "DOC: get_form_text_fields does not extract dropdown data (#1029)\n\nSee #391",
+          "timestamp": "2022-06-26T11:18:18+02:00",
+          "tree_id": "421671c4b77cd03f8a8e3172a43c6ac2afa945e2",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/a40946c28841746ae848fb31158b5763afd2b943"
+        },
+        "date": 1656235174535,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8091602826919645,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02515166351861388",
+            "extra": "mean: 1.2358490912000009 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.431596468516,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005759437112195673",
+            "extra": "mean: 87.47684566666791 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22130012988910142,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029128260060408008",
+            "extra": "mean: 4.5187501720000025 sec\nrounds: 5"
           }
         ]
       }
