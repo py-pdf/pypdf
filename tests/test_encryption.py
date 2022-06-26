@@ -63,6 +63,23 @@ def test_encryption(name):
 
 
 @pytest.mark.parametrize(
+    ("name", "user_passwd", "owner_passwd"),
+    [
+        # created by `qpdf --encrypt "foo" "bar" 256 -- unencrypted.pdf r6-both-passwords.pdf`
+        ("r6-both-passwords.pdf", "foo", "bar"),
+    ],
+)
+def test_both_password(name, user_passwd, owner_passwd):
+    from PyPDF2 import PasswordType
+    inputfile = os.path.join(RESOURCE_ROOT, "encryption", name)
+    ipdf = PyPDF2.PdfReader(inputfile)
+    assert ipdf.is_encrypted
+    assert ipdf.decrypt(user_passwd) == PasswordType.USER_PASSWORD
+    assert ipdf.decrypt(owner_passwd) == PasswordType.OWNER_PASSWORD
+    assert len(ipdf.pages) == 1
+
+
+@pytest.mark.parametrize(
     "names",
     [
         (["unencrypted.pdf", "r3-user-password.pdf", "r4-aes-user-password.pdf", "r5-user-password.pdf"]),
