@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1656224320532,
+  "lastUpdate": 1656225554684,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -6529,6 +6529,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.05974816728304044",
             "extra": "mean: 4.790044655600025 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3c750c1faa64a4f1d5bc867e2d388ce4ce2c3b44",
+          "message": "ENH: Add PdfReader.pdf_header (#1013)\n\nThe new attribute will return the first bytes of the PDF file. This is typically something like `\"%PDF-1.4\"`.\r\nThat can be used to get the PDF version of the file - at least the version the file claims to have.",
+          "timestamp": "2022-06-26T08:38:12+02:00",
+          "tree_id": "3bc9948e0c5d25da463df27e770c3c3252d5e9cb",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/3c750c1faa64a4f1d5bc867e2d388ce4ce2c3b44"
+        },
+        "date": 1656225554187,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0068956278439363,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018307786448851063",
+            "extra": "mean: 993.1515961999935 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 14.385260519703731,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006175751785531681",
+            "extra": "mean: 69.51559887499315 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.271437167340339,
+            "unit": "iter/sec",
+            "range": "stddev: 0.056585051987500454",
+            "extra": "mean: 3.6840938542000004 sec\nrounds: 5"
           }
         ]
       }
