@@ -137,7 +137,7 @@ class PdfMerger:
         reader = PdfReader(stream, strict=self.strict)  # type: ignore[arg-type]
         self.inputs.append((stream, reader, my_file))
         if encryption_obj is not None:
-            reader.encryption = encryption_obj
+            reader._encryption = encryption_obj
 
         # Find the range of pages to merge.
         if pages is None:
@@ -204,8 +204,8 @@ class PdfMerger:
             stream = FileIO(fileobj, "rb")
             my_file = True
         elif isinstance(fileobj, PdfReader):
-            if fileobj.encryption:
-                encryption_obj = fileobj.encryption
+            if fileobj._encryption:
+                encryption_obj = fileobj._encryption
             orig_tell = fileobj.stream.tell()
             fileobj.stream.seek(0)
             stream = BytesIO(fileobj.stream.read())

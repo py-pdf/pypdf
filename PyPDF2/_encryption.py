@@ -25,6 +25,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from enum import Enum
 import hashlib
 import random
 import struct
@@ -509,7 +510,6 @@ class AlgV5:
             )[sum(E[:16]) % 3]
             K = hash_fn(E).digest()
             if count >= 64 and E[-1] <= count - 32:
-                print(count, E[-1])
                 break
         return K[:32]
 
@@ -612,6 +612,12 @@ class AlgV5:
         return perms
 
 
+class PasswordType(Enum):
+    NOT_DECRYPTED = 0
+    USER_PASSWORD = 1
+    OWNER_PASSWORD = 2
+
+
 class Encryption:
     def __init__(
         self,
@@ -635,11 +641,11 @@ class Encryption:
 
         # 1 => owner password
         # 2 => user password
-        self._password_type = 0
+        self._password_type = PasswordType.NOT_DECRYPTED
         self._key: Optional[bytes] = None
 
-    def verified(self) -> bool:
-        return self._password_type != 0
+    def is_decrypted(self) -> bool:
+        return self._password_type != PasswordType.NOT_DECRYPTED
 
     def decrypt_object(self, obj: PdfObject, idnum: int, generation: int) -> PdfObject:
         """
@@ -707,7 +713,7 @@ class Encryption:
         else:
             return CryptRC4(rc4_key)
 
-    def verify(self, password: Union[bytes, str]) -> int:
+    def verify(self, password: Union[bytes, str]) -> PasswordType:
         if isinstance(password, str):
             try:
                 pwd = password.encode("latin-1")
@@ -717,12 +723,12 @@ class Encryption:
             pwd = password
 
         key, rc = self.verify_v4(pwd) if self.algV <= 4 else self.verify_v5(pwd)
-        if rc != 0:
+        if rc != PasswordType.NOT_DECRYPTED:
             self._password_type = rc
             self._key = key
         return rc
 
-    def verify_v4(self, password: bytes) -> Tuple[bytes, int]:
+    def verify_v4(self, password: bytes) -> Tuple[bytes, PasswordType]:
         R = cast(int, self.entry["/R"])
         P = cast(int, self.entry["/P"])
         P = (P + 0x100000000) % 0x100000000  # maybe < 0
@@ -742,7 +748,7 @@ class Encryption:
             metadata_encrypted,
         )
         if key:
-            return key, 2
+            return key, PasswordType.OWNER_PASSWORD
         key = AlgV4.verify_user_password(
             password,
             R,
@@ -754,10 +760,10 @@ class Encryption:
             metadata_encrypted,
         )
         if key:
-            return key, 1
-        return b"", 0
+            return key, PasswordType.USER_PASSWORD
+        return b"", PasswordType.NOT_DECRYPTED
 
-    def verify_v5(self, password: bytes) -> Tuple[bytes, int]:
+    def verify_v5(self, password: bytes) -> Tuple[bytes, PasswordType]:
         # TODO: use SASLprep process
         o_entry = cast(ByteStringObject, self.entry["/O"].get_object()).original_bytes
         u_entry = cast(ByteStringObject, self.entry["/U"].get_object()).original_bytes
@@ -766,12 +772,12 @@ class Encryption:
 
         # verify owner password first
         key = AlgV5.verify_owner_password(self.algR, password, o_entry, oe_entry, u_entry)
-        rc = 2
+        rc = PasswordType.OWNER_PASSWORD
         if not key:
             key = AlgV5.verify_user_password(self.algR, password, u_entry, ue_entry)
-            rc = 1
+            rc = PasswordType.USER_PASSWORD
         if not key:
-            return b"", 0
+            return b"", PasswordType.NOT_DECRYPTED
 
         # verify Perms
         perms = cast(ByteStringObject, self.entry["/Perms"].get_object()).original_bytes
@@ -779,7 +785,7 @@ class Encryption:
         P = (P + 0x100000000) % 0x100000000  # maybe < 0
         metadata_encrypted = self.entry.get("/EncryptMetadata", True)
         if not AlgV5.verify_perms(key, perms, P, metadata_encrypted):
-            return b"", 0
+            return b"", PasswordType.NOT_DECRYPTED
         return key, rc
 
     @staticmethod

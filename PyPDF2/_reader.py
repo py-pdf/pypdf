@@ -45,7 +45,7 @@ from typing import (
     cast,
 )
 
-from ._encryption import Encryption
+from ._encryption import Encryption, PasswordType
 from ._page import PageObject, _VirtualList
 from ._utils import (
     StrByteType,
@@ -254,7 +254,7 @@ class PdfReader:
         self.stream = stream
 
         self._override_encryption = False
-        self.encryption: Optional[Encryption] = None
+        self._encryption: Optional[Encryption] = None
         if self.is_encrypted:
             self._override_encryption = True
             # Some documents may not have a /ID, use two empty
@@ -262,12 +262,12 @@ class PdfReader:
             # https://github.com/mstamy2/PyPDF2/issues/608
             id_entry = self.trailer.get(TK.ID)
             id1_entry = id_entry[0].get_object().original_bytes if id_entry else b""
-            encryptEntry = cast(DictionaryObject, self.trailer[TK.ENCRYPT].get_object())
-            self.encryption = Encryption.read(encryptEntry, id1_entry)
+            encrypt_entry = cast(DictionaryObject, self.trailer[TK.ENCRYPT].get_object())
+            self._encryption = Encryption.read(encrypt_entry, id1_entry)
 
             # try empty password if no password provided
             pwd = password if password is not None else b""
-            if self.encryption.verify(pwd) == 0 and password is not None:
+            if self._encryption.verify(pwd) == 0 and password is not None:
                 # raise if password provided
                 raise PdfReadError("Wrong password")
             self._override_encryption = False
@@ -1055,13 +1055,13 @@ class PdfReader:
             retval = read_object(self.stream, self)  # type: ignore
 
             # override encryption is used for the /Encrypt dictionary
-            if not self._override_encryption and self.encryption is not None:
+            if not self._override_encryption and self._encryption is not None:
                 # if we don't have the encryption key:
-                if not self.encryption.verified():
+                if not self._encryption.is_decrypted():
                     raise PdfReadError("File has not been decrypted")
                 # otherwise, decrypt here...
                 retval = cast(PdfObject, retval)
-                retval = self.encryption.decrypt_object(
+                retval = self._encryption.decrypt_object(
                     retval, indirect_reference.idnum, indirect_reference.generation
                 )
         else:
@@ -1554,7 +1554,7 @@ class PdfReader:
         deprecate_no_replacement("readNextEndLine")
         return self.read_next_end_line(stream, limit_offset)
 
-    def decrypt(self, password: Union[str, bytes]) -> int:
+    def decrypt(self, password: Union[str, bytes]) -> PasswordType:
         """
         When using an encrypted / secured PDF file with the PDF Standard
         encryption handler, this function will allow the file to be decrypted.
@@ -1567,15 +1567,14 @@ class PdfReader:
         this library.
 
         :param str password: The password to match.
-        :return: ``0`` if the password failed, ``1`` if the password matched the user
-            password, and ``2`` if the password matched the owner password.
+        :return: `PasswordType`.
         :rtype: int
             method.
         """
-        if not self.encryption:
+        if not self._encryption:
             raise PdfReadError("Not encrypted file")
         # TODO: raise Exception for wrong password
-        return self.encryption.verify(password)
+        return self._encryption.verify(password)
 
     def decode_permissions(self, permissions_code: int) -> Dict[str, bool]:
         # Takes the permissions as an integer, returns the allowed access
