@@ -13,6 +13,7 @@ repos:
         exclude: "resources/.*"
     -   id: trailing-whitespace
     -   id: mixed-line-ending
+        args: ['--fix=lf']
     -   id: check-added-large-files
         args: ['--maxkb=1000']
 -   repo: https://gitlab.com/pycqa/flake8
