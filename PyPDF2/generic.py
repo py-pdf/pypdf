@@ -34,11 +34,12 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import codecs
 import decimal
+import hashlib
 import logging
 import re
 import warnings
 from io import BytesIO
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 
 from ._codecs import (  # noqa: rev_encoding
     _pdfdoc_encoding,
@@ -77,6 +78,21 @@ IndirectPattern = re.compile(rb"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]")
 
 
 class PdfObject:
+    # function for calculating a hash value
+    hash_func: Callable[..., "hashlib._Hash"] = hashlib.sha1
+
+    def hash_value_data(self) -> bytes:
+        return ("%s" % self).encode()
+
+    def hash_value(self) -> bytes:
+        return (
+            "%s:%s"
+            % (
+                self.__class__.__name__,
+                self.hash_func(self.hash_value_data()).hexdigest(),
+            )
+        ).encode()
+
     def get_object(self) -> Optional["PdfObject"]:
         """Resolve indirect references."""
         return self
@@ -1000,6 +1016,9 @@ class StreamObject(DictionaryObject):
     def __init__(self) -> None:
         self.__data: Optional[str] = None
         self.decoded_self: Optional[DecodedStreamObject] = None
+
+    def hash_value_data(self) -> bytes:
+        return b_(self._data)
 
     @property
     def decodedSelf(self) -> Optional["DecodedStreamObject"]:  # pragma: no cover
