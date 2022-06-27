@@ -211,8 +211,8 @@ class XmpInformation(PdfObject):
         try:
             data = self.stream.get_data()
             doc_root: Document = parseString(data)
-        except ExpatError:
-            raise PdfReadError("XML in XmpInformation was invalid")
+        except ExpatError as e:
+            raise PdfReadError(f"XML in XmpInformation was invalid: {e}")
         self.rdf_root: XmlElement = doc_root.getElementsByTagNameNS(
             RDF_NAMESPACE, "RDF"
         )[0]
