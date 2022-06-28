@@ -10,7 +10,7 @@ PDF Reference, sixth edition, Version 1.7, 2006.
 
 
 class Core:
-    """Keywords that don't quite belong anywhere else"""
+    """Keywords that don't quite belong anywhere else."""
 
     OUTLINES = "/Outlines"
     PAGE = "/Page"
@@ -33,7 +33,7 @@ class CatalogAttributes:
 
 class EncryptionDictAttributes:
     """
-    Additional encryption dictionary entries for the standard security handler
+    Additional encryption dictionary entries for the standard security handler.
 
     TABLE 3.19, Page 122
     """
@@ -46,7 +46,7 @@ class EncryptionDictAttributes:
 
 
 class Ressources:
-    """TABLE 3.30 Entries in a resource dictionary"""
+    """TABLE 3.30 Entries in a resource dictionary."""
 
     EXT_G_STATE = "/ExtGState"  # dictionary, optional
     COLOR_SPACE = "/ColorSpace"  # dictionary, optional
@@ -59,7 +59,7 @@ class Ressources:
 
 
 class PagesAttributes:
-    """Page Attributes, Table 6.2, Page 52"""
+    """Page Attributes, Table 6.2, Page 52."""
 
     TYPE = "/Type"  # name, required; must be /Pages
     KIDS = "/Kids"  # array, required; List of indirect references
@@ -68,7 +68,7 @@ class PagesAttributes:
 
 
 class PageAttributes:
-    """TABLE 3.27 Entries in a page object"""
+    """TABLE 3.27 Entries in a page object."""
 
     TYPE = "/Type"  # name, required; must be /Page
     PARENT = "/Parent"  # dictionary, required; a pages object
@@ -104,7 +104,7 @@ class PageAttributes:
 
 
 class StreamAttributes:
-    """Table 4.2"""
+    """Table 4.2."""
 
     LENGTH = "/Length"  # integer, required
     FILTER = "/Filter"  # name or array of names, optional
@@ -113,7 +113,7 @@ class StreamAttributes:
 
 class FilterTypes:
     """
-    Table 4.3 of the 1.4 Manual
+    Table 4.3 of the 1.4 Manual.
 
     Page 354 of the 1.7 Manual
     """
@@ -128,7 +128,7 @@ class FilterTypes:
 
 
 class FilterTypeAbbreviations:
-    """Table 4.44 of the 1.7 Manual (page 353ff)"""
+    """Table 4.44 of the 1.7 Manual (page 353ff)."""
 
     AHx = "/AHx"
     A85 = "/A85"
@@ -140,7 +140,7 @@ class FilterTypeAbbreviations:
 
 
 class LzwFilterParameters:
-    """Table 4.4"""
+    """Table 4.4."""
 
     PREDICTOR = "/Predictor"  # integer
     COLUMNS = "/Columns"  # integer
@@ -150,7 +150,7 @@ class LzwFilterParameters:
 
 
 class CcittFaxDecodeParameters:
-    """Table 4.5"""
+    """Table 4.5."""
 
     K = "/K"  # integer
     END_OF_LINE = "/EndOfLine"  # boolean
@@ -184,7 +184,7 @@ class ColorSpaces:
 
 
 class TypArguments:
-    """Table 8.2 of the PDF 1.7 reference"""
+    """Table 8.2 of the PDF 1.7 reference."""
 
     LEFT = "/Left"
     RIGHT = "/Right"
@@ -193,7 +193,7 @@ class TypArguments:
 
 
 class TypFitArguments:
-    """Table 8.2 of the PDF 1.7 reference"""
+    """Table 8.2 of the PDF 1.7 reference."""
 
     FIT = "/Fit"
     FIT_V = "/FitV"
@@ -205,7 +205,7 @@ class TypFitArguments:
 
 
 class FieldDistionaryAttributes:
-    """TABLE 8.69 Entries common to all field dictionaries (PDF 1.7 reference)"""
+    """TABLE 8.69 Entries common to all field dictionaries (PDF 1.7 reference)."""
 
     FT = "/FT"  # name, required for terminal fields
     Parent = "/Parent"  # dictionary, required for children
@@ -220,7 +220,7 @@ class FieldDistionaryAttributes:
 
 
 class DocumentInformationAttributes:
-    """TABLE 10.2 Entries in the document information dictionary"""
+    """TABLE 10.2 Entries in the document information dictionary."""
 
     TITLE = "/Title"  # text string, optional
     AUTHOR = "/Author"  # text string, optional
@@ -234,7 +234,7 @@ class DocumentInformationAttributes:
 
 
 class PageLayouts:
-    """Page 84, PDF 1.4 reference"""
+    """Page 84, PDF 1.4 reference."""
 
     SINGLE_PAGE = "/SinglePage"
     ONE_COLUMN = "/OneColumn"
@@ -243,7 +243,7 @@ class PageLayouts:
 
 
 class GraphicsStateParameters:
-    """Table 4.8 of the 1.7 reference"""
+    """Table 4.8 of the 1.7 reference."""
 
     TYPE = "/Type"  # name, optional
     LW = "/LW"  # number, optional
@@ -253,7 +253,7 @@ class GraphicsStateParameters:
 
 
 class CatalogDictionary:
-    """Table 3.25 in the 1.7 reference"""
+    """Table 3.25 in the 1.7 reference."""
 
     TYPE = "/Type"  # name, required; must be /Catalog
     VERSION = "/Version"  # name

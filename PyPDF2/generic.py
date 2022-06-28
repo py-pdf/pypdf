@@ -26,9 +26,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-"""
-Implementation of generic PDF objects (dictionary, number, string, and so on).
-"""
+"""Implementation of generic PDF objects (dictionary, number, string, ...)."""
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
@@ -1558,7 +1556,9 @@ class RectangleObject(ArrayObject):
 
 class Field(TreeObject):
     """
-    A class representing a field dictionary. This class is accessed through
+    A class representing a field dictionary.
+
+    This class is accessed through
     :meth:`get_fields()<PyPDF2.PdfReader.get_fields>`
     """
 
@@ -1915,8 +1915,7 @@ def create_string_object(
     forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
 ) -> Union[TextStringObject, ByteStringObject]:
     """
-    Given a string, create a ByteStringObject or a TextStringObject to
-    represent the string.
+    Create a ByteStringObject or a TextStringObject from a string to represent the string.
 
     :param string: A string
 

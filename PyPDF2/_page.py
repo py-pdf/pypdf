@@ -1118,7 +1118,6 @@ class PageObject(DictionaryObject):
             default = "/Content"
         :return: a string object.
         """
-
         text: str = ""
         output: str = ""
         cmaps: Dict[
@@ -1316,7 +1315,8 @@ class PageObject(DictionaryObject):
         self, xform: EncodedStreamObject, space_width: float = 200.0
     ) -> str:
         """
-        Extraction tet from an XObject.
+        Extraction text from an XObject.
+
         space_width : float = force default space width (if not extracted from font (default 200)
 
         :return: a string object.

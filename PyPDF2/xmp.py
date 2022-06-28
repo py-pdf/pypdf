@@ -1,3 +1,9 @@
+"""
+Anything related to XMP metadata.
+
+See https://en.wikipedia.org/wiki/Extensible_Metadata_Platform
+"""
+
 import datetime
 import decimal
 import re
@@ -479,7 +485,7 @@ class XmpInformation(PdfObject):
     @property
     def custom_properties(self) -> Dict[Any, Any]:
         """
-        Retrieves custom metadata properties defined in the undocumented pdfx
+        Retrieve custom metadata properties defined in the undocumented pdfx
         metadata schema.
 
         :return: a dictionary of key/value items for custom metadata properties.

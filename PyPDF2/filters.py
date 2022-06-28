@@ -85,6 +85,8 @@ class FlateDecode:
         **kwargs: Any,
     ) -> bytes:
         """
+        Decode data which is flate-encoded.
+
         :param data: flate-encoded data.
         :param decode_parms: a dictionary of values, understanding the
             "/Predictor":<int> key only
@@ -378,7 +380,7 @@ class JPXDecode:
 
 
 class CCITParameters:
-    """TABLE 3.9 Optional parameters for the CCITTFaxDecode filter"""
+    """TABLE 3.9 Optional parameters for the CCITTFaxDecode filter."""
 
     def __init__(self, K: int = 0, columns: int = 0, rows: int = 0) -> None:
         self.K = K
