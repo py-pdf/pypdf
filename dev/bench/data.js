@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1656393675539,
+  "lastUpdate": 1656430120977,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -6799,6 +6799,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.020932752690622343",
             "extra": "mean: 3.5872777629999972 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "harry.karvonen@gmail.com",
+            "name": "Harry Karvonen",
+            "username": "Hatell"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ed832b3d91017a73673fb72ec1a78e96dd1a1ac9",
+          "message": "PI: Check duplicate objects in writer._sweep_indirect_references (#207)\n\nThis check can reduce the file size significantly when writing PDFs and there are objects used multiple times, for example images.\r\n\r\nIf you read- and write a file again, this can already reduce the file size:\r\n\r\n```python\r\nfrom PyPDF2 import PdfReader, PdfWriter\r\n\r\nreader = PdfReader(\"big-old-file.pdf\")\r\nwriter = PdfWriter()\r\n\r\nfor page in reader.pages:\r\n    writer.add_page(page)\r\n\r\nwriter.add_metadata(reader.metadata)\r\n\r\nwith open(\"smaller-new-file.pdf\", \"wb\") as fp:\r\n    writer.write(fp)\r\n```\r\n\r\nFor the following files, the size was reduced significantly:\r\n\r\n* https://corpora.tika.apache.org/base/docs/govdocs1/958/958893.pdf : 5.7 MB ➔ 0.8 MB (-4.9 MB / -86%)\r\n* https://corpora.tika.apache.org/base/docs/govdocs1/949/949428.pdf : 6.7 MB ➔ 1.9 MB (-4.8 MB / -72%)\r\n* https://corpora.tika.apache.org/base/docs/govdocs1/911/911140.pdf : 8.8 MB ➔ 4.3 MB (-4.5 MB / -51%)\r\n\r\nCo-authored-by: Harry Karvonen <harry.karvonen@onebyte.fi>",
+          "timestamp": "2022-06-28T17:27:36+02:00",
+          "tree_id": "9edb4ff3f54851daf42611821153d2abaf22b824",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/ed832b3d91017a73673fb72ec1a78e96dd1a1ac9"
+        },
+        "date": 1656430119809,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.148674161928067,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007063714386839335",
+            "extra": "mean: 870.5688986000041 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 17.87383759261543,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0055493042269585775",
+            "extra": "mean: 55.947694210511884 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.3083825701534602,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02027037595796119",
+            "extra": "mean: 3.2427254221999986 sec\nrounds: 5"
           }
         ]
       }
