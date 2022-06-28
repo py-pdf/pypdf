@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1656430120977,
+  "lastUpdate": 1656430445688,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -6844,6 +6844,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02027037595796119",
             "extra": "mean: 3.2427254221999986 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a89ff74d8c0203278a039d9496a3d8df4d134f84",
+          "message": "STY: Docstring formatting (#1033)\n\nSee PEP-257 for some guides.\r\n\r\nflake8-naming was used to find those spots.\r\n\r\nThe \"rtype\" (return type) was removed from the docstrings as it already is in the type annotation in a more readable way + linked with the used type. It's also checked by mypy in the function signature.",
+          "timestamp": "2022-06-28T17:32:35+02:00",
+          "tree_id": "a09aa81bab2a49a259fb8a15e5e463ded0e75158",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/a89ff74d8c0203278a039d9496a3d8df4d134f84"
+        },
+        "date": 1656430444558,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8667548510101643,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00858566442630517",
+            "extra": "mean: 1.1537287606000064 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.590327197220496,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005896558608058444",
+            "extra": "mean: 73.58174571429898 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23435479981000262,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022095817530280906",
+            "extra": "mean: 4.267034431599972 sec\nrounds: 5"
           }
         ]
       }
