@@ -260,8 +260,7 @@ class PageObject(DictionaryObject):
             space units.
         :param float height: The height of the new page expressed in default user
             space units.
-        :return: the new blank page:
-        :rtype: :class:`PageObject<PageObject>`
+        :return: the new blank page
         :raises PageSizeNotDefinedError: if ``pdf`` is ``None`` or contains
             no page
         """
@@ -1300,14 +1299,18 @@ class PageObject(DictionaryObject):
     ) -> str:
         """
         Locate all text drawing commands, in the order they are provided in the
-        content stream, and extract the text.  This works well for some PDF
-        files, but poorly for others, depending on the generator used.  This will
-        be refined in the future.  Do not rely on the order of text coming out of
-        this function, as it will change if this function is made more
-        sophisticated.
-        space_width : float = force default space width (if not extracted from font (default 200)
+        content stream, and extract the text.
 
-        :return: a string object.
+        This works well for some PDF files, but poorly for others, depending on
+        the generator used.  This will be refined in the future.
+
+        Do not rely on the order of text coming out of this function, as it
+        will change if this function is made more sophisticated.
+
+
+        :param space_width : force default space width (if not extracted from font (default 200)
+
+        :return: The extracted text
         """
         return self._extract_text(self, self.pdf, space_width, PG.CONTENTS)
 
@@ -1319,7 +1322,7 @@ class PageObject(DictionaryObject):
 
         space_width : float = force default space width (if not extracted from font (default 200)
 
-        :return: a string object.
+        :return: The extracted text
         """
         return self._extract_text(xform, self.pdf, space_width, None)
 

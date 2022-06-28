@@ -1807,74 +1807,42 @@ class Destination(TreeObject):
 
     @property
     def title(self) -> Optional[str]:
-        """
-        Read-only property accessing the destination title.
-
-        :rtype: str
-        """
+        """Read-only property accessing the destination title."""
         return self.get("/Title")
 
     @property
     def page(self) -> Optional[int]:
-        """
-        Read-only property accessing the destination page number.
-
-        :rtype: int
-        """
+        """Read-only property accessing the destination page number."""
         return self.get("/Page")
 
     @property
     def typ(self) -> Optional[str]:
-        """
-        Read-only property accessing the destination type.
-
-        :rtype: str
-        """
+        """Read-only property accessing the destination type."""
         return self.get("/Type")
 
     @property
     def zoom(self) -> Optional[int]:
-        """
-        Read-only property accessing the zoom factor.
-
-        :rtype: int, or ``None`` if not available.
-        """
+        """Read-only property accessing the zoom factor."""
         return self.get("/Zoom", None)
 
     @property
     def left(self) -> Optional[FloatObject]:
-        """
-        Read-only property accessing the left horizontal coordinate.
-
-        :rtype: float, or ``None`` if not available.
-        """
+        """Read-only property accessing the left horizontal coordinate."""
         return self.get("/Left", None)
 
     @property
     def right(self) -> Optional[FloatObject]:
-        """
-        Read-only property accessing the right horizontal coordinate.
-
-        :rtype: float, or ``None`` if not available.
-        """
+        """Read-only property accessing the right horizontal coordinate."""
         return self.get("/Right", None)
 
     @property
     def top(self) -> Optional[FloatObject]:
-        """
-        Read-only property accessing the top vertical coordinate.
-
-        :rtype: float, or ``None`` if not available.
-        """
+        """Read-only property accessing the top vertical coordinate."""
         return self.get("/Top", None)
 
     @property
     def bottom(self) -> Optional[FloatObject]:
-        """
-        Read-only property accessing the bottom vertical coordinate.
-
-        :rtype: float, or ``None`` if not available.
-        """
+        """Read-only property accessing the bottom vertical coordinate."""
         return self.get("/Bottom", None)
 
 

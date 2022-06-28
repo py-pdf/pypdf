@@ -226,7 +226,6 @@ class PdfWriter:
         :param int page_number: The page number to retrieve
             (pages begin at zero)
         :return: the page at the index given by *page_number*
-        :rtype: :class:`PageObject<PyPDF2._page.PageObject>`
         """
         if pageNumber is not None:  # pragma: no cover
             if page_number is not None:
@@ -281,7 +280,6 @@ class PdfWriter:
         :param float height: The height of the new page expressed in default
             user space units.
         :return: the newly appended page
-        :rtype: :class:`PageObject<PyPDF2._page.PageObject>`
         :raises PageSizeNotDefinedError: if width and height are not defined
             and previous page does not exist.
         """
@@ -316,7 +314,6 @@ class PdfWriter:
             user space units.
         :param int index: Position to add the page.
         :return: the newly appended page
-        :rtype: :class:`PageObject<PyPDF2._page.PageObject>`
         :raises PageSizeNotDefinedError: if width and height are not defined
             and previous page does not exist.
         """

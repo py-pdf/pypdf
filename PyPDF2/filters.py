@@ -266,8 +266,6 @@ class LZWDecode:
             algorithm derived from:
             http://www.rasip.fer.hr/research/compress/algorithms/fund/lz/lzw.html
             and the PDFReference
-
-            :rtype: bytes
             """
             cW = self.CLEARDICT
             baos = ""
@@ -310,7 +308,6 @@ class LZWDecode:
         :param data: ``bytes`` or ``str`` text to decode.
         :param decode_parms: a dictionary of parameter values.
         :return: decoded data.
-        :rtype: bytes
         """
         if "decodeParms" in kwargs:  # pragma: no cover
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")

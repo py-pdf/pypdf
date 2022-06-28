@@ -308,8 +308,6 @@ class PdfReader:
         function.
 
         :return: the document information of this PDF file
-        :rtype: :class:`DocumentInformation<pdf.DocumentInformation>` or
-            ``None`` if none exists.
         """
         if TK.INFO not in self.trailer:
             return None
@@ -344,8 +342,7 @@ class PdfReader:
 
         :return: a :class:`XmpInformation<xmp.XmpInformation>`
             instance that can be used to access XMP metadata from the document.
-        :rtype: :class:`XmpInformation<xmp.XmpInformation>` or
-            ``None`` if no metadata was found on the document root.
+            or ``None`` if no metadata was found on the document root.
         """
         try:
             self._override_encryption = True
@@ -377,7 +374,6 @@ class PdfReader:
         Calculate the number of pages in this PDF file.
 
         :return: number of pages
-        :rtype: int
         :raises PdfReadError: if file is encrypted and restrictions prevent
             this action.
         """
@@ -428,7 +424,6 @@ class PdfReader:
         :param int page_number: The page number to retrieve
             (pages begin at zero)
         :return: a :class:`PageObject<PyPDF2._page.PageObject>` instance.
-        :rtype: :class:`PageObject<PyPDF2._page.PageObject>`
         """
         # ensure that we're not trying to access an encrypted PDF
         # assert not self.trailer.has_key(TK.ENCRYPT)
@@ -474,7 +469,7 @@ class PdfReader:
         :return: A dictionary where each key is a field name, and each
             value is a :class:`Field<PyPDF2.generic.Field>` object. By
             default, the mapping name is used for keys.
-        :rtype: dict, or ``None`` if form data could not be located.
+            ``None`` if form data could not be located.
         """
         field_attributes = {
             "/FT": "Field Type",
@@ -622,7 +617,6 @@ class PdfReader:
 
         :return: a dictionary which maps names to
             :class:`Destinations<PyPDF2.generic.Destination>`.
-        :rtype: dict
         """
         if retval is None:
             retval = {}
@@ -761,7 +755,6 @@ class PdfReader:
         :param PageObject page: The page to get page number. Should be
             an instance of :class:`PageObject<PyPDF2._page.PageObject>`
         :return: the page number or -1 if page not found
-        :rtype: int
         """
         return self._get_page_number_by_indirect(page.indirect_ref)
 
@@ -780,7 +773,6 @@ class PdfReader:
 
         :param Destination destination: The destination to get page number.
         :return: the page number or -1 if page not found
-        :rtype: int
         """
         return self._get_page_number_by_indirect(destination.page)
 
@@ -855,7 +847,6 @@ class PdfReader:
         Get the page layout.
 
         :return: Page layout currently being used.
-        :rtype: ``str``, ``None`` if not specified
 
         .. list-table:: Valid ``layout`` values
            :widths: 50 200
@@ -905,7 +896,6 @@ class PdfReader:
         Get the page mode.
 
         :return: Page mode currently being used.
-        :rtype: ``str``, ``None`` if not specified
 
         .. list-table:: Valid ``mode`` values
            :widths: 50 200
@@ -1600,8 +1590,6 @@ class PdfReader:
 
         :param str password: The password to match.
         :return: `PasswordType`.
-        :rtype: int
-            method.
         """
         if not self._encryption:
             raise PdfReadError("Not encrypted file")

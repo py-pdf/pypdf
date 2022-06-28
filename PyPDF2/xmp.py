@@ -489,7 +489,6 @@ class XmpInformation(PdfObject):
         metadata schema.
 
         :return: a dictionary of key/value items for custom metadata properties.
-        :rtype: dict
         """
         if not hasattr(self, "_custom_properties"):
             self._custom_properties = {}
