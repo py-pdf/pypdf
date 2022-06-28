@@ -61,10 +61,7 @@ ERR_CLOSED_WRITER = "close() was called and thus the writer cannot be used anymo
 
 
 class _MergedPage:
-    """
-    _MergedPage is used internally by PdfMerger to collect necessary
-    information on each page that is being merged.
-    """
+    """Collect necessary information on each page that is being merged."""
 
     def __init__(self, pagedata: PageObject, src: PdfReader, id: int) -> None:
         self.src = src
@@ -75,9 +72,10 @@ class _MergedPage:
 
 class PdfMerger:
     """
-    Initializes a ``PdfMerger`` object. ``PdfMerger`` merges multiple
-    PDFs into a single PDF. It can concatenate, slice, insert, or any
-    combination of the above.
+    Initialize a ``PdfMerger`` object.
+
+    ``PdfMerger`` merges multiple PDFs into a single PDF.
+    It can concatenate, slice, insert, or any combination of the above.
 
     See the functions :meth:`merge()<merge>` (or :meth:`append()<append>`)
     and :meth:`write()<write>` for usage information.
@@ -105,7 +103,7 @@ class PdfMerger:
         import_bookmarks: bool = True,
     ) -> None:
         """
-        Merges the pages from the given file into the output file at the
+        Merge the pages from the given file into the output file at the
         specified page number.
 
         :param int position: The *page number* to insert this file. File will
@@ -127,7 +125,6 @@ class PdfMerger:
         :param bool import_bookmarks: You may prevent the source document's
             bookmarks from being imported by specifying this as ``False``.
         """
-
         stream, my_file, encryption_obj = self._create_stream(fileobj)
 
         # Create a new PdfReader instance using the stream
@@ -253,7 +250,7 @@ class PdfMerger:
 
     def write(self, fileobj: StrByteType) -> None:
         """
-        Writes all data that has been merged to the given output file.
+        Write all data that has been merged to the given output file.
 
         :param fileobj: Output file. Can be a filename or any kind of
             file-like object.
@@ -288,10 +285,7 @@ class PdfMerger:
             fileobj.close()
 
     def close(self) -> None:
-        """
-        Shuts all file descriptors (input and output) and clears all memory
-        usage.
-        """
+        """Shut all file descriptors (input and output) and clear all memory usage."""
         self.pages = []
         for fo, _reader, mine in self.inputs:
             if mine:
@@ -332,7 +326,7 @@ class PdfMerger:
 
     def set_page_layout(self, layout: LayoutType) -> None:
         """
-        Set the page layout
+        Set the page layout.
 
         :param str layout: The page layout to be used
 
@@ -399,10 +393,7 @@ class PdfMerger:
         dests: Dict[str, Dict[str, Any]],
         pages: Union[Tuple[int, int], Tuple[int, int, int]],
     ) -> List[Dict[str, Any]]:
-        """
-        Removes any named destinations that are not a part of the specified
-        page set.
-        """
+        """Remove named destinations that are not a part of the specified page set."""
         new_dests = []
         for key, obj in dests.items():
             for j in range(*pages):
@@ -419,10 +410,7 @@ class PdfMerger:
         outline: OutlinesType,
         pages: Union[Tuple[int, int], Tuple[int, int, int]],
     ) -> OutlinesType:
-        """
-        Removes any outline/bookmark entries that are not a part of the
-        specified page set.
-        """
+        """Remove outline/bookmark entries that are not a part of the specified page set."""
         new_outline = []
         prev_header_added = True
         for i, o in enumerate(outline):
@@ -680,7 +668,6 @@ class PdfMerger:
         :param str title: Title to use
         :param int pagenum: Page number this destination points at.
         """
-
         dest = Destination(
             TextStringObject(title),
             NumberObject(pagenum),

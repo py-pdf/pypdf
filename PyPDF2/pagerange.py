@@ -107,6 +107,7 @@ class PageRange:
     def indices(self, n: int) -> Tuple[int, int, int]:
         """
         n is the length of the list of pages to choose from.
+
         Returns arguments for range().  See help(slice.indices).
         """
         return self._slice.indices(n)
@@ -141,8 +142,8 @@ def parse_filename_page_ranges(
     args: List[Union[str, PageRange, None]]
 ) -> List[Tuple[str, PageRange]]:
     """
-    Given a list of filenames and page ranges, return a list of
-    (filename, page_range) pairs.
+    Given a list of filenames and page ranges, return a list of (filename, page_range) pairs.
+
     First arg must be a filename; other ags are filenames, page-range
     expressions, slice objects, or PageRange objects.
     A filename not followed by a page range indicates all pages of the file.
