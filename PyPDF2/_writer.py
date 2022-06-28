@@ -869,13 +869,16 @@ class PdfWriter:
                 if newobj is None:
                     try:
                         newobj = data.pdf.get_object(data)
-                        hash_value = newobj.hash_value()
+                        hash_value = None
+                        if newobj is not None:
+                            hash_value = newobj.hash_value()
                         # Check if object is already added to pdf.
                         if hash_value in self._idnum_hash:
                             return IndirectObject(self._idnum_hash[hash_value], 0, self)
                         self._objects.append(None)  # placeholder
                         idnum = len(self._objects)
-                        self._idnum_hash[hash_value] = idnum
+                        if hash_value is not None:
+                            self._idnum_hash[hash_value] = idnum
                         newobj_ido = IndirectObject(idnum, 0, self)
                         if data.pdf not in extern_map:
                             extern_map[data.pdf] = {}
