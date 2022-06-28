@@ -127,6 +127,21 @@ class PdfWriter:
         self._root: Optional[IndirectObject] = None
         self._root_object = root
 
+    @property
+    def pdf_header(self) -> bytes:
+        """
+        Header of the PDF document that is written.
+
+        This should be something like b'%PDF-1.5'. It is recommended to set the
+        lowest version that supports all features which are used within the
+        PDF file.
+        """
+        return self._header
+
+    @pdf_header.setter
+    def pdf_header(self, new_header: bytes) -> None:
+        self._header = new_header
+
     def _add_object(self, obj: Optional[PdfObject]) -> IndirectObject:
         self._objects.append(obj)
         return IndirectObject(len(self._objects), 0, self)
