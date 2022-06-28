@@ -7,6 +7,7 @@ text and metadata from PDFs as well.
 You can read the full docs at https://pypdf2.readthedocs.io/.
 """
 
+from ._encryption import PasswordType
 from ._merger import PdfFileMerger, PdfMerger
 from ._page import PageObject, Transformation
 from ._reader import DocumentInformation, PdfFileReader, PdfReader
@@ -29,4 +30,5 @@ __all__ = [
     "PdfWriter",
     "Transformation",
     "PageObject",
+    "PasswordType",
 ]
