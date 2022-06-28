@@ -1315,7 +1315,7 @@ class PageObject(DictionaryObject):
         self, xform: EncodedStreamObject, space_width: float = 200.0
     ) -> str:
         """
-        Extraction text from an XObject.
+        Extract text from an XObject.
 
         space_width : float = force default space width (if not extracted from font (default 200)
 
