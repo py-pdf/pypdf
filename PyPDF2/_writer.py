@@ -754,7 +754,7 @@ class PdfWriter:
 
     def _write_header(self, stream: StreamType) -> List[int]:
         object_positions = []
-        stream.write(self._header + b"\n")
+        stream.write(self.pdf_header + b"\n")
         stream.write(b"%\xE2\xE3\xCF\xD3\n")
         for i, obj in enumerate(self._objects):
             obj = self._objects[i]
