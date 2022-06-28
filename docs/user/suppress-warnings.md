@@ -2,7 +2,9 @@
 
 PyPDF2 makes use of 3 mechanisms to show that something went wrong:
 
-* **Exceptions**: Error-cases the client should explicitly handle.
+* **Exceptions**: Error-cases the client should explicitly handle. In the
+   `strict=True` mode, most log messages will become exceptions. This can be
+   useful in applications where you can force to user to fix the broken PDF.
 * **Warnings**: Avoidable issues, such as using deprecated classes / functions / parameters
 * **Log messages**: Nothing the client can do, but they should know it happened.
 
@@ -37,13 +39,23 @@ if you prefer something more specific.
 
 ## Warnings
 
+The [`warnings` module](https://docs.python.org/3/library/warnings.html) allows
+you to ignore warnings:
+
 ```python
 import warnings
 
 warnings.filterwarnings("ignore")
 ```
 
+In many cases, you actually want to start Python with the `-W` flag so that you
+see all warnings. This is especially true for Continuous Integration (CI).
+
 ## Log messages
+
+Log messages can be noisy in some cases. PyPDF2 hopefully is having a reasonable
+level of log messages, but you can reduce which types of messages you want to
+see:
 
 ```python
 import logging
@@ -51,3 +63,13 @@ import logging
 logger = logging.getLogger("PyPDF2")
 logger.setLevel(logging.ERROR)
 ```
+
+The [`logging` module](https://docs.python.org/3/library/logging.html#logging-levels)
+defines six log levels:
+
+* CRITICAL
+* ERROR
+* WARNING
+* INFO
+* DEBUG
+* NOTSET
