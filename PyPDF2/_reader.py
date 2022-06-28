@@ -45,6 +45,7 @@ from typing import (
     cast,
 )
 
+from ._encryption import Encryption, PasswordType
 from ._page import PageObject, _VirtualList
 from ._utils import (
     StrByteType,
@@ -66,7 +67,6 @@ from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
 from .constants import TrailerKeys as TK
 from .errors import (
-    DependencyError,
     PdfReadError,
     PdfReadWarning,
     PdfStreamError,
@@ -254,8 +254,26 @@ class PdfReader:
         self.stream = stream
 
         self._override_encryption = False
-        if password is not None and self.decrypt(password) == 0:
-            raise PdfReadError("Wrong password")
+        self._encryption: Optional[Encryption] = None
+        if self.is_encrypted:
+            self._override_encryption = True
+            # Some documents may not have a /ID, use two empty
+            # byte strings instead. Solves
+            # https://github.com/mstamy2/PyPDF2/issues/608
+            id_entry = self.trailer.get(TK.ID)
+            id1_entry = id_entry[0].get_object().original_bytes if id_entry else b""
+            encrypt_entry = cast(DictionaryObject, self.trailer[TK.ENCRYPT].get_object())
+            self._encryption = Encryption.read(encrypt_entry, id1_entry)
+
+            # try empty password if no password provided
+            pwd = password if password is not None else b""
+            if self._encryption.verify(pwd) == PasswordType.NOT_DECRYPTED and password is not None:
+                # raise if password provided
+                raise PdfReadError("Wrong password")
+            self._override_encryption = False
+        else:
+            if password is not None:
+                raise PdfReadError("Not encrypted file")
 
     @property
     def pdf_header(self) -> str:
@@ -352,17 +370,7 @@ class PdfReader:
         # the PDF file's page count is used in this case. Otherwise,
         # the original method (flattened page count) is used.
         if self.is_encrypted:
-            try:
-                self._override_encryption = True
-                self.decrypt("")
-                return self.trailer[TK.ROOT]["/Pages"]["/Count"]  # type: ignore
-            except DependencyError as e:
-                # make dependency error clear to users
-                raise e
-            except Exception:
-                raise PdfReadError("File has not been decrypted")
-            finally:
-                self._override_encryption = False
+            return self.trailer[TK.ROOT]["/Pages"]["/Count"]  # type: ignore
         else:
             if self.flattened_pages is None:
                 self._flatten()
@@ -560,7 +568,15 @@ class PdfReader:
                 pass
 
     def get_form_text_fields(self) -> Dict[str, Any]:
-        """Retrieves form fields from the document with textual data (inputs, dropdowns)"""
+        """
+        Retrieves form fields from the document with textual data.
+
+        The key is the name of the form field, the value is the content of the
+        field.
+
+        If the document contains multiple form fields with the same name, the
+        second and following will get the suffix _2, _3, ...
+        """
         # Retrieve document form fields
         formfields = self.get_fields()
         if formfields is None:
@@ -1055,10 +1071,10 @@ class PdfReader:
             retval = read_object(self.stream, self)  # type: ignore
 
             # override encryption is used for the /Encrypt dictionary
-            if not self._override_encryption and self.is_encrypted:
+            if not self._override_encryption and self._encryption is not None:
                 # if we don't have the encryption key:
-                if not hasattr(self, "_encryption"):
-                    raise PdfReadError("file has not been decrypted")
+                if not self._encryption.is_decrypted():
+                    raise PdfReadError("File has not been decrypted")
                 # otherwise, decrypt here...
                 retval = cast(PdfObject, retval)
                 retval = self._encryption.decrypt_object(
@@ -1554,7 +1570,7 @@ class PdfReader:
         deprecate_no_replacement("readNextEndLine")
         return self.read_next_end_line(stream, limit_offset)
 
-    def decrypt(self, password: Union[str, bytes]) -> int:
+    def decrypt(self, password: Union[str, bytes]) -> PasswordType:
         """
         When using an encrypted / secured PDF file with the PDF Standard
         encryption handler, this function will allow the file to be decrypted.
@@ -1567,18 +1583,14 @@ class PdfReader:
         this library.
 
         :param str password: The password to match.
-        :return: ``0`` if the password failed, ``1`` if the password matched the user
-            password, and ``2`` if the password matched the owner password.
+        :return: `PasswordType`.
         :rtype: int
-        :raises NotImplementedError: if document uses an unsupported encryption
             method.
         """
-
-        self._override_encryption = True
-        try:
-            return self._decrypt(password)
-        finally:
-            self._override_encryption = False
+        if not self._encryption:
+            raise PdfReadError("Not encrypted file")
+        # TODO: raise Exception for wrong password
+        return self._encryption.verify(password)
 
     def decode_permissions(self, permissions_code: int) -> Dict[str, bool]:
         # Takes the permissions as an integer, returns the allowed access
@@ -1594,26 +1606,6 @@ class PdfReader:
             permissions_code & (1 << 12 - 1) != 0
         )  # bit 12
         return permissions
-
-    def _decrypt(self, password: Union[str, bytes]) -> int:
-        # already got the KEY
-        if hasattr(self, "_encryption"):
-            return 3
-        from PyPDF2._encryption import Encryption
-
-        # Some documents may not have a /ID, use two empty
-        # byte strings instead. Solves
-        # https://github.com/mstamy2/PyPDF2/issues/608
-        id_entry = self.trailer.get(TK.ID)
-        id1_entry = id_entry[0].get_object().original_bytes if id_entry else b""
-        encryptEntry = cast(DictionaryObject, self.trailer[TK.ENCRYPT].get_object())
-        encryption = Encryption.read(encryptEntry, id1_entry)
-        # maybe password is owner password
-        # TODO: add/modify api to set owner password
-        rr = encryption.verify(password, password)
-        if rr > 0:
-            self._encryption = encryption
-        return rr
 
     @property
     def is_encrypted(self) -> bool:

@@ -25,10 +25,11 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from enum import IntEnum
 import hashlib
 import random
 import struct
-from typing import Dict, Optional, Tuple, Union, cast
+from typing import Optional, Tuple, Union, cast
 
 from PyPDF2.errors import DependencyError
 from PyPDF2.generic import (
@@ -226,16 +227,7 @@ def _padding(data: bytes) -> bytes:
     return (data + _PADDING)[:32]
 
 
-def _bytes(value: Union[bytes, str]) -> bytes:
-    if isinstance(value, bytes):
-        return value
-    try:
-        return value.encode("latin-1")
-    except Exception:  # noqa
-        return value.encode("utf-8")
-
-
-class AlgR4:
+class AlgV4:
     @staticmethod
     def compute_key(
         password: bytes,
@@ -397,10 +389,10 @@ class AlgR4:
            encryption dictionary’s U (user password) value (Security handlers of revision 3 or greater)") shall be used
            to decrypt the document.
         """
-        key = AlgR4.compute_key(
+        key = AlgV4.compute_key(
             user_pwd, rev, key_size, o_entry, P, id1_entry, metadata_encrypted
         )
-        u_value = AlgR4.compute_U_value(key, rev, id1_entry)
+        u_value = AlgV4.compute_U_value(key, rev, id1_entry)
         if rev >= 3:
             u_value = u_value[:16]
             u_entry = u_entry[:16]
@@ -434,7 +426,7 @@ class AlgR4:
         c) The result of step (b) purports to be the user password. Authenticate this user password using "Algorithm 6:
            Authenticating the user password". If it is correct, the password supplied is the correct owner password.
         """
-        rc4_key = AlgR4.compute_O_value_key(owner_pwd, rev, key_size)
+        rc4_key = AlgV4.compute_O_value_key(owner_pwd, rev, key_size)
 
         if rev <= 2:
             u_pwd = RC4_decrypt(rc4_key, o_entry)
@@ -443,15 +435,15 @@ class AlgR4:
             for i in range(19, -1, -1):
                 key = bytes(bytearray(x ^ i for x in rc4_key))
                 u_pwd = RC4_decrypt(key, u_pwd)
-        return AlgR4.verify_user_password(
+        return AlgV4.verify_user_password(
             u_pwd, rev, key_size, o_entry, u_entry, P, id1_entry, metadata_encrypted
         )
 
 
-class AlgR5:
+class AlgV5:
     @staticmethod
     def verify_owner_password(
-        password: bytes, o_value: bytes, oe_value: bytes, u_value: bytes
+        R: int, password: bytes, o_value: bytes, oe_value: bytes, u_value: bytes
     ) -> bytes:
         """
         Algorithm 3.2a Computing an encryption key
@@ -483,22 +475,43 @@ class AlgR5:
            should match the value in the P key.
         """
         password = password[:127]
-        if hashlib.sha256(password + o_value[32:40] + u_value).digest() != o_value[:32]:
+        if AlgV5.calculate_hash(R, password, o_value[32:40], u_value) != o_value[:32]:
             return b""
         iv = bytes(0 for _ in range(16))
-        tmp_key = hashlib.sha256(password + o_value[40:] + u_value).digest()
+        tmp_key = AlgV5.calculate_hash(R, password, o_value[40:], u_value)
         key = AES_CBC_decrypt(tmp_key, iv, oe_value)
         return key
 
     @staticmethod
-    def verify_user_password(password: bytes, u_value: bytes, ue_value: bytes) -> bytes:
+    def verify_user_password(R: int, password: bytes, u_value: bytes, ue_value: bytes) -> bytes:
         """see :func:`verify_owner_password`"""
         password = password[:127]
-        if hashlib.sha256(password + u_value[32:40]).digest() != u_value[:32]:
+        if AlgV5.calculate_hash(R, password, u_value[32:40], b"") != u_value[:32]:
             return b""
         iv = bytes(0 for _ in range(16))
-        tmp_key = hashlib.sha256(password + u_value[40:]).digest()
+        tmp_key = AlgV5.calculate_hash(R, password, u_value[40:], b"")
         return AES_CBC_decrypt(tmp_key, iv, ue_value)
+
+    @staticmethod
+    def calculate_hash(R: int, password: bytes, salt: bytes, udata: bytes) -> bytes:
+        # from https://github.com/qpdf/qpdf/blob/main/libqpdf/QPDF_encryption.cc
+        K = hashlib.sha256(password + salt + udata).digest()
+        if R < 6:
+            return K
+        count = 0
+        while True:
+            count += 1
+            K1 = password + K + udata
+            E = AES_CBC_encrypt(K[:16], K[16:32], K1 * 64)
+            hash_fn = (
+                hashlib.sha256,
+                hashlib.sha384,
+                hashlib.sha512,
+            )[sum(E[:16]) % 3]
+            K = hash_fn(E).digest()
+            if count >= 64 and E[-1] <= count - 32:
+                break
+        return K[:32]
 
     @staticmethod
     def verify_perms(
@@ -514,9 +527,9 @@ class AlgR5:
     def generate_values(
         user_pwd: bytes, owner_pwd: bytes, key: bytes, p: int, metadata_encrypted: bool
     ) -> dict:
-        u_value, ue_value = AlgR5.compute_U_value(user_pwd, key)
-        o_value, oe_value = AlgR5.compute_O_value(owner_pwd, key, u_value)
-        perms = AlgR5.compute_Perms_value(key, p, metadata_encrypted)
+        u_value, ue_value = AlgV5.compute_U_value(user_pwd, key)
+        o_value, oe_value = AlgV5.compute_O_value(owner_pwd, key, u_value)
+        perms = AlgV5.compute_Perms_value(key, p, metadata_encrypted)
         return {
             "/U": u_value,
             "/UE": ue_value,
@@ -599,10 +612,17 @@ class AlgR5:
         return perms
 
 
+class PasswordType(IntEnum):
+    NOT_DECRYPTED = 0
+    USER_PASSWORD = 1
+    OWNER_PASSWORD = 2
+
+
 class Encryption:
     def __init__(
         self,
         algV: int,
+        algR: int,
         entry: DictionaryObject,
         first_id_entry: bytes,
         StmF: str,
@@ -611,6 +631,7 @@ class Encryption:
     ) -> None:
         # See TABLE 3.18 Entries common to all encryption dictionaries
         self.algV = algV
+        self.algR = algR
         self.entry = entry
         self.key_size = entry.get("/Length", 40)
         self.id1_entry = first_id_entry
@@ -618,10 +639,13 @@ class Encryption:
         self.StrF = StrF
         self.EFF = EFF
 
+        # 1 => owner password
+        # 2 => user password
+        self._password_type = PasswordType.NOT_DECRYPTED
         self._key: Optional[bytes] = None
-        # keep key
-        self._user_keys: Dict = {}
-        self._owner_keys: Dict = {}
+
+    def is_decrypted(self) -> bool:
+        return self._password_type != PasswordType.NOT_DECRYPTED
 
     def decrypt_object(self, obj: PdfObject, idnum: int, generation: int) -> PdfObject:
         """
@@ -666,7 +690,7 @@ class Encryption:
         key_hash.update(b"sAlT")
         aes128_key = key_hash.digest()[: min(n + 5, 16)]
 
-        # for V=5 use AES-256
+        # for AES-256
         aes256_key = key
 
         stmCrypt = self._get_crypt(self.StmF, rc4_key, aes128_key, aes256_key)
@@ -689,36 +713,22 @@ class Encryption:
         else:
             return CryptRC4(rc4_key)
 
-    def verify(self, user_pwd: Union[bytes, str], owner_pwd: Union[bytes, str]) -> int:
-        up_bytes = _bytes(user_pwd)
-        op_bytes = _bytes(owner_pwd)
-
-        key = self._user_keys.get(up_bytes)
-        if key:
-            self._key = key
-            return 1
-
-        key = self._owner_keys.get(op_bytes)
-        if key:
-            self._key = key
-            return 2
-
-        rc = 0
-        if self.algV <= 4:
-            key, rc = self.verify_r4(up_bytes, op_bytes)
+    def verify(self, password: Union[bytes, str]) -> PasswordType:
+        if isinstance(password, str):
+            try:
+                pwd = password.encode("latin-1")
+            except Exception:  # noqa
+                pwd = password.encode("utf-8")
         else:
-            key, rc = self.verify_r5(up_bytes, op_bytes)
+            pwd = password
 
-        if rc == 1:
+        key, rc = self.verify_v4(pwd) if self.algV <= 4 else self.verify_v5(pwd)
+        if rc != PasswordType.NOT_DECRYPTED:
+            self._password_type = rc
             self._key = key
-            self._user_keys[up_bytes] = key
-        elif rc == 2:
-            self._key = key
-            self._owner_keys[op_bytes] = key
-
         return rc
 
-    def verify_r4(self, user_pwd: bytes, owner_pwd: bytes) -> Tuple[bytes, int]:
+    def verify_v4(self, password: bytes) -> Tuple[bytes, PasswordType]:
         R = cast(int, self.entry["/R"])
         P = cast(int, self.entry["/P"])
         P = (P + 0x100000000) % 0x100000000  # maybe < 0
@@ -726,8 +736,9 @@ class Encryption:
         o_entry = cast(ByteStringObject, self.entry["/O"].get_object()).original_bytes
         u_entry = cast(ByteStringObject, self.entry["/U"].get_object()).original_bytes
 
-        key = AlgR4.verify_user_password(
-            user_pwd,
+        # verify owner password first
+        key = AlgV4.verify_owner_password(
+            password,
             R,
             self.key_size,
             o_entry,
@@ -737,9 +748,9 @@ class Encryption:
             metadata_encrypted,
         )
         if key:
-            return key, 1
-        key = AlgR4.verify_owner_password(
-            owner_pwd,
+            return key, PasswordType.OWNER_PASSWORD
+        key = AlgV4.verify_user_password(
+            password,
             R,
             self.key_size,
             o_entry,
@@ -749,33 +760,32 @@ class Encryption:
             metadata_encrypted,
         )
         if key:
-            return key, 2
-        return b"", 0
+            return key, PasswordType.USER_PASSWORD
+        return b"", PasswordType.NOT_DECRYPTED
 
-    def verify_r5(self, user_pwd: bytes, owner_pwd: bytes) -> Tuple[bytes, int]:
+    def verify_v5(self, password: bytes) -> Tuple[bytes, PasswordType]:
         # TODO: use SASLprep process
         o_entry = cast(ByteStringObject, self.entry["/O"].get_object()).original_bytes
         u_entry = cast(ByteStringObject, self.entry["/U"].get_object()).original_bytes
         oe_entry = cast(ByteStringObject, self.entry["/OE"].get_object()).original_bytes
         ue_entry = cast(ByteStringObject, self.entry["/UE"].get_object()).original_bytes
 
-        rc = 0
-        key = AlgR5.verify_user_password(user_pwd, u_entry, ue_entry)
-        if key:
-            rc = 1
-        else:
-            key = AlgR5.verify_owner_password(owner_pwd, o_entry, oe_entry, u_entry)
-            if key:
-                rc = 2
-        if rc == 0:
-            return b"", 0
+        # verify owner password first
+        key = AlgV5.verify_owner_password(self.algR, password, o_entry, oe_entry, u_entry)
+        rc = PasswordType.OWNER_PASSWORD
+        if not key:
+            key = AlgV5.verify_user_password(self.algR, password, u_entry, ue_entry)
+            rc = PasswordType.USER_PASSWORD
+        if not key:
+            return b"", PasswordType.NOT_DECRYPTED
+
         # verify Perms
         perms = cast(ByteStringObject, self.entry["/Perms"].get_object()).original_bytes
         P = cast(int, self.entry["/P"])
         P = (P + 0x100000000) % 0x100000000  # maybe < 0
         metadata_encrypted = self.entry.get("/EncryptMetadata", True)
-        if not AlgR5.verify_perms(key, perms, P, metadata_encrypted):
-            return b"", 0
+        if not AlgV5.verify_perms(key, perms, P, metadata_encrypted):
+            return b"", PasswordType.NOT_DECRYPTED
         return key, rc
 
     @staticmethod
@@ -818,7 +828,4 @@ class Encryption:
                 raise NotImplementedError(f"EFF Method {EFF} NOT supported!")
 
         R = cast(int, encryption_entry["/R"])
-        if R > 5:
-            raise NotImplementedError(f"encryption R={R} NOT supported!")
-
-        return Encryption(V, encryption_entry, first_id_entry, StmF, StrF, EFF)
+        return Encryption(V, R, encryption_entry, first_id_entry, StmF, StrF, EFF)

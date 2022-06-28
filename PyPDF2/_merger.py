@@ -202,7 +202,7 @@ class PdfMerger:
             stream = FileIO(fileobj, "rb")
             my_file = True
         elif isinstance(fileobj, PdfReader):
-            if hasattr(fileobj, "_encryption"):
+            if fileobj._encryption:
                 encryption_obj = fileobj._encryption
             orig_tell = fileobj.stream.tell()
             fileobj.stream.seek(0)
@@ -435,6 +435,8 @@ class PdfMerger:
             else:
                 prev_header_added = False
                 for j in range(*pages):
+                    if o["/Page"] is None:
+                        continue
                     if pdf.pages[j].get_object() == o["/Page"].get_object():
                         o[NameObject("/Page")] = o["/Page"].get_object()
                         new_outline.append(o)
