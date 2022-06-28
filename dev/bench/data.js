@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1656271501637,
+  "lastUpdate": 1656393675539,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -6754,6 +6754,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.012915675499338955",
             "extra": "mean: 3.154613501600005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c7d24504282431efc4e7ae90bf55177e6940f5bb",
+          "message": "DOC: Add CHANGELOG to the rendered docs (#1023)\n\nCo-authored-by: Matthew Peveler <matt.peveler@gmail.com>",
+          "timestamp": "2022-06-28T07:20:10+02:00",
+          "tree_id": "c0cac9073dd9490d56322506eb076b5afb9aac39",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/c7d24504282431efc4e7ae90bf55177e6940f5bb"
+        },
+        "date": 1656393674429,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0171262973270403,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008635347698013418",
+            "extra": "mean: 983.1620740000062 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 14.138630409798562,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005903963251785021",
+            "extra": "mean: 70.7282085333361 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2787629132915852,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020932752690622343",
+            "extra": "mean: 3.5872777629999972 sec\nrounds: 5"
           }
         ]
       }
