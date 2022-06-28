@@ -421,9 +421,9 @@ class XmpInformation(PdfObject):
         _getter_single(XMP_NAMESPACE, "MetadataDate", _converter_date)
     )
     """
-    The date and time that any metadata for this resource was last
-    changed.  The date and time are returned as a UTC datetime.datetime
-    object.
+    The date and time that any metadata for this resource was last changed.
+
+    The date and time are returned as a UTC datetime.datetime object.
     """
 
     @property
@@ -437,9 +437,7 @@ class XmpInformation(PdfObject):
         self.xmp_metadata_date = value
 
     xmp_creator_tool = property(_getter_single(XMP_NAMESPACE, "CreatorTool"))
-    """
-    The name of the first known tool used to create the resource.
-    """
+    """The name of the first known tool used to create the resource."""
 
     @property
     def xmp_creatorTool(self) -> str:  # pragma: no cover
