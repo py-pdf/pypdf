@@ -25,9 +25,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-"""
-Utility functions for PDF library.
-"""
+"""Utility functions for PDF library."""
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
@@ -66,9 +64,29 @@ DEPR_MSG_NO_REPLACEMENT = "{} is deprecated and will be removed in PyPDF2 {}."
 DEPR_MSG = "{} is deprecated and will be removed in PyPDF2 3.0.0. Use {} instead."
 
 
+def _get_max_pdf_version_header(header1: bytes, header2: bytes) -> bytes:
+    versions = (
+        b"%PDF-1.3",
+        b"%PDF-1.4",
+        b"%PDF-1.5",
+        b"%PDF-1.6",
+        b"%PDF-1.7",
+        b"%PDF-2.0",
+    )
+    pdf_header_indices = []
+    if header1 in versions:
+        pdf_header_indices.append(versions.index(header1))
+    if header2 in versions:
+        pdf_header_indices.append(versions.index(header2))
+    if len(pdf_header_indices) == 0:
+        raise ValueError(f"neither {header1!r} nor {header2!r} are proper headers")
+    return versions[max(pdf_header_indices)]
+
+
 def read_until_whitespace(stream: StreamType, maxchars: Optional[int] = None) -> bytes:
     """
-    Reads non-whitespace characters and returns them.
+    Read non-whitespace characters and return them.
+
     Stops upon encountering whitespace or when maxchars is reached.
     """
     txt = b""
@@ -83,9 +101,7 @@ def read_until_whitespace(stream: StreamType, maxchars: Optional[int] = None) ->
 
 
 def read_non_whitespace(stream: StreamType) -> bytes:
-    """
-    Finds and reads the next non-whitespace character (ignores whitespace).
-    """
+    """Find and read the next non-whitespace character (ignores whitespace)."""
     tok = stream.read(1)
     while tok in WHITESPACES:
         tok = stream.read(1)
@@ -94,7 +110,7 @@ def read_non_whitespace(stream: StreamType) -> bytes:
 
 def skip_over_whitespace(stream: StreamType) -> bool:
     """
-    Similar to readNonWhitespace, but returns a Boolean if more than
+    Similar to read_non_whitespace, but return a Boolean if more than
     one whitespace character was read.
     """
     tok = WHITESPACES[0]
@@ -117,7 +133,8 @@ def read_until_regex(
     stream: StreamType, regex: Pattern, ignore_eof: bool = False
 ) -> bytes:
     """
-    Reads until the regular expression pattern matched (ignore the match)
+    Read until the regular expression pattern matched (ignore the match).
+
     :raises PdfStreamError: on premature end-of-file
     :param bool ignore_eof: If true, ignore end-of-line and return immediately
     :param regex: re.Pattern
@@ -156,8 +173,10 @@ def read_block_backwards(stream: StreamType, to_read: int) -> bytes:
 
 
 def read_previous_line(stream: StreamType) -> bytes:
-    """Given a byte stream with current position X, return the previous
-    line - all characters between the first CR/LF byte found before X
+    """
+    Given a byte stream with current position X, return the previous line.
+
+    All characters between the first CR/LF byte found before X
     (or, the start of the file, if no such byte is found) and position X
     After this call, the stream will be positioned one byte after the
     first non-CRLF character found beyond the first CR/LF byte before X,
@@ -214,7 +233,7 @@ def matrix_multiply(
 
 
 def mark_location(stream: StreamType) -> None:
-    """Creates text file showing current location in context."""
+    """Create text file showing current location in context."""
     # Mainly for debugging
     radius = 5000
     stream.seek(-radius, 1)

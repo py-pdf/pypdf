@@ -45,6 +45,7 @@ from typing import (
     cast,
 )
 
+from ._encryption import Encryption, PasswordType
 from ._page import PageObject, _VirtualList
 from ._utils import (
     StrByteType,
@@ -67,12 +68,7 @@ from .constants import FieldDictionaryAttributes, GoToActionArguments
 from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
 from .constants import TrailerKeys as TK
-from .errors import (
-    DependencyError,
-    PdfReadError,
-    PdfReadWarning,
-    PdfStreamError,
-)
+from .errors import PdfReadError, PdfReadWarning, PdfStreamError
 from .generic import (
     ArrayObject,
     ContentStream,
@@ -145,9 +141,12 @@ class DocumentInformation(DictionaryObject):
 
     @property
     def title(self) -> Optional[str]:
-        """Read-only property accessing the document's **title**.
+        """
+        Read-only property accessing the document's **title**.
+
         Returns a unicode string (``TextStringObject``) or ``None``
-        if the title is not specified."""
+        if the title is not specified.
+        """
         return (
             self._get_text(DI.TITLE) or self.get(DI.TITLE).get_object()  # type: ignore
             if self.get(DI.TITLE)
@@ -161,9 +160,12 @@ class DocumentInformation(DictionaryObject):
 
     @property
     def author(self) -> Optional[str]:
-        """Read-only property accessing the document's **author**.
+        """
+        Read-only property accessing the document's **author**.
+
         Returns a unicode string (``TextStringObject``) or ``None``
-        if the author is not specified."""
+        if the author is not specified.
+        """
         return self._get_text(DI.AUTHOR)
 
     @property
@@ -173,9 +175,12 @@ class DocumentInformation(DictionaryObject):
 
     @property
     def subject(self) -> Optional[str]:
-        """Read-only property accessing the document's **subject**.
+        """
+        Read-only property accessing the document's **subject**.
+
         Returns a unicode string (``TextStringObject``) or ``None``
-        if the subject is not specified."""
+        if the subject is not specified.
+        """
         return self._get_text(DI.SUBJECT)
 
     @property
@@ -185,11 +190,14 @@ class DocumentInformation(DictionaryObject):
 
     @property
     def creator(self) -> Optional[str]:
-        """Read-only property accessing the document's **creator**. If the
-        document was converted to PDF from another format, this is the name of the
-        application (e.g. OpenOffice) that created the original document from
-        which it was converted. Returns a unicode string (``TextStringObject``)
-        or ``None`` if the creator is not specified."""
+        """
+        Read-only property accessing the document's **creator**.
+
+        If the document was converted to PDF from another format, this is the
+        name of the application (e.g. OpenOffice) that created the original
+        document from which it was converted. Returns a unicode string
+        (``TextStringObject``) or ``None`` if the creator is not specified.
+        """
         return self._get_text(DI.CREATOR)
 
     @property
@@ -199,11 +207,14 @@ class DocumentInformation(DictionaryObject):
 
     @property
     def producer(self) -> Optional[str]:
-        """Read-only property accessing the document's **producer**.
+        """
+        Read-only property accessing the document's **producer**.
+
         If the document was converted to PDF from another format, this is
         the name of the application (for example, OSX Quartz) that converted
         it to PDF. Returns a unicode string (``TextStringObject``)
-        or ``None`` if the producer is not specified."""
+        or ``None`` if the producer is not specified.
+        """
         return self._get_text(DI.PRODUCER)
 
     @property
@@ -256,11 +267,36 @@ class PdfReader:
         self.stream = stream
 
         self._override_encryption = False
-        if password is not None and self.decrypt(password) == 0:
-            raise PdfReadError("Wrong password")
+        self._encryption: Optional[Encryption] = None
+        if self.is_encrypted:
+            self._override_encryption = True
+            # Some documents may not have a /ID, use two empty
+            # byte strings instead. Solves
+            # https://github.com/mstamy2/PyPDF2/issues/608
+            id_entry = self.trailer.get(TK.ID)
+            id1_entry = id_entry[0].get_object().original_bytes if id_entry else b""
+            encrypt_entry = cast(
+                DictionaryObject, self.trailer[TK.ENCRYPT].get_object()
+            )
+            self._encryption = Encryption.read(encrypt_entry, id1_entry)
+
+            # try empty password if no password provided
+            pwd = password if password is not None else b""
+            if (
+                self._encryption.verify(pwd) == PasswordType.NOT_DECRYPTED
+                and password is not None
+            ):
+                # raise if password provided
+                raise PdfReadError("Wrong password")
+            self._override_encryption = False
+        else:
+            if password is not None:
+                raise PdfReadError("Not encrypted file")
 
     @property
     def pdf_header(self) -> str:
+        # TODO: Make this return a bytes object for consistency
+        #       but that needs a deprecation
         loc = self.stream.tell()
         self.stream.seek(0, 0)
         pdf_file_version = self.stream.read(8).decode("utf-8")
@@ -276,8 +312,6 @@ class PdfReader:
         function.
 
         :return: the document information of this PDF file
-        :rtype: :class:`DocumentInformation<pdf.DocumentInformation>` or
-            ``None`` if none exists.
         """
         if TK.INFO not in self.trailer:
             return None
@@ -312,8 +346,7 @@ class PdfReader:
 
         :return: a :class:`XmpInformation<xmp.XmpInformation>`
             instance that can be used to access XMP metadata from the document.
-        :rtype: :class:`XmpInformation<xmp.XmpInformation>` or
-            ``None`` if no metadata was found on the document root.
+            or ``None`` if no metadata was found on the document root.
         """
         try:
             self._override_encryption = True
@@ -342,29 +375,17 @@ class PdfReader:
 
     def _get_num_pages(self) -> int:
         """
-        Calculates the number of pages in this PDF file.
+        Calculate the number of pages in this PDF file.
 
         :return: number of pages
-        :rtype: int
         :raises PdfReadError: if file is encrypted and restrictions prevent
             this action.
         """
-
         # Flattened pages will not work on an Encrypted PDF;
         # the PDF file's page count is used in this case. Otherwise,
         # the original method (flattened page count) is used.
         if self.is_encrypted:
-            try:
-                self._override_encryption = True
-                self.decrypt("")
-                return self.trailer[TK.ROOT]["/Pages"]["/Count"]  # type: ignore
-            except DependencyError as e:
-                # make dependency error clear to users
-                raise e
-            except Exception:
-                raise PdfReadError("File has not been decrypted")
-            finally:
-                self._override_encryption = False
+            return self.trailer[TK.ROOT]["/Pages"]["/Count"]  # type: ignore
         else:
             if self.flattened_pages is None:
                 self._flatten()
@@ -402,12 +423,11 @@ class PdfReader:
 
     def _get_page(self, page_number: int) -> PageObject:
         """
-        Retrieves a page by number from this PDF file.
+        Retrieve a page by number from this PDF file.
 
         :param int page_number: The page number to retrieve
             (pages begin at zero)
         :return: a :class:`PageObject<PyPDF2._page.PageObject>` instance.
-        :rtype: :class:`PageObject<PyPDF2._page.PageObject>`
         """
         # ensure that we're not trying to access an encrypted PDF
         # assert not self.trailer.has_key(TK.ENCRYPT)
@@ -444,7 +464,8 @@ class PdfReader:
         fileobj: Optional[Any] = None,
     ) -> Optional[Dict[str, Any]]:
         """
-        Extracts field data if this PDF contains interactive form fields.
+        Extract field data if this PDF contains interactive form fields.
+
         The *tree* and *retval* parameters are for recursive use.
 
         :param fileobj: A file object (usually a text file) to write
@@ -452,7 +473,7 @@ class PdfReader:
         :return: A dictionary where each key is a field name, and each
             value is a :class:`Field<PyPDF2.generic.Field>` object. By
             default, the mapping name is used for keys.
-        :rtype: dict, or ``None`` if form data could not be located.
+            ``None`` if form data could not be located.
         """
         field_attributes = FieldDictionaryAttributes.attributes_dict()
         if retval is None:
@@ -557,7 +578,15 @@ class PdfReader:
                 pass
 
     def get_form_text_fields(self) -> Dict[str, Any]:
-        """Retrieves form fields from the document with textual data (inputs, dropdowns)"""
+        """
+        Retrieve form fields from the document with textual data.
+
+        The key is the name of the form field, the value is the content of the
+        field.
+
+        If the document contains multiple form fields with the same name, the
+        second and following will get the suffix _2, _3, ...
+        """
         # Retrieve document form fields
         formfields = self.get_fields()
         if formfields is None:
@@ -583,11 +612,10 @@ class PdfReader:
         retval: Optional[Any] = None,
     ) -> Dict[str, Any]:
         """
-        Retrieves the named destinations present in the document.
+        Retrieve the named destinations present in the document.
 
         :return: a dictionary which maps names to
             :class:`Destinations<PyPDF2.generic.Destination>`.
-        :rtype: dict
         """
         if retval is None:
             retval = {}
@@ -726,7 +754,6 @@ class PdfReader:
         :param PageObject page: The page to get page number. Should be
             an instance of :class:`PageObject<PyPDF2._page.PageObject>`
         :return: the page number or -1 if page not found
-        :rtype: int
         """
         return self._get_page_number_by_indirect(page.indirect_ref)
 
@@ -745,7 +772,6 @@ class PdfReader:
 
         :param Destination destination: The destination to get page number.
         :return: the page number or -1 if page not found
-        :rtype: int
         """
         return self._get_page_number_by_indirect(destination.page)
 
@@ -820,7 +846,6 @@ class PdfReader:
         Get the page layout.
 
         :return: Page layout currently being used.
-        :rtype: ``str``, ``None`` if not specified
 
         .. list-table:: Valid ``layout`` values
            :widths: 50 200
@@ -870,7 +895,6 @@ class PdfReader:
         Get the page mode.
 
         :return: Page mode currently being used.
-        :rtype: ``str``, ``None`` if not specified
 
         .. list-table:: Valid ``mode`` values
            :widths: 50 200
@@ -1052,10 +1076,10 @@ class PdfReader:
             retval = read_object(self.stream, self)  # type: ignore
 
             # override encryption is used for the /Encrypt dictionary
-            if not self._override_encryption and self.is_encrypted:
+            if not self._override_encryption and self._encryption is not None:
                 # if we don't have the encryption key:
-                if not hasattr(self, "_encryption"):
-                    raise PdfReadError("file has not been decrypted")
+                if not self._encryption.is_decrypted():
+                    raise PdfReadError("File has not been decrypted")
                 # otherwise, decrypt here...
                 retval = cast(PdfObject, retval)
                 retval = self._encryption.decrypt_object(
@@ -1551,7 +1575,7 @@ class PdfReader:
         deprecate_no_replacement("readNextEndLine")
         return self.read_next_end_line(stream, limit_offset)
 
-    def decrypt(self, password: Union[str, bytes]) -> int:
+    def decrypt(self, password: Union[str, bytes]) -> PasswordType:
         """
         When using an encrypted / secured PDF file with the PDF Standard
         encryption handler, this function will allow the file to be decrypted.
@@ -1564,18 +1588,12 @@ class PdfReader:
         this library.
 
         :param str password: The password to match.
-        :return: ``0`` if the password failed, ``1`` if the password matched the user
-            password, and ``2`` if the password matched the owner password.
-        :rtype: int
-        :raises NotImplementedError: if document uses an unsupported encryption
-            method.
+        :return: `PasswordType`.
         """
-
-        self._override_encryption = True
-        try:
-            return self._decrypt(password)
-        finally:
-            self._override_encryption = False
+        if not self._encryption:
+            raise PdfReadError("Not encrypted file")
+        # TODO: raise Exception for wrong password
+        return self._encryption.verify(password)
 
     def decode_permissions(self, permissions_code: int) -> Dict[str, bool]:
         # Takes the permissions as an integer, returns the allowed access
@@ -1591,26 +1609,6 @@ class PdfReader:
             permissions_code & (1 << 12 - 1) != 0
         )  # bit 12
         return permissions
-
-    def _decrypt(self, password: Union[str, bytes]) -> int:
-        # already got the KEY
-        if hasattr(self, "_encryption"):
-            return 3
-        from PyPDF2._encryption import Encryption
-
-        # Some documents may not have a /ID, use two empty
-        # byte strings instead. Solves
-        # https://github.com/mstamy2/PyPDF2/issues/608
-        id_entry = self.trailer.get(TK.ID)
-        id1_entry = id_entry[0].get_object().original_bytes if id_entry else b""
-        encryptEntry = cast(DictionaryObject, self.trailer[TK.ENCRYPT].get_object())
-        encryption = Encryption.read(encryptEntry, id1_entry)
-        # maybe password is owner password
-        # TODO: add/modify api to set owner password
-        rr = encryption.verify(password, password)
-        if rr > 0:
-            self._encryption = encryption
-        return rr
 
     @property
     def is_encrypted(self) -> bool:

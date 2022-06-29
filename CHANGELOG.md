@@ -1,16 +1,45 @@
-Version 2.3.1, 2022-06-19
--------------------------
+# CHANGELOG
+
+## Version 2.4.0, 2022-06-26
+
+### New Features (ENH):
+-  Support R6 decrypting (#1015)
+-  Add PdfReader.pdf_header (#1013)
+
+### Performance Improvements (PI):
+-  Remove ord_ calls (#1014)
+
+### Bug Fixes (BUG):
+-  Fix missing page for bookmark (#1016)
+
+### Robustness (ROB):
+-  Deal with invalid Destinations (#1028)
+
+### Documentation (DOC):
+-  get_form_text_fields does not extract dropdown data (#1029)
+-  Adjust PdfWriter.add_uri docstring
+-  Mention crypto extra_requires for installation (#1017)
+
+### Developer Experience (DEV):
+-  Use /n line endings everywhere (#1027)
+-  Adjust string formatting to be able to use mutmut (#1020)
+-  Update Bug report template
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.3.1...2.4.0
+
+## Version 2.3.1, 2022-06-19
 
 BUG: Forgot to add the interal `_codecs` subpackage.
 
-Version 2.3.0, 2022-06-19
--------------------------
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.3.0...2.3.1
+
+## Version 2.3.0, 2022-06-19
 
 The highlight of this release is improved support for file encryption
 (AES-128 and AES-256, R5 only). See #749 for the amazing work of
 @exiledkingcc 🎊 Thank you 🤗
 
-Deprecations (DEP):
+### Deprecations (DEP)
 -  Rename names to be PEP8-compliant (#967)
   - `PdfWriter.get_page`: the pageNumber parameter is renamed to page_number
   - `PyPDF2.filters`:
@@ -32,57 +61,55 @@ Deprecations (DEP):
     * TreeObject.hasChildren ➔ TreeObject.has_children
     * TreeObject.emptyTree ➔ TreeObject.empty_tree
 
-New Features (ENH):
+### New Features (ENH)
 -  Add decrypt support for V5 and AES-128, AES-256 (R5 only) (#749)
 
-Robustness (ROB):
+### Robustness (ROB)
 -  Fix corrupted (wrongly) linear PDF (#1008)
 
-Maintenance (MAINT):
+### Maintenance (MAINT)
 -  Move PDF_Samples folder into ressources
 -  Fix typos (#1007)
 
-Testing (TST):
+### Testing (TST)
 -  Improve encryption/decryption test (#1009)
 -  Add merger test cases with real PDFs (#1006)
 -  Add mutmut config
 
-Code Style (STY):
+### Code Style (STY)
 -  Put pure data mappings in separate files (#1005)
 -  Make encryption module private, apply pre-commit (#1010)
 
 Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.2.1...2.3.0
 
-Version 2.2.1, 2022-06-17
--------------------------
+## Version 2.2.1, 2022-06-17
 
-Performance Improvements (PI):
+### Performance Improvements (PI)
 -  Remove b_ calls (#992, #986)
 -  Apply improvements to _utils suggested by perflint (#993)
 
-Robustness (ROB):
+### Robustness (ROB)
 -  utf-16-be\' codec can\'t decode (...) (#995)
 
-Documentation (DOC):
+### Documentation (DOC)
 -  Remove reference to Scripts (#987)
 
-Developer Experience (DEV):
+### Developer Experience (DEV)
 -  Fix type annotations for add_bookmarks (#1000)
 
-Testing (TST):
+### Testing (TST)
 -  Add test for PdfMerger (#1001)
 -  Add tests for XMP information (#996)
 -  reader.get_fields / zlib issue / LZW decode issue (#1004)
 -  reader.get_fields with report generation (#1002)
 -  Improve test coverage by extracting texts (#998)
 
-Code Style (STY):
+### Code Style (STY)
 -  Apply fixes suggested by pylint (#999)
 
 Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.2.0...2.2.1
 
-Version 2.2.0, 2022-06-13
--------------------------
+## Version 2.2.0, 2022-06-13
 
 The 2.2.0 release improves text extraction again via (#969):
 
@@ -99,42 +126,40 @@ e.g. Russian / Chinese / Japanese / Korean / Arabic.
 
 Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.1.1...2.2.0
 
-Version 2.1.1, 2022-06-12
--------------------------
+## Version 2.1.1, 2022-06-12
 
-New Features (ENH):
+### New Features (ENH)
 -  Add support for pathlib as input for PdfReader (#979)
 
-Performance Improvements (PI):
+### Performance Improvements (PI)
 -  Optimize read_next_end_line (#646)
 
-Bug Fixes (BUG):
+### Bug Fixes (BUG)
 -  Adobe Acrobat \'Would you like to save this file?\' (#970)
 
-Documentation (DOC):
+### Documentation (DOC)
 -  Notes on annotations (#982)
 -  Who uses PyPDF2
 -  intendet \xe2\x9e\x94 in robustness page  (#958)
 
-Maintenance (MAINT):
+### Maintenance (MAINT)
 -  pre-commit / requirements.txt updates (#977)
 -  Mark read_next_end_line as deprecated (#965)
 -  Export `PageObject` in PyPDF2 root (#960)
 
-Testing (TST):
+### Testing (TST)
 -  Add MCVE of issue #416 (#980)
 -  FlateDecode.decode decodeParms (#964)
 -  Xmp module (#962)
 -  utils.paeth_predictor (#959)
 
-Code Style (STY):
+### Code Style (STY)
 -  Use more tuples and list/dict comprehensions (#976)
 
 Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.1.0...2.1.1
 
 
-Version 2.1.0, 2022-06-06
--------------------------
+## Version 2.1.0, 2022-06-06
 
 The highlight of the 2.1.0 release is the most massive improvement to the
 text extraction capabilities of PyPDF2 since 2016 🥳🎊 A very big thank you goes
@@ -153,7 +178,7 @@ PR which also incorporated the latest changes of PyPDF2 2.0.0.
 Thank you to [VictorCarlquist](https://github.com/VictorCarlquist) for #858 and
 [asabramo](https://github.com/asabramo) for #464 🤗
 
-New Features (ENH):
+### New Features (ENH)
 -  Massive text extraction improvement (#924). Closed many open issues:
     - Exceptions / missing spaces in extract_text() method (#17) 🕺
       - Whitespace issues in extract_text() (#42) 💃
@@ -175,14 +200,14 @@ New Features (ENH):
 -  Update glyphlist (#947) - inspired by #464
 -  Allow adding PageRange objects (#948)
 
-Bug Fixes (BUG):
+### Bug Fixes (BUG)
 -  Delete .python-version file (#944)
 -  Compare StreamObject.decoded_self with None (#931)
 
-Robustness (ROB):
+### Robustness (ROB)
 -  Fix some conversion errors on non conform PDF (#932)
 
-Documentation (DOC):
+### Documentation (DOC)
 -  Elaborate on PDF text extraction difficulties (#939)
 -  Add logo (#942)
 -  rotate vs Transformation().rotate (#937)
@@ -191,24 +216,23 @@ Documentation (DOC):
 -  Fix typos on robustness page (#935)
 -  Remove scripts (pdfcat) from docs (#934)
 
-Developer Experience (DEV):
+### Developer Experience (DEV)
 -  Ignore .python-version file
 -  Mark deprecated code with no-cover (#943)
 -  Automatically create Github releases from tags (#870)
 
-Testing (TST):
+### Testing (TST)
 -  Text extraction for non-latin alphabets (#954)
 -  Ignore PdfReadWarning in benchmark (#949)
 -  writer.remove_text (#946)
 -  Add test for Tree and _security (#945)
 
-Code Style (STY):
+### Code Style (STY)
 -  black, isort, Flake8, splitting buildCharMap (#950)
 
 Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.0.0...2.1.0
 
-Version 2.0.0, 2022-06-01
--------------------------
+## Version 2.0.0, 2022-06-01
 
 The 2.0.0 release of PyPDF2 includes three core changes:
 
@@ -219,7 +243,7 @@ The 2.0.0 release of PyPDF2 includes three core changes:
 We introduced a [deprecation process](https://github.com/py-pdf/PyPDF2/pull/930)
 that hopefully helps users to avoid unexpected breaking changes.
 
-Breaking Changes(DEP):
+### Breaking Changes (DEP)
 - PyPDF2 2.0 requires Python 3.6+. Python 2.7 and 3.5 support were dropped.
 - PdfFileReader: The "warndest" parameter was removed
 - PdfFileReader and PdfFileMerger no longer have the `overwriteWarnings`
@@ -255,26 +279,26 @@ Breaking Changes(DEP):
 For a full list of deprecated functions, please see the changelog of version
 1.28.0.
 
-New Features (ENH):
+### New Features (ENH)
 -  Improve space setting for text extraction (#922)
 -  Allow setting the decryption password in PdfReader.__init__ (#920)
 -  Add Page.add_transformation (#883)
 
-Bug Fixes (BUG):
+### Bug Fixes (BUG)
 -  Fix error adding transformation to page without /Contents (#908)
 
-Robustness (ROB):
+### Robustness (ROB)
 -  Cope with invalid length in streams (#861)
 
-Documentation (DOC):
+### Documentation (DOC)
 -  Fix style of 1.25 and 1.27 patch notes (#927)
 -  Transformation (#907)
 
-Developer Experience (DEV):
+### Developer Experience (DEV)
 -  Create flake8 config file (#916)
 -  Use relative imports (#875)
 
-Maintenance (MAINT):
+### Maintenance (MAINT)
 -  Use Python 3.6 language features (#849)
 -  Add wrapper function for PendingDeprecationWarnings (#928)
 -  Use new PEP8 compliant names (#884)
@@ -286,7 +310,7 @@ Maintenance (MAINT):
 -  Type annotations for all functions/methods (#854)
 -  Add initial type support with mypy (#853)
 
-Testing (TST):
+### Testing (TST)
 -  Regression test for xmp_metadata converter (#923)
 -  Checkout submodule sample-files for benchmark
 -  Add text extracting performance benchmark
@@ -297,49 +321,44 @@ Testing (TST):
 
 Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.28.4...2.0.0
 
-Version 1.28.4, 2022-05-29
---------------------------
+## Version 1.28.4, 2022-05-29
 
 Bug Fixes (BUG):
 -  XmpInformation._converter_date was unusable (#921)
 
 Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.28.3...1.28.4
 
-Version 1.28.3, 2022-05-28
---------------------------
+## Version 1.28.3, 2022-05-28
 
-Deprecations (DEP):
+### Deprecations (DEP)
 -  PEP8 renaming (#905)
 
-Bug Fixes (BUG):
+### Bug Fixes (BUG)
 -  XmpInformation missing method _getText (#917)
 -  Fix PendingDeprecationWarning on _merge_page (#904)
 
 Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.28.2...1.28.3
 
-Version 1.28.2, 2022-05-23
---------------------------
+## Version 1.28.2, 2022-05-23
 
-Bug Fixes (BUG):
+### Bug Fixes (BUG)
 -  PendingDeprecationWarning for getContents (#893)
 -  PendingDeprecationWarning on using PdfMerger (#891)
 
 Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.28.1...1.28.2
 
-Version 1.28.1, 2022-05-22
---------------------------
+## Version 1.28.1, 2022-05-22
 
-Bug Fixes (BUG):
+### Bug Fixes (BUG)
 -  Incorrectly show deprecation warnings on internal usage (#887)
 
-Maintenance (MAINT):
+### Maintenance (MAINT)
 -  Add stacklevel=2 to deprecation warnings (#889)
 -  Remove duplicate warnings imports (#888)
 
 Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.28.0...1.28.1
 
-Version 1.28.0, 2022-05-22
---------------------------
+## Version 1.28.0, 2022-05-22
 
 This release adds a lot of deprecation warnings in preparation of the
 PyPDF2 2.0.0 release. The changes are mostly using snake_case function-, method-,
@@ -471,49 +490,46 @@ utils.py:
   - matrixMultiply ➔ matrix_multiply
   - RC4_encrypt is moved to the security module
 
-Version 1.27.12, 2022-05-02
----------------------------
+## Version 1.27.12, 2022-05-02
 
-Bug Fixes (BUG):
+### Bug Fixes (BUG)
 -  _rebuild_xref_table expects trailer to be a dict (#857)
 
-Documentation (DOC):
+### Documentation (DOC)
 -  Security Policy
 
 Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.27.11...1.27.12
 
-Version 1.27.11, 2022-05-02
----------------------------
+## Version 1.27.11, 2022-05-02
 
-Bug Fixes (BUG):
+### Bug Fixes (BUG)
 -  Incorrectly issued xref warning/exception (#855)
 
 Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.27.10...1.27.11
 
-Version 1.27.10, 2022-05-01
----------------------------
+## Version 1.27.10, 2022-05-01
 
-Robustness (ROB):
+### Robustness (ROB)
 -  Handle missing destinations in reader (#840)
 -  warn-only in readStringFromStream (#837)
 -  Fix corruption in startxref or xref table (#788 and #830)
 
-Documentation (DOC):
+### Documentation (DOC)
 -  Project Governance (#799)
 -  History of PyPDF2
 -  PDF feature/version support (#816)
 -  More details on text parsing issues (#815)
 
-Developer Experience (DEV):
+### Developer Experience (DEV)
 -  Add benchmark command to Makefile
 -  Ignore IronPython parts for code coverage (#826)
 
-Maintenance (MAINT):
+### Maintenance (MAINT)
 -  Split pdf module (#836)
 -  Separated CCITTFax param parsing/decoding (#841)
 -  Update requirements files
 
-Testing (TST):
+### Testing (TST)
 -  Use external repository for larger/more PDFs for testing (#820)
 -  Swap incorrect test names (#838)
 -  Add test for PdfFileReader and page properties (#835)
@@ -523,85 +539,81 @@ Testing (TST):
 -  Add test for FlateDecode (#823)
 -  Add test for filters.ASCIIHexDecode (#822)
 
-Code Style (STY):
+### Code Style (STY)
 -  Apply pre-commit (black, isort) + use snake_case variables (#832)
 -  Remove debug code (#828)
 -  Documentation, Variable names (#839)
 
 Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.27.9...1.27.10
 
-Version 1.27.9, 2022-04-24
---------------------------
+## Version 1.27.9, 2022-04-24
 
 A change I would like to highlight is the performance improvement for
 large PDF files (#808) 🎉
 
-New Features (ENH):
+### New Features (ENH)
 -  Add papersizes (#800)
 -  Allow setting permission flags when encrypting (#803)
 -  Allow setting form field flags (#802)
 
-Bug Fixes (BUG):
+### Bug Fixes (BUG)
 -  TypeError in xmp._converter_date (#813)
 -  Improve spacing for text extraction (#806)
 -  Fix PDFDocEncoding Character Set (#809)
 
-Robustness (ROB):
+### Robustness (ROB)
 -  Use null ID when encrypted but no ID given (#812)
 -  Handle recursion error (#804)
 
-Documentation (DOC):
+### Documentation (DOC)
 -  CMaps (#811)
 -  The PDF Format + commit prefixes (#810)
 -  Add compression example (#792)
 
-Developer Experience (DEV):
+### Developer Experience (DEV)
 -  Add Benchmark for Performance Testing (#781)
 
-Maintenance (MAINT):
+### Maintenance (MAINT)
 -  Validate PDF magic byte in strict mode (#814)
 -  Make PdfFileMerger.addBookmark() behave life PdfFileWriters\' (#339)
 -  Quadratic runtime while parsing reduced to linear  (#808)
 
-Testing (TST):
+### Testing (TST)
 -  Newlines in text extraction (#807)
 
 Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.27.8...1.27.9
 
-Version 1.27.8, 2022-04-21
---------------------------
+## Version 1.27.8, 2022-04-21
 
-Bug Fixes (BUG):
+### Bug Fixes (BUG)
 -  Use 1MB as offset for readNextEndLine (#321)
 -  'PdfFileWriter' object has no attribute 'stream' (#787)
 
-Robustness (ROB):
+### Robustness (ROB)
 -  Invalid float object; use 0 as fallback (#782)
 
-Documentation (DOC):
+### Documentation (DOC)
 -  Robustness (#785)
 
 Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.27.7...1.27.8
 
-Version 1.27.7, 2022-04-19
---------------------------
+## Version 1.27.7, 2022-04-19
 
-Bug Fixes (BUG):
+### Bug Fixes (BUG)
 - Import exceptions from PyPDF2.errors in PyPDF2.utils (#780)
 
-Code Style (STY):
+### Code Style (STY)
 -  Naming in 'make_changelog.py'
 
-Version 1.27.6, 2022-04-18
---------------------------
+## Version 1.27.6, 2022-04-18
 
-Deprecations (DEP):
+### Deprecations (DEP)
 -  Remove support for Python 2.6 and older (#776)
 
-New Features (ENH):
+### New Features (ENH)
 -  Extract document permissions (#320)
 
-Bug Fixes (BUG):
+### Bug Fixes (BUG)
 -  Clip by trimBox when merging pages, which would otherwise be ignored (#240)
 -  Add overwriteWarnings parameter PdfFileMerger (#243)
 -  IndexError for getPage() of decryped file (#359)
@@ -612,25 +624,25 @@ Bug Fixes (BUG):
 -  Fix reading more than last1K for EOF (#642)
 -  Acciental import
 
-Robustness (ROB):
+### Robustness (ROB)
 -  Allow extra whitespace before "obj" in readObjectHeader (#567)
 
-Documentation (DOC):
+### Documentation (DOC)
 -  Link to pdftoc in Sample_Code (#628)
 -  Working with annotations (#764)
 -  Structure history
 
-Developer Experience (DEV):
+### Developer Experience (DEV)
 -  Add issue templates (#765)
 -  Add tool to generate changelog
 
-Maintenance (MAINT):
+### Maintenance (MAINT)
 -  Use grouped constants instead of string literals (#745)
 -  Add error module (#768)
 -  Use decorators for @staticmethod (#775)
 -  Split long functions (#777)
 
-Testing (TST):
+### Testing (TST)
 -  Run tests in CI once with -OO Flags (#770)
 -  Filling out forms (#771)
 -  Add tests for Writer (#772)
@@ -639,67 +651,65 @@ Testing (TST):
 -  Regression test for issue #88
 -  Regression test for issue #327
 
-Code Style (STY):
+### Code Style (STY)
 -  Make variable naming more consistent in tests
 
 
 All changes: https://github.com/py-pdf/PyPDF2/compare/1.27.5...1.27.6
 
-Version 1.27.5, 2022-04-15
---------------------------
+## Version 1.27.5, 2022-04-15
 
-Security (SEC):
+### Security (SEC)
 
 - ContentStream_readInlineImage had potential infinite loop (#740)
 
-Bug fixes (BUG):
+### Bug fixes (BUG)
 
 - Fix merging encrypted files (#757)
 - CCITTFaxDecode decodeParms can be an ArrayObject (#756)
 
-Robustness improvements (ROBUST):
+### Robustness improvements (ROBUST)
 
 - title sometimes None (#744)
 
-Documentation (DOC):
+### Documentation (DOC)
 
 - Adjust short description of the package
 
-Tests and Test setup (TST):
+### Tests and Test setup (TST)
 
 - Rewrite JS tests from unittest to pytest (#746)
 - Increase Test coverage, mainly with filters (#756)
 - Add test for inline images (#758)
 
-Developer Experience Improvements (DEV):
+### Developer Experience Improvements (DEV)
 
 - Remove unused Travis-CI configuration (#747)
 - Show code coverage (#754, #755)
 - Add mutmut (#760)
 
-Miscellaneous:
+### Miscellaneous
 
 - STY: Closing file handles, explicit exports, ... (#743)
 
 All changes: https://github.com/py-pdf/PyPDF2/compare/1.27.4...1.27.5
 
 
-Version 1.27.4, 2022-04-12
---------------------------
+## Version 1.27.4, 2022-04-12
 
-Bug fixes (BUG):
+### Bug fixes (BUG)
 
 - Guard formatting of __init__.__doc__ string (#738)
 
-Packaging (PKG):
+### Packaging (PKG)
 
 - Add more precise license field to setup (#733)
 
-Testing (TST):
+### Testing (TST)
 
 - Add test for issue #297
 
-Miscellaneous:
+### Miscellaneous
 
 - DOC: Miscallenious ➔ Miscellaneous (Typo)
 - TST: Fix CI triggering (master ➔ main) (#739)
@@ -707,8 +717,7 @@ Miscellaneous:
 
 All changes: https://github.com/py-pdf/PyPDF2/compare/1.27.3...1.27.4
 
-Version 1.27.3, 2022-04-10
---------------------------
+## Version 1.27.3, 2022-04-10
 
 - PKG: Make Tests not a subpackage (#728)
 - BUG: Fix ASCII85Decode.decode assertion (#729)
@@ -724,8 +733,7 @@ Version 1.27.3, 2022-04-10
 
 All changes: https://github.com/py-pdf/PyPDF2/compare/1.27.2...1.27.3
 
-Version 1.27.2, 2022-04-09
---------------------------
+## Version 1.27.2, 2022-04-09
 
 - Add Scripts (including `pdfcat`), Resources, Tests, and Sample_Code back to
   PyPDF2. It was removed by accident in 1.27.0, but might get removed with 2.0.0
@@ -733,8 +741,7 @@ Version 1.27.2, 2022-04-09
 
 All changes: https://github.com/py-pdf/PyPDF2/compare/1.27.1...1.27.2
 
-Version 1.27.1, 2022-04-08
---------------------------
+## Version 1.27.1, 2022-04-08
 
 - Fixed project links on PyPI page after migration from mstamy2
   to MartinThoma to the py-pdf organization on GitHub
@@ -742,14 +749,13 @@ Version 1.27.1, 2022-04-08
 
 All changes: https://github.com/py-pdf/PyPDF2/compare/1.27.0...1.27.1
 
-Version 1.27.0, 2022-04-07
---------------------------
+## Version 1.27.0, 2022-04-07
 
 Features:
 
  - Add alpha channel support for png files in Script (#614)
 
-Bug fixes (BUG):
+### Bug fixes (BUG)
 
  - Fix formatWarning for filename without slash (#612)
  - Add whitespace between words for extractText() (#569, #334)
@@ -757,24 +763,24 @@ Bug fixes (BUG):
  - Avoid error when printing warning in pythonw (#486)
  - Stream operations can be List or Dict (#665)
 
-Documentation (DOC):
+### Documentation (DOC)
 
  - Added Scripts/pdf-image-extractor.py
  - Documentation improvements (#550, #538, #324, #426, #394)
 
-Tests and Test setup (TST):
+### Tests and Test setup (TST)
 
  - Add Github Action which automatically run unit tests via pytest and
    static code analysis with Flake8 (#660)
  - Add several unit tests (#661, #663)
  - Add .coveragerc to create coverage reports
 
-Developer Experience Improvements (DEV):
+### Developer Experience Improvements (DEV)
 
  - Pre commit: Developers can now `pre-commit install` to avoid tiny issues
                like trailing whitespaces
 
-Miscellaneous:
+### Miscellaneous
 
  - Add the LICENSE file to the distributed packages (#288)
  - Use setuptools instead of distutils (#599)
@@ -783,8 +789,7 @@ Miscellaneous:
 
 You can see the full changelog at: https://github.com/py-pdf/PyPDF2/compare/1.26.0...1.27.0
 
-Version 1.26.0, 2016-05-18
---------------------------
+## Version 1.26.0, 2016-05-18
 
  - NOTE: Active maintenance on PyPDF2 is resuming after a hiatus
 
@@ -809,8 +814,7 @@ Version 1.26.0, 2016-05-18
  - Fix bug where reading an inline image would cut off prematurely
    in certain cases (speedplane)
 
-Version 1.25.1, 2015-07-20
---------------------------
+## Version 1.25.1, 2015-07-20
 
  - Fix bug when parsing inline images. Occurred when merging
    certain pages with inline images
@@ -818,8 +822,7 @@ Version 1.25.1, 2015-07-20
  - Fixed type error when creating outlines by utilizing the
    isString() test
 
-Version 1.25, 2015-07-07
-------------------------
+## Version 1.25, 2015-07-07
 
 BUGFIXES:
 
@@ -887,8 +890,7 @@ OTHER ENHANCEMENTS:
  - Enhanced regex usage in NameObject class (speedplane)
 
 
-Version 1.24, 2014-12-31
-------------------------
+## Version 1.24, 2014-12-31
 
  - Bugfixes for reading files in Python 3 (by Anthony Tuininga and
    pqqp)
@@ -913,8 +915,7 @@ Version 1.24, 2014-12-31
  - Created separate folder for scripts
 
 
-Version 1.23, 2014-08-11
-------------------------
+## Version 1.23, 2014-08-11
 
  - Documentation now available at http://pythonhosted.org//PyPDF2
 
@@ -957,8 +958,7 @@ Version 1.23, 2014-08-11
    the page fit option could be properly customized
 
 
-Version 1.22, 2014-05-29
-------------------------
+## Version 1.22, 2014-05-29
 
  - Added .DS_Store to .gitignore (for Mac users) (by Steve Witham)
 
@@ -988,8 +988,7 @@ Version 1.22, 2014-05-29
    dictionary
 
 
-Version 1.21, 2014-04-21
-------------------------
+## Version 1.21, 2014-04-21
 
  - Fix for when /Type isn't present in the Pages dictionary (by Rob1080)
 
@@ -1031,8 +1030,7 @@ Version 1.21, 2014-04-21
  - Improvements to Xref parsing algorithm (by speedplane)
 
 
-Version 1.20, 2014-01-27
-------------------------
+## Version 1.20, 2014-01-27
 
  - Official Python 3+ support (with contributions from TWAC and cgammans)
    Support for Python versions 2.6 and 2.7 will be maintained
@@ -1069,8 +1067,7 @@ Version 1.20, 2014-01-27
  - Exception handling for illegal characters in Name Objects
 
 
-Version 1.19, 2013-10-08
-------------------------
+## Version 1.19, 2013-10-08
 
 BUGFIXES:
  - Removed pop in sweepIndirectReferences to prevent infinite loop
@@ -1110,8 +1107,7 @@ UPCOMING:
  - A FAQ to answer common questions
 
 
-Version 1.18, 2013-08-19
-------------------------
+## Version 1.18, 2013-08-19
 
  - Fixed a bug where older verions of objects were incorrectly added to the
    cache, resulting in outdated or missing pages, images, and other objects
@@ -1137,8 +1133,7 @@ Other Changes:
  - Installation through pip library is fixed
 
 
-Version 1.17, 2013-07-25
-------------------------
+## Version 1.17, 2013-07-25
 
  - Removed one (from pdf.py) of the two Destination classes. Both
    classes had the same name, but were slightly different in content,
@@ -1152,8 +1147,7 @@ Version 1.17, 2013-07-25
    discussion and collaboration
 
 
-Versions -1.16, -2013-06-30
----------------------------
+## Versions -1.16, -2013-06-30
 
  - Note: This ChangeLog has not been kept up-to-date for a while.
    Hopefully we can keep better track of it from now on. Some of the
@@ -1184,8 +1178,7 @@ Versions -1.16, -2013-06-30
 	Thanks for contributing!
 
 
-Version 1.13, 2010-12-04
-------------------------
+## Version 1.13, 2010-12-04
 
  - Fixed a typo in code for reading a "\b" escape character in strings.
 
@@ -1209,8 +1202,7 @@ Version 1.13, 2010-12-04
    changes you submitted.  Sorry!  I'll do better in the future.
 
 
-Version 1.12, 2008-09-02
-------------------------
+## Version 1.12, 2008-09-02
 
  - Added support for XMP metadata.
 
@@ -1220,8 +1212,7 @@ Version 1.12, 2008-09-02
    characters.  Affects merging PDF files.
 
 
-Version 1.11, 2008-05-09
-------------------------
+## Version 1.11, 2008-05-09
 
  - Patch from Hartmut Goebel to permit RectangleObjects to accept NumberObject
    or FloatObject values.
@@ -1233,8 +1224,7 @@ Version 1.11, 2008-05-09
  - Fix for comments inside content streams.
 
 
-Version 1.10, 2007-10-04
-------------------------
+## Version 1.10, 2007-10-04
 
  - Text strings from PDF files are returned as Unicode string objects when
  pyPdf determines that they can be decoded (as UTF-16 strings, or as
@@ -1270,16 +1260,14 @@ Version 1.10, 2007-10-04
  - Minor optimizations to FlateDecode algorithm increase speed when using PNG
  predictors.
 
-Version 1.9, 2006-12-15
------------------------
+## Version 1.9, 2006-12-15
 
  - Fix several serious bugs introduced in version 1.8, caused by a failure to
    run through our PDF test suite before releasing that version.
 
  - Fix bug in NullObject reading and writing.
 
-Version 1.8, 2006-12-14
------------------------
+## Version 1.8, 2006-12-14
 
  - Add support for decryption with the standard PDF security handler.  This
    allows for decrypting PDF files given the proper user or owner password.
@@ -1291,8 +1279,7 @@ Version 1.8, 2006-12-14
  - Fix bug in ASCII85 decode that occurs when whitespace exists inside the
    two terminating characters of the stream.
 
-Version 1.7, 2006-12-10
------------------------
+## Version 1.7, 2006-12-10
 
  - Fix a bug when using a single page object in two PdfFileWriter objects.
 
@@ -1308,8 +1295,7 @@ Version 1.7, 2006-12-10
  - Add extractText function to PdfFileReader.
 
 
-Version 1.6, 2006-06-06
------------------------
+## Version 1.6, 2006-06-06
 
  - Add basic support for comments in PDF files.  This allows us to read some
    ReportLab PDFs that could not be read before.
@@ -1341,8 +1327,7 @@ Version 1.6, 2006-06-06
    Lawrence.
 
 
-Version 1.5, 2006-01-28
------------------------
+## Version 1.5, 2006-01-28
 
 - Fix a bug where merging pages did not work in "no-rename" cases when the
   second page has an array of content streams.
@@ -1350,8 +1335,7 @@ Version 1.5, 2006-01-28
 - Remove some debugging output that should not have been present.
 
 
-Version 1.4, 2006-01-27
------------------------
+## Version 1.4, 2006-01-27
 
 - Add capability to merge pages from multiple PDF files into a single page
   using the PageObject.mergePage function.  See example code (README or web
@@ -1372,8 +1356,7 @@ Version 1.4, 2006-01-27
 - Change url and download_url to refer to new pybrary.net web site.
 
 
-Version 1.3, 2006-01-23
------------------------
+## Version 1.3, 2006-01-23
 
 - Fix new bug introduced in 1.2 where PDF files with \r line endings did not
   work properly anymore.  A new test suite developed with various PDF files
@@ -1382,8 +1365,7 @@ Version 1.3, 2006-01-23
 - Fix a bug where inheriting attributes from page nodes did not work.
 
 
-Version 1.2, 2006-01-23
------------------------
+## Version 1.2, 2006-01-23
 
 - Improved support for files with CRLF-based line endings, fixing a common
   reported problem stating "assertion error: assert line == "%%EOF"".
@@ -1392,8 +1374,7 @@ Version 1.2, 2006-01-23
   is sure to result in better software... somehow.
 
 
-Version 1.1, 2006-01-18
------------------------
+## Version 1.1, 2006-01-18
 
 - Add capability to rotate pages.
 
@@ -1405,8 +1386,7 @@ Version 1.1, 2006-01-18
   This release can mangle Adobe's PDFReference16.pdf successfully.
 
 
-Version 1.0, 2006-01-17
------------------------
+## Version 1.0, 2006-01-17
 
 - First distutils-capable true public release.  Supports a wide variety of PDF
   files that I found sitting around on my system.

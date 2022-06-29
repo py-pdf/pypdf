@@ -54,8 +54,9 @@ def _alg32(
     metadata_encrypt: bool = True,
 ) -> bytes:
     """
-    Implementation of algorithm 3.2 of the PDF standard security handler,
-    section 3.5.2 of the PDF 1.6 reference.
+    Implementation of algorithm 3.2 of the PDF standard security handler.
+
+    See section 3.5.2 of the PDF 1.6 reference.
     """
     # 1. Pad or truncate the password string to exactly 32 bytes.  If the
     # password string is more than 32 bytes long, use only its first 32 bytes;
@@ -159,8 +160,9 @@ def _alg34(
     id1_entry: ByteStringObject,
 ) -> Tuple[bytes, bytes]:
     """
-    Implementation of algorithm 3.4 of the PDF standard security handler,
-    section 3.5.2 of the PDF 1.6 reference.
+    Implementation of algorithm 3.4 of the PDF standard security handler.
+
+    See section 3.5.2 of the PDF 1.6 reference.
     """
     # 1. Create an encryption key based on the user password string, as
     # described in algorithm 3.2.
@@ -186,8 +188,9 @@ def _alg35(
     metadata_encrypt: bool,
 ) -> Tuple[bytes, bytes]:
     """
-    Implementation of algorithm 3.4 of the PDF standard security handler,
-    section 3.5.2 of the PDF 1.6 reference.
+    Implementation of algorithm 3.4 of the PDF standard security handler.
+
+    See section 3.5.2 of the PDF 1.6 reference.
     """
     # 1. Create an encryption key based on the user password string, as
     # described in Algorithm 3.2.
