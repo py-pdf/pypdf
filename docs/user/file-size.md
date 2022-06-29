@@ -48,10 +48,10 @@ with open("out.pdf", "wb") as f:
     writer.write(f)
 ```
 
-## Loss-less Compression
+## Lossless Compression
 
 PyPDF2 supports the FlateDecode filter which uses the zlib/deflate compression
-method. It is a loss-less compression, meaning the resulting PDF looks exactly
+method. It is a lossless compression, meaning the resulting PDF looks exactly
 the same.
 
 Deflate compression can be applied to a page via [`page.compress_content_streams`](https://pypdf2.readthedocs.io/en/latest/modules/PageObject.html#PyPDF2._page.PageObject.compress_content_streams):
