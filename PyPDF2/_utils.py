@@ -79,7 +79,7 @@ def _get_max_pdf_version_header(header1: bytes, header2: bytes) -> bytes:
     if header2 in versions:
         pdf_header_indices.append(versions.index(header2))
     if len(pdf_header_indices) == 0:
-        raise ValueError(f"neither {header1} nor {header2} are proper headers")
+        raise ValueError(f"neither {header1!r} nor {header2!r} are proper headers")
     return versions[max(pdf_header_indices)]
 
 
