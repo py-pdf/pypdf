@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1656502718309,
+  "lastUpdate": 1656513507215,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -7024,6 +7024,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.018975984706865057",
             "extra": "mean: 3.6528932032000028 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "matt.peveler@gmail.com",
+            "name": "Matthew Peveler",
+            "username": "MasterOdin"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0215cc77349f2540286527eea1c89a960c74c5ad",
+          "message": "DOC: Remove hyphen from lossless (#1041)\n\nSigned-off-by: Matthew Peveler <matt.peveler@gmail.com>",
+          "timestamp": "2022-06-29T16:28:39+02:00",
+          "tree_id": "30f6e7db84a44af794cc1b52e5a6fcbf05a1b18d",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/0215cc77349f2540286527eea1c89a960c74c5ad"
+        },
+        "date": 1656513506547,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0035401180258077,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004281845081860131",
+            "extra": "mean: 996.4723702000356 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.308966260322267,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004248368468312421",
+            "extra": "mean: 65.3211969374965 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27416175551273797,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013860823522779732",
+            "extra": "mean: 3.647481750799989 sec\nrounds: 5"
           }
         ]
       }
