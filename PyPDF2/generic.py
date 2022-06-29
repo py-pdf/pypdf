@@ -26,19 +26,18 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-"""
-Implementation of generic PDF objects (dictionary, number, string, and so on).
-"""
+"""Implementation of generic PDF objects (dictionary, number, string, ...)."""
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import codecs
 import decimal
+import hashlib
 import logging
 import re
 import warnings
 from io import BytesIO
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 
 from ._codecs import (  # noqa: rev_encoding
     _pdfdoc_encoding,
@@ -59,6 +58,7 @@ from ._utils import (
     skip_over_comment,
     str_,
 )
+from .constants import FieldDictionaryAttributes
 from .constants import FilterTypes as FT
 from .constants import StreamAttributes as SA
 from .constants import TypArguments as TA
@@ -77,6 +77,21 @@ IndirectPattern = re.compile(rb"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]")
 
 
 class PdfObject:
+    # function for calculating a hash value
+    hash_func: Callable[..., "hashlib._Hash"] = hashlib.sha1
+
+    def hash_value_data(self) -> bytes:
+        return ("%s" % self).encode()
+
+    def hash_value(self) -> bytes:
+        return (
+            "%s:%s"
+            % (
+                self.__class__.__name__,
+                self.hash_func(self.hash_value_data()).hexdigest(),
+            )
+        ).encode()
+
     def get_object(self) -> Optional["PdfObject"]:
         """Resolve indirect references."""
         return self
@@ -218,7 +233,10 @@ class IndirectObject(PdfObject):
         self.pdf = pdf
 
     def get_object(self) -> Optional[PdfObject]:
-        return self.pdf.get_object(self).get_object()
+        obj = self.pdf.get_object(self)
+        if obj is None:
+            return None
+        return obj.get_object()
 
     def __repr__(self) -> str:
         return f"IndirectObject({self.idnum!r}, {self.generation!r})"
@@ -998,6 +1016,9 @@ class StreamObject(DictionaryObject):
         self.__data: Optional[str] = None
         self.decoded_self: Optional[DecodedStreamObject] = None
 
+    def hash_value_data(self) -> bytes:
+        return b_(self._data)
+
     @property
     def decodedSelf(self) -> Optional["DecodedStreamObject"]:  # pragma: no cover
         deprecate_with_replacement("decodedSelf", "decoded_self")
@@ -1555,25 +1576,16 @@ class RectangleObject(ArrayObject):
 
 class Field(TreeObject):
     """
-    A class representing a field dictionary. This class is accessed through
+    A class representing a field dictionary.
+
+    This class is accessed through
     :meth:`get_fields()<PyPDF2.PdfReader.get_fields>`
     """
 
     def __init__(self, data: Dict[str, Any]) -> None:
         DictionaryObject.__init__(self)
-        attributes = (
-            "/FT",
-            "/Parent",
-            "/Kids",
-            "/T",
-            "/TU",
-            "/TM",
-            "/Ff",
-            "/V",
-            "/DV",
-            "/AA",
-        )
-        for attr in attributes:
+
+        for attr in FieldDictionaryAttributes.attributes():
             try:
                 self[NameObject(attr)] = data[attr]
             except KeyError:
@@ -1583,7 +1595,7 @@ class Field(TreeObject):
     @property
     def field_type(self) -> Optional[NameObject]:
         """Read-only property accessing the type of this field."""
-        return self.get("/FT")
+        return self.get(FieldDictionaryAttributes.FT)
 
     @property
     def fieldType(self) -> Optional[NameObject]:  # pragma: no cover
@@ -1598,22 +1610,22 @@ class Field(TreeObject):
     @property
     def parent(self) -> Optional[DictionaryObject]:
         """Read-only property accessing the parent of this field."""
-        return self.get("/Parent")
+        return self.get(FieldDictionaryAttributes.Parent)
 
     @property
     def kids(self) -> Optional[ArrayObject]:
         """Read-only property accessing the kids of this field."""
-        return self.get("/Kids")
+        return self.get(FieldDictionaryAttributes.Kids)
 
     @property
     def name(self) -> Optional[str]:
         """Read-only property accessing the name of this field."""
-        return self.get("/T")
+        return self.get(FieldDictionaryAttributes.T)
 
     @property
     def alternate_name(self) -> Optional[str]:
         """Read-only property accessing the alternate name of this field."""
-        return self.get("/TU")
+        return self.get(FieldDictionaryAttributes.TU)
 
     @property
     def altName(self) -> Optional[str]:  # pragma: no cover
@@ -1632,7 +1644,7 @@ class Field(TreeObject):
         name is used by PyPDF2 as a key in the dictionary returned by
         :meth:`get_fields()<PyPDF2.PdfReader.get_fields>`
         """
-        return self.get("/TM")
+        return self.get(FieldDictionaryAttributes.TM)
 
     @property
     def mappingName(self) -> Optional[str]:  # pragma: no cover
@@ -1650,7 +1662,7 @@ class Field(TreeObject):
         Read-only property accessing the field flags, specifying various
         characteristics of the field (see Table 8.70 of the PDF 1.7 reference).
         """
-        return self.get("/Ff")
+        return self.get(FieldDictionaryAttributes.Ff)
 
     @property
     def value(self) -> Optional[Any]:
@@ -1658,12 +1670,12 @@ class Field(TreeObject):
         Read-only property accessing the value of this field. Format
         varies based on field type.
         """
-        return self.get("/V")
+        return self.get(FieldDictionaryAttributes.V)
 
     @property
     def default_value(self) -> Optional[Any]:
         """Read-only property accessing the default value of this field."""
-        return self.get("/DV")
+        return self.get(FieldDictionaryAttributes.DV)
 
     @property
     def defaultValue(self) -> Optional[Any]:  # pragma: no cover
@@ -1682,7 +1694,7 @@ class Field(TreeObject):
         This dictionary defines the field's behavior in response to trigger events.
         See Section 8.5.2 of the PDF 1.7 reference.
         """
-        return self.get("/AA")
+        return self.get(FieldDictionaryAttributes.AA)
 
     @property
     def additionalActions(self) -> Optional[DictionaryObject]:  # pragma: no cover
@@ -1804,74 +1816,42 @@ class Destination(TreeObject):
 
     @property
     def title(self) -> Optional[str]:
-        """
-        Read-only property accessing the destination title.
-
-        :rtype: str
-        """
+        """Read-only property accessing the destination title."""
         return self.get("/Title")
 
     @property
     def page(self) -> Optional[int]:
-        """
-        Read-only property accessing the destination page number.
-
-        :rtype: int
-        """
+        """Read-only property accessing the destination page number."""
         return self.get("/Page")
 
     @property
     def typ(self) -> Optional[str]:
-        """
-        Read-only property accessing the destination type.
-
-        :rtype: str
-        """
+        """Read-only property accessing the destination type."""
         return self.get("/Type")
 
     @property
     def zoom(self) -> Optional[int]:
-        """
-        Read-only property accessing the zoom factor.
-
-        :rtype: int, or ``None`` if not available.
-        """
+        """Read-only property accessing the zoom factor."""
         return self.get("/Zoom", None)
 
     @property
     def left(self) -> Optional[FloatObject]:
-        """
-        Read-only property accessing the left horizontal coordinate.
-
-        :rtype: float, or ``None`` if not available.
-        """
+        """Read-only property accessing the left horizontal coordinate."""
         return self.get("/Left", None)
 
     @property
     def right(self) -> Optional[FloatObject]:
-        """
-        Read-only property accessing the right horizontal coordinate.
-
-        :rtype: float, or ``None`` if not available.
-        """
+        """Read-only property accessing the right horizontal coordinate."""
         return self.get("/Right", None)
 
     @property
     def top(self) -> Optional[FloatObject]:
-        """
-        Read-only property accessing the top vertical coordinate.
-
-        :rtype: float, or ``None`` if not available.
-        """
+        """Read-only property accessing the top vertical coordinate."""
         return self.get("/Top", None)
 
     @property
     def bottom(self) -> Optional[FloatObject]:
-        """
-        Read-only property accessing the bottom vertical coordinate.
-
-        :rtype: float, or ``None`` if not available.
-        """
+        """Read-only property accessing the bottom vertical coordinate."""
         return self.get("/Bottom", None)
 
 
@@ -1912,8 +1892,7 @@ def create_string_object(
     forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
 ) -> Union[TextStringObject, ByteStringObject]:
     """
-    Given a string, create a ByteStringObject or a TextStringObject to
-    represent the string.
+    Create a ByteStringObject or a TextStringObject from a string to represent the string.
 
     :param string: A string
 
