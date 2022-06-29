@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1656533683932,
+  "lastUpdate": 1656533763859,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -7114,6 +7114,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.06699320087045386",
             "extra": "mean: 4.890546114400001 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a85c7e702195c51214bbaa141a27b63b7eb981a5",
+          "message": "DOC: How to surppress exceptions/warnings/log messages (#1037)",
+          "timestamp": "2022-06-29T22:14:58+02:00",
+          "tree_id": "92ee3792c08b8bcde74f79c8835d8c91448b1e9d",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/a85c7e702195c51214bbaa141a27b63b7eb981a5"
+        },
+        "date": 1656533762877,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0041741739004093,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011278539429591899",
+            "extra": "mean: 995.8431773999962 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.426389468806706,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005089479526809303",
+            "extra": "mean: 64.82398243750254 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27345833628825417,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022080465486302134",
+            "extra": "mean: 3.6568641993999904 sec\nrounds: 5"
           }
         ]
       }
