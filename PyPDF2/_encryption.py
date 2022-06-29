@@ -25,10 +25,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from enum import IntEnum
 import hashlib
 import random
 import struct
+from enum import IntEnum
 from typing import Optional, Tuple, Union, cast
 
 from PyPDF2.errors import DependencyError
@@ -239,32 +239,47 @@ class AlgV4:
         metadata_encrypted: bool,
     ) -> bytes:
         """
-        Algorithm 2: Computing an encryption key
+        Algorithm 2: Computing an encryption key.
 
-        a) Pad or truncate the password string to exactly 32 bytes. If the password string is more than 32 bytes long,
-           use only its first 32 bytes; if it is less than 32 bytes long, pad it by appending the required number of
+        a) Pad or truncate the password string to exactly 32 bytes. If the
+           password string is more than 32 bytes long,
+           use only its first 32 bytes; if it is less than 32 bytes long, pad it
+           by appending the required number of
            additional bytes from the beginning of the following padding string:
                 < 28 BF 4E 5E 4E 75 8A 41 64 00 4E 56 FF FA 01 08
                 2E 2E 00 B6 D0 68 3E 80 2F 0C A9 FE 64 53 69 7A >
-           That is, if the password string is n bytes long, append the first 32 - n bytes of the padding string to the end
-           of the password string. If the password string is empty (zero-length), meaning there is no user password,
+           That is, if the password string is n bytes long, append
+           the first 32 - n bytes of the padding string to the end
+           of the password string. If the password string is empty (zero-length),
+           meaning there is no user password,
            substitute the entire padding string in its place.
 
-        b) Initialize the MD5 hash function and pass the result of step (a) as input to this function.
-        c) Pass the value of the encryption dictionary’s O entry to the MD5 hash function. ("Algorithm 3: Computing
-           the encryption dictionary’s O (owner password) value" shows how the O value is computed.)
-        d) Convert the integer value of the P entry to a 32-bit unsigned binary number and pass these bytes to the
+        b) Initialize the MD5 hash function and pass the result of step (a)
+           as input to this function.
+        c) Pass the value of the encryption dictionary’s O entry to the
+           MD5 hash function. ("Algorithm 3: Computing
+           the encryption dictionary’s O (owner password) value" shows how the
+           O value is computed.)
+        d) Convert the integer value of the P entry to a 32-bit unsigned binary
+           number and pass these bytes to the
            MD5 hash function, low-order byte first.
-        e) Pass the first element of the file’s file identifier array (the value of the ID entry in the document’s trailer
+        e) Pass the first element of the file’s file identifier array (the value
+           of the ID entry in the document’s trailer
            dictionary; see Table 15) to the MD5 hash function.
-        f) (Security handlers of revision 4 or greater) If document metadata is not being encrypted, pass 4 bytes with
+        f) (Security handlers of revision 4 or greater) If document metadata is
+           not being encrypted, pass 4 bytes with
            the value 0xFFFFFFFF to the MD5 hash function.
         g) Finish the hash.
-        h) (Security handlers of revision 3 or greater) Do the following 50 times: Take the output from the previous
-           MD5 hash and pass the first n bytes of the output as input into a new MD5 hash, where n is the number of
-           bytes of the encryption key as defined by the value of the encryption dictionary’s Length entry.
-        i) Set the encryption key to the first n bytes of the output from the final MD5 hash, where n shall always be 5
-           for security handlers of revision 2 but, for security handlers of revision 3 or greater, shall depend on the
+        h) (Security handlers of revision 3 or greater) Do the following
+           50 times: Take the output from the previous
+           MD5 hash and pass the first n bytes of the output as input into a new
+           MD5 hash, where n is the number of
+           bytes of the encryption key as defined by the value of the encryption
+           dictionary’s Length entry.
+        i) Set the encryption key to the first n bytes of the output from the
+           final MD5 hash, where n shall always be 5
+           for security handlers of revision 2 but, for security handlers of
+           revision 3 or greater, shall depend on the
            value of the encryption dictionary’s Length entry.
         """
         a = _padding(password)
@@ -284,26 +299,36 @@ class AlgV4:
     @staticmethod
     def compute_O_value_key(owner_pwd: bytes, rev: int, key_size: int) -> bytes:
         """
-        Algorithm 3: Computing the encryption dictionary’s O (owner password) value
+        Algorithm 3: Computing the encryption dictionary’s O (owner password) value.
 
-        a) Pad or truncate the owner password string as described in step (a) of "Algorithm 2: Computing an
-           encryption key". If there is no owner password, use the user password instead.
-        b) Initialize the MD5 hash function and pass the result of step (a) as input to this function.
-        c) (Security handlers of revision 3 or greater) Do the following 50 times: Take the output from the previous
+        a) Pad or truncate the owner password string as described in step (a)
+           of "Algorithm 2: Computing an encryption key".
+           If there is no owner password, use the user password instead.
+        b) Initialize the MD5 hash function and pass the result of step (a) as
+           input to this function.
+        c) (Security handlers of revision 3 or greater) Do the following 50 times:
+           Take the output from the previous
            MD5 hash and pass it as input into a new MD5 hash.
-        d) Create an RC4 encryption key using the first n bytes of the output from the final MD5 hash, where n shall
-           always be 5 for security handlers of revision 2 but, for security handlers of revision 3 or greater, shall
+        d) Create an RC4 encryption key using the first n bytes of the output
+           from the final MD5 hash, where n shall
+           always be 5 for security handlers of revision 2 but, for security
+           handlers of revision 3 or greater, shall
            depend on the value of the encryption dictionary’s Length entry.
-        e) Pad or truncate the user password string as described in step (a) of "Algorithm 2: Computing an encryption key".
-        f) Encrypt the result of step (e), using an RC4 encryption function with the encryption key obtained in step (d).
-        g) (Security handlers of revision 3 or greater) Do the following 19 times: Take the output from the previous
-           invocation of the RC4 function and pass it as input to a new invocation of the function; use an encryption
-           key generated by taking each byte of the encryption key obtained in step (d) and performing an XOR
-           (exclusive or) operation between that byte and the single-byte value of the iteration counter (from 1 to 19).
-        h) Store the output from the final invocation of the RC4 function as the value of the O entry in the encryption
-           dictionary.
+        e) Pad or truncate the user password string as described in step (a) of
+           "Algorithm 2: Computing an encryption key".
+        f) Encrypt the result of step (e), using an RC4 encryption function with
+           the encryption key obtained in step (d).
+        g) (Security handlers of revision 3 or greater) Do the following 19 times:
+           Take the output from the previous
+           invocation of the RC4 function and pass it as input to a new
+           invocation of the function; use an encryption
+           key generated by taking each byte of the encryption key obtained in
+           step (d) and performing an XOR
+           (exclusive or) operation between that byte and the single-byte value
+           of the iteration counter (from 1 to 19).
+        h) Store the output from the final invocation of the RC4 function as
+           the value of the O entry in the encryption dictionary.
         """
-
         a = _padding(owner_pwd)
         o_hash_digest = hashlib.md5(a).digest()
 
@@ -316,7 +341,7 @@ class AlgV4:
 
     @staticmethod
     def compute_O_value(rc4_key: bytes, user_pwd: bytes, rev: int) -> bytes:
-        """see :func:`compute_O_value_key`"""
+        """See :func:`compute_O_value_key`."""
         a = _padding(user_pwd)
         rc4_enc = RC4_encrypt(rc4_key, a)
         if rev >= 3:
@@ -328,34 +353,46 @@ class AlgV4:
     @staticmethod
     def compute_U_value(key: bytes, rev: int, id1_entry: bytes) -> bytes:
         """
-        Algorithm 4: Computing the encryption dictionary’s U (user password) value (Security handlers of revision 2)
+        Algorithm 4: Computing the encryption dictionary’s U (user password) value.
 
-        a) Create an encryption key based on the user password string, as described in "Algorithm 2: Computing an
-           encryption key".
-        b) Encrypt the 32-byte padding string shown in step (a) of "Algorithm 2: Computing an encryption key", using
-           an RC4 encryption function with the encryption key from the preceding step.
-        c) Store the result of step (b) as the value of the U entry in the encryption dictionary.
+        (Security handlers of revision 2)
+
+        a) Create an encryption key based on the user password string, as
+           described in "Algorithm 2: Computing an encryption key".
+        b) Encrypt the 32-byte padding string shown in step (a) of
+           "Algorithm 2: Computing an encryption key", using an RC4 encryption
+           function with the encryption key from the preceding step.
+        c) Store the result of step (b) as the value of the U entry in the
+           encryption dictionary.
         """
         if rev <= 2:
             value = RC4_encrypt(key, _PADDING)
             return value
 
         """
-        Algorithm 5: Computing the encryption dictionary’s U (user password) value (Security handlers of revision 3 or greater)
+        Algorithm 5: Computing the encryption dictionary’s U (user password) value.
 
-        a) Create an encryption key based on the user password string, as described in "Algorithm 2: Computing an
-           encryption key".
-        b) Initialize the MD5 hash function and pass the 32-byte padding string shown in step (a) of "Algorithm 2:
+        (Security handlers of revision 3 or greater)
+
+        a) Create an encryption key based on the user password string, as
+           described in "Algorithm 2: Computing an encryption key".
+        b) Initialize the MD5 hash function and pass the 32-byte padding string
+           shown in step (a) of "Algorithm 2:
            Computing an encryption key" as input to this function.
-        c) Pass the first element of the file’s file identifier array (the value of the ID entry in the document’s trailer
+        c) Pass the first element of the file’s file identifier array (the value
+           of the ID entry in the document’s trailer
            dictionary; see Table 15) to the hash function and finish the hash.
-        d) Encrypt the 16-byte result of the hash, using an RC4 encryption function with the encryption key from step (a).
-        e) Do the following 19 times: Take the output from the previous invocation of the RC4 function and pass it as
-           input to a new invocation of the function; use an encryption key generated by taking each byte of the
-           original encryption key obtained in step (a) and performing an XOR (exclusive or) operation between that
+        d) Encrypt the 16-byte result of the hash, using an RC4 encryption
+           function with the encryption key from step (a).
+        e) Do the following 19 times: Take the output from the previous
+           invocation of the RC4 function and pass it as input to a new
+           invocation of the function; use an encryption key generated by
+           taking each byte of the original encryption key obtained in
+           step (a) and performing an XOR (exclusive or) operation between that
            byte and the single-byte value of the iteration counter (from 1 to 19).
-        f) Append 16 bytes of arbitrary padding to the output from the final invocation of the RC4 function and store
-           the 32-byte result as the value of the U entry in the encryption dictionary.
+        f) Append 16 bytes of arbitrary padding to the output from the final
+           invocation of the RC4 function and store the 32-byte result as the
+           value of the U entry in the encryption dictionary.
         """
         u_hash = hashlib.md5(_PADDING)
         u_hash.update(id1_entry)
@@ -377,7 +414,7 @@ class AlgV4:
         metadata_encrypted: bool,
     ) -> bytes:
         """
-        Algorithm 6: Authenticating the user password
+        Algorithm 6: Authenticating the user password.
 
         a) Perform all but the last step of "Algorithm 4: Computing the encryption dictionary’s U (user password)
            value (Security handlers of revision 2)" or "Algorithm 5: Computing the encryption dictionary’s U (user
@@ -412,7 +449,7 @@ class AlgV4:
         metadata_encrypted: bool,
     ) -> bytes:
         """
-        Algorithm 7: Authenticating the owner password
+        Algorithm 7: Authenticating the owner password.
 
         a) Compute an encryption key from the supplied password string, as described in steps (a) to (d) of
            "Algorithm 3: Computing the encryption dictionary’s O (owner password) value".
@@ -446,7 +483,7 @@ class AlgV5:
         R: int, password: bytes, o_value: bytes, oe_value: bytes, u_value: bytes
     ) -> bytes:
         """
-        Algorithm 3.2a Computing an encryption key
+        Algorithm 3.2a Computing an encryption key.
 
         To understand the algorithm below, it is necessary to treat the O and U strings in the Encrypt dictionary
         as made up of three sections. The first 32 bytes are a hash value (explained below). The next 8 bytes are
@@ -483,8 +520,10 @@ class AlgV5:
         return key
 
     @staticmethod
-    def verify_user_password(R: int, password: bytes, u_value: bytes, ue_value: bytes) -> bytes:
-        """see :func:`verify_owner_password`"""
+    def verify_user_password(
+        R: int, password: bytes, u_value: bytes, ue_value: bytes
+    ) -> bytes:
+        """See :func:`verify_owner_password`."""
         password = password[:127]
         if AlgV5.calculate_hash(R, password, u_value[32:40], b"") != u_value[:32]:
             return b""
@@ -517,7 +556,7 @@ class AlgV5:
     def verify_perms(
         key: bytes, perms: bytes, p: int, metadata_encrypted: bool
     ) -> bool:
-        """see :func:`verify_owner_password` and :func:`compute_Perms_value`"""
+        """See :func:`verify_owner_password` and :func:`compute_Perms_value`."""
         b8 = b"T" if metadata_encrypted else b"F"
         p1 = struct.pack("<I", p) + b"\xff\xff\xff\xff" + b8 + b"adb"
         p2 = AES_ECB_decrypt(key, perms)
@@ -566,7 +605,7 @@ class AlgV5:
         password: bytes, key: bytes, u_value: bytes
     ) -> Tuple[bytes, bytes]:
         """
-        Algorithm 3.9 Computing the encryption dictionary’s O (owner password) and OE (owner encryption key) values
+        Algorithm 3.9 Computing the encryption dictionary’s O (owner password) and OE (owner encryption key) values.
 
         1. Generate 16 random bytes of data using a strong random number generator. The first 8 bytes are the
            Owner Validation Salt. The second 8 bytes are the Owner Key Salt. Compute the 32-byte SHA-256 hash
@@ -649,7 +688,7 @@ class Encryption:
 
     def decrypt_object(self, obj: PdfObject, idnum: int, generation: int) -> PdfObject:
         """
-        Algorithm 1: Encryption of data using the RC4 or AES algorithms
+        Algorithm 1: Encryption of data using the RC4 or AES algorithms.
 
         a) Obtain the object number and generation number from the object identifier of the string or stream to be
            encrypted (see 7.3.10, "Indirect Objects"). If the string is a direct object, use the identifier of the indirect
@@ -771,7 +810,9 @@ class Encryption:
         ue_entry = cast(ByteStringObject, self.entry["/UE"].get_object()).original_bytes
 
         # verify owner password first
-        key = AlgV5.verify_owner_password(self.algR, password, o_entry, oe_entry, u_entry)
+        key = AlgV5.verify_owner_password(
+            self.algR, password, o_entry, oe_entry, u_entry
+        )
         rc = PasswordType.OWNER_PASSWORD
         if not key:
             key = AlgV5.verify_user_password(self.algR, password, u_entry, ue_entry)
