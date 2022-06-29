@@ -41,7 +41,12 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 from ._page import PageObject, _VirtualList
 from ._reader import PdfReader
 from ._security import _alg33, _alg34, _alg35
-from ._utils import StreamType, b_, deprecate_with_replacement, _get_max_pdf_version_header
+from ._utils import (
+    StreamType,
+    _get_max_pdf_version_header,
+    b_,
+    deprecate_with_replacement,
+)
 from .constants import AnnotationDictionaryAttributes
 from .constants import CatalogAttributes as CA
 from .constants import CatalogDictionary
