@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1656498799285,
+  "lastUpdate": 1656502718309,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -6979,6 +6979,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.020454923381853823",
             "extra": "mean: 3.615944746599996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f2ffa7af8f52eed3c37d9d6bc376db9f481b2a03",
+          "message": "DOC: Compression of content streams (#1040)",
+          "timestamp": "2022-06-29T13:37:35+02:00",
+          "tree_id": "21c1d85f6b74d81b1f31e2e226be9ba1b4f88899",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/f2ffa7af8f52eed3c37d9d6bc376db9f481b2a03"
+        },
+        "date": 1656502717482,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0091244868587101,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007709364274456624",
+            "extra": "mean: 990.9580165999998 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.402657272402028,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004012592866452533",
+            "extra": "mean: 64.92386231249637 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27375560805445426,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018975984706865057",
+            "extra": "mean: 3.6528932032000028 sec\nrounds: 5"
           }
         ]
       }
