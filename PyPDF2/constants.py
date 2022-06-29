@@ -8,6 +8,8 @@ PDF Reference, third edition, Version 1.4, 2001. ISBN 0-201-75839-3.
 PDF Reference, sixth edition, Version 1.7, 2006.
 """
 
+from typing import Dict, Tuple
+
 
 class Core:
     """Keywords that don't quite belong anywhere else."""
@@ -101,6 +103,15 @@ class PageAttributes:
     PRES_STEPS = "/PresSteps"  # dictionary, optional
     USER_UNIT = "/UserUnit"  # number, optional
     VP = "/VP"  # dictionary, optional
+
+
+class FileSpecificationDictionaryEntries:
+    """TABLE 3.41 Entries in a file specification dictionary"""
+
+    Type = "/Type"
+    FS = "/FS"  # The name of the file system to be used to interpret this file specification
+    F = "/F"  # A file specification string of the form described in Section 3.10.1
+    EF = "/EF"  # dictionary, containing a subset of the keys F , UF , DOS , Mac , and Unix
 
 
 class StreamAttributes:
@@ -202,9 +213,45 @@ class TypFitArguments:
     FIT_H = "/FitH"
     FIT_BH = "/FitBH"
     FIT_R = "/FitR"
+    XYZ = "/XYZ"
 
 
-class FieldDistionaryAttributes:
+class GoToActionArguments:
+    S = "/S"  # name, required: type of action
+    D = "/D"  # name / byte string /array, required: Destination to jump to
+
+
+class AnnotationDictionaryAttributes:
+    """TABLE 8.15 Entries common to all annotation dictionaries"""
+
+    Type = "/Type"
+    Subtype = "/Subtype"
+    Rect = "/Rect"
+    Contents = "/Contents"
+    P = "/P"
+    NM = "/NM"
+    M = "/M"
+    F = "/F"
+    AP = "/AP"
+    AS = "/AS"
+    Border = "/Border"
+    C = "/C"
+    StructParent = "/StructParent"
+    OC = "/OC"
+
+
+class InteractiveFormDictEntries:
+    Fields = "/Fields"
+    NeedAppearances = "/NeedAppearances"
+    SigFlags = "/SigFlags"
+    CO = "/CO"
+    DR = "/DR"
+    DA = "/DA"
+    Q = "/Q"
+    XFA = "/XFA"
+
+
+class FieldDictionaryAttributes:
     """TABLE 8.69 Entries common to all field dictionaries (PDF 1.7 reference)."""
 
     FT = "/FT"  # name, required for terminal fields
@@ -217,6 +264,34 @@ class FieldDistionaryAttributes:
     V = "/V"  # text string, optional
     DV = "/DV"  # text string, optional
     AA = "/AA"  # dictionary, optional
+
+    @classmethod
+    def attributes(cls) -> Tuple[str, ...]:
+        return (
+            cls.TM,
+            cls.T,
+            cls.FT,
+            cls.Parent,
+            cls.TU,
+            cls.Ff,
+            cls.V,
+            cls.DV,
+            cls.Kids,
+            cls.AA,
+        )
+
+    @classmethod
+    def attributes_dict(cls) -> Dict[str, str]:
+        return {
+            cls.FT: "Field Type",
+            cls.Parent: "Parent",
+            cls.T: "Field Name",
+            cls.TU: "Alternate Field Name",
+            cls.TM: "Mapping Name",
+            cls.Ff: "Field Flags",
+            cls.V: "Value",
+            cls.DV: "Default Value",
+        }
 
 
 class DocumentInformationAttributes:
@@ -286,20 +361,28 @@ class CatalogDictionary:
 
 
 PDF_KEYS = (
-    PagesAttributes,
-    PageAttributes,
-    Ressources,
+    AnnotationDictionaryAttributes,
+    CatalogAttributes,
+    CatalogDictionary,
+    CcittFaxDecodeParameters,
+    ColorSpaces,
+    Core,
+    DocumentInformationAttributes,
     EncryptionDictAttributes,
-    ImageAttributes,
-    StreamAttributes,
+    FieldDictionaryAttributes,
+    FilterTypeAbbreviations,
     FilterTypes,
+    GoToActionArguments,
+    GraphicsStateParameters,
+    ImageAttributes,
+    FileSpecificationDictionaryEntries,
     LzwFilterParameters,
+    PageAttributes,
+    PageLayouts,
+    PagesAttributes,
+    Ressources,
+    StreamAttributes,
+    TrailerKeys,
     TypArguments,
     TypFitArguments,
-    PageLayouts,
-    GraphicsStateParameters,
-    CatalogDictionary,
-    Core,
-    TrailerKeys,
-    CatalogAttributes,
 )

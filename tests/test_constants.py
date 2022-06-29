@@ -1,4 +1,5 @@
 import re
+from typing import Callable
 
 from PyPDF2.constants import PDF_KEYS
 
@@ -10,6 +11,8 @@ def test_slash_prefix():
             if attr.startswith("__") and attr.endswith("__"):
                 continue
             constant_value = getattr(cls, attr)
+            if isinstance(constant_value, Callable):
+                continue
             assert constant_value.startswith("/")
             assert pattern.match(constant_value)
             assert attr.replace("_", "").lower() == constant_value[1:].lower()

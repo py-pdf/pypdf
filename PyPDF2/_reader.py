@@ -60,9 +60,11 @@ from ._utils import (
     skip_over_whitespace,
 )
 from .constants import CatalogAttributes as CA
+from .constants import CatalogDictionary
 from .constants import CatalogDictionary as CD
 from .constants import Core as CO
 from .constants import DocumentInformationAttributes as DI
+from .constants import FieldDictionaryAttributes, GoToActionArguments
 from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
 from .constants import TrailerKeys as TK
@@ -473,22 +475,13 @@ class PdfReader:
             default, the mapping name is used for keys.
             ``None`` if form data could not be located.
         """
-        field_attributes = {
-            "/FT": "Field Type",
-            PA.PARENT: "Parent",
-            "/T": "Field Name",
-            "/TU": "Alternate Field Name",
-            "/TM": "Mapping Name",
-            "/Ff": "Field Flags",
-            "/V": "Value",
-            "/DV": "Default Value",
-        }
+        field_attributes = FieldDictionaryAttributes.attributes_dict()
         if retval is None:
             retval = {}
             catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
             # get the AcroForm tree
-            if "/AcroForm" in catalog:
-                tree = cast(Optional[TreeObject], catalog["/AcroForm"])
+            if CatalogDictionary.ACRO_FORM in catalog:
+                tree = cast(Optional[TreeObject], catalog[CatalogDictionary.ACRO_FORM])
             else:
                 return None
         if tree is None:
@@ -553,11 +546,15 @@ class PdfReader:
                 self.get_fields(kid.get_object(), retval, fileobj)
 
     def _write_field(self, fileobj: Any, field: Any, field_attributes: Any) -> None:
-        order = ("/TM", "/T", "/FT", PA.PARENT, "/TU", "/Ff", "/V", "/DV")
-        for attr in order:
+        for attr in FieldDictionaryAttributes.attributes():
+            if attr in (
+                FieldDictionaryAttributes.Kids,
+                FieldDictionaryAttributes.AA,
+            ):
+                continue
             attr_name = field_attributes[attr]
             try:
-                if attr == "/FT":
+                if attr == FieldDictionaryAttributes.FT:
                     # Make the field type value more clear
                     types = {
                         "/Btn": "Button",
@@ -567,12 +564,12 @@ class PdfReader:
                     }
                     if field[attr] in types:
                         fileobj.write(attr_name + ": " + types[field[attr]] + "\n")
-                elif attr == PA.PARENT:
+                elif attr == FieldDictionaryAttributes.Parent:
                     # Let's just write the name of the parent
                     try:
-                        name = field[PA.PARENT]["/TM"]
+                        name = field[attr][FieldDictionaryAttributes.TM]
                     except KeyError:
-                        name = field[PA.PARENT]["/T"]
+                        name = field[attr][FieldDictionaryAttributes.T]
                     fileobj.write(attr_name + ": " + name + "\n")
                 else:
                     fileobj.write(attr_name + ": " + str(field[attr]) + "\n")
@@ -819,9 +816,9 @@ class PdfReader:
             # Action, section 8.5 (only type GoTo supported)
             title = node["/Title"]
             action = cast(DictionaryObject, node["/A"])
-            action_type = cast(NameObject, action["/S"])
+            action_type = cast(NameObject, action[GoToActionArguments.S])
             if action_type == "/GoTo":
-                dest = action["/D"]
+                dest = action[GoToActionArguments.D]
         elif "/Dest" in node and "/Title" in node:
             # Destination, section 8.2.1
             title = node["/Title"]
