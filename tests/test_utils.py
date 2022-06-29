@@ -5,6 +5,7 @@ import pytest
 
 import PyPDF2._utils
 from PyPDF2._utils import (
+    _get_max_pdf_version_header,
     mark_location,
     matrix_multiply,
     read_block_backwards,
@@ -212,3 +213,9 @@ def test_read_previous_line2():
         b"d" * (2 * io.DEFAULT_BUFFER_SIZE),
         6,
     )
+
+
+def test_get_max_pdf_version_header():
+    with pytest.raises(ValueError) as exc:
+        _get_max_pdf_version_header(b"", b"PDF-1.2")
+    assert exc.value.args[0] == "neither b'' nor b'PDF-1.2' are proper headers"

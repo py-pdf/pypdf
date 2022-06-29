@@ -17,7 +17,7 @@ PyPDF2 1.27.10 supported Python 2.7 to 3.10.
 
 ## Who uses PyPDF2?
 
-pyPdf is vendored [into]((https://github.com/Buyanbat/XacCRM/tree/ee78e8df967182f661b6494a86444501e7d89c8f/report/pyPdf)) [several](https://github.com/MyBook/calibre/tree/ca1efe3c21f6553e096dab745b3cdeb36244a5a9/src/pyPdf) [projects](https://github.com/Giacomo-De-Florio-Dev/Make_Your_PDF_Safe/tree/ec439f92243d12d54ae024668792470c6b40ee96/MakeYourPDFsafe_V1.3/PyPDF2). That
+pyPdf is vendored [into](https://github.com/Buyanbat/XacCRM/tree/ee78e8df967182f661b6494a86444501e7d89c8f/report/pyPdf) [several](https://github.com/MyBook/calibre/tree/ca1efe3c21f6553e096dab745b3cdeb36244a5a9/src/pyPdf) [projects](https://github.com/Giacomo-De-Florio-Dev/Make_Your_PDF_Safe/tree/ec439f92243d12d54ae024668792470c6b40ee96/MakeYourPDFsafe_V1.3/PyPDF2). That
 means the code of pyPdf was copied into that project.
 
 Projects that depend on PyPDF2:

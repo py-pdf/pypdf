@@ -85,6 +85,8 @@ class FlateDecode:
         **kwargs: Any,
     ) -> bytes:
         """
+        Decode data which is flate-encoded.
+
         :param data: flate-encoded data.
         :param decode_parms: a dictionary of values, understanding the
             "/Predictor":<int> key only
@@ -264,8 +266,6 @@ class LZWDecode:
             algorithm derived from:
             http://www.rasip.fer.hr/research/compress/algorithms/fund/lz/lzw.html
             and the PDFReference
-
-            :rtype: bytes
             """
             cW = self.CLEARDICT
             baos = ""
@@ -308,7 +308,6 @@ class LZWDecode:
         :param data: ``bytes`` or ``str`` text to decode.
         :param decode_parms: a dictionary of parameter values.
         :return: decoded data.
-        :rtype: bytes
         """
         if "decodeParms" in kwargs:  # pragma: no cover
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
@@ -378,7 +377,7 @@ class JPXDecode:
 
 
 class CCITParameters:
-    """TABLE 3.9 Optional parameters for the CCITTFaxDecode filter"""
+    """TABLE 3.9 Optional parameters for the CCITTFaxDecode filter."""
 
     def __init__(self, K: int = 0, columns: int = 0, rows: int = 0) -> None:
         self.K = K

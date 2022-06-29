@@ -513,3 +513,15 @@ def test_write_bookmark_on_page_fitv():
 
     # cleanup
     os.remove("tmp-merger-do-not-commit.pdf")
+
+
+def test_pdf_header():
+    writer = PdfWriter()
+    assert writer.pdf_header == b"%PDF-1.3"
+
+    reader = PdfReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
+    writer.add_page(reader.pages[0])
+    assert writer.pdf_header == b"%PDF-1.5"
+
+    writer.pdf_header = b"%PDF-1.6"
+    assert writer.pdf_header == b"%PDF-1.6"
