@@ -41,7 +41,12 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 from ._page import PageObject, _VirtualList
 from ._reader import PdfReader
 from ._security import _alg33, _alg34, _alg35
-from ._utils import StreamType, b_, deprecate_with_replacement
+from ._utils import (
+    StreamType,
+    _get_max_pdf_version_header,
+    b_,
+    deprecate_with_replacement,
+)
 from .constants import CatalogAttributes as CA
 from .constants import Core as CO
 from .constants import EncryptionDictAttributes as ED
@@ -88,15 +93,6 @@ class PdfWriter:
     This class supports writing PDF files out, given pages produced by another
     class (typically :class:`PdfReader<PyPDF2.PdfReader>`).
     """
-
-    versions = (
-        b"%PDF-1.3",
-        b"%PDF-1.4",
-        b"%PDF-1.5",
-        b"%PDF-1.6",
-        b"%PDF-1.7",
-        b"%PDF-2.0",
-    )
 
     def __init__(self) -> None:
         self._header = b"%PDF-1.3"
@@ -173,14 +169,10 @@ class PdfWriter:
         self, page: PageObject, action: Callable[[Any, IndirectObject], None]
     ) -> None:
         assert page[PA.TYPE] == CO.PAGE
-        reader = page.pdf
-        if reader is not None:
-            new_header = reader.pdf_header.encode("utf8")
-            if new_header in PdfWriter.versions:
-                new_index = PdfWriter.versions.index(new_header)
-                old_index = PdfWriter.versions.index(self.pdf_header)
-                if new_index > old_index:
-                    self.pdf_header = new_header
+        if page.pdf is not None:
+            self.pdf_header = _get_max_pdf_version_header(
+                self.pdf_header, page.pdf.pdf_header
+            )
         page[NameObject(PA.PARENT)] = self._pages
         page_ind = self._add_object(page)
         pages = cast(DictionaryObject, self.get_object(self._pages))
