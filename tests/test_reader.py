@@ -824,8 +824,8 @@ def test_unexpected_destination():
 @pytest.mark.parametrize(
     "src,pdf_header",
     [
-        (os.path.join(RESOURCE_ROOT, "attachment.pdf"), "%PDF-1.5"),
-        (os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "%PDF-1.5"),
+        (os.path.join(RESOURCE_ROOT, "attachment.pdf"), b"%PDF-1.5"),
+        (os.path.join(RESOURCE_ROOT, "crazyones.pdf"), b"%PDF-1.5"),
     ],
 )
 def test_header(src, pdf_header):
