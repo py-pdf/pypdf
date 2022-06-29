@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1656433996192,
+  "lastUpdate": 1656498799285,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -6934,6 +6934,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.027168105901579854",
             "extra": "mean: 3.7225273704000017 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "99034948+behzadfhm@users.noreply.github.com",
+            "name": "Behzad Fahimi",
+            "username": "behzadfhm"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "08c54d98e8cf7b2cf1fdb0a5bc38502d8a18998a",
+          "message": "DOC: Fix inconsistent variable names in add-watermark.md (#1039)",
+          "timestamp": "2022-06-29T12:32:11+02:00",
+          "tree_id": "af46f949f1fe0979d25385aefe7269d26fe5309c",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/08c54d98e8cf7b2cf1fdb0a5bc38502d8a18998a"
+        },
+        "date": 1656498798446,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.013853716923474,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00776502494203068",
+            "extra": "mean: 986.335586000007 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.51798068567379,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004607006823694248",
+            "extra": "mean: 64.44137418750628 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2765528983650209,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020454923381853823",
+            "extra": "mean: 3.615944746599996 sec\nrounds: 5"
           }
         ]
       }
