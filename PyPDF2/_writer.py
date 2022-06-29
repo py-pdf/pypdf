@@ -170,9 +170,10 @@ class PdfWriter:
     ) -> None:
         assert page[PA.TYPE] == CO.PAGE
         if page.pdf is not None:
-            self.pdf_header = _get_max_pdf_version_header(
-                self.pdf_header, page.pdf.pdf_header
-            )
+            other = page.pdf.pdf_header
+            if isinstance(other, str):
+                other = other.encode()  # type: ignore
+            self.pdf_header = _get_max_pdf_version_header(self.pdf_header, other)  # type: ignore
         page[NameObject(PA.PARENT)] = self._pages
         page_ind = self._add_object(page)
         pages = cast(DictionaryObject, self.get_object(self._pages))

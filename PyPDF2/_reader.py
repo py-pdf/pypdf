@@ -292,10 +292,12 @@ class PdfReader:
                 raise PdfReadError("Not encrypted file")
 
     @property
-    def pdf_header(self) -> bytes:
+    def pdf_header(
+        self,
+    ) -> str:  # TODO: Make this return a bytes object for consistency
         loc = self.stream.tell()
         self.stream.seek(0, 0)
-        pdf_file_version = self.stream.read(8)
+        pdf_file_version = self.stream.read(8).decode("utf-8")
         self.stream.seek(loc, 0)  # return to where it was
         return pdf_file_version
 
