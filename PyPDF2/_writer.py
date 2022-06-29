@@ -41,7 +41,12 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 from ._page import PageObject, _VirtualList
 from ._reader import PdfReader
 from ._security import _alg33, _alg34, _alg35
-from ._utils import StreamType, b_, deprecate_with_replacement
+from ._utils import (
+    StreamType,
+    _get_max_pdf_version_header,
+    b_,
+    deprecate_with_replacement,
+)
 from .constants import CatalogAttributes as CA
 from .constants import Core as CO
 from .constants import EncryptionDictAttributes as ED
@@ -127,6 +132,21 @@ class PdfWriter:
         self._root: Optional[IndirectObject] = None
         self._root_object = root
 
+    @property
+    def pdf_header(self) -> bytes:
+        """
+        Header of the PDF document that is written.
+
+        This should be something like b'%PDF-1.5'. It is recommended to set the
+        lowest version that supports all features which are used within the
+        PDF file.
+        """
+        return self._header
+
+    @pdf_header.setter
+    def pdf_header(self, new_header: bytes) -> None:
+        self._header = new_header
+
     def _add_object(self, obj: Optional[PdfObject]) -> IndirectObject:
         self._objects.append(obj)
         return IndirectObject(len(self._objects), 0, self)
@@ -149,6 +169,11 @@ class PdfWriter:
         self, page: PageObject, action: Callable[[Any, IndirectObject], None]
     ) -> None:
         assert page[PA.TYPE] == CO.PAGE
+        if page.pdf is not None:
+            other = page.pdf.pdf_header
+            if isinstance(other, str):
+                other = other.encode()  # type: ignore
+            self.pdf_header = _get_max_pdf_version_header(self.pdf_header, other)  # type: ignore
         page[NameObject(PA.PARENT)] = self._pages
         page_ind = self._add_object(page)
         pages = cast(DictionaryObject, self.get_object(self._pages))
@@ -739,7 +764,7 @@ class PdfWriter:
 
     def _write_header(self, stream: StreamType) -> List[int]:
         object_positions = []
-        stream.write(self._header + b"\n")
+        stream.write(self.pdf_header + b"\n")
         stream.write(b"%\xE2\xE3\xCF\xD3\n")
         for i, obj in enumerate(self._objects):
             obj = self._objects[i]

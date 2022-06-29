@@ -293,6 +293,8 @@ class PdfReader:
 
     @property
     def pdf_header(self) -> str:
+        # TODO: Make this return a bytes object for consistency
+        #       but that needs a deprecation
         loc = self.stream.tell()
         self.stream.seek(0, 0)
         pdf_file_version = self.stream.read(8).decode("utf-8")
