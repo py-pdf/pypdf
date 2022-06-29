@@ -89,6 +89,15 @@ class PdfWriter:
     class (typically :class:`PdfReader<PyPDF2.PdfReader>`).
     """
 
+    versions = (
+        b"%PDF-1.3",
+        b"%PDF-1.4",
+        b"%PDF-1.5",
+        b"%PDF-1.6",
+        b"%PDF-1.7",
+        b"%PDF-2.0",
+    )
+
     def __init__(self) -> None:
         self._header = b"%PDF-1.3"
         self._objects: List[Optional[PdfObject]] = []  # array of indirect objects
@@ -164,6 +173,14 @@ class PdfWriter:
         self, page: PageObject, action: Callable[[Any, IndirectObject], None]
     ) -> None:
         assert page[PA.TYPE] == CO.PAGE
+        reader = page.pdf
+        if reader is not None:
+            new_header = reader.pdf_header.encode("utf8")
+            if new_header in PdfWriter.versions:
+                new_index = PdfWriter.versions.index(new_header)
+                old_index = PdfWriter.versions.index(self.pdf_header)
+                if new_index > old_index:
+                    self.pdf_header = new_header
         page[NameObject(PA.PARENT)] = self._pages
         page_ind = self._add_object(page)
         pages = cast(DictionaryObject, self.get_object(self._pages))
