@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1656513507215,
+  "lastUpdate": 1656533683932,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -7069,6 +7069,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.013860823522779732",
             "extra": "mean: 3.647481750799989 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "eedf0e019f3e42572788f5073f2a8314378c9235",
+          "message": "ENH: Add writer.pdf_header property (getter and setter) (#1038)\n\nWhen writing a PDF, set the version to the highest PDF version of the\r\nwritten ones\r\n\r\nCloses #162\r\n\r\nCo-authored-by: Matthew Peveler <matt.peveler@gmail.com>",
+          "timestamp": "2022-06-29T22:13:23+02:00",
+          "tree_id": "c34c3c1b373498a82182b12953e8b9cfa80adea5",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/eedf0e019f3e42572788f5073f2a8314378c9235"
+        },
+        "date": 1656533683329,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.746499346406679,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026041546432880803",
+            "extra": "mean: 1.3395859015999974 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.757915446767734,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006353879923949406",
+            "extra": "mean: 85.04908923077018 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.20447614164306585,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06699320087045386",
+            "extra": "mean: 4.890546114400001 sec\nrounds: 5"
           }
         ]
       }
