@@ -719,8 +719,8 @@ class PdfWriter:
             keylen = int(40 / 8)
         P = permissions_flag
         O = ByteStringObject(_alg33(owner_pwd, user_pwd, rev, keylen))
-        ID_1 = ByteStringObject(md5(b_(repr(time.time()))).digest())
-        ID_2 = ByteStringObject(md5(b_(repr(random.random()))).digest())
+        ID_1 = ByteStringObject(md5((repr(time.time())).encode("utf8")).digest())
+        ID_2 = ByteStringObject(md5((repr(random.random())).encode("utf8")).digest())
         self._ID = ArrayObject((ID_1, ID_2))
         if rev == 2:
             U, key = _alg34(user_pwd, O, P, ID_1)
