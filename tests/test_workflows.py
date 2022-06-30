@@ -258,3 +258,18 @@ def test_get_metadata(url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
     reader.metadata
+
+
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/938/938702.pdf",
+            "tika-938702.pdf",
+        )
+    ],
+)
+def test_extract_text(url, name):
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+    reader.metadata
