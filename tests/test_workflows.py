@@ -7,7 +7,7 @@ import pytest
 
 from PyPDF2 import PdfMerger, PdfReader, PdfWriter
 from PyPDF2.constants import PageAttributes as PG
-from PyPDF2.errors import PdfReadWarning
+from PyPDF2.errors import PdfReadError, PdfReadWarning
 
 from . import get_pdf_from_url
 
@@ -273,3 +273,23 @@ def test_extract_text(url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
     reader.metadata
+
+
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/938/938702.pdf",
+            "tika-938702.pdf",
+        )
+    ],
+)
+def test_compress(url, name):
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+    # TODO: which page exactly?
+    # TODO: Is it reasonable to have an exception here?
+    with pytest.raises(PdfReadError) as exc:
+        for page in reader.pages:
+            page.compress_content_streams()
+    assert exc.value.args[0] == "Unexpected end of stream"
