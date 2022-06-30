@@ -38,6 +38,8 @@ import warnings
 from hashlib import md5
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 
+from PyPDF2.errors import PdfReadWarning
+
 from ._page import PageObject, _VirtualList
 from ._reader import PdfReader
 from ._security import _alg33, _alg34, _alg35
@@ -934,7 +936,8 @@ class PdfWriter:
                         # Unable to resolve the Object, returning NullObject instead.
                         warnings.warn(
                             f"Unable to resolve [{data.__class__.__name__}: {data}], "
-                            "returning NullObject instead"
+                            "returning NullObject instead",
+                            PdfReadWarning,
                         )
                         return NullObject()
                 return newobj

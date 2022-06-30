@@ -257,3 +257,16 @@ def test_sweep_recursion2():
 
     # cleanup
     os.remove("tmp-merger-do-not-commit.pdf")
+
+
+def test_foo():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
+    name = "tika-924546.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    merger = PdfMerger()
+    merger.append(reader)
+    with pytest.warns(UserWarning, match="returning NullObject instead"):
+        merger.write("tmp-merger-do-not-commit.pdf")
+
+    # cleanup
+    os.remove("tmp-merger-do-not-commit.pdf")

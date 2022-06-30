@@ -5,7 +5,7 @@ from io import BytesIO
 
 import pytest
 
-from PyPDF2 import PdfReader
+from PyPDF2 import PdfMerger, PdfReader, PdfWriter
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.errors import PdfReadWarning
 
@@ -188,3 +188,58 @@ def test_extract_textbench(enable, url, pages, print_result=False):
                 print(f"{rst}\n*****************************\n")
     except PdfReadWarning:
         pass
+
+
+@pytest.mark.parametrize(
+    ("base_path", "overlay_path"),
+    [
+        (
+            "resources/crazyones.pdf",
+            "sample-files/013-reportlab-overlay/reportlab-overlay.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/935/935981.pdf",
+            "sample-files/013-reportlab-overlay/reportlab-overlay.pdf",
+        ),
+    ],
+)
+def test_overlay(base_path, overlay_path):
+    if base_path.startswith("http"):
+        base_path = BytesIO(get_pdf_from_url(base_path, name="tika-935981.pdf"))
+    else:
+        base_path = os.path.join(PROJECT_ROOT, base_path)
+    reader = PdfReader(base_path)
+    writer = PdfWriter()
+
+    reader_overlay = PdfReader(os.path.join(PROJECT_ROOT, overlay_path))
+    overlay = reader_overlay.pages[0]
+
+    for page in reader.pages:
+        page.merge_page(overlay)
+        writer.add_page(page)
+    with open("dont_commit_overlay.pdf", "wb") as fp:
+        writer.write(fp)
+
+    # Cleanup
+    os.remove("dont_commit_overlay.pdf")
+
+
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf",
+            "tika-924546.pdf",
+        )
+    ],
+)
+def test_merge(url, name):
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+    merger = PdfMerger()
+    merger.append(reader)
+    # This could actually be a performance bottleneck:
+    with pytest.warns(
+        PdfReadWarning, match="^Unable to resolve .*, returning NullObject instead"
+    ):
+        merger.write("tmp.merged.pdf")
