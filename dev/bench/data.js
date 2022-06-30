@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1656567541537,
+  "lastUpdate": 1656569535652,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -7249,6 +7249,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04621042711955402",
             "extra": "mean: 4.750220367199998 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f1281b945c5be175cca6f9d61933ea45b44d45fa",
+          "message": "PI: Remove b_ call in FloatObject.write_to_stream (#1044)\n\nAlso in writer.encrypt",
+          "timestamp": "2022-06-30T08:10:59+02:00",
+          "tree_id": "dce839116c8c68e44256b1f1be4a4f6741939094",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/f1281b945c5be175cca6f9d61933ea45b44d45fa"
+        },
+        "date": 1656569533565,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8885055972096039,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007059985487706229",
+            "extra": "mean: 1.125485312799998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.57571454156501,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006415192657544882",
+            "extra": "mean: 73.66094778571559 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.235245603671324,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06429349665714058",
+            "extra": "mean: 4.250876464399994 sec\nrounds: 5"
           }
         ]
       }
