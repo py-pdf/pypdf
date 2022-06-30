@@ -243,3 +243,18 @@ def test_merge(url, name):
         PdfReadWarning, match="^Unable to resolve .*, returning NullObject instead"
     ):
         merger.write("tmp.merged.pdf")
+
+
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/935/935996.pdf",
+            "tika-935996.pdf",
+        )
+    ],
+)
+def test_get_metadata(url, name):
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+    reader.metadata
