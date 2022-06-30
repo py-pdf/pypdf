@@ -20,6 +20,9 @@ from typing import (
 from xml.dom.minidom import Document
 from xml.dom.minidom import Element as XmlElement
 from xml.dom.minidom import parseString
+from xml.parsers.expat import ExpatError
+
+from PyPDF2.errors import PdfReadError
 
 from ._utils import StreamType, deprecate_with_replacement
 from .generic import ContentStream, PdfObject
@@ -205,11 +208,17 @@ class XmpInformation(PdfObject):
     """
     An object that represents Adobe XMP metadata.
     Usually accessed by :py:attr:`xmp_metadata()<PyPDF2.PdfReader.xmp_metadata>`
+
+    :raises: PdfReadError if XML is invalid
     """
 
     def __init__(self, stream: ContentStream) -> None:
         self.stream = stream
-        doc_root: Document = parseString(self.stream.get_data())
+        try:
+            data = self.stream.get_data()
+            doc_root: Document = parseString(data)
+        except ExpatError as e:
+            raise PdfReadError(f"XML in XmpInformation was invalid: {e}")
         self.rdf_root: XmlElement = doc_root.getElementsByTagNameNS(
             RDF_NAMESPACE, "RDF"
         )[0]
