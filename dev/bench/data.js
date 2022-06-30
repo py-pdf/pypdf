@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1656571405657,
+  "lastUpdate": 1656571655662,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -7339,6 +7339,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0715725539707955",
             "extra": "mean: 4.203153804199999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "66f00fcc1e921e63c4370aac47876da54d5d85ac",
+          "message": "REL: 2.4.1\n\nNew Features (ENH):\n-  Add writer.pdf_header property (getter and setter) (#1038)\n\nPerformance Improvements (PI):\n-  Remove b_ call in FloatObject.write_to_stream (#1044)\n-  Check duplicate objects in writer._sweep_indirect_references (#207)\n\nDocumentation (DOC):\n-  How to surppress exceptions/warnings/log messages (#1037)\n-  Remove hyphen from lossless (#1041)\n-  Compression of content streams (#1040)\n-  Fix inconsistent variable names in add-watermark.md (#1039)\n-  File size reduction\n-  Add CHANGELOG to the rendered docs (#1023)\n\nMaintenance (MAINT):\n-  Handle XML error when reading XmpInformation (#1030)\n-  Deduplicate Code / add mutmut config (#1022)\n\nCode Style (STY):\n-  Use unnecessary one-line function / class attribute (#1043)\n-  Docstring formatting (#1033)\n\nFull Changelog: https://github.com/py-pdf/PyPDF2/compare/2.4.0...2.4.1",
+          "timestamp": "2022-06-30T08:44:39+02:00",
+          "tree_id": "8cdaeb8ef2c762be05b3bee60e2794ac836f39d3",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/66f00fcc1e921e63c4370aac47876da54d5d85ac"
+        },
+        "date": 1656571655132,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0389104949130572,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005625843425303861",
+            "extra": "mean: 962.5468266000013 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 16.10249057174322,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0046015854190562",
+            "extra": "mean: 62.102194411764344 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.28054329948271867,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014699524143170321",
+            "extra": "mean: 3.5645121513999998 sec\nrounds: 5"
           }
         ]
       }
