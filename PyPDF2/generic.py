@@ -326,7 +326,7 @@ class FloatObject(decimal.Decimal, PdfObject):
             return o
 
     def as_numeric(self) -> float:
-        return float(b_(repr(self)))
+        return float(repr(self).encode("utf8"))
 
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
@@ -351,12 +351,12 @@ class NumberObject(int, PdfObject):
             return int.__new__(cls, 0)
 
     def as_numeric(self) -> int:
-        return int(b_(repr(self)))
+        return int(repr(self).encode("utf8"))
 
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
-        stream.write(b_(repr(self)))
+        stream.write(repr(self).encode("utf8"))
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
