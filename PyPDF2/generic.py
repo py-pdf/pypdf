@@ -342,7 +342,6 @@ class FloatObject(decimal.Decimal, PdfObject):
 
 class NumberObject(int, PdfObject):
     NumberPattern = re.compile(b"[^+-.0-9]")
-    ByteDot = b"."
 
     def __new__(cls, value: Any) -> "NumberObject":
         val = int(value)
@@ -368,7 +367,7 @@ class NumberObject(int, PdfObject):
     @staticmethod
     def read_from_stream(stream: StreamType) -> Union["NumberObject", FloatObject]:
         num = read_until_regex(stream, NumberObject.NumberPattern)
-        if num.find(NumberObject.ByteDot) != -1:
+        if num.find(b".") != -1:
             return FloatObject(num)
         return NumberObject(num)
 
@@ -1175,12 +1174,10 @@ class ContentStream(DecodedStreamObject):
             assert stream_data is not None
             stream_data_bytes = b_(stream_data)
             stream_bytes = BytesIO(stream_data_bytes)
-        # self.savstream = stream
         self.forced_encoding = forced_encoding
         self.__parse_content_stream(stream_bytes)
 
     def __parse_content_stream(self, stream: StreamType) -> None:
-        # file("f:\\tmp.txt", "w").write(stream.read())
         stream.seek(0, 0)
         operands: List[Union[int, str, PdfObject]] = []
         while True:

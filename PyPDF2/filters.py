@@ -73,10 +73,6 @@ def decompress(data: bytes) -> bytes:
         return result_str
 
 
-def compress(data: bytes) -> bytes:
-    return zlib.compress(data)
-
-
 class FlateDecode:
     @staticmethod
     def decode(
@@ -171,7 +167,7 @@ class FlateDecode:
 
     @staticmethod
     def encode(data: bytes) -> bytes:
-        return compress(data)
+        return zlib.compress(data)
 
 
 class ASCIIHexDecode:
