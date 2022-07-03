@@ -56,7 +56,7 @@ class CryptIdentity(CryptBase):
 
 
 try:
-    from Crypto.Cipher import AES, ARC4
+    from Crypto.Cipher import AES, ARC4  # type: ignore[import]
 
     class CryptRC4(CryptBase):
         def __init__(self, key: bytes) -> None:
