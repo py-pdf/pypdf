@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1656858963637,
+  "lastUpdate": 1656859985362,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -7429,6 +7429,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.06664910168698623",
             "extra": "mean: 4.1992851696020805 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0e18938fbb7ee56a57b20352e06df719683d7b42",
+          "message": "ENH: Add PdfReader.xfa attribute (#1026)\n\nCloses #408\r\n\r\nCo-authored-by: George Alverson <George.Alverson@cern.ch>",
+          "timestamp": "2022-07-03T16:52:01+02:00",
+          "tree_id": "2ef11b0339bca68a1ea22194d8c25d1fd4e083e4",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/0e18938fbb7ee56a57b20352e06df719683d7b42"
+        },
+        "date": 1656859984043,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0501157454691517,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011650141812943863",
+            "extra": "mean: 952.2759794000024 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 15.782468476774657,
+            "unit": "iter/sec",
+            "range": "stddev: 0.003862412851988108",
+            "extra": "mean: 63.36144447059035 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2808997606548474,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011666032470771259",
+            "extra": "mean: 3.5599887934000036 sec\nrounds: 5"
           }
         ]
       }
