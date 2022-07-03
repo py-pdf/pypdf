@@ -624,6 +624,16 @@ def test_pages_attribute():
     # Test if getting as slice throws an error
     assert len(reader.pages[:]) == 1
 
+    with pytest.raises(IndexError) as exc:
+        reader.pages[-1000]
+
+    assert exc.value.args[0] == "sequence index out of range"
+
+    with pytest.raises(IndexError):
+        reader.pages[1000]
+
+    assert exc.value.args[0] == "sequence index out of range"
+
 
 def test_convert_to_int():
     assert convert_to_int(b"\x01", 8) == 1
