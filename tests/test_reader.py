@@ -822,6 +822,32 @@ def test_unexpected_destination():
 
 
 @pytest.mark.parametrize(
+    "src",
+    [
+        (os.path.join(RESOURCE_ROOT, "crazyones.pdf")),
+        (os.path.join(RESOURCE_ROOT, "commented.pdf")),
+    ],
+)
+def test_xfa(src):
+    reader = PdfReader(src)
+    assert reader.xfa is None
+
+
+def test_xfa_non_empty():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/942/942050.pdf"
+    name = "tika-942050.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    assert list(reader.xfa.keys()) == [
+        "preamble",
+        "config",
+        "template",
+        "PDFSecurity",
+        "datasets",
+        "postamble",
+    ]
+
+
+@pytest.mark.parametrize(
     "src,pdf_header",
     [
         (os.path.join(RESOURCE_ROOT, "attachment.pdf"), "%PDF-1.5"),
