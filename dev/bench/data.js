@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1656875679101,
+  "lastUpdate": 1656876505813,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -7564,6 +7564,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.08350474105742015",
             "extra": "mean: 4.321140996999998 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4097db98a7abd21308b40445c22e8e97bc3b5cda",
+          "message": "TST: Invalid XML in xmp information (#1051)\n\nSee #1030",
+          "timestamp": "2022-07-03T21:27:14+02:00",
+          "tree_id": "eae9323cf5f9a1129cb5d1971d2e484bcccaba7f",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/4097db98a7abd21308b40445c22e8e97bc3b5cda"
+        },
+        "date": 1656876504834,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8861843927608105,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00906952037229707",
+            "extra": "mean: 1.1284333239999966 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.654239616140092,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005914188660457808",
+            "extra": "mean: 73.23732614285916 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23433005823722422,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006942725508818936",
+            "extra": "mean: 4.267484963399997 sec\nrounds: 5"
           }
         ]
       }
