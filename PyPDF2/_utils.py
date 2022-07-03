@@ -64,6 +64,25 @@ DEPR_MSG_NO_REPLACEMENT = "{} is deprecated and will be removed in PyPDF2 {}."
 DEPR_MSG = "{} is deprecated and will be removed in PyPDF2 3.0.0. Use {} instead."
 
 
+def _get_max_pdf_version_header(header1: bytes, header2: bytes) -> bytes:
+    versions = (
+        b"%PDF-1.3",
+        b"%PDF-1.4",
+        b"%PDF-1.5",
+        b"%PDF-1.6",
+        b"%PDF-1.7",
+        b"%PDF-2.0",
+    )
+    pdf_header_indices = []
+    if header1 in versions:
+        pdf_header_indices.append(versions.index(header1))
+    if header2 in versions:
+        pdf_header_indices.append(versions.index(header2))
+    if len(pdf_header_indices) == 0:
+        raise ValueError(f"neither {header1!r} nor {header2!r} are proper headers")
+    return versions[max(pdf_header_indices)]
+
+
 def read_until_whitespace(stream: StreamType, maxchars: Optional[int] = None) -> bytes:
     """
     Read non-whitespace characters and return them.

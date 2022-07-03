@@ -38,17 +38,33 @@ import warnings
 from hashlib import md5
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 
+from PyPDF2.errors import PdfReadWarning
+
 from ._page import PageObject, _VirtualList
 from ._reader import PdfReader
 from ._security import _alg33, _alg34, _alg35
-from ._utils import StreamType, b_, deprecate_with_replacement
+from ._utils import (
+    StreamType,
+    _get_max_pdf_version_header,
+    b_,
+    deprecate_with_replacement,
+)
+from .constants import AnnotationDictionaryAttributes
 from .constants import CatalogAttributes as CA
+from .constants import CatalogDictionary
 from .constants import Core as CO
 from .constants import EncryptionDictAttributes as ED
+from .constants import (
+    FieldDictionaryAttributes,
+    FileSpecificationDictionaryEntries,
+    GoToActionArguments,
+    InteractiveFormDictEntries,
+)
 from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
 from .constants import StreamAttributes as SA
 from .constants import TrailerKeys as TK
+from .constants import TypFitArguments
 from .generic import (
     ArrayObject,
     BooleanObject,
@@ -127,6 +143,21 @@ class PdfWriter:
         self._root: Optional[IndirectObject] = None
         self._root_object = root
 
+    @property
+    def pdf_header(self) -> bytes:
+        """
+        Header of the PDF document that is written.
+
+        This should be something like b'%PDF-1.5'. It is recommended to set the
+        lowest version that supports all features which are used within the
+        PDF file.
+        """
+        return self._header
+
+    @pdf_header.setter
+    def pdf_header(self, new_header: bytes) -> None:
+        self._header = new_header
+
     def _add_object(self, obj: Optional[PdfObject]) -> IndirectObject:
         self._objects.append(obj)
         return IndirectObject(len(self._objects), 0, self)
@@ -149,6 +180,11 @@ class PdfWriter:
         self, page: PageObject, action: Callable[[Any, IndirectObject], None]
     ) -> None:
         assert page[PA.TYPE] == CO.PAGE
+        if page.pdf is not None:
+            other = page.pdf.pdf_header
+            if isinstance(other, str):
+                other = other.encode()  # type: ignore
+            self.pdf_header = _get_max_pdf_version_header(self.pdf_header, other)  # type: ignore
         page[NameObject(PA.PARENT)] = self._pages
         page_ind = self._add_object(page)
         pages = cast(DictionaryObject, self.get_object(self._pages))
@@ -162,17 +198,17 @@ class PdfWriter:
         try:
             catalog = self._root_object
             # get the AcroForm tree
-            if "/AcroForm" not in catalog:
+            if CatalogDictionary.ACRO_FORM not in catalog:
                 self._root_object.update(
                     {
-                        NameObject("/AcroForm"): IndirectObject(
+                        NameObject(CatalogDictionary.ACRO_FORM): IndirectObject(
                             len(self._objects), 0, self
                         )
                     }
                 )
 
-            need_appearances = NameObject("/NeedAppearances")
-            self._root_object["/AcroForm"][need_appearances] = BooleanObject(True)  # type: ignore
+            need_appearances = NameObject(InteractiveFormDictEntries.NeedAppearances)
+            self._root_object[CatalogDictionary.ACRO_FORM][need_appearances] = BooleanObject(True)  # type: ignore
 
         except Exception as exc:
             logger.error("set_need_appearances_writer() catch : ", repr(exc))
@@ -440,10 +476,10 @@ class PdfWriter:
         filespec.update(
             {
                 NameObject(PA.TYPE): NameObject("/Filespec"),
-                NameObject("/F"): create_string_object(
+                NameObject(FileSpecificationDictionaryEntries.F): create_string_object(
                     filename
                 ),  # Perhaps also try TextStringObject
-                NameObject("/EF"): ef_entry,
+                NameObject(FileSpecificationDictionaryEntries.EF): ef_entry,
             }
         )
 
@@ -554,15 +590,29 @@ class PdfWriter:
             if PG.PARENT in writer_annot:
                 writer_parent_annot = writer_annot[PG.PARENT]
             for field in fields:
-                if writer_annot.get("/T") == field:
+                if writer_annot.get(FieldDictionaryAttributes.T) == field:
                     writer_annot.update(
-                        {NameObject("/V"): TextStringObject(fields[field])}
+                        {
+                            NameObject(FieldDictionaryAttributes.V): TextStringObject(
+                                fields[field]
+                            )
+                        }
                     )
                     if flags:
-                        writer_annot.update({NameObject("/Ff"): NumberObject(flags)})
-                elif writer_parent_annot.get("/T") == field:
+                        writer_annot.update(
+                            {
+                                NameObject(FieldDictionaryAttributes.Ff): NumberObject(
+                                    flags
+                                )
+                            }
+                        )
+                elif writer_parent_annot.get(FieldDictionaryAttributes.T) == field:
                     writer_parent_annot.update(
-                        {NameObject("/V"): TextStringObject(fields[field])}
+                        {
+                            NameObject(FieldDictionaryAttributes.V): TextStringObject(
+                                fields[field]
+                            )
+                        }
                     )
 
     def updatePageFormFieldValues(
@@ -671,8 +721,8 @@ class PdfWriter:
             keylen = int(40 / 8)
         P = permissions_flag
         O = ByteStringObject(_alg33(owner_pwd, user_pwd, rev, keylen))
-        ID_1 = ByteStringObject(md5(b_(repr(time.time()))).digest())
-        ID_2 = ByteStringObject(md5(b_(repr(random.random()))).digest())
+        ID_1 = ByteStringObject(md5((repr(time.time())).encode("utf8")).digest())
+        ID_2 = ByteStringObject(md5((repr(random.random())).encode("utf8")).digest())
         self._ID = ArrayObject((ID_1, ID_2))
         if rev == 2:
             U, key = _alg34(user_pwd, O, P, ID_1)
@@ -739,7 +789,7 @@ class PdfWriter:
 
     def _write_header(self, stream: StreamType) -> List[int]:
         object_positions = []
-        stream.write(self._header + b"\n")
+        stream.write(self.pdf_header + b"\n")
         stream.write(b"%\xE2\xE3\xCF\xD3\n")
         for i, obj in enumerate(self._objects):
             obj = self._objects[i]
@@ -886,7 +936,8 @@ class PdfWriter:
                         # Unable to resolve the Object, returning NullObject instead.
                         warnings.warn(
                             f"Unable to resolve [{data.__class__.__name__}: {data}], "
-                            "returning NullObject instead"
+                            "returning NullObject instead",
+                            PdfReadWarning,
                         )
                         return NullObject()
                 return newobj
@@ -1084,7 +1135,10 @@ class PdfWriter:
         )
         dest_array = dest.dest_array
         action.update(
-            {NameObject("/D"): dest_array, NameObject("/S"): NameObject("/GoTo")}
+            {
+                NameObject(GoToActionArguments.D): dest_array,
+                NameObject(GoToActionArguments.S): NameObject("/GoTo"),
+            }
         )
         action_ref = self._add_object(action)
 
@@ -1149,10 +1203,10 @@ class PdfWriter:
         dest = DictionaryObject()
         dest.update(
             {
-                NameObject("/D"): ArrayObject(
-                    [page_ref, NameObject("/FitH"), NumberObject(826)]
+                NameObject(GoToActionArguments.D): ArrayObject(
+                    [page_ref, NameObject(TypFitArguments.FIT_H), NumberObject(826)]
                 ),
-                NameObject("/S"): NameObject("/GoTo"),
+                NameObject(GoToActionArguments.S): NameObject("/GoTo"),
             }
         )
 
@@ -1382,12 +1436,14 @@ class PdfWriter:
         lnk = DictionaryObject()
         lnk.update(
             {
-                NameObject("/Type"): NameObject(PG.ANNOTS),
-                NameObject("/Subtype"): NameObject("/Link"),
-                NameObject("/P"): page_link,
-                NameObject("/Rect"): rect,
+                NameObject(AnnotationDictionaryAttributes.Type): NameObject(PG.ANNOTS),
+                NameObject(AnnotationDictionaryAttributes.Subtype): NameObject("/Link"),
+                NameObject(AnnotationDictionaryAttributes.P): page_link,
+                NameObject(AnnotationDictionaryAttributes.Rect): rect,
                 NameObject("/H"): NameObject("/I"),
-                NameObject("/Border"): ArrayObject(border_arr),
+                NameObject(AnnotationDictionaryAttributes.Border): ArrayObject(
+                    border_arr
+                ),
                 NameObject("/A"): lnk2,
             }
         )

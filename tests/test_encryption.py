@@ -71,6 +71,7 @@ def test_encryption(name):
 )
 def test_both_password(name, user_passwd, owner_passwd):
     from PyPDF2 import PasswordType
+
     inputfile = os.path.join(RESOURCE_ROOT, "encryption", name)
     ipdf = PyPDF2.PdfReader(inputfile)
     assert ipdf.is_encrypted
@@ -82,7 +83,14 @@ def test_both_password(name, user_passwd, owner_passwd):
 @pytest.mark.parametrize(
     "names",
     [
-        (["unencrypted.pdf", "r3-user-password.pdf", "r4-aes-user-password.pdf", "r5-user-password.pdf"]),
+        (
+            [
+                "unencrypted.pdf",
+                "r3-user-password.pdf",
+                "r4-aes-user-password.pdf",
+                "r5-user-password.pdf",
+            ]
+        ),
     ],
 )
 def test_encryption_merge(names):

@@ -20,6 +20,7 @@ You can contribute to `PyPDF2 on Github <https://github.com/py-pdf/PyPDF2>`_.
 
    user/installation
    user/robustness
+   user/suppress-warnings
    user/metadata
    user/extract-text
    user/encryption-decryption

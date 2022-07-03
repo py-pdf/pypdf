@@ -20,5 +20,5 @@ writer.add_page(page)
 
 # finally, write the new document with a watermark
 with open("PyPDF2-output.pdf", "wb") as fp:
-    output.write(fp)
+    writer.write(fp)
 ```

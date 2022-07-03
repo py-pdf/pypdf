@@ -1,5 +1,32 @@
 # CHANGELOG
 
+## Version 2.4.1, 2022-06-30
+
+### New Features (ENH)
+-  Add writer.pdf_header property (getter and setter) (#1038)
+
+### Performance Improvements (PI)
+-  Remove b_ call in FloatObject.write_to_stream (#1044)
+-  Check duplicate objects in writer._sweep_indirect_references (#207)
+
+### Documentation (DOC)
+-  How to surppress exceptions/warnings/log messages (#1037)
+-  Remove hyphen from lossless (#1041)
+-  Compression of content streams (#1040)
+-  Fix inconsistent variable names in add-watermark.md (#1039)
+-  File size reduction
+-  Add CHANGELOG to the rendered docs (#1023)
+
+### Maintenance (MAINT)
+-  Handle XML error when reading XmpInformation (#1030)
+-  Deduplicate Code / add mutmut config (#1022)
+
+### Code Style (STY)
+-  Use unnecessary one-line function / class attribute (#1043)
+-  Docstring formatting (#1033)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.4.0...2.4.1
+
 ## Version 2.4.0, 2022-06-26
 
 ### New Features (ENH):
