@@ -38,6 +38,8 @@ import warnings
 from hashlib import md5
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 
+from PyPDF2.errors import PdfReadWarning
+
 from ._page import PageObject, _VirtualList
 from ._reader import PdfReader
 from ._security import _alg33, _alg34, _alg35
@@ -776,8 +778,8 @@ class PdfWriter:
             keylen = int(40 / 8)
         P = permissions_flag
         O = ByteStringObject(_alg33(owner_pwd, user_pwd, rev, keylen))
-        ID_1 = ByteStringObject(md5(b_(repr(time.time()))).digest())
-        ID_2 = ByteStringObject(md5(b_(repr(random.random()))).digest())
+        ID_1 = ByteStringObject(md5((repr(time.time())).encode("utf8")).digest())
+        ID_2 = ByteStringObject(md5((repr(random.random())).encode("utf8")).digest())
         self._ID = ArrayObject((ID_1, ID_2))
         if rev == 2:
             U, key = _alg34(user_pwd, O, P, ID_1)
@@ -991,7 +993,8 @@ class PdfWriter:
                         # Unable to resolve the Object, returning NullObject instead.
                         warnings.warn(
                             f"Unable to resolve [{data.__class__.__name__}: {data}], "
-                            "returning NullObject instead"
+                            "returning NullObject instead",
+                            PdfReadWarning,
                         )
                         return NullObject()
                 return newobj

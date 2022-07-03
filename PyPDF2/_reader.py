@@ -31,6 +31,7 @@ import os
 import re
 import struct
 import warnings
+import zlib
 from io import BytesIO
 from pathlib import Path
 from typing import (
@@ -1637,6 +1638,30 @@ class PdfReader:
         """
         deprecate_with_replacement("isEncrypted", "is_encrypted")
         return self.is_encrypted
+
+    @property
+    def xfa(self) -> Optional[Dict[str, Any]]:
+        tree: Optional[TreeObject] = None
+        retval: Dict[str, Any] = {}
+        catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
+
+        if "/AcroForm" not in catalog or not catalog["/AcroForm"]:
+            return None
+
+        tree = cast(TreeObject, catalog["/AcroForm"])
+
+        if "/XFA" in tree:
+            fields = cast(ArrayObject, tree["/XFA"])
+            i = iter(fields)
+            for f in i:
+                tag = f
+                f = next(i)
+                if isinstance(f, IndirectObject):
+                    field = cast(Optional[EncodedStreamObject], f.get_object())
+                    if field:
+                        es = zlib.decompress(field._data)
+                        retval[tag] = es
+        return retval
 
 
 class PdfFileReader(PdfReader):  # pragma: no cover
