@@ -53,13 +53,7 @@ def test_encryption(name, requres_pycryptodome):
     if requres_pycryptodome and not HAS_PYCRYPTODOME:
         with pytest.raises(DependencyError) as exc:
             ipdf = PyPDF2.PdfReader(inputfile)
-            if inputfile.endswith("unencrypted.pdf"):
-                assert not ipdf.is_encrypted
-            else:
-                assert ipdf.is_encrypted
-                ipdf.decrypt("asdfzxcv")
-            assert len(ipdf.pages) == 1
-            dd = dict(ipdf.metadata)
+            ipdf.decrypt("asdfzxcv")
         assert exc.value.args[0] == "PyCryptodome is required for AES algorithm"
         return
     else:
