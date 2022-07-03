@@ -233,7 +233,7 @@ def test_overlay(base_path, overlay_path):
         )
     ],
 )
-def test_merge(url, name):
+def test_merge_with_warning(url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
     merger = PdfMerger()
@@ -243,6 +243,23 @@ def test_merge(url, name):
         PdfReadWarning, match="^Unable to resolve .*, returning NullObject instead"
     ):
         merger.write("tmp.merged.pdf")
+
+
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/980/980613.pdf",
+            "tika-980613.pdf",
+        )
+    ],
+)
+def test_merge(url, name):
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+    merger = PdfMerger()
+    merger.append(reader)
+    merger.write("tmp.merged.pdf")
 
 
 @pytest.mark.parametrize(
@@ -293,3 +310,18 @@ def test_compress(url, name):
         for page in reader.pages:
             page.compress_content_streams()
     assert exc.value.args[0] == "Unexpected end of stream"
+
+
+def test_get_fields():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/961/961883.pdf"
+    name = "tika-961883.pdf"
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+    with open("tmp.txt", "w") as fp:
+        with pytest.warns(PdfReadWarning, match="Object 2 0 not defined."):
+            retrieved_fields = reader.get_fields(fileobj=fp)
+
+    assert retrieved_fields == {}
+
+    # Cleanup
+    os.remove("tmp.txt")
