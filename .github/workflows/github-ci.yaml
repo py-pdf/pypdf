@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "3.10.3"]
 
     steps:
     - name: Checkout Code
@@ -38,6 +38,10 @@ jobs:
     - name: Install requirements (Python 3)
       run: |
         pip install -r requirements/ci.txt
+    - name: Remove cryptodome
+      run: |
+        pip uninstall pycryptodome -y
+      if: matrix.python-version == '3.10.3'
     - name: Install PyPDF2
       run: |
         pip install .
