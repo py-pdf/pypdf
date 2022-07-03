@@ -104,6 +104,25 @@ def test_both_password(name, user_passwd, owner_passwd):
 
 
 @pytest.mark.parametrize(
+    ("pdffile", "password"),
+    [
+        ("crazyones-encrypted-256.pdf", "password"),
+    ],
+)
+def test_get_page_of_encrypted_file_new_algorithm(pdffile, password):
+    """
+    Check if we can read a page of an encrypted file.
+
+    This is a regression test for issue 327:
+    IndexError for get_page() of decrypted file
+    """
+    if not HAS_PYCRYPTODOME:
+        return
+    path = os.path.join(RESOURCE_ROOT, pdffile)
+    PyPDF2.PdfReader(path, password=password).pages[0]
+
+
+@pytest.mark.parametrize(
     "names",
     [
         (
