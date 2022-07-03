@@ -87,7 +87,7 @@ def test_encryption(name, requres_pycryptodome):
 )
 def test_both_password(name, user_passwd, owner_passwd):
     if not HAS_PYCRYPTODOME:
-        return
+        pytest.skip()
     from PyPDF2 import PasswordType
 
     inputfile = os.path.join(RESOURCE_ROOT, "encryption", name)
@@ -112,7 +112,7 @@ def test_get_page_of_encrypted_file_new_algorithm(pdffile, password):
     IndexError for get_page() of decrypted file
     """
     if not HAS_PYCRYPTODOME:
-        return
+        pytest.skip()
     path = os.path.join(RESOURCE_ROOT, pdffile)
     PyPDF2.PdfReader(path, password=password).pages[0]
 
@@ -132,7 +132,7 @@ def test_get_page_of_encrypted_file_new_algorithm(pdffile, password):
 )
 def test_encryption_merge(names):
     if not HAS_PYCRYPTODOME:
-        return
+        pytest.skip()
     pdf_merger = PyPDF2.PdfMerger()
     files = [os.path.join(RESOURCE_ROOT, "encryption", x) for x in names]
     pdfs = [PyPDF2.PdfReader(x) for x in files]
