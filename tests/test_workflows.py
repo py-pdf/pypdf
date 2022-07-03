@@ -5,9 +5,9 @@ from io import BytesIO
 
 import pytest
 
-from PyPDF2 import PdfReader
+from PyPDF2 import PdfMerger, PdfReader, PdfWriter
 from PyPDF2.constants import PageAttributes as PG
-from PyPDF2.errors import PdfReadWarning
+from PyPDF2.errors import PdfReadError, PdfReadWarning
 
 from . import get_pdf_from_url
 
@@ -188,3 +188,140 @@ def test_extract_textbench(enable, url, pages, print_result=False):
                 print(f"{rst}\n*****************************\n")
     except PdfReadWarning:
         pass
+
+
+@pytest.mark.parametrize(
+    ("base_path", "overlay_path"),
+    [
+        (
+            "resources/crazyones.pdf",
+            "sample-files/013-reportlab-overlay/reportlab-overlay.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/935/935981.pdf",
+            "sample-files/013-reportlab-overlay/reportlab-overlay.pdf",
+        ),
+    ],
+)
+def test_overlay(base_path, overlay_path):
+    if base_path.startswith("http"):
+        base_path = BytesIO(get_pdf_from_url(base_path, name="tika-935981.pdf"))
+    else:
+        base_path = os.path.join(PROJECT_ROOT, base_path)
+    reader = PdfReader(base_path)
+    writer = PdfWriter()
+
+    reader_overlay = PdfReader(os.path.join(PROJECT_ROOT, overlay_path))
+    overlay = reader_overlay.pages[0]
+
+    for page in reader.pages:
+        page.merge_page(overlay)
+        writer.add_page(page)
+    with open("dont_commit_overlay.pdf", "wb") as fp:
+        writer.write(fp)
+
+    # Cleanup
+    os.remove("dont_commit_overlay.pdf")
+
+
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf",
+            "tika-924546.pdf",
+        )
+    ],
+)
+def test_merge_with_warning(url, name):
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+    merger = PdfMerger()
+    merger.append(reader)
+    # This could actually be a performance bottleneck:
+    with pytest.warns(
+        PdfReadWarning, match="^Unable to resolve .*, returning NullObject instead"
+    ):
+        merger.write("tmp.merged.pdf")
+
+
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/980/980613.pdf",
+            "tika-980613.pdf",
+        )
+    ],
+)
+def test_merge(url, name):
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+    merger = PdfMerger()
+    merger.append(reader)
+    merger.write("tmp.merged.pdf")
+
+
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/935/935996.pdf",
+            "tika-935996.pdf",
+        )
+    ],
+)
+def test_get_metadata(url, name):
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+    reader.metadata
+
+
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/938/938702.pdf",
+            "tika-938702.pdf",
+        )
+    ],
+)
+def test_extract_text(url, name):
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+    reader.metadata
+
+
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/938/938702.pdf",
+            "tika-938702.pdf",
+        )
+    ],
+)
+def test_compress(url, name):
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+    # TODO: which page exactly?
+    # TODO: Is it reasonable to have an exception here?
+    with pytest.raises(PdfReadError) as exc:
+        for page in reader.pages:
+            page.compress_content_streams()
+    assert exc.value.args[0] == "Unexpected end of stream"
+
+
+def test_get_fields():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/961/961883.pdf"
+    name = "tika-961883.pdf"
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+    with open("tmp.txt", "w") as fp:
+        with pytest.warns(PdfReadWarning, match="Object 2 0 not defined."):
+            retrieved_fields = reader.get_fields(fileobj=fp)
+
+    assert retrieved_fields == {}
+
+    # Cleanup
+    os.remove("tmp.txt")
