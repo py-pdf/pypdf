@@ -3,6 +3,14 @@ import os
 import pytest
 
 import PyPDF2
+from PyPDF2.errors import DependencyError
+
+try:
+    from Crypto.Cipher import AES
+
+    HAS_PYCRYPTODOME = True
+except ImportError:
+    HAS_PYCRYPTODOME = False
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -10,37 +18,37 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
 
 
 @pytest.mark.parametrize(
-    "name",
+    ("name", "requres_pycryptodome"),
     [
         # unencrypted pdf
-        "unencrypted.pdf",
+        ("unencrypted.pdf", False),
         # created by `qpdf --encrypt "" "" 40 -- unencrypted.pdf r2-empty-password.pdf`
-        "r2-empty-password.pdf",
+        ("r2-empty-password.pdf", False),
         # created by `qpdf --encrypt "" "" 128 -- unencrypted.pdf r3-empty-password.pdf`
-        "r3-empty-password.pdf",
+        ("r3-empty-password.pdf", False),
         # created by `qpdf --encrypt "asdfzxcv" "" 40 -- unencrypted.pdf r2-user-password.pdf`
-        "r2-user-password.pdf",
+        ("r2-user-password.pdf", False),
         # created by `qpdf --encrypt "asdfzxcv" "" 128 -- unencrypted.pdf r3-user-password.pdf`
-        "r3-user-password.pdf",
+        ("r3-user-password.pdf", False),
         # created by `qpdf --encrypt "asdfzxcv" "" 128 --force-V4 -- unencrypted.pdf r4-user-password.pdf`
-        "r4-user-password.pdf",
+        ("r4-user-password.pdf", False),
         # created by `qpdf --encrypt "asdfzxcv" "" 128 --use-aes=y -- unencrypted.pdf r4-aes-user-password.pdf`
-        "r4-aes-user-password.pdf",
+        ("r4-aes-user-password.pdf", True),
         # # created by `qpdf --encrypt "" "" 256 --force-R5 -- unencrypted.pdf r5-empty-password.pdf`
-        "r5-empty-password.pdf",
+        ("r5-empty-password.pdf", True),
         # # created by `qpdf --encrypt "asdfzxcv" "" 256 --force-R5 -- unencrypted.pdf r5-user-password.pdf`
-        "r5-user-password.pdf",
+        ("r5-user-password.pdf", True),
         # # created by `qpdf --encrypt "" "asdfzxcv" 256 --force-R5 -- unencrypted.pdf r5-owner-password.pdf`
-        "r5-owner-password.pdf",
+        ("r5-owner-password.pdf", True),
         # created by `qpdf --encrypt "" "" 256 -- unencrypted.pdf r6-empty-password.pdf`
-        "r6-empty-password.pdf",
+        ("r6-empty-password.pdf", True),
         # created by `qpdf --encrypt "asdfzxcv" "" 256 -- unencrypted.pdf r6-user-password.pdf`
-        "r6-user-password.pdf",
+        ("r6-user-password.pdf", True),
         # created by `qpdf --encrypt "" "asdfzxcv" 256 -- unencrypted.pdf r6-owner-password.pdf`
-        "r6-owner-password.pdf",
+        ("r6-owner-password.pdf", True),
     ],
 )
-def test_encryption(name):
+def test_encryption(name, requres_pycryptodome):
     inputfile = os.path.join(RESOURCE_ROOT, "encryption", name)
     ipdf = PyPDF2.PdfReader(inputfile)
     if inputfile.endswith("unencrypted.pdf"):
@@ -49,7 +57,13 @@ def test_encryption(name):
         assert ipdf.is_encrypted
         ipdf.decrypt("asdfzxcv")
     assert len(ipdf.pages) == 1
-    dd = dict(ipdf.metadata)
+    if requres_pycryptodome and not HAS_PYCRYPTODOME:
+        with pytest.raises(DependencyError) as exc:
+            dd = dict(ipdf.metadata)
+        assert exc.value.args[0] == "PyCryptodome is required for AES algorithm"
+        return
+    else:
+        dd = dict(ipdf.metadata)
     # remove empty value entry
     dd = {x[0]: x[1] for x in dd.items() if x[1]}
     assert dd == {
