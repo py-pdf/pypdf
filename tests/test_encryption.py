@@ -54,6 +54,7 @@ def test_encryption(name, requres_pycryptodome):
         with pytest.raises(DependencyError) as exc:
             ipdf = PyPDF2.PdfReader(inputfile)
             ipdf.decrypt("asdfzxcv")
+            dd = dict(ipdf.metadata)
         assert exc.value.args[0] == "PyCryptodome is required for AES algorithm"
         return
     else:
