@@ -48,7 +48,6 @@ from ._utils import (
     WHITESPACES,
     StreamType,
     b_,
-    bytes_type,
     deprecate_no_replacement,
     deprecate_with_replacement,
     hex_str,
@@ -496,7 +495,7 @@ def read_string_from_stream(
     return create_string_object(txt, forced_encoding)
 
 
-class ByteStringObject(bytes_type, PdfObject):  # type: ignore
+class ByteStringObject(bytes, PdfObject):  # type: ignore
     """
     Represents a string object where the text encoding could not be determined.
     This occurs quite often, as the PDF spec doesn't provide an alternate way to
@@ -1897,16 +1896,8 @@ def create_string_object(
     """
     if isinstance(string, str):
         return TextStringObject(string)
-    elif isinstance(string, bytes_type):
-        if isinstance(forced_encoding, (list, dict)):
-            out = ""
-            for x in string:
-                try:
-                    out += forced_encoding[x]
-                except Exception:
-                    out += bytes((x,)).decode("charmap")
-            return TextStringObject(out)
-        elif isinstance(forced_encoding, str):
+    elif isinstance(string, bytes):
+        if isinstance(forced_encoding, str):
             if forced_encoding == "bytes":
                 return ByteStringObject(string)
             return TextStringObject(string.decode(forced_encoding))
