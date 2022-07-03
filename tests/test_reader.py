@@ -846,7 +846,7 @@ def test_xfa_non_empty():
         "postamble",
     ]
 
-    
+
 @pytest.mark.parametrize(
     "src,pdf_header",
     [
