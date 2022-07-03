@@ -6,7 +6,7 @@ import PyPDF2
 from PyPDF2.errors import DependencyError
 
 try:
-    from Crypto.Cipher import AES
+    from Crypto.Cipher import AES  # noqa: F401
 
     HAS_PYCRYPTODOME = True
 except ImportError:
