@@ -85,7 +85,7 @@ def test_encryption(name, requres_pycryptodome):
         ("r6-both-passwords.pdf", "foo", "bar"),
     ],
 )
-@pytest.mark.skipif(not HAS_PYCRYPTODOME)
+@pytest.mark.skipif(not HAS_PYCRYPTODOME, reason="No pycryptodome")
 def test_both_password(name, user_passwd, owner_passwd):
     from PyPDF2 import PasswordType
 
@@ -103,7 +103,7 @@ def test_both_password(name, user_passwd, owner_passwd):
         ("crazyones-encrypted-256.pdf", "password"),
     ],
 )
-@pytest.mark.skipif(not HAS_PYCRYPTODOME)
+@pytest.mark.skipif(not HAS_PYCRYPTODOME, reason="No pycryptodome")
 def test_get_page_of_encrypted_file_new_algorithm(pdffile, password):
     """
     Check if we can read a page of an encrypted file.
@@ -128,7 +128,7 @@ def test_get_page_of_encrypted_file_new_algorithm(pdffile, password):
         ),
     ],
 )
-@pytest.mark.skipif(not HAS_PYCRYPTODOME)
+@pytest.mark.skipif(not HAS_PYCRYPTODOME, reason="No pycryptodome")
 def test_encryption_merge(names):
     pdf_merger = PyPDF2.PdfMerger()
     files = [os.path.join(RESOURCE_ROOT, "encryption", x) for x in names]
