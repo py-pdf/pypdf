@@ -483,7 +483,10 @@ def test_add_free_text_annotation():
 
     writer.add_page(reader.pages[0])
 
-    writer.add_free_text_annotation(0, "Hello World", rect=(0, 0, 100, 100))
+    writer.add_free_text_annotation(
+        0, "Hello World", rect=(0, 0, 100, 100), bold=True, italic=True
+    )
+    writer.add_free_text_annotation(0, "PyPDF2", rect=(50, 0, 100, 100))
 
     with open("foo.pdf", "wb") as fh:
         writer.write(fh)
