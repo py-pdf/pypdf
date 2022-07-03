@@ -281,23 +281,6 @@ def test_get_page_of_encrypted_file(pdffile, password, should_fail):
 
 
 @pytest.mark.parametrize(
-    ("pdffile", "password"),
-    [
-        ("crazyones-encrypted-256.pdf", "password"),
-    ],
-)
-def test_get_page_of_encrypted_file_new_algorithm(pdffile, password):
-    """
-    Check if we can read a page of an encrypted file.
-
-    This is a regression test for issue 327:
-    IndexError for get_page() of decrypted file
-    """
-    path = os.path.join(RESOURCE_ROOT, pdffile)
-    PdfReader(path, password=password).pages[0]
-
-
-@pytest.mark.parametrize(
     ("src", "expected", "expected_get_fields"),
     [
         (
@@ -640,6 +623,16 @@ def test_pages_attribute():
 
     # Test if getting as slice throws an error
     assert len(reader.pages[:]) == 1
+
+    with pytest.raises(IndexError) as exc:
+        reader.pages[-1000]
+
+    assert exc.value.args[0] == "sequence index out of range"
+
+    with pytest.raises(IndexError):
+        reader.pages[1000]
+
+    assert exc.value.args[0] == "sequence index out of range"
 
 
 def test_convert_to_int():
