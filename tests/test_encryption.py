@@ -85,9 +85,8 @@ def test_encryption(name, requres_pycryptodome):
         ("r6-both-passwords.pdf", "foo", "bar"),
     ],
 )
+@pytest.mark.skipif(not HAS_PYCRYPTODOME)
 def test_both_password(name, user_passwd, owner_passwd):
-    if not HAS_PYCRYPTODOME:
-        pytest.skip()
     from PyPDF2 import PasswordType
 
     inputfile = os.path.join(RESOURCE_ROOT, "encryption", name)
@@ -104,6 +103,7 @@ def test_both_password(name, user_passwd, owner_passwd):
         ("crazyones-encrypted-256.pdf", "password"),
     ],
 )
+@pytest.mark.skipif(not HAS_PYCRYPTODOME)
 def test_get_page_of_encrypted_file_new_algorithm(pdffile, password):
     """
     Check if we can read a page of an encrypted file.
@@ -111,8 +111,6 @@ def test_get_page_of_encrypted_file_new_algorithm(pdffile, password):
     This is a regression test for issue 327:
     IndexError for get_page() of decrypted file
     """
-    if not HAS_PYCRYPTODOME:
-        pytest.skip()
     path = os.path.join(RESOURCE_ROOT, pdffile)
     PyPDF2.PdfReader(path, password=password).pages[0]
 
@@ -130,9 +128,8 @@ def test_get_page_of_encrypted_file_new_algorithm(pdffile, password):
         ),
     ],
 )
+@pytest.mark.skipif(not HAS_PYCRYPTODOME)
 def test_encryption_merge(names):
-    if not HAS_PYCRYPTODOME:
-        pytest.skip()
     pdf_merger = PyPDF2.PdfMerger()
     files = [os.path.join(RESOURCE_ROOT, "encryption", x) for x in names]
     pdfs = [PyPDF2.PdfReader(x) for x in files]
