@@ -50,19 +50,26 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
 )
 def test_encryption(name, requres_pycryptodome):
     inputfile = os.path.join(RESOURCE_ROOT, "encryption", name)
-    ipdf = PyPDF2.PdfReader(inputfile)
-    if inputfile.endswith("unencrypted.pdf"):
-        assert not ipdf.is_encrypted
-    else:
-        assert ipdf.is_encrypted
-        ipdf.decrypt("asdfzxcv")
-    assert len(ipdf.pages) == 1
     if requres_pycryptodome and not HAS_PYCRYPTODOME:
         with pytest.raises(DependencyError) as exc:
+            ipdf = PyPDF2.PdfReader(inputfile)
+            if inputfile.endswith("unencrypted.pdf"):
+                assert not ipdf.is_encrypted
+            else:
+                assert ipdf.is_encrypted
+                ipdf.decrypt("asdfzxcv")
+            assert len(ipdf.pages) == 1
             dd = dict(ipdf.metadata)
         assert exc.value.args[0] == "PyCryptodome is required for AES algorithm"
         return
     else:
+        ipdf = PyPDF2.PdfReader(inputfile)
+        if inputfile.endswith("unencrypted.pdf"):
+            assert not ipdf.is_encrypted
+        else:
+            assert ipdf.is_encrypted
+            ipdf.decrypt("asdfzxcv")
+        assert len(ipdf.pages) == 1
         dd = dict(ipdf.metadata)
     # remove empty value entry
     dd = {x[0]: x[1] for x in dd.items() if x[1]}
