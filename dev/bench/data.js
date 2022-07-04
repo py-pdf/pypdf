@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1656878525654,
+  "lastUpdate": 1656944717970,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -7654,6 +7654,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.030220821747183282",
             "extra": "mean: 4.153830169599999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "harry.karvonen@gmail.com",
+            "name": "Harry Karvonen",
+            "username": "Hatell"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "32ab2a3423739b3327a2781782b0134b1c0aaa9f",
+          "message": "DEV: Added {posargs} to tox.ini (#1055)\n\nThis allows adding options from command line. \r\n\r\nFor example, run only one test in py39 env using an option -k:\r\n$ tox -e py39 -- -k test_issue585\r\n\r\nFor example, run only one test in all envs using an option -k:\r\n$ tox -- -k test_issue585\r\n\r\nCo-authored-by: Harry Karvonen <harry.karvonen@onebyte.fi>",
+          "timestamp": "2022-07-04T16:23:50+02:00",
+          "tree_id": "1c627f160aa6da92db717da26700865f968d6585",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/32ab2a3423739b3327a2781782b0134b1c0aaa9f"
+        },
+        "date": 1656944715972,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7357501827849161,
+            "unit": "iter/sec",
+            "range": "stddev: 0.027845418127010125",
+            "extra": "mean: 1.3591569848000062 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.3349138101134,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007323175467311111",
+            "extra": "mean: 88.22299108333453 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2029259698016985,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01740625486775476",
+            "extra": "mean: 4.927905486799995 sec\nrounds: 5"
           }
         ]
       }
