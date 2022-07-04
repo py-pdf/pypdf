@@ -691,7 +691,7 @@ def test_extract_text_hello_world():
 
 
 def test_read_path():
-    path = Path(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
+    path = Path(RESOURCE_ROOT, "crazyones.pdf")
     reader = PdfReader(path)
     assert len(reader.pages) == 1
 
