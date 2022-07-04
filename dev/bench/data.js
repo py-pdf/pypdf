@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1656944717970,
+  "lastUpdate": 1656953806689,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -7699,6 +7699,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01740625486775476",
             "extra": "mean: 4.927905486799995 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "matt.peveler@gmail.com",
+            "name": "Matthew Peveler",
+            "username": "MasterOdin"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4a62a47a984a78449347f52512c017ca0f306f09",
+          "message": "TST: Simplify pathlib PdfReader test (#1056)\n\nThe Path constructor allows a variable amount of arguments to it which it joins together similar to os.path.join works, so it's not necessary to use os.path.join before passing the args to Path.",
+          "timestamp": "2022-07-04T18:55:00+02:00",
+          "tree_id": "2c2f2febb8b573555d1d857d730340d1cbf86d9a",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/4a62a47a984a78449347f52512c017ca0f306f09"
+        },
+        "date": 1656953804772,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8443208421023759,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0119143774685313",
+            "extra": "mean: 1.184383885999995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.576837008355191,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005294070132828775",
+            "extra": "mean: 73.65485785714299 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24253251798305825,
+            "unit": "iter/sec",
+            "range": "stddev: 0.061842954221642585",
+            "extra": "mean: 4.1231584462 sec\nrounds: 5"
           }
         ]
       }
