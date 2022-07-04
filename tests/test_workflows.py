@@ -325,3 +325,13 @@ def test_get_fields():
 
     # Cleanup
     os.remove("tmp.txt")
+
+
+def test_scale_rectangle_indirect_object():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/999/999944.pdf"
+    name = "tika-999944.pdf"
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+
+    for page in reader.pages:
+        page.scale(sx=2, sy=3)
