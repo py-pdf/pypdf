@@ -975,7 +975,7 @@ class PageObject(DictionaryObject):
         applying a FlateDecode filter.
 
         However, it is possible that this function will perform no action if
-        content stream compression becomes "automatic" for some reason.
+        content stream compression becomes "automatic".
         """
         content = self.get_contents()
         if content is not None:
