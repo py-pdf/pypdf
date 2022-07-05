@@ -1897,7 +1897,15 @@ def create_string_object(
     if isinstance(string, str):
         return TextStringObject(string)
     elif isinstance(string, bytes):
-        if isinstance(forced_encoding, str):
+        if isinstance(forced_encoding, (list, dict)):
+            out = ""
+            for x in string:
+                try:
+                    out += forced_encoding[x]
+                except Exception:
+                    out += bytes((x,)).decode("charmap")
+            return TextStringObject(out)
+        elif isinstance(forced_encoding, str):
             if forced_encoding == "bytes":
                 return ByteStringObject(string)
             return TextStringObject(string.decode(forced_encoding))
