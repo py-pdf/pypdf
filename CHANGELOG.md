@@ -1,5 +1,34 @@
 # CHANGELOG
 
+## Version 2.4.2, 2022-07-05
+
+### New Features (ENH)
+-  Add PdfReader.xfa attribute (#1026)
+
+### Bug Fixes (BUG)
+-  Wrong page inserted when PdfMerger.merge is done (#1063)
+-  Resolve IndirectObject when it refers to a free entry (#1054)
+
+### Developer Experience (DEV)
+-  Added {posargs} to tox.ini (#1055)
+
+### Maintenance (MAINT)
+-  Remove PyPDF2._utils.bytes_type (#1053)
+
+### Testing (TST)
+-  Scale page (indirect rect object) (#1057)
+-  Simplify pathlib PdfReader test (#1056)
+-  IndexError of VirtualList (#1052)
+-  Invalid XML in xmp information (#1051)
+-  No pycryptodome (#1050)
+-  Increase test coverage (#1045)
+
+### Code Style (STY)
+-  DOC of compress_content_streams (#1061)
+-  Minimize diff for #879 (#1049)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.4.1...2.4.2
+
 ## Version 2.4.1, 2022-06-30
 
 ### New Features (ENH)
