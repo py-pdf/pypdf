@@ -119,17 +119,6 @@ class PdfFileWriter(object):
         self._root = None
         self._root_object = root
 
-        if "/AcroForm" in self._root_object:
-            self._root_object["/AcroForm"].update({
-                NameObject("/NeedAppearances"): BooleanObject(True)
-            })
-        else:
-            self._root_object.update({
-                NameObject("/AcroForm"): IndirectObject(len(self._objects), 0, self)
-            })
-            need_appearances = NameObject("/NeedAppearances")
-            self._root_object["/AcroForm"][need_appearances] = BooleanObject(True)
-
     def _addObject(self, obj):
         self._objects.append(obj)
         return IndirectObject(len(self._objects), 0, self)
