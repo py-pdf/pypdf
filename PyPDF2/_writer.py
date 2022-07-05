@@ -926,6 +926,8 @@ class PdfWriter:
                         hash_value = None
                         if newobj is not None:
                             hash_value = newobj.hash_value()
+                        else:
+                            newobj = NullObject()
                         # Check if object is already added to pdf.
                         if hash_value in self._idnum_hash:
                             newobj_ido = IndirectObject(
