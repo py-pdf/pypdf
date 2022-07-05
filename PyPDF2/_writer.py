@@ -922,6 +922,19 @@ class PdfWriter:
                             extern_map[data.pdf][data.generation] = {}
                         extern_map[data.pdf][data.generation][data.idnum] = newobj_ido
                         newobj = self._sweep_indirect_references(extern_map, newobj)
+                        # Ensure that all objects is handled
+                        hash_value = None
+                        if newobj is not None:
+                            hash_value = newobj.hash_value()
+                        # Check if object is already added to pdf.
+                        if hash_value in self._idnum_hash:
+                            newobj_ido = IndirectObject(
+                                self._idnum_hash[hash_value], 0, self
+                            )
+                            self._objects[idnum - 1] = newobj_ido
+                            return newobj_ido
+                        if hash_value is not None:
+                            self._idnum_hash[hash_value] = idnum
                         self._objects[idnum - 1] = newobj
                         return newobj_ido
                     except (ValueError, RecursionError):
