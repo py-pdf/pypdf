@@ -922,7 +922,7 @@ class PdfWriter:
                             extern_map[data.pdf][data.generation] = {}
                         extern_map[data.pdf][data.generation][data.idnum] = newobj_ido
                         newobj = self._sweep_indirect_references(extern_map, newobj)
-                        # Ensure that all objects is handled
+                        # Ensure that all objects are handled
                         hash_value = None
                         if newobj is not None:
                             hash_value = newobj.hash_value()
