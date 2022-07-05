@@ -244,6 +244,9 @@ def test_merge_with_warning(url, name):
     ):
         merger.write("tmp.merged.pdf")
 
+    # Cleanup
+    os.remove("tmp.merged.pdf")
+
 
 @pytest.mark.parametrize(
     ("url", "name"),
@@ -260,6 +263,9 @@ def test_merge(url, name):
     merger = PdfMerger()
     merger.append(reader)
     merger.write("tmp.merged.pdf")
+
+    # Cleanup
+    os.remove("tmp.merged.pdf")
 
 
 @pytest.mark.parametrize(
@@ -335,3 +341,31 @@ def test_scale_rectangle_indirect_object():
 
     for page in reader.pages:
         page.scale(sx=2, sy=3)
+
+
+def test_merge_output():
+    # Arrange
+    base = os.path.join(RESOURCE_ROOT, "Seige_of_Vicksburg_Sample_OCR.pdf")
+    crazy = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    expected = os.path.join(
+        RESOURCE_ROOT, "Seige_of_Vicksburg_Sample_OCR-crazyones-merged.pdf"
+    )
+
+    # Act
+    merger = PdfMerger(strict=True)
+    with pytest.warns(PdfReadWarning):
+        merger.append(base)
+    merger.merge(1, crazy)
+    stream = BytesIO()
+    merger.write(stream)
+
+    # Assert
+    stream.seek(0)
+    actual = stream.read()
+    with open(expected, "rb") as fp:
+        expected_data = fp.read()
+    if actual != expected_data:
+        # See https://github.com/pytest-dev/pytest/issues/9124
+        assert (
+            False
+        ), f"len(actual) = {len(actual):,} vs len(expected) = {len(expected_data):,}"
