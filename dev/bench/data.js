@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1657014220899,
+  "lastUpdate": 1657024541223,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -7924,6 +7924,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.015032280746965563",
             "extra": "mean: 3.6001426070000035 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "621a51f9552731928e73689ae17161214f9cddcf",
+          "message": "BUG: Wrong page inserted when PdfMerger.merge is done (#1063)\n\nCaused-by: #207\r\n\r\nWhy it wasn't detected by the tests: We don't have any tests that check\r\nfor the correct result of a merge. We just check for exceptions\r\n\r\nHow we prevent it in future: Unit test was added\r\n\r\nRisk of the fix:\r\n- We will have bigger file sizes again as #207 was effectively reverted\r\n- We will need to adjust this test if we change the way we write PDFs\r\n\r\nCloses: #1062",
+          "timestamp": "2022-07-05T14:34:37+02:00",
+          "tree_id": "e4f5b6e44d7d87b09071878b7b536c2a94885be5",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/621a51f9552731928e73689ae17161214f9cddcf"
+        },
+        "date": 1657024539267,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0467339357431968,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00445794756712191",
+            "extra": "mean: 955.352612400003 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.971924397819953,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0043864352662166695",
+            "extra": "mean: 71.57210213333467 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2797901876661233,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011401319073286491",
+            "extra": "mean: 3.5741067560000035 sec\nrounds: 5"
           }
         ]
       }
