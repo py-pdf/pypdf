@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1657024541223,
+  "lastUpdate": 1657024752454,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -7969,6 +7969,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.011401319073286491",
             "extra": "mean: 3.5741067560000035 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "a34569089e6699b2461d71143dbb2a0a0ff1796b",
+          "message": "REL: 2.4.2\n\nNew Features (ENH):\n-  Add PdfReader.xfa attribute (#1026)\n\nBug Fixes (BUG):\n-  Wrong page inserted when PdfMerger.merge is done (#1063)\n-  Resolve IndirectObject when it refers to a free entry (#1054)\n\nDeveloper Experience (DEV):\n-  Added {posargs} to tox.ini (#1055)\n\nMaintenance (MAINT):\n-  Remove PyPDF2._utils.bytes_type (#1053)\n\nTesting (TST):\n-  Scale page (indirect rect object) (#1057)\n-  Simplify pathlib PdfReader test (#1056)\n-  IndexError of VirtualList (#1052)\n-  Invalid XML in xmp information (#1051)\n-  No pycryptodome (#1050)\n-  Increase test coverage (#1045)\n\nCode Style (STY):\n-  DOC of compress_content_streams (#1061)\n-  Minimize diff for #879 (#1049)\n\nFull Changelog: https://github.com/py-pdf/PyPDF2/compare/2.4.1...2.4.2",
+          "timestamp": "2022-07-05T14:37:03+02:00",
+          "tree_id": "495569c09f8e7dfb53c139a92e6a8fd7a1217c7f",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/a34569089e6699b2461d71143dbb2a0a0ff1796b"
+        },
+        "date": 1657024750786,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.425680099634246,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0057479501024147745",
+            "extra": "mean: 701.4196243999947 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 20.867720689040873,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0033925636589958296",
+            "extra": "mean: 47.92090209091074 msec\nrounds: 22"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.3728863476947458,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07816821817936107",
+            "extra": "mean: 2.6817822808000074 sec\nrounds: 5"
           }
         ]
       }
