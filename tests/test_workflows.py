@@ -369,3 +369,6 @@ def test_merge_output():
         assert (
             False
         ), f"len(actual) = {len(actual):,} vs len(expected) = {len(expected_data):,}"
+
+    # Cleanup
+    merger.close()
