@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1656967645399,
+  "lastUpdate": 1657009319199,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -7789,6 +7789,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.032498839979054006",
             "extra": "mean: 3.987744551000003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "harry.karvonen@gmail.com",
+            "name": "Harry Karvonen",
+            "username": "Hatell"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "02c601c86819578d9796479a1b8953accefea92b",
+          "message": "BUG: Resolve IndirectObject when it refers to a free entry (#1054)\n\nFrom the PDF 1.7 docs https://opensource.adobe.com/dc-acrobat-sdk-docs/standards/pdfstandards/pdf/PDF32000_2008.pdf:\r\n\r\nSection 7.3.10 Indirect Objects:\r\nAn indirect reference to an undefined object shall not be considered an error by a conforming reader;\r\nit shall be treated as a reference to the null object.\r\n\r\nAnd section 7.5.4 Cross-Reference Table:\r\nThere are two ways an entry may be a member of the free entries list. Using the basic mechanism the free\r\nentries in the cross-reference table may form a linked list, with each free entry containing the object number of\r\nthe next. The first entry in the table (object number 0) shall always be free and shall have a generation number\r\nof 65,535; it is shall be the head of the linked list of free objects. The last free entry (the tail of the linked list)\r\nlinks back to object number 0. Using the second mechanism, the table may contain other free entries that link\r\nback to object number 0 and have a generation number of 65,535, even though these entries are not in the\r\nlinked list itself.\r\n\r\nThose entries form a linked list. The correct way to handle this is to resolve the indirect reference to the NullObject.\r\n\r\nSee \"3.4.3 Cross-Reference Table\" in the PDF 1.7 standard for free cross-reference entries in general.\r\n\r\nCo-authored-by: Harry Karvonen <harry.karvonen@onebyte.fi>\r\n\r\nCloses #521\r\nCloses #1034",
+          "timestamp": "2022-07-05T10:20:44+02:00",
+          "tree_id": "4f5b338e32b74c288d8f4f8782009960bb8c94ad",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/02c601c86819578d9796479a1b8953accefea92b"
+        },
+        "date": 1657009318683,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0497777182183352,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005951886660807513",
+            "extra": "mean: 952.5826112000004 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 16.12849695722835,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004810048194116284",
+            "extra": "mean: 62.00205776470866 msec\nrounds: 17"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2795944767368405,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026536790501431994",
+            "extra": "mean: 3.576608564199995 sec\nrounds: 5"
           }
         ]
       }
