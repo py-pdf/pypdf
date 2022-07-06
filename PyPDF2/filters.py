@@ -108,36 +108,49 @@ class FlateDecode:
         if predictor != 1:
             # The /Columns param. has 1 as the default value; see ISO 32000,
             # §7.4.4.3 LZWDecode and FlateDecode Parameters, Table 8
+            DEFAULT_BITS_PER_COMPONENT = 8
             if isinstance(decode_parms, ArrayObject):
                 columns = 1
+                bits_per_component = DEFAULT_BITS_PER_COMPONENT
                 for decode_parm in decode_parms:
                     if "/Columns" in decode_parm:
                         columns = decode_parm["/Columns"]
+                    if LZW.BITS_PER_COMPONENT in decode_parm:
+                        bits_per_component = decode_parm[LZW.BITS_PER_COMPONENT]
             else:
                 columns = (
                     1 if decode_parms is None else decode_parms.get(LZW.COLUMNS, 1)
                 )
+                bits_per_component = decode_parms.get(
+                    LZW.BITS_PER_COMPONENT, DEFAULT_BITS_PER_COMPONENT
+                )
+
+            # PNG predictor can vary by row and so is the lead byte on each row
+            rowlength = (
+                math.ceil(columns * bits_per_component / 8) + 1
+            )  # number of bytes
 
             # PNG prediction:
             if 10 <= predictor <= 15:
-                str_data = FlateDecode._decode_png_prediction(str_data, columns)  # type: ignore
+                str_data = FlateDecode._decode_png_prediction(str_data, columns, rowlength)  # type: ignore
             else:
                 # unsupported predictor
                 raise PdfReadError(f"Unsupported flatedecode predictor {predictor!r}")
         return str_data
 
     @staticmethod
-    def _decode_png_prediction(data: str, columns: int) -> str:
-        output = StringIO()
+    def _decode_png_prediction(data: str, columns: int, rowlength: int) -> bytes:
+        output = BytesIO()
         # PNG prediction can vary from row to row
-        rowlength = columns + 1
-        assert len(data) % rowlength == 0
+        if len(data) % rowlength != 0:
+            raise PdfReadError("Image data is not rectangular")
         prev_rowdata = (0,) * rowlength
         for row in range(len(data) // rowlength):
             rowdata = [
                 ord_(x) for x in data[(row * rowlength) : ((row + 1) * rowlength)]
             ]
             filter_byte = rowdata[0]
+
             if filter_byte == 0:
                 pass
             elif filter_byte == 1:
@@ -162,7 +175,7 @@ class FlateDecode:
                 # unsupported PNG filter
                 raise PdfReadError(f"Unsupported PNG filter {filter_byte!r}")
             prev_rowdata = tuple(rowdata)
-            output.write("".join([chr(x) for x in rowdata[1:]]))
+            output.write(bytearray(rowdata[1:]))
         return output.getvalue()
 
     @staticmethod
