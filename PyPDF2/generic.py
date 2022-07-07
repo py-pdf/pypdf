@@ -231,6 +231,16 @@ class IndirectObject(PdfObject):
         self.generation = generation
         self.pdf = pdf
 
+    def hash_value_data(self) -> bytes:
+        return (
+            "IndirectObject(%d, %d, %d)"
+            % (
+                self.idnum,
+                self.generation,
+                id(self.pdf),
+            )
+        ).encode()
+
     def get_object(self) -> Optional[PdfObject]:
         obj = self.pdf.get_object(self)
         if obj is None:
