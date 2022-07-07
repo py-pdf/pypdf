@@ -37,7 +37,7 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 import math
 import struct
 import zlib
-from io import BytesIO, StringIO
+from io import BytesIO
 from typing import Any, Dict, Optional, Tuple, Union
 
 from .generic import ArrayObject, DictionaryObject, NameObject
