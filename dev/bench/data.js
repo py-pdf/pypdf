@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1657170807134,
+  "lastUpdate": 1657172331201,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -8059,6 +8059,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01775698611713741",
             "extra": "mean: 3.6320326537999974 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ff5fd88fec3a350d513f85f1ddf50c9b80e00d29",
+          "message": "DEV: Cache downloaded files (#1070)\n\nAlso: Fix pycryptodome uninstall in CI",
+          "timestamp": "2022-07-07T07:37:37+02:00",
+          "tree_id": "c0103dc5d910073839462165451e83afd6e84813",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/ff5fd88fec3a350d513f85f1ddf50c9b80e00d29"
+        },
+        "date": 1657172329245,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8687574681519459,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017326264574992093",
+            "extra": "mean: 1.1510692416000041 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.483461490100849,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006759483395572858",
+            "extra": "mean: 80.10598669231136 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23940974604647547,
+            "unit": "iter/sec",
+            "range": "stddev: 0.12327075702392903",
+            "extra": "mean: 4.176939395800014 sec\nrounds: 5"
           }
         ]
       }
