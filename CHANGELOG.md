@@ -651,7 +651,7 @@ large PDF files (#808) 🎉
 ### Documentation (DOC)
 -  Robustness (#785)
 
-[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/1.27.7...1.27.8
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/1.27.7...1.27.8)
 
 ## Version 1.27.7, 2022-04-19
 
