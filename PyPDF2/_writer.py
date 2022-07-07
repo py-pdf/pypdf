@@ -901,12 +901,15 @@ class PdfWriter:
                     self,
                 )
 
-            # This is new object
-            self._objects.append(real_obj)
+            if data.pdf == self:
+                self._idnum_hash[hash_value] = data.idnum
+            # This is new object in this pdf
+            else:
+                self._objects.append(real_obj)
 
-            idnum = len(self._objects)
+                idnum = len(self._objects)
 
-            self._idnum_hash[hash_value] = idnum
+                self._idnum_hash[hash_value] = idnum
 
             try:
                 self._sweep_indirect_references(real_obj)
