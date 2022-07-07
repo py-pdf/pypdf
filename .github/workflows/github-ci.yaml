@@ -52,7 +52,7 @@ jobs:
     - name: Remove cryptodome
       run: |
         pip uninstall pycryptodome -y
-      if: matrix.use-cryptodome == false
+      if: matrix.use-cryptodome == 'false'
     - name: Install PyPDF2
       run: |
         pip install .
