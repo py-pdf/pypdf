@@ -121,8 +121,10 @@ class FlateDecode:
                 columns = (
                     1 if decode_parms is None else decode_parms.get(LZW.COLUMNS, 1)
                 )
-                bits_per_component = decode_parms.get(
-                    LZW.BITS_PER_COMPONENT, DEFAULT_BITS_PER_COMPONENT
+                bits_per_component = (
+                    decode_parms.get(LZW.BITS_PER_COMPONENT, DEFAULT_BITS_PER_COMPONENT)
+                    if decode_parms
+                    else DEFAULT_BITS_PER_COMPONENT
                 )
 
             # PNG predictor can vary by row and so is the lead byte on each row
