@@ -35,7 +35,7 @@ jobs:
       id: cache-downloaded-files
       uses: actions/cache@v3
       with:
-        path: tests/pdf_cache
+        path: '**/tests/pdf_cache/*'
         key: cache-downloaded-files
     - name: Setup Python
       uses: actions/setup-python@v4
@@ -52,7 +52,7 @@ jobs:
     - name: Remove cryptodome
       run: |
         pip uninstall pycryptodome -y
-      if: matrix.use-cryptodome == false
+      if: matrix.use-cryptodome == 'false'
     - name: Install PyPDF2
       run: |
         pip install .
