@@ -109,7 +109,7 @@ class PdfWriter:
     def __init__(self) -> None:
         self._header = b"%PDF-1.3"
         self._objects: List[Optional[PdfObject]] = []  # array of indirect objects
-        self._idnum_hash: Dict[bytes, PdfObject] = {}
+        self._idnum_hash: Dict[bytes, IndirectObject] = {}
 
         # The root of our page tree node.
         pages = DictionaryObject()
@@ -856,8 +856,8 @@ class PdfWriter:
             TextStringObject,
             NullObject,
         ],
-    ) -> Union[Any, StreamObject]:
-        stack = collections.deque()
+    ) -> None:
+        stack: Any = collections.deque()
         discovered = list()
         parent = None
         key_or_id = None
