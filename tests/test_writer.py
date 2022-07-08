@@ -3,9 +3,9 @@ from io import BytesIO
 
 import pytest
 
-from PyPDF2 import PdfMerger, PdfReader, PdfWriter
+from PyPDF2 import PageObject, PdfMerger, PdfReader, PdfWriter
 from PyPDF2.errors import PageSizeNotDefinedError
-from PyPDF2.generic import RectangleObject
+from PyPDF2.generic import RectangleObject, StreamObject
 
 from . import get_pdf_from_url
 
@@ -510,3 +510,35 @@ def test_pdf_header():
 
     writer.pdf_header = b"%PDF-1.6"
     assert writer.pdf_header == b"%PDF-1.6"
+
+
+def test_write_dict_stream_object():
+    stream = (
+        b"BT "
+        b"/F0 36 Tf "
+        b"50 706 Td "
+        b"36 TL "
+        b"(The Tj operator) Tj "
+        b'1 2 (The double quote operator) " '
+        b"(The single quote operator) ' "
+        b"ET"
+    )
+    from PyPDF2.generic import NameObject
+
+    stream_object = StreamObject()
+    stream_object[NameObject("/Type")] = NameObject("/Text")
+    stream_object._data = stream
+
+    writer = PdfWriter()
+
+    page_object = PageObject.create_blank_page(writer, 1000, 1000)
+    # Construct dictionary object (PageObject) with stream object
+    # Writer will replace this stream object with indirect object
+    page_object[NameObject("/Test")] = stream_object
+
+    writer.add_page(page_object)
+
+    with open("tmp-writer-do-not-commit.pdf", "wb") as fp:
+        writer.write(fp)
+
+    os.remove("tmp-writer-do-not-commit.pdf")

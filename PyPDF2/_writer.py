@@ -872,9 +872,7 @@ class PdfWriter:
             if isinstance(data, (ArrayObject, DictionaryObject)):
                 for key, value in data.items():
                     stack.append((value, data, key))
-                continue
-
-            if isinstance(data, IndirectObject):
+            elif isinstance(data, IndirectObject):
                 data = self._resolve_indirect_object(data)
 
                 if str(data) not in discovered:
