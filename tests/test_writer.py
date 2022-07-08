@@ -523,7 +523,7 @@ def test_write_dict_stream_object():
         b"(The single quote operator) ' "
         b"ET"
     )
-    from PyPDF2.generic import NameObject
+    from PyPDF2.generic import NameObject, IndirectObject
 
     stream_object = StreamObject()
     stream_object[NameObject("/Type")] = NameObject("/Text")
@@ -538,7 +538,23 @@ def test_write_dict_stream_object():
 
     writer.add_page(page_object)
 
+    for k, v in page_object.items():
+        if k == "/Test":
+            assert str(v) == str(stream_object)
+            break
+    else:
+        assert False, "/Test not found"
+
     with open("tmp-writer-do-not-commit.pdf", "wb") as fp:
         writer.write(fp)
+
+    for k, v in page_object.items():
+        if k == "/Test":
+            assert str(v) != str(stream_object)
+            assert isinstance(v, IndirectObject)
+            assert str(v.get_object()) == str(stream_object)
+            break
+    else:
+        assert False, "/Test not found"
 
     os.remove("tmp-writer-do-not-commit.pdf")
