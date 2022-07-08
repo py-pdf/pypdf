@@ -238,8 +238,10 @@ def test_sweep_recursion1():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     merger = PdfMerger()
     merger.append(reader)
-    with pytest.warns(UserWarning, match="returning NullObject instead"):
-        merger.write("tmp-merger-do-not-commit.pdf")
+    merger.write("tmp-merger-do-not-commit.pdf")
+
+    reader2 = PdfReader("tmp-merger-do-not-commit.pdf")
+    reader2.pages
 
     # cleanup
     os.remove("tmp-merger-do-not-commit.pdf")
@@ -263,8 +265,10 @@ def test_sweep_recursion2(url, name):
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     merger = PdfMerger()
     merger.append(reader)
-    with pytest.warns(UserWarning, match="returning NullObject instead"):
-        merger.write("tmp-merger-do-not-commit.pdf")
+    merger.write("tmp-merger-do-not-commit.pdf")
+
+    reader2 = PdfReader("tmp-merger-do-not-commit.pdf")
+    reader2.pages
 
     # cleanup
     os.remove("tmp-merger-do-not-commit.pdf")

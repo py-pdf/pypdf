@@ -28,6 +28,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import codecs
+import collections
 import decimal
 import logging
 import random
@@ -108,7 +109,7 @@ class PdfWriter:
     def __init__(self) -> None:
         self._header = b"%PDF-1.3"
         self._objects: List[Optional[PdfObject]] = []  # array of indirect objects
-        self._idnum_hash: Dict[bytes, int] = {}
+        self._idnum_hash: Dict[bytes, PdfObject] = {}
 
         # The root of our page tree node.
         pages = DictionaryObject()
@@ -843,7 +844,7 @@ class PdfWriter:
 
     def _sweep_indirect_references(
         self,
-        data: Union[
+        root: Union[
             ArrayObject,
             BooleanObject,
             DictionaryObject,
@@ -856,82 +857,80 @@ class PdfWriter:
             NullObject,
         ],
     ) -> Union[Any, StreamObject]:
-        if isinstance(data, DictionaryObject):
-            for key, value in list(data.items()):
-                value = self._sweep_indirect_references(value)
-                if isinstance(value, StreamObject):
+        stack = collections.deque()
+        discovered = list()
+        parent = None
+        key_or_id = None
+
+        # Start from root
+        stack.append((root, parent, key_or_id))
+
+        while len(stack):
+            data, parent, key_or_id = stack.pop()
+
+            # Build stack for a processing depth-first
+            if isinstance(data, (ArrayObject, DictionaryObject)):
+                for key, value in data.items():
+                    stack.append((value, data, key))
+                continue
+
+            if isinstance(data, IndirectObject):
+                data = self._resolve_indirect_object(data)
+
+                if str(data) not in discovered:
+                    discovered.append(str(data))
+                    stack.append((data.get_object(), None, None))
+
+            # Check if data has a parent and if it is a dict or an array update the value
+            if isinstance(parent, (DictionaryObject, ArrayObject)):
+                if isinstance(data, StreamObject):
                     # a dictionary value is a stream.  streams must be indirect
                     # objects, so we need to change this value.
-                    value = self._add_object(value)
-                data[key] = value
-            return data
-        elif isinstance(data, ArrayObject):
-            for i in range(len(data)):
-                value = self._sweep_indirect_references(data[i])
-                if isinstance(value, StreamObject):
-                    # an array value is a stream.  streams must be indirect
-                    # objects, so we need to change this value
-                    value = self._add_object(value)
-                data[i] = value
-            return data
-        elif isinstance(data, IndirectObject):
-            # Internal reference
-            # if idnum is in hash-table it is processed
-            if data.pdf == self and data.idnum in self._idnum_hash.values():
-                return data
+                    parent[key_or_id] = self._add_object(data)
+                else:
+                    parent[key_or_id] = data
+            # while len(stack)
 
-            if hasattr(data.pdf, "stream") and data.pdf.stream.closed:
-                raise ValueError(
-                    f"I/O operation on closed file: {data.pdf.stream.name}"
-                )
+    def _resolve_indirect_object(self, data: IndirectObject) -> IndirectObject:
+        """
+        Resolves indirect object to this pdf indirect objects.
 
-            # Get real object indirect object
-            real_obj = data.pdf.get_object(data)
-
-            if real_obj is None:
-                real_obj = NullObject()
-
-            hash_value = real_obj.hash_value()
-
-            # Check if object is handled
-            if hash_value in self._idnum_hash:
-                return IndirectObject(
-                    self._idnum_hash[hash_value],
-                    0,
-                    self,
-                )
-
-            if data.pdf == self:
-                self._idnum_hash[hash_value] = data.idnum
-            # This is new object in this pdf
-            else:
-                self._objects.append(real_obj)
-
-                idnum = len(self._objects)
-
-                self._idnum_hash[hash_value] = idnum
-
-            try:
-                self._sweep_indirect_references(real_obj)
-            except (
-                ValueError,
-                RecursionError,
-            ):
-                # Unable to resolve the Object, returning NullObject instead.
-                warnings.warn(
-                    f"Unable to resolve [{data.__class__.__name__}: {data}], "
-                    "returning NullObject instead",
-                    PdfReadWarning,
-                )
-                return NullObject()
-
-            return IndirectObject(
-                self._idnum_hash[hash_value],
-                0,
-                self,
+        If it is a new object then it is added to self._objects and new idnum is given and
+        generation is always 0.
+        """
+        if not isinstance(data, IndirectObject):
+            raise ValueError(
+                f"Unable to resolve [{data.__class__.__name__}: {data}], "
+                "returning NullObject instead",
             )
+
+        if hasattr(data.pdf, "stream") and data.pdf.stream.closed:
+            raise ValueError(f"I/O operation on closed file: {data.pdf.stream.name}")
+
+        # Get real object indirect object
+        real_obj = data.pdf.get_object(data)
+
+        if real_obj is None:
+            warnings.warn(
+                f"Unable to resolve [{data.__class__.__name__}: {data}], "
+                "returning NullObject instead",
+                PdfReadWarning,
+            )
+            real_obj = NullObject()
+
+        hash_value = real_obj.hash_value()
+
+        # Check if object is handled
+        if hash_value in self._idnum_hash:
+            return self._idnum_hash[hash_value]
+
+        if data.pdf == self:
+            self._idnum_hash[hash_value] = IndirectObject(data.idnum, 0, self)
+        # This is new object in this pdf
         else:
-            return data
+            self._idnum_hash[hash_value] = self._add_object(real_obj)
+
+        return self._idnum_hash[hash_value]
 
     def get_reference(self, obj: PdfObject) -> IndirectObject:
         idnum = self._objects.index(obj) + 1
