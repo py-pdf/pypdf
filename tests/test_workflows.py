@@ -239,10 +239,7 @@ def test_merge_with_warning(url, name):
     merger = PdfMerger()
     merger.append(reader)
     # This could actually be a performance bottleneck:
-    with pytest.warns(
-        PdfReadWarning, match="^Unable to resolve .*, returning NullObject instead"
-    ):
-        merger.write("tmp.merged.pdf")
+    merger.write("tmp.merged.pdf")
 
     # Cleanup
     os.remove("tmp.merged.pdf")

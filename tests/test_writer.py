@@ -482,8 +482,7 @@ def test_sweep_indirect_references_nullobject_exception():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     merger = PdfMerger()
     merger.append(reader)
-    with pytest.warns(UserWarning, match="returning NullObject instead"):
-        merger.write("tmp-merger-do-not-commit.pdf")
+    merger.write("tmp-merger-do-not-commit.pdf")
 
     # cleanup
     os.remove("tmp-merger-do-not-commit.pdf")
