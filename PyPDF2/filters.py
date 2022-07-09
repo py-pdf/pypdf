@@ -570,7 +570,21 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
     if SA.FILTER in x_object_obj:
         if x_object_obj[SA.FILTER] == FT.FLATE_DECODE:
             extension = ".png"
+            color_space = None
+            if "/ColorSpace" in x_object_obj:
+                color_space = x_object_obj["/ColorSpace"].get_object()
+                if (
+                    isinstance(color_space, ArrayObject)
+                    and color_space[0] == "/Indexed"
+                ):
+                    color_space, base, hival, lookup = (
+                        value.get_object() for value in color_space
+                    )
+
             img = Image.frombytes(mode, size, data)
+            if color_space == "/Indexed":
+                img.putpalette(lookup.get_data())
+                img = img.convert("RGB")
             if G.S_MASK in x_object_obj:  # add alpha channel
                 alpha = Image.frombytes("L", size, x_object_obj[G.S_MASK].get_data())
                 img.putalpha(alpha)
