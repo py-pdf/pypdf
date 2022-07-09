@@ -695,7 +695,7 @@ class PdfReader:
                     return outlines
 
                 # TABLE 8.3 Entries in the outline dictionary
-                if "/First" in lines:
+                if lines is not None and "/First" in lines:
                     node = cast(DictionaryObject, lines["/First"])
             self._namedDests = self._get_named_destinations()
 
