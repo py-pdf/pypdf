@@ -917,12 +917,6 @@ class PdfWriter:
         If it is a new object then it is added to self._objects and new idnum is given and
         generation is always 0.
         """
-        if not isinstance(data, IndirectObject):
-            raise ValueError(
-                f"Unable to resolve [{data.__class__.__name__}: {data}], "
-                "returning NullObject instead",
-            )
-
         if hasattr(data.pdf, "stream") and data.pdf.stream.closed:
             raise ValueError(f"I/O operation on closed file: {data.pdf.stream.name}")
 
