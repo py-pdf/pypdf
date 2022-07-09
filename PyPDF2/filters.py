@@ -425,7 +425,7 @@ class CCITTFaxDecode:
         parameters: Union[None, ArrayObject, DictionaryObject], rows: int
     ) -> CCITParameters:
         k = 0
-        columns = 0
+        columns = 1728  # TABLE 3.9 Optional parameters for the CCITTFaxDecode filter
         if parameters:
             if isinstance(parameters, ArrayObject):
                 for decode_parm in parameters:
@@ -434,8 +434,10 @@ class CCITTFaxDecode:
                     if CCITT.K in decode_parm:
                         k = decode_parm[CCITT.K]
             else:
-                columns = parameters[CCITT.COLUMNS]  # type: ignore
-                k = parameters[CCITT.K]  # type: ignore
+                if CCITT.COLUMNS in parameters:
+                    columns = parameters[CCITT.COLUMNS]  # type: ignore
+                if CCITT.K in parameters:
+                    k = parameters[CCITT.K]  # type: ignore
 
         return CCITParameters(k, columns, rows)
 
@@ -556,7 +558,10 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
 
     size = (x_object_obj[IA.WIDTH], x_object_obj[IA.HEIGHT])
     data = x_object_obj.get_data()  # type: ignore
-    if x_object_obj[IA.COLOR_SPACE] == ColorSpaces.DEVICE_RGB:
+    if (
+        IA.COLOR_SPACE in x_object_obj
+        and x_object_obj[IA.COLOR_SPACE] == ColorSpaces.DEVICE_RGB
+    ):
         mode: Literal["RGB", "P"] = "RGB"
     else:
         mode = "P"

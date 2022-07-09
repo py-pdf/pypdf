@@ -705,7 +705,6 @@ def test_read_not_binary_mode():
             PdfReader(f)
 
 
-@pytest.mark.xfail(reason="#416")
 def test_read_form_416():
     url = (
         "https://www.fda.gov/downloads/AboutFDA/ReportsManualsForms/Forms/UCM074728.pdf"
