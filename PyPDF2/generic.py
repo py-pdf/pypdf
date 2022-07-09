@@ -48,7 +48,6 @@ from ._utils import (
     WHITESPACES,
     StreamType,
     b_,
-    bytes_type,
     deprecate_no_replacement,
     deprecate_with_replacement,
     hex_str,
@@ -496,7 +495,7 @@ def read_string_from_stream(
     return create_string_object(txt, forced_encoding)
 
 
-class ByteStringObject(bytes_type, PdfObject):  # type: ignore
+class ByteStringObject(bytes, PdfObject):  # type: ignore
     """
     Represents a string object where the text encoding could not be determined.
     This occurs quite often, as the PDF spec doesn't provide an alternate way to
@@ -1361,6 +1360,16 @@ class RectangleObject(ArrayObject):
             value = FloatObject(value)
         return value
 
+    def scale(self, sx: float, sy: float) -> "RectangleObject":
+        return RectangleObject(
+            (
+                float(self.left) * sx,
+                float(self.bottom) * sy,
+                float(self.right) * sx,
+                float(self.top) * sy,
+            )
+        )
+
     def ensureIsNumber(
         self, value: Any
     ) -> Union[FloatObject, NumberObject]:  # pragma: no cover
@@ -1897,7 +1906,7 @@ def create_string_object(
     """
     if isinstance(string, str):
         return TextStringObject(string)
-    elif isinstance(string, bytes_type):
+    elif isinstance(string, bytes):
         if isinstance(forced_encoding, (list, dict)):
             out = ""
             for x in string:

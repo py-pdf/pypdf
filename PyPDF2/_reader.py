@@ -691,8 +691,11 @@ class PdfReader:
                     # so continue to load the file without the Bookmarks
                     return outlines
 
+                if isinstance(lines, NullObject):
+                    return outlines
+
                 # TABLE 8.3 Entries in the outline dictionary
-                if "/First" in lines:
+                if lines is not None and "/First" in lines:
                     node = cast(DictionaryObject, lines["/First"])
             self._namedDests = self._get_named_destinations()
 
@@ -1052,6 +1055,10 @@ class PdfReader:
             indirect_reference.generation in self.xref
             and indirect_reference.idnum in self.xref[indirect_reference.generation]
         ):
+            if self.xref_free_entry.get(indirect_reference.generation, {}).get(
+                indirect_reference.idnum, False
+            ):
+                return NullObject()
             start = self.xref[indirect_reference.generation][indirect_reference.idnum]
             self.stream.seek(start, 0)
             idnum, generation = self.read_object_header(self.stream)
@@ -1225,6 +1232,7 @@ class PdfReader:
 
         # read all cross reference tables and their trailers
         self.xref: Dict[int, Dict[Any, Any]] = {}
+        self.xref_free_entry: Dict[int, Dict[Any, Any]] = {}
         self.xref_objStm: Dict[int, Tuple[Any, Any]] = {}
         self.trailer = DictionaryObject()
         while True:
@@ -1380,9 +1388,12 @@ class PdfReader:
                     stream.seek(-1, 1)
 
                 offset_b, generation_b = line[:16].split(b" ")
+                entry_type_b = line[17:18]
+
                 offset, generation = int(offset_b), int(generation_b)
                 if generation not in self.xref:
                     self.xref[generation] = {}
+                    self.xref_free_entry[generation] = {}
                 if num in self.xref[generation]:
                     # It really seems like we should allow the last
                     # xref table in the file to override previous
@@ -1391,6 +1402,7 @@ class PdfReader:
                     pass
                 else:
                     self.xref[generation][num] = offset
+                    self.xref_free_entry[generation][num] = entry_type_b == b"f"
                 cnt += 1
                 num += 1
             read_non_whitespace(stream)

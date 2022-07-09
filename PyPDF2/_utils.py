@@ -56,7 +56,6 @@ CompressedTransformationMatrix: TypeAlias = Tuple[
     float, float, float, float, float, float
 ]
 
-bytes_type = bytes  # Works the same in Python 2.X and 3.X
 StreamType = Union[BytesIO, BufferedReader, BufferedWriter, FileIO]
 StrByteType = Union[str, StreamType]
 
