@@ -1142,22 +1142,53 @@ class PageObject(DictionaryObject):
         # are strings where the byte->string encoding was unknown, so adding
         # them to the text here would be gibberish.
 
+        cm_matrix: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+        cm_stack = []
         tm_matrix: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-        tm_prev: List[float] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+        tm_prev: List[float] = [
+            1.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+        ]  # will store cm_matrix * tm_matrix
         char_scale = 1.0
         space_scale = 1.0
         _space_width: float = 500.0  # will be set correctly at first Tf
         TL = 0.0
         font_size = 12.0  # init just in case of
 
-        # tm_matrix: Tuple = tm_matrix, output: str = output, text: str = text,
-        # char_scale: float = char_scale,space_scale : float = space_scale, _space_width: float = _space_width,
-        # TL: float = TL, font_size: float = font_size, cmap = cmap
+        def sign(x: float) -> float:
+            return 1 if x >= 0 else -1
+
+        def mult(m: List[float], n: List[float]) -> float:
+            return [
+                m[0] * n[0] + m[2] * n[1],
+                m[0] * n[1] + m[2] * n[3],
+                m[2] * n[0] + m[3] * n[1],
+                m[2] * n[1] + m[3] * n[3],
+                m[4] * n[0] + m[5] * n[2] + n[4],
+                m[4] * n[1] + m[5] * n[3] + n[5],
+            ]
+
+        def orient(m: List[float]) -> int:
+            if m[3] > 1e-6:
+                return 0
+            elif m[3] < -1e-6:
+                return 180
+            elif m[1] > 0:
+                return 90
+            else:
+                return 270
+
+        def current_spacewidth():
+            # return space_scale * _space_width * char_scale
+            return _space_width / 1000
 
         def process_operation(operator: bytes, operands: List) -> None:
-            nonlocal tm_matrix, tm_prev, output, text, char_scale, space_scale, _space_width, TL, font_size, cmap
-            if tm_matrix[4] != 0 and tm_matrix[5] != 0:  # o reuse of the
-                tm_prev = list(tm_matrix)
+            nonlocal cm_matrix, cm_stack, tm_matrix, tm_prev, output, text, char_scale, space_scale, _space_width, TL, font_size, cmap
+            check_crlf_space: bool = False
             # Table 5.4 page 405
             if operator == b"BT":
                 tm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
@@ -1171,6 +1202,29 @@ class PageObject(DictionaryObject):
             elif operator == b"ET":
                 output += text
                 text = ""
+            # table 4.7, page 219
+            # cm_matrix calculation is a reserved for the moment
+            elif operator == b"q":
+                cm_stack.append(cm_matrix)
+            elif operator == b"Q":
+                try:
+                    cm_matrix = cm_stack.pop()
+                except Exception:
+                    cm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+            elif operator == b"cm":
+                output += text
+                text = ""
+                cm_matrix = mult(
+                    [
+                        float(operands[0]),
+                        float(operands[1]),
+                        float(operands[2]),
+                        float(operands[3]),
+                        float(operands[4]),
+                        float(operands[5]),
+                    ],
+                    cm_matrix,
+                )
             # Table 5.2 page 398
             elif operator == b"Tz":
                 char_scale = float(operands[0]) / 100.0
@@ -1202,9 +1256,11 @@ class PageObject(DictionaryObject):
                     pass  # keep previous size
             # Table 5.5 page 406
             elif operator == b"Td":
-                tm_matrix[5] += float(operands[1])
+                check_crlf_space = True
                 tm_matrix[4] += float(operands[0])
+                tm_matrix[5] += float(operands[1])
             elif operator == b"Tm":
+                check_crlf_space = True
                 tm_matrix = [
                     float(operands[0]),
                     float(operands[1]),
@@ -1214,8 +1270,11 @@ class PageObject(DictionaryObject):
                     float(operands[5]),
                 ]
             elif operator == b"T*":
+                check_crlf_space = True
                 tm_matrix[5] -= TL
+
             elif operator == b"Tj":
+                check_crlf_space = True
                 t: str = ""
                 tt: bytes = (
                     encode_pdfdocencoding(operands[0])
@@ -1241,20 +1300,57 @@ class PageObject(DictionaryObject):
                 text += "".join([cmap[1][x] if x in cmap[1] else x for x in t])
             else:
                 return None
-            # process text changes due to positionchange: " "
-            if tm_matrix[5] <= (
-                tm_prev[5]
-                - font_size  # remove scaling * sqrt(tm_matrix[2] ** 2 + tm_matrix[3] ** 2)
-            ):  # it means that we are moving down by one line
-                output += text + "\n"  # .translate(cmap) + "\n"
-                text = ""
-            elif tm_matrix[4] >= (
-                tm_prev[4] + space_scale * _space_width * char_scale
-            ):  # it means that we are moving down by one line
-                text += " "
-            return None
-            # for clarity Operator in (b"g",b"G") : nothing to do
-            # end of process_operation ######
+            if check_crlf_space:
+                m = mult(tm_matrix, cm_matrix)
+                o = orient(m)
+                deltaX = m[4] - tm_prev[4]
+                deltaY = m[5] - tm_prev[5]
+                k = math.sqrt(abs(m[0] * m[3]) + abs(m[1] * m[2]))
+                f = font_size * k
+                tm_prev = m
+                try:
+                    if o == 0:
+                        if deltaY < -0.8 * f:
+                            if (output + text)[-1] != "\n":
+                                text += "\n"
+                        elif (
+                            abs(deltaY) < f * 0.3
+                            and abs(deltaX) > current_spacewidth() * f * 10
+                        ):
+                            if (output + text)[-1] != " ":
+                                text += " "
+                    elif o == 180:
+                        if deltaY > 0.8 * f:
+                            if (output + text)[-1] != "\n":
+                                text += "\n"
+                        elif (
+                            abs(deltaY) < f * 0.3
+                            and abs(deltaX) > current_spacewidth() * f * 10
+                        ):
+                            if (output + text)[-1] != " ":
+                                text += " "
+                    elif o == 90:
+                        if deltaX > 0.8 * f:
+                            if (output + text)[-1] != "\n":
+                                text += "\n"
+                        elif (
+                            abs(deltaX) < f * 0.3
+                            and abs(deltaY) > current_spacewidth() * f * 10
+                        ):
+                            if (output + text)[-1] != " ":
+                                text += " "
+                    elif o == 270:
+                        if deltaX < -0.8 * f:
+                            if (output + text)[-1] != "\n":
+                                text += "\n"
+                        elif (
+                            abs(deltaX) < f * 0.3
+                            and abs(deltaY) > current_spacewidth() * f * 10
+                        ):
+                            if (output + text)[-1] != " ":
+                                text += " "
+                except Exception:
+                    pass
 
         for operands, operator in content.operations:
             # multiple operators are defined in here ####
@@ -1262,8 +1358,10 @@ class PageObject(DictionaryObject):
                 process_operation(b"T*", [])
                 process_operation(b"Tj", operands)
             elif operator == b'"':
+                process_operation(b"Tw", [operands[0]])
+                process_operation(b"Tc", [operands[1]])
                 process_operation(b"T*", [])
-                process_operation(b"TJ", operands)
+                process_operation(b"Tj", operands[2:])
             elif operator == b"TD":
                 process_operation(b"TL", [-operands[1]])
                 process_operation(b"Td", operands)
@@ -1272,15 +1370,23 @@ class PageObject(DictionaryObject):
                     if isinstance(op, (str, bytes)):
                         process_operation(b"Tj", [op])
                     if isinstance(op, (int, float, NumberObject, FloatObject)):
-                        process_operation(b"Td", [-op, 0.0])
+                        if (
+                            (abs(op) >= _space_width)
+                            and (abs(op) <= 8 * _space_width)
+                            and (text[-1] != " ")
+                        ):
+                            process_operation(b"Tj", [" "])
             elif operator == b"Do":
                 output += text
-                if output != "":
-                    output += "\n"
+                try:
+                    if output[-1] != "\n":
+                        output += "\n"
+                except IndexError:
+                    pass
                 try:
                     xobj = resources_dict["/XObject"]  # type: ignore
                     if xobj[operands[0]]["/Subtype"] != "/Image":  # type: ignore
-                        output += text
+                        # output += text
                         text = self.extract_xform_text(xobj[operands[0]], space_width)  # type: ignore
                         output += text
                 except Exception:
