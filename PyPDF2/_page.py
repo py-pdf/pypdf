@@ -1360,7 +1360,9 @@ class PageObject(DictionaryObject):
                     if e is not None:
                         embedded = embedded.union(e)
         elif isinstance(obj, DictionaryObject):
-            f, e = _get_fonts_walk(obj["/Resources"], fonts, embedded)
+            f, e = _get_fonts_walk(
+                cast(DictionaryObject, obj["/Resources"]), fonts, embedded
+            )
             if f is not None:
                 fonts = fonts.union(f)
             if e is not None:
@@ -1533,12 +1535,12 @@ def _get_fonts_walk(
         return None, None
     fontkeys = ("/FontFile", "/FontFile2", "/FontFile3")
     if "/BaseFont" in obj:
-        fnt.add(obj["/BaseFont"])
+        fnt.add(cast(str, obj["/BaseFont"]))
     if "/FontName" in obj:
         if [x for x in fontkeys if x in obj]:  # test to see if there is FontFile
-            emb.add(obj["/FontName"])
+            emb.add(cast(str, obj["/FontName"]))
 
     for key in obj.keys():
-        _get_fonts_walk(obj[key], fnt, emb)
+        _get_fonts_walk(cast(DictionaryObject, obj[key]), fnt, emb)
 
     return fnt, emb  # return the sets for each page
