@@ -20,6 +20,13 @@ from PyPDF2.filters import _xobj_to_image
 
 from . import get_pdf_from_url
 
+try:
+    from Crypto.Cipher import AES  # noqa: F401
+
+    HAS_PYCRYPTODOME = True
+except ImportError:
+    HAS_PYCRYPTODOME = False
+
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
 RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
@@ -705,6 +712,7 @@ def test_read_not_binary_mode():
             PdfReader(f)
 
 
+@pytest.mark.skipif(not HAS_PYCRYPTODOME, reason="No pycryptodome")
 def test_read_form_416():
     url = (
         "https://www.fda.gov/downloads/AboutFDA/ReportsManualsForms/Forms/UCM074728.pdf"
