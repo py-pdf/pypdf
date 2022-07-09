@@ -424,8 +424,9 @@ class CCITTFaxDecode:
     def _get_parameters(
         parameters: Union[None, ArrayObject, DictionaryObject], rows: int
     ) -> CCITParameters:
+        # TABLE 3.9 Optional parameters for the CCITTFaxDecode filter
         k = 0
-        columns = 1728  # TABLE 3.9 Optional parameters for the CCITTFaxDecode filter
+        columns = 1728
         if parameters:
             if isinstance(parameters, ArrayObject):
                 for decode_parm in parameters:
