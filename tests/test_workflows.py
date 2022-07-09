@@ -378,9 +378,36 @@ def test_merge_output():
     merger.close()
 
 
-def test_image_extraction():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/994/994636.pdf"
-    name = "tika-994636.pdf"
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/994/994636.pdf",
+            "tika-994636.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/952/952133.pdf",
+            "tika-952133.pdf",
+        ),
+        (  # JPXDecode
+            "https://corpora.tika.apache.org/base/docs/govdocs1/914/914568.pdf",
+            "tika-914568.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/952/952016.pdf",
+            "tika-952016.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/965/965118.pdf",
+            "tika-952016.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/959/959184.pdf",
+            "tika-959184.pdf",
+        ),
+    ],
+)
+def test_image_extraction(url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
 
