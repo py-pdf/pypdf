@@ -85,6 +85,12 @@ def test_writer_operations():
     with open(tmp_path, "wb") as output_stream:
         writer.write(output_stream)
 
+    # Check that every key in _idnum_hash is correct
+    objects_hash = [o.hash_value() for o in writer._objects]
+    for k, v in writer._idnum_hash.items():
+        assert v.pdf == writer
+        assert k in objects_hash, "Missing %s" % v
+
     # cleanup
     os.remove(tmp_path)
 
@@ -556,5 +562,11 @@ def test_write_dict_stream_object():
             break
     else:
         assert False, "/Test not found"
+
+    # Check that every key in _idnum_hash is correct
+    objects_hash = [o.hash_value() for o in writer._objects]
+    for k, v in writer._idnum_hash.items():
+        assert v.pdf == writer
+        assert k in objects_hash, "Missing %s" % v
 
     os.remove("tmp-writer-do-not-commit.pdf")

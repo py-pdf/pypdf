@@ -860,33 +860,50 @@ class PdfWriter:
         stack: Any = collections.deque()
         discovered = list()
         parent = None
+        grant_parents = []
         key_or_id = None
 
         # Start from root
-        stack.append((root, parent, key_or_id))
+        stack.append((root, parent, key_or_id, grant_parents))
 
         while len(stack):
-            data, parent, key_or_id = stack.pop()
+            data, parent, key_or_id, grant_parents = stack.pop()
 
             # Build stack for a processing depth-first
             if isinstance(data, (ArrayObject, DictionaryObject)):
                 for key, value in data.items():
-                    stack.append((value, data, key))
+                    stack.append((value, data, key, grant_parents + [parent] if parent is not None else []))
             elif isinstance(data, IndirectObject):
                 data = self._resolve_indirect_object(data)
 
                 if str(data) not in discovered:
                     discovered.append(str(data))
-                    stack.append((data.get_object(), None, None))
+                    stack.append((data.get_object(), None, None, []))
 
             # Check if data has a parent and if it is a dict or an array update the value
             if isinstance(parent, (DictionaryObject, ArrayObject)):
                 if isinstance(data, StreamObject):
                     # a dictionary value is a stream.  streams must be indirect
                     # objects, so we need to change this value.
-                    parent[key_or_id] = self._add_object(data)
-                else:
+                    data = self._resolve_indirect_object(self._add_object(data))
+
+                update_hashes = []
+
+                # Data changed what mead hash value changed
+                if parent[key_or_id] != data:
+                    update_hashes = [
+                        parent.hash_value()
+                    ] + [
+                        grant_parent.hash_value()
+                        for grant_parent in grant_parents
+                    ]
                     parent[key_or_id] = data
+
+                # Update old hash value to new hash value
+                for old_hash in update_hashes:
+                    if old_hash in self._idnum_hash:
+                        indirect_ref = self._idnum_hash.pop(old_hash)
+                        self._idnum_hash[indirect_ref.get_object().hash_value()] = indirect_ref
             # while len(stack)
 
     def _resolve_indirect_object(self, data: IndirectObject) -> IndirectObject:
