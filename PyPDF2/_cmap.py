@@ -37,7 +37,7 @@ def build_char_map(
                 encoding[x] = chr(x)
     try:
         # override space_width with new params
-        space_width = _default_fonts_space_width[cast(str,ft["/BaseFont"])]
+        space_width = _default_fonts_space_width[cast(str, ft["/BaseFont"])]
     except Exception:
         pass
     # I conside the space_code is available on one byte
