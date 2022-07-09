@@ -897,18 +897,18 @@ class PageObject(DictionaryObject):
         Scale a page by the given factors by applying a transformation
         matrix to its content and updating the page size.
 
+        This updates the mediabox, the cropbox, and the contents
+        of the page.
+
         :param float sx: The scaling factor on horizontal axis.
         :param float sy: The scaling factor on vertical axis.
         """
         self.add_transformation((sx, 0, 0, sy, 0, 0))
-        self.mediabox = RectangleObject(
-            (
-                float(self.mediabox.left) * sx,
-                float(self.mediabox.bottom) * sy,
-                float(self.mediabox.right) * sx,
-                float(self.mediabox.top) * sy,
-            )
-        )
+        self.mediabox = self.mediabox.scale(sx, sy)
+        self.cropbox = self.cropbox.scale(sx, sy)
+        self.artbox = self.artbox.scale(sx, sy)
+        self.bleedbox = self.bleedbox.scale(sx, sy)
+        self.trimbox = self.trimbox.scale(sx, sy)
         if PG.VP in self:
             viewport = self[PG.VP]
             if isinstance(viewport, ArrayObject):
