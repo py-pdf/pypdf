@@ -403,7 +403,8 @@ def test_image_extraction():
                         images_extracted.append(filename)
 
     # Cleanup
-    return
-    for filepath in images_extracted:
-        if os.path.exists(filepath):
-            os.remove(filepath)
+    do_cleanup = True  # set this to False for manual inspection
+    if do_cleanup:
+        for filepath in images_extracted:
+            if os.path.exists(filepath):
+                os.remove(filepath)
