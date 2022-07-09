@@ -37,7 +37,7 @@ def build_char_map(
                 encoding[x] = chr(x)
     try:
         # override space_width with new params
-        space_width = _default_fonts_space_width[ft["/BaseFont"]]
+        space_width = _default_fonts_space_width[cast(str,ft["/BaseFont"])]
     except Exception:
         pass
     # I conside the space_code is available on one byte
@@ -269,7 +269,7 @@ def compute_space_width(
     w1 = {}
     st: int = 0
     if "/DescendantFonts" in ft:  # ft["/Subtype"].startswith("/CIDFontType"):
-        ft1 = ft["/DescendantFonts"][0].get_object()
+        ft1 = ft["/DescendantFonts"][0].get_object()    # type: ignore
         try:
             w1[-1] = cast(float, ft1["/DW"])
         except Exception:

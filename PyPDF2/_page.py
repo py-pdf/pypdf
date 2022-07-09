@@ -1162,7 +1162,7 @@ class PageObject(DictionaryObject):
         def sign(x: float) -> float:
             return 1 if x >= 0 else -1
 
-        def mult(m: List[float], n: List[float]) -> float:
+        def mult(m: List[float], n: List[float]) -> List[float]:
             return [
                 m[0] * n[0] + m[2] * n[1],
                 m[0] * n[1] + m[2] * n[3],
@@ -1182,9 +1182,9 @@ class PageObject(DictionaryObject):
             else:
                 return 270
 
-        def current_spacewidth():
+        def current_spacewidth() -> float:
             # return space_scale * _space_width * char_scale
-            return _space_width / 1000
+            return _space_width / 1000.0
 
         def process_operation(operator: bytes, operands: List) -> None:
             nonlocal cm_matrix, cm_stack, tm_matrix, tm_prev, output, text, char_scale, space_scale, _space_width, TL, font_size, cmap
@@ -1371,8 +1371,8 @@ class PageObject(DictionaryObject):
                         process_operation(b"Tj", [op])
                     if isinstance(op, (int, float, NumberObject, FloatObject)):
                         if (
-                            (abs(op) >= _space_width)
-                            and (abs(op) <= 8 * _space_width)
+                            (abs(float(op)) >= _space_width)
+                            and (abs(float(op)) <= 8 * _space_width)
                             and (text[-1] != " ")
                         ):
                             process_operation(b"Tj", [" "])
