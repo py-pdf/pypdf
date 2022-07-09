@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1657367457022,
+  "lastUpdate": 1657367523449,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -8509,6 +8509,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04480082188996308",
             "extra": "mean: 4.6729810529999956 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8edaca8f1d747ccdb2abe770da55270fd31c6295",
+          "message": "BUG: Let Page.scale also scale the crop-/trim-/bleed-/artbox (#1066)\n\nCloses #272\r\n\r\nCo-authored-by: Brian Painter <brianpainter@tindallcorp.com>",
+          "timestamp": "2022-07-09T13:50:51+02:00",
+          "tree_id": "5973fb374c27ef6e60382475174af1d6ce0aa872",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/8edaca8f1d747ccdb2abe770da55270fd31c6295"
+        },
+        "date": 1657367521499,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9140571551193449,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00994067322391346",
+            "extra": "mean: 1.0940234911999938 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.660256934723575,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006098691467236528",
+            "extra": "mean: 78.98733850000131 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.244218284124805,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016555680011455607",
+            "extra": "mean: 4.094697510400005 sec\nrounds: 5"
           }
         ]
       }
