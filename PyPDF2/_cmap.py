@@ -193,7 +193,7 @@ def parse_to_unicode(
     )
 
     for l in cm.split(b"\n"):
-        if l in (b"", b" "):
+        if l in (b"", b" ") or l[0] == 37:  # 37 = %
             continue
         if b"beginbfrange" in l:
             process_rg = True
@@ -224,7 +224,7 @@ def parse_to_unicode(
                     a += 1
             else:
                 c = int(lst[2], 16)
-                fmt2 = b"%%0%dX" % len(lst[2])
+                fmt2 = b"%%0%dX" % max(4, len(lst[2]))
                 while a <= b:
                     map_dict[
                         unhexlify(fmt % a).decode(
