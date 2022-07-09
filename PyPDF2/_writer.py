@@ -860,7 +860,7 @@ class PdfWriter:
         stack: Any = collections.deque()
         discovered = list()
         parent = None
-        grant_parents = []
+        grant_parents: List[PdfObject] = list()
         key_or_id = None
 
         # Start from root
@@ -901,9 +901,13 @@ class PdfWriter:
 
                 # Update old hash value to new hash value
                 for old_hash in update_hashes:
-                    if old_hash in self._idnum_hash:
-                        indirect_ref = self._idnum_hash.pop(old_hash)
-                        self._idnum_hash[indirect_ref.get_object().hash_value()] = indirect_ref
+                    indirect_ref = self._idnum_hash.pop(old_hash, None)
+
+                    if indirect_ref is not None:
+                        indirect_ref_obj = indirect_ref.get_object()
+
+                        if indirect_ref_obj is not None:
+                            self._idnum_hash[indirect_ref_obj.hash_value()] = indirect_ref
             # while len(stack)
 
     def _resolve_indirect_object(self, data: IndirectObject) -> IndirectObject:
