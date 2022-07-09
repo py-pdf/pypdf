@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1657356291122,
+  "lastUpdate": 1657358969478,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -8374,6 +8374,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02870064265297541",
             "extra": "mean: 3.6111777692000033 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f776f54c673674c31e81b8c4dba88f60e51c1006",
+          "message": "ENH: Add support for indexed color spaces / BitsPerComponent for decoding PNGs (#1067)\n\nCloses #535\r\nCloses #536\r\n\r\nCo-authored-by: Christopher Egner <chris@science.clinic>",
+          "timestamp": "2022-07-09T11:28:09+02:00",
+          "tree_id": "f707cb14a56c221b6c117fc6d9bc94457cc369d3",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/f776f54c673674c31e81b8c4dba88f60e51c1006"
+        },
+        "date": 1657358967522,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8671449720400788,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01704221892288181",
+            "extra": "mean: 1.1532097079999915 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.861176728266669,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007274560817846208",
+            "extra": "mean: 84.30866708333203 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2296303151227268,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07440090977009457",
+            "extra": "mean: 4.354825709599998 sec\nrounds: 5"
           }
         ]
       }
