@@ -1350,16 +1350,7 @@ class PageObject(DictionaryObject):
 
         fonts: Set[str] = set()
         embedded: Set[str] = set()
-        if isinstance(obj, ArrayObject):
-            embedded_fonts: Set[str] = set()
-            for i in obj:
-                if hasattr(i, "keys"):
-                    f, e = _get_fonts_walk(i, fonts, embedded_fonts)
-                    if f is not None:
-                        fonts = fonts.union(f)
-                    if e is not None:
-                        embedded = embedded.union(e)
-        elif isinstance(obj, DictionaryObject):
+        if isinstance(obj, DictionaryObject):
             f, e = _get_fonts_walk(
                 cast(DictionaryObject, obj["/Resources"]), fonts, embedded
             )
