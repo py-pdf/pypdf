@@ -112,7 +112,7 @@ logger = logging.getLogger(__name__)
 
 
 OPTIONAL_READ_WRITE_FIELD = FieldFlag(0)
-ALL_DOCUMENT_PERMISSIONS = UserAccessPermissions((2**32 - 1) - 3)
+ALL_DOCUMENT_PERMISSIONS = UserAccessPermissions((2**31 - 1) - 3)
 
 
 class PdfWriter:
