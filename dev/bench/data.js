@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1657461248990,
+  "lastUpdate": 1657461810553,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -8734,6 +8734,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02559102476699079",
             "extra": "mean: 2.6131717733999835 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c5c0b5547cc607e6c1a340873dfbc987ed0e752b",
+          "message": "MAINT: Set page.rotate(angle: int) (#1092)\n\nCloses #1021\r\n\r\nCo-authored-by: probel_hero <93727145+SXHRYU@users.noreply.github.com>",
+          "timestamp": "2022-07-10T16:02:21+02:00",
+          "tree_id": "294dfbb37aab5dc7d01328969372873eb129d93f",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/c5c0b5547cc607e6c1a340873dfbc987ed0e752b"
+        },
+        "date": 1657461808618,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9858302514927426,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03437761411849744",
+            "extra": "mean: 1.0143734162000015 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.243561454322077,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013930276317956186",
+            "extra": "mean: 81.67558138461354 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2637072187334048,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07955456147981202",
+            "extra": "mean: 3.792084284999993 sec\nrounds: 5"
           }
         ]
       }
