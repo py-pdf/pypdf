@@ -67,6 +67,7 @@ from .constants import Core as CO
 from .constants import EncryptionDictAttributes as ED
 from .constants import (
     FieldDictionaryAttributes,
+    FieldFlag,
     FileSpecificationDictionaryEntries,
     GoToActionArguments,
     InteractiveFormDictEntries,
@@ -75,7 +76,7 @@ from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
 from .constants import StreamAttributes as SA
 from .constants import TrailerKeys as TK
-from .constants import TypFitArguments
+from .constants import TypFitArguments, UserAccessPermissions
 from .generic import (
     ArrayObject,
     BooleanObject,
@@ -576,7 +577,7 @@ class PdfWriter:
         self.append_pages_from_reader(reader, after_page_append)
 
     def update_page_form_field_values(
-        self, page: PageObject, fields: Dict[str, Any], flags: int = 0
+        self, page: PageObject, fields: Dict[str, Any], flags: FieldFlag = FieldFlag(0)
     ) -> None:
         """
         Update the form field values for a given page from a fields dictionary.
@@ -627,7 +628,7 @@ class PdfWriter:
                     )
 
     def updatePageFormFieldValues(
-        self, page: PageObject, fields: Dict[str, Any], flags: int = 0
+        self, page: PageObject, fields: Dict[str, Any], flags: FieldFlag = FieldFlag(0)
     ) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
@@ -699,7 +700,9 @@ class PdfWriter:
         user_pwd: str,
         owner_pwd: Optional[str] = None,
         use_128bit: bool = True,
-        permissions_flag: int = -1,
+        permissions_flag: UserAccessPermissions = UserAccessPermissions(
+            2**32 - 1 - 3
+        ),
     ) -> None:
         """
         Encrypt this PDF file with the PDF Standard encryption handler.
