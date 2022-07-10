@@ -29,7 +29,6 @@
 
 import codecs
 import collections
-from typing import Deque
 import decimal
 import logging
 import random
@@ -38,7 +37,17 @@ import time
 import uuid
 import warnings
 from hashlib import md5
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
+from typing import (
+    Any,
+    Callable,
+    Deque,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+)
 
 from PyPDF2.errors import PdfReadWarning
 
@@ -880,7 +889,14 @@ class PdfWriter:
             # Build stack for a processing depth-first
             if isinstance(data, (ArrayObject, DictionaryObject)):
                 for key, value in data.items():
-                    stack.append((value, data, key, grant_parents + [parent] if parent is not None else []))
+                    stack.append(
+                        (
+                            value,
+                            data,
+                            key,
+                            grant_parents + [parent] if parent is not None else [],
+                        )
+                    )
             elif isinstance(data, IndirectObject):
                 data = self._resolve_indirect_object(data)
 
@@ -899,11 +915,8 @@ class PdfWriter:
 
                 # Data changed and thus the hash value changed
                 if parent[key_or_id] != data:
-                    update_hashes = [
-                        parent.hash_value()
-                    ] + [
-                        grant_parent.hash_value()
-                        for grant_parent in grant_parents
+                    update_hashes = [parent.hash_value()] + [
+                        grant_parent.hash_value() for grant_parent in grant_parents
                     ]
                     parent[key_or_id] = data
 
@@ -915,7 +928,9 @@ class PdfWriter:
                         indirect_ref_obj = indirect_ref.get_object()
 
                         if indirect_ref_obj is not None:
-                            self._idnum_hash[indirect_ref_obj.hash_value()] = indirect_ref
+                            self._idnum_hash[
+                                indirect_ref_obj.hash_value()
+                            ] = indirect_ref
 
     def _resolve_indirect_object(self, data: IndirectObject) -> IndirectObject:
         """
