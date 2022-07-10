@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1657454882738,
+  "lastUpdate": 1657461248990,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -8689,6 +8689,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0184237342150669",
             "extra": "mean: 3.8771740112000033 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e51141d7ed735703bb07f5ffa7e5d2f4d9a79347",
+          "message": "ENH: Add PageObject._get_fonts (#1083)\n\nAdd possibility to get names of fonts\r\n\r\nSee #153\r\n\r\nCo-authored-by: tiarno <jtim.arnold@gmail.com>",
+          "timestamp": "2022-07-10T15:53:04+02:00",
+          "tree_id": "ab246a1f3a0fc9c700a39aa01c02f78d187aad96",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/e51141d7ed735703bb07f5ffa7e5d2f4d9a79347"
+        },
+        "date": 1657461248070,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.4432589149770836,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004607637363015814",
+            "extra": "mean: 692.8763713999842 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 19.183757625006596,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00322877802375587",
+            "extra": "mean: 52.12743090000629 msec\nrounds: 20"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.38267671883616955,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02559102476699079",
+            "extra": "mean: 2.6131717733999835 sec\nrounds: 5"
           }
         ]
       }
