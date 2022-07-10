@@ -1346,18 +1346,8 @@ class PageObject(DictionaryObject):
         :return: (Set of embedded fonts, set of unembedded fonts)
         """
         obj = self.get_object()
-        assert obj is not None
-
-        fonts: Set[str] = set()
-        embedded: Set[str] = set()
-        if isinstance(obj, DictionaryObject):
-            f, e = _get_fonts_walk(
-                cast(DictionaryObject, obj["/Resources"]), fonts, embedded
-            )
-            if f is not None:
-                fonts = fonts.union(f)
-            if e is not None:
-                embedded = embedded.union(e)
+        assert isinstance(obj, DictionaryObject)
+        fonts, embedded = _get_fonts_walk(cast(DictionaryObject, obj["/Resources"]))
         unembedded = fonts - embedded
         return embedded, unembedded
 
@@ -1512,8 +1502,10 @@ class _VirtualList:
 
 
 def _get_fonts_walk(
-    obj: DictionaryObject, fnt: Set[str], emb: Set[str]
-) -> Tuple[Optional[Set[str]], Optional[Set[str]]]:
+    obj: DictionaryObject,
+    fnt: Optional[Set[str]] = None,
+    emb: Optional[Set[str]] = None,
+) -> Tuple[Set[str], Set[str]]:
     """
     If there is a key called 'BaseFont', that is a font that is used in the document.
     If there is a key called 'FontName' and another key in the same dictionary object
@@ -1522,8 +1514,12 @@ def _get_fonts_walk(
 
     We create and add to two sets, fnt = fonts used and emb = fonts embedded.
     """
+    if fnt is None:
+        fnt = set()
+    if emb is None:
+        emb = set()
     if not hasattr(obj, "keys"):
-        return None, None
+        return set(), set()
     fontkeys = ("/FontFile", "/FontFile2", "/FontFile3")
     if "/BaseFont" in obj:
         fnt.add(cast(str, obj["/BaseFont"]))
