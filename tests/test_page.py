@@ -266,3 +266,58 @@ def test_extract_text_operator_t_star():  # L1266, L1267
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     for page in reader.pages:
         page.extract_text()
+
+
+@pytest.mark.parametrize(
+    ("pdf_path", "password", "embedded", "unembedded"),
+    [
+        (
+            os.path.join(RESOURCE_ROOT, "crazyones.pdf"),
+            None,
+            {
+                "/HHXGQB+SFTI1440",
+                "/TITXYI+SFRM0900",
+                "/YISQAD+SFTI1200",
+            },
+            set(),
+        ),
+        (
+            os.path.join(RESOURCE_ROOT, "attachment.pdf"),
+            None,
+            {
+                "/HHXGQB+SFTI1440",
+                "/TITXYI+SFRM0900",
+                "/YISQAD+SFTI1200",
+            },
+            set(),
+        ),
+        (
+            os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf"),
+            "openpassword",
+            {"/BAAAAA+DejaVuSans"},
+            set(),
+        ),
+        (
+            os.path.join(RESOURCE_ROOT, "imagemagick-images.pdf"),
+            None,
+            set(),
+            {"/Helvetica"},
+        ),
+        (os.path.join(RESOURCE_ROOT, "imagemagick-lzw.pdf"), None, set(), set()),
+        (
+            os.path.join(RESOURCE_ROOT, "reportlab-inline-image.pdf"),
+            None,
+            set(),
+            {"/Helvetica"},
+        ),
+    ],
+)
+def test_get_fonts(pdf_path, password, embedded, unembedded):
+    reader = PdfReader(pdf_path, password=password)
+    a = set()
+    b = set()
+    for page in reader.pages:
+        a_tmp, b_tmp = page._get_fonts()
+        a = a.union(a_tmp)
+        b = b.union(b_tmp)
+    assert (a, b) == (embedded, unembedded)

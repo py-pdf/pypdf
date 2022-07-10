@@ -39,6 +39,7 @@ from typing import (
     Iterator,
     List,
     Optional,
+    Set,
     Tuple,
     Union,
     cast,
@@ -1338,6 +1339,18 @@ class PageObject(DictionaryObject):
         deprecate_with_replacement("extractText", "extract_text")
         return self.extract_text(Tj_sep=Tj_sep, TJ_sep=TJ_sep)
 
+    def _get_fonts(self) -> Tuple[Set[str], Set[str]]:
+        """
+        Get the names of embedded fonts and unembedded fonts.
+
+        :return: (Set of embedded fonts, set of unembedded fonts)
+        """
+        obj = self.get_object()
+        assert isinstance(obj, DictionaryObject)
+        fonts, embedded = _get_fonts_walk(cast(DictionaryObject, obj["/Resources"]))
+        unembedded = fonts - embedded
+        return embedded, unembedded
+
     mediabox = _create_rectangle_accessor(PG.MEDIABOX, ())
     """
     A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
@@ -1486,3 +1499,35 @@ class _VirtualList:
     def __iter__(self) -> Iterator[PageObject]:
         for i in range(len(self)):
             yield self[i]
+
+
+def _get_fonts_walk(
+    obj: DictionaryObject,
+    fnt: Optional[Set[str]] = None,
+    emb: Optional[Set[str]] = None,
+) -> Tuple[Set[str], Set[str]]:
+    """
+    If there is a key called 'BaseFont', that is a font that is used in the document.
+    If there is a key called 'FontName' and another key in the same dictionary object
+    that is called 'FontFilex' (where x is null, 2, or 3), then that fontname is
+    embedded.
+
+    We create and add to two sets, fnt = fonts used and emb = fonts embedded.
+    """
+    if fnt is None:
+        fnt = set()
+    if emb is None:
+        emb = set()
+    if not hasattr(obj, "keys"):
+        return set(), set()
+    fontkeys = ("/FontFile", "/FontFile2", "/FontFile3")
+    if "/BaseFont" in obj:
+        fnt.add(cast(str, obj["/BaseFont"]))
+    if "/FontName" in obj:
+        if [x for x in fontkeys if x in obj]:  # test to see if there is FontFile
+            emb.add(cast(str, obj["/FontName"]))
+
+    for key in obj.keys():
+        _get_fonts_walk(cast(DictionaryObject, obj[key]), fnt, emb)
+
+    return fnt, emb  # return the sets for each page
