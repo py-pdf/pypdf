@@ -29,6 +29,7 @@
 
 import codecs
 import collections
+from typing import Deque
 import decimal
 import logging
 import random
@@ -857,10 +858,17 @@ class PdfWriter:
             NullObject,
         ],
     ) -> None:
-        stack: Any = collections.deque()
-        discovered = list()
+        stack: Deque[
+            Tuple[
+                Any,
+                Optional[Any],
+                Any,
+                List[PdfObject],
+            ]
+        ] = collections.deque()
+        discovered = []
         parent = None
-        grant_parents: List[PdfObject] = list()
+        grant_parents: List[PdfObject] = []
         key_or_id = None
 
         # Start from root
@@ -889,7 +897,7 @@ class PdfWriter:
 
                 update_hashes = []
 
-                # Data changed what mead hash value changed
+                # Data changed and thus the hash value changed
                 if parent[key_or_id] != data:
                     update_hashes = [
                         parent.hash_value()
@@ -908,14 +916,13 @@ class PdfWriter:
 
                         if indirect_ref_obj is not None:
                             self._idnum_hash[indirect_ref_obj.hash_value()] = indirect_ref
-            # while len(stack)
 
     def _resolve_indirect_object(self, data: IndirectObject) -> IndirectObject:
         """
         Resolves indirect object to this pdf indirect objects.
 
-        If it is a new object then it is added to self._objects and new idnum is given and
-        generation is always 0.
+        If it is a new object then it is added to self._objects
+        and new idnum is given and generation is always 0.
         """
         if hasattr(data.pdf, "stream") and data.pdf.stream.closed:
             raise ValueError(f"I/O operation on closed file: {data.pdf.stream.name}")
