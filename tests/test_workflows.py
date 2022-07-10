@@ -2,12 +2,16 @@ import binascii
 import os
 import sys
 from io import BytesIO
+from pathlib import Path
 
 import pytest
 
 from PyPDF2 import PdfMerger, PdfReader, PdfWriter
+from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import PageAttributes as PG
+from PyPDF2.constants import Ressources as RES
 from PyPDF2.errors import PdfReadError, PdfReadWarning
+from PyPDF2.filters import _xobj_to_image
 
 from . import get_pdf_from_url
 
@@ -369,3 +373,62 @@ def test_merge_output():
 
     # Cleanup
     merger.close()
+
+
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/994/994636.pdf",
+            "tika-994636.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/952/952133.pdf",
+            "tika-952133.pdf",
+        ),
+        (  # JPXDecode
+            "https://corpora.tika.apache.org/base/docs/govdocs1/914/914568.pdf",
+            "tika-914568.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/952/952016.pdf",
+            "tika-952016.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/965/965118.pdf",
+            "tika-952016.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/959/959184.pdf",
+            "tika-959184.pdf",
+        ),
+    ],
+)
+def test_image_extraction(url, name):
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+
+    images_extracted = []
+    root = Path("extracted-images")
+    if not root.exists():
+        os.mkdir(root)
+
+    for page in reader.pages:
+        if RES.XOBJECT in page[PG.RESOURCES]:
+            x_object = page[PG.RESOURCES][RES.XOBJECT].get_object()
+
+            for obj in x_object:
+                if x_object[obj][IA.SUBTYPE] == "/Image":
+                    extension, byte_stream = _xobj_to_image(x_object[obj])
+                    if extension is not None:
+                        filename = root / (obj[1:] + extension)
+                        with open(filename, "wb") as img:
+                            img.write(byte_stream)
+                        images_extracted.append(filename)
+
+    # Cleanup
+    do_cleanup = True  # set this to False for manual inspection
+    if do_cleanup:
+        for filepath in images_extracted:
+            if os.path.exists(filepath):
+                os.remove(filepath)

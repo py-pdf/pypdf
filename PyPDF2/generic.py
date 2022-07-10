@@ -1379,6 +1379,16 @@ class RectangleObject(ArrayObject):
             value = FloatObject(value)
         return value
 
+    def scale(self, sx: float, sy: float) -> "RectangleObject":
+        return RectangleObject(
+            (
+                float(self.left) * sx,
+                float(self.bottom) * sy,
+                float(self.right) * sx,
+                float(self.top) * sy,
+            )
+        )
+
     def ensureIsNumber(
         self, value: Any
     ) -> Union[FloatObject, NumberObject]:  # pragma: no cover

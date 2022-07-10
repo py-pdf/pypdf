@@ -58,3 +58,57 @@ the way PDF stores information just makes it hard to achieve that:
 
 And finally there are issues that PyPDF2 will deal with. If you find such a
 text extraction bug, please share the PDF with us so we can work on it!
+
+## OCR vs Text Extraction
+
+Optical Character Recognition (OCR) is the process of extracting text from
+images. Software which does this is called *OCR software*. The
+[tesseract OCR engine](https://github.com/tesseract-ocr/tesseract) is the
+most commonly known Open Source OCR software.
+
+PyPDF2 is **not** OCR software.
+
+### Digitally-born vs Scanned PDF files
+
+PDF documents can contain images and text. PDF files don't store text in a
+semantically meaningful way, but in a way that makes it easy to show the
+text on screen or print it. For this reason text extraction from PDFs is hard.
+
+If you scan a document, the resulting PDF typically shows the image of the scan.
+Scanners then also run OCR software and put the recognized text in the background
+of the image. This result of the scanners OCR software can be extracted by
+PyPDF2. However, in such cases it's recommended to directly use OCR software as
+errors can accumulate: The OCR software is not perfect in recognizing the text.
+Then it stores the text in a format that is not meant for text extraction and
+PyPDF2 might make mistakes parsing that.
+
+Hence I would distinguish three types of PDF documents:
+
+* **Digitally-born PDF files**: The file was created digitally on the computer.
+  It can contain images, texts, links, bookmarks, JavaScript, ...
+  If you Zoom in a lot, the text still looks sharp.
+* **Scanned PDF files**: Any number of pages was scanned. The images were then
+  stored in a PDF file. Hence the file is just a container for those images.
+  You cannot copy the text, you don't have links, bookmarks, JavaScript.
+* **OCRed PDF files**: The scanner ran OCR software and put the recognized text
+  in the background of the image. Hence you can copy the text, but it still looks
+  like a scan. If you zoom in enough, you can recognize pixels.
+
+
+### Can we just always use OCR?
+
+You might now wonder if it makes sense to just always use OCR software. If the
+PDF file is digitally-born, you can just render it to an image.
+
+I would recommend not to do that.
+
+Text extraction software like PyPDF2 can use more information from the
+PDF than just the image. It can know about fonts, encodings, typical character
+distances and similar topics.
+
+That means PyPDF2 has a clear advantage when it
+comes to characters which are easy to confuse such as `oO0ö`.
+**PyPDF2 will never confuse characters**. It just reads what is in the file.
+
+PyPDF2 also has an edge when it comes to characters which are rare, e.g.
+🤰. OCR software will not be able to recognize smileys correctly.
