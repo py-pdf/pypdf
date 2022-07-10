@@ -37,7 +37,17 @@ import logging
 import re
 import warnings
 from io import BytesIO
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+)
 
 from ._codecs import (  # noqa: rev_encoding
     _pdfdoc_encoding,
@@ -177,6 +187,13 @@ class BooleanObject(PdfObject):
 
 
 class ArrayObject(list, PdfObject):
+    def items(self) -> Iterable:
+        """
+        Emulate DictionaryObject.items for a list
+        (index, object)
+        """
+        return enumerate(self)
+
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
@@ -238,7 +255,7 @@ class IndirectObject(PdfObject):
         return obj.get_object()
 
     def __repr__(self) -> str:
-        return f"IndirectObject({self.idnum!r}, {self.generation!r})"
+        return f"IndirectObject({self.idnum!r}, {self.generation!r}, {id(self.pdf)})"
 
     def __eq__(self, other: Any) -> bool:
         return (
@@ -1015,7 +1032,9 @@ class StreamObject(DictionaryObject):
         self.decoded_self: Optional[DecodedStreamObject] = None
 
     def hash_value_data(self) -> bytes:
-        return b_(self._data)
+        data = super().hash_value_data()
+        data += b_(self._data)
+        return data
 
     @property
     def decodedSelf(self) -> Optional["DecodedStreamObject"]:  # pragma: no cover
