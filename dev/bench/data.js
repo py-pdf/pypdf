@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1657374610140,
+  "lastUpdate": 1657454882738,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -8644,6 +8644,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03335396845884524",
             "extra": "mean: 4.545368496799989 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "harry.karvonen@gmail.com",
+            "name": "Harry Karvonen",
+            "username": "Hatell"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1e4c2c9b4649449241b0ae166e7e90f6bc61596d",
+          "message": "PI: Use iterative DFS in PdfWriter._sweep_indirect_references (#1072)\n\n* Recursive Depth-first search (DFS) was changed to iterative DFS\r\n* Removed PdfWriter.external_reference_map and calculate hash from every referred object and use that to detect duplicate objects.\r\n* In several cases, the warning \"Unable to resolve .*, returning NullObject instead\" is no longer necessary.\r\n* Bugfix: Recalculate all parents hashes when a dictionary or array object value changes\r\n\r\nCloses #351\r\nCloses #1036",
+          "timestamp": "2022-07-10T14:06:48+02:00",
+          "tree_id": "71407213de13b6b7f1226e2e321d46e5f3aea4b2",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/1e4c2c9b4649449241b0ae166e7e90f6bc61596d"
+        },
+        "date": 1657454880818,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9489710604009811,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026955488948409385",
+            "extra": "mean: 1.0537729143999996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.84893789082983,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006420936732895826",
+            "extra": "mean: 84.39574999999986 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2579198140478857,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0184237342150669",
+            "extra": "mean: 3.8771740112000033 sec\nrounds: 5"
           }
         ]
       }
