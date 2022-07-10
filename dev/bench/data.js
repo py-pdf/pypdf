@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1657462556600,
+  "lastUpdate": 1657462813147,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -8824,6 +8824,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.05111446603990091",
             "extra": "mean: 4.018587587000002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "8f47939c5d056970153ffcf428412c52727645f1",
+          "message": "REL: 2.5.0\n\nNew Features (ENH):\n-  Add PageObject._get_fonts (#1083)\n-  Add support for indexed color spaces / BitsPerComponent for decoding PNGs (#1067)\n\nPerformance Improvements (PI):\n-  Use iterative DFS in PdfWriter._sweep_indirect_references (#1072)\n\nBug Fixes (BUG):\n-  Let Page.scale also scale the crop-/trim-/bleed-/artbox (#1066)\n-  Column default for CCITTFaxDecode (#1079)\n\nRobustness (ROB):\n-  Guard against None-value in _get_outlines (#1060)\n\nDocumentation (DOC):\n-  Stamps and watermarks (#1082)\n-  OCR vs PDF text extraction (#1081)\n-  Python Version support\n-  Formatting of CHANGELOG\n\nDeveloper Experience (DEV):\n-  Cache downloaded files (#1070)\n-  Speed-up for CI (#1069)\n\nMaintenance (MAINT):\n-  Set page.rotate(angle: int) (#1092)\n-  Issue #416 was fixed by #1015 (#1078)\n\nTesting (TST):\n-  Image extraction (#1080)\n-  Image extraction (#1077)\n\nCode Style (STY):\n-  Apply black\n-  Typo in Changelog\n\nFull Changelog: https://github.com/py-pdf/PyPDF2/compare/2.4.2...2.4.3",
+          "timestamp": "2022-07-10T16:18:19+02:00",
+          "tree_id": "428da4f2fbab382fac5e7bb7f1a435df9ab81220",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/8f47939c5d056970153ffcf428412c52727645f1"
+        },
+        "date": 1657462811997,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0359888593620326,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006811872858583174",
+            "extra": "mean: 965.2613451999912 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.92483433069683,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004693594979469746",
+            "extra": "mean: 77.37043078571405 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27798380332696093,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00977305022263045",
+            "extra": "mean: 3.5973318877999985 sec\nrounds: 5"
           }
         ]
       }
