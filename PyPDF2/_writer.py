@@ -111,6 +111,10 @@ from .types import (
 logger = logging.getLogger(__name__)
 
 
+OPTIONAL_READ_WRITE_FIELD = FieldFlag(0)
+ALL_DOCUMENT_PERMISSIONS = UserAccessPermissions((2**32 - 1) - 3)
+
+
 class PdfWriter:
     """
     This class supports writing PDF files out, given pages produced by another
@@ -577,7 +581,10 @@ class PdfWriter:
         self.append_pages_from_reader(reader, after_page_append)
 
     def update_page_form_field_values(
-        self, page: PageObject, fields: Dict[str, Any], flags: FieldFlag = FieldFlag(0)
+        self,
+        page: PageObject,
+        fields: Dict[str, Any],
+        flags: FieldFlag = OPTIONAL_READ_WRITE_FIELD,
     ) -> None:
         """
         Update the form field values for a given page from a fields dictionary.
@@ -628,7 +635,10 @@ class PdfWriter:
                     )
 
     def updatePageFormFieldValues(
-        self, page: PageObject, fields: Dict[str, Any], flags: FieldFlag = FieldFlag(0)
+        self,
+        page: PageObject,
+        fields: Dict[str, Any],
+        flags: FieldFlag = OPTIONAL_READ_WRITE_FIELD,
     ) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
@@ -700,9 +710,7 @@ class PdfWriter:
         user_pwd: str,
         owner_pwd: Optional[str] = None,
         use_128bit: bool = True,
-        permissions_flag: UserAccessPermissions = UserAccessPermissions(
-            2**32 - 1 - 3
-        ),
+        permissions_flag: UserAccessPermissions = ALL_DOCUMENT_PERMISSIONS,
     ) -> None:
         """
         Encrypt this PDF file with the PDF Standard encryption handler.
