@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1657461810553,
+  "lastUpdate": 1657462556600,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -8779,6 +8779,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.07955456147981202",
             "extra": "mean: 3.792084284999993 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "46ba4aeae2009ef94f2bf89047af01d28fc0807e",
+          "message": "STY: Apply black",
+          "timestamp": "2022-07-10T16:14:39+02:00",
+          "tree_id": "13477cc3349539c484e4f1e1c76ca54a74fd5b25",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/46ba4aeae2009ef94f2bf89047af01d28fc0807e"
+        },
+        "date": 1657462554667,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9282931177279148,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016877930404253585",
+            "extra": "mean: 1.0772459483999994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.68091775022726,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007181095272067105",
+            "extra": "mean: 85.60971161538606 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2488436492550186,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05111446603990091",
+            "extra": "mean: 4.018587587000002 sec\nrounds: 5"
           }
         ]
       }
