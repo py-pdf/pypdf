@@ -809,9 +809,7 @@ def test_unexpected_destination():
     name = "tika-913678.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     merger = PdfMerger()
-    with pytest.raises(PdfReadError) as exc:
-        merger.append(reader)
-    assert exc.value.args[0] == "Unexpected destination '/1'"
+    merger.append(reader)
 
 
 @pytest.mark.parametrize(
