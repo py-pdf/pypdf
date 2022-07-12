@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1657611285855,
+  "lastUpdate": 1657611628203,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -9049,6 +9049,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02233486697769969",
             "extra": "mean: 3.604599189600002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "af5a0c3394a33eae154c63f5ccaa403ca54dbf1b",
+          "message": "STY: Use IntFlag for permissions_flag / update_page_form_field_values (#1094)",
+          "timestamp": "2022-07-12T09:39:18+02:00",
+          "tree_id": "6baa1dac6254031379c6b9e4ab5f5bbacca401e3",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/af5a0c3394a33eae154c63f5ccaa403ca54dbf1b"
+        },
+        "date": 1657611625991,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9407199716353059,
+            "unit": "iter/sec",
+            "range": "stddev: 0.040010764193426196",
+            "extra": "mean: 1.0630155946000002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.620911095183994,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0053748369496096375",
+            "extra": "mean: 79.23358246153794 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2614913010553103,
+            "unit": "iter/sec",
+            "range": "stddev: 0.041766541713557294",
+            "extra": "mean: 3.824218993000005 sec\nrounds: 5"
           }
         ]
       }
