@@ -38,7 +38,7 @@
 -  Apply black
 -  Typo in Changelog
 
-Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.4.2...2.4.3
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.4.2...2.5.0
 
 ## Version 2.4.2, 2022-07-05
 
