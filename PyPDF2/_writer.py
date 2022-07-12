@@ -1155,12 +1155,6 @@ class PdfWriter:
             }
         )
         action_ref = self._add_object(action)
-
-        outline_ref = self.get_outline_root()
-
-        if parent is None:
-            parent = outline_ref
-
         bookmark = _create_bookmark(action_ref, title, color, italic, bold)
 
         return self.add_bookmark_destination(bookmark, parent)
