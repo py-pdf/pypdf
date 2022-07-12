@@ -1141,10 +1141,14 @@ class PdfWriter:
             NameObject("/" + title + " bookmark"), page_ref, NameObject(fit), *zoom_args
         )
 
-        action = DictionaryObject()
-        action[NameObject(GoToActionArguments.D)] = dest.dest_array
-        action[NameObject(GoToActionArguments.S)] = NameObject("/GoTo")
-        action_ref = self._add_object(action)
+        action_ref = self._add_object(
+            DictionaryObject(
+                {
+                    NameObject(GoToActionArguments.D): dest.dest_array,
+                    NameObject(GoToActionArguments.S): NameObject("/GoTo"),
+                }
+            )
+        )
         bookmark = _create_bookmark(action_ref, title, color, italic, bold)
 
         if parent is None:
