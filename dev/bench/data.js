@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1657606923233,
+  "lastUpdate": 1657611285855,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -9004,6 +9004,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01556251562206628",
             "extra": "mean: 3.6216901410000046 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d376d0e71939decbe21de8e93d016f09b3ce2210",
+          "message": "STY: Simplify code (#1101)",
+          "timestamp": "2022-07-12T09:33:40+02:00",
+          "tree_id": "3e025f97068fc3bd08a712ca8dc115498b4192cd",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/d376d0e71939decbe21de8e93d016f09b3ce2210"
+        },
+        "date": 1657611285271,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0355050211036876,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00948496836767645",
+            "extra": "mean: 965.7123621999972 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.013706586070336,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006234061509155801",
+            "extra": "mean: 76.84205828571423 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27742335483101765,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02233486697769969",
+            "extra": "mean: 3.604599189600002 sec\nrounds: 5"
           }
         ]
       }
