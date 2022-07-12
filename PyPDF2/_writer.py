@@ -1157,6 +1157,8 @@ class PdfWriter:
         action_ref = self._add_object(action)
         bookmark = _create_bookmark(action_ref, title, color, italic, bold)
 
+        if parent is None:
+            parent = self.get_outline_root()
         return self.add_bookmark_destination(bookmark, parent)
 
     def addBookmark(
