@@ -1164,9 +1164,9 @@ class PageObject(DictionaryObject):
 
         def mult(m: List[float], n: List[float]) -> List[float]:
             return [
-                m[0] * n[0] + m[2] * n[1],
-                m[0] * n[1] + m[2] * n[3],
-                m[2] * n[0] + m[3] * n[1],
+                m[0] * n[0] + m[1] * n[2],
+                m[0] * n[1] + m[1] * n[3],
+                m[2] * n[0] + m[3] * n[2],
                 m[2] * n[1] + m[3] * n[3],
                 m[4] * n[0] + m[5] * n[2] + n[4],
                 m[4] * n[1] + m[5] * n[3] + n[5],
