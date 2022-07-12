@@ -1057,7 +1057,7 @@ class PdfWriter:
     def add_bookmark_destination(
         self, dest: PageObject, parent: Optional[TreeObject] = None
     ) -> IndirectObject:
-        dest_ref = self._add_object(dest)
+        bookmark_ref = self._add_object(dest)
 
         outline_ref = self.get_outline_root()
 
@@ -1065,9 +1065,9 @@ class PdfWriter:
             parent = outline_ref
 
         parent = cast(TreeObject, parent.get_object())
-        parent.add_child(dest_ref, self)
+        parent.add_child(bookmark_ref, self)
 
-        return dest_ref
+        return bookmark_ref
 
     def addBookmarkDestination(
         self, dest: PageObject, parent: Optional[TreeObject] = None
@@ -1103,8 +1103,7 @@ class PdfWriter:
         if parent is None:
             parent = outline_ref
 
-        parent = parent.get_object()  # type: ignore
-        assert parent is not None, "hint for mypy"
+        parent = cast(TreeObject, parent.get_object())
         parent.add_child(bookmark_ref, self)
 
         return bookmark_ref
