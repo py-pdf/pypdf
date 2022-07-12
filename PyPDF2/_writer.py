@@ -1059,17 +1059,17 @@ class PdfWriter:
         dest: Union[PageObject, TreeObject],
         parent: Union[None, TreeObject, IndirectObject] = None,
     ) -> IndirectObject:
-        bookmark_ref = self._add_object(dest)
+        dest_ref = self._add_object(dest)
 
         outline_ref = self.get_outline_root()
 
         if parent is None:
             parent = outline_ref
 
-        parent_obj = cast(TreeObject, parent.get_object())
-        parent_obj.add_child(bookmark_ref, self)
+        parent = cast(TreeObject, parent.get_object())
+        parent.add_child(dest_ref, self)
 
-        return bookmark_ref
+        return dest_ref
 
     def addBookmarkDestination(
         self, dest: PageObject, parent: Optional[TreeObject] = None
