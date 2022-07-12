@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1657519288821,
+  "lastUpdate": 1657604903811,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -8914,6 +8914,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01931916743074996",
             "extra": "mean: 3.599170380799998 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d7b64dc817a948b275f221d326746ee07130e2de",
+          "message": "MAINT: Use add_bookmark_destination in add_bookmark_dict (#1099)\n\nRe-use code\r\n\r\nSee #1098",
+          "timestamp": "2022-07-12T07:47:11+02:00",
+          "tree_id": "47d9469880066927561c72d4b02846fc28def03d",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/d7b64dc817a948b275f221d326746ee07130e2de"
+        },
+        "date": 1657604901746,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9698349404610689,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01871675039972224",
+            "extra": "mean: 1.031103292200001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.138948501772013,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007415669602696842",
+            "extra": "mean: 82.379458142855 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2535416047031901,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08128608835123619",
+            "extra": "mean: 3.944125861200001 sec\nrounds: 5"
           }
         ]
       }
