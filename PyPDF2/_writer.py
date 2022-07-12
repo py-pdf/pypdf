@@ -1059,14 +1059,11 @@ class PdfWriter:
         dest: Union[PageObject, TreeObject],
         parent: Union[None, TreeObject, IndirectObject] = None,
     ) -> IndirectObject:
-        dest_ref = self._add_object(dest)
-
-        outline_ref = self.get_outline_root()
-
         if parent is None:
-            parent = outline_ref
+            parent = self.get_outline_root()
 
         parent = cast(TreeObject, parent.get_object())
+        dest_ref = self._add_object(dest)
         parent.add_child(dest_ref, self)
 
         return dest_ref
@@ -1137,23 +1134,16 @@ class PdfWriter:
             :meth:`addLink()<addLink>` for details.
         """
         page_ref = NumberObject(pagenum)
-        action = DictionaryObject()
-        zoom_args: ZoomArgsType = []
-        for a in args:
-            if a is not None:
-                zoom_args.append(NumberObject(a))
-            else:
-                zoom_args.append(NullObject())
+        zoom_args: ZoomArgsType = [
+            NullObject() if a is None else NumberObject(a) for a in args
+        ]
         dest = Destination(
             NameObject("/" + title + " bookmark"), page_ref, NameObject(fit), *zoom_args
         )
-        dest_array = dest.dest_array
-        action.update(
-            {
-                NameObject(GoToActionArguments.D): dest_array,
-                NameObject(GoToActionArguments.S): NameObject("/GoTo"),
-            }
-        )
+
+        action = DictionaryObject()
+        action[NameObject(GoToActionArguments.D)] = dest.dest_array
+        action[NameObject(GoToActionArguments.S)] = NameObject("/GoTo")
         action_ref = self._add_object(action)
         bookmark = _create_bookmark(action_ref, title, color, italic, bold)
 
@@ -1537,26 +1527,21 @@ class PdfWriter:
         else:
             rect = RectangleObject(rect)
 
-        zoom_args: ZoomArgsType = []
-        for a in args:
-            if a is not None:
-                zoom_args.append(NumberObject(a))
-            else:
-                zoom_args.append(NullObject())
+        zoom_args: ZoomArgsType = [
+            NullObject() if a is None else NumberObject(a) for a in args
+        ]
         dest = Destination(
             NameObject("/LinkName"), page_dest, NameObject(fit), *zoom_args
         )  # TODO: create a better name for the link
-        dest_array = dest.dest_array
 
-        lnk = DictionaryObject()
-        lnk.update(
+        lnk = DictionaryObject(
             {
                 NameObject("/Type"): NameObject(PG.ANNOTS),
                 NameObject("/Subtype"): NameObject("/Link"),
                 NameObject("/P"): page_link,
                 NameObject("/Rect"): rect,
                 NameObject("/Border"): ArrayObject(border_arr),
-                NameObject("/Dest"): dest_array,
+                NameObject("/Dest"): dest.dest_array,
             }
         )
         lnk_ref = self._add_object(lnk)
