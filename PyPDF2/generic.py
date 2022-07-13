@@ -1894,7 +1894,7 @@ class Destination(TreeObject):
         return self.get("/C", [FloatObject(0), FloatObject(0), FloatObject(0)])
 
     @property
-    def fmt(self) -> Optional[OutlineFontFlag]:
+    def font_format(self) -> Optional[OutlineFontFlag]:
         """Read-only property accessing the font type. 1=italic, 2=bold, 3=both"""
         return self.get("/F", 0)
 

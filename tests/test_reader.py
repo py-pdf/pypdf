@@ -867,8 +867,8 @@ def test_outline_color():
     assert reader.outlines[0].color == [0, 0, 1]
 
 
-def test_outline_fmt():
+def test_outline_font_format():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
     name = "tika-924546.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    assert reader.outlines[0].fmt == 2
+    assert reader.outlines[0].font_format == 2
