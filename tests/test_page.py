@@ -35,6 +35,7 @@ all_files_meta = get_all_sample_files()
     [m for m in all_files_meta["data"] if not m["encrypted"]],
     ids=[m["path"] for m in all_files_meta["data"] if not m["encrypted"]],
 )
+@pytest.mark.filterwarnings("ignore::PyPDF2.errors.PdfReadWarning")
 def test_read(meta):
     pdf_path = os.path.join(EXTERNAL_ROOT, meta["path"])
     reader = PdfReader(pdf_path)
