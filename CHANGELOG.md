@@ -1,5 +1,45 @@
 # CHANGELOG
 
+## Version 2.5.0, 2022-07-10
+
+### New Features (ENH)
+-  Add support for indexed color spaces / BitsPerComponent for decoding PNGs (#1067)
+-  Add PageObject._get_fonts (#1083)
+
+### Performance Improvements (PI)
+-  Use iterative DFS in PdfWriter._sweep_indirect_references (#1072)
+
+### Bug Fixes (BUG)
+-  Let Page.scale also scale the crop-/trim-/bleed-/artbox (#1066)
+-  Column default for CCITTFaxDecode (#1079)
+
+### Robustness (ROB)
+-  Guard against None-value in _get_outlines (#1060)
+
+### Documentation (DOC)
+-  Stamps and watermarks (#1082)
+-  OCR vs PDF text extraction (#1081)
+-  Python Version support
+-  Formatting of CHANGELOG
+
+### Developer Experience (DEV)
+-  Cache downloaded files (#1070)
+-  Speed-up for CI (#1069)
+
+### Maintenance (MAINT)
+-  Set page.rotate(angle: int) (#1092)
+-  Issue #416 was fixed by #1015 (#1078)
+
+### Testing (TST)
+-  Image extraction (#1080)
+-  Image extraction (#1077)
+
+### Code Style (STY)
+-  Apply black
+-  Typo in Changelog
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.4.2...2.5.0
+
 ## Version 2.4.2, 2022-07-05
 
 ### New Features (ENH)
