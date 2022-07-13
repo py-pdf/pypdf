@@ -83,7 +83,6 @@ from .generic import (
     NameObject,
     NullObject,
     NumberObject,
-    OutlineFontFlag,
     PdfObject,
     TextStringObject,
     TreeObject,
@@ -844,7 +843,7 @@ class PdfReader:
         if outline:
             if "/C" in node:
                 # Color of outline in (R, G, B) with values ranging 0.0-1.0
-                outline[NameObject("/C")] = ArrayObject(FloatObject(c) for c in node["/C"])
+                outline[NameObject("/C")] = ArrayObject(FloatObject(c) for c in node["/C"])  # type: ignore
             if "/F" in node:
                 # specifies style characteristics bold and/or italic
                 # 1=italic, 2=bold, 3=both
