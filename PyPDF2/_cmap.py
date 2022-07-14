@@ -245,7 +245,7 @@ def parse_to_unicode(
         elif process_char:
             lst = [x for x in l.split(b" ") if x]
             map_dict[-1] = len(lst[0]) // 2
-            while len(lst) > 0:
+            while len(lst) > 1:
                 map_dict[
                     unhexlify(lst[0]).decode(
                         "charmap" if map_dict[-1] == 1 else "utf-16-be", "surrogatepass"
