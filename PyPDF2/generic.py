@@ -805,7 +805,7 @@ class DictionaryObject(dict, PdfObject):
                     f"Multiple definitions in dictionary at byte "
                     f"{hex_str(stream.tell())} for key {key}"
                 )
-                if pdf.strict:
+                if pdf is not None and pdf.strict:
                     raise PdfReadError(msg)
                 else:
                     warnings.warn(msg, PdfReadWarning)
