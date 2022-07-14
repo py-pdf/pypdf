@@ -48,7 +48,7 @@ from typing import (
     Union,
     cast,
 )
-
+from enum import IntFlag
 from ._codecs import (  # noqa: rev_encoding
     _pdfdoc_encoding,
     _pdfdoc_encoding_rev,
@@ -1732,6 +1732,15 @@ class Field(TreeObject):
         return self.additional_actions
 
 
+class OutlineFontFlag(IntFlag):
+    """
+    A class used as an enumerable flag for formatting an outline font
+    """
+
+    italic = 1
+    bold = 2
+
+
 class Destination(TreeObject):
     """
     A class representing a destination within a PDF file.
@@ -1878,6 +1887,16 @@ class Destination(TreeObject):
     def bottom(self) -> Optional[FloatObject]:
         """Read-only property accessing the bottom vertical coordinate."""
         return self.get("/Bottom", None)
+
+    @property
+    def color(self) -> Optional[tuple]:
+        """Read-only property accessing the color in (R, G, B) with values 0.0-1.0"""
+        return self.get("/C", [FloatObject(0), FloatObject(0), FloatObject(0)])
+
+    @property
+    def font_format(self) -> Optional[OutlineFontFlag]:
+        """Read-only property accessing the font type. 1=italic, 2=bold, 3=both"""
+        return self.get("/F", 0)
 
 
 class Bookmark(Destination):

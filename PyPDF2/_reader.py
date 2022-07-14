@@ -78,6 +78,7 @@ from .generic import (
     DictionaryObject,
     EncodedStreamObject,
     Field,
+    FloatObject,
     IndirectObject,
     NameObject,
     NullObject,
@@ -837,6 +838,17 @@ class PdfReader:
                 outline[NameObject("/Title")] = title  # type: ignore
             else:
                 raise PdfReadError(f"Unexpected destination {dest!r}")
+
+        # if outline created, add color and format if present
+        if outline:
+            if "/C" in node:
+                # Color of outline in (R, G, B) with values ranging 0.0-1.0
+                outline[NameObject("/C")] = ArrayObject(FloatObject(c) for c in node["/C"])  # type: ignore
+            if "/F" in node:
+                # specifies style characteristics bold and/or italic
+                # 1=italic, 2=bold, 3=both
+                outline[NameObject("/F")] = node["/F"]
+
         return outline
 
     @property
