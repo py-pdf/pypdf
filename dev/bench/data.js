@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1657824678230,
+  "lastUpdate": 1657825115318,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -9184,6 +9184,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.013698385087942395",
             "extra": "mean: 3.769176537800007 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dkg@fifthhorseman.net",
+            "name": "dkg",
+            "username": "dkg"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "bb2d1dbf20dbe6a77d60be46cbd8646fde6b418c",
+          "message": "BUG: Avoid IndexError in _cmap.parse_to_unicode (#1110)\n\nThe code within the if block assumes that `lst` has index 0 and index 1.\r\n\r\nFixes #1091\r\nRelated to #1111",
+          "timestamp": "2022-07-14T20:57:11+02:00",
+          "tree_id": "1f6e758987072f3a2e793f40c246e2dfea43caeb",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/bb2d1dbf20dbe6a77d60be46cbd8646fde6b418c"
+        },
+        "date": 1657825113173,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7876358328323747,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019815457705392062",
+            "extra": "mean: 1.2696222775999844 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.964985044609621,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007086859656120921",
+            "extra": "mean: 100.35137990908797 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2046891864008162,
+            "unit": "iter/sec",
+            "range": "stddev: 0.050061393739731015",
+            "extra": "mean: 4.885455932400015 sec\nrounds: 5"
           }
         ]
       }
