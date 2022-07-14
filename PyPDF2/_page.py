@@ -1287,7 +1287,9 @@ class PageObject(DictionaryObject):
                     )
                     if isinstance(cmap[0], str):
                         try:
-                            t = tt.decode(cmap[0], "surrogatepass")  # apply str encoding
+                            t = tt.decode(
+                                cmap[0], "surrogatepass"
+                            )  # apply str encoding
                         except Exception:  # the data does not match the expectation, we use the alternative ; text extraction may not be good
                             t = tt.decode(
                                 "utf-16-be" if cmap[0] == "charmap" else "charmap",
