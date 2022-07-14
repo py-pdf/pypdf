@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1657689568884,
+  "lastUpdate": 1657824678230,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -9139,6 +9139,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00942761138488269",
             "extra": "mean: 4.79695628980001 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mtd91429@users.noreply.github.com",
+            "name": "mtd91429",
+            "username": "mtd91429"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5e1cc57677c2ee9b80d9ed27a41321d3cae2d7c3",
+          "message": "ENH: Add color and font_format to PdfReader.outlines[i] (#1104)",
+          "timestamp": "2022-07-14T20:50:10+02:00",
+          "tree_id": "008b47ff9b87319b14a12a88101f3835e80858c2",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/5e1cc57677c2ee9b80d9ed27a41321d3cae2d7c3"
+        },
+        "date": 1657824676988,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0360648962397507,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005887555483642308",
+            "extra": "mean: 965.1905046000081 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.862439922276632,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004883350595671598",
+            "extra": "mean: 77.74574699999854 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2653099397099824,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013698385087942395",
+            "extra": "mean: 3.769176537800007 sec\nrounds: 5"
           }
         ]
       }
