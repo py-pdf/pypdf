@@ -302,6 +302,8 @@ class FieldDictionaryAttributes:
     V = "/V"  # text string, optional
     DV = "/DV"  # text string, optional
     AA = "/AA"  # dictionary, optional
+class CheckboxRadioButtonAttributes:
+    """TABLE 8.76 Additional entry specific to check box and radio button fields."""
     Opt = "/Opt" # Options, Optional
 
     @classmethod
