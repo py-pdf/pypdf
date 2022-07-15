@@ -1,4 +1,5 @@
 import binascii
+from operator import contains
 import os
 import sys
 from io import BytesIO
