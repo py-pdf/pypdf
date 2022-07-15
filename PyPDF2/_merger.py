@@ -78,16 +78,28 @@ class PdfMerger:
     :param bool strict: Determines whether user should be warned of all
             problems and also causes some correctable problems to be fatal.
             Defaults to ``False``.
+    :param fileobj: Output file. Can be a filename or any kind of
+            file-like object.
     """
 
-    def __init__(self, strict: bool = False) -> None:
+    def __init__(self, fileobj: StrByteType = "", strict: bool = False) -> None:
         self.inputs: List[Tuple[Any, PdfReader, bool]] = []
         self.pages: List[Any] = []
         self.output: Optional[PdfWriter] = PdfWriter()
         self.bookmarks: OutlinesType = []
         self.named_dests: List[Any] = []
         self.id_count = 0
+        self.fileobj = fileobj
         self.strict = strict
+
+    # There is nothing to do.
+    def __enter__(self):
+        return self
+
+    # Write to the fileobj and close the merger.
+    def __exit__(self, *args):
+        self.write(self.fileobj)
+        self.close()
 
     def merge(
         self,
@@ -252,10 +264,6 @@ class PdfMerger:
         """
         if self.output is None:
             raise RuntimeError(ERR_CLOSED_WRITER)
-        my_file = False
-        if isinstance(fileobj, str):
-            fileobj = FileIO(fileobj, "wb")
-            my_file = True
 
         # Add pages to the PdfWriter
         # The commented out line below was replaced with the two lines below it
@@ -275,9 +283,6 @@ class PdfMerger:
 
         # Write the output to the file
         self.output.write(fileobj)
-
-        if my_file:
-            fileobj.close()
 
     def close(self) -> None:
         """Shut all file descriptors (input and output) and clear all memory usage."""

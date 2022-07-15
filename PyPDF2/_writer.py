@@ -59,6 +59,7 @@ from ._utils import (
     _get_max_pdf_version_header,
     b_,
     deprecate_with_replacement,
+    StrByteType
 )
 from .constants import AnnotationDictionaryAttributes
 from .constants import CatalogAttributes as CA
@@ -107,6 +108,8 @@ from .types import (
     ZoomArgsType,
     ZoomArgType,
 )
+from io import FileIO
+
 
 logger = logging.getLogger(__name__)
 
@@ -121,7 +124,7 @@ class PdfWriter:
     class (typically :class:`PdfReader<PyPDF2.PdfReader>`).
     """
 
-    def __init__(self) -> None:
+    def __init__(self, fileobj: StrByteType = "") -> None:
         self._header = b"%PDF-1.3"
         self._objects: List[Optional[PdfObject]] = []  # array of indirect objects
         self._idnum_hash: Dict[bytes, IndirectObject] = {}
@@ -158,6 +161,19 @@ class PdfWriter:
         )
         self._root: Optional[IndirectObject] = None
         self._root_object = root
+        self.fileobj = fileobj
+        self.my_file = False
+
+    # Nothing to do.
+    def __enter__(self):
+        return self
+
+    # Write to the fileobj.
+    def __exit__(self, *args):
+        self.write(self.fileobj)
+
+        if self.my_file:
+            self.fileobj.close()
 
     @property
     def pdf_header(self) -> bytes:
@@ -763,7 +779,7 @@ class PdfWriter:
         self._encrypt = self._add_object(encrypt)
         self._encrypt_key = key
 
-    def write(self, stream: StreamType) -> None:
+    def write_stream(self, stream: StreamType) -> None:
         """
         Write the collection of pages added to this object out as a PDF file.
 
@@ -793,6 +809,16 @@ class PdfWriter:
         xref_location = self._write_xref_table(stream, object_positions)
         self._write_trailer(stream)
         stream.write(b_(f"\nstartxref\n{xref_location}\n%%EOF\n"))  # eof
+
+    def write(self, fileobj):
+
+        if isinstance(fileobj, str) and fileobj:
+            self.fileobj = FileIO(fileobj, "wb")
+            self.my_file = True
+        else:
+            self.fileobj = fileobj
+
+        self.write_stream(self.fileobj)
 
     def _write_header(self, stream: StreamType) -> List[int]:
         object_positions = []
