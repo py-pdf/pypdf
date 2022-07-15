@@ -1,4 +1,5 @@
 import binascii
+from operator import contains
 import os
 import sys
 from io import BytesIO
@@ -20,6 +21,14 @@ PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
 RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
 
 sys.path.append(PROJECT_ROOT)
+
+
+def test_dropdown_items():
+    with open(os.path.join(RESOURCE_ROOT, "libreoffice-form.pdf"), "rb") as inputfile:
+    # Load PDF file from file
+        reader = PdfReader(inputfile)
+        fields = reader.get_fields()
+        assert "/Opt" in fields['Nationality'].keys() 
 
 
 def test_PdfReaderFileLoad():
