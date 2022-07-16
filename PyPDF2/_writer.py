@@ -28,6 +28,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import codecs
+import collections
 import decimal
 import logging
 import random
@@ -36,7 +37,17 @@ import time
 import uuid
 import warnings
 from hashlib import md5
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
+from typing import (
+    Any,
+    Callable,
+    Deque,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+)
 
 from PyPDF2.errors import PdfReadWarning
 
@@ -57,6 +68,7 @@ from .constants import Core as CO
 from .constants import EncryptionDictAttributes as ED
 from .constants import (
     FieldDictionaryAttributes,
+    FieldFlag,
     FileSpecificationDictionaryEntries,
     GoToActionArguments,
     InteractiveFormDictEntries,
@@ -65,7 +77,7 @@ from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
 from .constants import StreamAttributes as SA
 from .constants import TrailerKeys as TK
-from .constants import TypFitArguments
+from .constants import TypFitArguments, UserAccessPermissions
 from .generic import (
     ArrayObject,
     BooleanObject,
@@ -100,6 +112,10 @@ from .types import (
 logger = logging.getLogger(__name__)
 
 
+OPTIONAL_READ_WRITE_FIELD = FieldFlag(0)
+ALL_DOCUMENT_PERMISSIONS = UserAccessPermissions((2**31 - 1) - 3)
+
+
 class PdfWriter:
     """
     This class supports writing PDF files out, given pages produced by another
@@ -109,7 +125,7 @@ class PdfWriter:
     def __init__(self) -> None:
         self._header = b"%PDF-1.3"
         self._objects: List[Optional[PdfObject]] = []  # array of indirect objects
-        self._idnum_hash: Dict[bytes, int] = {}
+        self._idnum_hash: Dict[bytes, IndirectObject] = {}
 
         # The root of our page tree node.
         pages = DictionaryObject()
@@ -622,7 +638,10 @@ class PdfWriter:
         self.append_pages_from_reader(reader, after_page_append)
 
     def update_page_form_field_values(
-        self, page: PageObject, fields: Dict[str, Any], flags: int = 0
+        self,
+        page: PageObject,
+        fields: Dict[str, Any],
+        flags: FieldFlag = OPTIONAL_READ_WRITE_FIELD,
     ) -> None:
         """
         Update the form field values for a given page from a fields dictionary.
@@ -673,7 +692,10 @@ class PdfWriter:
                     )
 
     def updatePageFormFieldValues(
-        self, page: PageObject, fields: Dict[str, Any], flags: int = 0
+        self,
+        page: PageObject,
+        fields: Dict[str, Any],
+        flags: FieldFlag = OPTIONAL_READ_WRITE_FIELD,
     ) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
@@ -745,7 +767,7 @@ class PdfWriter:
         user_pwd: str,
         owner_pwd: Optional[str] = None,
         use_128bit: bool = True,
-        permissions_flag: int = -1,
+        permissions_flag: UserAccessPermissions = ALL_DOCUMENT_PERMISSIONS,
     ) -> None:
         """
         Encrypt this PDF file with the PDF Standard encryption handler.
@@ -814,8 +836,6 @@ class PdfWriter:
         if not self._root:
             self._root = self._add_object(self._root_object)
 
-        external_reference_map: Dict[Any, Any] = {}
-
         # PDF objects sometimes have circular references to their /Page objects
         # inside their object tree (for example, annotations).  Those will be
         # indirect references to objects that we've recreated in this PDF.  To
@@ -824,20 +844,7 @@ class PdfWriter:
         # we sweep for indirect references.  This forces self-page-referencing
         # trees to reference the correct new object location, rather than
         # copying in a new copy of the page object.
-        for obj_index, obj in enumerate(self._objects):
-            if isinstance(obj, PageObject) and obj.indirect_ref is not None:
-                data = obj.indirect_ref
-                if data.pdf not in external_reference_map:
-                    external_reference_map[data.pdf] = {}
-                if data.generation not in external_reference_map[data.pdf]:
-                    external_reference_map[data.pdf][data.generation] = {}
-                external_reference_map[data.pdf][data.generation][
-                    data.idnum
-                ] = IndirectObject(obj_index + 1, 0, self)
-
-        self.stack: List[int] = []
-        self._sweep_indirect_references(external_reference_map, self._root)
-        del self.stack
+        self._sweep_indirect_references(self._root)
 
         object_positions = self._write_header(stream)
         xref_location = self._write_xref_table(stream, object_positions)
@@ -915,8 +922,7 @@ class PdfWriter:
 
     def _sweep_indirect_references(
         self,
-        extern_map: Dict[Any, Any],
-        data: Union[
+        root: Union[
             ArrayObject,
             BooleanObject,
             DictionaryObject,
@@ -928,70 +934,106 @@ class PdfWriter:
             TextStringObject,
             NullObject,
         ],
-    ) -> Union[Any, StreamObject]:
-        if isinstance(data, DictionaryObject):
-            for key, value in list(data.items()):
-                value = self._sweep_indirect_references(extern_map, value)
-                if isinstance(value, StreamObject):
+    ) -> None:
+        stack: Deque[
+            Tuple[
+                Any,
+                Optional[Any],
+                Any,
+                List[PdfObject],
+            ]
+        ] = collections.deque()
+        discovered = []
+        parent = None
+        grant_parents: List[PdfObject] = []
+        key_or_id = None
+
+        # Start from root
+        stack.append((root, parent, key_or_id, grant_parents))
+
+        while len(stack):
+            data, parent, key_or_id, grant_parents = stack.pop()
+
+            # Build stack for a processing depth-first
+            if isinstance(data, (ArrayObject, DictionaryObject)):
+                for key, value in data.items():
+                    stack.append(
+                        (
+                            value,
+                            data,
+                            key,
+                            grant_parents + [parent] if parent is not None else [],
+                        )
+                    )
+            elif isinstance(data, IndirectObject):
+                data = self._resolve_indirect_object(data)
+
+                if str(data) not in discovered:
+                    discovered.append(str(data))
+                    stack.append((data.get_object(), None, None, []))
+
+            # Check if data has a parent and if it is a dict or an array update the value
+            if isinstance(parent, (DictionaryObject, ArrayObject)):
+                if isinstance(data, StreamObject):
                     # a dictionary value is a stream.  streams must be indirect
                     # objects, so we need to change this value.
-                    value = self._add_object(value)
-                data[key] = value
-            return data
-        elif isinstance(data, ArrayObject):
-            for i in range(len(data)):
-                value = self._sweep_indirect_references(extern_map, data[i])
-                if isinstance(value, StreamObject):
-                    # an array value is a stream.  streams must be indirect
-                    # objects, so we need to change this value
-                    value = self._add_object(value)
-                data[i] = value
-            return data
-        elif isinstance(data, IndirectObject):
-            # internal indirect references are fine
-            if data.pdf == self:
-                if data.idnum in self.stack:
-                    return data
-                else:
-                    self.stack.append(data.idnum)
-                    realdata = self.get_object(data)
-                    self._sweep_indirect_references(extern_map, realdata)
-                    return data
-            else:
-                if hasattr(data.pdf, "stream") and data.pdf.stream.closed:
-                    raise ValueError(
-                        f"I/O operation on closed file: {data.pdf.stream.name}"
-                    )
-                newobj = (
-                    extern_map.get(data.pdf, {})
-                    .get(data.generation, {})
-                    .get(data.idnum, None)
-                )
-                if newobj is None:
-                    try:
-                        newobj = data.pdf.get_object(data)
-                        self._objects.append(None)  # placeholder
-                        idnum = len(self._objects)
-                        newobj_ido = IndirectObject(idnum, 0, self)
-                        if data.pdf not in extern_map:
-                            extern_map[data.pdf] = {}
-                        if data.generation not in extern_map[data.pdf]:
-                            extern_map[data.pdf][data.generation] = {}
-                        extern_map[data.pdf][data.generation][data.idnum] = newobj_ido
-                        newobj = self._sweep_indirect_references(extern_map, newobj)
-                        self._objects[idnum - 1] = newobj
-                        return newobj_ido
-                    except (ValueError, RecursionError):
-                        # Unable to resolve the Object, returning NullObject instead.
-                        warnings.warn(
-                            f"Unable to resolve [{data.__class__.__name__}: {data}], "
-                            "returning NullObject instead",
-                            PdfReadWarning,
-                        )
-                        return NullObject()
-                return newobj
+                    data = self._resolve_indirect_object(self._add_object(data))
+
+                update_hashes = []
+
+                # Data changed and thus the hash value changed
+                if parent[key_or_id] != data:
+                    update_hashes = [parent.hash_value()] + [
+                        grant_parent.hash_value() for grant_parent in grant_parents
+                    ]
+                    parent[key_or_id] = data
+
+                # Update old hash value to new hash value
+                for old_hash in update_hashes:
+                    indirect_ref = self._idnum_hash.pop(old_hash, None)
+
+                    if indirect_ref is not None:
+                        indirect_ref_obj = indirect_ref.get_object()
+
+                        if indirect_ref_obj is not None:
+                            self._idnum_hash[
+                                indirect_ref_obj.hash_value()
+                            ] = indirect_ref
+
+    def _resolve_indirect_object(self, data: IndirectObject) -> IndirectObject:
+        """
+        Resolves indirect object to this pdf indirect objects.
+
+        If it is a new object then it is added to self._objects
+        and new idnum is given and generation is always 0.
+        """
+        if hasattr(data.pdf, "stream") and data.pdf.stream.closed:
+            raise ValueError(f"I/O operation on closed file: {data.pdf.stream.name}")
+
+        # Get real object indirect object
+        real_obj = data.pdf.get_object(data)
+
+        if real_obj is None:
+            warnings.warn(
+                f"Unable to resolve [{data.__class__.__name__}: {data}], "
+                "returning NullObject instead",
+                PdfReadWarning,
+            )
+            real_obj = NullObject()
+
+        hash_value = real_obj.hash_value()
+
+        # Check if object is handled
+        if hash_value in self._idnum_hash:
+            return self._idnum_hash[hash_value]
+
+        if data.pdf == self:
+            self._idnum_hash[hash_value] = IndirectObject(data.idnum, 0, self)
+        # This is new object in this pdf
         else:
-            return data
+            self._idnum_hash[hash_value] = self._add_object(real_obj)
+
+        return self._idnum_hash[hash_value]
 
     def get_reference(self, obj: PdfObject) -> IndirectObject:
         idnum = self._objects.index(obj) + 1
@@ -1081,16 +1123,15 @@ class PdfWriter:
         return self.get_named_dest_root()
 
     def add_bookmark_destination(
-        self, dest: PageObject, parent: Optional[TreeObject] = None
+        self,
+        dest: Union[PageObject, TreeObject],
+        parent: Union[None, TreeObject, IndirectObject] = None,
     ) -> IndirectObject:
-        dest_ref = self._add_object(dest)
-
-        outline_ref = self.get_outline_root()
-
         if parent is None:
-            parent = outline_ref
+            parent = self.get_outline_root()
 
         parent = cast(TreeObject, parent.get_object())
+        dest_ref = self._add_object(dest)
         parent.add_child(dest_ref, self)
 
         return dest_ref
@@ -1122,18 +1163,7 @@ class PdfWriter:
             action_ref = self._add_object(action)
             bookmark_obj[NameObject("/A")] = action_ref
 
-        bookmark_ref = self._add_object(bookmark_obj)
-
-        outline_ref = self.get_outline_root()
-
-        if parent is None:
-            parent = outline_ref
-
-        parent = parent.get_object()  # type: ignore
-        assert parent is not None, "hint for mypy"
-        parent.add_child(bookmark_ref, self)
-
-        return bookmark_ref
+        return self.add_bookmark_destination(bookmark_obj, parent)
 
     def addBookmarkDict(
         self, bookmark: BookmarkTypes, parent: Optional[TreeObject] = None
@@ -1172,39 +1202,26 @@ class PdfWriter:
             :meth:`addLink()<addLink>` for details.
         """
         page_ref = NumberObject(pagenum)
-        action = DictionaryObject()
-        zoom_args: ZoomArgsType = []
-        for a in args:
-            if a is not None:
-                zoom_args.append(NumberObject(a))
-            else:
-                zoom_args.append(NullObject())
+        zoom_args: ZoomArgsType = [
+            NullObject() if a is None else NumberObject(a) for a in args
+        ]
         dest = Destination(
             NameObject("/" + title + " bookmark"), page_ref, NameObject(fit), *zoom_args
         )
-        dest_array = dest.dest_array
-        action.update(
-            {
-                NameObject(GoToActionArguments.D): dest_array,
-                NameObject(GoToActionArguments.S): NameObject("/GoTo"),
-            }
+
+        action_ref = self._add_object(
+            DictionaryObject(
+                {
+                    NameObject(GoToActionArguments.D): dest.dest_array,
+                    NameObject(GoToActionArguments.S): NameObject("/GoTo"),
+                }
+            )
         )
-        action_ref = self._add_object(action)
-
-        outline_ref = self.get_outline_root()
-
-        if parent is None:
-            parent = outline_ref
-
         bookmark = _create_bookmark(action_ref, title, color, italic, bold)
 
-        bookmark_ref = self._add_object(bookmark)
-
-        assert parent is not None, "hint for mypy"
-        parent_obj = cast(TreeObject, parent.get_object())
-        parent_obj.add_child(bookmark_ref, self)
-
-        return bookmark_ref
+        if parent is None:
+            parent = self.get_outline_root()
+        return self.add_bookmark_destination(bookmark, parent)
 
     def addBookmark(
         self,
@@ -1582,26 +1599,21 @@ class PdfWriter:
         else:
             rect = RectangleObject(rect)
 
-        zoom_args: ZoomArgsType = []
-        for a in args:
-            if a is not None:
-                zoom_args.append(NumberObject(a))
-            else:
-                zoom_args.append(NullObject())
+        zoom_args: ZoomArgsType = [
+            NullObject() if a is None else NumberObject(a) for a in args
+        ]
         dest = Destination(
             NameObject("/LinkName"), page_dest, NameObject(fit), *zoom_args
         )  # TODO: create a better name for the link
-        dest_array = dest.dest_array
 
-        lnk = DictionaryObject()
-        lnk.update(
+        lnk = DictionaryObject(
             {
                 NameObject("/Type"): NameObject(PG.ANNOTS),
                 NameObject("/Subtype"): NameObject("/Link"),
                 NameObject("/P"): page_link,
                 NameObject("/Rect"): rect,
                 NameObject("/Border"): ArrayObject(border_arr),
-                NameObject("/Dest"): dest_array,
+                NameObject("/Dest"): dest.dest_array,
             }
         )
         lnk_ref = self._add_object(lnk)

@@ -37,8 +37,18 @@ import logging
 import re
 import warnings
 from io import BytesIO
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
-
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+)
+from enum import IntFlag
 from ._codecs import (  # noqa: rev_encoding
     _pdfdoc_encoding,
     _pdfdoc_encoding_rev,
@@ -177,6 +187,13 @@ class BooleanObject(PdfObject):
 
 
 class ArrayObject(list, PdfObject):
+    def items(self) -> Iterable:
+        """
+        Emulate DictionaryObject.items for a list
+        (index, object)
+        """
+        return enumerate(self)
+
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
@@ -238,7 +255,7 @@ class IndirectObject(PdfObject):
         return obj.get_object()
 
     def __repr__(self) -> str:
-        return f"IndirectObject({self.idnum!r}, {self.generation!r})"
+        return f"IndirectObject({self.idnum!r}, {self.generation!r}, {id(self.pdf)})"
 
     def __eq__(self, other: Any) -> bool:
         return (
@@ -788,7 +805,7 @@ class DictionaryObject(dict, PdfObject):
                     f"Multiple definitions in dictionary at byte "
                     f"{hex_str(stream.tell())} for key {key}"
                 )
-                if pdf.strict:
+                if pdf is not None and pdf.strict:
                     raise PdfReadError(msg)
                 else:
                     warnings.warn(msg, PdfReadWarning)
@@ -1015,7 +1032,9 @@ class StreamObject(DictionaryObject):
         self.decoded_self: Optional[DecodedStreamObject] = None
 
     def hash_value_data(self) -> bytes:
-        return b_(self._data)
+        data = super().hash_value_data()
+        data += b_(self._data)
+        return data
 
     @property
     def decodedSelf(self) -> Optional["DecodedStreamObject"]:  # pragma: no cover
@@ -1713,6 +1732,15 @@ class Field(TreeObject):
         return self.additional_actions
 
 
+class OutlineFontFlag(IntFlag):
+    """
+    A class used as an enumerable flag for formatting an outline font
+    """
+
+    italic = 1
+    bold = 2
+
+
 class Destination(TreeObject):
     """
     A class representing a destination within a PDF file.
@@ -1859,6 +1887,16 @@ class Destination(TreeObject):
     def bottom(self) -> Optional[FloatObject]:
         """Read-only property accessing the bottom vertical coordinate."""
         return self.get("/Bottom", None)
+
+    @property
+    def color(self) -> Optional[tuple]:
+        """Read-only property accessing the color in (R, G, B) with values 0.0-1.0"""
+        return self.get("/C", [FloatObject(0), FloatObject(0), FloatObject(0)])
+
+    @property
+    def font_format(self) -> Optional[OutlineFontFlag]:
+        """Read-only property accessing the font type. 1=italic, 2=bold, 3=both"""
+        return self.get("/F", 0)
 
 
 class Bookmark(Destination):
