@@ -1889,9 +1889,9 @@ class Destination(TreeObject):
         return self.get("/Bottom", None)
 
     @property
-    def color(self) -> Optional[tuple]:
+    def color(self) -> Optional[ArrayObject]:
         """Read-only property accessing the color in (R, G, B) with values 0.0-1.0"""
-        return self.get("/C", [FloatObject(0), FloatObject(0), FloatObject(0)])
+        return self.get("/C", ArrayObject([FloatObject(0), FloatObject(0), FloatObject(0)]))
 
     @property
     def font_format(self) -> Optional[OutlineFontFlag]:
