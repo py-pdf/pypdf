@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1657863780113,
+  "lastUpdate": 1657947285086,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -9274,6 +9274,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.012699612982499702",
             "extra": "mean: 3.729437738000013 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "harry.karvonen@gmail.com",
+            "name": "Harry Karvonen",
+            "username": "Hatell"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "dd2d69a8d89a1370753f1418b3e0df9a7908d928",
+          "message": "BUG: Prevent deduplication of PageObject (#1105)\n\nMake sure that PageObject is not deduplicated if it is not exactly same page object.\r\nAdobe Reader/Acrobat doesn't like it if same page is referred more than one time.\r\n\r\nCloses #1102\r\n\r\nCo-authored-by: Harry Karvonen <harry.karvonen@onebyte.fi>",
+          "timestamp": "2022-07-16T06:53:39+02:00",
+          "tree_id": "f35bde6862ab4d0eff65cfc03d8b21b047aa0620",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/dd2d69a8d89a1370753f1418b3e0df9a7908d928"
+        },
+        "date": 1657947284097,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0291048562174767,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0071036458656652205",
+            "extra": "mean: 971.7182791999903 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.528717531234342,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006771865300383582",
+            "extra": "mean: 79.8166290769171 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2634419608894469,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020287965559171853",
+            "extra": "mean: 3.7959025077999966 sec\nrounds: 5"
           }
         ]
       }
