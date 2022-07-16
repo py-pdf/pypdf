@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1657947285086,
+  "lastUpdate": 1657995336695,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -9319,6 +9319,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.020287965559171853",
             "extra": "mean: 3.7959025077999966 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mtd91429@users.noreply.github.com",
+            "name": "mtd91429",
+            "username": "mtd91429"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ed5ecd9d55cd669045fe47eadef4d049c7959b7d",
+          "message": "MAINT: Destination.color returns ArrayObject instead of tuple as fallback (#1119)",
+          "timestamp": "2022-07-16T20:14:19+02:00",
+          "tree_id": "c0f28b6e661a4b9d34b5aaa59ca74982c0da6626",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/ed5ecd9d55cd669045fe47eadef4d049c7959b7d"
+        },
+        "date": 1657995335678,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8338303045331391,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008833898300457544",
+            "extra": "mean: 1.1992847879999986 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.597719317814308,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008320518758290056",
+            "extra": "mean: 94.35992499999912 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21210706015047634,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028979365953499033",
+            "extra": "mean: 4.714600255599999 sec\nrounds: 5"
           }
         ]
       }
