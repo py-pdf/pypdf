@@ -5,11 +5,19 @@ from io import BytesIO
 
 import pytest
 
-from PyPDF2 import PdfReader, Transformation
+from PyPDF2 import PdfReader, PdfWriter, Transformation
 from PyPDF2._page import PageObject
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.errors import PdfReadWarning
-from PyPDF2.generic import DictionaryObject, NameObject, RectangleObject
+from PyPDF2.generic import (
+    ArrayObject,
+    DictionaryObject,
+    FloatObject,
+    IndirectObject,
+    NameObject,
+    RectangleObject,
+    TextStringObject,
+)
 
 from . import get_pdf_from_url
 
@@ -322,3 +330,103 @@ def test_get_fonts(pdf_path, password, embedded, unembedded):
         a = a.union(a_tmp)
         b = b.union(b_tmp)
     assert (a, b) == (embedded, unembedded)
+
+
+def test_annotation_getter():
+    pdf_path = os.path.join(RESOURCE_ROOT, "commented.pdf")
+    reader = PdfReader(pdf_path)
+    annotations = reader.pages[0].annotations
+    assert annotations is not None
+    assert isinstance(annotations[0], IndirectObject)
+
+    annot_dict = dict(annotations[0].get_object())
+    assert "/P" in annot_dict
+    assert isinstance(annot_dict["/P"], IndirectObject)
+    del annot_dict["/P"]
+
+    annot_dict["/Popup"] = annot_dict["/Popup"].get_object()
+    del annot_dict["/Popup"]["/P"]
+    del annot_dict["/Popup"]["/Parent"]
+    assert annot_dict == {
+        "/Type": "/Annot",
+        "/Subtype": "/Text",
+        "/Rect": ArrayObject(
+            [
+                270.75,
+                596.25,
+                294.75,
+                620.25,
+            ]
+        ),
+        "/Contents": "Note in second paragraph",
+        "/C": ArrayObject([1, 1, 0]),
+        "/M": "D:20220406191858+02'00",
+        "/Popup": DictionaryObject(
+            {
+                "/M": "D:20220406191847+02'00",
+                "/Rect": ArrayObject([294.75, 446.25, 494.75, 596.25]),
+                "/Subtype": "/Popup",
+                "/Type": "/Annot",
+            }
+        ),
+        "/T": "moose",
+    }
+
+
+def test_annotation_setter():
+    # Arange
+    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    writer = PdfWriter()
+    writer.add_page(page)
+
+    # Act
+    page_number = 0
+    page_link = writer.get_object(writer._pages)["/Kids"][page_number]
+    annot_dict = {
+        NameObject("/P"): page_link,
+        NameObject("/Type"): NameObject("/Annot"),
+        NameObject("/Subtype"): NameObject("/Text"),
+        NameObject("/Rect"): ArrayObject(
+            [
+                FloatObject(270.75),
+                FloatObject(596.25),
+                FloatObject(294.75),
+                FloatObject(620.25),
+            ]
+        ),
+        NameObject("/Contents"): TextStringObject("Note in second paragraph"),
+        NameObject("/C"): ArrayObject([FloatObject(1), FloatObject(1), FloatObject(0)]),
+        NameObject("/M"): TextStringObject("D:20220406191858+02'00"),
+        NameObject("/Popup"): DictionaryObject(
+            {
+                NameObject("/M"): TextStringObject("D:20220406191847+02'00"),
+                NameObject("/Rect"): ArrayObject(
+                    [
+                        FloatObject(294.75),
+                        FloatObject(446.25),
+                        FloatObject(494.75),
+                        FloatObject(596.25),
+                    ]
+                ),
+                NameObject("/Subtype"): NameObject("/Popup"),
+                NameObject("/Type"): TextStringObject("/Annot"),
+            }
+        ),
+        NameObject("/T"): TextStringObject("moose"),
+    }
+    arr = ArrayObject()
+    page.annotations = arr
+
+    d = DictionaryObject(annot_dict)
+    ind_obj = writer._add_object(d)
+    arr.append(ind_obj)
+
+    # Assert manually
+    target = "annot-out.pdf"
+    with open(target, "wb") as fp:
+        writer.write(fp)
+
+    # Cleanup
+    os.remove(target)  # remove for testing
