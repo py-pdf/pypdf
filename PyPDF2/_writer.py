@@ -164,7 +164,6 @@ class PdfWriter:
         self._root: Optional[IndirectObject] = None
         self._root_object = root
         self.fileobj = fileobj
-        self.my_file = False
 
     # Nothing to do.
     def __enter__(self):
@@ -174,9 +173,6 @@ class PdfWriter:
     def __exit__(self, exc_type: Optional[Type[BaseException]], exc: Optional[BaseException],
                  traceback: Optional[TracebackType]):
         self.write(self.fileobj)
-
-        if self.my_file:
-            self.fileobj.close()
 
     @property
     def pdf_header(self) -> bytes:
@@ -814,14 +810,18 @@ class PdfWriter:
         stream.write(b_(f"\nstartxref\n{xref_location}\n%%EOF\n"))  # eof
 
     def write(self, fileobj: StrByteType) -> None:
+        my_file = False
 
         if isinstance(fileobj, str) and fileobj:
-            self.fileobj = FileIO(fileobj, "wb")
-            self.my_file = True
+            fileobj = FileIO(fileobj, "wb")
+            my_file = True
         else:
-            self.fileobj = fileobj
+            ...
 
-        self.write_stream(self.fileobj)
+        self.write_stream(fileobj)
+
+        if my_file:
+            fileobj.close()
 
     def _write_header(self, stream: StreamType) -> List[int]:
         object_positions = []
