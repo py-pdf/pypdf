@@ -47,6 +47,8 @@ from typing import (
     Tuple,
     Union,
     cast,
+    Type,
+    TracebackType
 )
 
 from PyPDF2.errors import PdfReadWarning
@@ -169,7 +171,8 @@ class PdfWriter:
         return self
 
     # Write to the fileobj.
-    def __exit__(self, *args):
+    def __exit__(self, exc_type: Optional[Type[BaseException]], exc: Optional[BaseException],
+                 traceback: Optional[TracebackType]):
         self.write(self.fileobj)
 
         if self.my_file:
