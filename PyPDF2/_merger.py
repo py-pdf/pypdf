@@ -26,7 +26,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from io import BytesIO, FileIO, IOBase
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast, Type, TracebackType
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast, Type
 
 from ._encryption import Encryption
 from ._page import PageObject
@@ -51,6 +51,7 @@ from .generic import (
 )
 from .pagerange import PageRange, PageRangeSpec
 from .types import FitType, LayoutType, OutlinesType, PagemodeType, ZoomArgType
+from types import TracebackType
 
 ERR_CLOSED_WRITER = "close() was called and thus the writer cannot be used anymore"
 

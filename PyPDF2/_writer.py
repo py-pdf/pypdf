@@ -47,8 +47,7 @@ from typing import (
     Tuple,
     Union,
     cast,
-    Type,
-    TracebackType
+    Type
 )
 
 from PyPDF2.errors import PdfReadWarning
@@ -111,6 +110,7 @@ from .types import (
     ZoomArgType,
 )
 from io import FileIO
+from types import TracebackType
 
 
 logger = logging.getLogger(__name__)
