@@ -26,7 +26,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from io import BytesIO, FileIO, IOBase
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast, Type, TracebackType
 
 from ._encryption import Encryption
 from ._page import PageObject
@@ -97,7 +97,8 @@ class PdfMerger:
         return self
 
     # Write to the fileobj and close the merger.
-    def __exit__(self, *args):
+    def __exit__(self, exc_type: Optional[Type[BaseException]], exc: Optional[BaseException], traceback:
+                 Optional[TracebackType]):
         self.write(self.fileobj)
         self.close()
 
