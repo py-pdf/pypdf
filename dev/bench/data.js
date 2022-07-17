@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658083376027,
+  "lastUpdate": 1658084061130,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -9679,6 +9679,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03255510766917822",
             "extra": "mean: 4.5539755856 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e24b0a046635995c08c91ccf9d6900560d7fb390",
+          "message": "MAINT: Text extraction improvements (#1126)\n\nCredits to pubpub-zz, see\r\nhttps://github.com/py-pdf/PyPDF2/pull/1118#issuecomment-1186148575\r\n\r\nCo-authored-by: pubpub-zz <4083478+pubpub-zz@users.noreply.github.com>",
+          "timestamp": "2022-07-17T20:53:18+02:00",
+          "tree_id": "64671b1863424f02f7824dfe93b5c82266482d1c",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/e24b0a046635995c08c91ccf9d6900560d7fb390"
+        },
+        "date": 1658084060549,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0262185993617878,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008474045287202959",
+            "extra": "mean: 974.4512530000009 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.009941850940857,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0061688519951541235",
+            "extra": "mean: 76.86429435714055 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26243625848034563,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028449458487934356",
+            "extra": "mean: 3.810449081200005 sec\nrounds: 5"
           }
         ]
       }
