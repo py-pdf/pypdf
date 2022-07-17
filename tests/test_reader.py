@@ -876,7 +876,6 @@ def test_outline_font_format():
     assert reader.outlines[0].font_format == 2
 
 
-@pytest.mark.xfail(reason="#1121")
 def test_outline_title_issue_1121():
     reader = PdfReader(EXTERNAL_ROOT / "014-outlines/mistitled_outlines_example.pdf")
 
