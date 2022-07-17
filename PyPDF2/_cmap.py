@@ -191,7 +191,13 @@ def parse_to_unicode(
     for i in range(len(ll)):
         j = ll[i].find(b">")
         if j >= 0:
-            ll[i] = ll[i][:j].replace(b" ", b"") + b" " + ll[i][j + 1 :]
+            if j == 0:
+                # string is empty: stash a placeholder here (see below)
+                # see https://github.com/py-pdf/PyPDF2/issues/1111
+                content = b"."
+            else:
+                content = ll[i][:j].replace(b" ", b"")
+            ll[i] = content + b" " + ll[i][j + 1 :]
     cm = (
         (b" ".join(ll))
         .replace(b"[", b" [ ")
@@ -246,13 +252,17 @@ def parse_to_unicode(
             lst = [x for x in l.split(b" ") if x]
             map_dict[-1] = len(lst[0]) // 2
             while len(lst) > 1:
+                map_to = ""
+                # placeholder (see above) means empty string
+                if lst[1] != b".":
+                    map_to = unhexlify(lst[1]).decode(
+                        "utf-16-be", "surrogatepass"
+                    )  # join is here as some cases where the code was split
                 map_dict[
                     unhexlify(lst[0]).decode(
                         "charmap" if map_dict[-1] == 1 else "utf-16-be", "surrogatepass"
                     )
-                ] = unhexlify(lst[1]).decode(
-                    "utf-16-be", "surrogatepass"
-                )  # join is here as some cases where the code was split
+                ] = map_to
                 int_entry.append(int(lst[0], 16))
                 lst = lst[2:]
     for a, value in map_dict.items():
