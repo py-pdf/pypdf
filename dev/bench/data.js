@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658084809490,
+  "lastUpdate": 1658085489964,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -9814,6 +9814,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.017662484147484774",
             "extra": "mean: 3.774226175000004 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "33634d40ffce9351f96fb35f491c2b3fe98b2406",
+          "message": "REL: 2.6.0\n\nNew Features (ENH):\n-  Add color and font_format to PdfReader.outlines[i] (#1104)\n-  Extract Text Enhancement (whitespaces) (#1084)\n\nBug Fixes (BUG):\n-  Use `build_destination` for named destination outlines (#1128)\n-  Avoid a crash when a ToUnicode CMap has an empty dstString in beginbfchar (#1118)\n-  Prevent deduplication of PageObject (#1105)\n-  None-check in DictionaryObject.read_from_stream (#1113)\n-  Avoid IndexError in _cmap.parse_to_unicode (#1110)\n\nDocumentation (DOC):\n-  Explanation for git submodule\n-  Watermark and stamp (#1095)\n\nMaintenance (MAINT):\n-  Text extraction improvements (#1126)\n-  Destination.color returns ArrayObject instead of tuple as fallback (#1119)\n-  Use add_bookmark_destination in add_bookmark (#1100)\n-  Use add_bookmark_destination in add_bookmark_dict (#1099)\n\nTesting (TST):\n-  Remove xfail from test_outline_title_issue_1121\n-  Add test for arab text (#1127)\n-  Add xfail for decryption fail (#1125)\n-  Add xfail test for IndexError when extracting text (#1124)\n-  Add MCVE showing outline title issue (#1123)\n\nCode Style (STY):\n-  Apply black and isort\n-  Use IntFlag for permissions_flag / update_page_form_field_values (#1094)\n-  Simplify code (#1101)\n\nFull Changelog: https://github.com/py-pdf/PyPDF2/compare/2.5.0...2.6.0",
+          "timestamp": "2022-07-17T21:17:03+02:00",
+          "tree_id": "8f8b7e691906f7eb569b24fb6d7cea64c58f0e1c",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/33634d40ffce9351f96fb35f491c2b3fe98b2406"
+        },
+        "date": 1658085489432,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.049645300280839,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0075047709437715115",
+            "extra": "mean: 952.7027841999995 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.129986949580701,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005521591952281133",
+            "extra": "mean: 76.1615380000004 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26549255757661444,
+            "unit": "iter/sec",
+            "range": "stddev: 0.031049336278416446",
+            "extra": "mean: 3.7665839265999965 sec\nrounds: 5"
           }
         ]
       }
