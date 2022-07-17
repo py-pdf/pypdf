@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658043472543,
+  "lastUpdate": 1658044789611,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -9409,6 +9409,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.015997462929725766",
             "extra": "mean: 3.8020611154000052 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b1d4ea1fb4364336f84f1f3add19163aab2084a6",
+          "message": "TST: Add xfail test for IndexError when extracting text (#1124)\n\nSee #1091",
+          "timestamp": "2022-07-17T09:58:31+02:00",
+          "tree_id": "8423c822241c9d368a2b911d6a14d8a439f782cc",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/b1d4ea1fb4364336f84f1f3add19163aab2084a6"
+        },
+        "date": 1658044787752,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8795717110052204,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008923554331270947",
+            "extra": "mean: 1.1369169648000024 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.051615537038819,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007869031555584724",
+            "extra": "mean: 90.48450850000715 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22263520216104246,
+            "unit": "iter/sec",
+            "range": "stddev: 0.038017984879417176",
+            "extra": "mean: 4.491652668999995 sec\nrounds: 5"
           }
         ]
       }
