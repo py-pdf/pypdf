@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658084061130,
+  "lastUpdate": 1658084778542,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -9724,6 +9724,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.028449458487934356",
             "extra": "mean: 3.810449081200005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mtd91429@users.noreply.github.com",
+            "name": "mtd91429",
+            "username": "mtd91429"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7fba86b65e25809367ff169e779dbccb517e1b25",
+          "message": "BUG: Use `build_destination` for named destination outlines (#1128)\n\nCloses #1121",
+          "timestamp": "2022-07-17T21:04:58+02:00",
+          "tree_id": "3bce533bed49a6d5c2b859775ca06217730530b0",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/7fba86b65e25809367ff169e779dbccb517e1b25"
+        },
+        "date": 1658084776550,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7905968772881199,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04227312329487738",
+            "extra": "mean: 1.2648671260000015 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.075012045890803,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005759740950072237",
+            "extra": "mean: 99.25546445454229 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21190527373531154,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08780883134982091",
+            "extra": "mean: 4.71908972519999 sec\nrounds: 5"
           }
         ]
       }
