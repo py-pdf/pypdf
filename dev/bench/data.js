@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658060113723,
+  "lastUpdate": 1658083376027,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -9634,6 +9634,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.019202664714317568",
             "extra": "mean: 3.3676792563999927 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0b693e1122d568f29f266340121915b3813eb8c2",
+          "message": "TST: Add test for arab text (#1127)",
+          "timestamp": "2022-07-17T20:41:45+02:00",
+          "tree_id": "81b9287586f0ea59604fa581b6db2c1b1fa5eaac",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/0b693e1122d568f29f266340121915b3813eb8c2"
+        },
+        "date": 1658083375360,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8711878951465271,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011247861746166665",
+            "extra": "mean: 1.1478580058000092 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.952956264232837,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008813528513059077",
+            "extra": "mean: 91.29955199999529 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21958835334165433,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03255510766917822",
+            "extra": "mean: 4.5539755856 sec\nrounds: 5"
           }
         ]
       }
