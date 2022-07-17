@@ -36,6 +36,7 @@ import hashlib
 import logging
 import re
 import warnings
+from enum import IntFlag
 from io import BytesIO
 from typing import (
     Any,
@@ -48,7 +49,7 @@ from typing import (
     Union,
     cast,
 )
-from enum import IntFlag
+
 from ._codecs import (  # noqa: rev_encoding
     _pdfdoc_encoding,
     _pdfdoc_encoding_rev,
@@ -1891,7 +1892,9 @@ class Destination(TreeObject):
     @property
     def color(self) -> Optional[ArrayObject]:
         """Read-only property accessing the color in (R, G, B) with values 0.0-1.0"""
-        return self.get("/C", ArrayObject([FloatObject(0), FloatObject(0), FloatObject(0)]))
+        return self.get(
+            "/C", ArrayObject([FloatObject(0), FloatObject(0), FloatObject(0)])
+        )
 
     @property
     def font_format(self) -> Optional[OutlineFontFlag]:
