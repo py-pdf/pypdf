@@ -834,8 +834,7 @@ class PdfReader:
             if isinstance(dest, ArrayObject):
                 outline = self._build_destination(title, dest)  # type: ignore
             elif isinstance(dest, str) and dest in self._namedDests:
-                outline = self._namedDests[dest]
-                outline[NameObject("/Title")] = title  # type: ignore
+                outline = self._build_destination(title, self._namedDests[dest].dest_array)  # type: ignore
             else:
                 raise PdfReadError(f"Unexpected destination {dest!r}")
 
