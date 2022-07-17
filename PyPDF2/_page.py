@@ -244,6 +244,11 @@ class PageObject(DictionaryObject):
         self.pdf: Optional[PdfReader] = pdf
         self.indirect_ref = indirect_ref
 
+    def hash_value_data(self) -> bytes:
+        data = super().hash_value_data()
+        data += b"%d" % id(self)
+        return data
+
     @staticmethod
     def create_blank_page(
         pdf: Optional[Any] = None,  # PdfReader
@@ -1287,7 +1292,9 @@ class PageObject(DictionaryObject):
                     )
                     if isinstance(cmap[0], str):
                         try:
-                            t = tt.decode(cmap[0], "surrogatepass")  # apply str encoding
+                            t = tt.decode(
+                                cmap[0], "surrogatepass"
+                            )  # apply str encoding
                         except Exception:  # the data does not match the expectation, we use the alternative ; text extraction may not be good
                             t = tt.decode(
                                 "utf-16-be" if cmap[0] == "charmap" else "charmap",
