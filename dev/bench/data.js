@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658045874808,
+  "lastUpdate": 1658060113723,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -9589,6 +9589,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.08659099363942872",
             "extra": "mean: 4.199482640800002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dkg@fifthhorseman.net",
+            "name": "dkg",
+            "username": "dkg"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ae0ff49058e6c57a8edcfcd3d956665ddaa8a787",
+          "message": "BUG: Avoid a crash when a ToUnicode CMap has an empty dstString in beginbfchar (#1118)\n\nThis is not a principled fix, but it is a hack to avoid a crash when\r\nencountering an empty dstString in a `beginbfchar` table in a\r\nToUnicode CMap.\r\n\r\nWe take narrow aim at the issue of zero-length (empty) hex\r\nstring representations.\r\n\r\nWe take advantage of the fact that no angle-bracket-delimited hex\r\nstring contains a . character.  when we encounter an empty hex string,\r\nrather than replacing it with the empty string, we replace it with a\r\nliteral \".\".  Then, when we encounter a \".\", we remember that it was\r\nsupposed to be an empty string.\r\n\r\nOne consequence of this fix is that the exported cmap can now return\r\nan empty string, so we also have to clean up\r\n`PageObject::process_operation` so that it doesn't try to read the\r\nfinal character from an empty string.\r\n\r\nCloses #1111",
+          "timestamp": "2022-07-17T14:14:10+02:00",
+          "tree_id": "3da253fd5a9c122d03179fb67dcd3317eea5c0dd",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/ae0ff49058e6c57a8edcfcd3d956665ddaa8a787"
+        },
+        "date": 1658060113156,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.1783886200608842,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005444331459133562",
+            "extra": "mean: 848.6164776000066 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 14.767755325067798,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006068474692919121",
+            "extra": "mean: 67.71509806250187 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2969403924377845,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019202664714317568",
+            "extra": "mean: 3.3676792563999927 sec\nrounds: 5"
           }
         ]
       }
