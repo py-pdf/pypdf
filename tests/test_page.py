@@ -322,3 +322,14 @@ def test_get_fonts(pdf_path, password, embedded, unembedded):
         a = a.union(a_tmp)
         b = b.union(b_tmp)
     assert (a, b) == (embedded, unembedded)
+
+
+@pytest.mark.xfail(reason="#1091")
+def test_text_extraction_issue_1091():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/966/966635.pdf"
+    name = "tika-966635.pdf"
+    stream = BytesIO(get_pdf_from_url(url, name=name))
+    with pytest.warns(PdfReadWarning):
+        reader = PdfReader(stream)
+    for page in reader.pages:
+        page.extract_text()
