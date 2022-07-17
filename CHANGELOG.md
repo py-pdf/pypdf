@@ -1,5 +1,40 @@
 # CHANGELOG
 
+## Version 2.6.0, 2022-07-17
+
+### New Features (ENH)
+-  Add color and font_format to PdfReader.outlines[i] (#1104)
+-  Extract Text Enhancement (whitespaces) (#1084)
+
+### Bug Fixes (BUG)
+-  Use `build_destination` for named destination outlines (#1128)
+-  Avoid a crash when a ToUnicode CMap has an empty dstString in beginbfchar (#1118)
+-  Prevent deduplication of PageObject (#1105)
+-  None-check in DictionaryObject.read_from_stream (#1113)
+-  Avoid IndexError in _cmap.parse_to_unicode (#1110)
+
+### Documentation (DOC)
+-  Explanation for git submodule
+-  Watermark and stamp (#1095)
+
+### Maintenance (MAINT)
+-  Text extraction improvements (#1126)
+-  Destination.color returns ArrayObject instead of tuple as fallback (#1119)
+-  Use add_bookmark_destination in add_bookmark (#1100)
+-  Use add_bookmark_destination in add_bookmark_dict (#1099)
+
+### Testing (TST)
+-  Add test for arab text (#1127)
+-  Add xfail for decryption fail (#1125)
+-  Add xfail test for IndexError when extracting text (#1124)
+-  Add MCVE showing outline title issue (#1123)
+
+### Code Style (STY)
+-  Use IntFlag for permissions_flag / update_page_form_field_values (#1094)
+-  Simplify code (#1101)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.5.0...2.6.0
+
 ## Version 2.5.0, 2022-07-10
 
 ### New Features (ENH)
