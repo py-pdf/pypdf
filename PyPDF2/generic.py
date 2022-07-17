@@ -1901,6 +1901,16 @@ class Destination(TreeObject):
         """Read-only property accessing the font type. 1=italic, 2=bold, 3=both"""
         return self.get("/F", 0)
 
+    @property
+    def outline_count(self) -> Optional[int]:
+        """
+        Read-only property accessing the outline count.
+        positive = expanded
+        negative = collapsed
+        absolute value = number of visible descendents at all levels
+        """
+        return self.get("/Count", None)
+
 
 class Bookmark(Destination):
     def write_to_stream(
