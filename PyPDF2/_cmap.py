@@ -251,20 +251,25 @@ def parse_to_unicode(
         elif process_char:
             lst = [x for x in l.split(b" ") if x]
             map_dict[-1] = len(lst[0]) // 2
-            while len(lst) > 1:
-                map_to = ""
-                # placeholder (see above) means empty string
-                if lst[1] != b".":
-                    map_to = unhexlify(lst[1]).decode(
-                        "utf-16-be", "surrogatepass"
-                    )  # join is here as some cases where the code was split
+            if len(lst) == 1:
+                # some case where the 2nd param is empty (seems not IAW pdfspec)
                 map_dict[
                     unhexlify(lst[0]).decode(
                         "charmap" if map_dict[-1] == 1 else "utf-16-be", "surrogatepass"
                     )
-                ] = map_to
-                int_entry.append(int(lst[0], 16))
-                lst = lst[2:]
+                ] = ""
+            else:
+                while len(lst) > 0:
+                    map_dict[
+                        unhexlify(lst[0]).decode(
+                            "charmap" if map_dict[-1] == 1 else "utf-16-be",
+                            "surrogatepass",
+                        )
+                    ] = unhexlify(lst[1]).decode(
+                        "utf-16-be", "surrogatepass"
+                    )  # join is here as some cases where the code was split
+                    int_entry.append(int(lst[0], 16))
+                    lst = lst[2:]
     for a, value in map_dict.items():
         if value == " ":
             space_code = a
