@@ -816,7 +816,7 @@ class PdfWriter:
             fileobj = FileIO(fileobj, "wb")
             my_file = True
         else:
-            ...
+            pass
 
         self.write_stream(fileobj)
 
