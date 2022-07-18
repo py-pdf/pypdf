@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658085489964,
+  "lastUpdate": 1658123229084,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -9859,6 +9859,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.031049336278416446",
             "extra": "mean: 3.7665839265999965 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mtd91429@users.noreply.github.com",
+            "name": "mtd91429",
+            "username": "mtd91429"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "25cba33f88c6708ebc50169808f02b80e96fb0ab",
+          "message": "ENH: Add `outline_count` property (#1129)\n\nEnables retrieval of \"/Count\" attribute of outline item in PdfReader.outlines by implementing property outline_count.\r\n\r\nCloses #1122",
+          "timestamp": "2022-07-18T07:45:36+02:00",
+          "tree_id": "675069f3197a523cc4dd897dd7627d350ffd16fc",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/25cba33f88c6708ebc50169808f02b80e96fb0ab"
+        },
+        "date": 1658123227051,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.791820744082733,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018431316882015103",
+            "extra": "mean: 1.2629121016 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.208826618872974,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00814933017028937",
+            "extra": "mean: 97.95445033333294 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.20813095733572187,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0167676422578944",
+            "extra": "mean: 4.804667276800001 sec\nrounds: 5"
           }
         ]
       }
