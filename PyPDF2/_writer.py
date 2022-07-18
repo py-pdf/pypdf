@@ -812,7 +812,10 @@ class PdfWriter:
     def write(self, fileobj: StrByteType) -> None:
         my_file = False
 
-        if isinstance(fileobj, str) and fileobj:
+        if fileobj == "":
+            raise ValueError(f"Output(fileobj={fileobj}) is empty.")
+
+        if isinstance(fileobj, str):
             fileobj = FileIO(fileobj, "wb")
             my_file = True
         else:
@@ -1630,7 +1633,7 @@ class PdfWriter:
 
     def getPageLayout(self) -> Optional[LayoutType]:  # pragma: no cover
         """
-        .. deprecated:: 1.28.0
+        .. deprecated:: 1.28.0raise
 
             Use :py:attr:`page_layout` instead.
         """
