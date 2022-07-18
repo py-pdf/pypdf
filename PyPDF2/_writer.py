@@ -171,7 +171,7 @@ class PdfWriter:
 
     # Write to the fileobj.
     def __exit__(self, exc_type: Optional[Type[BaseException]], exc: Optional[BaseException],
-                 traceback: Optional[TracebackType]):
+                 traceback: Optional[TracebackType]) -> None:
         self.write(self.fileobj)
 
     @property
