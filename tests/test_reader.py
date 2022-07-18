@@ -933,3 +933,61 @@ def test_outline_title_issue_1121():
             "Twenty-seventh",
         ],
     ]
+
+
+def test_outline_count():
+    reader = PdfReader(EXTERNAL_ROOT / "014-outlines/mistitled_outlines_example.pdf")
+
+    def get_counts_only(outlines, results=None):
+        if results is None:
+            results = []
+        if isinstance(outlines, list):
+            for outline in outlines:
+                if isinstance(outline, Destination):
+                    results.append(outline.outline_count)
+                else:
+                    results.append(get_counts_only(outline))
+        else:
+            raise ValueError(f"got {type(outlines)}")
+        return results
+    assert get_counts_only(reader.outlines) == [
+        5,
+        [
+            None,
+            None,
+            2,
+            [
+                None,
+                None,
+            ],
+            -2,
+            [
+                None,
+                None,
+            ],
+        ],
+        4,
+        [
+            None,
+            None,
+            None,
+            None,
+        ],
+        -2,
+        [
+            None,
+            None,
+        ],
+        None,
+        8,
+        [
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ],
+    ]
