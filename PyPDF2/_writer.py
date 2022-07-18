@@ -166,7 +166,7 @@ class PdfWriter:
         self.fileobj = fileobj
 
     # Nothing to do.
-    def __enter__(self):
+    def __enter__(self) -> "PdfWriter":
         return self
 
     # Write to the fileobj.
