@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658123876431,
+  "lastUpdate": 1658127287830,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -9949,6 +9949,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.024493586094480612",
             "extra": "mean: 3.829049020599996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f2983e142f504d1fde7874af78975431e287043b",
+          "message": "DOC: Fix type in signature of PdfWriter.add_uri (#1131)",
+          "timestamp": "2022-07-18T08:53:13+02:00",
+          "tree_id": "27f4e984c8cef3695ef21c2ba8fc3192578f323a",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/f2983e142f504d1fde7874af78975431e287043b"
+        },
+        "date": 1658127287232,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0520343233368676,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0041459235668808775",
+            "extra": "mean: 950.539329199998 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.99488524751043,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004322561202045019",
+            "extra": "mean: 76.95335364285582 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27021007157059634,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016566891658991",
+            "extra": "mean: 3.700824303799999 sec\nrounds: 5"
           }
         ]
       }
