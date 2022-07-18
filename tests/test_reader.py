@@ -876,23 +876,23 @@ def test_outline_font_format():
     assert reader.outlines[0].font_format == 2
 
 
+def get_outlines_property(outlines, attribute_name: str):
+    results = []
+    if isinstance(outlines, list):
+        for outline in outlines:
+            if isinstance(outline, Destination):
+                results.append(getattr(outline, attribute_name))
+            else:
+                results.append(get_outlines_property(outline, attribute_name))
+    else:
+        raise ValueError(f"got {type(outlines)}")
+    return results
+
+
 def test_outline_title_issue_1121():
     reader = PdfReader(EXTERNAL_ROOT / "014-outlines/mistitled_outlines_example.pdf")
 
-    def get_titles_only(outlines, results=None):
-        if results is None:
-            results = []
-        if isinstance(outlines, list):
-            for outline in outlines:
-                if isinstance(outline, Destination):
-                    results.append(outline.title)
-                else:
-                    results.append(get_titles_only(outline))
-        else:
-            raise ValueError(f"got {type(outlines)}")
-        return results
-
-    assert get_titles_only(reader.outlines) == [
+    assert get_outlines_property(reader.outlines, "title") == [
         "First",
         [
             "Second",
@@ -938,19 +938,7 @@ def test_outline_title_issue_1121():
 def test_outline_count():
     reader = PdfReader(EXTERNAL_ROOT / "014-outlines/mistitled_outlines_example.pdf")
 
-    def get_counts_only(outlines, results=None):
-        if results is None:
-            results = []
-        if isinstance(outlines, list):
-            for outline in outlines:
-                if isinstance(outline, Destination):
-                    results.append(outline.outline_count)
-                else:
-                    results.append(get_counts_only(outline))
-        else:
-            raise ValueError(f"got {type(outlines)}")
-        return results
-    assert get_counts_only(reader.outlines) == [
+    assert get_outlines_property(reader.outlines, "outline_count") == [
         5,
         [
             None,
