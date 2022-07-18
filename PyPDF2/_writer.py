@@ -166,12 +166,12 @@ class PdfWriter:
         self.fileobj = fileobj
 
     # Nothing to do.
-    def __enter__(self):
+    def __enter__(self) -> "PdfWriter":
         return self
 
     # Write to the fileobj.
     def __exit__(self, exc_type: Optional[Type[BaseException]], exc: Optional[BaseException],
-                 traceback: Optional[TracebackType]):
+                 traceback: Optional[TracebackType]) -> None:
         self.write(self.fileobj)
 
     @property

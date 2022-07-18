@@ -99,7 +99,7 @@ class PdfMerger:
 
     # Write to the fileobj and close the merger.
     def __exit__(self, exc_type: Optional[Type[BaseException]], exc: Optional[BaseException],
-                 traceback: Optional[TracebackType]):
+                 traceback: Optional[TracebackType]) -> None:
         self.write(self.fileobj)
         self.close()
 
