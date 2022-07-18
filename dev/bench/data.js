@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658123229084,
+  "lastUpdate": 1658123876431,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -9904,6 +9904,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0167676422578944",
             "extra": "mean: 4.804667276800001 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "df95aae5215c7dcf7bfb14504b153427bbf8f44a",
+          "message": "STY: Re-use code via get_outlines_property in tests (#1130)",
+          "timestamp": "2022-07-18T07:56:53+02:00",
+          "tree_id": "96ec8049a0619c0b2c766ab0b67bce5676aa7a63",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/df95aae5215c7dcf7bfb14504b153427bbf8f44a"
+        },
+        "date": 1658123875856,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0432245397351165,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008178004344528672",
+            "extra": "mean: 958.5664082000108 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.012240498456364,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0067863186403710135",
+            "extra": "mean: 76.85071607142747 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26116145147791925,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024493586094480612",
+            "extra": "mean: 3.829049020599996 sec\nrounds: 5"
           }
         ]
       }
