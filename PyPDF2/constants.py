@@ -302,7 +302,6 @@ class FieldDictionaryAttributes:
     V = "/V"  # text string, optional
     DV = "/DV"  # text string, optional
     AA = "/AA"  # dictionary, optional
-    Opt = "/Opt" # Options, Optional
 
     @classmethod
     def attributes(cls) -> Tuple[str, ...]:
@@ -317,7 +316,6 @@ class FieldDictionaryAttributes:
             cls.DV,
             cls.Kids,
             cls.AA,
-            cls.Opt,
         )
 
     @classmethod
@@ -331,7 +329,22 @@ class FieldDictionaryAttributes:
             cls.Ff: "Field Flags",
             cls.V: "Value",
             cls.DV: "Default Value",
-            cls.Opt: "Options"
+        }
+
+
+class CheckboxRadioButtonAttributes:
+    """TABLE 8.76 Field flags common to all field types"""
+
+    Opt = "/Opt"  # Options, Optional
+
+    @classmethod
+    def attributes(cls) -> Tuple[str, ...]:
+        return (cls.Opt,)
+
+    @classmethod
+    def attributes_dict(cls) -> Dict[str, str]:
+        return {
+            cls.Opt: "Options",
         }
 
 
@@ -414,6 +427,7 @@ PDF_KEYS = (
     CatalogAttributes,
     CatalogDictionary,
     CcittFaxDecodeParameters,
+    CheckboxRadioButtonAttributes,
     ColorSpaces,
     Core,
     DocumentInformationAttributes,

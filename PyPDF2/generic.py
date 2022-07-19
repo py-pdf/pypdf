@@ -67,7 +67,7 @@ from ._utils import (
     skip_over_comment,
     str_,
 )
-from .constants import FieldDictionaryAttributes
+from .constants import CheckboxRadioButtonAttributes, FieldDictionaryAttributes
 from .constants import FilterTypes as FT
 from .constants import StreamAttributes as SA
 from .constants import TypArguments as TA
@@ -1609,8 +1609,9 @@ class Field(TreeObject):
 
     def __init__(self, data: Dict[str, Any]) -> None:
         DictionaryObject.__init__(self)
-
-        for attr in FieldDictionaryAttributes.attributes():
+        Field_attributes = FieldDictionaryAttributes.attributes()
+        Field_attributes = Field_attributes + CheckboxRadioButtonAttributes.attributes()
+        for attr in Field_attributes:
             try:
                 self[NameObject(attr)] = data[attr]
             except KeyError:

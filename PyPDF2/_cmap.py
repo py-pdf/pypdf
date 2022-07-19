@@ -269,7 +269,7 @@ def compute_space_width(
     w1 = {}
     st: int = 0
     if "/DescendantFonts" in ft:  # ft["/Subtype"].startswith("/CIDFontType"):
-        ft1 = ft["/DescendantFonts"][0].get_object()    # type: ignore
+        ft1 = ft["/DescendantFonts"][0].get_object()  # type: ignore
         try:
             w1[-1] = cast(float, ft1["/DW"])
         except Exception:

@@ -24,10 +24,9 @@ sys.path.append(PROJECT_ROOT)
 
 def test_dropdown_items():
     with open(os.path.join(RESOURCE_ROOT, "libreoffice-form.pdf"), "rb") as inputfile:
-    # Load PDF file from file
         reader = PdfReader(inputfile)
         fields = reader.get_fields()
-        assert "/Opt" in fields['Nationality'].keys() 
+        assert "/Opt" in fields["Nationality"].keys()
 
 
 def test_PdfReaderFileLoad():

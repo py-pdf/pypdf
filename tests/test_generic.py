@@ -11,6 +11,7 @@ from PyPDF2.generic import (
     Bookmark,
     BooleanObject,
     ByteStringObject,
+    CheckboxRadioButtonAttributes,
     Destination,
     DictionaryObject,
     FloatObject,
@@ -491,3 +492,7 @@ def test_issue_997():
 
     # cleanup
     os.remove(merged_filename)
+
+
+def test_CheckboxRadioButtonAttributes_opt():
+    assert "/Opt" in CheckboxRadioButtonAttributes.attributes_dict()

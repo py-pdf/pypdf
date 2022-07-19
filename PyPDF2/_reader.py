@@ -65,7 +65,11 @@ from .constants import CatalogDictionary
 from .constants import CatalogDictionary as CD
 from .constants import Core as CO
 from .constants import DocumentInformationAttributes as DI
-from .constants import FieldDictionaryAttributes, GoToActionArguments
+from .constants import (
+    FieldDictionaryAttributes,
+    GoToActionArguments,
+    CheckboxRadioButtonAttributes,
+)
 from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
 from .constants import TrailerKeys as TK
@@ -478,6 +482,7 @@ class PdfReader:
             ``None`` if form data could not be located.
         """
         field_attributes = FieldDictionaryAttributes.attributes_dict()
+        field_attributes.update(CheckboxRadioButtonAttributes.attributes_dict())
         if retval is None:
             retval = {}
             catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
@@ -488,7 +493,6 @@ class PdfReader:
                 return None
         if tree is None:
             return retval
-
         self._check_kids(tree, retval, fileobj)
         for attr in field_attributes:
             if attr in tree:
@@ -497,6 +501,7 @@ class PdfReader:
                 break
 
         if "/Fields" in tree:
+
             fields = cast(ArrayObject, tree["/Fields"])
             for f in fields:
                 field = f.get_object()
@@ -548,7 +553,12 @@ class PdfReader:
                 self.get_fields(kid.get_object(), retval, fileobj)
 
     def _write_field(self, fileobj: Any, field: Any, field_attributes: Any) -> None:
-        for attr in FieldDictionaryAttributes.attributes():
+        field_attributes_tuple = FieldDictionaryAttributes.attributes()
+        field_attributes_tuple = (
+            field_attributes_tuple + CheckboxRadioButtonAttributes.attributes()
+        )
+
+        for attr in field_attributes_tuple:
             if attr in (
                 FieldDictionaryAttributes.Kids,
                 FieldDictionaryAttributes.AA,
