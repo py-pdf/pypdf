@@ -244,6 +244,11 @@ class PageObject(DictionaryObject):
         self.pdf: Optional[PdfReader] = pdf
         self.indirect_ref = indirect_ref
 
+    def hash_value_data(self) -> bytes:
+        data = super().hash_value_data()
+        data += b"%d" % id(self)
+        return data
+
     @staticmethod
     def create_blank_page(
         pdf: Optional[Any] = None,  # PdfReader
@@ -1378,7 +1383,7 @@ class PageObject(DictionaryObject):
                     if isinstance(op, (int, float, NumberObject, FloatObject)):
                         if (
                             (abs(float(op)) >= _space_width)
-                            and (abs(float(op)) <= 8 * _space_width)
+                            and (len(text) > 0)
                             and (text[-1] != " ")
                         ):
                             process_operation(b"Tj", [" "])
