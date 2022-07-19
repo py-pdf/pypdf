@@ -9,7 +9,7 @@ people 🤗
 The list is definitely not complete. You can find more contributors via the git
 history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/PyPDF2/graphs/contributors).
 
-
+* [pubpub-zz](https://github.com/pubpub-zz): involved in community development
 * [Thoma, Martin](https://github.com/MartinThoma): Maintainer of PyPDF2 since April 2022. I hope to build a great community with many awesome contributors. [LinkedIn](https://www.linkedin.com/in/martin-thoma/) | [StackOverflow](https://stackoverflow.com/users/562769/martin-thoma) | [Blog](https://martin-thoma.com/)
 
 ## Adding a new contributor
@@ -38,6 +38,6 @@ OR
 * GitHub Username: 140-characters of text; links to linkedin / github / other profiles and personal pages are ok
 ```
 
-and add the entry in the alphabetical order. The 140 characters are everything visible after the `Name:`.
+and add the entry in the alphabetical order. People who . The 140 characters are everything visible after the `Name:`.
 
 Please don't use images.
