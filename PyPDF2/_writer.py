@@ -1431,7 +1431,7 @@ class PdfWriter:
     def add_uri(
         self,
         pagenum: int,
-        uri: int,
+        uri: str,
         rect: RectangleObject,
         border: Optional[ArrayObject] = None,
     ) -> None:
@@ -1440,7 +1440,7 @@ class PdfWriter:
         This uses the basic structure of :meth:`add_link`
 
         :param int pagenum: index of the page on which to place the URI action.
-        :param int uri: string -- uri of resource to link to.
+        :param str uri: URI of resource to link to.
         :param rect: :class:`RectangleObject<PyPDF2.generic.RectangleObject>` or array of four
             integers specifying the clickable rectangular area
             ``[xLL, yLL, xUR, yUR]``, or string in the form ``"[ xLL yLL xUR yUR ]"``.
@@ -1498,7 +1498,7 @@ class PdfWriter:
     def addURI(
         self,
         pagenum: int,
-        uri: int,
+        uri: str,
         rect: RectangleObject,
         border: Optional[ArrayObject] = None,
     ) -> None:  # pragma: no cover

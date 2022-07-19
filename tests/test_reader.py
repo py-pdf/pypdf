@@ -17,6 +17,7 @@ from PyPDF2.errors import (
     PdfReadWarning,
 )
 from PyPDF2.filters import _xobj_to_image
+from PyPDF2.generic import Destination
 
 from . import get_pdf_from_url
 
@@ -30,6 +31,7 @@ except ImportError:
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
 RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
+EXTERNAL_ROOT = Path(PROJECT_ROOT) / "sample-files"
 
 
 @pytest.mark.parametrize(
@@ -872,3 +874,108 @@ def test_outline_font_format():
     name = "tika-924546.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     assert reader.outlines[0].font_format == 2
+
+
+def get_outlines_property(outlines, attribute_name: str):
+    results = []
+    if isinstance(outlines, list):
+        for outline in outlines:
+            if isinstance(outline, Destination):
+                results.append(getattr(outline, attribute_name))
+            else:
+                results.append(get_outlines_property(outline, attribute_name))
+    else:
+        raise ValueError(f"got {type(outlines)}")
+    return results
+
+
+def test_outline_title_issue_1121():
+    reader = PdfReader(EXTERNAL_ROOT / "014-outlines/mistitled_outlines_example.pdf")
+
+    assert get_outlines_property(reader.outlines, "title") == [
+        "First",
+        [
+            "Second",
+            "Third",
+            "Fourth",
+            [
+                "Fifth",
+                "Sixth",
+            ],
+            "Seventh",
+            [
+                "Eighth",
+                "Ninth",
+            ],
+        ],
+        "Tenth",
+        [
+            "Eleventh",
+            "Twelfth",
+            "Thirteenth",
+            "Fourteenth",
+        ],
+        "Fifteenth",
+        [
+            "Sixteenth",
+            "Seventeenth",
+        ],
+        "Eighteenth",
+        "Nineteenth",
+        [
+            "Twentieth",
+            "Twenty-first",
+            "Twenty-second",
+            "Twenty-third",
+            "Twenty-fourth",
+            "Twenty-fifth",
+            "Twenty-sixth",
+            "Twenty-seventh",
+        ],
+    ]
+
+
+def test_outline_count():
+    reader = PdfReader(EXTERNAL_ROOT / "014-outlines/mistitled_outlines_example.pdf")
+
+    assert get_outlines_property(reader.outlines, "outline_count") == [
+        5,
+        [
+            None,
+            None,
+            2,
+            [
+                None,
+                None,
+            ],
+            -2,
+            [
+                None,
+                None,
+            ],
+        ],
+        4,
+        [
+            None,
+            None,
+            None,
+            None,
+        ],
+        -2,
+        [
+            None,
+            None,
+        ],
+        None,
+        8,
+        [
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ],
+    ]
