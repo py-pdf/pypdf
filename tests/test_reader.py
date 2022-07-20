@@ -238,7 +238,7 @@ def test_get_images_raw(strict, with_prev_0, startx_correction, should_fail):
         pdf_data.find(b"4 0 obj"),
         pdf_data.find(b"5 0 obj"),
         b"/Prev 0 " if with_prev_0 else b"",
-        # startx_correction should be -1 due to double % at the beginning indiducing an error on startxref computation
+        # startx_correction should be -1 due to double % at the beginning inducing an error on startxref computation
         pdf_data.find(b"xref") + startx_correction,
     )
     pdf_stream = io.BytesIO(pdf_data)
