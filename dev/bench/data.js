@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658127287830,
+  "lastUpdate": 1658350515021,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -9994,6 +9994,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.016566891658991",
             "extra": "mean: 3.700824303799999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c63a0ff24965bdbe9339ca5d837b5460f93c3c13",
+          "message": "DOC: Contributors file (#1132)\n\nWe value the work of our contributors - of all of them. The CONTRIBUTORS file might give them more visibility and be more robust when the project is vendored into other projects.\r\n\r\nIt is by far not complete - I hope that people add themselves in PRs :-) \r\n\r\nSee #798",
+          "timestamp": "2022-07-20T22:54:06+02:00",
+          "tree_id": "4a796e854aeeaf63d058737ea9e4c8840a8adc33",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/c63a0ff24965bdbe9339ca5d837b5460f93c3c13"
+        },
+        "date": 1658350513756,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0612077280848211,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005518801364676714",
+            "extra": "mean: 942.3225760000037 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.258551595532452,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0046758783943127566",
+            "extra": "mean: 81.57570592307522 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27165791803443434,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014166988155820145",
+            "extra": "mean: 3.6811001395999936 sec\nrounds: 5"
           }
         ]
       }
