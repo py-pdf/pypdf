@@ -284,9 +284,9 @@ def compute_space_width(
             w1[-1] = cast(float, ft1["/DW"])
         except Exception:
             w1[-1] = 1000.0
-        try:
+        if "/W" in ft1:
             w = list(ft1["/W"])  # type: ignore
-        except Exception:
+        else:
             w = []
         while len(w) > 0:
             st = w[0]
