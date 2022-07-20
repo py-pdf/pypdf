@@ -284,7 +284,10 @@ def compute_space_width(
             w1[-1] = cast(float, ft1["/DW"])
         except Exception:
             w1[-1] = 1000.0
-        w = list(ft1["/W"])  # type: ignore
+        try:
+            w = list(ft1["/W"])  # type: ignore
+        except Exception:
+            w = []
         while len(w) > 0:
             st = w[0]
             second = w[1]
