@@ -1828,7 +1828,9 @@ def _pdf_objectify(obj: Union[Dict[str, Any], str, int, List[Any]]) -> PdfObject
     elif isinstance(obj, (int, float)):
         return FloatObject(obj)
     else:
-        raise NotImplemented(f"type(obj)={type(obj)} could not be casted to PdfObject")
+        raise NotImplementedError(
+            f"type(obj)={type(obj)} could not be casted to PdfObject"
+        )
 
 
 class PdfFileWriter(PdfWriter):  # pragma: no cover
