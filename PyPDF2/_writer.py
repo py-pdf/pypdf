@@ -1796,7 +1796,7 @@ class PdfWriter:
 
     def add_annotation(self, page_number: int, annotation: Dict[str, Any]) -> None:
         to_add = cast(DictionaryObject, _pdf_objectify(annotation))
-        to_add[NameObject("/P")] = self.get_object(self._pages)["/Kids"][page_number]
+        to_add[NameObject("/P")] = self.get_object(self._pages)["/Kids"][page_number]  # type: ignore
         page = self.pages[page_number]
         if page.annotations is None:
             page[NameObject("/Annots")] = ArrayObject()
@@ -1816,10 +1816,10 @@ def _pdf_objectify(obj: Union[Dict[str, Any], str, int, List[Any]]) -> PdfObject
             to_add[name_key] = casted_value
         return to_add
     elif isinstance(obj, list):
-        to_add = ArrayObject()
+        arr = ArrayObject()
         for el in obj:
-            to_add.append(_pdf_objectify(el))
-        return to_add
+            arr.append(_pdf_objectify(el))
+        return arr
     elif isinstance(obj, str):
         if obj.startswith("/"):
             return NameObject(obj)
