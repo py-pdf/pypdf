@@ -1588,10 +1588,10 @@ class PageObject(DictionaryObject):
         if "/Annots" not in self:
             return None
         else:
-            return self["/Annots"]
+            return cast(ArrayObject, self["/Annots"])
 
     @annotations.setter
-    def annotations(self, value: Optional[ArrayObject]):
+    def annotations(self, value: Optional[ArrayObject]) -> None:
         """
         Set the annotations array of the page.
 
