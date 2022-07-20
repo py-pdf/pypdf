@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658350515021,
+  "lastUpdate": 1658350567886,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -10039,6 +10039,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.014166988155820145",
             "extra": "mean: 3.6811001395999936 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "tim.gates@iress.com",
+            "name": "Tim Gates",
+            "username": "timgates42"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d41201b9f76fd93484f259e359877d9b87e1d201",
+          "message": "STY: Fixing typos (#1137)\n\nThere were typos in:\r\n- docs/meta/project-governance.md\r\n- tests/test_reader.py\r\n- tests/test_writer.py\r\n\r\nFixes:\r\n- Should read `inducing` rather than `indiducing`.\r\n- Should read `decisions` rather than `decisons`.\r\n\r\nSigned-off-by: Tim Gates <tim.gates@iress.com>",
+          "timestamp": "2022-07-20T22:54:58+02:00",
+          "tree_id": "20c05c6ed7777e2eb7246f12873abdf57401dd51",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/d41201b9f76fd93484f259e359877d9b87e1d201"
+        },
+        "date": 1658350566848,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0584495422797122,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012902924704329783",
+            "extra": "mean: 944.7781496000061 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.22202586336415,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004792635076554576",
+            "extra": "mean: 81.8194963076888 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2705726481189021,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011946226159717214",
+            "extra": "mean: 3.695865073400006 sec\nrounds: 5"
           }
         ]
       }
