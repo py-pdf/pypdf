@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658350567886,
+  "lastUpdate": 1658351169228,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -10084,6 +10084,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.011946226159717214",
             "extra": "mean: 3.695865073400006 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2abae354f4ce8e1cf44f90eba8a89da5f275dd03",
+          "message": "ROB: Cope with invalid parent xref (#1133)\n\nRebuild the xref table if the parent chained xref is invalid\r\n\r\nCloses #1089",
+          "timestamp": "2022-07-20T23:05:03+02:00",
+          "tree_id": "63bc744618691d0186c2cace0569481ba687c0e6",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/2abae354f4ce8e1cf44f90eba8a89da5f275dd03"
+        },
+        "date": 1658351168258,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.052918574625751,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008087750563953543",
+            "extra": "mean: 949.7410570000056 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.39700570048084,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005286807845390452",
+            "extra": "mean: 80.6646398461536 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27131232219369605,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01122033816115988",
+            "extra": "mean: 3.6857891005999988 sec\nrounds: 5"
           }
         ]
       }
