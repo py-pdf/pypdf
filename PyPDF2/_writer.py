@@ -1794,6 +1794,42 @@ class PdfWriter:
         deprecate_with_replacement("pageMode", "page_mode")
         self.page_mode = mode
 
+    def add_annotation(self, page_number: int, annotation: Dict[str, Any]) -> None:
+        to_add = cast(DictionaryObject, _pdf_objectify(annotation))
+        to_add[NameObject("/P")] = self.get_object(self._pages)["/Kids"][page_number]
+        page = self.pages[page_number]
+        if page.annotations is None:
+            page[NameObject("/Annots")] = ArrayObject()
+        assert page.annotations is not None
+
+        ind_obj = self._add_object(to_add)
+
+        page.annotations.append(ind_obj)
+
+
+def _pdf_objectify(obj: Union[Dict[str, Any], str, int, List[Any]]) -> PdfObject:
+    if isinstance(obj, dict):
+        to_add = DictionaryObject()
+        for key, value in obj.items():
+            name_key = NameObject(key)
+            casted_value = _pdf_objectify(value)
+            to_add[name_key] = casted_value
+        return to_add
+    elif isinstance(obj, list):
+        to_add = ArrayObject()
+        for el in obj:
+            to_add.append(_pdf_objectify(el))
+        return to_add
+    elif isinstance(obj, str):
+        if obj.startswith("/"):
+            return NameObject(obj)
+        else:
+            return TextStringObject(obj)
+    elif isinstance(obj, (int, float)):
+        return FloatObject(obj)
+    else:
+        raise NotImplemented(f"type(obj)={type(obj)} could not be casted to PdfObject")
+
 
 class PdfFileWriter(PdfWriter):  # pragma: no cover
     def __init__(self, *args: Any, **kwargs: Any) -> None:
