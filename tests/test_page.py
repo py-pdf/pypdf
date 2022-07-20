@@ -2,6 +2,7 @@ import json
 import os
 from copy import deepcopy
 from io import BytesIO
+from pathlib import Path
 
 import pytest
 
@@ -24,11 +25,11 @@ from . import get_pdf_from_url
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
 RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
-EXTERNAL_ROOT = os.path.join(PROJECT_ROOT, "sample-files")
+EXTERNAL_ROOT = Path(PROJECT_ROOT) / "sample-files"
 
 
 def get_all_sample_files():
-    with open(os.path.join(EXTERNAL_ROOT, "files.json")) as fp:
+    with open(EXTERNAL_ROOT / "files.json") as fp:
         data = fp.read()
     meta = json.loads(data)
     return meta
@@ -45,7 +46,7 @@ all_files_meta = get_all_sample_files()
 )
 @pytest.mark.filterwarnings("ignore::PyPDF2.errors.PdfReadWarning")
 def test_read(meta):
-    pdf_path = os.path.join(EXTERNAL_ROOT, meta["path"])
+    pdf_path = EXTERNAL_ROOT / meta["path"]
     reader = PdfReader(pdf_path)
     reader.pages[0]
     assert len(reader.pages) == meta["pages"]
@@ -462,3 +463,29 @@ def test_add_single_annotation():
 
     # Cleanup
     os.remove(target)  # remove for testing
+
+
+@pytest.mark.xfail(reason="#1091")
+def test_text_extraction_issue_1091():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/966/966635.pdf"
+    name = "tika-966635.pdf"
+    stream = BytesIO(get_pdf_from_url(url, name=name))
+    with pytest.warns(PdfReadWarning):
+        reader = PdfReader(stream)
+    for page in reader.pages:
+        page.extract_text()
+
+
+@pytest.mark.xfail(reason="#1088")
+def test_empyt_password_1088():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/941/941536.pdf"
+    name = "tika-941536.pdf"
+    stream = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(stream)
+    len(reader.pages)
+
+
+@pytest.mark.xfail(reason="#1088 / #1126")
+def test_arab_text_extraction():
+    reader = PdfReader(EXTERNAL_ROOT / "015-arabic/habibi.pdf")
+    assert reader.pages[0].extract_text() == "habibi حَبيبي"
