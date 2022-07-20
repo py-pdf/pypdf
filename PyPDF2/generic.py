@@ -1163,8 +1163,24 @@ class EncodedStreamObject(StreamObject):
             self.decoded_self = decoded
             return decoded._data
 
+    def getData(self):
+        warnings.warn(
+            DEPR_MSG.format("getData", "get_data"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.get_data()
+
     def set_data(self, data):
         raise PdfReadError("Creating EncodedStreamObject is not currently supported")
+
+    def setData(self, data):
+        warnings.warn(
+            DEPR_MSG.format("setData", "set_data"),
+            PendingDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.set_data(data)
 
 
 class ContentStream(DecodedStreamObject):
