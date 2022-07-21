@@ -164,9 +164,11 @@ class PdfWriter:
         self._root: Optional[IndirectObject] = None
         self._root_object = root
         self.fileobj = fileobj
+        self.with_as_usage = False
 
-    # Nothing to do.
+    # Let it know whether it is initialized by with ... as ... usage or not
     def __enter__(self) -> "PdfWriter":
+        self.with_as_usage = True
         return self
 
     # Write to the fileobj.
@@ -822,6 +824,9 @@ class PdfWriter:
             pass
 
         self.write_stream(fileobj)
+
+        if self.with_as_usage:
+            fileobj.close()
 
         return my_file
 
