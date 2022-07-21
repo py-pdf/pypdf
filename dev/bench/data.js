@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658384322947,
+  "lastUpdate": 1658384425774,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -10219,6 +10219,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.025168821179455975",
             "extra": "mean: 3.737745649999988 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "fa96d66f6a82321ed13f2410754309f4c4c1db1c",
+          "message": "DEV: Add .git-blame-ignore-revs (#1141)\n\nSee https://docs.github.com/en/repositories/working-with-files/using-files/viewing-a-file#ignore-commits-in-the-blame-view",
+          "timestamp": "2022-07-21T08:19:28+02:00",
+          "tree_id": "ea1633f8baf144620b2dde8850f26286df6800aa",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/fa96d66f6a82321ed13f2410754309f4c4c1db1c"
+        },
+        "date": 1658384425149,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.1753790372310273,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013793510034000976",
+            "extra": "mean: 850.789377999979 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.998161401222049,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005985472840893236",
+            "extra": "mean: 71.43795326668396 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.3026753744029591,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08469432525084206",
+            "extra": "mean: 3.303869705199986 sec\nrounds: 5"
           }
         ]
       }
