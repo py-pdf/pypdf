@@ -834,12 +834,11 @@ class PdfReader:
             if isinstance(dest, ArrayObject):
                 outline = self._build_destination(title, dest)  # type: ignore
             elif isinstance(dest, str) and dest in self._namedDests:
-                outline = self._namedDests[dest]
-                outline[NameObject("/Title")] = title  # type: ignore
+                outline = self._build_destination(title, self._namedDests[dest].dest_array)  # type: ignore
             else:
                 raise PdfReadError(f"Unexpected destination {dest!r}")
 
-        # if outline created, add color and format if present
+        # if outline created, add color, format, and child count if present
         if outline:
             if "/C" in node:
                 # Color of outline in (R, G, B) with values ranging 0.0-1.0
@@ -848,6 +847,10 @@ class PdfReader:
                 # specifies style characteristics bold and/or italic
                 # 1=italic, 2=bold, 3=both
                 outline[NameObject("/F")] = node["/F"]
+            if "/Count" in node:
+                # absolute value = num. visible children
+                # positive = open/unfolded, negative = closed/folded
+                outline[NameObject("/Count")] = node["/Count"]
 
         return outline
 

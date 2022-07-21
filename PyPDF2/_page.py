@@ -1383,7 +1383,7 @@ class PageObject(DictionaryObject):
                     if isinstance(op, (int, float, NumberObject, FloatObject)):
                         if (
                             (abs(float(op)) >= _space_width)
-                            and (abs(float(op)) <= 8 * _space_width)
+                            and (len(text) > 0)
                             and (text[-1] != " ")
                         ):
                             process_operation(b"Tj", [" "])
