@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658420006487,
+  "lastUpdate": 1658421166560,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -10309,6 +10309,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.007212211107266255",
             "extra": "mean: 3.7230424180000057 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "j4c0bh3rrm4nn@gmail.com",
+            "name": "KourFrost",
+            "username": "KourFrost"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7cba98a57789c4058898b47875d2dda0a48d6bb5",
+          "message": "BUG: Make reader.get_fields also return dropdowns with options (#1114)\n\nAdded /Opt to the checked field_attributes within reader.get_fields\r\n\r\nCloses #391",
+          "timestamp": "2022-07-21T18:31:44+02:00",
+          "tree_id": "097cdc34059f595a34dc6d2b434febda0bebc3cb",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/7cba98a57789c4058898b47875d2dda0a48d6bb5"
+        },
+        "date": 1658421165741,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0404229678102017,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0044982655612011355",
+            "extra": "mean: 961.1475629999973 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.17814333458148,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006523894539040963",
+            "extra": "mean: 82.11432338461358 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26695582451658223,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009123891115513599",
+            "extra": "mean: 3.7459381222000045 sec\nrounds: 5"
           }
         ]
       }
