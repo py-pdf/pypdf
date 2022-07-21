@@ -67,6 +67,7 @@ You can contribute to `PyPDF2 on Github <https://github.com/py-pdf/PyPDF2>`_.
    meta/CHANGELOG
    meta/project-governance
    meta/history
+   meta/CONTRIBUTORS
    meta/comparisons
    meta/faq
 

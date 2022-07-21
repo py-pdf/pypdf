@@ -1326,6 +1326,15 @@ class PdfReader:
                 if found:
                     continue
                 # no xref table found at specified location
+                if "/Root" in self.trailer and not self.strict:
+                    # if Root has been already found, just raise warning
+                    warnings.warn("Invalid parent xref., rebuild xref", PdfReadWarning)
+                    try:
+                        self._rebuild_xref_table(stream)
+                        break
+                    except Exception:
+                        raise PdfReadError("can not rebuild xref")
+                    break
                 raise PdfReadError("Could not find xref table at specified location")
         # if not zero-indexed, verify that the table is correct; change it if necessary
         if self.xref_index and not self.strict:

@@ -238,7 +238,7 @@ def test_get_images_raw(strict, with_prev_0, startx_correction, should_fail):
         pdf_data.find(b"4 0 obj"),
         pdf_data.find(b"5 0 obj"),
         b"/Prev 0 " if with_prev_0 else b"",
-        # startx_correction should be -1 due to double % at the beginning indiducing an error on startxref computation
+        # startx_correction should be -1 due to double % at the beginning inducing an error on startxref computation
         pdf_data.find(b"xref") + startx_correction,
     )
     pdf_stream = io.BytesIO(pdf_data)
@@ -770,12 +770,12 @@ def test_get_fields():
     assert dict(fields["c1-1"]) == ({"/FT": "/Btn", "/T": "c1-1"})
 
 
+# covers also issue 1089
+@pytest.mark.filterwarnings("ignore::PyPDF2.errors.PdfReadWarning")
 def test_get_fields_read_else_block():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/934/934771.pdf"
     name = "tika-934771.pdf"
-    with pytest.raises(PdfReadError) as exc:
-        PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    assert exc.value.args[0] == "Could not find xref table at specified location"
+    PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
 
 
 def test_get_fields_read_else_block2():
@@ -786,12 +786,11 @@ def test_get_fields_read_else_block2():
     assert fields is None
 
 
+@pytest.mark.filterwarnings("ignore::PyPDF2.errors.PdfReadWarning")
 def test_get_fields_read_else_block3():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/957/957721.pdf"
     name = "tika-957721.pdf"
-    with pytest.raises(PdfReadError) as exc:
-        PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    assert exc.value.args[0] == "Could not find xref table at specified location"
+    PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
 
 
 def test_metadata_is_none():

@@ -243,6 +243,11 @@ def test_extract_text_single_quote_op():
             "https://corpora.tika.apache.org/base/docs/govdocs1/932/932446.pdf",
             "tika-932446.pdf",
         ),
+        # iss 1134:
+        (
+            "https://github.com/py-pdf/PyPDF2/files/9150656/ST.2019.PDF",
+            "iss_1134.pdf",
+        ),
     ],
 )
 def test_extract_text_page_pdf(url, name):

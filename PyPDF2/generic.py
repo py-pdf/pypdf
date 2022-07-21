@@ -1162,8 +1162,16 @@ class EncodedStreamObject(StreamObject):
             self.decoded_self = decoded
             return decoded._data
 
+    def getData(self) -> Union[None, str, bytes]:  # pragma: no cover
+        deprecate_with_replacement("getData", "get_data")
+        return self.get_data()
+
     def set_data(self, data: Any) -> None:
         raise PdfReadError("Creating EncodedStreamObject is not currently supported")
+
+    def setData(self, data: Any) -> None:  # pragma: no cover
+        deprecate_with_replacement("setData", "set_data")
+        return self.set_data(data)
 
 
 class ContentStream(DecodedStreamObject):
