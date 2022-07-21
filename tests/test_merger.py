@@ -100,7 +100,7 @@ def merger_operate(merger):
 tmp_path = "dont_commit_merged.pdf"
 
 
-def test_writer_operations_by_totally_traditional_usage():
+def test_merger_operations_by_totally_traditional_usage():
     merger = PdfMerger()
 
     merger_operate(merger)
@@ -112,7 +112,7 @@ def test_writer_operations_by_totally_traditional_usage():
     os.remove(tmp_path)
 
 
-def test_writer_operations_by_semi_traditional_usage():
+def test_merger_operations_by_semi_traditional_usage():
     with PdfMerger() as merger:
         merger_operate(merger)
 
@@ -122,7 +122,7 @@ def test_writer_operations_by_semi_traditional_usage():
     os.remove(tmp_path)
 
 
-def test_writer_operation_by_totally_new_usage():
+def test_merger_operation_by_totally_new_usage():
     with PdfMerger(tmp_path) as merger:
         merger_operate(merger)
 
