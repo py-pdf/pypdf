@@ -18,11 +18,11 @@ with open("output.pdf", "wb") as output_stream:
 
 ## Free Text
 
-If you want to add text in a box like this:
+If you want to add text in a box like this
 
 ![](free-text-annotation.png)
 
-You can use the {py:class}`AnnotationBuilder <PyPDF2.generic.AnnotationBuilder>`:
+you can use the {py:class}`AnnotationBuilder <PyPDF2.generic.AnnotationBuilder>`:
 
 ```python
 from PyPDF2 import PdfReader, PdfWriter
@@ -46,6 +46,35 @@ annotation = AnnotationBuilder.free_text(
     font_color="00ff00",
     border_color="0000ff",
     bg_color="cdcdcd",
+)
+writer.add_annotation(page_number=0, annotation=annotation)
+
+# Write the annotated file to disk
+with open("annotated-pdf.pdf", "wb") as fp:
+    writer.write(fp)
+```
+
+## Line
+
+If you want to add a line like this:
+
+![](annotation-line.png)
+
+you can use the {py:class}`AnnotationBuilder <PyPDF2.generic.AnnotationBuilder>`:
+
+```python
+pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+reader = PdfReader(pdf_path)
+page = reader.pages[0]
+writer = PdfWriter()
+writer.add_page(page)
+
+# Add the line
+annotation = AnnotationBuilder.line(
+    text="Hello World\nLine2",
+    rect=(50, 550, 200, 650),
+    p1=(50, 550),
+    p2=(200, 650),
 )
 writer.add_annotation(page_number=0, annotation=annotation)
 

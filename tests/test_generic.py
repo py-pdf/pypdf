@@ -513,7 +513,32 @@ def test_annotation_builder_free_text():
         font_size="20pt",
         font_color="00ff00",
         border_color="0000ff",
-        bg_color="cdcdcd",
+        background_color="cdcdcd",
+    )
+    writer.add_annotation(0, annotation)
+
+    # Assert: You need to inspect the file manually
+    target = "annotated-pdf.pd"
+    with open(target, "wb") as fp:
+        writer.write(fp)
+
+    os.remove(target)  # comment this out for manual inspection
+
+
+def test_annotation_builder_line():
+    # Arrange
+    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    writer = PdfWriter()
+    writer.add_page(page)
+
+    # Act
+    annotation = AnnotationBuilder.line(
+        text="Hello World\nLine2",
+        rect=(50, 550, 200, 650),
+        p1=(50, 550),
+        p2=(200, 650),
     )
     writer.add_annotation(0, annotation)
 
