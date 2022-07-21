@@ -1633,7 +1633,7 @@ class PdfWriter:
 
     def getPageLayout(self) -> Optional[LayoutType]:  # pragma: no cover
         """
-        .. deprecated:: 1.28.0raise
+        .. deprecated:: 1.28.0
 
             Use :py:attr:`page_layout` instead.
         """
