@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from PyPDF2 import PdfMerger, PdfReader
+from PyPDF2 import PdfReader
 from PyPDF2._reader import convert_to_int, convertToInt
 from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import PageAttributes as PG
@@ -812,16 +812,6 @@ def test_get_fields_read_write_report():
     os.remove("tmp-fields-report.txt")
 
 
-def test_unexpected_destination():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/913/913678.pdf"
-    name = "tika-913678.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    merger = PdfMerger()
-    with pytest.raises(PdfReadError) as exc:
-        merger.append(reader)
-    assert exc.value.args[0] == "Unexpected destination '/1'"
-
-
 @pytest.mark.parametrize(
     "src",
     [
@@ -978,3 +968,33 @@ def test_outline_count():
             None,
         ],
     ]
+
+
+def test_outline_missing_title():
+    reader = PdfReader(os.path.join(RESOURCE_ROOT, "outline-without-title.pdf"), strict=True)
+    with pytest.raises(PdfReadError) as exc:
+        reader.outlines
+    assert exc.value.args[0].startswith("Outline Entry Missing /Title attribute:")
+
+
+def test_outline_with_missing_named_destination():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/913/913678.pdf"
+    name = "tika-913678.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    # outline items in document reference a named destination that is not defined
+    assert reader.outlines[1][0].title.startswith('Report for 2002AZ3B: Microbial')
+
+
+def test_outline_with_empty_action():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
+    name = "tika-924546.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    # outline (entitled Tables and Figures) utilize an empty action (/A)
+    # that has no type or destination
+    assert reader.outlines[-4].title == 'Tables'
+
+
+def test_outlines_with_invalid_destinations():
+    reader = PdfReader(os.path.join(RESOURCE_ROOT, "outlines-with-invalid-destinations.pdf"))
+    # contains 9 outlines, 6 with invalid destinations caused by different malformations
+    assert len(reader.outlines) == 9

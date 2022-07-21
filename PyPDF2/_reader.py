@@ -807,15 +807,31 @@ class PdfReader:
         title: str,
         array: List[Union[NumberObject, IndirectObject, NullObject, DictionaryObject]],
     ) -> Destination:
-        page, typ = array[0:2]
-        array = array[2:]
-        try:
-            return Destination(title, page, typ, *array)  # type: ignore
-        except PdfReadError:
-            warnings.warn(f"Unknown destination: {title} {array}", PdfReadWarning)
-            if self.strict:
-                raise
-            else:
+        page, typ = None, None
+        # handle outlines with missing or invalid destination
+        if (
+            isinstance(array, type(None))
+            or (
+                isinstance(array, ArrayObject)
+                and len(array) == 0
+            )
+            or (
+                isinstance(array, str)
+            )
+        ):
+
+            page = NullObject()
+            typ = TextStringObject("/Fit")
+            return Destination(title, page, typ)
+        else:
+            page, typ = array[0:2]  # type: ignore
+            array = array[2:]
+            try:
+                return Destination(title, page, typ, *array)  # type: ignore
+            except PdfReadError:
+                warnings.warn(f"Unknown destination: {title} {array}", PdfReadWarning)
+                if self.strict:
+                    raise
                 # create a link to first Page
                 tmp = self.pages[0].indirect_ref
                 indirect_ref = NullObject() if tmp is None else tmp
@@ -826,26 +842,45 @@ class PdfReader:
     def _build_outline(self, node: DictionaryObject) -> Optional[Destination]:
         dest, title, outline = None, None, None
 
-        if "/A" in node and "/Title" in node:
-            # Action, section 8.5 (only type GoTo supported)
+        # title required for valid outline
+        # PDFv1.7 Table 153
+        try:
             title = node["/Title"]
+        except KeyError:
+            if self.strict:
+                raise PdfReadError(f"Outline Entry Missing /Title attribute: {node!r}")
+            title = ''  # type: ignore
+
+        if "/A" in node:
+            # Action, PDFv1.7 Section 12.6 (only type GoTo supported)
             action = cast(DictionaryObject, node["/A"])
             action_type = cast(NameObject, action[GoToActionArguments.S])
             if action_type == "/GoTo":
                 dest = action[GoToActionArguments.D]
-        elif "/Dest" in node and "/Title" in node:
-            # Destination, section 8.2.1
-            title = node["/Title"]
+        elif "/Dest" in node:
+            # Destination, PDFv1.7 Section 12.3.2
             dest = node["/Dest"]
+            # if array was referenced in another object, will be a dict w/ key "/D"
+            if isinstance(dest, DictionaryObject) and "/D" in dest:
+                dest = dest["/D"]
 
-        # if destination found, then create outline
-        if dest:
-            if isinstance(dest, ArrayObject):
-                outline = self._build_destination(title, dest)  # type: ignore
-            elif isinstance(dest, str) and dest in self._namedDests:
+        if isinstance(dest, ArrayObject):
+            outline = self._build_destination(title, dest)  # type: ignore
+        elif isinstance(dest, str):
+            # named destination, addresses NameObject Issue #193
+            try:
                 outline = self._build_destination(title, self._namedDests[dest].dest_array)  # type: ignore
-            else:
+            except KeyError:
+                # named destination not found in Name Dict
+                outline = self._build_destination(title, None)
+        elif isinstance(dest, type(None)):
+            # outline not required to have destination or action
+            # PDFv1.7 Table 153
+            outline = self._build_destination(title, dest)  # type: ignore
+        else:
+            if self.strict:
                 raise PdfReadError(f"Unexpected destination {dest!r}")
+            outline = self._build_destination(title, None)  # type: ignore
 
         # if outline created, add color, format, and child count if present
         if outline:
