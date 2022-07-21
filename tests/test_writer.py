@@ -529,7 +529,7 @@ def test_write_dict_stream_object():
         b"(The single quote operator) ' "
         b"ET"
     )
-    from PyPDF2.generic import NameObject, IndirectObject
+    from PyPDF2.generic import IndirectObject, NameObject
 
     stream_object = StreamObject()
     stream_object[NameObject("/Type")] = NameObject("/Text")
@@ -570,3 +570,35 @@ def test_write_dict_stream_object():
         assert k in objects_hash, "Missing %s" % v
 
     os.remove("tmp-writer-do-not-commit.pdf")
+
+
+def test_add_single_annotation():
+    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    writer = PdfWriter()
+    writer.add_page(page)
+
+    annot_dict = {
+        "/Type": "/Annot",
+        "/Subtype": "/Text",
+        "/Rect": [270.75, 596.25, 294.75, 620.25],
+        "/Contents": "Note in second paragraph",
+        "/C": [1, 1, 0],
+        "/M": "D:20220406191858+02'00",
+        "/Popup": {
+            "/Type": "/Annot",
+            "/Subtype": "/Popup",
+            "/Rect": [294.75, 446.25, 494.75, 596.25],
+            "/M": "D:20220406191847+02'00",
+        },
+        "/T": "moose",
+    }
+    writer.add_annotation(0, annot_dict)
+    # Assert manually
+    target = "annot-single-out.pdf"
+    with open(target, "wb") as fp:
+        writer.write(fp)
+
+    # Cleanup
+    os.remove(target)  # remove for testing

@@ -1808,6 +1808,8 @@ class PdfWriter:
 
 
 def _pdf_objectify(obj: Union[Dict[str, Any], str, int, List[Any]]) -> PdfObject:
+    if isinstance(obj, PdfObject):
+        return obj
     if isinstance(obj, dict):
         to_add = DictionaryObject()
         for key, value in obj.items():
