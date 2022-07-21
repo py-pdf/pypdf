@@ -22,6 +22,13 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
 sys.path.append(PROJECT_ROOT)
 
 
+def test_dropdown_items():
+    inputfile = os.path.join(RESOURCE_ROOT, "libreoffice-form.pdf")
+    reader = PdfReader(inputfile)
+    fields = reader.get_fields()
+    assert "/Opt" in fields["Nationality"].keys()
+
+
 def test_PdfReaderFileLoad():
     """
     Test loading and parsing of a file. Extract text of the file and compare to expected

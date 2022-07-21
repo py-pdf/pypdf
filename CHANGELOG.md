@@ -1,5 +1,31 @@
 # CHANGELOG
 
+## Version 2.7.0, 2022-07-21
+
+### New Features (ENH)
+-  Add `outline_count` property (#1129)
+
+### Bug Fixes (BUG)
+-  Make reader.get_fields also return dropdowns with options (#1114)
+-  Add deprecated EncodedStreamObject functions back until PyPDF2==3.0.0 (#1139)
+
+### Robustness (ROB)
+-  Cope with missing /W entry (#1136)
+-  Cope with invalid parent xref (#1133)
+
+### Documentation (DOC)
+-  Contributors file (#1132)
+-  Fix type in signature of PdfWriter.add_uri (#1131)
+
+### Developer Experience (DEV)
+-  Add .git-blame-ignore-revs (#1141)
+
+### Code Style (STY)
+-  Fixing typos (#1137)
+-  Re-use code via get_outlines_property in tests (#1130)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.6.0...2.7.0
+
 ## Version 2.6.0, 2022-07-17
 
 ### New Features (ENH)

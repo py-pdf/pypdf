@@ -12,6 +12,7 @@ from PyPDF2.generic import (
     Bookmark,
     BooleanObject,
     ByteStringObject,
+    CheckboxRadioButtonAttributes,
     Destination,
     DictionaryObject,
     FloatObject,
@@ -522,3 +523,7 @@ def test_annotation_builder_free_text():
         writer.write(fp)
 
     os.remove(target)  # comment this out for manual inspection
+
+
+def test_CheckboxRadioButtonAttributes_opt():
+    assert "/Opt" in CheckboxRadioButtonAttributes.attributes_dict()

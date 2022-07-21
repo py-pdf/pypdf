@@ -68,7 +68,7 @@ from ._utils import (
     skip_over_comment,
     str_,
 )
-from .constants import FieldDictionaryAttributes
+from .constants import CheckboxRadioButtonAttributes, FieldDictionaryAttributes
 from .constants import FilterTypes as FT
 from .constants import StreamAttributes as SA
 from .constants import TypArguments as TA
@@ -1162,8 +1162,16 @@ class EncodedStreamObject(StreamObject):
             self.decoded_self = decoded
             return decoded._data
 
+    def getData(self) -> Union[None, str, bytes]:  # pragma: no cover
+        deprecate_with_replacement("getData", "get_data")
+        return self.get_data()
+
     def set_data(self, data: Any) -> None:
         raise PdfReadError("Creating EncodedStreamObject is not currently supported")
+
+    def setData(self, data: Any) -> None:  # pragma: no cover
+        deprecate_with_replacement("setData", "set_data")
+        return self.set_data(data)
 
 
 class ContentStream(DecodedStreamObject):
@@ -1610,8 +1618,11 @@ class Field(TreeObject):
 
     def __init__(self, data: Dict[str, Any]) -> None:
         DictionaryObject.__init__(self)
-
-        for attr in FieldDictionaryAttributes.attributes():
+        field_attributes = (
+            FieldDictionaryAttributes.attributes()
+            + CheckboxRadioButtonAttributes.attributes()
+        )
+        for attr in field_attributes:
             try:
                 self[NameObject(attr)] = data[attr]
             except KeyError:
