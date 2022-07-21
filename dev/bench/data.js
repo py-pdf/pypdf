@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658421166560,
+  "lastUpdate": 1658422464322,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -10354,6 +10354,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.009123891115513599",
             "extra": "mean: 3.7459381222000045 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0f520528b881688e7324ee5aab3c379dac678e1f",
+          "message": "STY: Variable naming / opening PDF with PdfReader (#1144)",
+          "timestamp": "2022-07-21T18:53:15+02:00",
+          "tree_id": "6d5405e51617a97e341a3bac1ab4970eb2441d7c",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/0f520528b881688e7324ee5aab3c379dac678e1f"
+        },
+        "date": 1658422463653,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9211263296360976,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00985425999628602",
+            "extra": "mean: 1.0856274191999944 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.865024098974253,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007481799107634444",
+            "extra": "mean: 92.03845209090775 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2399999405376148,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08863718826884263",
+            "extra": "mean: 4.166667698999999 sec\nrounds: 5"
           }
         ]
       }
