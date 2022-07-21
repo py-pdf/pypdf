@@ -1,3 +1,11 @@
+Version 1.28.5, 2022-07-21
+--------------------------
+
+Bug Fixes (BUG):
+-  BUG: Add missing deprecated EncodedStreamObject functions (#1140)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.28.4...1.28.5
+
 Version 1.28.4, 2022-05-29
 --------------------------
 
