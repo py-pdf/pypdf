@@ -285,7 +285,10 @@ class PdfMerger:
         self._write_bookmarks()
 
         # Write the output to the file
-        self.output.write(fileobj)
+        my_file = self.output.write(fileobj)
+
+        if my_file:
+            fileobj.close()
 
     def close(self) -> None:
         """Shut all file descriptors (input and output) and clear all memory usage."""

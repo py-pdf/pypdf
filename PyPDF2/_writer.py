@@ -823,8 +823,7 @@ class PdfWriter:
 
         self.write_stream(fileobj)
 
-        if my_file:
-            fileobj.close()
+        return my_file
 
     def _write_header(self, stream: StreamType) -> List[int]:
         object_positions = []
