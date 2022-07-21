@@ -1618,9 +1618,11 @@ class Field(TreeObject):
 
     def __init__(self, data: Dict[str, Any]) -> None:
         DictionaryObject.__init__(self)
-        Field_attributes = FieldDictionaryAttributes.attributes()
-        Field_attributes = Field_attributes + CheckboxRadioButtonAttributes.attributes()
-        for attr in Field_attributes:
+        field_attributes = (
+            FieldDictionaryAttributes.attributes()
+            + CheckboxRadioButtonAttributes.attributes()
+        )
+        for attr in field_attributes:
             try:
                 self[NameObject(attr)] = data[attr]
             except KeyError:
