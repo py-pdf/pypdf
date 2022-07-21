@@ -24,12 +24,9 @@ def test_writer_clone():
     assert len(writer.pages) == 4
 
 
-def test_writer_operations():
+def writer_operate(writer):
     """
-    This test just checks if the operation throws an exception.
-
-    This should be done way more thoroughly: It should be checked if the
-    output is as expected.
+    To test the writer that initialized by each of the four usages.
     """
     pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
     pdf_outline_path = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
@@ -37,7 +34,6 @@ def test_writer_operations():
     reader = PdfReader(pdf_path)
     reader_outline = PdfReader(pdf_outline_path)
 
-    writer = PdfWriter()
     page = reader.pages[0]
     with pytest.raises(PageSizeNotDefinedError) as exc:
         writer.add_blank_page()
@@ -80,16 +76,56 @@ def test_writer_operations():
 
     writer.add_attachment("foobar.gif", b"foobarcontent")
 
-    # finally, write "output" to PyPDF2-output.pdf
-    tmp_path = "dont_commit_writer.pdf"
-    with open(tmp_path, "wb") as output_stream:
-        writer.write(output_stream)
-
     # Check that every key in _idnum_hash is correct
     objects_hash = [o.hash_value() for o in writer._objects]
     for k, v in writer._idnum_hash.items():
         assert v.pdf == writer
         assert k in objects_hash, "Missing %s" % v
+
+
+tmp_path = "dont_commit_writer.pdf"
+
+
+def test_writer_operations_by_totally_traditional_usage():
+    writer = PdfWriter()
+
+    writer_operate(writer)
+
+    # finally, write "output" to PyPDF2-output.pdf
+    with open(tmp_path, "wb") as output_stream:
+        writer.write(output_stream)
+
+    # cleanup
+    os.remove(tmp_path)
+
+
+def test_writer_operations_by_semi_traditional_usage():
+    with PdfWriter() as writer:
+        writer_operate(writer)
+
+        # finally, write "output" to PyPDF2-output.pdf
+        with open(tmp_path, "wb") as output_stream:
+            writer.write(output_stream)
+
+    # cleanup
+    os.remove(tmp_path)
+
+
+def test_writer_operations_by_semi_new_traditional_usage():
+    with PdfWriter() as writer:
+        writer_operate(writer)
+
+        # finally, write "output" to PyPDF2-output.pdf
+        writer.write(tmp_path)
+
+    # cleanup
+    os.remove(tmp_path)
+
+
+def test_writer_operation_by_totally_new_usage():
+    # This includes write "output" to PyPDF2-output.pdf
+    with PdfWriter(tmp_path) as writer:
+        writer_operate(writer)
 
     # cleanup
     os.remove(tmp_path)

@@ -17,13 +17,13 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
 sys.path.append(PROJECT_ROOT)
 
 
-def test_merge():
+def merger_operate(merger):
     pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
     outline = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
     pdf_forms = os.path.join(RESOURCE_ROOT, "pdflatex-forms.pdf")
     pdf_pw = os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf")
 
-    merger = PyPDF2.PdfMerger()
+    # merger = PyPDF2.PdfMerger()
 
     # string path:
     merger.append(pdf_path)
@@ -78,10 +78,6 @@ def test_merge():
     merger.set_page_layout("/SinglePage")
     merger.set_page_mode("/UseThumbs")
 
-    tmp_path = "dont_commit_merged.pdf"
-    merger.write(tmp_path)
-    merger.close()
-
     # Check if bookmarks are correct
     reader = PyPDF2.PdfReader(tmp_path)
     assert [
@@ -102,7 +98,37 @@ def test_merge():
 
     # TODO: There seem to be no destinations for those links?
 
-    # Clean up
+
+tmp_path = "dont_commit_merged.pdf"
+
+
+def test_writer_operations_by_totally_traditional_usage():
+    merger = PdfMerger()
+
+    merger_operate(merger)
+
+    merger.write(tmp_path)
+    merger.close()
+
+    # cleanup
+    os.remove(tmp_path)
+
+
+def test_writer_operations_by_semi_traditional_usage():
+    with PdfMerger() as merger:
+        merger_operate(merger)
+
+        merger.write(tmp_path)
+
+    # cleanup
+    os.remove(tmp_path)
+
+
+def test_writer_operation_by_totally_new_usage():
+    with PdfMerger(tmp_path) as merger:
+        merger_operate(merger)
+
+    # cleanup
     os.remove(tmp_path)
 
 
