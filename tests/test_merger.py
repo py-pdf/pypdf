@@ -23,8 +23,6 @@ def merger_operate(merger):
     pdf_forms = os.path.join(RESOURCE_ROOT, "pdflatex-forms.pdf")
     pdf_pw = os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf")
 
-    # merger = PyPDF2.PdfMerger()
-
     # string path:
     merger.append(pdf_path)
     merger.append(outline)
