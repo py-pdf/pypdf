@@ -501,7 +501,6 @@ class PdfReader:
                 break
 
         if "/Fields" in tree:
-
             fields = cast(ArrayObject, tree["/Fields"])
             for f in fields:
                 field = f.get_object()
