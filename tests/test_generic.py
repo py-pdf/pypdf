@@ -518,8 +518,8 @@ def test_annotation_builder_free_text():
     writer.add_annotation(0, annotation)
 
     # Assert: You need to inspect the file manually
-    target = "out-annotation-free-text.pdf"
-    with open("out-annotation-free-text.pdf", "wb") as fp:
+    target = "annotated-pdf.pd"
+    with open(target, "wb") as fp:
         writer.write(fp)
 
     os.remove(target)  # comment this out for manual inspection
