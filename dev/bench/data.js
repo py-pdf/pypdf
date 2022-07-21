@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658384425774,
+  "lastUpdate": 1658420006487,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -10264,6 +10264,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.08469432525084206",
             "extra": "mean: 3.303869705199986 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "matt.peveler@gmail.com",
+            "name": "Matthew Peveler",
+            "username": "MasterOdin"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e1f9772693b788deae6b0fcdcb5ff49577706549",
+          "message": "BUG: Add deprecated EncodedStreamObject functions back until PyPDF2==3.0.0 (#1139)\n\nAccidentally, PyPDF2 did not follow the deprecation process:\r\nhttps://pypdf2.readthedocs.io/en/latest/dev/deprecations.html\r\n\r\nISSUE: The EncodedStreamObject.getData / setData were removed\r\nAFFECTS: PyPDF2>=1.28.3,<=2.6.0\r\nFIX: Add the getData / setData methods back with deprecation warnings\r\n\r\nCloses #1138",
+          "timestamp": "2022-07-21T18:12:15+02:00",
+          "tree_id": "c7e95639a866503b18bd2db13508a853184200cd",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/e1f9772693b788deae6b0fcdcb5ff49577706549"
+        },
+        "date": 1658420005839,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0455819351367865,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011089372748378153",
+            "extra": "mean: 956.4052001999983 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.235745291320878,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005902954999637591",
+            "extra": "mean: 81.72775553846525 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2685975306553702,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007212211107266255",
+            "extra": "mean: 3.7230424180000057 sec\nrounds: 5"
           }
         ]
       }
