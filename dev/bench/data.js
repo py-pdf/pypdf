@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658423128879,
+  "lastUpdate": 1658423229566,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -10444,6 +10444,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.08896515118510831",
             "extra": "mean: 11.006885761800003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "6899c7448ee6d3546b4e3afa60754bd595556ead",
+          "message": "REL: 2.7.0\n\nNew Features (ENH):\n-  Add `outline_count` property (#1129)\n\nBug Fixes (BUG):\n-  Make reader.get_fields also return dropdowns with options (#1114)\n-  Add deprecated EncodedStreamObject functions back until PyPDF2==3.0.0 (#1139)\n\nRobustness (ROB):\n-  Cope with missing /W entry (#1136)\n-  Cope with invalid parent xref (#1133)\n\nDocumentation (DOC):\n-  Contributors file (#1132)\n-  Fix type in signature of PdfWriter.add_uri (#1131)\n\nDeveloper Experience (DEV):\n-  Add .git-blame-ignore-revs (#1141)\n\nCode Style (STY):\n-  Fixing typos (#1137)\n-  Re-use code via get_outlines_property in tests (#1130)\n\nFull Changelog: https://github.com/py-pdf/PyPDF2/compare/2.6.0...2.7.0",
+          "timestamp": "2022-07-21T19:03:11+02:00",
+          "tree_id": "bb3c8bba93828e4f5504757b157d15a35a18f295",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/6899c7448ee6d3546b4e3afa60754bd595556ead"
+        },
+        "date": 1658423228164,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0622521746025002,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007922873952649866",
+            "extra": "mean: 941.3960487999987 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.159882156449015,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004214308642453213",
+            "extra": "mean: 82.23763907692543 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27242552177198925,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01275817258528066",
+            "extra": "mean: 3.6707280341999877 sec\nrounds: 5"
           }
         ]
       }
