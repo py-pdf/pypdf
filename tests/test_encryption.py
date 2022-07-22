@@ -3,6 +3,7 @@ import os
 import pytest
 
 import PyPDF2
+from PyPDF2._encryption import CryptRC4
 from PyPDF2.errors import DependencyError
 
 try:
@@ -139,3 +140,16 @@ def test_encryption_merge(names):
         pdf_merger.append(pdf)
     # no need to write to file
     pdf_merger.close()
+
+
+@pytest.mark.parametrize(
+    "cryptcls",
+    [
+        CryptRC4,
+    ],
+)
+def test_encrypt_decrypt_class(cryptcls):
+    message = b"Hello World"
+    key = bytes(0 for _ in range(128))  # b"secret key"
+    crypt = cryptcls(key)
+    assert crypt.decrypt(crypt.encrypt(message)) == message
