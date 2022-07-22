@@ -637,19 +637,11 @@ class NameObject(str, PdfObject):
             raise PdfReadError("name read error")
         name += read_until_regex(stream, NameObject.delimiter_pattern, ignore_eof=True)
         try:
-            try:
-                ret = name.decode("utf-8")
-            except (UnicodeEncodeError, UnicodeDecodeError):
-                ret = name.decode("gbk")
-            return NameObject(ret)
-        except (UnicodeEncodeError, UnicodeDecodeError) as e:
-            # Name objects should represent irregular characters
-            # with a '#' followed by the symbol's hex number
-            if not pdf.strict:
-                warnings.warn("Illegal character in Name Object", PdfReadWarning)
-                return NameObject(name)
-            else:
-                raise PdfReadError("Illegal character in Name Object") from e
+            ret = name.decode("utf-8")
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            warnings.warn("Illegal character in Name Object", PdfReadWarning)
+            ret = name.decode("gbk")
+        return NameObject(ret)
 
     @staticmethod
     def readFromStream(
