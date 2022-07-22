@@ -782,12 +782,6 @@ class PdfWriter:
         self._encrypt_key = key
 
     def write_stream(self, stream: StreamType) -> None:
-        """
-        Write the collection of pages added to this object out as a PDF file.
-
-        :param stream: An object to write the file to.  The object must support
-            the write method and the tell method, similar to a file object.
-        """
         if hasattr(stream, "mode") and "b" not in stream.mode:
             warnings.warn(
                 f"File <{stream.name}> to write to is not in binary mode. "  # type: ignore
@@ -813,6 +807,14 @@ class PdfWriter:
         stream.write(b_(f"\nstartxref\n{xref_location}\n%%EOF\n"))  # eof
 
     def write(self, stream: StrByteType) -> None:
+        """
+        Write the collection of pages added to this object out as a PDF file.
+
+        :param stream: An object to write the file to.  The object can support
+            the write method and the tell method, similar to a file object, or
+            be a file path, just like the fileobj, just named it stream to keep
+            existing workflow.
+        """
         my_file = False
 
         if fileobj == "":
