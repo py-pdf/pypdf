@@ -265,13 +265,13 @@ def test_merge_with_warning(url, name):
         )
     ],
 )
-def test_merge(url, name):
+def test_merge(caplog, url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
     merger = PdfMerger()
     merger.append(reader)
-    with pytest.warns(PdfReadWarning):
-        merger.write("tmp.merged.pdf")
+    merger.write("tmp.merged.pdf")
+    assert "Illegal character in Name" in caplog.text
 
     # Cleanup
     os.remove("tmp.merged.pdf")

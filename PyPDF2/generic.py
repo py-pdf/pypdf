@@ -639,7 +639,7 @@ class NameObject(str, PdfObject):
         try:
             ret = name.decode("utf-8")
         except (UnicodeEncodeError, UnicodeDecodeError):
-            warnings.warn("Illegal character in Name Object", PdfReadWarning)
+            logger.warning("Illegal character in Name Object")
             ret = name.decode("gbk")
         return NameObject(ret)
 
