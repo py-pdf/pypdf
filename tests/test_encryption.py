@@ -3,8 +3,9 @@ import os
 import pytest
 
 import PyPDF2
+from PyPDF2 import PdfReader
 from PyPDF2._encryption import CryptRC4
-from PyPDF2.errors import DependencyError
+from PyPDF2.errors import DependencyError, PdfReadError
 
 try:
     from Crypto.Cipher import AES  # noqa: F401
@@ -153,3 +154,10 @@ def test_encrypt_decrypt_class(cryptcls):
     key = bytes(0 for _ in range(128))  # b"secret key"
     crypt = cryptcls(key)
     assert crypt.decrypt(crypt.encrypt(message)) == message
+
+
+def test_decrypt_not_decrypted_pdf():
+    path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    with pytest.raises(PdfReadError) as exc:
+        PdfReader(path, password="nonexistant")
+    assert exc.value.args[0] == "Not encrypted file"
