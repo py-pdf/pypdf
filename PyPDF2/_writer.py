@@ -812,7 +812,7 @@ class PdfWriter:
         self._write_trailer(stream)
         stream.write(b_(f"\nstartxref\n{xref_location}\n%%EOF\n"))  # eof
 
-    def write(self, fileobj: StrByteType) -> None:
+    def write(self, stream: StrByteType) -> None:
         my_file = False
 
         if fileobj == "":
