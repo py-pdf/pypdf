@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658507738583,
+  "lastUpdate": 1658514339834,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -10579,6 +10579,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.027940308210069778",
             "extra": "mean: 3.7148473655999994 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "aaac604bce06519906f834b4e5b0d5edd6ae4924",
+          "message": "TST: Test CryptRC4 encryption class; test image extraction filters (#1147)",
+          "timestamp": "2022-07-22T20:24:33+02:00",
+          "tree_id": "239969255e6e9c5abfac6e024166785739a3905a",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/aaac604bce06519906f834b4e5b0d5edd6ae4924"
+        },
+        "date": 1658514338694,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.054967256019145,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0074270191738517516",
+            "extra": "mean: 947.8967183999998 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.274950224581255,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00625585159293243",
+            "extra": "mean: 81.46672546153756 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2685618945931708,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018636486308825393",
+            "extra": "mean: 3.7235364366 sec\nrounds: 5"
           }
         ]
       }
