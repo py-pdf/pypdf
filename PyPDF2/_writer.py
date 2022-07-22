@@ -174,7 +174,8 @@ class PdfWriter:
     # Write to the fileobj.
     def __exit__(self, exc_type: Optional[Type[BaseException]], exc: Optional[BaseException],
                  traceback: Optional[TracebackType]) -> None:
-        self.write(self.fileobj)
+        if self.fileobj:
+            self.write(self.fileobj)
 
     @property
     def pdf_header(self) -> bytes:
@@ -828,7 +829,7 @@ class PdfWriter:
         if self.with_as_usage:
             fileobj.close()
 
-        return my_file
+        return my_file, fileobj
 
     def _write_header(self, stream: StreamType) -> List[int]:
         object_positions = []
