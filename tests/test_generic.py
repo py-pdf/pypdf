@@ -459,9 +459,10 @@ def test_name_object_read_from_stream_unicode_error():  # L588
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/974/974966.pdf"
     name = "tika-974966.pdf"
 
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    for page in reader.pages:
-        page.extract_text()
+    with pytest.warns(PdfReadWarning):
+        reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+        for page in reader.pages:
+            page.extract_text()
 
 
 def test_bool_repr():
