@@ -2058,3 +2058,104 @@ def decode_pdfdocencoding(byte_array: bytes) -> str:
             )
         retval += c
     return retval
+
+
+def hex_to_rgb(value: str) -> Tuple[float, float, float]:
+    return tuple(int(value[i : i + 2], 16) / 255.0 for i in (0, 2, 4))  # type: ignore
+
+
+class AnnotationBuilder:
+    @staticmethod
+    def free_text(
+        text: str,
+        rect: Tuple[float, float, float, float],
+        font: str = "Helvetica",
+        bold: bool = False,
+        italic: bool = False,
+        font_size: str = "14pt",
+        font_color: str = "000000",
+        border_color: str = "000000",
+        background_color: str = "ffffff",
+    ) -> DictionaryObject:
+        """Add text in a rectangle to a page."""
+        font_str = "font: "
+        if bold is True:
+            font_str = font_str + "bold "
+        if italic is True:
+            font_str = font_str + "italic "
+        font_str = font_str + font + " " + font_size
+        font_str = font_str + ";text-align:left;color:#" + font_color
+
+        bg_color_str = ""
+        for st in hex_to_rgb(border_color):
+            bg_color_str = bg_color_str + str(st) + " "
+        bg_color_str = bg_color_str + "rg"
+
+        free_text = DictionaryObject()
+        free_text.update(
+            {
+                NameObject("/Type"): NameObject("/Annot"),
+                NameObject("/Subtype"): NameObject("/FreeText"),
+                NameObject("/Rect"): RectangleObject(rect),
+                NameObject("/Contents"): TextStringObject(text),
+                # font size color
+                NameObject("/DS"): TextStringObject(font_str),
+                # border color
+                NameObject("/DA"): TextStringObject(bg_color_str),
+                # background color
+                NameObject("/C"): ArrayObject(
+                    [FloatObject(n) for n in hex_to_rgb(background_color)]
+                ),
+            }
+        )
+        return free_text
+
+    @staticmethod
+    def line(
+        p1: Tuple[float, float],
+        p2: Tuple[float, float],
+        rect: Tuple[float, float, float, float],
+        text: str = "",
+        title_bar: str = "",
+    ) -> DictionaryObject:
+        """
+        Draw a line on the PDF.
+
+        :param p1: First point
+        :param p2: Second point
+        :param rect: Rectangle
+        :param text: Text to be displayed as the line annotation
+        :param title_bar: Text to be displayed in the title bar of the
+            annotation; by convention this is the name of the author
+        """
+        line_obj = DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Annot"),
+                NameObject("/Subtype"): NameObject("/Line"),
+                NameObject("/Rect"): RectangleObject(rect),
+                NameObject("/T"): TextStringObject(title_bar),
+                NameObject("/L"): ArrayObject(
+                    [
+                        FloatObject(p1[0]),
+                        FloatObject(p1[1]),
+                        FloatObject(p2[0]),
+                        FloatObject(p2[1]),
+                    ]
+                ),
+                NameObject("/LE"): ArrayObject(
+                    [
+                        NameObject(None),
+                        NameObject(None),
+                    ]
+                ),
+                NameObject("/IC"): ArrayObject(
+                    [
+                        FloatObject(0.5),
+                        FloatObject(0.5),
+                        FloatObject(0.5),
+                    ]
+                ),
+                NameObject("/Contents"): TextStringObject(text),
+            }
+        )
+        return line_obj

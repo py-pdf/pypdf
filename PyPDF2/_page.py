@@ -1583,6 +1583,27 @@ class PageObject(DictionaryObject):
         deprecate_with_replacement("artBox", "artbox")
         self.artbox = value
 
+    @property
+    def annotations(self) -> Optional[ArrayObject]:
+        if "/Annots" not in self:
+            return None
+        else:
+            return cast(ArrayObject, self["/Annots"])
+
+    @annotations.setter
+    def annotations(self, value: Optional[ArrayObject]) -> None:
+        """
+        Set the annotations array of the page.
+
+        Typically you don't want to set this value, but append to it.
+        If you append to it, don't forget to add the object first to the writer
+        and only add the indirect object.
+        """
+        if value is None:
+            del self[NameObject("/Annots")]
+        else:
+            self[NameObject("/Annots")] = value
+
 
 class _VirtualList:
     def __init__(
