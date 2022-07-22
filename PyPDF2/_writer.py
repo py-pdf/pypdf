@@ -821,8 +821,6 @@ class PdfWriter:
         if isinstance(fileobj, str):
             fileobj = FileIO(fileobj, "wb")
             my_file = True
-        else:
-            pass
 
         self.write_stream(fileobj)
 
