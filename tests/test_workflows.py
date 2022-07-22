@@ -270,7 +270,8 @@ def test_merge(url, name):
     reader = PdfReader(data)
     merger = PdfMerger()
     merger.append(reader)
-    merger.write("tmp.merged.pdf")
+    with pytest.warns(PdfReadWarning):
+        merger.write("tmp.merged.pdf")
 
     # Cleanup
     os.remove("tmp.merged.pdf")
