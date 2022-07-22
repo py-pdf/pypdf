@@ -2117,7 +2117,7 @@ class AnnotationBuilder:
         rect: Tuple[float, float, float, float],
         text: str = "",
         title_bar: str = "",
-    ):
+    ) -> DictionaryObject:
         """
         Draw a line on the PDF.
 
