@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658468541411,
+  "lastUpdate": 1658507738583,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -10534,6 +10534,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01498053624153225",
             "extra": "mean: 3.738878194999984 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1a65a4663cdd05e09d005a425ba674b0238fe0a0",
+          "message": "ENH: Add writer.add_annotation, page.annotations, and generic.AnnotationBuilder (#1120)\n\n* Add `page.annotations` (getter and setter)\r\n* Add `writer.add_annotation(page_number, annotation_dictionary)`\r\n* Add AnnotationBuilder to generate the `annotation_dictionary` for the different subtypes of annotations. Similarly, we could have an AnnotationsParser.\r\n\r\nSee #107\r\n\r\nCloses #981",
+          "timestamp": "2022-07-22T18:34:35+02:00",
+          "tree_id": "327fe8c087ce13a89782bd362c17438e5159c516",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/1a65a4663cdd05e09d005a425ba674b0238fe0a0"
+        },
+        "date": 1658507737626,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0555700475119205,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006355115240418405",
+            "extra": "mean: 947.3554146000026 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.269059041570799,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005830062953548805",
+            "extra": "mean: 81.505843 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26919006397413214,
+            "unit": "iter/sec",
+            "range": "stddev: 0.027940308210069778",
+            "extra": "mean: 3.7148473655999994 sec\nrounds: 5"
           }
         ]
       }
