@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658563287327,
+  "lastUpdate": 1658586928217,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -10759,6 +10759,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.022519079174650174",
             "extra": "mean: 4.449347039399993 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "27702c2e098fcf62b37d34ee52cfeeb6c3cc4f12",
+          "message": "ROB: Cope with null params for FitH /FitV destination (#1152)\n\niaw PDF specifications, page 583\r\n\r\nCloses #1145",
+          "timestamp": "2022-07-23T16:34:28+02:00",
+          "tree_id": "57c3a8c6cf476d4f2c58cd8d358f184ffd2d1b43",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/27702c2e098fcf62b37d34ee52cfeeb6c3cc4f12"
+        },
+        "date": 1658586927635,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0592912684441653,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007315416636626577",
+            "extra": "mean: 944.0274170000009 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.451894798365847,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004598691486666011",
+            "extra": "mean: 80.30906269230907 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26655999741647496,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014119233750709323",
+            "extra": "mean: 3.7515006365999994 sec\nrounds: 5"
           }
         ]
       }
