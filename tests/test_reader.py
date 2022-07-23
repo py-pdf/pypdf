@@ -971,7 +971,9 @@ def test_outline_count():
 
 
 def test_outline_missing_title():
-    reader = PdfReader(os.path.join(RESOURCE_ROOT, "outline-without-title.pdf"), strict=True)
+    reader = PdfReader(
+        os.path.join(RESOURCE_ROOT, "outline-without-title.pdf"), strict=True
+    )
     with pytest.raises(PdfReadError) as exc:
         reader.outlines
     assert exc.value.args[0].startswith("Outline Entry Missing /Title attribute:")
@@ -982,7 +984,7 @@ def test_outline_with_missing_named_destination():
     name = "tika-913678.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     # outline items in document reference a named destination that is not defined
-    assert reader.outlines[1][0].title.startswith('Report for 2002AZ3B: Microbial')
+    assert reader.outlines[1][0].title.startswith("Report for 2002AZ3B: Microbial")
 
 
 def test_outline_with_empty_action():
@@ -991,10 +993,12 @@ def test_outline_with_empty_action():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     # outline (entitled Tables and Figures) utilize an empty action (/A)
     # that has no type or destination
-    assert reader.outlines[-4].title == 'Tables'
+    assert reader.outlines[-4].title == "Tables"
 
 
 def test_outlines_with_invalid_destinations():
-    reader = PdfReader(os.path.join(RESOURCE_ROOT, "outlines-with-invalid-destinations.pdf"))
+    reader = PdfReader(
+        os.path.join(RESOURCE_ROOT, "outlines-with-invalid-destinations.pdf")
+    )
     # contains 9 outlines, 6 with invalid destinations caused by different malformations
     assert len(reader.outlines) == 9

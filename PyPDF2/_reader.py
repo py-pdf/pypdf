@@ -808,13 +808,8 @@ class PdfReader:
         # handle outlines with missing or invalid destination
         if (
             isinstance(array, (type(None), NullObject))
-            or (
-                isinstance(array, ArrayObject)
-                and len(array) == 0
-            )
-            or (
-                isinstance(array, str)
-            )
+            or (isinstance(array, ArrayObject) and len(array) == 0)
+            or (isinstance(array, str))
         ):
 
             page = NullObject()
@@ -846,7 +841,7 @@ class PdfReader:
         except KeyError:
             if self.strict:
                 raise PdfReadError(f"Outline Entry Missing /Title attribute: {node!r}")
-            title = ''  # type: ignore
+            title = ""  # type: ignore
 
         if "/A" in node:
             # Action, PDFv1.7 Section 12.6 (only type GoTo supported)
@@ -1406,20 +1401,18 @@ class PdfReader:
                 break
 
     def _read_xref_tables_and_trailers(
-        self, stream: StreamType, startxref: int, xref_issue_nr: int
+        self, stream: StreamType, startxref: Optional[int], xref_issue_nr: int
     ) -> None:
         self.xref: Dict[int, Dict[Any, Any]] = {}
         self.xref_free_entry: Dict[int, Dict[Any, Any]] = {}
         self.xref_objStm: Dict[int, Tuple[Any, Any]] = {}
         self.trailer = DictionaryObject()
-        while True:
+        while startxref is not None:
             # load the xref table
             stream.seek(startxref, 0)
             x = stream.read(1)
             if x == b"x":
-                startxref = self._read_xref(stream)  # type: ignore
-                if startxref is None:
-                    break
+                startxref = self._read_xref(stream)
             elif xref_issue_nr:
                 try:
                     self._rebuild_xref_table(stream)
@@ -1438,9 +1431,7 @@ class PdfReader:
                 else:
                     break
             else:
-                startxref = self._read_xref_other_error(stream)  # type: ignore
-                if startxref is None:
-                    break
+                startxref = self._read_xref_other_error(stream, startxref)
 
     def _read_xref(self, stream) -> Optional[int]:
         self._read_standard_xref_table(stream)
