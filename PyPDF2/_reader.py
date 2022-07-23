@@ -1417,16 +1417,8 @@ class PdfReader:
             stream.seek(startxref, 0)
             x = stream.read(1)
             if x == b"x":
-                self._read_standard_xref_table(stream)
-                read_non_whitespace(stream)
-                stream.seek(-1, 1)
-                new_trailer = cast(Dict[str, Any], read_object(stream, self))
-                for key, value in new_trailer.items():
-                    if key not in self.trailer:
-                        self.trailer[key] = value
-                if "/Prev" in new_trailer:
-                    startxref = new_trailer["/Prev"]
-                else:
+                startxref = self._read_xref(stream)  # type: ignore
+                if startxref is None:
                     break
             elif xref_issue_nr:
                 try:
@@ -1446,49 +1438,68 @@ class PdfReader:
                 else:
                     break
             else:
-                # some PDFs have /Prev=0 in the trailer, instead of no /Prev
-                if startxref == 0:
-                    if self.strict:
-                        raise PdfReadError(
-                            "/Prev=0 in the trailer (try opening with strict=False)"
-                        )
-                    else:
-                        warnings.warn(
-                            "/Prev=0 in the trailer - assuming there"
-                            " is no previous xref table"
-                        )
-                        break
-                # bad xref character at startxref.  Let's see if we can find
-                # the xref table nearby, as we've observed this error with an
-                # off-by-one before.
-                stream.seek(-11, 1)
-                tmp = stream.read(20)
-                xref_loc = tmp.find(b"xref")
-                if xref_loc != -1:
-                    startxref -= 10 - xref_loc
-                    continue
-                # No explicit xref table, try finding a cross-reference stream.
-                stream.seek(startxref, 0)
-                found = False
-                for look in range(5):
-                    if stream.read(1).isdigit():
-                        # This is not a standard PDF, consider adding a warning
-                        startxref += look
-                        found = True
-                        break
-                if found:
-                    continue
-                # no xref table found at specified location
-                if "/Root" in self.trailer and not self.strict:
-                    # if Root has been already found, just raise warning
-                    warnings.warn("Invalid parent xref., rebuild xref", PdfReadWarning)
-                    try:
-                        self._rebuild_xref_table(stream)
-                        break
-                    except Exception:
-                        raise PdfReadError("can not rebuild xref")
+                startxref = self._read_xref_other_error(stream)  # type: ignore
+                if startxref is None:
                     break
-                raise PdfReadError("Could not find xref table at specified location")
+
+    def _read_xref(self, stream) -> Optional[int]:
+        self._read_standard_xref_table(stream)
+        read_non_whitespace(stream)
+        stream.seek(-1, 1)
+        new_trailer = cast(Dict[str, Any], read_object(stream, self))
+        for key, value in new_trailer.items():
+            if key not in self.trailer:
+                self.trailer[key] = value
+        if "/Prev" in new_trailer:
+            startxref = new_trailer["/Prev"]
+            return startxref
+        else:
+            return None
+
+    def _read_xref_other_error(self, stream, startxref) -> Optional[int]:
+        # some PDFs have /Prev=0 in the trailer, instead of no /Prev
+        if startxref == 0:
+            if self.strict:
+                raise PdfReadError(
+                    "/Prev=0 in the trailer (try opening with strict=False)"
+                )
+            else:
+                warnings.warn(
+                    "/Prev=0 in the trailer - assuming there"
+                    " is no previous xref table"
+                )
+                return None
+        # bad xref character at startxref.  Let's see if we can find
+        # the xref table nearby, as we've observed this error with an
+        # off-by-one before.
+        stream.seek(-11, 1)
+        tmp = stream.read(20)
+        xref_loc = tmp.find(b"xref")
+        if xref_loc != -1:
+            startxref -= 10 - xref_loc
+            return startxref
+        # No explicit xref table, try finding a cross-reference stream.
+        stream.seek(startxref, 0)
+        found = False
+        for look in range(5):
+            if stream.read(1).isdigit():
+                # This is not a standard PDF, consider adding a warning
+                startxref += look
+                found = True
+                break
+        if found:
+            return startxref
+        # no xref table found at specified location
+        if "/Root" in self.trailer and not self.strict:
+            # if Root has been already found, just raise warning
+            warnings.warn("Invalid parent xref., rebuild xref", PdfReadWarning)
+            try:
+                self._rebuild_xref_table(stream)
+                return None
+            except Exception:
+                raise PdfReadError("can not rebuild xref")
+            return None
+        raise PdfReadError("Could not find xref table at specified location")
 
     def _read_pdf15_xref_stream(
         self, stream: StreamType
