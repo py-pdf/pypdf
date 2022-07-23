@@ -810,7 +810,7 @@ class PdfReader:
         page, typ = None, None
         # handle outlines with missing or invalid destination
         if (
-            isinstance(array, type(None))
+            isinstance(array, (type(None), NullObject))
             or (
                 isinstance(array, ArrayObject)
                 and len(array) == 0
