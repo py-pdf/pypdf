@@ -455,14 +455,13 @@ def test_text_string_write_to_stream():
         page.compress_content_streams()
 
 
-def test_name_object_read_from_stream_unicode_error(caplog):  # L588
+def test_name_object_read_from_stream_unicode_error():  # L588
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/974/974966.pdf"
     name = "tika-974966.pdf"
 
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     for page in reader.pages:
         page.extract_text()
-    assert "Illegal character in Name" in caplog.text
 
 
 def test_bool_repr():
