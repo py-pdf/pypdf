@@ -502,9 +502,29 @@ def test_get_outline(url, name):
             "https://corpora.tika.apache.org/base/docs/govdocs1/935/935981.pdf",
             "tika-935981.pdf",
         ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/937/937334.pdf",
+            "tika-937334.pdf",
+        ),
     ],
 )
 def test_get_xfa(url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
     reader.xfa
+
+
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/988/988698.pdf",
+            "tika-988698.pdf",
+        ),
+    ],
+)
+def test_(url, name):
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+    for page in reader.pages:
+        page._get_fonts()
