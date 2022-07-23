@@ -521,9 +521,13 @@ def test_get_xfa(url, name):
             "https://corpora.tika.apache.org/base/docs/govdocs1/988/988698.pdf",
             "tika-988698.pdf",
         ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/914/914133.pdf",
+            "tika-988698.pdf",
+        ),
     ],
 )
-def test_(url, name):
+def test_get_fonts(url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
     for page in reader.pages:
