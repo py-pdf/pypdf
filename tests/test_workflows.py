@@ -271,7 +271,6 @@ def test_merge(caplog, url, name):
     merger = PdfMerger()
     merger.append(reader)
     merger.write("tmp.merged.pdf")
-    assert "Illegal character in Name" in caplog.text
 
     # Cleanup
     os.remove("tmp.merged.pdf")
