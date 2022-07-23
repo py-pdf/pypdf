@@ -1433,7 +1433,7 @@ class PdfReader:
             else:
                 startxref = self._read_xref_other_error(stream, startxref)
 
-    def _read_xref(self, stream) -> Optional[int]:
+    def _read_xref(self, stream: StreamType) -> Optional[int]:
         self._read_standard_xref_table(stream)
         read_non_whitespace(stream)
         stream.seek(-1, 1)
@@ -1447,7 +1447,9 @@ class PdfReader:
         else:
             return None
 
-    def _read_xref_other_error(self, stream, startxref) -> Optional[int]:
+    def _read_xref_other_error(
+        self, stream: StreamType, startxref: int
+    ) -> Optional[int]:
         # some PDFs have /Prev=0 in the trailer, instead of no /Prev
         if startxref == 0:
             if self.strict:
