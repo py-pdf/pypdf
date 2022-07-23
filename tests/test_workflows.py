@@ -478,3 +478,33 @@ def test_image_extraction2(url, name):
         for filepath in images_extracted:
             if os.path.exists(filepath):
                 os.remove(filepath)
+
+
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/918/918137.pdf",
+            "tika-918137.pdf",
+        ),
+    ],
+)
+def test_get_outline(url, name):
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+    reader.outlines
+
+
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/935/935981.pdf",
+            "tika-935981.pdf",
+        ),
+    ],
+)
+def test_get_xfa(url, name):
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+    reader.xfa
