@@ -50,6 +50,7 @@ You can contribute to `PyPDF2 on Github <https://github.com/py-pdf/PyPDF2>`_.
    modules/RectangleObject
    modules/Field
    modules/PageRange
+   modules/AnnotationBuilder
 
 .. toctree::
    :caption: Developer Guide
