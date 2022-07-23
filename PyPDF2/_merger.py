@@ -83,7 +83,7 @@ class PdfMerger:
             Defaults to ``False``.
     """
 
-    def __init__(self, fileobj: StrByteType = "", strict: bool = False) -> None:
+    def __init__(self, strict: bool = False, fileobj: StrByteType = "") -> None:
         self.inputs: List[Tuple[Any, PdfReader, bool]] = []
         self.pages: List[Any] = []
         self.output: Optional[PdfWriter] = PdfWriter()
