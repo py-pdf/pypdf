@@ -149,6 +149,8 @@ def test_rotate_45():
         (True, "https://arxiv.org/pdf/2201.00200.pdf", [0, 1, 5, 6]),
         (True, "https://arxiv.org/pdf/2201.00022.pdf", [0, 1, 5, 10]),
         (True, "https://arxiv.org/pdf/2201.00029.pdf", [0, 1, 6, 10]),
+        # #1145
+        (True, "https://github.com/py-pdf/PyPDF2/files/9174594/2017.pdf", [0]),
         # 6 instead of 5: as there is an issue in page 5 (missing objects)
         # and too complex to handle the warning without hiding real regressions
         (True, "https://arxiv.org/pdf/1601.03642.pdf", [0, 1, 5, 7]),

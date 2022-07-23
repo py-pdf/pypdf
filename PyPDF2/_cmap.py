@@ -42,7 +42,11 @@ def build_char_map(
         pass
     # I conside the space_code is available on one byte
     if isinstance(space_code, str):
-        sp = space_code.encode("charmap")[0]
+        try:  # one byte
+            sp = space_code.encode("charmap")[0]
+        except Exception:
+            sp = space_code.encode("utf-16-be")
+            sp = sp[0] + 256 * sp[1]
     else:
         sp = space_code
     sp_width = compute_space_width(ft, sp, space_width)
