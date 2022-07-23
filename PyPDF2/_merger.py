@@ -540,8 +540,6 @@ class PdfMerger:
 
             if pageno is not None:
                 b[NameObject("/Page")] = NumberObject(pageno)
-            else:
-                raise ValueError(f"Unresolved bookmark '{b['/Title']}'")
 
     def find_bookmark(
         self,
