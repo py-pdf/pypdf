@@ -82,6 +82,7 @@ from .generic import (
     BooleanObject,
     ByteStringObject,
     ContentStream,
+    _create_outline_item,
     DecodedStreamObject,
     Destination,
     DictionaryObject,
@@ -95,15 +96,15 @@ from .generic import (
     StreamObject,
     TextStringObject,
     TreeObject,
-    _create_bookmark,
     create_string_object,
+    deprecate_bookmark,
 )
 from .types import (
-    BookmarkTypes,
     BorderArrayType,
     FitType,
     LayoutType,
     PagemodeType,
+    OutlineItemType,
     ZoomArgsType,
     ZoomArgType,
 )
@@ -1065,7 +1066,7 @@ class PdfWriter:
         deprecate_with_replacement("getNamedDestRoot", "get_named_dest_root")
         return self.get_named_dest_root()
 
-    def add_bookmark_destination(
+    def add_outline_item_destination(
         self,
         dest: Union[PageObject, TreeObject],
         parent: Union[None, TreeObject, IndirectObject] = None,
@@ -1079,45 +1080,126 @@ class PdfWriter:
 
         return dest_ref
 
+    def add_bookmark_destination(
+        self,
+        dest: Union[PageObject, TreeObject],
+        parent: Union[None, TreeObject, IndirectObject] = None,
+    ) -> IndirectObject:
+        """
+        .. deprecated:: 2.8.0
+
+            Use :meth:`add_outline_item_destination` instead.
+        """
+        deprecate_with_replacement(
+            "add_bookmark_destination", "add_outline_item_destination"
+        )
+        return self.add_outline_item_destination(dest, parent)
+
     def addBookmarkDestination(
         self, dest: PageObject, parent: Optional[TreeObject] = None
     ) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
-            Use :meth:`add_bookmark_destination` instead.
+            Use :meth:`add_outline_item_destination` instead.
         """
-        deprecate_with_replacement("addBookmarkDestination", "add_bookmark_destination")
-        return self.add_bookmark_destination(dest, parent)
+        deprecate_with_replacement(
+            "addBookmarkDestination", "add_outline_item_destination"
+        )
+        return self.add_outline_item_destination(dest, parent)
 
-    def add_bookmark_dict(
-        self, bookmark: BookmarkTypes, parent: Optional[TreeObject] = None
+    @deprecate_bookmark(bookmark="outline_item")
+    def add_outline_item_dict(
+        self, outline_item: OutlineItemType, parent: Optional[TreeObject] = None
     ) -> IndirectObject:
-        bookmark_obj = TreeObject()
-        for k, v in list(bookmark.items()):
-            bookmark_obj[NameObject(str(k))] = v
-        bookmark_obj.update(bookmark)
+        outline_item_object = TreeObject()
+        for k, v in list(outline_item.items()):
+            outline_item_object[NameObject(str(k))] = v
+        outline_item_object.update(outline_item)
 
-        if "/A" in bookmark:
+        if "/A" in outline_item:
             action = DictionaryObject()
-            a_dict = cast(DictionaryObject, bookmark["/A"])
+            a_dict = cast(DictionaryObject, outline_item["/A"])
             for k, v in list(a_dict.items()):
                 action[NameObject(str(k))] = v
             action_ref = self._add_object(action)
-            bookmark_obj[NameObject("/A")] = action_ref
+            outline_item_object[NameObject("/A")] = action_ref
 
-        return self.add_bookmark_destination(bookmark_obj, parent)
+        return self.add_outline_item_destination(outline_item_object, parent)
 
+    @deprecate_bookmark(bookmark="outline_item")
+    def add_bookmark_dict(
+        self, outline_item: OutlineItemType, parent: Optional[TreeObject] = None
+    ) -> IndirectObject:
+        """
+        .. deprecated:: 2.8.0
+
+            Use :meth:`add_outline_item_dict` instead.
+        """
+        deprecate_with_replacement("add_bookmark_dict", "add_outline_item_dict")
+        return self.add_outline_item_dict(outline_item, parent)
+
+    @deprecate_bookmark(bookmark="outline_item")
     def addBookmarkDict(
-        self, bookmark: BookmarkTypes, parent: Optional[TreeObject] = None
+        self, outline_item: OutlineItemType, parent: Optional[TreeObject] = None
     ) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
-            Use :meth:`add_bookmark_dict` instead.
+            Use :meth:`add_outline_item_dict` instead.
         """
-        deprecate_with_replacement("addBookmarkDict", "add_bookmark_dict")
-        return self.add_bookmark_dict(bookmark, parent)
+        deprecate_with_replacement("addBookmarkDict", "add_outline_item_dict")
+        return self.add_outline_item_dict(outline_item, parent)
+
+    def add_outline_item(
+        self,
+        title: str,
+        pagenum: int,
+        parent: Union[None, TreeObject, IndirectObject] = None,
+        color: Optional[Tuple[float, float, float]] = None,
+        bold: bool = False,
+        italic: bool = False,
+        fit: FitType = "/Fit",
+        *args: ZoomArgType,
+    ) -> IndirectObject:
+        """
+        Add an outline item (commonly referred to as a "Bookmark") to this PDF file.
+
+        :param str title: Title to use for this outline item.
+        :param int pagenum: Page number this outline item will point to.
+        :param parent: A reference to a parent outline item to create nested
+            outline items.
+        :param tuple color: Color of the outline item's font as a red, green, blue tuple
+            from 0.0 to 1.0
+        :param bool bold: Outline item font is bold
+        :param bool italic: Outline item font is italic
+        :param str fit: The fit of the destination page. See
+            :meth:`add_link()<add_link>` for details.
+        """
+        page_ref = NumberObject(pagenum)
+        zoom_args: ZoomArgsType = [
+            NullObject() if a is None else NumberObject(a) for a in args
+        ]
+        dest = Destination(
+            NameObject("/" + title + " outline item"),
+            page_ref,
+            NameObject(fit),
+            *zoom_args,
+        )
+
+        action_ref = self._add_object(
+            DictionaryObject(
+                {
+                    NameObject(GoToActionArguments.D): dest.dest_array,
+                    NameObject(GoToActionArguments.S): NameObject("/GoTo"),
+                }
+            )
+        )
+        outline_item = _create_outline_item(action_ref, title, color, italic, bold)
+
+        if parent is None:
+            parent = self.get_outline_root()
+        return self.add_outline_item_destination(outline_item, parent)
 
     def add_bookmark(
         self,
@@ -1131,40 +1213,14 @@ class PdfWriter:
         *args: ZoomArgType,
     ) -> IndirectObject:
         """
-        Add a bookmark to this PDF file.
+        .. deprecated:: 2.8.0
 
-        :param str title: Title to use for this bookmark.
-        :param int pagenum: Page number this bookmark will point to.
-        :param parent: A reference to a parent bookmark to create nested
-            bookmarks.
-        :param tuple color: Color of the bookmark as a red, green, blue tuple
-            from 0.0 to 1.0
-        :param bool bold: Bookmark is bold
-        :param bool italic: Bookmark is italic
-        :param str fit: The fit of the destination page. See
-            :meth:`addLink()<addLink>` for details.
+            Use :meth:`add_outline_item` instead.
         """
-        page_ref = NumberObject(pagenum)
-        zoom_args: ZoomArgsType = [
-            NullObject() if a is None else NumberObject(a) for a in args
-        ]
-        dest = Destination(
-            NameObject("/" + title + " bookmark"), page_ref, NameObject(fit), *zoom_args
+        deprecate_with_replacement("add_bookmark", "add_outline_item")
+        return self.add_outline_item(
+            title, pagenum, parent, color, bold, italic, fit, *args
         )
-
-        action_ref = self._add_object(
-            DictionaryObject(
-                {
-                    NameObject(GoToActionArguments.D): dest.dest_array,
-                    NameObject(GoToActionArguments.S): NameObject("/GoTo"),
-                }
-            )
-        )
-        bookmark = _create_bookmark(action_ref, title, color, italic, bold)
-
-        if parent is None:
-            parent = self.get_outline_root()
-        return self.add_bookmark_destination(bookmark, parent)
 
     def addBookmark(
         self,
@@ -1180,12 +1236,25 @@ class PdfWriter:
         """
         .. deprecated:: 1.28.0
 
-            Use :meth:`add_bookmark` instead.
+            Use :meth:`add_outline_item` instead.
         """
-        deprecate_with_replacement("addBookmark", "add_bookmark")
-        return self.add_bookmark(
+        deprecate_with_replacement("addBookmark", "add_outline_item")
+        return self.add_outline_item(
             title, pagenum, parent, color, bold, italic, fit, *args
         )
+
+    def add_outline(
+        self,
+        outline: Optional[Union[DictionaryObject, TreeObject, OutlineItemType]] = None,
+        parent: Optional[Union[None, TreeObject, IndirectObject]] = None,
+        titles: Optional[Union[ArrayObject, Tuple, List]] = None,
+        pages: Optional[Union[ArrayObject, Tuple, List]] = None,
+    ) -> None:
+        """
+        Add an outline (a collection of outline items, a.k.a. bookmarks)
+        """
+
+        return outline
 
     def add_named_destination_object(self, dest: PdfObject) -> IndirectObject:
         dest_ref = self._add_object(dest)
@@ -1756,9 +1825,9 @@ class PdfWriter:
            :widths: 50 200
 
            * - /UseNone
-             - Do not show outlines or thumbnails panels
+             - Do not show outline or thumbnails panels
            * - /UseOutlines
-             - Show outlines (aka bookmarks) panel
+             - Show outline (aka bookmarks) panel
            * - /UseThumbs
              - Show page thumbnails panel
            * - /FullScreen

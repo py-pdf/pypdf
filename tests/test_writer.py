@@ -44,23 +44,23 @@ def test_writer_operations():
     assert exc.value.args == ()
     writer.insert_page(page, 1)
     writer.insert_page(reader_outline.pages[0], 0)
-    writer.add_bookmark_destination(page)
+    writer.add_outline_item_destination(page)
     writer.remove_links()
-    writer.add_bookmark_destination(page)
-    bm = writer.add_bookmark(
-        "A bookmark", 0, None, (255, 0, 15), True, True, "/FitBV", 10
+    writer.add_outline_item_destination(page)
+    bm = writer.add_outline_item(
+        "An outline item", 0, None, (255, 0, 15), True, True, "/FitBV", 10
     )
-    writer.add_bookmark(
+    writer.add_outline_item(
         "The XYZ fit", 0, bm, (255, 0, 15), True, True, "/XYZ", 10, 20, 3
     )
-    writer.add_bookmark("The FitH fit", 0, bm, (255, 0, 15), True, True, "/FitH", 10)
-    writer.add_bookmark("The FitV fit", 0, bm, (255, 0, 15), True, True, "/FitV", 10)
-    writer.add_bookmark(
+    writer.add_outline_item("The FitH fit", 0, bm, (255, 0, 15), True, True, "/FitH", 10)
+    writer.add_outline_item("The FitV fit", 0, bm, (255, 0, 15), True, True, "/FitV", 10)
+    writer.add_outline_item(
         "The FitR fit", 0, bm, (255, 0, 15), True, True, "/FitR", 10, 20, 30, 40
     )
-    writer.add_bookmark("The FitB fit", 0, bm, (255, 0, 15), True, True, "/FitB")
-    writer.add_bookmark("The FitBH fit", 0, bm, (255, 0, 15), True, True, "/FitBH", 10)
-    writer.add_bookmark("The FitBV fit", 0, bm, (255, 0, 15), True, True, "/FitBV", 10)
+    writer.add_outline_item("The FitB fit", 0, bm, (255, 0, 15), True, True, "/FitB")
+    writer.add_outline_item("The FitBH fit", 0, bm, (255, 0, 15), True, True, "/FitBH", 10)
+    writer.add_outline_item("The FitBV fit", 0, bm, (255, 0, 15), True, True, "/FitBV", 10)
     writer.add_blank_page()
     writer.add_uri(2, "https://example.com", RectangleObject([0, 0, 100, 100]))
     writer.add_link(2, 1, RectangleObject([0, 0, 100, 100]))
@@ -305,20 +305,20 @@ def test_encrypt(use_128bit):
     os.remove(tmp_filename)
 
 
-def test_add_bookmark():
+def test_add_outline_item():
     reader = PdfReader(os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf"))
     writer = PdfWriter()
 
     for page in reader.pages:
         writer.add_page(page)
 
-    bookmark = writer.add_bookmark(
-        "A bookmark", 1, None, (255, 0, 15), True, True, "/Fit", 200, 0, None
+    outline_item = writer.add_outline_item(
+        "An outline item", 1, None, (255, 0, 15), True, True, "/Fit", 200, 0, None
     )
-    writer.add_bookmark("Another", 2, bookmark, None, False, False, "/Fit", 0, 0, None)
+    writer.add_outline_item("Another", 2, outline_item, None, False, False, "/Fit", 0, 0, None)
 
     # write "output" to PyPDF2-output.pdf
-    tmp_filename = "dont_commit_bookmark.pdf"
+    tmp_filename = "dont_commit_outline_item.pdf"
     with open(tmp_filename, "wb") as output_stream:
         writer.write(output_stream)
 
@@ -494,7 +494,7 @@ def test_sweep_indirect_references_nullobject_exception():
     os.remove("tmp-merger-do-not-commit.pdf")
 
 
-def test_write_bookmark_on_page_fitv():
+def test_write_outline_item_on_page_fitv():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/922/922840.pdf"
     name = "tika-922840.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))

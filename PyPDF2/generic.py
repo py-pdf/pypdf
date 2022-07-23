@@ -32,6 +32,7 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import codecs
 import decimal
+import functools
 import hashlib
 import logging
 import re
@@ -1932,7 +1933,7 @@ class Destination(TreeObject):
         return self.get("/Count", None)
 
 
-class Bookmark(Destination):
+class OutlineItem(Destination):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
@@ -1954,6 +1955,12 @@ class Bookmark(Destination):
         value.write_to_stream(stream, encryption_key)
         stream.write(b"\n")
         stream.write(b">>")
+
+
+class Bookmark(OutlineItem):  # pragma: no cover
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        deprecate_with_replacement("Bookmark", "OutlineItem")
+        super().__init__(*args, **kwargs)
 
 
 def createStringObject(
@@ -2010,16 +2017,16 @@ def create_string_object(
         raise TypeError("create_string_object should have str or unicode arg")
 
 
-def _create_bookmark(
+def _create_outline_item(
     action_ref: IndirectObject,
     title: str,
     color: Optional[Tuple[float, float, float]],
     italic: bool,
     bold: bool,
 ) -> TreeObject:
-    bookmark = TreeObject()
+    outline_item = TreeObject()
 
-    bookmark.update(
+    outline_item.update(
         {
             NameObject("/A"): action_ref,
             NameObject("/Title"): create_string_object(title),
@@ -2027,7 +2034,7 @@ def _create_bookmark(
     )
 
     if color is not None:
-        bookmark.update(
+        outline_item.update(
             {NameObject("/C"): ArrayObject([FloatObject(c) for c in color])}
         )
 
@@ -2037,8 +2044,8 @@ def _create_bookmark(
     if bold:
         format_flag += 2
     if format_flag:
-        bookmark.update({NameObject("/F"): NumberObject(format_flag)})
-    return bookmark
+        outline_item.update({NameObject("/F"): NumberObject(format_flag)})
+    return outline_item
 
 
 def encode_pdfdocencoding(unicode_string: str) -> bytes:
@@ -2168,3 +2175,46 @@ class AnnotationBuilder:
             }
         )
         return line_obj
+
+
+def deprecate_bookmark(**aliases: str) -> Callable:
+    """
+    Decorator for deprecated term "bookmark"
+    To be used for methods and function arguments
+        outline_item = a bookmark
+        outline = a collection of outline items
+    """
+
+    def decoration(func: Callable):  # type: ignore
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):  # type: ignore
+            rename_kwargs(func.__name__, kwargs, aliases)
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decoration
+
+
+def rename_kwargs(  # type: ignore
+    func_name: str,
+    kwargs: Dict[str, Any],
+    aliases: Dict[str, str]
+):
+    """
+    Helper function to deprecate arguments.
+    """
+
+    for old_term, new_term in aliases.items():
+        if old_term in kwargs:
+            if new_term in kwargs:
+                raise TypeError(
+                    f"{func_name} received both {old_term} and {new_term} as an argument."
+                    f"{old_term} is deprecated. Use {new_term} instead."
+                )
+            kwargs[new_term] = kwargs.pop(old_term)
+            warnings.warn(
+                message=(
+                    f"{old_term} is deprecated as an argument. Use {new_term} instead"
+                )
+            )
