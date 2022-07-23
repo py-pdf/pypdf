@@ -843,7 +843,7 @@ class PdfReader:
         dest, title, outline = None, None, None
 
         # title required for valid outline
-        # PDFv1.7 Table 153
+        # PDF Reference 1.7: TABLE 8.4 Entries in an outline item dictionary
         try:
             title = node["/Title"]
         except KeyError:
