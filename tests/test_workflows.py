@@ -265,7 +265,7 @@ def test_merge_with_warning(url, name):
         )
     ],
 )
-def test_merge(caplog, url, name):
+def test_merge(url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
     merger = PdfMerger()
