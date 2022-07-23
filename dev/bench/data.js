@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658525939539,
+  "lastUpdate": 1658557345362,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -10669,6 +10669,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.030585110944694214",
             "extra": "mean: 3.7425782548 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mtd91429@users.noreply.github.com",
+            "name": "mtd91429",
+            "username": "mtd91429"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "89c0ff2e95f76960ffa7958e956270d41d3fea79",
+          "message": "ROB: Handle outlines without valid destination (#1076)\n\nAdjust `PdfReader._build_outline(...)` and `PdfReader._build_destination(...)` to handle outline items with and without valid destinations\r\n\r\nCloses #193 : PdfReadError: Unexpected destination '/__WKANCHOR_2'\r\nCloses #956 : ValueError: Unresolved bookmark\r\n\r\n#1059 no longer throws an exception, but the outlines are not extracted either.\r\n\r\nCloses #1068 : Skip NameObject when building outline",
+          "timestamp": "2022-07-23T08:21:12+02:00",
+          "tree_id": "c12163130cd57fc3f0b19a9e0fcf77a03ea53c3b",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/89c0ff2e95f76960ffa7958e956270d41d3fea79"
+        },
+        "date": 1658557344322,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9137757277601906,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008605869575894995",
+            "extra": "mean: 1.0943604317999984 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.740298361231524,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007111796066819849",
+            "extra": "mean: 93.10728309090811 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23514327285023232,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009329513540225797",
+            "extra": "mean: 4.2527263819999686 sec\nrounds: 5"
           }
         ]
       }
