@@ -647,11 +647,10 @@ class NameObject(str, PdfObject):
             # Name objects should represent irregular characters
             # with a '#' followed by the symbol's hex number
             if not pdf.strict:
-                warnings.warn("Illegal character in Name Object", PdfReadWarning)
+                logger_warning("Illegal character in Name Object", __name__)
                 return NameObject(name)
             else:
                 raise PdfReadError("Illegal character in Name Object") from e
-        return NameObject(ret)
 
     @staticmethod
     def readFromStream(
