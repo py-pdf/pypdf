@@ -326,9 +326,16 @@ def test_compress(url, name):
     assert exc.value.args[0] == "Unexpected end of stream"
 
 
-def test_get_fields():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/961/961883.pdf"
-    name = "tika-961883.pdf"
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/961/961883.pdf",
+            "tika-961883.pdf",
+        ),
+    ],
+)
+def test_get_fields_warns(url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
     with open("tmp.txt", "w") as fp:
@@ -336,6 +343,27 @@ def test_get_fields():
             retrieved_fields = reader.get_fields(fileobj=fp)
 
     assert retrieved_fields == {}
+
+    # Cleanup
+    os.remove("tmp.txt")
+
+
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/942/942050.pdf",
+            "tika-942050.pdf",
+        ),
+    ],
+)
+def test_get_fields_no_warning(url, name):
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+    with open("tmp.txt", "w") as fp:
+        retrieved_fields = reader.get_fields(fileobj=fp)
+
+    assert len(retrieved_fields) == 10
 
     # Cleanup
     os.remove("tmp.txt")
