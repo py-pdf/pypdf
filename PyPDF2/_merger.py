@@ -76,11 +76,11 @@ class PdfMerger:
     See the functions :meth:`merge()<merge>` (or :meth:`append()<append>`)
     and :meth:`write()<write>` for usage information.
 
-    :param fileobj: Output file. Can be a filename or any kind of
-            file-like object.
     :param bool strict: Determines whether user should be warned of all
             problems and also causes some correctable problems to be fatal.
             Defaults to ``False``.
+    :param fileobj: Output file. Can be a filename or any kind of
+            file-like object.
     """
 
     def __init__(self, strict: bool = False, fileobj: StrByteType = "") -> None:
