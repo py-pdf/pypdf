@@ -288,3 +288,11 @@ def test_sweep_indirect_list_newobj_is_None():
 
     # cleanup
     os.remove("tmp-merger-do-not-commit.pdf")
+
+
+def test_iss1145():
+    # issue with FitH destination with null param
+    url = "https://github.com/py-pdf/PyPDF2/files/9164743/file-0.pdf"
+    name = "iss1145.pdf"
+    merger = PdfMerger()
+    merger.append(PdfReader(BytesIO(get_pdf_from_url(url, name=name))))

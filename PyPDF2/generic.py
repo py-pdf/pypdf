@@ -135,6 +135,9 @@ class NullObject(PdfObject):
         deprecate_with_replacement("writeToStream", "write_to_stream")
         self.write_to_stream(stream, encryption_key)
 
+    def __repr__(self) -> str:
+        return "NullObject"
+
     @staticmethod
     def readFromStream(stream: StreamType) -> "NullObject":  # pragma: no cover
         deprecate_with_replacement("readFromStream", "read_from_stream")
@@ -1813,9 +1816,15 @@ class Destination(TreeObject):
                 self[NameObject(TA.TOP)],
             ) = args
         elif typ in [TF.FIT_H, TF.FIT_BH]:
-            (self[NameObject(TA.TOP)],) = args
+            try:  # Prefered to be more robust not only to null parameters
+                (self[NameObject(TA.TOP)],) = args
+            except Exception:
+                (self[NameObject(TA.TOP)],) = (NullObject(),)
         elif typ in [TF.FIT_V, TF.FIT_BV]:
-            (self[NameObject(TA.LEFT)],) = args
+            try:  # Prefered to be more robust not only to null parameters
+                (self[NameObject(TA.LEFT)],) = args
+            except Exception:
+                (self[NameObject(TA.LEFT)],) = (NullObject(),)
         elif typ in [TF.FIT, TF.FIT_B]:
             pass
         else:
