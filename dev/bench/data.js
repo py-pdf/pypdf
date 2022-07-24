@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658679650147,
+  "lastUpdate": 1658684468327,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -11254,6 +11254,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.015534713529506593",
             "extra": "mean: 3.6799894801999926 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0b2728737809fa6fe253b2a4505e86cd093d7006",
+          "message": "ROB: Cope with empty DecodeParams (#1165)\n\nSee #1143, 2nd part",
+          "timestamp": "2022-07-24T19:40:00+02:00",
+          "tree_id": "9437dfd494657aff5ac00765aac790fc8c5bdbef",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/0b2728737809fa6fe253b2a4505e86cd093d7006"
+        },
+        "date": 1658684467336,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0465086380074604,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005895982682673883",
+            "extra": "mean: 955.5582856000001 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.318682111606961,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006432360609824816",
+            "extra": "mean: 81.17751484615191 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26679495324841795,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024946486839636",
+            "extra": "mean: 3.748196837399996 sec\nrounds: 5"
           }
         ]
       }
