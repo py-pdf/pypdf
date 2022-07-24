@@ -241,13 +241,13 @@ def process_cm_line(
     elif b"endbfchar" in l:
         process_char = False
     elif process_rg:
-        run_process_rg(l, map_dict, int_entry)
+        parse_bfrange(l, map_dict, int_entry)
     elif process_char:
-        run_process_char(l, map_dict, int_entry)
+        parse_bfchar(l, map_dict, int_entry)
     return process_rg, process_char
 
 
-def run_process_rg(l: bytes, map_dict: Dict[Any, Any], int_entry: List[int]) -> None:
+def parse_bfrange(l: bytes, map_dict: Dict[Any, Any], int_entry: List[int]) -> None:
     lst = [x for x in l.split(b" ") if x]
     a = int(lst[0], 16)
     b = int(lst[1], 16)
@@ -281,7 +281,7 @@ def run_process_rg(l: bytes, map_dict: Dict[Any, Any], int_entry: List[int]) -> 
             c += 1
 
 
-def run_process_char(l: bytes, map_dict: Dict[Any, Any], int_entry: List[int]) -> None:
+def parse_bfchar(l: bytes, map_dict: Dict[Any, Any], int_entry: List[int]) -> None:
     lst = [x for x in l.split(b" ") if x]
     map_dict[-1] = len(lst[0]) // 2
     while len(lst) > 1:
