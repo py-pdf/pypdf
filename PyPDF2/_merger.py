@@ -640,7 +640,7 @@ class PdfMerger:
 
 class PdfFileMerger(PdfMerger):  # pragma: no cover
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        deprecate_with_replacement("PdfFileMerger", "PdfMerge")
+        deprecate_with_replacement("PdfFileMerger", "PdfMerger")
 
         if "strict" not in kwargs and len(args) < 1:
             kwargs["strict"] = True  # maintain the default
