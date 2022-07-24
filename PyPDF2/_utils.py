@@ -226,7 +226,7 @@ def read_previous_line(stream: StreamType) -> bytes:
 def matrix_multiply(
     a: TransformationMatrixType, b: TransformationMatrixType
 ) -> TransformationMatrixType:
-    return tuple(
+    return tuple(  # type: ignore[return-value]
         tuple(sum(float(i) * float(j) for i, j in zip(row, col)) for col in zip(*b))
         for row in a
     )

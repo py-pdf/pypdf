@@ -577,7 +577,7 @@ class PageObject(DictionaryObject):
             page2.mediabox.bottom.as_numeric(),
         )
         if ctm is not None:
-            ctm = tuple(float(x) for x in ctm)
+            ctm = tuple(float(x) for x in ctm)  # type: ignore[assignment]
             new_x = tuple(
                 ctm[0] * corners2[i] + ctm[2] * corners2[i + 1] + ctm[4]
                 for i in range(0, 8, 2)
@@ -631,7 +631,7 @@ class PageObject(DictionaryObject):
         self._merge_page(
             page2,
             lambda page2Content: PageObject._add_transformation_matrix(
-                page2Content, page2.pdf, ctm
+                page2Content, page2.pdf, ctm  # type: ignore[arg-type]
             ),
             ctm,
             expand,
@@ -866,7 +866,7 @@ class PageObject(DictionaryObject):
                 self.mediabox.bottom.as_numeric(),
             ]
 
-            ctm = tuple(float(x) for x in ctm)
+            ctm = tuple(float(x) for x in ctm)  # type: ignore[assignment]
             new_x = [
                 ctm[0] * corners[i] + ctm[2] * corners[i + 1] + ctm[4]
                 for i in range(0, 8, 2)
