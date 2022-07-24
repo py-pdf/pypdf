@@ -817,19 +817,19 @@ class PdfWriter:
         """
         my_file = False
 
-        if fileobj == "":
-            raise ValueError(f"Output(fileobj={fileobj}) is empty.")
+        if stream == "":
+            raise ValueError(f"Output(stream={stream}) is empty.")
 
-        if isinstance(fileobj, str):
-            fileobj = FileIO(fileobj, "wb")
+        if isinstance(stream, str):
+            stream = FileIO(stream, "wb")
             my_file = True
 
-        self.write_stream(fileobj)
+        self.write_stream(stream)
 
         if self.with_as_usage:
-            fileobj.close()
+            stream.close()
 
-        return my_file, fileobj
+        return my_file, stream
 
     def _write_header(self, stream: StreamType) -> List[int]:
         object_positions = []
