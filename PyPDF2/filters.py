@@ -104,7 +104,7 @@ class FlateDecode:
                             predictor = decode_parm["/Predictor"]
                 else:
                     predictor = decode_parms.get("/Predictor", 1)
-            except AttributeError:
+            except (AttributeError, TypeError):  # Type Error is NullObject
                 pass  # Usually an array with a null object was read
         # predictor 1 == no predictor
         if predictor != 1:
