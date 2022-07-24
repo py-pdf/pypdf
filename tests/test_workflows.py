@@ -441,6 +441,18 @@ def test_merge_output():
             "https://corpora.tika.apache.org/base/docs/govdocs1/958/958496.pdf",
             "tika-958496.pdf",
         ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/972/972174.pdf",
+            "tika-972174.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/972/972243.pdf",
+            "tika-972243.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/969/969502.pdf",
+            "tika-969502.pdf",
+        ),
     ],
 )
 def test_image_extraction(url, name):
