@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658649786621,
+  "lastUpdate": 1658654443671,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -11074,6 +11074,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.037344257841753124",
             "extra": "mean: 4.304660655799995 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2de09730c13e3e380f0038d241e5ee81b0509a40",
+          "message": "MAINT: Break up parse_to_unicode (#1162)\n\nJust move parts in separate functions for easier readability",
+          "timestamp": "2022-07-24T11:19:38+02:00",
+          "tree_id": "8160317deafe1e8b4f48e7afcc93fbf5ab8f3d26",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/2de09730c13e3e380f0038d241e5ee81b0509a40"
+        },
+        "date": 1658654442640,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9880444212227384,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03738436161627342",
+            "extra": "mean: 1.012100244200019 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.799681534671311,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00861358717725552",
+            "extra": "mean: 92.59532299999762 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26232882077697,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029886540448272887",
+            "extra": "mean: 3.8120096642000023 sec\nrounds: 5"
           }
         ]
       }
