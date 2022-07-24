@@ -30,9 +30,8 @@ import random
 import struct
 from enum import IntEnum
 from typing import Optional, Tuple, Union, cast
-import warnings
 
-from PyPDF2.errors import DependencyError, PdfReadWarning
+from PyPDF2.errors import DependencyError
 from PyPDF2._utils import logger_warning
 from PyPDF2.generic import (
     ArrayObject,
