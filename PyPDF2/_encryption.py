@@ -30,8 +30,9 @@ import random
 import struct
 from enum import IntEnum
 from typing import Optional, Tuple, Union, cast
+import warnings
 
-from PyPDF2.errors import DependencyError
+from PyPDF2.errors import DependencyError, PdfReadWarning
 from PyPDF2.generic import (
     ArrayObject,
     ByteStringObject,
@@ -826,7 +827,7 @@ class Encryption:
         P = (P + 0x100000000) % 0x100000000  # maybe < 0
         metadata_encrypted = self.entry.get("/EncryptMetadata", True)
         if not AlgV5.verify_perms(key, perms, P, metadata_encrypted):
-            return b"", PasswordType.NOT_DECRYPTED
+            warnings.warn("ignore '/Perms' verify failed", PdfReadWarning)
         return key, rc
 
     @staticmethod
