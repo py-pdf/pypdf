@@ -1303,7 +1303,7 @@ class PdfReader:
             stream.seek(0, os.SEEK_END)
 
     def _find_eof_marker(self, stream: StreamType) -> None:
-        last_mb = stream.tell() - 1024 * 1024 + 1  # offset of last MB of stream
+        last_mb = 8  # to parse whole file
         line = b""
         while line[:5] != b"%%EOF":
             if stream.tell() < last_mb:

@@ -396,7 +396,9 @@ def test_read_malformed_header():
 def test_read_malformed_body():
     with pytest.raises(PdfReadError) as exc:
         PdfReader(io.BytesIO(b"%PDF-"), strict=True)
-    assert exc.value.args[0] == STREAM_TRUNCATED_PREMATURELY
+    assert (
+        exc.value.args[0] == "EOF marker not found"
+    )  # used to be:STREAM_TRUNCATED_PREMATURELY
 
 
 def test_read_prev_0_trailer():
