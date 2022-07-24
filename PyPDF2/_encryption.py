@@ -33,6 +33,7 @@ from typing import Optional, Tuple, Union, cast
 import warnings
 
 from PyPDF2.errors import DependencyError, PdfReadWarning
+from PyPDF2._utils import logger_warning
 from PyPDF2.generic import (
     ArrayObject,
     ByteStringObject,
@@ -827,7 +828,7 @@ class Encryption:
         P = (P + 0x100000000) % 0x100000000  # maybe < 0
         metadata_encrypted = self.entry.get("/EncryptMetadata", True)
         if not AlgV5.verify_perms(key, perms, P, metadata_encrypted):
-            warnings.warn("ignore '/Perms' verify failed", PdfReadWarning)
+            logger_warning("ignore '/Perms' verify failed", __name__)
         return key, rc
 
     @staticmethod
