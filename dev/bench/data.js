@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658643792930,
+  "lastUpdate": 1658644071700,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -10939,6 +10939,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03308381427900485",
             "extra": "mean: 4.615879372800009 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "exiledkingcc@gmail.com",
+            "name": "exiledkingcc",
+            "username": "exiledkingcc"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2bf40f4a70a35434086eab2054d11425380b919c",
+          "message": "BUG: Ignore if '/Perms' verify failed (#1157)\n\nIt seems to be save to ignore the /Perms entry:\r\n\r\nQpdf ignores it:\r\nhttps://github.com/qpdf/qpdf/blob/main/libqpdf/QPDF_encryption.cc#L1064\r\n\r\npdfbox ignores it:\r\nhttps://github.com/apache/pdfbox/blob/dc1a75027d5bebf95a3330f6298a533e78e0b99e/pdfbox/src/main/java/org/apache/pdfbox/pdmodel/encryption/StandardSecurityHandler.java#L311\r\n\r\nCloses #378",
+          "timestamp": "2022-07-24T08:26:50+02:00",
+          "tree_id": "23cea4cac48140defb8a9d6abd3f7baea9ba499d",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/2bf40f4a70a35434086eab2054d11425380b919c"
+        },
+        "date": 1658644071100,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0609824723666696,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006591941236200268",
+            "extra": "mean: 942.5226392000241 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.293976048102211,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005641008316898288",
+            "extra": "mean: 81.34064976923128 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26909782747276006,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011094370329913793",
+            "extra": "mean: 3.716120673999967 sec\nrounds: 5"
           }
         ]
       }
