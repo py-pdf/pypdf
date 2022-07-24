@@ -3,6 +3,7 @@ from binascii import unhexlify
 from typing import Any, Dict, List, Tuple, Union, cast
 
 from ._codecs import adobe_glyphs, charset_encoding
+from ._utils import logger_warning
 from .errors import PdfReadWarning
 from .generic import DecodedStreamObject, DictionaryObject
 
@@ -330,9 +331,9 @@ def compute_space_width(
                     st += 1
                 w = w[2:]
             else:
-                warnings.warn(
+                logger_warning(
                     "unknown widths : \n" + (ft1["/W"]).__repr__(),
-                    PdfReadWarning,
+                    __name__,
                 )
                 break
         try:

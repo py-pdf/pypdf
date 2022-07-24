@@ -54,6 +54,7 @@ from ._utils import (
     b_,
     deprecate_no_replacement,
     deprecate_with_replacement,
+    logger_warning,
     read_non_whitespace,
     read_previous_line,
     read_until_whitespace,
@@ -70,7 +71,7 @@ from .constants import FieldDictionaryAttributes, GoToActionArguments
 from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
 from .constants import TrailerKeys as TK
-from .errors import PdfReadError, PdfReadWarning, PdfStreamError
+from .errors import PdfReadError, PdfStreamError
 from .generic import (
     ArrayObject,
     ContentStream,
@@ -258,10 +259,10 @@ class PdfReader:
             Dict[Any, Any]
         ] = None  # map page indirect_ref number to Page Number
         if hasattr(stream, "mode") and "b" not in stream.mode:  # type: ignore
-            warnings.warn(
+            logger_warning(
                 "PdfReader stream/file object is not in binary mode. "
                 "It may not be read correctly.",
-                PdfReadWarning,
+                __name__,
             )
         if isinstance(stream, (str, Path)):
             with open(stream, "rb") as fh:
@@ -821,7 +822,7 @@ class PdfReader:
             try:
                 return Destination(title, page, typ, *array)  # type: ignore
             except PdfReadError:
-                warnings.warn(f"Unknown destination: {title} {array}", PdfReadWarning)
+                logger_warning(f"Unknown destination: {title} {array}", __name__)
                 if self.strict:
                     raise
                 # create a link to first Page
@@ -1076,11 +1077,11 @@ class PdfReader:
             except PdfStreamError as exc:
                 # Stream object cannot be read. Normally, a critical error, but
                 # Adobe Reader doesn't complain, so continue (in strict mode?)
-                warnings.warn(
+                logger_warning(
                     f"Invalid stream (index {i}) within object "
                     f"{indirect_reference.idnum} {indirect_reference.generation}: "
                     f"{exc}",
-                    PdfReadWarning,
+                    __name__,
                 )
 
                 if self.strict:
@@ -1147,10 +1148,10 @@ class PdfReader:
                     retval, indirect_reference.idnum, indirect_reference.generation
                 )
         else:
-            warnings.warn(
+            logger_warning(
                 f"Object {indirect_reference.idnum} {indirect_reference.generation} "
                 "not defined.",
-                PdfReadWarning,
+                __name__,
             )
             if self.strict:
                 raise PdfReadError("Could not find object.")
@@ -1192,9 +1193,9 @@ class PdfReader:
         read_non_whitespace(stream)
         stream.seek(-1, 1)
         if extra and self.strict:
-            warnings.warn(
+            logger_warning(
                 f"Superfluous whitespace found in object header {idnum} {generation}",  # type: ignore
-                PdfReadWarning,
+                __name__,
             )
         return int(idnum), int(generation)
 
@@ -1235,7 +1236,7 @@ class PdfReader:
             if self.strict:
                 raise PdfReadError(msg)
             else:
-                warnings.warn(msg)
+                logger_warning(msg, __name__)
         self.resolved_objects[(generation, idnum)] = obj
         return obj
 
@@ -1261,8 +1262,8 @@ class PdfReader:
             if self.strict and xref_issue_nr:
                 raise PdfReadError("Broken xref table")
             else:
-                warnings.warn(
-                    f"incorrect startxref pointer({xref_issue_nr})", PdfReadWarning
+                logger_warning(
+                    f"incorrect startxref pointer({xref_issue_nr})", __name__
                 )
 
         # read all cross reference tables and their trailers
@@ -1320,7 +1321,7 @@ class PdfReader:
             if not line.startswith(b"startxref"):
                 raise PdfReadError("startxref not found")
             startxref = int(line[9:].strip())
-            warnings.warn("startxref on same line as offset", PdfReadWarning)
+            logger_warning("startxref on same line as offset", __name__)
         else:
             line = read_previous_line(stream)
             if line[:9] != b"startxref":
@@ -1340,9 +1341,9 @@ class PdfReader:
             if firsttime and num != 0:
                 self.xref_index = num
                 if self.strict:
-                    warnings.warn(
+                    logger_warning(
                         "Xref table not zero-indexed. ID numbers for objects will be corrected.",
-                        PdfReadWarning,
+                        __name__,
                     )
                     # if table not zero indexed, could be due to error from when PDF was created
                     # which will lead to mismatched indices later on, only warned and corrected if self.strict==True
@@ -1459,9 +1460,10 @@ class PdfReader:
                     "/Prev=0 in the trailer (try opening with strict=False)"
                 )
             else:
-                warnings.warn(
+                logger_warning(
                     "/Prev=0 in the trailer - assuming there"
-                    " is no previous xref table"
+                    " is no previous xref table",
+                    __name__,
                 )
                 return None
         # bad xref character at startxref.  Let's see if we can find
@@ -1487,7 +1489,7 @@ class PdfReader:
         # no xref table found at specified location
         if "/Root" in self.trailer and not self.strict:
             # if Root has been already found, just raise warning
-            warnings.warn("Invalid parent xref., rebuild xref", PdfReadWarning)
+            logger_warning("Invalid parent xref., rebuild xref", __name__)
             try:
                 self._rebuild_xref_table(stream)
                 return None
