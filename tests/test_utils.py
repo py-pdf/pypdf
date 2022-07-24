@@ -38,7 +38,7 @@ def test_skip_over_whitespace(stream, expected):
 
 
 def test_read_until_whitespace():
-    assert read_until_whitespace(io.BytesIO(b"foo"), maxchars=1) == b"f"
+    assert read_until_whitespace(io.BytesIO(b"foo1"), maxchars=1) == b"1"
 
 
 @pytest.mark.parametrize(

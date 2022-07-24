@@ -88,12 +88,19 @@ def read_until_whitespace(stream: StreamType, maxchars: Optional[int] = None) ->
     Read non-whitespace characters and return them.
 
     Stops upon encountering whitespace or when maxchars is reached.
+    Skips non-integers
+
+    This is only used in PdfReader.read_object_header
     """
     txt = b""
     while True:
         tok = stream.read(1)
-        if tok.isspace() or not tok:
+        if txt and tok.isspace() or not tok:
             break
+
+        # skip non-integers int
+        if not tok.isdigit():
+            continue
         txt += tok
         if len(txt) == maxchars:
             break
