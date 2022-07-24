@@ -813,6 +813,7 @@ def test_get_fields_read_write_report():
 
 
 def test_unexpected_destination():
+    from PyPDF2 import PdfMerger
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/913/913678.pdf"
     name = "tika-913678.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
