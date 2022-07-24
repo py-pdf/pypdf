@@ -1,5 +1,34 @@
 # CHANGELOG
 
+## Version 2.8.0, 2022-07-24
+
+### New Features (ENH)
+-  Add writer.add_annotation, page.annotations, and generic.AnnotationBuilder (#1120)
+
+### Bug Fixes (BUG)
+-  Set /AS for /Btn form fields in writer (#1161)
+-  Ignore if /Perms verify failed (#1157)
+
+### Robustness (ROB)
+-  Cope with utf16 character for space calculation (#1155)
+-  Cope with null params for FitH / FitV destination (#1152)
+-  Handle outlines without valid destination (#1076)
+
+### Developer Experience (DEV)
+-  Introduce _utils.logger_warning (#1148)
+
+### Maintenance (MAINT)
+-  Break up parse_to_unicode (#1162)
+-  Add diagnostic output to exception in read_from_stream (#1159)
+-  Reduce PdfReader.read complexity (#1151)
+
+### Testing (TST)
+-  Add workflow tests found by arc testing (#1154)
+-  Decrypt file which is not encrypted (#1149)
+-  Test CryptRC4 encryption class; test image extraction filters (#1147)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.7.0...2.8.0
+
 ## Version 2.7.0, 2022-07-21
 
 ### New Features (ENH)
