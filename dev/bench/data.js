@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658644071700,
+  "lastUpdate": 1658644214086,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -10984,6 +10984,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.011094370329913793",
             "extra": "mean: 3.716120673999967 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "35bec4034e503cac97c23de9f923154785d48767",
+          "message": "ROB: Cope with utf16 character for space calculation (#1155)\n\nSee #1143\r\n\r\nCo-authored-by: Martin Thoma <info@martin-thoma.de>",
+          "timestamp": "2022-07-24T08:28:50+02:00",
+          "tree_id": "734adbadd0c44c8db659ec28c7a85808f18e3047",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/35bec4034e503cac97c23de9f923154785d48767"
+        },
+        "date": 1658644211981,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8821578955468429,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022878981461502336",
+            "extra": "mean: 1.1335839140000075 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.805938436915897,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007955383512216935",
+            "extra": "mean: 101.97902081817615 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2226384273964435,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08989962279164848",
+            "extra": "mean: 4.4915876009999804 sec\nrounds: 5"
           }
         ]
       }
