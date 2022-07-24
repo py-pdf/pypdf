@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658586928217,
+  "lastUpdate": 1658640189664,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -10804,6 +10804,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.014119233750709323",
             "extra": "mean: 3.7515006365999994 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b429b395316021ff97ab41b9626287adb221f6fe",
+          "message": "DEV: Introduce _utils.logger_warning (#1148)\n\n- Exceptions: User code should handle the issue\r\n- warnings.warn: User should re-write something, e.g. deprecations\r\n- _utils.logger_warning: User might want to know in case of errors / post mortem analysis (or for developing PyPDF2 itself)",
+          "timestamp": "2022-07-24T07:21:45+02:00",
+          "tree_id": "6b6e04b53068c5b6b011678ac350b5fee0ff4f26",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/b429b395316021ff97ab41b9626287adb221f6fe"
+        },
+        "date": 1658640187628,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8893118391174807,
+            "unit": "iter/sec",
+            "range": "stddev: 0.037962210275045906",
+            "extra": "mean: 1.1244649581999966 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.582198160252936,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005161624958010947",
+            "extra": "mean: 94.49832490909412 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22734933739596463,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06454507003077448",
+            "extra": "mean: 4.398517327800005 sec\nrounds: 5"
           }
         ]
       }
