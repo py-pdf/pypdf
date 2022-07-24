@@ -167,19 +167,31 @@ def parse_encoding(
 
 def parse_to_unicode(
     ft: DictionaryObject, space_code: int
-) -> Tuple[Dict, int, List[int]]:
-    map_dict: Dict[
-        Any, Any
-    ] = (
-        {}
-    )  # will store all translation code and map_dict[-1] we will have the number of bytes to convert
-    int_entry: List[
-        int
-    ] = []  # will provide the list of cmap keys as int to correct encoding
+) -> Tuple[Dict[Any, Any], int, List[int]]:
+    # will store all translation code
+    # and map_dict[-1] we will have the number of bytes to convert
+    map_dict: Dict[Any, Any] = {}
+
+    # will provide the list of cmap keys as int to correct encoding
+    int_entry: List[int] = []
+
     if "/ToUnicode" not in ft:
         return {}, space_code, []
     process_rg: bool = False
     process_char: bool = False
+    cm = prepare_cm(ft)
+    for l in cm.split(b"\n"):
+        process_rg, process_char = process_cm_line(
+            l, process_rg, process_char, map_dict, int_entry
+        )
+
+    for a, value in map_dict.items():
+        if value == " ":
+            space_code = a
+    return map_dict, space_code, int_entry
+
+
+def prepare_cm(ft: DictionaryObject) -> bytes:
     cm: bytes = cast(DecodedStreamObject, ft["/ToUnicode"]).get_data()
     # we need to prepare cm before due to missing return line in pdf printed to pdf from word
     cm = (
@@ -208,71 +220,84 @@ def parse_to_unicode(
         .replace(b"]", b" ]\n ")
         .replace(b"\r", b"\n")
     )
+    return cm
 
-    for l in cm.split(b"\n"):
-        if l in (b"", b" ") or l[0] == 37:  # 37 = %
-            continue
-        if b"beginbfrange" in l:
-            process_rg = True
-        elif b"endbfrange" in l:
-            process_rg = False
-        elif b"beginbfchar" in l:
-            process_char = True
-        elif b"endbfchar" in l:
-            process_char = False
-        elif process_rg:
-            lst = [x for x in l.split(b" ") if x]
-            a = int(lst[0], 16)
-            b = int(lst[1], 16)
-            nbi = len(lst[0])
-            map_dict[-1] = nbi // 2
-            fmt = b"%%0%dX" % nbi
-            if lst[2] == b"[":
-                for sq in lst[3:]:
-                    if sq == b"]":
-                        break
-                    map_dict[
-                        unhexlify(fmt % a).decode(
-                            "charmap" if map_dict[-1] == 1 else "utf-16-be",
-                            "surrogatepass",
-                        )
-                    ] = unhexlify(sq).decode("utf-16-be", "surrogatepass")
-                    int_entry.append(a)
-                    a += 1
-            else:
-                c = int(lst[2], 16)
-                fmt2 = b"%%0%dX" % max(4, len(lst[2]))
-                while a <= b:
-                    map_dict[
-                        unhexlify(fmt % a).decode(
-                            "charmap" if map_dict[-1] == 1 else "utf-16-be",
-                            "surrogatepass",
-                        )
-                    ] = unhexlify(fmt2 % c).decode("utf-16-be", "surrogatepass")
-                    int_entry.append(a)
-                    a += 1
-                    c += 1
-        elif process_char:
-            lst = [x for x in l.split(b" ") if x]
-            map_dict[-1] = len(lst[0]) // 2
-            while len(lst) > 1:
-                map_to = ""
-                # placeholder (see above) means empty string
-                if lst[1] != b".":
-                    map_to = unhexlify(lst[1]).decode(
-                        "utf-16-be", "surrogatepass"
-                    )  # join is here as some cases where the code was split
-                map_dict[
-                    unhexlify(lst[0]).decode(
-                        "charmap" if map_dict[-1] == 1 else "utf-16-be", "surrogatepass"
-                    )
-                ] = map_to
-                int_entry.append(int(lst[0], 16))
-                lst = lst[2:]
-    for a, value in map_dict.items():
-        if value == " ":
-            space_code = a
-    return map_dict, space_code, int_entry
+
+def process_cm_line(
+    l: bytes,
+    process_rg: bool,
+    process_char: bool,
+    map_dict: Dict[Any, Any],
+    int_entry: List[int],
+) -> Tuple[bool, bool]:
+    if l in (b"", b" ") or l[0] == 37:  # 37 = %
+        return process_rg, process_char
+    if b"beginbfrange" in l:
+        process_rg = True
+    elif b"endbfrange" in l:
+        process_rg = False
+    elif b"beginbfchar" in l:
+        process_char = True
+    elif b"endbfchar" in l:
+        process_char = False
+    elif process_rg:
+        run_process_rg(l, map_dict, int_entry)
+    elif process_char:
+        run_process_char(l, map_dict, int_entry)
+    return process_rg, process_char
+
+
+def run_process_rg(l: bytes, map_dict: Dict[Any, Any], int_entry: List[int]) -> None:
+    lst = [x for x in l.split(b" ") if x]
+    a = int(lst[0], 16)
+    b = int(lst[1], 16)
+    nbi = len(lst[0])
+    map_dict[-1] = nbi // 2
+    fmt = b"%%0%dX" % nbi
+    if lst[2] == b"[":
+        for sq in lst[3:]:
+            if sq == b"]":
+                break
+            map_dict[
+                unhexlify(fmt % a).decode(
+                    "charmap" if map_dict[-1] == 1 else "utf-16-be",
+                    "surrogatepass",
+                )
+            ] = unhexlify(sq).decode("utf-16-be", "surrogatepass")
+            int_entry.append(a)
+            a += 1
+    else:
+        c = int(lst[2], 16)
+        fmt2 = b"%%0%dX" % max(4, len(lst[2]))
+        while a <= b:
+            map_dict[
+                unhexlify(fmt % a).decode(
+                    "charmap" if map_dict[-1] == 1 else "utf-16-be",
+                    "surrogatepass",
+                )
+            ] = unhexlify(fmt2 % c).decode("utf-16-be", "surrogatepass")
+            int_entry.append(a)
+            a += 1
+            c += 1
+
+
+def run_process_char(l: bytes, map_dict: Dict[Any, Any], int_entry: List[int]) -> None:
+    lst = [x for x in l.split(b" ") if x]
+    map_dict[-1] = len(lst[0]) // 2
+    while len(lst) > 1:
+        map_to = ""
+        # placeholder (see above) means empty string
+        if lst[1] != b".":
+            map_to = unhexlify(lst[1]).decode(
+                "utf-16-be", "surrogatepass"
+            )  # join is here as some cases where the code was split
+        map_dict[
+            unhexlify(lst[0]).decode(
+                "charmap" if map_dict[-1] == 1 else "utf-16-be", "surrogatepass"
+            )
+        ] = map_to
+        int_entry.append(int(lst[0], 16))
+        lst = lst[2:]
 
 
 def compute_space_width(
