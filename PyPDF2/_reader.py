@@ -869,6 +869,8 @@ class PdfReader:
             # outline not required to have destination or action
             # PDFv1.7 Table 153
             outline = self._build_destination(title, dest)  # type: ignore
+        elif isinstance(dest, NameObject):
+            pass
         else:
             if self.strict:
                 raise PdfReadError(f"Unexpected destination {dest!r}")

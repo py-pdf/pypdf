@@ -1002,3 +1002,13 @@ def test_outlines_with_invalid_destinations():
     )
     # contains 9 outlines, 6 with invalid destinations caused by different malformations
     assert len(reader.outlines) == 9
+
+
+def test_unexpected_destination():
+    from PyPDF2 import PdfMerger
+
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/913/913678.pdf"
+    name = "tika-913678.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    merger = PdfMerger()
+    merger.append(reader)
