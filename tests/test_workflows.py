@@ -297,7 +297,11 @@ def test_get_metadata(url, name):
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/938/938702.pdf",
             "tika-938702.pdf",
-        )
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/942/942358.pdf",
+            "tika-942358.pdf",
+        ),
     ],
 )
 def test_extract_text(url, name):
@@ -326,9 +330,16 @@ def test_compress(url, name):
     assert exc.value.args[0] == "Unexpected end of stream"
 
 
-def test_get_fields():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/961/961883.pdf"
-    name = "tika-961883.pdf"
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/961/961883.pdf",
+            "tika-961883.pdf",
+        ),
+    ],
+)
+def test_get_fields_warns(url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
     with open("tmp.txt", "w") as fp:
@@ -336,6 +347,27 @@ def test_get_fields():
             retrieved_fields = reader.get_fields(fileobj=fp)
 
     assert retrieved_fields == {}
+
+    # Cleanup
+    os.remove("tmp.txt")
+
+
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/942/942050.pdf",
+            "tika-942050.pdf",
+        ),
+    ],
+)
+def test_get_fields_no_warning(url, name):
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+    with open("tmp.txt", "w") as fp:
+        retrieved_fields = reader.get_fields(fileobj=fp)
+
+    assert len(retrieved_fields) == 10
 
     # Cleanup
     os.remove("tmp.txt")
@@ -409,6 +441,22 @@ def test_merge_output():
             "https://corpora.tika.apache.org/base/docs/govdocs1/959/959184.pdf",
             "tika-959184.pdf",
         ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/958/958496.pdf",
+            "tika-958496.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/972/972174.pdf",
+            "tika-972174.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/972/972243.pdf",
+            "tika-972243.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/969/969502.pdf",
+            "tika-969502.pdf",
+        ),
     ],
 )
 def test_image_extraction(url, name):
@@ -478,3 +526,57 @@ def test_image_extraction2(url, name):
         for filepath in images_extracted:
             if os.path.exists(filepath):
                 os.remove(filepath)
+
+
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/918/918137.pdf",
+            "tika-918137.pdf",
+        ),
+    ],
+)
+def test_get_outline(url, name):
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+    reader.outlines
+
+
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/935/935981.pdf",
+            "tika-935981.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/937/937334.pdf",
+            "tika-937334.pdf",
+        ),
+    ],
+)
+def test_get_xfa(url, name):
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+    reader.xfa
+
+
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/988/988698.pdf",
+            "tika-988698.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/914/914133.pdf",
+            "tika-988698.pdf",
+        ),
+    ],
+)
+def test_get_fonts(url, name):
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+    for page in reader.pages:
+        page._get_fonts()
