@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658640479225,
+  "lastUpdate": 1658643792930,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -10894,6 +10894,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03520633305970928",
             "extra": "mean: 4.2518502655999955 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "102260d8d5d21559371f7154ec647db5ce659dc2",
+          "message": "MAINT: Add diagnostic output to exception in read_from_stream (#1159)\n\nCo-authored-by: speedplane <mes65@cornell.edu>",
+          "timestamp": "2022-07-24T08:21:49+02:00",
+          "tree_id": "31b7a520c6c779668cad4ade444e374c748daedc",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/102260d8d5d21559371f7154ec647db5ce659dc2"
+        },
+        "date": 1658643790822,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8477372503769978,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009419933420346183",
+            "extra": "mean: 1.1796107809999967 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.703609099853143,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006542810520033091",
+            "extra": "mean: 103.05443981818416 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21664344304417912,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03308381427900485",
+            "extra": "mean: 4.615879372800009 sec\nrounds: 5"
           }
         ]
       }
