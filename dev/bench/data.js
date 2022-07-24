@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658644214086,
+  "lastUpdate": 1658649786621,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -11029,6 +11029,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.08989962279164848",
             "extra": "mean: 4.4915876009999804 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "fa5e3f76da2048b50c9d1dd94d7a938a11ac53e8",
+          "message": "BUG: Set /AS for /Btn form fields in writer (#1161)\n\nCloses #434\r\n\r\nCo-authored-by: liuzhuoling <liuzhuoling@mycapital.net>",
+          "timestamp": "2022-07-24T10:01:55+02:00",
+          "tree_id": "3415c1773510211fbcd8d90de2ddd636cee28c2b",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/fa5e3f76da2048b50c9d1dd94d7a938a11ac53e8"
+        },
+        "date": 1658649785248,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9017165730790321,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011343821025849481",
+            "extra": "mean: 1.1089959194000016 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.460030018707617,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00899577327067763",
+            "extra": "mean: 95.6020200909093 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23230634885298665,
+            "unit": "iter/sec",
+            "range": "stddev: 0.037344257841753124",
+            "extra": "mean: 4.304660655799995 sec\nrounds: 5"
           }
         ]
       }
