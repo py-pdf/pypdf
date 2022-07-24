@@ -56,12 +56,12 @@ def build_char_map(
         float(sp_width / 2),
         encoding,
         # https://github.com/python/mypy/issues/4374
-        map_dict,  # type: ignore
-    )  # type: ignore
+        map_dict,
+    )
 
 
 # used when missing data, e.g. font def missing
-unknown_char_map: Tuple[str, float, Union[str, Dict[int, str]], Dict] = (
+unknown_char_map: Tuple[str, float, Union[str, Dict[int, str]], Dict[Any, Any]] = (
     "Unknown",
     9999,
     dict(zip(range(256), ["�"] * 256)),
@@ -108,7 +108,7 @@ def parse_encoding(
     encoding: Union[str, List[str], Dict[int, str]] = []
     if "/Encoding" not in ft:
         try:
-            if "/BaseFont" in ft and ft["/BaseFont"] in charset_encoding:
+            if "/BaseFont" in ft and cast(str, ft["/BaseFont"]) in charset_encoding:
                 encoding = dict(
                     zip(range(256), charset_encoding[cast(str, ft["/BaseFont"])])
                 )
@@ -116,7 +116,7 @@ def parse_encoding(
                 encoding = "charmap"
             return encoding, _default_fonts_space_width[cast(str, ft["/BaseFont"])]
         except Exception:
-            if ft["/Subtype"] == "/Type1":
+            if cast(str, ft["/Subtype"]) == "/Type1":
                 return "charmap", space_code
             else:
                 return "", space_code
@@ -314,7 +314,7 @@ def compute_space_width(
         except Exception:
             w1[-1] = 1000.0
         if "/W" in ft1:
-            w = list(ft1["/W"])  # type: ignore
+            w = list(ft1["/W"])
         else:
             w = []
         while len(w) > 0:

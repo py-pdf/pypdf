@@ -46,7 +46,7 @@ try:
     # Python 3.10+: https://www.python.org/dev/peps/pep-0484/
     from typing import TypeAlias  # type: ignore[attr-defined]
 except ImportError:
-    from typing_extensions import TypeAlias  # type: ignore[misc]
+    from typing_extensions import TypeAlias
 
 from .errors import STREAM_TRUNCATED_PREMATURELY, PdfStreamError
 
@@ -130,7 +130,7 @@ def skip_over_comment(stream: StreamType) -> None:
 
 
 def read_until_regex(
-    stream: StreamType, regex: Pattern, ignore_eof: bool = False
+    stream: StreamType, regex: Pattern[bytes], ignore_eof: bool = False
 ) -> bytes:
     """
     Read until the regular expression pattern matched (ignore the match).

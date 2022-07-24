@@ -192,7 +192,7 @@ class BooleanObject(PdfObject):
 
 
 class ArrayObject(list, PdfObject):
-    def items(self) -> Iterable:
+    def items(self) -> Iterable[Any]:
         """
         Emulate DictionaryObject.items for a list
         (index, object)
@@ -517,7 +517,7 @@ def read_string_from_stream(
     return create_string_object(txt, forced_encoding)
 
 
-class ByteStringObject(bytes, PdfObject):  # type: ignore
+class ByteStringObject(bytes, PdfObject):
     """
     Represents a string object where the text encoding could not be determined.
     This occurs quite often, as the PDF spec doesn't provide an alternate way to
