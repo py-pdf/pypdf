@@ -297,7 +297,11 @@ def test_get_metadata(url, name):
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/938/938702.pdf",
             "tika-938702.pdf",
-        )
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/942/942358.pdf",
+            "tika-942358.pdf",
+        ),
     ],
 )
 def test_extract_text(url, name):
