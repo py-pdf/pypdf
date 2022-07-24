@@ -861,7 +861,9 @@ class PdfReader:
         elif isinstance(dest, str):
             # named destination, addresses NameObject Issue #193
             try:
-                outline = self._build_destination(title, self._namedDests[dest].dest_array)  # type: ignore
+                outline = self._build_destination(
+                    title, self._namedDests[dest].dest_array
+                )
             except KeyError:
                 # named destination not found in Name Dict
                 outline = self._build_destination(title, None)
