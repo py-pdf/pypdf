@@ -2,12 +2,16 @@ import binascii
 import os
 import sys
 from io import BytesIO
+from pathlib import Path
 
 import pytest
 
 from PyPDF2 import PdfMerger, PdfReader, PdfWriter
+from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import PageAttributes as PG
+from PyPDF2.constants import Ressources as RES
 from PyPDF2.errors import PdfReadError, PdfReadWarning
+from PyPDF2.filters import _xobj_to_image
 
 from . import get_pdf_from_url
 
@@ -16,6 +20,13 @@ PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
 RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
 
 sys.path.append(PROJECT_ROOT)
+
+
+def test_dropdown_items():
+    inputfile = os.path.join(RESOURCE_ROOT, "libreoffice-form.pdf")
+    reader = PdfReader(inputfile)
+    fields = reader.get_fields()
+    assert "/Opt" in fields["Nationality"].keys()
 
 
 def test_PdfReaderFileLoad():
@@ -239,10 +250,7 @@ def test_merge_with_warning(url, name):
     merger = PdfMerger()
     merger.append(reader)
     # This could actually be a performance bottleneck:
-    with pytest.warns(
-        PdfReadWarning, match="^Unable to resolve .*, returning NullObject instead"
-    ):
-        merger.write("tmp.merged.pdf")
+    merger.write("tmp.merged.pdf")
 
     # Cleanup
     os.remove("tmp.merged.pdf")
@@ -289,7 +297,11 @@ def test_get_metadata(url, name):
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/938/938702.pdf",
             "tika-938702.pdf",
-        )
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/942/942358.pdf",
+            "tika-942358.pdf",
+        ),
     ],
 )
 def test_extract_text(url, name):
@@ -318,9 +330,16 @@ def test_compress(url, name):
     assert exc.value.args[0] == "Unexpected end of stream"
 
 
-def test_get_fields():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/961/961883.pdf"
-    name = "tika-961883.pdf"
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/961/961883.pdf",
+            "tika-961883.pdf",
+        ),
+    ],
+)
+def test_get_fields_warns(url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
     with open("tmp.txt", "w") as fp:
@@ -328,6 +347,27 @@ def test_get_fields():
             retrieved_fields = reader.get_fields(fileobj=fp)
 
     assert retrieved_fields == {}
+
+    # Cleanup
+    os.remove("tmp.txt")
+
+
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/942/942050.pdf",
+            "tika-942050.pdf",
+        ),
+    ],
+)
+def test_get_fields_no_warning(url, name):
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+    with open("tmp.txt", "w") as fp:
+        retrieved_fields = reader.get_fields(fileobj=fp)
+
+    assert len(retrieved_fields) == 10
 
     # Cleanup
     os.remove("tmp.txt")
@@ -372,3 +412,171 @@ def test_merge_output():
 
     # Cleanup
     merger.close()
+
+
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/994/994636.pdf",
+            "tika-994636.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/952/952133.pdf",
+            "tika-952133.pdf",
+        ),
+        (  # JPXDecode
+            "https://corpora.tika.apache.org/base/docs/govdocs1/914/914568.pdf",
+            "tika-914568.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/952/952016.pdf",
+            "tika-952016.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/965/965118.pdf",
+            "tika-952016.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/959/959184.pdf",
+            "tika-959184.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/958/958496.pdf",
+            "tika-958496.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/972/972174.pdf",
+            "tika-972174.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/972/972243.pdf",
+            "tika-972243.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/969/969502.pdf",
+            "tika-969502.pdf",
+        ),
+    ],
+)
+def test_image_extraction(url, name):
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+
+    images_extracted = []
+    root = Path("extracted-images")
+    if not root.exists():
+        os.mkdir(root)
+
+    for page in reader.pages:
+        if RES.XOBJECT in page[PG.RESOURCES]:
+            x_object = page[PG.RESOURCES][RES.XOBJECT].get_object()
+
+            for obj in x_object:
+                if x_object[obj][IA.SUBTYPE] == "/Image":
+                    extension, byte_stream = _xobj_to_image(x_object[obj])
+                    if extension is not None:
+                        filename = root / (obj[1:] + extension)
+                        with open(filename, "wb") as img:
+                            img.write(byte_stream)
+                        images_extracted.append(filename)
+
+    # Cleanup
+    do_cleanup = True  # set this to False for manual inspection
+    if do_cleanup:
+        for filepath in images_extracted:
+            if os.path.exists(filepath):
+                os.remove(filepath)
+
+
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/977/977609.pdf",
+            "tika-977609.pdf",
+        ),
+    ],
+)
+def test_image_extraction2(url, name):
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+
+    images_extracted = []
+    root = Path("extracted-images")
+    if not root.exists():
+        os.mkdir(root)
+
+    for page in reader.pages:
+        if RES.XOBJECT in page[PG.RESOURCES]:
+            x_object = page[PG.RESOURCES][RES.XOBJECT].get_object()
+
+            for obj in x_object:
+                if x_object[obj][IA.SUBTYPE] == "/Image":
+                    extension, byte_stream = _xobj_to_image(x_object[obj])
+                    if extension is not None:
+                        filename = root / (obj[1:] + extension)
+                        with open(filename, "wb") as img:
+                            img.write(byte_stream)
+                        images_extracted.append(filename)
+
+    # Cleanup
+    do_cleanup = True  # set this to False for manual inspection
+    if do_cleanup:
+        for filepath in images_extracted:
+            if os.path.exists(filepath):
+                os.remove(filepath)
+
+
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/918/918137.pdf",
+            "tika-918137.pdf",
+        ),
+    ],
+)
+def test_get_outline(url, name):
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+    reader.outlines
+
+
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/935/935981.pdf",
+            "tika-935981.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/937/937334.pdf",
+            "tika-937334.pdf",
+        ),
+    ],
+)
+def test_get_xfa(url, name):
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+    reader.xfa
+
+
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/988/988698.pdf",
+            "tika-988698.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/914/914133.pdf",
+            "tika-988698.pdf",
+        ),
+    ],
+)
+def test_get_fonts(url, name):
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+    for page in reader.pages:
+        page._get_fonts()

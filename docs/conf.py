@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.abspath("."))
 sys.path.insert(0, os.path.abspath("../"))
 
 shutil.copyfile("../CHANGELOG.md", "meta/CHANGELOG.md")
+shutil.copyfile("../CONTRIBUTORS.md", "meta/CONTRIBUTORS.md")
 
 # -- Project information -----------------------------------------------------
 

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from PyPDF2 import PdfMerger, PdfReader
+from PyPDF2 import PdfReader
 from PyPDF2._reader import convert_to_int, convertToInt
 from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import PageAttributes as PG
@@ -17,12 +17,21 @@ from PyPDF2.errors import (
     PdfReadWarning,
 )
 from PyPDF2.filters import _xobj_to_image
+from PyPDF2.generic import Destination
 
 from . import get_pdf_from_url
+
+try:
+    from Crypto.Cipher import AES  # noqa: F401
+
+    HAS_PYCRYPTODOME = True
+except ImportError:
+    HAS_PYCRYPTODOME = False
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
 RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
+EXTERNAL_ROOT = Path(PROJECT_ROOT) / "sample-files"
 
 
 @pytest.mark.parametrize(
@@ -229,7 +238,7 @@ def test_get_images_raw(strict, with_prev_0, startx_correction, should_fail):
         pdf_data.find(b"4 0 obj"),
         pdf_data.find(b"5 0 obj"),
         b"/Prev 0 " if with_prev_0 else b"",
-        # startx_correction should be -1 due to double % at the beginning indiducing an error on startxref computation
+        # startx_correction should be -1 due to double % at the beginning inducing an error on startxref computation
         pdf_data.find(b"xref") + startx_correction,
     )
     pdf_stream = io.BytesIO(pdf_data)
@@ -705,7 +714,7 @@ def test_read_not_binary_mode():
             PdfReader(f)
 
 
-@pytest.mark.xfail(reason="#416")
+@pytest.mark.skipif(not HAS_PYCRYPTODOME, reason="No pycryptodome")
 def test_read_form_416():
     url = (
         "https://www.fda.gov/downloads/AboutFDA/ReportsManualsForms/Forms/UCM074728.pdf"
@@ -761,12 +770,12 @@ def test_get_fields():
     assert dict(fields["c1-1"]) == ({"/FT": "/Btn", "/T": "c1-1"})
 
 
+# covers also issue 1089
+@pytest.mark.filterwarnings("ignore::PyPDF2.errors.PdfReadWarning")
 def test_get_fields_read_else_block():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/934/934771.pdf"
     name = "tika-934771.pdf"
-    with pytest.raises(PdfReadError) as exc:
-        PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    assert exc.value.args[0] == "Could not find xref table at specified location"
+    PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
 
 
 def test_get_fields_read_else_block2():
@@ -777,12 +786,11 @@ def test_get_fields_read_else_block2():
     assert fields is None
 
 
+@pytest.mark.filterwarnings("ignore::PyPDF2.errors.PdfReadWarning")
 def test_get_fields_read_else_block3():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/957/957721.pdf"
     name = "tika-957721.pdf"
-    with pytest.raises(PdfReadError) as exc:
-        PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    assert exc.value.args[0] == "Could not find xref table at specified location"
+    PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
 
 
 def test_metadata_is_none():
@@ -849,3 +857,156 @@ def test_header(src, pdf_header):
     reader = PdfReader(src)
 
     assert reader.pdf_header == pdf_header
+
+
+def test_outline_color():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
+    name = "tika-924546.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    assert reader.outlines[0].color == [0, 0, 1]
+
+
+def test_outline_font_format():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
+    name = "tika-924546.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    assert reader.outlines[0].font_format == 2
+
+
+def get_outlines_property(outlines, attribute_name: str):
+    results = []
+    if isinstance(outlines, list):
+        for outline in outlines:
+            if isinstance(outline, Destination):
+                results.append(getattr(outline, attribute_name))
+            else:
+                results.append(get_outlines_property(outline, attribute_name))
+    else:
+        raise ValueError(f"got {type(outlines)}")
+    return results
+
+
+def test_outline_title_issue_1121():
+    reader = PdfReader(EXTERNAL_ROOT / "014-outlines/mistitled_outlines_example.pdf")
+
+    assert get_outlines_property(reader.outlines, "title") == [
+        "First",
+        [
+            "Second",
+            "Third",
+            "Fourth",
+            [
+                "Fifth",
+                "Sixth",
+            ],
+            "Seventh",
+            [
+                "Eighth",
+                "Ninth",
+            ],
+        ],
+        "Tenth",
+        [
+            "Eleventh",
+            "Twelfth",
+            "Thirteenth",
+            "Fourteenth",
+        ],
+        "Fifteenth",
+        [
+            "Sixteenth",
+            "Seventeenth",
+        ],
+        "Eighteenth",
+        "Nineteenth",
+        [
+            "Twentieth",
+            "Twenty-first",
+            "Twenty-second",
+            "Twenty-third",
+            "Twenty-fourth",
+            "Twenty-fifth",
+            "Twenty-sixth",
+            "Twenty-seventh",
+        ],
+    ]
+
+
+def test_outline_count():
+    reader = PdfReader(EXTERNAL_ROOT / "014-outlines/mistitled_outlines_example.pdf")
+
+    assert get_outlines_property(reader.outlines, "outline_count") == [
+        5,
+        [
+            None,
+            None,
+            2,
+            [
+                None,
+                None,
+            ],
+            -2,
+            [
+                None,
+                None,
+            ],
+        ],
+        4,
+        [
+            None,
+            None,
+            None,
+            None,
+        ],
+        -2,
+        [
+            None,
+            None,
+        ],
+        None,
+        8,
+        [
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ],
+    ]
+
+
+def test_outline_missing_title():
+    reader = PdfReader(
+        os.path.join(RESOURCE_ROOT, "outline-without-title.pdf"), strict=True
+    )
+    with pytest.raises(PdfReadError) as exc:
+        reader.outlines
+    assert exc.value.args[0].startswith("Outline Entry Missing /Title attribute:")
+
+
+def test_outline_with_missing_named_destination():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/913/913678.pdf"
+    name = "tika-913678.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    # outline items in document reference a named destination that is not defined
+    assert reader.outlines[1][0].title.startswith("Report for 2002AZ3B: Microbial")
+
+
+def test_outline_with_empty_action():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
+    name = "tika-924546.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    # outline (entitled Tables and Figures) utilize an empty action (/A)
+    # that has no type or destination
+    assert reader.outlines[-4].title == "Tables"
+
+
+def test_outlines_with_invalid_destinations():
+    reader = PdfReader(
+        os.path.join(RESOURCE_ROOT, "outlines-with-invalid-destinations.pdf")
+    )
+    # contains 9 outlines, 6 with invalid destinations caused by different malformations
+    assert len(reader.outlines) == 9

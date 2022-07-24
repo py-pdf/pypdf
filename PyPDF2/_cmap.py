@@ -35,10 +35,17 @@ def build_char_map(
         for x in int_entry:
             if x <= 255:
                 encoding[x] = chr(x)
-    if font_name in _default_fonts_space_width:
+    try:
         # override space_width with new params
-        space_width = _default_fonts_space_width[font_name]
-    sp_width = compute_space_width(ft, space_code, space_width)
+        space_width = _default_fonts_space_width[cast(str, ft["/BaseFont"])]
+    except Exception:
+        pass
+    # I conside the space_code is available on one byte
+    if isinstance(space_code, str):
+        sp = space_code.encode("charmap")[0]
+    else:
+        sp = space_code
+    sp_width = compute_space_width(ft, sp, space_width)
 
     return (
         font_type,
@@ -184,7 +191,13 @@ def parse_to_unicode(
     for i in range(len(ll)):
         j = ll[i].find(b">")
         if j >= 0:
-            ll[i] = ll[i][:j].replace(b" ", b"") + b" " + ll[i][j + 1 :]
+            if j == 0:
+                # string is empty: stash a placeholder here (see below)
+                # see https://github.com/py-pdf/PyPDF2/issues/1111
+                content = b"."
+            else:
+                content = ll[i][:j].replace(b" ", b"")
+            ll[i] = content + b" " + ll[i][j + 1 :]
     cm = (
         (b" ".join(ll))
         .replace(b"[", b" [ ")
@@ -193,7 +206,7 @@ def parse_to_unicode(
     )
 
     for l in cm.split(b"\n"):
-        if l in (b"", b" "):
+        if l in (b"", b" ") or l[0] == 37:  # 37 = %
             continue
         if b"beginbfrange" in l:
             process_rg = True
@@ -224,7 +237,7 @@ def parse_to_unicode(
                     a += 1
             else:
                 c = int(lst[2], 16)
-                fmt2 = b"%%0%dX" % len(lst[2])
+                fmt2 = b"%%0%dX" % max(4, len(lst[2]))
                 while a <= b:
                     map_dict[
                         unhexlify(fmt % a).decode(
@@ -238,14 +251,18 @@ def parse_to_unicode(
         elif process_char:
             lst = [x for x in l.split(b" ") if x]
             map_dict[-1] = len(lst[0]) // 2
-            while len(lst) > 0:
+            while len(lst) > 1:
+                map_to = ""
+                # placeholder (see above) means empty string
+                if lst[1] != b".":
+                    map_to = unhexlify(lst[1]).decode(
+                        "utf-16-be", "surrogatepass"
+                    )  # join is here as some cases where the code was split
                 map_dict[
                     unhexlify(lst[0]).decode(
                         "charmap" if map_dict[-1] == 1 else "utf-16-be", "surrogatepass"
                     )
-                ] = unhexlify(lst[1]).decode(
-                    "utf-16-be", "surrogatepass"
-                )  # join is here as some cases where the code was split
+                ] = map_to
                 int_entry.append(int(lst[0], 16))
                 lst = lst[2:]
     for a, value in map_dict.items():
@@ -259,30 +276,43 @@ def compute_space_width(
 ) -> float:
     sp_width: float = space_width * 2  # default value
     w = []
+    w1 = {}
     st: int = 0
-    if "/W" in ft:
-        if "/DW" in ft:
-            sp_width = cast(float, ft["/DW"])
-        w = list(ft["/W"])  # type: ignore
+    if "/DescendantFonts" in ft:  # ft["/Subtype"].startswith("/CIDFontType"):
+        ft1 = ft["/DescendantFonts"][0].get_object()  # type: ignore
+        try:
+            w1[-1] = cast(float, ft1["/DW"])
+        except Exception:
+            w1[-1] = 1000.0
+        if "/W" in ft1:
+            w = list(ft1["/W"])  # type: ignore
+        else:
+            w = []
         while len(w) > 0:
             st = w[0]
             second = w[1]
-            if isinstance(int, second):
-                if st <= space_code and space_code <= second:
-                    sp_width = w[2]
-                    break
+            if isinstance(second, int):
+                for x in range(st, second):
+                    w1[x] = w[2]
                 w = w[3:]
-            if isinstance(list, second):
-                if st <= space_code and space_code <= st + len(second) - 1:
-                    sp_width = second[space_code - st]
+            elif isinstance(second, list):
+                for y in second:
+                    w1[st] = y
+                    st += 1
                 w = w[2:]
             else:
                 warnings.warn(
-                    "unknown widths : \n" + (ft["/W"]).__repr__(),
+                    "unknown widths : \n" + (ft1["/W"]).__repr__(),
                     PdfReadWarning,
                 )
                 break
-    if "/Widths" in ft:
+        try:
+            sp_width = w1[space_code]
+        except Exception:
+            sp_width = (
+                w1[-1] / 2.0
+            )  # if using default we consider space will be only half size
+    elif "/Widths" in ft:
         w = list(ft["/Widths"])  # type: ignore
         try:
             st = cast(int, ft["/FirstChar"])

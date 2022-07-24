@@ -3,9 +3,9 @@ from io import BytesIO
 
 import pytest
 
-from PyPDF2 import PdfMerger, PdfReader, PdfWriter
+from PyPDF2 import PageObject, PdfMerger, PdfReader, PdfWriter
 from PyPDF2.errors import PageSizeNotDefinedError
-from PyPDF2.generic import RectangleObject
+from PyPDF2.generic import RectangleObject, StreamObject
 
 from . import get_pdf_from_url
 
@@ -84,6 +84,12 @@ def test_writer_operations():
     tmp_path = "dont_commit_writer.pdf"
     with open(tmp_path, "wb") as output_stream:
         writer.write(output_stream)
+
+    # Check that every key in _idnum_hash is correct
+    objects_hash = [o.hash_value() for o in writer._objects]
+    for k, v in writer._idnum_hash.items():
+        assert v.pdf == writer
+        assert k in objects_hash, "Missing %s" % v
 
     # cleanup
     os.remove(tmp_path)
@@ -197,7 +203,7 @@ def test_remove_text_all_operators(ignore_byte_string_object):
         pdf_data.find(b"4 0 obj") + startx_correction,
         pdf_data.find(b"5 0 obj") + startx_correction,
         pdf_data.find(b"6 0 obj") + startx_correction,
-        # startx_correction should be -1 due to double % at the beginning indiducing an error on startxref computation
+        # startx_correction should be -1 due to double % at the beginning inducing an error on startxref computation
         pdf_data.find(b"xref"),
     )
     print(pdf_data.decode())
@@ -482,8 +488,7 @@ def test_sweep_indirect_references_nullobject_exception():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     merger = PdfMerger()
     merger.append(reader)
-    with pytest.warns(UserWarning, match="returning NullObject instead"):
-        merger.write("tmp-merger-do-not-commit.pdf")
+    merger.write("tmp-merger-do-not-commit.pdf")
 
     # cleanup
     os.remove("tmp-merger-do-not-commit.pdf")
@@ -511,3 +516,89 @@ def test_pdf_header():
 
     writer.pdf_header = b"%PDF-1.6"
     assert writer.pdf_header == b"%PDF-1.6"
+
+
+def test_write_dict_stream_object():
+    stream = (
+        b"BT "
+        b"/F0 36 Tf "
+        b"50 706 Td "
+        b"36 TL "
+        b"(The Tj operator) Tj "
+        b'1 2 (The double quote operator) " '
+        b"(The single quote operator) ' "
+        b"ET"
+    )
+    from PyPDF2.generic import IndirectObject, NameObject
+
+    stream_object = StreamObject()
+    stream_object[NameObject("/Type")] = NameObject("/Text")
+    stream_object._data = stream
+
+    writer = PdfWriter()
+
+    page_object = PageObject.create_blank_page(writer, 1000, 1000)
+    # Construct dictionary object (PageObject) with stream object
+    # Writer will replace this stream object with indirect object
+    page_object[NameObject("/Test")] = stream_object
+
+    writer.add_page(page_object)
+
+    for k, v in page_object.items():
+        if k == "/Test":
+            assert str(v) == str(stream_object)
+            break
+    else:
+        assert False, "/Test not found"
+
+    with open("tmp-writer-do-not-commit.pdf", "wb") as fp:
+        writer.write(fp)
+
+    for k, v in page_object.items():
+        if k == "/Test":
+            assert str(v) != str(stream_object)
+            assert isinstance(v, IndirectObject)
+            assert str(v.get_object()) == str(stream_object)
+            break
+    else:
+        assert False, "/Test not found"
+
+    # Check that every key in _idnum_hash is correct
+    objects_hash = [o.hash_value() for o in writer._objects]
+    for k, v in writer._idnum_hash.items():
+        assert v.pdf == writer
+        assert k in objects_hash, "Missing %s" % v
+
+    os.remove("tmp-writer-do-not-commit.pdf")
+
+
+def test_add_single_annotation():
+    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    writer = PdfWriter()
+    writer.add_page(page)
+
+    annot_dict = {
+        "/Type": "/Annot",
+        "/Subtype": "/Text",
+        "/Rect": [270.75, 596.25, 294.75, 620.25],
+        "/Contents": "Note in second paragraph",
+        "/C": [1, 1, 0],
+        "/M": "D:20220406191858+02'00",
+        "/Popup": {
+            "/Type": "/Annot",
+            "/Subtype": "/Popup",
+            "/Rect": [294.75, 446.25, 494.75, 596.25],
+            "/M": "D:20220406191847+02'00",
+        },
+        "/T": "moose",
+    }
+    writer.add_annotation(0, annot_dict)
+    # Assert manually
+    target = "annot-single-out.pdf"
+    with open(target, "wb") as fp:
+        writer.write(fp)
+
+    # Cleanup
+    os.remove(target)  # remove for testing

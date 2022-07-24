@@ -2,25 +2,34 @@ import json
 import os
 from copy import deepcopy
 from io import BytesIO
+from pathlib import Path
 
 import pytest
 
-from PyPDF2 import PdfReader, Transformation
+from PyPDF2 import PdfReader, PdfWriter, Transformation
 from PyPDF2._page import PageObject
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.errors import PdfReadWarning
-from PyPDF2.generic import DictionaryObject, NameObject, RectangleObject
+from PyPDF2.generic import (
+    ArrayObject,
+    DictionaryObject,
+    FloatObject,
+    IndirectObject,
+    NameObject,
+    RectangleObject,
+    TextStringObject,
+)
 
 from . import get_pdf_from_url
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
 RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
-EXTERNAL_ROOT = os.path.join(PROJECT_ROOT, "sample-files")
+EXTERNAL_ROOT = Path(PROJECT_ROOT) / "sample-files"
 
 
 def get_all_sample_files():
-    with open(os.path.join(EXTERNAL_ROOT, "files.json")) as fp:
+    with open(EXTERNAL_ROOT / "files.json") as fp:
         data = fp.read()
     meta = json.loads(data)
     return meta
@@ -35,8 +44,9 @@ all_files_meta = get_all_sample_files()
     [m for m in all_files_meta["data"] if not m["encrypted"]],
     ids=[m["path"] for m in all_files_meta["data"] if not m["encrypted"]],
 )
+@pytest.mark.filterwarnings("ignore::PyPDF2.errors.PdfReadWarning")
 def test_read(meta):
-    pdf_path = os.path.join(EXTERNAL_ROOT, meta["path"])
+    pdf_path = EXTERNAL_ROOT / meta["path"]
     reader = PdfReader(pdf_path)
     reader.pages[0]
     assert len(reader.pages) == meta["pages"]
@@ -241,6 +251,11 @@ def test_extract_text_single_quote_op():
             "https://corpora.tika.apache.org/base/docs/govdocs1/932/932446.pdf",
             "tika-932446.pdf",
         ),
+        # iss 1134:
+        (
+            "https://github.com/py-pdf/PyPDF2/files/9150656/ST.2019.PDF",
+            "iss_1134.pdf",
+        ),
     ],
 )
 def test_extract_text_page_pdf(url, name):
@@ -266,3 +281,184 @@ def test_extract_text_operator_t_star():  # L1266, L1267
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     for page in reader.pages:
         page.extract_text()
+
+
+@pytest.mark.parametrize(
+    ("pdf_path", "password", "embedded", "unembedded"),
+    [
+        (
+            os.path.join(RESOURCE_ROOT, "crazyones.pdf"),
+            None,
+            {
+                "/HHXGQB+SFTI1440",
+                "/TITXYI+SFRM0900",
+                "/YISQAD+SFTI1200",
+            },
+            set(),
+        ),
+        (
+            os.path.join(RESOURCE_ROOT, "attachment.pdf"),
+            None,
+            {
+                "/HHXGQB+SFTI1440",
+                "/TITXYI+SFRM0900",
+                "/YISQAD+SFTI1200",
+            },
+            set(),
+        ),
+        (
+            os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf"),
+            "openpassword",
+            {"/BAAAAA+DejaVuSans"},
+            set(),
+        ),
+        (
+            os.path.join(RESOURCE_ROOT, "imagemagick-images.pdf"),
+            None,
+            set(),
+            {"/Helvetica"},
+        ),
+        (os.path.join(RESOURCE_ROOT, "imagemagick-lzw.pdf"), None, set(), set()),
+        (
+            os.path.join(RESOURCE_ROOT, "reportlab-inline-image.pdf"),
+            None,
+            set(),
+            {"/Helvetica"},
+        ),
+    ],
+)
+def test_get_fonts(pdf_path, password, embedded, unembedded):
+    reader = PdfReader(pdf_path, password=password)
+    a = set()
+    b = set()
+    for page in reader.pages:
+        a_tmp, b_tmp = page._get_fonts()
+        a = a.union(a_tmp)
+        b = b.union(b_tmp)
+    assert (a, b) == (embedded, unembedded)
+
+
+def test_annotation_getter():
+    pdf_path = os.path.join(RESOURCE_ROOT, "commented.pdf")
+    reader = PdfReader(pdf_path)
+    annotations = reader.pages[0].annotations
+    assert annotations is not None
+    assert isinstance(annotations[0], IndirectObject)
+
+    annot_dict = dict(annotations[0].get_object())
+    assert "/P" in annot_dict
+    assert isinstance(annot_dict["/P"], IndirectObject)
+    del annot_dict["/P"]
+
+    annot_dict["/Popup"] = annot_dict["/Popup"].get_object()
+    del annot_dict["/Popup"]["/P"]
+    del annot_dict["/Popup"]["/Parent"]
+    assert annot_dict == {
+        "/Type": "/Annot",
+        "/Subtype": "/Text",
+        "/Rect": ArrayObject(
+            [
+                270.75,
+                596.25,
+                294.75,
+                620.25,
+            ]
+        ),
+        "/Contents": "Note in second paragraph",
+        "/C": ArrayObject([1, 1, 0]),
+        "/M": "D:20220406191858+02'00",
+        "/Popup": DictionaryObject(
+            {
+                "/M": "D:20220406191847+02'00",
+                "/Rect": ArrayObject([294.75, 446.25, 494.75, 596.25]),
+                "/Subtype": "/Popup",
+                "/Type": "/Annot",
+            }
+        ),
+        "/T": "moose",
+    }
+
+
+def test_annotation_setter():
+    # Arange
+    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    writer = PdfWriter()
+    writer.add_page(page)
+
+    # Act
+    page_number = 0
+    page_link = writer.get_object(writer._pages)["/Kids"][page_number]
+    annot_dict = {
+        NameObject("/P"): page_link,
+        NameObject("/Type"): NameObject("/Annot"),
+        NameObject("/Subtype"): NameObject("/Text"),
+        NameObject("/Rect"): ArrayObject(
+            [
+                FloatObject(270.75),
+                FloatObject(596.25),
+                FloatObject(294.75),
+                FloatObject(620.25),
+            ]
+        ),
+        NameObject("/Contents"): TextStringObject("Note in second paragraph"),
+        NameObject("/C"): ArrayObject([FloatObject(1), FloatObject(1), FloatObject(0)]),
+        NameObject("/M"): TextStringObject("D:20220406191858+02'00"),
+        NameObject("/Popup"): DictionaryObject(
+            {
+                NameObject("/M"): TextStringObject("D:20220406191847+02'00"),
+                NameObject("/Rect"): ArrayObject(
+                    [
+                        FloatObject(294.75),
+                        FloatObject(446.25),
+                        FloatObject(494.75),
+                        FloatObject(596.25),
+                    ]
+                ),
+                NameObject("/Subtype"): NameObject("/Popup"),
+                NameObject("/Type"): TextStringObject("/Annot"),
+            }
+        ),
+        NameObject("/T"): TextStringObject("moose"),
+    }
+    arr = ArrayObject()
+    page.annotations = arr
+
+    d = DictionaryObject(annot_dict)
+    ind_obj = writer._add_object(d)
+    arr.append(ind_obj)
+
+    # Assert manually
+    target = "annot-out.pdf"
+    with open(target, "wb") as fp:
+        writer.write(fp)
+
+    # Cleanup
+    os.remove(target)  # remove for testing
+
+
+@pytest.mark.xfail(reason="#1091")
+def test_text_extraction_issue_1091():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/966/966635.pdf"
+    name = "tika-966635.pdf"
+    stream = BytesIO(get_pdf_from_url(url, name=name))
+    with pytest.warns(PdfReadWarning):
+        reader = PdfReader(stream)
+    for page in reader.pages:
+        page.extract_text()
+
+
+@pytest.mark.xfail(reason="#1088")
+def test_empyt_password_1088():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/941/941536.pdf"
+    name = "tika-941536.pdf"
+    stream = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(stream)
+    len(reader.pages)
+
+
+@pytest.mark.xfail(reason="#1088 / #1126")
+def test_arab_text_extraction():
+    reader = PdfReader(EXTERNAL_ROOT / "015-arabic/habibi.pdf")
+    assert reader.pages[0].extract_text() == "habibi حَبيبي"

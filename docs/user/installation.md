@@ -28,6 +28,16 @@ using the regular installation.
 pip install PyPDF2[crypto]
 ```
 
+
+## Python Version Support
+
+| Python                 | 3.10 | 3.9 | 3.8 | 3.7 | 3.6 | 2.7 |
+| ---------------------- | ---- | --- | --- | --- | --- | --- |
+| PyPDF2>=2.0            | YES  | YES | YES | YES | YES |     |
+| PyPDF2 1.20.0 - 1.28.4 | YES  | YES | YES | YES | YES | YES |
+| PyPDF2 1.15.0 - 1.20.0 |      |     |     |     |     | YES |
+
+
 ## Anaconda
 
 Anaconda users can [install PyPDF2 via conda-forge](https://anaconda.org/conda-forge/pypdf2).

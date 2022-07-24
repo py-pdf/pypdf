@@ -29,6 +29,7 @@
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
+import logging
 import warnings
 from codecs import getencoder
 from io import (
@@ -342,3 +343,22 @@ def deprecate_with_replacement(
 
 def deprecate_no_replacement(name: str, removed_in: str = "3.0.0") -> None:
     deprecate(DEPR_MSG_NO_REPLACEMENT.format(name, removed_in), 4)
+
+
+def logger_warning(msg: str, src: str) -> None:
+    """
+    Use this instead of logger.warning directly.
+
+    That allows people to overwrite it more easily.
+
+    ## Exception, warnings.warn, logger_warning
+    - Exceptions should be used if the user should write code that deals with
+      an error case, e.g. the PDF being completely broken.
+    - warnings.warn should be used if the user needs to fix their code, e.g.
+      DeprecationWarnings
+    - logger_warning should be used if the user needs to know that an issue was
+      handled by PyPDF2, e.g. a non-compliant PDF being read in a way that
+      PyPDF2 could apply a robustness fix to still read it. This applies mainly
+      to strict=False mode.
+    """
+    logging.getLogger(src).warning(msg)

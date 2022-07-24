@@ -1,5 +1,106 @@
 # CHANGELOG
 
+## Version 2.7.0, 2022-07-21
+
+### New Features (ENH)
+-  Add `outline_count` property (#1129)
+
+### Bug Fixes (BUG)
+-  Make reader.get_fields also return dropdowns with options (#1114)
+-  Add deprecated EncodedStreamObject functions back until PyPDF2==3.0.0 (#1139)
+
+### Robustness (ROB)
+-  Cope with missing /W entry (#1136)
+-  Cope with invalid parent xref (#1133)
+
+### Documentation (DOC)
+-  Contributors file (#1132)
+-  Fix type in signature of PdfWriter.add_uri (#1131)
+
+### Developer Experience (DEV)
+-  Add .git-blame-ignore-revs (#1141)
+
+### Code Style (STY)
+-  Fixing typos (#1137)
+-  Re-use code via get_outlines_property in tests (#1130)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.6.0...2.7.0
+
+## Version 2.6.0, 2022-07-17
+
+### New Features (ENH)
+-  Add color and font_format to PdfReader.outlines[i] (#1104)
+-  Extract Text Enhancement (whitespaces) (#1084)
+
+### Bug Fixes (BUG)
+-  Use `build_destination` for named destination outlines (#1128)
+-  Avoid a crash when a ToUnicode CMap has an empty dstString in beginbfchar (#1118)
+-  Prevent deduplication of PageObject (#1105)
+-  None-check in DictionaryObject.read_from_stream (#1113)
+-  Avoid IndexError in _cmap.parse_to_unicode (#1110)
+
+### Documentation (DOC)
+-  Explanation for git submodule
+-  Watermark and stamp (#1095)
+
+### Maintenance (MAINT)
+-  Text extraction improvements (#1126)
+-  Destination.color returns ArrayObject instead of tuple as fallback (#1119)
+-  Use add_bookmark_destination in add_bookmark (#1100)
+-  Use add_bookmark_destination in add_bookmark_dict (#1099)
+
+### Testing (TST)
+-  Add test for arab text (#1127)
+-  Add xfail for decryption fail (#1125)
+-  Add xfail test for IndexError when extracting text (#1124)
+-  Add MCVE showing outline title issue (#1123)
+
+### Code Style (STY)
+-  Use IntFlag for permissions_flag / update_page_form_field_values (#1094)
+-  Simplify code (#1101)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.5.0...2.6.0
+
+## Version 2.5.0, 2022-07-10
+
+### New Features (ENH)
+-  Add support for indexed color spaces / BitsPerComponent for decoding PNGs (#1067)
+-  Add PageObject._get_fonts (#1083)
+
+### Performance Improvements (PI)
+-  Use iterative DFS in PdfWriter._sweep_indirect_references (#1072)
+
+### Bug Fixes (BUG)
+-  Let Page.scale also scale the crop-/trim-/bleed-/artbox (#1066)
+-  Column default for CCITTFaxDecode (#1079)
+
+### Robustness (ROB)
+-  Guard against None-value in _get_outlines (#1060)
+
+### Documentation (DOC)
+-  Stamps and watermarks (#1082)
+-  OCR vs PDF text extraction (#1081)
+-  Python Version support
+-  Formatting of CHANGELOG
+
+### Developer Experience (DEV)
+-  Cache downloaded files (#1070)
+-  Speed-up for CI (#1069)
+
+### Maintenance (MAINT)
+-  Set page.rotate(angle: int) (#1092)
+-  Issue #416 was fixed by #1015 (#1078)
+
+### Testing (TST)
+-  Image extraction (#1080)
+-  Image extraction (#1077)
+
+### Code Style (STY)
+-  Apply black
+-  Typo in Changelog
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.4.2...2.5.0
+
 ## Version 2.4.2, 2022-07-05
 
 ### New Features (ENH)
@@ -27,7 +128,7 @@
 -  DOC of compress_content_streams (#1061)
 -  Minimize diff for #879 (#1049)
 
-Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.4.1...2.4.2
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/2.4.1...2.4.2)
 
 ## Version 2.4.1, 2022-06-30
 
@@ -54,7 +155,7 @@ Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.4.1...2.4.2
 -  Use unnecessary one-line function / class attribute (#1043)
 -  Docstring formatting (#1033)
 
-Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.4.0...2.4.1
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/2.4.0...2.4.1)
 
 ## Version 2.4.0, 2022-06-26
 
@@ -81,13 +182,13 @@ Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.4.0...2.4.1
 -  Adjust string formatting to be able to use mutmut (#1020)
 -  Update Bug report template
 
-Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.3.1...2.4.0
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/2.3.1...2.4.0)
 
 ## Version 2.3.1, 2022-06-19
 
 BUG: Forgot to add the interal `_codecs` subpackage.
 
-Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.3.0...2.3.1
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/2.3.0...2.3.1)
 
 ## Version 2.3.0, 2022-06-19
 
@@ -136,7 +237,7 @@ The highlight of this release is improved support for file encryption
 -  Put pure data mappings in separate files (#1005)
 -  Make encryption module private, apply pre-commit (#1010)
 
-Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.2.1...2.3.0
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/2.2.1...2.3.0)
 
 ## Version 2.2.1, 2022-06-17
 
@@ -163,7 +264,7 @@ Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.2.1...2.3.0
 ### Code Style (STY)
 -  Apply fixes suggested by pylint (#999)
 
-Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.2.0...2.2.1
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/2.2.0...2.2.1)
 
 ## Version 2.2.0, 2022-06-13
 
@@ -180,7 +281,7 @@ The 2.2.0 release improves text extraction again via (#969):
 Those changes should mainly improve the text extraction for non-ASCII alphabets,
 e.g. Russian / Chinese / Japanese / Korean / Arabic.
 
-Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.1.1...2.2.0
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/2.1.1...2.2.0)
 
 ## Version 2.1.1, 2022-06-12
 
@@ -212,7 +313,7 @@ Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.1.1...2.2.0
 ### Code Style (STY)
 -  Use more tuples and list/dict comprehensions (#976)
 
-Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.1.0...2.1.1
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/2.1.0...2.1.1)
 
 
 ## Version 2.1.0, 2022-06-06
@@ -286,7 +387,7 @@ Thank you to [VictorCarlquist](https://github.com/VictorCarlquist) for #858 and
 ### Code Style (STY)
 -  black, isort, Flake8, splitting buildCharMap (#950)
 
-Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.0.0...2.1.0
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/2.0.0...2.1.0)
 
 ## Version 2.0.0, 2022-06-01
 
@@ -330,14 +431,14 @@ that hopefully helps users to avoid unexpected breaking changes.
   files on PyPI. This should have little to no impact on most people. The
   `Tests` are renamed to `tests`, the `Resources` are renamed to `resources`.
   Both are still in the git repository. The `Scripts` are now in
-  https://github.com/py-pdf/cpdf. `Sample_Code` was moved to the `docs`.
+  [cpdf](https://github.com/py-pdf/cpdf). `Sample_Code` was moved to the `docs`.
 
 For a full list of deprecated functions, please see the changelog of version
 1.28.0.
 
 ### New Features (ENH)
 -  Improve space setting for text extraction (#922)
--  Allow setting the decryption password in PdfReader.__init__ (#920)
+-  Allow setting the decryption password in `PdfReader.__init__` (#920)
 -  Add Page.add_transformation (#883)
 
 ### Bug Fixes (BUG)
@@ -375,14 +476,14 @@ For a full list of deprecated functions, please see the changelog of version
 -  Remove -OO testrun from CI (#901)
 -  Improve tests for convert_to_int (#899)
 
-Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.28.4...2.0.0
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/1.28.4...2.0.0)
 
 ## Version 1.28.4, 2022-05-29
 
 Bug Fixes (BUG):
 -  XmpInformation._converter_date was unusable (#921)
 
-Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.28.3...1.28.4
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/1.28.3...1.28.4)
 
 ## Version 1.28.3, 2022-05-28
 
@@ -393,7 +494,7 @@ Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.28.3...1.28.4
 -  XmpInformation missing method _getText (#917)
 -  Fix PendingDeprecationWarning on _merge_page (#904)
 
-Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.28.2...1.28.3
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/1.28.2...1.28.3)
 
 ## Version 1.28.2, 2022-05-23
 
@@ -401,7 +502,7 @@ Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.28.2...1.28.3
 -  PendingDeprecationWarning for getContents (#893)
 -  PendingDeprecationWarning on using PdfMerger (#891)
 
-Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.28.1...1.28.2
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/1.28.1...1.28.2)
 
 ## Version 1.28.1, 2022-05-22
 
@@ -412,7 +513,7 @@ Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.28.1...1.28.2
 -  Add stacklevel=2 to deprecation warnings (#889)
 -  Remove duplicate warnings imports (#888)
 
-Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.28.0...1.28.1
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/1.28.0...1.28.1)
 
 ## Version 1.28.0, 2022-05-22
 
@@ -423,7 +524,7 @@ and variable-names as well as using properties instead of getter-methods.
 Maintenance (MAINT):
 -  Remove IronPython Fallback for zlib (#868)
 
-Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.27.12...1.27.13
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/1.27.12...1.27.13)
 
 ### Deprecations (DEP)
 
@@ -554,14 +655,14 @@ utils.py:
 ### Documentation (DOC)
 -  Security Policy
 
-Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.27.11...1.27.12
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/1.27.11...1.27.12)
 
 ## Version 1.27.11, 2022-05-02
 
 ### Bug Fixes (BUG)
 -  Incorrectly issued xref warning/exception (#855)
 
-Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.27.10...1.27.11
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/1.27.10...1.27.11)
 
 ## Version 1.27.10, 2022-05-01
 
@@ -600,7 +701,7 @@ Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.27.10...1.27.11
 -  Remove debug code (#828)
 -  Documentation, Variable names (#839)
 
-Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.27.9...1.27.10
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/1.27.9...1.27.10)
 
 ## Version 1.27.9, 2022-04-24
 
@@ -637,7 +738,7 @@ large PDF files (#808) 🎉
 ### Testing (TST)
 -  Newlines in text extraction (#807)
 
-Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.27.8...1.27.9
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/1.27.8...1.27.9)
 
 ## Version 1.27.8, 2022-04-21
 
@@ -651,7 +752,7 @@ Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.27.8...1.27.9
 ### Documentation (DOC)
 -  Robustness (#785)
 
-Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.27.7...1.27.8
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/1.27.7...1.27.8)
 
 ## Version 1.27.7, 2022-04-19
 
@@ -711,7 +812,7 @@ Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.27.7...1.27.8
 -  Make variable naming more consistent in tests
 
 
-All changes: https://github.com/py-pdf/PyPDF2/compare/1.27.5...1.27.6
+[Full changelog](https://github.com/py-pdf/PyPDF2/compare/1.27.5...1.27.6)
 
 ## Version 1.27.5, 2022-04-15
 
@@ -748,14 +849,14 @@ All changes: https://github.com/py-pdf/PyPDF2/compare/1.27.5...1.27.6
 
 - STY: Closing file handles, explicit exports, ... (#743)
 
-All changes: https://github.com/py-pdf/PyPDF2/compare/1.27.4...1.27.5
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/1.27.4...1.27.5)
 
 
 ## Version 1.27.4, 2022-04-12
 
 ### Bug fixes (BUG)
 
-- Guard formatting of __init__.__doc__ string (#738)
+- Guard formatting of `__init__.__doc__` string (#738)
 
 ### Packaging (PKG)
 
@@ -771,7 +872,7 @@ All changes: https://github.com/py-pdf/PyPDF2/compare/1.27.4...1.27.5
 - TST: Fix CI triggering (master ➔ main) (#739)
 - STY: Fix various style issues (#742)
 
-All changes: https://github.com/py-pdf/PyPDF2/compare/1.27.3...1.27.4
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/1.27.3...1.27.4)
 
 ## Version 1.27.3, 2022-04-10
 
@@ -787,23 +888,23 @@ All changes: https://github.com/py-pdf/PyPDF2/compare/1.27.3...1.27.4
 - DEV: Make tox use pytest and add more Python versions (#721)
 - DOC: Many (#720, #723-725, #469)
 
-All changes: https://github.com/py-pdf/PyPDF2/compare/1.27.2...1.27.3
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/1.27.2...1.27.3)
 
 ## Version 1.27.2, 2022-04-09
 
 - Add Scripts (including `pdfcat`), Resources, Tests, and Sample_Code back to
   PyPDF2. It was removed by accident in 1.27.0, but might get removed with 2.0.0
-  See https://github.com/py-pdf/PyPDF2/discussions/718 for discussion
+  See [discussions/718](https://github.com/py-pdf/PyPDF2/discussions/718).
 
-All changes: https://github.com/py-pdf/PyPDF2/compare/1.27.1...1.27.2
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/1.27.1...1.27.2)
 
 ## Version 1.27.1, 2022-04-08
 
 - Fixed project links on PyPI page after migration from mstamy2
   to MartinThoma to the py-pdf organization on GitHub
-- Documentation is now at https://pypdf2.readthedocs.io/en/latest/
+- Documentation is now at [pypdf2.readthedocs.io](https://pypdf2.readthedocs.io/en/latest/)
 
-All changes: https://github.com/py-pdf/PyPDF2/compare/1.27.0...1.27.1
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/1.27.0...1.27.1)
 
 ## Version 1.27.0, 2022-04-07
 
@@ -843,7 +944,7 @@ Features:
  - Improvements for the PyPI page (#644)
  - Python 3 changes (#504, #366)
 
-You can see the full changelog at: https://github.com/py-pdf/PyPDF2/compare/1.26.0...1.27.0
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/1.26.0...1.27.0)
 
 ## Version 1.26.0, 2016-05-18
 
@@ -973,9 +1074,9 @@ OTHER ENHANCEMENTS:
 
 ## Version 1.23, 2014-08-11
 
- - Documentation now available at http://pythonhosted.org//PyPDF2
+ - Documentation now available at pythonhosted.org
 
- - Bugfix in pagerange.py for when __init__.__doc__ has no value (by
+ - Bugfix in pagerange.py for when `__init__.__doc__` has no value (by
    Vladir Cruz)
 
  - Fix typos in OutlinesObject().add() (by shilluc)
@@ -1018,7 +1119,7 @@ OTHER ENHANCEMENTS:
 
  - Added .DS_Store to .gitignore (for Mac users) (by Steve Witham)
 
- - Removed __init__() implementation in NameObject (by Steve Witham)
+ - Removed `__init__()` implementation in NameObject (by Steve Witham)
 
  - Fixed bug (inf. loop) when merging pages in Python 3 (by commx)
 
@@ -1184,8 +1285,6 @@ UPCOMING:
 Other Changes:
 
  - Downloads now available via PyPI
-   https://pypi.python.org/pypi?:action=display&name=PyPDF2
-
  - Installation through pip library is fixed
 
 
@@ -1211,7 +1310,7 @@ Other Changes:
    were only vaguely defined. With the new _version.py file we should
    have more structured and better documented versioning from now on.
 
- - Defined PyPDF2.__version__
+ - Defined `PyPDF2.__version__`
 
  - Fixed encrypt() method (from Martijn The)
 
@@ -1238,7 +1337,7 @@ Other Changes:
 
  - Fixed a typo in code for reading a "\b" escape character in strings.
 
- - Improved __repr__ in FloatObject.
+ - Improved `__repr__` in FloatObject.
 
  - Fixed a bug in reading octal escape sequences in strings.
 

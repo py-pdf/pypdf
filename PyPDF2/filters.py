@@ -37,7 +37,7 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 import math
 import struct
 import zlib
-from io import BytesIO, StringIO
+from io import BytesIO
 from typing import Any, Dict, Optional, Tuple, Union
 
 from .generic import ArrayObject, DictionaryObject, NameObject
@@ -45,6 +45,8 @@ from .generic import ArrayObject, DictionaryObject, NameObject
 try:
     from typing import Literal  # type: ignore[attr-defined]
 except ImportError:
+    # PEP 586 introduced typing.Literal with Python 3.8
+    # For older Python versions, the backport typing_extensions is necessary:
     from typing_extensions import Literal  # type: ignore[misc]
 
 from ._utils import b_, deprecate_with_replacement, ord_, paeth_predictor
@@ -108,36 +110,51 @@ class FlateDecode:
         if predictor != 1:
             # The /Columns param. has 1 as the default value; see ISO 32000,
             # §7.4.4.3 LZWDecode and FlateDecode Parameters, Table 8
+            DEFAULT_BITS_PER_COMPONENT = 8
             if isinstance(decode_parms, ArrayObject):
                 columns = 1
+                bits_per_component = DEFAULT_BITS_PER_COMPONENT
                 for decode_parm in decode_parms:
                     if "/Columns" in decode_parm:
                         columns = decode_parm["/Columns"]
+                    if LZW.BITS_PER_COMPONENT in decode_parm:
+                        bits_per_component = decode_parm[LZW.BITS_PER_COMPONENT]
             else:
                 columns = (
                     1 if decode_parms is None else decode_parms.get(LZW.COLUMNS, 1)
                 )
+                bits_per_component = (
+                    decode_parms.get(LZW.BITS_PER_COMPONENT, DEFAULT_BITS_PER_COMPONENT)
+                    if decode_parms
+                    else DEFAULT_BITS_PER_COMPONENT
+                )
+
+            # PNG predictor can vary by row and so is the lead byte on each row
+            rowlength = (
+                math.ceil(columns * bits_per_component / 8) + 1
+            )  # number of bytes
 
             # PNG prediction:
             if 10 <= predictor <= 15:
-                str_data = FlateDecode._decode_png_prediction(str_data, columns)  # type: ignore
+                str_data = FlateDecode._decode_png_prediction(str_data, columns, rowlength)  # type: ignore
             else:
                 # unsupported predictor
                 raise PdfReadError(f"Unsupported flatedecode predictor {predictor!r}")
         return str_data
 
     @staticmethod
-    def _decode_png_prediction(data: str, columns: int) -> str:
-        output = StringIO()
+    def _decode_png_prediction(data: str, columns: int, rowlength: int) -> bytes:
+        output = BytesIO()
         # PNG prediction can vary from row to row
-        rowlength = columns + 1
-        assert len(data) % rowlength == 0
+        if len(data) % rowlength != 0:
+            raise PdfReadError("Image data is not rectangular")
         prev_rowdata = (0,) * rowlength
         for row in range(len(data) // rowlength):
             rowdata = [
                 ord_(x) for x in data[(row * rowlength) : ((row + 1) * rowlength)]
             ]
             filter_byte = rowdata[0]
+
             if filter_byte == 0:
                 pass
             elif filter_byte == 1:
@@ -162,7 +179,7 @@ class FlateDecode:
                 # unsupported PNG filter
                 raise PdfReadError(f"Unsupported PNG filter {filter_byte!r}")
             prev_rowdata = tuple(rowdata)
-            output.write("".join([chr(x) for x in rowdata[1:]]))
+            output.write(bytearray(rowdata[1:]))
         return output.getvalue()
 
     @staticmethod
@@ -409,8 +426,9 @@ class CCITTFaxDecode:
     def _get_parameters(
         parameters: Union[None, ArrayObject, DictionaryObject], rows: int
     ) -> CCITParameters:
+        # TABLE 3.9 Optional parameters for the CCITTFaxDecode filter
         k = 0
-        columns = 0
+        columns = 1728
         if parameters:
             if isinstance(parameters, ArrayObject):
                 for decode_parm in parameters:
@@ -419,8 +437,10 @@ class CCITTFaxDecode:
                     if CCITT.K in decode_parm:
                         k = decode_parm[CCITT.K]
             else:
-                columns = parameters[CCITT.COLUMNS]  # type: ignore
-                k = parameters[CCITT.K]  # type: ignore
+                if CCITT.COLUMNS in parameters:
+                    columns = parameters[CCITT.COLUMNS]  # type: ignore
+                if CCITT.K in parameters:
+                    k = parameters[CCITT.K]  # type: ignore
 
         return CCITParameters(k, columns, rows)
 
@@ -541,7 +561,11 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
 
     size = (x_object_obj[IA.WIDTH], x_object_obj[IA.HEIGHT])
     data = x_object_obj.get_data()  # type: ignore
-    if x_object_obj[IA.COLOR_SPACE] == ColorSpaces.DEVICE_RGB:
+    if (
+        IA.COLOR_SPACE in x_object_obj
+        and x_object_obj[IA.COLOR_SPACE] == ColorSpaces.DEVICE_RGB
+    ):
+        # https://pillow.readthedocs.io/en/stable/handbook/concepts.html#modes
         mode: Literal["RGB", "P"] = "RGB"
     else:
         mode = "P"
@@ -549,7 +573,21 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
     if SA.FILTER in x_object_obj:
         if x_object_obj[SA.FILTER] == FT.FLATE_DECODE:
             extension = ".png"
+            color_space = None
+            if "/ColorSpace" in x_object_obj:
+                color_space = x_object_obj["/ColorSpace"].get_object()
+                if (
+                    isinstance(color_space, ArrayObject)
+                    and color_space[0] == "/Indexed"
+                ):
+                    color_space, base, hival, lookup = (
+                        value.get_object() for value in color_space
+                    )
+
             img = Image.frombytes(mode, size, data)
+            if color_space == "/Indexed":
+                img.putpalette(lookup.get_data())
+                img = img.convert("RGB")
             if G.S_MASK in x_object_obj:  # add alpha channel
                 alpha = Image.frombytes("L", size, x_object_obj[G.S_MASK].get_data())
                 img.putalpha(alpha)

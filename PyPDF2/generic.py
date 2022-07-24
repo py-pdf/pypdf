@@ -36,8 +36,19 @@ import hashlib
 import logging
 import re
 import warnings
+from enum import IntFlag
 from io import BytesIO
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+)
 
 from ._codecs import (  # noqa: rev_encoding
     _pdfdoc_encoding,
@@ -52,12 +63,13 @@ from ._utils import (
     deprecate_with_replacement,
     hex_str,
     hexencode,
+    logger_warning,
     read_non_whitespace,
     read_until_regex,
     skip_over_comment,
     str_,
 )
-from .constants import FieldDictionaryAttributes
+from .constants import CheckboxRadioButtonAttributes, FieldDictionaryAttributes
 from .constants import FilterTypes as FT
 from .constants import StreamAttributes as SA
 from .constants import TypArguments as TA
@@ -124,6 +136,9 @@ class NullObject(PdfObject):
         deprecate_with_replacement("writeToStream", "write_to_stream")
         self.write_to_stream(stream, encryption_key)
 
+    def __repr__(self) -> str:
+        return "NullObject"
+
     @staticmethod
     def readFromStream(stream: StreamType) -> "NullObject":  # pragma: no cover
         deprecate_with_replacement("readFromStream", "read_from_stream")
@@ -177,6 +192,13 @@ class BooleanObject(PdfObject):
 
 
 class ArrayObject(list, PdfObject):
+    def items(self) -> Iterable:
+        """
+        Emulate DictionaryObject.items for a list
+        (index, object)
+        """
+        return enumerate(self)
+
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
@@ -238,7 +260,7 @@ class IndirectObject(PdfObject):
         return obj.get_object()
 
     def __repr__(self) -> str:
-        return f"IndirectObject({self.idnum!r}, {self.generation!r})"
+        return f"IndirectObject({self.idnum!r}, {self.generation!r}, {id(self.pdf)})"
 
     def __eq__(self, other: Any) -> bool:
         return (
@@ -310,7 +332,7 @@ class FloatObject(decimal.Decimal, PdfObject):
             except decimal.InvalidOperation:
                 # If this isn't a valid decimal (happens in malformed PDFs)
                 # fallback to 0
-                logger.warning(f"Invalid FloatObject {value}")
+                logger_warning(f"Invalid FloatObject {value}", __name__)
                 return decimal.Decimal.__new__(cls, "0")
 
     def __repr__(self) -> str:
@@ -490,7 +512,7 @@ def read_string_from_stream(
                     tok = b""
                 else:
                     msg = rf"Unexpected escaped string: {tok.decode('utf8')}"
-                    logger.warning(msg)
+                    logger_warning(msg, __name__)
         txt += tok
     return create_string_object(txt, forced_encoding)
 
@@ -628,7 +650,7 @@ class NameObject(str, PdfObject):
             # Name objects should represent irregular characters
             # with a '#' followed by the symbol's hex number
             if not pdf.strict:
-                warnings.warn("Illegal character in Name Object", PdfReadWarning)
+                logger_warning("Illegal character in Name Object", __name__)
                 return NameObject(name)
             else:
                 raise PdfReadError("Illegal character in Name Object") from e
@@ -788,7 +810,7 @@ class DictionaryObject(dict, PdfObject):
                     f"Multiple definitions in dictionary at byte "
                     f"{hex_str(stream.tell())} for key {key}"
                 )
-                if pdf.strict:
+                if pdf is not None and pdf.strict:
                     raise PdfReadError(msg)
                 else:
                     warnings.warn(msg, PdfReadWarning)
@@ -1015,7 +1037,9 @@ class StreamObject(DictionaryObject):
         self.decoded_self: Optional[DecodedStreamObject] = None
 
     def hash_value_data(self) -> bytes:
-        return b_(self._data)
+        data = super().hash_value_data()
+        data += b_(self._data)
+        return data
 
     @property
     def decodedSelf(self) -> Optional["DecodedStreamObject"]:  # pragma: no cover
@@ -1142,8 +1166,16 @@ class EncodedStreamObject(StreamObject):
             self.decoded_self = decoded
             return decoded._data
 
+    def getData(self) -> Union[None, str, bytes]:  # pragma: no cover
+        deprecate_with_replacement("getData", "get_data")
+        return self.get_data()
+
     def set_data(self, data: Any) -> None:
         raise PdfReadError("Creating EncodedStreamObject is not currently supported")
+
+    def setData(self, data: Any) -> None:  # pragma: no cover
+        deprecate_with_replacement("setData", "set_data")
+        return self.set_data(data)
 
 
 class ContentStream(DecodedStreamObject):
@@ -1359,6 +1391,16 @@ class RectangleObject(ArrayObject):
         if not isinstance(value, (NumberObject, FloatObject)):
             value = FloatObject(value)
         return value
+
+    def scale(self, sx: float, sy: float) -> "RectangleObject":
+        return RectangleObject(
+            (
+                float(self.left) * sx,
+                float(self.bottom) * sy,
+                float(self.right) * sx,
+                float(self.top) * sy,
+            )
+        )
 
     def ensureIsNumber(
         self, value: Any
@@ -1580,8 +1622,11 @@ class Field(TreeObject):
 
     def __init__(self, data: Dict[str, Any]) -> None:
         DictionaryObject.__init__(self)
-
-        for attr in FieldDictionaryAttributes.attributes():
+        field_attributes = (
+            FieldDictionaryAttributes.attributes()
+            + CheckboxRadioButtonAttributes.attributes()
+        )
+        for attr in field_attributes:
             try:
                 self[NameObject(attr)] = data[attr]
             except KeyError:
@@ -1703,6 +1748,15 @@ class Field(TreeObject):
         return self.additional_actions
 
 
+class OutlineFontFlag(IntFlag):
+    """
+    A class used as an enumerable flag for formatting an outline font
+    """
+
+    italic = 1
+    bold = 2
+
+
 class Destination(TreeObject):
     """
     A class representing a destination within a PDF file.
@@ -1763,9 +1817,15 @@ class Destination(TreeObject):
                 self[NameObject(TA.TOP)],
             ) = args
         elif typ in [TF.FIT_H, TF.FIT_BH]:
-            (self[NameObject(TA.TOP)],) = args
+            try:  # Prefered to be more robust not only to null parameters
+                (self[NameObject(TA.TOP)],) = args
+            except Exception:
+                (self[NameObject(TA.TOP)],) = (NullObject(),)
         elif typ in [TF.FIT_V, TF.FIT_BV]:
-            (self[NameObject(TA.LEFT)],) = args
+            try:  # Prefered to be more robust not only to null parameters
+                (self[NameObject(TA.LEFT)],) = args
+            except Exception:
+                (self[NameObject(TA.LEFT)],) = (NullObject(),)
         elif typ in [TF.FIT, TF.FIT_B]:
             pass
         else:
@@ -1849,6 +1909,28 @@ class Destination(TreeObject):
     def bottom(self) -> Optional[FloatObject]:
         """Read-only property accessing the bottom vertical coordinate."""
         return self.get("/Bottom", None)
+
+    @property
+    def color(self) -> Optional[ArrayObject]:
+        """Read-only property accessing the color in (R, G, B) with values 0.0-1.0"""
+        return self.get(
+            "/C", ArrayObject([FloatObject(0), FloatObject(0), FloatObject(0)])
+        )
+
+    @property
+    def font_format(self) -> Optional[OutlineFontFlag]:
+        """Read-only property accessing the font type. 1=italic, 2=bold, 3=both"""
+        return self.get("/F", 0)
+
+    @property
+    def outline_count(self) -> Optional[int]:
+        """
+        Read-only property accessing the outline count.
+        positive = expanded
+        negative = collapsed
+        absolute value = number of visible descendents at all levels
+        """
+        return self.get("/Count", None)
 
 
 class Bookmark(Destination):
@@ -1986,3 +2068,104 @@ def decode_pdfdocencoding(byte_array: bytes) -> str:
             )
         retval += c
     return retval
+
+
+def hex_to_rgb(value: str) -> Tuple[float, float, float]:
+    return tuple(int(value[i : i + 2], 16) / 255.0 for i in (0, 2, 4))  # type: ignore
+
+
+class AnnotationBuilder:
+    @staticmethod
+    def free_text(
+        text: str,
+        rect: Tuple[float, float, float, float],
+        font: str = "Helvetica",
+        bold: bool = False,
+        italic: bool = False,
+        font_size: str = "14pt",
+        font_color: str = "000000",
+        border_color: str = "000000",
+        background_color: str = "ffffff",
+    ) -> DictionaryObject:
+        """Add text in a rectangle to a page."""
+        font_str = "font: "
+        if bold is True:
+            font_str = font_str + "bold "
+        if italic is True:
+            font_str = font_str + "italic "
+        font_str = font_str + font + " " + font_size
+        font_str = font_str + ";text-align:left;color:#" + font_color
+
+        bg_color_str = ""
+        for st in hex_to_rgb(border_color):
+            bg_color_str = bg_color_str + str(st) + " "
+        bg_color_str = bg_color_str + "rg"
+
+        free_text = DictionaryObject()
+        free_text.update(
+            {
+                NameObject("/Type"): NameObject("/Annot"),
+                NameObject("/Subtype"): NameObject("/FreeText"),
+                NameObject("/Rect"): RectangleObject(rect),
+                NameObject("/Contents"): TextStringObject(text),
+                # font size color
+                NameObject("/DS"): TextStringObject(font_str),
+                # border color
+                NameObject("/DA"): TextStringObject(bg_color_str),
+                # background color
+                NameObject("/C"): ArrayObject(
+                    [FloatObject(n) for n in hex_to_rgb(background_color)]
+                ),
+            }
+        )
+        return free_text
+
+    @staticmethod
+    def line(
+        p1: Tuple[float, float],
+        p2: Tuple[float, float],
+        rect: Tuple[float, float, float, float],
+        text: str = "",
+        title_bar: str = "",
+    ) -> DictionaryObject:
+        """
+        Draw a line on the PDF.
+
+        :param p1: First point
+        :param p2: Second point
+        :param rect: Rectangle
+        :param text: Text to be displayed as the line annotation
+        :param title_bar: Text to be displayed in the title bar of the
+            annotation; by convention this is the name of the author
+        """
+        line_obj = DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Annot"),
+                NameObject("/Subtype"): NameObject("/Line"),
+                NameObject("/Rect"): RectangleObject(rect),
+                NameObject("/T"): TextStringObject(title_bar),
+                NameObject("/L"): ArrayObject(
+                    [
+                        FloatObject(p1[0]),
+                        FloatObject(p1[1]),
+                        FloatObject(p2[0]),
+                        FloatObject(p2[1]),
+                    ]
+                ),
+                NameObject("/LE"): ArrayObject(
+                    [
+                        NameObject(None),
+                        NameObject(None),
+                    ]
+                ),
+                NameObject("/IC"): ArrayObject(
+                    [
+                        FloatObject(0.5),
+                        FloatObject(0.5),
+                        FloatObject(0.5),
+                    ]
+                ),
+                NameObject("/Contents"): TextStringObject(text),
+            }
+        )
+        return line_obj
