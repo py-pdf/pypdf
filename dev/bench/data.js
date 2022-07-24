@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658654443671,
+  "lastUpdate": 1658654722124,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -11119,6 +11119,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.029886540448272887",
             "extra": "mean: 3.8120096642000023 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "ec30171a9da60755763ed8b2c24c96298f9ee902",
+          "message": "REL: 2.8.0\n\nNew Features (ENH):\n-  Add writer.add_annotation, page.annotations, and generic.AnnotationBuilder (#1120)\n\nBug Fixes (BUG):\n-  Set /AS for /Btn form fields in writer (#1161)\n-  Ignore if /Perms verify failed (#1157)\n\nRobustness (ROB):\n-  Cope with utf16 character for space calculation (#1155)\n-  Cope with null params for FitH / FitV destination (#1152)\n-  Handle outlines without valid destination (#1076)\n\nDeveloper Experience (DEV):\n-  Introduce _utils.logger_warning (#1148)\n\nMaintenance (MAINT):\n-  Break up parse_to_unicode (#1162)\n-  Add diagnostic output to exception in read_from_stream (#1159)\n-  Reduce PdfReader.read complexity (#1151)\n\nTesting (TST):\n-  Add workflow tests found by arc testing (#1154)\n-  Decrypt file which is not encrypted (#1149)\n-  Test CryptRC4 encryption class; test image extraction filters (#1147)\n\nFull Changelog: https://github.com/py-pdf/PyPDF2/compare/2.7.0...2.8.0",
+          "timestamp": "2022-07-24T11:23:39+02:00",
+          "tree_id": "b05293953884c1fe33d9cc251bd40d91d699d3f2",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/ec30171a9da60755763ed8b2c24c96298f9ee902"
+        },
+        "date": 1658654721494,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0641401747345502,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005341469481196329",
+            "extra": "mean: 939.7258216000068 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.462070442402817,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005153701438757066",
+            "extra": "mean: 80.24348799999156 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27005025847083536,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03938884544385699",
+            "extra": "mean: 3.703014415400003 sec\nrounds: 5"
           }
         ]
       }
