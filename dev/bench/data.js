@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658640189664,
+  "lastUpdate": 1658640479225,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -10849,6 +10849,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.06454507003077448",
             "extra": "mean: 4.398517327800005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c52988489fa5d1b83e327bbeba02a7eca2e211bb",
+          "message": "TST: Add workflow tests found by arc testing (#1154)\n\nDone with https://github.com/py-pdf/pdf-crawler/blob/main/get_coverage_by_pdf.py",
+          "timestamp": "2022-07-24T07:26:48+02:00",
+          "tree_id": "3c188a77922002ae24d978a2b43d3b086faa4b8e",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/c52988489fa5d1b83e327bbeba02a7eca2e211bb"
+        },
+        "date": 1658640478191,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9309114818418303,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010324034729472605",
+            "extra": "mean: 1.0742159909999998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.860639365514578,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007535369392613841",
+            "extra": "mean: 92.07561049999195 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23519172537438499,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03520633305970928",
+            "extra": "mean: 4.2518502655999955 sec\nrounds: 5"
           }
         ]
       }
