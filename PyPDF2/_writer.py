@@ -195,7 +195,7 @@ class PdfWriter:
     def _add_page(
         self, page: PageObject, action: Callable[[Any, IndirectObject], None]
     ) -> None:
-        assert page[PA.TYPE] == CO.PAGE
+        assert cast(str, page[PA.TYPE]) == CO.PAGE
         if page.pdf is not None:
             other = page.pdf.pdf_header
             if isinstance(other, str):
@@ -292,7 +292,7 @@ class PdfWriter:
             raise ValueError("Please specify the page_number")
         pages = cast(Dict[str, Any], self.get_object(self._pages))
         # TODO: crude hack
-        return pages[PA.KIDS][page_number].get_object()
+        return cast(PageObject, pages[PA.KIDS][page_number].get_object())
 
     def getPage(self, pageNumber: int) -> PageObject:  # pragma: no cover
         """

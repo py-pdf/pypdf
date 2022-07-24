@@ -1047,7 +1047,7 @@ class PdfReader:
         stmnum, idx = self.xref_objStm[indirect_reference.idnum]
         obj_stm: EncodedStreamObject = IndirectObject(stmnum, 0, self).get_object()  # type: ignore
         # This is an xref to a stream, so its type better be a stream
-        assert obj_stm["/Type"] == "/ObjStm"
+        assert cast(str, obj_stm["/Type"]) == "/ObjStm"
         # /N is the number of indirect objects in the stream
         assert idx < obj_stm["/N"]
         stream_data = BytesIO(b_(obj_stm.get_data()))  # type: ignore
@@ -1503,7 +1503,7 @@ class PdfReader:
         stream.seek(-1, 1)
         idnum, generation = self.read_object_header(stream)
         xrefstream = cast(ContentStream, read_object(stream, self))
-        assert xrefstream["/Type"] == "/XRef"
+        assert cast(str, xrefstream["/Type"]) == "/XRef"
         self.cache_indirect_object(generation, idnum, xrefstream)
         stream_data = BytesIO(b_(xrefstream.get_data()))
         # Index pairs specify the subsections in the dictionary. If

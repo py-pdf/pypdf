@@ -46,7 +46,7 @@ try:
     # Python 3.10+: https://www.python.org/dev/peps/pep-0484/
     from typing import TypeAlias  # type: ignore[attr-defined]
 except ImportError:
-    from typing_extensions import TypeAlias  # type: ignore[misc]
+    from typing_extensions import TypeAlias
 
 from .errors import STREAM_TRUNCATED_PREMATURELY, PdfStreamError
 
@@ -130,7 +130,7 @@ def skip_over_comment(stream: StreamType) -> None:
 
 
 def read_until_regex(
-    stream: StreamType, regex: Pattern, ignore_eof: bool = False
+    stream: StreamType, regex: Pattern[bytes], ignore_eof: bool = False
 ) -> bytes:
     """
     Read until the regular expression pattern matched (ignore the match).
@@ -226,7 +226,7 @@ def read_previous_line(stream: StreamType) -> bytes:
 def matrix_multiply(
     a: TransformationMatrixType, b: TransformationMatrixType
 ) -> TransformationMatrixType:
-    return tuple(  # type: ignore[return-value]
+    return tuple(
         tuple(sum(float(i) * float(j) for i, j in zip(row, col)) for col in zip(*b))
         for row in a
     )

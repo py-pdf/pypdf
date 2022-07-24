@@ -556,7 +556,7 @@ class PdfMerger:
                 res = self.find_bookmark(bookmark, b)  # type: ignore
                 if res:
                     return [i] + res
-            elif b == bookmark or b["/Title"] == bookmark:
+            elif b == bookmark or cast(Dict[Any, Any], b["/Title"]) == bookmark:
                 # we found a leaf node
                 return [i]
 

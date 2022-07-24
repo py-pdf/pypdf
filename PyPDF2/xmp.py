@@ -16,6 +16,7 @@ from typing import (
     Optional,
     TypeVar,
     Union,
+    cast,
 )
 from xml.dom.minidom import Document
 from xml.dom.minidom import Element as XmlElement
@@ -482,7 +483,7 @@ class XmpInformation(PdfObject):
     @property
     def xmpmm_instanceId(self) -> str:  # pragma: no cover
         deprecate_with_replacement("xmpmm_instanceId", "xmpmm_instance_id")
-        return self.xmpmm_instance_id
+        return cast(str, self.xmpmm_instance_id)
 
     @xmpmm_instanceId.setter
     def xmpmm_instanceId(self, value: str) -> None:  # pragma: no cover

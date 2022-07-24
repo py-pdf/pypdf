@@ -506,9 +506,9 @@ class PageObject(DictionaryObject):
         # Combine /ProcSet sets.
         new_resources[NameObject(RES.PROC_SET)] = ArrayObject(
             frozenset(
-                original_resources.get(RES.PROC_SET, ArrayObject()).get_object()  # type: ignore
+                original_resources.get(RES.PROC_SET, ArrayObject()).get_object()
             ).union(
-                frozenset(page2resources.get(RES.PROC_SET, ArrayObject()).get_object())  # type: ignore
+                frozenset(page2resources.get(RES.PROC_SET, ArrayObject()).get_object())
             )
         )
 
@@ -577,7 +577,7 @@ class PageObject(DictionaryObject):
             page2.mediabox.bottom.as_numeric(),
         )
         if ctm is not None:
-            ctm = tuple(float(x) for x in ctm)  # type: ignore[assignment]
+            ctm = tuple(float(x) for x in ctm)
             new_x = tuple(
                 ctm[0] * corners2[i] + ctm[2] * corners2[i + 1] + ctm[4]
                 for i in range(0, 8, 2)
@@ -631,7 +631,7 @@ class PageObject(DictionaryObject):
         self._merge_page(
             page2,
             lambda page2Content: PageObject._add_transformation_matrix(
-                page2Content, page2.pdf, ctm  # type: ignore[arg-type]
+                page2Content, page2.pdf, ctm
             ),
             ctm,
             expand,
@@ -866,7 +866,7 @@ class PageObject(DictionaryObject):
                 self.mediabox.bottom.as_numeric(),
             ]
 
-            ctm = tuple(float(x) for x in ctm)  # type: ignore[assignment]
+            ctm = tuple(float(x) for x in ctm)
             new_x = [
                 ctm[0] * corners[i] + ctm[2] * corners[i + 1] + ctm[4]
                 for i in range(0, 8, 2)
@@ -1248,7 +1248,7 @@ class PageObject(DictionaryObject):
                         cmaps[operands[0]][2],
                         cmaps[operands[0]][3],
                         operands[0],
-                    )  # type:ignore
+                    )
                 except KeyError:  # font not found
                     _space_width = unknown_char_map[1]
                     cmap = (
@@ -1395,7 +1395,7 @@ class PageObject(DictionaryObject):
                 except IndexError:
                     pass
                 try:
-                    xobj = resources_dict["/XObject"]  # type: ignore
+                    xobj = resources_dict["/XObject"]
                     if xobj[operands[0]]["/Subtype"] != "/Image":  # type: ignore
                         # output += text
                         text = self.extract_xform_text(xobj[operands[0]], space_width)  # type: ignore

@@ -29,10 +29,10 @@ import hashlib
 import random
 import struct
 from enum import IntEnum
-from typing import Optional, Tuple, Union, cast
+from typing import Any, Dict, Optional, Tuple, Union, cast
 
-from PyPDF2.errors import DependencyError
 from PyPDF2._utils import logger_warning
+from PyPDF2.errors import DependencyError
 from PyPDF2.generic import (
     ArrayObject,
     ByteStringObject,
@@ -57,7 +57,7 @@ class CryptIdentity(CryptBase):
 
 
 try:
-    from Crypto.Cipher import AES, ARC4  # type: ignore[import]
+    from Crypto.Cipher import AES, ARC4
 
     class CryptRC4(CryptBase):
         def __init__(self, key: bytes) -> None:
@@ -566,7 +566,7 @@ class AlgV5:
     @staticmethod
     def generate_values(
         user_pwd: bytes, owner_pwd: bytes, key: bytes, p: int, metadata_encrypted: bool
-    ) -> dict:
+    ) -> Dict[Any, Any]:
         u_value, ue_value = AlgV5.compute_U_value(user_pwd, key)
         o_value, oe_value = AlgV5.compute_O_value(owner_pwd, key, u_value)
         perms = AlgV5.compute_Perms_value(key, p, metadata_encrypted)
