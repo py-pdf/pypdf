@@ -610,6 +610,14 @@ class PdfWriter:
                 writer_parent_annot = writer_annot[PG.PARENT]
             for field in fields:
                 if writer_annot.get(FieldDictionaryAttributes.T) == field:
+                    if writer_annot.get(FieldDictionaryAttributes.FT) == "/Btn":
+                        writer_annot.update(
+                            {
+                                NameObject(
+                                    AnnotationDictionaryAttributes.AS
+                                ): NameObject(fields[field])
+                            }
+                        )
                     writer_annot.update(
                         {
                             NameObject(FieldDictionaryAttributes.V): TextStringObject(
