@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658781572461,
+  "lastUpdate": 1658781768519,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -11434,6 +11434,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.10202723485163538",
             "extra": "mean: 4.550964549800017 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "5b75160144a45eb75441158046edc3c5805b0749",
+          "message": "REL: 2.8.1\n\nBug Fixes (BUG):\n-  u_hash in AlgV4.compute_key (#1170)\n\nRobustness (ROB):\n-  Fix loading of file from #134 (#1167)\n-  Cope with empty DecodeParams (#1165)\n\nDocumentation (DOC):\n-  Typo in warning message (#1166)\n\nMaintenance (MAINT):\n-  Package updates; solve mypy strict remarks (#1163)\n\nTesting (TST):\n-  Add test from #325 (#1169)\n\nFull Changelog: https://github.com/py-pdf/PyPDF2/compare/2.8.0...2.8.1",
+          "timestamp": "2022-07-25T22:41:21+02:00",
+          "tree_id": "038afadd407c468e0c9f84e45f01d5b750aa90e9",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/5b75160144a45eb75441158046edc3c5805b0749"
+        },
+        "date": 1658781767501,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0477892067900123,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013319141629088416",
+            "extra": "mean: 954.3904380000072 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.26889897257622,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006095524318308341",
+            "extra": "mean: 81.50690638460937 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26925845962162914,
+            "unit": "iter/sec",
+            "range": "stddev: 0.027211792882892966",
+            "extra": "mean: 3.713903739199998 sec\nrounds: 5"
           }
         ]
       }
