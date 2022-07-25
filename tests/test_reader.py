@@ -1002,3 +1002,13 @@ def test_outlines_with_invalid_destinations():
     )
     # contains 9 outlines, 6 with invalid destinations caused by different malformations
     assert len(reader.outlines) == 9
+
+
+def test_PdfReaderMultipleDefinitions():
+    # iss325
+    url = "https://github.com/py-pdf/PyPDF2/files/9176644/multipledefs.pdf"
+    name = "multipledefs.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    with pytest.warns(PdfReadWarning) as w:
+        reader.pages[0].extract_text()
+    assert len(w) == 1
