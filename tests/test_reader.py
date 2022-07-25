@@ -11,11 +11,7 @@ from PyPDF2._reader import convert_to_int, convertToInt
 from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.constants import Ressources as RES
-from PyPDF2.errors import (
-    STREAM_TRUNCATED_PREMATURELY,
-    PdfReadError,
-    PdfReadWarning,
-)
+from PyPDF2.errors import PdfReadError, PdfReadWarning
 from PyPDF2.filters import _xobj_to_image
 from PyPDF2.generic import Destination
 
@@ -396,7 +392,9 @@ def test_read_malformed_header():
 def test_read_malformed_body():
     with pytest.raises(PdfReadError) as exc:
         PdfReader(io.BytesIO(b"%PDF-"), strict=True)
-    assert exc.value.args[0] == STREAM_TRUNCATED_PREMATURELY
+    assert (
+        exc.value.args[0] == "EOF marker not found"
+    )  # used to be:STREAM_TRUNCATED_PREMATURELY
 
 
 def test_read_prev_0_trailer():
