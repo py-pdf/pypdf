@@ -296,3 +296,26 @@ def test_iss1145():
     name = "iss1145.pdf"
     merger = PdfMerger()
     merger.append(PdfReader(BytesIO(get_pdf_from_url(url, name=name))))
+
+
+def test_deprecate_bookmark_decorator_warning():
+    reader = PdfReader(
+        os.path.join(RESOURCE_ROOT, "outlines-with-invalid-destinations.pdf")
+    )
+    merger = PdfMerger()
+    with pytest.warns(
+        UserWarning,
+        match="import_bookmarks is deprecated as an argument. Use import_outline instead",
+    ):
+        merger.merge(0, reader, import_bookmarks=True)
+
+
+@pytest.mark.filterwarnings("ignore::UserWarning")
+def test_deprecate_bookmark_decorator_output():
+    reader = PdfReader(
+        os.path.join(RESOURCE_ROOT, "outlines-with-invalid-destinations.pdf")
+    )
+    merger = PdfMerger()
+    merger.merge(0, reader, import_bookmarks=True)
+    first_oi_title = 'Valid Destination: Action /GoTo Named Destination "section.1"'
+    assert merger.outline[0].title == first_oi_title

@@ -602,3 +602,18 @@ def test_add_single_annotation():
 
     # Cleanup
     os.remove(target)  # remove for testing
+
+
+def test_deprecate_bookmark_decorator():
+    reader = PdfReader(
+        os.path.join(RESOURCE_ROOT, "outlines-with-invalid-destinations.pdf")
+    )
+    page = reader.pages[0]
+    outline_item = reader.outline[0]
+    writer = PdfWriter()
+    writer.add_page(page)
+    with pytest.warns(
+        UserWarning,
+        match="bookmark is deprecated as an argument. Use outline_item instead",
+    ):
+        writer.add_outline_item_dict(bookmark=outline_item)
