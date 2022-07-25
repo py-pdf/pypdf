@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658773963973,
+  "lastUpdate": 1658774223459,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -11344,6 +11344,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.09527709614801189",
             "extra": "mean: 4.329090840800004 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "844f2380d68ef047c2f9403699a933875633af11",
+          "message": "ROB: Fix loading of file from #134 (#1167)\n\nSee #134\r\n\r\na) cmap : strip lines when processing cmap from fonts\r\nb) look for %EOF up to beginning of file",
+          "timestamp": "2022-07-25T20:35:59+02:00",
+          "tree_id": "c6d9f657d07d818254e032ef72f3a7a2b3c8c6fd",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/844f2380d68ef047c2f9403699a933875633af11"
+        },
+        "date": 1658774222861,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.1820799592710876,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006819451899795098",
+            "extra": "mean: 845.9664611999983 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 14.099016081552099,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005102897096419803",
+            "extra": "mean: 70.92693519999973 msec\nrounds: 15"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.30479174395027026,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02328166731650192",
+            "extra": "mean: 3.2809287648000067 sec\nrounds: 5"
           }
         ]
       }
