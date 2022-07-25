@@ -288,7 +288,7 @@ class AlgV4:
         u_hash.update(o_entry)
         u_hash.update(struct.pack("<I", P))
         u_hash.update(id1_entry)
-        if rev >= 3 and not metadata_encrypted:
+        if rev >= 4 and metadata_encrypted == False:
             u_hash.update(b"\xff\xff\xff\xff")
         u_hash_digest = u_hash.digest()
         length = key_size // 8
