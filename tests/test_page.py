@@ -449,7 +449,6 @@ def test_text_extraction_issue_1091():
         page.extract_text()
 
 
-@pytest.mark.xfail(reason="#1088")
 def test_empyt_password_1088():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/941/941536.pdf"
     name = "tika-941536.pdf"
