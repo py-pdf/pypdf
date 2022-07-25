@@ -567,12 +567,12 @@ class PdfMerger:
 
         for i, oi_enum in enumerate(root):
             if isinstance(oi_enum, list):
-                # b is still an inner node
+                # oi_enum is still an inner node
                 # (OutlineType, if recursive types were supported by mypy)
                 res = self.find_outline_item(outline_item, oi_enum)  # type: ignore
                 if res:
                     return [i] + res
-            elif oi_enum == outline_item or oi_enum["/Title"] == outline_item:
+            elif oi_enum == outline_item or cast(Dict[Any, Any], oi_enum["/Title"]) == outline_item:
                 # we found a leaf node
                 return [i]
 
@@ -689,7 +689,7 @@ class PdfMerger:
 
 class PdfFileMerger(PdfMerger):  # pragma: no cover
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        deprecate_with_replacement("PdfFileMerger", "PdfMerge")
+        deprecate_with_replacement("PdfFileMerger", "PdfMerger")
 
         if "strict" not in kwargs and len(args) < 1:
             kwargs["strict"] = True  # maintain the default

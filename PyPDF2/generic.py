@@ -64,6 +64,7 @@ from ._utils import (
     deprecate_with_replacement,
     hex_str,
     hexencode,
+    logger_warning,
     read_non_whitespace,
     read_until_regex,
     skip_over_comment,
@@ -192,7 +193,7 @@ class BooleanObject(PdfObject):
 
 
 class ArrayObject(list, PdfObject):
-    def items(self) -> Iterable:
+    def items(self) -> Iterable[Any]:
         """
         Emulate DictionaryObject.items for a list
         (index, object)
@@ -332,7 +333,7 @@ class FloatObject(decimal.Decimal, PdfObject):
             except decimal.InvalidOperation:
                 # If this isn't a valid decimal (happens in malformed PDFs)
                 # fallback to 0
-                logger.warning(f"Invalid FloatObject {value}")
+                logger_warning(f"Invalid FloatObject {value}", __name__)
                 return decimal.Decimal.__new__(cls, "0")
 
     def __repr__(self) -> str:
@@ -512,12 +513,12 @@ def read_string_from_stream(
                     tok = b""
                 else:
                     msg = rf"Unexpected escaped string: {tok.decode('utf8')}"
-                    logger.warning(msg)
+                    logger_warning(msg, __name__)
         txt += tok
     return create_string_object(txt, forced_encoding)
 
 
-class ByteStringObject(bytes, PdfObject):  # type: ignore
+class ByteStringObject(bytes, PdfObject):
     """
     Represents a string object where the text encoding could not be determined.
     This occurs quite often, as the PDF spec doesn't provide an alternate way to
@@ -650,7 +651,7 @@ class NameObject(str, PdfObject):
             # Name objects should represent irregular characters
             # with a '#' followed by the symbol's hex number
             if not pdf.strict:
-                warnings.warn("Illegal character in Name Object", PdfReadWarning)
+                logger_warning("Illegal character in Name Object", __name__)
                 return NameObject(name)
             else:
                 raise PdfReadError("Illegal character in Name Object") from e
@@ -862,7 +863,7 @@ class DictionaryObject(dict, PdfObject):
                     stream.seek(pos, 0)
                     raise PdfReadError(
                         "Unable to find 'endstream' marker after stream at byte "
-                        f"{hex_str(stream.tell())}."
+                        f"{hex_str(stream.tell())} (nd='{ndstream!r}', end='{end!r}')."
                     )
         else:
             stream.seek(pos, 0)

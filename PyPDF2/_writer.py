@@ -196,7 +196,7 @@ class PdfWriter:
     def _add_page(
         self, page: PageObject, action: Callable[[Any, IndirectObject], None]
     ) -> None:
-        assert page[PA.TYPE] == CO.PAGE
+        assert cast(str, page[PA.TYPE]) == CO.PAGE
         if page.pdf is not None:
             other = page.pdf.pdf_header
             if isinstance(other, str):
@@ -293,7 +293,7 @@ class PdfWriter:
             raise ValueError("Please specify the page_number")
         pages = cast(Dict[str, Any], self.get_object(self._pages))
         # TODO: crude hack
-        return pages[PA.KIDS][page_number].get_object()
+        return cast(PageObject, pages[PA.KIDS][page_number].get_object())
 
     def getPage(self, pageNumber: int) -> PageObject:  # pragma: no cover
         """
@@ -611,6 +611,14 @@ class PdfWriter:
                 writer_parent_annot = writer_annot[PG.PARENT]
             for field in fields:
                 if writer_annot.get(FieldDictionaryAttributes.T) == field:
+                    if writer_annot.get(FieldDictionaryAttributes.FT) == "/Btn":
+                        writer_annot.update(
+                            {
+                                NameObject(
+                                    AnnotationDictionaryAttributes.AS
+                                ): NameObject(fields[field])
+                            }
+                        )
                     writer_annot.update(
                         {
                             NameObject(FieldDictionaryAttributes.V): TextStringObject(
@@ -1244,17 +1252,11 @@ class PdfWriter:
         )
 
     def add_outline(
-        self,
-        outline: Optional[Union[DictionaryObject, TreeObject, OutlineItemType]] = None,
-        parent: Optional[Union[None, TreeObject, IndirectObject]] = None,
-        titles: Optional[Union[ArrayObject, Tuple, List]] = None,
-        pages: Optional[Union[ArrayObject, Tuple, List]] = None,
+        self
     ) -> None:
-        """
-        Add an outline (a collection of outline items, a.k.a. bookmarks)
-        """
-
-        return outline
+        raise NotImplementedError(
+            "This method is not yet implemented. Use :meth:`add_outline_item` instead."
+        )
 
     def add_named_destination_object(self, dest: PdfObject) -> IndirectObject:
         dest_ref = self._add_object(dest)
