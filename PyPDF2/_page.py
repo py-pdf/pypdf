@@ -1133,11 +1133,11 @@ class PageObject(DictionaryObject):
         if "/Font" in resources_dict:
             for f in cast(DictionaryObject, resources_dict["/Font"]):
                 cmaps[f] = build_char_map(f, space_width, obj)
-        cmap: Tuple[Union[str, Dict[int, str]], Dict[str, str], str] = [
+        cmap: Tuple[Union[str, Dict[int, str]], Dict[str, str], str] = (
             "charmap",
             {},
             "NotInitialized",
-        ]  # (encoding,CMAP,font_name)
+        )  # (encoding,CMAP,font_name)
         try:
             content = (
                 obj[content_key].get_object() if isinstance(content_key, str) else obj
