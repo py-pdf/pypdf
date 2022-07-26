@@ -238,6 +238,15 @@ def test_extract_text_single_quote_op():
         page.extract_text()
 
 
+def test_iss_1142():
+    # check fix for problem of context save/restore (q/Q)
+    url = "https://github.com/py-pdf/PyPDF2/files/9150656/ST.2019.PDF"
+    name = "st2019.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    txt = reader.pages[3].extract_text()
+    assert txt.find("有限公司郑州分公司") > 0
+
+
 @pytest.mark.parametrize(
     ("url", "name"),
     [
