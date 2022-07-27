@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658942387861,
+  "lastUpdate": 1658950390471,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -11524,6 +11524,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02971548734296278",
             "extra": "mean: 4.4049191306000015 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9c8252d5bc876c0048b6dfe3b531bc8fa6cfd81e",
+          "message": "BUG: Named Dest in PDF1.1 (#1174)\n\nNamed destinations are stored in a dictionary in PDF 1.1\r\n\r\nCloses #1173",
+          "timestamp": "2022-07-27T21:31:58+02:00",
+          "tree_id": "15d053117b796543eac501c0ebcf3baa8e9a408e",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/9c8252d5bc876c0048b6dfe3b531bc8fa6cfd81e"
+        },
+        "date": 1658950389778,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8896778938373943,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010469479957112225",
+            "extra": "mean: 1.1240023011999996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.239758125162997,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007327894456982603",
+            "extra": "mean: 88.96988608333582 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22530790301573322,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02278210376226497",
+            "extra": "mean: 4.438370721200002 sec\nrounds: 5"
           }
         ]
       }
