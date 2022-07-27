@@ -1133,9 +1133,11 @@ class PageObject(DictionaryObject):
         if "/Font" in resources_dict:
             for f in cast(DictionaryObject, resources_dict["/Font"]):
                 cmaps[f] = build_char_map(f, space_width, obj)
-        cmap: Tuple[
-            Union[str, Dict[int, str]], Dict[str, str], str
-        ]  # (encoding,CMAP,font_name)
+        cmap: Tuple[Union[str, Dict[int, str]], Dict[str, str], str] = (
+            "charmap",
+            {},
+            "NotInitialized",
+        )  # (encoding,CMAP,font_name)
         try:
             content = (
                 obj[content_key].get_object() if isinstance(content_key, str) else obj
@@ -1211,10 +1213,28 @@ class PageObject(DictionaryObject):
             # table 4.7, page 219
             # cm_matrix calculation is a reserved for the moment
             elif operator == b"q":
-                cm_stack.append(cm_matrix)
+                cm_stack.append(
+                    (
+                        cm_matrix,
+                        cmap,
+                        font_size,
+                        char_scale,
+                        space_scale,
+                        _space_width,
+                        TL,
+                    )
+                )
             elif operator == b"Q":
                 try:
-                    cm_matrix = cm_stack.pop()
+                    (
+                        cm_matrix,
+                        cmap,
+                        font_size,
+                        char_scale,
+                        space_scale,
+                        _space_width,
+                        TL,
+                    ) = cm_stack.pop()
                 except Exception:
                     cm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
             elif operator == b"cm":
