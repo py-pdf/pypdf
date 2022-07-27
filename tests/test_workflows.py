@@ -3,6 +3,7 @@ import os
 import sys
 from io import BytesIO
 from pathlib import Path
+from re import findall
 
 import pytest
 
@@ -44,7 +45,7 @@ def test_PdfReaderFileLoad():
         with open(os.path.join(RESOURCE_ROOT, "crazyones.txt"), "rb") as pdftext_file:
             pdftext = pdftext_file.read()
 
-        text = page.extract_text(Tj_sep="", TJ_sep="").encode("utf-8")
+        text = page.extract_text().encode("utf-8")
 
         # Compare the text of the PDF to a known source
         for expected_line, actual_line in zip(text.split(b"\n"), pdftext.split(b"\n")):
@@ -207,6 +208,22 @@ def test_extract_textbench(enable, url, pages, print_result=False):
                 print(f"{rst}\n*****************************\n")
     except PdfReadWarning:
         pass
+
+
+def test_orientations():
+    p = PdfReader(os.path.join(RESOURCE_ROOT, "test Orient.pdf")).pages[0]
+    for (req, rst) in (
+        (0, ["T"]),
+        (90, ["L"]),
+        (180, ["B"]),
+        (270, ["R"]),
+        ((0,), ["T"]),
+        ((0, 180), ["T", "B"]),
+        ((45,), []),
+    ):
+        assert (
+            findall("\\((.)\\)", p.extract_text(req)) == rst
+        ), f"extract_text({req}) => {rst}"
 
 
 @pytest.mark.parametrize(
