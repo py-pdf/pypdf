@@ -585,7 +585,7 @@ class PdfMerger:
         root: Optional[OutlineType] = None,
     ) -> Optional[List[int]]:
         """
-        .. deprecated:: 2.8.0
+        .. deprecated:: 2.9.0
             Use :meth:`find_outline_item` instead.
         """
 
@@ -655,7 +655,7 @@ class PdfMerger:
         *args: ZoomArgType,
     ) -> IndirectObject:
         """
-        .. deprecated:: 2.8.0
+        .. deprecated:: 2.9.0
             Use :meth:`add_outline_item` instead.
         """
         deprecate_with_replacement("addBookmark", "add_outline_item")

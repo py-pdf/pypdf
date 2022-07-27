@@ -685,7 +685,7 @@ class PdfReader:
     @property
     def outlines(self) -> OutlineType:
         """
-        .. deprecated:: 2.8.0
+        .. deprecated:: 2.9.0
 
             Use :py:attr:`outline` instead.
         """

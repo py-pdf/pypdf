@@ -1094,7 +1094,7 @@ class PdfWriter:
         parent: Union[None, TreeObject, IndirectObject] = None,
     ) -> IndirectObject:
         """
-        .. deprecated:: 2.8.0
+        .. deprecated:: 2.9.0
 
             Use :meth:`add_outline_item_destination` instead.
         """
@@ -1140,7 +1140,7 @@ class PdfWriter:
         self, outline_item: OutlineItemType, parent: Optional[TreeObject] = None
     ) -> IndirectObject:
         """
-        .. deprecated:: 2.8.0
+        .. deprecated:: 2.9.0
 
             Use :meth:`add_outline_item_dict` instead.
         """
@@ -1221,7 +1221,7 @@ class PdfWriter:
         *args: ZoomArgType,
     ) -> IndirectObject:
         """
-        .. deprecated:: 2.8.0
+        .. deprecated:: 2.9.0
 
             Use :meth:`add_outline_item` instead.
         """
