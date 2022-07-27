@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658781768519,
+  "lastUpdate": 1658942387861,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -11479,6 +11479,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.027211792882892966",
             "extra": "mean: 3.713903739199998 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d8bd12f3e1d6b5a5b0a488413dbe8ec598b84355",
+          "message": "BUG: Incomplete Graphic State save/restore (#1172)\n\nGraphic state shall store also the font, font size, ...\r\n\r\nSee #1142",
+          "timestamp": "2022-07-27T19:18:30+02:00",
+          "tree_id": "542550eb9452feaadfd88752ec408b9e11bb0bdd",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/d8bd12f3e1d6b5a5b0a488413dbe8ec598b84355"
+        },
+        "date": 1658942387202,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.893808343592129,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00943189730336303",
+            "extra": "mean: 1.1188080835999998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.243903811854517,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007456852139132779",
+            "extra": "mean: 88.93708241666864 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22701892369674181,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02971548734296278",
+            "extra": "mean: 4.4049191306000015 sec\nrounds: 5"
           }
         ]
       }
