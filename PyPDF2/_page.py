@@ -1106,7 +1106,7 @@ class PageObject(DictionaryObject):
         self,
         obj: Any,
         pdf: Any,
-        orientations: Tuple[int] = (0, 90, 270, 360),
+        orientations: Tuple[int, ...] = (0, 90, 270, 360),
         space_width: float = 200.0,
         content_key: Optional[str] = PG.CONTENTS,
     ) -> str:
@@ -1440,7 +1440,7 @@ class PageObject(DictionaryObject):
 
     def extract_text(
         self,
-        orientations: Union[int, Tuple[int]] = (0, 90, 270, 360),
+        orientations: Union[int, Tuple[int, ...]] = (0, 90, 270, 360),
         space_width: float = 200.0,
     ) -> str:
         """
@@ -1469,7 +1469,7 @@ class PageObject(DictionaryObject):
     def extract_xform_text(
         self,
         xform: EncodedStreamObject,
-        orientations: Tuple[int] = (0, 90, 270, 360),
+        orientations: Tuple[int, ...] = (0, 90, 270, 360),
         space_width: float = 200.0,
     ) -> str:
         """
@@ -1490,7 +1490,7 @@ class PageObject(DictionaryObject):
             Use :meth:`extract_text` instead.
         """
         deprecate_with_replacement("extractText", "extract_text")
-        return self.extract_text(Tj_sep=Tj_sep, TJ_sep=TJ_sep)
+        return self.extract_text()
 
     def _get_fonts(self) -> Tuple[Set[str], Set[str]]:
         """
