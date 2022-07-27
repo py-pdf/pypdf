@@ -644,9 +644,8 @@ class PdfReader:
             # recurse down the tree
             for kid in cast(ArrayObject, tree[PA.KIDS]):
                 self._get_named_destinations(kid.get_object(), retval)
-
         # TABLE 3.33 Entries in a name tree node dictionary (PDF 1.7 specs)
-        if CA.NAMES in tree:
+        elif CA.NAMES in tree:  # KIDS and NAMES are exclusives (PDF 1.7 specs p 162)
             names = cast(DictionaryObject, tree[CA.NAMES])
             for i in range(0, len(names), 2):
                 key = cast(str, names[i].get_object())
@@ -656,7 +655,12 @@ class PdfReader:
                 dest = self._build_destination(key, value)  # type: ignore
                 if dest is not None:
                     retval[key] = dest
-
+        else:  # case where Dests is in root catalog (PDF 1.7 specs, §2 about PDF1.1
+            for k__, v__ in tree.items():
+                val = v__.get_object()
+                dest = self._build_destination(k__, val)
+                if dest is not None:
+                    retval[k__] = dest
         return retval
 
     def getNamedDestinations(

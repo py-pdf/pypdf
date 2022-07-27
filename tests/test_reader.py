@@ -977,6 +977,21 @@ def test_outline_missing_title():
     assert exc.value.args[0].startswith("Outline Entry Missing /Title attribute:")
 
 
+def test_named_destination():
+    # 1st case : the named_dest are stored directly as a dictionnary, PDF1.1 style
+    url = "https://github.com/py-pdf/PyPDF2/files/9197028/lorem_ipsum.pdf"
+    name = "lorem_ipsum.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    assert len(reader.named_destinations) > 0
+    # 2nd case : Dest below names and with Kids...
+    url = "https://opensource.adobe.com/dc-acrobat-sdk-docs/standards/pdfstandards/pdf/PDF32000_2008.pdf"
+    name = "PDF32000_2008.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    assert len(reader.named_destinations) > 0
+    # 3nd case : Dests with Name tree
+    # TODO : case to be added
+
+
 def test_outline_with_missing_named_destination():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/913/913678.pdf"
     name = "tika-913678.pdf"
