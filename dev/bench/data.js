@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1658950390471,
+  "lastUpdate": 1659030226898,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -11569,6 +11569,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02278210376226497",
             "extra": "mean: 4.438370721200002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7b852acb3350033a9f76fbc61f6e0d27f561b444",
+          "message": "DOC: We now have CMAP support (#1177)",
+          "timestamp": "2022-07-28T19:42:44+02:00",
+          "tree_id": "13cc12afa1b77cdc584d16a72a27dd8f0213eb50",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/7b852acb3350033a9f76fbc61f6e0d27f561b444"
+        },
+        "date": 1659030225969,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0541763000986601,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005649541919640726",
+            "extra": "mean: 948.6079319999988 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.025241393868319,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004640254247969051",
+            "extra": "mean: 76.77400899999854 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.27080216376394733,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015921388475102383",
+            "extra": "mean: 3.692732680199998 sec\nrounds: 5"
           }
         ]
       }
