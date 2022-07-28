@@ -42,7 +42,6 @@ from typing import (
     List,
     Optional,
     Tuple,
-    Union,
     cast,
 )
 
@@ -93,7 +92,7 @@ from .types import OutlinesType, PagemodeType
 from .xmp import XmpInformation
 
 
-def convert_to_int(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:
+def convert_to_int(d: bytes, size: int) -> int | Tuple[Any, ...]:
     if size > 8:
         raise PdfReadError("invalid size in convert_to_int")
     d = b"\x00\x00\x00\x00\x00\x00\x00\x00" + d
@@ -103,7 +102,7 @@ def convert_to_int(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:
 
 def convertToInt(
     d: bytes, size: int
-) -> Union[int, Tuple[Any, ...]]:  # pragma: no cover
+) -> int | Tuple[Any, ...]:  # pragma: no cover
     deprecate_with_replacement("convertToInt", "convert_to_int")
     return convert_to_int(d, size)
 
@@ -246,9 +245,9 @@ class PdfReader:
 
     def __init__(
         self,
-        stream: Union[StrByteType, Path],
+        stream: StrByteType | Path,
         strict: bool = False,
-        password: Union[None, str, bytes] = None,
+        password: None | str | bytes = None,
     ) -> None:
         self.strict = strict
         self.flattened_pages: Optional[List[PageObject]] = None
@@ -521,7 +520,7 @@ class PdfReader:
 
     def _build_field(
         self,
-        field: Union[TreeObject, DictionaryObject],
+        field: TreeObject | DictionaryObject,
         retval: Dict[Any, Any],
         fileobj: Any,
         field_attributes: Any,
@@ -541,7 +540,7 @@ class PdfReader:
         retval[key] = Field(field)
 
     def _check_kids(
-        self, tree: Union[TreeObject, DictionaryObject], retval: Any, fileobj: Any
+        self, tree: TreeObject | DictionaryObject, retval: Any, fileobj: Any
     ) -> None:
         if PA.KIDS in tree:
             # recurse down the tree
@@ -616,7 +615,7 @@ class PdfReader:
 
     def _get_named_destinations(
         self,
-        tree: Union[TreeObject, None] = None,
+        tree: TreeObject | None = None,
         retval: Optional[Any] = None,
     ) -> Dict[str, Any]:
         """
@@ -665,7 +664,7 @@ class PdfReader:
 
     def getNamedDestinations(
         self,
-        tree: Union[TreeObject, None] = None,
+        tree: TreeObject | None = None,
         retval: Optional[Any] = None,
     ) -> Dict[str, Any]:  # pragma: no cover
         """
@@ -744,7 +743,7 @@ class PdfReader:
         return self._get_outlines(node, outlines)
 
     def _get_page_number_by_indirect(
-        self, indirect_ref: Union[None, int, NullObject, IndirectObject]
+        self, indirect_ref: None | int | NullObject | IndirectObject
     ) -> int:
         """Generate _page_id2num"""
         if self._page_id2num is None:
@@ -806,7 +805,7 @@ class PdfReader:
     def _build_destination(
         self,
         title: str,
-        array: List[Union[NumberObject, IndirectObject, NullObject, DictionaryObject]],
+        array: List[NumberObject | IndirectObject | NullObject | DictionaryObject],
     ) -> Destination:
         page, typ = None, None
         # handle outlines with missing or invalid destination
@@ -999,7 +998,7 @@ class PdfReader:
 
     def _flatten(
         self,
-        pages: Union[None, DictionaryObject, PageObject] = None,
+        pages: None | DictionaryObject | PageObject = None,
         inherit: Optional[Dict[str, Any]] = None,
         indirect_ref: Optional[IndirectObject] = None,
     ) -> None:
@@ -1045,7 +1044,7 @@ class PdfReader:
 
     def _get_object_from_stream(
         self, indirect_reference: IndirectObject
-    ) -> Union[int, PdfObject, str]:
+    ) -> int | PdfObject | str:
         # indirect reference to object in object stream
         # read the entire object stream into memory
         stmnum, idx = self.xref_objStm[indirect_reference.idnum]
@@ -1502,7 +1501,7 @@ class PdfReader:
 
     def _read_pdf15_xref_stream(
         self, stream: StreamType
-    ) -> Union[ContentStream, EncodedStreamObject, DecodedStreamObject]:
+    ) -> ContentStream | EncodedStreamObject | DecodedStreamObject:
         # PDF 1.5+ Cross-Reference Stream
         stream.seek(-1, 1)
         idnum, generation = self.read_object_header(stream)
@@ -1518,7 +1517,7 @@ class PdfReader:
         if self.strict and len(entry_sizes) > 3:
             raise PdfReadError(f"Too many entry sizes: {entry_sizes}")
 
-        def get_entry(i: int) -> Union[int, Tuple[int, ...]]:
+        def get_entry(i: int) -> int | Tuple[int, ...]:
             # Reads the correct number of bytes for each entry. See the
             # discussion of the W parameter in PDF spec table 17.
             if entry_sizes[i] > 0:
@@ -1532,7 +1531,7 @@ class PdfReader:
             else:
                 return 0
 
-        def used_before(num: int, generation: Union[int, Tuple[int, ...]]) -> bool:
+        def used_before(num: int, generation: int | Tuple[int, ...]) -> bool:
             # We move backwards through the xrefs, don't replace any.
             return num in self.xref.get(generation, []) or num in self.xref_objStm  # type: ignore
 
@@ -1587,8 +1586,8 @@ class PdfReader:
     def _read_xref_subsections(
         self,
         idx_pairs: List[int],
-        get_entry: Callable[[int], Union[int, Tuple[int, ...]]],
-        used_before: Callable[[int, Union[int, Tuple[int, ...]]], bool],
+        get_entry: Callable[[int], int | Tuple[int, ...]],
+        used_before: Callable[[int, int | Tuple[int, ...]], bool],
     ) -> None:
         last_end = 0
         for start, size in self._pairs(idx_pairs):
@@ -1674,7 +1673,7 @@ class PdfReader:
         deprecate_no_replacement("readNextEndLine")
         return self.read_next_end_line(stream, limit_offset)
 
-    def decrypt(self, password: Union[str, bytes]) -> PasswordType:
+    def decrypt(self, password: str | bytes) -> PasswordType:
         """
         When using an encrypted / secured PDF file with the PDF Standard
         encryption handler, this function will allow the file to be decrypted.
