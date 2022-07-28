@@ -1,7 +1,5 @@
 import os
 
-import pytest
-
 import PyPDF2
 from PyPDF2 import PdfReader, Transformation
 from PyPDF2.generic import Destination

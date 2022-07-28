@@ -35,7 +35,6 @@ import decimal
 import hashlib
 import logging
 import re
-import warnings
 from enum import IntFlag
 from io import BytesIO
 from typing import (

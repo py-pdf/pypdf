@@ -30,7 +30,6 @@
 import os
 import re
 import struct
-import warnings
 import zlib
 from io import BytesIO
 from pathlib import Path
