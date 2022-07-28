@@ -6,7 +6,7 @@ from unittest.mock import patch
 import pytest
 
 from PyPDF2 import PdfReader
-from PyPDF2.errors import PdfReadError, PdfReadWarning, PdfStreamError
+from PyPDF2.errors import PdfReadError, PdfStreamError
 from PyPDF2.filters import (
     ASCII85Decode,
     ASCIIHexDecode,

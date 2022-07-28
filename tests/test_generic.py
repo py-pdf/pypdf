@@ -6,7 +6,7 @@ import pytest
 
 from PyPDF2 import PdfMerger, PdfReader, PdfWriter
 from PyPDF2.constants import TypFitArguments as TF
-from PyPDF2.errors import PdfReadError, PdfReadWarning, PdfStreamError
+from PyPDF2.errors import PdfReadError, PdfStreamError
 from PyPDF2.generic import (
     AnnotationBuilder,
     ArrayObject,
@@ -409,15 +409,17 @@ def test_remove_child_in_tree():
     tree.empty_tree()
 
 
-def test_dict_read_from_stream(capsys):
+def test_dict_read_from_stream(caplog):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/984/984877.pdf"
     name = "tika-984877.pdf"
 
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     for page in reader.pages:
         page.extract_text()
-    stdout, _stderr = capsys.readouterr()
-    assert _stderr == ""
+    assert (
+        "Multiple definitions in dictionary at byte 0x1084 for key /Length"
+        in caplog.text
+    )
 
 
 def test_parse_content_stream_peek_percentage():
