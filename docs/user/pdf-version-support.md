@@ -21,12 +21,12 @@ all features of PDF 2.0.
 | Feature                                 | PDF-Version | PyPDF2 Support |
 | --------------------------------------- | ----------- | -------------- |
 | Transparent Graphics                    | 1.4         | ?              |
-| CMaps                                   | 1.4         | ❌ [#201](https://github.com/py-pdf/PyPDF2/pull/201), [#464](https://github.com/py-pdf/PyPDF2/pull/464), [#805](https://github.com/py-pdf/PyPDF2/pull/805)   |
+| CMaps                                   | 1.4         | ✅             |
 | Object Streams                          | 1.5         | ?              |
 | Cross-reference Streams                 | 1.5         | ?              |
 | Optional Content Groups (OCGs) - Layers | 1.5         | ?              |
 | Content Stream Compression              | 1.5         | ?              |
-| AES Encryption                          | 1.6         | ❌ [#749](https://github.com/py-pdf/PyPDF2/pull/749)  |
+| AES Encryption                          | 1.6         | ✅             |
 
 See [History of PDF](https://en.wikipedia.org/wiki/History_of_PDF) for more
 features.
