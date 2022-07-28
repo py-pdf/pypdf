@@ -1450,7 +1450,6 @@ class PageObject(DictionaryObject):
         space_width: float = 200.0,
     ) -> str:
         """
-        Tj_sep: str = "", TJ_sep: str = "",
         Locate all text drawing commands, in the order they are provided in the
         content stream, and extract the text.
 
@@ -1460,6 +1459,7 @@ class PageObject(DictionaryObject):
         Do not rely on the order of text coming out of this function, as it
         will change if this function is made more sophisticated.
 
+        :params obsolete/Depreciating Tj_sep, TJ_sep: kept for compatibility
         :param orientations : (list of) orientations (of the characters) (default: (0,90,270,360))
                                single int is equivalent to a singleton ( 0 == (0,) )
                 note: currently only 0(Up),90(turned Left), 180(upside Down),270 (turned Right)
