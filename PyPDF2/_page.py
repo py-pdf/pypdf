@@ -1494,7 +1494,7 @@ class PageObject(DictionaryObject):
                         raise TypeError(f"Invalid positional parameter {args[1]}")
             else:
                 raise TypeError(f"Invalid positional parameter {args[0]}")
-        if Tj_sep != None or TJ_sep != None:
+        if Tj_sep is not None or TJ_sep is not None:
             warnings.warn(
                 "parameters Tj_Sep, TJ_sep depreciated, and will be removed in PyPDF2 3.0.0.",
                 DeprecationWarning,
