@@ -1106,7 +1106,7 @@ class PageObject(DictionaryObject):
         self,
         obj: Any,
         pdf: Any,
-        orientations: Tuple[int, ...] = (0, 90, 270, 360),
+        orientations: Tuple[int, ...] = (0, 90, 180, 270),
         space_width: float = 200.0,
         content_key: Optional[str] = PG.CONTENTS,
     ) -> str:
@@ -1118,6 +1118,9 @@ class PageObject(DictionaryObject):
         this function, as it will change if this function is made more
         sophisticated.
 
+        :param Tuple[int, ...] orientations: list of orientations text_extraction will look for
+                    default = (0, 90, 180, 270)
+                note: currently only 0(Up),90(turned Left), 180(upside Down), 270 (turned Right)
         :param float space_width: force default space width
                     (if not extracted from font (default 200)
         :param Optional[str] content_key: indicate the default key where to extract data
@@ -1440,7 +1443,10 @@ class PageObject(DictionaryObject):
 
     def extract_text(
         self,
-        orientations: Union[int, Tuple[int, ...]] = (0, 90, 270, 360),
+        *args,
+        Tj_sep: str = None,
+        TJ_sep: str = None,
+        orientations: Union[int, Tuple[int, ...]] = (0, 90, 180, 270),
         space_width: float = 200.0,
     ) -> str:
         """
@@ -1456,12 +1462,48 @@ class PageObject(DictionaryObject):
 
         :param orientations : (list of) orientations (of the characters) (default: (0,90,270,360))
                                single int is equivalent to a singleton ( 0 == (0,) )
+                note: currently only 0(Up),90(turned Left), 180(upside Down),270 (turned Right)
         :param space_width : force default space width (if not extracted from font (default: 200)
 
         :return: The extracted text
         """
+        if len(args) >= 1:
+            if isinstance(args[0], str):
+                Tj_sep = args[0]
+                if len(args) >= 2:
+                    if isinstance(args[1], str):
+                        TJ_sep = args[1]
+                    else:
+                        raise TypeError(f"Invalid positional parameter {args[1]}")
+                if len(args) >= 3:
+                    if isinstance(args[2], (list, int)):
+                        orientations = args[2]
+                    else:
+                        raise TypeError(f"Invalid positional parameter {args[2]}")
+                if len(args) >= 4:
+                    if isinstance(args[3], (float, int)):
+                        space_width = args[3]
+                    else:
+                        raise TypeError(f"Invalid positional parameter {args[3]}")
+            elif isinstance(args[0], (tuple, int)):
+                orientations = args[0]
+                if len(args) >= 2:
+                    if isinstance(args[1], (float, int)):
+                        space_width = args[1]
+                    else:
+                        raise TypeError(f"Invalid positional parameter {args[1]}")
+            else:
+                raise TypeError(f"Invalid positional parameter {args[0]}")
+        if Tj_sep != None or TJ_sep != None:
+            warnings.warn(
+                "parameters Tj_Sep, TJ_sep depreciated, and will be removed in PyPDF2 3.0.0.",
+                DeprecationWarning,
+            )
+
         if isinstance(orientations, int):
             orientations = (orientations,)
+        print(self, self.pdf, orientations, space_width, PG.CONTENTS)
+
         return self._extract_text(
             self, self.pdf, orientations, space_width, PG.CONTENTS
         )
