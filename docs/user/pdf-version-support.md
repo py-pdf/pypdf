@@ -30,3 +30,8 @@ all features of PDF 2.0.
 
 See [History of PDF](https://en.wikipedia.org/wiki/History_of_PDF) for more
 features.
+
+Some PDF features are not supported by PyPDF2, but other libraries can be used
+for them:
+
+* [pyHanko](https://pyhanko.readthedocs.io/en/latest/index.html): Cryptographically sign a PDF
