@@ -1,5 +1,6 @@
 import os
 from io import BytesIO
+from unittest.mock import patch
 
 import pytest
 
@@ -408,14 +409,15 @@ def test_remove_child_in_tree():
     tree.empty_tree()
 
 
-def test_dict_read_from_stream():
+def test_dict_read_from_stream(capsys):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/984/984877.pdf"
     name = "tika-984877.pdf"
 
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     for page in reader.pages:
-        with pytest.warns(PdfReadWarning):
-            page.extract_text()
+        page.extract_text()
+    stdout, _stderr = capsys.readouterr()
+    assert _stderr == ""
 
 
 def test_parse_content_stream_peek_percentage():
@@ -477,19 +479,21 @@ def test_bool_repr():
     os.remove("tmp-fields-report.txt")
 
 
-def test_issue_997():
+@patch("PyPDF2._reader.logger_warning")
+def test_issue_997(mock_logger_warning):
     url = "https://github.com/py-pdf/PyPDF2/files/8908874/Exhibit_A-2_930_Enterprise_Zone_Tax_Credits_final.pdf"
     name = "gh-issue-997.pdf"
 
     merger = PdfMerger()
     merged_filename = "tmp-out.pdf"
-    with pytest.warns(PdfReadWarning, match="not defined"):
-        merger.append(
-            BytesIO(get_pdf_from_url(url, name=name))
-        )  # here the error raises
+    merger.append(BytesIO(get_pdf_from_url(url, name=name)))  # here the error raises
     with open(merged_filename, "wb") as f:
         merger.write(f)
     merger.close()
+
+    mock_logger_warning.assert_called_with(
+        "Overwriting cache for 0 4", "PyPDF2._reader"
+    )
 
     # cleanup
     os.remove(merged_filename)
