@@ -341,14 +341,16 @@ def test_compress(url, name):
         ),
     ],
 )
-def test_get_fields_warns(url, name):
+def test_get_fields_warns(caplog, url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
     with open("tmp.txt", "w") as fp:
-        with pytest.warns(PdfReadWarning, match="Object 2 0 not defined."):
-            retrieved_fields = reader.get_fields(fileobj=fp)
+        retrieved_fields = reader.get_fields(fileobj=fp)
 
     assert retrieved_fields == {}
+    assert (
+        caplog.text == "WARNING  PyPDF2._reader:_utils.py:364 Object 2 0 not defined.\n"
+    )
 
     # Cleanup
     os.remove("tmp.txt")
@@ -385,7 +387,7 @@ def test_scale_rectangle_indirect_object():
         page.scale(sx=2, sy=3)
 
 
-def test_merge_output():
+def test_merge_output(caplog):
     # Arrange
     base = os.path.join(RESOURCE_ROOT, "Seige_of_Vicksburg_Sample_OCR.pdf")
     crazy = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
@@ -395,8 +397,12 @@ def test_merge_output():
 
     # Act
     merger = PdfMerger(strict=True)
-    with pytest.warns(PdfReadWarning):
-        merger.append(base)
+    merger.append(base)
+    msg = (
+        "WARNING  PyPDF2._reader:_utils.py:364 Xref table not zero-indexed. "
+        "ID numbers for objects will be corrected.\n"
+    )
+    assert caplog.text == msg
     merger.merge(1, crazy)
     stream = BytesIO()
     merger.write(stream)
