@@ -1443,7 +1443,7 @@ class PageObject(DictionaryObject):
 
     def extract_text(
         self,
-        *args,
+        *args: Any,
         Tj_sep: str = None,
         TJ_sep: str = None,
         orientations: Union[int, Tuple[int, ...]] = (0, 90, 180, 270),
@@ -1476,7 +1476,7 @@ class PageObject(DictionaryObject):
                     else:
                         raise TypeError(f"Invalid positional parameter {args[1]}")
                 if len(args) >= 3:
-                    if isinstance(args[2], (list, int)):
+                    if isinstance(args[2], (tuple, int)):
                         orientations = args[2]
                     else:
                         raise TypeError(f"Invalid positional parameter {args[2]}")
