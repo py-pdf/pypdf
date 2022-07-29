@@ -34,4 +34,5 @@ features.
 Some PDF features are not supported by PyPDF2, but other libraries can be used
 for them:
 
-* [pyHanko](https://pyhanko.readthedocs.io/en/latest/index.html): Cryptographically sign a PDF
+* [pyHanko](https://pyhanko.readthedocs.io/en/latest/index.html): Cryptographically sign a PDF ([#302](https://github.com/py-pdf/PyPDF2/issues/302))
+* [camelot-py](https://pypi.org/project/camelot-py/): Table Extraction ([#231](https://github.com/py-pdf/PyPDF2/issues/231))
