@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1659030226898,
+  "lastUpdate": 1659077310354,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -11614,6 +11614,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.015921388475102383",
             "extra": "mean: 3.692732680199998 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8d5037c590fbab28d9980962070d28a94dfd9be5",
+          "message": "DOC: Mention pyHanko for signing PDF documents (#1178)",
+          "timestamp": "2022-07-29T08:47:25+02:00",
+          "tree_id": "83c06a077c93925f21926c89becb84221872089e",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/8d5037c590fbab28d9980962070d28a94dfd9be5"
+        },
+        "date": 1659077309328,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0492996251858635,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007126754767050424",
+            "extra": "mean: 953.0166370000074 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.214918775643191,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005561519090434753",
+            "extra": "mean: 75.67205042857543 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2662433115298449,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01926811668724168",
+            "extra": "mean: 3.7559628981999937 sec\nrounds: 5"
           }
         ]
       }
