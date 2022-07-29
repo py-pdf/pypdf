@@ -142,7 +142,7 @@ def test_get_attachments(src):
 )
 def test_get_outline(src, outline_elements):
     reader = PdfReader(src)
-    outline = reader._get_outline()
+    outline = reader.outline
     assert len(outline) == outline_elements
 
 
@@ -524,7 +524,7 @@ def test_read_encrypted_without_decryption():
 def test_get_destination_page_number():
     src = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
     reader = PdfReader(src)
-    outline = reader._get_outline()
+    outline = reader.outline
     for outline_item in outline:
         if not isinstance(outline_item, list):
             reader.get_destination_page_number(outline_item)
@@ -579,14 +579,14 @@ def test_issue604(strict):
         if strict:
             pdf = PdfReader(f, strict=strict)
             with pytest.raises(PdfReadError) as exc, pytest.warns(PdfReadWarning):
-                outline = pdf._get_outline()
+                outline = pdf.outline
             if "Unknown Destination" not in exc.value.args[0]:
                 raise Exception("Expected exception not raised")
             return  # outline is not correct
         else:
             pdf = PdfReader(f, strict=strict)
             with pytest.warns(PdfReadWarning):
-                outline = pdf._get_outline()
+                outline = pdf.outline
 
         def get_dest_pages(x):
             if isinstance(x, list):
@@ -596,10 +596,8 @@ def test_issue604(strict):
                 return pdf.get_destination_page_number(x) + 1
 
         out = []
-        for (
-            b
-        ) in outline:  # b can be destination or a list:preferred to just print them
-            out.append(get_dest_pages(b))
+        for oi in outline:  # oi can be destination or a list:preferred to just print them
+            out.append(get_dest_pages(oi))
 
 
 def test_decode_permissions():

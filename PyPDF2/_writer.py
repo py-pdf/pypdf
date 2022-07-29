@@ -59,6 +59,7 @@ from ._utils import (
     _get_max_pdf_version_header,
     b_,
     deprecate_with_replacement,
+    deprecate_bookmark,
 )
 from .constants import AnnotationDictionaryAttributes
 from .constants import CatalogAttributes as CA
@@ -97,7 +98,6 @@ from .generic import (
     TextStringObject,
     TreeObject,
     create_string_object,
-    deprecate_bookmark,
 )
 from .types import (
     BorderArrayType,
@@ -1251,9 +1251,7 @@ class PdfWriter:
             title, pagenum, parent, color, bold, italic, fit, *args
         )
 
-    def add_outline(
-        self
-    ) -> None:
+    def add_outline(self) -> None:
         raise NotImplementedError(
             "This method is not yet implemented. Use :meth:`add_outline_item` instead."
         )

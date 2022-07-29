@@ -690,7 +690,7 @@ class PdfReader:
             Use :py:attr:`outline` instead.
         """
         deprecate_with_replacement("outlines", "outline")
-        return self._get_outline()
+        return self.outline
 
     def _get_outline(
         self, node: Optional[DictionaryObject] = None, outline: Optional[Any] = None
@@ -706,7 +706,7 @@ class PdfReader:
                 except PdfReadError:
                     # this occurs if the /Outlines object reference is incorrect
                     # for an example of such a file, see https://unglueit-files.s3.amazonaws.com/ebf/7552c42e9280b4476e59e77acc0bc812.pdf
-                    # so continue to load the file without the Bookmarks
+                    # so continue to load the file without the Outlines
                     return outline
 
                 if isinstance(lines, NullObject):

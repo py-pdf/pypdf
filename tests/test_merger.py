@@ -45,8 +45,12 @@ def test_merge():
         merger.append(fh)
 
     outline_item = merger.add_outline_item("An outline item", 0)
-    bm2 = merger.add_outline_item("deeper", 0, parent=outline_item, italic=True, bold=True)
-    merger.add_outline_item("Let's see", 2, bm2, (255, 255, 0), True, True, "/FitBV", 12)
+    oi2 = merger.add_outline_item(
+        "deeper", 0, parent=outline_item, italic=True, bold=True
+    )
+    merger.add_outline_item(
+        "Let's see", 2, oi2, (255, 255, 0), True, True, "/FitBV", 12
+    )
     merger.add_outline_item(
         "The XYZ fit", 0, outline_item, (255, 0, 15), True, True, "/XYZ", 10, 20, 3
     )
@@ -57,9 +61,11 @@ def test_merge():
         "The FitV fit", 0, outline_item, (255, 0, 15), True, True, "/FitV", 10
     )
     merger.add_outline_item(
-        "The FitR fit", 0, outline_item, (255, 0, 15), True, True, "/FitR", 10, 20, 30, 40
+        "The FitR fit", 0, outline_item, (255, 0, 15), True, True, "/FitR", 10, 20, 30, 40,
     )
-    merger.add_outline_item("The FitB fit", 0, outline_item, (255, 0, 15), True, True, "/FitB")
+    merger.add_outline_item(
+        "The FitB fit", 0, outline_item, (255, 0, 15), True, True, "/FitB"
+    )
     merger.add_outline_item(
         "The FitBH fit", 0, outline_item, (255, 0, 15), True, True, "/FitBH", 10
     )
@@ -84,9 +90,7 @@ def test_merge():
 
     # Check if outline is correct
     reader = PyPDF2.PdfReader(tmp_path)
-    assert [
-        el.title for el in reader._get_outline() if isinstance(el, Destination)
-    ] == [
+    assert [el.title for el in reader.outline if isinstance(el, Destination)] == [
         "An outline item",
         "Foo",
         "Bar",

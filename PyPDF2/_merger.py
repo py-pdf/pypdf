@@ -31,7 +31,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 from ._encryption import Encryption
 from ._page import PageObject
 from ._reader import PdfReader
-from ._utils import StrByteType, deprecate_with_replacement, str_
+from ._utils import StrByteType, deprecate_with_replacement, deprecate_bookmark, str_
 from ._writer import PdfWriter
 from .constants import GoToActionArguments
 from .constants import PagesAttributes as PA
@@ -48,7 +48,6 @@ from .generic import (
     OutlineItem,
     TextStringObject,
     TreeObject,
-    deprecate_bookmark,
 )
 from .pagerange import PageRange, PageRangeSpec
 from .types import FitType, LayoutType, OutlineType, PagemodeType, ZoomArgType
@@ -81,7 +80,7 @@ class PdfMerger:
             Defaults to ``False``.
     """
 
-    @deprecate_bookmark(bookmarks='outline')
+    @deprecate_bookmark(bookmarks="outline")
     def __init__(self, strict: bool = False) -> None:
         self.inputs: List[Tuple[Any, PdfReader, bool]] = []
         self.pages: List[Any] = []
@@ -91,10 +90,7 @@ class PdfMerger:
         self.id_count = 0
         self.strict = strict
 
-    @deprecate_bookmark(
-        bookmark='outline_item',
-        import_bookmarks='import_outline'
-    )
+    @deprecate_bookmark(bookmark="outline_item", import_bookmarks="import_outline")
     def merge(
         self,
         position: int,
@@ -220,10 +216,7 @@ class PdfMerger:
             stream = fileobj
         return stream, my_file, encryption_obj
 
-    @deprecate_bookmark(
-        bookmark='outline_item',
-        import_bookmarks='import_outline'
-    )
+    @deprecate_bookmark(bookmark="outline_item", import_bookmarks="import_outline")
     def append(
         self,
         fileobj: Union[StrByteType, PdfReader],
@@ -453,7 +446,7 @@ class PdfMerger:
             if pageno is not None:
                 self.output.add_named_destination_object(named_dest)
 
-    @deprecate_bookmark(bookmarks='outline')
+    @deprecate_bookmark(bookmarks="outline")
     def _write_outline(
         self,
         outline: Optional[Iterable[OutlineItem]] = None,
@@ -481,7 +474,7 @@ class PdfMerger:
                 del outline_item["/Page"], outline_item["/Type"]
                 last_added = self.output.add_outline_item_dict(outline_item, parent)
 
-    @deprecate_bookmark(bookmark='outline_item')
+    @deprecate_bookmark(bookmark="outline_item")
     def _write_outline_item_on_page(
         self, outline_item: Union[OutlineItem, Destination], page: _MergedPage
     ) -> None:
@@ -501,7 +494,9 @@ class PdfMerger:
             ),
         }
         for arg_key in fit2arg_keys.get(oi_type, tuple()):
-            if arg_key in outline_item and not isinstance(outline_item[arg_key], NullObject):
+            if arg_key in outline_item and not isinstance(
+                outline_item[arg_key], NullObject
+            ):
                 args.append(FloatObject(outline_item[arg_key]))
             else:
                 args.append(FloatObject(0))
@@ -531,7 +526,7 @@ class PdfMerger:
             else:
                 raise ValueError(f"Unresolved named destination '{nd['/Title']}'")
 
-    @deprecate_bookmark(bookmarks='outline')
+    @deprecate_bookmark(bookmarks="outline")
     def _associate_outline_items_to_pages(
         self, pages: List[_MergedPage], outline: Optional[Iterable[OutlineItem]] = None
     ) -> None:
@@ -556,7 +551,7 @@ class PdfMerger:
             if pageno is not None:
                 outline_item[NameObject("/Page")] = NumberObject(pageno)
 
-    @deprecate_bookmark(bookmark='outline_item')
+    @deprecate_bookmark(bookmark="outline_item")
     def find_outline_item(
         self,
         outline_item: Dict[str, Any],
@@ -572,13 +567,16 @@ class PdfMerger:
                 res = self.find_outline_item(outline_item, oi_enum)  # type: ignore
                 if res:
                     return [i] + res
-            elif oi_enum == outline_item or cast(Dict[Any, Any], oi_enum["/Title"]) == outline_item:
+            elif (
+                oi_enum == outline_item
+                or cast(Dict[Any, Any], oi_enum["/Title"]) == outline_item
+            ):
                 # we found a leaf node
                 return [i]
 
         return None
 
-    @deprecate_bookmark(bookmark='outline_item')
+    @deprecate_bookmark(bookmark="outline_item")
     def find_bookmark(
         self,
         outline_item: Dict[str, Any],

@@ -47,20 +47,30 @@ def test_writer_operations():
     writer.add_outline_item_destination(page)
     writer.remove_links()
     writer.add_outline_item_destination(page)
-    bm = writer.add_outline_item(
+    oi = writer.add_outline_item(
         "An outline item", 0, None, (255, 0, 15), True, True, "/FitBV", 10
     )
     writer.add_outline_item(
-        "The XYZ fit", 0, bm, (255, 0, 15), True, True, "/XYZ", 10, 20, 3
+        "The XYZ fit", 0, oi, (255, 0, 15), True, True, "/XYZ", 10, 20, 3
     )
-    writer.add_outline_item("The FitH fit", 0, bm, (255, 0, 15), True, True, "/FitH", 10)
-    writer.add_outline_item("The FitV fit", 0, bm, (255, 0, 15), True, True, "/FitV", 10)
     writer.add_outline_item(
-        "The FitR fit", 0, bm, (255, 0, 15), True, True, "/FitR", 10, 20, 30, 40
+        "The FitH fit", 0, oi, (255, 0, 15), True, True, "/FitH", 10
     )
-    writer.add_outline_item("The FitB fit", 0, bm, (255, 0, 15), True, True, "/FitB")
-    writer.add_outline_item("The FitBH fit", 0, bm, (255, 0, 15), True, True, "/FitBH", 10)
-    writer.add_outline_item("The FitBV fit", 0, bm, (255, 0, 15), True, True, "/FitBV", 10)
+    writer.add_outline_item(
+        "The FitV fit", 0, oi, (255, 0, 15), True, True, "/FitV", 10
+    )
+    writer.add_outline_item(
+        "The FitR fit", 0, oi, (255, 0, 15), True, True, "/FitR", 10, 20, 30, 40
+    )
+    writer.add_outline_item(
+        "The FitB fit", 0, oi, (255, 0, 15), True, True, "/FitB"
+    )
+    writer.add_outline_item(
+        "The FitBH fit", 0, oi, (255, 0, 15), True, True, "/FitBH", 10
+    )
+    writer.add_outline_item(
+        "The FitBV fit", 0, oi, (255, 0, 15), True, True, "/FitBV", 10
+    )
     writer.add_blank_page()
     writer.add_uri(2, "https://example.com", RectangleObject([0, 0, 100, 100]))
     writer.add_link(2, 1, RectangleObject([0, 0, 100, 100]))
@@ -315,7 +325,9 @@ def test_add_outline_item():
     outline_item = writer.add_outline_item(
         "An outline item", 1, None, (255, 0, 15), True, True, "/Fit", 200, 0, None
     )
-    writer.add_outline_item("Another", 2, outline_item, None, False, False, "/Fit", 0, 0, None)
+    writer.add_outline_item(
+        "Another", 2, outline_item, None, False, False, "/Fit", 0, 0, None
+    )
 
     # write "output" to PyPDF2-output.pdf
     tmp_filename = "dont_commit_outline_item.pdf"
