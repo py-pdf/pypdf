@@ -1502,7 +1502,6 @@ class PageObject(DictionaryObject):
 
         if isinstance(orientations, int):
             orientations = (orientations,)
-        print(self, self.pdf, orientations, space_width, PG.CONTENTS)
 
         return self._extract_text(
             self, self.pdf, orientations, space_width, PG.CONTENTS
