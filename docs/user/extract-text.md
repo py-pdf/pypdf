@@ -85,7 +85,7 @@ PyPDF2 might make mistakes parsing that.
 Hence I would distinguish three types of PDF documents:
 
 * **Digitally-born PDF files**: The file was created digitally on the computer.
-  It can contain images, texts, links, outline items (a.k.a., bookmarks, JavaScript, ...
+  It can contain images, texts, links, outline items (a.k.a., bookmarks), JavaScript, ...
   If you Zoom in a lot, the text still looks sharp.
 * **Scanned PDF files**: Any number of pages was scanned. The images were then
   stored in a PDF file. Hence the file is just a container for those images.
