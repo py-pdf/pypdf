@@ -32,7 +32,6 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import codecs
 import decimal
-import functools
 import hashlib
 import logging
 import re
