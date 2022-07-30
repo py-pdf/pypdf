@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1659157842382,
+  "lastUpdate": 1659163138946,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -11794,6 +11794,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01477706425287276",
             "extra": "mean: 3.6678507251999988 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8a27fa4eea0c072cd7c8718a4c04869223c31ef6",
+          "message": "ENH: Add capability to filter text extraction by orientation  (#1175)\n\nCloses #1071",
+          "timestamp": "2022-07-30T08:37:42+02:00",
+          "tree_id": "6846bfc0b3ff2d752519e8fbbc645be15daeb874",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/8a27fa4eea0c072cd7c8718a4c04869223c31ef6"
+        },
+        "date": 1659163136956,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8773266320865186,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02100957944505252",
+            "extra": "mean: 1.1398263353999993 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.77057854695802,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005850627026893956",
+            "extra": "mean: 92.84552316666723 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21958151773332513,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0525692812831815",
+            "extra": "mean: 4.554117351600004 sec\nrounds: 5"
           }
         ]
       }
