@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1659116647599,
+  "lastUpdate": 1659157842382,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -11749,6 +11749,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01859651774856864",
             "extra": "mean: 3.8385466879999965 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mtd91429@users.noreply.github.com",
+            "name": "mtd91429",
+            "username": "mtd91429"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8c532a0ff13395b706d0ae1f183dd24bab577bfc",
+          "message": "MAINT: Consistent terminology for outline items (#1156)\n\nThis PR makes sure PyPDF2 uses a consistent nomenclature for the outline:\r\n\r\n* **Outline**: A document has exactly one outline (also called \"table of contents\", in short toc). That outline might be empty.\r\n* **Outline Item**: An element within an outline. This is also called a \"bookmark\" by some PDF viewers.\r\n\r\nThis means that some names will be deprecated to ensure consistency:\r\n\r\n## PdfReader\r\n\r\n* `outlines` ➔ `outline`\r\n* `_build_outline()` ➔ `_build_outline_item()`\r\n\r\n## PdfWriter\r\n\r\n* Keep `get_outline_root()`\r\n* `add_bookmark_dict()` ➔ `add_outline()` \r\n* `add_bookmark()` ➔ `add_outline_item()`\r\n\r\n\r\n## PdfMerger\r\n\r\n* `find_bookmark()` ➔ `find_outline_item()`\r\n* `_write_bookmarks()` ➔ `_write_outline()`\r\n* `_write_bookmark_on_page()` ➔ `_write_outline_item_on_page()`\r\n* `_associate_bookmarks_to_pages()` ➔ `_associate_outline_items_to_pages()`\r\n* Keep `_trim_outline()`\r\n\r\n## generic.py\r\n\r\n* `Bookmark` ➔ `OutlineItem`\r\n\r\nCloses #1048\r\nCloses #1098",
+          "timestamp": "2022-07-30T07:09:41+02:00",
+          "tree_id": "eb04db67e26aeed926e00abce2a61e2000fa30a4",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/8c532a0ff13395b706d0ae1f183dd24bab577bfc"
+        },
+        "date": 1659157841776,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.062528375803113,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007770576699827226",
+            "extra": "mean: 941.1513356000014 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.014772555173414,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004673416187843098",
+            "extra": "mean: 76.83576457142901 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2726392306888314,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01477706425287276",
+            "extra": "mean: 3.6678507251999988 sec\nrounds: 5"
           }
         ]
       }
