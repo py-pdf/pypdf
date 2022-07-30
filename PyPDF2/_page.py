@@ -1106,6 +1106,7 @@ class PageObject(DictionaryObject):
         self,
         obj: Any,
         pdf: Any,
+        orientations: Tuple[int, ...] = (0, 90, 180, 270),
         space_width: float = 200.0,
         content_key: Optional[str] = PG.CONTENTS,
     ) -> str:
@@ -1117,6 +1118,9 @@ class PageObject(DictionaryObject):
         this function, as it will change if this function is made more
         sophisticated.
 
+        :param Tuple[int, ...] orientations: list of orientations text_extraction will look for
+                    default = (0, 90, 180, 270)
+                note: currently only 0(Up),90(turned Left), 180(upside Down), 270 (turned Right)
         :param float space_width: force default space width
                     (if not extracted from font (default 200)
         :param Optional[str] content_key: indicate the default key where to extract data
@@ -1195,7 +1199,7 @@ class PageObject(DictionaryObject):
             return _space_width / 1000.0
 
         def process_operation(operator: bytes, operands: List) -> None:
-            nonlocal cm_matrix, cm_stack, tm_matrix, tm_prev, output, text, char_scale, space_scale, _space_width, TL, font_size, cmap
+            nonlocal cm_matrix, cm_stack, tm_matrix, tm_prev, output, text, char_scale, space_scale, _space_width, TL, font_size, cmap, orientations
             check_crlf_space: bool = False
             # Table 5.4 page 405
             if operator == b"BT":
@@ -1301,34 +1305,37 @@ class PageObject(DictionaryObject):
 
             elif operator == b"Tj":
                 check_crlf_space = True
-                if isinstance(operands[0], str):
-                    text += operands[0]
-                else:
-                    t: str = ""
-                    tt: bytes = (
-                        encode_pdfdocencoding(operands[0])
-                        if isinstance(operands[0], str)
-                        else operands[0]
-                    )
-                    if isinstance(cmap[0], str):
-                        try:
-                            t = tt.decode(
-                                cmap[0], "surrogatepass"
-                            )  # apply str encoding
-                        except Exception:  # the data does not match the expectation, we use the alternative ; text extraction may not be good
-                            t = tt.decode(
-                                "utf-16-be" if cmap[0] == "charmap" else "charmap",
-                                "surrogatepass",
-                            )  # apply str encoding
-                    else:  # apply dict encoding
-                        t = "".join(
-                            [
-                                cmap[0][x] if x in cmap[0] else bytes((x,)).decode()
-                                for x in tt
-                            ]
+                m = mult(tm_matrix, cm_matrix)
+                o = orient(m)
+                if o in orientations:
+                    if isinstance(operands[0], str):
+                        text += operands[0]
+                    else:
+                        t: str = ""
+                        tt: bytes = (
+                            encode_pdfdocencoding(operands[0])
+                            if isinstance(operands[0], str)
+                            else operands[0]
                         )
+                        if isinstance(cmap[0], str):
+                            try:
+                                t = tt.decode(
+                                    cmap[0], "surrogatepass"
+                                )  # apply str encoding
+                            except Exception:  # the data does not match the expectation, we use the alternative ; text extraction may not be good
+                                t = tt.decode(
+                                    "utf-16-be" if cmap[0] == "charmap" else "charmap",
+                                    "surrogatepass",
+                                )  # apply str encoding
+                        else:  # apply dict encoding
+                            t = "".join(
+                                [
+                                    cmap[0][x] if x in cmap[0] else bytes((x,)).decode()
+                                    for x in tt
+                                ]
+                            )
 
-                    text += "".join([cmap[1][x] if x in cmap[1] else x for x in t])
+                        text += "".join([cmap[1][x] if x in cmap[1] else x for x in t])
             else:
                 return None
             if check_crlf_space:
@@ -1339,6 +1346,8 @@ class PageObject(DictionaryObject):
                 k = math.sqrt(abs(m[0] * m[3]) + abs(m[1] * m[2]))
                 f = font_size * k
                 tm_prev = m
+                if o not in orientations:
+                    return
                 try:
                     if o == 0:
                         if deltaY < -0.8 * f:
@@ -1418,7 +1427,7 @@ class PageObject(DictionaryObject):
                     xobj = resources_dict["/XObject"]
                     if xobj[operands[0]]["/Subtype"] != "/Image":  # type: ignore
                         # output += text
-                        text = self.extract_xform_text(xobj[operands[0]], space_width)  # type: ignore
+                        text = self.extract_xform_text(xobj[operands[0]], orientations, space_width)  # type: ignore
                         output += text
                 except Exception:
                     warnings.warn(
@@ -1433,7 +1442,12 @@ class PageObject(DictionaryObject):
         return output
 
     def extract_text(
-        self, Tj_sep: str = "", TJ_sep: str = "", space_width: float = 200.0
+        self,
+        *args: Any,
+        Tj_sep: str = None,
+        TJ_sep: str = None,
+        orientations: Union[int, Tuple[int, ...]] = (0, 90, 180, 270),
+        space_width: float = 200.0,
     ) -> str:
         """
         Locate all text drawing commands, in the order they are provided in the
@@ -1445,15 +1459,59 @@ class PageObject(DictionaryObject):
         Do not rely on the order of text coming out of this function, as it
         will change if this function is made more sophisticated.
 
-
-        :param space_width : force default space width (if not extracted from font (default 200)
+        :params obsolete/Depreciating Tj_sep, TJ_sep: kept for compatibility
+        :param orientations : (list of) orientations (of the characters) (default: (0,90,270,360))
+                               single int is equivalent to a singleton ( 0 == (0,) )
+                note: currently only 0(Up),90(turned Left), 180(upside Down),270 (turned Right)
+        :param space_width : force default space width (if not extracted from font (default: 200)
 
         :return: The extracted text
         """
-        return self._extract_text(self, self.pdf, space_width, PG.CONTENTS)
+        if len(args) >= 1:
+            if isinstance(args[0], str):
+                Tj_sep = args[0]
+                if len(args) >= 2:
+                    if isinstance(args[1], str):
+                        TJ_sep = args[1]
+                    else:
+                        raise TypeError(f"Invalid positional parameter {args[1]}")
+                if len(args) >= 3:
+                    if isinstance(args[2], (tuple, int)):
+                        orientations = args[2]
+                    else:
+                        raise TypeError(f"Invalid positional parameter {args[2]}")
+                if len(args) >= 4:
+                    if isinstance(args[3], (float, int)):
+                        space_width = args[3]
+                    else:
+                        raise TypeError(f"Invalid positional parameter {args[3]}")
+            elif isinstance(args[0], (tuple, int)):
+                orientations = args[0]
+                if len(args) >= 2:
+                    if isinstance(args[1], (float, int)):
+                        space_width = args[1]
+                    else:
+                        raise TypeError(f"Invalid positional parameter {args[1]}")
+            else:
+                raise TypeError(f"Invalid positional parameter {args[0]}")
+        if Tj_sep is not None or TJ_sep is not None:
+            warnings.warn(
+                "parameters Tj_Sep, TJ_sep depreciated, and will be removed in PyPDF2 3.0.0.",
+                DeprecationWarning,
+            )
+
+        if isinstance(orientations, int):
+            orientations = (orientations,)
+
+        return self._extract_text(
+            self, self.pdf, orientations, space_width, PG.CONTENTS
+        )
 
     def extract_xform_text(
-        self, xform: EncodedStreamObject, space_width: float = 200.0
+        self,
+        xform: EncodedStreamObject,
+        orientations: Tuple[int, ...] = (0, 90, 270, 360),
+        space_width: float = 200.0,
     ) -> str:
         """
         Extract text from an XObject.
@@ -1462,7 +1520,7 @@ class PageObject(DictionaryObject):
 
         :return: The extracted text
         """
-        return self._extract_text(xform, self.pdf, space_width, None)
+        return self._extract_text(xform, self.pdf, orientations, space_width, None)
 
     def extractText(
         self, Tj_sep: str = "", TJ_sep: str = ""
@@ -1473,7 +1531,7 @@ class PageObject(DictionaryObject):
             Use :meth:`extract_text` instead.
         """
         deprecate_with_replacement("extractText", "extract_text")
-        return self.extract_text(Tj_sep=Tj_sep, TJ_sep=TJ_sep)
+        return self.extract_text()
 
     def _get_fonts(self) -> Tuple[Set[str], Set[str]]:
         """
