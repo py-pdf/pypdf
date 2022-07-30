@@ -69,7 +69,7 @@ from ._utils import (
     skip_over_comment,
     str_,
 )
-from .constants import CheckboxRadioButtonAttributes, FieldDictionaryAttributes
+from .constants import CheckboxRadioButtonAttributes, FieldDictionaryAttributes, NamedColors
 from .constants import FilterTypes as FT
 from .constants import StreamAttributes as SA
 from .constants import TypArguments as TA
@@ -2020,7 +2020,7 @@ def create_string_object(
 def _create_outline_item(
     action_ref: IndirectObject,
     title: str,
-    color: Optional[Tuple[float, float, float]],
+    color: Union[Tuple[float, float, float], str],
     italic: bool,
     bold: bool,
 ) -> TreeObject:
@@ -2034,6 +2034,16 @@ def _create_outline_item(
     )
 
     if color is not None:
+        if isinstance(color, str):
+            try:
+                # see if a named color
+                color = NamedColors.attributes_dict()[color.lower()]
+            except KeyError:
+                # see if it is a hexstring
+                color = hex_to_rgb(color)
+            except ValueError:
+                raise
+
         outline_item.update(
             {NameObject("/C"): ArrayObject([FloatObject(c) for c in color])}
         )
@@ -2077,7 +2087,7 @@ def decode_pdfdocencoding(byte_array: bytes) -> str:
 
 
 def hex_to_rgb(value: str) -> Tuple[float, float, float]:
-    return tuple(int(value[i : i + 2], 16) / 255.0 for i in (0, 2, 4))  # type: ignore
+    return tuple(int(value.lstrip("#")[i : i + 2], 16) / 255.0 for i in (0, 2, 4))  # type: ignore
 
 
 class AnnotationBuilder:

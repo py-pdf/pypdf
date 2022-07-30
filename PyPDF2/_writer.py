@@ -1164,7 +1164,7 @@ class PdfWriter:
         title: str,
         pagenum: int,
         parent: Union[None, TreeObject, IndirectObject] = None,
-        color: Optional[Tuple[float, float, float]] = None,
+        color: Optional[Union[Tuple[float, float, float], str]] = None,
         bold: bool = False,
         italic: bool = False,
         fit: FitType = "/Fit",
