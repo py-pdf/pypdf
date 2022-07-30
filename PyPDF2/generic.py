@@ -1933,7 +1933,7 @@ class Destination(TreeObject):
         return self.get("/Count", None)
 
 
-class Bookmark(Destination):
+class OutlineItem(Destination):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
@@ -1955,6 +1955,12 @@ class Bookmark(Destination):
         value.write_to_stream(stream, encryption_key)
         stream.write(b"\n")
         stream.write(b">>")
+
+
+class Bookmark(OutlineItem):  # pragma: no cover
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        deprecate_with_replacement("Bookmark", "OutlineItem")
+        super().__init__(*args, **kwargs)
 
 
 def createStringObject(
@@ -2011,16 +2017,16 @@ def create_string_object(
         raise TypeError("create_string_object should have str or unicode arg")
 
 
-def _create_bookmark(
+def _create_outline_item(
     action_ref: IndirectObject,
     title: str,
     color: Optional[Tuple[float, float, float]],
     italic: bool,
     bold: bool,
 ) -> TreeObject:
-    bookmark = TreeObject()
+    outline_item = TreeObject()
 
-    bookmark.update(
+    outline_item.update(
         {
             NameObject("/A"): action_ref,
             NameObject("/Title"): create_string_object(title),
@@ -2028,7 +2034,7 @@ def _create_bookmark(
     )
 
     if color is not None:
-        bookmark.update(
+        outline_item.update(
             {NameObject("/C"): ArrayObject([FloatObject(c) for c in color])}
         )
 
@@ -2038,8 +2044,8 @@ def _create_bookmark(
     if bold:
         format_flag += 2
     if format_flag:
-        bookmark.update({NameObject("/F"): NumberObject(format_flag)})
-    return bookmark
+        outline_item.update({NameObject("/F"): NumberObject(format_flag)})
+    return outline_item
 
 
 def encode_pdfdocencoding(unicode_string: str) -> bytes:
