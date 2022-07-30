@@ -548,7 +548,7 @@ def test_image_extraction2(url, name):
 def test_get_outline(url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
-    reader.outlines
+    reader.outline
 
 
 @pytest.mark.parametrize(

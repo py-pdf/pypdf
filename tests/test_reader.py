@@ -140,10 +140,10 @@ def test_get_attachments(src):
         (os.path.join(RESOURCE_ROOT, "crazyones.pdf"), 0),
     ],
 )
-def test_get_outlines(src, outline_elements):
+def test_get_outline(src, outline_elements):
     reader = PdfReader(src)
-    outlines = reader._get_outlines()
-    assert len(outlines) == outline_elements
+    outline = reader.outline
+    assert len(outline) == outline_elements
 
 
 @pytest.mark.parametrize(
@@ -524,10 +524,10 @@ def test_read_encrypted_without_decryption():
 def test_get_destination_page_number():
     src = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
     reader = PdfReader(src)
-    outlines = reader._get_outlines()
-    for outline in outlines:
-        if not isinstance(outline, list):
-            reader.get_destination_page_number(outline)
+    outline = reader.outline
+    for outline_item in outline:
+        if not isinstance(outline_item, list):
+            reader.get_destination_page_number(outline_item)
 
 
 def test_do_not_get_stuck_on_large_files_without_start_xref():
@@ -560,7 +560,7 @@ def test_decrypt_when_no_id():
 
 def test_reader_properties():
     reader = PdfReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
-    assert reader.outlines == []
+    assert reader.outline == []
     assert len(reader.pages) == 1
     assert reader.page_layout is None
     assert reader.page_mode is None
@@ -575,18 +575,18 @@ def test_issue604(strict):
     """Test with invalid destinations"""  # todo
     with open(os.path.join(RESOURCE_ROOT, "issue-604.pdf"), "rb") as f:
         pdf = None
-        bookmarks = None
+        outline = None
         if strict:
             pdf = PdfReader(f, strict=strict)
             with pytest.raises(PdfReadError) as exc, pytest.warns(PdfReadWarning):
-                bookmarks = pdf._get_outlines()
+                outline = pdf.outline
             if "Unknown Destination" not in exc.value.args[0]:
                 raise Exception("Expected exception not raised")
-            return  # bookmarks not correct
+            return  # outline is not correct
         else:
             pdf = PdfReader(f, strict=strict)
             with pytest.warns(PdfReadWarning):
-                bookmarks = pdf._get_outlines()
+                outline = pdf.outline
 
         def get_dest_pages(x):
             if isinstance(x, list):
@@ -596,10 +596,8 @@ def test_issue604(strict):
                 return pdf.get_destination_page_number(x) + 1
 
         out = []
-        for (
-            b
-        ) in bookmarks:  # b can be destination or a list:preferred to just print them
-            out.append(get_dest_pages(b))
+        for oi in outline:  # oi can be destination or a list:preferred to just print them
+            out.append(get_dest_pages(oi))
 
 
 def test_decode_permissions():
@@ -853,33 +851,33 @@ def test_outline_color():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
     name = "tika-924546.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    assert reader.outlines[0].color == [0, 0, 1]
+    assert reader.outline[0].color == [0, 0, 1]
 
 
 def test_outline_font_format():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
     name = "tika-924546.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    assert reader.outlines[0].font_format == 2
+    assert reader.outline[0].font_format == 2
 
 
-def get_outlines_property(outlines, attribute_name: str):
+def get_outline_property(outline, attribute_name: str):
     results = []
-    if isinstance(outlines, list):
-        for outline in outlines:
-            if isinstance(outline, Destination):
-                results.append(getattr(outline, attribute_name))
+    if isinstance(outline, list):
+        for outline_item in outline:
+            if isinstance(outline_item, Destination):
+                results.append(getattr(outline_item, attribute_name))
             else:
-                results.append(get_outlines_property(outline, attribute_name))
+                results.append(get_outline_property(outline_item, attribute_name))
     else:
-        raise ValueError(f"got {type(outlines)}")
+        raise ValueError(f"got {type(outline)}")
     return results
 
 
 def test_outline_title_issue_1121():
     reader = PdfReader(EXTERNAL_ROOT / "014-outlines/mistitled_outlines_example.pdf")
 
-    assert get_outlines_property(reader.outlines, "title") == [
+    assert get_outline_property(reader.outline, "title") == [
         "First",
         [
             "Second",
@@ -925,7 +923,7 @@ def test_outline_title_issue_1121():
 def test_outline_count():
     reader = PdfReader(EXTERNAL_ROOT / "014-outlines/mistitled_outlines_example.pdf")
 
-    assert get_outlines_property(reader.outlines, "outline_count") == [
+    assert get_outline_property(reader.outline, "outline_count") == [
         5,
         [
             None,
@@ -973,7 +971,7 @@ def test_outline_missing_title():
         os.path.join(RESOURCE_ROOT, "outline-without-title.pdf"), strict=True
     )
     with pytest.raises(PdfReadError) as exc:
-        reader.outlines
+        reader.outline
     assert exc.value.args[0].startswith("Outline Entry Missing /Title attribute:")
 
 
@@ -997,24 +995,24 @@ def test_outline_with_missing_named_destination():
     name = "tika-913678.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     # outline items in document reference a named destination that is not defined
-    assert reader.outlines[1][0].title.startswith("Report for 2002AZ3B: Microbial")
+    assert reader.outline[1][0].title.startswith("Report for 2002AZ3B: Microbial")
 
 
 def test_outline_with_empty_action():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
     name = "tika-924546.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    # outline (entitled Tables and Figures) utilize an empty action (/A)
+    # outline items (entitled Tables and Figures) utilize an empty action (/A)
     # that has no type or destination
-    assert reader.outlines[-4].title == "Tables"
+    assert reader.outline[-4].title == "Tables"
 
 
-def test_outlines_with_invalid_destinations():
+def test_outline_with_invalid_destinations():
     reader = PdfReader(
         os.path.join(RESOURCE_ROOT, "outlines-with-invalid-destinations.pdf")
     )
-    # contains 9 outlines, 6 with invalid destinations caused by different malformations
-    assert len(reader.outlines) == 9
+    # contains 9 outline items, 6 with invalid destinations caused by different malformations
+    assert len(reader.outline) == 9
 
 
 def test_PdfReaderMultipleDefinitions():

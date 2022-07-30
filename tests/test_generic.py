@@ -9,7 +9,6 @@ from PyPDF2.errors import PdfReadError, PdfReadWarning, PdfStreamError
 from PyPDF2.generic import (
     AnnotationBuilder,
     ArrayObject,
-    Bookmark,
     BooleanObject,
     ByteStringObject,
     CheckboxRadioButtonAttributes,
@@ -20,6 +19,7 @@ from PyPDF2.generic import (
     NameObject,
     NullObject,
     NumberObject,
+    OutlineItem,
     RectangleObject,
     TextStringObject,
     TreeObject,
@@ -197,12 +197,12 @@ def test_destination_exception():
         )
 
 
-def test_bookmark_write_to_stream():
+def test_outline_item_write_to_stream():
     stream = BytesIO()
-    bm = Bookmark(
+    oi = OutlineItem(
         NameObject("title"), NullObject(), NameObject(TF.FIT_V), FloatObject(0)
     )
-    bm.write_to_stream(stream, None)
+    oi.write_to_stream(stream, None)
     stream.seek(0, 0)
     assert stream.read() == b"<<\n/Title title\n/Dest [ null /FitV 0 ]\n>>"
 
@@ -400,7 +400,7 @@ def test_remove_child_in_tree():
     reader = PdfReader(pdf)
     writer = PdfWriter()
     writer.add_page(reader.pages[0])
-    writer.add_bookmark("foo", pagenum=0)
+    writer.add_outline_item("foo", pagenum=0)
     obj = writer._objects[-1]
     tree.add_child(obj, writer)
     tree.remove_child(obj)
