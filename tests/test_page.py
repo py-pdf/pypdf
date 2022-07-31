@@ -20,12 +20,12 @@ from PyPDF2.generic import (
     TextStringObject,
 )
 
-from . import get_pdf_from_url
+from . import get_pdf_from_url, normalize_warnings
 
-TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
-PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
-RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
-EXTERNAL_ROOT = Path(PROJECT_ROOT) / "sample-files"
+TESTS_ROOT = Path(__file__).parent.resolve()
+PROJECT_ROOT = TESTS_ROOT.parent
+RESOURCE_ROOT = PROJECT_ROOT / "resources"
+EXTERNAL_ROOT = PROJECT_ROOT / "sample-files"
 
 
 def get_all_sample_files():
@@ -77,7 +77,7 @@ def test_page_operations(pdf_path, password):
     if pdf_path.startswith("http"):
         pdf_path = BytesIO(get_pdf_from_url(pdf_path, pdf_path.split("/")[-1]))
     else:
-        pdf_path = os.path.join(RESOURCE_ROOT, pdf_path)
+        pdf_path = RESOURCE_ROOT / pdf_path
     reader = PdfReader(pdf_path)
 
     if password:
@@ -99,11 +99,11 @@ def test_page_operations(pdf_path, password):
 
 
 def test_transformation_equivalence():
-    pdf_path = os.path.join(RESOURCE_ROOT, "labeled-edges-center-image.pdf")
+    pdf_path = RESOURCE_ROOT / "labeled-edges-center-image.pdf"
     reader_base = PdfReader(pdf_path)
     page_base = reader_base.pages[0]
 
-    pdf_path = os.path.join(RESOURCE_ROOT, "box.pdf")
+    pdf_path = RESOURCE_ROOT / "box.pdf"
     reader_add = PdfReader(pdf_path)
     page_box = reader_add.pages[0]
 
@@ -141,7 +141,7 @@ def compare_dict_objects(d1, d2):
 
 
 def test_page_transformations():
-    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
 
     page: PageObject = reader.pages[0]
@@ -167,11 +167,11 @@ def test_page_transformations():
 @pytest.mark.parametrize(
     ("pdf_path", "password"),
     [
-        (os.path.join(RESOURCE_ROOT, "crazyones.pdf"), None),
-        (os.path.join(RESOURCE_ROOT, "attachment.pdf"), None),
-        (os.path.join(RESOURCE_ROOT, "side-by-side-subfig.pdf"), None),
+        (RESOURCE_ROOT / "crazyones.pdf", None),
+        (RESOURCE_ROOT / "attachment.pdf", None),
+        (RESOURCE_ROOT / "side-by-side-subfig.pdf", None),
         (
-            os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf"),
+            RESOURCE_ROOT / "libreoffice-writer-password.pdf",
             "openpassword",
         ),
     ],
@@ -185,7 +185,7 @@ def test_compress_content_streams(pdf_path, password):
 
 
 def test_page_properties():
-    reader = PdfReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
     page = reader.pages[0]
     assert page.mediabox == RectangleObject((0, 0, 612, 792))
     assert page.cropbox == RectangleObject((0, 0, 612, 792))
@@ -198,7 +198,7 @@ def test_page_properties():
 
 
 def test_page_rotation_non90():
-    reader = PdfReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
     page = reader.pages[0]
     with pytest.raises(ValueError) as exc:
         page.rotate(91)
@@ -221,7 +221,7 @@ def test_add_transformation_on_page_without_contents():
 
 
 def test_multi_language():
-    reader = PdfReader(os.path.join(RESOURCE_ROOT, "multilang.pdf"))
+    reader = PdfReader(RESOURCE_ROOT / "multilang.pdf")
     txt = reader.pages[0].extract_text()
     assert "Hello World" in txt, "English not correctly extracted"
     # Arabic is for the moment left on side
@@ -273,15 +273,14 @@ def test_extract_text_page_pdf(url, name):
         page.extract_text()
 
 
-def test_extract_text_page_pdf_impossible_decode_xform():
+def test_extract_text_page_pdf_impossible_decode_xform(caplog):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/972/972962.pdf"
     name = "tika-972962.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    with pytest.warns(
-        PdfReadWarning, match="impossible to decode XFormObject /Meta203"
-    ):
-        for page in reader.pages:
-            page.extract_text()
+    for page in reader.pages:
+        page.extract_text()
+    warn_msgs = normalize_warnings(caplog.text)
+    assert warn_msgs == [" impossible to decode XFormObject /Meta203"]
 
 
 def test_extract_text_operator_t_star():  # L1266, L1267
@@ -296,7 +295,7 @@ def test_extract_text_operator_t_star():  # L1266, L1267
     ("pdf_path", "password", "embedded", "unembedded"),
     [
         (
-            os.path.join(RESOURCE_ROOT, "crazyones.pdf"),
+            RESOURCE_ROOT / "crazyones.pdf",
             None,
             {
                 "/HHXGQB+SFTI1440",
@@ -306,7 +305,7 @@ def test_extract_text_operator_t_star():  # L1266, L1267
             set(),
         ),
         (
-            os.path.join(RESOURCE_ROOT, "attachment.pdf"),
+            RESOURCE_ROOT / "attachment.pdf",
             None,
             {
                 "/HHXGQB+SFTI1440",
@@ -316,20 +315,20 @@ def test_extract_text_operator_t_star():  # L1266, L1267
             set(),
         ),
         (
-            os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf"),
+            RESOURCE_ROOT / "libreoffice-writer-password.pdf",
             "openpassword",
             {"/BAAAAA+DejaVuSans"},
             set(),
         ),
         (
-            os.path.join(RESOURCE_ROOT, "imagemagick-images.pdf"),
+            RESOURCE_ROOT / "imagemagick-images.pdf",
             None,
             set(),
             {"/Helvetica"},
         ),
-        (os.path.join(RESOURCE_ROOT, "imagemagick-lzw.pdf"), None, set(), set()),
+        (RESOURCE_ROOT / "imagemagick-lzw.pdf", None, set(), set()),
         (
-            os.path.join(RESOURCE_ROOT, "reportlab-inline-image.pdf"),
+            RESOURCE_ROOT / "reportlab-inline-image.pdf",
             None,
             set(),
             {"/Helvetica"},
@@ -348,7 +347,7 @@ def test_get_fonts(pdf_path, password, embedded, unembedded):
 
 
 def test_annotation_getter():
-    pdf_path = os.path.join(RESOURCE_ROOT, "commented.pdf")
+    pdf_path = RESOURCE_ROOT / "commented.pdf"
     reader = PdfReader(pdf_path)
     annotations = reader.pages[0].annotations
     assert annotations is not None
@@ -390,7 +389,7 @@ def test_annotation_getter():
 
 def test_annotation_setter():
     # Arange
-    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
     page = reader.pages[0]
     writer = PdfWriter()
@@ -470,3 +469,32 @@ def test_empyt_password_1088():
 def test_arab_text_extraction():
     reader = PdfReader(EXTERNAL_ROOT / "015-arabic/habibi.pdf")
     assert reader.pages[0].extract_text() == "habibi حَبيبي"
+
+
+def test_read_link_annotation():
+    reader = PdfReader(EXTERNAL_ROOT / "016-libre-office-link/libre-office-link.pdf")
+    assert len(reader.pages[0].annotations) == 1
+    annot = dict(reader.pages[0].annotations[0].get_object())
+    expected = {
+        "/Type": "/Annot",
+        "/Subtype": "/Link",
+        "/A": DictionaryObject(
+            {
+                "/S": "/URI",
+                "/Type": "/Action",
+                "/URI": "https://martin-thoma.com/",
+            }
+        ),
+        "/Border": ArrayObject([0, 0, 0]),
+        "/Rect": [
+            92.043,
+            771.389,
+            217.757,
+            785.189,
+        ],
+    }
+
+    assert set(expected.keys()) == set(annot.keys())
+    del expected["/Rect"]
+    del annot["/Rect"]
+    assert annot == expected

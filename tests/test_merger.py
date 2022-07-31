@@ -1,6 +1,7 @@
 import os
 import sys
 from io import BytesIO
+from pathlib import Path
 
 import pytest
 
@@ -10,18 +11,18 @@ from PyPDF2.generic import Destination
 
 from . import get_pdf_from_url
 
-TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
-PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
-RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
+TESTS_ROOT = Path(__file__).parent.resolve()
+PROJECT_ROOT = TESTS_ROOT.parent
+RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
-sys.path.append(PROJECT_ROOT)
+sys.path.append(str(PROJECT_ROOT))
 
 
 def test_merge():
-    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
-    outline = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
-    pdf_forms = os.path.join(RESOURCE_ROOT, "pdflatex-forms.pdf")
-    pdf_pw = os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf")
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    outline = RESOURCE_ROOT / "pdflatex-outline.pdf"
+    pdf_forms = RESOURCE_ROOT / "pdflatex-forms.pdf"
+    pdf_pw = RESOURCE_ROOT / "libreoffice-writer-password.pdf"
 
     merger = PyPDF2.PdfMerger()
 
@@ -61,7 +62,17 @@ def test_merge():
         "The FitV fit", 0, outline_item, (255, 0, 15), True, True, "/FitV", 10
     )
     merger.add_outline_item(
-        "The FitR fit", 0, outline_item, (255, 0, 15), True, True, "/FitR", 10, 20, 30, 40,
+        "The FitR fit",
+        0,
+        outline_item,
+        (255, 0, 15),
+        True,
+        True,
+        "/FitR",
+        10,
+        20,
+        30,
+        40,
     )
     merger.add_outline_item(
         "The FitB fit", 0, outline_item, (255, 0, 15), True, True, "/FitB"
@@ -112,7 +123,7 @@ def test_merge():
 
 def test_merge_page_exception():
     merger = PyPDF2.PdfMerger()
-    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     with pytest.raises(TypeError) as exc:
         merger.merge(0, pdf_path, pages="a:b")
     assert exc.value.args[0] == '"pages" must be a tuple of (start, stop[, step])'
@@ -121,14 +132,14 @@ def test_merge_page_exception():
 
 def test_merge_page_tuple():
     merger = PyPDF2.PdfMerger()
-    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     merger.merge(0, pdf_path, pages=(0, 1))
     merger.close()
 
 
 def test_merge_write_closed_fh():
     merger = PyPDF2.PdfMerger()
-    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     merger.append(pdf_path)
 
     err_closed = "close() was called and thus the writer cannot be used anymore"
@@ -278,14 +289,14 @@ def test_sweep_recursion2(url, name):
     os.remove("tmp-merger-do-not-commit.pdf")
 
 
-def test_sweep_indirect_list_newobj_is_None():
+def test_sweep_indirect_list_newobj_is_None(caplog):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/906/906769.pdf"
     name = "tika-906769.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     merger = PdfMerger()
     merger.append(reader)
-    with pytest.warns(UserWarning, match="Object 21 0 not defined."):
-        merger.write("tmp-merger-do-not-commit.pdf")
+    merger.write("tmp-merger-do-not-commit.pdf")
+    assert "Object 21 0 not defined." in caplog.text
 
     reader2 = PdfReader("tmp-merger-do-not-commit.pdf")
     reader2.pages
@@ -303,9 +314,7 @@ def test_iss1145():
 
 
 def test_deprecate_bookmark_decorator_warning():
-    reader = PdfReader(
-        os.path.join(RESOURCE_ROOT, "outlines-with-invalid-destinations.pdf")
-    )
+    reader = PdfReader(RESOURCE_ROOT / "outlines-with-invalid-destinations.pdf")
     merger = PdfMerger()
     with pytest.warns(
         UserWarning,
@@ -316,9 +325,7 @@ def test_deprecate_bookmark_decorator_warning():
 
 @pytest.mark.filterwarnings("ignore::UserWarning")
 def test_deprecate_bookmark_decorator_output():
-    reader = PdfReader(
-        os.path.join(RESOURCE_ROOT, "outlines-with-invalid-destinations.pdf")
-    )
+    reader = PdfReader(RESOURCE_ROOT / "outlines-with-invalid-destinations.pdf")
     merger = PdfMerger()
     merger.merge(0, reader, import_bookmarks=True)
     first_oi_title = 'Valid Destination: Action /GoTo Named Destination "section.1"'
