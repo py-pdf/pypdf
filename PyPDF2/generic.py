@@ -2021,7 +2021,7 @@ def create_string_object(
 def _create_outline_item(
     action_ref: IndirectObject,
     title: str,
-    color: Union[Tuple[float, float, float], str],
+    color: Union[Tuple[float, float, float], str, None],
     italic: bool,
     bold: bool,
 ) -> TreeObject:
