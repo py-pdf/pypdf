@@ -1,14 +1,15 @@
 import os
+from pathlib import Path
 
 from PyPDF2 import PdfReader, PdfWriter
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
-PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
-RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
+PROJECT_ROOT = Path(os.path.dirname(TESTS_ROOT))
+RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 
 def test_basic_features():
-    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
     writer = PdfWriter()
 

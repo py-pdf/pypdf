@@ -1,6 +1,7 @@
 import os
 import sys
 from io import BytesIO
+from pathlib import Path
 
 import pytest
 
@@ -11,17 +12,17 @@ from PyPDF2.generic import Destination
 from . import get_pdf_from_url
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
-PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
-RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
+PROJECT_ROOT = Path(os.path.dirname(TESTS_ROOT))
+RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 sys.path.append(PROJECT_ROOT)
 
 
 def test_merge():
-    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
-    outline = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
-    pdf_forms = os.path.join(RESOURCE_ROOT, "pdflatex-forms.pdf")
-    pdf_pw = os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf")
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    outline = RESOURCE_ROOT / "pdflatex-outline.pdf"
+    pdf_forms = RESOURCE_ROOT / "pdflatex-forms.pdf"
+    pdf_pw = RESOURCE_ROOT / "libreoffice-writer-password.pdf"
 
     merger = PyPDF2.PdfMerger()
 

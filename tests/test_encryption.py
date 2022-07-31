@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import pytest
 
@@ -15,8 +16,8 @@ except ImportError:
     HAS_PYCRYPTODOME = False
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
-PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
-RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
+PROJECT_ROOT = Path(os.path.dirname(TESTS_ROOT))
+RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 
 @pytest.mark.parametrize(
@@ -51,7 +52,7 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
     ],
 )
 def test_encryption(name, requres_pycryptodome):
-    inputfile = os.path.join(RESOURCE_ROOT, "encryption", name)
+    inputfile = RESOURCE_ROOT / "encryption" / name
     if requres_pycryptodome and not HAS_PYCRYPTODOME:
         with pytest.raises(DependencyError) as exc:
             ipdf = PyPDF2.PdfReader(inputfile)
@@ -91,7 +92,7 @@ def test_encryption(name, requres_pycryptodome):
 def test_both_password(name, user_passwd, owner_passwd):
     from PyPDF2 import PasswordType
 
-    inputfile = os.path.join(RESOURCE_ROOT, "encryption", name)
+    inputfile = RESOURCE_ROOT / "encryption" / name
     ipdf = PyPDF2.PdfReader(inputfile)
     assert ipdf.is_encrypted
     assert ipdf.decrypt(user_passwd) == PasswordType.USER_PASSWORD
@@ -113,7 +114,7 @@ def test_get_page_of_encrypted_file_new_algorithm(pdffile, password):
     This is a regression test for issue 327:
     IndexError for get_page() of decrypted file
     """
-    path = os.path.join(RESOURCE_ROOT, pdffile)
+    path = RESOURCE_ROOT / pdffile
     PyPDF2.PdfReader(path, password=password).pages[0]
 
 
@@ -133,7 +134,7 @@ def test_get_page_of_encrypted_file_new_algorithm(pdffile, password):
 @pytest.mark.skipif(not HAS_PYCRYPTODOME, reason="No pycryptodome")
 def test_encryption_merge(names):
     pdf_merger = PyPDF2.PdfMerger()
-    files = [os.path.join(RESOURCE_ROOT, "encryption", x) for x in names]
+    files = [RESOURCE_ROOT / "encryption" / x for x in names]
     pdfs = [PyPDF2.PdfReader(x) for x in files]
     for pdf in pdfs:
         if pdf.is_encrypted:
@@ -157,7 +158,7 @@ def test_encrypt_decrypt_class(cryptcls):
 
 
 def test_decrypt_not_decrypted_pdf():
-    path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    path = RESOURCE_ROOT / "crazyones.pdf"
     with pytest.raises(PdfReadError) as exc:
         PdfReader(path, password="nonexistant")
     assert exc.value.args[0] == "Not encrypted file"
