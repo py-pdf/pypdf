@@ -2083,7 +2083,7 @@ class AnnotationBuilder:
     @staticmethod
     def free_text(
         text: str,
-        rect: Tuple[float, float, float, float],
+        rect: Union[RectangleObject, Tuple[float, float, float, float]],
         font: str = "Helvetica",
         bold: bool = False,
         italic: bool = False,
@@ -2092,7 +2092,21 @@ class AnnotationBuilder:
         border_color: str = "000000",
         background_color: str = "ffffff",
     ) -> DictionaryObject:
-        """Add text in a rectangle to a page."""
+        """
+        Add text in a rectangle to a page.
+
+        :param str text: Text to be added
+        :param :class:`RectangleObject<PyPDF2.generic.RectangleObject>` rect: or array of four
+                    integers specifying the clickable rectangular area
+                    ``[xLL, yLL, xUR, yUR]``
+        :param str font: Name of the Font, e.g. 'Helvetica'
+        :param bool bold: Print the text in bold
+        :param bool italic: Print the text in italic
+        :param str font_size: How big the text will be, e.g. '14pt'
+        :param str font_color: Hex-string for the color
+        :param str border_color: Hex-string for the border color
+        :param str background_color: Hex-string for the background of the annotation
+        """
         font_str = "font: "
         if bold is True:
             font_str = font_str + "bold "
@@ -2129,18 +2143,20 @@ class AnnotationBuilder:
     def line(
         p1: Tuple[float, float],
         p2: Tuple[float, float],
-        rect: Tuple[float, float, float, float],
+        rect: Union[RectangleObject, Tuple[float, float, float, float]],
         text: str = "",
         title_bar: str = "",
     ) -> DictionaryObject:
         """
         Draw a line on the PDF.
 
-        :param p1: First point
-        :param p2: Second point
-        :param rect: Rectangle
-        :param text: Text to be displayed as the line annotation
-        :param title_bar: Text to be displayed in the title bar of the
+        :param Tuple[float, float] p1: First point
+        :param Tuple[float, float] p2: Second point
+        :param :class:`RectangleObject<PyPDF2.generic.RectangleObject>` rect: or array of four
+                    integers specifying the clickable rectangular area
+                    ``[xLL, yLL, xUR, yUR]``
+        :param str text: Text to be displayed as the line annotation
+        :param str title_bar: Text to be displayed in the title bar of the
             annotation; by convention this is the name of the author
         """
         line_obj = DictionaryObject(
@@ -2193,7 +2209,7 @@ class AnnotationBuilder:
         An internal link requires the target_page_index, fit, and fit args.
 
 
-        :param rect: :class:`RectangleObject<PyPDF2.generic.RectangleObject>` or array of four
+        :param :class:`RectangleObject<PyPDF2.generic.RectangleObject>` rect: or array of four
                     integers specifying the clickable rectangular area
                     ``[xLL, yLL, xUR, yUR]``
         :param border: if provided, an array describing border-drawing
