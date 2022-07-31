@@ -1593,7 +1593,9 @@ class PdfWriter:
 
             Use :meth:`add_link` instead.
         """
-        deprecate_with_replacement("addLink", "add_link", "4.0.0")
+        deprecate_with_replacement(
+            "addLink", "add_annotation(AnnotationBuilder.link(...))", "4.0.0"
+        )
         return self.add_link(pagenum, pagedest, rect, border, fit, *args)
 
     _valid_layouts = (
