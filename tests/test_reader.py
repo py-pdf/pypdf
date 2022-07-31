@@ -596,7 +596,8 @@ def test_issue604(strict):
                 return pdf.get_destination_page_number(x) + 1
 
         out = []
-        for oi in outline:  # oi can be destination or a list:preferred to just print them
+        # oi can be destination or a list:preferred to just print them
+        for oi in outline:
             out.append(get_dest_pages(oi))
 
 

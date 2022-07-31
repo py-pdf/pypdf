@@ -41,7 +41,16 @@ from io import (
     FileIO,
 )
 from os import SEEK_CUR
-from typing import Any, Callable, Dict, Optional, Pattern, Tuple, Union, overload
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Optional,
+    Pattern,
+    Tuple,
+    Union,
+    overload,
+)
 
 try:
     # Python 3.10+: https://www.python.org/dev/peps/pep-0484/
