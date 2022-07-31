@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1659279861341,
+  "lastUpdate": 1659293826902,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -11974,6 +11974,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.020408633587563348",
             "extra": "mean: 3.3817869447999995 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "42ae3127528a5edfecce504ab685cdd942700f54",
+          "message": "ENH: Add support for pathlib.Path in PdfMerger.merge (#1190)\n\nReplace many os.path usages with pathlib",
+          "timestamp": "2022-07-31T20:55:52+02:00",
+          "tree_id": "086c9a7f91c301f61c2e5e0d0892129a8d0a8e3f",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/42ae3127528a5edfecce504ab685cdd942700f54"
+        },
+        "date": 1659293825782,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.831176231253874,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018119702539614424",
+            "extra": "mean: 1.203114288400002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.493327068664627,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0075104885590176074",
+            "extra": "mean: 95.29865918181652 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2090701518387571,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03630057659255962",
+            "extra": "mean: 4.783083530599998 sec\nrounds: 5"
           }
         ]
       }
