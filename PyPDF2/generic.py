@@ -35,6 +35,7 @@ import decimal
 import hashlib
 import logging
 import re
+from types import NoneType
 import warnings
 from enum import IntFlag
 from io import BytesIO
@@ -2025,28 +2026,24 @@ def _create_outline_item(
     bold: bool,
 ) -> TreeObject:
     outline_item = TreeObject()
-
     outline_item.update(
         {
             NameObject("/A"): action_ref,
             NameObject("/Title"): create_string_object(title),
         }
     )
-
-    if color is not None:
+    if color:
         if isinstance(color, str):
             color = hex_to_rgb(color)
-
         outline_item.update(
             {NameObject("/C"): ArrayObject([FloatObject(c) for c in color])}
         )
-
-    format_flag = 0
-    if italic:
-        format_flag += 1
-    if bold:
-        format_flag += 2
-    if format_flag:
+    if italic | bold:
+        format_flag = 0
+        if italic:
+            format_flag += 1
+        if bold:
+            format_flag += 2
         outline_item.update({NameObject("/F"): NumberObject(format_flag)})
     return outline_item
 
