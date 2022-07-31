@@ -57,6 +57,7 @@ from ._utils import (
     b_,
     deprecate_bookmark,
     deprecate_with_replacement,
+    logger_warning,
 )
 from .constants import AnnotationDictionaryAttributes
 from .constants import CatalogAttributes as CA
