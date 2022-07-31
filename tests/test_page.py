@@ -469,3 +469,32 @@ def test_empyt_password_1088():
 def test_arab_text_extraction():
     reader = PdfReader(EXTERNAL_ROOT / "015-arabic/habibi.pdf")
     assert reader.pages[0].extract_text() == "habibi حَبيبي"
+
+
+def test_read_link_annotation():
+    reader = PdfReader(EXTERNAL_ROOT / "016-libre-office-link/libre-office-link.pdf")
+    assert len(reader.pages[0].annotations) == 1
+    annot = dict(reader.pages[0].annotations[0].get_object())
+    expected = {
+        "/Type": "/Annot",
+        "/Subtype": "/Link",
+        "/A": DictionaryObject(
+            {
+                "/S": "/URI",
+                "/Type": "/Action",
+                "/URI": "https://martin-thoma.com/",
+            }
+        ),
+        "/Border": ArrayObject([0, 0, 0]),
+        "/Rect": [
+            92.043,
+            771.389,
+            217.757,
+            785.189,
+        ],
+    }
+
+    assert set(expected.keys()) == set(annot.keys())
+    del expected["/Rect"]
+    del annot["/Rect"]
+    assert annot == expected

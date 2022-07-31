@@ -71,7 +71,8 @@ def test_writer_operations():
     )
     writer.add_blank_page()
     writer.add_uri(2, "https://example.com", RectangleObject([0, 0, 100, 100]))
-    writer.add_link(2, 1, RectangleObject([0, 0, 100, 100]))
+    with pytest.warns(PendingDeprecationWarning):
+        writer.add_link(2, 1, RectangleObject([0, 0, 100, 100]))
     assert writer._get_page_layout() is None
     writer._set_page_layout("/SinglePage")
     assert writer._get_page_layout() == "/SinglePage"
@@ -418,30 +419,36 @@ def test_add_link():
 
     from PyPDF2.generic import RectangleObject
 
-    writer.add_link(
-        1,
-        2,
-        RectangleObject([0, 0, 100, 100]),
-        border=[1, 2, 3, [4]],
-        fit="/Fit",
-    )
-    writer.add_link(2, 3, RectangleObject([20, 30, 50, 80]), [1, 2, 3], "/FitH", None)
-    writer.add_link(
-        3,
-        0,
-        "[ 200 300 250 350 ]",
-        [0, 0, 0],
-        "/XYZ",
-        0,
-        0,
-        2,
-    )
-    writer.add_link(
-        3,
-        0,
-        [100, 200, 150, 250],
-        border=[0, 0, 0],
-    )
+    with pytest.warns(
+        PendingDeprecationWarning,
+        match="add_link is deprecated and will be removed in PyPDF2",
+    ):
+        writer.add_link(
+            1,
+            2,
+            RectangleObject([0, 0, 100, 100]),
+            border=[1, 2, 3, [4]],
+            fit="/Fit",
+        )
+        writer.add_link(
+            2, 3, RectangleObject([20, 30, 50, 80]), [1, 2, 3], "/FitH", None
+        )
+        writer.add_link(
+            3,
+            0,
+            "[ 200 300 250 350 ]",
+            [0, 0, 0],
+            "/XYZ",
+            0,
+            0,
+            2,
+        )
+        writer.add_link(
+            3,
+            0,
+            [100, 200, 150, 250],
+            border=[0, 0, 0],
+        )
 
     # write "output" to PyPDF2-output.pdf
     tmp_filename = "dont_commit_link.pdf"

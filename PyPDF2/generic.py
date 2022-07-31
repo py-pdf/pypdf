@@ -70,6 +70,7 @@ from ._utils import (
 )
 from .constants import CheckboxRadioButtonAttributes, FieldDictionaryAttributes
 from .constants import FilterTypes as FT
+from .constants import PageAttributes as PG
 from .constants import StreamAttributes as SA
 from .constants import TypArguments as TA
 from .constants import TypFitArguments as TF
@@ -1375,7 +1376,9 @@ class RectangleObject(ArrayObject):
         * :attr:`trimbox <PyPDF2._page.PageObject.trimbox>`
     """
 
-    def __init__(self, arr: Tuple[float, float, float, float]) -> None:
+    def __init__(
+        self, arr: Union["RectangleObject", Tuple[float, float, float, float]]
+    ) -> None:
         # must have four points
         assert len(arr) == 4
         # automatically convert arr[x] into NumberObject(arr[x]) if necessary
@@ -2075,10 +2078,12 @@ def hex_to_rgb(value: str) -> Tuple[float, float, float]:
 
 
 class AnnotationBuilder:
+    from .types import FitType, ZoomArgType
+
     @staticmethod
     def free_text(
         text: str,
-        rect: Tuple[float, float, float, float],
+        rect: Union[RectangleObject, Tuple[float, float, float, float]],
         font: str = "Helvetica",
         bold: bool = False,
         italic: bool = False,
@@ -2087,7 +2092,21 @@ class AnnotationBuilder:
         border_color: str = "000000",
         background_color: str = "ffffff",
     ) -> DictionaryObject:
-        """Add text in a rectangle to a page."""
+        """
+        Add text in a rectangle to a page.
+
+        :param str text: Text to be added
+        :param :class:`RectangleObject<PyPDF2.generic.RectangleObject>` rect: or array of four
+                    integers specifying the clickable rectangular area
+                    ``[xLL, yLL, xUR, yUR]``
+        :param str font: Name of the Font, e.g. 'Helvetica'
+        :param bool bold: Print the text in bold
+        :param bool italic: Print the text in italic
+        :param str font_size: How big the text will be, e.g. '14pt'
+        :param str font_color: Hex-string for the color
+        :param str border_color: Hex-string for the border color
+        :param str background_color: Hex-string for the background of the annotation
+        """
         font_str = "font: "
         if bold is True:
             font_str = font_str + "bold "
@@ -2124,18 +2143,20 @@ class AnnotationBuilder:
     def line(
         p1: Tuple[float, float],
         p2: Tuple[float, float],
-        rect: Tuple[float, float, float, float],
+        rect: Union[RectangleObject, Tuple[float, float, float, float]],
         text: str = "",
         title_bar: str = "",
     ) -> DictionaryObject:
         """
         Draw a line on the PDF.
 
-        :param p1: First point
-        :param p2: Second point
-        :param rect: Rectangle
-        :param text: Text to be displayed as the line annotation
-        :param title_bar: Text to be displayed in the title bar of the
+        :param Tuple[float, float] p1: First point
+        :param Tuple[float, float] p2: Second point
+        :param :class:`RectangleObject<PyPDF2.generic.RectangleObject>` rect: or array of four
+                    integers specifying the clickable rectangular area
+                    ``[xLL, yLL, xUR, yUR]``
+        :param str text: Text to be displayed as the line annotation
+        :param str title_bar: Text to be displayed in the title bar of the
             annotation; by convention this is the name of the author
         """
         line_obj = DictionaryObject(
@@ -2169,3 +2190,112 @@ class AnnotationBuilder:
             }
         )
         return line_obj
+
+    @staticmethod
+    def link(
+        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        border: Optional[ArrayObject] = None,
+        url: Optional[str] = None,
+        target_page_index: Optional[int] = None,
+        fit: FitType = "/Fit",
+        fit_args: Tuple[ZoomArgType, ...] = tuple(),
+    ) -> DictionaryObject:
+        """
+        Add a link to the document.
+
+        The link can either be an external link or an internal link.
+
+        An external link requires the URL parameter.
+        An internal link requires the target_page_index, fit, and fit args.
+
+
+        :param :class:`RectangleObject<PyPDF2.generic.RectangleObject>` rect: or array of four
+                    integers specifying the clickable rectangular area
+                    ``[xLL, yLL, xUR, yUR]``
+        :param border: if provided, an array describing border-drawing
+            properties. See the PDF spec for details. No border will be
+            drawn if this argument is omitted.
+            - horizontal corner radius,
+            - vertical corner radius, and
+            - border width
+            - Optionally: Dash
+        :param str url: Link to a website (if you want to make an external link)
+        :param int target_page_index: index of the page to which the link should go
+                                (if you want to make an internal link)
+        :param str fit: Page fit or 'zoom' option (see below). Additional arguments may need
+            to be supplied. Passing ``None`` will be read as a null value for that coordinate.
+        :param Tuple[int, ...] fit_args: Parameters for the fit argument.
+
+
+        .. list-table:: Valid ``fit`` arguments (see Table 8.2 of the PDF 1.7 reference for details)
+           :widths: 50 200
+
+           * - /Fit
+             - No additional arguments
+           * - /XYZ
+             - [left] [top] [zoomFactor]
+           * - /FitH
+             - [top]
+           * - /FitV
+             - [left]
+           * - /FitR
+             - [left] [bottom] [right] [top]
+           * - /FitB
+             - No additional arguments
+           * - /FitBH
+             - [top]
+           * - /FitBV
+             - [left]
+        """
+        from .types import BorderArrayType
+
+        is_external = url is not None
+        is_internal = target_page_index is not None
+        if not is_external and not is_internal:
+            raise ValueError(
+                "Either 'url' or 'target_page_index' have to be provided. Both were None."
+            )
+        if is_external and is_internal:
+            raise ValueError(
+                f"Either 'url' or 'target_page_index' have to be provided. url={url}, target_page_index={target_page_index}"
+            )
+
+        border_arr: BorderArrayType
+        if border is not None:
+            border_arr = [NameObject(n) for n in border[:3]]
+            if len(border) == 4:
+                dash_pattern = ArrayObject([NameObject(n) for n in border[3]])
+                border_arr.append(dash_pattern)
+        else:
+            border_arr = [NumberObject(0)] * 3
+
+        link_obj = DictionaryObject(
+            {
+                NameObject("/Type"): NameObject(PG.ANNOTS),
+                NameObject("/Subtype"): NameObject("/Link"),
+                NameObject("/Rect"): RectangleObject(rect),
+                NameObject("/Border"): ArrayObject(border_arr),
+            }
+        )
+        if is_external:
+            link_obj[NameObject("/A")] = DictionaryObject(
+                {
+                    NameObject("/S"): NameObject("/URI"),
+                    NameObject("/Type"): NameObject("/Action"),
+                    NameObject("/URI"): TextStringObject(url),
+                }
+            )
+        if is_internal:
+            fit_arg_ready = [
+                NullObject() if a is None else NumberObject(a) for a in fit_args
+            ]
+            # This needs to be updated later!
+            dest_deferred = DictionaryObject(
+                {
+                    "target_page_index": NumberObject(target_page_index),
+                    "fit": NameObject(fit),
+                    "fit_args": ArrayObject(fit_arg_ready),
+                }
+            )
+            link_obj[NameObject("/Dest")] = dest_deferred
+        return link_obj
