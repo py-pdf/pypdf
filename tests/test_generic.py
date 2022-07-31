@@ -565,6 +565,29 @@ def test_annotation_builder_link():
     writer.add_page(page)
 
     # Act
+    # Part 1: Too many args
+    with pytest.raises(ValueError) as exc:
+        AnnotationBuilder.link(
+            rect=(50, 550, 200, 650),
+            url="https://martin-thoma.com/",
+            target_page_index=3,
+        )
+    assert (
+        exc.value.args[0]
+        == "Either 'url' or 'target_page_index' have to be provided. url=https://martin-thoma.com/, target_page_index=3"
+    )
+
+    # Part 2: Too few args
+    with pytest.raises(ValueError) as exc:
+        AnnotationBuilder.link(
+            rect=(50, 550, 200, 650),
+        )
+    assert (
+        exc.value.args[0]
+        == "Either 'url' or 'target_page_index' have to be provided. Both were None."
+    )
+
+    # Part 3: Just right
     annotation = AnnotationBuilder.link(
         rect=(50, 550, 200, 650),
         url="https://martin-thoma.com/",
