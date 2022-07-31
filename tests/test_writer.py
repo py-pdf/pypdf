@@ -1,5 +1,6 @@
 import os
 from io import BytesIO
+from pathlib import Path
 
 import pytest
 
@@ -10,12 +11,12 @@ from PyPDF2.generic import RectangleObject, StreamObject
 from . import get_pdf_from_url
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
-PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
-RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
+PROJECT_ROOT = Path(os.path.dirname(TESTS_ROOT))
+RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 
 def test_writer_clone():
-    src = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
+    src = RESOURCE_ROOT / "pdflatex-outline.pdf"
 
     reader = PdfReader(src)
     writer = PdfWriter()
@@ -31,8 +32,8 @@ def test_writer_operations():
     This should be done way more thoroughly: It should be checked if the
     output is as expected.
     """
-    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
-    pdf_outline_path = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    pdf_outline_path = RESOURCE_ROOT / "pdflatex-outline.pdf"
 
     reader = PdfReader(pdf_path)
     reader_outline = PdfReader(pdf_outline_path)
@@ -112,7 +113,7 @@ def test_writer_operations():
     ],
 )
 def test_remove_images(input_path, ignore_byte_string_object):
-    pdf_path = os.path.join(RESOURCE_ROOT, input_path)
+    pdf_path = RESOURCE_ROOT / input_path
 
     reader = PdfReader(pdf_path)
     writer = PdfWriter()
@@ -146,7 +147,7 @@ def test_remove_images(input_path, ignore_byte_string_object):
     ],
 )
 def test_remove_text(input_path, ignore_byte_string_object):
-    pdf_path = os.path.join(RESOURCE_ROOT, input_path)
+    pdf_path = RESOURCE_ROOT / input_path
 
     reader = PdfReader(pdf_path)
     writer = PdfWriter()
@@ -235,7 +236,7 @@ def test_remove_text_all_operators(ignore_byte_string_object):
 
 
 def test_write_metadata():
-    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
 
     reader = PdfReader(pdf_path)
     writer = PdfWriter()
@@ -263,7 +264,7 @@ def test_write_metadata():
 
 
 def test_fill_form():
-    reader = PdfReader(os.path.join(RESOURCE_ROOT, "form.pdf"))
+    reader = PdfReader(RESOURCE_ROOT / "form.pdf")
     writer = PdfWriter()
 
     page = reader.pages[0]
@@ -285,7 +286,7 @@ def test_fill_form():
     [(True), (False)],
 )
 def test_encrypt(use_128bit):
-    reader = PdfReader(os.path.join(RESOURCE_ROOT, "form.pdf"))
+    reader = PdfReader(RESOURCE_ROOT / "form.pdf")
     writer = PdfWriter()
 
     page = reader.pages[0]
@@ -315,7 +316,7 @@ def test_encrypt(use_128bit):
 
 
 def test_add_outline_item():
-    reader = PdfReader(os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf"))
+    reader = PdfReader(RESOURCE_ROOT / "pdflatex-outline.pdf")
     writer = PdfWriter()
 
     for page in reader.pages:

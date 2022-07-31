@@ -123,7 +123,7 @@ def test_merge():
 
 def test_merge_page_exception():
     merger = PyPDF2.PdfMerger()
-    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     with pytest.raises(TypeError) as exc:
         merger.merge(0, pdf_path, pages="a:b")
     assert exc.value.args[0] == '"pages" must be a tuple of (start, stop[, step])'
@@ -132,14 +132,14 @@ def test_merge_page_exception():
 
 def test_merge_page_tuple():
     merger = PyPDF2.PdfMerger()
-    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     merger.merge(0, pdf_path, pages=(0, 1))
     merger.close()
 
 
 def test_merge_write_closed_fh():
     merger = PyPDF2.PdfMerger()
-    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     merger.append(pdf_path)
 
     err_closed = "close() was called and thus the writer cannot be used anymore"
@@ -314,9 +314,7 @@ def test_iss1145():
 
 
 def test_deprecate_bookmark_decorator_warning():
-    reader = PdfReader(
-        os.path.join(RESOURCE_ROOT, "outlines-with-invalid-destinations.pdf")
-    )
+    reader = PdfReader(RESOURCE_ROOT / "outlines-with-invalid-destinations.pdf")
     merger = PdfMerger()
     with pytest.warns(
         UserWarning,
@@ -327,9 +325,7 @@ def test_deprecate_bookmark_decorator_warning():
 
 @pytest.mark.filterwarnings("ignore::UserWarning")
 def test_deprecate_bookmark_decorator_output():
-    reader = PdfReader(
-        os.path.join(RESOURCE_ROOT, "outlines-with-invalid-destinations.pdf")
-    )
+    reader = PdfReader(RESOURCE_ROOT / "outlines-with-invalid-destinations.pdf")
     merger = PdfMerger()
     merger.merge(0, reader, import_bookmarks=True)
     first_oi_title = 'Valid Destination: Action /GoTo Named Destination "section.1"'
