@@ -2017,30 +2017,29 @@ def create_string_object(
 def _create_outline_item(
     action_ref: IndirectObject,
     title: str,
-    color: Optional[Tuple[float, float, float]],
+    color: Union[Tuple[float, float, float], str, None],
     italic: bool,
     bold: bool,
 ) -> TreeObject:
     outline_item = TreeObject()
-
     outline_item.update(
         {
             NameObject("/A"): action_ref,
             NameObject("/Title"): create_string_object(title),
         }
     )
-
-    if color is not None:
+    if color:
+        if isinstance(color, str):
+            color = hex_to_rgb(color)
         outline_item.update(
             {NameObject("/C"): ArrayObject([FloatObject(c) for c in color])}
         )
-
-    format_flag = 0
-    if italic:
-        format_flag += 1
-    if bold:
-        format_flag += 2
-    if format_flag:
+    if italic or bold:
+        format_flag = 0
+        if italic:
+            format_flag += 1
+        if bold:
+            format_flag += 2
         outline_item.update({NameObject("/F"): NumberObject(format_flag)})
     return outline_item
 
@@ -2074,7 +2073,7 @@ def decode_pdfdocencoding(byte_array: bytes) -> str:
 
 
 def hex_to_rgb(value: str) -> Tuple[float, float, float]:
-    return tuple(int(value[i : i + 2], 16) / 255.0 for i in (0, 2, 4))  # type: ignore
+    return tuple(int(value.lstrip("#")[i : i + 2], 16) / 255.0 for i in (0, 2, 4))  # type: ignore
 
 
 class AnnotationBuilder:

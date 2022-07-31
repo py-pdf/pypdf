@@ -13,6 +13,7 @@ from . import get_pdf_from_url
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
+EXTERNAL_ROOT = Path(PROJECT_ROOT) / "sample-files"
 
 
 def test_writer_clone():
@@ -633,3 +634,25 @@ def test_deprecate_bookmark_decorator():
         match="bookmark is deprecated as an argument. Use outline_item instead",
     ):
         writer.add_outline_item_dict(bookmark=outline_item)
+
+
+def test_colors_in_outline_item():
+    reader = PdfReader(EXTERNAL_ROOT / "004-pdflatex-4-pages/pdflatex-4-pages.pdf")
+    writer = PdfWriter()
+    writer.clone_document_from_reader(reader)
+    purple_rgb = (0.50196, 0, 0.50196)
+    writer.add_outline_item("First Outline Item", pagenum=2, color="800080")
+    writer.add_outline_item("Second Outline Item", pagenum=3, color="#800080")
+    writer.add_outline_item("Third Outline Item", pagenum=4, color=purple_rgb)
+
+    target = "tmp-named-color-outline.pdf"
+    with open(target, "wb") as f:
+        writer.write(f)
+
+    reader2 = PdfReader(target)
+    for outline_item in reader2.outline:
+        # convert float to string because of mutability
+        assert [str(c) for c in outline_item.color] == [str(p) for p in purple_rgb]
+
+    # Cleanup
+    os.remove(target)  # remove for testing
