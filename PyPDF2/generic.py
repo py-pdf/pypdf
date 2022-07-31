@@ -2270,10 +2270,12 @@ class AnnotationBuilder:
                 NullObject() if a is None else NumberObject(a) for a in fit_args
             ]
             # This needs to be updated later!
-            dest_deferred = {
-                "target_page_index": target_page_index,
-                "fit": NameObject(fit),
-                "fit_args": fit_arg_ready,
-            }
+            dest_deferred = DictionaryObject(
+                {
+                    "target_page_index": NumberObject(target_page_index),
+                    "fit": NameObject(fit),
+                    "fit_args": ArrayObject(fit_arg_ready),
+                }
+            )
             link_obj[NameObject("/Dest")] = dest_deferred
         return link_obj

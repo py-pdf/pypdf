@@ -1561,7 +1561,10 @@ class PdfWriter:
         )
 
         if isinstance(rect, str):
-            rect = NameObject(rect)
+            rect = rect.strip()[1:-1]
+            rect = RectangleObject(
+                [float(num) for num in rect.split(" ") if len(num) > 0]
+            )
         elif isinstance(rect, RectangleObject):
             pass
         else:
@@ -1570,7 +1573,7 @@ class PdfWriter:
         annotation = AnnotationBuilder.link(
             rect=rect,
             border=border,
-            page_number=pagedest,
+            target_page_index=pagedest,
             fit=fit,
             fit_args=args,
         )
