@@ -1815,12 +1815,13 @@ class PdfWriter:
             page[NameObject("/Annots")] = ArrayObject()
         assert page.annotations is not None
 
-        # Link annotations need the correct object type
-        if to_add.get("/Subtype") == "/Link":
+        # Internal link annotations need the correct object type for the
+        # destination
+        if to_add.get("/Subtype") == "/Link" and NameObject("/Dest") in to_add:
             tmp = cast(dict, to_add[NameObject("/Dest")])
             dest = Destination(
                 NameObject("/LinkName"),
-                tmp["page_number"],
+                tmp["target_page_index"],
                 tmp["fit"],
                 *tmp["fit_args"],
             )

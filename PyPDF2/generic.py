@@ -75,7 +75,6 @@ from .constants import StreamAttributes as SA
 from .constants import TypArguments as TA
 from .constants import TypFitArguments as TF
 from .errors import STREAM_TRUNCATED_PREMATURELY, PdfReadError, PdfStreamError
-from .types import BorderArrayType, FitType, ZoomArgType
 
 logger = logging.getLogger(__name__)
 ObjectPrefix = b"/<[tf(n%"
@@ -2079,6 +2078,8 @@ def hex_to_rgb(value: str) -> Tuple[float, float, float]:
 
 
 class AnnotationBuilder:
+    from .types import BorderArrayType, FitType, ZoomArgType
+
     @staticmethod
     def free_text(
         text: str,
@@ -2179,7 +2180,7 @@ class AnnotationBuilder:
         rect: Union[RectangleObject, Tuple[float, float, float, float]],
         border: Optional[ArrayObject] = None,
         url: Optional[str] = None,
-        page_number: Optional[int] = None,
+        target_page_index: Optional[int] = None,
         fit: FitType = "/Fit",
         fit_args: Tuple[ZoomArgType, ...] = tuple(),
     ) -> DictionaryObject:
@@ -2189,7 +2190,7 @@ class AnnotationBuilder:
         The link can either be an external link or an internal link.
 
         An external link requires the URL parameter.
-        An internal link requires the page_number, fit, and fit args.
+        An internal link requires the target_page_index, fit, and fit args.
 
 
         :param rect: :class:`RectangleObject<PyPDF2.generic.RectangleObject>` or array of four
@@ -2199,7 +2200,7 @@ class AnnotationBuilder:
             properties. See the PDF spec for details. No border will be
             drawn if this argument is omitted.
         :param str url: Link to a website (if you want to make an external link)
-        :param int page_number: index of the page to which the link should go
+        :param int target_page_index: index of the page to which the link should go
                                 (if you want to make an internal link)
         :param str fit: Page fit or 'zoom' option (see below). Additional arguments may need
             to be supplied. Passing ``None`` will be read as a null value for that coordinate.
@@ -2227,14 +2228,14 @@ class AnnotationBuilder:
              - [left]
         """
         is_external = url is not None
-        is_internal = page_number is not None
+        is_internal = target_page_index is not None
         if not is_external and not is_internal:
             raise ValueError(
-                "Either 'url' or 'page_number' have to be provided. Both were None."
+                "Either 'url' or 'target_page_index' have to be provided. Both were None."
             )
         if is_external and is_internal:
             raise ValueError(
-                f"Either 'url' or 'page_number' have to be provided. url={url}, page_number={page_number}"
+                f"Either 'url' or 'target_page_index' have to be provided. url={url}, target_page_index={target_page_index}"
             )
 
         border_arr: BorderArrayType
@@ -2266,10 +2267,9 @@ class AnnotationBuilder:
             fit_arg_ready = [
                 NullObject() if a is None else NumberObject(a) for a in fit_args
             ]
-            # page_number must be 'page_dest = pages_obj[PA.KIDS][pagedest]'!
             # This needs to be updated later!
             dest_deferred = {
-                "page_number": page_number,
+                "target_page_index": target_page_index,
                 "fit": NameObject(fit),
                 "fit_args": fit_arg_ready,
             }
