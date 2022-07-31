@@ -70,10 +70,12 @@ from ._utils import (
 )
 from .constants import CheckboxRadioButtonAttributes, FieldDictionaryAttributes
 from .constants import FilterTypes as FT
+from .constants import PageAttributes as PG
 from .constants import StreamAttributes as SA
 from .constants import TypArguments as TA
 from .constants import TypFitArguments as TF
 from .errors import STREAM_TRUNCATED_PREMATURELY, PdfReadError, PdfStreamError
+from .types import BorderArrayType, FitType, ZoomArgType
 
 logger = logging.getLogger(__name__)
 ObjectPrefix = b"/<[tf(n%"
@@ -1375,7 +1377,9 @@ class RectangleObject(ArrayObject):
         * :attr:`trimbox <PyPDF2._page.PageObject.trimbox>`
     """
 
-    def __init__(self, arr: Tuple[float, float, float, float]) -> None:
+    def __init__(
+        self, arr: Union["RectangleObject", Tuple[float, float, float, float]]
+    ) -> None:
         # must have four points
         assert len(arr) == 4
         # automatically convert arr[x] into NumberObject(arr[x]) if necessary
@@ -2171,20 +2175,103 @@ class AnnotationBuilder:
         return line_obj
 
     @staticmethod
-    def link(rect: Tuple[float, float, float, float], url: str) -> DictionaryObject:
-        """ """
+    def link(
+        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        border: Optional[ArrayObject] = None,
+        url: Optional[str] = None,
+        page_number: Optional[int] = None,
+        fit: FitType = "/Fit",
+        fit_args: Tuple[ZoomArgType, ...] = tuple(),
+    ) -> DictionaryObject:
+        """
+        Add a link to the document.
+
+        The link can either be an external link or an internal link.
+
+        An external link requires the URL parameter.
+        An internal link requires the page_number, fit, and fit args.
+
+
+        :param rect: :class:`RectangleObject<PyPDF2.generic.RectangleObject>` or array of four
+                    integers specifying the clickable rectangular area
+                    ``[xLL, yLL, xUR, yUR]``
+        :param border: if provided, an array describing border-drawing
+            properties. See the PDF spec for details. No border will be
+            drawn if this argument is omitted.
+        :param str url: Link to a website (if you want to make an external link)
+        :param int page_number: index of the page to which the link should go
+                                (if you want to make an internal link)
+        :param str fit: Page fit or 'zoom' option (see below). Additional arguments may need
+            to be supplied. Passing ``None`` will be read as a null value for that coordinate.
+        :param Tuple[int, ...] fit_args: Parameters for the fit argument.
+
+
+        .. list-table:: Valid ``fit`` arguments (see Table 8.2 of the PDF 1.7 reference for details)
+           :widths: 50 200
+
+           * - /Fit
+             - No additional arguments
+           * - /XYZ
+             - [left] [top] [zoomFactor]
+           * - /FitH
+             - [top]
+           * - /FitV
+             - [left]
+           * - /FitR
+             - [left] [bottom] [right] [top]
+           * - /FitB
+             - No additional arguments
+           * - /FitBH
+             - [top]
+           * - /FitBV
+             - [left]
+        """
+        is_external = url is not None
+        is_internal = page_number is not None
+        if not is_external and not is_internal:
+            raise ValueError(
+                "Either 'url' or 'page_number' have to be provided. Both were None."
+            )
+        if is_external and is_internal:
+            raise ValueError(
+                f"Either 'url' or 'page_number' have to be provided. url={url}, page_number={page_number}"
+            )
+
+        border_arr: BorderArrayType
+        if border is not None:
+            border_arr = [NameObject(n) for n in border[:3]]
+            if len(border) == 4:
+                dash_pattern = ArrayObject([NameObject(n) for n in border[3]])
+                border_arr.append(dash_pattern)
+        else:
+            border_arr = [NumberObject(0)] * 3
+
         link_obj = DictionaryObject(
             {
-                NameObject("/Type"): NameObject("/Annot"),
+                NameObject("/Type"): NameObject(PG.ANNOTS),
                 NameObject("/Subtype"): NameObject("/Link"),
                 NameObject("/Rect"): RectangleObject(rect),
-                NameObject("/A"): DictionaryObject(
-                    {
-                        NameObject("/S"): NameObject("/URI"),
-                        NameObject("/Type"): NameObject("/Action"),
-                        NameObject("/URI"): TextStringObject(url),
-                    }
-                ),
+                NameObject("/Border"): ArrayObject(border_arr),
             }
         )
+        if is_external:
+            link_obj[NameObject("/A")] = DictionaryObject(
+                {
+                    NameObject("/S"): NameObject("/URI"),
+                    NameObject("/Type"): NameObject("/Action"),
+                    NameObject("/URI"): TextStringObject(url),
+                }
+            )
+        if is_internal:
+            fit_arg_ready = [
+                NullObject() if a is None else NumberObject(a) for a in fit_args
+            ]
+            # page_number must be 'page_dest = pages_obj[PA.KIDS][pagedest]'!
+            # This needs to be updated later!
+            dest_deferred = {
+                "page_number": page_number,
+                "fit": NameObject(fit),
+                "fit_args": fit_arg_ready,
+            }
+            link_obj[NameObject("/Dest")] = dest_deferred
         return link_obj

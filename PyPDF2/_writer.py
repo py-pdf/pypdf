@@ -77,6 +77,7 @@ from .constants import StreamAttributes as SA
 from .constants import TrailerKeys as TK
 from .constants import TypFitArguments, UserAccessPermissions
 from .generic import (
+    AnnotationBuilder,
     ArrayObject,
     BooleanObject,
     ByteStringObject,
@@ -1555,53 +1556,9 @@ class PdfWriter:
         fit: FitType = "/Fit",
         *args: ZoomArgType,
     ) -> None:
-        """
-        Add an internal link from a rectangular area to the specified page.
-
-        :param int pagenum: index of the page on which to place the link.
-        :param int pagedest: index of the page to which the link should go.
-        :param rect: :class:`RectangleObject<PyPDF2.generic.RectangleObject>` or array of four
-            integers specifying the clickable rectangular area
-            ``[xLL, yLL, xUR, yUR]``, or string in the form ``"[ xLL yLL xUR yUR ]"``.
-        :param border: if provided, an array describing border-drawing
-            properties. See the PDF spec for details. No border will be
-            drawn if this argument is omitted.
-        :param str fit: Page fit or 'zoom' option (see below). Additional arguments may need
-            to be supplied. Passing ``None`` will be read as a null value for that coordinate.
-
-        .. list-table:: Valid ``zoom`` arguments (see Table 8.2 of the PDF 1.7 reference for details)
-           :widths: 50 200
-
-           * - /Fit
-             - No additional arguments
-           * - /XYZ
-             - [left] [top] [zoomFactor]
-           * - /FitH
-             - [top]
-           * - /FitV
-             - [left]
-           * - /FitR
-             - [left] [bottom] [right] [top]
-           * - /FitB
-             - No additional arguments
-           * - /FitBH
-             - [top]
-           * - /FitBV
-             - [left]
-        """
-        pages_obj = cast(Dict[str, Any], self.get_object(self._pages))
-        page_link = pages_obj[PA.KIDS][pagenum]
-        page_dest = pages_obj[PA.KIDS][pagedest]  # TODO: switch for external link
-        page_ref = cast(Dict[str, Any], self.get_object(page_link))
-
-        border_arr: BorderArrayType
-        if border is not None:
-            border_arr = [NameObject(n) for n in border[:3]]
-            if len(border) == 4:
-                dash_pattern = ArrayObject([NameObject(n) for n in border[3]])
-                border_arr.append(dash_pattern)
-        else:
-            border_arr = [NumberObject(0)] * 3
+        deprecate_with_replacement(
+            "add_link", "add_annotation(AnnotationBuilder.link(...))"
+        )
 
         if isinstance(rect, str):
             rect = NameObject(rect)
@@ -1610,29 +1567,14 @@ class PdfWriter:
         else:
             rect = RectangleObject(rect)
 
-        zoom_args: ZoomArgsType = [
-            NullObject() if a is None else NumberObject(a) for a in args
-        ]
-        dest = Destination(
-            NameObject("/LinkName"), page_dest, NameObject(fit), *zoom_args
-        )  # TODO: create a better name for the link
-
-        lnk = DictionaryObject(
-            {
-                NameObject("/Type"): NameObject(PG.ANNOTS),
-                NameObject("/Subtype"): NameObject("/Link"),
-                NameObject("/P"): page_link,
-                NameObject("/Rect"): rect,
-                NameObject("/Border"): ArrayObject(border_arr),
-                NameObject("/Dest"): dest.dest_array,
-            }
+        annotation = AnnotationBuilder.link(
+            rect=rect,
+            border=border,
+            page_number=pagedest,
+            fit=fit,
+            fit_args=args,
         )
-        lnk_ref = self._add_object(lnk)
-
-        if PG.ANNOTS in page_ref:
-            page_ref[PG.ANNOTS].append(lnk_ref)
-        else:
-            page_ref[NameObject(PG.ANNOTS)] = ArrayObject([lnk_ref])
+        return self.add_annotation(page_number=pagenum, annotation=annotation)
 
     def addLink(  # pragma: no cover
         self,
@@ -1872,6 +1814,17 @@ class PdfWriter:
         if page.annotations is None:
             page[NameObject("/Annots")] = ArrayObject()
         assert page.annotations is not None
+
+        # Link annotations need the correct object type
+        if to_add.get("/Subtype") == "/Link":
+            tmp = cast(dict, to_add[NameObject("/Dest")])
+            dest = Destination(
+                NameObject("/LinkName"),
+                tmp["page_number"],
+                tmp["fit"],
+                *tmp["fit_args"],
+            )
+            to_add[NameObject("/Dest")] = dest.dest_array
 
         ind_obj = self._add_object(to_add)
 
