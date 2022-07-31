@@ -1,5 +1,30 @@
 # CHANGELOG
 
+## Version 2.9.0, 2022-07-31
+
+### New Features (ENH)
+-  Add ability to add hex encoded colors to outline items (#1186)
+-  Add support for pathlib.Path in PdfMerger.merge (#1190)
+-  Add link annotation (#1189)
+-  Add capability to filter text extraction by orientation (#1175)
+
+### Bug Fixes (BUG)
+-  Named Dest in PDF1.1 (#1174)
+-  Incomplete Graphic State save/restore (#1172)
+
+### Documentation (DOC)
+-  Update changelog url in package metadata (#1180)
+-  Mantion camelot for table extraction (#1179)
+-  Mention pyHanko for signing PDF documents (#1178)
+-  Weow have CMAP support since a while (#1177)
+
+### Maintenance (MAINT)
+-  Consistant usage of warnings / log messages (#1164)
+-  Consistent terminology for outline items (#1156)
+
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.8.1...2.9.0
+
 ## Version 2.8.1, 2022-07-25
 
 ### Bug Fixes (BUG)
