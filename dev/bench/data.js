@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1659294468952,
+  "lastUpdate": 1659295076940,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -12064,6 +12064,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.022737388676111657",
             "extra": "mean: 3.904855956000006 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "0a6676fe064837222d391a7c73c7b0f3df782ac1",
+          "message": "REL: 2.9.0\n\nNew Features (ENH):\n-  Add ability to add hex encoded colors to outline items (#1186)\n-  Add support for pathlib.Path in PdfMerger.merge (#1190)\n-  Add link annotation (#1189)\n-  Add capability to filter text extraction by orientation  (#1175)\n\nBug Fixes (BUG):\n-  Named Dest in PDF1.1 (#1174)\n-  Incomplete Graphic State save/restore (#1172)\n\nDocumentation (DOC):\n-  Update changelog url in package metadata (#1180)\n-  Table extraction (#1179)\n-  Mention pyHanko for signing PDF documents (#1178)\n-  We now have CMAP support (#1177)\n\nMaintenance (MAINT):\n-  Consistant usage of warnings / log messages (#1164)\n-  Consistent terminology for outline items (#1156)\n\nCode Style (STY):\n-  Apply pre-commit (#1188)\n\nFull Changelog: https://github.com/py-pdf/PyPDF2/compare/2.8.1...2.9.0",
+          "timestamp": "2022-07-31T21:16:03+02:00",
+          "tree_id": "b8707a3138f2b6f54c2c5b92ddc04290ad111772",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/0a6676fe064837222d391a7c73c7b0f3df782ac1"
+        },
+        "date": 1659295076345,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.040979676900055,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008674631566280306",
+            "extra": "mean: 960.6335475999985 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.045597412832,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006150326114245457",
+            "extra": "mean: 76.6542127857152 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2609130965165412,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01687489248183051",
+            "extra": "mean: 3.832693771800001 sec\nrounds: 5"
           }
         ]
       }
