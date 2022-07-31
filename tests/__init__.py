@@ -33,5 +33,20 @@ def get_pdf_from_url(url: str, name: str) -> bytes:
     return data
 
 
+def _strip_position(line: str) -> str:
+    """
+    Remove the location information.
+
+    The message
+        WARNING  PyPDF2._reader:_utils.py:364 Xref table not zero-indexed.
+
+    becomes
+        Xref table not zero-indexed.
+    """
+    line = ".py".join(line.split(".py:")[1:])
+    line = " ".join(line.split(" ")[1:])
+    return line
+
+
 def normalize_warnings(caplog_text: str) -> List[str]:
-    return caplog_text.strip().split("\n")
+    return [_strip_position(line) for line in caplog_text.strip().split("\n")]

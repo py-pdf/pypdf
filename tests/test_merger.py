@@ -61,7 +61,17 @@ def test_merge():
         "The FitV fit", 0, outline_item, (255, 0, 15), True, True, "/FitV", 10
     )
     merger.add_outline_item(
-        "The FitR fit", 0, outline_item, (255, 0, 15), True, True, "/FitR", 10, 20, 30, 40,
+        "The FitR fit",
+        0,
+        outline_item,
+        (255, 0, 15),
+        True,
+        True,
+        "/FitR",
+        10,
+        20,
+        30,
+        40,
     )
     merger.add_outline_item(
         "The FitB fit", 0, outline_item, (255, 0, 15), True, True, "/FitB"

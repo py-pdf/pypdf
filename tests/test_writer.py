@@ -62,9 +62,7 @@ def test_writer_operations():
     writer.add_outline_item(
         "The FitR fit", 0, oi, (255, 0, 15), True, True, "/FitR", 10, 20, 30, 40
     )
-    writer.add_outline_item(
-        "The FitB fit", 0, oi, (255, 0, 15), True, True, "/FitB"
-    )
+    writer.add_outline_item("The FitB fit", 0, oi, (255, 0, 15), True, True, "/FitB")
     writer.add_outline_item(
         "The FitBH fit", 0, oi, (255, 0, 15), True, True, "/FitBH", 10
     )

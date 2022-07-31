@@ -31,7 +31,12 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 from ._encryption import Encryption
 from ._page import PageObject
 from ._reader import PdfReader
-from ._utils import StrByteType, deprecate_with_replacement, deprecate_bookmark, str_
+from ._utils import (
+    StrByteType,
+    deprecate_bookmark,
+    deprecate_with_replacement,
+    str_,
+)
 from ._writer import PdfWriter
 from .constants import GoToActionArguments
 from .constants import PagesAttributes as PA
@@ -426,7 +431,9 @@ class PdfMerger:
                     if outline_item["/Page"] is None:
                         continue
                     if pdf.pages[j].get_object() == outline_item["/Page"].get_object():
-                        outline_item[NameObject("/Page")] = outline_item["/Page"].get_object()
+                        outline_item[NameObject("/Page")] = outline_item[
+                            "/Page"
+                        ].get_object()
                         new_outline.append(outline_item)
                         prev_header_added = True
                         break

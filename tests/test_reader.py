@@ -15,7 +15,7 @@ from PyPDF2.errors import PdfReadError, PdfReadWarning
 from PyPDF2.filters import _xobj_to_image
 from PyPDF2.generic import Destination
 
-from . import get_pdf_from_url
+from . import get_pdf_from_url, normalize_warnings
 
 try:
     from Crypto.Cipher import AES  # noqa: F401
@@ -189,16 +189,18 @@ def test_get_images(src, nb_images):
 
 
 @pytest.mark.parametrize(
-    ("strict", "with_prev_0", "startx_correction", "should_fail", "warning_msg"),
+    ("strict", "with_prev_0", "startx_correction", "should_fail", "warning_msgs"),
     [
         (
             True,
             False,
             -1,
             False,
-            "WARNING  PyPDF2._reader:_utils.py:364 startxref on same line as offset\n"
-            "WARNING  PyPDF2._reader:_utils.py:364 Xref table not zero-indexed. "
-            "ID numbers for objects will be corrected.\n",
+            [
+                "startxref on same line as offset",
+                "Xref table not zero-indexed. "
+                "ID numbers for objects will be corrected.",
+            ],
         ),  # all nominal => no fail
         (True, True, -1, True, ""),  # Prev=0 => fail expected
         (
@@ -206,16 +208,17 @@ def test_get_images(src, nb_images):
             False,
             -1,
             False,
-            "WARNING  PyPDF2._reader:_utils.py:364 startxref on same line as offset\n",
+            ["startxref on same line as offset"],
         ),
         (
             False,
             True,
             -1,
             False,
-            "WARNING  PyPDF2._reader:_utils.py:364 startxref on same line as offset\n"
-            "WARNING  PyPDF2._reader:_utils.py:364 /Prev=0 in the trailer - "
-            "assuming there is no previous xref table\n",
+            [
+                "startxref on same line as offset",
+                "/Prev=0 in the trailer - assuming there is no previous xref table",
+            ],
         ),  # Prev =0 => no strict so tolerant
         (True, False, 0, True, ""),  # error on startxref, in strict => fail expected
         (True, True, 0, True, ""),
@@ -224,21 +227,19 @@ def test_get_images(src, nb_images):
             False,
             0,
             False,
-            "WARNING  PyPDF2._reader:_utils.py:364 startxref on same line as offset\n"
-            "WARNING  PyPDF2._reader:_utils.py:364 incorrect startxref pointer(1)\n",
+            ["startxref on same line as offset", "incorrect startxref pointer(1)"],
         ),  # error on startxref, but no strict => xref rebuilt,no fail
         (
             False,
             True,
             0,
             False,
-            "WARNING  PyPDF2._reader:_utils.py:364 startxref on same line as offset\n"
-            "WARNING  PyPDF2._reader:_utils.py:364 incorrect startxref pointer(1)\n",
+            ["startxref on same line as offset", "incorrect startxref pointer(1)"],
         ),
     ],
 )
 def test_get_images_raw(
-    caplog, strict, with_prev_0, startx_correction, should_fail, warning_msg
+    caplog, strict, with_prev_0, startx_correction, should_fail, warning_msgs
 ):
     pdf_data = (
         b"%%PDF-1.7\n"
@@ -283,7 +284,7 @@ def test_get_images_raw(
             )
     else:
         PdfReader(pdf_stream, strict=strict)
-        assert caplog.text == warning_msg
+        assert normalize_warnings(caplog.text) == warning_msgs
 
 
 def test_issue297(caplog):
@@ -293,10 +294,7 @@ def test_issue297(caplog):
     assert caplog.text == ""
     assert "Broken xref table" in exc.value.args[0]
     reader = PdfReader(path, strict=False)
-    assert (
-        caplog.text
-        == "WARNING  PyPDF2._reader:_utils.py:364 incorrect startxref pointer(1)\n"
-    )
+    assert normalize_warnings(caplog.text) == ["incorrect startxref pointer(1)"]
     reader.pages[0]
 
 
@@ -539,22 +537,21 @@ def test_read_unknown_zero_pages(caplog):
     )
     pdf_stream = io.BytesIO(pdf_data)
     reader = PdfReader(pdf_stream, strict=True)
-    warnings = (
-        "WARNING  PyPDF2._reader:_utils.py:364 startxref on same line as offset\n"
-        "WARNING  PyPDF2._reader:_utils.py:364 Xref table not zero-indexed. "
-        "ID numbers for objects will be corrected.\n"
-    )
-    assert caplog.text == warnings
+    warnings = [
+        "startxref on same line as offset",
+        "Xref table not zero-indexed. ID numbers for objects will be corrected.",
+    ]
+    assert normalize_warnings(caplog.text) == warnings
     with pytest.raises(PdfReadError) as exc, pytest.warns(PdfReadWarning):
         len(reader.pages)
 
     assert exc.value.args[0] == "Could not find object."
     reader = PdfReader(pdf_stream, strict=False)
-    warnings += (
-        "WARNING  PyPDF2._reader:_utils.py:364 Object 5 1 not defined.\n"
-        "WARNING  PyPDF2._reader:_utils.py:364 startxref on same line as offset\n"
-    )
-    assert caplog.text == warnings
+    warnings += [
+        "Object 5 1 not defined.",
+        "startxref on same line as offset",
+    ]
+    assert normalize_warnings(caplog.text) == warnings
     with pytest.raises(AttributeError) as exc, pytest.warns(PdfReadWarning):
         len(reader.pages)
     assert exc.value.args[0] == "'NoneType' object has no attribute 'get_object'"
@@ -633,11 +630,10 @@ def test_issue604(caplog, strict):
         else:
             pdf = PdfReader(f, strict=strict)
             outline = pdf.outline
-            msg = (
-                "WARNING  PyPDF2._reader:_utils.py:364 "
-                "Unknown destination: ms_Thyroid_2_2020_071520_watermarked.pdf [0, 1]\n"
-            )
-            assert caplog.text == msg
+            msg = [
+                "Unknown destination: ms_Thyroid_2_2020_071520_watermarked.pdf [0, 1]"
+            ]
+            assert normalize_warnings(caplog.text) == msg
 
         def get_dest_pages(x):
             if isinstance(x, list):
@@ -756,13 +752,10 @@ def test_read_path():
 
 def test_read_not_binary_mode(caplog):
     with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf")) as f:
-        msg = (
-            "WARNING  PyPDF2._reader:_utils.py:364 "
-            "PdfReader stream/file object is not in binary mode. It may not be read correctly.\n"
-        )
+        msg = "PdfReader stream/file object is not in binary mode. It may not be read correctly."
         with pytest.raises(io.UnsupportedOperation):
             PdfReader(f)
-    assert caplog.text == msg
+    assert normalize_warnings(caplog.text) == [msg]
 
 
 @pytest.mark.skipif(not HAS_PYCRYPTODOME, reason="No pycryptodome")
@@ -778,21 +771,21 @@ def test_read_form_416():
 def test_extract_text_xref_issue_2(caplog):
     # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/981/981961.pdf"
-    msg = "WARNING  PyPDF2._reader:_utils.py:364 incorrect startxref pointer(2)\n"
+    msg = "incorrect startxref pointer(2)"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-981961.pdf")))
     for page in reader.pages:
         page.extract_text()
-    assert caplog.text == msg
+    assert normalize_warnings(caplog.text) == [msg]
 
 
 def test_extract_text_xref_issue_3(caplog):
     # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/977/977774.pdf"
-    msg = "WARNING  PyPDF2._reader:_utils.py:364 incorrect startxref pointer(3)\n"
+    msg = "incorrect startxref pointer(3)"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-977774.pdf")))
     for page in reader.pages:
         page.extract_text()
-    assert caplog.text == msg
+    assert normalize_warnings(caplog.text) == [msg]
 
 
 def test_extract_text_pdf15():
@@ -1070,11 +1063,12 @@ def test_outline_with_invalid_destinations():
     assert len(reader.outline) == 9
 
 
-def test_PdfReaderMultipleDefinitions():
+def test_PdfReaderMultipleDefinitions(caplog):
     # iss325
     url = "https://github.com/py-pdf/PyPDF2/files/9176644/multipledefs.pdf"
     name = "multipledefs.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    with pytest.warns(PdfReadWarning) as w:
-        reader.pages[0].extract_text()
-    assert len(w) == 1
+    reader.pages[0].extract_text()
+    assert normalize_warnings(caplog.text) == [
+        "Multiple definitions in dictionary at byte 0xb5 for key /Group"
+    ]
