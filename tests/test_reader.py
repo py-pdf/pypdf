@@ -644,7 +644,7 @@ def test_issue604(caplog, strict):
 
         out = []
 
-        # b can be destination or a list:preferred to just print them
+        # oi can be destination or a list:preferred to just print them
         for oi in outline:
             out.append(get_dest_pages(oi))
 
