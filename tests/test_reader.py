@@ -193,24 +193,57 @@ def test_get_images(src, nb_images):
 
 
 @pytest.mark.parametrize(
-    ("strict", "with_prev_0", "startx_correction", "should_fail"),
+    ("strict", "with_prev_0", "startx_correction", "should_fail", "warning_msg"),
     [
-        (True, False, -1, False),  # all nominal => no fail
-        (True, True, -1, True),  # Prev=0 => fail expected
-        (False, False, -1, False),
-        (False, True, -1, False),  # Prev =0 => no strict so tolerant
-        (True, False, 0, True),  # error on startxref, in strict => fail expected
-        (True, True, 0, True),
+        (
+            True,
+            False,
+            -1,
+            False,
+            "WARNING  PyPDF2._reader:_utils.py:364 startxref on same line as offset\n"
+            "WARNING  PyPDF2._reader:_utils.py:364 Xref table not zero-indexed. "
+            "ID numbers for objects will be corrected.\n",
+        ),  # all nominal => no fail
+        (True, True, -1, True, ""),  # Prev=0 => fail expected
+        (
+            False,
+            False,
+            -1,
+            False,
+            "WARNING  PyPDF2._reader:_utils.py:364 startxref on same line as offset\n",
+        ),
+        (
+            False,
+            True,
+            -1,
+            False,
+            "WARNING  PyPDF2._reader:_utils.py:364 startxref on same line as offset\n"
+            "WARNING  PyPDF2._reader:_utils.py:364 /Prev=0 in the trailer - "
+            "assuming there is no previous xref table\n",
+        ),  # Prev =0 => no strict so tolerant
+        (True, False, 0, True, ""),  # error on startxref, in strict => fail expected
+        (True, True, 0, True, ""),
         (
             False,
             False,
             0,
             False,
+            "WARNING  PyPDF2._reader:_utils.py:364 startxref on same line as offset\n"
+            "WARNING  PyPDF2._reader:_utils.py:364 incorrect startxref pointer(1)\n",
         ),  # error on startxref, but no strict => xref rebuilt,no fail
-        (False, True, 0, False),
+        (
+            False,
+            True,
+            0,
+            False,
+            "WARNING  PyPDF2._reader:_utils.py:364 startxref on same line as offset\n"
+            "WARNING  PyPDF2._reader:_utils.py:364 incorrect startxref pointer(1)\n",
+        ),
     ],
 )
-def test_get_images_raw(strict, with_prev_0, startx_correction, should_fail):
+def test_get_images_raw(
+    caplog, strict, with_prev_0, startx_correction, should_fail, warning_msg
+):
     pdf_data = (
         b"%%PDF-1.7\n"
         b"1 0 obj << /Count 1 /Kids [4 0 R] /Type /Pages >> endobj\n"
@@ -238,7 +271,8 @@ def test_get_images_raw(strict, with_prev_0, startx_correction, should_fail):
         pdf_data.find(b"4 0 obj"),
         pdf_data.find(b"5 0 obj"),
         b"/Prev 0 " if with_prev_0 else b"",
-        # startx_correction should be -1 due to double % at the beginning inducing an error on startxref computation
+        # startx_correction should be -1 due to double % at the beginning
+        # inducing an error on startxref computation
         pdf_data.find(b"xref") + startx_correction,
     )
     pdf_stream = io.BytesIO(pdf_data)
@@ -252,17 +286,21 @@ def test_get_images_raw(strict, with_prev_0, startx_correction, should_fail):
                 == "/Prev=0 in the trailer (try opening with strict=False)"
             )
     else:
-        with pytest.warns(PdfReadWarning):
-            PdfReader(pdf_stream, strict=strict)
+        PdfReader(pdf_stream, strict=strict)
+        assert caplog.text == warning_msg
 
 
-def test_issue297():
+def test_issue297(caplog):
     path = os.path.join(RESOURCE_ROOT, "issue-297.pdf")
-    with pytest.raises(PdfReadError) as exc, pytest.warns(PdfReadWarning):
+    with pytest.raises(PdfReadError) as exc:
         reader = PdfReader(path, strict=True)
+    assert caplog.text == ""
     assert "Broken xref table" in exc.value.args[0]
-    with pytest.warns(PdfReadWarning):
-        reader = PdfReader(path, strict=False)
+    reader = PdfReader(path, strict=False)
+    assert (
+        caplog.text
+        == "WARNING  PyPDF2._reader:_utils.py:364 incorrect startxref pointer(1)\n"
+    )
     reader.pages[0]
 
 
@@ -471,7 +509,7 @@ def test_read_missing_startxref():
     assert exc.value.args[0] == "startxref not found"
 
 
-def test_read_unknown_zero_pages():
+def test_read_unknown_zero_pages(caplog):
     pdf_data = (
         b"%%PDF-1.7\n"
         b"1 0 obj << /Count 1 /Kids [4 0 R] /Type /Pages >> endobj\n"
@@ -502,14 +540,23 @@ def test_read_unknown_zero_pages():
         pdf_data.find(b"xref") - 1,
     )
     pdf_stream = io.BytesIO(pdf_data)
-    with pytest.warns(PdfReadWarning):
-        reader = PdfReader(pdf_stream, strict=True)
+    reader = PdfReader(pdf_stream, strict=True)
+    warnings = (
+        "WARNING  PyPDF2._reader:_utils.py:364 startxref on same line as offset\n"
+        "WARNING  PyPDF2._reader:_utils.py:364 Xref table not zero-indexed. "
+        "ID numbers for objects will be corrected.\n"
+    )
+    assert caplog.text == warnings
     with pytest.raises(PdfReadError) as exc, pytest.warns(PdfReadWarning):
         len(reader.pages)
 
     assert exc.value.args[0] == "Could not find object."
-    with pytest.warns(PdfReadWarning):
-        reader = PdfReader(pdf_stream, strict=False)
+    reader = PdfReader(pdf_stream, strict=False)
+    warnings += (
+        "WARNING  PyPDF2._reader:_utils.py:364 Object 5 1 not defined.\n"
+        "WARNING  PyPDF2._reader:_utils.py:364 startxref on same line as offset\n"
+    )
+    assert caplog.text == warnings
     with pytest.raises(AttributeError) as exc, pytest.warns(PdfReadWarning):
         len(reader.pages)
     assert exc.value.args[0] == "'NoneType' object has no attribute 'get_object'"
@@ -571,9 +618,9 @@ def test_reader_properties():
 
 @pytest.mark.parametrize(
     "strict",
-    [(True), (False)],
+    [True, False],
 )
-def test_issue604(strict):
+def test_issue604(caplog, strict):
     """Test with invalid destinations"""  # todo
     with open(os.path.join(RESOURCE_ROOT, "issue-604.pdf"), "rb") as f:
         pdf = None
@@ -587,8 +634,12 @@ def test_issue604(strict):
             return  # bookmarks not correct
         else:
             pdf = PdfReader(f, strict=strict)
-            with pytest.warns(PdfReadWarning):
-                bookmarks = pdf._get_outlines()
+            bookmarks = pdf._get_outlines()
+            msg = (
+                "WARNING  PyPDF2._reader:_utils.py:364 "
+                "Unknown destination: ms_Thyroid_2_2020_071520_watermarked.pdf [0, 1]\n"
+            )
+            assert caplog.text == msg
 
         def get_dest_pages(x):
             if isinstance(x, list):
@@ -598,9 +649,9 @@ def test_issue604(strict):
                 return pdf.get_destination_page_number(x) + 1
 
         out = []
-        for (
-            b
-        ) in bookmarks:  # b can be destination or a list:preferred to just print them
+
+        # b can be destination or a list:preferred to just print them
+        for b in bookmarks:
             out.append(get_dest_pages(b))
 
 
@@ -705,13 +756,15 @@ def test_read_path():
     assert len(reader.pages) == 1
 
 
-def test_read_not_binary_mode():
+def test_read_not_binary_mode(caplog):
     with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf")) as f:
-        msg = "PdfReader stream/file object is not in binary mode. It may not be read correctly."
-        with pytest.warns(PdfReadWarning, match=msg), pytest.raises(
-            io.UnsupportedOperation
-        ):
+        msg = (
+            "WARNING  PyPDF2._reader:_utils.py:364 "
+            "PdfReader stream/file object is not in binary mode. It may not be read correctly.\n"
+        )
+        with pytest.raises(io.UnsupportedOperation):
             PdfReader(f)
+    assert caplog.text == msg
 
 
 @pytest.mark.skipif(not HAS_PYCRYPTODOME, reason="No pycryptodome")
@@ -724,24 +777,24 @@ def test_read_form_416():
     assert len(fields) > 0
 
 
-def test_extract_text_xref_issue_2():
+def test_extract_text_xref_issue_2(caplog):
     # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/981/981961.pdf"
-    msg = r"incorrect startxref pointer\(2\)"
-    with pytest.warns(PdfReadWarning, match=msg):
-        reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-981961.pdf")))
+    msg = "WARNING  PyPDF2._reader:_utils.py:364 incorrect startxref pointer(2)\n"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-981961.pdf")))
     for page in reader.pages:
         page.extract_text()
+    assert caplog.text == msg
 
 
-def test_extract_text_xref_issue_3():
+def test_extract_text_xref_issue_3(caplog):
     # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/977/977774.pdf"
-    msg = r"incorrect startxref pointer\(3\)"
-    with pytest.warns(PdfReadWarning, match=msg):
-        reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-977774.pdf")))
+    msg = "WARNING  PyPDF2._reader:_utils.py:364 incorrect startxref pointer(3)\n"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-977774.pdf")))
     for page in reader.pages:
         page.extract_text()
+    assert caplog.text == msg
 
 
 def test_extract_text_pdf15():

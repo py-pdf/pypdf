@@ -264,15 +264,16 @@ def test_extract_text_page_pdf(url, name):
         page.extract_text()
 
 
-def test_extract_text_page_pdf_impossible_decode_xform():
+def test_extract_text_page_pdf_impossible_decode_xform(caplog):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/972/972962.pdf"
     name = "tika-972962.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    with pytest.warns(
-        PdfReadWarning, match="impossible to decode XFormObject /Meta203"
-    ):
-        for page in reader.pages:
-            page.extract_text()
+    for page in reader.pages:
+        page.extract_text()
+    assert (
+        caplog.text
+        == "WARNING  PyPDF2._page:_utils.py:364  impossible to decode XFormObject /Meta203\n"
+    )
 
 
 def test_extract_text_operator_t_star():  # L1266, L1267
