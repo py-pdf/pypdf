@@ -15,7 +15,7 @@ TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = Path(os.path.dirname(TESTS_ROOT))
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
-sys.path.append(PROJECT_ROOT)
+sys.path.append(str(PROJECT_ROOT))
 
 
 def test_merge():

@@ -62,7 +62,7 @@ def test_encryption(name, requres_pycryptodome):
         return
     else:
         ipdf = PyPDF2.PdfReader(inputfile)
-        if inputfile.endswith("unencrypted.pdf"):
+        if str(inputfile).endswith("unencrypted.pdf"):
             assert not ipdf.is_encrypted
         else:
             assert ipdf.is_encrypted

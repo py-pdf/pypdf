@@ -17,14 +17,14 @@ from PyPDF2.filters import _xobj_to_image
 from . import get_pdf_from_url, normalize_warnings
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
-PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
-RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
+PROJECT_ROOT = Path(os.path.dirname(TESTS_ROOT))
+RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
-sys.path.append(PROJECT_ROOT)
+sys.path.append(str(PROJECT_ROOT))
 
 
 def test_dropdown_items():
-    inputfile = os.path.join(RESOURCE_ROOT, "libreoffice-form.pdf")
+    inputfile = RESOURCE_ROOT / "libreoffice-form.pdf"
     reader = PdfReader(inputfile)
     fields = reader.get_fields()
     assert "/Opt" in fields["Nationality"].keys()
@@ -36,13 +36,13 @@ def test_PdfReaderFileLoad():
     textual output. Expected outcome: file loads, text matches expected.
     """
 
-    with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
+    with open(RESOURCE_ROOT / "crazyones.pdf", "rb") as inputfile:
         # Load PDF file from file
         reader = PdfReader(inputfile)
         page = reader.pages[0]
 
         # Retrieve the text of the PDF
-        with open(os.path.join(RESOURCE_ROOT, "crazyones.txt"), "rb") as pdftext_file:
+        with open(RESOURCE_ROOT / "crazyones.txt", "rb") as pdftext_file:
             pdftext = pdftext_file.read()
 
         text = page.extract_text().encode("utf-8")
@@ -63,12 +63,12 @@ def test_PdfReaderJpegImage():
     textual output. Expected outcome: file loads, image matches expected.
     """
 
-    with open(os.path.join(RESOURCE_ROOT, "jpeg.pdf"), "rb") as inputfile:
+    with open(RESOURCE_ROOT / "jpeg.pdf", "rb") as inputfile:
         # Load PDF file from file
         reader = PdfReader(inputfile)
 
         # Retrieve the text of the image
-        with open(os.path.join(RESOURCE_ROOT, "jpeg.txt")) as pdftext_file:
+        with open(RESOURCE_ROOT / "jpeg.txt") as pdftext_file:
             imagetext = pdftext_file.read()
 
         page = reader.pages[0]
@@ -83,9 +83,7 @@ def test_PdfReaderJpegImage():
 
 
 def test_decrypt():
-    with open(
-        os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf"), "rb"
-    ) as inputfile:
+    with open(RESOURCE_ROOT / "libreoffice-writer-password.pdf", "rb") as inputfile:
         reader = PdfReader(inputfile)
         assert reader.is_encrypted is True
         reader.decrypt("openpassword")
@@ -100,7 +98,7 @@ def test_decrypt():
 
 
 def test_text_extraction_encrypted():
-    inputfile = os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf")
+    inputfile = RESOURCE_ROOT / "libreoffice-writer-password.pdf"
     reader = PdfReader(inputfile)
     assert reader.is_encrypted is True
     reader.decrypt("openpassword")
@@ -115,14 +113,14 @@ def test_text_extraction_encrypted():
 
 @pytest.mark.parametrize("degree", [0, 90, 180, 270, 360, -90])
 def test_rotate(degree):
-    with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
+    with open(RESOURCE_ROOT / "crazyones.pdf", "rb") as inputfile:
         reader = PdfReader(inputfile)
         page = reader.pages[0]
         page.rotate(degree)
 
 
 def test_rotate_45():
-    with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
+    with open(RESOURCE_ROOT / "crazyones.pdf", "rb") as inputfile:
         reader = PdfReader(inputfile)
         page = reader.pages[0]
         with pytest.raises(ValueError) as exc:
@@ -174,7 +172,7 @@ def test_rotate_45():
         (True, "https://github.com/py-pdf/PyPDF2/files/8884469/999092.pdf", [0, 1]),
         (
             True,
-            "file://" + os.path.join(RESOURCE_ROOT, "test Orient.pdf"),
+            "file://" + str(RESOURCE_ROOT / "test Orient.pdf"),
             [0],
         ),  # TODO: preparation of text orientation validation
         (
@@ -211,7 +209,7 @@ def test_extract_textbench(enable, url, pages, print_result=False):
 
 
 def test_orientations():
-    p = PdfReader(os.path.join(RESOURCE_ROOT, "test Orient.pdf")).pages[0]
+    p = PdfReader(RESOURCE_ROOT / "test Orient.pdf").pages[0]
     try:
         p.extract_text("", "")
     except DeprecationWarning:
@@ -303,11 +301,11 @@ def test_overlay(base_path, overlay_path):
     if base_path.startswith("http"):
         base_path = BytesIO(get_pdf_from_url(base_path, name="tika-935981.pdf"))
     else:
-        base_path = os.path.join(PROJECT_ROOT, base_path)
+        base_path = PROJECT_ROOT / base_path
     reader = PdfReader(base_path)
     writer = PdfWriter()
 
-    reader_overlay = PdfReader(os.path.join(PROJECT_ROOT, overlay_path))
+    reader_overlay = PdfReader(PROJECT_ROOT / overlay_path)
     overlay = reader_overlay.pages[0]
 
     for page in reader.pages:
@@ -470,11 +468,9 @@ def test_scale_rectangle_indirect_object():
 
 def test_merge_output(caplog):
     # Arrange
-    base = os.path.join(RESOURCE_ROOT, "Seige_of_Vicksburg_Sample_OCR.pdf")
-    crazy = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
-    expected = os.path.join(
-        RESOURCE_ROOT, "Seige_of_Vicksburg_Sample_OCR-crazyones-merged.pdf"
-    )
+    base = RESOURCE_ROOT / "Seige_of_Vicksburg_Sample_OCR.pdf"
+    crazy = RESOURCE_ROOT / "crazyones.pdf"
+    expected = RESOURCE_ROOT / "Seige_of_Vicksburg_Sample_OCR-crazyones-merged.pdf"
 
     # Act
     merger = PdfMerger(strict=True)
