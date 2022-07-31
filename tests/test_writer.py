@@ -339,7 +339,7 @@ def test_add_outline_item():
 
 
 def test_add_named_destination():
-    reader = PdfReader(os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf"))
+    reader = PdfReader(RESOURCE_ROOT / "pdflatex-outline.pdf")
     writer = PdfWriter()
 
     for page in reader.pages:
@@ -369,7 +369,7 @@ def test_add_named_destination():
 
 
 def test_add_uri():
-    reader = PdfReader(os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf"))
+    reader = PdfReader(RESOURCE_ROOT / "pdflatex-outline.pdf")
     writer = PdfWriter()
 
     for page in reader.pages:
@@ -412,7 +412,7 @@ def test_add_uri():
 
 
 def test_add_link():
-    reader = PdfReader(os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf"))
+    reader = PdfReader(RESOURCE_ROOT / "pdflatex-outline.pdf")
     writer = PdfWriter()
 
     for page in reader.pages:
@@ -463,7 +463,7 @@ def test_add_link():
 def test_io_streams():
     """This is the example from the docs ("Streaming data")."""
 
-    filepath = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
+    filepath = RESOURCE_ROOT / "pdflatex-outline.pdf"
     with open(filepath, "rb") as fh:
         bytes_stream = BytesIO(fh.read())
 
@@ -478,7 +478,7 @@ def test_io_streams():
 
 
 def test_regression_issue670():
-    filepath = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    filepath = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(filepath, strict=False)
     for _ in range(2):
         writer = PdfWriter()
@@ -491,7 +491,7 @@ def test_issue301():
     """
     Test with invalid stream length object
     """
-    with open(os.path.join(RESOURCE_ROOT, "issue-301.pdf"), "rb") as f:
+    with open(RESOURCE_ROOT / "issue-301.pdf", "rb") as f:
         reader = PdfReader(f)
         writer = PdfWriter()
         writer.append_pages_from_reader(reader)
@@ -528,7 +528,7 @@ def test_pdf_header():
     writer = PdfWriter()
     assert writer.pdf_header == b"%PDF-1.3"
 
-    reader = PdfReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
     writer.add_page(reader.pages[0])
     assert writer.pdf_header == b"%PDF-1.5"
 
@@ -591,7 +591,7 @@ def test_write_dict_stream_object():
 
 
 def test_add_single_annotation():
-    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
     page = reader.pages[0]
     writer = PdfWriter()
@@ -623,9 +623,7 @@ def test_add_single_annotation():
 
 
 def test_deprecate_bookmark_decorator():
-    reader = PdfReader(
-        os.path.join(RESOURCE_ROOT, "outlines-with-invalid-destinations.pdf")
-    )
+    reader = PdfReader(RESOURCE_ROOT / "outlines-with-invalid-destinations.pdf")
     page = reader.pages[0]
     outline_item = reader.outline[0]
     writer = PdfWriter()
