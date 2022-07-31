@@ -2199,6 +2199,10 @@ class AnnotationBuilder:
         :param border: if provided, an array describing border-drawing
             properties. See the PDF spec for details. No border will be
             drawn if this argument is omitted.
+            - horizontal corner radius,
+            - vertical corner radius, and
+            - border width
+            - Optionally: Dash
         :param str url: Link to a website (if you want to make an external link)
         :param int target_page_index: index of the page to which the link should go
                                 (if you want to make an internal link)
