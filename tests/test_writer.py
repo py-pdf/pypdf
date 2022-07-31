@@ -1,5 +1,6 @@
 import os
 from io import BytesIO
+from pathlib import Path
 
 import pytest
 
@@ -9,13 +10,13 @@ from PyPDF2.generic import RectangleObject, StreamObject
 
 from . import get_pdf_from_url
 
-TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
-PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
-RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
+TESTS_ROOT = Path(__file__).parent.resolve()
+PROJECT_ROOT = TESTS_ROOT.parent
+RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 
 def test_writer_clone():
-    src = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
+    src = RESOURCE_ROOT / "pdflatex-outline.pdf"
 
     reader = PdfReader(src)
     writer = PdfWriter()
@@ -31,8 +32,8 @@ def test_writer_operations():
     This should be done way more thoroughly: It should be checked if the
     output is as expected.
     """
-    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
-    pdf_outline_path = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    pdf_outline_path = RESOURCE_ROOT / "pdflatex-outline.pdf"
 
     reader = PdfReader(pdf_path)
     reader_outline = PdfReader(pdf_outline_path)
@@ -112,7 +113,7 @@ def test_writer_operations():
     ],
 )
 def test_remove_images(input_path, ignore_byte_string_object):
-    pdf_path = os.path.join(RESOURCE_ROOT, input_path)
+    pdf_path = RESOURCE_ROOT / input_path
 
     reader = PdfReader(pdf_path)
     writer = PdfWriter()
@@ -146,7 +147,7 @@ def test_remove_images(input_path, ignore_byte_string_object):
     ],
 )
 def test_remove_text(input_path, ignore_byte_string_object):
-    pdf_path = os.path.join(RESOURCE_ROOT, input_path)
+    pdf_path = RESOURCE_ROOT / input_path
 
     reader = PdfReader(pdf_path)
     writer = PdfWriter()
@@ -235,7 +236,7 @@ def test_remove_text_all_operators(ignore_byte_string_object):
 
 
 def test_write_metadata():
-    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
 
     reader = PdfReader(pdf_path)
     writer = PdfWriter()
@@ -263,7 +264,7 @@ def test_write_metadata():
 
 
 def test_fill_form():
-    reader = PdfReader(os.path.join(RESOURCE_ROOT, "form.pdf"))
+    reader = PdfReader(RESOURCE_ROOT / "form.pdf")
     writer = PdfWriter()
 
     page = reader.pages[0]
@@ -285,7 +286,7 @@ def test_fill_form():
     [(True), (False)],
 )
 def test_encrypt(use_128bit):
-    reader = PdfReader(os.path.join(RESOURCE_ROOT, "form.pdf"))
+    reader = PdfReader(RESOURCE_ROOT / "form.pdf")
     writer = PdfWriter()
 
     page = reader.pages[0]
@@ -315,7 +316,7 @@ def test_encrypt(use_128bit):
 
 
 def test_add_outline_item():
-    reader = PdfReader(os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf"))
+    reader = PdfReader(RESOURCE_ROOT / "pdflatex-outline.pdf")
     writer = PdfWriter()
 
     for page in reader.pages:
@@ -338,7 +339,7 @@ def test_add_outline_item():
 
 
 def test_add_named_destination():
-    reader = PdfReader(os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf"))
+    reader = PdfReader(RESOURCE_ROOT / "pdflatex-outline.pdf")
     writer = PdfWriter()
 
     for page in reader.pages:
@@ -368,7 +369,7 @@ def test_add_named_destination():
 
 
 def test_add_uri():
-    reader = PdfReader(os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf"))
+    reader = PdfReader(RESOURCE_ROOT / "pdflatex-outline.pdf")
     writer = PdfWriter()
 
     for page in reader.pages:
@@ -411,7 +412,7 @@ def test_add_uri():
 
 
 def test_add_link():
-    reader = PdfReader(os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf"))
+    reader = PdfReader(RESOURCE_ROOT / "pdflatex-outline.pdf")
     writer = PdfWriter()
 
     for page in reader.pages:
@@ -462,7 +463,7 @@ def test_add_link():
 def test_io_streams():
     """This is the example from the docs ("Streaming data")."""
 
-    filepath = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
+    filepath = RESOURCE_ROOT / "pdflatex-outline.pdf"
     with open(filepath, "rb") as fh:
         bytes_stream = BytesIO(fh.read())
 
@@ -477,7 +478,7 @@ def test_io_streams():
 
 
 def test_regression_issue670():
-    filepath = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    filepath = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(filepath, strict=False)
     for _ in range(2):
         writer = PdfWriter()
@@ -490,7 +491,7 @@ def test_issue301():
     """
     Test with invalid stream length object
     """
-    with open(os.path.join(RESOURCE_ROOT, "issue-301.pdf"), "rb") as f:
+    with open(RESOURCE_ROOT / "issue-301.pdf", "rb") as f:
         reader = PdfReader(f)
         writer = PdfWriter()
         writer.append_pages_from_reader(reader)
@@ -527,7 +528,7 @@ def test_pdf_header():
     writer = PdfWriter()
     assert writer.pdf_header == b"%PDF-1.3"
 
-    reader = PdfReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
     writer.add_page(reader.pages[0])
     assert writer.pdf_header == b"%PDF-1.5"
 
@@ -590,7 +591,7 @@ def test_write_dict_stream_object():
 
 
 def test_add_single_annotation():
-    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
     page = reader.pages[0]
     writer = PdfWriter()
@@ -622,9 +623,7 @@ def test_add_single_annotation():
 
 
 def test_deprecate_bookmark_decorator():
-    reader = PdfReader(
-        os.path.join(RESOURCE_ROOT, "outlines-with-invalid-destinations.pdf")
-    )
+    reader = PdfReader(RESOURCE_ROOT / "outlines-with-invalid-destinations.pdf")
     page = reader.pages[0]
     outline_item = reader.outline[0]
     writer = PdfWriter()

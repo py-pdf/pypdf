@@ -1,5 +1,6 @@
 import os
 from io import BytesIO
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -33,9 +34,9 @@ from PyPDF2.generic import (
 
 from . import get_pdf_from_url
 
-TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
-PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
-RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
+TESTS_ROOT = Path(__file__).parent.resolve()
+PROJECT_ROOT = TESTS_ROOT.parent
+RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 
 def test_float_object_exception():
@@ -395,7 +396,7 @@ def test_remove_child_not_in_tree():
 
 
 def test_remove_child_in_tree():
-    pdf = os.path.join(RESOURCE_ROOT, "form.pdf")
+    pdf = RESOURCE_ROOT / "form.pdf"
 
     tree = TreeObject()
     reader = PdfReader(pdf)
@@ -503,7 +504,7 @@ def test_issue_997(mock_logger_warning):
 
 def test_annotation_builder_free_text():
     # Arrange
-    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
     page = reader.pages[0]
     writer = PdfWriter()
@@ -533,7 +534,7 @@ def test_annotation_builder_free_text():
 
 def test_annotation_builder_line():
     # Arrange
-    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
     page = reader.pages[0]
     writer = PdfWriter()
@@ -558,7 +559,7 @@ def test_annotation_builder_line():
 
 def test_annotation_builder_link():
     # Arrange
-    pdf_path = os.path.join(RESOURCE_ROOT, "outline-without-title.pdf")
+    pdf_path = RESOURCE_ROOT / "outline-without-title.pdf"
     reader = PdfReader(pdf_path)
     page = reader.pages[0]
     writer = PdfWriter()

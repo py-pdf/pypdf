@@ -26,6 +26,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from io import BytesIO, FileIO, IOBase
+from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 
 from ._encryption import Encryption
@@ -99,7 +100,7 @@ class PdfMerger:
     def merge(
         self,
         position: int,
-        fileobj: Union[StrByteType, PdfReader],
+        fileobj: Union[Path, StrByteType, PdfReader],
         outline_item: Optional[str] = None,
         pages: Optional[PageRangeSpec] = None,
         import_outline: bool = True,
@@ -184,7 +185,7 @@ class PdfMerger:
         self.pages[position:position] = srcpages
 
     def _create_stream(
-        self, fileobj: Union[StrByteType, PdfReader]
+        self, fileobj: Union[Path, StrByteType, PdfReader]
     ) -> Tuple[IOBase, bool, Optional[Encryption]]:
         # This parameter is passed to self.inputs.append and means
         # that the stream used was created in this method.
@@ -198,7 +199,7 @@ class PdfMerger:
         # If fileobj is none of the above types, it is not modified
         encryption_obj = None
         stream: IOBase
-        if isinstance(fileobj, str):
+        if isinstance(fileobj, (str, Path)):
             stream = FileIO(fileobj, "rb")
             my_file = True
         elif isinstance(fileobj, PdfReader):
@@ -224,7 +225,7 @@ class PdfMerger:
     @deprecate_bookmark(bookmark="outline_item", import_bookmarks="import_outline")
     def append(
         self,
-        fileobj: Union[StrByteType, PdfReader],
+        fileobj: Union[StrByteType, PdfReader, Path],
         outline_item: Optional[str] = None,
         pages: Union[None, PageRange, Tuple[int, int], Tuple[int, int, int]] = None,
         import_outline: bool = True,
