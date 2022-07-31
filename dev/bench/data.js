@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1659293826902,
+  "lastUpdate": 1659294468952,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -12019,6 +12019,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03630057659255962",
             "extra": "mean: 4.783083530599998 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mtd91429@users.noreply.github.com",
+            "name": "mtd91429",
+            "username": "mtd91429"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7c7ef7759e031aa0639d1abd496c94d0188bed92",
+          "message": "ENH: Add ability to add hex encoded colors to outline items (#1186)",
+          "timestamp": "2022-07-31T21:06:47+02:00",
+          "tree_id": "89784066eca59a7960c18f5d5518e95d7f04a515",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/7c7ef7759e031aa0639d1abd496c94d0188bed92"
+        },
+        "date": 1659294468323,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.04086401132344,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009063730443882935",
+            "extra": "mean: 960.7402975999889 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.108772912187534,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006352729714921886",
+            "extra": "mean: 76.28479085714243 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2560913926833716,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022737388676111657",
+            "extra": "mean: 3.904855956000006 sec\nrounds: 5"
           }
         ]
       }
