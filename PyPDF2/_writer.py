@@ -58,8 +58,8 @@ from ._utils import (
     StreamType,
     _get_max_pdf_version_header,
     b_,
-    deprecate_with_replacement,
     deprecate_bookmark,
+    deprecate_with_replacement,
 )
 from .constants import AnnotationDictionaryAttributes
 from .constants import CatalogAttributes as CA
@@ -83,7 +83,6 @@ from .generic import (
     BooleanObject,
     ByteStringObject,
     ContentStream,
-    _create_outline_item,
     DecodedStreamObject,
     Destination,
     DictionaryObject,
@@ -97,14 +96,15 @@ from .generic import (
     StreamObject,
     TextStringObject,
     TreeObject,
+    _create_outline_item,
     create_string_object,
 )
 from .types import (
     BorderArrayType,
     FitType,
     LayoutType,
-    PagemodeType,
     OutlineItemType,
+    PagemodeType,
     ZoomArgsType,
     ZoomArgType,
 )
