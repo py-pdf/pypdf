@@ -279,10 +279,9 @@ def test_extract_text_page_pdf_impossible_decode_xform(caplog):
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     for page in reader.pages:
         page.extract_text()
-    assert (
-        caplog.text
-        == "WARNING  PyPDF2._page:_utils.py:364  impossible to decode XFormObject /Meta203\n"
-    )
+    warn_msgs = caplog.text.strip().split("\n")
+    assert len(warn_msgs) == 1
+    assert "impossible to decode XFormObject /Meta203\n" in warn_msgs[0]
 
 
 def test_extract_text_operator_t_star():  # L1266, L1267
