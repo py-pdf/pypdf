@@ -280,8 +280,7 @@ def test_extract_text_page_pdf_impossible_decode_xform(caplog):
     for page in reader.pages:
         page.extract_text()
     warn_msgs = normalize_warnings(caplog.text)
-    assert len(warn_msgs) == 1
-    assert "impossible to decode XFormObject /Meta203\n" in warn_msgs[0]
+    assert warn_msgs == ["impossible to decode XFormObject /Meta203"]
 
 
 def test_extract_text_operator_t_star():  # L1266, L1267
