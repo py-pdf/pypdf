@@ -697,6 +697,7 @@ class PdfWriter:
         """
         self.clone_reader_document_root(reader)
         self.append_pages_from_reader(reader, after_page_append)
+        self._sweep_indirect_references(self._root_object)
 
     def cloneDocumentFromReader(
         self,
