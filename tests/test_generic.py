@@ -556,5 +556,29 @@ def test_annotation_builder_line():
     os.remove(target)  # comment this out for manual inspection
 
 
+def test_annotation_builder_link():
+    # Arrange
+    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    writer = PdfWriter()
+    writer.add_page(page)
+
+    # Act
+    annotation = AnnotationBuilder.link(
+        # text="Hello World\nLine2",
+        rect=(50, 550, 200, 650),
+        url="https://martin-thoma.com/",
+    )
+    writer.add_annotation(0, annotation)
+
+    # Assert: You need to inspect the file manually
+    target = "annotated-pdf-link.pdf"
+    with open(target, "wb") as fp:
+        writer.write(fp)
+
+    # os.remove(target)  # comment this out for manual inspection
+
+
 def test_CheckboxRadioButtonAttributes_opt():
     assert "/Opt" in CheckboxRadioButtonAttributes.attributes_dict()

@@ -2169,3 +2169,22 @@ class AnnotationBuilder:
             }
         )
         return line_obj
+
+    @staticmethod
+    def link(rect: Tuple[float, float, float, float], url: str):
+        """ """
+        link_obj = DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Annot"),
+                NameObject("/Subtype"): NameObject("/Link"),
+                NameObject("/Rect"): RectangleObject(rect),
+                NameObject("/A"): DictionaryObject(
+                    {
+                        NameObject("/S"): NameObject("/URI"),
+                        NameObject("/Type"): NameObject("/Action"),
+                        NameObject("/URI"): TextStringObject(url),
+                    }
+                ),
+            }
+        )
+        return link_obj
