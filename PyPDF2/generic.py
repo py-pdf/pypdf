@@ -2034,7 +2034,7 @@ def _create_outline_item(
         outline_item.update(
             {NameObject("/C"): ArrayObject([FloatObject(c) for c in color])}
         )
-    if italic | bold:
+    if italic or bold:
         format_flag = 0
         if italic:
             format_flag += 1

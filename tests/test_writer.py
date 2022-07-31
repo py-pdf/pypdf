@@ -651,7 +651,7 @@ def test_colors_in_outline_item():
 
     reader2 = PdfReader(target)
     for outline_item in reader2.outline:
-        # convert float to string b/c of mutability
+        # convert float to string because of mutability
         assert [str(c) for c in outline_item.color] == [str(p) for p in purple_rgb]
 
     # Cleanup
