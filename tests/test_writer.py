@@ -633,15 +633,14 @@ def test_deprecate_bookmark_decorator():
         writer.add_outline_item_dict(bookmark=outline_item)
 
 
-def test_named_colors_in_outline_item():
+def test_colors_in_outline_item():
     reader = PdfReader(EXTERNAL_ROOT / "004-pdflatex-4-pages/pdflatex-4-pages.pdf")
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
     purple_rgb = (0.50196, 0, 0.50196)
-    writer.add_outline_item("First Outline Item", pagenum=1, color="PurpLE")
-    writer.add_outline_item("Second Outline Item", pagenum=2, color="800080")
-    writer.add_outline_item("Third Outline Item", pagenum=3, color="#800080")
-    writer.add_outline_item("Fourth Outline Item", pagenum=4, color=purple_rgb)
+    writer.add_outline_item("First Outline Item", pagenum=2, color="800080")
+    writer.add_outline_item("Second Outline Item", pagenum=3, color="#800080")
+    writer.add_outline_item("Third Outline Item", pagenum=4, color=purple_rgb)
 
     target = "tmp-named-color-outline.pdf"
     with open(target, "wb") as f:

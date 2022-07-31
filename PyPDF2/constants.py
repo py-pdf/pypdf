@@ -278,73 +278,6 @@ class AnnotationDictionaryAttributes:
     OC = "/OC"
 
 
-class NamedColors:
-    """Named Colors as defined by the basic subset of the W3C specifications (plus Orange)"""
-
-    WHITE = "white"
-    SILVER = "silver"
-    GRAY = "gray"
-    BLACK = "black"
-    RED = "red"
-    MAROON = "maroon"
-    ORANGE = "orange"
-    YELLOW = "yellow"
-    OLIVE = "olive"
-    LIME = "lime"
-    GREEN = "green"
-    AQUA = "aqua"
-    TEAL = "teal"
-    BLUE = "blue"
-    NAVY = "navy"
-    FUCHSIA = "fuchsia"
-    PURPLE = "purple"
-
-    @classmethod
-    def attributes(cls) -> Tuple[str, ...]:
-        return (
-            cls.WHITE,
-            cls.SILVER,
-            cls.GRAY,
-            cls.BLACK,
-            cls.RED,
-            cls.MAROON,
-            cls.ORANGE,
-            cls.YELLOW,
-            cls.OLIVE,
-            cls.LIME,
-            cls.GREEN,
-            cls.AQUA,
-            cls.TEAL,
-            cls.BLUE,
-            cls.NAVY,
-            cls.FUCHSIA,
-            cls.PURPLE,
-        )
-
-    @classmethod
-    def attributes_dict(cls) -> Dict[str, Tuple[float, float, float]]:
-        """Returns Tuple of (R, G, B) values ranging from 0.0 - 1.0"""
-        return {
-            cls.WHITE: (1.0, 1.0, 1.0),
-            cls.SILVER: (0.75294, 0.75294, 0.75294),
-            cls.GRAY: (0.50196, 0.50196, 0.50196),
-            cls.BLACK: (0.0, 0.0, 0.0),
-            cls.RED: (1.0, 0.0, 0.0),
-            cls.MAROON: (0.50196, 0.0, 0.0),
-            cls.ORANGE: (1.0, 0.64706, 0.0),
-            cls.YELLOW: (1.0, 1.0, 0.0),
-            cls.OLIVE: (0.50196, 0.50196, 0.0),
-            cls.LIME: (0.0, 1.0, 0.0),
-            cls.GREEN: (0.0, 0.50196, 0.0),
-            cls.AQUA: (0.0, 1.0, 1.0),
-            cls.TEAL: (0.0, 0.50196, 0.50196),
-            cls.BLUE: (0.0, 0.0, 1.0),
-            cls.NAVY: (0.0, 0.0, 0.50196),
-            cls.FUCHSIA: (1.0, 0.0, 1.0),
-            cls.PURPLE: (0.50196, 0.0, 0.50196),
-        }
-
-
 class InteractiveFormDictEntries:
     Fields = "/Fields"
     NeedAppearances = "/NeedAppearances"
@@ -507,7 +440,6 @@ PDF_KEYS = (
     ImageAttributes,
     FileSpecificationDictionaryEntries,
     LzwFilterParameters,
-    NamedColors,
     PageAttributes,
     PageLayouts,
     PagesAttributes,

@@ -69,7 +69,7 @@ from ._utils import (
     skip_over_comment,
     str_,
 )
-from .constants import CheckboxRadioButtonAttributes, FieldDictionaryAttributes, NamedColors
+from .constants import CheckboxRadioButtonAttributes, FieldDictionaryAttributes
 from .constants import FilterTypes as FT
 from .constants import StreamAttributes as SA
 from .constants import TypArguments as TA
@@ -2035,14 +2035,7 @@ def _create_outline_item(
 
     if color is not None:
         if isinstance(color, str):
-            try:
-                # see if a named color
-                color = NamedColors.attributes_dict()[color.lower()]  # type: ignore
-            except KeyError:
-                # see if it is a hexstring
-                color = hex_to_rgb(color)  # type: ignore
-            except ValueError:
-                raise
+            color = hex_to_rgb(color)
 
         outline_item.update(
             {NameObject("/C"): ArrayObject([FloatObject(c) for c in color])}
