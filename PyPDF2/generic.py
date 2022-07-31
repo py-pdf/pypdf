@@ -2171,7 +2171,7 @@ class AnnotationBuilder:
         return line_obj
 
     @staticmethod
-    def link(rect: Tuple[float, float, float, float], url: str):
+    def link(rect: Tuple[float, float, float, float], url: str) -> DictionaryObject:
         """ """
         link_obj = DictionaryObject(
             {
