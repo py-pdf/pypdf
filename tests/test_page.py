@@ -20,7 +20,7 @@ from PyPDF2.generic import (
     TextStringObject,
 )
 
-from . import get_pdf_from_url
+from . import get_pdf_from_url, normalize_warnings
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -279,7 +279,7 @@ def test_extract_text_page_pdf_impossible_decode_xform(caplog):
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     for page in reader.pages:
         page.extract_text()
-    warn_msgs = caplog.text.strip().split("\n")
+    warn_msgs = normalize_warnings(caplog.text)
     assert len(warn_msgs) == 1
     assert "impossible to decode XFormObject /Meta203\n" in warn_msgs[0]
 

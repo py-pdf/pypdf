@@ -1,6 +1,7 @@
 import os
 import ssl
 import urllib.request
+from typing import List
 
 
 def get_pdf_from_url(url: str, name: str) -> bytes:
@@ -30,3 +31,7 @@ def get_pdf_from_url(url: str, name: str) -> bytes:
     with open(cache_path, "rb") as fp:
         data = fp.read()
     return data
+
+
+def normalize_warnings(caplog_text: str) -> List[str]:
+    return caplog_text.strip().split("\n")
