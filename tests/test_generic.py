@@ -566,7 +566,6 @@ def test_annotation_builder_link():
 
     # Act
     annotation = AnnotationBuilder.link(
-        # text="Hello World\nLine2",
         rect=(50, 550, 200, 650),
         url="https://martin-thoma.com/",
     )
@@ -577,7 +576,7 @@ def test_annotation_builder_link():
     with open(target, "wb") as fp:
         writer.write(fp)
 
-    # os.remove(target)  # comment this out for manual inspection
+    os.remove(target)  # comment this out for manual inspection
 
 
 def test_CheckboxRadioButtonAttributes_opt():
