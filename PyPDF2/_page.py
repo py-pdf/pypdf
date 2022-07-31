@@ -51,11 +51,12 @@ from ._utils import (
     TransformationMatrixType,
     deprecate_no_replacement,
     deprecate_with_replacement,
+    logger_warning,
     matrix_multiply,
 )
 from .constants import PageAttributes as PG
 from .constants import Ressources as RES
-from .errors import PageSizeNotDefinedError, PdfReadWarning
+from .errors import PageSizeNotDefinedError
 from .generic import (
     ArrayObject,
     ContentStream,
@@ -1430,9 +1431,9 @@ class PageObject(DictionaryObject):
                         text = self.extract_xform_text(xobj[operands[0]], orientations, space_width)  # type: ignore
                         output += text
                 except Exception:
-                    warnings.warn(
+                    logger_warning(
                         f" impossible to decode XFormObject {operands[0]}",
-                        PdfReadWarning,
+                        __name__,
                     )
                 finally:
                     text = ""

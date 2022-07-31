@@ -1,7 +1,5 @@
 import os
 
-import pytest
-
 import PyPDF2
 from PyPDF2 import PdfReader, Transformation
 from PyPDF2.generic import Destination
@@ -127,7 +125,6 @@ def text_extraction(pdf_path):
     return text
 
 
-@pytest.mark.filterwarnings("ignore::PyPDF2.errors.PdfReadWarning")
 def test_text_extraction(benchmark):
     file_path = os.path.join(SAMPLE_ROOT, "009-pdflatex-geotopo/GeoTopo.pdf")
     benchmark(text_extraction, file_path)

@@ -20,7 +20,7 @@ from PyPDF2.generic import (
     TextStringObject,
 )
 
-from . import get_pdf_from_url
+from . import get_pdf_from_url, normalize_warnings
 
 TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
@@ -273,15 +273,14 @@ def test_extract_text_page_pdf(url, name):
         page.extract_text()
 
 
-def test_extract_text_page_pdf_impossible_decode_xform():
+def test_extract_text_page_pdf_impossible_decode_xform(caplog):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/972/972962.pdf"
     name = "tika-972962.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    with pytest.warns(
-        PdfReadWarning, match="impossible to decode XFormObject /Meta203"
-    ):
-        for page in reader.pages:
-            page.extract_text()
+    for page in reader.pages:
+        page.extract_text()
+    warn_msgs = normalize_warnings(caplog.text)
+    assert warn_msgs == [" impossible to decode XFormObject /Meta203"]
 
 
 def test_extract_text_operator_t_star():  # L1266, L1267

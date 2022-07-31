@@ -35,7 +35,6 @@ import decimal
 import hashlib
 import logging
 import re
-import warnings
 from enum import IntFlag
 from io import BytesIO
 from typing import (
@@ -74,12 +73,7 @@ from .constants import FilterTypes as FT
 from .constants import StreamAttributes as SA
 from .constants import TypArguments as TA
 from .constants import TypFitArguments as TF
-from .errors import (
-    STREAM_TRUNCATED_PREMATURELY,
-    PdfReadError,
-    PdfReadWarning,
-    PdfStreamError,
-)
+from .errors import STREAM_TRUNCATED_PREMATURELY, PdfReadError, PdfStreamError
 
 logger = logging.getLogger(__name__)
 ObjectPrefix = b"/<[tf(n%"
@@ -813,7 +807,7 @@ class DictionaryObject(dict, PdfObject):
                 if pdf is not None and pdf.strict:
                     raise PdfReadError(msg)
                 else:
-                    warnings.warn(msg, PdfReadWarning)
+                    logger_warning(msg, __name__)
 
         pos = stream.tell()
         s = read_non_whitespace(stream)

@@ -1,12 +1,20 @@
-# Suppress Warnings and Log messages
+# Exceptions, Warnings, and Log messages
 
 PyPDF2 makes use of 3 mechanisms to show that something went wrong:
 
-* **Exceptions**: Error-cases the client should explicitly handle. In the
-   `strict=True` mode, most log messages will become exceptions. This can be
-   useful in applications where you can force to user to fix the broken PDF.
-* **Warnings**: Avoidable issues, such as using deprecated classes / functions / parameters
-* **Log messages**: Nothing the client can do, but they should know it happened.
+* **Log messages** are informative messages that can be used for post-mortem
+  analysis. Most of the time, users can ignore them. They come in different
+  *levels*, such as info / warning / error indicating the severity.
+  Examples are non-standard compliant PDF files which PyPDF2 can deal with.
+* **Warnings** are avoidable issues, such as using deprecated classes /
+  functions / parameters. Another example is missing capabilities of PyPDF2.
+  In those cases, PyPDF2 users should adjust their code. Warnings
+  are issued by the `warnings` module - those are different from the log-level
+  "warning".
+* **Exceptions** are error-cases that PyPDF2 users should explicitly handle.
+  In the `strict=True` mode, most log messages with the warning level will
+  become exceptions. This can be useful in applications where you can force to
+  user to fix the broken PDF.
 
 
 ## Exceptions

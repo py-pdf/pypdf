@@ -35,7 +35,6 @@ import random
 import struct
 import time
 import uuid
-import warnings
 from hashlib import md5
 from typing import (
     Any,
@@ -49,8 +48,6 @@ from typing import (
     cast,
 )
 
-from PyPDF2.errors import PdfReadWarning
-
 from ._page import PageObject, _VirtualList
 from ._reader import PdfReader
 from ._security import _alg33, _alg34, _alg35
@@ -60,6 +57,7 @@ from ._utils import (
     b_,
     deprecate_bookmark,
     deprecate_with_replacement,
+    logger_warning,
 )
 from .constants import AnnotationDictionaryAttributes
 from .constants import CatalogAttributes as CA
@@ -780,9 +778,10 @@ class PdfWriter:
             the write method and the tell method, similar to a file object.
         """
         if hasattr(stream, "mode") and "b" not in stream.mode:
-            warnings.warn(
+            logger_warning(
                 f"File <{stream.name}> to write to is not in binary mode. "  # type: ignore
-                "It may not be written to correctly."
+                "It may not be written to correctly.",
+                __name__,
             )
 
         if not self._root:
@@ -966,10 +965,10 @@ class PdfWriter:
         real_obj = data.pdf.get_object(data)
 
         if real_obj is None:
-            warnings.warn(
+            logger_warning(
                 f"Unable to resolve [{data.__class__.__name__}: {data}], "
                 "returning NullObject instead",
-                PdfReadWarning,
+                __name__,
             )
             real_obj = NullObject()
 
@@ -1703,8 +1702,9 @@ class PdfWriter:
         """
         if not isinstance(layout, NameObject):
             if layout not in self._valid_layouts:
-                warnings.warn(
-                    f"Layout should be one of: {'', ''.join(self._valid_layouts)}"
+                logger_warning(
+                    f"Layout should be one of: {'', ''.join(self._valid_layouts)}",
+                    __name__,
                 )
             layout = NameObject(layout)
         self._root_object.update({NameObject("/PageLayout"): layout})
@@ -1803,7 +1803,9 @@ class PdfWriter:
             mode_name: NameObject = mode
         else:
             if mode not in self._valid_modes:
-                warnings.warn(f"Mode should be one of: {', '.join(self._valid_modes)}")
+                logger_warning(
+                    f"Mode should be one of: {', '.join(self._valid_modes)}", __name__
+                )
             mode_name = NameObject(mode)
         self._root_object.update({NameObject("/PageMode"): mode_name})
 
