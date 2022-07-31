@@ -183,7 +183,7 @@ def parse_to_unicode(
     cm = prepare_cm(ft)
     for l in cm.split(b"\n"):
         process_rg, process_char = process_cm_line(
-            l, process_rg, process_char, map_dict, int_entry
+            l.strip(b" "), process_rg, process_char, map_dict, int_entry
         )
 
     for a, value in map_dict.items():

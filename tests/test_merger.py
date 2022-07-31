@@ -30,7 +30,7 @@ def test_merge():
     merger.append(outline)
     merger.append(pdf_path, pages=PyPDF2.pagerange.PageRange(slice(0, 0)))
     merger.append(pdf_forms)
-    merger.merge(0, pdf_path, import_bookmarks=False)
+    merger.merge(0, pdf_path, import_outline=False)
 
     # Merging an encrypted file
     reader = PyPDF2.PdfReader(pdf_pw)
@@ -38,40 +38,46 @@ def test_merge():
     merger.append(reader)
 
     # PdfReader object:
-    merger.append(PyPDF2.PdfReader(pdf_path), bookmark="foo")
+    merger.append(PyPDF2.PdfReader(pdf_path), outline_item="foo")
 
     # File handle
     with open(pdf_path, "rb") as fh:
         merger.append(fh)
 
-    bookmark = merger.add_bookmark("A bookmark", 0)
-    bm2 = merger.add_bookmark("deeper", 0, parent=bookmark, italic=True, bold=True)
-    merger.add_bookmark("Let's see", 2, bm2, (255, 255, 0), True, True, "/FitBV", 12)
-    merger.add_bookmark(
-        "The XYZ fit", 0, bookmark, (255, 0, 15), True, True, "/XYZ", 10, 20, 3
+    outline_item = merger.add_outline_item("An outline item", 0)
+    oi2 = merger.add_outline_item(
+        "deeper", 0, parent=outline_item, italic=True, bold=True
     )
-    merger.add_bookmark(
-        "The FitH fit", 0, bookmark, (255, 0, 15), True, True, "/FitH", 10
+    merger.add_outline_item(
+        "Let's see", 2, oi2, (255, 255, 0), True, True, "/FitBV", 12
     )
-    merger.add_bookmark(
-        "The FitV fit", 0, bookmark, (255, 0, 15), True, True, "/FitV", 10
+    merger.add_outline_item(
+        "The XYZ fit", 0, outline_item, (255, 0, 15), True, True, "/XYZ", 10, 20, 3
     )
-    merger.add_bookmark(
-        "The FitR fit", 0, bookmark, (255, 0, 15), True, True, "/FitR", 10, 20, 30, 40
+    merger.add_outline_item(
+        "The FitH fit", 0, outline_item, (255, 0, 15), True, True, "/FitH", 10
     )
-    merger.add_bookmark("The FitB fit", 0, bookmark, (255, 0, 15), True, True, "/FitB")
-    merger.add_bookmark(
-        "The FitBH fit", 0, bookmark, (255, 0, 15), True, True, "/FitBH", 10
+    merger.add_outline_item(
+        "The FitV fit", 0, outline_item, (255, 0, 15), True, True, "/FitV", 10
     )
-    merger.add_bookmark(
-        "The FitBV fit", 0, bookmark, (255, 0, 15), True, True, "/FitBV", 10
+    merger.add_outline_item(
+        "The FitR fit", 0, outline_item, (255, 0, 15), True, True, "/FitR", 10, 20, 30, 40,
+    )
+    merger.add_outline_item(
+        "The FitB fit", 0, outline_item, (255, 0, 15), True, True, "/FitB"
+    )
+    merger.add_outline_item(
+        "The FitBH fit", 0, outline_item, (255, 0, 15), True, True, "/FitBH", 10
+    )
+    merger.add_outline_item(
+        "The FitBV fit", 0, outline_item, (255, 0, 15), True, True, "/FitBV", 10
     )
 
-    found_bm = merger.find_bookmark("nothing here")
-    assert found_bm is None
+    found_oi = merger.find_outline_item("nothing here")
+    assert found_oi is None
 
-    found_bm = merger.find_bookmark("foo")
-    assert found_bm == [9]
+    found_oi = merger.find_outline_item("foo")
+    assert found_oi == [9]
 
     merger.add_metadata({"author": "Martin Thoma"})
     merger.add_named_destination("title", 0)
@@ -82,12 +88,10 @@ def test_merge():
     merger.write(tmp_path)
     merger.close()
 
-    # Check if bookmarks are correct
+    # Check if outline is correct
     reader = PyPDF2.PdfReader(tmp_path)
-    assert [
-        el.title for el in reader._get_outlines() if isinstance(el, Destination)
-    ] == [
-        "A bookmark",
+    assert [el.title for el in reader.outline if isinstance(el, Destination)] == [
+        "An outline item",
         "Foo",
         "Bar",
         "Baz",
@@ -147,11 +151,11 @@ def test_merge_write_closed_fh():
     assert exc.value.args[0] == err_closed
 
     with pytest.raises(RuntimeError) as exc:
-        merger._write_bookmarks()
+        merger._write_outline()
     assert exc.value.args[0] == err_closed
 
     with pytest.raises(RuntimeError) as exc:
-        merger.add_bookmark("A bookmark", 0)
+        merger.add_outline_item("An outline item", 0)
     assert exc.value.args[0] == err_closed
 
     with pytest.raises(RuntimeError) as exc:
@@ -195,7 +199,7 @@ def test_zoom_xyz_no_left():
     os.remove("tmp-merger-do-not-commit.pdf")
 
 
-def test_bookmark():
+def test_outline_item():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/997/997511.pdf"
     name = "tika-997511.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
@@ -296,3 +300,26 @@ def test_iss1145():
     name = "iss1145.pdf"
     merger = PdfMerger()
     merger.append(PdfReader(BytesIO(get_pdf_from_url(url, name=name))))
+
+
+def test_deprecate_bookmark_decorator_warning():
+    reader = PdfReader(
+        os.path.join(RESOURCE_ROOT, "outlines-with-invalid-destinations.pdf")
+    )
+    merger = PdfMerger()
+    with pytest.warns(
+        UserWarning,
+        match="import_bookmarks is deprecated as an argument. Use import_outline instead",
+    ):
+        merger.merge(0, reader, import_bookmarks=True)
+
+
+@pytest.mark.filterwarnings("ignore::UserWarning")
+def test_deprecate_bookmark_decorator_output():
+    reader = PdfReader(
+        os.path.join(RESOURCE_ROOT, "outlines-with-invalid-destinations.pdf")
+    )
+    merger = PdfMerger()
+    merger.merge(0, reader, import_bookmarks=True)
+    first_oi_title = 'Valid Destination: Action /GoTo Named Destination "section.1"'
+    assert merger.outline[0].title == first_oi_title

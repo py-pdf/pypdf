@@ -288,7 +288,7 @@ class AlgV4:
         u_hash.update(o_entry)
         u_hash.update(struct.pack("<I", P))
         u_hash.update(id1_entry)
-        if rev >= 3 and not metadata_encrypted:
+        if rev >= 4 and metadata_encrypted is False:
             u_hash.update(b"\xff\xff\xff\xff")
         u_hash_digest = u_hash.digest()
         length = key_size // 8
@@ -772,7 +772,9 @@ class Encryption:
         R = cast(int, self.entry["/R"])
         P = cast(int, self.entry["/P"])
         P = (P + 0x100000000) % 0x100000000  # maybe < 0
-        metadata_encrypted = self.entry.get("/EncryptMetadata", True)
+        # make type(metadata_encrypted) == bool
+        em = self.entry.get("/EncryptMetadata")
+        metadata_encrypted = em.value if em else True
         o_entry = cast(ByteStringObject, self.entry["/O"].get_object()).original_bytes
         u_entry = cast(ByteStringObject, self.entry["/U"].get_object()).original_bytes
 

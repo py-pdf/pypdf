@@ -69,14 +69,14 @@ def merge():
     file_merger.append(reader)
 
     # PdfReader object:
-    file_merger.append(PyPDF2.PdfReader(pdf_path, "rb"), bookmark=True)
+    file_merger.append(PyPDF2.PdfReader(pdf_path, "rb"), outline_item=True)
 
     # File handle
     with open(pdf_path, "rb") as fh:
         file_merger.append(fh)
 
-    bookmark = file_merger.add_bookmark("A bookmark", 0)
-    file_merger.add_bookmark("deeper", 0, parent=bookmark)
+    outline_item = file_merger.add_outline_item("An outline item", 0)
+    file_merger.add_outline_item("deeper", 0, parent=outline_item)
     file_merger.add_metadata({"author": "Martin Thoma"})
     file_merger.add_named_destination("title", 0)
     file_merger.set_page_layout("/SinglePage")
@@ -86,12 +86,12 @@ def merge():
     file_merger.write(tmp_path)
     file_merger.close()
 
-    # Check if bookmarks are correct
+    # Check if outline is correct
     reader = PyPDF2.PdfReader(tmp_path)
     assert [
-        el.title for el in reader._get_outlines() if isinstance(el, Destination)
+        el.title for el in reader._get_outline() if isinstance(el, Destination)
     ] == [
-        "A bookmark",
+        "An outline item",
         "Foo",
         "Bar",
         "Baz",

@@ -29,6 +29,7 @@
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
+import functools
 import logging
 import warnings
 from codecs import getencoder
@@ -40,7 +41,7 @@ from io import (
     FileIO,
 )
 from os import SEEK_CUR
-from typing import Dict, Optional, Pattern, Tuple, Union, overload
+from typing import Any, Callable, Dict, Optional, Pattern, Tuple, Union, overload
 
 try:
     # Python 3.10+: https://www.python.org/dev/peps/pep-0484/
@@ -362,3 +363,44 @@ def logger_warning(msg: str, src: str) -> None:
       to strict=False mode.
     """
     logging.getLogger(src).warning(msg)
+
+
+def deprecate_bookmark(**aliases: str) -> Callable:
+    """
+    Decorator for deprecated term "bookmark"
+    To be used for methods and function arguments
+        outline_item = a bookmark
+        outline = a collection of outline items
+    """
+
+    def decoration(func: Callable):  # type: ignore
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):  # type: ignore
+            rename_kwargs(func.__name__, kwargs, aliases)
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decoration
+
+
+def rename_kwargs(  # type: ignore
+    func_name: str, kwargs: Dict[str, Any], aliases: Dict[str, str]
+):
+    """
+    Helper function to deprecate arguments.
+    """
+
+    for old_term, new_term in aliases.items():
+        if old_term in kwargs:
+            if new_term in kwargs:
+                raise TypeError(
+                    f"{func_name} received both {old_term} and {new_term} as an argument."
+                    f"{old_term} is deprecated. Use {new_term} instead."
+                )
+            kwargs[new_term] = kwargs.pop(old_term)
+            warnings.warn(
+                message=(
+                    f"{old_term} is deprecated as an argument. Use {new_term} instead"
+                )
+            )

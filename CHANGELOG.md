@@ -1,5 +1,26 @@
 # CHANGELOG
 
+## Version 2.8.1, 2022-07-25
+
+### Bug Fixes (BUG)
+-  u_hash in AlgV4.compute_key (#1170)
+
+### Robustness (ROB)
+-  Fix loading of file from #134 (#1167)
+-  Cope with empty DecodeParams (#1165)
+
+### Documentation (DOC)
+-  Typo in merger deprecation warning message (#1166)
+
+### Maintenance (MAINT)
+-  Package updates; solve mypy strict remarks (#1163)
+
+### Testing (TST)
+-  Add test from #325 (#1169)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.8.0...2.8.1
+
+
 ## Version 2.8.0, 2022-07-24
 
 ### New Features (ENH)

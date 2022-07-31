@@ -3,6 +3,7 @@ import os
 import sys
 from io import BytesIO
 from pathlib import Path
+from re import findall
 
 import pytest
 
@@ -44,7 +45,7 @@ def test_PdfReaderFileLoad():
         with open(os.path.join(RESOURCE_ROOT, "crazyones.txt"), "rb") as pdftext_file:
             pdftext = pdftext_file.read()
 
-        text = page.extract_text(Tj_sep="", TJ_sep="").encode("utf-8")
+        text = page.extract_text().encode("utf-8")
 
         # Compare the text of the PDF to a known source
         for expected_line, actual_line in zip(text.split(b"\n"), pdftext.split(b"\n")):
@@ -151,6 +152,12 @@ def test_rotate_45():
         (True, "https://arxiv.org/pdf/2201.00029.pdf", [0, 1, 6, 10]),
         # #1145
         (True, "https://github.com/py-pdf/PyPDF2/files/9174594/2017.pdf", [0]),
+        # #1145, remaining issue (empty arguments for FlateEncoding)
+        (
+            True,
+            "https://github.com/py-pdf/PyPDF2/files/9175966/2015._pb_decode_pg0.pdf",
+            [0],
+        ),
         # 6 instead of 5: as there is an issue in page 5 (missing objects)
         # and too complex to handle the warning without hiding real regressions
         (True, "https://arxiv.org/pdf/1601.03642.pdf", [0, 1, 5, 7]),
@@ -201,6 +208,82 @@ def test_extract_textbench(enable, url, pages, print_result=False):
                 print(f"{rst}\n*****************************\n")
     except PdfReadWarning:
         pass
+
+
+def test_orientations():
+    p = PdfReader(os.path.join(RESOURCE_ROOT, "test Orient.pdf")).pages[0]
+    try:
+        p.extract_text("", "")
+    except DeprecationWarning:
+        pass
+    else:
+        raise Exception("DeprecationWarning expected")
+    try:
+        p.extract_text("", "", 0)
+    except DeprecationWarning:
+        pass
+    else:
+        raise Exception("DeprecationWarning expected")
+    try:
+        p.extract_text("", "", 0, 200)
+    except DeprecationWarning:
+        pass
+    else:
+        raise Exception("DeprecationWarning expected")
+
+    try:
+        p.extract_text(Tj_sep="", TJ_sep="")
+    except DeprecationWarning:
+        pass
+    else:
+        raise Exception("DeprecationWarning expected")
+    assert findall("\\((.)\\)", p.extract_text()) == ["T", "B", "L", "R"]
+    try:
+        p.extract_text(None)
+    except Exception:
+        pass
+    else:
+        raise Exception("Argument 1 check invalid")
+    try:
+        p.extract_text("", 0)
+    except Exception:
+        pass
+    else:
+        raise Exception("Argument 2 check invalid")
+    try:
+        p.extract_text("", "", None)
+    except Exception:
+        pass
+    else:
+        raise Exception("Argument 3 check invalid")
+    try:
+        p.extract_text("", "", 0, "")
+    except Exception:
+        pass
+    else:
+        raise Exception("Argument 4 check invalid")
+    try:
+        p.extract_text(0, "")
+    except Exception:
+        pass
+    else:
+        raise Exception("Argument 1 new syntax check invalid")
+
+    p.extract_text(0, 0)
+    p.extract_text(orientations=0)
+
+    for (req, rst) in (
+        (0, ["T"]),
+        (90, ["L"]),
+        (180, ["B"]),
+        (270, ["R"]),
+        ((0,), ["T"]),
+        ((0, 180), ["T", "B"]),
+        ((45,), []),
+    ):
+        assert (
+            findall("\\((.)\\)", p.extract_text(req)) == rst
+        ), f"extract_text({req}) => {rst}"
 
 
 @pytest.mark.parametrize(
@@ -548,7 +631,7 @@ def test_image_extraction2(url, name):
 def test_get_outline(url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
-    reader.outlines
+    reader.outline
 
 
 @pytest.mark.parametrize(
