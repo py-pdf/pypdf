@@ -1,17 +1,18 @@
 import os
+from pathlib import Path
 
 import PyPDF2
 from PyPDF2 import PdfReader, Transformation
 from PyPDF2.generic import Destination
 
-TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
-PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
-RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
-SAMPLE_ROOT = os.path.join(PROJECT_ROOT, "sample-files")
+TESTS_ROOT = Path(__file__).parent.resolve()
+PROJECT_ROOT = TESTS_ROOT.parent
+RESOURCE_ROOT = PROJECT_ROOT / "resources"
+SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 
 
 def page_ops(pdf_path, password):
-    pdf_path = os.path.join(RESOURCE_ROOT, pdf_path)
+    pdf_path = RESOURCE_ROOT / pdf_path
 
     reader = PdfReader(pdf_path)
 
@@ -50,10 +51,10 @@ def test_page_operations(benchmark):
 
 
 def merge():
-    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
-    outline = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
-    pdf_forms = os.path.join(RESOURCE_ROOT, "pdflatex-forms.pdf")
-    pdf_pw = os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf")
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    outline = RESOURCE_ROOT / "pdflatex-outline.pdf"
+    pdf_forms = RESOURCE_ROOT / "pdflatex-forms.pdf"
+    pdf_pw = RESOURCE_ROOT / "libreoffice-writer-password.pdf"
 
     file_merger = PyPDF2.PdfMerger()
 
@@ -126,5 +127,5 @@ def text_extraction(pdf_path):
 
 
 def test_text_extraction(benchmark):
-    file_path = os.path.join(SAMPLE_ROOT, "009-pdflatex-geotopo/GeoTopo.pdf")
+    file_path = SAMPLE_ROOT / "009-pdflatex-geotopo/GeoTopo.pdf"
     benchmark(text_extraction, file_path)

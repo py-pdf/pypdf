@@ -1,4 +1,3 @@
-import os
 from datetime import datetime
 from io import BytesIO
 from pathlib import Path
@@ -12,8 +11,8 @@ from PyPDF2.errors import PdfReadError
 
 from . import get_pdf_from_url
 
-TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
-PROJECT_ROOT = Path(os.path.dirname(TESTS_ROOT))
+TESTS_ROOT = Path(__file__).parent.resolve()
+PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 

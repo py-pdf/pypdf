@@ -10,8 +10,8 @@ from PyPDF2.generic import RectangleObject, StreamObject
 
 from . import get_pdf_from_url
 
-TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
-PROJECT_ROOT = Path(os.path.dirname(TESTS_ROOT))
+TESTS_ROOT = Path(__file__).parent.resolve()
+PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 

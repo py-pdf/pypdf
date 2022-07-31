@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 import pytest
@@ -15,8 +14,8 @@ try:
 except ImportError:
     HAS_PYCRYPTODOME = False
 
-TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
-PROJECT_ROOT = Path(os.path.dirname(TESTS_ROOT))
+TESTS_ROOT = Path(__file__).parent.resolve()
+PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 
