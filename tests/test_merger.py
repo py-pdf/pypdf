@@ -274,14 +274,14 @@ def test_sweep_recursion2(url, name):
     os.remove("tmp-merger-do-not-commit.pdf")
 
 
-def test_sweep_indirect_list_newobj_is_None():
+def test_sweep_indirect_list_newobj_is_None(caplog):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/906/906769.pdf"
     name = "tika-906769.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     merger = PdfMerger()
     merger.append(reader)
-    with pytest.warns(UserWarning, match="Object 21 0 not defined."):
-        merger.write("tmp-merger-do-not-commit.pdf")
+    merger.write("tmp-merger-do-not-commit.pdf")
+    assert "Object 21 0 not defined." in caplog.text
 
     reader2 = PdfReader("tmp-merger-do-not-commit.pdf")
     reader2.pages
