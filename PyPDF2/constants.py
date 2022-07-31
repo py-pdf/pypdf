@@ -322,26 +322,26 @@ class NamedColors:
         )
 
     @classmethod
-    def attributes_dict(cls) -> Dict[str, tuple]:
+    def attributes_dict(cls) -> Dict[str, Tuple[float, float, float]]:
         """Returns Tuple of (R, G, B) values ranging from 0.0 - 1.0"""
         return {
             cls.WHITE: (1.0, 1.0, 1.0),
-            cls.SILVER: (0.7529411764705882, 0.7529411764705882, 0.7529411764705882),
-            cls.GRAY: (0.5019607843137255, 0.5019607843137255, 0.5019607843137255),
+            cls.SILVER: (0.75294, 0.75294, 0.75294),
+            cls.GRAY: (0.50196, 0.50196, 0.50196),
             cls.BLACK: (0.0, 0.0, 0.0),
             cls.RED: (1.0, 0.0, 0.0),
-            cls.MAROON: (0.5019607843137255, 0.0, 0.0),
-            cls.ORANGE: (1.0, 0.6470588235294118, 0.0),
+            cls.MAROON: (0.50196, 0.0, 0.0),
+            cls.ORANGE: (1.0, 0.64706, 0.0),
             cls.YELLOW: (1.0, 1.0, 0.0),
-            cls.OLIVE: (0.5019607843137255, 0.5019607843137255, 0.0),
+            cls.OLIVE: (0.50196, 0.50196, 0.0),
             cls.LIME: (0.0, 1.0, 0.0),
-            cls.GREEN: (0.0, 0.5019607843137255, 0.0),
+            cls.GREEN: (0.0, 0.50196, 0.0),
             cls.AQUA: (0.0, 1.0, 1.0),
-            cls.TEAL: (0.0, 0.5019607843137255, 0.5019607843137255),
+            cls.TEAL: (0.0, 0.50196, 0.50196),
             cls.BLUE: (0.0, 0.0, 1.0),
-            cls.NAVY: (0.0, 0.0, 0.5019607843137255),
+            cls.NAVY: (0.0, 0.0, 0.50196),
             cls.FUCHSIA: (1.0, 0.0, 1.0),
-            cls.PURPLE: (0.5019607843137255, 0.0, 0.5019607843137255),
+            cls.PURPLE: (0.50196, 0.0, 0.50196),
         }
 
 

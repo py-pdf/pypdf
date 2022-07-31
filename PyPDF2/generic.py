@@ -2037,10 +2037,10 @@ def _create_outline_item(
         if isinstance(color, str):
             try:
                 # see if a named color
-                color = NamedColors.attributes_dict()[color.lower()]
+                color = NamedColors.attributes_dict()[color.lower()]  # type: ignore
             except KeyError:
                 # see if it is a hexstring
-                color = hex_to_rgb(color)
+                color = hex_to_rgb(color)  # type: ignore
             except ValueError:
                 raise
 
