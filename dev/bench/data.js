@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1659259227558,
+  "lastUpdate": 1659279861341,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -11929,6 +11929,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.024834464174909723",
             "extra": "mean: 3.860033641000004 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ab01f14f9bdebecd4efe552093605d5bb81f42c5",
+          "message": "ENH: Add link annotation (#1189)\n\n* Add AnnotationBuilder.link(...)\r\n* Allow creating a RectangleObject from a RectangleObject. This is useful to create a copy or to ensure we have a RectangleObject with little code.\r\n* Deprecate `writer.add_link` by `writer.add_annotation(AnnotationBuilder.link(...))`.\r\n* Add test for reading an external link annotation.\r\n\r\nCloses #284",
+          "timestamp": "2022-07-31T17:03:24+02:00",
+          "tree_id": "403339d8e7f83b4ea19dab88aa70f0208d06fb54",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/ab01f14f9bdebecd4efe552093605d5bb81f42c5"
+        },
+        "date": 1659279860721,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.1834915384504299,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0070573752637748234",
+            "extra": "mean: 844.9574564000017 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 14.930138856935008,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005614028936784909",
+            "extra": "mean: 66.97861350000123 msec\nrounds: 16"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2957016560542493,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020408633587563348",
+            "extra": "mean: 3.3817869447999995 sec\nrounds: 5"
           }
         ]
       }
