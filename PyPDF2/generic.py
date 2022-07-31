@@ -2078,7 +2078,7 @@ def hex_to_rgb(value: str) -> Tuple[float, float, float]:
 
 
 class AnnotationBuilder:
-    from .types import BorderArrayType, FitType, ZoomArgType
+    from .types import FitType, ZoomArgType
 
     @staticmethod
     def free_text(
@@ -2227,6 +2227,8 @@ class AnnotationBuilder:
            * - /FitBV
              - [left]
         """
+        from .types import BorderArrayType
+
         is_external = url is not None
         is_internal = target_page_index is not None
         if not is_external and not is_internal:
