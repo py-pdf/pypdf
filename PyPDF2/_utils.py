@@ -29,6 +29,8 @@
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
+import functools
+import logging
 import warnings
 from codecs import getencoder
 from io import (
@@ -39,13 +41,22 @@ from io import (
     FileIO,
 )
 from os import SEEK_CUR
-from typing import Dict, Optional, Pattern, Tuple, Union, overload
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Optional,
+    Pattern,
+    Tuple,
+    Union,
+    overload,
+)
 
 try:
     # Python 3.10+: https://www.python.org/dev/peps/pep-0484/
     from typing import TypeAlias  # type: ignore[attr-defined]
 except ImportError:
-    from typing_extensions import TypeAlias  # type: ignore[misc]
+    from typing_extensions import TypeAlias
 
 from .errors import STREAM_TRUNCATED_PREMATURELY, PdfStreamError
 
@@ -129,7 +140,7 @@ def skip_over_comment(stream: StreamType) -> None:
 
 
 def read_until_regex(
-    stream: StreamType, regex: Pattern, ignore_eof: bool = False
+    stream: StreamType, regex: Pattern[bytes], ignore_eof: bool = False
 ) -> bytes:
     """
     Read until the regular expression pattern matched (ignore the match).
@@ -342,3 +353,63 @@ def deprecate_with_replacement(
 
 def deprecate_no_replacement(name: str, removed_in: str = "3.0.0") -> None:
     deprecate(DEPR_MSG_NO_REPLACEMENT.format(name, removed_in), 4)
+
+
+def logger_warning(msg: str, src: str) -> None:
+    """
+    Use this instead of logger.warning directly.
+
+    That allows people to overwrite it more easily.
+
+    ## Exception, warnings.warn, logger_warning
+    - Exceptions should be used if the user should write code that deals with
+      an error case, e.g. the PDF being completely broken.
+    - warnings.warn should be used if the user needs to fix their code, e.g.
+      DeprecationWarnings
+    - logger_warning should be used if the user needs to know that an issue was
+      handled by PyPDF2, e.g. a non-compliant PDF being read in a way that
+      PyPDF2 could apply a robustness fix to still read it. This applies mainly
+      to strict=False mode.
+    """
+    logging.getLogger(src).warning(msg)
+
+
+def deprecate_bookmark(**aliases: str) -> Callable:
+    """
+    Decorator for deprecated term "bookmark"
+    To be used for methods and function arguments
+        outline_item = a bookmark
+        outline = a collection of outline items
+    """
+
+    def decoration(func: Callable):  # type: ignore
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):  # type: ignore
+            rename_kwargs(func.__name__, kwargs, aliases)
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decoration
+
+
+def rename_kwargs(  # type: ignore
+    func_name: str, kwargs: Dict[str, Any], aliases: Dict[str, str]
+):
+    """
+    Helper function to deprecate arguments.
+    """
+
+    for old_term, new_term in aliases.items():
+        if old_term in kwargs:
+            if new_term in kwargs:
+                raise TypeError(
+                    f"{func_name} received both {old_term} and {new_term} as an argument."
+                    f"{old_term} is deprecated. Use {new_term} instead."
+                )
+            kwargs[new_term] = kwargs.pop(old_term)
+            warnings.warn(
+                message=(
+                    f"{old_term} is deprecated as an argument. Use {new_term} instead"
+                )
+            )

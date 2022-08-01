@@ -6,13 +6,13 @@
 #
 attrs==21.4.0
     # via pytest
-black==22.3.0
+black==22.6.0
     # via -r requirements/dev.in
 bleach==4.1.0
     # via readme-renderer
 certifi==2022.6.15
     # via requests
-cffi==1.15.0
+cffi==1.15.1
     # via cryptography
 cfgv==3.3.1
     # via pre-commit
@@ -26,11 +26,11 @@ colorama==0.4.5
     # via twine
 coverage[toml]==6.2
     # via pytest-cov
-cryptography==37.0.2
+cryptography==37.0.4
     # via secretstorage
 dataclasses==0.8
     # via black
-distlib==0.3.4
+distlib==0.3.5
     # via virtualenv
 docutils==0.18.1
     # via readme-renderer
@@ -135,11 +135,11 @@ typing-extensions==4.1.1
     # via
     #   black
     #   importlib-metadata
-urllib3==1.26.9
+urllib3==1.26.10
     # via
     #   requests
     #   twine
-virtualenv==20.14.1
+virtualenv==20.15.1
     # via pre-commit
 webencodings==0.5.1
     # via bleach

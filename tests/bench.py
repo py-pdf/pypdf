@@ -1,19 +1,18 @@
 import os
-
-import pytest
+from pathlib import Path
 
 import PyPDF2
 from PyPDF2 import PdfReader, Transformation
 from PyPDF2.generic import Destination
 
-TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
-PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
-RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
-SAMPLE_ROOT = os.path.join(PROJECT_ROOT, "sample-files")
+TESTS_ROOT = Path(__file__).parent.resolve()
+PROJECT_ROOT = TESTS_ROOT.parent
+RESOURCE_ROOT = PROJECT_ROOT / "resources"
+SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 
 
 def page_ops(pdf_path, password):
-    pdf_path = os.path.join(RESOURCE_ROOT, pdf_path)
+    pdf_path = RESOURCE_ROOT / pdf_path
 
     reader = PdfReader(pdf_path)
 
@@ -52,10 +51,10 @@ def test_page_operations(benchmark):
 
 
 def merge():
-    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
-    outline = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
-    pdf_forms = os.path.join(RESOURCE_ROOT, "pdflatex-forms.pdf")
-    pdf_pw = os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf")
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    outline = RESOURCE_ROOT / "pdflatex-outline.pdf"
+    pdf_forms = RESOURCE_ROOT / "pdflatex-forms.pdf"
+    pdf_pw = RESOURCE_ROOT / "libreoffice-writer-password.pdf"
 
     file_merger = PyPDF2.PdfMerger()
 
@@ -71,14 +70,14 @@ def merge():
     file_merger.append(reader)
 
     # PdfReader object:
-    file_merger.append(PyPDF2.PdfReader(pdf_path, "rb"), bookmark=True)
+    file_merger.append(PyPDF2.PdfReader(pdf_path, "rb"), outline_item=True)
 
     # File handle
     with open(pdf_path, "rb") as fh:
         file_merger.append(fh)
 
-    bookmark = file_merger.add_bookmark("A bookmark", 0)
-    file_merger.add_bookmark("deeper", 0, parent=bookmark)
+    outline_item = file_merger.add_outline_item("An outline item", 0)
+    file_merger.add_outline_item("deeper", 0, parent=outline_item)
     file_merger.add_metadata({"author": "Martin Thoma"})
     file_merger.add_named_destination("title", 0)
     file_merger.set_page_layout("/SinglePage")
@@ -88,12 +87,12 @@ def merge():
     file_merger.write(tmp_path)
     file_merger.close()
 
-    # Check if bookmarks are correct
+    # Check if outline is correct
     reader = PyPDF2.PdfReader(tmp_path)
     assert [
-        el.title for el in reader._get_outlines() if isinstance(el, Destination)
+        el.title for el in reader._get_outline() if isinstance(el, Destination)
     ] == [
-        "A bookmark",
+        "An outline item",
         "Foo",
         "Bar",
         "Baz",
@@ -127,7 +126,6 @@ def text_extraction(pdf_path):
     return text
 
 
-@pytest.mark.filterwarnings("ignore::PyPDF2.errors.PdfReadWarning")
 def test_text_extraction(benchmark):
-    file_path = os.path.join(SAMPLE_ROOT, "009-pdflatex-geotopo/GeoTopo.pdf")
+    file_path = SAMPLE_ROOT / "009-pdflatex-geotopo/GeoTopo.pdf"
     benchmark(text_extraction, file_path)

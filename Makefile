@@ -31,3 +31,6 @@ mutation-results:
 
 benchmark:
 	pytest tests/bench.py
+
+mypy:
+	mypy PyPDF2 --ignore-missing-imports --check-untyped --strict

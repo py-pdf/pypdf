@@ -26,19 +26,24 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from io import BytesIO, FileIO, IOBase
+from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast, Type
 
 from ._encryption import Encryption
 from ._page import PageObject
 from ._reader import PdfReader
-from ._utils import StrByteType, deprecate_with_replacement, str_
+from ._utils import (
+    StrByteType,
+    deprecate_bookmark,
+    deprecate_with_replacement,
+    str_,
+)
 from ._writer import PdfWriter
 from .constants import GoToActionArguments
 from .constants import PagesAttributes as PA
 from .constants import TypArguments, TypFitArguments
 from .generic import (
     ArrayObject,
-    Bookmark,
     Destination,
     DictionaryObject,
     FloatObject,
@@ -46,12 +51,14 @@ from .generic import (
     NameObject,
     NullObject,
     NumberObject,
+    OutlineItem,
     TextStringObject,
     TreeObject,
 )
 from .pagerange import PageRange, PageRangeSpec
-from .types import FitType, LayoutType, OutlinesType, PagemodeType, ZoomArgType
+from .types import FitType, LayoutType, OutlineType, PagemodeType, ZoomArgType
 from types import TracebackType
+
 
 ERR_CLOSED_WRITER = "close() was called and thus the writer cannot be used anymore"
 
@@ -83,11 +90,12 @@ class PdfMerger:
             file-like object.
     """
 
+     @deprecate_bookmark(bookmarks="outline")
     def __init__(self, strict: bool = False, fileobj: StrByteType = "") -> None:
         self.inputs: List[Tuple[Any, PdfReader, bool]] = []
         self.pages: List[Any] = []
         self.output: Optional[PdfWriter] = PdfWriter()
-        self.bookmarks: OutlinesType = []
+        self.outline: OutlineType = []
         self.named_dests: List[Any] = []
         self.id_count = 0
         self.fileobj = fileobj
@@ -104,13 +112,14 @@ class PdfMerger:
             self.write(self.fileobj)
         self.close()
 
+    @deprecate_bookmark(bookmark="outline_item", import_bookmarks="import_outline")
     def merge(
         self,
         position: int,
-        fileobj: Union[StrByteType, PdfReader],
-        bookmark: Optional[str] = None,
+        fileobj: Union[Path, StrByteType, PdfReader],
+        outline_item: Optional[str] = None,
         pages: Optional[PageRangeSpec] = None,
-        import_bookmarks: bool = True,
+        import_outline: bool = True,
     ) -> None:
         """
         Merge the pages from the given file into the output file at the
@@ -123,17 +132,18 @@ class PdfMerger:
             read and seek methods similar to a File Object. Could also be a
             string representing a path to a PDF file.
 
-        :param str bookmark: Optionally, you may specify a bookmark to be
-            applied at the beginning of the included file by supplying the text
-            of the bookmark.
+        :param str outline_item: Optionally, you may specify an outline item
+            (previously referred to as a 'bookmark') to be applied at the
+            beginning of the included file by supplying the text of the outline item.
 
         :param pages: can be a :class:`PageRange<PyPDF2.pagerange.PageRange>`
             or a ``(start, stop[, step])`` tuple
             to merge only the specified range of pages from the source
             document into the output document.
 
-        :param bool import_bookmarks: You may prevent the source document's
-            bookmarks from being imported by specifying this as ``False``.
+        :param bool import_outline: You may prevent the source document's
+            outline (collection of outline items, previously referred to as
+            'bookmarks') from being imported by specifying this as ``False``.
         """
         stream, my_file, encryption_obj = self._create_stream(fileobj)
 
@@ -155,19 +165,19 @@ class PdfMerger:
         srcpages = []
 
         outline = []
-        if import_bookmarks:
-            outline = reader.outlines
+        if import_outline:
+            outline = reader.outline
             outline = self._trim_outline(reader, outline, pages)
 
-        if bookmark:
-            bookmark_typ = Bookmark(
-                TextStringObject(bookmark),
+        if outline_item:
+            outline_item_typ = OutlineItem(
+                TextStringObject(outline_item),
                 NumberObject(self.id_count),
                 NameObject(TypFitArguments.FIT),
             )
-            self.bookmarks += [bookmark_typ, outline]  # type: ignore
+            self.outline += [outline_item_typ, outline]  # type: ignore
         else:
-            self.bookmarks += outline
+            self.outline += outline
 
         dests = reader.named_destinations
         trimmed_dests = self._trim_dests(reader, dests, pages)
@@ -185,13 +195,13 @@ class PdfMerger:
             srcpages.append(mp)
 
         self._associate_dests_to_pages(srcpages)
-        self._associate_bookmarks_to_pages(srcpages)
+        self._associate_outline_items_to_pages(srcpages)
 
         # Slice to insert the pages at the specified position
         self.pages[position:position] = srcpages
 
     def _create_stream(
-        self, fileobj: Union[StrByteType, PdfReader]
+        self, fileobj: Union[Path, StrByteType, PdfReader]
     ) -> Tuple[IOBase, bool, Optional[Encryption]]:
         # This parameter is passed to self.inputs.append and means
         # that the stream used was created in this method.
@@ -205,7 +215,7 @@ class PdfMerger:
         # If fileobj is none of the above types, it is not modified
         encryption_obj = None
         stream: IOBase
-        if isinstance(fileobj, str):
+        if isinstance(fileobj, (str, Path)):
             stream = FileIO(fileobj, "rb")
             my_file = True
         elif isinstance(fileobj, PdfReader):
@@ -228,12 +238,13 @@ class PdfMerger:
             stream = fileobj
         return stream, my_file, encryption_obj
 
+    @deprecate_bookmark(bookmark="outline_item", import_bookmarks="import_outline")
     def append(
         self,
-        fileobj: Union[StrByteType, PdfReader],
-        bookmark: Optional[str] = None,
+        fileobj: Union[StrByteType, PdfReader, Path],
+        outline_item: Optional[str] = None,
         pages: Union[None, PageRange, Tuple[int, int], Tuple[int, int, int]] = None,
-        import_bookmarks: bool = True,
+        import_outline: bool = True,
     ) -> None:
         """
         Identical to the :meth:`merge()<merge>` method, but assumes you want to
@@ -244,19 +255,20 @@ class PdfMerger:
             read and seek methods similar to a File Object. Could also be a
             string representing a path to a PDF file.
 
-        :param str bookmark: Optionally, you may specify a bookmark to be
-            applied at the beginning of the included file by supplying the text
-            of the bookmark.
+        :param str outline_item: Optionally, you may specify an outline item
+            (previously referred to as a 'bookmark') to be applied at the
+            beginning of the included file by supplying the text of the outline item.
 
         :param pages: can be a :class:`PageRange<PyPDF2.pagerange.PageRange>`
             or a ``(start, stop[, step])`` tuple
             to merge only the specified range of pages from the source
             document into the output document.
 
-        :param bool import_bookmarks: You may prevent the source document's
-            bookmarks from being imported by specifying this as ``False``.
+        :param bool import_outline: You may prevent the source document's
+            outline (collection of outline items, previously referred to as
+            'bookmarks') from being imported by specifying this as ``False``.
         """
-        self.merge(len(self.pages), fileobj, bookmark, pages, import_bookmarks)
+        self.merge(len(self.pages), fileobj, outline_item, pages, import_outline)
 
     def write(self, fileobj: StrByteType) -> None:
         """
@@ -280,9 +292,9 @@ class PdfMerger:
             # idnum = self.output._objects.index(self.output._pages.get_object()[PA.KIDS][-1].get_object()) + 1
             # page.out_pagedata = IndirectObject(idnum, 0, self.output)
 
-        # Once all pages are added, create bookmarks to point at those pages
+        # Once all pages are added, create outline items to point at those pages
         self._write_dests()
-        self._write_bookmarks()
+        self._write_outline()
 
         # Write the output to the file
         my_file, fileobj = self.output.write(fileobj)
@@ -377,9 +389,9 @@ class PdfMerger:
            :widths: 50 200
 
            * - /UseNone
-             - Do not show outlines or thumbnails panels
+             - Do not show outline or thumbnails panels
            * - /UseOutlines
-             - Show outlines (aka bookmarks) panel
+             - Show outline (aka bookmarks) panel
            * - /UseThumbs
              - Show page thumbnails panel
            * - /FullScreen
@@ -413,15 +425,15 @@ class PdfMerger:
     def _trim_outline(
         self,
         pdf: PdfReader,
-        outline: OutlinesType,
+        outline: OutlineType,
         pages: Union[Tuple[int, int], Tuple[int, int, int]],
-    ) -> OutlinesType:
-        """Remove outline/bookmark entries that are not a part of the specified page set."""
+    ) -> OutlineType:
+        """Remove outline item entries that are not a part of the specified page set."""
         new_outline = []
         prev_header_added = True
-        for i, o in enumerate(outline):
-            if isinstance(o, list):
-                sub = self._trim_outline(pdf, o, pages)  # type: ignore
+        for i, outline_item in enumerate(outline):
+            if isinstance(outline_item, list):
+                sub = self._trim_outline(pdf, outline_item, pages)  # type: ignore
                 if sub:
                     if not prev_header_added:
                         new_outline.append(outline[i - 1])
@@ -429,11 +441,13 @@ class PdfMerger:
             else:
                 prev_header_added = False
                 for j in range(*pages):
-                    if o["/Page"] is None:
+                    if outline_item["/Page"] is None:
                         continue
-                    if pdf.pages[j].get_object() == o["/Page"].get_object():
-                        o[NameObject("/Page")] = o["/Page"].get_object()
-                        new_outline.append(o)
+                    if pdf.pages[j].get_object() == outline_item["/Page"].get_object():
+                        outline_item[NameObject("/Page")] = outline_item[
+                            "/Page"
+                        ].get_object()
+                        new_outline.append(outline_item)
                         prev_header_added = True
                         break
         return new_outline
@@ -452,38 +466,40 @@ class PdfMerger:
             if pageno is not None:
                 self.output.add_named_destination_object(named_dest)
 
-    def _write_bookmarks(
+    @deprecate_bookmark(bookmarks="outline")
+    def _write_outline(
         self,
-        bookmarks: Optional[Iterable[Bookmark]] = None,
+        outline: Optional[Iterable[OutlineItem]] = None,
         parent: Optional[TreeObject] = None,
     ) -> None:
         if self.output is None:
             raise RuntimeError(ERR_CLOSED_WRITER)
-        if bookmarks is None:
-            bookmarks = self.bookmarks  # type: ignore
-        assert bookmarks is not None, "hint for mypy"  # TODO: is that true?
+        if outline is None:
+            outline = self.outline  # type: ignore
+        assert outline is not None, "hint for mypy"  # TODO: is that true?
 
         last_added = None
-        for bookmark in bookmarks:
-            if isinstance(bookmark, list):
-                self._write_bookmarks(bookmark, last_added)
+        for outline_item in outline:
+            if isinstance(outline_item, list):
+                self._write_outline(outline_item, last_added)
                 continue
 
             page_no = None
-            if "/Page" in bookmark:
+            if "/Page" in outline_item:
                 for page_no, page in enumerate(self.pages):  # noqa: B007
-                    if page.id == bookmark["/Page"]:
-                        self._write_bookmark_on_page(bookmark, page)
+                    if page.id == outline_item["/Page"]:
+                        self._write_outline_item_on_page(outline_item, page)
                         break
             if page_no is not None:
-                del bookmark["/Page"], bookmark["/Type"]
-                last_added = self.output.add_bookmark_dict(bookmark, parent)
+                del outline_item["/Page"], outline_item["/Type"]
+                last_added = self.output.add_outline_item_dict(outline_item, parent)
 
-    def _write_bookmark_on_page(
-        self, bookmark: Union[Bookmark, Destination], page: _MergedPage
+    @deprecate_bookmark(bookmark="outline_item")
+    def _write_outline_item_on_page(
+        self, outline_item: Union[OutlineItem, Destination], page: _MergedPage
     ) -> None:
-        bm_type = cast(str, bookmark["/Type"])
-        args = [NumberObject(page.id), NameObject(bm_type)]
+        oi_type = cast(str, outline_item["/Type"])
+        args = [NumberObject(page.id), NameObject(oi_type)]
         fit2arg_keys: Dict[str, Tuple[str, ...]] = {
             TypFitArguments.FIT_H: (TypArguments.TOP,),
             TypFitArguments.FIT_BH: (TypArguments.TOP,),
@@ -497,14 +513,16 @@ class PdfMerger:
                 TypArguments.TOP,
             ),
         }
-        for arg_key in fit2arg_keys.get(bm_type, tuple()):
-            if arg_key in bookmark and not isinstance(bookmark[arg_key], NullObject):
-                args.append(FloatObject(bookmark[arg_key]))
+        for arg_key in fit2arg_keys.get(oi_type, tuple()):
+            if arg_key in outline_item and not isinstance(
+                outline_item[arg_key], NullObject
+            ):
+                args.append(FloatObject(outline_item[arg_key]))
             else:
                 args.append(FloatObject(0))
-            del bookmark[arg_key]
+            del outline_item[arg_key]
 
-        bookmark[NameObject("/A")] = DictionaryObject(
+        outline_item[NameObject("/A")] = DictionaryObject(
             {
                 NameObject(GoToActionArguments.S): NameObject("/GoTo"),
                 NameObject(GoToActionArguments.D): ArrayObject(args),
@@ -528,52 +546,100 @@ class PdfMerger:
             else:
                 raise ValueError(f"Unresolved named destination '{nd['/Title']}'")
 
-    def _associate_bookmarks_to_pages(
-        self, pages: List[_MergedPage], bookmarks: Optional[Iterable[Bookmark]] = None
+    @deprecate_bookmark(bookmarks="outline")
+    def _associate_outline_items_to_pages(
+        self, pages: List[_MergedPage], outline: Optional[Iterable[OutlineItem]] = None
     ) -> None:
-        if bookmarks is None:
-            bookmarks = self.bookmarks  # type: ignore # TODO: self.bookmarks can be None!
-        assert bookmarks is not None, "hint for mypy"
-        for b in bookmarks:
-            if isinstance(b, list):
-                self._associate_bookmarks_to_pages(pages, b)
+        if outline is None:
+            outline = self.outline  # type: ignore # TODO: self.bookmarks can be None!
+        assert outline is not None, "hint for mypy"
+        for outline_item in outline:
+            if isinstance(outline_item, list):
+                self._associate_outline_items_to_pages(pages, outline_item)
                 continue
 
             pageno = None
-            bp = b["/Page"]
+            outline_item_page = outline_item["/Page"]
 
-            if isinstance(bp, NumberObject):
+            if isinstance(outline_item_page, NumberObject):
                 continue
 
             for p in pages:
-                if bp.get_object() == p.pagedata.get_object():
+                if outline_item_page.get_object() == p.pagedata.get_object():
                     pageno = p.id
 
             if pageno is not None:
-                b[NameObject("/Page")] = NumberObject(pageno)
-            else:
-                raise ValueError(f"Unresolved bookmark '{b['/Title']}'")
+                outline_item[NameObject("/Page")] = NumberObject(pageno)
 
-    def find_bookmark(
+    @deprecate_bookmark(bookmark="outline_item")
+    def find_outline_item(
         self,
-        bookmark: Dict[str, Any],
-        root: Optional[OutlinesType] = None,
+        outline_item: Dict[str, Any],
+        root: Optional[OutlineType] = None,
     ) -> Optional[List[int]]:
         if root is None:
-            root = self.bookmarks
+            root = self.outline
 
-        for i, b in enumerate(root):
-            if isinstance(b, list):
-                # b is still an inner node
-                # (OutlinesType, if recursive types were supported by mypy)
-                res = self.find_bookmark(bookmark, b)  # type: ignore
+        for i, oi_enum in enumerate(root):
+            if isinstance(oi_enum, list):
+                # oi_enum is still an inner node
+                # (OutlineType, if recursive types were supported by mypy)
+                res = self.find_outline_item(outline_item, oi_enum)  # type: ignore
                 if res:
                     return [i] + res
-            elif b == bookmark or b["/Title"] == bookmark:
+            elif (
+                oi_enum == outline_item
+                or cast(Dict[Any, Any], oi_enum["/Title"]) == outline_item
+            ):
                 # we found a leaf node
                 return [i]
 
         return None
+
+    @deprecate_bookmark(bookmark="outline_item")
+    def find_bookmark(
+        self,
+        outline_item: Dict[str, Any],
+        root: Optional[OutlineType] = None,
+    ) -> Optional[List[int]]:
+        """
+        .. deprecated:: 2.9.0
+            Use :meth:`find_outline_item` instead.
+        """
+
+        return self.find_outline_item(outline_item, root)
+
+    def add_outline_item(
+        self,
+        title: str,
+        pagenum: int,
+        parent: Union[None, TreeObject, IndirectObject] = None,
+        color: Optional[Tuple[float, float, float]] = None,
+        bold: bool = False,
+        italic: bool = False,
+        fit: FitType = "/Fit",
+        *args: ZoomArgType,
+    ) -> IndirectObject:
+        """
+        Add an outline item (commonly referred to as a "Bookmark") to this PDF file.
+
+        :param str title: Title to use for this outline item.
+        :param int pagenum: Page number this outline item will point to.
+        :param parent: A reference to a parent outline item to create nested
+            outline items.
+        :param tuple color: Color of the outline item's font as a red, green, blue tuple
+            from 0.0 to 1.0
+        :param bool bold: Outline item font is bold
+        :param bool italic: Outline item font is italic
+        :param str fit: The fit of the destination page. See
+            :meth:`add_link()<add_link>` for details.
+        """
+        writer = self.output
+        if writer is None:
+            raise RuntimeError(ERR_CLOSED_WRITER)
+        return writer.add_outline_item(
+            title, pagenum, parent, color, bold, italic, fit, *args
+        )
 
     def addBookmark(
         self,
@@ -588,10 +654,10 @@ class PdfMerger:
     ) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
-            Use :meth:`add_bookmark` instead.
+            Use :meth:`add_outline_item` instead.
         """
-        deprecate_with_replacement("addBookmark", "add_bookmark")
-        return self.add_bookmark(
+        deprecate_with_replacement("addBookmark", "add_outline_item")
+        return self.add_outline_item(
             title, pagenum, parent, color, bold, italic, fit, *args
         )
 
@@ -607,23 +673,11 @@ class PdfMerger:
         *args: ZoomArgType,
     ) -> IndirectObject:
         """
-        Add a bookmark to this PDF file.
-
-        :param str title: Title to use for this bookmark.
-        :param int pagenum: Page number this bookmark will point to.
-        :param parent: A reference to a parent bookmark to create nested
-            bookmarks.
-        :param tuple color: Color of the bookmark as a red, green, blue tuple
-            from 0.0 to 1.0
-        :param bool bold: Bookmark is bold
-        :param bool italic: Bookmark is italic
-        :param str fit: The fit of the destination page. See
-            :meth:`addLink()<addLink>` for details.
+        .. deprecated:: 2.9.0
+            Use :meth:`add_outline_item` instead.
         """
-        writer = self.output
-        if writer is None:
-            raise RuntimeError(ERR_CLOSED_WRITER)
-        return writer.add_bookmark(
+        deprecate_with_replacement("addBookmark", "add_outline_item")
+        return self.add_outline_item(
             title, pagenum, parent, color, bold, italic, fit, *args
         )
 
@@ -653,7 +707,7 @@ class PdfMerger:
 
 class PdfFileMerger(PdfMerger):  # pragma: no cover
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        deprecate_with_replacement("PdfFileMerger", "PdfMerge")
+        deprecate_with_replacement("PdfFileMerger", "PdfMerger")
 
         if "strict" not in kwargs and len(args) < 1:
             kwargs["strict"] = True  # maintain the default

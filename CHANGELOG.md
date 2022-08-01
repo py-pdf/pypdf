@@ -1,5 +1,106 @@
 # CHANGELOG
 
+## Version 2.9.0, 2022-07-31
+
+### New Features (ENH)
+-  Add ability to add hex encoded colors to outline items (#1186)
+-  Add support for pathlib.Path in PdfMerger.merge (#1190)
+-  Add link annotation (#1189)
+-  Add capability to filter text extraction by orientation (#1175)
+
+### Bug Fixes (BUG)
+-  Named Dest in PDF1.1 (#1174)
+-  Incomplete Graphic State save/restore (#1172)
+
+### Documentation (DOC)
+-  Update changelog url in package metadata (#1180)
+-  Mantion camelot for table extraction (#1179)
+-  Mention pyHanko for signing PDF documents (#1178)
+-  Weow have CMAP support since a while (#1177)
+
+### Maintenance (MAINT)
+-  Consistant usage of warnings / log messages (#1164)
+-  Consistent terminology for outline items (#1156)
+
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.8.1...2.9.0
+
+## Version 2.8.1, 2022-07-25
+
+### Bug Fixes (BUG)
+-  u_hash in AlgV4.compute_key (#1170)
+
+### Robustness (ROB)
+-  Fix loading of file from #134 (#1167)
+-  Cope with empty DecodeParams (#1165)
+
+### Documentation (DOC)
+-  Typo in merger deprecation warning message (#1166)
+
+### Maintenance (MAINT)
+-  Package updates; solve mypy strict remarks (#1163)
+
+### Testing (TST)
+-  Add test from #325 (#1169)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.8.0...2.8.1
+
+
+## Version 2.8.0, 2022-07-24
+
+### New Features (ENH)
+-  Add writer.add_annotation, page.annotations, and generic.AnnotationBuilder (#1120)
+
+### Bug Fixes (BUG)
+-  Set /AS for /Btn form fields in writer (#1161)
+-  Ignore if /Perms verify failed (#1157)
+
+### Robustness (ROB)
+-  Cope with utf16 character for space calculation (#1155)
+-  Cope with null params for FitH / FitV destination (#1152)
+-  Handle outlines without valid destination (#1076)
+
+### Developer Experience (DEV)
+-  Introduce _utils.logger_warning (#1148)
+
+### Maintenance (MAINT)
+-  Break up parse_to_unicode (#1162)
+-  Add diagnostic output to exception in read_from_stream (#1159)
+-  Reduce PdfReader.read complexity (#1151)
+
+### Testing (TST)
+-  Add workflow tests found by arc testing (#1154)
+-  Decrypt file which is not encrypted (#1149)
+-  Test CryptRC4 encryption class; test image extraction filters (#1147)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.7.0...2.8.0
+
+## Version 2.7.0, 2022-07-21
+
+### New Features (ENH)
+-  Add `outline_count` property (#1129)
+
+### Bug Fixes (BUG)
+-  Make reader.get_fields also return dropdowns with options (#1114)
+-  Add deprecated EncodedStreamObject functions back until PyPDF2==3.0.0 (#1139)
+
+### Robustness (ROB)
+-  Cope with missing /W entry (#1136)
+-  Cope with invalid parent xref (#1133)
+
+### Documentation (DOC)
+-  Contributors file (#1132)
+-  Fix type in signature of PdfWriter.add_uri (#1131)
+
+### Developer Experience (DEV)
+-  Add .git-blame-ignore-revs (#1141)
+
+### Code Style (STY)
+-  Fixing typos (#1137)
+-  Re-use code via get_outlines_property in tests (#1130)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.6.0...2.7.0
+
 ## Version 2.6.0, 2022-07-17
 
 ### New Features (ENH)

@@ -3,6 +3,7 @@ import os
 import sys
 from io import BytesIO
 from pathlib import Path
+from re import findall
 
 import pytest
 
@@ -13,13 +14,20 @@ from PyPDF2.constants import Ressources as RES
 from PyPDF2.errors import PdfReadError, PdfReadWarning
 from PyPDF2.filters import _xobj_to_image
 
-from . import get_pdf_from_url
+from . import get_pdf_from_url, normalize_warnings
 
-TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
-PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
-RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
+TESTS_ROOT = Path(__file__).parent.resolve()
+PROJECT_ROOT = TESTS_ROOT.parent
+RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
-sys.path.append(PROJECT_ROOT)
+sys.path.append(str(PROJECT_ROOT))
+
+
+def test_dropdown_items():
+    inputfile = RESOURCE_ROOT / "libreoffice-form.pdf"
+    reader = PdfReader(inputfile)
+    fields = reader.get_fields()
+    assert "/Opt" in fields["Nationality"].keys()
 
 
 def test_PdfReaderFileLoad():
@@ -28,16 +36,16 @@ def test_PdfReaderFileLoad():
     textual output. Expected outcome: file loads, text matches expected.
     """
 
-    with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
+    with open(RESOURCE_ROOT / "crazyones.pdf", "rb") as inputfile:
         # Load PDF file from file
         reader = PdfReader(inputfile)
         page = reader.pages[0]
 
         # Retrieve the text of the PDF
-        with open(os.path.join(RESOURCE_ROOT, "crazyones.txt"), "rb") as pdftext_file:
+        with open(RESOURCE_ROOT / "crazyones.txt", "rb") as pdftext_file:
             pdftext = pdftext_file.read()
 
-        text = page.extract_text(Tj_sep="", TJ_sep="").encode("utf-8")
+        text = page.extract_text().encode("utf-8")
 
         # Compare the text of the PDF to a known source
         for expected_line, actual_line in zip(text.split(b"\n"), pdftext.split(b"\n")):
@@ -55,12 +63,12 @@ def test_PdfReaderJpegImage():
     textual output. Expected outcome: file loads, image matches expected.
     """
 
-    with open(os.path.join(RESOURCE_ROOT, "jpeg.pdf"), "rb") as inputfile:
+    with open(RESOURCE_ROOT / "jpeg.pdf", "rb") as inputfile:
         # Load PDF file from file
         reader = PdfReader(inputfile)
 
         # Retrieve the text of the image
-        with open(os.path.join(RESOURCE_ROOT, "jpeg.txt")) as pdftext_file:
+        with open(RESOURCE_ROOT / "jpeg.txt") as pdftext_file:
             imagetext = pdftext_file.read()
 
         page = reader.pages[0]
@@ -75,9 +83,7 @@ def test_PdfReaderJpegImage():
 
 
 def test_decrypt():
-    with open(
-        os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf"), "rb"
-    ) as inputfile:
+    with open(RESOURCE_ROOT / "libreoffice-writer-password.pdf", "rb") as inputfile:
         reader = PdfReader(inputfile)
         assert reader.is_encrypted is True
         reader.decrypt("openpassword")
@@ -92,7 +98,7 @@ def test_decrypt():
 
 
 def test_text_extraction_encrypted():
-    inputfile = os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf")
+    inputfile = RESOURCE_ROOT / "libreoffice-writer-password.pdf"
     reader = PdfReader(inputfile)
     assert reader.is_encrypted is True
     reader.decrypt("openpassword")
@@ -107,14 +113,14 @@ def test_text_extraction_encrypted():
 
 @pytest.mark.parametrize("degree", [0, 90, 180, 270, 360, -90])
 def test_rotate(degree):
-    with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
+    with open(RESOURCE_ROOT / "crazyones.pdf", "rb") as inputfile:
         reader = PdfReader(inputfile)
         page = reader.pages[0]
         page.rotate(degree)
 
 
 def test_rotate_45():
-    with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "rb") as inputfile:
+    with open(RESOURCE_ROOT / "crazyones.pdf", "rb") as inputfile:
         reader = PdfReader(inputfile)
         page = reader.pages[0]
         with pytest.raises(ValueError) as exc:
@@ -142,6 +148,14 @@ def test_rotate_45():
         (True, "https://arxiv.org/pdf/2201.00200.pdf", [0, 1, 5, 6]),
         (True, "https://arxiv.org/pdf/2201.00022.pdf", [0, 1, 5, 10]),
         (True, "https://arxiv.org/pdf/2201.00029.pdf", [0, 1, 6, 10]),
+        # #1145
+        (True, "https://github.com/py-pdf/PyPDF2/files/9174594/2017.pdf", [0]),
+        # #1145, remaining issue (empty arguments for FlateEncoding)
+        (
+            True,
+            "https://github.com/py-pdf/PyPDF2/files/9175966/2015._pb_decode_pg0.pdf",
+            [0],
+        ),
         # 6 instead of 5: as there is an issue in page 5 (missing objects)
         # and too complex to handle the warning without hiding real regressions
         (True, "https://arxiv.org/pdf/1601.03642.pdf", [0, 1, 5, 7]),
@@ -158,7 +172,7 @@ def test_rotate_45():
         (True, "https://github.com/py-pdf/PyPDF2/files/8884469/999092.pdf", [0, 1]),
         (
             True,
-            "file://" + os.path.join(RESOURCE_ROOT, "test Orient.pdf"),
+            "file://" + str(RESOURCE_ROOT / "test Orient.pdf"),
             [0],
         ),  # TODO: preparation of text orientation validation
         (
@@ -194,6 +208,82 @@ def test_extract_textbench(enable, url, pages, print_result=False):
         pass
 
 
+def test_orientations():
+    p = PdfReader(RESOURCE_ROOT / "test Orient.pdf").pages[0]
+    try:
+        p.extract_text("", "")
+    except DeprecationWarning:
+        pass
+    else:
+        raise Exception("DeprecationWarning expected")
+    try:
+        p.extract_text("", "", 0)
+    except DeprecationWarning:
+        pass
+    else:
+        raise Exception("DeprecationWarning expected")
+    try:
+        p.extract_text("", "", 0, 200)
+    except DeprecationWarning:
+        pass
+    else:
+        raise Exception("DeprecationWarning expected")
+
+    try:
+        p.extract_text(Tj_sep="", TJ_sep="")
+    except DeprecationWarning:
+        pass
+    else:
+        raise Exception("DeprecationWarning expected")
+    assert findall("\\((.)\\)", p.extract_text()) == ["T", "B", "L", "R"]
+    try:
+        p.extract_text(None)
+    except Exception:
+        pass
+    else:
+        raise Exception("Argument 1 check invalid")
+    try:
+        p.extract_text("", 0)
+    except Exception:
+        pass
+    else:
+        raise Exception("Argument 2 check invalid")
+    try:
+        p.extract_text("", "", None)
+    except Exception:
+        pass
+    else:
+        raise Exception("Argument 3 check invalid")
+    try:
+        p.extract_text("", "", 0, "")
+    except Exception:
+        pass
+    else:
+        raise Exception("Argument 4 check invalid")
+    try:
+        p.extract_text(0, "")
+    except Exception:
+        pass
+    else:
+        raise Exception("Argument 1 new syntax check invalid")
+
+    p.extract_text(0, 0)
+    p.extract_text(orientations=0)
+
+    for (req, rst) in (
+        (0, ["T"]),
+        (90, ["L"]),
+        (180, ["B"]),
+        (270, ["R"]),
+        ((0,), ["T"]),
+        ((0, 180), ["T", "B"]),
+        ((45,), []),
+    ):
+        assert (
+            findall("\\((.)\\)", p.extract_text(req)) == rst
+        ), f"extract_text({req}) => {rst}"
+
+
 @pytest.mark.parametrize(
     ("base_path", "overlay_path"),
     [
@@ -211,11 +301,11 @@ def test_overlay(base_path, overlay_path):
     if base_path.startswith("http"):
         base_path = BytesIO(get_pdf_from_url(base_path, name="tika-935981.pdf"))
     else:
-        base_path = os.path.join(PROJECT_ROOT, base_path)
+        base_path = PROJECT_ROOT / base_path
     reader = PdfReader(base_path)
     writer = PdfWriter()
 
-    reader_overlay = PdfReader(os.path.join(PROJECT_ROOT, overlay_path))
+    reader_overlay = PdfReader(PROJECT_ROOT / overlay_path)
     overlay = reader_overlay.pages[0]
 
     for page in reader.pages:
@@ -290,7 +380,11 @@ def test_get_metadata(url, name):
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/938/938702.pdf",
             "tika-938702.pdf",
-        )
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/942/942358.pdf",
+            "tika-942358.pdf",
+        ),
     ],
 )
 def test_extract_text(url, name):
@@ -319,16 +413,44 @@ def test_compress(url, name):
     assert exc.value.args[0] == "Unexpected end of stream"
 
 
-def test_get_fields():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/961/961883.pdf"
-    name = "tika-961883.pdf"
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/961/961883.pdf",
+            "tika-961883.pdf",
+        ),
+    ],
+)
+def test_get_fields_warns(caplog, url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
     with open("tmp.txt", "w") as fp:
-        with pytest.warns(PdfReadWarning, match="Object 2 0 not defined."):
-            retrieved_fields = reader.get_fields(fileobj=fp)
+        retrieved_fields = reader.get_fields(fileobj=fp)
 
     assert retrieved_fields == {}
+    assert normalize_warnings(caplog.text) == ["Object 2 0 not defined."]
+
+    # Cleanup
+    os.remove("tmp.txt")
+
+
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/942/942050.pdf",
+            "tika-942050.pdf",
+        ),
+    ],
+)
+def test_get_fields_no_warning(url, name):
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+    with open("tmp.txt", "w") as fp:
+        retrieved_fields = reader.get_fields(fileobj=fp)
+
+    assert len(retrieved_fields) == 10
 
     # Cleanup
     os.remove("tmp.txt")
@@ -344,18 +466,17 @@ def test_scale_rectangle_indirect_object():
         page.scale(sx=2, sy=3)
 
 
-def test_merge_output():
+def test_merge_output(caplog):
     # Arrange
-    base = os.path.join(RESOURCE_ROOT, "Seige_of_Vicksburg_Sample_OCR.pdf")
-    crazy = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
-    expected = os.path.join(
-        RESOURCE_ROOT, "Seige_of_Vicksburg_Sample_OCR-crazyones-merged.pdf"
-    )
+    base = RESOURCE_ROOT / "Seige_of_Vicksburg_Sample_OCR.pdf"
+    crazy = RESOURCE_ROOT / "crazyones.pdf"
+    expected = RESOURCE_ROOT / "Seige_of_Vicksburg_Sample_OCR-crazyones-merged.pdf"
 
     # Act
     merger = PdfMerger(strict=True)
-    with pytest.warns(PdfReadWarning):
-        merger.append(base)
+    merger.append(base)
+    msg = "Xref table not zero-indexed. ID numbers for objects will be corrected."
+    assert normalize_warnings(caplog.text) == [msg]
     merger.merge(1, crazy)
     stream = BytesIO()
     merger.write(stream)
@@ -402,6 +523,22 @@ def test_merge_output():
             "https://corpora.tika.apache.org/base/docs/govdocs1/959/959184.pdf",
             "tika-959184.pdf",
         ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/958/958496.pdf",
+            "tika-958496.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/972/972174.pdf",
+            "tika-972174.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/972/972243.pdf",
+            "tika-972243.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/969/969502.pdf",
+            "tika-969502.pdf",
+        ),
     ],
 )
 def test_image_extraction(url, name):
@@ -432,3 +569,96 @@ def test_image_extraction(url, name):
         for filepath in images_extracted:
             if os.path.exists(filepath):
                 os.remove(filepath)
+
+
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/977/977609.pdf",
+            "tika-977609.pdf",
+        ),
+    ],
+)
+def test_image_extraction2(url, name):
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+
+    images_extracted = []
+    root = Path("extracted-images")
+    if not root.exists():
+        os.mkdir(root)
+
+    for page in reader.pages:
+        if RES.XOBJECT in page[PG.RESOURCES]:
+            x_object = page[PG.RESOURCES][RES.XOBJECT].get_object()
+
+            for obj in x_object:
+                if x_object[obj][IA.SUBTYPE] == "/Image":
+                    extension, byte_stream = _xobj_to_image(x_object[obj])
+                    if extension is not None:
+                        filename = root / (obj[1:] + extension)
+                        with open(filename, "wb") as img:
+                            img.write(byte_stream)
+                        images_extracted.append(filename)
+
+    # Cleanup
+    do_cleanup = True  # set this to False for manual inspection
+    if do_cleanup:
+        for filepath in images_extracted:
+            if os.path.exists(filepath):
+                os.remove(filepath)
+
+
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/918/918137.pdf",
+            "tika-918137.pdf",
+        ),
+    ],
+)
+def test_get_outline(url, name):
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+    reader.outline
+
+
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/935/935981.pdf",
+            "tika-935981.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/937/937334.pdf",
+            "tika-937334.pdf",
+        ),
+    ],
+)
+def test_get_xfa(url, name):
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+    reader.xfa
+
+
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/988/988698.pdf",
+            "tika-988698.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/914/914133.pdf",
+            "tika-988698.pdf",
+        ),
+    ],
+)
+def test_get_fonts(url, name):
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+    for page in reader.pages:
+        page._get_fonts()

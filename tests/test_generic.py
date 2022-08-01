@@ -1,16 +1,19 @@
 import os
 from io import BytesIO
+from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
 from PyPDF2 import PdfMerger, PdfReader, PdfWriter
 from PyPDF2.constants import TypFitArguments as TF
-from PyPDF2.errors import PdfReadError, PdfReadWarning, PdfStreamError
+from PyPDF2.errors import PdfReadError, PdfStreamError
 from PyPDF2.generic import (
+    AnnotationBuilder,
     ArrayObject,
-    Bookmark,
     BooleanObject,
     ByteStringObject,
+    CheckboxRadioButtonAttributes,
     Destination,
     DictionaryObject,
     FloatObject,
@@ -18,6 +21,7 @@ from PyPDF2.generic import (
     NameObject,
     NullObject,
     NumberObject,
+    OutlineItem,
     RectangleObject,
     TextStringObject,
     TreeObject,
@@ -30,9 +34,9 @@ from PyPDF2.generic import (
 
 from . import get_pdf_from_url
 
-TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
-PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
-RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
+TESTS_ROOT = Path(__file__).parent.resolve()
+PROJECT_ROOT = TESTS_ROOT.parent
+RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 
 def test_float_object_exception():
@@ -195,12 +199,12 @@ def test_destination_exception():
         )
 
 
-def test_bookmark_write_to_stream():
+def test_outline_item_write_to_stream():
     stream = BytesIO()
-    bm = Bookmark(
+    oi = OutlineItem(
         NameObject("title"), NullObject(), NameObject(TF.FIT_V), FloatObject(0)
     )
-    bm.write_to_stream(stream, None)
+    oi.write_to_stream(stream, None)
     stream.seek(0, 0)
     assert stream.read() == b"<<\n/Title title\n/Dest [ null /FitV 0 ]\n>>"
 
@@ -392,13 +396,13 @@ def test_remove_child_not_in_tree():
 
 
 def test_remove_child_in_tree():
-    pdf = os.path.join(RESOURCE_ROOT, "form.pdf")
+    pdf = RESOURCE_ROOT / "form.pdf"
 
     tree = TreeObject()
     reader = PdfReader(pdf)
     writer = PdfWriter()
     writer.add_page(reader.pages[0])
-    writer.add_bookmark("foo", pagenum=0)
+    writer.add_outline_item("foo", pagenum=0)
     obj = writer._objects[-1]
     tree.add_child(obj, writer)
     tree.remove_child(obj)
@@ -406,14 +410,17 @@ def test_remove_child_in_tree():
     tree.empty_tree()
 
 
-def test_dict_read_from_stream():
+def test_dict_read_from_stream(caplog):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/984/984877.pdf"
     name = "tika-984877.pdf"
 
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     for page in reader.pages:
-        with pytest.warns(PdfReadWarning):
-            page.extract_text()
+        page.extract_text()
+    assert (
+        "Multiple definitions in dictionary at byte 0x1084 for key /Length"
+        in caplog.text
+    )
 
 
 def test_parse_content_stream_peek_percentage():
@@ -475,19 +482,138 @@ def test_bool_repr():
     os.remove("tmp-fields-report.txt")
 
 
-def test_issue_997():
+@patch("PyPDF2._reader.logger_warning")
+def test_issue_997(mock_logger_warning):
     url = "https://github.com/py-pdf/PyPDF2/files/8908874/Exhibit_A-2_930_Enterprise_Zone_Tax_Credits_final.pdf"
     name = "gh-issue-997.pdf"
 
     merger = PdfMerger()
     merged_filename = "tmp-out.pdf"
-    with pytest.warns(PdfReadWarning, match="not defined"):
-        merger.append(
-            BytesIO(get_pdf_from_url(url, name=name))
-        )  # here the error raises
+    merger.append(BytesIO(get_pdf_from_url(url, name=name)))  # here the error raises
     with open(merged_filename, "wb") as f:
         merger.write(f)
     merger.close()
 
+    mock_logger_warning.assert_called_with(
+        "Overwriting cache for 0 4", "PyPDF2._reader"
+    )
+
     # cleanup
     os.remove(merged_filename)
+
+
+def test_annotation_builder_free_text():
+    # Arrange
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    writer = PdfWriter()
+    writer.add_page(page)
+
+    # Act
+    free_text_annotation = AnnotationBuilder.free_text(
+        "Hello World\nThis is the second line!",
+        rect=(50, 550, 200, 650),
+        font="Arial",
+        bold=True,
+        italic=True,
+        font_size="20pt",
+        font_color="00ff00",
+        border_color="0000ff",
+        background_color="cdcdcd",
+    )
+    writer.add_annotation(0, free_text_annotation)
+
+    # Assert: You need to inspect the file manually
+    target = "annotated-pdf.pd"
+    with open(target, "wb") as fp:
+        writer.write(fp)
+
+    os.remove(target)  # comment this out for manual inspection
+
+
+def test_annotation_builder_line():
+    # Arrange
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    writer = PdfWriter()
+    writer.add_page(page)
+
+    # Act
+    line_annotation = AnnotationBuilder.line(
+        text="Hello World\nLine2",
+        rect=(50, 550, 200, 650),
+        p1=(50, 550),
+        p2=(200, 650),
+    )
+    writer.add_annotation(0, line_annotation)
+
+    # Assert: You need to inspect the file manually
+    target = "annotated-pdf.pd"
+    with open(target, "wb") as fp:
+        writer.write(fp)
+
+    os.remove(target)  # comment this out for manual inspection
+
+
+def test_annotation_builder_link():
+    # Arrange
+    pdf_path = RESOURCE_ROOT / "outline-without-title.pdf"
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    writer = PdfWriter()
+    writer.add_page(page)
+
+    # Act
+    # Part 1: Too many args
+    with pytest.raises(ValueError) as exc:
+        AnnotationBuilder.link(
+            rect=(50, 550, 200, 650),
+            url="https://martin-thoma.com/",
+            target_page_index=3,
+        )
+    assert (
+        exc.value.args[0]
+        == "Either 'url' or 'target_page_index' have to be provided. url=https://martin-thoma.com/, target_page_index=3"
+    )
+
+    # Part 2: Too few args
+    with pytest.raises(ValueError) as exc:
+        AnnotationBuilder.link(
+            rect=(50, 550, 200, 650),
+        )
+    assert (
+        exc.value.args[0]
+        == "Either 'url' or 'target_page_index' have to be provided. Both were None."
+    )
+
+    # Part 3: External Link
+    link_annotation = AnnotationBuilder.link(
+        rect=(50, 50, 100, 100),
+        url="https://martin-thoma.com/",
+        border=[1, 0, 6, [3, 2]],
+    )
+    writer.add_annotation(0, link_annotation)
+
+    # Part 4: Internal Link
+    link_annotation = AnnotationBuilder.link(
+        rect=(100, 100, 300, 200),
+        target_page_index=1,
+        border=[50, 10, 4],
+    )
+    writer.add_annotation(0, link_annotation)
+
+    for page in reader.pages[1:]:
+        writer.add_page(page)
+
+    # Assert: You need to inspect the file manually
+    target = "annotated-pdf-link.pdf"
+    with open(target, "wb") as fp:
+        writer.write(fp)
+
+    # os.remove(target)  # comment this out for manual inspection
+
+
+def test_CheckboxRadioButtonAttributes_opt():
+    assert "/Opt" in CheckboxRadioButtonAttributes.attributes_dict()

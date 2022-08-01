@@ -30,7 +30,6 @@
 import os
 import re
 import struct
-import warnings
 import zlib
 from io import BytesIO
 from pathlib import Path
@@ -54,6 +53,7 @@ from ._utils import (
     b_,
     deprecate_no_replacement,
     deprecate_with_replacement,
+    logger_warning,
     read_non_whitespace,
     read_previous_line,
     read_until_whitespace,
@@ -63,13 +63,14 @@ from ._utils import (
 from .constants import CatalogAttributes as CA
 from .constants import CatalogDictionary
 from .constants import CatalogDictionary as CD
+from .constants import CheckboxRadioButtonAttributes
 from .constants import Core as CO
 from .constants import DocumentInformationAttributes as DI
 from .constants import FieldDictionaryAttributes, GoToActionArguments
 from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
 from .constants import TrailerKeys as TK
-from .errors import PdfReadError, PdfReadWarning, PdfStreamError
+from .errors import PdfReadError, PdfStreamError
 from .generic import (
     ArrayObject,
     ContentStream,
@@ -88,7 +89,7 @@ from .generic import (
     TreeObject,
     read_object,
 )
-from .types import OutlinesType, PagemodeType
+from .types import OutlineType, PagemodeType
 from .xmp import XmpInformation
 
 
@@ -257,10 +258,10 @@ class PdfReader:
             Dict[Any, Any]
         ] = None  # map page indirect_ref number to Page Number
         if hasattr(stream, "mode") and "b" not in stream.mode:  # type: ignore
-            warnings.warn(
+            logger_warning(
                 "PdfReader stream/file object is not in binary mode. "
                 "It may not be read correctly.",
-                PdfReadWarning,
+                __name__,
             )
         if isinstance(stream, (str, Path)):
             with open(stream, "rb") as fh:
@@ -478,6 +479,7 @@ class PdfReader:
             ``None`` if form data could not be located.
         """
         field_attributes = FieldDictionaryAttributes.attributes_dict()
+        field_attributes.update(CheckboxRadioButtonAttributes.attributes_dict())
         if retval is None:
             retval = {}
             catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
@@ -488,7 +490,6 @@ class PdfReader:
                 return None
         if tree is None:
             return retval
-
         self._check_kids(tree, retval, fileobj)
         for attr in field_attributes:
             if attr in tree:
@@ -548,7 +549,12 @@ class PdfReader:
                 self.get_fields(kid.get_object(), retval, fileobj)
 
     def _write_field(self, fileobj: Any, field: Any, field_attributes: Any) -> None:
-        for attr in FieldDictionaryAttributes.attributes():
+        field_attributes_tuple = FieldDictionaryAttributes.attributes()
+        field_attributes_tuple = (
+            field_attributes_tuple + CheckboxRadioButtonAttributes.attributes()
+        )
+
+        for attr in field_attributes_tuple:
             if attr in (
                 FieldDictionaryAttributes.Kids,
                 FieldDictionaryAttributes.AA,
@@ -638,9 +644,8 @@ class PdfReader:
             # recurse down the tree
             for kid in cast(ArrayObject, tree[PA.KIDS]):
                 self._get_named_destinations(kid.get_object(), retval)
-
         # TABLE 3.33 Entries in a name tree node dictionary (PDF 1.7 specs)
-        if CA.NAMES in tree:
+        elif CA.NAMES in tree:  # KIDS and NAMES are exclusives (PDF 1.7 specs p 162)
             names = cast(DictionaryObject, tree[CA.NAMES])
             for i in range(0, len(names), 2):
                 key = cast(str, names[i].get_object())
@@ -650,7 +655,12 @@ class PdfReader:
                 dest = self._build_destination(key, value)  # type: ignore
                 if dest is not None:
                     retval[key] = dest
-
+        else:  # case where Dests is in root catalog (PDF 1.7 specs, §2 about PDF1.1
+            for k__, v__ in tree.items():
+                val = v__.get_object()
+                dest = self._build_destination(k__, val)
+                if dest is not None:
+                    retval[k__] = dest
         return retval
 
     def getNamedDestinations(
@@ -667,19 +677,30 @@ class PdfReader:
         return self._get_named_destinations(tree, retval)
 
     @property
-    def outlines(self) -> OutlinesType:
+    def outline(self) -> OutlineType:
         """
-        Read-only property for outlines present in the document.
+        Read-only property for the outline (i.e., a collection of 'outline items'
+        which are also known as 'bookmarks') present in the document.
 
         :return: a nested list of :class:`Destinations<PyPDF2.generic.Destination>`.
         """
-        return self._get_outlines()
+        return self._get_outline()
 
-    def _get_outlines(
-        self, node: Optional[DictionaryObject] = None, outlines: Optional[Any] = None
-    ) -> OutlinesType:
-        if outlines is None:
-            outlines = []
+    @property
+    def outlines(self) -> OutlineType:
+        """
+        .. deprecated:: 2.9.0
+
+            Use :py:attr:`outline` instead.
+        """
+        deprecate_with_replacement("outlines", "outline")
+        return self.outline
+
+    def _get_outline(
+        self, node: Optional[DictionaryObject] = None, outline: Optional[Any] = None
+    ) -> OutlineType:
+        if outline is None:
+            outline = []
             catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
 
             # get the outline dictionary and named destinations
@@ -689,11 +710,11 @@ class PdfReader:
                 except PdfReadError:
                     # this occurs if the /Outlines object reference is incorrect
                     # for an example of such a file, see https://unglueit-files.s3.amazonaws.com/ebf/7552c42e9280b4476e59e77acc0bc812.pdf
-                    # so continue to load the file without the Bookmarks
-                    return outlines
+                    # so continue to load the file without the Outlines
+                    return outline
 
                 if isinstance(lines, NullObject):
-                    return outlines
+                    return outline
 
                 # TABLE 8.3 Entries in the outline dictionary
                 if lines is not None and "/First" in lines:
@@ -701,37 +722,37 @@ class PdfReader:
             self._namedDests = self._get_named_destinations()
 
         if node is None:
-            return outlines
+            return outline
 
-        # see if there are any more outlines
+        # see if there are any more outline items
         while True:
-            outline = self._build_outline(node)
-            if outline:
-                outlines.append(outline)
+            outline_obj = self._build_outline_item(node)
+            if outline_obj:
+                outline.append(outline_obj)
 
-            # check for sub-outlines
+            # check for sub-outline
             if "/First" in node:
-                sub_outlines: List[Any] = []
-                self._get_outlines(cast(DictionaryObject, node["/First"]), sub_outlines)
-                if sub_outlines:
-                    outlines.append(sub_outlines)
+                sub_outline: List[Any] = []
+                self._get_outline(cast(DictionaryObject, node["/First"]), sub_outline)
+                if sub_outline:
+                    outline.append(sub_outline)
 
             if "/Next" not in node:
                 break
             node = cast(DictionaryObject, node["/Next"])
 
-        return outlines
+        return outline
 
     def getOutlines(
-        self, node: Optional[DictionaryObject] = None, outlines: Optional[Any] = None
-    ) -> OutlinesType:  # pragma: no cover
+        self, node: Optional[DictionaryObject] = None, outline: Optional[Any] = None
+    ) -> OutlineType:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
-            Use :py:attr:`outlines` instead.
+            Use :py:attr:`outline` instead.
         """
-        deprecate_with_replacement("getOutlines", "outlines")
-        return self._get_outlines(node, outlines)
+        deprecate_with_replacement("getOutlines", "outline")
+        return self._get_outline(node, outline)
 
     def _get_page_number_by_indirect(
         self, indirect_ref: Union[None, int, NullObject, IndirectObject]
@@ -798,15 +819,26 @@ class PdfReader:
         title: str,
         array: List[Union[NumberObject, IndirectObject, NullObject, DictionaryObject]],
     ) -> Destination:
-        page, typ = array[0:2]
-        array = array[2:]
-        try:
-            return Destination(title, page, typ, *array)  # type: ignore
-        except PdfReadError:
-            warnings.warn(f"Unknown destination: {title} {array}", PdfReadWarning)
-            if self.strict:
-                raise
-            else:
+        page, typ = None, None
+        # handle outline items with missing or invalid destination
+        if (
+            isinstance(array, (type(None), NullObject))
+            or (isinstance(array, ArrayObject) and len(array) == 0)
+            or (isinstance(array, str))
+        ):
+
+            page = NullObject()
+            typ = TextStringObject("/Fit")
+            return Destination(title, page, typ)
+        else:
+            page, typ = array[0:2]  # type: ignore
+            array = array[2:]
+            try:
+                return Destination(title, page, typ, *array)  # type: ignore
+            except PdfReadError:
+                logger_warning(f"Unknown destination: {title} {array}", __name__)
+                if self.strict:
+                    raise
                 # create a link to first Page
                 tmp = self.pages[0].indirect_ref
                 indirect_ref = NullObject() if tmp is None else tmp
@@ -814,45 +846,66 @@ class PdfReader:
                     title, indirect_ref, TextStringObject("/Fit")  # type: ignore
                 )
 
-    def _build_outline(self, node: DictionaryObject) -> Optional[Destination]:
-        dest, title, outline = None, None, None
+    def _build_outline_item(self, node: DictionaryObject) -> Optional[Destination]:
+        dest, title, outline_item = None, None, None
 
-        if "/A" in node and "/Title" in node:
-            # Action, section 8.5 (only type GoTo supported)
+        # title required for valid outline
+        # PDF Reference 1.7: TABLE 8.4 Entries in an outline item dictionary
+        try:
             title = node["/Title"]
+        except KeyError:
+            if self.strict:
+                raise PdfReadError(f"Outline Entry Missing /Title attribute: {node!r}")
+            title = ""  # type: ignore
+
+        if "/A" in node:
+            # Action, PDFv1.7 Section 12.6 (only type GoTo supported)
             action = cast(DictionaryObject, node["/A"])
             action_type = cast(NameObject, action[GoToActionArguments.S])
             if action_type == "/GoTo":
                 dest = action[GoToActionArguments.D]
-        elif "/Dest" in node and "/Title" in node:
-            # Destination, section 8.2.1
-            title = node["/Title"]
+        elif "/Dest" in node:
+            # Destination, PDFv1.7 Section 12.3.2
             dest = node["/Dest"]
+            # if array was referenced in another object, will be a dict w/ key "/D"
+            if isinstance(dest, DictionaryObject) and "/D" in dest:
+                dest = dest["/D"]
 
-        # if destination found, then create outline
-        if dest:
-            if isinstance(dest, ArrayObject):
-                outline = self._build_destination(title, dest)  # type: ignore
-            elif isinstance(dest, str) and dest in self._namedDests:
-                outline = self._build_destination(title, self._namedDests[dest].dest_array)  # type: ignore
-            else:
+        if isinstance(dest, ArrayObject):
+            outline_item = self._build_destination(title, dest)  # type: ignore
+        elif isinstance(dest, str):
+            # named destination, addresses NameObject Issue #193
+            try:
+                outline_item = self._build_destination(
+                    title, self._namedDests[dest].dest_array
+                )
+            except KeyError:
+                # named destination not found in Name Dict
+                outline_item = self._build_destination(title, None)
+        elif isinstance(dest, type(None)):
+            # outline item not required to have destination or action
+            # PDFv1.7 Table 153
+            outline_item = self._build_destination(title, dest)  # type: ignore
+        else:
+            if self.strict:
                 raise PdfReadError(f"Unexpected destination {dest!r}")
+            outline_item = self._build_destination(title, None)  # type: ignore
 
-        # if outline created, add color, format, and child count if present
-        if outline:
+        # if outline item created, add color, format, and child count if present
+        if outline_item:
             if "/C" in node:
-                # Color of outline in (R, G, B) with values ranging 0.0-1.0
-                outline[NameObject("/C")] = ArrayObject(FloatObject(c) for c in node["/C"])  # type: ignore
+                # Color of outline item font in (R, G, B) with values ranging 0.0-1.0
+                outline_item[NameObject("/C")] = ArrayObject(FloatObject(c) for c in node["/C"])  # type: ignore
             if "/F" in node:
                 # specifies style characteristics bold and/or italic
                 # 1=italic, 2=bold, 3=both
-                outline[NameObject("/F")] = node["/F"]
+                outline_item[NameObject("/F")] = node["/F"]
             if "/Count" in node:
                 # absolute value = num. visible children
                 # positive = open/unfolded, negative = closed/folded
-                outline[NameObject("/Count")] = node["/Count"]
+                outline_item[NameObject("/Count")] = node["/Count"]
 
-        return outline
+        return outline_item
 
     @property
     def pages(self) -> _VirtualList:
@@ -919,9 +972,9 @@ class PdfReader:
            :widths: 50 200
 
            * - /UseNone
-             - Do not show outlines or thumbnails panels
+             - Do not show outline or thumbnails panels
            * - /UseOutlines
-             - Show outlines (aka bookmarks) panel
+             - Show outline (aka bookmarks) panel
            * - /UseThumbs
              - Show page thumbnails panel
            * - /FullScreen
@@ -1009,7 +1062,7 @@ class PdfReader:
         stmnum, idx = self.xref_objStm[indirect_reference.idnum]
         obj_stm: EncodedStreamObject = IndirectObject(stmnum, 0, self).get_object()  # type: ignore
         # This is an xref to a stream, so its type better be a stream
-        assert obj_stm["/Type"] == "/ObjStm"
+        assert cast(str, obj_stm["/Type"]) == "/ObjStm"
         # /N is the number of indirect objects in the stream
         assert idx < obj_stm["/N"]
         stream_data = BytesIO(b_(obj_stm.get_data()))  # type: ignore
@@ -1038,11 +1091,11 @@ class PdfReader:
             except PdfStreamError as exc:
                 # Stream object cannot be read. Normally, a critical error, but
                 # Adobe Reader doesn't complain, so continue (in strict mode?)
-                warnings.warn(
+                logger_warning(
                     f"Invalid stream (index {i}) within object "
                     f"{indirect_reference.idnum} {indirect_reference.generation}: "
                     f"{exc}",
-                    PdfReadWarning,
+                    __name__,
                 )
 
                 if self.strict:
@@ -1109,10 +1162,10 @@ class PdfReader:
                     retval, indirect_reference.idnum, indirect_reference.generation
                 )
         else:
-            warnings.warn(
+            logger_warning(
                 f"Object {indirect_reference.idnum} {indirect_reference.generation} "
                 "not defined.",
-                PdfReadWarning,
+                __name__,
             )
             if self.strict:
                 raise PdfReadError("Could not find object.")
@@ -1154,9 +1207,9 @@ class PdfReader:
         read_non_whitespace(stream)
         stream.seek(-1, 1)
         if extra and self.strict:
-            warnings.warn(
+            logger_warning(
                 f"Superfluous whitespace found in object header {idnum} {generation}",  # type: ignore
-                PdfReadWarning,
+                __name__,
             )
         return int(idnum), int(generation)
 
@@ -1197,7 +1250,7 @@ class PdfReader:
             if self.strict:
                 raise PdfReadError(msg)
             else:
-                warnings.warn(msg)
+                logger_warning(msg, __name__)
         self.resolved_objects[(generation, idnum)] = obj
         return obj
 
@@ -1213,26 +1266,8 @@ class PdfReader:
         return self.cache_indirect_object(generation, idnum, obj)
 
     def read(self, stream: StreamType) -> None:
-        # start at the end:
-        stream.seek(0, os.SEEK_END)
-        if not stream.tell():
-            raise PdfReadError("Cannot read an empty file")
-        if self.strict:
-            stream.seek(0, os.SEEK_SET)
-            header_byte = stream.read(5)
-            if header_byte != b"%PDF-":
-                raise PdfReadError(
-                    f"PDF starts with '{header_byte.decode('utf8')}', "
-                    "but '%PDF-' expected"
-                )
-            stream.seek(0, os.SEEK_END)
-        last_mb = stream.tell() - 1024 * 1024 + 1  # offset of last MB of stream
-        line = b""
-        while line[:5] != b"%%EOF":
-            if stream.tell() < last_mb:
-                raise PdfReadError("EOF marker not found")
-            line = read_previous_line(stream)
-
+        self._basic_validation(stream)
+        self._find_eof_marker(stream)
         startxref = self._find_startxref_pos(stream)
 
         # check and eventually correct the startxref only in not strict
@@ -1241,83 +1276,13 @@ class PdfReader:
             if self.strict and xref_issue_nr:
                 raise PdfReadError("Broken xref table")
             else:
-                warnings.warn(
-                    f"incorrect startxref pointer({xref_issue_nr})", PdfReadWarning
+                logger_warning(
+                    f"incorrect startxref pointer({xref_issue_nr})", __name__
                 )
 
         # read all cross reference tables and their trailers
-        self.xref: Dict[int, Dict[Any, Any]] = {}
-        self.xref_free_entry: Dict[int, Dict[Any, Any]] = {}
-        self.xref_objStm: Dict[int, Tuple[Any, Any]] = {}
-        self.trailer = DictionaryObject()
-        while True:
-            # load the xref table
-            stream.seek(startxref, 0)
-            x = stream.read(1)
-            if x == b"x":
-                self._read_standard_xref_table(stream)
-                read_non_whitespace(stream)
-                stream.seek(-1, 1)
-                new_trailer = cast(Dict[str, Any], read_object(stream, self))
-                for key, value in new_trailer.items():
-                    if key not in self.trailer:
-                        self.trailer[key] = value
-                if "/Prev" in new_trailer:
-                    startxref = new_trailer["/Prev"]
-                else:
-                    break
-            elif xref_issue_nr:
-                try:
-                    self._rebuild_xref_table(stream)
-                    break
-                except Exception:
-                    xref_issue_nr = 0
-            elif x.isdigit():
-                xrefstream = self._read_pdf15_xref_stream(stream)
+        self._read_xref_tables_and_trailers(stream, startxref, xref_issue_nr)
 
-                trailer_keys = TK.ROOT, TK.ENCRYPT, TK.INFO, TK.ID
-                for key in trailer_keys:
-                    if key in xrefstream and key not in self.trailer:
-                        self.trailer[NameObject(key)] = xrefstream.raw_get(key)
-                if "/Prev" in xrefstream:
-                    startxref = cast(int, xrefstream["/Prev"])
-                else:
-                    break
-            else:
-                # some PDFs have /Prev=0 in the trailer, instead of no /Prev
-                if startxref == 0:
-                    if self.strict:
-                        raise PdfReadError(
-                            "/Prev=0 in the trailer (try opening with strict=False)"
-                        )
-                    else:
-                        warnings.warn(
-                            "/Prev=0 in the trailer - assuming there"
-                            " is no previous xref table"
-                        )
-                        break
-                # bad xref character at startxref.  Let's see if we can find
-                # the xref table nearby, as we've observed this error with an
-                # off-by-one before.
-                stream.seek(-11, 1)
-                tmp = stream.read(20)
-                xref_loc = tmp.find(b"xref")
-                if xref_loc != -1:
-                    startxref -= 10 - xref_loc
-                    continue
-                # No explicit xref table, try finding a cross-reference stream.
-                stream.seek(startxref, 0)
-                found = False
-                for look in range(5):
-                    if stream.read(1).isdigit():
-                        # This is not a standard PDF, consider adding a warning
-                        startxref += look
-                        found = True
-                        break
-                if found:
-                    continue
-                # no xref table found at specified location
-                raise PdfReadError("Could not find xref table at specified location")
         # if not zero-indexed, verify that the table is correct; change it if necessary
         if self.xref_index and not self.strict:
             loc = stream.tell()
@@ -1337,6 +1302,29 @@ class PdfReader:
                     # non-zero-index is actually correct
             stream.seek(loc, 0)  # return to where it was
 
+    def _basic_validation(self, stream: StreamType) -> None:
+        # start at the end:
+        stream.seek(0, os.SEEK_END)
+        if not stream.tell():
+            raise PdfReadError("Cannot read an empty file")
+        if self.strict:
+            stream.seek(0, os.SEEK_SET)
+            header_byte = stream.read(5)
+            if header_byte != b"%PDF-":
+                raise PdfReadError(
+                    f"PDF starts with '{header_byte.decode('utf8')}', "
+                    "but '%PDF-' expected"
+                )
+            stream.seek(0, os.SEEK_END)
+
+    def _find_eof_marker(self, stream: StreamType) -> None:
+        last_mb = 8  # to parse whole file
+        line = b""
+        while line[:5] != b"%%EOF":
+            if stream.tell() < last_mb:
+                raise PdfReadError("EOF marker not found")
+            line = read_previous_line(stream)
+
     def _find_startxref_pos(self, stream: StreamType) -> int:
         """Find startxref entry - the location of the xref table"""
         line = read_previous_line(stream)
@@ -1347,7 +1335,7 @@ class PdfReader:
             if not line.startswith(b"startxref"):
                 raise PdfReadError("startxref not found")
             startxref = int(line[9:].strip())
-            warnings.warn("startxref on same line as offset", PdfReadWarning)
+            logger_warning("startxref on same line as offset", __name__)
         else:
             line = read_previous_line(stream)
             if line[:9] != b"startxref":
@@ -1367,9 +1355,9 @@ class PdfReader:
             if firsttime and num != 0:
                 self.xref_index = num
                 if self.strict:
-                    warnings.warn(
+                    logger_warning(
                         "Xref table not zero-indexed. ID numbers for objects will be corrected.",
-                        PdfReadWarning,
+                        __name__,
                     )
                     # if table not zero indexed, could be due to error from when PDF was created
                     # which will lead to mismatched indices later on, only warned and corrected if self.strict==True
@@ -1429,6 +1417,101 @@ class PdfReader:
             else:
                 break
 
+    def _read_xref_tables_and_trailers(
+        self, stream: StreamType, startxref: Optional[int], xref_issue_nr: int
+    ) -> None:
+        self.xref: Dict[int, Dict[Any, Any]] = {}
+        self.xref_free_entry: Dict[int, Dict[Any, Any]] = {}
+        self.xref_objStm: Dict[int, Tuple[Any, Any]] = {}
+        self.trailer = DictionaryObject()
+        while startxref is not None:
+            # load the xref table
+            stream.seek(startxref, 0)
+            x = stream.read(1)
+            if x == b"x":
+                startxref = self._read_xref(stream)
+            elif xref_issue_nr:
+                try:
+                    self._rebuild_xref_table(stream)
+                    break
+                except Exception:
+                    xref_issue_nr = 0
+            elif x.isdigit():
+                xrefstream = self._read_pdf15_xref_stream(stream)
+
+                trailer_keys = TK.ROOT, TK.ENCRYPT, TK.INFO, TK.ID
+                for key in trailer_keys:
+                    if key in xrefstream and key not in self.trailer:
+                        self.trailer[NameObject(key)] = xrefstream.raw_get(key)
+                if "/Prev" in xrefstream:
+                    startxref = cast(int, xrefstream["/Prev"])
+                else:
+                    break
+            else:
+                startxref = self._read_xref_other_error(stream, startxref)
+
+    def _read_xref(self, stream: StreamType) -> Optional[int]:
+        self._read_standard_xref_table(stream)
+        read_non_whitespace(stream)
+        stream.seek(-1, 1)
+        new_trailer = cast(Dict[str, Any], read_object(stream, self))
+        for key, value in new_trailer.items():
+            if key not in self.trailer:
+                self.trailer[key] = value
+        if "/Prev" in new_trailer:
+            startxref = new_trailer["/Prev"]
+            return startxref
+        else:
+            return None
+
+    def _read_xref_other_error(
+        self, stream: StreamType, startxref: int
+    ) -> Optional[int]:
+        # some PDFs have /Prev=0 in the trailer, instead of no /Prev
+        if startxref == 0:
+            if self.strict:
+                raise PdfReadError(
+                    "/Prev=0 in the trailer (try opening with strict=False)"
+                )
+            else:
+                logger_warning(
+                    "/Prev=0 in the trailer - assuming there"
+                    " is no previous xref table",
+                    __name__,
+                )
+                return None
+        # bad xref character at startxref.  Let's see if we can find
+        # the xref table nearby, as we've observed this error with an
+        # off-by-one before.
+        stream.seek(-11, 1)
+        tmp = stream.read(20)
+        xref_loc = tmp.find(b"xref")
+        if xref_loc != -1:
+            startxref -= 10 - xref_loc
+            return startxref
+        # No explicit xref table, try finding a cross-reference stream.
+        stream.seek(startxref, 0)
+        found = False
+        for look in range(5):
+            if stream.read(1).isdigit():
+                # This is not a standard PDF, consider adding a warning
+                startxref += look
+                found = True
+                break
+        if found:
+            return startxref
+        # no xref table found at specified location
+        if "/Root" in self.trailer and not self.strict:
+            # if Root has been already found, just raise warning
+            logger_warning("Invalid parent xref., rebuild xref", __name__)
+            try:
+                self._rebuild_xref_table(stream)
+                return None
+            except Exception:
+                raise PdfReadError("can not rebuild xref")
+            return None
+        raise PdfReadError("Could not find xref table at specified location")
+
     def _read_pdf15_xref_stream(
         self, stream: StreamType
     ) -> Union[ContentStream, EncodedStreamObject, DecodedStreamObject]:
@@ -1436,7 +1519,7 @@ class PdfReader:
         stream.seek(-1, 1)
         idnum, generation = self.read_object_header(stream)
         xrefstream = cast(ContentStream, read_object(stream, self))
-        assert xrefstream["/Type"] == "/XRef"
+        assert cast(str, xrefstream["/Type"]) == "/XRef"
         self.cache_indirect_object(generation, idnum, xrefstream)
         stream_data = BytesIO(b_(xrefstream.get_data()))
         # Index pairs specify the subsections in the dictionary. If

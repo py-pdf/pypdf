@@ -332,6 +332,22 @@ class FieldDictionaryAttributes:
         }
 
 
+class CheckboxRadioButtonAttributes:
+    """TABLE 8.76 Field flags common to all field types"""
+
+    Opt = "/Opt"  # Options, Optional
+
+    @classmethod
+    def attributes(cls) -> Tuple[str, ...]:
+        return (cls.Opt,)
+
+    @classmethod
+    def attributes_dict(cls) -> Dict[str, str]:
+        return {
+            cls.Opt: "Options",
+        }
+
+
 class FieldFlag(IntFlag):
     """TABLE 8.70 Field flags common to all field types"""
 
@@ -411,6 +427,7 @@ PDF_KEYS = (
     CatalogAttributes,
     CatalogDictionary,
     CcittFaxDecodeParameters,
+    CheckboxRadioButtonAttributes,
     ColorSpaces,
     Core,
     DocumentInformationAttributes,

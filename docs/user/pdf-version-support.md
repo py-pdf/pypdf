@@ -21,12 +21,18 @@ all features of PDF 2.0.
 | Feature                                 | PDF-Version | PyPDF2 Support |
 | --------------------------------------- | ----------- | -------------- |
 | Transparent Graphics                    | 1.4         | ?              |
-| CMaps                                   | 1.4         | ❌ [#201](https://github.com/py-pdf/PyPDF2/pull/201), [#464](https://github.com/py-pdf/PyPDF2/pull/464), [#805](https://github.com/py-pdf/PyPDF2/pull/805)   |
+| CMaps                                   | 1.4         | ✅             |
 | Object Streams                          | 1.5         | ?              |
 | Cross-reference Streams                 | 1.5         | ?              |
 | Optional Content Groups (OCGs) - Layers | 1.5         | ?              |
 | Content Stream Compression              | 1.5         | ?              |
-| AES Encryption                          | 1.6         | ❌ [#749](https://github.com/py-pdf/PyPDF2/pull/749)  |
+| AES Encryption                          | 1.6         | ✅             |
 
 See [History of PDF](https://en.wikipedia.org/wiki/History_of_PDF) for more
 features.
+
+Some PDF features are not supported by PyPDF2, but other libraries can be used
+for them:
+
+* [pyHanko](https://pyhanko.readthedocs.io/en/latest/index.html): Cryptographically sign a PDF ([#302](https://github.com/py-pdf/PyPDF2/issues/302))
+* [camelot-py](https://pypi.org/project/camelot-py/): Table Extraction ([#231](https://github.com/py-pdf/PyPDF2/issues/231))

@@ -45,6 +45,8 @@ from .generic import ArrayObject, DictionaryObject, NameObject
 try:
     from typing import Literal  # type: ignore[attr-defined]
 except ImportError:
+    # PEP 586 introduced typing.Literal with Python 3.8
+    # For older Python versions, the backport typing_extensions is necessary:
     from typing_extensions import Literal  # type: ignore[misc]
 
 from ._utils import b_, deprecate_with_replacement, ord_, paeth_predictor
@@ -102,7 +104,7 @@ class FlateDecode:
                             predictor = decode_parm["/Predictor"]
                 else:
                     predictor = decode_parms.get("/Predictor", 1)
-            except AttributeError:
+            except (AttributeError, TypeError):  # Type Error is NullObject
                 pass  # Usually an array with a null object was read
         # predictor 1 == no predictor
         if predictor != 1:

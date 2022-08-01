@@ -29,8 +29,9 @@ import hashlib
 import random
 import struct
 from enum import IntEnum
-from typing import Optional, Tuple, Union, cast
+from typing import Any, Dict, Optional, Tuple, Union, cast
 
+from PyPDF2._utils import logger_warning
 from PyPDF2.errors import DependencyError
 from PyPDF2.generic import (
     ArrayObject,
@@ -287,7 +288,7 @@ class AlgV4:
         u_hash.update(o_entry)
         u_hash.update(struct.pack("<I", P))
         u_hash.update(id1_entry)
-        if rev >= 3 and not metadata_encrypted:
+        if rev >= 4 and metadata_encrypted is False:
             u_hash.update(b"\xff\xff\xff\xff")
         u_hash_digest = u_hash.digest()
         length = key_size // 8
@@ -565,7 +566,7 @@ class AlgV5:
     @staticmethod
     def generate_values(
         user_pwd: bytes, owner_pwd: bytes, key: bytes, p: int, metadata_encrypted: bool
-    ) -> dict:
+    ) -> Dict[Any, Any]:
         u_value, ue_value = AlgV5.compute_U_value(user_pwd, key)
         o_value, oe_value = AlgV5.compute_O_value(owner_pwd, key, u_value)
         perms = AlgV5.compute_Perms_value(key, p, metadata_encrypted)
@@ -771,7 +772,9 @@ class Encryption:
         R = cast(int, self.entry["/R"])
         P = cast(int, self.entry["/P"])
         P = (P + 0x100000000) % 0x100000000  # maybe < 0
-        metadata_encrypted = self.entry.get("/EncryptMetadata", True)
+        # make type(metadata_encrypted) == bool
+        em = self.entry.get("/EncryptMetadata")
+        metadata_encrypted = em.value if em else True
         o_entry = cast(ByteStringObject, self.entry["/O"].get_object()).original_bytes
         u_entry = cast(ByteStringObject, self.entry["/U"].get_object()).original_bytes
 
@@ -826,7 +829,7 @@ class Encryption:
         P = (P + 0x100000000) % 0x100000000  # maybe < 0
         metadata_encrypted = self.entry.get("/EncryptMetadata", True)
         if not AlgV5.verify_perms(key, perms, P, metadata_encrypted):
-            return b"", PasswordType.NOT_DECRYPTED
+            logger_warning("ignore '/Perms' verify failed", __name__)
         return key, rc
 
     @staticmethod

@@ -35,7 +35,6 @@ import random
 import struct
 import time
 import uuid
-import warnings
 from hashlib import md5
 from typing import (
     Any,
@@ -50,8 +49,6 @@ from typing import (
     Type
 )
 
-from PyPDF2.errors import PdfReadWarning
-
 from ._page import PageObject, _VirtualList
 from ._reader import PdfReader
 from ._security import _alg33, _alg34, _alg35
@@ -59,8 +56,10 @@ from ._utils import (
     StreamType,
     _get_max_pdf_version_header,
     b_,
+    deprecate_bookmark,
     deprecate_with_replacement,
     StrByteType
+    logger_warning,
 )
 from .constants import AnnotationDictionaryAttributes
 from .constants import CatalogAttributes as CA
@@ -80,6 +79,7 @@ from .constants import StreamAttributes as SA
 from .constants import TrailerKeys as TK
 from .constants import TypFitArguments, UserAccessPermissions
 from .generic import (
+    AnnotationBuilder,
     ArrayObject,
     BooleanObject,
     ByteStringObject,
@@ -97,14 +97,14 @@ from .generic import (
     StreamObject,
     TextStringObject,
     TreeObject,
-    _create_bookmark,
+    _create_outline_item,
     create_string_object,
 )
 from .types import (
-    BookmarkTypes,
     BorderArrayType,
     FitType,
     LayoutType,
+    OutlineItemType,
     PagemodeType,
     ZoomArgsType,
     ZoomArgType,
@@ -213,7 +213,7 @@ class PdfWriter:
     def _add_page(
         self, page: PageObject, action: Callable[[Any, IndirectObject], None]
     ) -> None:
-        assert page[PA.TYPE] == CO.PAGE
+        assert cast(str, page[PA.TYPE]) == CO.PAGE
         if page.pdf is not None:
             other = page.pdf.pdf_header
             if isinstance(other, str):
@@ -310,7 +310,7 @@ class PdfWriter:
             raise ValueError("Please specify the page_number")
         pages = cast(Dict[str, Any], self.get_object(self._pages))
         # TODO: crude hack
-        return pages[PA.KIDS][page_number].get_object()
+        return cast(PageObject, pages[PA.KIDS][page_number].get_object())
 
     def getPage(self, pageNumber: int) -> PageObject:  # pragma: no cover
         """
@@ -628,6 +628,14 @@ class PdfWriter:
                 writer_parent_annot = writer_annot[PG.PARENT]
             for field in fields:
                 if writer_annot.get(FieldDictionaryAttributes.T) == field:
+                    if writer_annot.get(FieldDictionaryAttributes.FT) == "/Btn":
+                        writer_annot.update(
+                            {
+                                NameObject(
+                                    AnnotationDictionaryAttributes.AS
+                                ): NameObject(fields[field])
+                            }
+                        )
                     writer_annot.update(
                         {
                             NameObject(FieldDictionaryAttributes.V): TextStringObject(
@@ -783,9 +791,10 @@ class PdfWriter:
 
     def write_stream(self, stream: StreamType) -> None:
         if hasattr(stream, "mode") and "b" not in stream.mode:
-            warnings.warn(
+            logger_warning(
                 f"File <{stream.name}> to write to is not in binary mode. "  # type: ignore
-                "It may not be written to correctly."
+                "It may not be written to correctly.",
+                __name__,
             )
 
         if not self._root:
@@ -994,10 +1003,10 @@ class PdfWriter:
         real_obj = data.pdf.get_object(data)
 
         if real_obj is None:
-            warnings.warn(
+            logger_warning(
                 f"Unable to resolve [{data.__class__.__name__}: {data}], "
                 "returning NullObject instead",
-                PdfReadWarning,
+                __name__,
             )
             real_obj = NullObject()
 
@@ -1102,7 +1111,7 @@ class PdfWriter:
         deprecate_with_replacement("getNamedDestRoot", "get_named_dest_root")
         return self.get_named_dest_root()
 
-    def add_bookmark_destination(
+    def add_outline_item_destination(
         self,
         dest: Union[PageObject, TreeObject],
         parent: Union[None, TreeObject, IndirectObject] = None,
@@ -1116,45 +1125,126 @@ class PdfWriter:
 
         return dest_ref
 
+    def add_bookmark_destination(
+        self,
+        dest: Union[PageObject, TreeObject],
+        parent: Union[None, TreeObject, IndirectObject] = None,
+    ) -> IndirectObject:
+        """
+        .. deprecated:: 2.9.0
+
+            Use :meth:`add_outline_item_destination` instead.
+        """
+        deprecate_with_replacement(
+            "add_bookmark_destination", "add_outline_item_destination"
+        )
+        return self.add_outline_item_destination(dest, parent)
+
     def addBookmarkDestination(
         self, dest: PageObject, parent: Optional[TreeObject] = None
     ) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
-            Use :meth:`add_bookmark_destination` instead.
+            Use :meth:`add_outline_item_destination` instead.
         """
-        deprecate_with_replacement("addBookmarkDestination", "add_bookmark_destination")
-        return self.add_bookmark_destination(dest, parent)
+        deprecate_with_replacement(
+            "addBookmarkDestination", "add_outline_item_destination"
+        )
+        return self.add_outline_item_destination(dest, parent)
 
-    def add_bookmark_dict(
-        self, bookmark: BookmarkTypes, parent: Optional[TreeObject] = None
+    @deprecate_bookmark(bookmark="outline_item")
+    def add_outline_item_dict(
+        self, outline_item: OutlineItemType, parent: Optional[TreeObject] = None
     ) -> IndirectObject:
-        bookmark_obj = TreeObject()
-        for k, v in list(bookmark.items()):
-            bookmark_obj[NameObject(str(k))] = v
-        bookmark_obj.update(bookmark)
+        outline_item_object = TreeObject()
+        for k, v in list(outline_item.items()):
+            outline_item_object[NameObject(str(k))] = v
+        outline_item_object.update(outline_item)
 
-        if "/A" in bookmark:
+        if "/A" in outline_item:
             action = DictionaryObject()
-            a_dict = cast(DictionaryObject, bookmark["/A"])
+            a_dict = cast(DictionaryObject, outline_item["/A"])
             for k, v in list(a_dict.items()):
                 action[NameObject(str(k))] = v
             action_ref = self._add_object(action)
-            bookmark_obj[NameObject("/A")] = action_ref
+            outline_item_object[NameObject("/A")] = action_ref
 
-        return self.add_bookmark_destination(bookmark_obj, parent)
+        return self.add_outline_item_destination(outline_item_object, parent)
 
+    @deprecate_bookmark(bookmark="outline_item")
+    def add_bookmark_dict(
+        self, outline_item: OutlineItemType, parent: Optional[TreeObject] = None
+    ) -> IndirectObject:
+        """
+        .. deprecated:: 2.9.0
+
+            Use :meth:`add_outline_item_dict` instead.
+        """
+        deprecate_with_replacement("add_bookmark_dict", "add_outline_item_dict")
+        return self.add_outline_item_dict(outline_item, parent)
+
+    @deprecate_bookmark(bookmark="outline_item")
     def addBookmarkDict(
-        self, bookmark: BookmarkTypes, parent: Optional[TreeObject] = None
+        self, outline_item: OutlineItemType, parent: Optional[TreeObject] = None
     ) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
-            Use :meth:`add_bookmark_dict` instead.
+            Use :meth:`add_outline_item_dict` instead.
         """
-        deprecate_with_replacement("addBookmarkDict", "add_bookmark_dict")
-        return self.add_bookmark_dict(bookmark, parent)
+        deprecate_with_replacement("addBookmarkDict", "add_outline_item_dict")
+        return self.add_outline_item_dict(outline_item, parent)
+
+    def add_outline_item(
+        self,
+        title: str,
+        pagenum: int,
+        parent: Union[None, TreeObject, IndirectObject] = None,
+        color: Optional[Union[Tuple[float, float, float], str]] = None,
+        bold: bool = False,
+        italic: bool = False,
+        fit: FitType = "/Fit",
+        *args: ZoomArgType,
+    ) -> IndirectObject:
+        """
+        Add an outline item (commonly referred to as a "Bookmark") to this PDF file.
+
+        :param str title: Title to use for this outline item.
+        :param int pagenum: Page number this outline item will point to.
+        :param parent: A reference to a parent outline item to create nested
+            outline items.
+        :param tuple color: Color of the outline item's font as a red, green, blue tuple
+            from 0.0 to 1.0 or as a Hex String (#RRGGBB)
+        :param bool bold: Outline item font is bold
+        :param bool italic: Outline item font is italic
+        :param str fit: The fit of the destination page. See
+            :meth:`add_link()<add_link>` for details.
+        """
+        page_ref = NumberObject(pagenum)
+        zoom_args: ZoomArgsType = [
+            NullObject() if a is None else NumberObject(a) for a in args
+        ]
+        dest = Destination(
+            NameObject("/" + title + " outline item"),
+            page_ref,
+            NameObject(fit),
+            *zoom_args,
+        )
+
+        action_ref = self._add_object(
+            DictionaryObject(
+                {
+                    NameObject(GoToActionArguments.D): dest.dest_array,
+                    NameObject(GoToActionArguments.S): NameObject("/GoTo"),
+                }
+            )
+        )
+        outline_item = _create_outline_item(action_ref, title, color, italic, bold)
+
+        if parent is None:
+            parent = self.get_outline_root()
+        return self.add_outline_item_destination(outline_item, parent)
 
     def add_bookmark(
         self,
@@ -1168,40 +1258,14 @@ class PdfWriter:
         *args: ZoomArgType,
     ) -> IndirectObject:
         """
-        Add a bookmark to this PDF file.
+        .. deprecated:: 2.9.0
 
-        :param str title: Title to use for this bookmark.
-        :param int pagenum: Page number this bookmark will point to.
-        :param parent: A reference to a parent bookmark to create nested
-            bookmarks.
-        :param tuple color: Color of the bookmark as a red, green, blue tuple
-            from 0.0 to 1.0
-        :param bool bold: Bookmark is bold
-        :param bool italic: Bookmark is italic
-        :param str fit: The fit of the destination page. See
-            :meth:`addLink()<addLink>` for details.
+            Use :meth:`add_outline_item` instead.
         """
-        page_ref = NumberObject(pagenum)
-        zoom_args: ZoomArgsType = [
-            NullObject() if a is None else NumberObject(a) for a in args
-        ]
-        dest = Destination(
-            NameObject("/" + title + " bookmark"), page_ref, NameObject(fit), *zoom_args
+        deprecate_with_replacement("add_bookmark", "add_outline_item")
+        return self.add_outline_item(
+            title, pagenum, parent, color, bold, italic, fit, *args
         )
-
-        action_ref = self._add_object(
-            DictionaryObject(
-                {
-                    NameObject(GoToActionArguments.D): dest.dest_array,
-                    NameObject(GoToActionArguments.S): NameObject("/GoTo"),
-                }
-            )
-        )
-        bookmark = _create_bookmark(action_ref, title, color, italic, bold)
-
-        if parent is None:
-            parent = self.get_outline_root()
-        return self.add_bookmark_destination(bookmark, parent)
 
     def addBookmark(
         self,
@@ -1217,11 +1281,16 @@ class PdfWriter:
         """
         .. deprecated:: 1.28.0
 
-            Use :meth:`add_bookmark` instead.
+            Use :meth:`add_outline_item` instead.
         """
-        deprecate_with_replacement("addBookmark", "add_bookmark")
-        return self.add_bookmark(
+        deprecate_with_replacement("addBookmark", "add_outline_item")
+        return self.add_outline_item(
             title, pagenum, parent, color, bold, italic, fit, *args
+        )
+
+    def add_outline(self) -> None:
+        raise NotImplementedError(
+            "This method is not yet implemented. Use :meth:`add_outline_item` instead."
         )
 
     def add_named_destination_object(self, dest: PdfObject) -> IndirectObject:
@@ -1524,84 +1593,28 @@ class PdfWriter:
         fit: FitType = "/Fit",
         *args: ZoomArgType,
     ) -> None:
-        """
-        Add an internal link from a rectangular area to the specified page.
-
-        :param int pagenum: index of the page on which to place the link.
-        :param int pagedest: index of the page to which the link should go.
-        :param rect: :class:`RectangleObject<PyPDF2.generic.RectangleObject>` or array of four
-            integers specifying the clickable rectangular area
-            ``[xLL, yLL, xUR, yUR]``, or string in the form ``"[ xLL yLL xUR yUR ]"``.
-        :param border: if provided, an array describing border-drawing
-            properties. See the PDF spec for details. No border will be
-            drawn if this argument is omitted.
-        :param str fit: Page fit or 'zoom' option (see below). Additional arguments may need
-            to be supplied. Passing ``None`` will be read as a null value for that coordinate.
-
-        .. list-table:: Valid ``zoom`` arguments (see Table 8.2 of the PDF 1.7 reference for details)
-           :widths: 50 200
-
-           * - /Fit
-             - No additional arguments
-           * - /XYZ
-             - [left] [top] [zoomFactor]
-           * - /FitH
-             - [top]
-           * - /FitV
-             - [left]
-           * - /FitR
-             - [left] [bottom] [right] [top]
-           * - /FitB
-             - No additional arguments
-           * - /FitBH
-             - [top]
-           * - /FitBV
-             - [left]
-        """
-        pages_obj = cast(Dict[str, Any], self.get_object(self._pages))
-        page_link = pages_obj[PA.KIDS][pagenum]
-        page_dest = pages_obj[PA.KIDS][pagedest]  # TODO: switch for external link
-        page_ref = cast(Dict[str, Any], self.get_object(page_link))
-
-        border_arr: BorderArrayType
-        if border is not None:
-            border_arr = [NameObject(n) for n in border[:3]]
-            if len(border) == 4:
-                dash_pattern = ArrayObject([NameObject(n) for n in border[3]])
-                border_arr.append(dash_pattern)
-        else:
-            border_arr = [NumberObject(0)] * 3
+        deprecate_with_replacement(
+            "add_link", "add_annotation(AnnotationBuilder.link(...))"
+        )
 
         if isinstance(rect, str):
-            rect = NameObject(rect)
+            rect = rect.strip()[1:-1]
+            rect = RectangleObject(
+                [float(num) for num in rect.split(" ") if len(num) > 0]
+            )
         elif isinstance(rect, RectangleObject):
             pass
         else:
             rect = RectangleObject(rect)
 
-        zoom_args: ZoomArgsType = [
-            NullObject() if a is None else NumberObject(a) for a in args
-        ]
-        dest = Destination(
-            NameObject("/LinkName"), page_dest, NameObject(fit), *zoom_args
-        )  # TODO: create a better name for the link
-
-        lnk = DictionaryObject(
-            {
-                NameObject("/Type"): NameObject(PG.ANNOTS),
-                NameObject("/Subtype"): NameObject("/Link"),
-                NameObject("/P"): page_link,
-                NameObject("/Rect"): rect,
-                NameObject("/Border"): ArrayObject(border_arr),
-                NameObject("/Dest"): dest.dest_array,
-            }
+        annotation = AnnotationBuilder.link(
+            rect=rect,
+            border=border,
+            target_page_index=pagedest,
+            fit=fit,
+            fit_args=args,
         )
-        lnk_ref = self._add_object(lnk)
-
-        if PG.ANNOTS in page_ref:
-            page_ref[PG.ANNOTS].append(lnk_ref)
-        else:
-            page_ref[NameObject(PG.ANNOTS)] = ArrayObject([lnk_ref])
+        return self.add_annotation(page_number=pagenum, annotation=annotation)
 
     def addLink(  # pragma: no cover
         self,
@@ -1617,7 +1630,9 @@ class PdfWriter:
 
             Use :meth:`add_link` instead.
         """
-        deprecate_with_replacement("addLink", "add_link")
+        deprecate_with_replacement(
+            "addLink", "add_annotation(AnnotationBuilder.link(...))", "4.0.0"
+        )
         return self.add_link(pagenum, pagedest, rect, border, fit, *args)
 
     _valid_layouts = (
@@ -1671,8 +1686,9 @@ class PdfWriter:
         """
         if not isinstance(layout, NameObject):
             if layout not in self._valid_layouts:
-                warnings.warn(
-                    f"Layout should be one of: {'', ''.join(self._valid_layouts)}"
+                logger_warning(
+                    f"Layout should be one of: {'', ''.join(self._valid_layouts)}",
+                    __name__,
                 )
             layout = NameObject(layout)
         self._root_object.update({NameObject("/PageLayout"): layout})
@@ -1771,7 +1787,9 @@ class PdfWriter:
             mode_name: NameObject = mode
         else:
             if mode not in self._valid_modes:
-                warnings.warn(f"Mode should be one of: {', '.join(self._valid_modes)}")
+                logger_warning(
+                    f"Mode should be one of: {', '.join(self._valid_modes)}", __name__
+                )
             mode_name = NameObject(mode)
         self._root_object.update({NameObject("/PageMode"): mode_name})
 
@@ -1793,9 +1811,9 @@ class PdfWriter:
            :widths: 50 200
 
            * - /UseNone
-             - Do not show outlines or thumbnails panels
+             - Do not show outline or thumbnails panels
            * - /UseOutlines
-             - Show outlines (aka bookmarks) panel
+             - Show outline (aka bookmarks) panel
            * - /UseThumbs
              - Show page thumbnails panel
            * - /FullScreen
@@ -1830,6 +1848,58 @@ class PdfWriter:
         """
         deprecate_with_replacement("pageMode", "page_mode")
         self.page_mode = mode
+
+    def add_annotation(self, page_number: int, annotation: Dict[str, Any]) -> None:
+        to_add = cast(DictionaryObject, _pdf_objectify(annotation))
+        to_add[NameObject("/P")] = self.get_object(self._pages)["/Kids"][page_number]  # type: ignore
+        page = self.pages[page_number]
+        if page.annotations is None:
+            page[NameObject("/Annots")] = ArrayObject()
+        assert page.annotations is not None
+
+        # Internal link annotations need the correct object type for the
+        # destination
+        if to_add.get("/Subtype") == "/Link" and NameObject("/Dest") in to_add:
+            tmp = cast(dict, to_add[NameObject("/Dest")])
+            dest = Destination(
+                NameObject("/LinkName"),
+                tmp["target_page_index"],
+                tmp["fit"],
+                *tmp["fit_args"],
+            )
+            to_add[NameObject("/Dest")] = dest.dest_array
+
+        ind_obj = self._add_object(to_add)
+
+        page.annotations.append(ind_obj)
+
+
+def _pdf_objectify(obj: Union[Dict[str, Any], str, int, List[Any]]) -> PdfObject:
+    if isinstance(obj, PdfObject):
+        return obj
+    if isinstance(obj, dict):
+        to_add = DictionaryObject()
+        for key, value in obj.items():
+            name_key = NameObject(key)
+            casted_value = _pdf_objectify(value)
+            to_add[name_key] = casted_value
+        return to_add
+    elif isinstance(obj, list):
+        arr = ArrayObject()
+        for el in obj:
+            arr.append(_pdf_objectify(el))
+        return arr
+    elif isinstance(obj, str):
+        if obj.startswith("/"):
+            return NameObject(obj)
+        else:
+            return TextStringObject(obj)
+    elif isinstance(obj, (int, float)):
+        return FloatObject(obj)
+    else:
+        raise NotImplementedError(
+            f"type(obj)={type(obj)} could not be casted to PdfObject"
+        )
 
 
 class PdfFileWriter(PdfWriter):  # pragma: no cover
