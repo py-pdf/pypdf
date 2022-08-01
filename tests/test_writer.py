@@ -692,3 +692,13 @@ def test_colors_in_outline_item():
 
     # Cleanup
     os.remove(target)  # remove for testing
+
+
+def test_write_empty_stream():
+    reader = PdfReader(EXTERNAL_ROOT / "004-pdflatex-4-pages/pdflatex-4-pages.pdf")
+    writer = PdfWriter()
+    writer.clone_document_from_reader(reader)
+
+    with pytest.raises(ValueError) as exc:
+        writer.write("")
+    assert exc.value.args[0] == "Output(stream=) is empty."
