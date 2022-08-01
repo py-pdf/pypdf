@@ -110,8 +110,8 @@ class PdfMerger:
         self.fileobj = fileobj
         self.strict = strict
 
-    # There is nothing to do.
     def __enter__(self) -> "PdfMerger":
+        # There is nothing to do.
         return self
 
     def __exit__(

@@ -165,18 +165,18 @@ class PdfWriter:
         self.fileobj = fileobj
         self.with_as_usage = False
 
-    # Let it know whether it is initialized by with ... as ... usage or not
     def __enter__(self) -> "PdfWriter":
+        """Store that writer is initialized by 'with'."""
         self.with_as_usage = True
         return self
 
-    # Write to the fileobj.
     def __exit__(
         self,
         exc_type: Optional[Type[BaseException]],
         exc: Optional[BaseException],
         traceback: Optional[TracebackType],
     ) -> None:
+        """Write data to the fileobj."""
         if self.fileobj:
             self.write(self.fileobj)
 
