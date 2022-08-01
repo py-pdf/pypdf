@@ -27,7 +27,18 @@
 
 from io import BytesIO, FileIO, IOBase
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast, Type
+from types import TracebackType
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+    cast,
+)
 
 from ._encryption import Encryption
 from ._page import PageObject
@@ -57,8 +68,6 @@ from .generic import (
 )
 from .pagerange import PageRange, PageRangeSpec
 from .types import FitType, LayoutType, OutlineType, PagemodeType, ZoomArgType
-from types import TracebackType
-
 
 ERR_CLOSED_WRITER = "close() was called and thus the writer cannot be used anymore"
 
@@ -90,7 +99,7 @@ class PdfMerger:
             file-like object.
     """
 
-     @deprecate_bookmark(bookmarks="outline")
+    @deprecate_bookmark(bookmarks="outline")
     def __init__(self, strict: bool = False, fileobj: StrByteType = "") -> None:
         self.inputs: List[Tuple[Any, PdfReader, bool]] = []
         self.pages: List[Any] = []
@@ -105,8 +114,12 @@ class PdfMerger:
     def __enter__(self) -> "PdfMerger":
         return self
 
-    def __exit__(self, exc_type: Optional[Type[BaseException]], exc: Optional[BaseException],
-                 traceback: Optional[TracebackType]) -> None:
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> None:
         """Write to the fileobj and close the merger."""
         if self.fileobj:
             self.write(self.fileobj)

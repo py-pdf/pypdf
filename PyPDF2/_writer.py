@@ -36,6 +36,8 @@ import struct
 import time
 import uuid
 from hashlib import md5
+from io import FileIO
+from types import TracebackType
 from typing import (
     Any,
     Callable,
@@ -44,21 +46,21 @@ from typing import (
     List,
     Optional,
     Tuple,
+    Type,
     Union,
     cast,
-    Type
 )
 
 from ._page import PageObject, _VirtualList
 from ._reader import PdfReader
 from ._security import _alg33, _alg34, _alg35
 from ._utils import (
+    StrByteType,
     StreamType,
     _get_max_pdf_version_header,
     b_,
     deprecate_bookmark,
     deprecate_with_replacement,
-    StrByteType
     logger_warning,
 )
 from .constants import AnnotationDictionaryAttributes
@@ -109,9 +111,6 @@ from .types import (
     ZoomArgsType,
     ZoomArgType,
 )
-from io import FileIO
-from types import TracebackType
-
 
 logger = logging.getLogger(__name__)
 
@@ -172,8 +171,12 @@ class PdfWriter:
         return self
 
     # Write to the fileobj.
-    def __exit__(self, exc_type: Optional[Type[BaseException]], exc: Optional[BaseException],
-                 traceback: Optional[TracebackType]) -> None:
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> None:
         if self.fileobj:
             self.write(self.fileobj)
 
