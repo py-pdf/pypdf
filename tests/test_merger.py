@@ -19,10 +19,10 @@ sys.path.append(str(PROJECT_ROOT))
 
 
 def merger_operate(merger):
-    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
-    outline = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
-    pdf_forms = os.path.join(RESOURCE_ROOT, "pdflatex-forms.pdf")
-    pdf_pw = os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf")
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    outline = RESOURCE_ROOT / "pdflatex-outline.pdf"
+    pdf_forms = RESOURCE_ROOT / "pdflatex-forms.pdf"
+    pdf_pw = RESOURCE_ROOT / "libreoffice-writer-password.pdf"
 
     # string path:
     merger.append(pdf_path)
@@ -132,6 +132,7 @@ def test_merger_operations_by_semi_traditional_usage():
         merger_operate(merger)
 
         merger.write(tmp_path)
+    assert os.path.isfile(tmp_path)
 
     # cleanup
     os.remove(tmp_path)
