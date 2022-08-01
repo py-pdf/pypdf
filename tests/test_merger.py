@@ -93,6 +93,8 @@ def merger_operate(merger):
     merger.set_page_layout("/SinglePage")
     merger.set_page_mode("/UseThumbs")
 
+
+def check_outline(tmp_path):
     # Check if outline is correct
     reader = PyPDF2.PdfReader(tmp_path)
     assert [el.title for el in reader.outline if isinstance(el, Destination)] == [
@@ -116,12 +118,16 @@ tmp_path = "dont_commit_merged.pdf"
 
 
 def test_merger_operations_by_totally_traditional_usage():
+    # Arrange
     merger = PdfMerger()
-
     merger_operate(merger)
 
+    # Act
     merger.write(tmp_path)
     merger.close()
+
+    # Assert
+    check_outline(tmp_path)
 
     # cleanup
     os.remove(tmp_path)
@@ -129,18 +135,26 @@ def test_merger_operations_by_totally_traditional_usage():
 
 def test_merger_operations_by_semi_traditional_usage():
     with PdfMerger() as merger:
+        # Arrange
         merger_operate(merger)
-
+        # Act
         merger.write(tmp_path)
+
+    # Assert
     assert os.path.isfile(tmp_path)
+    check_outline(tmp_path)
 
     # cleanup
     os.remove(tmp_path)
 
 
 def test_merger_operation_by_totally_new_usage():
-    with PdfMerger(tmp_path) as merger:
+    with PdfMerger(fileobj=tmp_path) as merger:
         merger_operate(merger)
+
+    # Assert
+    assert os.path.isfile(tmp_path)
+    check_outline(tmp_path)
 
     # cleanup
     os.remove(tmp_path)
