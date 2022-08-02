@@ -114,50 +114,43 @@ def check_outline(tmp_path):
     # TODO: There seem to be no destinations for those links?
 
 
-tmp_path = "dont_commit_merged.pdf"
+tmp_filename = "dont_commit_merged.pdf"
 
 
-def test_merger_operations_by_traditional_usage():
+def test_merger_operations_by_traditional_usage(tmp_path):
     # Arrange
     merger = PdfMerger()
     merger_operate(merger)
+    path = tmp_path / tmp_filename
 
     # Act
-    merger.write(tmp_path)
+    merger.write(path)
     merger.close()
 
     # Assert
-    check_outline(tmp_path)
-
-    # cleanup
-    os.remove(tmp_path)
+    check_outline(path)
 
 
-def test_merger_operations_by_semi_traditional_usage():
+def test_merger_operations_by_semi_traditional_usage(tmp_path):
+    path = tmp_path / tmp_filename
+
     with PdfMerger() as merger:
-        # Arrange
         merger_operate(merger)
-        # Act
-        merger.write(tmp_path)
+        merger.write(path)  # Act
 
     # Assert
-    assert os.path.isfile(tmp_path)
-    check_outline(tmp_path)
-
-    # cleanup
-    os.remove(tmp_path)
+    assert os.path.isfile(path)
+    check_outline(path)
 
 
-def test_merger_operation_by_new_usage():
-    with PdfMerger(fileobj=tmp_path) as merger:
+def test_merger_operation_by_new_usage(tmp_path):
+    path = tmp_path / tmp_filename
+    with PdfMerger(fileobj=path) as merger:
         merger_operate(merger)
 
     # Assert
-    assert os.path.isfile(tmp_path)
-    check_outline(tmp_path)
-
-    # cleanup
-    os.remove(tmp_path)
+    assert os.path.isfile(path)
+    check_outline(path)
 
 
 def test_merge_page_exception():
