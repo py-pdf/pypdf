@@ -124,9 +124,7 @@ class PdfMerger:
     ) -> None:
         """Write to the fileobj and close the merger."""
         if self.fileobj:
-            print(f"write to {self.fileobj}")
             self.write(self.fileobj)
-        print("nope")
         self.close()
 
     @deprecate_bookmark(bookmark="outline_item", import_bookmarks="import_outline")

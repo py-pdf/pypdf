@@ -351,7 +351,6 @@ def test_DictionaryObject_read_from_stream_stream_stream_valid(
         if length in (6, 10):
             assert b"BT /F1" in do._StreamObject__data
         raise PdfReadError("__ALLGOOD__")
-    print(exc.value)
     assert should_fail ^ (exc.value.args[0] == "__ALLGOOD__")
 
 
