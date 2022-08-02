@@ -312,10 +312,10 @@ class PdfMerger:
         self._write_outline()
 
         # Write the output to the file
-        my_file, fileobj = self.output.write(fileobj)
+        my_file, ret_fileobj = self.output.write(fileobj)
 
         if my_file:
-            fileobj.close()
+            ret_fileobj.close()
 
     def close(self) -> None:
         """Shut all file descriptors (input and output) and clear all memory usage."""
