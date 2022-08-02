@@ -97,49 +97,91 @@ def writer_operate(writer):
 tmp_path = "dont_commit_writer.pdf"
 
 
-def test_writer_operations_by_totally_traditional_usage():
+@pytest.mark.parametrize(
+    ("write_data_here", "needs_cleanup"),
+    [
+        ("dont_commit_writer.pdf", True),
+        (Path("dont_commit_writer.pdf"), True),
+        (BytesIO(), False),
+    ],
+)
+def test_writer_operations_by_traditional_usage(write_data_here, needs_cleanup):
     writer = PdfWriter()
 
     writer_operate(writer)
 
     # finally, write "output" to PyPDF2-output.pdf
-    with open(tmp_path, "wb") as output_stream:
+    if needs_cleanup:
+        with open(write_data_here, "wb") as output_stream:
+            writer.write(output_stream)
+    else:
+        output_stream = write_data_here
         writer.write(output_stream)
 
-    # cleanup
-    os.remove(tmp_path)
+    if needs_cleanup:
+        os.remove(write_data_here)
 
 
-def test_writer_operations_by_semi_traditional_usage():
+@pytest.mark.parametrize(
+    ("write_data_here", "needs_cleanup"),
+    [
+        ("dont_commit_writer.pdf", True),
+        (Path("dont_commit_writer.pdf"), True),
+        (BytesIO(), False),
+    ],
+)
+def test_writer_operations_by_semi_traditional_usage(write_data_here, needs_cleanup):
     with PdfWriter() as writer:
         writer_operate(writer)
 
         # finally, write "output" to PyPDF2-output.pdf
-        with open(tmp_path, "wb") as output_stream:
+        if needs_cleanup:
+            with open(write_data_here, "wb") as output_stream:
+                writer.write(output_stream)
+        else:
+            output_stream = write_data_here
             writer.write(output_stream)
 
-    # cleanup
-    os.remove(tmp_path)
+    if needs_cleanup:
+        os.remove(write_data_here)
 
 
-def test_writer_operations_by_semi_new_traditional_usage():
+@pytest.mark.parametrize(
+    ("write_data_here", "needs_cleanup"),
+    [
+        ("dont_commit_writer.pdf", True),
+        (Path("dont_commit_writer.pdf"), True),
+        (BytesIO(), False),
+    ],
+)
+def test_writer_operations_by_semi_new_traditional_usage(
+    write_data_here, needs_cleanup
+):
     with PdfWriter() as writer:
         writer_operate(writer)
 
         # finally, write "output" to PyPDF2-output.pdf
-        writer.write(tmp_path)
+        writer.write(write_data_here)
 
-    # cleanup
-    os.remove(tmp_path)
+    if needs_cleanup:
+        os.remove(write_data_here)
 
 
-def test_writer_operation_by_totally_new_usage():
+@pytest.mark.parametrize(
+    ("write_data_here", "needs_cleanup"),
+    [
+        ("dont_commit_writer.pdf", True),
+        (Path("dont_commit_writer.pdf"), True),
+        (BytesIO(), False),
+    ],
+)
+def test_writer_operation_by_new_usage(write_data_here, needs_cleanup):
     # This includes write "output" to PyPDF2-output.pdf
-    with PdfWriter(tmp_path) as writer:
+    with PdfWriter(write_data_here) as writer:
         writer_operate(writer)
 
-    # cleanup
-    os.remove(tmp_path)
+    if needs_cleanup:
+        os.remove(write_data_here)
 
 
 @pytest.mark.parametrize(
