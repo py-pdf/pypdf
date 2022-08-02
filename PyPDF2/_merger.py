@@ -100,7 +100,9 @@ class PdfMerger:
     """
 
     @deprecate_bookmark(bookmarks="outline")
-    def __init__(self, strict: bool = False, fileobj: StrByteType = "") -> None:
+    def __init__(
+        self, strict: bool = False, fileobj: Union[Path, StrByteType] = ""
+    ) -> None:
         self.inputs: List[Tuple[Any, PdfReader, bool]] = []
         self.pages: List[Any] = []
         self.output: Optional[PdfWriter] = PdfWriter()
@@ -285,7 +287,7 @@ class PdfMerger:
         """
         self.merge(len(self.pages), fileobj, outline_item, pages, import_outline)
 
-    def write(self, fileobj: StrByteType) -> None:
+    def write(self, fileobj: Union[Path, StrByteType]) -> None:
         """
         Write all data that has been merged to the given output file.
 

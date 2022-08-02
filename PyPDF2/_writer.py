@@ -37,6 +37,7 @@ import time
 import uuid
 from hashlib import md5
 from io import BufferedReader, BufferedWriter, BytesIO, FileIO
+from pathlib import Path
 from types import TracebackType
 from typing import (
     Any,
@@ -819,7 +820,7 @@ class PdfWriter:
         stream.write(b_(f"\nstartxref\n{xref_location}\n%%EOF\n"))  # eof
 
     def write(
-        self, stream: StrByteType
+        self, stream: Union[Path, StrByteType]
     ) -> Tuple[bool, Union[FileIO, BytesIO, BufferedReader, BufferedWriter]]:
         """
         Write the collection of pages added to this object out as a PDF file.
@@ -834,7 +835,7 @@ class PdfWriter:
         if stream == "":
             raise ValueError(f"Output(stream={stream}) is empty.")
 
-        if isinstance(stream, str):
+        if isinstance(stream, (str, Path)):
             stream = FileIO(stream, "wb")
             my_file = True
 
