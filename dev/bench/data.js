@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1659295076940,
+  "lastUpdate": 1659527318704,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -12109,6 +12109,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01687489248183051",
             "extra": "mean: 3.832693771800001 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4aa9ec9637c8a154d58bf3b49185df79dfbf8e12",
+          "message": "ENH: \"with\" support for PdfMerger and PdfWriter (#1193)\n\nCloses #1108\r\nCloses #1117\r\n\r\nFull credit for this PR goes to JianzhengLuo\r\n\r\nCo-authored-by: JianzhengLuo <jianzheng.luo.china@gmail.com>",
+          "timestamp": "2022-08-03T13:47:28+02:00",
+          "tree_id": "f23ccf439511e00993e26c887f834689bc713fc7",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/4aa9ec9637c8a154d58bf3b49185df79dfbf8e12"
+        },
+        "date": 1659527317434,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0413838092507133,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0053684202406900396",
+            "extra": "mean: 960.2607522000085 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.857895196206655,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006027653775457083",
+            "extra": "mean: 77.77322685714694 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.25904612415983774,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07621903459691846",
+            "extra": "mean: 3.8603163944000016 sec\nrounds: 5"
           }
         ]
       }
