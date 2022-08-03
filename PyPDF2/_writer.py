@@ -1874,8 +1874,15 @@ class PdfWriter:
                 *tmp["fit_args"],
             )
             to_add[NameObject("/Dest")] = dest.dest_array
+        elif to_add.get("/Subtype") == "/Popup" and NameObject("/Parent") in to_add:
+            tmp = cast(dict, to_add[NameObject("/Parent")])
+            ind_obj_parent = self._add_object(tmp)
+            to_add[NameObject("/Parent")] = ind_obj_parent
 
         ind_obj = self._add_object(to_add)
+
+        if to_add.get("/Subtype") == "/Popup" and NameObject("/Parent") in to_add:
+            tmp[NameObject("/Popup")] = ind_obj
 
         page.annotations.append(ind_obj)
 

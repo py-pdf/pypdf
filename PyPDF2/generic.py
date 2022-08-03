@@ -2080,6 +2080,60 @@ class AnnotationBuilder:
     from .types import FitType, ZoomArgType
 
     @staticmethod
+    def text(
+        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        text: str,
+        open: bool = False,
+        flags: int = 0,
+    ):
+        """
+        Add text.
+
+        :param :class:`RectangleObject<PyPDF2.generic.RectangleObject>` rect:
+            or array of four integers specifying the clickable rectangular area
+            ``[xLL, yLL, xUR, yUR]``
+        """
+        # TABLE 8.23 Additional entries specific to a text annotation
+        text_obj = DictionaryObject(
+            {
+                NameObject("/Type"): NameObject(PG.ANNOTS),
+                NameObject("/Subtype"): NameObject("/Text"),
+                NameObject("/Rect"): RectangleObject(rect),
+                NameObject("/Contents"): TextStringObject(text),
+                NameObject("/Open"): BooleanObject(open),
+                NameObject("/Flags"): NumberObject(flags),
+                NameObject("/AP"): DictionaryObject(
+                    {
+                        NameObject("/N"): DictionaryObject(
+                            {
+                                NameObject("/Filter"): NameObject("/FlateDecode"),
+                                NameObject("/Type"): NameObject("/XObject"),
+                                NameObject("/Subtype"): NameObject("/Form"),
+                                NameObject("/FormType"): NumberObject(1),
+                                NameObject("/BBox"): ArrayObject(
+                                    [
+                                        NumberObject(0),
+                                        NumberObject(0),
+                                        NumberObject(18),
+                                        NumberObject(22),
+                                    ]
+                                ),
+                                NameObject("/Resources"): DictionaryObject(
+                                    {
+                                        NameObject("/ProcSet"): ArrayObject(
+                                            [NameObject("/PDF")]
+                                        )
+                                    }
+                                ),
+                            }
+                        )
+                    }
+                ),
+            }
+        )
+        return text_obj
+
+    @staticmethod
     def free_text(
         text: str,
         rect: Union[RectangleObject, Tuple[float, float, float, float]],
@@ -2095,9 +2149,9 @@ class AnnotationBuilder:
         Add text in a rectangle to a page.
 
         :param str text: Text to be added
-        :param :class:`RectangleObject<PyPDF2.generic.RectangleObject>` rect: or array of four
-                    integers specifying the clickable rectangular area
-                    ``[xLL, yLL, xUR, yUR]``
+        :param :class:`RectangleObject<PyPDF2.generic.RectangleObject>` rect:
+            or array of four integers specifying the clickable rectangular area
+            ``[xLL, yLL, xUR, yUR]``
         :param str font: Name of the Font, e.g. 'Helvetica'
         :param bool bold: Print the text in bold
         :param bool italic: Print the text in italic
@@ -2270,7 +2324,7 @@ class AnnotationBuilder:
 
         link_obj = DictionaryObject(
             {
-                NameObject("/Type"): NameObject(PG.ANNOTS),
+                NameObject("/Type"): NameObject("/Annot"),
                 NameObject("/Subtype"): NameObject("/Link"),
                 NameObject("/Rect"): RectangleObject(rect),
                 NameObject("/Border"): ArrayObject(border_arr),
@@ -2298,3 +2352,36 @@ class AnnotationBuilder:
             )
             link_obj[NameObject("/Dest")] = dest_deferred
         return link_obj
+
+    @staticmethod
+    def popup(
+        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        flags: int = 0,
+        parent: Optional[DictionaryObject] = None,
+        open: bool = False,
+    ):
+        """
+        Add a popup to the document.
+
+        :param :class:`RectangleObject<PyPDF2.generic.RectangleObject>` rect: or array of four
+                    integers specifying the clickable rectangular area
+                    ``[xLL, yLL, xUR, yUR]``
+        :param int flags: 1 - invisible, 2 - hidden, 3 - print, 4 - no zoom,
+                          5 - no rotate, 6 - no view, 7 - read only
+                          8 - locked,    9 - toggle no view, 10 - locked contents
+        :param bool open: Weather the popup should be shown directly or not (default is False)
+        :param dict parent: The contents of the popup. Create this via the AnnotationBuilder
+        """
+        popup_obj = DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Annot"),
+                NameObject("/Subtype"): NameObject("/Popup"),
+                NameObject("/Rect"): RectangleObject(rect),
+                NameObject("/Open"): BooleanObject(open),
+                NameObject("/Flags"): NumberObject(flags),
+            }
+        )
+        if parent:
+            # This needs to be an indirect object
+            popup_obj[NameObject("/Parent")] = parent
+        return popup_obj

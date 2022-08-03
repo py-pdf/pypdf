@@ -611,6 +611,35 @@ def test_annotation_builder_link():
     with open(target, "wb") as fp:
         writer.write(fp)
 
+    os.remove(target)  # comment this out for manual inspection
+
+
+def test_annotation_builder_popup():
+    # Arrange
+    pdf_path = RESOURCE_ROOT / "outline-without-title.pdf"
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    writer = PdfWriter()
+    writer.add_page(page)
+
+    # Act
+    text_annotation = AnnotationBuilder.text(
+        text="Hello World\nThis is the second line!",
+        rect=(50, 550, 200, 650),
+        open=True,
+    )
+    popup_annotation = AnnotationBuilder.popup(
+        rect=(50, 550, 200, 650),
+        open=True,
+        parent=text_annotation,
+    )
+    writer.add_annotation(0, popup_annotation)
+
+    # Assert: You need to inspect the file manually
+    target = "annotated-pdf-popup.pdf"
+    with open(target, "wb") as fp:
+        writer.write(fp)
+
     # os.remove(target)  # comment this out for manual inspection
 
 
