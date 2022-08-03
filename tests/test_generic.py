@@ -634,6 +634,7 @@ def test_annotation_builder_popup():
         parent=text_annotation,
     )
     writer.add_annotation(0, popup_annotation)
+    # writer.add_annotation(0, text_annotation)
 
     # Assert: You need to inspect the file manually
     target = "annotated-pdf-popup.pdf"

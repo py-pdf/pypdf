@@ -2359,7 +2359,7 @@ class AnnotationBuilder:
         flags: int = 0,
         parent: Optional[DictionaryObject] = None,
         open: bool = False,
-    ):
+    ) -> DictionaryObject:
         """
         Add a popup to the document.
 
