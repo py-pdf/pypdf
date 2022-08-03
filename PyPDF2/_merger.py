@@ -27,7 +27,18 @@
 
 from io import BytesIO, FileIO, IOBase
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
+from types import TracebackType
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+    cast,
+)
 
 from ._encryption import Encryption
 from ._page import PageObject
@@ -84,17 +95,37 @@ class PdfMerger:
     :param bool strict: Determines whether user should be warned of all
             problems and also causes some correctable problems to be fatal.
             Defaults to ``False``.
+    :param fileobj: Output file. Can be a filename or any kind of
+            file-like object.
     """
 
     @deprecate_bookmark(bookmarks="outline")
-    def __init__(self, strict: bool = False) -> None:
+    def __init__(
+        self, strict: bool = False, fileobj: Union[Path, StrByteType] = ""
+    ) -> None:
         self.inputs: List[Tuple[Any, PdfReader, bool]] = []
         self.pages: List[Any] = []
         self.output: Optional[PdfWriter] = PdfWriter()
         self.outline: OutlineType = []
         self.named_dests: List[Any] = []
         self.id_count = 0
+        self.fileobj = fileobj
         self.strict = strict
+
+    def __enter__(self) -> "PdfMerger":
+        # There is nothing to do.
+        return self
+
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> None:
+        """Write to the fileobj and close the merger."""
+        if self.fileobj:
+            self.write(self.fileobj)
+        self.close()
 
     @deprecate_bookmark(bookmark="outline_item", import_bookmarks="import_outline")
     def merge(
@@ -254,7 +285,7 @@ class PdfMerger:
         """
         self.merge(len(self.pages), fileobj, outline_item, pages, import_outline)
 
-    def write(self, fileobj: StrByteType) -> None:
+    def write(self, fileobj: Union[Path, StrByteType]) -> None:
         """
         Write all data that has been merged to the given output file.
 
@@ -263,10 +294,6 @@ class PdfMerger:
         """
         if self.output is None:
             raise RuntimeError(ERR_CLOSED_WRITER)
-        my_file = False
-        if isinstance(fileobj, str):
-            fileobj = FileIO(fileobj, "wb")
-            my_file = True
 
         # Add pages to the PdfWriter
         # The commented out line below was replaced with the two lines below it
@@ -285,10 +312,10 @@ class PdfMerger:
         self._write_outline()
 
         # Write the output to the file
-        self.output.write(fileobj)
+        my_file, ret_fileobj = self.output.write(fileobj)
 
         if my_file:
-            fileobj.close()
+            ret_fileobj.close()
 
     def close(self) -> None:
         """Shut all file descriptors (input and output) and clear all memory usage."""

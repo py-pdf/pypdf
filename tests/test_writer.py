@@ -26,12 +26,9 @@ def test_writer_clone():
     assert len(writer.pages) == 4
 
 
-def test_writer_operations():
+def writer_operate(writer):
     """
-    This test just checks if the operation throws an exception.
-
-    This should be done way more thoroughly: It should be checked if the
-    output is as expected.
+    To test the writer that initialized by each of the four usages.
     """
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     pdf_outline_path = RESOURCE_ROOT / "pdflatex-outline.pdf"
@@ -39,7 +36,6 @@ def test_writer_operations():
     reader = PdfReader(pdf_path)
     reader_outline = PdfReader(pdf_outline_path)
 
-    writer = PdfWriter()
     page = reader.pages[0]
     with pytest.raises(PageSizeNotDefinedError) as exc:
         writer.add_blank_page()
@@ -91,19 +87,101 @@ def test_writer_operations():
 
     writer.add_attachment("foobar.gif", b"foobarcontent")
 
-    # finally, write "output" to PyPDF2-output.pdf
-    tmp_path = "dont_commit_writer.pdf"
-    with open(tmp_path, "wb") as output_stream:
-        writer.write(output_stream)
-
     # Check that every key in _idnum_hash is correct
     objects_hash = [o.hash_value() for o in writer._objects]
     for k, v in writer._idnum_hash.items():
         assert v.pdf == writer
         assert k in objects_hash, "Missing %s" % v
 
-    # cleanup
-    os.remove(tmp_path)
+
+tmp_path = "dont_commit_writer.pdf"
+
+
+@pytest.mark.parametrize(
+    ("write_data_here", "needs_cleanup"),
+    [
+        ("dont_commit_writer.pdf", True),
+        (Path("dont_commit_writer.pdf"), True),
+        (BytesIO(), False),
+    ],
+)
+def test_writer_operations_by_traditional_usage(write_data_here, needs_cleanup):
+    writer = PdfWriter()
+
+    writer_operate(writer)
+
+    # finally, write "output" to PyPDF2-output.pdf
+    if needs_cleanup:
+        with open(write_data_here, "wb") as output_stream:
+            writer.write(output_stream)
+    else:
+        output_stream = write_data_here
+        writer.write(output_stream)
+
+    if needs_cleanup:
+        os.remove(write_data_here)
+
+
+@pytest.mark.parametrize(
+    ("write_data_here", "needs_cleanup"),
+    [
+        ("dont_commit_writer.pdf", True),
+        (Path("dont_commit_writer.pdf"), True),
+        (BytesIO(), False),
+    ],
+)
+def test_writer_operations_by_semi_traditional_usage(write_data_here, needs_cleanup):
+    with PdfWriter() as writer:
+        writer_operate(writer)
+
+        # finally, write "output" to PyPDF2-output.pdf
+        if needs_cleanup:
+            with open(write_data_here, "wb") as output_stream:
+                writer.write(output_stream)
+        else:
+            output_stream = write_data_here
+            writer.write(output_stream)
+
+    if needs_cleanup:
+        os.remove(write_data_here)
+
+
+@pytest.mark.parametrize(
+    ("write_data_here", "needs_cleanup"),
+    [
+        ("dont_commit_writer.pdf", True),
+        (Path("dont_commit_writer.pdf"), True),
+        (BytesIO(), False),
+    ],
+)
+def test_writer_operations_by_semi_new_traditional_usage(
+    write_data_here, needs_cleanup
+):
+    with PdfWriter() as writer:
+        writer_operate(writer)
+
+        # finally, write "output" to PyPDF2-output.pdf
+        writer.write(write_data_here)
+
+    if needs_cleanup:
+        os.remove(write_data_here)
+
+
+@pytest.mark.parametrize(
+    ("write_data_here", "needs_cleanup"),
+    [
+        ("dont_commit_writer.pdf", True),
+        (Path("dont_commit_writer.pdf"), True),
+        (BytesIO(), False),
+    ],
+)
+def test_writer_operation_by_new_usage(write_data_here, needs_cleanup):
+    # This includes write "output" to PyPDF2-output.pdf
+    with PdfWriter(write_data_here) as writer:
+        writer_operate(writer)
+
+    if needs_cleanup:
+        os.remove(write_data_here)
 
 
 @pytest.mark.parametrize(
@@ -656,3 +734,13 @@ def test_colors_in_outline_item():
 
     # Cleanup
     os.remove(target)  # remove for testing
+
+
+def test_write_empty_stream():
+    reader = PdfReader(EXTERNAL_ROOT / "004-pdflatex-4-pages/pdflatex-4-pages.pdf")
+    writer = PdfWriter()
+    writer.clone_document_from_reader(reader)
+
+    with pytest.raises(ValueError) as exc:
+        writer.write("")
+    assert exc.value.args[0] == "Output(stream=) is empty."

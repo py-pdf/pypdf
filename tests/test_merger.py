@@ -18,13 +18,11 @@ RESOURCE_ROOT = PROJECT_ROOT / "resources"
 sys.path.append(str(PROJECT_ROOT))
 
 
-def test_merge():
+def merger_operate(merger):
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     outline = RESOURCE_ROOT / "pdflatex-outline.pdf"
     pdf_forms = RESOURCE_ROOT / "pdflatex-forms.pdf"
     pdf_pw = RESOURCE_ROOT / "libreoffice-writer-password.pdf"
-
-    merger = PyPDF2.PdfMerger()
 
     # string path:
     merger.append(pdf_path)
@@ -95,10 +93,8 @@ def test_merge():
     merger.set_page_layout("/SinglePage")
     merger.set_page_mode("/UseThumbs")
 
-    tmp_path = "dont_commit_merged.pdf"
-    merger.write(tmp_path)
-    merger.close()
 
+def check_outline(tmp_path):
     # Check if outline is correct
     reader = PyPDF2.PdfReader(tmp_path)
     assert [el.title for el in reader.outline if isinstance(el, Destination)] == [
@@ -117,8 +113,44 @@ def test_merge():
 
     # TODO: There seem to be no destinations for those links?
 
-    # Clean up
-    os.remove(tmp_path)
+
+tmp_filename = "dont_commit_merged.pdf"
+
+
+def test_merger_operations_by_traditional_usage(tmp_path):
+    # Arrange
+    merger = PdfMerger()
+    merger_operate(merger)
+    path = tmp_path / tmp_filename
+
+    # Act
+    merger.write(path)
+    merger.close()
+
+    # Assert
+    check_outline(path)
+
+
+def test_merger_operations_by_semi_traditional_usage(tmp_path):
+    path = tmp_path / tmp_filename
+
+    with PdfMerger() as merger:
+        merger_operate(merger)
+        merger.write(path)  # Act
+
+    # Assert
+    assert os.path.isfile(path)
+    check_outline(path)
+
+
+def test_merger_operation_by_new_usage(tmp_path):
+    path = tmp_path / tmp_filename
+    with PdfMerger(fileobj=path) as merger:
+        merger_operate(merger)
+
+    # Assert
+    assert os.path.isfile(path)
+    check_outline(path)
 
 
 def test_merge_page_exception():

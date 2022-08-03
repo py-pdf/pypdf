@@ -36,6 +36,9 @@ import struct
 import time
 import uuid
 from hashlib import md5
+from io import BufferedReader, BufferedWriter, BytesIO, FileIO
+from pathlib import Path
+from types import TracebackType
 from typing import (
     Any,
     Callable,
@@ -44,6 +47,7 @@ from typing import (
     List,
     Optional,
     Tuple,
+    Type,
     Union,
     cast,
 )
@@ -52,6 +56,7 @@ from ._page import PageObject, _VirtualList
 from ._reader import PdfReader
 from ._security import _alg33, _alg34, _alg35
 from ._utils import (
+    StrByteType,
     StreamType,
     _get_max_pdf_version_header,
     b_,
@@ -121,7 +126,7 @@ class PdfWriter:
     class (typically :class:`PdfReader<PyPDF2.PdfReader>`).
     """
 
-    def __init__(self) -> None:
+    def __init__(self, fileobj: StrByteType = "") -> None:
         self._header = b"%PDF-1.3"
         self._objects: List[Optional[PdfObject]] = []  # array of indirect objects
         self._idnum_hash: Dict[bytes, IndirectObject] = {}
@@ -158,6 +163,23 @@ class PdfWriter:
         )
         self._root: Optional[IndirectObject] = None
         self._root_object = root
+        self.fileobj = fileobj
+        self.with_as_usage = False
+
+    def __enter__(self) -> "PdfWriter":
+        """Store that writer is initialized by 'with'."""
+        self.with_as_usage = True
+        return self
+
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> None:
+        """Write data to the fileobj."""
+        if self.fileobj:
+            self.write(self.fileobj)
 
     @property
     def pdf_header(self) -> bytes:
@@ -771,13 +793,7 @@ class PdfWriter:
         self._encrypt = self._add_object(encrypt)
         self._encrypt_key = key
 
-    def write(self, stream: StreamType) -> None:
-        """
-        Write the collection of pages added to this object out as a PDF file.
-
-        :param stream: An object to write the file to.  The object must support
-            the write method and the tell method, similar to a file object.
-        """
+    def write_stream(self, stream: StreamType) -> None:
         if hasattr(stream, "mode") and "b" not in stream.mode:
             logger_warning(
                 f"File <{stream.name}> to write to is not in binary mode. "  # type: ignore
@@ -802,6 +818,33 @@ class PdfWriter:
         xref_location = self._write_xref_table(stream, object_positions)
         self._write_trailer(stream)
         stream.write(b_(f"\nstartxref\n{xref_location}\n%%EOF\n"))  # eof
+
+    def write(
+        self, stream: Union[Path, StrByteType]
+    ) -> Tuple[bool, Union[FileIO, BytesIO, BufferedReader, BufferedWriter]]:
+        """
+        Write the collection of pages added to this object out as a PDF file.
+
+        :param stream: An object to write the file to.  The object can support
+            the write method and the tell method, similar to a file object, or
+            be a file path, just like the fileobj, just named it stream to keep
+            existing workflow.
+        """
+        my_file = False
+
+        if stream == "":
+            raise ValueError(f"Output(stream={stream}) is empty.")
+
+        if isinstance(stream, (str, Path)):
+            stream = FileIO(stream, "wb")
+            my_file = True
+
+        self.write_stream(stream)
+
+        if self.with_as_usage:
+            stream.close()
+
+        return my_file, stream
 
     def _write_header(self, stream: StreamType) -> List[int]:
         object_positions = []
