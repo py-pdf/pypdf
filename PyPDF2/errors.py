@@ -33,11 +33,11 @@ class ParseError(Exception):
     pass
 
 
-class WrongPasswordError(PdfReadError):
+class FileNotDecryptedError(PdfReadError):
     pass
 
 
-class FileNotDecryptedError(PdfReadError):
+class WrongPasswordError(FileNotDecryptedError):
     pass
 
 
