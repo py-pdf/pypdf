@@ -4,4 +4,5 @@
 ignore = E203,E501,E741,W503,W604,N817,N814,VNE001,VNE002,VNE003,N802,SIM105,P101
 exclude = build,sample-files
 per-file-ignores =
-    tests/*: ASS001,PT011,B011
+    tests/*: ASS001,PT011,B011,T001
+    make_changelog.py:T001
