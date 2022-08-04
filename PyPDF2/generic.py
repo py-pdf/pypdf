@@ -70,7 +70,6 @@ from ._utils import (
 )
 from .constants import CheckboxRadioButtonAttributes, FieldDictionaryAttributes
 from .constants import FilterTypes as FT
-from .constants import PageAttributes as PG
 from .constants import StreamAttributes as SA
 from .constants import TypArguments as TA
 from .constants import TypFitArguments as TF
@@ -2080,6 +2079,33 @@ class AnnotationBuilder:
     from .types import FitType, ZoomArgType
 
     @staticmethod
+    def text(
+        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        text: str,
+        open: bool = False,
+        flags: int = 0,
+    ) -> DictionaryObject:
+        """
+        Add text annotation.
+
+        :param :class:`RectangleObject<PyPDF2.generic.RectangleObject>` rect:
+            or array of four integers specifying the clickable rectangular area
+            ``[xLL, yLL, xUR, yUR]``
+        """
+        # TABLE 8.23 Additional entries specific to a text annotation
+        text_obj = DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Annot"),
+                NameObject("/Subtype"): NameObject("/Text"),
+                NameObject("/Rect"): RectangleObject(rect),
+                NameObject("/Contents"): TextStringObject(text),
+                NameObject("/Open"): BooleanObject(open),
+                NameObject("/Flags"): NumberObject(flags),
+            }
+        )
+        return text_obj
+
+    @staticmethod
     def free_text(
         text: str,
         rect: Union[RectangleObject, Tuple[float, float, float, float]],
@@ -2270,7 +2296,7 @@ class AnnotationBuilder:
 
         link_obj = DictionaryObject(
             {
-                NameObject("/Type"): NameObject(PG.ANNOTS),
+                NameObject("/Type"): NameObject("/Annot"),
                 NameObject("/Subtype"): NameObject("/Link"),
                 NameObject("/Rect"): RectangleObject(rect),
                 NameObject("/Border"): ArrayObject(border_arr),
