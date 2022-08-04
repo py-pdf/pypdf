@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1659637953659,
+  "lastUpdate": 1659644825821,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -12199,6 +12199,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0392991121014089",
             "extra": "mean: 3.8402727491999995 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "43197dc4ccbf1f2efefa1f41edf376c30c4de963",
+          "message": "ENH: Add AnnotationBuilder.text(...) to build text annotations (#1202)",
+          "timestamp": "2022-08-04T22:25:54+02:00",
+          "tree_id": "c162d2baccf0c3638d849f7422a65f912d964b93",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/43197dc4ccbf1f2efefa1f41edf376c30c4de963"
+        },
+        "date": 1659644825072,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.883069710523824,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05227592414190219",
+            "extra": "mean: 1.1324134301999949 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.251790361079332,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00774013617053834",
+            "extra": "mean: 88.87474507693145 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22532698468803616,
+            "unit": "iter/sec",
+            "range": "stddev: 0.11937259987699297",
+            "extra": "mean: 4.437994860600003 sec\nrounds: 5"
           }
         ]
       }
