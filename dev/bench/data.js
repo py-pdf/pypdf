@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1659644825821,
+  "lastUpdate": 1659646098771,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -12244,6 +12244,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.11937259987699297",
             "extra": "mean: 4.437994860600003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "223da14bb249503574f1699b17d46cd4b7fc7885",
+          "message": "DEV: Add flake8-print (#1203)",
+          "timestamp": "2022-08-04T22:46:59+02:00",
+          "tree_id": "de68807158b5045fcd4e74e99dab8f12a13e6fbc",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/223da14bb249503574f1699b17d46cd4b7fc7885"
+        },
+        "date": 1659646096504,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8349902849932428,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017248055602281497",
+            "extra": "mean: 1.1976187244000003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.547084735296867,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007247789356955628",
+            "extra": "mean: 94.81292936363741 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21240549114687624,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02312717404637299",
+            "extra": "mean: 4.7079762138 sec\nrounds: 5"
           }
         ]
       }
