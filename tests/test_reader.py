@@ -414,7 +414,7 @@ def test_get_page_mode(src, expected):
 
 
 def test_read_empty():
-    with pytest.raises(EmptyFileError) as exc:
+    with pytest.raises(EmptyFileError):
         PdfReader(io.BytesIO())
 
 
@@ -559,7 +559,7 @@ def test_read_unknown_zero_pages(caplog):
 def test_read_encrypted_without_decryption():
     src = RESOURCE_ROOT / "libreoffice-writer-password.pdf"
     reader = PdfReader(src)
-    with pytest.raises(FileNotDecryptedError) as exc:
+    with pytest.raises(FileNotDecryptedError):
         len(reader.pages)
 
 
@@ -1064,6 +1064,7 @@ def test_PdfReaderMultipleDefinitions(caplog):
     assert normalize_warnings(caplog.text) == [
         "Multiple definitions in dictionary at byte 0xb5 for key /Group"
     ]
+
 
 def test_wrong_password_error():
     encrypted_pdf_path = RESOURCE_ROOT / "encrypted-file.pdf"
