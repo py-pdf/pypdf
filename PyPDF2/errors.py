@@ -33,4 +33,16 @@ class ParseError(Exception):
     pass
 
 
+class FileNotDecryptedError(PdfReadError):
+    pass
+
+
+class WrongPasswordError(FileNotDecryptedError):
+    pass
+
+
+class EmptyFileError(PdfReadError):
+    pass
+
+
 STREAM_TRUNCATED_PREMATURELY = "Stream has ended unexpectedly"

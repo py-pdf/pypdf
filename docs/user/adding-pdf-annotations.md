@@ -54,6 +54,12 @@ with open("annotated-pdf.pdf", "wb") as fp:
     writer.write(fp)
 ```
 
+## Text
+
+A text annotation looks like this:
+
+![](text-annotation.png)
+
 ## Line
 
 If you want to add a line like this:

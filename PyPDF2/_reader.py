@@ -70,7 +70,8 @@ from .constants import FieldDictionaryAttributes, GoToActionArguments
 from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
 from .constants import TrailerKeys as TK
-from .errors import PdfReadError, PdfStreamError
+from .errors import PdfReadError, PdfStreamError, WrongPasswordError, \
+    FileNotDecryptedError, EmptyFileError
 from .generic import (
     ArrayObject,
     ContentStream,
@@ -290,7 +291,7 @@ class PdfReader:
                 and password is not None
             ):
                 # raise if password provided
-                raise PdfReadError("Wrong password")
+                raise WrongPasswordError("Wrong password")
             self._override_encryption = False
         else:
             if password is not None:
@@ -1155,7 +1156,7 @@ class PdfReader:
             if not self._override_encryption and self._encryption is not None:
                 # if we don't have the encryption key:
                 if not self._encryption.is_decrypted():
-                    raise PdfReadError("File has not been decrypted")
+                    raise FileNotDecryptedError("File has not been decrypted")
                 # otherwise, decrypt here...
                 retval = cast(PdfObject, retval)
                 retval = self._encryption.decrypt_object(
@@ -1306,7 +1307,7 @@ class PdfReader:
         # start at the end:
         stream.seek(0, os.SEEK_END)
         if not stream.tell():
-            raise PdfReadError("Cannot read an empty file")
+            raise EmptyFileError("Cannot read an empty file")
         if self.strict:
             stream.seek(0, os.SEEK_SET)
             header_byte = stream.read(5)

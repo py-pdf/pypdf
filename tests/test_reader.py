@@ -11,7 +11,7 @@ from PyPDF2._reader import convert_to_int, convertToInt
 from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.constants import Ressources as RES
-from PyPDF2.errors import PdfReadError, PdfReadWarning
+from PyPDF2.errors import PdfReadError, PdfReadWarning, EmptyFileError, FileNotDecryptedError, WrongPasswordError
 from PyPDF2.filters import _xobj_to_image
 from PyPDF2.generic import Destination
 
@@ -414,7 +414,7 @@ def test_get_page_mode(src, expected):
 
 
 def test_read_empty():
-    with pytest.raises(PdfReadError) as exc:
+    with pytest.raises(EmptyFileError) as exc:
         PdfReader(io.BytesIO())
     assert exc.value.args[0] == "Cannot read an empty file"
 
@@ -560,7 +560,7 @@ def test_read_unknown_zero_pages(caplog):
 def test_read_encrypted_without_decryption():
     src = RESOURCE_ROOT / "libreoffice-writer-password.pdf"
     reader = PdfReader(src)
-    with pytest.raises(PdfReadError) as exc:
+    with pytest.raises(FileNotDecryptedError) as exc:
         len(reader.pages)
     assert exc.value.args[0] == "File has not been decrypted"
 
@@ -1066,3 +1066,12 @@ def test_PdfReaderMultipleDefinitions(caplog):
     assert normalize_warnings(caplog.text) == [
         "Multiple definitions in dictionary at byte 0xb5 for key /Group"
     ]
+
+
+def test_wrong_password_error():
+    encrypted_pdf_path = RESOURCE_ROOT / "encrypted-file.pdf"
+    with pytest.raises(WrongPasswordError):
+        PdfReader(
+            encrypted_pdf_path,
+            password="definitely_the_wrong_password!",
+        )

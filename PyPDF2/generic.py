@@ -70,7 +70,6 @@ from ._utils import (
 )
 from .constants import CheckboxRadioButtonAttributes, FieldDictionaryAttributes
 from .constants import FilterTypes as FT
-from .constants import PageAttributes as PG
 from .constants import StreamAttributes as SA
 from .constants import TypArguments as TA
 from .constants import TypFitArguments as TF
@@ -2085,9 +2084,9 @@ class AnnotationBuilder:
         text: str,
         open: bool = False,
         flags: int = 0,
-    ):
+    ) -> DictionaryObject:
         """
-        Add text.
+        Add text annotation.
 
         :param :class:`RectangleObject<PyPDF2.generic.RectangleObject>` rect:
             or array of four integers specifying the clickable rectangular area
@@ -2096,39 +2095,12 @@ class AnnotationBuilder:
         # TABLE 8.23 Additional entries specific to a text annotation
         text_obj = DictionaryObject(
             {
-                NameObject("/Type"): NameObject(PG.ANNOTS),
+                NameObject("/Type"): NameObject("/Annot"),
                 NameObject("/Subtype"): NameObject("/Text"),
                 NameObject("/Rect"): RectangleObject(rect),
                 NameObject("/Contents"): TextStringObject(text),
                 NameObject("/Open"): BooleanObject(open),
                 NameObject("/Flags"): NumberObject(flags),
-                NameObject("/AP"): DictionaryObject(
-                    {
-                        NameObject("/N"): DictionaryObject(
-                            {
-                                NameObject("/Filter"): NameObject("/FlateDecode"),
-                                NameObject("/Type"): NameObject("/XObject"),
-                                NameObject("/Subtype"): NameObject("/Form"),
-                                NameObject("/FormType"): NumberObject(1),
-                                NameObject("/BBox"): ArrayObject(
-                                    [
-                                        NumberObject(0),
-                                        NumberObject(0),
-                                        NumberObject(18),
-                                        NumberObject(22),
-                                    ]
-                                ),
-                                NameObject("/Resources"): DictionaryObject(
-                                    {
-                                        NameObject("/ProcSet"): ArrayObject(
-                                            [NameObject("/PDF")]
-                                        )
-                                    }
-                                ),
-                            }
-                        )
-                    }
-                ),
             }
         )
         return text_obj
