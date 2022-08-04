@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1659527318704,
+  "lastUpdate": 1659637953659,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -12154,6 +12154,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.07621903459691846",
             "extra": "mean: 3.8603163944000016 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "chilledgeek@gmail.com",
+            "name": "Ern Chow",
+            "username": "chilledgeek"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d0a058ad24847f657b0922a186630535cab7a811",
+          "message": "MAINT: Introduce WrongPasswordError / FileNotDecryptedError / EmptyFileError  (#1201)\n\nSome cases of PdfReadError were replaced by more specific exceptions:\r\n\r\n* FileNotDecryptedError\r\n    * WrongPasswordError\r\n* EmptyFileError\r\n\r\nThis enables PyPDF2 users to handle those specific issues more conveniently.",
+          "timestamp": "2022-08-04T20:31:29+02:00",
+          "tree_id": "a5de23c69f38bf44f855eefa65345a54642da77a",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/d0a058ad24847f657b0922a186630535cab7a811"
+        },
+        "date": 1659637952974,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0484843940628137,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006682155018680735",
+            "extra": "mean: 953.7576388000019 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.261086642822868,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005970304318552824",
+            "extra": "mean: 75.40860164285387 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2603981709914533,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0392991121014089",
+            "extra": "mean: 3.8402727491999995 sec\nrounds: 5"
           }
         ]
       }
