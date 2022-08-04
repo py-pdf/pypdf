@@ -414,8 +414,9 @@ def test_get_page_mode(src, expected):
 
 
 def test_read_empty():
-    with pytest.raises(EmptyFileError):
+    with pytest.raises(EmptyFileError) as exc:
         PdfReader(io.BytesIO())
+    assert exc.value.args[0] == "Cannot read an empty file"
 
 
 def test_read_malformed_header():
@@ -559,8 +560,9 @@ def test_read_unknown_zero_pages(caplog):
 def test_read_encrypted_without_decryption():
     src = RESOURCE_ROOT / "libreoffice-writer-password.pdf"
     reader = PdfReader(src)
-    with pytest.raises(FileNotDecryptedError):
+    with pytest.raises(FileNotDecryptedError) as exc:
         len(reader.pages)
+    assert exc.value.args[0] == "File has not been decrypted"
 
 
 def test_get_destination_page_number():
