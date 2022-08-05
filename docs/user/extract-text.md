@@ -10,6 +10,19 @@ page = reader.pages[0]
 print(page.extract_text())
 ```
 
+you can also select limit the text orientation you want to extract.<br/>
+eg:<br/>
+to extract only text oriented up
+```python
+print(page.extract_text(0))
+```
+to extract text oriented up and turned left
+```python
+print(page.extract_text((0, 90)))
+```
+
+refer to [extract\_text](../modules/PageObject.html#PyPDF2._page.PageObject.extract_text) for more details.
+
 ## Why Text Extraction is hard
 
 Extracting text from a PDF can be pretty tricky. In several cases there is no
