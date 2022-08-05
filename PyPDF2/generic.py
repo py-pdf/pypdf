@@ -2335,3 +2335,58 @@ class AnnotationBuilder:
             )
             link_obj[NameObject("/Dest")] = dest_deferred
         return link_obj
+
+    @staticmethod
+    def widget(
+        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        appearence: Optional[DictionaryObject] = None,
+    ) -> DictionaryObject:
+        """ """
+        # See TABLE 8.39 Additional entries specific to a widget annotation
+        widget_obj = DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Annot"),
+                NameObject("/Subtype"): NameObject("/Widget"),
+                NameObject("/Rect"): RectangleObject(rect),
+                NameObject("/H"): NameObject("O"),
+            }
+        )
+        if appearence:
+            widget_obj[NameObject("/MK")] = appearence
+        return widget_obj
+
+
+def build_appearence_characteristics(
+    rotation: int = 0,
+    border_color: Optional[str] = None,
+    background_color: Optional[str] = None,
+) -> DictionaryObject:
+    """
+    Build an appearence characteristics dictionary.
+
+    This directly refers to
+        TABLE 8.40 Entries in an appearance characteristics dictionary
+    in the context of the widget annotation.
+
+    :param int rotation: 0 is no rotation.
+        Must be multiple of 90. Direction is counterclockwise.
+    :param str border_color: Hex-code of the border color.
+        Must start with a hash, followed by 6 characters (RRGGBB).
+    """
+    # See also: 8.6.2 Field Dictionaries
+    d = DictionaryObject(
+        {
+            NameObject("/R"): NumberObject(rotation),
+        }
+    )
+    if border_color:
+        d[NameObject("/BC")] = ArrayObject(
+            [FloatObject(c) for c in hex_to_rgb(border_color)]
+        )
+    if background_color:
+        d[NameObject("/BG")] = ArrayObject(
+            [FloatObject(c) for c in hex_to_rgb(background_color)]
+        )
+    if True:
+        d[NameObject("/CA")] = TextStringObject("Back")
+    return d

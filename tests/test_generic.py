@@ -25,6 +25,7 @@ from PyPDF2.generic import (
     RectangleObject,
     TextStringObject,
     TreeObject,
+    build_appearence_characteristics,
     create_string_object,
     encode_pdfdocencoding,
     read_hex_string_from_stream,
@@ -631,11 +632,48 @@ def test_annotation_builder_text():
     writer.add_annotation(0, text_annotation)
 
     # Assert: You need to inspect the file manually
-    target = "annotated-pdf-popup.pdf"
+    target = "annotated-pdf-text.pdf"
     with open(target, "wb") as fp:
         writer.write(fp)
 
     os.remove(target)  # comment this out for manual inspection
+
+
+def test_annotation_builder_widget():
+    # Arrange
+    pdf_path = RESOURCE_ROOT / "outline-without-title.pdf"
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    writer = PdfWriter()
+    writer.add_page(page)
+
+    # Act
+    widget_annotation = AnnotationBuilder.widget(
+        rect=(50, 550, 500, 650),
+        appearence=build_appearence_characteristics(
+            background_color="#FFaa33", border_color="ff0000"
+        ),
+    )
+    ind_widget = writer._add_object(widget_annotation)
+    obj = DictionaryObject(
+        {
+            NameObject("/T"): TextStringObject("Back"),
+            NameObject("/DA"): TextStringObject("/Times 8 Tf 0 g"),
+            NameObject("/FT"): NameObject("/Btn"),
+            NameObject("/Ff"): NumberObject(1),
+            NameObject("/Kids"): ArrayObject([ind_widget]),
+        }
+    )
+    ind = writer._add_object(obj)
+    widget_annotation[NameObject("/Parent")] = ind
+    writer.add_annotation(0, widget_annotation)
+
+    # Assert: You need to inspect the file manually
+    target = "annotated-pdf-widget.pdf"
+    with open(target, "wb") as fp:
+        writer.write(fp)
+
+    # os.remove(target)  # comment this out for manual inspection
 
 
 def test_CheckboxRadioButtonAttributes_opt():
