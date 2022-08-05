@@ -2076,6 +2076,16 @@ def hex_to_rgb(value: str) -> Tuple[float, float, float]:
 
 
 class AnnotationBuilder:
+    """
+    The AnnotationBuilder creates dictionaries representing PDF annotations.
+
+    Those dictionaries can be modified before they are added to a PdfWriter
+    instance via `writer.add_annotation`.
+
+    See `adding PDF annotations <../user/adding-pdf-annotations.html>`_ for
+    it's usage combined with PdfWriter.
+    """
+
     from .types import FitType, ZoomArgType
 
     @staticmethod
@@ -2088,9 +2098,11 @@ class AnnotationBuilder:
         """
         Add text annotation.
 
-        :param :class:`RectangleObject<PyPDF2.generic.RectangleObject>` rect:
+        :param RectangleObject rect:
             or array of four integers specifying the clickable rectangular area
             ``[xLL, yLL, xUR, yUR]``
+        :param bool open:
+        :param int flags:
         """
         # TABLE 8.23 Additional entries specific to a text annotation
         text_obj = DictionaryObject(
@@ -2121,9 +2133,8 @@ class AnnotationBuilder:
         Add text in a rectangle to a page.
 
         :param str text: Text to be added
-        :param :class:`RectangleObject<PyPDF2.generic.RectangleObject>` rect: or array of four
-                    integers specifying the clickable rectangular area
-                    ``[xLL, yLL, xUR, yUR]``
+        :param RectangleObject rect: or array of four integers
+            specifying the clickable rectangular area ``[xLL, yLL, xUR, yUR]``
         :param str font: Name of the Font, e.g. 'Helvetica'
         :param bool bold: Print the text in bold
         :param bool italic: Print the text in italic
@@ -2177,9 +2188,9 @@ class AnnotationBuilder:
 
         :param Tuple[float, float] p1: First point
         :param Tuple[float, float] p2: Second point
-        :param :class:`RectangleObject<PyPDF2.generic.RectangleObject>` rect: or array of four
-                    integers specifying the clickable rectangular area
-                    ``[xLL, yLL, xUR, yUR]``
+        :param RectangleObject rect: or array of four
+                integers specifying the clickable rectangular area
+                ``[xLL, yLL, xUR, yUR]``
         :param str text: Text to be displayed as the line annotation
         :param str title_bar: Text to be displayed in the title bar of the
             annotation; by convention this is the name of the author
@@ -2234,9 +2245,9 @@ class AnnotationBuilder:
         An internal link requires the target_page_index, fit, and fit args.
 
 
-        :param :class:`RectangleObject<PyPDF2.generic.RectangleObject>` rect: or array of four
-                    integers specifying the clickable rectangular area
-                    ``[xLL, yLL, xUR, yUR]``
+        :param RectangleObject rect: or array of four
+            integers specifying the clickable rectangular area
+            ``[xLL, yLL, xUR, yUR]``
         :param border: if provided, an array describing border-drawing
             properties. See the PDF spec for details. No border will be
             drawn if this argument is omitted.

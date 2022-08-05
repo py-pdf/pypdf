@@ -32,4 +32,5 @@ PyPDF2_pdfLocation.txt
 .python-version
 tests/pdf_cache/
 docs/meta/CHANGELOG.md
+docs/meta/CONTRIBUTORS.md
 extracted-images/
