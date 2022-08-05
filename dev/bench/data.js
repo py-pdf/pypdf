@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1659646098771,
+  "lastUpdate": 1659699274179,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -12289,6 +12289,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02312717404637299",
             "extra": "mean: 4.7079762138 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "759cbc344fb8f484dc55ba4a9f394d19f9189591",
+          "message": "DOC: Fix AnnotationBuilder parameter formatting (#1204)",
+          "timestamp": "2022-08-05T13:33:22+02:00",
+          "tree_id": "5c5bd548b89da9af1d36e20ac87724e140b3f799",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/759cbc344fb8f484dc55ba4a9f394d19f9189591"
+        },
+        "date": 1659699273564,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0506608214869269,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006666497538104555",
+            "extra": "mean: 951.7819448000068 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.337958416496448,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005500971636413434",
+            "extra": "mean: 74.97399292857259 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2624989302984843,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025766723318749025",
+            "extra": "mean: 3.8095393335999974 sec\nrounds: 5"
           }
         ]
       }
