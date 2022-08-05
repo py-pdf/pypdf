@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1659699274179,
+  "lastUpdate": 1659723575927,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -12334,6 +12334,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.025766723318749025",
             "extra": "mean: 3.8095393335999974 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a6b8fa6e4cd654d22760ccf62760b89de287c7d6",
+          "message": "DOC: Example for orientation parameter of extract_text (#1206)\n\nIntroduced by 8a27fa4eea0c072cd7c8718a4c04869223c31ef6 (#1175)",
+          "timestamp": "2022-08-05T20:18:27+02:00",
+          "tree_id": "3addce30d9190b90b88e63192f6e8c0ab2247619",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/a6b8fa6e4cd654d22760ccf62760b89de287c7d6"
+        },
+        "date": 1659723574321,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0220956120407398,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00588781616447542",
+            "extra": "mean: 978.3820497999955 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.449751450432633,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005352428818516371",
+            "extra": "mean: 80.32288869230797 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2571066723141527,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022949357524360853",
+            "extra": "mean: 3.889436205599998 sec\nrounds: 5"
           }
         ]
       }
