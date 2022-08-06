@@ -38,9 +38,9 @@ import math
 import struct
 import zlib
 from io import BytesIO
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union, cast
 
-from .generic import ArrayObject, DictionaryObject, NameObject
+from .generic import ArrayObject, DictionaryObject, IndirectObject, NameObject
 
 try:
     from typing import Literal  # type: ignore[attr-defined]
@@ -506,7 +506,8 @@ class CCITTFaxDecode:
 
 def decode_stream_data(stream: Any) -> Union[str, bytes]:  # utils.StreamObject
     filters = stream.get(SA.FILTER, ())
-
+    if isinstance(filters, IndirectObject):
+        filters = cast(ArrayObject, filters.get_object())
     if len(filters) and not isinstance(filters[0], NameObject):
         # we have a single filter instance
         filters = (filters,)

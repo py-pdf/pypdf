@@ -219,3 +219,10 @@ def test_lzw_decode_neg1():
         for page in reader.pages:
             page.extract_text()
     assert exc.value.args[0] == "Missed the stop code in LZWDecode!"
+
+
+def test_issue_399():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/976/976970.pdf"
+    name = "tika-976970.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader.pages[1].extract_text()
