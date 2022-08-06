@@ -193,6 +193,12 @@ class Transformation:
     def scale(
         self, sx: Optional[float] = None, sy: Optional[float] = None
     ) -> "Transformation":
+        """
+        Scale the contents of a page towards the origin of the coordinate system.
+
+        Typically, that is the lower-left corner of the page. That can be
+        changed by translating the contents / the page boxes.
+        """
         if sx is None and sy is None:
             raise ValueError("Either sx or sy must be specified")
         if sx is None:

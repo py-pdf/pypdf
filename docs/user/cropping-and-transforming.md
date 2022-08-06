@@ -128,3 +128,66 @@ op = Transformation().rotate(45).translate(tx=50)
 ```
 
 ![](merge-translated.png)
+
+
+## Scaling
+
+PyPDF2 offers two ways to scale: The page itself and the contents on a page.
+Typically, you want to combine both.
+
+![](scaling.png)
+
+### Scaling a Page (the Canvas)
+
+```python
+from PyPDF2 import PdfReader, PdfWriter
+
+# Read the input
+reader = PdfReader("resources/side-by-side-subfig.pdf")
+page = reader.pages[0]
+
+# Scale
+page.scale(0.5)
+
+# Write the result to a file
+writer = PdfWriter()
+writer.add_page(page)
+writer.write("out.pdf")
+```
+
+If you wish to have more control, you can adjust the various page boxes
+directly:
+
+```python
+from PyPDF2.generic import RectangleObject
+
+mb = page.mediabox
+
+page.mediabox = RectangleObject((mb.left, mb.bottom, mb.right, mb.top))
+page.cropbox = RectangleObject((mb.left, mb.bottom, mb.right, mb.top))
+page.trimbox = RectangleObject((mb.left, mb.bottom, mb.right, mb.top))
+page.bleedbox = RectangleObject((mb.left, mb.bottom, mb.right, mb.top))
+page.artbox = RectangleObject((mb.left, mb.bottom, mb.right, mb.top))
+```
+
+### Scaling the content
+
+The content is scaled towords the origin of the coordinate system. Typically,
+that is the lower-left corner.
+
+```python
+from PyPDF2 import PdfReader, PdfWriter, Transformation
+
+# Read the input
+reader = PdfReader("resources/side-by-side-subfig.pdf")
+page = reader.pages[0]
+
+# Scale
+op = Transformation().scale(sx=0.7, sy=0.7)
+page.add_transformation(op)
+
+# Write the result to a file
+writer = PdfWriter()
+writer.add_page(page)
+writer.write("out-pg-transform.pdf")
+```
