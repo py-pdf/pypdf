@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1659794129675,
+  "lastUpdate": 1659794368614,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -12514,6 +12514,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.07546537338014762",
             "extra": "mean: 4.327633087799984 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "406d5f103c2543913ae4b39d1d33dddb29bfb081",
+          "message": "DOC: Font scrambling",
+          "timestamp": "2022-08-06T15:58:22+02:00",
+          "tree_id": "176b28f5820526e41a1c47d490ef42b81d3e9022",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/406d5f103c2543913ae4b39d1d33dddb29bfb081"
+        },
+        "date": 1659794367930,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.035843837349023,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007611730782135815",
+            "extra": "mean: 965.3964854000037 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.084145410164783,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007642617556960101",
+            "extra": "mean: 76.42837714285277 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2614420034508712,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01660144494266108",
+            "extra": "mean: 3.8249400891999925 sec\nrounds: 5"
           }
         ]
       }
