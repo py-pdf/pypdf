@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1659771409640,
+  "lastUpdate": 1659793781418,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -12424,6 +12424,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.022381595789916508",
             "extra": "mean: 4.5995038728 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5b6bffb6c65cb982f0ad118405fc28458011f3d0",
+          "message": "BUG: Allow IndirectObjects as stream filters (#1211)\n\nSee 'TABLE 3.4 Entries common to all stream dictionaries'\r\n\r\nand\r\n\r\n> Any object in a PDF file may be labeled as an indirect object.\r\n\r\nCloses #399",
+          "timestamp": "2022-08-06T15:48:39+02:00",
+          "tree_id": "476130414b16443849ff8590240dc4975a9454ad",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/5b6bffb6c65cb982f0ad118405fc28458011f3d0"
+        },
+        "date": 1659793780790,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0449193490870716,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006233377303075084",
+            "extra": "mean: 957.0116591999977 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.058932087546047,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004441237064559221",
+            "extra": "mean: 76.57593999999993 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2655745992550426,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017607373278194585",
+            "extra": "mean: 3.7654203482000073 sec\nrounds: 5"
           }
         ]
       }
