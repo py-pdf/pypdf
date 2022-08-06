@@ -124,3 +124,17 @@ comes to characters which are easy to confuse such as `oO0ö`.
 
 PyPDF2 also has an edge when it comes to characters which are rare, e.g.
 🤰. OCR software will not be able to recognize smileys correctly.
+
+
+
+## Attempts to prevent text extraction
+
+If people who share PDF documents want to prevent text extraction, there are
+multiple ways to do so:
+
+1. Store the contents of the PDF as an image
+2. [Use a scrambled font](https://stackoverflow.com/a/43466923/562769)
+
+However, text extraction cannot be completely prevented if people should still
+be able to read the document. In the worst case people can make a screenshot,
+print it, scan it, and run OCR over it.
