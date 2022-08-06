@@ -3,6 +3,7 @@ from binascii import unhexlify
 from typing import Any, Dict, List, Tuple, Union, cast
 
 from ._codecs import adobe_glyphs, charset_encoding
+from ._utils import logger_warning
 from .errors import PdfReadWarning
 from .generic import DecodedStreamObject, DictionaryObject
 
@@ -35,22 +36,33 @@ def build_char_map(
         for x in int_entry:
             if x <= 255:
                 encoding[x] = chr(x)
-    if font_name in _default_fonts_space_width:
+    try:
         # override space_width with new params
-        space_width = _default_fonts_space_width[font_name]
-    sp_width = compute_space_width(ft, space_code, space_width)
+        space_width = _default_fonts_space_width[cast(str, ft["/BaseFont"])]
+    except Exception:
+        pass
+    # I conside the space_code is available on one byte
+    if isinstance(space_code, str):
+        try:  # one byte
+            sp = space_code.encode("charmap")[0]
+        except Exception:
+            sp = space_code.encode("utf-16-be")
+            sp = sp[0] + 256 * sp[1]
+    else:
+        sp = space_code
+    sp_width = compute_space_width(ft, sp, space_width)
 
     return (
         font_type,
         float(sp_width / 2),
         encoding,
         # https://github.com/python/mypy/issues/4374
-        map_dict,  # type: ignore
-    )  # type: ignore
+        map_dict,
+    )
 
 
 # used when missing data, e.g. font def missing
-unknown_char_map: Tuple[str, float, Union[str, Dict[int, str]], Dict] = (
+unknown_char_map: Tuple[str, float, Union[str, Dict[int, str]], Dict[Any, Any]] = (
     "Unknown",
     9999,
     dict(zip(range(256), ["�"] * 256)),
@@ -97,7 +109,7 @@ def parse_encoding(
     encoding: Union[str, List[str], Dict[int, str]] = []
     if "/Encoding" not in ft:
         try:
-            if "/BaseFont" in ft and ft["/BaseFont"] in charset_encoding:
+            if "/BaseFont" in ft and cast(str, ft["/BaseFont"]) in charset_encoding:
                 encoding = dict(
                     zip(range(256), charset_encoding[cast(str, ft["/BaseFont"])])
                 )
@@ -105,7 +117,7 @@ def parse_encoding(
                 encoding = "charmap"
             return encoding, _default_fonts_space_width[cast(str, ft["/BaseFont"])]
         except Exception:
-            if ft["/Subtype"] == "/Type1":
+            if cast(str, ft["/Subtype"]) == "/Type1":
                 return "charmap", space_code
             else:
                 return "", space_code
@@ -156,19 +168,31 @@ def parse_encoding(
 
 def parse_to_unicode(
     ft: DictionaryObject, space_code: int
-) -> Tuple[Dict, int, List[int]]:
-    map_dict: Dict[
-        Any, Any
-    ] = (
-        {}
-    )  # will store all translation code and map_dict[-1] we will have the number of bytes to convert
-    int_entry: List[
-        int
-    ] = []  # will provide the list of cmap keys as int to correct encoding
+) -> Tuple[Dict[Any, Any], int, List[int]]:
+    # will store all translation code
+    # and map_dict[-1] we will have the number of bytes to convert
+    map_dict: Dict[Any, Any] = {}
+
+    # will provide the list of cmap keys as int to correct encoding
+    int_entry: List[int] = []
+
     if "/ToUnicode" not in ft:
         return {}, space_code, []
     process_rg: bool = False
     process_char: bool = False
+    cm = prepare_cm(ft)
+    for l in cm.split(b"\n"):
+        process_rg, process_char = process_cm_line(
+            l.strip(b" "), process_rg, process_char, map_dict, int_entry
+        )
+
+    for a, value in map_dict.items():
+        if value == " ":
+            space_code = a
+    return map_dict, space_code, int_entry
+
+
+def prepare_cm(ft: DictionaryObject) -> bytes:
     cm: bytes = cast(DecodedStreamObject, ft["/ToUnicode"]).get_data()
     # we need to prepare cm before due to missing return line in pdf printed to pdf from word
     cm = (
@@ -184,74 +208,97 @@ def parse_to_unicode(
     for i in range(len(ll)):
         j = ll[i].find(b">")
         if j >= 0:
-            ll[i] = ll[i][:j].replace(b" ", b"") + b" " + ll[i][j + 1 :]
+            if j == 0:
+                # string is empty: stash a placeholder here (see below)
+                # see https://github.com/py-pdf/PyPDF2/issues/1111
+                content = b"."
+            else:
+                content = ll[i][:j].replace(b" ", b"")
+            ll[i] = content + b" " + ll[i][j + 1 :]
     cm = (
         (b" ".join(ll))
         .replace(b"[", b" [ ")
         .replace(b"]", b" ]\n ")
         .replace(b"\r", b"\n")
     )
+    return cm
 
-    for l in cm.split(b"\n"):
-        if l in (b"", b" "):
-            continue
-        if b"beginbfrange" in l:
-            process_rg = True
-        elif b"endbfrange" in l:
-            process_rg = False
-        elif b"beginbfchar" in l:
-            process_char = True
-        elif b"endbfchar" in l:
-            process_char = False
-        elif process_rg:
-            lst = [x for x in l.split(b" ") if x]
-            a = int(lst[0], 16)
-            b = int(lst[1], 16)
-            nbi = len(lst[0])
-            map_dict[-1] = nbi // 2
-            fmt = b"%%0%dX" % nbi
-            if lst[2] == b"[":
-                for sq in lst[3:]:
-                    if sq == b"]":
-                        break
-                    map_dict[
-                        unhexlify(fmt % a).decode(
-                            "charmap" if map_dict[-1] == 1 else "utf-16-be",
-                            "surrogatepass",
-                        )
-                    ] = unhexlify(sq).decode("utf-16-be", "surrogatepass")
-                    int_entry.append(a)
-                    a += 1
-            else:
-                c = int(lst[2], 16)
-                fmt2 = b"%%0%dX" % len(lst[2])
-                while a <= b:
-                    map_dict[
-                        unhexlify(fmt % a).decode(
-                            "charmap" if map_dict[-1] == 1 else "utf-16-be",
-                            "surrogatepass",
-                        )
-                    ] = unhexlify(fmt2 % c).decode("utf-16-be", "surrogatepass")
-                    int_entry.append(a)
-                    a += 1
-                    c += 1
-        elif process_char:
-            lst = [x for x in l.split(b" ") if x]
-            map_dict[-1] = len(lst[0]) // 2
-            while len(lst) > 0:
-                map_dict[
-                    unhexlify(lst[0]).decode(
-                        "charmap" if map_dict[-1] == 1 else "utf-16-be", "surrogatepass"
-                    )
-                ] = unhexlify(lst[1]).decode(
-                    "utf-16-be", "surrogatepass"
-                )  # join is here as some cases where the code was split
-                int_entry.append(int(lst[0], 16))
-                lst = lst[2:]
-    for a, value in map_dict.items():
-        if value == " ":
-            space_code = a
-    return map_dict, space_code, int_entry
+
+def process_cm_line(
+    l: bytes,
+    process_rg: bool,
+    process_char: bool,
+    map_dict: Dict[Any, Any],
+    int_entry: List[int],
+) -> Tuple[bool, bool]:
+    if l in (b"", b" ") or l[0] == 37:  # 37 = %
+        return process_rg, process_char
+    if b"beginbfrange" in l:
+        process_rg = True
+    elif b"endbfrange" in l:
+        process_rg = False
+    elif b"beginbfchar" in l:
+        process_char = True
+    elif b"endbfchar" in l:
+        process_char = False
+    elif process_rg:
+        parse_bfrange(l, map_dict, int_entry)
+    elif process_char:
+        parse_bfchar(l, map_dict, int_entry)
+    return process_rg, process_char
+
+
+def parse_bfrange(l: bytes, map_dict: Dict[Any, Any], int_entry: List[int]) -> None:
+    lst = [x for x in l.split(b" ") if x]
+    a = int(lst[0], 16)
+    b = int(lst[1], 16)
+    nbi = len(lst[0])
+    map_dict[-1] = nbi // 2
+    fmt = b"%%0%dX" % nbi
+    if lst[2] == b"[":
+        for sq in lst[3:]:
+            if sq == b"]":
+                break
+            map_dict[
+                unhexlify(fmt % a).decode(
+                    "charmap" if map_dict[-1] == 1 else "utf-16-be",
+                    "surrogatepass",
+                )
+            ] = unhexlify(sq).decode("utf-16-be", "surrogatepass")
+            int_entry.append(a)
+            a += 1
+    else:
+        c = int(lst[2], 16)
+        fmt2 = b"%%0%dX" % max(4, len(lst[2]))
+        while a <= b:
+            map_dict[
+                unhexlify(fmt % a).decode(
+                    "charmap" if map_dict[-1] == 1 else "utf-16-be",
+                    "surrogatepass",
+                )
+            ] = unhexlify(fmt2 % c).decode("utf-16-be", "surrogatepass")
+            int_entry.append(a)
+            a += 1
+            c += 1
+
+
+def parse_bfchar(l: bytes, map_dict: Dict[Any, Any], int_entry: List[int]) -> None:
+    lst = [x for x in l.split(b" ") if x]
+    map_dict[-1] = len(lst[0]) // 2
+    while len(lst) > 1:
+        map_to = ""
+        # placeholder (see above) means empty string
+        if lst[1] != b".":
+            map_to = unhexlify(lst[1]).decode(
+                "utf-16-be", "surrogatepass"
+            )  # join is here as some cases where the code was split
+        map_dict[
+            unhexlify(lst[0]).decode(
+                "charmap" if map_dict[-1] == 1 else "utf-16-be", "surrogatepass"
+            )
+        ] = map_to
+        int_entry.append(int(lst[0], 16))
+        lst = lst[2:]
 
 
 def compute_space_width(
@@ -259,30 +306,43 @@ def compute_space_width(
 ) -> float:
     sp_width: float = space_width * 2  # default value
     w = []
+    w1 = {}
     st: int = 0
-    if "/W" in ft:
-        if "/DW" in ft:
-            sp_width = cast(float, ft["/DW"])
-        w = list(ft["/W"])  # type: ignore
+    if "/DescendantFonts" in ft:  # ft["/Subtype"].startswith("/CIDFontType"):
+        ft1 = ft["/DescendantFonts"][0].get_object()  # type: ignore
+        try:
+            w1[-1] = cast(float, ft1["/DW"])
+        except Exception:
+            w1[-1] = 1000.0
+        if "/W" in ft1:
+            w = list(ft1["/W"])
+        else:
+            w = []
         while len(w) > 0:
             st = w[0]
             second = w[1]
-            if isinstance(int, second):
-                if st <= space_code and space_code <= second:
-                    sp_width = w[2]
-                    break
+            if isinstance(second, int):
+                for x in range(st, second):
+                    w1[x] = w[2]
                 w = w[3:]
-            if isinstance(list, second):
-                if st <= space_code and space_code <= st + len(second) - 1:
-                    sp_width = second[space_code - st]
+            elif isinstance(second, list):
+                for y in second:
+                    w1[st] = y
+                    st += 1
                 w = w[2:]
             else:
-                warnings.warn(
-                    "unknown widths : \n" + (ft["/W"]).__repr__(),
-                    PdfReadWarning,
+                logger_warning(
+                    "unknown widths : \n" + (ft1["/W"]).__repr__(),
+                    __name__,
                 )
                 break
-    if "/Widths" in ft:
+        try:
+            sp_width = w1[space_code]
+        except Exception:
+            sp_width = (
+                w1[-1] / 2.0
+            )  # if using default we consider space will be only half size
+    elif "/Widths" in ft:
         w = list(ft["/Widths"])  # type: ignore
         try:
             st = cast(int, ft["/FirstChar"])

@@ -35,9 +35,19 @@ import decimal
 import hashlib
 import logging
 import re
-import warnings
+from enum import IntFlag
 from io import BytesIO
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+)
 
 from ._codecs import (  # noqa: rev_encoding
     _pdfdoc_encoding,
@@ -48,27 +58,22 @@ from ._utils import (
     WHITESPACES,
     StreamType,
     b_,
-    bytes_type,
     deprecate_no_replacement,
     deprecate_with_replacement,
     hex_str,
     hexencode,
+    logger_warning,
     read_non_whitespace,
     read_until_regex,
     skip_over_comment,
     str_,
 )
-from .constants import FieldDictionaryAttributes
+from .constants import CheckboxRadioButtonAttributes, FieldDictionaryAttributes
 from .constants import FilterTypes as FT
 from .constants import StreamAttributes as SA
 from .constants import TypArguments as TA
 from .constants import TypFitArguments as TF
-from .errors import (
-    STREAM_TRUNCATED_PREMATURELY,
-    PdfReadError,
-    PdfReadWarning,
-    PdfStreamError,
-)
+from .errors import STREAM_TRUNCATED_PREMATURELY, PdfReadError, PdfStreamError
 
 logger = logging.getLogger(__name__)
 ObjectPrefix = b"/<[tf(n%"
@@ -125,6 +130,9 @@ class NullObject(PdfObject):
         deprecate_with_replacement("writeToStream", "write_to_stream")
         self.write_to_stream(stream, encryption_key)
 
+    def __repr__(self) -> str:
+        return "NullObject"
+
     @staticmethod
     def readFromStream(stream: StreamType) -> "NullObject":  # pragma: no cover
         deprecate_with_replacement("readFromStream", "read_from_stream")
@@ -178,6 +186,13 @@ class BooleanObject(PdfObject):
 
 
 class ArrayObject(list, PdfObject):
+    def items(self) -> Iterable[Any]:
+        """
+        Emulate DictionaryObject.items for a list
+        (index, object)
+        """
+        return enumerate(self)
+
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
@@ -239,7 +254,7 @@ class IndirectObject(PdfObject):
         return obj.get_object()
 
     def __repr__(self) -> str:
-        return f"IndirectObject({self.idnum!r}, {self.generation!r})"
+        return f"IndirectObject({self.idnum!r}, {self.generation!r}, {id(self.pdf)})"
 
     def __eq__(self, other: Any) -> bool:
         return (
@@ -311,7 +326,7 @@ class FloatObject(decimal.Decimal, PdfObject):
             except decimal.InvalidOperation:
                 # If this isn't a valid decimal (happens in malformed PDFs)
                 # fallback to 0
-                logger.warning(f"Invalid FloatObject {value}")
+                logger_warning(f"Invalid FloatObject {value}", __name__)
                 return decimal.Decimal.__new__(cls, "0")
 
     def __repr__(self) -> str:
@@ -491,12 +506,12 @@ def read_string_from_stream(
                     tok = b""
                 else:
                     msg = rf"Unexpected escaped string: {tok.decode('utf8')}"
-                    logger.warning(msg)
+                    logger_warning(msg, __name__)
         txt += tok
     return create_string_object(txt, forced_encoding)
 
 
-class ByteStringObject(bytes_type, PdfObject):  # type: ignore
+class ByteStringObject(bytes, PdfObject):
     """
     Represents a string object where the text encoding could not be determined.
     This occurs quite often, as the PDF spec doesn't provide an alternate way to
@@ -629,7 +644,7 @@ class NameObject(str, PdfObject):
             # Name objects should represent irregular characters
             # with a '#' followed by the symbol's hex number
             if not pdf.strict:
-                warnings.warn("Illegal character in Name Object", PdfReadWarning)
+                logger_warning("Illegal character in Name Object", __name__)
                 return NameObject(name)
             else:
                 raise PdfReadError("Illegal character in Name Object") from e
@@ -789,10 +804,10 @@ class DictionaryObject(dict, PdfObject):
                     f"Multiple definitions in dictionary at byte "
                     f"{hex_str(stream.tell())} for key {key}"
                 )
-                if pdf.strict:
+                if pdf is not None and pdf.strict:
                     raise PdfReadError(msg)
                 else:
-                    warnings.warn(msg, PdfReadWarning)
+                    logger_warning(msg, __name__)
 
         pos = stream.tell()
         s = read_non_whitespace(stream)
@@ -841,7 +856,7 @@ class DictionaryObject(dict, PdfObject):
                     stream.seek(pos, 0)
                     raise PdfReadError(
                         "Unable to find 'endstream' marker after stream at byte "
-                        f"{hex_str(stream.tell())}."
+                        f"{hex_str(stream.tell())} (nd='{ndstream!r}', end='{end!r}')."
                     )
         else:
             stream.seek(pos, 0)
@@ -1016,7 +1031,9 @@ class StreamObject(DictionaryObject):
         self.decoded_self: Optional[DecodedStreamObject] = None
 
     def hash_value_data(self) -> bytes:
-        return b_(self._data)
+        data = super().hash_value_data()
+        data += b_(self._data)
+        return data
 
     @property
     def decodedSelf(self) -> Optional["DecodedStreamObject"]:  # pragma: no cover
@@ -1143,8 +1160,16 @@ class EncodedStreamObject(StreamObject):
             self.decoded_self = decoded
             return decoded._data
 
+    def getData(self) -> Union[None, str, bytes]:  # pragma: no cover
+        deprecate_with_replacement("getData", "get_data")
+        return self.get_data()
+
     def set_data(self, data: Any) -> None:
         raise PdfReadError("Creating EncodedStreamObject is not currently supported")
+
+    def setData(self, data: Any) -> None:  # pragma: no cover
+        deprecate_with_replacement("setData", "set_data")
+        return self.set_data(data)
 
 
 class ContentStream(DecodedStreamObject):
@@ -1350,7 +1375,9 @@ class RectangleObject(ArrayObject):
         * :attr:`trimbox <PyPDF2._page.PageObject.trimbox>`
     """
 
-    def __init__(self, arr: Tuple[float, float, float, float]) -> None:
+    def __init__(
+        self, arr: Union["RectangleObject", Tuple[float, float, float, float]]
+    ) -> None:
         # must have four points
         assert len(arr) == 4
         # automatically convert arr[x] into NumberObject(arr[x]) if necessary
@@ -1360,6 +1387,16 @@ class RectangleObject(ArrayObject):
         if not isinstance(value, (NumberObject, FloatObject)):
             value = FloatObject(value)
         return value
+
+    def scale(self, sx: float, sy: float) -> "RectangleObject":
+        return RectangleObject(
+            (
+                float(self.left) * sx,
+                float(self.bottom) * sy,
+                float(self.right) * sx,
+                float(self.top) * sy,
+            )
+        )
 
     def ensureIsNumber(
         self, value: Any
@@ -1581,8 +1618,11 @@ class Field(TreeObject):
 
     def __init__(self, data: Dict[str, Any]) -> None:
         DictionaryObject.__init__(self)
-
-        for attr in FieldDictionaryAttributes.attributes():
+        field_attributes = (
+            FieldDictionaryAttributes.attributes()
+            + CheckboxRadioButtonAttributes.attributes()
+        )
+        for attr in field_attributes:
             try:
                 self[NameObject(attr)] = data[attr]
             except KeyError:
@@ -1704,6 +1744,15 @@ class Field(TreeObject):
         return self.additional_actions
 
 
+class OutlineFontFlag(IntFlag):
+    """
+    A class used as an enumerable flag for formatting an outline font
+    """
+
+    italic = 1
+    bold = 2
+
+
 class Destination(TreeObject):
     """
     A class representing a destination within a PDF file.
@@ -1764,9 +1813,15 @@ class Destination(TreeObject):
                 self[NameObject(TA.TOP)],
             ) = args
         elif typ in [TF.FIT_H, TF.FIT_BH]:
-            (self[NameObject(TA.TOP)],) = args
+            try:  # Prefered to be more robust not only to null parameters
+                (self[NameObject(TA.TOP)],) = args
+            except Exception:
+                (self[NameObject(TA.TOP)],) = (NullObject(),)
         elif typ in [TF.FIT_V, TF.FIT_BV]:
-            (self[NameObject(TA.LEFT)],) = args
+            try:  # Prefered to be more robust not only to null parameters
+                (self[NameObject(TA.LEFT)],) = args
+            except Exception:
+                (self[NameObject(TA.LEFT)],) = (NullObject(),)
         elif typ in [TF.FIT, TF.FIT_B]:
             pass
         else:
@@ -1851,8 +1906,30 @@ class Destination(TreeObject):
         """Read-only property accessing the bottom vertical coordinate."""
         return self.get("/Bottom", None)
 
+    @property
+    def color(self) -> Optional[ArrayObject]:
+        """Read-only property accessing the color in (R, G, B) with values 0.0-1.0"""
+        return self.get(
+            "/C", ArrayObject([FloatObject(0), FloatObject(0), FloatObject(0)])
+        )
 
-class Bookmark(Destination):
+    @property
+    def font_format(self) -> Optional[OutlineFontFlag]:
+        """Read-only property accessing the font type. 1=italic, 2=bold, 3=both"""
+        return self.get("/F", 0)
+
+    @property
+    def outline_count(self) -> Optional[int]:
+        """
+        Read-only property accessing the outline count.
+        positive = expanded
+        negative = collapsed
+        absolute value = number of visible descendents at all levels
+        """
+        return self.get("/Count", None)
+
+
+class OutlineItem(Destination):
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
@@ -1876,6 +1953,12 @@ class Bookmark(Destination):
         stream.write(b">>")
 
 
+class Bookmark(OutlineItem):  # pragma: no cover
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        deprecate_with_replacement("Bookmark", "OutlineItem")
+        super().__init__(*args, **kwargs)
+
+
 def createStringObject(
     string: Union[str, bytes],
     forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
@@ -1897,7 +1980,7 @@ def create_string_object(
     """
     if isinstance(string, str):
         return TextStringObject(string)
-    elif isinstance(string, bytes_type):
+    elif isinstance(string, bytes):
         if isinstance(forced_encoding, (list, dict)):
             out = ""
             for x in string:
@@ -1930,35 +2013,34 @@ def create_string_object(
         raise TypeError("create_string_object should have str or unicode arg")
 
 
-def _create_bookmark(
+def _create_outline_item(
     action_ref: IndirectObject,
     title: str,
-    color: Optional[Tuple[float, float, float]],
+    color: Union[Tuple[float, float, float], str, None],
     italic: bool,
     bold: bool,
 ) -> TreeObject:
-    bookmark = TreeObject()
-
-    bookmark.update(
+    outline_item = TreeObject()
+    outline_item.update(
         {
             NameObject("/A"): action_ref,
             NameObject("/Title"): create_string_object(title),
         }
     )
-
-    if color is not None:
-        bookmark.update(
+    if color:
+        if isinstance(color, str):
+            color = hex_to_rgb(color)
+        outline_item.update(
             {NameObject("/C"): ArrayObject([FloatObject(c) for c in color])}
         )
-
-    format_flag = 0
-    if italic:
-        format_flag += 1
-    if bold:
-        format_flag += 2
-    if format_flag:
-        bookmark.update({NameObject("/F"): NumberObject(format_flag)})
-    return bookmark
+    if italic or bold:
+        format_flag = 0
+        if italic:
+            format_flag += 1
+        if bold:
+            format_flag += 2
+        outline_item.update({NameObject("/F"): NumberObject(format_flag)})
+    return outline_item
 
 
 def encode_pdfdocencoding(unicode_string: str) -> bytes:
@@ -1987,3 +2069,269 @@ def decode_pdfdocencoding(byte_array: bytes) -> str:
             )
         retval += c
     return retval
+
+
+def hex_to_rgb(value: str) -> Tuple[float, float, float]:
+    return tuple(int(value.lstrip("#")[i : i + 2], 16) / 255.0 for i in (0, 2, 4))  # type: ignore
+
+
+class AnnotationBuilder:
+    """
+    The AnnotationBuilder creates dictionaries representing PDF annotations.
+
+    Those dictionaries can be modified before they are added to a PdfWriter
+    instance via `writer.add_annotation`.
+
+    See `adding PDF annotations <../user/adding-pdf-annotations.html>`_ for
+    it's usage combined with PdfWriter.
+    """
+
+    from .types import FitType, ZoomArgType
+
+    @staticmethod
+    def text(
+        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        text: str,
+        open: bool = False,
+        flags: int = 0,
+    ) -> DictionaryObject:
+        """
+        Add text annotation.
+
+        :param RectangleObject rect:
+            or array of four integers specifying the clickable rectangular area
+            ``[xLL, yLL, xUR, yUR]``
+        :param bool open:
+        :param int flags:
+        """
+        # TABLE 8.23 Additional entries specific to a text annotation
+        text_obj = DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Annot"),
+                NameObject("/Subtype"): NameObject("/Text"),
+                NameObject("/Rect"): RectangleObject(rect),
+                NameObject("/Contents"): TextStringObject(text),
+                NameObject("/Open"): BooleanObject(open),
+                NameObject("/Flags"): NumberObject(flags),
+            }
+        )
+        return text_obj
+
+    @staticmethod
+    def free_text(
+        text: str,
+        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        font: str = "Helvetica",
+        bold: bool = False,
+        italic: bool = False,
+        font_size: str = "14pt",
+        font_color: str = "000000",
+        border_color: str = "000000",
+        background_color: str = "ffffff",
+    ) -> DictionaryObject:
+        """
+        Add text in a rectangle to a page.
+
+        :param str text: Text to be added
+        :param RectangleObject rect: or array of four integers
+            specifying the clickable rectangular area ``[xLL, yLL, xUR, yUR]``
+        :param str font: Name of the Font, e.g. 'Helvetica'
+        :param bool bold: Print the text in bold
+        :param bool italic: Print the text in italic
+        :param str font_size: How big the text will be, e.g. '14pt'
+        :param str font_color: Hex-string for the color
+        :param str border_color: Hex-string for the border color
+        :param str background_color: Hex-string for the background of the annotation
+        """
+        font_str = "font: "
+        if bold is True:
+            font_str = font_str + "bold "
+        if italic is True:
+            font_str = font_str + "italic "
+        font_str = font_str + font + " " + font_size
+        font_str = font_str + ";text-align:left;color:#" + font_color
+
+        bg_color_str = ""
+        for st in hex_to_rgb(border_color):
+            bg_color_str = bg_color_str + str(st) + " "
+        bg_color_str = bg_color_str + "rg"
+
+        free_text = DictionaryObject()
+        free_text.update(
+            {
+                NameObject("/Type"): NameObject("/Annot"),
+                NameObject("/Subtype"): NameObject("/FreeText"),
+                NameObject("/Rect"): RectangleObject(rect),
+                NameObject("/Contents"): TextStringObject(text),
+                # font size color
+                NameObject("/DS"): TextStringObject(font_str),
+                # border color
+                NameObject("/DA"): TextStringObject(bg_color_str),
+                # background color
+                NameObject("/C"): ArrayObject(
+                    [FloatObject(n) for n in hex_to_rgb(background_color)]
+                ),
+            }
+        )
+        return free_text
+
+    @staticmethod
+    def line(
+        p1: Tuple[float, float],
+        p2: Tuple[float, float],
+        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        text: str = "",
+        title_bar: str = "",
+    ) -> DictionaryObject:
+        """
+        Draw a line on the PDF.
+
+        :param Tuple[float, float] p1: First point
+        :param Tuple[float, float] p2: Second point
+        :param RectangleObject rect: or array of four
+                integers specifying the clickable rectangular area
+                ``[xLL, yLL, xUR, yUR]``
+        :param str text: Text to be displayed as the line annotation
+        :param str title_bar: Text to be displayed in the title bar of the
+            annotation; by convention this is the name of the author
+        """
+        line_obj = DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Annot"),
+                NameObject("/Subtype"): NameObject("/Line"),
+                NameObject("/Rect"): RectangleObject(rect),
+                NameObject("/T"): TextStringObject(title_bar),
+                NameObject("/L"): ArrayObject(
+                    [
+                        FloatObject(p1[0]),
+                        FloatObject(p1[1]),
+                        FloatObject(p2[0]),
+                        FloatObject(p2[1]),
+                    ]
+                ),
+                NameObject("/LE"): ArrayObject(
+                    [
+                        NameObject(None),
+                        NameObject(None),
+                    ]
+                ),
+                NameObject("/IC"): ArrayObject(
+                    [
+                        FloatObject(0.5),
+                        FloatObject(0.5),
+                        FloatObject(0.5),
+                    ]
+                ),
+                NameObject("/Contents"): TextStringObject(text),
+            }
+        )
+        return line_obj
+
+    @staticmethod
+    def link(
+        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        border: Optional[ArrayObject] = None,
+        url: Optional[str] = None,
+        target_page_index: Optional[int] = None,
+        fit: FitType = "/Fit",
+        fit_args: Tuple[ZoomArgType, ...] = tuple(),
+    ) -> DictionaryObject:
+        """
+        Add a link to the document.
+
+        The link can either be an external link or an internal link.
+
+        An external link requires the URL parameter.
+        An internal link requires the target_page_index, fit, and fit args.
+
+
+        :param RectangleObject rect: or array of four
+            integers specifying the clickable rectangular area
+            ``[xLL, yLL, xUR, yUR]``
+        :param border: if provided, an array describing border-drawing
+            properties. See the PDF spec for details. No border will be
+            drawn if this argument is omitted.
+            - horizontal corner radius,
+            - vertical corner radius, and
+            - border width
+            - Optionally: Dash
+        :param str url: Link to a website (if you want to make an external link)
+        :param int target_page_index: index of the page to which the link should go
+                                (if you want to make an internal link)
+        :param str fit: Page fit or 'zoom' option (see below). Additional arguments may need
+            to be supplied. Passing ``None`` will be read as a null value for that coordinate.
+        :param Tuple[int, ...] fit_args: Parameters for the fit argument.
+
+
+        .. list-table:: Valid ``fit`` arguments (see Table 8.2 of the PDF 1.7 reference for details)
+           :widths: 50 200
+
+           * - /Fit
+             - No additional arguments
+           * - /XYZ
+             - [left] [top] [zoomFactor]
+           * - /FitH
+             - [top]
+           * - /FitV
+             - [left]
+           * - /FitR
+             - [left] [bottom] [right] [top]
+           * - /FitB
+             - No additional arguments
+           * - /FitBH
+             - [top]
+           * - /FitBV
+             - [left]
+        """
+        from .types import BorderArrayType
+
+        is_external = url is not None
+        is_internal = target_page_index is not None
+        if not is_external and not is_internal:
+            raise ValueError(
+                "Either 'url' or 'target_page_index' have to be provided. Both were None."
+            )
+        if is_external and is_internal:
+            raise ValueError(
+                f"Either 'url' or 'target_page_index' have to be provided. url={url}, target_page_index={target_page_index}"
+            )
+
+        border_arr: BorderArrayType
+        if border is not None:
+            border_arr = [NameObject(n) for n in border[:3]]
+            if len(border) == 4:
+                dash_pattern = ArrayObject([NameObject(n) for n in border[3]])
+                border_arr.append(dash_pattern)
+        else:
+            border_arr = [NumberObject(0)] * 3
+
+        link_obj = DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Annot"),
+                NameObject("/Subtype"): NameObject("/Link"),
+                NameObject("/Rect"): RectangleObject(rect),
+                NameObject("/Border"): ArrayObject(border_arr),
+            }
+        )
+        if is_external:
+            link_obj[NameObject("/A")] = DictionaryObject(
+                {
+                    NameObject("/S"): NameObject("/URI"),
+                    NameObject("/Type"): NameObject("/Action"),
+                    NameObject("/URI"): TextStringObject(url),
+                }
+            )
+        if is_internal:
+            fit_arg_ready = [
+                NullObject() if a is None else NumberObject(a) for a in fit_args
+            ]
+            # This needs to be updated later!
+            dest_deferred = DictionaryObject(
+                {
+                    "target_page_index": NumberObject(target_page_index),
+                    "fit": NameObject(fit),
+                    "fit_args": ArrayObject(fit_arg_ready),
+                }
+            )
+            link_obj[NameObject("/Dest")] = dest_deferred
+        return link_obj

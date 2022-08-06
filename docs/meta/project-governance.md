@@ -71,7 +71,7 @@ as their mother tongue. We try our best to understand others -
 The community can expect the following:
 
 * The **benevolent dictator** tries their best to make decisions from which the overall
-  community profits. The benevolent dictator is aware that his/her decisons can shape the
+  community profits. The benevolent dictator is aware that his/her decisions can shape the
   overall community. Once the benevolent dictator notices that she/he doesn't have the time
   to advance PyPDF2, he/she looks for a new benevolent dictator. As it is expected
   that the benevolent dictator will step down at some point of their choice

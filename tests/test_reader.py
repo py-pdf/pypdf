@@ -6,23 +6,28 @@ from pathlib import Path
 
 import pytest
 
-from PyPDF2 import PdfMerger, PdfReader
+from PyPDF2 import PdfReader
 from PyPDF2._reader import convert_to_int, convertToInt
 from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.constants import Ressources as RES
-from PyPDF2.errors import (
-    STREAM_TRUNCATED_PREMATURELY,
-    PdfReadError,
-    PdfReadWarning,
-)
+from PyPDF2.errors import PdfReadError, PdfReadWarning, EmptyFileError, FileNotDecryptedError, WrongPasswordError
 from PyPDF2.filters import _xobj_to_image
+from PyPDF2.generic import Destination
 
-from . import get_pdf_from_url
+from . import get_pdf_from_url, normalize_warnings
 
-TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
-PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
-RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
+try:
+    from Crypto.Cipher import AES  # noqa: F401
+
+    HAS_PYCRYPTODOME = True
+except ImportError:
+    HAS_PYCRYPTODOME = False
+
+TESTS_ROOT = Path(__file__).parent.resolve()
+PROJECT_ROOT = TESTS_ROOT.parent
+RESOURCE_ROOT = PROJECT_ROOT / "resources"
+EXTERNAL_ROOT = PROJECT_ROOT / "sample-files"
 
 
 @pytest.mark.parametrize(
@@ -30,7 +35,7 @@ RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
     [("selenium-PyPDF2-issue-177.pdf", 1), ("pdflatex-outline.pdf", 4)],
 )
 def test_get_num_pages(src, num_pages):
-    src = os.path.join(RESOURCE_ROOT, src)
+    src = RESOURCE_ROOT / src
     reader = PdfReader(src)
     assert len(reader.pages) == num_pages
 
@@ -39,7 +44,7 @@ def test_get_num_pages(src, num_pages):
     ("pdf_path", "expected"),
     [
         (
-            os.path.join(RESOURCE_ROOT, "crazyones.pdf"),
+            RESOURCE_ROOT / "crazyones.pdf",
             {
                 "/CreationDate": "D:20150604133406-06'00'",
                 "/Creator": " XeTeX output 2015.06.04:1334",
@@ -47,7 +52,7 @@ def test_get_num_pages(src, num_pages):
             },
         ),
         (
-            os.path.join(RESOURCE_ROOT, "metadata.pdf"),
+            RESOURCE_ROOT / "metadata.pdf",
             {
                 "/CreationDate": "D:20220415093243+02'00'",
                 "/ModDate": "D:20220415093243+02'00'",
@@ -92,8 +97,8 @@ def test_read_metadata(pdf_path, expected):
 @pytest.mark.parametrize(
     "src",
     [
-        (os.path.join(RESOURCE_ROOT, "crazyones.pdf")),
-        (os.path.join(RESOURCE_ROOT, "commented.pdf")),
+        RESOURCE_ROOT / "crazyones.pdf",
+        RESOURCE_ROOT / "commented.pdf",
     ],
 )
 def test_get_annotations(src):
@@ -110,8 +115,8 @@ def test_get_annotations(src):
 @pytest.mark.parametrize(
     "src",
     [
-        (os.path.join(RESOURCE_ROOT, "attachment.pdf")),
-        (os.path.join(RESOURCE_ROOT, "crazyones.pdf")),
+        RESOURCE_ROOT / "attachment.pdf",
+        RESOURCE_ROOT / "crazyones.pdf",
     ],
 )
 def test_get_attachments(src):
@@ -131,14 +136,14 @@ def test_get_attachments(src):
 @pytest.mark.parametrize(
     ("src", "outline_elements"),
     [
-        (os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf"), 9),
-        (os.path.join(RESOURCE_ROOT, "crazyones.pdf"), 0),
+        (RESOURCE_ROOT / "pdflatex-outline.pdf", 9),
+        (RESOURCE_ROOT / "crazyones.pdf", 0),
     ],
 )
-def test_get_outlines(src, outline_elements):
+def test_get_outline(src, outline_elements):
     reader = PdfReader(src)
-    outlines = reader._get_outlines()
-    assert len(outlines) == outline_elements
+    outline = reader.outline
+    assert len(outline) == outline_elements
 
 
 @pytest.mark.parametrize(
@@ -153,7 +158,7 @@ def test_get_outlines(src, outline_elements):
     ],
 )
 def test_get_images(src, nb_images):
-    src = os.path.join(RESOURCE_ROOT, src)
+    src = RESOURCE_ROOT / src
     reader = PdfReader(src)
 
     with pytest.raises(TypeError):
@@ -184,24 +189,58 @@ def test_get_images(src, nb_images):
 
 
 @pytest.mark.parametrize(
-    ("strict", "with_prev_0", "startx_correction", "should_fail"),
+    ("strict", "with_prev_0", "startx_correction", "should_fail", "warning_msgs"),
     [
-        (True, False, -1, False),  # all nominal => no fail
-        (True, True, -1, True),  # Prev=0 => fail expected
-        (False, False, -1, False),
-        (False, True, -1, False),  # Prev =0 => no strict so tolerant
-        (True, False, 0, True),  # error on startxref, in strict => fail expected
-        (True, True, 0, True),
+        (
+            True,
+            False,
+            -1,
+            False,
+            [
+                "startxref on same line as offset",
+                "Xref table not zero-indexed. "
+                "ID numbers for objects will be corrected.",
+            ],
+        ),  # all nominal => no fail
+        (True, True, -1, True, ""),  # Prev=0 => fail expected
+        (
+            False,
+            False,
+            -1,
+            False,
+            ["startxref on same line as offset"],
+        ),
+        (
+            False,
+            True,
+            -1,
+            False,
+            [
+                "startxref on same line as offset",
+                "/Prev=0 in the trailer - assuming there is no previous xref table",
+            ],
+        ),  # Prev =0 => no strict so tolerant
+        (True, False, 0, True, ""),  # error on startxref, in strict => fail expected
+        (True, True, 0, True, ""),
         (
             False,
             False,
             0,
             False,
+            ["startxref on same line as offset", "incorrect startxref pointer(1)"],
         ),  # error on startxref, but no strict => xref rebuilt,no fail
-        (False, True, 0, False),
+        (
+            False,
+            True,
+            0,
+            False,
+            ["startxref on same line as offset", "incorrect startxref pointer(1)"],
+        ),
     ],
 )
-def test_get_images_raw(strict, with_prev_0, startx_correction, should_fail):
+def test_get_images_raw(
+    caplog, strict, with_prev_0, startx_correction, should_fail, warning_msgs
+):
     pdf_data = (
         b"%%PDF-1.7\n"
         b"1 0 obj << /Count 1 /Kids [4 0 R] /Type /Pages >> endobj\n"
@@ -229,7 +268,8 @@ def test_get_images_raw(strict, with_prev_0, startx_correction, should_fail):
         pdf_data.find(b"4 0 obj"),
         pdf_data.find(b"5 0 obj"),
         b"/Prev 0 " if with_prev_0 else b"",
-        # startx_correction should be -1 due to double % at the beginning indiducing an error on startxref computation
+        # startx_correction should be -1 due to double % at the beginning
+        # inducing an error on startxref computation
         pdf_data.find(b"xref") + startx_correction,
     )
     pdf_stream = io.BytesIO(pdf_data)
@@ -243,17 +283,18 @@ def test_get_images_raw(strict, with_prev_0, startx_correction, should_fail):
                 == "/Prev=0 in the trailer (try opening with strict=False)"
             )
     else:
-        with pytest.warns(PdfReadWarning):
-            PdfReader(pdf_stream, strict=strict)
+        PdfReader(pdf_stream, strict=strict)
+        assert normalize_warnings(caplog.text) == warning_msgs
 
 
-def test_issue297():
-    path = os.path.join(RESOURCE_ROOT, "issue-297.pdf")
-    with pytest.raises(PdfReadError) as exc, pytest.warns(PdfReadWarning):
+def test_issue297(caplog):
+    path = RESOURCE_ROOT / "issue-297.pdf"
+    with pytest.raises(PdfReadError) as exc:
         reader = PdfReader(path, strict=True)
+    assert caplog.text == ""
     assert "Broken xref table" in exc.value.args[0]
-    with pytest.warns(PdfReadWarning):
-        reader = PdfReader(path, strict=False)
+    reader = PdfReader(path, strict=False)
+    assert normalize_warnings(caplog.text) == ["incorrect startxref pointer(1)"]
     reader.pages[0]
 
 
@@ -272,29 +313,12 @@ def test_get_page_of_encrypted_file(pdffile, password, should_fail):
     This is a regression test for issue 327:
     IndexError for get_page() of decrypted file
     """
-    path = os.path.join(RESOURCE_ROOT, pdffile)
+    path = RESOURCE_ROOT / pdffile
     if should_fail:
         with pytest.raises(PdfReadError):
             PdfReader(path, password=password)
     else:
         PdfReader(path, password=password).pages[0]
-
-
-@pytest.mark.parametrize(
-    ("pdffile", "password"),
-    [
-        ("crazyones-encrypted-256.pdf", "password"),
-    ],
-)
-def test_get_page_of_encrypted_file_new_algorithm(pdffile, password):
-    """
-    Check if we can read a page of an encrypted file.
-
-    This is a regression test for issue 327:
-    IndexError for get_page() of decrypted file
-    """
-    path = os.path.join(RESOURCE_ROOT, pdffile)
-    PdfReader(path, password=password).pages[0]
 
 
 @pytest.mark.parametrize(
@@ -324,7 +348,7 @@ def test_get_page_of_encrypted_file_new_algorithm(pdffile, password):
 )
 def test_get_form(src, expected, expected_get_fields):
     """Check if we can read out form data."""
-    src = os.path.join(RESOURCE_ROOT, src)
+    src = RESOURCE_ROOT / src
     reader = PdfReader(src)
     fields = reader.get_form_text_fields()
     assert fields == expected
@@ -360,7 +384,7 @@ def test_get_form(src, expected, expected_get_fields):
     ],
 )
 def test_get_page_number(src, page_nb):
-    src = os.path.join(RESOURCE_ROOT, src)
+    src = RESOURCE_ROOT / src
     reader = PdfReader(src)
     page = reader.pages[page_nb]
     assert reader.get_page_number(page) == page_nb
@@ -371,7 +395,7 @@ def test_get_page_number(src, page_nb):
     [("form.pdf", None), ("AutoCad_Simple.pdf", "/SinglePage")],
 )
 def test_get_page_layout(src, expected):
-    src = os.path.join(RESOURCE_ROOT, src)
+    src = RESOURCE_ROOT / src
     reader = PdfReader(src)
     assert reader.page_layout == expected
 
@@ -384,13 +408,13 @@ def test_get_page_layout(src, expected):
     ],
 )
 def test_get_page_mode(src, expected):
-    src = os.path.join(RESOURCE_ROOT, src)
+    src = RESOURCE_ROOT / src
     reader = PdfReader(src)
     assert reader.page_mode == expected
 
 
 def test_read_empty():
-    with pytest.raises(PdfReadError) as exc:
+    with pytest.raises(EmptyFileError) as exc:
         PdfReader(io.BytesIO())
     assert exc.value.args[0] == "Cannot read an empty file"
 
@@ -404,7 +428,9 @@ def test_read_malformed_header():
 def test_read_malformed_body():
     with pytest.raises(PdfReadError) as exc:
         PdfReader(io.BytesIO(b"%PDF-"), strict=True)
-    assert exc.value.args[0] == STREAM_TRUNCATED_PREMATURELY
+    assert (
+        exc.value.args[0] == "EOF marker not found"
+    )  # used to be:STREAM_TRUNCATED_PREMATURELY
 
 
 def test_read_prev_0_trailer():
@@ -479,7 +505,7 @@ def test_read_missing_startxref():
     assert exc.value.args[0] == "startxref not found"
 
 
-def test_read_unknown_zero_pages():
+def test_read_unknown_zero_pages(caplog):
     pdf_data = (
         b"%%PDF-1.7\n"
         b"1 0 obj << /Count 1 /Kids [4 0 R] /Type /Pages >> endobj\n"
@@ -510,34 +536,42 @@ def test_read_unknown_zero_pages():
         pdf_data.find(b"xref") - 1,
     )
     pdf_stream = io.BytesIO(pdf_data)
-    with pytest.warns(PdfReadWarning):
-        reader = PdfReader(pdf_stream, strict=True)
+    reader = PdfReader(pdf_stream, strict=True)
+    warnings = [
+        "startxref on same line as offset",
+        "Xref table not zero-indexed. ID numbers for objects will be corrected.",
+    ]
+    assert normalize_warnings(caplog.text) == warnings
     with pytest.raises(PdfReadError) as exc, pytest.warns(PdfReadWarning):
         len(reader.pages)
 
     assert exc.value.args[0] == "Could not find object."
-    with pytest.warns(PdfReadWarning):
-        reader = PdfReader(pdf_stream, strict=False)
+    reader = PdfReader(pdf_stream, strict=False)
+    warnings += [
+        "Object 5 1 not defined.",
+        "startxref on same line as offset",
+    ]
+    assert normalize_warnings(caplog.text) == warnings
     with pytest.raises(AttributeError) as exc, pytest.warns(PdfReadWarning):
         len(reader.pages)
     assert exc.value.args[0] == "'NoneType' object has no attribute 'get_object'"
 
 
 def test_read_encrypted_without_decryption():
-    src = os.path.join(RESOURCE_ROOT, "libreoffice-writer-password.pdf")
+    src = RESOURCE_ROOT / "libreoffice-writer-password.pdf"
     reader = PdfReader(src)
-    with pytest.raises(PdfReadError) as exc:
+    with pytest.raises(FileNotDecryptedError) as exc:
         len(reader.pages)
     assert exc.value.args[0] == "File has not been decrypted"
 
 
 def test_get_destination_page_number():
-    src = os.path.join(RESOURCE_ROOT, "pdflatex-outline.pdf")
+    src = RESOURCE_ROOT / "pdflatex-outline.pdf"
     reader = PdfReader(src)
-    outlines = reader._get_outlines()
-    for outline in outlines:
-        if not isinstance(outline, list):
-            reader.get_destination_page_number(outline)
+    outline = reader.outline
+    for outline_item in outline:
+        if not isinstance(outline_item, list):
+            reader.get_destination_page_number(outline_item)
 
 
 def test_do_not_get_stuck_on_large_files_without_start_xref():
@@ -560,17 +594,15 @@ def test_decrypt_when_no_id():
     https://github.com/mstamy2/PyPDF2/issues/608
     """
 
-    with open(
-        os.path.join(RESOURCE_ROOT, "encrypted_doc_no_id.pdf"), "rb"
-    ) as inputfile:
+    with open(RESOURCE_ROOT / "encrypted_doc_no_id.pdf", "rb") as inputfile:
         ipdf = PdfReader(inputfile)
         ipdf.decrypt("")
         assert ipdf.metadata == {"/Producer": "European Patent Office"}
 
 
 def test_reader_properties():
-    reader = PdfReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
-    assert reader.outlines == []
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    assert reader.outline == []
     assert len(reader.pages) == 1
     assert reader.page_layout is None
     assert reader.page_mode is None
@@ -579,24 +611,27 @@ def test_reader_properties():
 
 @pytest.mark.parametrize(
     "strict",
-    [(True), (False)],
+    [True, False],
 )
-def test_issue604(strict):
+def test_issue604(caplog, strict):
     """Test with invalid destinations"""  # todo
-    with open(os.path.join(RESOURCE_ROOT, "issue-604.pdf"), "rb") as f:
+    with open(RESOURCE_ROOT / "issue-604.pdf", "rb") as f:
         pdf = None
-        bookmarks = None
+        outline = None
         if strict:
             pdf = PdfReader(f, strict=strict)
             with pytest.raises(PdfReadError) as exc, pytest.warns(PdfReadWarning):
-                bookmarks = pdf._get_outlines()
+                outline = pdf.outline
             if "Unknown Destination" not in exc.value.args[0]:
                 raise Exception("Expected exception not raised")
-            return  # bookmarks not correct
+            return  # outline is not correct
         else:
             pdf = PdfReader(f, strict=strict)
-            with pytest.warns(PdfReadWarning):
-                bookmarks = pdf._get_outlines()
+            outline = pdf.outline
+            msg = [
+                "Unknown destination: ms_Thyroid_2_2020_071520_watermarked.pdf [0, 1]"
+            ]
+            assert normalize_warnings(caplog.text) == msg
 
         def get_dest_pages(x):
             if isinstance(x, list):
@@ -606,14 +641,14 @@ def test_issue604(strict):
                 return pdf.get_destination_page_number(x) + 1
 
         out = []
-        for (
-            b
-        ) in bookmarks:  # b can be destination or a list:preferred to just print them
-            out.append(get_dest_pages(b))
+
+        # oi can be destination or a list:preferred to just print them
+        for oi in outline:
+            out.append(get_dest_pages(oi))
 
 
 def test_decode_permissions():
-    reader = PdfReader(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
     base = {
         "accessability": False,
         "annotations": False,
@@ -635,11 +670,21 @@ def test_decode_permissions():
 
 
 def test_pages_attribute():
-    pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
 
     # Test if getting as slice throws an error
     assert len(reader.pages[:]) == 1
+
+    with pytest.raises(IndexError) as exc:
+        reader.pages[-1000]
+
+    assert exc.value.args[0] == "sequence index out of range"
+
+    with pytest.raises(IndexError):
+        reader.pages[1000]
+
+    assert exc.value.args[0] == "sequence index out of range"
 
 
 def test_convert_to_int():
@@ -679,7 +724,7 @@ def test_iss925():
 
 @pytest.mark.xfail(reason="#591")
 def test_extract_text_hello_world():
-    reader = PdfReader(os.path.join(RESOURCE_ROOT, "hello-world.pdf"))
+    reader = PdfReader(RESOURCE_ROOT / "hello-world.pdf")
     text = reader.pages[0].extract_text().split("\n")
     assert text == [
         "English:",
@@ -698,21 +743,20 @@ def test_extract_text_hello_world():
 
 
 def test_read_path():
-    path = Path(os.path.join(RESOURCE_ROOT, "crazyones.pdf"))
+    path = Path(RESOURCE_ROOT, "crazyones.pdf")
     reader = PdfReader(path)
     assert len(reader.pages) == 1
 
 
-def test_read_not_binary_mode():
-    with open(os.path.join(RESOURCE_ROOT, "crazyones.pdf")) as f:
+def test_read_not_binary_mode(caplog):
+    with open(RESOURCE_ROOT / "crazyones.pdf") as f:
         msg = "PdfReader stream/file object is not in binary mode. It may not be read correctly."
-        with pytest.warns(PdfReadWarning, match=msg), pytest.raises(
-            io.UnsupportedOperation
-        ):
+        with pytest.raises(io.UnsupportedOperation):
             PdfReader(f)
+    assert normalize_warnings(caplog.text) == [msg]
 
 
-@pytest.mark.xfail(reason="#416")
+@pytest.mark.skipif(not HAS_PYCRYPTODOME, reason="No pycryptodome")
 def test_read_form_416():
     url = (
         "https://www.fda.gov/downloads/AboutFDA/ReportsManualsForms/Forms/UCM074728.pdf"
@@ -722,24 +766,24 @@ def test_read_form_416():
     assert len(fields) > 0
 
 
-def test_extract_text_xref_issue_2():
+def test_extract_text_xref_issue_2(caplog):
     # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/981/981961.pdf"
-    msg = r"incorrect startxref pointer\(2\)"
-    with pytest.warns(PdfReadWarning, match=msg):
-        reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-981961.pdf")))
+    msg = "incorrect startxref pointer(2)"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-981961.pdf")))
     for page in reader.pages:
         page.extract_text()
+    assert normalize_warnings(caplog.text) == [msg]
 
 
-def test_extract_text_xref_issue_3():
+def test_extract_text_xref_issue_3(caplog):
     # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/977/977774.pdf"
-    msg = r"incorrect startxref pointer\(3\)"
-    with pytest.warns(PdfReadWarning, match=msg):
-        reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-977774.pdf")))
+    msg = "incorrect startxref pointer(3)"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-977774.pdf")))
     for page in reader.pages:
         page.extract_text()
+    assert normalize_warnings(caplog.text) == [msg]
 
 
 def test_extract_text_pdf15():
@@ -768,12 +812,12 @@ def test_get_fields():
     assert dict(fields["c1-1"]) == ({"/FT": "/Btn", "/T": "c1-1"})
 
 
+# covers also issue 1089
+@pytest.mark.filterwarnings("ignore::PyPDF2.errors.PdfReadWarning")
 def test_get_fields_read_else_block():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/934/934771.pdf"
     name = "tika-934771.pdf"
-    with pytest.raises(PdfReadError) as exc:
-        PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    assert exc.value.args[0] == "Could not find xref table at specified location"
+    PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
 
 
 def test_get_fields_read_else_block2():
@@ -784,12 +828,11 @@ def test_get_fields_read_else_block2():
     assert fields is None
 
 
+@pytest.mark.filterwarnings("ignore::PyPDF2.errors.PdfReadWarning")
 def test_get_fields_read_else_block3():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/957/957721.pdf"
     name = "tika-957721.pdf"
-    with pytest.raises(PdfReadError) as exc:
-        PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    assert exc.value.args[0] == "Could not find xref table at specified location"
+    PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
 
 
 def test_metadata_is_none():
@@ -811,21 +854,11 @@ def test_get_fields_read_write_report():
     os.remove("tmp-fields-report.txt")
 
 
-def test_unexpected_destination():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/913/913678.pdf"
-    name = "tika-913678.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    merger = PdfMerger()
-    with pytest.raises(PdfReadError) as exc:
-        merger.append(reader)
-    assert exc.value.args[0] == "Unexpected destination '/1'"
-
-
 @pytest.mark.parametrize(
     "src",
     [
-        (os.path.join(RESOURCE_ROOT, "crazyones.pdf")),
-        (os.path.join(RESOURCE_ROOT, "commented.pdf")),
+        RESOURCE_ROOT / "crazyones.pdf",
+        RESOURCE_ROOT / "commented.pdf",
     ],
 )
 def test_xfa(src):
@@ -850,11 +883,195 @@ def test_xfa_non_empty():
 @pytest.mark.parametrize(
     "src,pdf_header",
     [
-        (os.path.join(RESOURCE_ROOT, "attachment.pdf"), "%PDF-1.5"),
-        (os.path.join(RESOURCE_ROOT, "crazyones.pdf"), "%PDF-1.5"),
+        (RESOURCE_ROOT / "attachment.pdf", "%PDF-1.5"),
+        (RESOURCE_ROOT / "crazyones.pdf", "%PDF-1.5"),
     ],
 )
 def test_header(src, pdf_header):
     reader = PdfReader(src)
 
     assert reader.pdf_header == pdf_header
+
+
+def test_outline_color():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
+    name = "tika-924546.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    assert reader.outline[0].color == [0, 0, 1]
+
+
+def test_outline_font_format():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
+    name = "tika-924546.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    assert reader.outline[0].font_format == 2
+
+
+def get_outline_property(outline, attribute_name: str):
+    results = []
+    if isinstance(outline, list):
+        for outline_item in outline:
+            if isinstance(outline_item, Destination):
+                results.append(getattr(outline_item, attribute_name))
+            else:
+                results.append(get_outline_property(outline_item, attribute_name))
+    else:
+        raise ValueError(f"got {type(outline)}")
+    return results
+
+
+def test_outline_title_issue_1121():
+    reader = PdfReader(EXTERNAL_ROOT / "014-outlines/mistitled_outlines_example.pdf")
+
+    assert get_outline_property(reader.outline, "title") == [
+        "First",
+        [
+            "Second",
+            "Third",
+            "Fourth",
+            [
+                "Fifth",
+                "Sixth",
+            ],
+            "Seventh",
+            [
+                "Eighth",
+                "Ninth",
+            ],
+        ],
+        "Tenth",
+        [
+            "Eleventh",
+            "Twelfth",
+            "Thirteenth",
+            "Fourteenth",
+        ],
+        "Fifteenth",
+        [
+            "Sixteenth",
+            "Seventeenth",
+        ],
+        "Eighteenth",
+        "Nineteenth",
+        [
+            "Twentieth",
+            "Twenty-first",
+            "Twenty-second",
+            "Twenty-third",
+            "Twenty-fourth",
+            "Twenty-fifth",
+            "Twenty-sixth",
+            "Twenty-seventh",
+        ],
+    ]
+
+
+def test_outline_count():
+    reader = PdfReader(EXTERNAL_ROOT / "014-outlines/mistitled_outlines_example.pdf")
+
+    assert get_outline_property(reader.outline, "outline_count") == [
+        5,
+        [
+            None,
+            None,
+            2,
+            [
+                None,
+                None,
+            ],
+            -2,
+            [
+                None,
+                None,
+            ],
+        ],
+        4,
+        [
+            None,
+            None,
+            None,
+            None,
+        ],
+        -2,
+        [
+            None,
+            None,
+        ],
+        None,
+        8,
+        [
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ],
+    ]
+
+
+def test_outline_missing_title():
+    reader = PdfReader(RESOURCE_ROOT / "outline-without-title.pdf", strict=True)
+    with pytest.raises(PdfReadError) as exc:
+        reader.outline
+    assert exc.value.args[0].startswith("Outline Entry Missing /Title attribute:")
+
+
+def test_named_destination():
+    # 1st case : the named_dest are stored directly as a dictionnary, PDF1.1 style
+    url = "https://github.com/py-pdf/PyPDF2/files/9197028/lorem_ipsum.pdf"
+    name = "lorem_ipsum.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    assert len(reader.named_destinations) > 0
+    # 2nd case : Dest below names and with Kids...
+    url = "https://opensource.adobe.com/dc-acrobat-sdk-docs/standards/pdfstandards/pdf/PDF32000_2008.pdf"
+    name = "PDF32000_2008.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    assert len(reader.named_destinations) > 0
+    # 3nd case : Dests with Name tree
+    # TODO : case to be added
+
+
+def test_outline_with_missing_named_destination():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/913/913678.pdf"
+    name = "tika-913678.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    # outline items in document reference a named destination that is not defined
+    assert reader.outline[1][0].title.startswith("Report for 2002AZ3B: Microbial")
+
+
+def test_outline_with_empty_action():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
+    name = "tika-924546.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    # outline items (entitled Tables and Figures) utilize an empty action (/A)
+    # that has no type or destination
+    assert reader.outline[-4].title == "Tables"
+
+
+def test_outline_with_invalid_destinations():
+    reader = PdfReader(RESOURCE_ROOT / "outlines-with-invalid-destinations.pdf")
+    # contains 9 outline items, 6 with invalid destinations caused by different malformations
+    assert len(reader.outline) == 9
+
+
+def test_PdfReaderMultipleDefinitions(caplog):
+    # iss325
+    url = "https://github.com/py-pdf/PyPDF2/files/9176644/multipledefs.pdf"
+    name = "multipledefs.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader.pages[0].extract_text()
+    assert normalize_warnings(caplog.text) == [
+        "Multiple definitions in dictionary at byte 0xb5 for key /Group"
+    ]
+
+
+def test_wrong_password_error():
+    encrypted_pdf_path = RESOURCE_ROOT / "encrypted-file.pdf"
+    with pytest.raises(WrongPasswordError):
+        PdfReader(
+            encrypted_pdf_path,
+            password="definitely_the_wrong_password!",
+        )

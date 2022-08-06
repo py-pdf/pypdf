@@ -8,6 +8,7 @@ PDF Reference, third edition, Version 1.4, 2001. ISBN 0-201-75839-3.
 PDF Reference, sixth edition, Version 1.7, 2006.
 """
 
+from enum import IntFlag
 from typing import Dict, Tuple
 
 
@@ -45,6 +46,43 @@ class EncryptionDictAttributes:
     U = "/U"  # 32-byte string, required
     P = "/P"  # integer flag, required; permitted operations
     ENCRYPT_METADATA = "/EncryptMetadata"  # boolean flag, optional
+
+
+class UserAccessPermissions(IntFlag):
+    """TABLE 3.20 User access permissions"""
+
+    R1 = 1
+    R2 = 2
+    PRINT = 4
+    MODIFY = 8
+    EXTRACT = 16
+    ADD_OR_MODIFY = 32
+    R7 = 64
+    R8 = 128
+    FILL_FORM_FIELDS = 256
+    EXTRACT_TEXT_AND_GRAPHICS = 512
+    ASSEMBLE_DOC = 1024
+    PRINT_TO_REPRESENTATION = 2048
+    R13 = 2**12
+    R14 = 2**13
+    R15 = 2**14
+    R16 = 2**15
+    R17 = 2**16
+    R18 = 2**17
+    R19 = 2**18
+    R20 = 2**19
+    R21 = 2**20
+    R22 = 2**21
+    R23 = 2**22
+    R24 = 2**23
+    R25 = 2**24
+    R26 = 2**25
+    R27 = 2**26
+    R28 = 2**27
+    R29 = 2**28
+    R30 = 2**29
+    R31 = 2**30
+    R32 = 2**31
 
 
 class Ressources:
@@ -294,6 +332,30 @@ class FieldDictionaryAttributes:
         }
 
 
+class CheckboxRadioButtonAttributes:
+    """TABLE 8.76 Field flags common to all field types"""
+
+    Opt = "/Opt"  # Options, Optional
+
+    @classmethod
+    def attributes(cls) -> Tuple[str, ...]:
+        return (cls.Opt,)
+
+    @classmethod
+    def attributes_dict(cls) -> Dict[str, str]:
+        return {
+            cls.Opt: "Options",
+        }
+
+
+class FieldFlag(IntFlag):
+    """TABLE 8.70 Field flags common to all field types"""
+
+    READ_ONLY = 1
+    REQUIRED = 2
+    NO_EXPORT = 4
+
+
 class DocumentInformationAttributes:
     """TABLE 10.2 Entries in the document information dictionary."""
 
@@ -365,6 +427,7 @@ PDF_KEYS = (
     CatalogAttributes,
     CatalogDictionary,
     CcittFaxDecodeParameters,
+    CheckboxRadioButtonAttributes,
     ColorSpaces,
     Core,
     DocumentInformationAttributes,

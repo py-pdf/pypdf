@@ -1,25 +1,26 @@
-import os
 from datetime import datetime
 from io import BytesIO
+from pathlib import Path
 
 import pytest
 
 import PyPDF2.generic
 import PyPDF2.xmp
 from PyPDF2 import PdfReader
+from PyPDF2.errors import PdfReadError
 
 from . import get_pdf_from_url
 
-TESTS_ROOT = os.path.abspath(os.path.dirname(__file__))
-PROJECT_ROOT = os.path.dirname(TESTS_ROOT)
-RESOURCE_ROOT = os.path.join(PROJECT_ROOT, "resources")
+TESTS_ROOT = Path(__file__).parent.resolve()
+PROJECT_ROOT = TESTS_ROOT.parent
+RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 
 @pytest.mark.parametrize(
     ("src", "has_xmp"),
     [
-        (os.path.join(RESOURCE_ROOT, "commented-xmp.pdf"), True),
-        (os.path.join(RESOURCE_ROOT, "crazyones.pdf"), False),
+        (RESOURCE_ROOT / "commented-xmp.pdf", True),
+        (RESOURCE_ROOT / "crazyones.pdf", False),
     ],
 )
 def test_read_xmp(src, has_xmp):
@@ -73,7 +74,7 @@ def test_regression_issue774():
 
 
 def test_regression_issue914():
-    path = os.path.join(RESOURCE_ROOT, "issue-914-xmp-data.pdf")
+    path = RESOURCE_ROOT / "issue-914-xmp-data.pdf"
     reader = PdfReader(path)
     assert reader.xmp_metadata.xmp_modify_date == datetime(2022, 4, 9, 15, 22, 43)
 
@@ -168,12 +169,21 @@ def test_dc_subject():
     ]
 
 
+def test_issue585():
+    url = "https://github.com/mstamy2/PyPDF2/files/5536984/test.pdf"
+    name = "mstamy2-5536984.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    with pytest.raises(PdfReadError) as exc:
+        reader.xmp_metadata
+    assert exc.value.args[0].startswith("XML in XmpInformation was invalid")
+
+
 # def test_getter_bag():
 #     f = PyPDF2.xmp._getter_bag("namespace", "name")
 #     class Tst:  # to replace pdf
 #         strict = False
 
-#     reader = PdfReader(os.path.join(RESOURCE_ROOT, "commented-xmp.pdf"))
+#     reader = PdfReader(RESOURCE_ROOT / "commented-xmp.pdf")
 #     xmp_info = reader.xmp_metadata
 #     # <?xpacket begin='ï»¿' id='W5M0MpCehiHzreSzNTczkc9d'?>
 #     # <x:xmpmeta xmlns:x='adobe:ns:meta/' x:xmptk='Image::ExifTool 11.88'>

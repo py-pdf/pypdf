@@ -1,11 +1,12 @@
 import string
 from io import BytesIO
 from itertools import product as cartesian_product
+from unittest.mock import patch
 
 import pytest
 
 from PyPDF2 import PdfReader
-from PyPDF2.errors import PdfReadError, PdfReadWarning, PdfStreamError
+from PyPDF2.errors import PdfReadError, PdfStreamError
 from PyPDF2.filters import (
     ASCII85Decode,
     ASCIIHexDecode,
@@ -198,14 +199,16 @@ def test_CCITTFaxDecode():
     )
 
 
-def test_decompress_zlib_error():
+@patch("PyPDF2._reader.logger_warning")
+def test_decompress_zlib_error(mock_logger_warning):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/952/952445.pdf"
     name = "tika-952445.pdf"
-    with pytest.warns(PdfReadWarning, match=r"incorrect startxref pointer\(3\)"):
-        reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     for page in reader.pages:
         page.extract_text()
-    # assert exc.value.args[0] == "Could not find xref table at specified location"
+    mock_logger_warning.assert_called_with(
+        "incorrect startxref pointer(3)", "PyPDF2._reader"
+    )
 
 
 def test_lzw_decode_neg1():
