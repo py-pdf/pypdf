@@ -385,6 +385,26 @@ def test_get_metadata(url, name):
             "https://corpora.tika.apache.org/base/docs/govdocs1/942/942358.pdf",
             "tika-942358.pdf",
         ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/911/911260.pdf",
+            "tika-911260.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/992/992472.pdf",
+            "tika-992472.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/978/978477.pdf",
+            "tika-978477.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/960/960317.pdf",
+            "tika-960317.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/930/930513.pdf",
+            "tika-930513.pdf",
+        ),
     ],
 )
 def test_extract_text(url, name):
@@ -399,10 +419,14 @@ def test_extract_text(url, name):
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/938/938702.pdf",
             "tika-938702.pdf",
-        )
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/957/957304.pdf",
+            "tika-938702.pdf",
+        ),
     ],
 )
-def test_compress(url, name):
+def test_compress_raised(url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
     # TODO: which page exactly?
@@ -411,6 +435,28 @@ def test_compress(url, name):
         for page in reader.pages:
             page.compress_content_streams()
     assert exc.value.args[0] == "Unexpected end of stream"
+
+
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/915/915194.pdf",
+            "tika-915194.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/950/950337.pdf",
+            "tika-950337.pdf",
+        ),
+    ],
+)
+def test_compress(url, name):
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+    # TODO: which page exactly?
+    # TODO: Is it reasonable to have an exception here?
+    for page in reader.pages:
+        page.compress_content_streams()
 
 
 @pytest.mark.parametrize(
@@ -654,6 +700,10 @@ def test_get_xfa(url, name):
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/914/914133.pdf",
             "tika-988698.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/912/912552.pdf",
+            "tika-912552.pdf",
         ),
     ],
 )
