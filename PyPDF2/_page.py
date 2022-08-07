@@ -1354,7 +1354,7 @@ class PageObject(DictionaryObject):
                 f = font_size * k
                 tm_prev = m
                 if o not in orientations:
-                    return
+                    return None
                 try:
                     if o == 0:
                         if deltaY < -0.8 * f:

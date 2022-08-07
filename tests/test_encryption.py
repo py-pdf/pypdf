@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 import PyPDF2
-from PyPDF2 import PdfReader
+from PyPDF2 import PasswordType, PdfReader
 from PyPDF2._encryption import CryptRC4
 from PyPDF2.errors import DependencyError, PdfReadError
 
@@ -89,8 +89,6 @@ def test_encryption(name, requres_pycryptodome):
 )
 @pytest.mark.skipif(not HAS_PYCRYPTODOME, reason="No pycryptodome")
 def test_both_password(name, user_passwd, owner_passwd):
-    from PyPDF2 import PasswordType
-
     inputfile = RESOURCE_ROOT / "encryption" / name
     ipdf = PyPDF2.PdfReader(inputfile)
     assert ipdf.is_encrypted

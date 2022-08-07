@@ -26,7 +26,7 @@ from .generic import (
 BorderArrayType: TypeAlias = List[Union[NameObject, NumberObject, ArrayObject]]
 OutlineItemType: TypeAlias = Union[OutlineItem, Destination]
 # BookmarkTypes is deprecated. Use OutlineItemType instead
-BookmarkTypes: TypeAlias = OutlineItemType  # TODO: remove in version 3.0.0
+BookmarkTypes: TypeAlias = OutlineItemType  # Remove with PyPDF2==3.0.0
 FitType: TypeAlias = Literal[
     "/Fit", "/XYZ", "/FitH", "/FitV", "/FitR", "/FitB", "/FitBH", "/FitBV"
 ]
@@ -40,7 +40,7 @@ ZoomArgsType: TypeAlias = List[ZoomArgType]
 # Hence use this for the moment:
 OutlineType = List[Union[Destination, List[Union[Destination, List[Destination]]]]]
 # OutlinesType is deprecated. Use OutlineType instead
-OutlinesType: TypeAlias = OutlineType  # TODO: remove in version 3.0.0
+OutlinesType: TypeAlias = OutlineType  # Remove with PyPDF2==3.0.0
 
 LayoutType: TypeAlias = Literal[
     "/NoLayout",

@@ -1144,8 +1144,7 @@ class PdfReader:
                         f"does not match actual ({idnum} {generation}); "
                         "xref table not zero-indexed."
                     )
-                else:
-                    pass  # xref table is corrected in non-strict mode
+                # xref table is corrected in non-strict mode
             elif idnum != indirect_reference.idnum and self.strict:
                 # some other problem
                 raise PdfReadError(
@@ -1255,8 +1254,7 @@ class PdfReader:
             msg = f"Overwriting cache for {generation} {idnum}"
             if self.strict:
                 raise PdfReadError(msg)
-            else:
-                logger_warning(msg, __name__)
+            logger_warning(msg, __name__)
         self.resolved_objects[(generation, idnum)] = obj
         return obj
 
@@ -1281,10 +1279,7 @@ class PdfReader:
         if xref_issue_nr != 0:
             if self.strict and xref_issue_nr:
                 raise PdfReadError("Broken xref table")
-            else:
-                logger_warning(
-                    f"incorrect startxref pointer({xref_issue_nr})", __name__
-                )
+            logger_warning(f"incorrect startxref pointer({xref_issue_nr})", __name__)
 
         # read all cross reference tables and their trailers
         self._read_xref_tables_and_trailers(stream, startxref, xref_issue_nr)
@@ -1479,13 +1474,11 @@ class PdfReader:
                 raise PdfReadError(
                     "/Prev=0 in the trailer (try opening with strict=False)"
                 )
-            else:
-                logger_warning(
-                    "/Prev=0 in the trailer - assuming there"
-                    " is no previous xref table",
-                    __name__,
-                )
-                return None
+            logger_warning(
+                "/Prev=0 in the trailer - assuming there is no previous xref table",
+                __name__,
+            )
+            return None
         # bad xref character at startxref.  Let's see if we can find
         # the xref table nearby, as we've observed this error with an
         # off-by-one before.

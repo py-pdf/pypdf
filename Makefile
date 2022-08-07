@@ -34,3 +34,6 @@ benchmark:
 
 mypy:
 	mypy PyPDF2 --ignore-missing-imports --check-untyped --strict
+
+pylint:
+	pylint PyPDF2

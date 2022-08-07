@@ -6,7 +6,12 @@ import pytest
 
 from PyPDF2 import PageObject, PdfMerger, PdfReader, PdfWriter
 from PyPDF2.errors import PageSizeNotDefinedError
-from PyPDF2.generic import RectangleObject, StreamObject
+from PyPDF2.generic import (
+    IndirectObject,
+    NameObject,
+    RectangleObject,
+    StreamObject,
+)
 
 from . import get_pdf_from_url
 
@@ -91,7 +96,7 @@ def writer_operate(writer):
     objects_hash = [o.hash_value() for o in writer._objects]
     for k, v in writer._idnum_hash.items():
         assert v.pdf == writer
-        assert k in objects_hash, "Missing %s" % v
+        assert k in objects_hash, f"Missing {v}"
 
 
 tmp_path = "dont_commit_writer.pdf"
@@ -430,12 +435,8 @@ def test_add_named_destination():
     for page in reader.pages:
         writer.add_page(page)
 
-    from PyPDF2.generic import NameObject
-
     writer.add_named_destination(NameObject("A named dest"), 2)
     writer.add_named_destination(NameObject("A named dest2"), 2)
-
-    from PyPDF2.generic import IndirectObject
 
     assert writer.get_named_dest_root() == [
         "A named dest",
@@ -459,8 +460,6 @@ def test_add_uri():
 
     for page in reader.pages:
         writer.add_page(page)
-
-    from PyPDF2.generic import RectangleObject
 
     writer.add_uri(
         1,
@@ -502,8 +501,6 @@ def test_add_link():
 
     for page in reader.pages:
         writer.add_page(page)
-
-    from PyPDF2.generic import RectangleObject
 
     with pytest.warns(
         PendingDeprecationWarning,
@@ -632,7 +629,6 @@ def test_write_dict_stream_object():
         b"(The single quote operator) ' "
         b"ET"
     )
-    from PyPDF2.generic import IndirectObject, NameObject
 
     stream_object = StreamObject()
     stream_object[NameObject("/Type")] = NameObject("/Text")

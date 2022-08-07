@@ -848,7 +848,7 @@ class Encryption:
 
         V = encryption_entry.get("/V", 0)
         if V not in (1, 2, 3, 4, 5):
-            raise NotImplementedError("Encryption V=%d NOT supported" % V)
+            raise NotImplementedError(f"Encryption V={V} NOT supported")
         if V >= 4:
             filters = encryption_entry["/CF"]
 
