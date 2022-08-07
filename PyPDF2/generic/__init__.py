@@ -32,29 +32,17 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 
 import codecs
 import decimal
-import hashlib
 import logging
 import re
 from enum import IntFlag
 from io import BytesIO
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Tuple,
-    Union,
-    cast,
-)
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 
-from ._codecs import (  # noqa: rev_encoding
+from .._codecs import (  # noqa: rev_encoding
     _pdfdoc_encoding,
     _pdfdoc_encoding_rev,
-    rev_encoding,
 )
-from ._utils import (
+from .._utils import (
     WHITESPACES,
     StreamType,
     b_,
@@ -68,47 +56,21 @@ from ._utils import (
     skip_over_comment,
     str_,
 )
-from .constants import CheckboxRadioButtonAttributes, FieldDictionaryAttributes
-from .constants import FilterTypes as FT
-from .constants import StreamAttributes as SA
-from .constants import TypArguments as TA
-from .constants import TypFitArguments as TF
-from .errors import STREAM_TRUNCATED_PREMATURELY, PdfReadError, PdfStreamError
+from ..constants import (
+    CheckboxRadioButtonAttributes,
+    FieldDictionaryAttributes,
+)
+from ..constants import FilterTypes as FT
+from ..constants import StreamAttributes as SA
+from ..constants import TypArguments as TA
+from ..constants import TypFitArguments as TF
+from ..errors import STREAM_TRUNCATED_PREMATURELY, PdfReadError, PdfStreamError
+from ._base import IndirectObject, PdfObject
 
 logger = logging.getLogger(__name__)
 ObjectPrefix = b"/<[tf(n%"
 NumberSigns = b"+-"
 IndirectPattern = re.compile(rb"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]")
-
-
-class PdfObject:
-    # function for calculating a hash value
-    hash_func: Callable[..., "hashlib._Hash"] = hashlib.sha1
-
-    def hash_value_data(self) -> bytes:
-        return ("%s" % self).encode()
-
-    def hash_value(self) -> bytes:
-        return (
-            "%s:%s"
-            % (
-                self.__class__.__name__,
-                self.hash_func(self.hash_value_data()).hexdigest(),
-            )
-        ).encode()
-
-    def get_object(self) -> Optional["PdfObject"]:
-        """Resolve indirect references."""
-        return self
-
-    def getObject(self) -> Optional["PdfObject"]:  # pragma: no cover
-        deprecate_with_replacement("getObject", "get_object")
-        return self.get_object()
-
-    def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:
-        raise NotImplementedError
 
 
 class NullObject(PdfObject):
@@ -239,79 +201,6 @@ class ArrayObject(list, PdfObject):
     ) -> "ArrayObject":  # pragma: no cover
         deprecate_with_replacement("readFromStream", "read_from_stream")
         return ArrayObject.read_from_stream(stream, pdf)
-
-
-class IndirectObject(PdfObject):
-    def __init__(self, idnum: int, generation: int, pdf: Any) -> None:  # PdfReader
-        self.idnum = idnum
-        self.generation = generation
-        self.pdf = pdf
-
-    def get_object(self) -> Optional[PdfObject]:
-        obj = self.pdf.get_object(self)
-        if obj is None:
-            return None
-        return obj.get_object()
-
-    def __repr__(self) -> str:
-        return f"IndirectObject({self.idnum!r}, {self.generation!r}, {id(self.pdf)})"
-
-    def __eq__(self, other: Any) -> bool:
-        return (
-            other is not None
-            and isinstance(other, IndirectObject)
-            and self.idnum == other.idnum
-            and self.generation == other.generation
-            and self.pdf is other.pdf
-        )
-
-    def __ne__(self, other: Any) -> bool:
-        return not self.__eq__(other)
-
-    def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:
-        stream.write(b_(f"{self.idnum} {self.generation} R"))
-
-    def writeToStream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # pragma: no cover
-        deprecate_with_replacement("writeToStream", "write_to_stream")
-        self.write_to_stream(stream, encryption_key)
-
-    @staticmethod
-    def read_from_stream(stream: StreamType, pdf: Any) -> "IndirectObject":  # PdfReader
-        idnum = b""
-        while True:
-            tok = stream.read(1)
-            if not tok:
-                raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
-            if tok.isspace():
-                break
-            idnum += tok
-        generation = b""
-        while True:
-            tok = stream.read(1)
-            if not tok:
-                raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
-            if tok.isspace():
-                if not generation:
-                    continue
-                break
-            generation += tok
-        r = read_non_whitespace(stream)
-        if r != b"R":
-            raise PdfReadError(
-                f"Error reading indirect object reference at byte {hex_str(stream.tell())}"
-            )
-        return IndirectObject(int(idnum), int(generation), pdf)
-
-    @staticmethod
-    def readFromStream(
-        stream: StreamType, pdf: Any  # PdfReader
-    ) -> "IndirectObject":  # pragma: no cover
-        deprecate_with_replacement("readFromStream", "read_from_stream")
-        return IndirectObject.read_from_stream(stream, pdf)
 
 
 class FloatObject(decimal.Decimal, PdfObject):
@@ -529,7 +418,7 @@ class ByteStringObject(bytes, PdfObject):
     ) -> None:
         bytearr = self
         if encryption_key:
-            from ._security import RC4_encrypt
+            from .._security import RC4_encrypt
 
             bytearr = RC4_encrypt(encryption_key, bytearr)  # type: ignore
         stream.write(b"<")
@@ -588,7 +477,7 @@ class TextStringObject(str, PdfObject):
         except UnicodeEncodeError:
             bytearr = codecs.BOM_UTF16_BE + self.encode("utf-16be")
         if encryption_key:
-            from ._security import RC4_encrypt
+            from .._security import RC4_encrypt
 
             bytearr = RC4_encrypt(encryption_key, bytearr)
             obj = ByteStringObject(bytearr)
@@ -689,7 +578,7 @@ class DictionaryObject(dict, PdfObject):
         that can be used to access XMP metadata from the document.  Can also
         return None if no metadata was found on the document root.
         """
-        from .xmp import XmpInformation
+        from ..xmp import XmpInformation
 
         metadata = self.get("/Metadata", None)
         if metadata is None:
@@ -1061,7 +950,7 @@ class StreamObject(DictionaryObject):
         stream.write(b"\nstream\n")
         data = self._data
         if encryption_key:
-            from ._security import RC4_encrypt
+            from .._security import RC4_encrypt
 
             data = RC4_encrypt(encryption_key, data)
         stream.write(data)
@@ -1093,7 +982,7 @@ class StreamObject(DictionaryObject):
         return self.flate_encode()
 
     def flate_encode(self) -> "EncodedStreamObject":
-        from .filters import FlateDecode
+        from ..filters import FlateDecode
 
         if SA.FILTER in self:
             f = self[SA.FILTER]
@@ -1143,7 +1032,7 @@ class EncodedStreamObject(StreamObject):
         self.decoded_self = value
 
     def get_data(self) -> Union[None, str, bytes]:
-        from .filters import decode_stream_data
+        from ..filters import decode_stream_data
 
         if self.decoded_self is not None:
             # cached version of decoded object
@@ -2085,7 +1974,7 @@ class AnnotationBuilder:
     it's usage combined with PdfWriter.
     """
 
-    from .types import FitType, ZoomArgType
+    from ..types import FitType, ZoomArgType
 
     @staticmethod
     def text(
@@ -2282,7 +2171,7 @@ class AnnotationBuilder:
            * - /FitBV
              - [left]
         """
-        from .types import BorderArrayType
+        from ..types import BorderArrayType
 
         is_external = url is not None
         is_internal = target_page_index is not None
