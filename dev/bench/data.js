@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1659867889062,
+  "lastUpdate": 1659868168135,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -12694,6 +12694,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.046242480972763955",
             "extra": "mean: 4.397133078800005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "6cc253e838b8adcce0ff80a6e804c4536f3f6c98",
+          "message": "REL: 2.10.0\n\nNew Features (ENH):\n-  \"with\" support for PdfMerger and PdfWriter (#1193)\n-  Add AnnotationBuilder.text(...) to build text annotations (#1202)\n\nBug Fixes (BUG):\n-  Allow IndirectObjects as stream filters (#1211)\n\nDocumentation (DOC):\n-  Font scrambling\n-  Page vs Content scaling (#1208)\n-  Example for orientation parameter of extract_text (#1206)\n-  Fix AnnotationBuilder parameter formatting (#1204)\n\nDeveloper Experience (DEV):\n-  Add flake8-print (#1203)\n\nMaintenance (MAINT):\n-  Introduce WrongPasswordError / FileNotDecryptedError / EmptyFileError  (#1201)\n\nFull Changelog: https://github.com/py-pdf/PyPDF2/compare/2.9.0...2.10.0",
+          "timestamp": "2022-08-07T12:27:41+02:00",
+          "tree_id": "7db532f7b4b224df414247f2d4edc28e15b3f9b2",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/6cc253e838b8adcce0ff80a6e804c4536f3f6c98"
+        },
+        "date": 1659868166805,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7635515912566374,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019779712001904218",
+            "extra": "mean: 1.3096691978000081 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.278153140363944,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007090964569568568",
+            "extra": "mean: 107.78007054545924 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.19671741604230863,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08593192599019665",
+            "extra": "mean: 5.083433994400002 sec\nrounds: 5"
           }
         ]
       }
