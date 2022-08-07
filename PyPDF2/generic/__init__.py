@@ -38,10 +38,7 @@ from enum import IntFlag
 from io import BytesIO
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 
-from .._codecs import (  # noqa: rev_encoding
-    _pdfdoc_encoding,
-    _pdfdoc_encoding_rev,
-)
+from .._codecs import _pdfdoc_encoding  # noqa: rev_encoding
 from .._utils import (
     WHITESPACES,
     StreamType,
@@ -49,12 +46,10 @@ from .._utils import (
     deprecate_no_replacement,
     deprecate_with_replacement,
     hex_str,
-    hexencode,
     logger_warning,
     read_non_whitespace,
     read_until_regex,
     skip_over_comment,
-    str_,
 )
 from ..constants import (
     CheckboxRadioButtonAttributes,
@@ -65,86 +60,23 @@ from ..constants import StreamAttributes as SA
 from ..constants import TypArguments as TA
 from ..constants import TypFitArguments as TF
 from ..errors import STREAM_TRUNCATED_PREMATURELY, PdfReadError, PdfStreamError
-from ._base import IndirectObject, PdfObject
+from ._base import encode_pdfdocencoding  # noqa: F401
+from ._base import (
+    BooleanObject,
+    ByteStringObject,
+    FloatObject,
+    IndirectObject,
+    NameObject,
+    NullObject,
+    NumberObject,
+    PdfObject,
+    TextStringObject,
+)
 
 logger = logging.getLogger(__name__)
 ObjectPrefix = b"/<[tf(n%"
 NumberSigns = b"+-"
 IndirectPattern = re.compile(rb"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]")
-
-
-class NullObject(PdfObject):
-    def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:
-        stream.write(b"null")
-
-    @staticmethod
-    def read_from_stream(stream: StreamType) -> "NullObject":
-        nulltxt = stream.read(4)
-        if nulltxt != b"null":
-            raise PdfReadError("Could not read Null object")
-        return NullObject()
-
-    def writeToStream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # pragma: no cover
-        deprecate_with_replacement("writeToStream", "write_to_stream")
-        self.write_to_stream(stream, encryption_key)
-
-    def __repr__(self) -> str:
-        return "NullObject"
-
-    @staticmethod
-    def readFromStream(stream: StreamType) -> "NullObject":  # pragma: no cover
-        deprecate_with_replacement("readFromStream", "read_from_stream")
-        return NullObject.read_from_stream(stream)
-
-
-class BooleanObject(PdfObject):
-    def __init__(self, value: Any) -> None:
-        self.value = value
-
-    def __eq__(self, __o: object) -> bool:
-        if isinstance(__o, BooleanObject):
-            return self.value == __o.value
-        elif isinstance(__o, bool):
-            return self.value == __o
-        else:
-            return False
-
-    def __repr__(self) -> str:
-        return "True" if self.value else "False"
-
-    def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:
-        if self.value:
-            stream.write(b"true")
-        else:
-            stream.write(b"false")
-
-    def writeToStream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # pragma: no cover
-        deprecate_with_replacement("writeToStream", "write_to_stream")
-        self.write_to_stream(stream, encryption_key)
-
-    @staticmethod
-    def read_from_stream(stream: StreamType) -> "BooleanObject":
-        word = stream.read(4)
-        if word == b"true":
-            return BooleanObject(True)
-        elif word == b"fals":
-            stream.read(1)
-            return BooleanObject(False)
-        else:
-            raise PdfReadError("Could not read Boolean object")
-
-    @staticmethod
-    def readFromStream(stream: StreamType) -> "BooleanObject":  # pragma: no cover
-        deprecate_with_replacement("readFromStream", "read_from_stream")
-        return BooleanObject.read_from_stream(stream)
 
 
 class ArrayObject(list, PdfObject):
@@ -201,86 +133,6 @@ class ArrayObject(list, PdfObject):
     ) -> "ArrayObject":  # pragma: no cover
         deprecate_with_replacement("readFromStream", "read_from_stream")
         return ArrayObject.read_from_stream(stream, pdf)
-
-
-class FloatObject(decimal.Decimal, PdfObject):
-    def __new__(
-        cls, value: Union[str, Any] = "0", context: Optional[Any] = None
-    ) -> "FloatObject":
-        try:
-            return decimal.Decimal.__new__(cls, str_(value), context)
-        except Exception:
-            try:
-                return decimal.Decimal.__new__(cls, str(value))
-            except decimal.InvalidOperation:
-                # If this isn't a valid decimal (happens in malformed PDFs)
-                # fallback to 0
-                logger_warning(f"Invalid FloatObject {value}", __name__)
-                return decimal.Decimal.__new__(cls, "0")
-
-    def __repr__(self) -> str:
-        if self == self.to_integral():
-            return str(self.quantize(decimal.Decimal(1)))
-        else:
-            # Standard formatting adds useless extraneous zeros.
-            o = f"{self:.5f}"
-            # Remove the zeros.
-            while o and o[-1] == "0":
-                o = o[:-1]
-            return o
-
-    def as_numeric(self) -> float:
-        return float(repr(self).encode("utf8"))
-
-    def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:
-        stream.write(repr(self).encode("utf8"))
-
-    def writeToStream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # pragma: no cover
-        deprecate_with_replacement("writeToStream", "write_to_stream")
-        self.write_to_stream(stream, encryption_key)
-
-
-class NumberObject(int, PdfObject):
-    NumberPattern = re.compile(b"[^+-.0-9]")
-
-    def __new__(cls, value: Any) -> "NumberObject":
-        val = int(value)
-        try:
-            return int.__new__(cls, val)
-        except OverflowError:
-            return int.__new__(cls, 0)
-
-    def as_numeric(self) -> int:
-        return int(repr(self).encode("utf8"))
-
-    def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:
-        stream.write(repr(self).encode("utf8"))
-
-    def writeToStream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # pragma: no cover
-        deprecate_with_replacement("writeToStream", "write_to_stream")
-        self.write_to_stream(stream, encryption_key)
-
-    @staticmethod
-    def read_from_stream(stream: StreamType) -> Union["NumberObject", FloatObject]:
-        num = read_until_regex(stream, NumberObject.NumberPattern)
-        if num.find(b".") != -1:
-            return FloatObject(num)
-        return NumberObject(num)
-
-    @staticmethod
-    def readFromStream(
-        stream: StreamType,
-    ) -> Union["NumberObject", FloatObject]:  # pragma: no cover
-        deprecate_with_replacement("readFromStream", "read_from_stream")
-        return NumberObject.read_from_stream(stream)
 
 
 def readHexStringFromStream(
@@ -398,152 +250,6 @@ def read_string_from_stream(
                     logger_warning(msg, __name__)
         txt += tok
     return create_string_object(txt, forced_encoding)
-
-
-class ByteStringObject(bytes, PdfObject):
-    """
-    Represents a string object where the text encoding could not be determined.
-    This occurs quite often, as the PDF spec doesn't provide an alternate way to
-    represent strings -- for example, the encryption data stored in files (like
-    /O) is clearly not text, but is still stored in a "String" object.
-    """
-
-    @property
-    def original_bytes(self) -> bytes:
-        """For compatibility with TextStringObject.original_bytes."""
-        return self
-
-    def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:
-        bytearr = self
-        if encryption_key:
-            from .._security import RC4_encrypt
-
-            bytearr = RC4_encrypt(encryption_key, bytearr)  # type: ignore
-        stream.write(b"<")
-        stream.write(hexencode(bytearr))
-        stream.write(b">")
-
-    def writeToStream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # pragma: no cover
-        deprecate_with_replacement("writeToStream", "write_to_stream")
-        self.write_to_stream(stream, encryption_key)
-
-
-class TextStringObject(str, PdfObject):
-    """
-    Represents a string object that has been decoded into a real unicode string.
-    If read from a PDF document, this string appeared to match the
-    PDFDocEncoding, or contained a UTF-16BE BOM mark to cause UTF-16 decoding to
-    occur.
-    """
-
-    autodetect_pdfdocencoding = False
-    autodetect_utf16 = False
-
-    @property
-    def original_bytes(self) -> bytes:
-        """
-        It is occasionally possible that a text string object gets created where
-        a byte string object was expected due to the autodetection mechanism --
-        if that occurs, this "original_bytes" property can be used to
-        back-calculate what the original encoded bytes were.
-        """
-        return self.get_original_bytes()
-
-    def get_original_bytes(self) -> bytes:
-        # We're a text string object, but the library is trying to get our raw
-        # bytes.  This can happen if we auto-detected this string as text, but
-        # we were wrong.  It's pretty common.  Return the original bytes that
-        # would have been used to create this object, based upon the autodetect
-        # method.
-        if self.autodetect_utf16:
-            return codecs.BOM_UTF16_BE + self.encode("utf-16be")
-        elif self.autodetect_pdfdocencoding:
-            return encode_pdfdocencoding(self)
-        else:
-            raise Exception("no information about original bytes")
-
-    def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:
-        # Try to write the string out as a PDFDocEncoding encoded string.  It's
-        # nicer to look at in the PDF file.  Sadly, we take a performance hit
-        # here for trying...
-        try:
-            bytearr = encode_pdfdocencoding(self)
-        except UnicodeEncodeError:
-            bytearr = codecs.BOM_UTF16_BE + self.encode("utf-16be")
-        if encryption_key:
-            from .._security import RC4_encrypt
-
-            bytearr = RC4_encrypt(encryption_key, bytearr)
-            obj = ByteStringObject(bytearr)
-            obj.write_to_stream(stream, None)
-        else:
-            stream.write(b"(")
-            for c in bytearr:
-                if not chr(c).isalnum() and c != b" ":
-                    # This:
-                    #   stream.write(b_(rf"\{c:0>3o}"))
-                    # gives
-                    #   https://github.com/davidhalter/parso/issues/207
-                    stream.write(b_("\\%03o" % c))
-                else:
-                    stream.write(b_(chr(c)))
-            stream.write(b")")
-
-    def writeToStream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # pragma: no cover
-        deprecate_with_replacement("writeToStream", "write_to_stream")
-        self.write_to_stream(stream, encryption_key)
-
-
-class NameObject(str, PdfObject):
-    delimiter_pattern = re.compile(rb"\s+|[\(\)<>\[\]{}/%]")
-    surfix = b"/"
-
-    def write_to_stream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:
-        stream.write(b_(self))
-
-    def writeToStream(
-        self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # pragma: no cover
-        deprecate_with_replacement("writeToStream", "write_to_stream")
-        self.write_to_stream(stream, encryption_key)
-
-    @staticmethod
-    def read_from_stream(stream: StreamType, pdf: Any) -> "NameObject":  # PdfReader
-        name = stream.read(1)
-        if name != NameObject.surfix:
-            raise PdfReadError("name read error")
-        name += read_until_regex(stream, NameObject.delimiter_pattern, ignore_eof=True)
-        try:
-            try:
-                ret = name.decode("utf-8")
-            except (UnicodeEncodeError, UnicodeDecodeError):
-                ret = name.decode("gbk")
-            return NameObject(ret)
-        except (UnicodeEncodeError, UnicodeDecodeError) as e:
-            # Name objects should represent irregular characters
-            # with a '#' followed by the symbol's hex number
-            if not pdf.strict:
-                logger_warning("Illegal character in Name Object", __name__)
-                return NameObject(name)
-            else:
-                raise PdfReadError("Illegal character in Name Object") from e
-
-    @staticmethod
-    def readFromStream(
-        stream: StreamType, pdf: Any  # PdfReader
-    ) -> "NameObject":  # pragma: no cover
-        deprecate_with_replacement("readFromStream", "read_from_stream")
-        return NameObject.read_from_stream(stream, pdf)
 
 
 class DictionaryObject(dict, PdfObject):
@@ -1929,18 +1635,6 @@ def _create_outline_item(
             format_flag += 2
         outline_item.update({NameObject("/F"): NumberObject(format_flag)})
     return outline_item
-
-
-def encode_pdfdocencoding(unicode_string: str) -> bytes:
-    retval = b""
-    for c in unicode_string:
-        try:
-            retval += b_(chr(_pdfdoc_encoding_rev[c]))
-        except KeyError:
-            raise UnicodeEncodeError(
-                "pdfdocencoding", c, -1, -1, "does not exist in translation table"
-            )
-    return retval
 
 
 def decode_pdfdocencoding(byte_array: bytes) -> str:
