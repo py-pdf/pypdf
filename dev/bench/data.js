@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1659794368614,
+  "lastUpdate": 1659858275894,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -12559,6 +12559,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01660144494266108",
             "extra": "mean: 3.8249400891999925 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "93514bee4092cc101280d68a42799278bb9088d9",
+          "message": "TST: Killing Security Mutants (#1212)\n\n* Killed 2340\r\n* Killed 2341\r\n* Killed 2342\r\n* Killed 2383\r\n\r\nSee #1025",
+          "timestamp": "2022-08-07T09:43:33+02:00",
+          "tree_id": "8fb352491ce61476619164d46c05496c09e6da60",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/93514bee4092cc101280d68a42799278bb9088d9"
+        },
+        "date": 1659858275213,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0226548165178975,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01138474254571245",
+            "extra": "mean: 977.8470544000015 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.022963348482426,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006754752024650987",
+            "extra": "mean: 76.78743871428699 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.25437188274427874,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03334755852351238",
+            "extra": "mean: 3.931252106999989 sec\nrounds: 5"
           }
         ]
       }
