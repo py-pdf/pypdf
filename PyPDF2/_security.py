@@ -31,10 +31,17 @@
 
 import struct
 from hashlib import md5
-from typing import Any, Tuple, Union
+from typing import Tuple, Union
 
 from ._utils import b_, ord_, str_
 from .generic import ByteStringObject
+
+try:
+    from typing import Literal  # type: ignore[attr-defined]
+except ImportError:
+    # PEP 586 introduced typing.Literal with Python 3.8
+    # For older Python versions, the backport typing_extensions is necessary:
+    from typing_extensions import Literal  # type: ignore[misc]
 
 # ref: pdf1.8 spec section 3.5.2 algorithm 3.2
 _encryption_padding = (
@@ -46,8 +53,8 @@ _encryption_padding = (
 
 def _alg32(
     password: Union[str, bytes],
-    rev: Any,
-    keylen: Any,
+    rev: Literal[2, 3, 4],
+    keylen: int,
     owner_entry: ByteStringObject,
     p_entry: int,
     id1_entry: ByteStringObject,
@@ -98,7 +105,7 @@ def _alg32(
     return md5_hash[:keylen]
 
 
-def _alg33(owner_pwd: str, user_pwd: str, rev: int, keylen: int) -> bytes:
+def _alg33(owner_pwd: str, user_pwd: str, rev: Literal[2, 3, 4], keylen: int) -> bytes:
     """
     Implementation of algorithm 3.3 of the PDF standard security handler,
     section 3.5.2 of the PDF 1.6 reference.
@@ -128,7 +135,7 @@ def _alg33(owner_pwd: str, user_pwd: str, rev: int, keylen: int) -> bytes:
     return val
 
 
-def _alg33_1(password: Union[bytes, str], rev: int, keylen: int) -> bytes:
+def _alg33_1(password: Union[bytes, str], rev: Literal[2, 3, 4], keylen: int) -> bytes:
     """Steps 1-4 of algorithm 3.3"""
     # 1. Pad or truncate the owner password string as described in step 1 of
     # algorithm 3.2.  If there is no owner password, use the user password
@@ -180,7 +187,7 @@ def _alg34(
 
 def _alg35(
     password: Union[str, bytes],
-    rev: int,
+    rev: Literal[2, 3, 4],
     keylen: int,
     owner_entry: ByteStringObject,
     p_entry: int,

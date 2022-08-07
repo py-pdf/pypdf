@@ -362,7 +362,7 @@ def test_fill_form():
 
 @pytest.mark.parametrize(
     "use_128bit",
-    [(True), (False)],
+    [True, False],
 )
 def test_encrypt(use_128bit):
     reader = PdfReader(RESOURCE_ROOT / "form.pdf")
@@ -379,15 +379,21 @@ def test_encrypt(use_128bit):
     with open(tmp_filename, "wb") as output_stream:
         writer.write(output_stream)
 
+    # Test that the data is not there in clear text
     with open(tmp_filename, "rb") as input_stream:
         data = input_stream.read()
-
     assert b"foo" not in data
 
+    # Test the user password:
     reader = PdfReader(tmp_filename, password="userpwd")
     new_text = reader.pages[0].extract_text()
     assert reader.metadata.get("/Producer") == "PyPDF2"
+    assert new_text == orig_text
 
+    # Test the owner password:
+    reader = PdfReader(tmp_filename, password="ownerpwd")
+    new_text = reader.pages[0].extract_text()
+    assert reader.metadata.get("/Producer") == "PyPDF2"
     assert new_text == orig_text
 
     # Cleanup
