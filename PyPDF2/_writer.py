@@ -305,11 +305,10 @@ class PdfWriter:
         if pageNumber is not None:  # pragma: no cover
             if page_number is not None:
                 raise ValueError("Please only use the page_number parameter")
-            else:
-                deprecate_with_replacement(
-                    "get_page(pageNumber)", "get_page(page_number)", "4.0.0"
-                )
-                page_number = pageNumber
+            deprecate_with_replacement(
+                "get_page(pageNumber)", "get_page(page_number)", "4.0.0"
+            )
+            page_number = pageNumber
         if page_number is None and pageNumber is None:  # pragma: no cover
             raise ValueError("Please specify the page_number")
         pages = cast(Dict[str, Any], self.get_object(self._pages))

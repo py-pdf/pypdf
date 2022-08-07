@@ -806,8 +806,7 @@ class DictionaryObject(dict, PdfObject):
                 )
                 if pdf is not None and pdf.strict:
                     raise PdfReadError(msg)
-                else:
-                    logger_warning(msg, __name__)
+                logger_warning(msg, __name__)
 
         pos = stream.tell()
         s = read_non_whitespace(stream)

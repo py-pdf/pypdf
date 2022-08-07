@@ -515,13 +515,13 @@ def decode_stream_data(stream: Any) -> Union[str, bytes]:  # utils.StreamObject
     # If there is not data to decode we should not try to decode the data.
     if data:
         for filter_type in filters:
-            if filter_type == FT.FLATE_DECODE or filter_type == FTA.FL:
+            if filter_type in (FT.FLATE_DECODE, FTA.FL):
                 data = FlateDecode.decode(data, stream.get(SA.DECODE_PARMS))
-            elif filter_type == FT.ASCII_HEX_DECODE or filter_type == FTA.AHx:
+            elif filter_type in (FT.ASCII_HEX_DECODE, FTA.AHx):
                 data = ASCIIHexDecode.decode(data)  # type: ignore
-            elif filter_type == FT.LZW_DECODE or filter_type == FTA.LZW:
+            elif filter_type in (FT.LZW_DECODE, FTA.LZW):
                 data = LZWDecode.decode(data, stream.get(SA.DECODE_PARMS))  # type: ignore
-            elif filter_type == FT.ASCII_85_DECODE or filter_type == FTA.A85:
+            elif filter_type in (FT.ASCII_85_DECODE, FTA.A85):
                 data = ASCII85Decode.decode(data)
             elif filter_type == FT.DCT_DECODE:
                 data = DCTDecode.decode(data)
