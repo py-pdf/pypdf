@@ -1,5 +1,29 @@
 # CHANGELOG
 
+
+## Version 2.10.0, 2022-08-07
+
+### New Features (ENH)
+-  "with" support for PdfMerger and PdfWriter (#1193)
+-  Add AnnotationBuilder.text(...) to build text annotations (#1202)
+
+### Bug Fixes (BUG)
+-  Allow IndirectObjects as stream filters (#1211)
+
+### Documentation (DOC)
+-  Font scrambling
+-  Page vs Content scaling (#1208)
+-  Example for orientation parameter of extract_text (#1206)
+-  Fix AnnotationBuilder parameter formatting (#1204)
+
+### Developer Experience (DEV)
+-  Add flake8-print (#1203)
+
+### Maintenance (MAINT)
+-  Introduce WrongPasswordError / FileNotDecryptedError / EmptyFileError  (#1201)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.9.0...2.10.0
+
 ## Version 2.9.0, 2022-07-31
 
 ### New Features (ENH)
