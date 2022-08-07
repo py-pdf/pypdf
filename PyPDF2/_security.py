@@ -173,7 +173,7 @@ def _alg34(
     """
     # 1. Create an encryption key based on the user password string, as
     # described in algorithm 3.2.
-    rev = 2
+    rev: Literal[2] = 2
     keylen = 5
     key = _alg32(password, rev, keylen, owner_entry, p_entry, id1_entry)
     # 2. Encrypt the 32-byte padding string shown in step 1 of algorithm 3.2,
