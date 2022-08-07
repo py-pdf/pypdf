@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1659858275894,
+  "lastUpdate": 1659865117369,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -12604,6 +12604,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03334755852351238",
             "extra": "mean: 3.931252106999989 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "dbdc9016da2728a0f3a5ec671a611695acae2247",
+          "message": "STY: Apply pylint (#1213)",
+          "timestamp": "2022-08-07T11:37:31+02:00",
+          "tree_id": "7c46e354311c637c5f7edb201b340dc07010e033",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/dbdc9016da2728a0f3a5ec671a611695acae2247"
+        },
+        "date": 1659865116703,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0035235459837533,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018336563681687887",
+            "extra": "mean: 996.4888257999974 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.000270114969156,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004639376756499262",
+            "extra": "mean: 76.92147864285914 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26698418966767495,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015896426263139148",
+            "extra": "mean: 3.745540143200003 sec\nrounds: 5"
           }
         ]
       }
