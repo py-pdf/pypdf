@@ -772,7 +772,7 @@ class PdfWriter:
             rev = 2
             keylen = int(40 / 8)
         P = permissions_flag
-        O = ByteStringObject(_alg33(owner_pwd, user_pwd, rev, keylen))
+        O = ByteStringObject(_alg33(owner_pwd, user_pwd, rev, keylen))  # type: ignore[arg-type]
         ID_1 = ByteStringObject(md5((repr(time.time())).encode("utf8")).digest())
         ID_2 = ByteStringObject(md5((repr(random.random())).encode("utf8")).digest())
         self._ID = ArrayObject((ID_1, ID_2))
@@ -780,7 +780,7 @@ class PdfWriter:
             U, key = _alg34(user_pwd, O, P, ID_1)
         else:
             assert rev == 3
-            U, key = _alg35(user_pwd, rev, keylen, O, P, ID_1, False)
+            U, key = _alg35(user_pwd, rev, keylen, O, P, ID_1, False)  # type: ignore[arg-type]
         encrypt = DictionaryObject()
         encrypt[NameObject(SA.FILTER)] = NameObject("/Standard")
         encrypt[NameObject("/V")] = NumberObject(V)

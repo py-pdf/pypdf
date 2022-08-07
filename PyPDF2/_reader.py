@@ -70,8 +70,13 @@ from .constants import FieldDictionaryAttributes, GoToActionArguments
 from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
 from .constants import TrailerKeys as TK
-from .errors import PdfReadError, PdfStreamError, WrongPasswordError, \
-    FileNotDecryptedError, EmptyFileError
+from .errors import (
+    EmptyFileError,
+    FileNotDecryptedError,
+    PdfReadError,
+    PdfStreamError,
+    WrongPasswordError,
+)
 from .generic import (
     ArrayObject,
     ContentStream,
