@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1659961479843,
+  "lastUpdate": 1659978231548,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -12829,6 +12829,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.013870446832068364",
             "extra": "mean: 3.7588059720000104 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f172e43e934863be647d16cffa722fad698a215b",
+          "message": "TST: Writer exception non-binary stream (#1218)",
+          "timestamp": "2022-08-08T19:02:44+02:00",
+          "tree_id": "3ff3b2cd794ef5436ef5cef866845b68377498d4",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/f172e43e934863be647d16cffa722fad698a215b"
+        },
+        "date": 1659978229437,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0379366633041969,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008115188736743063",
+            "extra": "mean: 963.4499245999962 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.848900362395833,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008287524333627144",
+            "extra": "mean: 77.82767176922351 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.259688567213296,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021645078327103752",
+            "extra": "mean: 3.8507663649999926 sec\nrounds: 5"
           }
         ]
       }
