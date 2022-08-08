@@ -693,7 +693,7 @@ class PdfReader:
         return self._get_outline()
 
     @property
-    def outlines(self) -> OutlineType:
+    def outlines(self) -> OutlineType:  # pragma: no cover
         """
         .. deprecated:: 2.9.0
 
