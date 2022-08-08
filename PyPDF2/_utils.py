@@ -404,7 +404,7 @@ def rename_kwargs(  # type: ignore
         if old_term in kwargs:
             if new_term in kwargs:
                 raise TypeError(
-                    f"{func_name} received both {old_term} and {new_term} as an argument."
+                    f"{func_name} received both {old_term} and {new_term} as an argument. "
                     f"{old_term} is deprecated. Use {new_term} instead."
                 )
             kwargs[new_term] = kwargs.pop(old_term)
