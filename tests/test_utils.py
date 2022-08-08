@@ -7,6 +7,7 @@ import pytest
 import PyPDF2._utils
 from PyPDF2._utils import (
     _get_max_pdf_version_header,
+    deprecate_bookmark,
     mark_location,
     matrix_multiply,
     read_block_backwards,
@@ -16,7 +17,7 @@ from PyPDF2._utils import (
     skip_over_comment,
     skip_over_whitespace,
 )
-from PyPDF2.errors import PdfStreamError
+from PyPDF2.errors import PdfReadError, PdfStreamError
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
@@ -220,3 +221,25 @@ def test_get_max_pdf_version_header():
     with pytest.raises(ValueError) as exc:
         _get_max_pdf_version_header(b"", b"PDF-1.2")
     assert exc.value.args[0] == "neither b'' nor b'PDF-1.2' are proper headers"
+
+
+def test_read_block_backwards_exception():
+    stream = io.BytesIO(b"foobar")
+    stream.seek(6)
+    with pytest.raises(PdfReadError) as exc:
+        read_block_backwards(stream, 7)
+    assert exc.value.args[0] == "Could not read malformed PDF file"
+
+
+def test_deprecate_bookmark():
+    @deprecate_bookmark(old_param="new_param")
+    def foo(old_param=1, baz=2):
+        return old_param * baz
+
+    with pytest.raises(TypeError) as exc:
+        foo(old_param=12, new_param=13)
+    expected_msg = (
+        "foo received both old_param and new_param as an argument. "
+        "old_param is deprecated. Use new_param instead."
+    )
+    assert exc.value.args[0] == expected_msg
