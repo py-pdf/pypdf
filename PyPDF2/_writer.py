@@ -1134,7 +1134,7 @@ class PdfWriter:
         self,
         dest: Union[PageObject, TreeObject],
         parent: Union[None, TreeObject, IndirectObject] = None,
-    ) -> IndirectObject:
+    ) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 2.9.0
 
@@ -1180,7 +1180,7 @@ class PdfWriter:
     @deprecate_bookmark(bookmark="outline_item")
     def add_bookmark_dict(
         self, outline_item: OutlineItemType, parent: Optional[TreeObject] = None
-    ) -> IndirectObject:
+    ) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 2.9.0
 
