@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1659978231548,
+  "lastUpdate": 1659986369983,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -12874,6 +12874,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.021645078327103752",
             "extra": "mean: 3.8507663649999926 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2df8a4ca1f7ff60fa6c40dc4a4337136b27697c1",
+          "message": "TST: Increase PdfReader coverage (#1219)",
+          "timestamp": "2022-08-08T21:18:12+02:00",
+          "tree_id": "e73bfa7398fdc1eba6ccf3c75dc89df0e5a9ad78",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/2df8a4ca1f7ff60fa6c40dc4a4337136b27697c1"
+        },
+        "date": 1659986368499,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9205694414189726,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009173646178667179",
+            "extra": "mean: 1.0862841574000028 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.408871957539896,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0069895596404613465",
+            "extra": "mean: 87.65108449999914 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2270943453044839,
+            "unit": "iter/sec",
+            "range": "stddev: 0.027092047218313393",
+            "extra": "mean: 4.403456187599997 sec\nrounds: 5"
           }
         ]
       }
