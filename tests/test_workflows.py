@@ -663,6 +663,10 @@ def test_image_extraction2(url, name):
             "https://corpora.tika.apache.org/base/docs/govdocs1/918/918137.pdf",
             "tika-918137.pdf",
         ),
+        (
+            "https://unglueit-files.s3.amazonaws.com/ebf/7552c42e9280b4476e59e77acc0bc812.pdf",
+            "7552c42e9280b4476e59e77acc0bc812.pdf",
+        ),
     ],
 )
 def test_get_outline(url, name):
