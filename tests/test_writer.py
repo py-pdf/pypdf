@@ -21,6 +21,20 @@ RESOURCE_ROOT = PROJECT_ROOT / "resources"
 EXTERNAL_ROOT = Path(PROJECT_ROOT) / "sample-files"
 
 
+def test_writer_exception_non_binary(tmp_path, caplog):
+    src = RESOURCE_ROOT / "pdflatex-outline.pdf"
+
+    reader = PdfReader(src)
+    writer = PdfWriter()
+    writer.add_page(reader.pages[0])
+
+    with open(tmp_path / "out.txt", "w") as fp:
+        with pytest.raises(TypeError):
+            writer.write_stream(fp)
+    ending = "to write to is not in binary mode. It may not be written to correctly.\n"
+    assert caplog.text.endswith(ending)
+
+
 def test_writer_clone():
     src = RESOURCE_ROOT / "pdflatex-outline.pdf"
 
