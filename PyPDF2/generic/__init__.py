@@ -30,7 +30,6 @@
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
-import codecs
 import decimal
 import logging
 import re
@@ -71,6 +70,13 @@ from ._base import (
     NumberObject,
     PdfObject,
     TextStringObject,
+)
+from ._utils import (
+    create_string_object,
+    decode_pdfdocencoding,
+    hex_to_rgb,
+    read_hex_string_from_stream,
+    read_string_from_stream,
 )
 
 logger = logging.getLogger(__name__)
@@ -144,30 +150,6 @@ def readHexStringFromStream(
     return read_hex_string_from_stream(stream)
 
 
-def read_hex_string_from_stream(
-    stream: StreamType,
-    forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
-) -> Union["TextStringObject", "ByteStringObject"]:
-    stream.read(1)
-    txt = ""
-    x = b""
-    while True:
-        tok = read_non_whitespace(stream)
-        if not tok:
-            raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
-        if tok == b">":
-            break
-        x += tok
-        if len(x) == 2:
-            txt += chr(int(x, base=16))
-            x = b""
-    if len(x) == 1:
-        x += b"0"
-    if len(x) == 2:
-        txt += chr(int(x, base=16))
-    return create_string_object(b_(txt), forced_encoding)
-
-
 def readStringFromStream(
     stream: StreamType,
     forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
@@ -176,80 +158,6 @@ def readStringFromStream(
         "readStringFromStream", "read_string_from_stream", "4.0.0"
     )
     return read_string_from_stream(stream, forced_encoding)
-
-
-def read_string_from_stream(
-    stream: StreamType,
-    forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
-) -> Union["TextStringObject", "ByteStringObject"]:
-    tok = stream.read(1)
-    parens = 1
-    txt = b""
-    while True:
-        tok = stream.read(1)
-        if not tok:
-            raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
-        if tok == b"(":
-            parens += 1
-        elif tok == b")":
-            parens -= 1
-            if parens == 0:
-                break
-        elif tok == b"\\":
-            tok = stream.read(1)
-            escape_dict = {
-                b"n": b"\n",
-                b"r": b"\r",
-                b"t": b"\t",
-                b"b": b"\b",
-                b"f": b"\f",
-                b"c": rb"\c",
-                b"(": b"(",
-                b")": b")",
-                b"/": b"/",
-                b"\\": b"\\",
-                b" ": b" ",
-                b"%": b"%",
-                b"<": b"<",
-                b">": b">",
-                b"[": b"[",
-                b"]": b"]",
-                b"#": b"#",
-                b"_": b"_",
-                b"&": b"&",
-                b"$": b"$",
-            }
-            try:
-                tok = escape_dict[tok]
-            except KeyError:
-                if tok.isdigit():
-                    # "The number ddd may consist of one, two, or three
-                    # octal digits; high-order overflow shall be ignored.
-                    # Three octal digits shall be used, with leading zeros
-                    # as needed, if the next character of the string is also
-                    # a digit." (PDF reference 7.3.4.2, p 16)
-                    for _ in range(2):
-                        ntok = stream.read(1)
-                        if ntok.isdigit():
-                            tok += ntok
-                        else:
-                            break
-                    tok = b_(chr(int(tok, base=8)))
-                elif tok in b"\n\r":
-                    # This case is  hit when a backslash followed by a line
-                    # break occurs.  If it's a multi-char EOL, consume the
-                    # second character:
-                    tok = stream.read(1)
-                    if tok not in b"\n\r":
-                        stream.seek(-1, 1)
-                    # Then don't add anything to the actual string, since this
-                    # line break was escaped:
-                    tok = b""
-                else:
-                    msg = rf"Unexpected escaped string: {tok.decode('utf8')}"
-                    logger_warning(msg, __name__)
-        txt += tok
-    return create_string_object(txt, forced_encoding)
 
 
 class DictionaryObject(dict, PdfObject):
@@ -1561,52 +1469,6 @@ def createStringObject(
     return create_string_object(string, forced_encoding)
 
 
-def create_string_object(
-    string: Union[str, bytes],
-    forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
-) -> Union[TextStringObject, ByteStringObject]:
-    """
-    Create a ByteStringObject or a TextStringObject from a string to represent the string.
-
-    :param string: A string
-
-    :raises TypeError: If string is not of type str or bytes.
-    """
-    if isinstance(string, str):
-        return TextStringObject(string)
-    elif isinstance(string, bytes):
-        if isinstance(forced_encoding, (list, dict)):
-            out = ""
-            for x in string:
-                try:
-                    out += forced_encoding[x]
-                except Exception:
-                    out += bytes((x,)).decode("charmap")
-            return TextStringObject(out)
-        elif isinstance(forced_encoding, str):
-            if forced_encoding == "bytes":
-                return ByteStringObject(string)
-            return TextStringObject(string.decode(forced_encoding))
-        else:
-            try:
-                if string.startswith(codecs.BOM_UTF16_BE):
-                    retval = TextStringObject(string.decode("utf-16"))
-                    retval.autodetect_utf16 = True
-                    return retval
-                else:
-                    # This is probably a big performance hit here, but we need to
-                    # convert string objects into the text/unicode-aware version if
-                    # possible... and the only way to check if that's possible is
-                    # to try.  Some strings are strings, some are just byte arrays.
-                    retval = TextStringObject(decode_pdfdocencoding(string))
-                    retval.autodetect_pdfdocencoding = True
-                    return retval
-            except UnicodeDecodeError:
-                return ByteStringObject(string)
-    else:
-        raise TypeError("create_string_object should have str or unicode arg")
-
-
 def _create_outline_item(
     action_ref: IndirectObject,
     title: str,
@@ -1635,26 +1497,6 @@ def _create_outline_item(
             format_flag += 2
         outline_item.update({NameObject("/F"): NumberObject(format_flag)})
     return outline_item
-
-
-def decode_pdfdocencoding(byte_array: bytes) -> str:
-    retval = ""
-    for b in byte_array:
-        c = _pdfdoc_encoding[b]
-        if c == "\u0000":
-            raise UnicodeDecodeError(
-                "pdfdocencoding",
-                bytearray(b),
-                -1,
-                -1,
-                "does not exist in translation table",
-            )
-        retval += c
-    return retval
-
-
-def hex_to_rgb(value: str) -> Tuple[float, float, float]:
-    return tuple(int(value.lstrip("#")[i : i + 2], 16) / 255.0 for i in (0, 2, 4))  # type: ignore
 
 
 class AnnotationBuilder:
