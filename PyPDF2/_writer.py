@@ -100,8 +100,8 @@ from .generic import (
     StreamObject,
     TextStringObject,
     TreeObject,
-    _create_outline_item,
     create_string_object,
+    hex_to_rgb,
 )
 from .types import (
     BorderArrayType,
@@ -1905,6 +1905,36 @@ def _pdf_objectify(obj: Union[Dict[str, Any], str, int, List[Any]]) -> PdfObject
         raise NotImplementedError(
             f"type(obj)={type(obj)} could not be casted to PdfObject"
         )
+
+
+def _create_outline_item(
+    action_ref: IndirectObject,
+    title: str,
+    color: Union[Tuple[float, float, float], str, None],
+    italic: bool,
+    bold: bool,
+) -> TreeObject:
+    outline_item = TreeObject()
+    outline_item.update(
+        {
+            NameObject("/A"): action_ref,
+            NameObject("/Title"): create_string_object(title),
+        }
+    )
+    if color:
+        if isinstance(color, str):
+            color = hex_to_rgb(color)
+        outline_item.update(
+            {NameObject("/C"): ArrayObject([FloatObject(c) for c in color])}
+        )
+    if italic or bold:
+        format_flag = 0
+        if italic:
+            format_flag += 1
+        if bold:
+            format_flag += 2
+        outline_item.update({NameObject("/F"): NumberObject(format_flag)})
+    return outline_item
 
 
 class PdfFileWriter(PdfWriter):  # pragma: no cover
