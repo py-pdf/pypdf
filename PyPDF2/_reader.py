@@ -591,9 +591,11 @@ class PdfReader:
                 # Field attribute is N/A or unknown, so don't write anything
                 pass
 
-    def get_form_text_fields(self) -> Dict[str, Any]:
+    def get_form_fields_in_list(self, ft_list: List[str]) -> Dict[str, Any]:
         """
-        Retrieve form fields from the document with textual data.
+        Retrieve form fields from the document, from a list of /FT labels
+
+        As an example, f_list could be [ '/Tx', '/Btn' ] to retrieve text and button data
 
         The key is the name of the form field, the value is the content of the
         field.
@@ -608,8 +610,21 @@ class PdfReader:
         return {
             formfields[field]["/T"]: formfields[field].get("/V")
             for field in formfields
-            if formfields[field].get("/FT") == "/Tx"
+            if formfields[field].get("/FT") in ft_list
         }
+
+    def get_form_text_fields(self) -> Dict[str, Any]:
+        """
+        Retrieve form fields from the document with textual data.
+
+        The key is the name of the form field, the value is the content of the
+        field.
+
+        If the document contains multiple form fields with the same name, the
+        second and following will get the suffix _2, _3, ...
+        """
+        # Retrieve document form fields
+        return self.get_form_fields_in_list(['/Tx'])
 
     def getFormTextFields(self) -> Dict[str, Any]:  # pragma: no cover
         """
