@@ -159,6 +159,10 @@ def test_readStringFromStream_excape_digit():
     stream = BytesIO(b"x\\1a )")
     assert read_string_from_stream(stream) == "\x01 "
 
+def test_readStringFromStream_excape_digit2():
+    stream = BytesIO(b"(hello \\1\\2\\3\\4)")
+    assert read_string_from_stream(stream) == "hello \x01\x02\x03\x04"
+
 
 def test_NameObject():
     stream = BytesIO(b"x")
