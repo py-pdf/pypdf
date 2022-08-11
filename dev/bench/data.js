@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1659986369983,
+  "lastUpdate": 1660247596109,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -12919,6 +12919,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.027092047218313393",
             "extra": "mean: 4.403456187599997 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "658bf285c109cb26d71807c314f0989627b6364b",
+          "message": "BUG: Fix stream truncated prematurely (#1223)\n\nObserved in case of  \\0 - \\9 in streams\r\n\r\nCloses  #454",
+          "timestamp": "2022-08-11T21:51:51+02:00",
+          "tree_id": "a86ee9605d1f51d915ccb2e9c0688fc4de57487d",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/658bf285c109cb26d71807c314f0989627b6364b"
+        },
+        "date": 1660247595430,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9192267930742712,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009851972685622254",
+            "extra": "mean: 1.0878708143999916 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.68715132114419,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006428911785915929",
+            "extra": "mean: 85.56405000000449 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22951618608493277,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02240910280131804",
+            "extra": "mean: 4.356991186799997 sec\nrounds: 5"
           }
         ]
       }
