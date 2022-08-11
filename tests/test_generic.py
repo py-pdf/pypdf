@@ -157,7 +157,7 @@ def test_readStringFromStream_multichar_eol2():
 
 def test_readStringFromStream_excape_digit():
     stream = BytesIO(b"x\\1a )")
-    assert read_string_from_stream(stream) == "\x01 "
+    assert read_string_from_stream(stream) == "\x01a "
 
 
 def test_readStringFromStream_excape_digit2():
