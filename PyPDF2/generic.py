@@ -492,7 +492,7 @@ def read_string_from_stream(
                         if ntok.isdigit():
                             tok += ntok
                         else:
-                            stream.seek(-1,1)  # ntok has to be analysed                          
+                            stream.seek(-1, 1)  # ntok has to be analysed                          
                             break
                     tok = b_(chr(int(tok, base=8)))
                 elif tok in b"\n\r":
