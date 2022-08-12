@@ -711,13 +711,7 @@ class PdfReader:
 
             # get the outline dictionary and named destinations
             if CO.OUTLINES in catalog:
-                try:
-                    lines = cast(DictionaryObject, catalog[CO.OUTLINES])
-                except PdfReadError:
-                    # this occurs if the /Outlines object reference is incorrect
-                    # for an example of such a file, see https://unglueit-files.s3.amazonaws.com/ebf/7552c42e9280b4476e59e77acc0bc812.pdf
-                    # so continue to load the file without the Outlines
-                    return outline
+                lines = cast(DictionaryObject, catalog[CO.OUTLINES])
 
                 if isinstance(lines, NullObject):
                     return outline

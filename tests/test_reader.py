@@ -1019,10 +1019,15 @@ def test_outline_count():
 
 
 def test_outline_missing_title():
+    # Strict
     reader = PdfReader(RESOURCE_ROOT / "outline-without-title.pdf", strict=True)
     with pytest.raises(PdfReadError) as exc:
         reader.outline
     assert exc.value.args[0].startswith("Outline Entry Missing /Title attribute:")
+
+    # Non-strict
+    reader = PdfReader(RESOURCE_ROOT / "outline-without-title.pdf", strict=False)
+    reader.outline
 
 
 def test_named_destination():
@@ -1081,3 +1086,8 @@ def test_wrong_password_error():
             encrypted_pdf_path,
             password="definitely_the_wrong_password!",
         )
+
+
+def test_get_page_number_by_indirect():
+    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    reader._get_page_number_by_indirect(1)
