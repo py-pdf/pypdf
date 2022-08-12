@@ -1026,8 +1026,10 @@ def test_outline_missing_title():
     assert exc.value.args[0].startswith("Outline Entry Missing /Title attribute:")
 
     # Non-strict
-    reader = PdfReader(RESOURCE_ROOT / "outline-without-title.pdf", strict=False)
-    reader.outline
+    with pytest.raises(ValueError) as exc:
+        reader = PdfReader(RESOURCE_ROOT / "outline-without-title.pdf", strict=False)
+        reader.outline
+    assert exc.value.args[0] == "value must be PdfObject"
 
 
 def test_named_destination():
