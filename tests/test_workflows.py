@@ -617,6 +617,39 @@ def test_image_extraction(url, name):
                 os.remove(filepath)
 
 
+def test_image_extraction_strict():
+    # Emits log messages
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/914/914102.pdf"
+    name = "tika-914102.pdf"
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data, strict=True)
+
+    images_extracted = []
+    root = Path("extracted-images")
+    if not root.exists():
+        os.mkdir(root)
+
+    for page in reader.pages:
+        if RES.XOBJECT in page[PG.RESOURCES]:
+            x_object = page[PG.RESOURCES][RES.XOBJECT].get_object()
+
+            for obj in x_object:
+                if x_object[obj][IA.SUBTYPE] == "/Image":
+                    extension, byte_stream = _xobj_to_image(x_object[obj])
+                    if extension is not None:
+                        filename = root / (obj[1:] + extension)
+                        with open(filename, "wb") as img:
+                            img.write(byte_stream)
+                        images_extracted.append(filename)
+
+    # Cleanup
+    do_cleanup = True  # set this to False for manual inspection
+    if do_cleanup:
+        for filepath in images_extracted:
+            if os.path.exists(filepath):
+                os.remove(filepath)
+
+
 @pytest.mark.parametrize(
     ("url", "name"),
     [
