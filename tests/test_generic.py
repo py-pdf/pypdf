@@ -6,6 +6,7 @@ from unittest.mock import patch
 import pytest
 
 from PyPDF2 import PdfMerger, PdfReader, PdfWriter
+from PyPDF2.constants import CheckboxRadioButtonAttributes
 from PyPDF2.constants import TypFitArguments as TF
 from PyPDF2.errors import PdfReadError, PdfStreamError
 from PyPDF2.generic import (
@@ -13,7 +14,6 @@ from PyPDF2.generic import (
     ArrayObject,
     BooleanObject,
     ByteStringObject,
-    CheckboxRadioButtonAttributes,
     Destination,
     DictionaryObject,
     FloatObject,
