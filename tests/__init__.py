@@ -50,3 +50,8 @@ def _strip_position(line: str) -> str:
 
 def normalize_warnings(caplog_text: str) -> List[str]:
     return [_strip_position(line) for line in caplog_text.strip().split("\n")]
+
+
+class ReaderDummy:
+    def __init__(self, strict=False):
+        self.strict = strict
