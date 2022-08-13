@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1660368980271,
+  "lastUpdate": 1660421072720,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -13099,6 +13099,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.043106602811107904",
             "extra": "mean: 3.872213563399998 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a85148ae83033de50e59dae7ca621305bb53ef6a",
+          "message": "MAINT: Split generic.py (#1229)\n\nThe aim of this refactoring PR is to explicitly define the interface of `PyPDF2.generic` via `__all__` and to structure this big submodule more. I hope this makes it easier to test / expand in future if necessary. Smaller modules should have less merge conflicts.\r\n\r\nThis PR should not change anything for users of PyPDF2.",
+          "timestamp": "2022-08-13T22:03:13+02:00",
+          "tree_id": "8e958153d88e2e2259806c34a734813fa9de958b",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/a85148ae83033de50e59dae7ca621305bb53ef6a"
+        },
+        "date": 1660421070628,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8323966235395815,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023810611343741437",
+            "extra": "mean: 1.201350380000008 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.439135403018941,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006898163262289006",
+            "extra": "mean: 95.79337381818091 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22233941901976878,
+            "unit": "iter/sec",
+            "range": "stddev: 0.051147426823572865",
+            "extra": "mean: 4.497628015799966 sec\nrounds: 5"
           }
         ]
       }
