@@ -89,6 +89,8 @@ class FlateDecode:
         :param decode_parms: a dictionary of values, understanding the
             "/Predictor":<int> key only
         :return: the flate-decoded data.
+
+        :raises PdfReadError:
         """
         if "decodeParms" in kwargs:  # pragma: no cover
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
@@ -205,6 +207,8 @@ class ASCIIHexDecode:
         :param decode_parms:
         :return: a string conversion in base-7 ASCII, where each of its values
             v is such that 0 <= ord(v) <= 127.
+
+        :raises PdfStreamError:
         """
         if "decodeParms" in kwargs:  # pragma: no cover
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
@@ -279,6 +283,8 @@ class LZWDecode:
             algorithm derived from:
             http://www.rasip.fer.hr/research/compress/algorithms/fund/lz/lzw.html
             and the PDFReference
+
+            :raises PdfReadError: If the stop code is missing
             """
             cW = self.CLEARDICT
             baos = ""
