@@ -1974,7 +1974,7 @@ def create_string_object(
     """
     Create a ByteStringObject or a TextStringObject from a string to represent the string.
 
-    :param string: A string
+    :param Union[str, bytes] string: A string
 
     :raises TypeError: If string is not of type str or bytes.
     """
@@ -2098,7 +2098,7 @@ class AnnotationBuilder:
         """
         Add text annotation.
 
-        :param RectangleObject rect:
+        :param Tuple[int, int, int, int] rect:
             or array of four integers specifying the clickable rectangular area
             ``[xLL, yLL, xUR, yUR]``
         :param bool open:

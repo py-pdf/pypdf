@@ -277,8 +277,7 @@ class PdfWriter:
         Insert a page in this PDF file. The page is usually acquired from a
         :class:`PdfReader<PyPDF2.PdfReader>` instance.
 
-        :param PageObject page: The page to add to the document.  This
-            argument should be an instance of :class:`PageObject<PyPDF2._page.PageObject>`.
+        :param PageObject page: The page to add to the document.
         :param int index: Position at which the page will be inserted.
         """
         self._add_page(page, lambda l, p: l.insert(index, p))
@@ -567,13 +566,14 @@ class PdfWriter:
         Copy pages from reader to writer. Includes an optional callback parameter
         which is invoked after pages are appended to the writer.
 
-        :param reader: a PdfReader object from which to copy page
+        :param PdfReader reader: a PdfReader object from which to copy page
             annotations to this writer object.  The writer's annots
             will then be updated
-        :callback after_page_append (function): Callback function that is invoked after
-            each page is appended to the writer. Callback signature:
-        :param writer_pageref (PDF page reference): Reference to the page
-            appended to the writer.
+        :param Callable[[PageObject], None] after_page_append:
+            Callback function that is invoked after each page is appended to
+            the writer. Signature includes a reference to the appended page
+            (delegates to append_pages_from_reader). The single parameter of the
+            callback is a reference to the page just appended to the document.
         """
         # Get page count from writer and reader
         reader_num_pages = len(reader.pages)
@@ -613,11 +613,11 @@ class PdfWriter:
         Copy field texts and values from fields to page.
         If the field links to a parent object, add the information to the parent.
 
-        :param page: Page reference from PDF writer where the annotations
-            and field data will be updated.
-        :param fields: a Python dictionary of field names (/T) and text
+        :param PageObject page: Page reference from PDF writer where the
+            annotations and field data will be updated.
+        :param dict fields: a Python dictionary of field names (/T) and text
             values (/V)
-        :param flags: An integer (0 to 7). The first bit sets ReadOnly, the
+        :param int flags: An integer (0 to 7). The first bit sets ReadOnly, the
             second bit sets Required, the third bit sets NoExport. See
             PDF Reference Table 8.70 for details.
         """
@@ -684,7 +684,6 @@ class PdfWriter:
         Copy the reader document root to the writer.
 
         :param reader:  PdfReader from the document root should be copied.
-        :callback after_page_append:
         """
         self._root_object = cast(DictionaryObject, reader.trailer[TK.ROOT])
 
@@ -709,12 +708,11 @@ class PdfWriter:
 
         :param reader: PDF file reader instance from which the clone
             should be created.
-        :callback after_page_append (function): Callback function that is invoked after
-            each page is appended to the writer. Signature includes a reference to the
-            appended page (delegates to appendPagesFromReader). Callback signature:
-
-            :param writer_pageref (PDF page reference): Reference to the page just
-                appended to the document.
+        :param Callable[[PageObject], None] after_page_append:
+            Callback function that is invoked after each page is appended to
+            the writer. Signature includes a reference to the appended page
+            (delegates to append_pages_from_reader). The single parameter of the
+            callback is a reference to the page just appended to the document.
         """
         self.clone_reader_document_root(reader)
         self.append_pages_from_reader(reader, after_page_append)
@@ -1520,10 +1518,10 @@ class PdfWriter:
 
         :param int pagenum: index of the page on which to place the URI action.
         :param str uri: URI of resource to link to.
-        :param rect: :class:`RectangleObject<PyPDF2.generic.RectangleObject>` or array of four
+        :param Tuple[int, int, int, int] rect: :class:`RectangleObject<PyPDF2.generic.RectangleObject>` or array of four
             integers specifying the clickable rectangular area
             ``[xLL, yLL, xUR, yUR]``, or string in the form ``"[ xLL yLL xUR yUR ]"``.
-        :param border: if provided, an array describing border-drawing
+        :param ArrayObject border: if provided, an array describing border-drawing
             properties. See the PDF spec for details. No border will be
             drawn if this argument is omitted.
         """

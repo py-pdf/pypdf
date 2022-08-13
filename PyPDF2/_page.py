@@ -1466,12 +1466,12 @@ class PageObject(DictionaryObject):
         Do not rely on the order of text coming out of this function, as it
         will change if this function is made more sophisticated.
 
-        :params obsolete/Depreciating Tj_sep, TJ_sep: kept for compatibility
-        :param orientations : (list of) orientations (of the characters) (default: (0,90,270,360))
-                               single int is equivalent to a singleton ( 0 == (0,) )
+        :param Tj_sep: Deprecated. Kept for compatibility until PyPDF2==4.0.0
+        :param TJ_sep: Deprecated. Kept for compatibility until PyPDF2==4.0.0
+        :param orientations: (list of) orientations (of the characters) (default: (0,90,270,360))
+                single int is equivalent to a singleton ( 0 == (0,) )
                 note: currently only 0(Up),90(turned Left), 180(upside Down),270 (turned Right)
-        :param space_width : force default space width (if not extracted from font (default: 200)
-
+        :param float space_width: force default space width (if not extracted from font (default: 200)
         :return: The extracted text
         """
         if len(args) >= 1:
@@ -1523,7 +1523,7 @@ class PageObject(DictionaryObject):
         """
         Extract text from an XObject.
 
-        space_width : float = force default space width (if not extracted from font (default 200)
+        :param float space_width:  force default space width (if not extracted from font (default 200)
 
         :return: The extracted text
         """
