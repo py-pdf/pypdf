@@ -14,14 +14,9 @@ try:
 except ImportError:
     from typing_extensions import TypeAlias
 
-from .generic import (
-    ArrayObject,
-    Destination,
-    NameObject,
-    NullObject,
-    NumberObject,
-    OutlineItem,
-)
+from .generic._base import NameObject, NullObject, NumberObject
+from .generic._data_structures import ArrayObject, Destination
+from .generic._outline import OutlineItem
 
 BorderArrayType: TypeAlias = List[Union[NameObject, NumberObject, ArrayObject]]
 OutlineItemType: TypeAlias = Union[OutlineItem, Destination]
