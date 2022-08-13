@@ -32,6 +32,7 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 from typing import Dict, List, Union
 
 from .._utils import StreamType, deprecate_with_replacement
+from ..constants import OutlineFontFlag
 from ._annotations import AnnotationBuilder
 from ._base import (
     BooleanObject,
@@ -53,13 +54,12 @@ from ._data_structures import (
     DictionaryObject,
     EncodedStreamObject,
     Field,
-    OutlineFontFlag,
-    OutlineItem,
-    RectangleObject,
     StreamObject,
     TreeObject,
     read_object,
 )
+from ._outline import Bookmark, OutlineItem
+from ._rectangle import RectangleObject
 from ._utils import (
     create_string_object,
     decode_pdfdocencoding,
@@ -119,9 +119,12 @@ __all__ = [
     "ContentStream",
     "RectangleObject",
     "Field",
-    "OutlineFontFlag",
-    "OutlineItem",
     "Destination",
+    # --- More specific stuff
+    # Outline
+    "OutlineItem",
+    "OutlineFontFlag",
+    "Bookmark",
     # Data structures core functions
     "read_object",
     # Utility functions

@@ -422,6 +422,15 @@ class CatalogDictionary:
     NEEDS_RENDERING = "/NeedsRendering"  # boolean, optional
 
 
+class OutlineFontFlag(IntFlag):
+    """
+    A class used as an enumerable flag for formatting an outline font
+    """
+
+    italic = 1
+    bold = 2
+
+
 PDF_KEYS = (
     AnnotationDictionaryAttributes,
     CatalogAttributes,

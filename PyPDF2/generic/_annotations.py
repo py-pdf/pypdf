@@ -8,7 +8,8 @@ from ._base import (
     NumberObject,
     TextStringObject,
 )
-from ._data_structures import ArrayObject, DictionaryObject, RectangleObject
+from ._data_structures import ArrayObject, DictionaryObject
+from ._rectangle import RectangleObject
 from ._utils import hex_to_rgb
 
 
