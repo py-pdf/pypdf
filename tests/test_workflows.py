@@ -728,24 +728,32 @@ def test_get_xfa(url, name):
 
 
 @pytest.mark.parametrize(
-    ("url", "name"),
+    ("url", "name", "strict"),
     [
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/988/988698.pdf",
             "tika-988698.pdf",
+            False,
         ),
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/914/914133.pdf",
             "tika-988698.pdf",
+            False,
         ),
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/912/912552.pdf",
             "tika-912552.pdf",
+            False,
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/914/914102.pdf",
+            "tika-914102.pdf",
+            True,
         ),
     ],
 )
-def test_get_fonts(url, name):
+def test_get_fonts(url, name, strict):
     data = BytesIO(get_pdf_from_url(url, name=name))
-    reader = PdfReader(data)
+    reader = PdfReader(data, strict=strict)
     for page in reader.pages:
         page._get_fonts()
