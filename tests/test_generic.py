@@ -32,7 +32,7 @@ from PyPDF2.generic import (
     read_string_from_stream,
 )
 
-from . import get_pdf_from_url
+from . import ReaderDummy, get_pdf_from_url
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
@@ -645,3 +645,23 @@ def test_annotation_builder_text():
 
 def test_CheckboxRadioButtonAttributes_opt():
     assert "/Opt" in CheckboxRadioButtonAttributes.attributes_dict()
+
+
+def test_name_object_invalid_decode():
+    stream = BytesIO(b"/\x80\x02\x03")
+
+    # strict:
+    with pytest.raises(PdfReadError) as exc:
+        NameObject.read_from_stream(stream, ReaderDummy(strict=True))
+    assert exc.value.args[0] == "Illegal character in Name Object"
+
+    # non-strict:
+    stream.seek(0)
+    NameObject.read_from_stream(stream, ReaderDummy(strict=False))
+
+
+def test_indirect_object_invalid_read():
+    stream = BytesIO(b"0 1 s")
+    with pytest.raises(PdfReadError) as exc:
+        IndirectObject.read_from_stream(stream, ReaderDummy())
+    assert exc.value.args[0] == "Error reading indirect object reference at byte 0x5"
