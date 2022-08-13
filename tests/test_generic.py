@@ -516,7 +516,7 @@ def test_annotation_builder_free_text():
 
     # Act
     free_text_annotation = AnnotationBuilder.free_text(
-        "Hello World\nThis is the second line!",
+        "Hello World - bold and italic\nThis is the second line!",
         rect=(50, 550, 200, 650),
         font="Arial",
         bold=True,
@@ -528,8 +528,21 @@ def test_annotation_builder_free_text():
     )
     writer.add_annotation(0, free_text_annotation)
 
+    free_text_annotation = AnnotationBuilder.free_text(
+        "Another free text annotation (not bold, not italic)",
+        rect=(500, 550, 200, 650),
+        font="Arial",
+        bold=False,
+        italic=False,
+        font_size="20pt",
+        font_color="00ff00",
+        border_color="0000ff",
+        background_color="cdcdcd",
+    )
+    writer.add_annotation(0, free_text_annotation)
+
     # Assert: You need to inspect the file manually
-    target = "annotated-pdf.pd"
+    target = "annotated-pdf.pdf"
     with open(target, "wb") as fp:
         writer.write(fp)
 
