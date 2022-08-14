@@ -374,7 +374,7 @@ class TreeObject(DictionaryObject):
         deprecate_with_replacement("addChild", "add_child")
         self.add_child(child, pdf)
 
-    def add_child(self, child: Any, pdf: Any) -> None:  # PdfReader
+    def add_child(self, child: Any, pdf: Any) -> None:  # PdfWriter
         child_obj = child.get_object()
         child = pdf.get_reference(child_obj)
         assert isinstance(child, IndirectObject)
@@ -446,13 +446,14 @@ class TreeObject(DictionaryObject):
                         next_obj = next_ref.get_object()
                         next_obj[NameObject("/Prev")] = prev_ref
                         prev[NameObject("/Next")] = next_ref
-                        self[NameObject("/Count")] -= 1
                     else:
                         # Removing last tree node
                         assert cur == last
                         del prev[NameObject("/Next")]
                         self[NameObject("/Last")] = prev_ref
-                        self[NameObject("/Count")] -= 1
+                    self[NameObject("/Count")] = NumberObject(
+                        self[NameObject("/Count")] - 1
+                    )
                 found = True
                 break
 

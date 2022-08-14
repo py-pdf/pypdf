@@ -3,6 +3,8 @@ import ssl
 import urllib.request
 from typing import List
 
+from PyPDF2.generic import DictionaryObject, IndirectObject
+
 
 def get_pdf_from_url(url: str, name: str) -> bytes:
     """
@@ -55,3 +57,13 @@ def normalize_warnings(caplog_text: str) -> List[str]:
 class ReaderDummy:
     def __init__(self, strict=False):
         self.strict = strict
+
+    def get_object(self, indirect_ref):
+        class DummyObj:
+            def get_object(self):
+                return self
+
+        return DictionaryObject()
+
+    def get_reference(self, obj):
+        return IndirectObject(idnum=1, generation=1, pdf=self)
