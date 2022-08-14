@@ -438,28 +438,40 @@ def test_remove_child_not_found_in_tree():
 def test_remove_child_found_in_tree():
     writer = PdfWriter()
 
-    class ChildDummy:
-        def __init__(self, parent):
-            self.parent = parent
-
-        def get_object(self):
-            tree = DictionaryObject()
-            tree[NameObject("/Parent")] = self.parent
-            return tree
-
+    # Add Tree
     tree = TreeObject()
-    child = DictionaryObject()
     writer._add_object(tree)
 
-    child_ref = writer._add_object(child)
-    tree.add_child(child_ref, writer)
+    # Add first child
+    # It's important to set a value, otherwise the writer.get_reference will
+    # return the same object when a second child is added.
+    child1 = TreeObject()
+    child1[NameObject("/Foo")] = TextStringObject("bar")
+    child1_ref = writer._add_object(child1)
+    tree.add_child(child1_ref, writer)
     assert tree[NameObject("/Count")] == 1
 
+    # Add second child
     child2 = TreeObject()
+    child2[NameObject("/Foo")] = TextStringObject("baz")
     child2_ref = writer._add_object(child2)
     tree.add_child(child2_ref, writer)
     assert tree[NameObject("/Count")] == 2
+
+    # Remove child
     tree.remove_child(child2)
+    assert tree[NameObject("/Count")] == 1
+
+    # Add new child
+    child3 = TreeObject()
+    child3_ref = writer._add_object(child3)
+    tree.add_child(child3_ref, writer)
+    assert tree[NameObject("/Count")] == 2
+
+    # Remove child
+    child1 = tree[NameObject("/First")]
+    tree.remove_child(child1)
+    assert tree[NameObject("/Count")] == 1
 
 
 def test_remove_child_in_tree():

@@ -406,6 +406,41 @@ class TreeObject(DictionaryObject):
         deprecate_with_replacement("removeChild", "remove_child")
         self.remove_child(child)
 
+    def _remove_node_from_tree(
+        self, prev: Any, prev_ref: Any, cur: Any, last: Any
+    ) -> None:
+        """Adjust the pointers of the linked list and tree node count."""
+        next_ref = cur.get(NameObject("/Next"), None)
+        if prev is None:
+            if next_ref:
+                # Removing first tree node
+                next_obj = next_ref.get_object()
+                del next_obj[NameObject("/Prev")]
+                self[NameObject("/First")] = next_ref
+                self[NameObject("/Count")] = NumberObject(
+                    self[NameObject("/Count")] - 1  # type: ignore
+                )
+
+            else:
+                # Removing only tree node
+                assert self[NameObject("/Count")] == 1
+                del self[NameObject("/Count")]
+                del self[NameObject("/First")]
+                if NameObject("/Last") in self:
+                    del self[NameObject("/Last")]
+        else:
+            if next_ref:
+                # Removing middle tree node
+                next_obj = next_ref.get_object()
+                next_obj[NameObject("/Prev")] = prev_ref
+                prev[NameObject("/Next")] = next_ref
+            else:
+                # Removing last tree node
+                assert cur == last
+                del prev[NameObject("/Next")]
+                self[NameObject("/Last")] = prev_ref
+            self[NameObject("/Count")] = NumberObject(self[NameObject("/Count")] - 1)  # type: ignore
+
     def remove_child(self, child: Any) -> None:
         child_obj = child.get_object()
 
@@ -423,40 +458,11 @@ class TreeObject(DictionaryObject):
         last = last_ref.get_object()
         while cur is not None:
             if cur == child_obj:
-                if prev is None:
-                    if NameObject("/Next") in cur:
-                        # Removing first tree node
-                        next_ref = cur[NameObject("/Next")]
-                        next_obj = next_ref.get_object()
-                        del next_obj[NameObject("/Prev")]
-                        self[NameObject("/First")] = next_ref
-                        self[NameObject("/Count")] -= 1  # type: ignore
-
-                    else:
-                        # Removing only tree node
-                        assert self[NameObject("/Count")] == 1
-                        del self[NameObject("/Count")]
-                        del self[NameObject("/First")]
-                        if NameObject("/Last") in self:
-                            del self[NameObject("/Last")]
-                else:
-                    if NameObject("/Next") in cur:
-                        # Removing middle tree node
-                        next_ref = cur[NameObject("/Next")]
-                        next_obj = next_ref.get_object()
-                        next_obj[NameObject("/Prev")] = prev_ref
-                        prev[NameObject("/Next")] = next_ref
-                    else:
-                        # Removing last tree node
-                        assert cur == last
-                        del prev[NameObject("/Next")]
-                        self[NameObject("/Last")] = prev_ref
-                    self[NameObject("/Count")] = NumberObject(
-                        self[NameObject("/Count")] - 1
-                    )
+                self._remove_node_from_tree(prev, prev_ref, cur, last)
                 found = True
                 break
 
+            # Go to the next node
             prev_ref = cur_ref
             prev = cur
             if NameObject("/Next") in cur:
@@ -469,11 +475,7 @@ class TreeObject(DictionaryObject):
         if not found:
             raise ValueError("Removal couldn't find item in tree")
 
-        del child_obj[NameObject("/Parent")]
-        if NameObject("/Next") in child_obj:
-            del child_obj[NameObject("/Next")]
-        if NameObject("/Prev") in child_obj:
-            del child_obj[NameObject("/Prev")]
+        _reset_node_tree_relationship(child_obj)
 
     def emptyTree(self) -> None:  # pragma: no cover
         deprecate_with_replacement("emptyTree", "empty_tree", "4.0.0")
@@ -494,6 +496,19 @@ class TreeObject(DictionaryObject):
             del self[NameObject("/First")]
         if NameObject("/Last") in self:
             del self[NameObject("/Last")]
+
+
+def _reset_node_tree_relationship(child_obj: Any) -> None:
+    """
+    Call this after a node has been removed from a tree.
+
+    This resets the nodes attributes in respect to that tree.
+    """
+    del child_obj[NameObject("/Parent")]
+    if NameObject("/Next") in child_obj:
+        del child_obj[NameObject("/Next")]
+    if NameObject("/Prev") in child_obj:
+        del child_obj[NameObject("/Prev")]
 
 
 class StreamObject(DictionaryObject):
