@@ -399,6 +399,42 @@ def test_remove_child_not_in_tree():
     assert exc.value.args[0] == "Removed child does not appear to be a tree item"
 
 
+def test_remove_child_not_in_that_tree():
+    class ChildDummy:
+        def __init__(self, parent):
+            self.parent = parent
+
+        def get_object(self):
+            tree = DictionaryObject()
+            tree[NameObject("/Parent")] = self.parent
+            return tree
+
+    tree = TreeObject()
+    child = ChildDummy(TreeObject())
+    tree.add_child(child, ReaderDummy())
+    with pytest.raises(ValueError) as exc:
+        tree.remove_child(child)
+    assert exc.value.args[0] == "Removed child is not a member of this tree"
+
+
+def test_remove_child_not_found_in_tree():
+    class ChildDummy:
+        def __init__(self, parent):
+            self.parent = parent
+
+        def get_object(self):
+            tree = DictionaryObject()
+            tree[NameObject("/Parent")] = self.parent
+            return tree
+
+    tree = TreeObject()
+    child = ChildDummy(tree)
+    tree.add_child(child, ReaderDummy())
+    with pytest.raises(ValueError) as exc:
+        tree.remove_child(child)
+    assert exc.value.args[0] == "Removal couldn't find item in tree"
+
+
 def test_remove_child_in_tree():
     pdf = RESOURCE_ROOT / "form.pdf"
 
@@ -684,3 +720,7 @@ def test_create_string_object_force():
     assert create_string_object(b"Hello World", []) == "Hello World"
     assert create_string_object(b"Hello World", {72: "A"}) == "Aello World"
     assert create_string_object(b"Hello World", "utf8") == "Hello World"
+
+
+def test_tree():
+    tree = TreeObject()
