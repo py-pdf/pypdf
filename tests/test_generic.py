@@ -435,6 +435,33 @@ def test_remove_child_not_found_in_tree():
     assert exc.value.args[0] == "Removal couldn't find item in tree"
 
 
+def test_remove_child_found_in_tree():
+    writer = PdfWriter()
+
+    class ChildDummy:
+        def __init__(self, parent):
+            self.parent = parent
+
+        def get_object(self):
+            tree = DictionaryObject()
+            tree[NameObject("/Parent")] = self.parent
+            return tree
+
+    tree = TreeObject()
+    child = DictionaryObject()
+    writer._add_object(tree)
+
+    child_ref = writer._add_object(child)
+    tree.add_child(child_ref, writer)
+    assert tree[NameObject("/Count")] == 1
+
+    child2 = TreeObject()
+    child2_ref = writer._add_object(child2)
+    tree.add_child(child2_ref, writer)
+    assert tree[NameObject("/Count")] == 2
+    tree.remove_child(child2)
+
+
 def test_remove_child_in_tree():
     pdf = RESOURCE_ROOT / "form.pdf"
 
