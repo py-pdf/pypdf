@@ -91,6 +91,7 @@ def writer_operate(writer):
     with pytest.warns(PendingDeprecationWarning):
         writer.add_link(2, 1, RectangleObject([0, 0, 100, 100]))
     assert writer._get_page_layout() is None
+    writer._set_page_layout("broken")
     writer._set_page_layout("/SinglePage")
     assert writer._get_page_layout() == "/SinglePage"
     assert writer._get_page_mode() is None
@@ -373,6 +374,10 @@ def test_fill_form():
         writer.pages[0], {"foo": "some filled in text"}, flags=1
     )
 
+    writer.update_page_form_field_values(
+        writer.pages[0], {"foo": "some filled in text"}
+    )
+
     # write "output" to PyPDF2-output.pdf
     tmp_filename = "dont_commit_filled_pdf.pdf"
     with open(tmp_filename, "wb") as output_stream:
@@ -445,16 +450,19 @@ def test_add_outline_item():
 def test_add_named_destination():
     reader = PdfReader(RESOURCE_ROOT / "pdflatex-outline.pdf")
     writer = PdfWriter()
+    assert writer.get_named_dest_root() == []
 
     for page in reader.pages:
         writer.add_page(page)
+
+    assert writer.get_named_dest_root() == []
 
     writer.add_named_destination(NameObject("A named dest"), 2)
     writer.add_named_destination(NameObject("A named dest2"), 2)
 
     assert writer.get_named_dest_root() == [
         "A named dest",
-        IndirectObject(7, 0, writer),
+        IndirectObject(9, 0, writer),
         "A named dest2",
         IndirectObject(10, 0, writer),
     ]
@@ -591,6 +599,16 @@ def test_issue301():
         reader = PdfReader(f)
         writer = PdfWriter()
         writer.append_pages_from_reader(reader)
+        o = BytesIO()
+        writer.write(o)
+
+
+def test_append_pages_from_reader_append():
+    """use append_pages_from_reader with a callable"""
+    with open(RESOURCE_ROOT / "issue-301.pdf", "rb") as f:
+        reader = PdfReader(f)
+        writer = PdfWriter()
+        writer.append_pages_from_reader(reader, callable)
         o = BytesIO()
         writer.write(o)
 
