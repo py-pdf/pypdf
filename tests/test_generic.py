@@ -458,20 +458,37 @@ def test_remove_child_found_in_tree():
     tree.add_child(child2_ref, writer)
     assert tree[NameObject("/Count")] == 2
 
-    # Remove child
+    # Remove last child
     tree.remove_child(child2)
     assert tree[NameObject("/Count")] == 1
 
     # Add new child
     child3 = TreeObject()
+    child3[NameObject("/Foo")] = TextStringObject("3")
     child3_ref = writer._add_object(child3)
     tree.add_child(child3_ref, writer)
     assert tree[NameObject("/Count")] == 2
 
-    # Remove child
+    # Remove first child
     child1 = tree[NameObject("/First")]
     tree.remove_child(child1)
     assert tree[NameObject("/Count")] == 1
+
+    child4 = TreeObject()
+    child4[NameObject("/Foo")] = TextStringObject("4")
+    child4_ref = writer._add_object(child4)
+    tree.add_child(child4_ref, writer)
+    assert tree[NameObject("/Count")] == 2
+
+    child5 = TreeObject()
+    child5[NameObject("/Foo")] = TextStringObject("5")
+    child5_ref = writer._add_object(child5)
+    tree.add_child(child5_ref, writer)
+    assert tree[NameObject("/Count")] == 3
+
+    # Remove middle child
+    tree.remove_child(child4)
+    assert tree[NameObject("/Count")] == 2
 
 
 def test_remove_child_in_tree():
