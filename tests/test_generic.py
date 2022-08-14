@@ -678,3 +678,9 @@ def test_indirect_object_invalid_read():
     with pytest.raises(PdfReadError) as exc:
         IndirectObject.read_from_stream(stream, ReaderDummy())
     assert exc.value.args[0] == "Error reading indirect object reference at byte 0x5"
+
+
+def test_create_string_object_force():
+    assert create_string_object(b"Hello World", []) == "Hello World"
+    assert create_string_object(b"Hello World", {72: "A"}) == "Aello World"
+    assert create_string_object(b"Hello World", "utf8") == "Hello World"
