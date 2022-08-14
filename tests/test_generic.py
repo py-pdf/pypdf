@@ -196,12 +196,16 @@ def test_destination_fit_r():
 def test_destination_fit_v():
     Destination(NameObject("title"), NullObject(), NameObject(TF.FIT_V), FloatObject(0))
 
+    # Trigger Exception
+    Destination(NameObject("title"), NullObject(), NameObject(TF.FIT_V), None)
+
 
 def test_destination_exception():
-    with pytest.raises(PdfReadError):
+    with pytest.raises(PdfReadError) as exc:
         Destination(
             NameObject("title"), NullObject(), NameObject("foo"), FloatObject(0)
         )
+    assert exc.value.args[0] == "Unknown Destination Type: 'foo'"
 
 
 def test_outline_item_write_to_stream():
@@ -450,6 +454,7 @@ def test_remove_child_found_in_tree():
     child1_ref = writer._add_object(child1)
     tree.add_child(child1_ref, writer)
     assert tree[NameObject("/Count")] == 1
+    assert len([el for el in tree.children()]) == 1
 
     # Add second child
     child2 = TreeObject()
@@ -457,10 +462,12 @@ def test_remove_child_found_in_tree():
     child2_ref = writer._add_object(child2)
     tree.add_child(child2_ref, writer)
     assert tree[NameObject("/Count")] == 2
+    assert len([el for el in tree.children()]) == 2
 
     # Remove last child
     tree.remove_child(child2)
     assert tree[NameObject("/Count")] == 1
+    assert len([el for el in tree.children()]) == 1
 
     # Add new child
     child3 = TreeObject()
@@ -468,27 +475,34 @@ def test_remove_child_found_in_tree():
     child3_ref = writer._add_object(child3)
     tree.add_child(child3_ref, writer)
     assert tree[NameObject("/Count")] == 2
+    assert len([el for el in tree.children()]) == 2
 
     # Remove first child
     child1 = tree[NameObject("/First")]
     tree.remove_child(child1)
     assert tree[NameObject("/Count")] == 1
+    assert len([el for el in tree.children()]) == 1
 
     child4 = TreeObject()
     child4[NameObject("/Foo")] = TextStringObject("4")
     child4_ref = writer._add_object(child4)
     tree.add_child(child4_ref, writer)
     assert tree[NameObject("/Count")] == 2
+    assert len([el for el in tree.children()]) == 2
 
     child5 = TreeObject()
     child5[NameObject("/Foo")] = TextStringObject("5")
     child5_ref = writer._add_object(child5)
     tree.add_child(child5_ref, writer)
     assert tree[NameObject("/Count")] == 3
+    assert len([el for el in tree.children()]) == 3
 
     # Remove middle child
     tree.remove_child(child4)
     assert tree[NameObject("/Count")] == 2
+    assert len([el for el in tree.children()]) == 2
+
+    tree.empty_tree()
 
 
 def test_remove_child_in_tree():

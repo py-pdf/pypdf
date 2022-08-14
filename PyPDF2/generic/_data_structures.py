@@ -359,16 +359,20 @@ class TreeObject(DictionaryObject):
     def __iter__(self) -> Any:
         return self.children()
 
-    def children(self) -> Optional[Any]:
+    def children(self) -> Iterable[Any]:
         if not self.has_children():
             return
 
-        child = self["/First"]
+        child_ref = self[NameObject("/First")]
+        child = child_ref.get_object()
         while True:
             yield child
-            if child == self["/Last"]:
+            if child == self[NameObject("/Last")]:
                 return
-            child = child["/Next"]  # type: ignore
+            child_ref = child.get(NameObject("/Next"))  # type: ignore
+            if child_ref is None:
+                return
+            child = child_ref.get_object()
 
     def addChild(self, child: Any, pdf: Any) -> None:  # pragma: no cover
         deprecate_with_replacement("addChild", "add_child")
@@ -484,11 +488,7 @@ class TreeObject(DictionaryObject):
     def empty_tree(self) -> None:
         for child in self:
             child_obj = child.get_object()
-            del child_obj[NameObject("/Parent")]
-            if NameObject("/Next") in child_obj:
-                del child_obj[NameObject("/Next")]
-            if NameObject("/Prev") in child_obj:
-                del child_obj[NameObject("/Prev")]
+            _reset_node_tree_relationship(child_obj)
 
         if NameObject("/Count") in self:
             del self[NameObject("/Count")]
@@ -650,7 +650,7 @@ class EncodedStreamObject(StreamObject):
         deprecate_with_replacement("getData", "get_data")
         return self.get_data()
 
-    def set_data(self, data: Any) -> None:
+    def set_data(self, data: Any) -> None:  # pragma: no cover
         raise PdfReadError("Creating EncodedStreamObject is not currently supported")
 
     def setData(self, data: Any) -> None:  # pragma: no cover
