@@ -1619,7 +1619,7 @@ class PdfWriter:
         )
         return self.add_annotation(page_number=pagenum, annotation=annotation)
 
-    def addLink(  # pragma: no cover
+    def addLink(
         self,
         pagenum: int,
         pagedest: int,
@@ -1627,7 +1627,7 @@ class PdfWriter:
         border: Optional[ArrayObject] = None,
         fit: FitType = "/Fit",
         *args: ZoomArgType,
-    ) -> None:
+    ) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
