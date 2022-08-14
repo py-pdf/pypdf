@@ -720,7 +720,3 @@ def test_create_string_object_force():
     assert create_string_object(b"Hello World", []) == "Hello World"
     assert create_string_object(b"Hello World", {72: "A"}) == "Aello World"
     assert create_string_object(b"Hello World", "utf8") == "Hello World"
-
-
-def test_tree():
-    tree = TreeObject()
