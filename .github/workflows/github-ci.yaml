@@ -89,10 +89,10 @@ jobs:
       - name: Check long_description
         run: python -m twine check dist/*
         
-      - name: Test installing wheel
-        run: python -m pip install dist/*.whl
-        
-      - name: Test running wheel
+      - name: Test installing package
+        run: python -m pip install .
+
+      - name: Test running installed package
         working-directory: /tmp
         run: python -c "import PyPDF2;print(PyPDF2.__version__)"
 
