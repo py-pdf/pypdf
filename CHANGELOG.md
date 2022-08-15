@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## Version 2.10.2, 2022-08-15
+
+BUG: Add PyPDF2.generic to PyPI distribution
+
 ## Version 2.10.1, 2022-08-15
 
 ### Bug Fixes (BUG)
