@@ -1,5 +1,33 @@
 # CHANGELOG
 
+## Version 2.10.1, 2022-08-15
+
+### Bug Fixes (BUG)
+-  TreeObject.remove_child had a non-PdfObject assignment for Count (#1233, #1234)
+-  Fix stream truncated prematurely (#1223)
+
+### Documentation (DOC)
+-  Fix docstring formatting (#1228)
+
+### Maintenance (MAINT)
+-  Split generic.py (#1229)
+
+### Testing (TST)
+-  Decrypt AlgV4 with owner password (#1239)
+-  AlgV5.generate_values (#1238)
+-  TreeObject.remove_child / empty_tree (#1235, #1236)
+-  create_string_object (#1232)
+-  Free-Text annotations (#1231)
+-  generic._base (#1230)
+-  Strict get fonts (#1226)
+-  Increase PdfReader coverage (#1219, #1225)
+-  Increase PdfWriter coverage (#1237)
+-  100% coverage for utils.py (#1217)
+-  PdfWriter exception non-binary stream (#1218)
+-  Don't check coverage for deprecated code (#1216)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.10.0...2.10.1
+
 
 ## Version 2.10.0, 2022-08-07
 
