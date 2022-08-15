@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1660573367562,
+  "lastUpdate": 1660575304037,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -13729,6 +13729,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03177415479147628",
             "extra": "mean: 3.8891925969999988 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "917ff2ecbf26660520d7385d55ae68ac3f1b0c4d",
+          "message": "DOC: Adding WevertonGomes as a Contributor\n\nThank you for reporting the issue so quickly!",
+          "timestamp": "2022-08-15T16:53:28+02:00",
+          "tree_id": "7dfece31221434b8d1ef72c24e587713e4ed1aac",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/917ff2ecbf26660520d7385d55ae68ac3f1b0c4d"
+        },
+        "date": 1660575303043,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0222397266645715,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013261486145194675",
+            "extra": "mean: 978.244118200007 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.931504432261626,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006522446003196362",
+            "extra": "mean: 77.33052292857678 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.25760414724360353,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029765619904610945",
+            "extra": "mean: 3.8819250804000034 sec\nrounds: 5"
           }
         ]
       }
