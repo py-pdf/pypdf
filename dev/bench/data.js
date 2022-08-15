@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1660559388512,
+  "lastUpdate": 1660563814885,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -13549,6 +13549,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01924520890389074",
             "extra": "mean: 3.8148455136000052 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5713f5080d94764fbb891e5c333d747d69f01468",
+          "message": "TST: Decrypt AlgV4 with owner password (#1239)",
+          "timestamp": "2022-08-15T13:42:28+02:00",
+          "tree_id": "cbd337fab1ce9935b811a0190df393633ac08960",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/5713f5080d94764fbb891e5c333d747d69f01468"
+        },
+        "date": 1660563813776,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0399293559183265,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006399689931126058",
+            "extra": "mean: 961.6037804000001 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.72592369036929,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0052478141153513725",
+            "extra": "mean: 78.57975769230634 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.260465324031058,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01532811169402222",
+            "extra": "mean: 3.8392826520000014 sec\nrounds: 5"
           }
         ]
       }
