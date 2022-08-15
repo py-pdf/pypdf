@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1660563814885,
+  "lastUpdate": 1660564207040,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -13594,6 +13594,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01532811169402222",
             "extra": "mean: 3.8392826520000014 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "1423c0d76d40490e0074a1836cb5a7b06934fbcb",
+          "message": "REL: 2.10.1\n\nBug Fixes (BUG):\n-  TreeObject.remove_child had a non-PdfObject assignment for Count (#1233, #1234)\n-  Fix stream truncated prematurely (#1223)\n\nDocumentation (DOC):\n-  Fix docstring formatting (#1228)\n\nMaintenance (MAINT):\n-  Split generic.py (#1229)\n\nTesting (TST):\n-  Decrypt AlgV4 with owner password (#1239)\n-  AlgV5.generate_values (#1238)\n-  TreeObject.remove_child / empty_tree (#1235, #1236)\n-  create_string_object (#1232)\n-  Free-Text annotations (#1231)\n-  generic._base (#1230)\n-  Strict get fonts (#1226)\n-  Increase PdfReader coverage (#1219, #1225)\n-  Increase PdfWriter coverage (#1237)\n-  100% coverage for utils.py (#1217)\n-  Writer exception non-binary stream (#1218)\n-  Don't check coverage for deprecated code (#1216)\n\nFull Changelog: https://github.com/py-pdf/PyPDF2/compare/2.10.0...2.10.1",
+          "timestamp": "2022-08-15T13:47:39+02:00",
+          "tree_id": "cece1a835d062231c528d154746d1e21a99bd289",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/1423c0d76d40490e0074a1836cb5a7b06934fbcb"
+        },
+        "date": 1660564206314,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0451345963578007,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009019294671757135",
+            "extra": "mean: 956.8145609999988 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.989716619394455,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0070879080699229255",
+            "extra": "mean: 76.98397350000212 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26219195758238156,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012221154644236296",
+            "extra": "mean: 3.8139995186000193 sec\nrounds: 5"
           }
         ]
       }
