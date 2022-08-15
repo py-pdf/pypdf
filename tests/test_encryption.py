@@ -4,7 +4,7 @@ import pytest
 
 import PyPDF2
 from PyPDF2 import PasswordType, PdfReader
-from PyPDF2._encryption import CryptRC4
+from PyPDF2._encryption import AlgV5, CryptRC4
 from PyPDF2.errors import DependencyError, PdfReadError
 
 try:
@@ -159,3 +159,22 @@ def test_decrypt_not_decrypted_pdf():
     with pytest.raises(PdfReadError) as exc:
         PdfReader(path, password="nonexistant")
     assert exc.value.args[0] == "Not encrypted file"
+
+
+def test_generate_values():
+    """
+    This test only checks if there is an exception.
+
+    It does not verify that the content is correct.
+    """
+    key = b"0123456789123451"
+    values = AlgV5.generate_values(
+        user_pwd=b"foo", owner_pwd=b"bar", key=key, p=0, metadata_encrypted=True
+    )
+    assert values == {
+        "/U": values["/U"],
+        "/UE": values["/UE"],
+        "/O": values["/O"],
+        "/OE": values["/OE"],
+        "/Perms": values["/Perms"],
+    }
