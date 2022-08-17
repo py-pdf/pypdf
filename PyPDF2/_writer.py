@@ -674,7 +674,7 @@ class PdfWriter:
                         }
                     )
 
-    def _generate_apperance_stream(self, writer_annot) -> None:
+    def _generate_apperance_stream(self, writer_annot: Any) -> None:
         text = writer_annot.get(FieldDictionaryAttributes.V)
         font = writer_annot.get(InteractiveFormDictEntries.DA)
         rect = writer_annot.get(AnnotationDictionaryAttributes.Rect)
