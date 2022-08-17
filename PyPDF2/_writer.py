@@ -52,6 +52,7 @@ from typing import (
     cast,
 )
 
+import zlib
 from ._page import PageObject, _VirtualList
 from ._reader import PdfReader
 from ._security import _alg33, _alg34, _alg35
@@ -102,6 +103,7 @@ from .generic import (
     TreeObject,
     create_string_object,
     hex_to_rgb,
+    encode_pdfdocencoding,
 )
 from .types import (
     BorderArrayType,
@@ -606,6 +608,7 @@ class PdfWriter:
         page: PageObject,
         fields: Dict[str, Any],
         flags: FieldFlag = OPTIONAL_READ_WRITE_FIELD,
+        generate_apperance_streams: bool = False,
     ) -> None:
         """
         Update the form field values for a given page from a fields dictionary.
@@ -620,6 +623,11 @@ class PdfWriter:
         :param int flags: An integer (0 to 7). The first bit sets ReadOnly, the
             second bit sets Required, the third bit sets NoExport. See
             PDF Reference Table 8.70 for details.
+        :param bool generate_apperance_streams: Some PDF reader can generate a apperance
+            atream when opening the PDF. Others, often simple one (previews etc.), do not.
+            If this flag is True, the Apperance Stream will be generated. More information can be obtained
+            from the PDF Reference Table 8.6 Variable Text. Please note the example. Right now, apperance only can
+            be generated for one line of text. Multi line text fields are not supported.
         """
         self.set_need_appearances_writer()
         # Iterate through pages, update field values
@@ -646,6 +654,9 @@ class PdfWriter:
                             )
                         }
                     )
+                    if generate_apperance_streams:
+                        self._generate_apperance_stream(writer_annot)
+
                     if flags:
                         writer_annot.update(
                             {
@@ -662,7 +673,61 @@ class PdfWriter:
                             )
                         }
                     )
+                
 
+    def _generate_apperance_stream(self, writer_annot) -> None:
+        text = writer_annot.get(FieldDictionaryAttributes.V)
+        font = writer_annot.get(InteractiveFormDictEntries.DA)
+        rect = writer_annot.get(AnnotationDictionaryAttributes.Rect)
+        ap = writer_annot.get(AnnotationDictionaryAttributes.AP)
+        n = ap.get_object().get(NameObject("/N"))
+        xobj = n.get_object()
+        stream = xobj.get_data()
+
+        font_size = int(font.split(" ")[1])
+        w = float(rect[2]) - float(rect[0])
+        h = float(rect[3]) - float(rect[1])
+        text_position_h = h/2 - font_size/3 # approximation
+
+        # layouting text
+        text_layouted = f"""
+2 { text_position_h } Td
+({ text }) Tj
+"""
+
+        apperance = f"""
+/Tx BMC 
+q
+1 1 { w } { h } re
+W
+n
+BT
+{ font }
+{ text_layouted }
+ET
+Q
+EMC
+
+"""
+
+        # remove old BMC to EMC
+        start_sub = stream.find(b"BMC")
+        end_sub = stream.find(b"EMC") + 3
+        stream = stream[:start_sub] + stream[end_sub:]
+        # add new BMC to EMC => apperance stream
+        b = encode_pdfdocencoding(apperance)
+        stream = stream.replace(b"/Tx", b)
+        xobj._data = zlib.compress(stream)
+
+        # change some attributes to match PDF Spec. Read 4.9 XObject for more information
+        xobj[NameObject("/Subtype")] = NameObject("/Form")
+        xobj[NameObject("/Type")] = NameObject("/XObject")
+        xobj[NameObject("/BBox")][0] = FloatObject(0)
+        xobj[NameObject("/BBox")][1] = FloatObject(0)
+        xobj[NameObject("/BBox")][2] = FloatObject(w)
+        xobj[NameObject("/BBox")][3] = FloatObject(h)
+        xobj[NameObject("/Length")] = NumberObject(len(stream))
+    
     def updatePageFormFieldValues(
         self,
         page: PageObject,
