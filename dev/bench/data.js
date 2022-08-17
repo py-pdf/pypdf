@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1660575304037,
+  "lastUpdate": 1660764502756,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -13774,6 +13774,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.029765619904610945",
             "extra": "mean: 3.8819250804000034 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "matt.peveler@gmail.com",
+            "name": "Matthew Peveler",
+            "username": "MasterOdin"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "28cf36aa9546787789b2c0b59f947bc2594e50be",
+          "message": "DEV: Modify CI to better verify built package contents (#1244)\n\nPR modifies the package CI job in two ways:\r\n\r\n1. Pass package to check-wheel-contents. This makes it so that check-wheel-contents verifies that each file in the package are actually in the wheel following their directory structure.\r\n2. Have CI steps that verify we can install the package, and that we can run a minimal example with it \r\n\r\nEither of these steps would have been sufficient to have caught #1242 per the example runs above.\r\n\r\nSigned-off-by: Matthew Peveler <matt.peveler@gmail.com>",
+          "timestamp": "2022-08-17T21:27:16+02:00",
+          "tree_id": "0172e6bbf6c552088414f7960f433f0b3cfdf41e",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/28cf36aa9546787789b2c0b59f947bc2594e50be"
+        },
+        "date": 1660764502047,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0289452533661347,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012586140199654306",
+            "extra": "mean: 971.8690054000035 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.919126417198093,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007216819553615987",
+            "extra": "mean: 77.4046145000012 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.25941972100251603,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016285558105022732",
+            "extra": "mean: 3.8547570559999995 sec\nrounds: 5"
           }
         ]
       }
