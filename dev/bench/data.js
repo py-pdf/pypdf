@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1660764502756,
+  "lastUpdate": 1660767443124,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -13819,6 +13819,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.016285558105022732",
             "extra": "mean: 3.8547570559999995 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "cb6c2247566cb42596de2dbbc05cae202242336f",
+          "message": "TST: Various PdfWriter (Layout, Bookmark deprecation) (#1249)",
+          "timestamp": "2022-08-17T22:16:18+02:00",
+          "tree_id": "1511d1885afbc09c08d62f35809aaf6a3b7683e9",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/cb6c2247566cb42596de2dbbc05cae202242336f"
+        },
+        "date": 1660767442181,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.054680557268596,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008026268202551253",
+            "extra": "mean: 948.1543896000062 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.224698505874471,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005989623961342829",
+            "extra": "mean: 75.61609057142553 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2636341285745015,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010720166652009767",
+            "extra": "mean: 3.793135605800012 sec\nrounds: 5"
           }
         ]
       }
