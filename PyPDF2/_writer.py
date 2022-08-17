@@ -35,6 +35,7 @@ import random
 import struct
 import time
 import uuid
+import zlib
 from hashlib import md5
 from io import BufferedReader, BufferedWriter, BytesIO, FileIO
 from pathlib import Path
@@ -52,7 +53,6 @@ from typing import (
     cast,
 )
 
-import zlib
 from ._page import PageObject, _VirtualList
 from ._reader import PdfReader
 from ._security import _alg33, _alg34, _alg35
@@ -102,8 +102,8 @@ from .generic import (
     TextStringObject,
     TreeObject,
     create_string_object,
-    hex_to_rgb,
     encode_pdfdocencoding,
+    hex_to_rgb,
 )
 from .types import (
     BorderArrayType,
@@ -673,7 +673,6 @@ class PdfWriter:
                             )
                         }
                     )
-                
 
     def _generate_apperance_stream(self, writer_annot) -> None:
         text = writer_annot.get(FieldDictionaryAttributes.V)
@@ -687,7 +686,7 @@ class PdfWriter:
         font_size = int(font.split(" ")[1])
         w = float(rect[2]) - float(rect[0])
         h = float(rect[3]) - float(rect[1])
-        text_position_h = h/2 - font_size/3 # approximation
+        text_position_h = h / 2 - font_size / 3  # approximation
 
         # layouting text
         text_layouted = f"""
@@ -696,7 +695,7 @@ class PdfWriter:
 """
 
         apperance = f"""
-/Tx BMC 
+/Tx BMC
 q
 1 1 { w } { h } re
 W
@@ -727,7 +726,7 @@ EMC
         xobj[NameObject("/BBox")][2] = FloatObject(w)
         xobj[NameObject("/BBox")][3] = FloatObject(h)
         xobj[NameObject("/Length")] = NumberObject(len(stream))
-    
+
     def updatePageFormFieldValues(
         self,
         page: PageObject,
