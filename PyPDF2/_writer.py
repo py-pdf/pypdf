@@ -624,7 +624,7 @@ class PdfWriter:
             second bit sets Required, the third bit sets NoExport. See
             PDF Reference Table 8.70 for details.
         :param bool generate_apperance_streams: Some PDF reader can generate a apperance
-            atream when opening the PDF. Others, often simple one (previews etc.), do not.
+            stream when opening the PDF. Others, often simple one (previews etc.), do not.
             If this flag is True, the Apperance Stream will be generated. More information can be obtained
             from the PDF Reference Table 8.6 Variable Text. Please note the example. Right now, apperance only can
             be generated for one line of text. Multi line text fields are not supported.
