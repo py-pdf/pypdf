@@ -1324,7 +1324,7 @@ EMC
         italic: bool = False,
         fit: FitType = "/Fit",
         *args: ZoomArgType,
-    ) -> IndirectObject:
+    ) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 2.9.0
 
