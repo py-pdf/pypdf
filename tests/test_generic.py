@@ -608,6 +608,18 @@ def test_issue_997(mock_logger_warning):
         "Overwriting cache for 0 4", "PyPDF2._reader"
     )
 
+    # Strict
+    merger = PdfMerger(strict=True)
+    merged_filename = "tmp-out.pdf"
+    with pytest.raises(PdfReadError) as exc:
+        merger.append(
+            BytesIO(get_pdf_from_url(url, name=name))
+        )  # here the error raises
+    assert exc.value.args[0] == "Could not find object."
+    with open(merged_filename, "wb") as f:
+        merger.write(f)
+    merger.close()
+
     # cleanup
     os.remove(merged_filename)
 
