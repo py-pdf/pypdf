@@ -91,8 +91,9 @@ def writer_operate(writer):
     with pytest.warns(PendingDeprecationWarning):
         writer.add_link(2, 1, RectangleObject([0, 0, 100, 100]))
     assert writer._get_page_layout() is None
-    writer._set_page_layout("broken")
-    writer._set_page_layout("/SinglePage")
+    writer.page_layout = "broken"
+    assert writer.page_layout == "broken"
+    writer.page_layout = NameObject("/SinglePage")
     assert writer._get_page_layout() == "/SinglePage"
     assert writer._get_page_mode() is None
     writer.set_page_mode("/UseNone")
