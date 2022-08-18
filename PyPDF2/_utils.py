@@ -177,8 +177,6 @@ def read_block_backwards(stream: StreamType, to_read: int) -> bytes:
     read = stream.read(to_read)
     # Seek to the start of the block we read after reading it.
     stream.seek(-to_read, SEEK_CUR)
-    if len(read) != to_read:
-        raise PdfStreamError(f"EOF: read {len(read)}, expected {to_read}?")
     return read
 
 
