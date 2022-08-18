@@ -1109,6 +1109,17 @@ class PageObject(DictionaryObject):
             out += "No Font\n"
         return out
 
+    def _visit_operand_empty(op, args, cm_matrix, tm_matrix):
+        """
+        Dummy-implementation of an operand-visitor called by _extract_text.
+        """
+        pass
+    def _visit_text_empty(text, cm_matrix, tm_matrix):
+        """
+        Dummy-implementation of a text-visitor called by _extract_text.
+        """
+        pass
+
     def _extract_text(
         self,
         obj: Any,
@@ -1116,6 +1127,9 @@ class PageObject(DictionaryObject):
         orientations: Tuple[int, ...] = (0, 90, 180, 270),
         space_width: float = 200.0,
         content_key: Optional[str] = PG.CONTENTS,
+        visitor_operand_before: Optional = None,
+        visitor_operand_after: Optional = None,
+        visitor_text: Optional = None,
     ) -> str:
         """
         Locate all text drawing commands, in the order they are provided in the
@@ -1125,6 +1139,9 @@ class PageObject(DictionaryObject):
         this function, as it will change if this function is made more
         sophisticated.
 
+        Additionally you can provide visitor-methods to get informed on all operands and all text-objects.
+        For example in some PDF files this can be useful to parse tables.
+
         :param Tuple[int, ...] orientations: list of orientations text_extraction will look for
                     default = (0, 90, 180, 270)
                 note: currently only 0(Up),90(turned Left), 180(upside Down), 270 (turned Right)
@@ -1133,6 +1150,15 @@ class PageObject(DictionaryObject):
         :param Optional[str] content_key: indicate the default key where to extract data
             None = the object; this allow to reuse the function on XObject
             default = "/Content"
+        :param Optional[Function] visitor_operand_before: function to be called before processing an operand.
+            It has four arguments: operand, operand-arguments,
+                current transformation matrix and text matrix.
+        :param Optional[Function] visitor_operand_after: function to be called after processing an operand.
+            It has four arguments: operand, operand-arguments,
+                current transformation matrix and text matrix.
+        :param Optional[Function] visitor_text: function to be called when extracting some text at some position.
+            It has three arguments: text,
+                current transformation matrix and text matrix.
         :return: a string object.
         """
         text: str = ""
@@ -1203,13 +1229,15 @@ class PageObject(DictionaryObject):
             return _space_width / 1000.0
 
         def process_operation(operator: bytes, operands: List) -> None:
-            nonlocal cm_matrix, cm_stack, tm_matrix, tm_prev, output, text, char_scale, space_scale, _space_width, TL, font_size, cmap, orientations
+            nonlocal cm_matrix, cm_stack, tm_matrix, tm_prev, output, text, char_scale, space_scale, _space_width, TL, font_size, cmap, orientations, visitor_text
             check_crlf_space: bool = False
             # Table 5.4 page 405
             if operator == b"BT":
                 tm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
                 # tm_prev = tm_matrix
                 output += text
+                if visitor_text is not None:
+                    visitor_text(text, cm_matrix, tm_matrix)
                 # based
                 # if output != "" and output[-1]!="\n":
                 #    output += "\n"
@@ -1217,6 +1245,8 @@ class PageObject(DictionaryObject):
                 return None
             elif operator == b"ET":
                 output += text
+                if visitor_text is not None:
+                    visitor_text(text, cm_matrix, tm_matrix)
                 text = ""
             # table 4.7, page 219
             # cm_matrix calculation is a reserved for the moment
@@ -1247,6 +1277,8 @@ class PageObject(DictionaryObject):
                     cm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
             elif operator == b"cm":
                 output += text
+                if visitor_text is not None:
+                    visitor_text(text, cm_matrix, tm_matrix)
                 text = ""
                 cm_matrix = mult(
                     [
@@ -1269,6 +1301,8 @@ class PageObject(DictionaryObject):
             elif operator == b"Tf":
                 if text != "":
                     output += text  # .translate(cmap)
+                    if visitor_text is not None:
+                        visitor_text(text, cm_matrix, tm_matrix)
                 text = ""
                 try:
                     _space_width = cmaps[operands[0]][1]
@@ -1397,6 +1431,8 @@ class PageObject(DictionaryObject):
                     pass
 
         for operands, operator in content.operations:
+            if visitor_operand_before is not None:
+                visitor_operand_before(operator, operands, cm_matrix, tm_matrix)
             # multiple operators are defined in here ####
             if operator == b"'":
                 process_operation(b"T*", [])
@@ -1422,6 +1458,8 @@ class PageObject(DictionaryObject):
                             process_operation(b"Tj", [" "])
             elif operator == b"Do":
                 output += text
+                if visitor_text is not None:
+                    visitor_text(text, cm_matrix, tm_matrix)
                 try:
                     if output[-1] != "\n":
                         output += "\n"
@@ -1431,8 +1469,11 @@ class PageObject(DictionaryObject):
                     xobj = resources_dict["/XObject"]
                     if xobj[operands[0]]["/Subtype"] != "/Image":  # type: ignore
                         # output += text
-                        text = self.extract_xform_text(xobj[operands[0]], orientations, space_width)  # type: ignore
+                        text = self.extract_xform_text(xobj[operands[0]], orientations, space_width,
+                            visitor_operand_before, visitor_operand_after, visitor_text)  # type: ignore
                         output += text
+                        if visitor_text is not None:
+                            visitor_text(text, cm_matrix, tm_matrix)
                 except Exception:
                     logger_warning(
                         f" impossible to decode XFormObject {operands[0]}",
@@ -1442,7 +1483,11 @@ class PageObject(DictionaryObject):
                     text = ""
             else:
                 process_operation(operator, operands)
+            if visitor_operand_after is not None:
+                visitor_operand_after(operator, operands, cm_matrix, tm_matrix)
         output += text  # just in case of
+        if text != "" and visitor_text is not None:
+            visitor_text(text, cm_matrix, tm_matrix)
         return output
 
     def extract_text(
@@ -1452,6 +1497,9 @@ class PageObject(DictionaryObject):
         TJ_sep: str = None,
         orientations: Union[int, Tuple[int, ...]] = (0, 90, 180, 270),
         space_width: float = 200.0,
+        visitor_operand_before: Optional = None,
+        visitor_operand_after: Optional = None,
+        visitor_text: Optional = None,
     ) -> str:
         """
         Locate all text drawing commands, in the order they are provided in the
@@ -1463,12 +1511,25 @@ class PageObject(DictionaryObject):
         Do not rely on the order of text coming out of this function, as it
         will change if this function is made more sophisticated.
 
+        Additionally you can provide visitor-methods to get informed on
+        all operations and all text-objects.
+        For example in some PDF files this can be useful to parse tables.
+
         :param Tj_sep: Deprecated. Kept for compatibility until PyPDF2==4.0.0
         :param TJ_sep: Deprecated. Kept for compatibility until PyPDF2==4.0.0
         :param orientations: (list of) orientations (of the characters) (default: (0,90,270,360))
                 single int is equivalent to a singleton ( 0 == (0,) )
                 note: currently only 0(Up),90(turned Left), 180(upside Down),270 (turned Right)
         :param float space_width: force default space width (if not extracted from font (default: 200)
+        :param Optional[Function] visitor_operand_before: function to be called before processing an operand.
+            It has four arguments: operator, operand-arguments,
+                current transformation matrix and text matrix.
+        :param Optional[Function] visitor_operand_after: function to be called after processing an operand.
+            It has four arguments: operand, operand-arguments,
+                current transformation matrix and text matrix.
+        :param Optional[Function] visitor_text: function to be called when extracting some text at some position.
+            It has three arguments: text,
+                current transformation matrix and text matrix.
         :return: The extracted text
         """
         if len(args) >= 1:
@@ -1508,7 +1569,8 @@ class PageObject(DictionaryObject):
             orientations = (orientations,)
 
         return self._extract_text(
-            self, self.pdf, orientations, space_width, PG.CONTENTS
+            self, self.pdf, orientations, space_width, PG.CONTENTS,
+            visitor_operand_before, visitor_operand_after, visitor_text
         )
 
     def extract_xform_text(
@@ -1516,6 +1578,9 @@ class PageObject(DictionaryObject):
         xform: EncodedStreamObject,
         orientations: Tuple[int, ...] = (0, 90, 270, 360),
         space_width: float = 200.0,
+        visitor_operand_before: Optional = None,
+        visitor_operand_after: Optional = None,
+        visitor_text: Optional = None,
     ) -> str:
         """
         Extract text from an XObject.
@@ -1524,7 +1589,8 @@ class PageObject(DictionaryObject):
 
         :return: The extracted text
         """
-        return self._extract_text(xform, self.pdf, orientations, space_width, None)
+        return self._extract_text(xform, self.pdf, orientations, space_width, None,
+            visitor_operand_before, visitor_operand_after, visitor_text)
 
     def extractText(
         self, Tj_sep: str = "", TJ_sep: str = ""
