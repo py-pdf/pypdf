@@ -24,11 +24,15 @@ def merger_operate(merger):
     pdf_forms = RESOURCE_ROOT / "pdflatex-forms.pdf"
     pdf_pw = RESOURCE_ROOT / "libreoffice-writer-password.pdf"
 
+    with open(pdf_forms, "rb") as fp:
+        pdf_forms_bytesio = BytesIO(fp.read())
+
     # string path:
     merger.append(pdf_path)
     merger.append(outline)
     merger.append(pdf_path, pages=PyPDF2.pagerange.PageRange(slice(0, 0)))
     merger.append(pdf_forms)
+    merger.append(pdf_forms_bytesio)
     merger.merge(0, pdf_path, import_outline=False)
 
     # Merging an encrypted file
