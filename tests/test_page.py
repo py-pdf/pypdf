@@ -290,6 +290,96 @@ def test_extract_text_operator_t_star():  # L1266, L1267
     for page in reader.pages:
         page.extract_text()
 
+def test_extract_text_visitor_callbacks():
+    """
+    Extract text in rectangle-objects
+
+    This test extracts the labels of package-boxes in Figure 2 of GeoBase_NHNC1_Data_Model_UML_EN.pdf.
+    """
+    import logging
+
+    class PositionedText():
+        """ Specify a text with coordinates. """
+
+        def __init__(self, text, x, y) -> None:
+            self.text = text.replace("\0", "")
+            self.x = x
+            self.y = y
+
+    class Rectangle():
+        """ Specify a rectangle. """
+    
+        def __init__(self, x, y, w, h) -> None:
+            self.x = x.as_numeric()
+            self.y = y.as_numeric()
+            self.w = w.as_numeric()
+            self.h = h.as_numeric()
+    
+        def contains(self, x, y) -> bool:
+            return x >= self.x and x <= (self.x + self.w) and y >= self.y and y <= (self.y + self.h)
+
+    def extractTextAndRectangles(page: PageObject) -> tuple:
+        """
+        Extracts texts and rectangles of a page of type PyPDF2._page.PageObject.
+    
+        This function supports simple coordinate transformations only.
+    
+        It returns a tuple containing a list of extracted texts (type PositionedText)
+        and a list of extracted rectangles (type Rectangle).
+        """
+    
+        logger = logging.getLogger('extractTextAndRectangles')
+    
+        listRects = []
+        listTexts = []
+    
+        def print_op_b(op, args, cm_matrix, tm_matrix):
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug(f"before: {op} at {cm_matrix}, {tm_matrix}")
+            if op == b're':
+                if logger.isEnabledFor(logging.DEBUG):
+                    logger.debug(f"  add rectangle: {args}")
+                w = args[2]
+                h = args[3]
+                # We ignore the invisible large rectangles.
+                if w < 400 and h < 400:
+                    listRects.append(Rectangle(args[0], args[1], w, h))
+    
+        def print_visi(text, cm_matrix, tm_matrix):
+            if text.strip() != "":
+                if logger.isEnabledFor(logging.DEBUG):
+                    logger.debug(f"at {cm_matrix}, {tm_matrix}")
+                listTexts.append(PositionedText(text, tm_matrix[4], tm_matrix[5]))
+        
+        visitor_before = print_op_b
+        visitor_text = print_visi
+
+        page.extract_text(visitor_operand_before=visitor_before, visitor_text=visitor_text)
+
+        return (listTexts, listRects)
+
+    # We test the analysis of page 7 "2.1 LRS model".
+    reader = PdfReader(RESOURCE_ROOT / "GeoBase_NHNC1_Data_Model_UML_EN.pdf")
+    pageLrsModel = reader.pages[6]
+    (listTexts, listRects) = extractTextAndRectangles(pageLrsModel)
+
+    # We see ten rectangles (5 tabs, 5 boxes) but there are 64 rectangles (including some invisible ones).
+    assert 60 == len(listRects)
+    mapRectTexts = {}
+    for t in listTexts:
+        for r in listRects:
+            if r.contains(t.x, t.y): 
+                texts = mapRectTexts.setdefault(r, [])
+                texts.append(t.text.strip())
+                break
+    # Five boxes and the figure-description below.
+    assert 6 == len(mapRectTexts)
+    boxTexts = [ " ".join(texts) for texts in mapRectTexts.values()]
+    assert "Hydro Network" in boxTexts
+    assert "Hydro Events" in boxTexts
+    assert "Metadata" in boxTexts
+    assert "Hydrography" in boxTexts
+    assert "Toponymy (external model)" in boxTexts
 
 @pytest.mark.parametrize(
     ("pdf_path", "password", "embedded", "unembedded"),
