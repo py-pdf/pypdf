@@ -1114,6 +1114,7 @@ class PageObject(DictionaryObject):
         Dummy-implementation of an operand-visitor called by _extract_text.
         """
         pass
+
     def _visit_text_empty(text, cm_matrix, tm_matrix):
         """
         Dummy-implementation of a text-visitor called by _extract_text.
@@ -1472,8 +1473,14 @@ class PageObject(DictionaryObject):
                     xobj = resources_dict["/XObject"]
                     if xobj[operands[0]]["/Subtype"] != "/Image":  # type: ignore
                         # output += text
-                        text = self.extract_xform_text(xobj[operands[0]], orientations, space_width,
-                            visitor_operand_before, visitor_operand_after, visitor_text)  # type: ignore
+                        text = self.extract_xform_text(
+                            xobj[operands[0]],
+                            orientations,
+                            space_width,
+                            visitor_operand_before,
+                            visitor_operand_after,
+                            visitor_text,
+                        )  # type: ignore
                         output += text
                         if visitor_text is not None:
                             visitor_text(text, cm_matrix, tm_matrix)
@@ -1572,8 +1579,14 @@ class PageObject(DictionaryObject):
             orientations = (orientations,)
 
         return self._extract_text(
-            self, self.pdf, orientations, space_width, PG.CONTENTS,
-            visitor_operand_before, visitor_operand_after, visitor_text
+            self,
+            self.pdf,
+            orientations,
+            space_width,
+            PG.CONTENTS,
+            visitor_operand_before,
+            visitor_operand_after,
+            visitor_text,
         )
 
     def extract_xform_text(
@@ -1592,8 +1605,16 @@ class PageObject(DictionaryObject):
 
         :return: The extracted text
         """
-        return self._extract_text(xform, self.pdf, orientations, space_width, None,
-            visitor_operand_before, visitor_operand_after, visitor_text)
+        return self._extract_text(
+            xform,
+            self.pdf,
+            orientations,
+            space_width,
+            None,
+            visitor_operand_before,
+            visitor_operand_after,
+            visitor_text,
+        )
 
     def extractText(
         self, Tj_sep: str = "", TJ_sep: str = ""
