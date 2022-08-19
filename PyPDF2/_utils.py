@@ -166,9 +166,11 @@ def read_until_regex(
 
 
 def read_block_backwards(stream: StreamType, to_read: int) -> bytes:
-    """Given a stream at position X, read a block of size
-    to_read ending at position X.
-    The stream's position should be unchanged.
+    """
+    Given a stream at position X, read a block of size to_read ending at position X.
+
+    This changes the streams position to the beginning where the block was
+    read.
     """
     if stream.tell() < to_read:
         raise PdfStreamError("Could not read malformed PDF file")
