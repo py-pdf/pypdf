@@ -30,6 +30,14 @@ def merger_operate(merger):
     merger.append(pdf_path, pages=PyPDF2.pagerange.PageRange(slice(0, 0)))
     merger.append(pdf_forms)
     merger.merge(0, pdf_path, import_outline=False)
+    with pytest.raises(NotImplementedError) as exc:
+        with open(pdf_path, "rb") as fp:
+            data = fp.read()
+        merger.append(data)
+    assert exc.value.args[0].startswith(
+        "PdfMerger.merge requires an object that PdfReader can parse. "
+        "Typically, that is a Path"
+    )
 
     # Merging an encrypted file
     reader = PyPDF2.PdfReader(pdf_pw)
