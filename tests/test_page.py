@@ -290,6 +290,7 @@ def test_extract_text_operator_t_star():  # L1266, L1267
     for page in reader.pages:
         page.extract_text()
 
+
 def test_extract_text_visitor_callbacks():
     """
     Extract text in rectangle-objects
@@ -298,45 +299,50 @@ def test_extract_text_visitor_callbacks():
     """
     import logging
 
-    class PositionedText():
-        """ Specify a text with coordinates. """
+    class PositionedText:
+        """Specify a text with coordinates."""
 
         def __init__(self, text, x, y) -> None:
             self.text = text.replace("\0", "")
             self.x = x
             self.y = y
 
-    class Rectangle():
-        """ Specify a rectangle. """
-    
+    class Rectangle:
+        """Specify a rectangle."""
+
         def __init__(self, x, y, w, h) -> None:
             self.x = x.as_numeric()
             self.y = y.as_numeric()
             self.w = w.as_numeric()
             self.h = h.as_numeric()
-    
+
         def contains(self, x, y) -> bool:
-            return x >= self.x and x <= (self.x + self.w) and y >= self.y and y <= (self.y + self.h)
+            return (
+                x >= self.x
+                and x <= (self.x + self.w)
+                and y >= self.y
+                and y <= (self.y + self.h)
+            )
 
     def extractTextAndRectangles(page: PageObject) -> tuple:
         """
         Extracts texts and rectangles of a page of type PyPDF2._page.PageObject.
-    
+
         This function supports simple coordinate transformations only.
-    
+
         It returns a tuple containing a list of extracted texts (type PositionedText)
         and a list of extracted rectangles (type Rectangle).
         """
-    
-        logger = logging.getLogger('extractTextAndRectangles')
-    
+
+        logger = logging.getLogger("extractTextAndRectangles")
+
         listRects = []
         listTexts = []
-    
+
         def print_op_b(op, args, cm_matrix, tm_matrix):
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug(f"before: {op} at {cm_matrix}, {tm_matrix}")
-            if op == b're':
+            if op == b"re":
                 if logger.isEnabledFor(logging.DEBUG):
                     logger.debug(f"  add rectangle: {args}")
                 w = args[2]
@@ -344,17 +350,19 @@ def test_extract_text_visitor_callbacks():
                 # We ignore the invisible large rectangles.
                 if w < 400 and h < 400:
                     listRects.append(Rectangle(args[0], args[1], w, h))
-    
+
         def print_visi(text, cm_matrix, tm_matrix):
             if text.strip() != "":
                 if logger.isEnabledFor(logging.DEBUG):
                     logger.debug(f"at {cm_matrix}, {tm_matrix}")
                 listTexts.append(PositionedText(text, tm_matrix[4], tm_matrix[5]))
-        
+
         visitor_before = print_op_b
         visitor_text = print_visi
 
-        page.extract_text(visitor_operand_before=visitor_before, visitor_text=visitor_text)
+        page.extract_text(
+            visitor_operand_before=visitor_before, visitor_text=visitor_text
+        )
 
         return (listTexts, listRects)
 
@@ -368,18 +376,19 @@ def test_extract_text_visitor_callbacks():
     mapRectTexts = {}
     for t in listTexts:
         for r in listRects:
-            if r.contains(t.x, t.y): 
+            if r.contains(t.x, t.y):
                 texts = mapRectTexts.setdefault(r, [])
                 texts.append(t.text.strip())
                 break
     # Five boxes and the figure-description below.
     assert 6 == len(mapRectTexts)
-    boxTexts = [ " ".join(texts) for texts in mapRectTexts.values()]
+    boxTexts = [" ".join(texts) for texts in mapRectTexts.values()]
     assert "Hydro Network" in boxTexts
     assert "Hydro Events" in boxTexts
     assert "Metadata" in boxTexts
     assert "Hydrography" in boxTexts
     assert "Toponymy (external model)" in boxTexts
+
 
 @pytest.mark.parametrize(
     ("pdf_path", "password", "embedded", "unembedded"),
