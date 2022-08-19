@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1660767443124,
+  "lastUpdate": 1660930041006,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -13864,6 +13864,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.010720166652009767",
             "extra": "mean: 3.793135605800012 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "52463ea626dba78dbcfab17074b5dc941f1319f5",
+          "message": "MAINT: Remove unreachable code in read_block_backwards (#1250)\n\nCo-authored-by: Matthew Peveler <matt.peveler@gmail.com>",
+          "timestamp": "2022-08-19T19:25:30+02:00",
+          "tree_id": "b693898dfb2f88b9ff244d8ab192a49348e859c0",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/52463ea626dba78dbcfab17074b5dc941f1319f5"
+        },
+        "date": 1660930038714,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9370789911421517,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05490430105340881",
+            "extra": "mean: 1.067145896400001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.739179837471907,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005446674815746214",
+            "extra": "mean: 93.11698054545369 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23100923168341247,
+            "unit": "iter/sec",
+            "range": "stddev: 0.11175293305201095",
+            "extra": "mean: 4.328831331600003 sec\nrounds: 5"
           }
         ]
       }
