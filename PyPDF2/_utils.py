@@ -169,7 +169,7 @@ def read_block_backwards(stream: StreamType, to_read: int) -> bytes:
     """
     Given a stream at position X, read a block of size to_read ending at position X.
 
-    This changes the streams position to the beginning where the block was
+    This changes the stream's position to the beginning of where the block was
     read.
     """
     if stream.tell() < to_read:
