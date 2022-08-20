@@ -105,6 +105,7 @@ def test_both_password(name, user_passwd, owner_passwd):
     ("pdffile", "password"),
     [
         ("crazyones-encrypted-256.pdf", "password"),
+        ("crazyones-encrypted-256.pdf", b"password"),
     ],
 )
 @pytest.mark.skipif(not HAS_PYCRYPTODOME, reason="No pycryptodome")
