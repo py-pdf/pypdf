@@ -85,7 +85,10 @@ try:
             data = data[16:]
             aes = AES.new(self.key, AES.MODE_CBC, iv)
             d = aes.decrypt(data)
-            return d[: -d[-1]]
+            if len(d) == 0:
+                return d
+            else:
+                return d[: -d[-1]]
 
     def RC4_encrypt(key: bytes, data: bytes) -> bytes:
         return ARC4.ARC4Cipher(key).encrypt(data)
