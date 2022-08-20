@@ -250,7 +250,12 @@ class PdfMerger:
             stream = BytesIO(filecontent)
             my_file = True
         else:
-            stream = fileobj
+            raise NotImplementedError(
+                "PdfMerger.merge requires an object that PdfReader can parse. "
+                "Typically, that is a Path or a string representing a Path, "
+                "a file object, or an object implementing .seek and .read. "
+                "Passing a PdfReader directly works as well."
+            )
         return stream, my_file, encryption_obj
 
     @deprecate_bookmark(bookmark="outline_item", import_bookmarks="import_outline")
