@@ -221,6 +221,7 @@ def test_trim_outline_list():
     merger = PdfMerger()
     merger.append(reader)
     merger.write("tmp-merger-do-not-commit.pdf")
+    merger.close()
 
     # cleanup
     os.remove("tmp-merger-do-not-commit.pdf")
@@ -233,6 +234,7 @@ def test_zoom():
     merger = PdfMerger()
     merger.append(reader)
     merger.write("tmp-merger-do-not-commit.pdf")
+    merger.close()
 
     # cleanup
     os.remove("tmp-merger-do-not-commit.pdf")
@@ -245,6 +247,7 @@ def test_zoom_xyz_no_left():
     merger = PdfMerger()
     merger.append(reader)
     merger.write("tmp-merger-do-not-commit.pdf")
+    merger.close()
 
     # cleanup
     os.remove("tmp-merger-do-not-commit.pdf")
@@ -257,6 +260,7 @@ def test_outline_item():
     merger = PdfMerger()
     merger.append(reader)
     merger.write("tmp-merger-do-not-commit.pdf")
+    merger.close()
 
     # cleanup
     os.remove("tmp-merger-do-not-commit.pdf")
@@ -269,6 +273,7 @@ def test_trim_outline():
     merger = PdfMerger()
     merger.append(reader)
     merger.write("tmp-merger-do-not-commit.pdf")
+    merger.close()
 
     # cleanup
     os.remove("tmp-merger-do-not-commit.pdf")
@@ -281,6 +286,7 @@ def test1():
     merger = PdfMerger()
     merger.append(reader)
     merger.write("tmp-merger-do-not-commit.pdf")
+    merger.close()
 
     # cleanup
     os.remove("tmp-merger-do-not-commit.pdf")
@@ -294,6 +300,7 @@ def test_sweep_recursion1():
     merger = PdfMerger()
     merger.append(reader)
     merger.write("tmp-merger-do-not-commit.pdf")
+    merger.close()
 
     reader2 = PdfReader("tmp-merger-do-not-commit.pdf")
     reader2.pages
@@ -321,6 +328,7 @@ def test_sweep_recursion2(url, name):
     merger = PdfMerger()
     merger.append(reader)
     merger.write("tmp-merger-do-not-commit.pdf")
+    merger.close()
 
     reader2 = PdfReader("tmp-merger-do-not-commit.pdf")
     reader2.pages
@@ -336,6 +344,7 @@ def test_sweep_indirect_list_newobj_is_None(caplog):
     merger = PdfMerger()
     merger.append(reader)
     merger.write("tmp-merger-do-not-commit.pdf")
+    merger.close()
     assert "Object 21 0 not defined." in caplog.text
 
     reader2 = PdfReader("tmp-merger-do-not-commit.pdf")
@@ -351,6 +360,7 @@ def test_iss1145():
     name = "iss1145.pdf"
     merger = PdfMerger()
     merger.append(PdfReader(BytesIO(get_pdf_from_url(url, name=name))))
+    merger.close()
 
 
 def test_deprecate_bookmark_decorator_warning():
