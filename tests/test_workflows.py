@@ -1,3 +1,9 @@
+"""
+Tests in this module behave like user code.
+
+They don't mock/patch anything, they cover typical user needs.
+"""
+
 import binascii
 import os
 import sys
@@ -757,3 +763,19 @@ def test_get_fonts(url, name, strict):
     reader = PdfReader(data, strict=strict)
     for page in reader.pages:
         page._get_fonts()
+
+
+@pytest.mark.parametrize(
+    ("url", "name", "strict"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/942/942303.pdf",
+            "tika-942303.pdf",
+            True,
+        ),
+    ],
+)
+def test_get_xmp(url, name, strict):
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data, strict=strict)
+    reader.xmp_metadata
