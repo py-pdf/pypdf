@@ -135,13 +135,11 @@ def _alg33(owner_pwd: str, user_pwd: str, rev: Literal[2, 3, 4], keylen: int) ->
     return val
 
 
-def _alg33_1(password: Union[bytes, str], rev: Literal[2, 3, 4], keylen: int) -> bytes:
+def _alg33_1(password: str, rev: Literal[2, 3, 4], keylen: int) -> bytes:
     """Steps 1-4 of algorithm 3.3"""
     # 1. Pad or truncate the owner password string as described in step 1 of
     # algorithm 3.2.  If there is no owner password, use the user password
     # instead.
-    if isinstance(password, bytes):
-        password = password.decode()
     password_bytes = b_((password + str_(_encryption_padding))[:32])
     # 2. Initialize the MD5 hash function and pass the result of step 1 as
     # input to this function.

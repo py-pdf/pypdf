@@ -409,14 +409,26 @@ def test_encrypt(use_128bit):
         data = input_stream.read()
     assert b"foo" not in data
 
-    # Test the user password:
+    # Test the user password (str):
     reader = PdfReader(tmp_filename, password="userpwd")
     new_text = reader.pages[0].extract_text()
     assert reader.metadata.get("/Producer") == "PyPDF2"
     assert new_text == orig_text
 
-    # Test the owner password:
+    # Test the owner password (str):
     reader = PdfReader(tmp_filename, password="ownerpwd")
+    new_text = reader.pages[0].extract_text()
+    assert reader.metadata.get("/Producer") == "PyPDF2"
+    assert new_text == orig_text
+
+    # Test the user password (bytes):
+    reader = PdfReader(tmp_filename, password=b"userpwd")
+    new_text = reader.pages[0].extract_text()
+    assert reader.metadata.get("/Producer") == "PyPDF2"
+    assert new_text == orig_text
+
+    # Test the owner password (stbytesr):
+    reader = PdfReader(tmp_filename, password=b"ownerpwd")
     new_text = reader.pages[0].extract_text()
     assert reader.metadata.get("/Producer") == "PyPDF2"
     assert new_text == orig_text

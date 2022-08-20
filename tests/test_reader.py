@@ -308,6 +308,7 @@ def test_issue297(caplog):
     ("pdffile", "password", "should_fail"),
     [
         ("encrypted-file.pdf", "test", False),
+        ("encrypted-file.pdf", b"test", False),
         ("encrypted-file.pdf", "qwerty", True),
         ("encrypted-file.pdf", b"qwerty", True),
     ],
