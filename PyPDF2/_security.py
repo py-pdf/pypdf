@@ -52,7 +52,7 @@ _encryption_padding = (
 
 
 def _alg32(
-    password: Union[str, bytes],
+    password: str,
     rev: Literal[2, 3, 4],
     keylen: int,
     owner_entry: ByteStringObject,
@@ -159,7 +159,7 @@ def _alg33_1(password: str, rev: Literal[2, 3, 4], keylen: int) -> bytes:
 
 
 def _alg34(
-    password: Union[str, bytes],
+    password: str,
     owner_entry: ByteStringObject,
     p_entry: int,
     id1_entry: ByteStringObject,
@@ -184,7 +184,7 @@ def _alg34(
 
 
 def _alg35(
-    password: Union[str, bytes],
+    password: str,
     rev: Literal[2, 3, 4],
     keylen: int,
     owner_entry: ByteStringObject,
