@@ -103,7 +103,7 @@ class PdfMerger:
     def __init__(
         self, strict: bool = False, fileobj: Union[Path, StrByteType] = ""
     ) -> None:
-        self.inputs: List[Tuple[Any, PdfReader, bool]] = []
+        self.inputs: List[Tuple[Any, PdfReader]] = []
         self.pages: List[Any] = []
         self.output: Optional[PdfWriter] = PdfWriter()
         self.outline: OutlineType = []
@@ -160,12 +160,12 @@ class PdfMerger:
             outline (collection of outline items, previously referred to as
             'bookmarks') from being imported by specifying this as ``False``.
         """
-        stream, my_file, encryption_obj = self._create_stream(fileobj)
+        stream, encryption_obj = self._create_stream(fileobj)
 
         # Create a new PdfReader instance using the stream
         # (either file or BytesIO or StringIO) created above
         reader = PdfReader(stream, strict=self.strict)  # type: ignore[arg-type]
-        self.inputs.append((stream, reader, my_file))
+        self.inputs.append((stream, reader))
         if encryption_obj is not None:
             reader._encryption = encryption_obj
 
@@ -217,11 +217,7 @@ class PdfMerger:
 
     def _create_stream(
         self, fileobj: Union[Path, StrByteType, PdfReader]
-    ) -> Tuple[IOBase, bool, Optional[Encryption]]:
-        # This parameter is passed to self.inputs.append and means
-        # that the stream used was created in this method.
-        my_file = False
-
+    ) -> Tuple[IOBase, Optional[Encryption]]:
         # If the fileobj parameter is a string, assume it is a path
         # and create a file object at that location. If it is a file,
         # copy the file's contents into a BytesIO stream object; if
@@ -232,7 +228,6 @@ class PdfMerger:
         stream: IOBase
         if isinstance(fileobj, (str, Path)):
             stream = FileIO(fileobj, "rb")
-            my_file = True
         elif isinstance(fileobj, PdfReader):
             if fileobj._encryption:
                 encryption_obj = fileobj._encryption
@@ -242,13 +237,10 @@ class PdfMerger:
 
             # reset the stream to its original location
             fileobj.stream.seek(orig_tell)
-
-            my_file = True
         elif hasattr(fileobj, "seek") and hasattr(fileobj, "read"):
             fileobj.seek(0)
             filecontent = fileobj.read()
             stream = BytesIO(filecontent)
-            my_file = True
         else:
             raise NotImplementedError(
                 "PdfMerger.merge requires an object that PdfReader can parse. "
@@ -256,7 +248,7 @@ class PdfMerger:
                 "a file object, or an object implementing .seek and .read. "
                 "Passing a PdfReader directly works as well."
             )
-        return stream, my_file, encryption_obj
+        return stream, encryption_obj
 
     @deprecate_bookmark(bookmark="outline_item", import_bookmarks="import_outline")
     def append(
@@ -325,9 +317,8 @@ class PdfMerger:
     def close(self) -> None:
         """Shut all file descriptors (input and output) and clear all memory usage."""
         self.pages = []
-        for fo, _reader, mine in self.inputs:
-            if mine:
-                fo.close()
+        for fo, _reader in self.inputs:
+            fo.close()
 
         self.inputs = []
         self.output = None
