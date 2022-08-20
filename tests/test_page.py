@@ -293,9 +293,12 @@ def test_extract_text_operator_t_star():  # L1266, L1267
 
 def test_extract_text_visitor_callbacks():
     """
-    Extract text in rectangle-objects
+    Extract text in rectangle-objects or simple tables.
 
-    This test extracts the labels of package-boxes in Figure 2 of GeoBase_NHNC1_Data_Model_UML_EN.pdf.
+    This test works with GeoBase_NHNC1_Data_Model_UML_EN.pdf.
+    It extracts the labels of package-boxes in Figure 2.
+    It extracts the texts in table "REVISION HISTORY".
+
     """
     import logging
 
@@ -324,11 +327,13 @@ def test_extract_text_visitor_callbacks():
                 and y <= (self.y + self.h)
             )
 
-    def extractTextAndRectangles(page: PageObject) -> tuple:
+    def extractTextAndRectangles(page: PageObject, rectFilter=None) -> tuple:
         """
         Extracts texts and rectangles of a page of type PyPDF2._page.PageObject.
 
         This function supports simple coordinate transformations only.
+        The optional rectFilter-lambda can be used to filter wanted rectangles.
+        rectFilter has Rectangle as argument and must return a boolean.
 
         It returns a tuple containing a list of extracted texts (type PositionedText)
         and a list of extracted rectangles (type Rectangle).
@@ -347,9 +352,9 @@ def test_extract_text_visitor_callbacks():
                     logger.debug(f"  add rectangle: {args}")
                 w = args[2]
                 h = args[3]
-                # We ignore the invisible large rectangles.
-                if w < 400 and h < 400:
-                    listRects.append(Rectangle(args[0], args[1], w, h))
+                r = Rectangle(args[0], args[1], w, h)
+                if (rectFilter is None) or rectFilter(r):
+                    listRects.append(r)
 
         def print_visi(text, cm_matrix, tm_matrix):
             if text.strip() != "":
@@ -366,10 +371,92 @@ def test_extract_text_visitor_callbacks():
 
         return (listTexts, listRects)
 
-    # We test the analysis of page 7 "2.1 LRS model".
+    def extractTable(listTexts: list, listRects: list) -> list:
+        """
+        Extracts a table containing text.
+
+        It is expected that each cell is marked by a rectangle-object.
+        It is expected that the page contains one table only.
+        It is expected that the table contains at least 3 columns and 2 rows.
+
+        A list of rows is returned.
+        Each row contains a list of cells.
+        Each cell contains a list of PositionedText-elements.
+        """
+        logger = logging.getLogger("extractTable")
+
+        # Step 1: Count number of x- and y-coordinates of rectangles.
+        mapColCount = {}
+        mapRowCount = {}
+        mapKnownRects = {}
+        listRectsFiltered = []
+        for r in listRects:
+            # Coordinates may be inaccurate, we have to round.
+            # cell: x=72.264, y=386.57, w=93.96, h=46.584
+            # cell: x=72.271, y=386.56, w=93.96, h=46.59
+            key = f"{round(r.x, 0)} {round(r.y, 0)} {round(r.w, 0)} {round(r.h, 0)}"
+            if key in mapKnownRects:
+                # Ignore duplicate rectangles
+                continue
+            mapKnownRects[key] = r
+            if r.x not in mapColCount:
+                mapColCount[r.x] = 0
+            if r.y not in mapRowCount:
+                mapRowCount[r.y] = 0
+            mapColCount[r.x] += 1
+            mapRowCount[r.y] += 1
+            listRectsFiltered.append(r)
+
+        mapRectText = {}
+        for t in listTexts:
+            for r in listRectsFiltered:
+                if r.contains(t.x, t.y):
+                    if r not in mapRectText:
+                        mapRectText[r] = []
+                    mapRectText[r].append(t)
+                    break
+
+        # PDF: y = 0 is expected at the bottom of the page.
+        # So the header-row is expected to have the highest y-value.
+        listRects.sort(key=lambda r: (-r.y, r.x))
+
+        listRows = []
+        rowNr = 0
+        colNr = 0
+        currY = None
+        currRow = None
+        for r in listRectsFiltered:
+            if mapColCount[r.x] < 3 or mapRowCount[r.y] < 2:
+                # We expect at least 3 columns and 2 rows.
+                continue
+            if currY is None or r.y != currY:
+                # next row
+                currY = r.y
+                colNr = 0
+                rowNr += 1
+                currRow = []
+                listRows.append(currRow)
+            colNr += 1
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug(f"cell: x={r.x}, y={r.y}, w={r.w}, h={r.h}")
+            if r not in mapRectText:
+                currRow.append("")
+                continue
+            cellText = "".join(t.text for t in mapRectText[r])
+            currRow.append(cellText.strip())
+
+        return listRows
+
+    # Test 1: We test the analysis of page 7 "2.1 LRS model".
     reader = PdfReader(RESOURCE_ROOT / "GeoBase_NHNC1_Data_Model_UML_EN.pdf")
     pageLrsModel = reader.pages[6]
-    (listTexts, listRects) = extractTextAndRectangles(pageLrsModel)
+    # We ignore the invisible large rectangles.
+    def ignoreLargeRectangles(r):
+        return r.w < 400 and r.h < 400
+
+    (listTexts, listRects) = extractTextAndRectangles(
+        pageLrsModel, rectFilter=ignoreLargeRectangles
+    )
 
     # We see ten rectangles (5 tabs, 5 boxes) but there are 64 rectangles (including some invisible ones).
     assert 60 == len(listRects)
@@ -388,6 +475,28 @@ def test_extract_text_visitor_callbacks():
     assert "Metadata" in boxTexts
     assert "Hydrography" in boxTexts
     assert "Toponymy (external model)" in boxTexts
+
+    # Test 2: Parse table "REVISION HISTORY" on page 3.
+    pageRevisions = reader.pages[2]
+    # We ignore the second table, therefore: r.y > 350
+    def filterFirstTable(r):
+        return r.w > 1 and r.h > 1 and r.w < 400 and r.h < 400 and r.y > 350
+
+    (listTexts, listRects) = extractTextAndRectangles(
+        pageRevisions, rectFilter=filterFirstTable
+    )
+    listRows = extractTable(listTexts, listRects)
+
+    assert len(listRows) == 9
+    assert listRows[0][0] == "Date"
+    assert listRows[0][1] == "Version"
+    assert listRows[0][2] == "Description"
+    assert listRows[1][0] == "September 2002"
+    assert (
+        listRows[6][2]
+        == "English review;\nRemove the UML model for the Segmented view."
+    )
+    assert listRows[7][2] == "Update from the March Workshop comments."
 
 
 @pytest.mark.parametrize(
