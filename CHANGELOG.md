@@ -1,5 +1,28 @@
 # CHANGELOG
 
+## Version 2.10.3, 2022-08-21
+
+### Robustness (ROB)
+-  Decrypt returns empty bytestring (#1258)
+
+### Developer Experience (DEV)
+-  Modify CI to better verify built package contents (#1244)
+
+### Maintenance (MAINT)
+-  Remove 'mine' as PdfMerger always creates the stream (#1261)
+-  Let PdfMerger._create_stream raise NotImplemented (#1251)
+-  password param of _security._alg32(...) is only a string, not bytes (#1259)
+-  Remove unreachable code in read_block_backwards (#1250)
+   and sign function in _extract_text (#1262)
+
+### Testing (TST)
+-  Delete annotations (#1263)
+-  Close PdfMerger in tests (#1260)
+-  PdfReader.xmp_metadata workflow (#1257)
+-  Various PdfWriter (Layout, Bookmark deprecation) (#1249)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.10.2...2.10.3
+
 ## Version 2.10.2, 2022-08-15
 
 BUG: Add PyPDF2.generic to PyPI distribution
