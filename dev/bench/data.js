@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1661109373412,
+  "lastUpdate": 1661109637517,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -14269,6 +14269,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.032347096512371755",
             "extra": "mean: 3.731155222399997 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "2ddc48a8933bce3efec757fd0222fa07d0f07b0e",
+          "message": "REL: 2.10.3\n\nRobustness (ROB):\n-  Decrypt returns empty bytestring (#1258)\n\nDocumentation (DOC):\n-  Adding WevertonGomes as a Contributor\n\nDeveloper Experience (DEV):\n-  Modify CI to better verify built package contents (#1244)\n\nMaintenance (MAINT):\n-  Remove unused sign function in _extract_text (#1262)\n-  Remove \\'mine\\' as PdfMerger always creates the stream (#1261)\n-  Let PdfMerger._create_stream raise NotImplemented (#1251)\n-  password param of _security._alg32(...) is only a string, not bytes (#1259)\n-  Remove unreachable code in read_block_backwards (#1250)\n\nTesting (TST):\n-  Delete annotations (#1263)\n-  Close PdfMerger in tests (#1260)\n-  PdfReader.xmp_metadata workflow (#1257)\n-  Various PdfWriter (Layout, Bookmark deprecation) (#1249)\n\nFull Changelog: https://github.com/py-pdf/PyPDF2/compare/2.10.2...2.10.3",
+          "timestamp": "2022-08-21T21:18:49+02:00",
+          "tree_id": "9157df6706b82e8fa527ea1a5cceb6e27217a9cf",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/2ddc48a8933bce3efec757fd0222fa07d0f07b0e"
+        },
+        "date": 1661109635987,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0318547139730054,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007335895767721379",
+            "extra": "mean: 969.1286829999996 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.73121350258523,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005496567335273853",
+            "extra": "mean: 78.54710784615602 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2602075659943726,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0346785794246462",
+            "extra": "mean: 3.843085792599999 sec\nrounds: 5"
           }
         ]
       }
