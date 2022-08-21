@@ -1178,9 +1178,6 @@ class PageObject(DictionaryObject):
         TL = 0.0
         font_size = 12.0  # init just in case of
 
-        def sign(x: float) -> float:
-            return 1 if x >= 0 else -1
-
         def mult(m: List[float], n: List[float]) -> List[float]:
             return [
                 m[0] * n[0] + m[1] * n[2],
