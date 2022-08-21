@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1661019373623,
+  "lastUpdate": 1661096320636,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -14089,6 +14089,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.013092832759295573",
             "extra": "mean: 3.8213727807999986 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "cf3aab4b784163539a1f68ebd3f8979018449204",
+          "message": "ROB: Decrypt returns empty bytestring (#1258)\n\nCloses #1245",
+          "timestamp": "2022-08-21T17:37:22+02:00",
+          "tree_id": "af3c06f3de9b56467d2973e6816addd7bfaa6590",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/cf3aab4b784163539a1f68ebd3f8979018449204"
+        },
+        "date": 1661096319413,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8836858516938194,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012720617999235382",
+            "extra": "mean: 1.1316238662000004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.045125963876767,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007452184204886718",
+            "extra": "mean: 90.53767274999973 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22358587462793958,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0457764006060093",
+            "extra": "mean: 4.472554456599999 sec\nrounds: 5"
           }
         ]
       }
