@@ -433,6 +433,9 @@ def test_annotation_setter():
     arr = ArrayObject()
     page.annotations = arr
 
+    # Delete Annotations
+    page.annotations = None
+
     d = DictionaryObject(annot_dict)
     ind_obj = writer._add_object(d)
     arr.append(ind_obj)
