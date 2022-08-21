@@ -386,10 +386,10 @@ def test_fill_form():
 
 
 @pytest.mark.parametrize(
-    "use_128bit",
-    [True, False],
+    ("use_128bit", "user_pwd", "owner_pwd"),
+    [(True, "userpwd", "ownerpwd"), (False, "userpwd", "ownerpwd")],
 )
-def test_encrypt(use_128bit):
+def test_encrypt(use_128bit, user_pwd, owner_pwd):
     reader = PdfReader(RESOURCE_ROOT / "form.pdf")
     writer = PdfWriter()
 
@@ -397,7 +397,7 @@ def test_encrypt(use_128bit):
     orig_text = page.extract_text()
 
     writer.add_page(page)
-    writer.encrypt(user_pwd="userpwd", owner_pwd="ownerpwd", use_128bit=use_128bit)
+    writer.encrypt(user_pwd=user_pwd, owner_pwd=owner_pwd, use_128bit=use_128bit)
 
     # write "output" to PyPDF2-output.pdf
     tmp_filename = "dont_commit_encrypted.pdf"
@@ -409,14 +409,26 @@ def test_encrypt(use_128bit):
         data = input_stream.read()
     assert b"foo" not in data
 
-    # Test the user password:
+    # Test the user password (str):
     reader = PdfReader(tmp_filename, password="userpwd")
     new_text = reader.pages[0].extract_text()
     assert reader.metadata.get("/Producer") == "PyPDF2"
     assert new_text == orig_text
 
-    # Test the owner password:
+    # Test the owner password (str):
     reader = PdfReader(tmp_filename, password="ownerpwd")
+    new_text = reader.pages[0].extract_text()
+    assert reader.metadata.get("/Producer") == "PyPDF2"
+    assert new_text == orig_text
+
+    # Test the user password (bytes):
+    reader = PdfReader(tmp_filename, password=b"userpwd")
+    new_text = reader.pages[0].extract_text()
+    assert reader.metadata.get("/Producer") == "PyPDF2"
+    assert new_text == orig_text
+
+    # Test the owner password (stbytesr):
+    reader = PdfReader(tmp_filename, password=b"ownerpwd")
     new_text = reader.pages[0].extract_text()
     assert reader.metadata.get("/Producer") == "PyPDF2"
     assert new_text == orig_text

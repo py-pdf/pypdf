@@ -56,36 +56,36 @@ def merge():
     pdf_forms = RESOURCE_ROOT / "pdflatex-forms.pdf"
     pdf_pw = RESOURCE_ROOT / "libreoffice-writer-password.pdf"
 
-    file_merger = PyPDF2.PdfMerger()
+    merger = PyPDF2.PdfMerger()
 
     # string path:
-    file_merger.append(pdf_path)
-    file_merger.append(outline)
-    file_merger.append(pdf_path, pages=PyPDF2.pagerange.PageRange(slice(0, 0)))
-    file_merger.append(pdf_forms)
+    merger.append(pdf_path)
+    merger.append(outline)
+    merger.append(pdf_path, pages=PyPDF2.pagerange.PageRange(slice(0, 0)))
+    merger.append(pdf_forms)
 
     # Merging an encrypted file
     reader = PyPDF2.PdfReader(pdf_pw)
     reader.decrypt("openpassword")
-    file_merger.append(reader)
+    merger.append(reader)
 
     # PdfReader object:
-    file_merger.append(PyPDF2.PdfReader(pdf_path, "rb"), outline_item=True)
+    merger.append(PyPDF2.PdfReader(pdf_path, "rb"), outline_item=True)
 
     # File handle
     with open(pdf_path, "rb") as fh:
-        file_merger.append(fh)
+        merger.append(fh)
 
-    outline_item = file_merger.add_outline_item("An outline item", 0)
-    file_merger.add_outline_item("deeper", 0, parent=outline_item)
-    file_merger.add_metadata({"author": "Martin Thoma"})
-    file_merger.add_named_destination("title", 0)
-    file_merger.set_page_layout("/SinglePage")
-    file_merger.set_page_mode("/UseThumbs")
+    outline_item = merger.add_outline_item("An outline item", 0)
+    merger.add_outline_item("deeper", 0, parent=outline_item)
+    merger.add_metadata({"author": "Martin Thoma"})
+    merger.add_named_destination("title", 0)
+    merger.set_page_layout("/SinglePage")
+    merger.set_page_mode("/UseThumbs")
 
     tmp_path = "dont_commit_merged.pdf"
-    file_merger.write(tmp_path)
-    file_merger.close()
+    merger.write(tmp_path)
+    merger.close()
 
     # Check if outline is correct
     reader = PyPDF2.PdfReader(tmp_path)

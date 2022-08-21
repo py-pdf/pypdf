@@ -105,6 +105,7 @@ def test_both_password(name, user_passwd, owner_passwd):
     ("pdffile", "password"),
     [
         ("crazyones-encrypted-256.pdf", "password"),
+        ("crazyones-encrypted-256.pdf", b"password"),
     ],
 )
 @pytest.mark.skipif(not HAS_PYCRYPTODOME, reason="No pycryptodome")
@@ -134,15 +135,15 @@ def test_get_page_of_encrypted_file_new_algorithm(pdffile, password):
 )
 @pytest.mark.skipif(not HAS_PYCRYPTODOME, reason="No pycryptodome")
 def test_encryption_merge(names):
-    pdf_merger = PyPDF2.PdfMerger()
+    merger = PyPDF2.PdfMerger()
     files = [RESOURCE_ROOT / "encryption" / x for x in names]
     pdfs = [PyPDF2.PdfReader(x) for x in files]
     for pdf in pdfs:
         if pdf.is_encrypted:
             pdf.decrypt("asdfzxcv")
-        pdf_merger.append(pdf)
+        merger.append(pdf)
     # no need to write to file
-    pdf_merger.close()
+    merger.close()
 
 
 @pytest.mark.parametrize(
