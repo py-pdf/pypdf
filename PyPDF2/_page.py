@@ -1109,18 +1109,6 @@ class PageObject(DictionaryObject):
             out += "No Font\n"
         return out
 
-    def _visit_operand_empty(op, args, cm_matrix, tm_matrix):
-        """
-        Dummy-implementation of an operand-visitor called by _extract_text.
-        """
-        pass
-
-    def _visit_text_empty(text, cm_matrix, tm_matrix):
-        """
-        Dummy-implementation of a text-visitor called by _extract_text.
-        """
-        pass
-
     def _extract_text(
         self,
         obj: Any,
@@ -1158,8 +1146,10 @@ class PageObject(DictionaryObject):
             It has four arguments: operand, operand-arguments,
                 current transformation matrix and text matrix.
         :param Optional[Function] visitor_text: function to be called when extracting some text at some position.
-            It has three arguments: text,
-                current transformation matrix and text matrix.
+            It has five arguments: text,
+                current transformation matrix, text matrix, font-dictionary and font-size.
+            The font-dictionary may be None in case of unknown fonts.
+            If not None it may e.g. contain key "/BaseFont" with value "/Arial,Bold".
         :return: a string object.
         """
         text: str = ""
@@ -1171,11 +1161,14 @@ class PageObject(DictionaryObject):
         if "/Font" in resources_dict:
             for f in cast(DictionaryObject, resources_dict["/Font"]):
                 cmaps[f] = build_char_map(f, space_width, obj)
-        cmap: Tuple[Union[str, Dict[int, str]], Dict[str, str], str] = (
+        cmap: Tuple[
+            Union[str, Dict[int, str]], Dict[str, str], str, DictionaryObject
+        ] = (
             "charmap",
             {},
             "NotInitialized",
-        )  # (encoding,CMAP,font_name)
+            None,
+        )  # (encoding,CMAP,font resource name,dictionary-object of font)
         try:
             content = (
                 obj[content_key].get_object() if isinstance(content_key, str) else obj
@@ -1238,7 +1231,7 @@ class PageObject(DictionaryObject):
                 # tm_prev = tm_matrix
                 output += text
                 if visitor_text is not None:
-                    visitor_text(text, cm_matrix, tm_matrix)
+                    visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
                 # based
                 # if output != "" and output[-1]!="\n":
                 #    output += "\n"
@@ -1247,9 +1240,9 @@ class PageObject(DictionaryObject):
             elif operator == b"ET":
                 output += text
                 if visitor_text is not None:
-                    visitor_text(text, cm_matrix, tm_matrix)
+                    visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
                 text = ""
-            # table 4.7, page 219
+            # table 4.7 "Graphics state operators", page 219
             # cm_matrix calculation is a reserved for the moment
             elif operator == b"q":
                 cm_stack.append(
@@ -1279,7 +1272,7 @@ class PageObject(DictionaryObject):
             elif operator == b"cm":
                 output += text
                 if visitor_text is not None:
-                    visitor_text(text, cm_matrix, tm_matrix)
+                    visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
                 text = ""
                 cm_matrix = mult(
                     [
@@ -1303,14 +1296,19 @@ class PageObject(DictionaryObject):
                 if text != "":
                     output += text  # .translate(cmap)
                     if visitor_text is not None:
-                        visitor_text(text, cm_matrix, tm_matrix)
+                        visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
                 text = ""
                 try:
-                    _space_width = cmaps[operands[0]][1]
+                    # charMapTuple: font_type, float(sp_width / 2), encoding, map_dict, font-dictionary
+                    charMapTuple = cmaps[operands[0]]
+                    _space_width = charMapTuple[1]
+                    # current cmap: encoding, map_dict, font resource name (internal name, not the real font-name),
+                    # font-dictionary. The font-dictionary describes the font.
                     cmap = (
-                        cmaps[operands[0]][2],
-                        cmaps[operands[0]][3],
+                        charMapTuple[2],
+                        charMapTuple[3],
                         operands[0],
+                        charMapTuple[4],
                     )
                 except KeyError:  # font not found
                     _space_width = unknown_char_map[1]
@@ -1318,6 +1316,7 @@ class PageObject(DictionaryObject):
                         unknown_char_map[2],
                         unknown_char_map[3],
                         "???" + operands[0],
+                        None,
                     )
                 try:
                     font_size = float(operands[1])
@@ -1460,7 +1459,7 @@ class PageObject(DictionaryObject):
             elif operator == b"Do":
                 output += text
                 if visitor_text is not None:
-                    visitor_text(text, cm_matrix, tm_matrix)
+                    visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
                 try:
                     if output[-1] != "\n":
                         output += "\n"
@@ -1480,7 +1479,7 @@ class PageObject(DictionaryObject):
                         )  # type: ignore
                         output += text
                         if visitor_text is not None:
-                            visitor_text(text, cm_matrix, tm_matrix)
+                            visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
                 except Exception:
                     logger_warning(
                         f" impossible to decode XFormObject {operands[0]}",
@@ -1494,7 +1493,7 @@ class PageObject(DictionaryObject):
                 visitor_operand_after(operator, operands, cm_matrix, tm_matrix)
         output += text  # just in case of
         if text != "" and visitor_text is not None:
-            visitor_text(text, cm_matrix, tm_matrix)
+            visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
         return output
 
     def extract_text(

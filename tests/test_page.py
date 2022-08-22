@@ -303,12 +303,18 @@ def test_extract_text_visitor_callbacks():
     import logging
 
     class PositionedText:
-        """Specify a text with coordinates."""
+        """Specify a text with coordinates, font-dictionary and font-size.
 
-        def __init__(self, text, x, y) -> None:
+        The font-dictionary may be None in case of an unknown font.
+        """
+
+        def __init__(self, text, x, y, font_dict, font_size) -> None:
+            # TODO \0-replace: Encoding issue in some files?
             self.text = text.replace("\0", "")
             self.x = x
             self.y = y
+            self.font_dict = font_dict
+            self.font_size = font_size
 
     class Rectangle:
         """Specify a rectangle."""
@@ -356,11 +362,15 @@ def test_extract_text_visitor_callbacks():
                 if (rectFilter is None) or rectFilter(r):
                     listRects.append(r)
 
-        def print_visi(text, cm_matrix, tm_matrix):
+        def print_visi(text, cm_matrix, tm_matrix, font_dict, font_size):
             if text.strip() != "":
                 if logger.isEnabledFor(logging.DEBUG):
-                    logger.debug(f"at {cm_matrix}, {tm_matrix}")
-                listTexts.append(PositionedText(text, tm_matrix[4], tm_matrix[5]))
+                    logger.debug(f"at {cm_matrix}, {tm_matrix}, fontSize={font_size}")
+                listTexts.append(
+                    PositionedText(
+                        text, tm_matrix[4], tm_matrix[5], font_dict, font_size
+                    )
+                )
 
         visitor_before = print_op_b
         visitor_text = print_visi
@@ -445,10 +455,14 @@ def test_extract_text_visitor_callbacks():
             if r not in mapRectText:
                 currRow.append("")
                 continue
-            cellText = "".join(t.text for t in mapRectText[r])
-            currRow.append(cellText.strip())
+            cellTexts = [t for t in mapRectText[r]]
+            currRow.append(cellTexts)
 
         return listRows
+
+    def extract_cell_text(cellTexts: list) -> str:
+        """Joins the text-objects of a cell."""
+        return ("".join(t.text for t in cellTexts)).strip()
 
     # Test 1: We test the analysis of page 7 "2.1 LRS model".
     reader = PdfReader(RESOURCE_ROOT / "GeoBase_NHNC1_Data_Model_UML_EN.pdf")
@@ -491,15 +505,32 @@ def test_extract_text_visitor_callbacks():
     listRows = extractTable(listTexts, listRects)
 
     assert len(listRows) == 9
-    assert listRows[0][0] == "Date"
-    assert listRows[0][1] == "Version"
-    assert listRows[0][2] == "Description"
-    assert listRows[1][0] == "September 2002"
+    assert extract_cell_text(listRows[0][0]) == "Date"
+    assert extract_cell_text(listRows[0][1]) == "Version"
+    assert extract_cell_text(listRows[0][2]) == "Description"
+    assert extract_cell_text(listRows[1][0]) == "September 2002"
     assert (
-        listRows[6][2]
+        extract_cell_text(listRows[6][2])
         == "English review;\nRemove the UML model for the Segmented view."
     )
-    assert listRows[7][2] == "Update from the March Workshop comments."
+    assert (
+        extract_cell_text(listRows[7][2]) == "Update from the March Workshop comments."
+    )
+
+    # Check the fonts. We check: /F2 9.96 Tf [...] [(Dat)-2(e)] TJ
+    textDatOfDate = listRows[0][0][0]
+    assert textDatOfDate.font_dict is not None
+    assert textDatOfDate.font_dict["/Name"] == "/F2"
+    assert textDatOfDate.font_dict["/BaseFont"] == "/Arial,Bold"
+    assert textDatOfDate.font_dict["/Encoding"] == "/WinAnsiEncoding"
+    assert textDatOfDate.font_size == 9.96
+    # Check: /F1 9.96 Tf [...] [(S)4(ep)4(t)-10(em)-20(be)4(r)-3( 20)4(02)] TJ
+    textS = listRows[1][0][0]
+    assert textS.font_dict is not None
+    assert textS.font_dict["/Name"] == "/F1"
+    assert textS.font_dict["/BaseFont"] == "/Arial"
+    assert textS.font_dict["/Encoding"] == "/WinAnsiEncoding"
+    assert textDatOfDate.font_size == 9.96
 
 
 @pytest.mark.parametrize(
