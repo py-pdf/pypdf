@@ -295,7 +295,7 @@ def test_extract_text_visitor_callbacks():
     """
     Extract text in rectangle-objects or simple tables.
 
-    This test works with GeoBase_NHNC1_Data_Model_UML_EN.pdf.
+    This test uses GeoBase_NHNC1_Data_Model_UML_EN.pdf.
     It extracts the labels of package-boxes in Figure 2.
     It extracts the texts in table "REVISION HISTORY".
 
@@ -386,6 +386,7 @@ def test_extract_text_visitor_callbacks():
         logger = logging.getLogger("extractTable")
 
         # Step 1: Count number of x- and y-coordinates of rectangles.
+        # Remove duplicate rectangles. the new list is listRectsFiltered.
         mapColCount = {}
         mapRowCount = {}
         mapKnownRects = {}
@@ -407,6 +408,7 @@ def test_extract_text_visitor_callbacks():
             mapRowCount[r.y] += 1
             listRectsFiltered.append(r)
 
+        # Step 2: Look for texts in rectangles.
         mapRectText = {}
         for t in listTexts:
             for r in listRectsFiltered:
@@ -420,6 +422,7 @@ def test_extract_text_visitor_callbacks():
         # So the header-row is expected to have the highest y-value.
         listRects.sort(key=lambda r: (-r.y, r.x))
 
+        # Step 3: Build the list of rows containing list of cell-texts.
         listRows = []
         rowNr = 0
         colNr = 0
