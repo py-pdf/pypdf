@@ -316,6 +316,14 @@ def test_extract_text_visitor_callbacks():
             self.font_dict = font_dict
             self.font_size = font_size
 
+        def get_base_font(self) -> str:
+            """Gets the base font of the text.
+
+            Return UNKNOWN in case of an unknown font."""
+            if (self.font_dict is None) or "/BaseFont" not in self.font_dict:
+                return "UNKNOWN"
+            return self.font_dict["/BaseFont"]
+
     class Rectangle:
         """Specify a rectangle."""
 
@@ -521,14 +529,14 @@ def test_extract_text_visitor_callbacks():
     textDatOfDate = listRows[0][0][0]
     assert textDatOfDate.font_dict is not None
     assert textDatOfDate.font_dict["/Name"] == "/F2"
-    assert textDatOfDate.font_dict["/BaseFont"] == "/Arial,Bold"
+    assert textDatOfDate.get_base_font() == "/Arial,Bold"
     assert textDatOfDate.font_dict["/Encoding"] == "/WinAnsiEncoding"
     assert textDatOfDate.font_size == 9.96
     # Check: /F1 9.96 Tf [...] [(S)4(ep)4(t)-10(em)-20(be)4(r)-3( 20)4(02)] TJ
     textS = listRows[1][0][0]
     assert textS.font_dict is not None
     assert textS.font_dict["/Name"] == "/F1"
-    assert textS.font_dict["/BaseFont"] == "/Arial"
+    assert textS.get_base_font() == "/Arial"
     assert textS.font_dict["/Encoding"] == "/WinAnsiEncoding"
     assert textDatOfDate.font_size == 9.96
 
