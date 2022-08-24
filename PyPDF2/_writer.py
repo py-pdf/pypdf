@@ -1922,7 +1922,7 @@ def _create_outline_item(
         if isinstance(color, str):
             color = hex_to_rgb(color)
         outline_item.update(
-            {NameObject("/C"): ArrayObject([FloatObject(c) for c in color])}
+            {NameObject("/C"): ArrayObject([FloatObject(c, prec=5) for c in color])}
         )
     if italic or bold:
         format_flag = 0

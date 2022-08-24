@@ -227,8 +227,15 @@ class IndirectObject(PdfObject):
 
 
 class FloatObject(decimal.Decimal, PdfObject):
+    def __init__(
+        self, value: Union[str, Any] = "0", context: Optional[Any] = None, prec: Optional[int] = None
+    ) -> None:
+        self.value = value
+        self.context = context
+        self.prec = prec
+
     def __new__(
-        cls, value: Union[str, Any] = "0", context: Optional[Any] = None
+        cls, value: Union[str, Any] = "0", context: Optional[Any] = None, prec: Optional[int] = None
     ) -> "FloatObject":
         try:
             return decimal.Decimal.__new__(cls, str_(value), context)
@@ -240,14 +247,15 @@ class FloatObject(decimal.Decimal, PdfObject):
 
     def __repr__(self) -> str:
         if self == self.to_integral():
+            # If this is an integer, format it with no decimal place.
             return str(self.quantize(decimal.Decimal(1)))
+        elif self.prec is not None:
+            # If a precision was specified, then use it.
+            return f"{self:.{self.prec}f}"
         else:
-            # Standard formatting adds useless extraneous zeros.
-            o = f"{self:.5f}"
-            # Remove the zeros.
-            while o and o[-1] == "0":
-                o = o[:-1]
-            return o
+            # Otherwise, format it with a decimal place, taking care to
+            # remove any extraneous trailing zeros.
+            return f"{self:f}".rstrip("0")
 
     def as_numeric(self) -> float:
         return float(repr(self).encode("utf8"))
