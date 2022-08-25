@@ -133,7 +133,7 @@ if __name__ == "__main__":
     fileIn = sys.argv[argIdx]
     fileOut = sys.argv[argIdx + 1]
 
-    print(f"Read {fileOut}")
+    print(f"Read {fileIn}")
 
     with open(fileIn, "r") as f:
         linesOut = update_lines(f, encoding)
