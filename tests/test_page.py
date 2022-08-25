@@ -238,6 +238,13 @@ def test_extract_text_single_quote_op():
         page.extract_text()
 
 
+def test_no_ressources_on_text_extract():
+    url = "https://raw.githubusercontent.com/eagletrt/wiki/0f3f16309604f665a47595c890d15af1b3aec6d6/fenice-telemetry-tx/PCB%20Outputs/Pdf/Edge%20Mount%20SMA/TelemetryTX_EM.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-964029.pdf")))
+    for page in reader.pages:
+        page.extract_text()
+
+
 def test_iss_1142():
     # check fix for problem of context save/restore (q/Q)
     url = "https://github.com/py-pdf/PyPDF2/files/9150656/ST.2019.PDF"
@@ -280,7 +287,7 @@ def test_extract_text_page_pdf_impossible_decode_xform(caplog):
     for page in reader.pages:
         page.extract_text()
     warn_msgs = normalize_warnings(caplog.text)
-    assert warn_msgs == [" impossible to decode XFormObject /Meta203"]
+    assert warn_msgs == [""]  # text extraction recognise no texg
 
 
 def test_extract_text_operator_t_star():  # L1266, L1267

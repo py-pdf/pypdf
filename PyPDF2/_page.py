@@ -1140,7 +1140,10 @@ class PageObject(DictionaryObject):
         cmaps: Dict[
             str, Tuple[str, float, Union[str, Dict[int, str]], Dict[str, str]]
         ] = {}
-        resources_dict = cast(DictionaryObject, obj["/Resources"])
+        try:
+            resources_dict = cast(DictionaryObject, obj["/Resources"])
+        except Exception:
+            return ""  # no resources means no text is possible (no font)
         if "/Font" in resources_dict:
             for f in cast(DictionaryObject, resources_dict["/Font"]):
                 cmaps[f] = build_char_map(f, space_width, obj)
