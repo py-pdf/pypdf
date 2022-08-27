@@ -384,6 +384,8 @@ def test_fill_form():
     with open(tmp_filename, "wb") as output_stream:
         writer.write(output_stream)
 
+    os.remove(tmp_filename)  # cleanup
+
 
 @pytest.mark.parametrize(
     ("use_128bit", "user_pwd", "owner_pwd"),
@@ -595,13 +597,17 @@ def test_io_streams():
 
 
 def test_regression_issue670():
+    tmp_file = "dont_commit_issue670.pdf"
     filepath = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(filepath, strict=False)
     for _ in range(2):
         writer = PdfWriter()
         writer.add_page(reader.pages[0])
-        with open("dont_commit_issue670.pdf", "wb") as f_pdf:
+        with open(tmp_file, "wb") as f_pdf:
             writer.write(f_pdf)
+
+    # cleanup
+    os.remove(tmp_file)
 
 
 def test_issue301():
