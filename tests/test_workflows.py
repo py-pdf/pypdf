@@ -418,42 +418,70 @@ def test_get_metadata(url, name):
 
 
 @pytest.mark.parametrize(
-    ("url", "name"),
+    ("url", "name", "strict", "exception"),
     [
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/938/938702.pdf",
             "tika-938702.pdf",
+            False,
+            (PdfReadError, "Unexpected end of stream"),
         ),
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/942/942358.pdf",
             "tika-942358.pdf",
+            False,
+            None,
         ),
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/911/911260.pdf",
             "tika-911260.pdf",
+            False,
+            None,
         ),
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/992/992472.pdf",
             "tika-992472.pdf",
+            False,
+            None,
         ),
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/978/978477.pdf",
             "tika-978477.pdf",
+            False,
+            None,
         ),
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/960/960317.pdf",
             "tika-960317.pdf",
+            False,
+            None,
         ),
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/930/930513.pdf",
             "tika-930513.pdf",
+            False,
+            None,
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/918/918113.pdf",
+            "tika-918113.pdf",
+            True,
+            None,
         ),
     ],
 )
-def test_extract_text(url, name):
+def test_extract_text(url, name, strict, exception):
     data = BytesIO(get_pdf_from_url(url, name=name))
-    reader = PdfReader(data)
-    reader.metadata
+    reader = PdfReader(data, strict=strict)
+    if not exception:
+        for page in reader.pages:
+            page.extract_text()
+    else:
+        exc, exc_text = exception
+        with pytest.raises(exc) as ex_info:
+            for page in reader.pages:
+                page.extract_text()
+        assert ex_info.value.args[0] == exc_text
 
 
 @pytest.mark.parametrize(
