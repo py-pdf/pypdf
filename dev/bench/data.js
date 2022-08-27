@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1661109637517,
+  "lastUpdate": 1661593156876,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -14314,6 +14314,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0346785794246462",
             "extra": "mean: 3.843085792599999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "Shortfinga@users.noreply.github.com",
+            "name": "Maximilian",
+            "username": "Shortfinga"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "84460f54aa4721db36452fe510f8063838e358d5",
+          "message": "PKG: Add minimum version for typing_extensions requirement (#1277)\n\nPyPDF2 uses TypeAlias which was introduced via PEP 613 in Python 3.10. Older versions of Python need typing_extensions>=3.10.0.0.",
+          "timestamp": "2022-08-27T11:37:58+02:00",
+          "tree_id": "9d70756651d1e055932cc07dfe69127b9db3e6dd",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/84460f54aa4721db36452fe510f8063838e358d5"
+        },
+        "date": 1661593155706,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8882557378302759,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012174822316427632",
+            "extra": "mean: 1.125801903000007 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.196244858594758,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00726290642689451",
+            "extra": "mean: 89.31566008333174 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22231838051433703,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02610528429108766",
+            "extra": "mean: 4.4980536368 sec\nrounds: 5"
           }
         ]
       }
