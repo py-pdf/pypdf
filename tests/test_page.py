@@ -272,6 +272,11 @@ def test_iss_1142():
             "https://github.com/py-pdf/PyPDF2/files/9150656/ST.2019.PDF",
             "iss_1134.pdf",
         ),
+        # iss 1:
+        (
+            "https://github.com/py-pdf/PyPDF2/files/9432350/Work.Flow.From.Check.to.QA.pdf",
+            "WFCA.pdf",
+        ),
     ],
 )
 def test_extract_text_page_pdf(url, name):

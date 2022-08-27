@@ -29,6 +29,49 @@ RESOURCE_ROOT = PROJECT_ROOT / "resources"
 sys.path.append(str(PROJECT_ROOT))
 
 
+def test_basic_features(tmp_path):
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    writer = PdfWriter()
+
+    assert len(reader.pages) == 1
+
+    # add page 1 from input1 to output document, unchanged
+    writer.add_page(reader.pages[0])
+
+    # add page 2 from input1, but rotated clockwise 90 degrees
+    writer.add_page(reader.pages[0].rotate(90))
+
+    # add page 3 from input1, but first add a watermark from another PDF:
+    page3 = reader.pages[0]
+    watermark_pdf = pdf_path
+    watermark = PdfReader(watermark_pdf)
+    page3.merge_page(watermark.pages[0])
+    writer.add_page(page3)
+
+    # add page 4 from input1, but crop it to half size:
+    page4 = reader.pages[0]
+    page4.mediabox.upper_right = (
+        page4.mediabox.right / 2,
+        page4.mediabox.top / 2,
+    )
+    writer.add_page(page4)
+
+    # add some Javascript to launch the print window on opening this PDF.
+    # the password dialog may prevent the print dialog from being shown,
+    # comment the the encription lines, if that's the case, to try this out
+    writer.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
+
+    # encrypt your new PDF and add a password
+    password = "secret"
+    writer.encrypt(password)
+
+    # finally, write "output" to PyPDF2-output.pdf
+    write_path = tmp_path / "PyPDF2-output.pdf"
+    with open(write_path, "wb") as output_stream:
+        writer.write(output_stream)
+
+
 def test_dropdown_items():
     inputfile = RESOURCE_ROOT / "libreoffice-form.pdf"
     reader = PdfReader(inputfile)
@@ -321,7 +364,7 @@ def test_overlay(base_path, overlay_path):
         writer.write(fp)
 
     # Cleanup
-    os.remove("dont_commit_overlay.pdf")
+    os.remove("dont_commit_overlay.pdf")  # remove for manual inspection
 
 
 @pytest.mark.parametrize(
@@ -333,16 +376,13 @@ def test_overlay(base_path, overlay_path):
         )
     ],
 )
-def test_merge_with_warning(url, name):
+def test_merge_with_warning(tmp_path, url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
     merger = PdfMerger()
     merger.append(reader)
     # This could actually be a performance bottleneck:
-    merger.write("tmp.merged.pdf")
-
-    # Cleanup
-    os.remove("tmp.merged.pdf")
+    merger.write(tmp_path / "tmp.merged.pdf")
 
 
 @pytest.mark.parametrize(
@@ -354,15 +394,12 @@ def test_merge_with_warning(url, name):
         )
     ],
 )
-def test_merge(url, name):
+def test_merge(tmp_path, url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
     merger = PdfMerger()
     merger.append(reader)
-    merger.write("tmp.merged.pdf")
-
-    # Cleanup
-    os.remove("tmp.merged.pdf")
+    merger.write(tmp_path / "tmp.merged.pdf")
 
 
 @pytest.mark.parametrize(
@@ -381,42 +418,88 @@ def test_get_metadata(url, name):
 
 
 @pytest.mark.parametrize(
-    ("url", "name"),
+    ("url", "name", "strict", "exception"),
     [
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/938/938702.pdf",
             "tika-938702.pdf",
+            False,
+            (PdfReadError, "Unexpected end of stream"),
         ),
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/942/942358.pdf",
             "tika-942358.pdf",
+            False,
+            None,
         ),
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/911/911260.pdf",
             "tika-911260.pdf",
+            False,
+            None,
         ),
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/992/992472.pdf",
             "tika-992472.pdf",
+            False,
+            None,
         ),
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/978/978477.pdf",
             "tika-978477.pdf",
+            False,
+            None,
         ),
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/960/960317.pdf",
             "tika-960317.pdf",
+            False,
+            None,
         ),
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/930/930513.pdf",
             "tika-930513.pdf",
+            False,
+            None,
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/918/918113.pdf",
+            "tika-918113.pdf",
+            True,
+            None,
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/940/940704.pdf",
+            "tika-940704.pdf",
+            True,
+            None,
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/976/976488.pdf",
+            "tika-976488.pdf",
+            True,
+            None,
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/948/948176.pdf",
+            "tika-948176.pdf",
+            True,
+            None,
         ),
     ],
 )
-def test_extract_text(url, name):
+def test_extract_text(url, name, strict, exception):
     data = BytesIO(get_pdf_from_url(url, name=name))
-    reader = PdfReader(data)
-    reader.metadata
+    reader = PdfReader(data, strict=strict)
+    if not exception:
+        for page in reader.pages:
+            page.extract_text()
+    else:
+        exc, exc_text = exception
+        with pytest.raises(exc) as ex_info:
+            for page in reader.pages:
+                page.extract_text()
+        assert ex_info.value.args[0] == exc_text
 
 
 @pytest.mark.parametrize(
@@ -444,21 +527,28 @@ def test_compress_raised(url, name):
 
 
 @pytest.mark.parametrize(
-    ("url", "name"),
+    ("url", "name", "strict"),
     [
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/915/915194.pdf",
             "tika-915194.pdf",
+            False,
         ),
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/950/950337.pdf",
             "tika-950337.pdf",
+            False,
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/962/962292.pdf",
+            "tika-962292.pdf",
+            True,
         ),
     ],
 )
-def test_compress(url, name):
+def test_compress(url, name, strict):
     data = BytesIO(get_pdf_from_url(url, name=name))
-    reader = PdfReader(data)
+    reader = PdfReader(data, strict=strict)
     # TODO: which page exactly?
     # TODO: Is it reasonable to have an exception here?
     for page in reader.pages:
@@ -474,17 +564,15 @@ def test_compress(url, name):
         ),
     ],
 )
-def test_get_fields_warns(caplog, url, name):
+def test_get_fields_warns(tmp_path, caplog, url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
-    with open("tmp.txt", "w") as fp:
+    write_path = tmp_path / "tmp.txt"
+    with open(write_path, "w") as fp:
         retrieved_fields = reader.get_fields(fileobj=fp)
 
     assert retrieved_fields == {}
     assert normalize_warnings(caplog.text) == ["Object 2 0 not defined."]
-
-    # Cleanup
-    os.remove("tmp.txt")
 
 
 @pytest.mark.parametrize(
@@ -496,16 +584,14 @@ def test_get_fields_warns(caplog, url, name):
         ),
     ],
 )
-def test_get_fields_no_warning(url, name):
+def test_get_fields_no_warning(tmp_path, url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
-    with open("tmp.txt", "w") as fp:
+    write_path = tmp_path / "tmp.txt"
+    with open(write_path, "w") as fp:
         retrieved_fields = reader.get_fields(fileobj=fp)
 
     assert len(retrieved_fields) == 10
-
-    # Cleanup
-    os.remove("tmp.txt")
 
 
 def test_scale_rectangle_indirect_object():
