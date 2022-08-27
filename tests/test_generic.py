@@ -579,17 +579,23 @@ def test_name_object_read_from_stream_unicode_error():  # L588
         page.extract_text()
 
 
-def test_bool_repr():
+def test_bool_repr(tmp_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/932/932449.pdf"
     name = "tika-932449.pdf"
 
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    with open("tmp-fields-report.txt", "w") as fp:
+    write_path = tmp_path / "tmp-fields-report.txt"
+    with open(write_path, "w") as fp:
         fields = reader.get_fields(fileobj=fp)
     assert fields
-
-    # cleanup
-    os.remove("tmp-fields-report.txt")
+    assert list(fields.keys()) == ["USGPOSignature"]
+    with open(write_path) as fp:
+        data = fp.read()
+    assert data.startswith(
+        "Field Name: USGPOSignature\nField Type: Signature\nField Flags: 1\n"
+        "Value: {'/Type': '/Sig', '/Filter': '/Adobe.PPKLite', "
+        "'/SubFilter':"
+    )
 
 
 @patch("PyPDF2._reader.logger_warning")
