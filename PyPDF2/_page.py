@@ -1141,9 +1141,14 @@ class PageObject(DictionaryObject):
             str, Tuple[str, float, Union[str, Dict[int, str]], Dict[str, str]]
         ] = {}
         try:
-            resources_dict = cast(DictionaryObject, obj["/Resources"])
+            objr = obj
+            while NameObject("/Resources") not in objr:
+                # /Resources can be inherited sometimes so we look to parents
+                objr = objr["/Parent"].get_object()
+                # if no parents we will have no /Resources will be available => an exception wil be raised
+            resources_dict = cast(DictionaryObject, objr["/Resources"])
         except Exception:
-            return ""  # no resources means no text is possible (no font)
+            return ""  # no resources means no text is possible (no font) we consider the file as not damaged, no need to check for TJ or Tj
         if "/Font" in resources_dict:
             for f in cast(DictionaryObject, resources_dict["/Font"]):
                 cmaps[f] = build_char_map(f, space_width, obj)
