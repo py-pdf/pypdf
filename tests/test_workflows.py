@@ -468,6 +468,24 @@ def test_get_metadata(url, name):
             True,
             None,
         ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/940/940704.pdf",
+            "tika-940704.pdf",
+            True,
+            None,
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/976/976488.pdf",
+            "tika-976488.pdf",
+            True,
+            None,
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/948/948176.pdf",
+            "tika-948176.pdf",
+            True,
+            None,
+        ),
     ],
 )
 def test_extract_text(url, name, strict, exception):
@@ -509,21 +527,28 @@ def test_compress_raised(url, name):
 
 
 @pytest.mark.parametrize(
-    ("url", "name"),
+    ("url", "name", "strict"),
     [
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/915/915194.pdf",
             "tika-915194.pdf",
+            False,
         ),
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/950/950337.pdf",
             "tika-950337.pdf",
+            False,
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/962/962292.pdf",
+            "tika-962292.pdf",
+            True,
         ),
     ],
 )
-def test_compress(url, name):
+def test_compress(url, name, strict):
     data = BytesIO(get_pdf_from_url(url, name=name))
-    reader = PdfReader(data)
+    reader = PdfReader(data, strict=strict)
     # TODO: which page exactly?
     # TODO: Is it reasonable to have an exception here?
     for page in reader.pages:
