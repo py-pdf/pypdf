@@ -322,10 +322,13 @@ class PdfReader:
 
         :return: the document information of this PDF file
         """
-        if TK.INFO not in self.trailer:
+        if self.trailer[TK.INFO]==None:
             return None
         obj = self.trailer[TK.INFO]
+        print(obj)
         retval = DocumentInformation()
+        if retval==None:
+            retval={}
         retval.update(obj)  # type: ignore
         return retval
 
