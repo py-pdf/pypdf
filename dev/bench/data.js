@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1661686940556,
+  "lastUpdate": 1661690597954,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -14494,6 +14494,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.06088756479434983",
             "extra": "mean: 4.684257274200002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "3b74312924542a59dce5c3f8e067b6e1765a12e6",
+          "message": "REL: 2.10.4\n\nRobustness (ROB):\n-  Fix errors/warnings on no /Resources within extract_text (#1276)\n-  Add required line separators in ContentStream ArrayObjects (#1281)\n\nMaintenance (MAINT):\n-  Use NameObject idempotency (#1290)\n\nTesting (TST):\n-  Rectangle deletion (#1289)\n-  Add workflow tests (#1287)\n-  Remove files after tests ran (#1286)\n\nPackaging (PKG):\n-  Add minimum version for typing_extensions requirement (#1277)\n\nFull Changelog: https://github.com/py-pdf/PyPDF2/compare/2.10.3...2.10.4",
+          "timestamp": "2022-08-28T14:41:24+02:00",
+          "tree_id": "51f65fcd64641186c8a554a6ec201406a04ce552",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/3b74312924542a59dce5c3f8e067b6e1765a12e6"
+        },
+        "date": 1661690596799,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8484339475283145,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016130499778974097",
+            "extra": "mean: 1.1786421358000028 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.177434279759009,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004999568420946521",
+            "extra": "mean: 98.25659124999812 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21005747619677081,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08995703125245019",
+            "extra": "mean: 4.760601803400002 sec\nrounds: 5"
           }
         ]
       }
