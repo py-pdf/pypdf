@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## Version 2.10.4, 2022-08-28
+
+### Robustness (ROB)
+-  Fix errors/warnings on no /Resources within extract_text (#1276)
+-  Add required line separators in ContentStream ArrayObjects (#1281)
+
+### Maintenance (MAINT)
+-  Use NameObject idempotency (#1290)
+
+### Testing (TST)
+-  Rectangle deletion (#1289)
+-  Add workflow tests (#1287)
+-  Remove files after tests ran (#1286)
+
+### Packaging (PKG)
+-  Add minimum version for typing_extensions requirement (#1277)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.10.3...2.10.4
+
 ## Version 2.10.3, 2022-08-21
 
 ### Robustness (ROB)
