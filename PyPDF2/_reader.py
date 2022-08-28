@@ -1400,7 +1400,14 @@ class PdfReader:
                     pass
                 else:
                     self.xref[generation][num] = offset
-                    self.xref_free_entry[generation][num] = entry_type_b == b"f"
+                    try:
+                        self.xref_free_entry[generation][num] = entry_type_b == b"f"
+                    except Exception:
+                        pass
+                    try:
+                        self.xref_free_entry[65535][num] = entry_type_b == b"f"
+                    except Exception:
+                        pass
                 cnt += 1
                 num += 1
             read_non_whitespace(stream)
@@ -1438,6 +1445,11 @@ class PdfReader:
                 for key in trailer_keys:
                     if key in xrefstream and key not in self.trailer:
                         self.trailer[NameObject(key)] = xrefstream.raw_get(key)
+                if "/XRefStm" in xrefstream:
+                    p = stream.tell()
+                    stream.seek(int(xrefstream["/XRefStm"]) + 1, 0)
+                    self._read_pdf15_xref_stream(stream)
+                    stream.seek(p, 0)
                 if "/Prev" in xrefstream:
                     startxref = cast(int, xrefstream["/Prev"])
                 else:
@@ -1453,6 +1465,11 @@ class PdfReader:
         for key, value in new_trailer.items():
             if key not in self.trailer:
                 self.trailer[key] = value
+        if "/XRefStm" in new_trailer:
+            p = stream.tell()
+            stream.seek(int(new_trailer["/XRefStm"]) + 1, 0)
+            self._read_pdf15_xref_stream(stream)
+            stream.seek(p, 0)
         if "/Prev" in new_trailer:
             startxref = new_trailer["/Prev"]
             return startxref
