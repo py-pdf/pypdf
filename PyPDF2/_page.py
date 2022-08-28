@@ -97,8 +97,7 @@ def getRectangle(
 
 
 def _set_rectangle(self: Any, name: str, value: Union[RectangleObject, float]) -> None:
-    if not isinstance(name, NameObject):
-        name = NameObject(name)
+    name = NameObject(name)
     self[name] = value
 
 
