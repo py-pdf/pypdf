@@ -55,6 +55,7 @@ def test_basic_features(tmp_path):
         page4.mediabox.right / 2,
         page4.mediabox.top / 2,
     )
+    del page4.mediabox
     writer.add_page(page4)
 
     # add some Javascript to launch the print window on opening this PDF.
