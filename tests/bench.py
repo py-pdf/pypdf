@@ -49,7 +49,7 @@ def test_page_operations(benchmark):
     benchmark(page_ops, "libreoffice-writer-password.pdf", "openpassword")
 
 
-def merge(tmp_path):
+def merge():
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     outline = RESOURCE_ROOT / "pdflatex-outline.pdf"
     pdf_forms = RESOURCE_ROOT / "pdflatex-forms.pdf"
@@ -82,7 +82,7 @@ def merge(tmp_path):
     merger.set_page_layout("/SinglePage")
     merger.set_page_mode("/UseThumbs")
 
-    write_path = tmp_path / "dont_commit_merged.pdf"
+    write_path = "dont_commit_merged.pdf"
     merger.write(write_path)
     merger.close()
 
