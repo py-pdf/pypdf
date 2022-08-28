@@ -487,6 +487,12 @@ def test_get_metadata(url, name):
             True,
             None,
         ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/992/992472.pdf",
+            "tika-992472.pdf",
+            True,
+            None,
+        ),
     ],
 )
 def test_extract_text(url, name, strict, exception):
@@ -543,6 +549,11 @@ def test_compress_raised(url, name):
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/962/962292.pdf",
             "tika-962292.pdf",
+            True,
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/957/957304.pdf",
+            "tika-957304.pdf",
             True,
         ),
     ],
