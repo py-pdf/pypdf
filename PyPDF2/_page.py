@@ -248,7 +248,7 @@ class PageObject(DictionaryObject):
         from ._reader import PdfReader
 
         DictionaryObject.__init__(self)
-        self.pdf: Optional[PdfReader] = pdf
+        self.pdf: Optional[PdfReaderProtocol] = pdf
         self.indirect_ref = indirect_ref
 
     def hash_value_data(self) -> bytes:
