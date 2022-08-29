@@ -326,8 +326,11 @@ class PdfReader:
             return None
         obj = self.trailer[TK.INFO]
         retval = DocumentInformation()
-        retval.update(obj)  # type: ignore
-        return retval
+        if isinstance(obj, type(None)) is True:
+            raise PdfReadError("trailer not found or does not point to document information directory")
+        else:
+            retval.update(obj)  # type: ignore
+            return retval
 
     def getDocumentInfo(self) -> Optional[DocumentInformation]:  # pragma: no cover
         """
