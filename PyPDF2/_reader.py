@@ -1398,7 +1398,7 @@ class PdfReader:
                         p = stream.tell()
                         stream.seek(0, 0)
                         buf = stream.read(-1)
-                        streal.seek(p)
+                        stream.seek(p)
 
                     f = re.search(f"{num}\\s+(\\d+)\\s+obj".encode(), buf)
                     if f is None:
