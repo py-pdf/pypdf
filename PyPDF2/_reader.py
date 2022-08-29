@@ -1392,8 +1392,8 @@ class PdfReader:
                     offset, generation = int(offset_b), int(generation_b)
                 except Exception:
                     # if something wrong occured
-                    if isinstance(stream, BytesIO) or hasattr(stream, "getbuffer"):
-                        buf = bytes(stream.getbuffer())
+                    if hasattr(stream, "getbuffer"):
+                        buf = bytes(stream.getbuffer())  # type: ignore
                     else:
                         p = stream.tell()
                         stream.seek(0, 0)
