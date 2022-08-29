@@ -56,7 +56,7 @@ PagemodeType: TypeAlias = Literal[
 ]
 
 
-class PdfReaderProtocol(Protocol):
+class PdfReaderProtocol(Protocol):  # pragma: no cover
     @property
     def pdf_header(self) -> str:
         ...
