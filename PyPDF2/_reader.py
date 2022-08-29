@@ -1392,9 +1392,15 @@ class PdfReader:
                     offset, generation = int(offset_b), int(generation_b)
                 except Exception:
                     # if something wrong occured
-                    f = re.search(
-                        f"({num}) (\\d+) obj".encode(), bytes(stream.getbuffer())
-                    )
+                    if hasattr(stream, "getbuffer"):
+                        buf = bytes(stream.getbuffer())
+                    else:
+                        p = stream.tell()
+                        stream.seek(0, 0)
+                        buf = stream.read(-1)
+                        streal.seek(p)
+
+                    f = re.search(f"{num}\\s+(\\d+)\\s+obj".encode(), buf)
                     if f is None:
                         logger_warning(
                             f"entry {num} in Xref table invalid; object not found",
@@ -1407,7 +1413,7 @@ class PdfReader:
                             f"entry {num} in Xref table invalid but object found",
                             __name__,
                         )
-                        generation = int(f.group(2))
+                        generation = int(f.group(1))
                         offset = f.start()
 
                 if generation not in self.xref:
