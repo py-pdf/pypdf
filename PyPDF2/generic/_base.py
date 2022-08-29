@@ -272,10 +272,7 @@ class NumberObject(int, PdfObject):
 
     def __new__(cls, value: Any) -> "NumberObject":
         val = int(value)
-        try:
-            return int.__new__(cls, val)
-        except OverflowError:
-            return int.__new__(cls, 0)
+        return int.__new__(cls, val)
 
     def as_numeric(self) -> int:
         return int(repr(self).encode("utf8"))
