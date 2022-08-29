@@ -1430,6 +1430,8 @@ class PdfReader:
             # load the xref table
             stream.seek(startxref, 0)
             x = stream.read(1)
+            if x in b"\r\n":
+                x = stream.read(1)
             if x == b"x":
                 startxref = self._read_xref(stream)
             elif xref_issue_nr:
