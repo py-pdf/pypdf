@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1661785295938,
+  "lastUpdate": 1661800812338,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -14584,6 +14584,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.024259499187166557",
             "extra": "mean: 3.9464348470000035 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d9ba8170f2712883422cbc23a906818ad72c81da",
+          "message": "MAINT: Remove catching OverflowException (#1302)\n\nSince Python 2.2 (PEP 237), integers cannot throw overflow exceptions.",
+          "timestamp": "2022-08-29T21:19:00+02:00",
+          "tree_id": "694d09062f1652cd52268e5b31263a59158a99d2",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/d9ba8170f2712883422cbc23a906818ad72c81da"
+        },
+        "date": 1661800809953,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9749196586940284,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04023151375329755",
+            "extra": "mean: 1.0257255467999982 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.33038995945093,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0047668218838942955",
+            "extra": "mean: 81.10043585714217 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26115022281684297,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01137542885677665",
+            "extra": "mean: 3.8292136580000062 sec\nrounds: 5"
           }
         ]
       }
