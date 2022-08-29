@@ -79,7 +79,7 @@ def read_string_from_stream(
             try:
                 tok = escape_dict[tok]
             except KeyError:
-                if tok in b"01234567":
+                if tok >= b"0" and tok <= b"7":
                     # "The number ddd may consist of one, two, or three
                     # octal digits; high-order overflow shall be ignored.
                     # Three octal digits shall be used, with leading zeros
@@ -87,7 +87,7 @@ def read_string_from_stream(
                     # a digit." (PDF reference 7.3.4.2, p 16)
                     for _ in range(2):
                         ntok = stream.read(1)
-                        if ntok in b"01234567":
+                        if ntok >= b"0" and ntok <= b"7":
                             tok += ntok
                         else:
                             stream.seek(-1, 1)  # ntok has to be analysed
