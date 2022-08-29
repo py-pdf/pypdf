@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1661690597954,
+  "lastUpdate": 1661785295938,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -14539,6 +14539,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.08995703125245019",
             "extra": "mean: 4.760601803400002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b5dce26583a125a15a39bf816dc3c979f5212638",
+          "message": "ROB: Cope with corrupted entries in xref table (#1300)\n\nThis robustness improvement is for PDF files that have a corrupted Xref table entry, but the object can be found in the PDF file by searching the file for the entry.\r\n\r\nCloses #1292",
+          "timestamp": "2022-08-29T17:00:26+02:00",
+          "tree_id": "c41aa8573a56e890eb86897ade2f776d75b4201e",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/b5dce26583a125a15a39bf816dc3c979f5212638"
+        },
+        "date": 1661785295143,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0251856503722079,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011782442337798677",
+            "extra": "mean: 975.4330834000029 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.846158764820924,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007798212546502772",
+            "extra": "mean: 77.84428157142897 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2533932622149277,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024259499187166557",
+            "extra": "mean: 3.9464348470000035 sec\nrounds: 5"
           }
         ]
       }
