@@ -71,6 +71,7 @@ from .generic import (
     TextStringObject,
     encode_pdfdocencoding,
 )
+from .types import PdfReaderProtocol
 
 
 def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
@@ -241,7 +242,7 @@ class PageObject(DictionaryObject):
 
     def __init__(
         self,
-        pdf: Optional[Any] = None,  # PdfReader
+        pdf: Optional[PdfReaderProtocol] = None,
         indirect_ref: Optional[IndirectObject] = None,
     ) -> None:
         from ._reader import PdfReader
