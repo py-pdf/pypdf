@@ -1,6 +1,6 @@
 """Helpers for working with PDF types."""
 
-from typing import Any, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 try:
     # Python 3.8+: https://peps.python.org/pep-0586
@@ -57,5 +57,21 @@ PagemodeType: TypeAlias = Literal[
 
 
 class PdfReaderProtocol(Protocol):
+    @property
+    def pdf_header(self) -> str:
+        ...
+
+    @property
+    def strict(self) -> bool:
+        ...
+
+    @property
+    def xref(self) -> Dict[int, Dict[int, Any]]:
+        ...
+
+    @property
+    def pages(self) -> List[Any]:
+        ...
+
     def get_object(self, indirect_reference: Any) -> Optional[Any]:
         ...
