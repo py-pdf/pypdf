@@ -43,9 +43,8 @@ def test_float_object_exception():
     assert FloatObject("abc") == 0
 
 
-def test_number_object_exception():
-    with pytest.raises(OverflowError):
-        NumberObject(1.5 * 2**10000)
+def test_number_object_no_exception():
+    NumberObject(2**100000000)
 
 
 def test_create_string_object_exception():
