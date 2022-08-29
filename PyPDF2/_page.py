@@ -245,8 +245,6 @@ class PageObject(DictionaryObject):
         pdf: Optional[PdfReaderProtocol] = None,
         indirect_ref: Optional[IndirectObject] = None,
     ) -> None:
-        from ._reader import PdfReader
-
         DictionaryObject.__init__(self)
         self.pdf: Optional[PdfReaderProtocol] = pdf
         self.indirect_ref = indirect_ref
