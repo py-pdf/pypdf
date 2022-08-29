@@ -55,3 +55,8 @@ def test_multiline_bfrange():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     for page in reader.pages:
         page.extract_text()
+    url = "https://github.com/yxj-HGNwmb5kdp8ewr/yxj-HGNwmb5kdp8ewr.github.io/raw/master/files/Giacalone%20Llobell%20Jaeger%20(2022)%20Food%20Qual%20Prefer.pdf"
+    name = "Giacalone.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for page in reader.pages:
+        page.extract_text()

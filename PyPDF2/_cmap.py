@@ -259,10 +259,8 @@ def parse_bfrange(
     multiline_rg: Union[None, Tuple[int, int]],
 ) -> Union[None, Tuple[int, int]]:
     lst = [x for x in l.split(b" ") if x]
-    a = int(lst[0], 16)
-    b = int(lst[1], 16)
-    nbi = len(lst[0])
     closure_found = False
+    nbi = len(lst[0])
     map_dict[-1] = nbi // 2
     fmt = b"%%0%dX" % nbi
     if multiline_rg is not None:
@@ -280,33 +278,36 @@ def parse_bfrange(
             ] = unhexlify(sq).decode("utf-16-be", "surrogatepass")
             int_entry.append(a)
             a += 1
-    elif lst[2] == b"[":
-        for sq in lst[3:]:
-            if sq == b"]":
-                closure_found = True
-                break
-            map_dict[
-                unhexlify(fmt % a).decode(
-                    "charmap" if map_dict[-1] == 1 else "utf-16-be",
-                    "surrogatepass",
-                )
-            ] = unhexlify(sq).decode("utf-16-be", "surrogatepass")
-            int_entry.append(a)
-            a += 1
-    else:  # case without list
-        c = int(lst[2], 16)
-        fmt2 = b"%%0%dX" % max(4, len(lst[2]))
-        closure_found = True
-        while a <= b:
-            map_dict[
-                unhexlify(fmt % a).decode(
-                    "charmap" if map_dict[-1] == 1 else "utf-16-be",
-                    "surrogatepass",
-                )
-            ] = unhexlify(fmt2 % c).decode("utf-16-be", "surrogatepass")
-            int_entry.append(a)
-            a += 1
-            c += 1
+    else:
+        a = int(lst[0], 16)
+        b = int(lst[1], 16)
+        if lst[2] == b"[":
+            for sq in lst[3:]:
+                if sq == b"]":
+                    closure_found = True
+                    break
+                map_dict[
+                    unhexlify(fmt % a).decode(
+                        "charmap" if map_dict[-1] == 1 else "utf-16-be",
+                        "surrogatepass",
+                    )
+                ] = unhexlify(sq).decode("utf-16-be", "surrogatepass")
+                int_entry.append(a)
+                a += 1
+        else:  # case without list
+            c = int(lst[2], 16)
+            fmt2 = b"%%0%dX" % max(4, len(lst[2]))
+            closure_found = True
+            while a <= b:
+                map_dict[
+                    unhexlify(fmt % a).decode(
+                        "charmap" if map_dict[-1] == 1 else "utf-16-be",
+                        "surrogatepass",
+                    )
+                ] = unhexlify(fmt2 % c).decode("utf-16-be", "surrogatepass")
+                int_entry.append(a)
+                a += 1
+                c += 1
     return None if closure_found else (a, b)
 
 
