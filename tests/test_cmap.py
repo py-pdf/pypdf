@@ -46,3 +46,12 @@ def test_get_font_width_from_default():  # L40
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     for page in reader.pages:
         page.extract_text()
+
+
+def test_multiline_bfrange():
+    # non regression test for iss_1285
+    url = "https://github.com/alexanderquispe/1REI05/raw/main/reports/report_1/The%20lean%20times%20in%20the%20Peruvian%20economy.pdf"
+    name = "tika-908104.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for page in reader.pages:
+        page.extract_text()
