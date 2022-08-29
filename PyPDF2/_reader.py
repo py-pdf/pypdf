@@ -1447,7 +1447,7 @@ class PdfReader:
                         self.trailer[NameObject(key)] = xrefstream.raw_get(key)
                 if "/XRefStm" in xrefstream:
                     p = stream.tell()
-                    stream.seek(int(xrefstream["/XRefStm"]) + 1, 0)
+                    stream.seek(cast(int, xrefstream["/XRefStm"]) + 1, 0)
                     self._read_pdf15_xref_stream(stream)
                     stream.seek(p, 0)
                 if "/Prev" in xrefstream:
@@ -1467,7 +1467,7 @@ class PdfReader:
                 self.trailer[key] = value
         if "/XRefStm" in new_trailer:
             p = stream.tell()
-            stream.seek(int(new_trailer["/XRefStm"]) + 1, 0)
+            stream.seek(cast(int, new_trailer["/XRefStm"]) + 1, 0)
             self._read_pdf15_xref_stream(stream)
             stream.seek(p, 0)
         if "/Prev" in new_trailer:
