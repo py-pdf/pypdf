@@ -328,9 +328,8 @@ class PdfReader:
         retval = DocumentInformation()
         if isinstance(obj, type(None)):
             raise PdfReadError("trailer not found or does not point to document information directory")
-        else:
-            retval.update(obj)  # type: ignore
-            return retval
+        retval.update(obj)  # type: ignore
+        return retval
 
     def getDocumentInfo(self) -> Optional[DocumentInformation]:  # pragma: no cover
         """
