@@ -1105,3 +1105,21 @@ def test_wrong_password_error():
 def test_get_page_number_by_indirect():
     reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
     reader._get_page_number_by_indirect(1)
+
+
+def test_corrupted_xref_table():
+    # issue #1292
+    url = "https://github.com/py-pdf/PyPDF2/files/9444747/BreezeManual.orig.pdf"
+    name = "BreezeMan1.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader.pages[0].extract_text()
+
+    url = "https://github.com/py-pdf/PyPDF2/files/9444748/BreezeManual.failed.pdf"
+    name = "BreezeMan2.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    try:
+        reader.pages[0].extract_text()
+    except Exception:
+        pass  # Exception normal
+    else:
+        raise Exception("page 0 should not be corrupted")
