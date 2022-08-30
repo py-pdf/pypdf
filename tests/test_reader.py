@@ -102,7 +102,7 @@ def test_read_metadata(pdf_path, expected):
 
 @pytest.mark.parametrize(
     "pdf_path",
-    [RESOURCE_ROOT / "unreadablemetadata.pdf"]
+    [EXTERNAL_ROOT / "017-unreadable-meta-data/unreadablemetadata.pdf"]
 )
 def test_broken_meta_data(pdf_path):
     with open(pdf_path, 'rb') as f:
