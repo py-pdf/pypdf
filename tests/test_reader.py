@@ -107,7 +107,7 @@ def test_read_metadata(pdf_path, expected):
 def test_broken_meta_data(pdf_path):
     with open(pdf_path, 'rb') as f:
         reader = PdfReader(f)
-        with pytest.raises(PdfReadError):
+        with pytest.raises(PdfReadError, match=r"trailer not found or does not point to document information directory"):
             reader.metadata
 
 
