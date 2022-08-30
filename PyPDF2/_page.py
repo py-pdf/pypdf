@@ -72,6 +72,10 @@ from .generic import (
     encode_pdfdocencoding,
 )
 
+CUSTOM_RTL_MIN = -1
+CUSTOM_RTL_MAX = -1
+CUSTOM_SPECIAL_CHARS = []
+
 
 def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
     retval: Union[None, RectangleObject, IndirectObject] = self.get(name)
@@ -1135,7 +1139,12 @@ class PageObject(DictionaryObject):
         :return: a string object.
         """
         text: str = ""
+        from watchpoints import watch
+
+        # watch(text)
+        watch.config(pdb=True)
         output: str = ""
+        rtl_dir: bool = False  #####  ! TODO :  introduire None
         cmaps: Dict[
             str, Tuple[str, float, Union[str, Dict[int, str]], Dict[str, str]]
         ] = {}
@@ -1210,7 +1219,7 @@ class PageObject(DictionaryObject):
             return _space_width / 1000.0
 
         def process_operation(operator: bytes, operands: List) -> None:
-            nonlocal cm_matrix, cm_stack, tm_matrix, tm_prev, output, text, char_scale, space_scale, _space_width, TL, font_size, cmap, orientations
+            nonlocal cm_matrix, cm_stack, tm_matrix, tm_prev, output, text, char_scale, space_scale, _space_width, TL, font_size, cmap, orientations, rtl_dir
             check_crlf_space: bool = False
             # Table 5.4 page 405
             if operator == b"BT":
@@ -1345,8 +1354,39 @@ class PageObject(DictionaryObject):
                                     for x in tt
                                 ]
                             )
-
-                        text += "".join([cmap[1][x] if x in cmap[1] else x for x in t])
+                        # "\u0590 - \u08FF \uFB50 - \uFDFF"
+                        for x in "".join(
+                            [cmap[1][x] if x in cmap[1] else x for x in t]
+                        ):
+                            xx = ord(x)
+                            if (xx >= 0x0590 and xx <= 0x08FF) or (
+                                xx in CUSTOM_SPECIAL_CHARS
+                            ):  # special characters will not change the ordrer
+                                text = x + text if rtl_dir else text + x
+                            elif (
+                                (xx >= 0x0590 and xx <= 0x08FF)
+                                or (xx >= 0xFB50 and xx <= 0xFDFF)
+                                or (xx >= 0xFE70 and xx <= 0xFEFF)
+                                or (xx >= CUSTOM_RTL_MIN and xx <= CUSTOM_RTL_MAX)
+                            ):
+                                # print("<",xx,x)
+                                if not rtl_dir:
+                                    rtl_dir = True
+                                    # print("RTL",text,"*")
+                                    output += text
+                                    text = ""
+                                text = x + text
+                            else:
+                                # print(">",xx,x,end="")
+                                if rtl_dir:
+                                    rtl_dir = False
+                                    # print("LTR",text,"*")
+                                    output += text
+                                    text = ""
+                                text = text + x
+                        # print("******",output,"\n/",text,"/")
+                        ##text += "".join([cmap[1][x] if x in cmap[1] else x for x in t])
+                        # import pdb;pdb.set_trace()
             else:
                 return None
             if check_crlf_space:
@@ -1363,40 +1403,44 @@ class PageObject(DictionaryObject):
                     if o == 0:
                         if deltaY < -0.8 * f:
                             if (output + text)[-1] != "\n":
-                                text += "\n"
+                                output += text + "\n"
+                                text = ""
                         elif (
                             abs(deltaY) < f * 0.3
-                            and abs(deltaX) > current_spacewidth() * f * 10
+                            and abs(deltaX) > current_spacewidth() * f * 15
                         ):
                             if (output + text)[-1] != " ":
                                 text += " "
                     elif o == 180:
                         if deltaY > 0.8 * f:
                             if (output + text)[-1] != "\n":
-                                text += "\n"
+                                output += text + "\n"
+                                text = ""
                         elif (
                             abs(deltaY) < f * 0.3
-                            and abs(deltaX) > current_spacewidth() * f * 10
+                            and abs(deltaX) > current_spacewidth() * f * 15
                         ):
                             if (output + text)[-1] != " ":
                                 text += " "
                     elif o == 90:
                         if deltaX > 0.8 * f:
                             if (output + text)[-1] != "\n":
-                                text += "\n"
+                                output += text + "\n"
+                                text = ""
                         elif (
                             abs(deltaX) < f * 0.3
-                            and abs(deltaY) > current_spacewidth() * f * 10
+                            and abs(deltaY) > current_spacewidth() * f * 15
                         ):
                             if (output + text)[-1] != " ":
                                 text += " "
                     elif o == 270:
                         if deltaX < -0.8 * f:
                             if (output + text)[-1] != "\n":
-                                text += "\n"
+                                output += text + "\n"
+                                text = ""
                         elif (
                             abs(deltaX) < f * 0.3
-                            and abs(deltaY) > current_spacewidth() * f * 10
+                            and abs(deltaY) > current_spacewidth() * f * 15
                         ):
                             if (output + text)[-1] != " ":
                                 text += " "
