@@ -845,22 +845,3 @@ def test_create_string_object_force():
 )
 def test_float_object_decimal_to_string(value, expected):
     assert repr(FloatObject(value)) == expected
-
-
-@pytest.mark.parametrize(
-    ("value", "prec", "expected"),
-    [
-        ("0.12345", None, "0.12345"),
-        ("0.12345", 3, "0.123"),
-        ("123.12345", 3, "123.123"),
-        ("1.01", None, "1.01"),
-        ("1.010", 3, "1.010"),
-        ("1.010", 2, "1.01"),
-        ("1.010", 1, "1.0"),
-        ("1.123", 5, "1.12300"),
-        ("1", 1, "1"),
-        ("1", 5, "1"),
-    ]
-)
-def test_float_object_to_string_with_precision(value, prec, expected):
-    assert repr(FloatObject(value, prec=prec)) == expected
