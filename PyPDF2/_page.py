@@ -1108,6 +1108,18 @@ class PageObject(DictionaryObject):
                     out += enc_repr + "\n"
                 except Exception:
                     pass
+                try:
+                    out += (
+                        self["/Resources"]["/Font"][fo][  # type:ignore
+                            "/ToUnicode"
+                        ]
+                        .get_data()
+                        .decode()
+                        + "\n"
+                    )
+                except Exception:
+                    pass
+
         except KeyError:
             out += "No Font\n"
         return out
@@ -1365,7 +1377,7 @@ class PageObject(DictionaryObject):
                                 text = x + text if rtl_dir else text + x
                             elif (
                                 (xx >= 0x0590 and xx <= 0x08FF)
-                                or (xx >= 0xFB50 and xx <= 0xFDFF)
+                                or (xx >= 0xFB1D and xx <= 0xFDFF)
                                 or (xx >= 0xFE70 and xx <= 0xFEFF)
                                 or (xx >= CUSTOM_RTL_MIN and xx <= CUSTOM_RTL_MAX)
                             ):
