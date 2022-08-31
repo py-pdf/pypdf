@@ -1273,6 +1273,7 @@ class PageObject(DictionaryObject):
                     ) = cm_stack.pop()
                 except Exception:
                     cm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+                rtl_dir = False
             elif operator == b"cm":
                 output += text
                 text = ""
@@ -1287,6 +1288,7 @@ class PageObject(DictionaryObject):
                     ],
                     cm_matrix,
                 )
+                rtl_dir = False
             # Table 5.2 page 398
             elif operator == b"Tz":
                 char_scale = float(operands[0]) / 100.0
@@ -1298,6 +1300,7 @@ class PageObject(DictionaryObject):
                 if text != "":
                     output += text  # .translate(cmap)
                 text = ""
+                rtl_dir = False
                 try:
                     _space_width = cmaps[operands[0]][1]
                     cmap = (
@@ -1371,13 +1374,16 @@ class PageObject(DictionaryObject):
                             [cmap[1][x] if x in cmap[1] else x for x in t]
                         ):
                             xx = ord(x)
-                            if (
-                                (xx <= 0x2F)
-                                or (xx >= 0x3A and xx <= 0x40)
-                                or xx in CUSTOM_SPECIAL_CHARS
+                            # fmt: off
+                            if (  # cases where the current inserting order is kept
+                                (xx <= 0x2F)                        # punctuations but...
+                                or (xx >= 0x3A and xx <= 0x40)      # numbers (x30-39)
+                                or (xx >= 0x2000 and xx <= 0x206F)  # upper punctuations..
+                                or (xx >= 0x20A0 and xx <= 0x21FF)  # but (numbers) indices/exponents
+                                or xx in CUSTOM_SPECIAL_CHARS       # customized....
                             ):  # special characters will not change the ordrer
                                 text = x + text if rtl_dir else text + x
-                            elif (
+                            elif (  # right-to-left characters set
                                 (xx >= 0x0590 and xx <= 0x08FF)
                                 or (xx >= 0xFB1D and xx <= 0xFDFF)
                                 or (xx >= 0xFE70 and xx <= 0xFEFF)
@@ -1390,7 +1396,7 @@ class PageObject(DictionaryObject):
                                     output += text
                                     text = ""
                                 text = x + text
-                            else:
+                            else:  # left-to-right
                                 # print(">",xx,x,end="")
                                 if rtl_dir:
                                     rtl_dir = False
@@ -1398,6 +1404,7 @@ class PageObject(DictionaryObject):
                                     output += text
                                     text = ""
                                 text = text + x
+                            # fmt: on
                         # print("******",output,"\n/",text,"/")
                         ##text += "".join([cmap[1][x] if x in cmap[1] else x for x in t])
                         # import pdb;pdb.set_trace()
