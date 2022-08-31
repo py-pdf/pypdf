@@ -1156,7 +1156,7 @@ class PageObject(DictionaryObject):
         # watch(text)
         watch.config(pdb=True)
         output: str = ""
-        rtl_dir: bool = False  #####  ! TODO :  introduire None
+        rtl_dir: bool = False  # right-to-left
         cmaps: Dict[
             str, Tuple[str, float, Union[str, Dict[int, str]], Dict[str, str]]
         ] = {}
@@ -1405,9 +1405,6 @@ class PageObject(DictionaryObject):
                                     text = ""
                                 text = text + x
                             # fmt: on
-                        # print("******",output,"\n/",text,"/")
-                        ##text += "".join([cmap[1][x] if x in cmap[1] else x for x in t])
-                        # import pdb;pdb.set_trace()
             else:
                 return None
             if check_crlf_space:
