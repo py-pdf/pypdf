@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1661865546305,
+  "lastUpdate": 1661919682981,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -14674,6 +14674,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03207313986346202",
             "extra": "mean: 3.816060062600002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4e7602a120d8cfd992b6c1581f4dbe01a4427c74",
+          "message": "TST: Catch Exception for sample-files repo (#1307)",
+          "timestamp": "2022-08-31T06:19:58+02:00",
+          "tree_id": "e82e060bdee42adb77700e42fd066ba73b24ce5c",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/4e7602a120d8cfd992b6c1581f4dbe01a4427c74"
+        },
+        "date": 1661919680632,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8097156069444527,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017057874100227806",
+            "extra": "mean: 1.2350015134000016 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.225955910436177,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01028252216249103",
+            "extra": "mean: 97.79036881817986 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.20379193155068612,
+            "unit": "iter/sec",
+            "range": "stddev: 0.044548799544015194",
+            "extra": "mean: 4.906965611400002 sec\nrounds: 5"
           }
         ]
       }
