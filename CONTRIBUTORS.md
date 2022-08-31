@@ -12,6 +12,7 @@ history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/PyPDF2/gr
 ## Contributors to the pyPdf / PyPDF2 project
 
 * [DL6ER](https://github.com/DL6ER)
+* [ediamondscience](https://github.com/ediamondscience)
 * [JianzhengLuo](https://github.com/JianzhengLuo)
 * [Karvonen, Harry](https://github.com/Hatell/)
 * [KourFrost](https://github.com/KourFrost)
