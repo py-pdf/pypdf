@@ -71,7 +71,42 @@ from .generic import (
     TextStringObject,
     encode_pdfdocencoding,
 )
-from .types import PdfReaderProtocol
+
+CUSTOM_RTL_MIN: int = -1
+CUSTOM_RTL_MAX: int = -1
+CUSTOM_RTL_SPECIAL_CHARS: List[int] = []
+
+
+def set_custom_rtl(
+    _min: Union[str, int, None] = None,
+    _max: Union[str, int, None] = None,
+    specials: Union[str, List[int], None] = None,
+) -> tuple[int, int, List[int]]:
+    """
+    changes the Right-To-Left and special characters customed parameters:
+
+    _min -> CUSTOM_RTL_MIN : None does not change the value ; int or str(converted to ascii code) ; -1 by default
+    _max -> CUSTOM_RTL_MAX : None does not change the value ; int or str(converted to ascii code) ; -1 by default
+        those values define a range of custom characters that will be written right to left ;
+        [-1;-1] set no additional range to be converter
+
+    specials -> CUSTOM_RTL_SPECIAL_CHARS: None does not change the current value; str to be converted to list or list of ascii codes ; [] by default
+        list of codes that will inserted applying the current insertion order ; this consist normally in a list of punctuation characters
+    """
+    global CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
+    if isinstance(_min, int):
+        CUSTOM_RTL_MIN = _min
+    elif isinstance(_min, str):
+        CUSTOM_RTL_MIN = ord(_min)
+    if isinstance(_max, int):
+        CUSTOM_RTL_MAX = _max
+    elif isinstance(_max, str):
+        CUSTOM_RTL_MAX = ord(_max)
+    if isinstance(specials, str):
+        CUSTOM_RTL_SPECIAL_CHARS = [ord(x) for x in specials]
+    elif isinstance(specials, list):
+        CUSTOM_RTL_SPECIAL_CHARS = specials
+    return CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
 
 
 def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
@@ -242,11 +277,13 @@ class PageObject(DictionaryObject):
 
     def __init__(
         self,
-        pdf: Optional[PdfReaderProtocol] = None,
+        pdf: Optional[Any] = None,  # PdfReader
         indirect_ref: Optional[IndirectObject] = None,
     ) -> None:
+        from ._reader import PdfReader
+
         DictionaryObject.__init__(self)
-        self.pdf: Optional[PdfReaderProtocol] = pdf
+        self.pdf: Optional[PdfReader] = pdf
         self.indirect_ref = indirect_ref
 
     def hash_value_data(self) -> bytes:
@@ -1103,6 +1140,18 @@ class PageObject(DictionaryObject):
                     out += enc_repr + "\n"
                 except Exception:
                     pass
+                try:
+                    out += (
+                        self["/Resources"]["/Font"][fo][  # type:ignore
+                            "/ToUnicode"
+                        ]
+                        .get_data()
+                        .decode()
+                        + "\n"
+                    )
+                except Exception:
+                    pass
+
         except KeyError:
             out += "No Font\n"
         return out
@@ -1123,6 +1172,9 @@ class PageObject(DictionaryObject):
         this function, as it will change if this function is made more
         sophisticated.
 
+        Arabic, Hebrew,... are extracted in the good order. If required an custom RTL range of characters
+        can be defined; see function set_custom_rtl
+
         :param Tuple[int, ...] orientations: list of orientations text_extraction will look for
                     default = (0, 90, 180, 270)
                 note: currently only 0(Up),90(turned Left), 180(upside Down), 270 (turned Right)
@@ -1135,6 +1187,7 @@ class PageObject(DictionaryObject):
         """
         text: str = ""
         output: str = ""
+        rtl_dir: bool = False  # right-to-left
         cmaps: Dict[
             str, Tuple[str, float, Union[str, Dict[int, str]], Dict[str, str]]
         ] = {}
@@ -1209,7 +1262,9 @@ class PageObject(DictionaryObject):
             return _space_width / 1000.0
 
         def process_operation(operator: bytes, operands: List) -> None:
-            nonlocal cm_matrix, cm_stack, tm_matrix, tm_prev, output, text, char_scale, space_scale, _space_width, TL, font_size, cmap, orientations
+            nonlocal cm_matrix, cm_stack, tm_matrix, tm_prev, output, text, char_scale, space_scale, _space_width, TL, font_size, cmap, orientations, rtl_dir
+            global CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
+
             check_crlf_space: bool = False
             # Table 5.4 page 405
             if operator == b"BT":
@@ -1251,6 +1306,7 @@ class PageObject(DictionaryObject):
                     ) = cm_stack.pop()
                 except Exception:
                     cm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+                # rtl_dir = False
             elif operator == b"cm":
                 output += text
                 text = ""
@@ -1265,6 +1321,7 @@ class PageObject(DictionaryObject):
                     ],
                     cm_matrix,
                 )
+                # rtl_dir = False
             # Table 5.2 page 398
             elif operator == b"Tz":
                 char_scale = float(operands[0]) / 100.0
@@ -1276,6 +1333,7 @@ class PageObject(DictionaryObject):
                 if text != "":
                     output += text  # .translate(cmap)
                 text = ""
+                # rtl_dir = False
                 try:
                     _space_width = cmaps[operands[0]][1]
                     cmap = (
@@ -1344,8 +1402,42 @@ class PageObject(DictionaryObject):
                                     for x in tt
                                 ]
                             )
-
-                        text += "".join([cmap[1][x] if x in cmap[1] else x for x in t])
+                        # "\u0590 - \u08FF \uFB50 - \uFDFF"
+                        for x in "".join(
+                            [cmap[1][x] if x in cmap[1] else x for x in t]
+                        ):
+                            xx = ord(x)
+                            # fmt: off
+                            if (  # cases where the current inserting order is kept (punctuation,...)
+                                (xx <= 0x2F)                        # punctuations but...
+                                or (xx >= 0x3A and xx <= 0x40)      # numbers (x30-39)
+                                or (xx >= 0x2000 and xx <= 0x206F)  # upper punctuations..
+                                or (xx >= 0x20A0 and xx <= 0x21FF)  # but (numbers) indices/exponents
+                                or xx in CUSTOM_RTL_SPECIAL_CHARS   # customized....
+                            ):
+                                text = x + text if rtl_dir else text + x
+                            elif (  # right-to-left characters set
+                                (xx >= 0x0590 and xx <= 0x08FF)
+                                or (xx >= 0xFB1D and xx <= 0xFDFF)
+                                or (xx >= 0xFE70 and xx <= 0xFEFF)
+                                or (xx >= CUSTOM_RTL_MIN and xx <= CUSTOM_RTL_MAX)
+                            ):
+                                # print("<",xx,x)
+                                if not rtl_dir:
+                                    rtl_dir = True
+                                    # print("RTL",text,"*")
+                                    output += text
+                                    text = ""
+                                text = x + text
+                            else:  # left-to-right
+                                # print(">",xx,x,end="")
+                                if rtl_dir:
+                                    rtl_dir = False
+                                    # print("LTR",text,"*")
+                                    output += text
+                                    text = ""
+                                text = text + x
+                            # fmt: on
             else:
                 return None
             if check_crlf_space:
@@ -1362,40 +1454,44 @@ class PageObject(DictionaryObject):
                     if o == 0:
                         if deltaY < -0.8 * f:
                             if (output + text)[-1] != "\n":
-                                text += "\n"
+                                output += text + "\n"
+                                text = ""
                         elif (
                             abs(deltaY) < f * 0.3
-                            and abs(deltaX) > current_spacewidth() * f * 10
+                            and abs(deltaX) > current_spacewidth() * f * 15
                         ):
                             if (output + text)[-1] != " ":
                                 text += " "
                     elif o == 180:
                         if deltaY > 0.8 * f:
                             if (output + text)[-1] != "\n":
-                                text += "\n"
+                                output += text + "\n"
+                                text = ""
                         elif (
                             abs(deltaY) < f * 0.3
-                            and abs(deltaX) > current_spacewidth() * f * 10
+                            and abs(deltaX) > current_spacewidth() * f * 15
                         ):
                             if (output + text)[-1] != " ":
                                 text += " "
                     elif o == 90:
                         if deltaX > 0.8 * f:
                             if (output + text)[-1] != "\n":
-                                text += "\n"
+                                output += text + "\n"
+                                text = ""
                         elif (
                             abs(deltaX) < f * 0.3
-                            and abs(deltaY) > current_spacewidth() * f * 10
+                            and abs(deltaY) > current_spacewidth() * f * 15
                         ):
                             if (output + text)[-1] != " ":
                                 text += " "
                     elif o == 270:
                         if deltaX < -0.8 * f:
                             if (output + text)[-1] != "\n":
-                                text += "\n"
+                                output += text + "\n"
+                                text = ""
                         elif (
                             abs(deltaX) < f * 0.3
-                            and abs(deltaY) > current_spacewidth() * f * 10
+                            and abs(deltaY) > current_spacewidth() * f * 15
                         ):
                             if (output + text)[-1] != " ":
                                 text += " "
