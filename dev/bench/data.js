@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1661921165865,
+  "lastUpdate": 1661976986701,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -14809,6 +14809,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03515069578892133",
             "extra": "mean: 3.8658324026 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7a95708b949c673b9d6d7140e9330b94a76f53f1",
+          "message": "ENH: Auto-detect RTL for text extraction (#1309)\n\nIncludes some customization capabilities to extend RTL\r\n\r\nCloses #1296",
+          "timestamp": "2022-08-31T22:15:10+02:00",
+          "tree_id": "37ee256da51944d8c036ea40e505a5ad452d0e75",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/7a95708b949c673b9d6d7140e9330b94a76f53f1"
+        },
+        "date": 1661976985545,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0513173974517462,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006111518136058924",
+            "extra": "mean: 951.1875314000008 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.885752369949303,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00517029118522961",
+            "extra": "mean: 77.6050921428606 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2627351888447409,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0247952285285272",
+            "extra": "mean: 3.8061136933999875 sec\nrounds: 5"
           }
         ]
       }
