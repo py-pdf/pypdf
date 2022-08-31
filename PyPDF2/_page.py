@@ -74,7 +74,7 @@ from .generic import (
 
 CUSTOM_RTL_MIN: int = -1
 CUSTOM_RTL_MAX: int = -1
-CUSTOM_RTL_SPECIAL_CHARS: list[int] = []
+CUSTOM_RTL_SPECIAL_CHARS: List[int] = []
 
 
 def set_custom_rtl(
