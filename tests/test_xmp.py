@@ -7,7 +7,6 @@ import pytest
 import PyPDF2.generic
 import PyPDF2.xmp
 from PyPDF2 import PdfReader
-from PyPDF2.errors import PdfReadError
 
 from . import get_pdf_from_url
 

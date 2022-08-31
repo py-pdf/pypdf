@@ -327,7 +327,9 @@ class PdfReader:
         obj = self.trailer[TK.INFO]
         retval = DocumentInformation()
         if isinstance(obj, type(None)):
-            raise PdfReadError("trailer not found or does not point to document information directory")
+            raise PdfReadError(
+                "trailer not found or does not point to document information directory"
+            )
         retval.update(obj)  # type: ignore
         return retval
 
@@ -1133,7 +1135,7 @@ class PdfReader:
             self.stream.seek(start, 0)
             try:
                 idnum, generation = self.read_object_header(self.stream)
-            except Exception as e:
+            except Exception:
                 m = re.search(
                     rf"\s{indirect_reference.idnum}\s+{indirect_reference.generation}\s+obj".encode(),
                     bytes(self.stream.getbuffer()),
@@ -1557,7 +1559,7 @@ class PdfReader:
             stream.seek(cast(int, new_trailer["/XRefStm"]) + 1, 0)
             try:
                 self._read_pdf15_xref_stream(stream)
-            except Exception as e:
+            except Exception:
                 logger_warning(
                     f"XRef object at {new_trailer['/XRefStm']} can not be read, some object may be missing",
                     __name__,
