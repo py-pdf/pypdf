@@ -1371,8 +1371,10 @@ class PageObject(DictionaryObject):
                             [cmap[1][x] if x in cmap[1] else x for x in t]
                         ):
                             xx = ord(x)
-                            if (xx >= 0x0590 and xx <= 0x08FF) or (
-                                xx in CUSTOM_SPECIAL_CHARS
+                            if (
+                                (xx <= 0x2F)
+                                or (xx >= 0x3A and xx <= 0x40)
+                                or xx in CUSTOM_SPECIAL_CHARS
                             ):  # special characters will not change the ordrer
                                 text = x + text if rtl_dir else text + x
                             elif (
