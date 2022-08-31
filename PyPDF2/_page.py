@@ -81,7 +81,7 @@ def set_custom_rtl(
     _min: Union[str, int, None] = None,
     _max: Union[str, int, None] = None,
     specials: Union[str, List[int], None] = None,
-) -> tuple[int, int, List[int]]:
+) -> Tuple[int, int, List[int]]:
     """
     changes the Right-To-Left and special characters customed parameters:
 
