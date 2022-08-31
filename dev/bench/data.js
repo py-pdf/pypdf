@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1661920802043,
+  "lastUpdate": 1661921165865,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -14764,6 +14764,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.13023745997447359",
             "extra": "mean: 4.293867655800002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c696192d1112200df1048626a8916a18be386e5a",
+          "message": "MAINT: PdfReaderProtocol (#1303)\n\nPyPDF2 has some dependencies that make proper typing hard:\r\n\r\n* PdfReader has the pages property which returns a List[PageObject]\r\n* PageObject has the pdf property which returns the PdfReader it belongs to\r\n\r\nThe simplest solution would be to put both classes in the same file, but that makes PRs hard to read. Additionally, bigger files mean merge conflicts happen more often.\r\n\r\nAnother solution is to just not use type annotations for one of the objects (or use `Any` as the type)\r\n\r\nThe solution implemented in this PR is to define a `Protocol` (PEP 544): A protocol just states which methods a class is expected to have (with their function signature). It's duck typing: If it walks like a duck and it quacks like a duck, then it must be a duck.\r\n\r\nSo we define the expected behavior instead of referencing to the specific class.\r\n\r\ntyping.Iterable is an example for a Protocol. In the Java world, one would call this an interface.",
+          "timestamp": "2022-08-31T06:45:02+02:00",
+          "tree_id": "a9c6ee0b1a1c8c99a7ee19fb9f5db85d7d5ffc1b",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/c696192d1112200df1048626a8916a18be386e5a"
+        },
+        "date": 1661921165154,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0431393577727275,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007088021372775671",
+            "extra": "mean: 958.6446840000008 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.05556465663114,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006695381598673855",
+            "extra": "mean: 76.5956912857142 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.25867650116633123,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03515069578892133",
+            "extra": "mean: 3.8658324026 sec\nrounds: 5"
           }
         ]
       }
