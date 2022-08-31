@@ -1136,9 +1136,15 @@ class PdfReader:
             try:
                 idnum, generation = self.read_object_header(self.stream)
             except Exception:
+                if hasattr(self.stream, "getbuffer"):
+                    buf = bytes(self.stream.getbuffer())
+                else:
+                    p = self.stream.tell()
+                    buf = self.stream.read(-1)
+                    self.stream.seek(p, 0)
                 m = re.search(
                     rf"\s{indirect_reference.idnum}\s+{indirect_reference.generation}\s+obj".encode(),
-                    bytes(self.stream.getbuffer()),
+                    buf,
                 )
                 if m is not None:
                     logger_warning(
@@ -1183,9 +1189,15 @@ class PdfReader:
                     retval, indirect_reference.idnum, indirect_reference.generation
                 )
         else:
+            if hasattr(self.stream, "getbuffer"):
+                buf = bytes(self.stream.getbuffer())
+            else:
+                p = self.stream.tell()
+                buf = self.stream.read(-1)
+                self.stream.seek(p, 0)
             m = re.search(
                 rf"\s{indirect_reference.idnum}\s+{indirect_reference.generation}\s+obj".encode(),
-                bytes(self.stream.getbuffer()),
+                buf,
             )
             if m is not None:
                 logger_warning(

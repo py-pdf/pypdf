@@ -7,6 +7,7 @@ import pytest
 import PyPDF2.generic
 import PyPDF2.xmp
 from PyPDF2 import PdfReader
+from PyPDF2.errors import PdfReadError
 
 from . import get_pdf_from_url
 
@@ -171,8 +172,10 @@ def test_dc_subject():
 def test_issue585():
     url = "https://github.com/mstamy2/PyPDF2/files/5536984/test.pdf"
     name = "mstamy2-5536984.pdf"
-    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    reader.xmp_metadata
+    with pytest.raises(PdfReadError) as exc:
+        reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+        reader.xmp_metadata
+    assert exc.value.args[0].startswith("XML in XmpInformation was invalid")
 
 
 # def test_getter_bag():
