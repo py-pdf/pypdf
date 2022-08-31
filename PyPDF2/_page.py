@@ -72,9 +72,41 @@ from .generic import (
     encode_pdfdocencoding,
 )
 
-CUSTOM_RTL_MIN = -1
-CUSTOM_RTL_MAX = -1
-CUSTOM_SPECIAL_CHARS = []
+CUSTOM_RTL_MIN: int = -1
+CUSTOM_RTL_MAX: int = -1
+CUSTOM_RTL_SPECIAL_CHARS: list[int] = []
+
+
+def set_custom_rtl(
+    _min: Union[str, int, None] = None,
+    _max: Union[str, int, None] = None,
+    specials: Union[str, list[Union[int]], None] = None,
+) -> tuple[int, int, list[int]]:
+    """
+    changes the Right-To-Left and special characters customed parameters:
+
+    _min -> CUSTOM_RTL_MIN : None does not change the value ; int or str(converted to ascii code) ; -1 by default
+    _max -> CUSTOM_RTL_MAX : None does not change the value ; int or str(converted to ascii code) ; -1 by default
+        those values define a range of custom characters that will be written right to left ;
+        [-1;-1] set no additional range to be converter
+
+    specials -> CUSTOM_RTL_SPECIAL_CHARS: None does not change the current value; str to be converted to list or list of ascii codes ; [] by default
+        list of codes that will inserted applying the current insertion order ; this consist normally in a list of punctuation characters
+    """
+    global CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
+    if isinstance(_min, int):
+        CUSTOM_RTL_MIN = _min
+    elif isinstance(_min, str):
+        CUSTOM_RTL_MIN = ord(_min)
+    if isinstance(_max, int):
+        CUSTOM_RTL_MAX = _max
+    elif isinstance(_max, str):
+        CUSTOM_RTL_MAX = ord(_max)
+    if isinstance(specials, str):
+        CUSTOM_RTL_SPECIAL_CHARS = [ord(x) for x in specials]
+    elif isinstance(specials, list):
+        CUSTOM_RTL_SPECIAL_CHARS = specials
+    return CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
 
 
 def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
@@ -1140,6 +1172,9 @@ class PageObject(DictionaryObject):
         this function, as it will change if this function is made more
         sophisticated.
 
+        Arabic, Hebrew,... are extracted in the good order. If required an custom RTL range of characters
+        can be defined; see function set_custom_rtl
+
         :param Tuple[int, ...] orientations: list of orientations text_extraction will look for
                     default = (0, 90, 180, 270)
                 note: currently only 0(Up),90(turned Left), 180(upside Down), 270 (turned Right)
@@ -1151,10 +1186,6 @@ class PageObject(DictionaryObject):
         :return: a string object.
         """
         text: str = ""
-        from watchpoints import watch
-
-        # watch(text)
-        watch.config(pdb=True)
         output: str = ""
         rtl_dir: bool = False  # right-to-left
         cmaps: Dict[
@@ -1232,6 +1263,8 @@ class PageObject(DictionaryObject):
 
         def process_operation(operator: bytes, operands: List) -> None:
             nonlocal cm_matrix, cm_stack, tm_matrix, tm_prev, output, text, char_scale, space_scale, _space_width, TL, font_size, cmap, orientations, rtl_dir
+            global CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
+
             check_crlf_space: bool = False
             # Table 5.4 page 405
             if operator == b"BT":
@@ -1273,7 +1306,7 @@ class PageObject(DictionaryObject):
                     ) = cm_stack.pop()
                 except Exception:
                     cm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-                rtl_dir = False
+                # rtl_dir = False
             elif operator == b"cm":
                 output += text
                 text = ""
@@ -1288,7 +1321,7 @@ class PageObject(DictionaryObject):
                     ],
                     cm_matrix,
                 )
-                rtl_dir = False
+                # rtl_dir = False
             # Table 5.2 page 398
             elif operator == b"Tz":
                 char_scale = float(operands[0]) / 100.0
@@ -1300,7 +1333,7 @@ class PageObject(DictionaryObject):
                 if text != "":
                     output += text  # .translate(cmap)
                 text = ""
-                rtl_dir = False
+                # rtl_dir = False
                 try:
                     _space_width = cmaps[operands[0]][1]
                     cmap = (
@@ -1375,13 +1408,13 @@ class PageObject(DictionaryObject):
                         ):
                             xx = ord(x)
                             # fmt: off
-                            if (  # cases where the current inserting order is kept
+                            if (  # cases where the current inserting order is kept (punctuation,...)
                                 (xx <= 0x2F)                        # punctuations but...
                                 or (xx >= 0x3A and xx <= 0x40)      # numbers (x30-39)
                                 or (xx >= 0x2000 and xx <= 0x206F)  # upper punctuations..
                                 or (xx >= 0x20A0 and xx <= 0x21FF)  # but (numbers) indices/exponents
-                                or xx in CUSTOM_SPECIAL_CHARS       # customized....
-                            ):  # special characters will not change the ordrer
+                                or xx in CUSTOM_RTL_SPECIAL_CHARS   # customized....
+                            ):
                                 text = x + text if rtl_dir else text + x
                             elif (  # right-to-left characters set
                                 (xx >= 0x0590 and xx <= 0x08FF)
