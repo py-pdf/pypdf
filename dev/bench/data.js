@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1661919682981,
+  "lastUpdate": 1661920802043,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -14719,6 +14719,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.044548799544015194",
             "extra": "mean: 4.906965611400002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ediamondscience@gmail.com",
+            "name": "Ed Diamond",
+            "username": "ediamondscience"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5c76c8f36e2cacab0ce7cd4905ad0f493f6143e3",
+          "message": "MAINT: Throw PdfReadError if Trailer can't be read (#1298)\n\nAdded PdfReadError in cases where trailer is absent of can't be read.\r\n\r\nCloses #1279",
+          "timestamp": "2022-08-31T06:38:47+02:00",
+          "tree_id": "458440a8334b0a238cf48064aac7154cc4a8bc1a",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/5c76c8f36e2cacab0ce7cd4905ad0f493f6143e3"
+        },
+        "date": 1661920799639,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9211107561643584,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022277082492411584",
+            "extra": "mean: 1.0856457741999974 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.675130341357066,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007858374699872533",
+            "extra": "mean: 85.65214869230869 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2328902705348256,
+            "unit": "iter/sec",
+            "range": "stddev: 0.13023745997447359",
+            "extra": "mean: 4.293867655800002 sec\nrounds: 5"
           }
         ]
       }
