@@ -1553,7 +1553,13 @@ class PdfReader:
         if "/XRefStm" in new_trailer:
             p = stream.tell()
             stream.seek(cast(int, new_trailer["/XRefStm"]) + 1, 0)
-            self._read_pdf15_xref_stream(stream)
+            try:
+                self._read_pdf15_xref_stream(stream)
+            except Exception as e:
+                logger_warning(
+                    f"XRef object at {new_trailer['/XRefStm']} can not be read, some object may be missing",
+                    __name__,
+                )
             stream.seek(p, 0)
         if "/Prev" in new_trailer:
             startxref = new_trailer["/Prev"]
