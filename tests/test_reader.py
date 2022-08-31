@@ -101,6 +101,17 @@ def test_read_metadata(pdf_path, expected):
 
 
 @pytest.mark.parametrize(
+    "pdf_path",
+    [EXTERNAL_ROOT / "017-unreadable-meta-data/unreadablemetadata.pdf"]
+)
+def test_broken_meta_data(pdf_path):
+    with open(pdf_path, 'rb') as f:
+        reader = PdfReader(f)
+        with pytest.raises(PdfReadError, match=r"trailer not found or does not point to document information directory"):
+            reader.metadata
+
+
+@pytest.mark.parametrize(
     "src",
     [
         RESOURCE_ROOT / "crazyones.pdf",
@@ -1102,7 +1113,6 @@ def test_corrupted_xref_table():
     name = "BreezeMan1.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     reader.pages[0].extract_text()
-
     # slightly different
     url = "https://github.com/py-pdf/PyPDF2/files/9444748/BreezeManual.failed.pdf"
     name = "BreezeMan2.pdf"

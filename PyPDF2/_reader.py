@@ -326,6 +326,8 @@ class PdfReader:
             return None
         obj = self.trailer[TK.INFO]
         retval = DocumentInformation()
+        if isinstance(obj, type(None)):
+            raise PdfReadError("trailer not found or does not point to document information directory")
         retval.update(obj)  # type: ignore
         return retval
 
@@ -908,9 +910,9 @@ class PdfReader:
         return outline_item
 
     @property
-    def pages(self) -> _VirtualList:
+    def pages(self) -> List[PageObject]:
         """Read-only property that emulates a list of :py:class:`Page<PyPDF2._page.Page>` objects."""
-        return _VirtualList(self._get_num_pages, self._get_page)
+        return _VirtualList(self._get_num_pages, self._get_page)  # type: ignore
 
     @property
     def page_layout(self) -> Optional[str]:

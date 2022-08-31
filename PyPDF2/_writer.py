@@ -1460,7 +1460,7 @@ class PdfWriter:
         pg_dict = cast(DictionaryObject, self.get_object(self._pages))
         pages = cast(List[IndirectObject], pg_dict[PA.KIDS])
         for page in pages:
-            page_ref = cast(Dict[str, Any], self.get_object(page))
+            page_ref = cast(PageObject, self.get_object(page))
             content = page_ref["/Contents"].get_object()
             if not isinstance(content, ContentStream):
                 content = ContentStream(content, page_ref)

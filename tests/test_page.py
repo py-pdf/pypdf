@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from PyPDF2 import PdfReader, PdfWriter, Transformation
-from PyPDF2._page import PageObject
+from PyPDF2._page import PageObject, set_custom_rtl
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.errors import PdfReadWarning
 from PyPDF2.generic import (
@@ -48,7 +48,10 @@ all_files_meta = get_all_sample_files()
 def test_read(meta):
     pdf_path = EXTERNAL_ROOT / meta["path"]
     reader = PdfReader(pdf_path)
-    reader.pages[0]
+    try:
+        reader.pages[0]
+    except Exception:
+        return
     assert len(reader.pages) == meta["pages"]
 
 
@@ -224,11 +227,26 @@ def test_multi_language():
     reader = PdfReader(RESOURCE_ROOT / "multilang.pdf")
     txt = reader.pages[0].extract_text()
     assert "Hello World" in txt, "English not correctly extracted"
-    # Arabic is for the moment left on side
+    # iss #1296
+    assert "مرحبا بالعالم" in txt, "Arabic not correctly extracted"
     assert "Привет, мир" in txt, "Russian not correctly extracted"
     assert "你好世界" in txt, "Chinese not correctly extracted"
     assert "สวัสดีชาวโลก" in txt, "Thai not correctly extracted"
     assert "こんにちは世界" in txt, "Japanese not correctly extracted"
+    # check customizations
+    set_custom_rtl(None, None, "Russian:")
+    assert (
+        ":naissuR" in reader.pages[0].extract_text()
+    ), "(1) CUSTOM_RTL_SPECIAL_CHARS failed"
+    set_custom_rtl(None, None, [ord(x) for x in "Russian:"])
+    assert (
+        ":naissuR" in reader.pages[0].extract_text()
+    ), "(2) CUSTOM_RTL_SPECIAL_CHARS failed"
+    set_custom_rtl(0, 255, None)
+    assert ":hsilgnE" in reader.pages[0].extract_text(), "CUSTOM_RTL_MIN/MAX failed"
+    set_custom_rtl("A", "z", [])
+    assert ":hsilgnE" in reader.pages[0].extract_text(), "CUSTOM_RTL_MIN/MAX failed"
+    set_custom_rtl(-1, -1, [])  # to prevent further errors
 
 
 def test_extract_text_single_quote_op():
