@@ -1137,7 +1137,7 @@ class PdfReader:
                 idnum, generation = self.read_object_header(self.stream)
             except Exception:
                 if hasattr(self.stream, "getbuffer"):
-                    buf = bytes(self.stream.getbuffer())
+                    buf = bytes(self.stream.getbuffer())  # type: ignore
                 else:
                     p = self.stream.tell()
                     buf = self.stream.read(-1)
@@ -1190,7 +1190,7 @@ class PdfReader:
                 )
         else:
             if hasattr(self.stream, "getbuffer"):
-                buf = bytes(self.stream.getbuffer())
+                buf = bytes(self.stream.getbuffer())  # type: ignore
             else:
                 p = self.stream.tell()
                 buf = self.stream.read(-1)
