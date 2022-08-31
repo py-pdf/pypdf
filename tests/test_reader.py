@@ -1103,12 +1103,16 @@ def test_corrupted_xref_table():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     reader.pages[0].extract_text()
 
+    # slightly different
     url = "https://github.com/py-pdf/PyPDF2/files/9444748/BreezeManual.failed.pdf"
     name = "BreezeMan2.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    try:
-        reader.pages[0].extract_text()
-    except Exception:
-        pass  # Exception normal
-    else:
-        raise Exception("page 0 should not be corrupted")
+
+
+def test_reader():
+    # iss #1273
+    url = "https://github.com/py-pdf/PyPDF2/files/9464742/shiv_resume.pdf"
+    name = "shiv_resume.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader.pages[0].extract_text()
+    # TODO : rerun a second time the extraction to see there is no log the second time
