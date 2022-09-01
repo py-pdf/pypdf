@@ -45,7 +45,7 @@ annotation = AnnotationBuilder.free_text(
     font_size="20pt",
     font_color="00ff00",
     border_color="0000ff",
-    bg_color="cdcdcd",
+    background_color="cdcdcd",
 )
 writer.add_annotation(page_number=0, annotation=annotation)
 
