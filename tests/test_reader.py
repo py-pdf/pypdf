@@ -101,13 +101,15 @@ def test_read_metadata(pdf_path, expected):
 
 
 @pytest.mark.parametrize(
-    "pdf_path",
-    [EXTERNAL_ROOT / "017-unreadable-meta-data/unreadablemetadata.pdf"]
+    "pdf_path", [EXTERNAL_ROOT / "017-unreadable-meta-data/unreadablemetadata.pdf"]
 )
 def test_broken_meta_data(pdf_path):
-    with open(pdf_path, 'rb') as f:
+    with open(pdf_path, "rb") as f:
         reader = PdfReader(f)
-        with pytest.raises(PdfReadError, match=r"trailer not found or does not point to document information directory"):
+        with pytest.raises(
+            PdfReadError,
+            match=r"trailer not found or does not point to document information directory",
+        ):
             reader.metadata
 
 
@@ -1119,10 +1121,18 @@ def test_corrupted_xref_table():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
 
 
-def test_reader():
+def test_reader(caplog):
     # iss #1273
     url = "https://github.com/py-pdf/PyPDF2/files/9464742/shiv_resume.pdf"
     name = "shiv_resume.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    assert "Previous trailer can not be read" in caplog.text
+    caplog.clear()
+    # first call requires some reparations...
     reader.pages[0].extract_text()
-    # TODO : rerun a second time the extraction to see there is no log the second time
+    assert "repaired" in caplog.text
+    assert "found" in caplog.text
+    caplog.clear()
+    # ...and now no more required
+    reader.pages[0].extract_text()
+    assert caplog.text == ""
