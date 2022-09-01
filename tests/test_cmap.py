@@ -46,3 +46,12 @@ def test_get_font_width_from_default():  # L40
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     for page in reader.pages:
         page.extract_text()
+
+
+def test_bfchar_on_2_chars():
+    # iss #1293
+    url = "https://github.com/xyegithub/myBlog/raw/main/posts/c94b2364/paper_pdfs/ImageClassification/2007%2CASurveyofImageClassificationBasedTechniques.pdf"
+    name = "ASurveyofImageClassificationBasedTechniques.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for page in reader.pages:
+        page.extract_text()
