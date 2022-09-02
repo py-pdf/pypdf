@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1662097410573,
+  "lastUpdate": 1662097625851,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -14989,6 +14989,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.035436951094155254",
             "extra": "mean: 3.9488880069999994 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yegor.litvinov@yandex.ru",
+            "name": "Egor Litvinov",
+            "username": "yegorLitvinov"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3326cb7bbbd795a71dbf472f78e20521891873f8",
+          "message": "BUG: Avoid scaling cropbox twice (#1314)\n\nWhen a PDF document has no crobox, artbox, etc, they are fallback to mediabox.\r\nAs they are lazy, self.cropbox returns the mediabox copy which already was scaled.\r\n\r\nChanging the order avoids this issue",
+          "timestamp": "2022-09-02T07:46:02+02:00",
+          "tree_id": "e43f028980048fc046779992cf67a4a3e0fa7a5e",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/3326cb7bbbd795a71dbf472f78e20521891873f8"
+        },
+        "date": 1662097624898,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0271256102432846,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007902516062116428",
+            "extra": "mean: 973.5907566000037 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.001814298242397,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006745562700653924",
+            "extra": "mean: 76.9123429285697 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2547594364787623,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021561905482224208",
+            "extra": "mean: 3.9252716752000025 sec\nrounds: 5"
           }
         ]
       }
