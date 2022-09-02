@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1662140597329,
+  "lastUpdate": 1662146288932,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -15169,6 +15169,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04733865141501659",
             "extra": "mean: 4.981272676600005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "eb0be4d2ffad84bbe051395802cc7e9e6b526983",
+          "message": "ROB: MultiLine bfrange in cmap (#1299)\n\nROB : ending list with only one item on the line\r\n\r\nFixes #1274\r\nFixes #1285",
+          "timestamp": "2022-09-02T21:17:04+02:00",
+          "tree_id": "1146299b373ca9dcdf07308e045ba12cd74a279a",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/eb0be4d2ffad84bbe051395802cc7e9e6b526983"
+        },
+        "date": 1662146287155,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0601241287553784,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0068229316191296555",
+            "extra": "mean: 943.2857651999996 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.011905546901044,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0047855996628543215",
+            "extra": "mean: 76.85269435714304 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2663104059654887,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013358065324864617",
+            "extra": "mean: 3.7550166182000053 sec\nrounds: 5"
           }
         ]
       }
