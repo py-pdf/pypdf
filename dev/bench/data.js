@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1662097625851,
+  "lastUpdate": 1662098264884,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -15034,6 +15034,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.021561905482224208",
             "extra": "mean: 3.9252716752000025 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1e089c0a42c267d6ffd9674171ecffdb9a2cbd80",
+          "message": "ROB: Cope with 2 digit codes in bfchar (#1310)\n\nFixes #1293",
+          "timestamp": "2022-09-02T07:56:23+02:00",
+          "tree_id": "c01ed851700527cc0d18314b317547bc4b8a2e76",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/1e089c0a42c267d6ffd9674171ecffdb9a2cbd80"
+        },
+        "date": 1662098262509,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8225284417964308,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007162297000818019",
+            "extra": "mean: 1.2157634304000056 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.251639377629775,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006783227310916198",
+            "extra": "mean: 97.54537427273456 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2125065141125252,
+            "unit": "iter/sec",
+            "range": "stddev: 0.055972676855762134",
+            "extra": "mean: 4.705738100200006 sec\nrounds: 5"
           }
         ]
       }
