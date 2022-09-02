@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1661976986701,
+  "lastUpdate": 1662097138198,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -14854,6 +14854,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0247952285285272",
             "extra": "mean: 3.8061136933999875 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yegor.litvinov@yandex.ru",
+            "name": "Egor Litvinov",
+            "username": "yegorLitvinov"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e3fc7f619eb00730dc308a19f304e719353d42df",
+          "message": "DOC: Fix usage of page.scale by replacing it with page.scale_by (#1313)\n\n`scale` accepts two params (`sx` and `sy`)\r\n`scale_by` accepts one (`factor`)",
+          "timestamp": "2022-09-02T07:37:41+02:00",
+          "tree_id": "920679ae390495d3dc0fe95cfdf2364bd244c99c",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/e3fc7f619eb00730dc308a19f304e719353d42df"
+        },
+        "date": 1662097136002,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8714498680723303,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014916997284713738",
+            "extra": "mean: 1.147512939799998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.810347494899359,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006672829978836444",
+            "extra": "mean: 92.50396441666926 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21816921365621486,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06394122871532412",
+            "extra": "mean: 4.5835981312000005 sec\nrounds: 5"
           }
         ]
       }
