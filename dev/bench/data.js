@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1662098264884,
+  "lastUpdate": 1662098417197,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -15079,6 +15079,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.055972676855762134",
             "extra": "mean: 4.705738100200006 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "markdlevy@gmail.com",
+            "name": "Mark Levy",
+            "username": "markdlevy"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b219dfd228b5f455c54758606d4c7a9b2cb259ba",
+          "message": "DOC: Fix AnnotationBuilder.free_text example (#1311)\n\nModify sample code for annotation builder to use the parameter background_color property instead of bg_color",
+          "timestamp": "2022-09-02T07:59:01+02:00",
+          "tree_id": "809a8b61291c5a4be45823d66987ec689009a01a",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/b219dfd228b5f455c54758606d4c7a9b2cb259ba"
+        },
+        "date": 1662098414880,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9309089981837798,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01730413885286789",
+            "extra": "mean: 1.0742188570000053 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.186570015570924,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006423409286983406",
+            "extra": "mean: 89.39290583334032 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22742819353663987,
+            "unit": "iter/sec",
+            "range": "stddev: 0.1983402087486978",
+            "extra": "mean: 4.396992230600006 sec\nrounds: 5"
           }
         ]
       }
