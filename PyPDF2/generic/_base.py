@@ -233,13 +233,10 @@ class FloatObject(decimal.Decimal, PdfObject):
         try:
             return decimal.Decimal.__new__(cls, str_(value), context)
         except Exception:
-            try:
-                return decimal.Decimal.__new__(cls, str(value))
-            except decimal.InvalidOperation:
-                # If this isn't a valid decimal (happens in malformed PDFs)
-                # fallback to 0
-                logger_warning(f"Invalid FloatObject {value}", __name__)
-                return decimal.Decimal.__new__(cls, "0")
+            # If this isn't a valid decimal (happens in malformed PDFs)
+            # fallback to 0
+            logger_warning(f"FloatObject ({value}) invalid; use 0.0 instead", __name__)
+            return decimal.Decimal.__new__(cls, "0.0")
 
     def __repr__(self) -> str:
         if self == self.to_integral():
@@ -271,10 +268,10 @@ class NumberObject(int, PdfObject):
     NumberPattern = re.compile(b"[^+-.0-9]")
 
     def __new__(cls, value: Any) -> "NumberObject":
-        val = int(value)
         try:
-            return int.__new__(cls, val)
-        except OverflowError:
+            return int.__new__(cls, int(value))
+        except ValueError:
+            logger_warning(f"NumberObject({value}) invalid; use 0 instead", __name__)
             return int.__new__(cls, 0)
 
     def as_numeric(self) -> int:

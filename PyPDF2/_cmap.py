@@ -319,7 +319,7 @@ def parse_bfchar(l: bytes, map_dict: Dict[Any, Any], int_entry: List[int]) -> No
         # placeholder (see above) means empty string
         if lst[1] != b".":
             map_to = unhexlify(lst[1]).decode(
-                "utf-16-be", "surrogatepass"
+                "charmap" if len(lst[1]) < 4 else "utf-16-be", "surrogatepass"
             )  # join is here as some cases where the code was split
         map_dict[
             unhexlify(lst[0]).decode(

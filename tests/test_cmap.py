@@ -60,3 +60,20 @@ def test_multiline_bfrange():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     for page in reader.pages:
         page.extract_text()
+
+
+def test_bfchar_on_2_chars():
+    # iss #1293
+    url = "https://github.com/xyegithub/myBlog/raw/main/posts/c94b2364/paper_pdfs/ImageClassification/2007%2CASurveyofImageClassificationBasedTechniques.pdf"
+    name = "ASurveyofImageClassificationBasedTechniques.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for page in reader.pages:
+        page.extract_text()
+
+
+def test_ascii_charset():
+    # iss #1312
+    url = "https://github.com/py-pdf/PyPDF2/files/9472500/main.pdf"
+    name = "ascii charset.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    assert "/a" not in reader.pages[0].extract_text()

@@ -326,6 +326,8 @@ class PdfReader:
             return None
         obj = self.trailer[TK.INFO]
         retval = DocumentInformation()
+        if isinstance(obj, type(None)):
+            raise PdfReadError("trailer not found or does not point to document information directory")
         retval.update(obj)  # type: ignore
         return retval
 
@@ -908,9 +910,9 @@ class PdfReader:
         return outline_item
 
     @property
-    def pages(self) -> _VirtualList:
+    def pages(self) -> List[PageObject]:
         """Read-only property that emulates a list of :py:class:`Page<PyPDF2._page.Page>` objects."""
-        return _VirtualList(self._get_num_pages, self._get_page)
+        return _VirtualList(self._get_num_pages, self._get_page)  # type: ignore
 
     @property
     def page_layout(self) -> Optional[str]:
@@ -1385,10 +1387,37 @@ class PdfReader:
                 if line[-1] in b"0123456789t":
                     stream.seek(-1, 1)
 
-                offset_b, generation_b = line[:16].split(b" ")
-                entry_type_b = line[17:18]
+                try:
+                    offset_b, generation_b = line[:16].split(b" ")
+                    entry_type_b = line[17:18]
 
-                offset, generation = int(offset_b), int(generation_b)
+                    offset, generation = int(offset_b), int(generation_b)
+                except Exception:
+                    # if something wrong occured
+                    if hasattr(stream, "getbuffer"):
+                        buf = bytes(stream.getbuffer())  # type: ignore
+                    else:
+                        p = stream.tell()
+                        stream.seek(0, 0)
+                        buf = stream.read(-1)
+                        stream.seek(p)
+
+                    f = re.search(f"{num}\\s+(\\d+)\\s+obj".encode(), buf)
+                    if f is None:
+                        logger_warning(
+                            f"entry {num} in Xref table invalid; object not found",
+                            __name__,
+                        )
+                        generation = 65535
+                        offset = -1
+                    else:
+                        logger_warning(
+                            f"entry {num} in Xref table invalid but object found",
+                            __name__,
+                        )
+                        generation = int(f.group(1))
+                        offset = f.start()
+
                 if generation not in self.xref:
                     self.xref[generation] = {}
                     self.xref_free_entry[generation] = {}

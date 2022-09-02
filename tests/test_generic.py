@@ -39,13 +39,18 @@ PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 
-def test_float_object_exception():
+def test_float_object_exception(caplog):
     assert FloatObject("abc") == 0
+    assert caplog.text != ""
 
 
-def test_number_object_exception():
-    with pytest.raises(OverflowError):
-        NumberObject(1.5 * 2**10000)
+def test_number_object_exception(caplog):
+    assert NumberObject("0,0") == 0
+    assert caplog.text != ""
+
+
+def test_number_object_no_exception():
+    NumberObject(2**100000000)
 
 
 def test_create_string_object_exception():
