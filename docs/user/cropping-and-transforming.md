@@ -147,7 +147,7 @@ reader = PdfReader("resources/side-by-side-subfig.pdf")
 page = reader.pages[0]
 
 # Scale
-page.scale(0.5)
+page.scale_by(0.5)
 
 # Write the result to a file
 writer = PdfWriter()
