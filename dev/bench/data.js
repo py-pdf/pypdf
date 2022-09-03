@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1662197726906,
+  "lastUpdate": 1662207043596,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -15259,6 +15259,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.014450287737417916",
             "extra": "mean: 3.7308191952000245 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "exiledkingcc@gmail.com",
+            "name": "exiledkingcc",
+            "username": "exiledkingcc"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a61ef5f6f2321e324cbf3e67f65cf6d80acf2c9c",
+          "message": "ROB: Crop data of /U and /O in encryption dictionary to 48 bytes (#1317)\n\nThe specification says:\r\n\r\nTo understand the algorithm below, it is necessary to treat the O and U strings in the Encrypt dictionary\r\nas made up of three sections. The first 32 bytes are a hash value (explained below). The next 8 bytes are\r\ncalled the Validation Salt. The final 8 bytes are called the Key Salt.\r\n\r\nSo /U and /O should be 48-bytes data, but for the PDF file which causes #1288 , /O 's length is 127-bytes. The redundant data are zeros.\r\n\r\nFixes #1288",
+          "timestamp": "2022-09-03T14:09:28+02:00",
+          "tree_id": "9caeea8f827caf3f0a92636bd1c9eedda219b9e2",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/a61ef5f6f2321e324cbf3e67f65cf6d80acf2c9c"
+        },
+        "date": 1662207042522,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0286415697238571,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019335938131490853",
+            "extra": "mean: 972.1559281999987 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.988821120075627,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007533205810339809",
+            "extra": "mean: 76.98928107142778 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.25688677950239697,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02390360262005744",
+            "extra": "mean: 3.8927655286000005 sec\nrounds: 5"
           }
         ]
       }
