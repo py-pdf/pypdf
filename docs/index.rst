@@ -60,6 +60,7 @@ You can contribute to `PyPDF2 on Github <https://github.com/py-pdf/PyPDF2>`_.
    dev/pdf-format
    dev/cmaps
    dev/deprecations
+   dev/testing
 
 .. toctree::
    :caption: About PyPDF2
