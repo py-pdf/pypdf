@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1662146288932,
+  "lastUpdate": 1662197726906,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -15214,6 +15214,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.013358065324864617",
             "extra": "mean: 3.7550166182000053 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1252a49c5c9cd7d2e3c6559a32c550c849c26550",
+          "message": "ENH:  Process XRefStm (#1297)\n\nFixes #1273\r\nFixes #1279\r\nFixes #1292\r\nFixes #1294\r\nFixes #1295\r\n\r\nROB: Cope with xref starting on \\r\\n\r\nROB: Escaped octal code followed by decimal int\r\nROB: Cope with some corrupted entries in xref table\r\nROB: Extend xref autorepair cases",
+          "timestamp": "2022-09-03T11:34:26+02:00",
+          "tree_id": "a6699f20448e00127832ba3fe23409e7c70d66ad",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/1252a49c5c9cd7d2e3c6559a32c550c849c26550"
+        },
+        "date": 1662197726196,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0641480573897524,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009059001811701621",
+            "extra": "mean: 939.7188605999986 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.04685515975275,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0048378466602849775",
+            "extra": "mean: 76.6468231428539 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2680376474117465,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014450287737417916",
+            "extra": "mean: 3.7308191952000245 sec\nrounds: 5"
           }
         ]
       }
