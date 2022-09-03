@@ -1120,6 +1120,7 @@ def test_corrupted_xref_table():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     reader.pages[0].extract_text()
 
+
 def test_reader(caplog):
     # iss #1273
     url = "https://github.com/py-pdf/PyPDF2/files/9464742/shiv_resume.pdf"
