@@ -1115,7 +1115,6 @@ def test_corrupted_xref_table():
     name = "BreezeMan1.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     reader.pages[0].extract_text()
-    # slightly different
     url = "https://github.com/py-pdf/PyPDF2/files/9444748/BreezeManual.failed.pdf"
     name = "BreezeMan2.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
