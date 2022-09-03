@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1662216910133,
+  "lastUpdate": 1662216966095,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -15349,6 +15349,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01924222494581255",
             "extra": "mean: 3.779788087599999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3ec834de9bf4cc6a9830aef9e8eb7131fa642cf0",
+          "message": "DOC: Creating a coverage report (#1319)",
+          "timestamp": "2022-09-03T16:54:39+02:00",
+          "tree_id": "135c9969d86e90b811fa7dfbb474e6a376a30b97",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/3ec834de9bf4cc6a9830aef9e8eb7131fa642cf0"
+        },
+        "date": 1662216965263,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7570694202561844,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014941045230091717",
+            "extra": "mean: 1.3208828321999988 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.68195774754705,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00645306975140907",
+            "extra": "mean: 103.28489610000133 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.1928527473396932,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06935520650738101",
+            "extra": "mean: 5.185303366400001 sec\nrounds: 5"
           }
         ]
       }
