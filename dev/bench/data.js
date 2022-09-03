@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1662207043596,
+  "lastUpdate": 1662216910133,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -15304,6 +15304,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02390360262005744",
             "extra": "mean: 3.8927655286000005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b4b8f2d74a1ba107b1858cb93280b1d71b3b2260",
+          "message": "ROB: Fix offset correction in revised PDF (#1318)\n\nThe problem is observed in PDF files where the xref table in previous versions are not starting at 0 where _zero_xref was changing index.\r\n\r\nFixes #328",
+          "timestamp": "2022-09-03T16:54:05+02:00",
+          "tree_id": "f29db2bbc34649ef3b8bff62067e287020f9ca1f",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/b4b8f2d74a1ba107b1858cb93280b1d71b3b2260"
+        },
+        "date": 1662216908898,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0522142758604975,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006153900146864961",
+            "extra": "mean: 950.3767653999972 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.079396098234664,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0044826547495367495",
+            "extra": "mean: 76.45612935714752 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26456509646152054,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01924222494581255",
+            "extra": "mean: 3.779788087599999 sec\nrounds: 5"
           }
         ]
       }
