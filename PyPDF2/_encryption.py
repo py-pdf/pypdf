@@ -516,7 +516,10 @@ class AlgV5:
            should match the value in the P key.
         """
         password = password[:127]
-        if AlgV5.calculate_hash(R, password, o_value[32:40], u_value[:48]) != o_value[:32]:
+        if (
+            AlgV5.calculate_hash(R, password, o_value[32:40], u_value[:48])
+            != o_value[:32]
+        ):
             return b""
         iv = bytes(0 for _ in range(16))
         tmp_key = AlgV5.calculate_hash(R, password, o_value[40:48], u_value[:48])
