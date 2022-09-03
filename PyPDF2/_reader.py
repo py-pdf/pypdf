@@ -327,7 +327,9 @@ class PdfReader:
         obj = self.trailer[TK.INFO]
         retval = DocumentInformation()
         if isinstance(obj, type(None)):
-            raise PdfReadError("trailer not found or does not point to document information directory")
+            raise PdfReadError(
+                "trailer not found or does not point to document information directory"
+            )
         retval.update(obj)  # type: ignore
         return retval
 
@@ -1131,7 +1133,31 @@ class PdfReader:
                 return NullObject()
             start = self.xref[indirect_reference.generation][indirect_reference.idnum]
             self.stream.seek(start, 0)
-            idnum, generation = self.read_object_header(self.stream)
+            try:
+                idnum, generation = self.read_object_header(self.stream)
+            except Exception:
+                if hasattr(self.stream, "getbuffer"):
+                    buf = bytes(self.stream.getbuffer())  # type: ignore
+                else:
+                    p = self.stream.tell()
+                    buf = self.stream.read(-1)
+                    self.stream.seek(p, 0)
+                m = re.search(
+                    rf"\s{indirect_reference.idnum}\s+{indirect_reference.generation}\s+obj".encode(),
+                    buf,
+                )
+                if m is not None:
+                    logger_warning(
+                        f"Object ID {indirect_reference.idnum},{indirect_reference.generation} ref repaired",
+                        __name__,
+                    )
+                    self.xref[indirect_reference.generation][
+                        indirect_reference.idnum
+                    ] = (m.start(0) + 1)
+                    self.stream.seek(m.start(0) + 1)
+                    idnum, generation = self.read_object_header(self.stream)
+                else:
+                    idnum = -1  # exception will be raised below
             if idnum != indirect_reference.idnum and self.xref_index:
                 # Xref table probably had bad indexes due to not being zero-indexed
                 if self.strict:
@@ -1163,13 +1189,48 @@ class PdfReader:
                     retval, indirect_reference.idnum, indirect_reference.generation
                 )
         else:
-            logger_warning(
-                f"Object {indirect_reference.idnum} {indirect_reference.generation} "
-                "not defined.",
-                __name__,
+            if hasattr(self.stream, "getbuffer"):
+                buf = bytes(self.stream.getbuffer())  # type: ignore
+            else:
+                p = self.stream.tell()
+                buf = self.stream.read(-1)
+                self.stream.seek(p, 0)
+            m = re.search(
+                rf"\s{indirect_reference.idnum}\s+{indirect_reference.generation}\s+obj".encode(),
+                buf,
             )
-            if self.strict:
-                raise PdfReadError("Could not find object.")
+            if m is not None:
+                logger_warning(
+                    f"Object {indirect_reference.idnum} {indirect_reference.generation} found",
+                    __name__,
+                )
+                if indirect_reference.generation not in self.xref:
+                    self.xref[indirect_reference.generation] = {}
+                self.xref[indirect_reference.generation][indirect_reference.idnum] = (
+                    m.start(0) + 1
+                )
+                self.stream.seek(m.end(0) + 1)
+                skip_over_whitespace(self.stream)
+                self.stream.seek(-1, 1)
+                retval = read_object(self.stream, self)  # type: ignore
+
+                # override encryption is used for the /Encrypt dictionary
+                if not self._override_encryption and self._encryption is not None:
+                    # if we don't have the encryption key:
+                    if not self._encryption.is_decrypted():
+                        raise FileNotDecryptedError("File has not been decrypted")
+                    # otherwise, decrypt here...
+                    retval = cast(PdfObject, retval)
+                    retval = self._encryption.decrypt_object(
+                        retval, indirect_reference.idnum, indirect_reference.generation
+                    )
+            else:
+                logger_warning(
+                    f"Object {indirect_reference.idnum} {indirect_reference.generation} not defined.",
+                    __name__,
+                )
+                if self.strict:
+                    raise PdfReadError("Could not find object.")
         self.cache_indirect_object(
             indirect_reference.generation, indirect_reference.idnum, retval
         )
@@ -1429,7 +1490,14 @@ class PdfReader:
                     pass
                 else:
                     self.xref[generation][num] = offset
-                    self.xref_free_entry[generation][num] = entry_type_b == b"f"
+                    try:
+                        self.xref_free_entry[generation][num] = entry_type_b == b"f"
+                    except Exception:
+                        pass
+                    try:
+                        self.xref_free_entry[65535][num] = entry_type_b == b"f"
+                    except Exception:
+                        pass
                 cnt += 1
                 num += 1
             read_non_whitespace(stream)
@@ -1452,6 +1520,8 @@ class PdfReader:
             # load the xref table
             stream.seek(startxref, 0)
             x = stream.read(1)
+            if x in b"\r\n":
+                x = stream.read(1)
             if x == b"x":
                 startxref = self._read_xref(stream)
             elif xref_issue_nr:
@@ -1461,12 +1531,26 @@ class PdfReader:
                 except Exception:
                     xref_issue_nr = 0
             elif x.isdigit():
-                xrefstream = self._read_pdf15_xref_stream(stream)
-
+                try:
+                    xrefstream = self._read_pdf15_xref_stream(stream)
+                except Exception as e:
+                    if TK.ROOT in self.trailer:
+                        logger_warning(
+                            f"Previous trailer can not be read {e.args}",
+                            __name__,
+                        )
+                        break
+                    else:
+                        raise PdfReadError(f"trailer can not be read {e.args}")
                 trailer_keys = TK.ROOT, TK.ENCRYPT, TK.INFO, TK.ID
                 for key in trailer_keys:
                     if key in xrefstream and key not in self.trailer:
                         self.trailer[NameObject(key)] = xrefstream.raw_get(key)
+                if "/XRefStm" in xrefstream:
+                    p = stream.tell()
+                    stream.seek(cast(int, xrefstream["/XRefStm"]) + 1, 0)
+                    self._read_pdf15_xref_stream(stream)
+                    stream.seek(p, 0)
                 if "/Prev" in xrefstream:
                     startxref = cast(int, xrefstream["/Prev"])
                 else:
@@ -1482,6 +1566,17 @@ class PdfReader:
         for key, value in new_trailer.items():
             if key not in self.trailer:
                 self.trailer[key] = value
+        if "/XRefStm" in new_trailer:
+            p = stream.tell()
+            stream.seek(cast(int, new_trailer["/XRefStm"]) + 1, 0)
+            try:
+                self._read_pdf15_xref_stream(stream)
+            except Exception:
+                logger_warning(
+                    f"XRef object at {new_trailer['/XRefStm']} can not be read, some object may be missing",
+                    __name__,
+                )
+            stream.seek(p, 0)
         if "/Prev" in new_trailer:
             startxref = new_trailer["/Prev"]
             return startxref
