@@ -1136,3 +1136,11 @@ def test_reader(caplog):
     # ...and now no more required
     reader.pages[0].extract_text()
     assert caplog.text == ""
+
+
+def test_zeroing_xref():
+    # iss #328
+    url = "https://github.com/py-pdf/PyPDF2/files/9066120/UTA_OSHA_3115_Fall_Protection_Training_09162021_.pdf"
+    name = "UTA_OSHA.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    len(reader.pages)

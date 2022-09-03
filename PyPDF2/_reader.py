@@ -1347,15 +1347,19 @@ class PdfReader:
             for gen, xref_entry in self.xref.items():
                 if gen == 65535:
                     continue
-                for id in xref_entry:
+                xref_k = sorted(
+                    xref_entry.keys()
+                )  # must ensure ascendant to prevent damange
+                for id in xref_k:
                     stream.seek(xref_entry[id], 0)
                     try:
                         pid, _pgen = self.read_object_header(stream)
                     except ValueError:
                         break
                     if pid == id - self.xref_index:
-                        self._zero_xref(gen)
-                        break
+                        # fixing index item per item is required for revised PDF.
+                        self.xref[gen][pid] = self.xref[gen][id]
+                        del self.xref[gen][id]
                     # if not, then either it's just plain wrong, or the
                     # non-zero-index is actually correct
             stream.seek(loc, 0)  # return to where it was
@@ -1749,11 +1753,6 @@ class PdfReader:
                         self.xref_objStm[num] = (objstr_num, obstr_idx)
                 elif self.strict:
                     raise PdfReadError(f"Unknown xref type: {xref_type}")
-
-    def _zero_xref(self, generation: int) -> None:
-        self.xref[generation] = {
-            k - self.xref_index: v for (k, v) in list(self.xref[generation].items())
-        }
 
     def _pairs(self, array: List[int]) -> Iterable[Tuple[int, int]]:
         i = 0
