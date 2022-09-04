@@ -891,10 +891,9 @@ def test_get_xmp(url, name, strict):
         xmp_info.pdf_pdfversion
         xmp_info.pdf_producer
         xmp_info.xmp_create_date
-        xmp_info.xmp_modifyDate
-        xmp_info.xmp_metadataDate
+        xmp_info.xmp_modify_date
+        xmp_info.xmp_metadata_date
         xmp_info.xmp_creator_tool
-        xmp_info.xmp_creatorTool
         xmp_info.xmpmm_document_id
         xmp_info.xmpmm_instance_id
         xmp_info.custom_properties
