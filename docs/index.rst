@@ -19,6 +19,7 @@ You can contribute to `PyPDF2 on Github <https://github.com/py-pdf/PyPDF2>`_.
    :maxdepth: 1
 
    user/installation
+   user/migration-1-to-2
    user/robustness
    user/suppress-warnings
    user/metadata
