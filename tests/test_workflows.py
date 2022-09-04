@@ -865,6 +865,16 @@ def test_get_fonts(url, name, strict):
             "tika-935981.pdf",
             True,
         ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/967/967399.pdf",
+            "tika-967399.pdf",
+            True,
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/935/935981.pdf",
+            "tika-935981.pdf",
+            False,
+        ),
     ],
 )
 def test_get_xmp(url, name, strict):
