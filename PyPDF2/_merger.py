@@ -541,21 +541,22 @@ class PdfMerger:
         )
 
     def _associate_dests_to_pages(self, pages: List[_MergedPage]) -> None:
-        for nd in self.named_dests:
+        for named_dest in self.named_dests:
             pageno = None
-            np = nd["/Page"]
+            np = named_dest["/Page"]
 
             if isinstance(np, NumberObject):
                 continue
 
-            for p in pages:
-                if np.get_object() == p.pagedata.get_object():
-                    pageno = p.id
+            for page in pages:
+                if np.get_object() == page.pagedata.get_object():
+                    pageno = page.id
 
-            if pageno is not None:
-                nd[NameObject("/Page")] = NumberObject(pageno)
-            else:
-                raise ValueError(f"Unresolved named destination '{nd['/Title']}'")
+            if pageno is None:
+                raise ValueError(
+                    f"Unresolved named destination '{named_dest['/Title']}'"
+                )
+            named_dest[NameObject("/Page")] = NumberObject(pageno)
 
     @deprecate_bookmark(bookmarks="outline")
     def _associate_outline_items_to_pages(
@@ -612,12 +613,11 @@ class PdfMerger:
         self,
         outline_item: Dict[str, Any],
         root: Optional[OutlineType] = None,
-    ) -> Optional[List[int]]:
+    ) -> Optional[List[int]]:  # pragma: no cover
         """
         .. deprecated:: 2.9.0
             Use :meth:`find_outline_item` instead.
         """
-
         return self.find_outline_item(outline_item, root)
 
     def add_outline_item(

@@ -1612,15 +1612,11 @@ class PdfReader:
             return startxref
         # No explicit xref table, try finding a cross-reference stream.
         stream.seek(startxref, 0)
-        found = False
         for look in range(5):
             if stream.read(1).isdigit():
                 # This is not a standard PDF, consider adding a warning
                 startxref += look
-                found = True
-                break
-        if found:
-            return startxref
+                return startxref
         # no xref table found at specified location
         if "/Root" in self.trailer and not self.strict:
             # if Root has been already found, just raise warning
@@ -1630,7 +1626,6 @@ class PdfReader:
                 return None
             except Exception:
                 raise PdfReadError("can not rebuild xref")
-            return None
         raise PdfReadError("Could not find xref table at specified location")
 
     def _read_pdf15_xref_stream(
