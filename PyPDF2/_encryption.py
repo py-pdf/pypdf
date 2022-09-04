@@ -119,7 +119,7 @@ except ImportError:
                 self.S[i], self.S[j] = self.S[j], self.S[i]
 
         def encrypt(self, data: bytes) -> bytes:
-            S = [x for x in self.S]
+            S = list(self.S)
             out = list(0 for _ in range(len(data)))
             i, j = 0, 0
             for k in range(len(data)):
