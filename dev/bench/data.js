@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1662301598950,
+  "lastUpdate": 1662305450553,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -15529,6 +15529,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.016684339404831678",
             "extra": "mean: 3.8875977141999982 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "4073b2a36ef476b865e927f4c84be4bedd21f0f8",
+          "message": "REL: 2.10.5\n\nVersion 2.10.5, 2022-09-04\n--------------------------\n\nNew Features (ENH):\n-  Process XRefStm (#1297)\n-  Auto-detect RTL for text extraction (#1309)\n\nBug Fixes (BUG):\n-  Avoid scaling cropbox twice (#1314)\n\nRobustness (ROB):\n-  Fix offset correction in revised PDF (#1318)\n-  Crop data of /U and /O in encryption dictionary to 48 bytes (#1317)\n-  MultiLine bfrange in cmap (#1299)\n-  Cope with 2 digit codes in bfchar (#1310)\n-  Accept '/annn' charset as ASCII code (#1316)\n-  Log errors during Float / NumberObject initialization (#1315)\n-  Cope with corrupted entries in xref table (#1300)\n\nDocumentation (DOC):\n-  Migration guide (PyPDF2 1.x \\xe2\\x9e\\x94 2.x) (#1324)\n-  Creating a coverage report (#1319)\n-  Fix AnnotationBuilder.free_text example (#1311)\n-  Fix usage of page.scale by replacing it with page.scale_by (#1313)\n\nDeveloper Experience (DEV):\n-  Only run coverage for PyPDF2\n\nMaintenance (MAINT):\n-  PdfReaderProtocol (#1303)\n-  Throw PdfReadError if Trailer can't be read (#1298)\n-  Remove catching OverflowException (#1302)\n\nFull Changelog: https://github.com/py-pdf/PyPDF2/compare/2.10.4...2.10.5",
+          "timestamp": "2022-09-04T17:27:10+02:00",
+          "tree_id": "74475491b489c12227e34c4a74fe104a3dd13a68",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/4073b2a36ef476b865e927f4c84be4bedd21f0f8"
+        },
+        "date": 1662305449811,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0553666856911397,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005881995922592149",
+            "extra": "mean: 947.5379634000092 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.967851975237185,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004936419985800421",
+            "extra": "mean: 77.11377350000248 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26515859642476325,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01562448075170397",
+            "extra": "mean: 3.7713278523999976 sec\nrounds: 5"
           }
         ]
       }
