@@ -860,9 +860,42 @@ def test_get_fonts(url, name, strict):
             "tika-942303.pdf",
             True,
         ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/935/935981.pdf",
+            "tika-935981.pdf",
+            True,
+        ),
     ],
 )
 def test_get_xmp(url, name, strict):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data, strict=strict)
-    reader.xmp_metadata
+    xmp_info = reader.xmp_metadata
+    if xmp_info:
+        xmp_info.dc_contributor
+        xmp_info.dc_coverage
+        xmp_info.dc_creator
+        xmp_info.dc_date
+        xmp_info.dc_description
+        xmp_info.dc_format
+        xmp_info.dc_identifier
+        xmp_info.dc_language
+        xmp_info.dc_publisher
+        xmp_info.dc_relation
+        xmp_info.dc_rights
+        xmp_info.dc_source
+        xmp_info.dc_subject
+        xmp_info.dc_title
+        xmp_info.dc_type
+        xmp_info.pdf_keywords
+        xmp_info.pdf_pdfversion
+        xmp_info.pdf_producer
+        xmp_info.xmp_create_date
+        xmp_info.xmp_createDate
+        xmp_info.xmp_modifyDate
+        xmp_info.xmp_metadataDate
+        xmp_info.xmp_creator_tool
+        xmp_info.xmp_creatorTool
+        xmp_info.xmpmm_document_id
+        xmp_info.xmpmm_instance_id
+        xmp_info.custom_properties
