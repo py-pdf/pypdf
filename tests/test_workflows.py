@@ -260,62 +260,26 @@ def test_extract_textbench(enable, url, pages, print_result=False):
 
 def test_orientations():
     p = PdfReader(RESOURCE_ROOT / "test Orient.pdf").pages[0]
-    try:
+    with pytest.warns(DeprecationWarning):
         p.extract_text("", "")
-    except DeprecationWarning:
-        pass
-    else:
-        raise Exception("DeprecationWarning expected")
-    try:
+    with pytest.warns(DeprecationWarning):
         p.extract_text("", "", 0)
-    except DeprecationWarning:
-        pass
-    else:
-        raise Exception("DeprecationWarning expected")
-    try:
+    with pytest.warns(DeprecationWarning):
         p.extract_text("", "", 0, 200)
-    except DeprecationWarning:
-        pass
-    else:
-        raise Exception("DeprecationWarning expected")
 
-    try:
+    with pytest.warns(DeprecationWarning):
         p.extract_text(Tj_sep="", TJ_sep="")
-    except DeprecationWarning:
-        pass
-    else:
-        raise Exception("DeprecationWarning expected")
     assert findall("\\((.)\\)", p.extract_text()) == ["T", "B", "L", "R"]
-    try:
+    with pytest.raises(Exception):
         p.extract_text(None)
-    except Exception:
-        pass
-    else:
-        raise Exception("Argument 1 check invalid")
-    try:
+    with pytest.raises(Exception):
         p.extract_text("", 0)
-    except Exception:
-        pass
-    else:
-        raise Exception("Argument 2 check invalid")
-    try:
+    with pytest.raises(Exception):
         p.extract_text("", "", None)
-    except Exception:
-        pass
-    else:
-        raise Exception("Argument 3 check invalid")
-    try:
+    with pytest.raises(Exception):
         p.extract_text("", "", 0, "")
-    except Exception:
-        pass
-    else:
-        raise Exception("Argument 4 check invalid")
-    try:
+    with pytest.raises(Exception):
         p.extract_text(0, "")
-    except Exception:
-        pass
-    else:
-        raise Exception("Argument 1 new syntax check invalid")
 
     p.extract_text(0, 0)
     p.extract_text(orientations=0)
