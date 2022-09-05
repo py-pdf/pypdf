@@ -759,17 +759,17 @@ class ContentStream(DecodedStreamObject):
                 tok = stream.read(1)
                 # Check for End Image
                 tok2 = stream.read(1)
-                if tok2 == b"I":
-                    # Data can contain EI, so check for the Q operator.
+                if tok2 == b"I" and buf[loc - 1 : loc] in WHITESPACES:
+                    # Data can contain [\s]EI,  so check for the separator \s; 4 chars suffisent Q operator not required.
                     tok3 = stream.read(1)
                     info = tok + tok2
-                    # We need to find whitespace between EI and Q.
+                    # We need to find at least one whitespace after.
                     has_q_whitespace = False
                     while tok3 in WHITESPACES:
                         has_q_whitespace = True
                         info += tok3
                         tok3 = stream.read(1)
-                    if tok3 == b"Q" and has_q_whitespace:
+                    if has_q_whitespace:
                         stream.seek(-1, 1)
                         break
                     else:
