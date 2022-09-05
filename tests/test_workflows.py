@@ -17,7 +17,7 @@ from PyPDF2 import PdfMerger, PdfReader, PdfWriter
 from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.constants import Ressources as RES
-from PyPDF2.errors import PdfReadError, PdfReadWarning
+from PyPDF2.errors import PdfReadWarning
 from PyPDF2.filters import _xobj_to_image
 
 from . import get_pdf_from_url, normalize_warnings
