@@ -17,7 +17,7 @@ from PyPDF2 import PdfMerger, PdfReader, PdfWriter
 from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.constants import Ressources as RES
-from PyPDF2.errors import PdfReadError, PdfReadWarning
+from PyPDF2.errors import PdfReadWarning
 from PyPDF2.filters import _xobj_to_image
 
 from . import get_pdf_from_url, normalize_warnings
@@ -425,7 +425,7 @@ def test_get_metadata(url, name):
             "https://corpora.tika.apache.org/base/docs/govdocs1/938/938702.pdf",
             "tika-938702.pdf",
             False,
-            (PdfReadError, "Unexpected end of stream"),
+            None,  # iss #1090 is now fixed
         ),
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/942/942358.pdf",
@@ -512,19 +512,16 @@ def test_extract_text(url, name, strict, exception):
         ),
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/957/957304.pdf",
-            "tika-938702.pdf",
+            "tika-957304.pdf",
         ),
     ],
 )
 def test_compress_raised(url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
-    # TODO: which page exactly?
-    # TODO: Is it reasonable to have an exception here?
-    with pytest.raises(PdfReadError) as exc:
-        for page in reader.pages:
-            page.compress_content_streams()
-    assert exc.value.args[0] == "Unexpected end of stream"
+    # no more error since iss #1090 fix
+    for page in reader.pages:
+        page.compress_content_streams()
 
 
 @pytest.mark.parametrize(
