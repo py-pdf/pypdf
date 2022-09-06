@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1662305450553,
+  "lastUpdate": 1662491629449,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -15574,6 +15574,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01562448075170397",
             "extra": "mean: 3.7713278523999976 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5049c1e7d0379d783bf809f6545d3583b51dab25",
+          "message": "ROB: Fix image extraction issue with superfluous whitespaces (#1327)\n\nFix some images reading when some operations are inserted between EI and Q\r\nend of image is now considered with [whitespace]EI[whitespace] (4 characters should be sufficient)\r\n\r\nFixes #1090",
+          "timestamp": "2022-09-06T21:12:20+02:00",
+          "tree_id": "b128cbaa7fa7c9f6c28ab5a926355235621fd287",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/5049c1e7d0379d783bf809f6545d3583b51dab25"
+        },
+        "date": 1662491627088,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8292465173651408,
+            "unit": "iter/sec",
+            "range": "stddev: 0.045797761839791944",
+            "extra": "mean: 1.2059140183999972 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.3474308992661,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009119273076981772",
+            "extra": "mean: 96.64234627272802 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2146879695554501,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09901607838831915",
+            "extra": "mean: 4.6579228546 sec\nrounds: 5"
           }
         ]
       }
