@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1662491629449,
+  "lastUpdate": 1662575218670,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -15619,6 +15619,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.09901607838831915",
             "extra": "mean: 4.6579228546 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "bfbe0b2528c74a12757cce1e811aed638f0c386e",
+          "message": "DOC: Update migration guide (#1326)",
+          "timestamp": "2022-09-07T20:25:41+02:00",
+          "tree_id": "2161e3f8ea1dfccd85e7185cf4cd1128981775d7",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/bfbe0b2528c74a12757cce1e811aed638f0c386e"
+        },
+        "date": 1662575217417,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8891542610484456,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021353915355282548",
+            "extra": "mean: 1.1246642386000048 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.320641950899935,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005819671925433987",
+            "extra": "mean: 88.33421323077044 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21906988769156338,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03924893089316149",
+            "extra": "mean: 4.564753333000001 sec\nrounds: 5"
           }
         ]
       }
