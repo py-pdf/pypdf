@@ -175,6 +175,17 @@ def test_NameObject():
     with pytest.raises(PdfReadError) as exc:
         NameObject.read_from_stream(stream, None)
     assert exc.value.args[0] == "name read error"
+    assert (
+        NameObject.read_from_stream(
+            BytesIO(b"/A;Name_With-Various***Characters?"), None
+        )
+        == "/A;Name_With-Various***Characters?"
+    )
+    assert (
+        NameObject.read_from_stream(BytesIO(b"/paired#28#29parentheses"), None)
+        == "/paired()parentheses"
+    )
+    assert NameObject.read_from_stream(BytesIO(b"/A#42"), None) == "/AB"
 
 
 def test_destination_fit_r():

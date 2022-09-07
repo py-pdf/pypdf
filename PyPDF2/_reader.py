@@ -1139,6 +1139,7 @@ class PdfReader:
                     buf = bytes(self.stream.getbuffer())  # type: ignore
                 else:
                     p = self.stream.tell()
+                    p.seek(0, 0)
                     buf = self.stream.read(-1)
                     self.stream.seek(p, 0)
                 m = re.search(
@@ -1192,6 +1193,7 @@ class PdfReader:
                 buf = bytes(self.stream.getbuffer())  # type: ignore
             else:
                 p = self.stream.tell()
+                self.stream.seek(0, 0)
                 buf = self.stream.read(-1)
                 self.stream.seek(p, 0)
             m = re.search(
@@ -1882,6 +1884,13 @@ class PdfReader:
                         es = zlib.decompress(field._data)
                         retval[tag] = es
         return retval
+
+    def _get_indirect_object(self, num: int, gen: int) -> PdfObject:
+        """
+        used to ease development
+        equivalent to generic.IndirectObject(num,gen,self).get_object()
+        """
+        return IndirectObject(num, gen, self).get_object()
 
 
 class PdfFileReader(PdfReader):  # pragma: no cover
