@@ -1139,7 +1139,7 @@ class PdfReader:
                     buf = bytes(self.stream.getbuffer())  # type: ignore
                 else:
                     p = self.stream.tell()
-                    p.seek(0, 0)
+                    self.stream.seek(0, 0)
                     buf = self.stream.read(-1)
                     self.stream.seek(p, 0)
                 m = re.search(
@@ -1885,7 +1885,7 @@ class PdfReader:
                         retval[tag] = es
         return retval
 
-    def _get_indirect_object(self, num: int, gen: int) -> PdfObject:
+    def _get_indirect_object(self, num: int, gen: int) -> Optional[PdfObject]:
         """
         used to ease development
         equivalent to generic.IndirectObject(num,gen,self).get_object()

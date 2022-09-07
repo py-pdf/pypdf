@@ -267,10 +267,10 @@ class DictionaryObject(dict, PdfObject):
                 tok = read_non_whitespace(stream)
                 stream.seek(-1, 1)
                 value = read_object(stream, pdf, forced_encoding)
-            except Exception as e:
+            except Exception as exc:
                 if pdf is not None and pdf.strict:
-                    raise PdfReadError(e.__repr__())
-                logger_warning(e.__repr__(), __name__)
+                    raise PdfReadError(exc.__repr__())
+                logger_warning(exc.__repr__(), __name__)
                 retval = DictionaryObject()
                 retval.update(data)
                 return retval  # return partial data
@@ -860,7 +860,7 @@ def read_object(
             return NumberObject.read_from_stream(stream)
     else:
         raise PdfReadError(
-            f"Invalid Elementary Object starting with {tok} @{stream.tell()}"
+            f"Invalid Elementary Object starting with {tok} @{stream.tell()}"  # type: ignore
         )
 
 
