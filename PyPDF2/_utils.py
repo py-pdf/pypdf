@@ -33,6 +33,7 @@ import functools
 import logging
 import warnings
 from codecs import getencoder
+from dataclasses import dataclass
 from io import (
     DEFAULT_BUFFER_SIZE,
     BufferedReader,
@@ -413,3 +414,9 @@ def rename_kwargs(  # type: ignore
                     f"{old_term} is deprecated as an argument. Use {new_term} instead"
                 )
             )
+
+
+@dataclass
+class File:
+    name: str
+    data: bytes

@@ -186,25 +186,8 @@ def test_get_images(src, nb_images):
     page = reader.pages[-1]
     page = reader.pages[0]
 
-    images_extracted = []
-
-    if RES.XOBJECT in page[PG.RESOURCES]:
-        x_object = page[PG.RESOURCES][RES.XOBJECT].get_object()
-
-        for obj in x_object:
-            if x_object[obj][IA.SUBTYPE] == "/Image":
-                extension, byte_stream = _xobj_to_image(x_object[obj])
-                if extension is not None:
-                    filename = obj[1:] + ".png"
-                    with open(filename, "wb") as img:
-                        img.write(byte_stream)
-                    images_extracted.append(filename)
-
+    images_extracted = page.images
     assert len(images_extracted) == nb_images
-
-    # Cleanup
-    for filepath in images_extracted:
-        os.remove(filepath)
 
 
 @pytest.mark.parametrize(
