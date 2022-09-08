@@ -134,6 +134,12 @@ def test_transformation_equivalence():
     )
 
 
+def test_get_user_unit_property():
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    assert reader.pages[0].user_unit == 1
+
+
 def compare_dict_objects(d1, d2):
     assert sorted(d1.keys()) == sorted(d2.keys())
     for k in d1.keys():
