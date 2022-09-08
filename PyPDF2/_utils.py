@@ -420,3 +420,9 @@ def rename_kwargs(  # type: ignore
 class File:
     name: str
     data: bytes
+    mime_type: str
+
+    @property
+    def file_extension(self) -> str:
+        if self.mime_type == "image/png":
+            return "png"
