@@ -766,4 +766,4 @@ class PdfFileMerger(PdfMerger):
         )
         if "strict" not in kwargs and len(args) < 1:
             kwargs["strict"] = True  # maintain the default
-        super().__init__(*args, **kwargs)
+        super(PdfFileMerger, self).__init__(*args, **kwargs)
