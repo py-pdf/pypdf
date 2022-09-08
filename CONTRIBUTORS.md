@@ -19,6 +19,7 @@ history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/PyPDF2/gr
 * [Lightup1](https://github.com/Lightup1)
 * [Pinheiro, Arthur](https://github.com/xilopaint)
 * [pubpub-zz](https://github.com/pubpub-zz): involved in community development
+* [Stüber, Timo](https://github.com/omit66)
 * [Thoma, Martin](https://github.com/MartinThoma): Maintainer of PyPDF2 since April 2022. I hope to build a great community with many awesome contributors. [LinkedIn](https://www.linkedin.com/in/martin-thoma/) | [StackOverflow](https://stackoverflow.com/users/562769/martin-thoma) | [Blog](https://martin-thoma.com/)
 * [WevertonGomes](https://github.com/WevertonGomesCosta)
 * ztravis
