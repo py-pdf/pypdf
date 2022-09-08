@@ -1,3 +1,11 @@
+Version 1.28.6, 2022-09-08
+--------------------------
+
+Bug Fixes (BUG):
+- Usage of super() (#1335)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/1.28.5...1.28.6
+
 Version 1.28.5, 2022-07-21
 --------------------------
 
