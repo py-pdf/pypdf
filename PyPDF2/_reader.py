@@ -1868,4 +1868,4 @@ class PdfFileReader(PdfReader):
         )
         if "strict" not in kwargs and len(args) < 2:
             kwargs["strict"] = True  # maintain the default
-        super().__init__(*args, **kwargs)
+        super(PdfFileReader, self).__init__(*args, **kwargs)

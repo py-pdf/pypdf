@@ -206,7 +206,7 @@ class ConvertFunctionsToVirtualList(_VirtualList):
             stacklevel=2,
         )
         warnings.warn(DEPR_MSG_NO_REPLACEMENT.format("ConvertFunctionsToVirtualList"))
-        super().__init__(lengthFunction, getFunction)
+        super(ConvertFunctionsToVirtualList, self).__init__(lengthFunction, getFunction)
 
 
 def matrix_multiply(a, b):

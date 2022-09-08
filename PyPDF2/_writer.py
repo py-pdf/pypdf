@@ -1774,4 +1774,4 @@ class PdfFileWriter(PdfWriter):
             PendingDeprecationWarning,
             stacklevel=2,
         )
-        super().__init__(*args, **kwargs)
+        super(PdfFileWriter, self).__init__(*args, **kwargs)
