@@ -296,9 +296,9 @@ class PageObject(DictionaryObject):
         """
         A read-only positive number giving the size of default user space units.
 
-        It is in multiples of 1 ⁄ 72 inch. Hence a value of 1 means a user space
+        It is in multiples of 1/72 inch. Hence a value of 1 means a user space
         unit is 1/72 inch, and a value of 3 means that a user space unit is
-        3 / 72 inch.
+        3/72 inch.
         """
         return self.get(PG.USER_UNIT, 1)
 
