@@ -67,7 +67,6 @@ from ._base import (
 from ._utils import read_hex_string_from_stream, read_string_from_stream
 
 logger = logging.getLogger(__name__)
-ObjectPrefix = b"/<[tf(n%"
 NumberSigns = b"+-"
 IndirectPattern = re.compile(rb"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]")
 
@@ -263,10 +262,19 @@ class DictionaryObject(dict, PdfObject):
                 stream.read(1)
                 break
             stream.seek(-1, 1)
-            key = read_object(stream, pdf)
-            tok = read_non_whitespace(stream)
-            stream.seek(-1, 1)
-            value = read_object(stream, pdf, forced_encoding)
+            try:
+                key = read_object(stream, pdf)
+                tok = read_non_whitespace(stream)
+                stream.seek(-1, 1)
+                value = read_object(stream, pdf, forced_encoding)
+            except Exception as exc:
+                if pdf is not None and pdf.strict:
+                    raise PdfReadError(exc.__repr__())
+                logger_warning(exc.__repr__(), __name__)
+                retval = DictionaryObject()
+                retval.update(data)
+                return retval  # return partial data
+
             if not data.get(key):
                 data[key] = value
             else:
@@ -812,10 +820,9 @@ def read_object(
 ) -> Union[PdfObject, int, str, ContentStream]:
     tok = stream.read(1)
     stream.seek(-1, 1)  # reset to start
-    idx = ObjectPrefix.find(tok)
-    if idx == 0:
+    if tok == b"/":
         return NameObject.read_from_stream(stream, pdf)
-    elif idx == 1:
+    elif tok == b"<":
         # hexadecimal string OR dictionary
         peek = stream.read(2)
         stream.seek(-2, 1)  # reset to start
@@ -824,15 +831,15 @@ def read_object(
             return DictionaryObject.read_from_stream(stream, pdf, forced_encoding)
         else:
             return read_hex_string_from_stream(stream, forced_encoding)
-    elif idx == 2:
+    elif tok == b"[":
         return ArrayObject.read_from_stream(stream, pdf, forced_encoding)
-    elif idx == 3 or idx == 4:
+    elif tok == b"t" or tok == b"f":
         return BooleanObject.read_from_stream(stream)
-    elif idx == 5:
+    elif tok == b"(":
         return read_string_from_stream(stream, forced_encoding)
-    elif idx == 6:
+    elif tok == b"n":
         return NullObject.read_from_stream(stream)
-    elif idx == 7:
+    elif tok == b"%":
         # comment
         while tok not in (b"\r", b"\n"):
             tok = stream.read(1)
@@ -843,7 +850,7 @@ def read_object(
         tok = read_non_whitespace(stream)
         stream.seek(-1, 1)
         return read_object(stream, pdf, forced_encoding)
-    else:
+    elif tok in b"0123456789+-.":
         # number object OR indirect reference
         peek = stream.read(20)
         stream.seek(-len(peek), 1)  # reset to start
@@ -851,6 +858,10 @@ def read_object(
             return IndirectObject.read_from_stream(stream, pdf)
         else:
             return NumberObject.read_from_stream(stream)
+    else:
+        raise PdfReadError(
+            f"Invalid Elementary Object starting with {tok} @{stream.tell()}"  # type: ignore
+        )
 
 
 class Field(TreeObject):

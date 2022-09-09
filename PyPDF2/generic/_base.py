@@ -421,6 +421,14 @@ class NameObject(str, PdfObject):
         self.write_to_stream(stream, encryption_key)
 
     @staticmethod
+    def unnumber(sin: str) -> str:
+        i = sin.find("#")
+        while i >= 0:
+            sin = sin[:i] + chr(int(sin[i + 1 : i + 3], 16)) + sin[i + 3 :]
+            i = sin.find("#")
+        return sin
+
+    @staticmethod
     def read_from_stream(stream: StreamType, pdf: Any) -> "NameObject":  # PdfReader
         name = stream.read(1)
         if name != NameObject.surfix:
@@ -431,10 +439,11 @@ class NameObject(str, PdfObject):
                 ret = name.decode("utf-8")
             except (UnicodeEncodeError, UnicodeDecodeError):
                 ret = name.decode("gbk")
-            return NameObject(ret)
-        except (UnicodeEncodeError, UnicodeDecodeError) as e:
             # Name objects should represent irregular characters
             # with a '#' followed by the symbol's hex number
+            ret = NameObject.unnumber(ret)
+            return NameObject(ret)
+        except (UnicodeEncodeError, UnicodeDecodeError) as e:
             if not pdf.strict:
                 logger_warning("Illegal character in Name Object", __name__)
                 return NameObject(name)
