@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1662703661843,
+  "lastUpdate": 1662732408039,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -15754,6 +15754,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02544385496308365",
             "extra": "mean: 3.912891736999998 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "0ceaa6034e1e72d52a0a08992cc0bce3ca001ef8",
+          "message": "REL: 2.10.6\n\nRobustness (ROB):\n-  Fix infinite loop due to Invalid object (#1331)\n-  Fix image extraction issue with superfluous whitespaces (#1327)\n\nFull Changelog: https://github.com/py-pdf/PyPDF2/compare/2.10.5...2.10.6",
+          "timestamp": "2022-09-09T16:04:55+02:00",
+          "tree_id": "6f31b908164a782f72c5cd4bf209a3c929bb6d72",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/0ceaa6034e1e72d52a0a08992cc0bce3ca001ef8"
+        },
+        "date": 1662732407001,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0494997827747492,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007430763104365055",
+            "extra": "mean: 952.8348803999961 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.063564509299399,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006188811198812502",
+            "extra": "mean: 76.54878569230797 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.25554098356379396,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026143391410957",
+            "extra": "mean: 3.9132666160000014 sec\nrounds: 5"
           }
         ]
       }
