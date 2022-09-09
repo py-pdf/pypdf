@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1662658669464,
+  "lastUpdate": 1662703661843,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -15709,6 +15709,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.049913376758489454",
             "extra": "mean: 3.8158574470000017 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e6531a25325e7e0174b6a1ba03b57320b5227f6b",
+          "message": "ROB: Fix infinite loop due to Invalid object (#1331)\n\nFixes #1329\r\n\r\n* Prevent loop within dictionaries caused by objects not respecting the PDF standard\r\n* Fix cmap warnings due to \"numbered\" characters ( #2d instead of -)\r\n* Apply unnumbering to NameObject\r\n* Add _get_indirect_object for debugging and development\r\n* Add some missing seeks (no issue reported yet)",
+          "timestamp": "2022-09-09T08:06:35+02:00",
+          "tree_id": "cc954c99d0488fe2494f4e966a6903608975177a",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/e6531a25325e7e0174b6a1ba03b57320b5227f6b"
+        },
+        "date": 1662703661148,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0422303387063234,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013902408031828246",
+            "extra": "mean: 959.4808008000016 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 13.082988064089117,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0058102600128795276",
+            "extra": "mean: 76.43513814285693 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.25556546595554336,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02544385496308365",
+            "extra": "mean: 3.912891736999998 sec\nrounds: 5"
           }
         ]
       }
