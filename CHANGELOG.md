@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## Version 2.10.6, 2022-09-09
+
+### Robustness (ROB)
+-  Fix infinite loop due to Invalid object (#1331)
+-  Fix image extraction issue with superfluous whitespaces (#1327)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.10.5...2.10.6
+
 ## Version 2.10.5, 2022-09-04
 
 ### New Features (ENH)
