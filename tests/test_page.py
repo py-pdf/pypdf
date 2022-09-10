@@ -88,6 +88,10 @@ def test_page_operations(pdf_path, password):
 
     page: PageObject = reader.pages[0]
 
+    t = Transformation().translate(50, 100).rotate(90)
+    assert abs(t.ctm[4] + 100) < 0.01
+    assert abs(t.ctm[5] - 50) < 0.01
+
     transformation = Transformation().rotate(90).scale(1).translate(1, 1)
     page.add_transformation(transformation, expand=True)
     page.add_transformation((1, 0, 0, 0, 0, 0))
