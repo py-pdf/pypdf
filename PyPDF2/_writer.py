@@ -1662,7 +1662,7 @@ class PdfWriter:
         deprecate_with_replacement("getPageLayout", "page_layout")
         return self._get_page_layout()
 
-    def _set_page_layout(self, layout: Union[NameObject, LayoutType]) -> None:
+    def set_page_layout(self, layout: Union[NameObject, LayoutType]) -> None:
         """
         Set the page layout.
 
@@ -1704,7 +1704,7 @@ class PdfWriter:
         deprecate_with_replacement(
             "writer.setPageLayout(val)", "writer.page_layout = val"
         )
-        return self._set_page_layout(layout)
+        return self.set_page_layout(layout)
 
     @property
     def page_layout(self) -> Optional[LayoutType]:
@@ -1733,7 +1733,7 @@ class PdfWriter:
 
     @page_layout.setter
     def page_layout(self, layout: LayoutType) -> None:
-        self._set_page_layout(layout)
+        self.set_page_layout(layout)
 
     @property
     def pageLayout(self) -> Optional[LayoutType]:  # pragma: no cover
