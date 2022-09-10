@@ -10,7 +10,6 @@ from PyPDF2 import PdfReader
 from PyPDF2._reader import convert_to_int, convertToInt
 from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import PageAttributes as PG
-from PyPDF2.constants import Ressources as RES
 from PyPDF2.errors import (
     EmptyFileError,
     FileNotDecryptedError,
@@ -18,7 +17,6 @@ from PyPDF2.errors import (
     PdfReadWarning,
     WrongPasswordError,
 )
-from PyPDF2.filters import _xobj_to_image
 from PyPDF2.generic import Destination
 
 from . import get_pdf_from_url, normalize_warnings
