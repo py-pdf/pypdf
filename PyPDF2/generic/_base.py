@@ -422,7 +422,6 @@ class NameObject(str, PdfObject):
 
     @staticmethod
     def unnumber(sin: str) -> str:
-        i = 0
         i = sin.find("#", 0)
         while i >= 0:
             sin = sin[:i] + chr(int(sin[i + 1 : i + 3], 16)) + sin[i + 3 :]
