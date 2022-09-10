@@ -217,8 +217,8 @@ class Transformation:
             matrix[0][1],
             matrix[1][0],
             matrix[1][1],
-            matrix[0][2],
-            matrix[1][2],
+            matrix[2][0],
+            matrix[2][1],
         )
 
     def translate(self, tx: float = 0, ty: float = 0) -> "Transformation":
