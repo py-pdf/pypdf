@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1662732408039,
+  "lastUpdate": 1662828979756,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -15799,6 +15799,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.026143391410957",
             "extra": "mean: 3.9132666160000014 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mgorny@gentoo.org",
+            "name": "Michał Górny",
+            "username": "mgorny"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2bbccf743305748b6460170ef2e3b73828470541",
+          "message": "TST: Use pytest.warns() for warnings, and .raises() for exceptions (#1325)\n\nReplace the warning-as-exception checks with use of `pytest.warns()`.\r\n\r\nThat is more semantically correct and works correctly when the tests\r\nare run without -Werror (e.g. because -Werror tends to cause test suites\r\nto crash on irrelevant deprecation warnings from other components).\r\n\r\nWhile at it, replace the homegrown exception checks in test_orientations\r\nwith `pytest.raises()`.",
+          "timestamp": "2022-09-10T18:54:59+02:00",
+          "tree_id": "7ec6063f7081b18a9face80398202f2798ae1a09",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/2bbccf743305748b6460170ef2e3b73828470541"
+        },
+        "date": 1662828977419,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9115532677130727,
+            "unit": "iter/sec",
+            "range": "stddev: 0.032870517787145344",
+            "extra": "mean: 1.0970285944000011 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.177973103055768,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006943427400421153",
+            "extra": "mean: 89.46165738461349 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22211418479684508,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06513811632151847",
+            "extra": "mean: 4.502188822000008 sec\nrounds: 5"
           }
         ]
       }
