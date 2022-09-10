@@ -186,6 +186,12 @@ def test_NameObject():
         == "/paired()parentheses"
     )
     assert NameObject.read_from_stream(BytesIO(b"/A#42"), None) == "/AB"
+    assert (
+        NameObject.read_from_stream(
+            BytesIO(b"/#f1j#d4#aa#0c#ce#87#b4#b3#b0#23J#86#fe#2a#b2jYJ#94"), None
+        )
+        == "/ñjÔª\x0cÎ\x87´³°#J\x86þ*²jYJ\x94"
+    )
 
 
 def test_destination_fit_r():
