@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1662913351055,
+  "lastUpdate": 1662927665078,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -16024,6 +16024,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.026250994937033246",
             "extra": "mean: 3.8827478488 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "e23b9854e419a66f5b1cba645372cb35be8d6053",
+          "message": "REL: 2.10.7\n\nBug Fixes (BUG):\n-  Fix Error in transformations (#1341)\n-  Decode #23 in NameObject (#1342)\n\nTesting (TST):\n-  Use pytest.warns() for warnings, and .raises() for exceptions (#1325)\n\nFull Changelog: https://github.com/py-pdf/PyPDF2/compare/2.10.6...2.10.7",
+          "timestamp": "2022-09-11T22:19:06+02:00",
+          "tree_id": "2ce9e5c0e3080056107ab2adfa7aadccec9115b1",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/e23b9854e419a66f5b1cba645372cb35be8d6053"
+        },
+        "date": 1662927664330,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0585717828094796,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012322810822143038",
+            "extra": "mean: 944.6690495999917 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.949241850377343,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00453974619900126",
+            "extra": "mean: 77.22459828571816 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26186914662466326,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016786024806938984",
+            "extra": "mean: 3.8187011066000025 sec\nrounds: 5"
           }
         ]
       }
