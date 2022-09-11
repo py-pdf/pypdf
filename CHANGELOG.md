@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## Version 2.10.7, 2022-09-11
+
+### Bug Fixes (BUG)
+-  Fix Error in transformations (#1341)
+-  Decode #23 in NameObject (#1342)
+
+### Testing (TST)
+-  Use pytest.warns() for warnings, and .raises() for exceptions (#1325)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.10.6...2.10.7
+
+
 ## Version 2.10.6, 2022-09-09
 
 ### Robustness (ROB)
