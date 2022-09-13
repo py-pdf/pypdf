@@ -370,9 +370,15 @@ def test_fill_form():
     page = reader.pages[0]
 
     writer.add_page(page)
+    writer.add_page(PdfReader(RESOURCE_ROOT / "crazyones.pdf").pages[0])
 
     writer.update_page_form_field_values(
         writer.pages[0], {"foo": "some filled in text"}, flags=1
+    )
+
+    # check if no fields to fill in the page
+    writer.update_page_form_field_values(
+        writer.pages[1], {"foo": "some filled in text"}, flags=1
     )
 
     writer.update_page_form_field_values(
