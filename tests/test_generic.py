@@ -170,10 +170,6 @@ def test_readStringFromStream_excape_digit2():
     assert read_string_from_stream(stream) == "hello \x01\x02\x03\x04"
 
 
-class fake:
-    strict = False
-
-
 def test_NameObject(caplog):
     stream = BytesIO(b"x")
     with pytest.raises(PdfReadError) as exc:
@@ -193,7 +189,8 @@ def test_NameObject(caplog):
 
     assert (
         NameObject.read_from_stream(
-            BytesIO(b"/#f1j#d4#aa#0c#ce#87#b4#b3#b0#23J#86#fe#2a#b2jYJ#94"), fake()
+            BytesIO(b"/#f1j#d4#aa#0c#ce#87#b4#b3#b0#23J#86#fe#2a#b2jYJ#94"),
+            ReaderDummy(),
         )
         == "/ñjÔª\x0cÎ\x87´³°#J\x86þ*²jYJ\x94"
     )

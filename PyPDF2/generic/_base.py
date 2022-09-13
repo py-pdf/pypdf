@@ -466,9 +466,9 @@ class NameObject(str, PdfObject):
             # Name objects should represent irregular characters
             # with a '#' followed by the symbol's hex number
             name = NameObject.unnumber(name)
-            for enc in ("utf-8", "latin-1", "gbk"):
+            for enc in ("utf-8", "gbk"):
                 try:
-                    ret = name.decode("utf-8")
+                    ret = name.decode(enc)
                     return NameObject(ret)
                 except Exception:
                     pass
