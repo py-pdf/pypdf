@@ -380,3 +380,15 @@ def test_deprecate_bookmark_decorator_output():
     merger.merge(0, reader, import_bookmarks=True)
     first_oi_title = 'Valid Destination: Action /GoTo Named Destination "section.1"'
     assert merger.outline[0].title == first_oi_title
+
+
+def test_iss1344(caplog):
+    url = "https://github.com/py-pdf/PyPDF2/files/9549001/input.pdf"
+    name = "iss1344.pdf"
+    m = PdfMerger()
+    m.append(PdfReader(BytesIO(get_pdf_from_url(url, name=name))))
+    b = BytesIO()
+    m.write(b)
+    p = PdfReader(b).pages[0]
+    assert "/DIJMAC+Arial Black" in p._debug_for_extract()
+    assert "adresse où le malade peut être visité" in p.extract_text()
