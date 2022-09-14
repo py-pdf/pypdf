@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Tuple, Union, cast
 from ._codecs import adobe_glyphs, charset_encoding
 from ._utils import logger_warning
 from .errors import PdfReadWarning
-from .generic import DecodedStreamObject, DictionaryObject, NameObject
+from .generic import DecodedStreamObject, DictionaryObject
 
 
 # code freely inspired from @twiggy ; see #711
@@ -124,7 +124,7 @@ def parse_encoding(
     enc: Union(str, DictionaryObject) = ft["/Encoding"].get_object()  # type: ignore
     if isinstance(enc, str):
         try:
-            enc = NameObject.unnumber(enc)  # for #xx decoding
+            # allready done : enc = NameObject.unnumber(enc.encode()).decode()  # for #xx decoding
             if enc in charset_encoding:
                 encoding = charset_encoding[enc].copy()
             elif enc in _predefined_cmap:

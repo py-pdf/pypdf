@@ -170,7 +170,7 @@ def test_readStringFromStream_excape_digit2():
     assert read_string_from_stream(stream) == "hello \x01\x02\x03\x04"
 
 
-def test_NameObject():
+def test_NameObject(caplog):
     stream = BytesIO(b"x")
     with pytest.raises(PdfReadError) as exc:
         NameObject.read_from_stream(stream, None)
@@ -186,17 +186,49 @@ def test_NameObject():
         == "/paired()parentheses"
     )
     assert NameObject.read_from_stream(BytesIO(b"/A#42"), None) == "/AB"
+
     assert (
         NameObject.read_from_stream(
-            BytesIO(b"/#f1j#d4#aa#0c#ce#87#b4#b3#b0#23J#86#fe#2a#b2jYJ#94"), None
+            BytesIO(b"/#f1j#d4#aa#0c#ce#87#b4#b3#b0#23J#86#fe#2a#b2jYJ#94"),
+            ReaderDummy(),
         )
         == "/ñjÔª\x0cÎ\x87´³°#J\x86þ*²jYJ\x94"
     )
 
+    assert (NameObject.read_from_stream(BytesIO(b"/#JA#231f"), None)) == "/#JA#1f"
+
+    assert (
+        NameObject.read_from_stream(
+            BytesIO(b"/#e4#bd#a0#e5#a5#bd#e4#b8#96#e7#95#8c"), None
+        )
+    ) == "/你好世界"
+
+    # test write
+    b = BytesIO()
+    NameObject("/hello").write_to_stream(b, None)
+    assert bytes(b.getbuffer()) == b"/hello"
+
+    caplog.clear()
+    b = BytesIO()
+    NameObject("hello").write_to_stream(b, None)
+    assert bytes(b.getbuffer()) == b"hello"
+    assert "Incorrect first char" in caplog.text
+
+    caplog.clear()
+    b = BytesIO()
+    NameObject("/DIJMAC+Arial Black#1").write_to_stream(b, None)
+    assert bytes(b.getbuffer()) == b"/DIJMAC+Arial#20Black#231"
+    assert caplog.text == ""
+
+    b = BytesIO()
+    NameObject("/你好世界").write_to_stream(b, None)
+    assert bytes(b.getbuffer()) == b"/#E4#BD#A0#E5#A5#BD#E4#B8#96#E7#95#8C"
+    assert caplog.text == ""
+
 
 def test_destination_fit_r():
     d = Destination(
-        NameObject("title"),
+        TextStringObject("title"),
         NullObject(),
         NameObject(TF.FIT_R),
         FloatObject(0),
@@ -812,7 +844,7 @@ def test_name_object_invalid_decode():
     # strict:
     with pytest.raises(PdfReadError) as exc:
         NameObject.read_from_stream(stream, ReaderDummy(strict=True))
-    assert exc.value.args[0] == "Illegal character in Name Object"
+    assert "Illegal character in Name Object" in exc.value.args[0]
 
     # non-strict:
     stream.seek(0)

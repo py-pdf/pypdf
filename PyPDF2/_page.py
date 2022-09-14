@@ -1121,7 +1121,7 @@ class PageObject(DictionaryObject):
     def _debug_for_extract(self) -> str:  # pragma: no cover
         out = ""
         for ope, op in ContentStream(
-            self["/Contents"].getObject(), self.pdf, "bytes"
+            self["/Contents"].get_object(), self.pdf, "bytes"
         ).operations:
             if op == b"TJ":
                 s = [x for x in ope[0] if isinstance(x, str)]
