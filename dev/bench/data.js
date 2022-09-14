@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1662927665078,
+  "lastUpdate": 1663128156818,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -16069,6 +16069,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.016786024806938984",
             "extra": "mean: 3.8187011066000025 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "fb8be4065bfb26ec3bec71d8c6d65b3be3a2034f",
+          "message": "ROB: Improve NameObject reading/writing (#1345)\n\nThree kinds of changes were made in this PR\r\n\r\n1) _cmap.py : the str is coming from `/Encoding` which stores a NameObject : The conversion is already performed; no need to force it.\r\n2) _page.py : Replaced obsolete call in _debug_for_extract()\r\n3) _base.py :\r\n3.1) unnumber : all `#xx` should be performed prior to conversion to str (using utf-8) to allow multi language text\r\n3.2) read_from_stream : if utf-8 (normally the only one required) or gbk (kept to prevent regression) we will use charmap to get some sequence of chars\r\n3.3) renumber : added to recode in #xx sequence. renumber will also be compatible with utf-8 chars\r\n\r\nCloses #1344",
+          "timestamp": "2022-09-14T06:01:29+02:00",
+          "tree_id": "e59fb626573c7fa27583dcf0dbf9d357dafb238e",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/fb8be4065bfb26ec3bec71d8c6d65b3be3a2034f"
+        },
+        "date": 1663128156045,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0094067154877042,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011447237489045643",
+            "extra": "mean: 990.6809462000069 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.210191939633464,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008486277987090545",
+            "extra": "mean: 81.89879446154052 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24724322397220874,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017219825674530575",
+            "extra": "mean: 4.044600227799992 sec\nrounds: 5"
           }
         ]
       }
