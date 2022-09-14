@@ -18,6 +18,7 @@ history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/PyPDF2/gr
 * [Karvonen, Harry](https://github.com/Hatell/)
 * [KourFrost](https://github.com/KourFrost)
 * [Lightup1](https://github.com/Lightup1)
+* [Mérino, Antoine](https://github.com/Merinorus)
 * [Pinheiro, Arthur](https://github.com/xilopaint)
 * [pubpub-zz](https://github.com/pubpub-zz): involved in community development
 * [sietzeberends](https://github.com/sietzeberends)
