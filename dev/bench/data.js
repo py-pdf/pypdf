@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1663128156818,
+  "lastUpdate": 1663128678605,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -16114,6 +16114,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.017219825674530575",
             "extra": "mean: 4.044600227799992 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3cf80bf3a76e878c742d81b22029b334c7dea78a",
+          "message": "ENH: Add PageObject.user_unit property (#1336)\n\nCo-authored-by: Matthew Peveler <matt.peveler@gmail.com>",
+          "timestamp": "2022-09-14T06:10:10+02:00",
+          "tree_id": "74d7c7594da4d6a27fb63891b61ced2762488b3d",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/3cf80bf3a76e878c742d81b22029b334c7dea78a"
+        },
+        "date": 1663128677834,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.972632710888716,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01765523186575038",
+            "extra": "mean: 1.0281373316000013 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.314642696435117,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007632295864917567",
+            "extra": "mean: 88.38104983333395 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24281006962622206,
+            "unit": "iter/sec",
+            "range": "stddev: 0.052753750665905014",
+            "extra": "mean: 4.118445341 sec\nrounds: 5"
           }
         ]
       }
