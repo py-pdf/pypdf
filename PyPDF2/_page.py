@@ -294,7 +294,7 @@ class PageObject(DictionaryObject):
     @property
     def user_unit(self) -> float:
         """
-        A read-only positive number giving the size of default user space units.
+        A read-only positive number giving the size of user space units.
 
         It is in multiples of 1/72 inch. Hence a value of 1 means a user space
         unit is 1/72 inch, and a value of 3 means that a user space unit is
