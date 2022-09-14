@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1663128678605,
+  "lastUpdate": 1663154350200,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -16159,6 +16159,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.052753750665905014",
             "extra": "mean: 4.118445341 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "7c96d13ad9404076730846a11284ed0f611cab4d",
+          "message": "DOC: Add Antoine Mérino as a contributor",
+          "timestamp": "2022-09-14T13:17:56+02:00",
+          "tree_id": "5ee5bc6f0bed3a809a0799badbd3dd54d4e5b81f",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/7c96d13ad9404076730846a11284ed0f611cab4d"
+        },
+        "date": 1663154348624,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.4684095944166569,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005770408644948413",
+            "extra": "mean: 681.0088982000025 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 18.378171551533548,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0033648545881603477",
+            "extra": "mean: 54.412377052632095 msec\nrounds: 19"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.36223994359127704,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010577205321008438",
+            "extra": "mean: 2.760601136600002 sec\nrounds: 5"
           }
         ]
       }
