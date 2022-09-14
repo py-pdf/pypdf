@@ -101,6 +101,19 @@ def test_read_metadata(pdf_path, expected):
 
 
 @pytest.mark.parametrize(
+    "pdf_path", [EXTERNAL_ROOT / "017-unreadable-meta-data/unreadablemetadata.pdf"]
+)
+def test_broken_meta_data(pdf_path):
+    with open(pdf_path, "rb") as f:
+        reader = PdfReader(f)
+        with pytest.raises(
+            PdfReadError,
+            match=r"trailer not found or does not point to document information directory",
+        ):
+            reader.metadata
+
+
+@pytest.mark.parametrize(
     "src",
     [
         RESOURCE_ROOT / "crazyones.pdf",
@@ -1094,3 +1107,40 @@ def test_wrong_password_error():
 def test_get_page_number_by_indirect():
     reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
     reader._get_page_number_by_indirect(1)
+
+
+def test_corrupted_xref_table():
+    # issue #1292
+    url = "https://github.com/py-pdf/PyPDF2/files/9444747/BreezeManual.orig.pdf"
+    name = "BreezeMan1.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader.pages[0].extract_text()
+    url = "https://github.com/py-pdf/PyPDF2/files/9444748/BreezeManual.failed.pdf"
+    name = "BreezeMan2.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader.pages[0].extract_text()
+
+
+def test_reader(caplog):
+    # iss #1273
+    url = "https://github.com/py-pdf/PyPDF2/files/9464742/shiv_resume.pdf"
+    name = "shiv_resume.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    assert "Previous trailer can not be read" in caplog.text
+    caplog.clear()
+    # first call requires some reparations...
+    reader.pages[0].extract_text()
+    assert "repaired" in caplog.text
+    assert "found" in caplog.text
+    caplog.clear()
+    # ...and now no more required
+    reader.pages[0].extract_text()
+    assert caplog.text == ""
+
+
+def test_zeroing_xref():
+    # iss #328
+    url = "https://github.com/py-pdf/PyPDF2/files/9066120/UTA_OSHA_3115_Fall_Protection_Training_09162021_.pdf"
+    name = "UTA_OSHA.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    len(reader.pages)

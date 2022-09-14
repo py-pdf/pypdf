@@ -17,7 +17,7 @@ from PyPDF2 import PdfMerger, PdfReader, PdfWriter
 from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.constants import Ressources as RES
-from PyPDF2.errors import PdfReadError, PdfReadWarning
+from PyPDF2.errors import PdfReadWarning
 from PyPDF2.filters import _xobj_to_image
 
 from . import get_pdf_from_url, normalize_warnings
@@ -27,6 +27,50 @@ PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 sys.path.append(str(PROJECT_ROOT))
+
+
+def test_basic_features(tmp_path):
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    writer = PdfWriter()
+
+    assert len(reader.pages) == 1
+
+    # add page 1 from input1 to output document, unchanged
+    writer.add_page(reader.pages[0])
+
+    # add page 2 from input1, but rotated clockwise 90 degrees
+    writer.add_page(reader.pages[0].rotate(90))
+
+    # add page 3 from input1, but first add a watermark from another PDF:
+    page3 = reader.pages[0]
+    watermark_pdf = pdf_path
+    watermark = PdfReader(watermark_pdf)
+    page3.merge_page(watermark.pages[0])
+    writer.add_page(page3)
+
+    # add page 4 from input1, but crop it to half size:
+    page4 = reader.pages[0]
+    page4.mediabox.upper_right = (
+        page4.mediabox.right / 2,
+        page4.mediabox.top / 2,
+    )
+    del page4.mediabox
+    writer.add_page(page4)
+
+    # add some Javascript to launch the print window on opening this PDF.
+    # the password dialog may prevent the print dialog from being shown,
+    # comment the the encription lines, if that's the case, to try this out
+    writer.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
+
+    # encrypt your new PDF and add a password
+    password = "secret"
+    writer.encrypt(password)
+
+    # finally, write "output" to PyPDF2-output.pdf
+    write_path = tmp_path / "PyPDF2-output.pdf"
+    with open(write_path, "wb") as output_stream:
+        writer.write(output_stream)
 
 
 def test_dropdown_items():
@@ -216,62 +260,26 @@ def test_extract_textbench(enable, url, pages, print_result=False):
 
 def test_orientations():
     p = PdfReader(RESOURCE_ROOT / "test Orient.pdf").pages[0]
-    try:
+    with pytest.warns(DeprecationWarning):
         p.extract_text("", "")
-    except DeprecationWarning:
-        pass
-    else:
-        raise Exception("DeprecationWarning expected")
-    try:
+    with pytest.warns(DeprecationWarning):
         p.extract_text("", "", 0)
-    except DeprecationWarning:
-        pass
-    else:
-        raise Exception("DeprecationWarning expected")
-    try:
+    with pytest.warns(DeprecationWarning):
         p.extract_text("", "", 0, 200)
-    except DeprecationWarning:
-        pass
-    else:
-        raise Exception("DeprecationWarning expected")
 
-    try:
+    with pytest.warns(DeprecationWarning):
         p.extract_text(Tj_sep="", TJ_sep="")
-    except DeprecationWarning:
-        pass
-    else:
-        raise Exception("DeprecationWarning expected")
     assert findall("\\((.)\\)", p.extract_text()) == ["T", "B", "L", "R"]
-    try:
+    with pytest.raises(Exception):
         p.extract_text(None)
-    except Exception:
-        pass
-    else:
-        raise Exception("Argument 1 check invalid")
-    try:
+    with pytest.raises(Exception):
         p.extract_text("", 0)
-    except Exception:
-        pass
-    else:
-        raise Exception("Argument 2 check invalid")
-    try:
+    with pytest.raises(Exception):
         p.extract_text("", "", None)
-    except Exception:
-        pass
-    else:
-        raise Exception("Argument 3 check invalid")
-    try:
+    with pytest.raises(Exception):
         p.extract_text("", "", 0, "")
-    except Exception:
-        pass
-    else:
-        raise Exception("Argument 4 check invalid")
-    try:
+    with pytest.raises(Exception):
         p.extract_text(0, "")
-    except Exception:
-        pass
-    else:
-        raise Exception("Argument 1 new syntax check invalid")
 
     p.extract_text(0, 0)
     p.extract_text(orientations=0)
@@ -321,7 +329,7 @@ def test_overlay(base_path, overlay_path):
         writer.write(fp)
 
     # Cleanup
-    os.remove("dont_commit_overlay.pdf")
+    os.remove("dont_commit_overlay.pdf")  # remove for manual inspection
 
 
 @pytest.mark.parametrize(
@@ -333,16 +341,13 @@ def test_overlay(base_path, overlay_path):
         )
     ],
 )
-def test_merge_with_warning(url, name):
+def test_merge_with_warning(tmp_path, url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
     merger = PdfMerger()
     merger.append(reader)
     # This could actually be a performance bottleneck:
-    merger.write("tmp.merged.pdf")
-
-    # Cleanup
-    os.remove("tmp.merged.pdf")
+    merger.write(tmp_path / "tmp.merged.pdf")
 
 
 @pytest.mark.parametrize(
@@ -354,15 +359,12 @@ def test_merge_with_warning(url, name):
         )
     ],
 )
-def test_merge(url, name):
+def test_merge(tmp_path, url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
     merger = PdfMerger()
     merger.append(reader)
-    merger.write("tmp.merged.pdf")
-
-    # Cleanup
-    os.remove("tmp.merged.pdf")
+    merger.write(tmp_path / "tmp.merged.pdf")
 
 
 @pytest.mark.parametrize(
@@ -381,42 +383,88 @@ def test_get_metadata(url, name):
 
 
 @pytest.mark.parametrize(
-    ("url", "name"),
+    ("url", "name", "strict", "exception"),
     [
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/938/938702.pdf",
             "tika-938702.pdf",
+            False,
+            None,  # iss #1090 is now fixed
         ),
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/942/942358.pdf",
             "tika-942358.pdf",
+            False,
+            None,
         ),
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/911/911260.pdf",
             "tika-911260.pdf",
+            False,
+            None,
         ),
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/992/992472.pdf",
             "tika-992472.pdf",
+            False,
+            None,
         ),
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/978/978477.pdf",
             "tika-978477.pdf",
+            False,
+            None,
         ),
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/960/960317.pdf",
             "tika-960317.pdf",
+            False,
+            None,
         ),
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/930/930513.pdf",
             "tika-930513.pdf",
+            False,
+            None,
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/918/918113.pdf",
+            "tika-918113.pdf",
+            True,
+            None,
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/940/940704.pdf",
+            "tika-940704.pdf",
+            True,
+            None,
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/976/976488.pdf",
+            "tika-976488.pdf",
+            True,
+            None,
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/948/948176.pdf",
+            "tika-948176.pdf",
+            True,
+            None,
         ),
     ],
 )
-def test_extract_text(url, name):
+def test_extract_text(url, name, strict, exception):
     data = BytesIO(get_pdf_from_url(url, name=name))
-    reader = PdfReader(data)
-    reader.metadata
+    reader = PdfReader(data, strict=strict)
+    if not exception:
+        for page in reader.pages:
+            page.extract_text()
+    else:
+        exc, exc_text = exception
+        with pytest.raises(exc) as ex_info:
+            for page in reader.pages:
+                page.extract_text()
+        assert ex_info.value.args[0] == exc_text
 
 
 @pytest.mark.parametrize(
@@ -428,37 +476,41 @@ def test_extract_text(url, name):
         ),
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/957/957304.pdf",
-            "tika-938702.pdf",
+            "tika-957304.pdf",
         ),
     ],
 )
 def test_compress_raised(url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
-    # TODO: which page exactly?
-    # TODO: Is it reasonable to have an exception here?
-    with pytest.raises(PdfReadError) as exc:
-        for page in reader.pages:
-            page.compress_content_streams()
-    assert exc.value.args[0] == "Unexpected end of stream"
+    # no more error since iss #1090 fix
+    for page in reader.pages:
+        page.compress_content_streams()
 
 
 @pytest.mark.parametrize(
-    ("url", "name"),
+    ("url", "name", "strict"),
     [
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/915/915194.pdf",
             "tika-915194.pdf",
+            False,
         ),
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/950/950337.pdf",
             "tika-950337.pdf",
+            False,
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/962/962292.pdf",
+            "tika-962292.pdf",
+            True,
         ),
     ],
 )
-def test_compress(url, name):
+def test_compress(url, name, strict):
     data = BytesIO(get_pdf_from_url(url, name=name))
-    reader = PdfReader(data)
+    reader = PdfReader(data, strict=strict)
     # TODO: which page exactly?
     # TODO: Is it reasonable to have an exception here?
     for page in reader.pages:
@@ -474,17 +526,15 @@ def test_compress(url, name):
         ),
     ],
 )
-def test_get_fields_warns(caplog, url, name):
+def test_get_fields_warns(tmp_path, caplog, url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
-    with open("tmp.txt", "w") as fp:
+    write_path = tmp_path / "tmp.txt"
+    with open(write_path, "w") as fp:
         retrieved_fields = reader.get_fields(fileobj=fp)
 
     assert retrieved_fields == {}
     assert normalize_warnings(caplog.text) == ["Object 2 0 not defined."]
-
-    # Cleanup
-    os.remove("tmp.txt")
 
 
 @pytest.mark.parametrize(
@@ -496,16 +546,14 @@ def test_get_fields_warns(caplog, url, name):
         ),
     ],
 )
-def test_get_fields_no_warning(url, name):
+def test_get_fields_no_warning(tmp_path, url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
-    with open("tmp.txt", "w") as fp:
+    write_path = tmp_path / "tmp.txt"
+    with open(write_path, "w") as fp:
         retrieved_fields = reader.get_fields(fileobj=fp)
 
     assert len(retrieved_fields) == 10
-
-    # Cleanup
-    os.remove("tmp.txt")
 
 
 def test_scale_rectangle_indirect_object():
@@ -773,9 +821,50 @@ def test_get_fonts(url, name, strict):
             "tika-942303.pdf",
             True,
         ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/935/935981.pdf",
+            "tika-935981.pdf",
+            True,
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/967/967399.pdf",
+            "tika-967399.pdf",
+            True,
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/935/935981.pdf",
+            "tika-935981.pdf",
+            False,
+        ),
     ],
 )
 def test_get_xmp(url, name, strict):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data, strict=strict)
-    reader.xmp_metadata
+    xmp_info = reader.xmp_metadata
+    if xmp_info:
+        xmp_info.dc_contributor
+        xmp_info.dc_coverage
+        xmp_info.dc_creator
+        xmp_info.dc_date
+        xmp_info.dc_description
+        xmp_info.dc_format
+        xmp_info.dc_identifier
+        xmp_info.dc_language
+        xmp_info.dc_publisher
+        xmp_info.dc_relation
+        xmp_info.dc_rights
+        xmp_info.dc_source
+        xmp_info.dc_subject
+        xmp_info.dc_title
+        xmp_info.dc_type
+        xmp_info.pdf_keywords
+        xmp_info.pdf_pdfversion
+        xmp_info.pdf_producer
+        xmp_info.xmp_create_date
+        xmp_info.xmp_modify_date
+        xmp_info.xmp_metadata_date
+        xmp_info.xmp_creator_tool
+        xmp_info.xmpmm_document_id
+        xmp_info.xmpmm_instance_id
+        xmp_info.custom_properties

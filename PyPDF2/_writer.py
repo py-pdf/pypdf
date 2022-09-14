@@ -247,7 +247,6 @@ class PdfWriter:
 
             need_appearances = NameObject(InteractiveFormDictEntries.NeedAppearances)
             self._root_object[CatalogDictionary.ACRO_FORM][need_appearances] = BooleanObject(True)  # type: ignore
-
         except Exception as exc:
             logger.error("set_need_appearances_writer() catch : ", repr(exc))
 
@@ -1460,7 +1459,7 @@ class PdfWriter:
         pg_dict = cast(DictionaryObject, self.get_object(self._pages))
         pages = cast(List[IndirectObject], pg_dict[PA.KIDS])
         for page in pages:
-            page_ref = cast(Dict[str, Any], self.get_object(page))
+            page_ref = cast(PageObject, self.get_object(page))
             content = page_ref["/Contents"].get_object()
             if not isinstance(content, ContentStream):
                 content = ContentStream(content, page_ref)

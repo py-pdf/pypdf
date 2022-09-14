@@ -72,6 +72,42 @@ from .generic import (
     encode_pdfdocencoding,
 )
 
+CUSTOM_RTL_MIN: int = -1
+CUSTOM_RTL_MAX: int = -1
+CUSTOM_RTL_SPECIAL_CHARS: List[int] = []
+
+
+def set_custom_rtl(
+    _min: Union[str, int, None] = None,
+    _max: Union[str, int, None] = None,
+    specials: Union[str, List[int], None] = None,
+) -> Tuple[int, int, List[int]]:
+    """
+    changes the Right-To-Left and special characters customed parameters:
+
+    _min -> CUSTOM_RTL_MIN : None does not change the value ; int or str(converted to ascii code) ; -1 by default
+    _max -> CUSTOM_RTL_MAX : None does not change the value ; int or str(converted to ascii code) ; -1 by default
+        those values define a range of custom characters that will be written right to left ;
+        [-1;-1] set no additional range to be converter
+
+    specials -> CUSTOM_RTL_SPECIAL_CHARS: None does not change the current value; str to be converted to list or list of ascii codes ; [] by default
+        list of codes that will inserted applying the current insertion order ; this consist normally in a list of punctuation characters
+    """
+    global CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
+    if isinstance(_min, int):
+        CUSTOM_RTL_MIN = _min
+    elif isinstance(_min, str):
+        CUSTOM_RTL_MIN = ord(_min)
+    if isinstance(_max, int):
+        CUSTOM_RTL_MAX = _max
+    elif isinstance(_max, str):
+        CUSTOM_RTL_MAX = ord(_max)
+    if isinstance(specials, str):
+        CUSTOM_RTL_SPECIAL_CHARS = [ord(x) for x in specials]
+    elif isinstance(specials, list):
+        CUSTOM_RTL_SPECIAL_CHARS = specials
+    return CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
+
 
 def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
     retval: Union[None, RectangleObject, IndirectObject] = self.get(name)
@@ -97,8 +133,7 @@ def getRectangle(
 
 
 def _set_rectangle(self: Any, name: str, value: Union[RectangleObject, float]) -> None:
-    if not isinstance(name, NameObject):
-        name = NameObject(name)
+    name = NameObject(name)
     self[name] = value
 
 
@@ -182,8 +217,8 @@ class Transformation:
             matrix[0][1],
             matrix[1][0],
             matrix[1][1],
-            matrix[0][2],
-            matrix[1][2],
+            matrix[2][0],
+            matrix[2][1],
         )
 
     def translate(self, tx: float = 0, ty: float = 0) -> "Transformation":
@@ -255,6 +290,17 @@ class PageObject(DictionaryObject):
         data = super().hash_value_data()
         data += b"%d" % id(self)
         return data
+
+    @property
+    def user_unit(self) -> float:
+        """
+        A read-only positive number giving the size of user space units.
+
+        It is in multiples of 1/72 inch. Hence a value of 1 means a user space
+        unit is 1/72 inch, and a value of 3 means that a user space unit is
+        3/72 inch.
+        """
+        return self.get(PG.USER_UNIT, 1)
 
     @staticmethod
     def create_blank_page(
@@ -917,11 +963,11 @@ class PageObject(DictionaryObject):
         :param float sy: The scaling factor on vertical axis.
         """
         self.add_transformation((sx, 0, 0, sy, 0, 0))
-        self.mediabox = self.mediabox.scale(sx, sy)
         self.cropbox = self.cropbox.scale(sx, sy)
         self.artbox = self.artbox.scale(sx, sy)
         self.bleedbox = self.bleedbox.scale(sx, sy)
         self.trimbox = self.trimbox.scale(sx, sy)
+        self.mediabox = self.mediabox.scale(sx, sy)
         if PG.VP in self:
             viewport = self[PG.VP]
             if isinstance(viewport, ArrayObject):
@@ -1086,7 +1132,7 @@ class PageObject(DictionaryObject):
     def _debug_for_extract(self) -> str:  # pragma: no cover
         out = ""
         for ope, op in ContentStream(
-            self["/Contents"].getObject(), self.pdf, "bytes"
+            self["/Contents"].get_object(), self.pdf, "bytes"
         ).operations:
             if op == b"TJ":
                 s = [x for x in ope[0] if isinstance(x, str)]
@@ -1105,6 +1151,18 @@ class PageObject(DictionaryObject):
                     out += enc_repr + "\n"
                 except Exception:
                     pass
+                try:
+                    out += (
+                        self["/Resources"]["/Font"][fo][  # type:ignore
+                            "/ToUnicode"
+                        ]
+                        .get_data()
+                        .decode()
+                        + "\n"
+                    )
+                except Exception:
+                    pass
+
         except KeyError:
             out += "No Font\n"
         return out
@@ -1140,6 +1198,9 @@ class PageObject(DictionaryObject):
         this function, as it will change if this function is made more
         sophisticated.
 
+        Arabic, Hebrew,... are extracted in the good order. If required an custom RTL range of characters
+        can be defined; see function set_custom_rtl
+
         Additionally you can provide visitor-methods to get informed on all operands and all text-objects.
         For example in some PDF files this can be useful to parse tables.
 
@@ -1166,10 +1227,19 @@ class PageObject(DictionaryObject):
         """
         text: str = ""
         output: str = ""
+        rtl_dir: bool = False  # right-to-left
         cmaps: Dict[
             str, Tuple[str, float, Union[str, Dict[int, str]], Dict[str, str]]
         ] = {}
-        resources_dict = cast(DictionaryObject, obj["/Resources"])
+        try:
+            objr = obj
+            while NameObject("/Resources") not in objr:
+                # /Resources can be inherited sometimes so we look to parents
+                objr = objr["/Parent"].get_object()
+                # if no parents we will have no /Resources will be available => an exception wil be raised
+            resources_dict = cast(DictionaryObject, objr["/Resources"])
+        except Exception:
+            return ""  # no resources means no text is possible (no font) we consider the file as not damaged, no need to check for TJ or Tj
         if "/Font" in resources_dict:
             for f in cast(DictionaryObject, resources_dict["/Font"]):
                 cmaps[f] = build_char_map(f, space_width, obj)
@@ -1235,7 +1305,9 @@ class PageObject(DictionaryObject):
             return _space_width / 1000.0
 
         def process_operation(operator: bytes, operands: List) -> None:
-            nonlocal cm_matrix, cm_stack, tm_matrix, tm_prev, output, text, char_scale, space_scale, _space_width, TL, font_size, cmap, orientations, visitor_text
+            nonlocal cm_matrix, cm_stack, tm_matrix, tm_prev, output, text, char_scale, space_scale, _space_width, TL, font_size, cmap, orientations, rtl_dir, visitor_text
+            global CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
+
             check_crlf_space: bool = False
             # Table 5.4 page 405
             if operator == b"BT":
@@ -1281,6 +1353,7 @@ class PageObject(DictionaryObject):
                     ) = cm_stack.pop()
                 except Exception:
                     cm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+                # rtl_dir = False
             elif operator == b"cm":
                 output += text
                 if visitor_text is not None:
@@ -1297,6 +1370,7 @@ class PageObject(DictionaryObject):
                     ],
                     cm_matrix,
                 )
+                # rtl_dir = False
             # Table 5.2 page 398
             elif operator == b"Tz":
                 char_scale = float(operands[0]) / 100.0
@@ -1310,6 +1384,7 @@ class PageObject(DictionaryObject):
                     if visitor_text is not None:
                         visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
                 text = ""
+                # rtl_dir = False
                 try:
                     # charMapTuple: font_type, float(sp_width / 2), encoding, map_dict, font-dictionary
                     charMapTuple = cmaps[operands[0]]
@@ -1384,8 +1459,42 @@ class PageObject(DictionaryObject):
                                     for x in tt
                                 ]
                             )
-
-                        text += "".join([cmap[1][x] if x in cmap[1] else x for x in t])
+                        # "\u0590 - \u08FF \uFB50 - \uFDFF"
+                        for x in "".join(
+                            [cmap[1][x] if x in cmap[1] else x for x in t]
+                        ):
+                            xx = ord(x)
+                            # fmt: off
+                            if (  # cases where the current inserting order is kept (punctuation,...)
+                                (xx <= 0x2F)                        # punctuations but...
+                                or (0x3A <= xx and xx <= 0x40)      # numbers (x30-39)
+                                or (0x2000 <= xx and xx <= 0x206F)  # upper punctuations..
+                                or (0x20A0 <= xx and xx <= 0x21FF)  # but (numbers) indices/exponents
+                                or xx in CUSTOM_RTL_SPECIAL_CHARS   # customized....
+                            ):
+                                text = x + text if rtl_dir else text + x
+                            elif (  # right-to-left characters set
+                                (0x0590 <= xx and xx <= 0x08FF)
+                                or (0xFB1D <= xx and xx <= 0xFDFF)
+                                or (0xFE70 <= xx and xx <= 0xFEFF)
+                                or (CUSTOM_RTL_MIN <= xx and xx <= CUSTOM_RTL_MAX)
+                            ):
+                                # print("<",xx,x)
+                                if not rtl_dir:
+                                    rtl_dir = True
+                                    # print("RTL",text,"*")
+                                    output += text
+                                    text = ""
+                                text = x + text
+                            else:  # left-to-right
+                                # print(">",xx,x,end="")
+                                if rtl_dir:
+                                    rtl_dir = False
+                                    # print("LTR",text,"*")
+                                    output += text
+                                    text = ""
+                                text = text + x
+                            # fmt: on
             else:
                 return None
             if check_crlf_space:
@@ -1402,40 +1511,44 @@ class PageObject(DictionaryObject):
                     if o == 0:
                         if deltaY < -0.8 * f:
                             if (output + text)[-1] != "\n":
-                                text += "\n"
+                                output += text + "\n"
+                                text = ""
                         elif (
                             abs(deltaY) < f * 0.3
-                            and abs(deltaX) > current_spacewidth() * f * 10
+                            and abs(deltaX) > current_spacewidth() * f * 15
                         ):
                             if (output + text)[-1] != " ":
                                 text += " "
                     elif o == 180:
                         if deltaY > 0.8 * f:
                             if (output + text)[-1] != "\n":
-                                text += "\n"
+                                output += text + "\n"
+                                text = ""
                         elif (
                             abs(deltaY) < f * 0.3
-                            and abs(deltaX) > current_spacewidth() * f * 10
+                            and abs(deltaX) > current_spacewidth() * f * 15
                         ):
                             if (output + text)[-1] != " ":
                                 text += " "
                     elif o == 90:
                         if deltaX > 0.8 * f:
                             if (output + text)[-1] != "\n":
-                                text += "\n"
+                                output += text + "\n"
+                                text = ""
                         elif (
                             abs(deltaX) < f * 0.3
-                            and abs(deltaY) > current_spacewidth() * f * 10
+                            and abs(deltaY) > current_spacewidth() * f * 15
                         ):
                             if (output + text)[-1] != " ":
                                 text += " "
                     elif o == 270:
                         if deltaX < -0.8 * f:
                             if (output + text)[-1] != "\n":
-                                text += "\n"
+                                output += text + "\n"
+                                text = ""
                         elif (
                             abs(deltaX) < f * 0.3
-                            and abs(deltaY) > current_spacewidth() * f * 10
+                            and abs(deltaY) > current_spacewidth() * f * 15
                         ):
                             if (output + text)[-1] != " ":
                                 text += " "

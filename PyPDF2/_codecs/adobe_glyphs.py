@@ -13425,3 +13425,13 @@ adobe_glyphs = {
     "/zukatakana": "\u30BA",
     "/zwarakay": "\u0659",
 }
+
+
+def _complete() -> None:
+    global adobe_glyphs
+    for i in range(256):
+        adobe_glyphs[f"/a{i}"] = chr(i)
+    adobe_glyphs["/.notdef"] = "□"
+
+
+_complete()

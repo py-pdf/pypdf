@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 import PyPDF2
@@ -83,12 +82,12 @@ def merge():
     merger.set_page_layout("/SinglePage")
     merger.set_page_mode("/UseThumbs")
 
-    tmp_path = "dont_commit_merged.pdf"
-    merger.write(tmp_path)
+    write_path = "dont_commit_merged.pdf"
+    merger.write(write_path)
     merger.close()
 
     # Check if outline is correct
-    reader = PyPDF2.PdfReader(tmp_path)
+    reader = PyPDF2.PdfReader(write_path)
     assert [
         el.title for el in reader._get_outline() if isinstance(el, Destination)
     ] == [
@@ -104,9 +103,6 @@ def merge():
         "Baz",
         "True",
     ]
-
-    # Clean up
-    os.remove(tmp_path)
 
 
 def test_merge(benchmark):

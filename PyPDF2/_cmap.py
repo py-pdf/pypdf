@@ -130,6 +130,7 @@ def parse_encoding(
     enc: Union(str, DictionaryObject) = ft["/Encoding"].get_object()  # type: ignore
     if isinstance(enc, str):
         try:
+            # allready done : enc = NameObject.unnumber(enc.encode()).decode()  # for #xx decoding
             if enc in charset_encoding:
                 encoding = charset_encoding[enc].copy()
             elif enc in _predefined_cmap:
@@ -186,10 +187,13 @@ def parse_to_unicode(
         return {}, space_code, []
     process_rg: bool = False
     process_char: bool = False
+    multiline_rg: Union[
+        None, Tuple[int, int]
+    ] = None  # tuple = (current_char, remaining size) ; cf #1285 for example of file
     cm = prepare_cm(ft)
     for l in cm.split(b"\n"):
-        process_rg, process_char = process_cm_line(
-            l.strip(b" "), process_rg, process_char, map_dict, int_entry
+        process_rg, process_char, multiline_rg = process_cm_line(
+            l.strip(b" "), process_rg, process_char, multiline_rg, map_dict, int_entry
         )
 
     for a, value in map_dict.items():
@@ -234,11 +238,12 @@ def process_cm_line(
     l: bytes,
     process_rg: bool,
     process_char: bool,
+    multiline_rg: Union[None, Tuple[int, int]],
     map_dict: Dict[Any, Any],
     int_entry: List[int],
-) -> Tuple[bool, bool]:
+) -> Tuple[bool, bool, Union[None, Tuple[int, int]]]:
     if l in (b"", b" ") or l[0] == 37:  # 37 = %
-        return process_rg, process_char
+        return process_rg, process_char, multiline_rg
     if b"beginbfrange" in l:
         process_rg = True
     elif b"endbfrange" in l:
@@ -248,22 +253,29 @@ def process_cm_line(
     elif b"endbfchar" in l:
         process_char = False
     elif process_rg:
-        parse_bfrange(l, map_dict, int_entry)
+        multiline_rg = parse_bfrange(l, map_dict, int_entry, multiline_rg)
     elif process_char:
         parse_bfchar(l, map_dict, int_entry)
-    return process_rg, process_char
+    return process_rg, process_char, multiline_rg
 
 
-def parse_bfrange(l: bytes, map_dict: Dict[Any, Any], int_entry: List[int]) -> None:
+def parse_bfrange(
+    l: bytes,
+    map_dict: Dict[Any, Any],
+    int_entry: List[int],
+    multiline_rg: Union[None, Tuple[int, int]],
+) -> Union[None, Tuple[int, int]]:
     lst = [x for x in l.split(b" ") if x]
-    a = int(lst[0], 16)
-    b = int(lst[1], 16)
+    closure_found = False
     nbi = len(lst[0])
     map_dict[-1] = nbi // 2
     fmt = b"%%0%dX" % nbi
-    if lst[2] == b"[":
-        for sq in lst[3:]:
+    if multiline_rg is not None:
+        a = multiline_rg[0]  # a, b not in the current line
+        b = multiline_rg[1]
+        for sq in lst[1:]:
             if sq == b"]":
+                closure_found = True
                 break
             map_dict[
                 unhexlify(fmt % a).decode(
@@ -274,18 +286,36 @@ def parse_bfrange(l: bytes, map_dict: Dict[Any, Any], int_entry: List[int]) -> N
             int_entry.append(a)
             a += 1
     else:
-        c = int(lst[2], 16)
-        fmt2 = b"%%0%dX" % max(4, len(lst[2]))
-        while a <= b:
-            map_dict[
-                unhexlify(fmt % a).decode(
-                    "charmap" if map_dict[-1] == 1 else "utf-16-be",
-                    "surrogatepass",
-                )
-            ] = unhexlify(fmt2 % c).decode("utf-16-be", "surrogatepass")
-            int_entry.append(a)
-            a += 1
-            c += 1
+        a = int(lst[0], 16)
+        b = int(lst[1], 16)
+        if lst[2] == b"[":
+            for sq in lst[3:]:
+                if sq == b"]":
+                    closure_found = True
+                    break
+                map_dict[
+                    unhexlify(fmt % a).decode(
+                        "charmap" if map_dict[-1] == 1 else "utf-16-be",
+                        "surrogatepass",
+                    )
+                ] = unhexlify(sq).decode("utf-16-be", "surrogatepass")
+                int_entry.append(a)
+                a += 1
+        else:  # case without list
+            c = int(lst[2], 16)
+            fmt2 = b"%%0%dX" % max(4, len(lst[2]))
+            closure_found = True
+            while a <= b:
+                map_dict[
+                    unhexlify(fmt % a).decode(
+                        "charmap" if map_dict[-1] == 1 else "utf-16-be",
+                        "surrogatepass",
+                    )
+                ] = unhexlify(fmt2 % c).decode("utf-16-be", "surrogatepass")
+                int_entry.append(a)
+                a += 1
+                c += 1
+    return None if closure_found else (a, b)
 
 
 def parse_bfchar(l: bytes, map_dict: Dict[Any, Any], int_entry: List[int]) -> None:
@@ -296,7 +326,7 @@ def parse_bfchar(l: bytes, map_dict: Dict[Any, Any], int_entry: List[int]) -> No
         # placeholder (see above) means empty string
         if lst[1] != b".":
             map_to = unhexlify(lst[1]).decode(
-                "utf-16-be", "surrogatepass"
+                "charmap" if len(lst[1]) < 4 else "utf-16-be", "surrogatepass"
             )  # join is here as some cases where the code was split
         map_dict[
             unhexlify(lst[0]).decode(

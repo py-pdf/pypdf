@@ -29,6 +29,7 @@ import codecs
 import decimal
 import hashlib
 import re
+from binascii import unhexlify
 from typing import Any, Callable, Optional, Union
 
 from .._codecs import _pdfdoc_encoding_rev
@@ -233,13 +234,10 @@ class FloatObject(decimal.Decimal, PdfObject):
         try:
             return decimal.Decimal.__new__(cls, str_(value), context)
         except Exception:
-            try:
-                return decimal.Decimal.__new__(cls, str(value))
-            except decimal.InvalidOperation:
-                # If this isn't a valid decimal (happens in malformed PDFs)
-                # fallback to 0
-                logger_warning(f"Invalid FloatObject {value}", __name__)
-                return decimal.Decimal.__new__(cls, "0")
+            # If this isn't a valid decimal (happens in malformed PDFs)
+            # fallback to 0
+            logger_warning(f"FloatObject ({value}) invalid; use 0.0 instead", __name__)
+            return decimal.Decimal.__new__(cls, "0.0")
 
     def __repr__(self) -> str:
         if self == self.to_integral():
@@ -271,10 +269,10 @@ class NumberObject(int, PdfObject):
     NumberPattern = re.compile(b"[^+-.0-9]")
 
     def __new__(cls, value: Any) -> "NumberObject":
-        val = int(value)
         try:
-            return int.__new__(cls, val)
-        except OverflowError:
+            return int.__new__(cls, int(value))
+        except ValueError:
+            logger_warning(f"NumberObject({value}) invalid; use 0 instead", __name__)
             return int.__new__(cls, 0)
 
     def as_numeric(self) -> int:
@@ -411,17 +409,52 @@ class TextStringObject(str, PdfObject):
 class NameObject(str, PdfObject):
     delimiter_pattern = re.compile(rb"\s+|[\(\)<>\[\]{}/%]")
     surfix = b"/"
+    renumber_table = {
+        "#": b"#23",
+        "(": b"#28",
+        ")": b"#29",
+        "/": b"#2F",
+        **{chr(i): f"#{i:02X}".encode() for i in range(33)},
+    }
 
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
-        stream.write(b_(self))
+        stream.write(self.renumber())  # b_(renumber(self)))
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:  # pragma: no cover
         deprecate_with_replacement("writeToStream", "write_to_stream")
         self.write_to_stream(stream, encryption_key)
+
+    def renumber(self) -> bytes:
+        out = self[0].encode("utf-8")
+        if out != b"/":
+            logger_warning(f"Incorrect first char in NameObject:({self})", __name__)
+        for c in self[1:]:
+            if c > "~":
+                for x in c.encode("utf-8"):
+                    out += f"#{x:02X}".encode()
+            else:
+                try:
+                    out += self.renumber_table[c]
+                except KeyError:
+                    out += c.encode("utf-8")
+        return out
+
+    @staticmethod
+    def unnumber(sin: bytes) -> bytes:
+        i = sin.find(b"#", 0)
+        while i >= 0:
+            try:
+                sin = sin[:i] + unhexlify(sin[i + 1 : i + 3]) + sin[i + 3 :]
+                i = sin.find(b"#", i + 1)
+            except ValueError:
+                # if the 2 characters after # can not be converted to hexa
+                # we change nothing and carry on
+                i = i + 1
+        return sin
 
     @staticmethod
     def read_from_stream(stream: StreamType, pdf: Any) -> "NameObject":  # PdfReader
@@ -430,19 +463,26 @@ class NameObject(str, PdfObject):
             raise PdfReadError("name read error")
         name += read_until_regex(stream, NameObject.delimiter_pattern, ignore_eof=True)
         try:
-            try:
-                ret = name.decode("utf-8")
-            except (UnicodeEncodeError, UnicodeDecodeError):
-                ret = name.decode("gbk")
-            return NameObject(ret)
-        except (UnicodeEncodeError, UnicodeDecodeError) as e:
             # Name objects should represent irregular characters
             # with a '#' followed by the symbol's hex number
+            name = NameObject.unnumber(name)
+            for enc in ("utf-8", "gbk"):
+                try:
+                    ret = name.decode(enc)
+                    return NameObject(ret)
+                except Exception:
+                    pass
+            raise UnicodeDecodeError("", name, 0, 0, "Code Not Found")
+        except (UnicodeEncodeError, UnicodeDecodeError) as e:
             if not pdf.strict:
-                logger_warning("Illegal character in Name Object", __name__)
-                return NameObject(name)
+                logger_warning(
+                    f"Illegal character in Name Object ({repr(name)})", __name__
+                )
+                return NameObject(name.decode("charmap"))
             else:
-                raise PdfReadError("Illegal character in Name Object") from e
+                raise PdfReadError(
+                    f"Illegal character in Name Object ({repr(name)})"
+                ) from e
 
     @staticmethod
     def readFromStream(

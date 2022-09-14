@@ -1,5 +1,86 @@
 # CHANGELOG
 
+## Version 2.10.8, 2022-09-14
+
+### New Features (ENH)
+-  Add PageObject.user_unit property (#1336)
+
+### Robustness (ROB)
+-  Improve NameObject reading/writing (#1345)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.10.7...2.10.8
+
+## Version 2.10.7, 2022-09-11
+
+### Bug Fixes (BUG)
+-  Fix Error in transformations (#1341)
+-  Decode #23 in NameObject (#1342)
+
+### Testing (TST)
+-  Use pytest.warns() for warnings, and .raises() for exceptions (#1325)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.10.6...2.10.7
+
+
+## Version 2.10.6, 2022-09-09
+
+### Robustness (ROB)
+-  Fix infinite loop due to Invalid object (#1331)
+-  Fix image extraction issue with superfluous whitespaces (#1327)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.10.5...2.10.6
+
+## Version 2.10.5, 2022-09-04
+
+### New Features (ENH)
+-  Process XRefStm (#1297)
+-  Auto-detect RTL for text extraction (#1309)
+
+### Bug Fixes (BUG)
+-  Avoid scaling cropbox twice (#1314)
+
+### Robustness (ROB)
+-  Fix offset correction in revised PDF (#1318)
+-  Crop data of /U and /O in encryption dictionary to 48 bytes (#1317)
+-  MultiLine bfrange in cmap (#1299)
+-  Cope with 2 digit codes in bfchar (#1310)
+-  Accept '/annn' charset as ASCII code (#1316)
+-  Log errors during Float / NumberObject initialization (#1315)
+-  Cope with corrupted entries in xref table (#1300)
+
+### Documentation (DOC)
+-  Migration guide (PyPDF2 1.x ➔ 2.x) (#1324)
+-  Creating a coverage report (#1319)
+-  Fix AnnotationBuilder.free_text example (#1311)
+-  Fix usage of page.scale by replacing it with page.scale_by (#1313)
+
+### Maintenance (MAINT)
+-  PdfReaderProtocol (#1303)
+-  Throw PdfReadError if Trailer can't be read (#1298)
+-  Remove catching OverflowException (#1302)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.10.4...2.10.5
+
+
+## Version 2.10.4, 2022-08-28
+
+### Robustness (ROB)
+-  Fix errors/warnings on no /Resources within extract_text (#1276)
+-  Add required line separators in ContentStream ArrayObjects (#1281)
+
+### Maintenance (MAINT)
+-  Use NameObject idempotency (#1290)
+
+### Testing (TST)
+-  Rectangle deletion (#1289)
+-  Add workflow tests (#1287)
+-  Remove files after tests ran (#1286)
+
+### Packaging (PKG)
+-  Add minimum version for typing_extensions requirement (#1277)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.10.3...2.10.4
+
 ## Version 2.10.3, 2022-08-21
 
 ### Robustness (ROB)
@@ -400,7 +481,7 @@ The highlight of this release is improved support for file encryption
 -  Apply improvements to _utils suggested by perflint (#993)
 
 ### Robustness (ROB)
--  utf-16-be\' codec can\'t decode (...) (#995)
+-  utf-16-be codec can't decode (...) (#995)
 
 ### Documentation (DOC)
 -  Remove reference to Scripts (#987)
@@ -446,7 +527,7 @@ e.g. Russian / Chinese / Japanese / Korean / Arabic.
 -  Optimize read_next_end_line (#646)
 
 ### Bug Fixes (BUG)
--  Adobe Acrobat \'Would you like to save this file?\' (#970)
+-  Adobe Acrobat 'Would you like to save this file?' (#970)
 
 ### Documentation (DOC)
 -  Notes on annotations (#982)
@@ -886,7 +967,7 @@ large PDF files (#808) 🎉
 
 ### Maintenance (MAINT)
 -  Validate PDF magic byte in strict mode (#814)
--  Make PdfFileMerger.addBookmark() behave life PdfFileWriters\' (#339)
+-  Make PdfFileMerger.addBookmark() behave life PdfFileWriters' (#339)
 -  Quadratic runtime while parsing reduced to linear  (#808)
 
 ### Testing (TST)
