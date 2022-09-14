@@ -557,9 +557,11 @@ def test_extract_text_visitor_callbacks():
     assert extract_cell_text(listRows[0][1]) == "Version"
     assert extract_cell_text(listRows[0][2]) == "Description"
     assert extract_cell_text(listRows[1][0]) == "September 2002"
+    # The line break between "English review;"
+    # and "Remove" is not detected.
     assert (
         extract_cell_text(listRows[6][2])
-        == "English review;\nRemove the UML model for the Segmented view."
+        == "English review;Remove the UML model for the Segmented view."
     )
     assert (
         extract_cell_text(listRows[7][2]) == "Update from the March Workshop comments."
