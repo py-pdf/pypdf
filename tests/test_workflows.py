@@ -17,7 +17,7 @@ from PyPDF2 import PdfMerger, PdfReader, PdfWriter
 from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.constants import Ressources as RES
-from PyPDF2.errors import PdfReadError, PdfReadWarning
+from PyPDF2.errors import PdfReadWarning
 from PyPDF2.filters import _xobj_to_image
 
 from . import get_pdf_from_url, normalize_warnings
@@ -260,62 +260,26 @@ def test_extract_textbench(enable, url, pages, print_result=False):
 
 def test_orientations():
     p = PdfReader(RESOURCE_ROOT / "test Orient.pdf").pages[0]
-    try:
+    with pytest.warns(DeprecationWarning):
         p.extract_text("", "")
-    except DeprecationWarning:
-        pass
-    else:
-        raise Exception("DeprecationWarning expected")
-    try:
+    with pytest.warns(DeprecationWarning):
         p.extract_text("", "", 0)
-    except DeprecationWarning:
-        pass
-    else:
-        raise Exception("DeprecationWarning expected")
-    try:
+    with pytest.warns(DeprecationWarning):
         p.extract_text("", "", 0, 200)
-    except DeprecationWarning:
-        pass
-    else:
-        raise Exception("DeprecationWarning expected")
 
-    try:
+    with pytest.warns(DeprecationWarning):
         p.extract_text(Tj_sep="", TJ_sep="")
-    except DeprecationWarning:
-        pass
-    else:
-        raise Exception("DeprecationWarning expected")
     assert findall("\\((.)\\)", p.extract_text()) == ["T", "B", "L", "R"]
-    try:
+    with pytest.raises(Exception):
         p.extract_text(None)
-    except Exception:
-        pass
-    else:
-        raise Exception("Argument 1 check invalid")
-    try:
+    with pytest.raises(Exception):
         p.extract_text("", 0)
-    except Exception:
-        pass
-    else:
-        raise Exception("Argument 2 check invalid")
-    try:
+    with pytest.raises(Exception):
         p.extract_text("", "", None)
-    except Exception:
-        pass
-    else:
-        raise Exception("Argument 3 check invalid")
-    try:
+    with pytest.raises(Exception):
         p.extract_text("", "", 0, "")
-    except Exception:
-        pass
-    else:
-        raise Exception("Argument 4 check invalid")
-    try:
+    with pytest.raises(Exception):
         p.extract_text(0, "")
-    except Exception:
-        pass
-    else:
-        raise Exception("Argument 1 new syntax check invalid")
 
     p.extract_text(0, 0)
     p.extract_text(orientations=0)
@@ -425,7 +389,7 @@ def test_get_metadata(url, name):
             "https://corpora.tika.apache.org/base/docs/govdocs1/938/938702.pdf",
             "tika-938702.pdf",
             False,
-            (PdfReadError, "Unexpected end of stream"),
+            None,  # iss #1090 is now fixed
         ),
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/942/942358.pdf",
@@ -512,19 +476,16 @@ def test_extract_text(url, name, strict, exception):
         ),
         (
             "https://corpora.tika.apache.org/base/docs/govdocs1/957/957304.pdf",
-            "tika-938702.pdf",
+            "tika-957304.pdf",
         ),
     ],
 )
 def test_compress_raised(url, name):
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data)
-    # TODO: which page exactly?
-    # TODO: Is it reasonable to have an exception here?
-    with pytest.raises(PdfReadError) as exc:
-        for page in reader.pages:
-            page.compress_content_streams()
-    assert exc.value.args[0] == "Unexpected end of stream"
+    # no more error since iss #1090 fix
+    for page in reader.pages:
+        page.compress_content_streams()
 
 
 @pytest.mark.parametrize(

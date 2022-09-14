@@ -88,6 +88,10 @@ def test_page_operations(pdf_path, password):
 
     page: PageObject = reader.pages[0]
 
+    t = Transformation().translate(50, 100).rotate(90)
+    assert abs(t.ctm[4] + 100) < 0.01
+    assert abs(t.ctm[5] - 50) < 0.01
+
     transformation = Transformation().rotate(90).scale(1).translate(1, 1)
     page.add_transformation(transformation, expand=True)
     page.add_transformation((1, 0, 0, 0, 0, 0))
@@ -132,6 +136,12 @@ def test_transformation_equivalence():
     compare_dict_objects(
         page_base1[NameObject(PG.RESOURCES)], page_base2[NameObject(PG.RESOURCES)]
     )
+
+
+def test_get_user_unit_property():
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    assert reader.pages[0].user_unit == 1
 
 
 def compare_dict_objects(d1, d2):

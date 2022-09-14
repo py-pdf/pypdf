@@ -217,8 +217,8 @@ class Transformation:
             matrix[0][1],
             matrix[1][0],
             matrix[1][1],
-            matrix[0][2],
-            matrix[1][2],
+            matrix[2][0],
+            matrix[2][1],
         )
 
     def translate(self, tx: float = 0, ty: float = 0) -> "Transformation":
@@ -290,6 +290,17 @@ class PageObject(DictionaryObject):
         data = super().hash_value_data()
         data += b"%d" % id(self)
         return data
+
+    @property
+    def user_unit(self) -> float:
+        """
+        A read-only positive number giving the size of user space units.
+
+        It is in multiples of 1/72 inch. Hence a value of 1 means a user space
+        unit is 1/72 inch, and a value of 3 means that a user space unit is
+        3/72 inch.
+        """
+        return self.get(PG.USER_UNIT, 1)
 
     @staticmethod
     def create_blank_page(
@@ -1121,7 +1132,7 @@ class PageObject(DictionaryObject):
     def _debug_for_extract(self) -> str:  # pragma: no cover
         out = ""
         for ope, op in ContentStream(
-            self["/Contents"].getObject(), self.pdf, "bytes"
+            self["/Contents"].get_object(), self.pdf, "bytes"
         ).operations:
             if op == b"TJ":
                 s = [x for x in ope[0] if isinstance(x, str)]
