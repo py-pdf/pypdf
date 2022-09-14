@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## Version 2.10.8, 2022-09-14
+
+### New Features (ENH)
+-  Add PageObject.user_unit property (#1336)
+
+### Robustness (ROB)
+-  Improve NameObject reading/writing (#1345)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.10.7...2.10.8
+
 ## Version 2.10.7, 2022-09-11
 
 ### Bug Fixes (BUG)
