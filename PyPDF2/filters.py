@@ -562,7 +562,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
     It's unclear if PyPDF2 will keep this function here, hence it's private.
     It might get removed at any point.
 
-    :return: Tuple[file extension, bytes]
+    :return: Tuple[mime type, bytes]
     """
     from PIL import Image
 
@@ -576,10 +576,10 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
         mode: Literal["RGB", "P"] = "RGB"
     else:
         mode = "P"
-    extension = None
+    mime_type = None
     if SA.FILTER in x_object_obj:
         if x_object_obj[SA.FILTER] == FT.FLATE_DECODE:
-            extension = ".png"
+            mime_type = "image/png"
             color_space = None
             if "/ColorSpace" in x_object_obj:
                 color_space = x_object_obj["/ColorSpace"].get_object()
@@ -606,19 +606,23 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
             [FT.ASCII_85_DECODE],
             [FT.CCITT_FAX_DECODE],
         ):
-            extension = ".png"
+            # I'm not sure if the mime types have any relationship to the filters
+            if x_object_obj[SA.FILTER] == FT.LZW_DECODE:
+                mime_type = "image/tiff"
+            else:
+                mime_type = "image/png"
             data = b_(data)
         elif x_object_obj[SA.FILTER] == FT.DCT_DECODE:
-            extension = ".jpg"
+            mime_type = "image/jpeg"
         elif x_object_obj[SA.FILTER] == "/JPXDecode":
-            extension = ".jp2"
+            mime_type = "image/x-jp2"
         elif x_object_obj[SA.FILTER] == FT.CCITT_FAX_DECODE:
-            extension = ".tiff"
+            mime_type = "image/tiff"
     else:
-        extension = ".png"
+        mime_type = "image/png"
         img = Image.frombytes(mode, size, data)
         img_byte_arr = BytesIO()
         img.save(img_byte_arr, format="PNG")
         data = img_byte_arr.getvalue()
 
-    return extension, data
+    return mime_type, data

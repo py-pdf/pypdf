@@ -5,6 +5,7 @@ from io import BytesIO
 from pathlib import Path
 
 import pytest
+from PIL import Image
 
 from PyPDF2 import PdfReader
 from PyPDF2._reader import convert_to_int, convertToInt
@@ -164,19 +165,22 @@ def test_get_outline(src, outline_elements):
 
 
 @pytest.mark.parametrize(
-    ("src", "nb_images"),
+    ("src", "expected_images"),
     [
-        ("pdflatex-outline.pdf", 0),
-        ("crazyones.pdf", 0),
-        ("git.pdf", 1),
-        ("imagemagick-lzw.pdf", 1),
-        ("imagemagick-ASCII85Decode.pdf", 1),
-        ("imagemagick-CCITTFaxDecode.pdf", 1),
+        ("pdflatex-outline.pdf", []),
+        ("crazyones.pdf", []),
+        ("git.pdf", [("Image9.png", "image/png")]),
+        ("imagemagick-lzw.pdf", [("Im0.png", "unknown")]),  # Broken extraction
+        (
+            "imagemagick-ASCII85Decode.pdf",
+            [("Im0.png", "unknown")],
+        ),  # Broken extraction
+        ("imagemagick-CCITTFaxDecode.pdf", [("Im0.png", "image/tiff")]),
     ],
 )
-def test_get_images(src, nb_images):
-    src = RESOURCE_ROOT / src
-    reader = PdfReader(src)
+def test_get_images(src, expected_images):
+    src_abs = RESOURCE_ROOT / src
+    reader = PdfReader(src_abs)
 
     with pytest.raises(TypeError):
         page = reader.pages["0"]
@@ -185,7 +189,15 @@ def test_get_images(src, nb_images):
     page = reader.pages[0]
 
     images_extracted = page.images
-    assert len(images_extracted) == nb_images
+    assert len(images_extracted) == len(expected_images)
+    for image, (expected_image, expected_mime) in zip(
+        images_extracted, expected_images
+    ):
+        assert image.name == expected_image
+        with open(f"test-out-{src}-{image.name}", "wb") as fp:
+            fp.write(image.data)
+        assert image.file_extension.upper() == Image.open(io.BytesIO(image.data)).format
+        assert image.mime_type == expected_mime
 
 
 @pytest.mark.parametrize(

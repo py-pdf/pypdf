@@ -424,10 +424,15 @@ class File:
 
     @property
     def file_extension(self) -> str:
-        if self.mime_type == "image/png":
-            return "png"
-        if self.mime_type == "image/jpeg":
-            return "jpg"
-        if self.mime_type == "image/gif":
-            return "gif"
-        return "unknown"
+        return File._mime2extension(self.mime_type)
+
+    @staticmethod
+    def _mime2extension(mime_type: str) -> str:
+        mapping = {
+            "image/png": "png",
+            "image/jpeg": "jpg",
+            "image/x-jp2": "jp2",
+            "image/gif": "gif",
+            "image/tiff": "tiff",
+        }
+        return mapping.get(mime_type, "unknown")
