@@ -687,17 +687,11 @@ def test_image_extraction(url, name):
         os.mkdir(root)
 
     for page in reader.pages:
-        if RES.XOBJECT in page[PG.RESOURCES]:
-            x_object = page[PG.RESOURCES][RES.XOBJECT].get_object()
-
-            for obj in x_object:
-                if x_object[obj][IA.SUBTYPE] == "/Image":
-                    extension, byte_stream = _xobj_to_image(x_object[obj])
-                    if extension is not None:
-                        filename = root / (obj[1:] + extension)
-                        with open(filename, "wb") as img:
-                            img.write(byte_stream)
-                        images_extracted.append(filename)
+        for image in page.images:
+            filename = root / image.name
+            with open(filename, "wb") as img:
+                img.write(image.data)
+            images_extracted.append(filename)
 
     # Cleanup
     do_cleanup = True  # set this to False for manual inspection
@@ -720,17 +714,11 @@ def test_image_extraction_strict():
         os.mkdir(root)
 
     for page in reader.pages:
-        if RES.XOBJECT in page[PG.RESOURCES]:
-            x_object = page[PG.RESOURCES][RES.XOBJECT].get_object()
-
-            for obj in x_object:
-                if x_object[obj][IA.SUBTYPE] == "/Image":
-                    extension, byte_stream = _xobj_to_image(x_object[obj])
-                    if extension is not None:
-                        filename = root / (obj[1:] + extension)
-                        with open(filename, "wb") as img:
-                            img.write(byte_stream)
-                        images_extracted.append(filename)
+        for image in page.images:
+            filename = root / image.name
+            with open(filename) as fp:
+                fp.write(image.data)
+            images_extracted.append(filename)
 
     # Cleanup
     do_cleanup = True  # set this to False for manual inspection
@@ -759,17 +747,11 @@ def test_image_extraction2(url, name):
         os.mkdir(root)
 
     for page in reader.pages:
-        if RES.XOBJECT in page[PG.RESOURCES]:
-            x_object = page[PG.RESOURCES][RES.XOBJECT].get_object()
-
-            for obj in x_object:
-                if x_object[obj][IA.SUBTYPE] == "/Image":
-                    extension, byte_stream = _xobj_to_image(x_object[obj])
-                    if extension is not None:
-                        filename = root / (obj[1:] + extension)
-                        with open(filename, "wb") as img:
-                            img.write(byte_stream)
-                        images_extracted.append(filename)
+        for image in page.images:
+            filename = root / image.name
+            with open(filename, "wb") as img:
+                img.write(image.data)
+            images_extracted.append(filename)
 
     # Cleanup
     do_cleanup = True  # set this to False for manual inspection
