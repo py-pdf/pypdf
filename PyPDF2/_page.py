@@ -360,7 +360,9 @@ class PageObject(DictionaryObject):
                 extension, byte_stream = _xobj_to_image(x_object[obj])
                 if extension is not None:
                     filename = obj[1:] + ".png"  # TODO
-                    images_extracted.append(File(name=filename, data=byte_stream))
+                    images_extracted.append(
+                        File(name=filename, data=byte_stream, mime_type="image/png")
+                    )
         return images_extracted
 
     def rotate(self, angle: int) -> "PageObject":

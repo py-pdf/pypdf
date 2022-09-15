@@ -426,3 +426,8 @@ class File:
     def file_extension(self) -> str:
         if self.mime_type == "image/png":
             return "png"
+        if self.mime_type == "image/jpeg":
+            return "jpg"
+        if self.mime_type == "image/gif":
+            return "gif"
+        return "unknown"
