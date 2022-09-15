@@ -10,3 +10,4 @@ pytest-benchmark
 pycryptodome
 typeguard
 types-Pillow
+types-dataclasses
