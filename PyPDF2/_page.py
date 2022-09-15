@@ -375,10 +375,10 @@ class PageObject(DictionaryObject):
         return self.get(PG.ROTATE, 0)
 
     @rotation.setter
-    def rotation(self, r: Union[int, float]):
+    def rotation(self, r: Union[int, float]) -> None:
         self[NameObject(PG.ROTATE)] = NumberObject((((int(r) + 45) // 90) * 90) % 360)
 
-    def transfer_rotation_to_content(self):
+    def transfer_rotation_to_content(self) -> None:
         """
         integrates the page rotation into the content and the Media/Crop... boxes
         recommanded before page merging
@@ -583,8 +583,14 @@ class PageObject(DictionaryObject):
 
         new_resources = DictionaryObject()
         rename = {}
-        original_resources = cast(DictionaryObject, self[PG.RESOURCES].get_object())
-        page2resources = cast(DictionaryObject, page2[PG.RESOURCES].get_object())
+        try:
+            original_resources = cast(DictionaryObject, self[PG.RESOURCES].get_object())
+        except KeyError:
+            original_resources = DictionaryObject()
+        try:
+            page2resources = cast(DictionaryObject, page2[PG.RESOURCES].get_object())
+        except KeyError:
+            page2resources = DictionaryObject()
         new_annots = ArrayObject()
 
         for page in (self, page2):

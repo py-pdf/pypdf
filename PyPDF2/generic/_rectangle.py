@@ -53,7 +53,7 @@ class RectangleObject(ArrayObject):
         return self[0]
 
     @left.setter
-    def left(self, f: float):
+    def left(self, f: float) -> None:
         self[0] = FloatObject(f)
 
     @property
@@ -61,7 +61,7 @@ class RectangleObject(ArrayObject):
         return self[1]
 
     @bottom.setter
-    def bottom(self, f: float):
+    def bottom(self, f: float) -> None:
         self[1] = FloatObject(f)
 
     @property
@@ -69,7 +69,7 @@ class RectangleObject(ArrayObject):
         return self[2]
 
     @right.setter
-    def right(self, f: float):
+    def right(self, f: float) -> None:
         self[2] = FloatObject(f)
 
     @property
@@ -77,7 +77,7 @@ class RectangleObject(ArrayObject):
         return self[3]
 
     @top.setter
-    def top(self, f: float):
+    def top(self, f: float) -> None:
         self[3] = FloatObject(f)
 
     def getLowerLeft_x(self) -> FloatObject:  # pragma: no cover
