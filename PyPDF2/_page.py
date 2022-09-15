@@ -383,18 +383,9 @@ class PageObject(DictionaryObject):
         integrates the page rotation into the content and the Media/Crop... boxes
         recommanded before page merging
         """
-        ##        def rotate_box(bx,r):
-        ##            if r == 0:
-        ##                pass
-        ##            else: #if r>0:
-        ##                bx.right, bx.top = bx.left +bx.height,bx.bottom +bx.width
-        ###            else:  # r > 0:
-        ###                return rotate_box([bx[1],bx[2],bx[3],bx[0]],r+1)
-        ##            return bx;
         r = -self.rotation  # rotation to apply is in the otherway
         self.rotation = 0
         mb = RectangleObject(self.mediabox)
-        rd = math.radians(r)
         trsf = (
             Transformation()
             .translate(
@@ -402,8 +393,6 @@ class PageObject(DictionaryObject):
             )
             .rotate(r)
         )
-        ##                .translate(float(mb.width)/2 * math.cos(rd)-float(mb.height)/2*math.sin(rd),
-        ##                           float(mb.width)/2*math.sin(rd)+float(mb.height)/2*math.cos(rd)))
         pt1 = trsf.apply_on(mb.lower_left)
         pt2 = trsf.apply_on(mb.upper_right)
         trsf = trsf.translate(-min(pt1[0], pt2[0]), -min(pt1[1], pt2[1]))
