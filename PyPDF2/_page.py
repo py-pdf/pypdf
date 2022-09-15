@@ -350,11 +350,11 @@ class PageObject(DictionaryObject):
 
     @property
     def images(self) -> List[File]:
-        images_extracted = []
-        if RES.XOBJECT not in self[PG.RESOURCES]:
+        images_extracted: List[File] = []
+        if RES.XOBJECT not in self[PG.RESOURCES]:  # type: ignore
             return images_extracted
 
-        x_object = self[PG.RESOURCES][RES.XOBJECT].get_object()
+        x_object = self[PG.RESOURCES][RES.XOBJECT].get_object()  # type: ignore
         for obj in x_object:
             if x_object[obj][IA.SUBTYPE] == "/Image":
                 mime_type, byte_stream = _xobj_to_image(x_object[obj])
