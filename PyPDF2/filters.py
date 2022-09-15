@@ -607,7 +607,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
             [FT.CCITT_FAX_DECODE],
         ):
             # I'm not sure if the mime types have any relationship to the filters
-            if x_object_obj[SA.FILTER] == FT.LZW_DECODE:
+            if x_object_obj[SA.FILTER] in [FT.LZW_DECODE, FT.CCITT_FAX_DECODE]:
                 mime_type = "image/tiff"
             else:
                 mime_type = "image/png"
