@@ -52,17 +52,33 @@ class RectangleObject(ArrayObject):
     def left(self) -> FloatObject:
         return self[0]
 
+    @left.setter
+    def left(self, f: float):
+        self[0] = FloatObject(f)
+
     @property
     def bottom(self) -> FloatObject:
         return self[1]
+
+    @bottom.setter
+    def bottom(self, f: float):
+        self[1] = FloatObject(f)
 
     @property
     def right(self) -> FloatObject:
         return self[2]
 
+    @right.setter
+    def right(self, f: float):
+        self[2] = FloatObject(f)
+
     @property
     def top(self) -> FloatObject:
         return self[3]
+
+    @top.setter
+    def top(self, f: float):
+        self[3] = FloatObject(f)
 
     def getLowerLeft_x(self) -> FloatObject:  # pragma: no cover
         deprecate_with_replacement("getLowerLeft_x", "left")
