@@ -180,7 +180,7 @@ def test_get_outline(src, outline_elements):
             [("Im0.png", "unknown")],
             marks=pytest.mark.xfail(reason="broken image extraction"),
         ),
-        ("imagemagick-CCITTFaxDecode.pdf", [("Im0.png", "image/tiff")]),
+        ("imagemagick-CCITTFaxDecode.pdf", [("Im0.tiff", "image/tiff")]),
     ],
 )
 def test_get_images(src, expected_images):
