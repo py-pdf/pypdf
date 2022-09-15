@@ -713,7 +713,7 @@ def test_image_extraction_strict():
     for page in reader.pages:
         for image in page.images:
             filename = root / image.name
-            with open(filename) as fp:
+            with open(filename, "wb") as fp:
                 fp.write(image.data)
             images_extracted.append(filename)
 
