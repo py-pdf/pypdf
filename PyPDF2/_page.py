@@ -260,7 +260,7 @@ class Transformation:
         return f"Transformation(ctm={self.ctm})"
 
     def apply_on(
-        self, pt: Union[Tuple[float, float], List[float]]
+        self, pt: Union[Tuple[Decimal, Decimal], Tuple[float, float], List[float]]
     ) -> Union[Tuple[float, float], List[float]]:
         pt1 = (
             float(pt[0]) * self.ctm[0] + float(pt[1]) * self.ctm[2] + self.ctm[4],
@@ -366,13 +366,13 @@ class PageObject(DictionaryObject):
         return PageObject.create_blank_page(pdf, width, height)
 
     @property
-    def rotation(self) -> NumberObject:
+    def rotation(self) -> int:
         """
         A read/write number giving the page VISUAL rotation will be within (0,90,180,270)
         can be used to rotate the page with += or -= operators
         this does not affect "/Contents"
         """
-        return self.get(PG.ROTATE, 0)
+        return int(self.get(PG.ROTATE, 0))
 
     @rotation.setter
     def rotation(self, r: Union[int, float]) -> None:
@@ -399,8 +399,8 @@ class PageObject(DictionaryObject):
         self.add_transformation(trsf, False)
         for b in ["/MediaBox", "/CropBox", "/BleedBox", "/TrimBox", "/ArtBox"]:
             if b in self:
-                pt1 = trsf.apply_on(self[b].lower_left)
-                pt2 = trsf.apply_on(self[b].upper_right)
+                pt1 = trsf.apply_on(cast(RectangleObject, self[b]).lower_left)
+                pt2 = trsf.apply_on(cast(RectangleObject, self[b]).upper_right)
                 self[NameObject(b)] = RectangleObject(
                     (
                         min(pt1[0], pt2[0]),
@@ -583,14 +583,8 @@ class PageObject(DictionaryObject):
 
         new_resources = DictionaryObject()
         rename = {}
-        try:
-            original_resources = cast(DictionaryObject, self[PG.RESOURCES].get_object())
-        except KeyError:
-            original_resources = DictionaryObject()
-        try:
-            page2resources = cast(DictionaryObject, page2[PG.RESOURCES].get_object())
-        except KeyError:
-            page2resources = DictionaryObject()
+        original_resources = cast(DictionaryObject, self[PG.RESOURCES].get_object())
+        page2resources = cast(DictionaryObject, page2[PG.RESOURCES].get_object())
         new_annots = ArrayObject()
 
         for page in (self, page2):
