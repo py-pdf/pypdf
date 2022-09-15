@@ -541,3 +541,12 @@ def test_read_link_annotation():
     del expected["/Rect"]
     del annot["/Rect"]
     assert annot == expected
+
+
+def test_no_resources():
+    url = "https://github.com/py-pdf/PyPDF2/files/9572045/108.pdf"
+    name = "108.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    page_one = reader.pages[0]
+    page_two = reader.pages[0]
+    page_one.merge_page(page_two)
