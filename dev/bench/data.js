@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1663409397572,
+  "lastUpdate": 1663412936948,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -16294,6 +16294,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.028210089859163425",
             "extra": "mean: 4.449155364199996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "71de6c8d2792c25e40d4d82dba1de4a788991196",
+          "message": "ENH: Add rotation property and transfer_rotate_to_content (#1348)\n\nSee #1280 for the context of this change",
+          "timestamp": "2022-09-17T13:07:55+02:00",
+          "tree_id": "8503b9a1c67a60c71ea311f2d2231e436638690c",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/71de6c8d2792c25e40d4d82dba1de4a788991196"
+        },
+        "date": 1663412936246,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0316565504419797,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008347614800685934",
+            "extra": "mean: 969.3148360000066 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.494743497452962,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006482750419340068",
+            "extra": "mean: 80.03365576923198 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2571593506264986,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022491068636409234",
+            "extra": "mean: 3.888639466400008 sec\nrounds: 5"
           }
         ]
       }
