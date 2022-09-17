@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1663409223041,
+  "lastUpdate": 1663409397572,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -16249,6 +16249,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.018530878962134206",
             "extra": "mean: 3.8574172935999966 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6f51189d880980b19fed900e43f73f91ac119239",
+          "message": "ROB: Fix merge_page for pages without resources (#1349)\n\nCloses #270",
+          "timestamp": "2022-09-17T12:08:10+02:00",
+          "tree_id": "8e336e7fe908841403757236d7e4cd7178f7b947",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/6f51189d880980b19fed900e43f73f91ac119239"
+        },
+        "date": 1663409395124,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9046985162073656,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013548143552784405",
+            "extra": "mean: 1.1053405991999994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.895769780578323,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007673579328333105",
+            "extra": "mean: 91.77873799999858 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22476176220917615,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028210089859163425",
+            "extra": "mean: 4.449155364199996 sec\nrounds: 5"
           }
         ]
       }
