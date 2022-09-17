@@ -529,8 +529,14 @@ class PageObject(DictionaryObject):
 
         new_resources = DictionaryObject()
         rename = {}
-        original_resources = cast(DictionaryObject, self[PG.RESOURCES].get_object())
-        page2resources = cast(DictionaryObject, page2[PG.RESOURCES].get_object())
+        try:
+            original_resources = cast(DictionaryObject, self[PG.RESOURCES].get_object())
+        except KeyError:
+            original_resources = DictionaryObject()
+        try:
+            page2resources = cast(DictionaryObject, page2[PG.RESOURCES].get_object())
+        except KeyError:
+            page2resources = DictionaryObject()
         new_annots = ArrayObject()
 
         for page in (self, page2):
@@ -1141,11 +1147,11 @@ class PageObject(DictionaryObject):
             out += op.decode("utf-8") + " " + "".join(s) + ope.__repr__() + "\n"
         out += "\n=============================\n"
         try:
-            for fo in self["/Resources"]["/Font"]:  # type:ignore
+            for fo in self[PG.RESOURCES]["/Font"]:  # type:ignore
                 out += fo + "\n"
-                out += self["/Resources"]["/Font"][fo].__repr__() + "\n"  # type:ignore
+                out += self[PG.RESOURCES]["/Font"][fo].__repr__() + "\n"  # type:ignore
                 try:
-                    enc_repr = self["/Resources"]["/Font"][fo][  # type:ignore
+                    enc_repr = self[PG.RESOURCES]["/Font"][fo][  # type:ignore
                         "/Encoding"
                     ].__repr__()
                     out += enc_repr + "\n"
@@ -1153,7 +1159,7 @@ class PageObject(DictionaryObject):
                     pass
                 try:
                     out += (
-                        self["/Resources"]["/Font"][fo][  # type:ignore
+                        self[PG.RESOURCES]["/Font"][fo][  # type:ignore
                             "/ToUnicode"
                         ]
                         .get_data()
@@ -1204,11 +1210,11 @@ class PageObject(DictionaryObject):
         ] = {}
         try:
             objr = obj
-            while NameObject("/Resources") not in objr:
+            while NameObject(PG.RESOURCES) not in objr:
                 # /Resources can be inherited sometimes so we look to parents
                 objr = objr["/Parent"].get_object()
                 # if no parents we will have no /Resources will be available => an exception wil be raised
-            resources_dict = cast(DictionaryObject, objr["/Resources"])
+            resources_dict = cast(DictionaryObject, objr[PG.RESOURCES])
         except Exception:
             return ""  # no resources means no text is possible (no font) we consider the file as not damaged, no need to check for TJ or Tj
         if "/Font" in resources_dict:
@@ -1658,7 +1664,7 @@ class PageObject(DictionaryObject):
         """
         obj = self.get_object()
         assert isinstance(obj, DictionaryObject)
-        fonts, embedded = _get_fonts_walk(cast(DictionaryObject, obj["/Resources"]))
+        fonts, embedded = _get_fonts_walk(cast(DictionaryObject, obj[PG.RESOURCES]))
         unembedded = fonts - embedded
         return embedded, unembedded
 
