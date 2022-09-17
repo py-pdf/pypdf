@@ -515,6 +515,7 @@ def test_extract_text_visitor_callbacks():
     # Test 1: We test the analysis of page 7 "2.1 LRS model".
     reader = PdfReader(RESOURCE_ROOT / "GeoBase_NHNC1_Data_Model_UML_EN.pdf")
     pageLrsModel = reader.pages[6]
+
     # We ignore the invisible large rectangles.
     def ignoreLargeRectangles(r):
         return r.w < 400 and r.h < 400
@@ -544,6 +545,7 @@ def test_extract_text_visitor_callbacks():
     # Test 2: Parse table "REVISION HISTORY" on page 3.
     pageRevisions = reader.pages[2]
     # We ignore the second table, therefore: r.y > 350
+
     def filterFirstTable(r):
         return r.w > 1 and r.h > 1 and r.w < 400 and r.h < 400 and r.y > 350
 
