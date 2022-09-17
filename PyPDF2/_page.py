@@ -259,6 +259,15 @@ class Transformation:
     def __repr__(self) -> str:
         return f"Transformation(ctm={self.ctm})"
 
+    def apply_on(
+        self, pt: Union[Tuple[Decimal, Decimal], Tuple[float, float], List[float]]
+    ) -> Union[Tuple[float, float], List[float]]:
+        pt1 = (
+            float(pt[0]) * self.ctm[0] + float(pt[1]) * self.ctm[2] + self.ctm[4],
+            float(pt[0]) * self.ctm[1] + float(pt[1]) * self.ctm[3] + self.ctm[5],
+        )
+        return list(pt1) if isinstance(pt, list) else pt1
+
 
 class PageObject(DictionaryObject):
     """
@@ -355,6 +364,53 @@ class PageObject(DictionaryObject):
         """
         deprecate_with_replacement("createBlankPage", "create_blank_page")
         return PageObject.create_blank_page(pdf, width, height)
+
+    @property
+    def rotation(self) -> int:
+        """
+        The VISUAL rotation of the page.
+
+        This number has to be a multiple of 90 degrees: 0,90,180,270
+        This property does not affect "/Contents"
+        """
+        return int(self.get(PG.ROTATE, 0))
+
+    @rotation.setter
+    def rotation(self, r: Union[int, float]) -> None:
+        self[NameObject(PG.ROTATE)] = NumberObject((((int(r) + 45) // 90) * 90) % 360)
+
+    def transfer_rotation_to_content(self) -> None:
+        """
+        Apply the rotation of the page to the content and the media/crop/... boxes.
+
+        It's recommended to apply this function before page merging.
+        """
+        r = -self.rotation  # rotation to apply is in the otherway
+        self.rotation = 0
+        mb = RectangleObject(self.mediabox)
+        trsf = (
+            Transformation()
+            .translate(
+                -float(mb.left + mb.width / 2), -float(mb.bottom + mb.height / 2)
+            )
+            .rotate(r)
+        )
+        pt1 = trsf.apply_on(mb.lower_left)
+        pt2 = trsf.apply_on(mb.upper_right)
+        trsf = trsf.translate(-min(pt1[0], pt2[0]), -min(pt1[1], pt2[1]))
+        self.add_transformation(trsf, False)
+        for b in ["/MediaBox", "/CropBox", "/BleedBox", "/TrimBox", "/ArtBox"]:
+            if b in self:
+                pt1 = trsf.apply_on(cast(RectangleObject, self[b]).lower_left)
+                pt2 = trsf.apply_on(cast(RectangleObject, self[b]).upper_right)
+                self[NameObject(b)] = RectangleObject(
+                    (
+                        min(pt1[0], pt2[0]),
+                        min(pt1[1], pt2[1]),
+                        max(pt1[0], pt2[0]),
+                        max(pt1[1], pt2[1]),
+                    )
+                )
 
     def rotate(self, angle: int) -> "PageObject":
         """

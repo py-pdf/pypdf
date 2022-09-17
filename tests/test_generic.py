@@ -427,6 +427,10 @@ def test_RectangleObject():
     ro.lower_left = (5, 6)
     assert ro.lower_left == (5, 6)
 
+    ro.bottom -= 2
+    ro.left -= 2
+    assert ro.lower_left == (3, 4)
+
     ro.lower_right = (7, 8)
     assert ro.lower_right == (7, 8)
 
@@ -435,6 +439,9 @@ def test_RectangleObject():
 
     ro.upper_right = (13, 17)
     assert ro.upper_right == (13, 17)
+    ro.top += 1
+    ro.right += 1
+    assert ro.upper_right == (14, 18)
 
 
 def test_TextStringObject_exc():
