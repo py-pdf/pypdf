@@ -368,9 +368,10 @@ class PageObject(DictionaryObject):
     @property
     def rotation(self) -> int:
         """
-        A read/write number giving the page VISUAL rotation will be within (0,90,180,270)
-        can be used to rotate the page with += or -= operators
-        this does not affect "/Contents"
+        The VISUAL rotation of the page.
+
+        This number has to be a multiple of 90 degrees: 0,90,180,270
+        This property does not affect "/Contents"
         """
         return int(self.get(PG.ROTATE, 0))
 
