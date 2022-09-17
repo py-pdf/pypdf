@@ -382,7 +382,7 @@ class PageObject(DictionaryObject):
     def transfer_rotation_to_content(self) -> None:
         """
         Apply the rotation of the page to the content and the media/crop/... boxes.
-        
+
         It's recommended to apply this function before page merging.
         """
         r = -self.rotation  # rotation to apply is in the otherway
