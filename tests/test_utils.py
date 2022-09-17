@@ -107,10 +107,10 @@ def test_b():
 
 
 def test_deprecate_no_replacement():
-    with pytest.raises(PendingDeprecationWarning) as exc:
+    with pytest.warns(PendingDeprecationWarning) as warn:
         PyPDF2._utils.deprecate_no_replacement("foo")
     error_msg = "foo is deprecated and will be removed in PyPDF2 3.0.0."
-    assert exc.value.args[0] == error_msg
+    assert warn[0].message.args[0] == error_msg
 
 
 @pytest.mark.parametrize(

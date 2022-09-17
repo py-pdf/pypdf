@@ -41,7 +41,7 @@ def read_string_from_stream(
 ) -> Union["TextStringObject", "ByteStringObject"]:
     tok = stream.read(1)
     parens = 1
-    txt = b""
+    txt = []
     while True:
         tok = stream.read(1)
         if not tok:
@@ -106,8 +106,8 @@ def read_string_from_stream(
                 else:
                     msg = rf"Unexpected escaped string: {tok.decode('utf8')}"
                     logger_warning(msg, __name__)
-        txt += tok
-    return create_string_object(txt, forced_encoding)
+        txt.append(tok)
+    return create_string_object(b''.join(txt), forced_encoding)
 
 
 def create_string_object(

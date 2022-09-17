@@ -220,8 +220,8 @@ class Transformation:
             matrix[0][1],
             matrix[1][0],
             matrix[1][1],
-            matrix[0][2],
-            matrix[1][2],
+            matrix[2][0],
+            matrix[2][1],
         )
 
     def translate(self, tx: float = 0, ty: float = 0) -> "Transformation":
@@ -262,6 +262,15 @@ class Transformation:
     def __repr__(self) -> str:
         return f"Transformation(ctm={self.ctm})"
 
+    def apply_on(
+        self, pt: Union[Tuple[Decimal, Decimal], Tuple[float, float], List[float]]
+    ) -> Union[Tuple[float, float], List[float]]:
+        pt1 = (
+            float(pt[0]) * self.ctm[0] + float(pt[1]) * self.ctm[2] + self.ctm[4],
+            float(pt[0]) * self.ctm[1] + float(pt[1]) * self.ctm[3] + self.ctm[5],
+        )
+        return list(pt1) if isinstance(pt, list) else pt1
+
 
 class PageObject(DictionaryObject):
     """
@@ -293,6 +302,17 @@ class PageObject(DictionaryObject):
         data = super().hash_value_data()
         data += b"%d" % id(self)
         return data
+
+    @property
+    def user_unit(self) -> float:
+        """
+        A read-only positive number giving the size of user space units.
+
+        It is in multiples of 1/72 inch. Hence a value of 1 means a user space
+        unit is 1/72 inch, and a value of 3 means that a user space unit is
+        3/72 inch.
+        """
+        return self.get(PG.USER_UNIT, 1)
 
     @staticmethod
     def create_blank_page(
@@ -364,6 +384,53 @@ class PageObject(DictionaryObject):
                         File(name=filename, data=byte_stream, mime_type=mime_type)
                     )
         return images_extracted
+
+    @property
+    def rotation(self) -> int:
+        """
+        The VISUAL rotation of the page.
+
+        This number has to be a multiple of 90 degrees: 0,90,180,270
+        This property does not affect "/Contents"
+        """
+        return int(self.get(PG.ROTATE, 0))
+
+    @rotation.setter
+    def rotation(self, r: Union[int, float]) -> None:
+        self[NameObject(PG.ROTATE)] = NumberObject((((int(r) + 45) // 90) * 90) % 360)
+
+    def transfer_rotation_to_content(self) -> None:
+        """
+        Apply the rotation of the page to the content and the media/crop/... boxes.
+
+        It's recommended to apply this function before page merging.
+        """
+        r = -self.rotation  # rotation to apply is in the otherway
+        self.rotation = 0
+        mb = RectangleObject(self.mediabox)
+        trsf = (
+            Transformation()
+            .translate(
+                -float(mb.left + mb.width / 2), -float(mb.bottom + mb.height / 2)
+            )
+            .rotate(r)
+        )
+        pt1 = trsf.apply_on(mb.lower_left)
+        pt2 = trsf.apply_on(mb.upper_right)
+        trsf = trsf.translate(-min(pt1[0], pt2[0]), -min(pt1[1], pt2[1]))
+        self.add_transformation(trsf, False)
+        for b in ["/MediaBox", "/CropBox", "/BleedBox", "/TrimBox", "/ArtBox"]:
+            if b in self:
+                pt1 = trsf.apply_on(cast(RectangleObject, self[b]).lower_left)
+                pt2 = trsf.apply_on(cast(RectangleObject, self[b]).upper_right)
+                self[NameObject(b)] = RectangleObject(
+                    (
+                        min(pt1[0], pt2[0]),
+                        min(pt1[1], pt2[1]),
+                        max(pt1[0], pt2[0]),
+                        max(pt1[1], pt2[1]),
+                    )
+                )
 
     def rotate(self, angle: int) -> "PageObject":
         """
@@ -538,8 +605,14 @@ class PageObject(DictionaryObject):
 
         new_resources = DictionaryObject()
         rename = {}
-        original_resources = cast(DictionaryObject, self[PG.RESOURCES].get_object())
-        page2resources = cast(DictionaryObject, page2[PG.RESOURCES].get_object())
+        try:
+            original_resources = cast(DictionaryObject, self[PG.RESOURCES].get_object())
+        except KeyError:
+            original_resources = DictionaryObject()
+        try:
+            page2resources = cast(DictionaryObject, page2[PG.RESOURCES].get_object())
+        except KeyError:
+            page2resources = DictionaryObject()
         new_annots = ArrayObject()
 
         for page in (self, page2):
@@ -1141,7 +1214,7 @@ class PageObject(DictionaryObject):
     def _debug_for_extract(self) -> str:  # pragma: no cover
         out = ""
         for ope, op in ContentStream(
-            self["/Contents"].getObject(), self.pdf, "bytes"
+            self["/Contents"].get_object(), self.pdf, "bytes"
         ).operations:
             if op == b"TJ":
                 s = [x for x in ope[0] if isinstance(x, str)]
@@ -1150,11 +1223,11 @@ class PageObject(DictionaryObject):
             out += op.decode("utf-8") + " " + "".join(s) + ope.__repr__() + "\n"
         out += "\n=============================\n"
         try:
-            for fo in self["/Resources"]["/Font"]:  # type:ignore
+            for fo in self[PG.RESOURCES]["/Font"]:  # type:ignore
                 out += fo + "\n"
-                out += self["/Resources"]["/Font"][fo].__repr__() + "\n"  # type:ignore
+                out += self[PG.RESOURCES]["/Font"][fo].__repr__() + "\n"  # type:ignore
                 try:
-                    enc_repr = self["/Resources"]["/Font"][fo][  # type:ignore
+                    enc_repr = self[PG.RESOURCES]["/Font"][fo][  # type:ignore
                         "/Encoding"
                     ].__repr__()
                     out += enc_repr + "\n"
@@ -1162,7 +1235,7 @@ class PageObject(DictionaryObject):
                     pass
                 try:
                     out += (
-                        self["/Resources"]["/Font"][fo][  # type:ignore
+                        self[PG.RESOURCES]["/Font"][fo][  # type:ignore
                             "/ToUnicode"
                         ]
                         .get_data()
@@ -1213,11 +1286,11 @@ class PageObject(DictionaryObject):
         ] = {}
         try:
             objr = obj
-            while NameObject("/Resources") not in objr:
+            while NameObject(PG.RESOURCES) not in objr:
                 # /Resources can be inherited sometimes so we look to parents
                 objr = objr["/Parent"].get_object()
                 # if no parents we will have no /Resources will be available => an exception wil be raised
-            resources_dict = cast(DictionaryObject, objr["/Resources"])
+            resources_dict = cast(DictionaryObject, objr[PG.RESOURCES])
         except Exception:
             return ""  # no resources means no text is possible (no font) we consider the file as not damaged, no need to check for TJ or Tj
         if "/Font" in resources_dict:
@@ -1667,7 +1740,7 @@ class PageObject(DictionaryObject):
         """
         obj = self.get_object()
         assert isinstance(obj, DictionaryObject)
-        fonts, embedded = _get_fonts_walk(cast(DictionaryObject, obj["/Resources"]))
+        fonts, embedded = _get_fonts_walk(cast(DictionaryObject, obj[PG.RESOURCES]))
         unembedded = fonts - embedded
         return embedded, unembedded
 

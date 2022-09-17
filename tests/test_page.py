@@ -88,6 +88,10 @@ def test_page_operations(pdf_path, password):
 
     page: PageObject = reader.pages[0]
 
+    t = Transformation().translate(50, 100).rotate(90)
+    assert abs(t.ctm[4] + 100) < 0.01
+    assert abs(t.ctm[5] - 50) < 0.01
+
     transformation = Transformation().rotate(90).scale(1).translate(1, 1)
     page.add_transformation(transformation, expand=True)
     page.add_transformation((1, 0, 0, 0, 0, 0))
@@ -132,6 +136,12 @@ def test_transformation_equivalence():
     compare_dict_objects(
         page_base1[NameObject(PG.RESOURCES)], page_base2[NameObject(PG.RESOURCES)]
     )
+
+
+def test_get_user_unit_property():
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    assert reader.pages[0].user_unit == 1
 
 
 def compare_dict_objects(d1, d2):
@@ -200,12 +210,29 @@ def test_page_properties():
     assert page.bleedbox == RectangleObject((0, 1, 100, 101))
 
 
-def test_page_rotation_non90():
+def test_page_rotation():
     reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
     page = reader.pages[0]
     with pytest.raises(ValueError) as exc:
         page.rotate(91)
     assert exc.value.args[0] == "Rotation angle must be a multiple of 90"
+
+    # test rotation
+    assert page.rotation == 0
+    page.rotation = 180
+    assert page.rotation == 180
+    page.rotation += 190
+    assert page.rotation == 0
+
+    # test transfer_rotate_to_content
+    page.rotation -= 90
+    page.transfer_rotation_to_content()
+    assert (
+        abs(float(page.mediabox.left) - 0) < 0.1
+        and abs(float(page.mediabox.bottom) - 0) < 0.1
+        and abs(float(page.mediabox.right) - 792) < 0.1
+        and abs(float(page.mediabox.top) - 612) < 0.1
+    )
 
 
 def test_page_scale():
@@ -531,3 +558,12 @@ def test_read_link_annotation():
     del expected["/Rect"]
     del annot["/Rect"]
     assert annot == expected
+
+
+def test_no_resources():
+    url = "https://github.com/py-pdf/PyPDF2/files/9572045/108.pdf"
+    name = "108.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    page_one = reader.pages[0]
+    page_two = reader.pages[0]
+    page_one.merge_page(page_two)
