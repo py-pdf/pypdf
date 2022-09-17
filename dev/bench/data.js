@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1663154350200,
+  "lastUpdate": 1663409223041,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -16204,6 +16204,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.010577205321008438",
             "extra": "mean: 2.760601136600002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "61194539+mergezalot@users.noreply.github.com",
+            "name": "Michael Karlen",
+            "username": "mergezalot"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3be01fda141817c90a0df18fb22e1747ac5832b3",
+          "message": "PI: Avoid string concatenation with large embedded base64-encoded images (#1350)\n\nCertain PDF libraries do embed images as base64 strings. This causes performance issues\r\nin `read_string_from_stream` due to incremental string concatenation, byte by byte.\r\n\r\nAn example for such a library is `Canon iR-ADV C256  PDF` (PDF Annotator 8.0.0.826  - Adobe PSL 1.3e for Canon)\r\n\r\nCo-authored-by: Michael Karlen <michael.karlen@gmail.com>",
+          "timestamp": "2022-09-17T12:05:58+02:00",
+          "tree_id": "0a34ecc10845d4069225da588f97779474d9e2e5",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/3be01fda141817c90a0df18fb22e1747ac5832b3"
+        },
+        "date": 1663409221842,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.038997853272714,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00926400754964586",
+            "extra": "mean: 962.4658962000012 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.307017853985258,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004912545069790154",
+            "extra": "mean: 81.25445269230515 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.25924081422539946,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018530878962134206",
+            "extra": "mean: 3.8574172935999966 sec\nrounds: 5"
           }
         ]
       }
