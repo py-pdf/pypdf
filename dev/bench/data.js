@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1663494444868,
+  "lastUpdate": 1663495298445,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -16384,6 +16384,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.022775210705508486",
             "extra": "mean: 3.870089609200005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "620d2fa03c8b87e2923d9f41e2bc0da8a4321c6a",
+          "message": "REL: 2.10.9\n\nNew Features (ENH):\n-  Add rotation property and transfer_rotate_to_content (#1348)\n\nPerformance Improvements (PI):\n-  Avoid string concatenation with large embedded base64-encoded images (#1350)\n\nBug Fixes (BUG):\n-  Format floats using their intrinsic decimal precision (#1267)\n\nRobustness (ROB):\n-  Fix merge_page for pages without resources (#1349)\n\nFull Changelog: https://github.com/py-pdf/PyPDF2/compare/2.10.8...2.10.9",
+          "timestamp": "2022-09-18T12:00:04+02:00",
+          "tree_id": "5e6d728dcbf9c03d3f94a42dc407e4fed5acaedf",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/620d2fa03c8b87e2923d9f41e2bc0da8a4321c6a"
+        },
+        "date": 1663495297665,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0514339613554329,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006172719079493318",
+            "extra": "mean: 951.0820810000013 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.477429613564272,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005006332828891026",
+            "extra": "mean: 80.14471176923294 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.26020978018594915,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014044998689420704",
+            "extra": "mean: 3.843053090799998 sec\nrounds: 5"
           }
         ]
       }
