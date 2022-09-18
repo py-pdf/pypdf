@@ -622,6 +622,9 @@ class PdfWriter:
         """
         self.set_need_appearances_writer()
         # Iterate through pages, update field values
+        if PG.ANNOTS not in page:
+            logger_warning("No fields to update on this page", __name__)
+            return
         for j in range(len(page[PG.ANNOTS])):  # type: ignore
             writer_annot = page[PG.ANNOTS][j].get_object()  # type: ignore
             # retrieve parent field values, if present
