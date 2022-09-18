@@ -423,7 +423,7 @@ class File:
     mime_type: str
 
     @property
-    def file_extension(self) -> str:
+    def format(self) -> str:
         return File._mime2extension(self.mime_type)
 
     @staticmethod
