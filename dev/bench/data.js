@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1663412936948,
+  "lastUpdate": 1663494444868,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -16339,6 +16339,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.022491068636409234",
             "extra": "mean: 3.888639466400008 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "donald.ness@gmail.com",
+            "name": "programmarchy",
+            "username": "programmarchy"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5aeb92633769785e50470a3acecffe883112a99d",
+          "message": "BUG: Format floats using their intrinsic decimal precision (#1267)\n\nSince FloatObject is represented as a decimal, format numbers using their intrinsic precision, instead of reducing the precision to 5 decimal places.\r\n\r\nThis fixes rendering issues for PDFs that contain coordinates, transformations, etc. with real numbers containing more than 5 decimal places of precision. For example, PDFs exported from Microsoft PowerPoint contain numbers with up to 11 decimal places.\r\n\r\nFixes #1266",
+          "timestamp": "2022-09-18T11:46:22+02:00",
+          "tree_id": "06a28811e5f006d4820d8ff85db228fd9dbc6228",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/5aeb92633769785e50470a3acecffe883112a99d"
+        },
+        "date": 1663494444144,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0396376033570993,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007102140060710866",
+            "extra": "mean: 961.8736344000013 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.72215104370597,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0059802404773838195",
+            "extra": "mean: 78.60305985714027 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2583919497943388,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022775210705508486",
+            "extra": "mean: 3.870089609200005 sec\nrounds: 5"
           }
         ]
       }
