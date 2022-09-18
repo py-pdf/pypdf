@@ -1186,9 +1186,9 @@ class PageObject(DictionaryObject):
         orientations: Tuple[int, ...] = (0, 90, 180, 270),
         space_width: float = 200.0,
         content_key: Optional[str] = PG.CONTENTS,
-        visitor_operand_before: Optional = None,
-        visitor_operand_after: Optional = None,
-        visitor_text: Optional = None,
+        visitor_operand_before: Optional[Callable[[Any, Any, Any, Any], None]] = None,
+        visitor_operand_after: Optional[Callable[[Any, Any, Any, Any], None] = None,
+        visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None] = None,
     ) -> str:
         """
         Locate all text drawing commands, in the order they are provided in the
@@ -1666,9 +1666,9 @@ class PageObject(DictionaryObject):
         TJ_sep: str = None,
         orientations: Union[int, Tuple[int, ...]] = (0, 90, 180, 270),
         space_width: float = 200.0,
-        visitor_operand_before: Optional = None,
-        visitor_operand_after: Optional = None,
-        visitor_text: Optional = None,
+        visitor_operand_before: Optional[Callable[[Any, Any, Any, Any], None]] = None,
+        visitor_operand_after: Optional[Callable[[Any, Any, Any, Any], None] = None,
+        visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None] = None,
     ) -> str:
         """
         Locate all text drawing commands, in the order they are provided in the
