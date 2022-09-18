@@ -241,14 +241,12 @@ class FloatObject(decimal.Decimal, PdfObject):
 
     def __repr__(self) -> str:
         if self == self.to_integral():
+            # If this is an integer, format it with no decimal place.
             return str(self.quantize(decimal.Decimal(1)))
         else:
-            # Standard formatting adds useless extraneous zeros.
-            o = f"{self:.5f}"
-            # Remove the zeros.
-            while o and o[-1] == "0":
-                o = o[:-1]
-            return o
+            # Otherwise, format it with a decimal place, taking care to
+            # remove any extraneous trailing zeros.
+            return f"{self:f}".rstrip("0")
 
     def as_numeric(self) -> float:
         return float(repr(self).encode("utf8"))
