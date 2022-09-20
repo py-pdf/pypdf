@@ -401,9 +401,9 @@ class PageObject(DictionaryObject):
         self.add_transformation(trsf, False)
         for b in ["/MediaBox", "/CropBox", "/BleedBox", "/TrimBox", "/ArtBox"]:
             if b in self:
-                r = RectangleObject(self[b])
-                pt1 = trsf.apply_on(r.lower_left)
-                pt2 = trsf.apply_on(r.upper_right)
+                rr = RectangleObject(self[b])  # type: ignore
+                pt1 = trsf.apply_on(rr.lower_left)
+                pt2 = trsf.apply_on(rr.upper_right)
                 self[NameObject(b)] = RectangleObject(
                     (
                         min(pt1[0], pt2[0]),
