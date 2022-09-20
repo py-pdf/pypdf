@@ -173,11 +173,11 @@ def test_readStringFromStream_excape_digit2():
 
 def test_readStringFromStream_performance():
     """
-    This test simulates reading an embedded base64 image of 1 megabyte.
+    This test simulates reading an embedded base64 image of 256kb.
     It should be faster than a second, even on ancient machines.
-    Runs in 200ms on a 2019 notebook. Takes 30 seconds prior to #1350.
+    Runs < 100ms on a 2019 notebook. Takes 10 seconds prior to #1350.
     """
-    stream = BytesIO(b"(" + b"".join([b"x"] * 1024 * 1024) + b")")
+    stream = BytesIO(b"(" + b"".join([b"x"] * 1024 * 256) + b")")
     start = time.time()
     assert read_string_from_stream(stream)
     end = time.time()
