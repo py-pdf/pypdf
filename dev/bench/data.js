@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1663496157509,
+  "lastUpdate": 1663832085391,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -16474,6 +16474,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01736674794806411",
             "extra": "mean: 3.866662841400006 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7803a72c1e446b957b7919b8097f272b14ae9fdc",
+          "message": "BUG: Errors in transfer_rotation_to_content() (#1356)\n\nSee https://github.com/py-pdf/PyPDF2/issues/1280#issuecomment-1251018614",
+          "timestamp": "2022-09-22T09:33:39+02:00",
+          "tree_id": "344d41bf9f4db99a1cef993c015d8fd5a54fd872",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/7803a72c1e446b957b7919b8097f272b14ae9fdc"
+        },
+        "date": 1663832084623,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0415303264411961,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008916489979658044",
+            "extra": "mean: 960.1256676000005 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.81585438654046,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005514018390088257",
+            "extra": "mean: 78.02835221428747 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2585361207204495,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025972699888375538",
+            "extra": "mean: 3.8679314798000006 sec\nrounds: 5"
           }
         ]
       }
