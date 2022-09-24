@@ -1319,7 +1319,7 @@ class PageObject(DictionaryObject):
             for f in cast(DictionaryObject, resources_dict["/Font"]):
                 cmaps[f] = build_char_map(f, space_width, obj)
         cmap: Tuple[
-            Union[str, Dict[int, str]], Dict[str, str], str, DictionaryObject
+            Union[str, Dict[int, str]], Dict[str, str], str, Optional[DictionaryObject]
         ] = (
             "charmap",
             {},
