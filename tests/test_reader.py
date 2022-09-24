@@ -169,18 +169,18 @@ def test_get_outline(src, outline_elements):
     [
         ("pdflatex-outline.pdf", []),
         ("crazyones.pdf", []),
-        ("git.pdf", [("Image9.png", "image/png")]),
+        ("git.pdf", ["Image9.png"]),
         pytest.param(
             "imagemagick-lzw.pdf",
-            [("Im0.png", "unknown")],
+            ["Im0.png"],
             marks=pytest.mark.xfail(reason="broken image extraction"),
         ),
         pytest.param(
             "imagemagick-ASCII85Decode.pdf",
-            [("Im0.png", "unknown")],
+            ["Im0.png"],
             marks=pytest.mark.xfail(reason="broken image extraction"),
         ),
-        ("imagemagick-CCITTFaxDecode.pdf", [("Im0.tiff", "image/tiff")]),
+        ("imagemagick-CCITTFaxDecode.pdf", ["Im0.tiff"]),
     ],
 )
 def test_get_images(src, expected_images):
@@ -195,9 +195,7 @@ def test_get_images(src, expected_images):
 
     images_extracted = page.images
     assert len(images_extracted) == len(expected_images)
-    for image, (expected_image, expected_mime) in zip(
-        images_extracted, expected_images
-    ):
+    for image, expected_image in zip(images_extracted, expected_images):
         assert image.name == expected_image
         with open(f"test-out-{src}-{image.name}", "wb") as fp:
             fp.write(image.data)
