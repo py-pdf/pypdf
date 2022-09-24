@@ -95,6 +95,10 @@ def test_read_metadata(pdf_path, expected):
         docinfo.producer_raw
         docinfo.subject
         docinfo.subject_raw
+        docinfo.creation_date
+        docinfo.creation_date_raw
+        docinfo.modification_date
+        docinfo.modification_date_raw
         if "/Title" in metadict:
             assert metadict["/Title"] == docinfo.title
 
