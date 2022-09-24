@@ -1254,18 +1254,6 @@ class PageObject(DictionaryObject):
             out += "No Font\n"
         return out
 
-    def _visit_operand_empty(op, args, cm_matrix, tm_matrix):
-        """
-        Dummy-implementation of an operand-visitor called by _extract_text.
-        """
-        pass
-
-    def _visit_text_empty(text, cm_matrix, tm_matrix):
-        """
-        Dummy-implementation of a text-visitor called by _extract_text.
-        """
-        pass
-
     def _extract_text(
         self,
         obj: Any,
