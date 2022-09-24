@@ -687,7 +687,7 @@ class ContentStream(DecodedStreamObject):
             data = b""
             for s in stream:
                 data += b_(s.get_object().get_data())
-                if data[-1] != b"\n":
+                if len(data) == 0 or data[-1] != b"\n":
                     data += b"\n"
             stream_bytes = BytesIO(data)
         else:
