@@ -370,6 +370,12 @@ class PageObject(DictionaryObject):
 
     @property
     def images(self) -> List[File]:
+        """
+        Get a list of all images of the page.
+
+        For the moment, this does NOT include inline images. They will be added
+        in future.
+        """
         images_extracted: List[File] = []
         if RES.XOBJECT not in self[PG.RESOURCES]:  # type: ignore
             return images_extracted
