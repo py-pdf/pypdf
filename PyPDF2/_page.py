@@ -1708,13 +1708,13 @@ class PageObject(DictionaryObject):
                     if xobj[operands[0]]["/Subtype"] != "/Image":  # type: ignore
                         # output += text
                         text = self.extract_xform_text(
-                            xobj[operands[0]],
+                            xobj[operands[0]],  # type: ignore
                             orientations,
                             space_width,
                             visitor_operand_before,
                             visitor_operand_after,
                             visitor_text,
-                        )  # type: ignore
+                        )
                         output += text
                         if visitor_text is not None:
                             visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
