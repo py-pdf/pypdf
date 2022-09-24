@@ -230,6 +230,36 @@ class DocumentInformation(DictionaryObject):
         """The "raw" version of producer; can return a ``ByteStringObject``."""
         return self.get(DI.PRODUCER)
 
+    @property
+    def creation_date(self) -> Optional[str]:
+        """
+        Read-only property accessing the document's **creation date**.
+
+        Typically in the format D:YYYYMMDDhhmmss[+-]hh'mm where the suffix is the
+        offset from UTC.
+        """
+        return self._get_text(DI.CREATION_DATE)
+
+    @property
+    def creation_date_raw(self) -> Optional[str]:
+        """The "raw" version of creation date; can return a ``ByteStringObject``."""
+        return self.get(DI.CREATION_DATE)
+
+    @property
+    def modification_date(self) -> Optional[str]:
+        """
+        Read-only property accessing the document's **modification date**.
+
+        Typically in the format D:YYYYMMDDhhmmss[+-]hh'mm where the suffix is the
+        offset from UTC.
+        """
+        return self._get_text(DI.MOD_DATE)
+
+    @property
+    def modification_date_raw(self) -> Optional[str]:
+        """The "raw" version of modification date; can return a ``ByteStringObject``."""
+        return self.get(DI.MOD_DATE)
+
 
 class PdfReader:
     """
