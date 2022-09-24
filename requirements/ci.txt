@@ -73,6 +73,8 @@ typed-ast==1.5.4
     # via mypy
 typeguard==2.13.3
     # via -r requirements/ci.in
+types-dataclasses==0.6.6
+    # via -r requirements/ci.in
 types-pillow==9.2.1
     # via -r requirements/ci.in
 typing-extensions==4.1.1

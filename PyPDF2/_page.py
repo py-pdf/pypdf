@@ -48,15 +48,18 @@ from typing import (
 from ._cmap import build_char_map, unknown_char_map
 from ._utils import (
     CompressedTransformationMatrix,
+    File,
     TransformationMatrixType,
     deprecate_no_replacement,
     deprecate_with_replacement,
     logger_warning,
     matrix_multiply,
 )
+from .constants import ImageAttributes as IA
 from .constants import PageAttributes as PG
 from .constants import Ressources as RES
 from .errors import PageSizeNotDefinedError
+from .filters import _xobj_to_image
 from .generic import (
     ArrayObject,
     ContentStream,
@@ -364,6 +367,27 @@ class PageObject(DictionaryObject):
         """
         deprecate_with_replacement("createBlankPage", "create_blank_page")
         return PageObject.create_blank_page(pdf, width, height)
+
+    @property
+    def images(self) -> List[File]:
+        """
+        Get a list of all images of the page.
+
+        For the moment, this does NOT include inline images. They will be added
+        in future.
+        """
+        images_extracted: List[File] = []
+        if RES.XOBJECT not in self[PG.RESOURCES]:  # type: ignore
+            return images_extracted
+
+        x_object = self[PG.RESOURCES][RES.XOBJECT].get_object()  # type: ignore
+        for obj in x_object:
+            if x_object[obj][IA.SUBTYPE] == "/Image":
+                extension, byte_stream = _xobj_to_image(x_object[obj])
+                if extension is not None:
+                    filename = f"{obj[1:]}{extension}"
+                    images_extracted.append(File(name=filename, data=byte_stream))
+        return images_extracted
 
     @property
     def rotation(self) -> int:

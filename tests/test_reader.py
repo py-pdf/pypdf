@@ -5,12 +5,12 @@ from io import BytesIO
 from pathlib import Path
 
 import pytest
+from PIL import Image
 
 from PyPDF2 import PdfReader
 from PyPDF2._reader import convert_to_int, convertToInt
 from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import PageAttributes as PG
-from PyPDF2.constants import Ressources as RES
 from PyPDF2.errors import (
     EmptyFileError,
     FileNotDecryptedError,
@@ -18,7 +18,6 @@ from PyPDF2.errors import (
     PdfReadWarning,
     WrongPasswordError,
 )
-from PyPDF2.filters import _xobj_to_image
 from PyPDF2.generic import Destination
 
 from . import get_pdf_from_url, normalize_warnings
@@ -166,19 +165,27 @@ def test_get_outline(src, outline_elements):
 
 
 @pytest.mark.parametrize(
-    ("src", "nb_images"),
+    ("src", "expected_images"),
     [
-        ("pdflatex-outline.pdf", 0),
-        ("crazyones.pdf", 0),
-        ("git.pdf", 1),
-        ("imagemagick-lzw.pdf", 1),
-        ("imagemagick-ASCII85Decode.pdf", 1),
-        ("imagemagick-CCITTFaxDecode.pdf", 1),
+        ("pdflatex-outline.pdf", []),
+        ("crazyones.pdf", []),
+        ("git.pdf", ["Image9.png"]),
+        pytest.param(
+            "imagemagick-lzw.pdf",
+            ["Im0.png"],
+            marks=pytest.mark.xfail(reason="broken image extraction"),
+        ),
+        pytest.param(
+            "imagemagick-ASCII85Decode.pdf",
+            ["Im0.png"],
+            marks=pytest.mark.xfail(reason="broken image extraction"),
+        ),
+        ("imagemagick-CCITTFaxDecode.pdf", ["Im0.tiff"]),
     ],
 )
-def test_get_images(src, nb_images):
-    src = RESOURCE_ROOT / src
-    reader = PdfReader(src)
+def test_get_images(src, expected_images):
+    src_abs = RESOURCE_ROOT / src
+    reader = PdfReader(src_abs)
 
     with pytest.raises(TypeError):
         page = reader.pages["0"]
@@ -186,25 +193,16 @@ def test_get_images(src, nb_images):
     page = reader.pages[-1]
     page = reader.pages[0]
 
-    images_extracted = []
-
-    if RES.XOBJECT in page[PG.RESOURCES]:
-        x_object = page[PG.RESOURCES][RES.XOBJECT].get_object()
-
-        for obj in x_object:
-            if x_object[obj][IA.SUBTYPE] == "/Image":
-                extension, byte_stream = _xobj_to_image(x_object[obj])
-                if extension is not None:
-                    filename = obj[1:] + ".png"
-                    with open(filename, "wb") as img:
-                        img.write(byte_stream)
-                    images_extracted.append(filename)
-
-    assert len(images_extracted) == nb_images
-
-    # Cleanup
-    for filepath in images_extracted:
-        os.remove(filepath)
+    images_extracted = page.images
+    assert len(images_extracted) == len(expected_images)
+    for image, expected_image in zip(images_extracted, expected_images):
+        assert image.name == expected_image
+        with open(f"test-out-{src}-{image.name}", "wb") as fp:
+            fp.write(image.data)
+        assert (
+            image.name.split(".")[-1].upper()
+            == Image.open(io.BytesIO(image.data)).format
+        )
 
 
 @pytest.mark.parametrize(

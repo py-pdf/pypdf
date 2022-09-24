@@ -24,6 +24,7 @@ You can contribute to `PyPDF2 on Github <https://github.com/py-pdf/PyPDF2>`_.
    user/suppress-warnings
    user/metadata
    user/extract-text
+   user/extract-images
    user/encryption-decryption
    user/merging-pdfs
    user/cropping-and-transforming
