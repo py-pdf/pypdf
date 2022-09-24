@@ -31,6 +31,7 @@ import os
 import re
 import struct
 import zlib
+from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 from typing import (
@@ -231,33 +232,45 @@ class DocumentInformation(DictionaryObject):
         return self.get(DI.PRODUCER)
 
     @property
-    def creation_date(self) -> Optional[str]:
+    def creation_date(self) -> Optional[datetime]:
         """
         Read-only property accessing the document's **creation date**.
-
-        Typically in the format D:YYYYMMDDhhmmss[+-]hh'mm where the suffix is the
-        offset from UTC.
         """
-        return self._get_text(DI.CREATION_DATE)
+        text = self._get_text(DI.CREATION_DATE)
+        if text is None:
+            return None
+        return datetime.strptime(text.replace("'", ""), "D:%Y%m%d%H%M%S%z")
 
     @property
     def creation_date_raw(self) -> Optional[str]:
-        """The "raw" version of creation date; can return a ``ByteStringObject``."""
-        return self.get(DI.CREATION_DATE)
-
-    @property
-    def modification_date(self) -> Optional[str]:
         """
-        Read-only property accessing the document's **modification date**.
+        The "raw" version of creation date; can return a ``ByteStringObject``.
 
         Typically in the format D:YYYYMMDDhhmmss[+-]hh'mm where the suffix is the
         offset from UTC.
         """
-        return self._get_text(DI.MOD_DATE)
+        return self.get(DI.CREATION_DATE)
+
+    @property
+    def modification_date(self) -> Optional[datetime]:
+        """
+        Read-only property accessing the document's **modification date**.
+
+        The date and time the document was most recently modified.
+        """
+        text = self._get_text(DI.MOD_DATE)
+        if text is None:
+            return None
+        return datetime.strptime(text.replace("'", ""), "D:%Y%m%d%H%M%S%z")
 
     @property
     def modification_date_raw(self) -> Optional[str]:
-        """The "raw" version of modification date; can return a ``ByteStringObject``."""
+        """
+        The "raw" version of modification date; can return a ``ByteStringObject``.
+
+        Typically in the format D:YYYYMMDDhhmmss[+-]hh'mm where the suffix is the
+        offset from UTC.
+        """
         return self.get(DI.MOD_DATE)
 
 
