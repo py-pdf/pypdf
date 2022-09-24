@@ -562,7 +562,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
     It's unclear if PyPDF2 will keep this function here, hence it's private.
     It might get removed at any point.
 
-    :return: Tuple[mime type, bytes]
+    :return: Tuple[file extension, bytes]
     """
     from PIL import Image
 
@@ -576,10 +576,10 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
         mode: Literal["RGB", "P"] = "RGB"
     else:
         mode = "P"
-    mime_type = None
+    extension = None
     if SA.FILTER in x_object_obj:
         if x_object_obj[SA.FILTER] == FT.FLATE_DECODE:
-            mime_type = "image/png"
+            extension = ".png"  # mime_type = "image/png"
             color_space = None
             if "/ColorSpace" in x_object_obj:
                 color_space = x_object_obj["/ColorSpace"].get_object()
@@ -606,23 +606,25 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
             [FT.ASCII_85_DECODE],
             [FT.CCITT_FAX_DECODE],
         ):
-            # I'm not sure if the mime types have any relationship to the filters
+            # I'm not sure if the following logic is correct.
+            # There might not be any relationship between the filters and the
+            # extension
             if x_object_obj[SA.FILTER] in [[FT.LZW_DECODE], [FT.CCITT_FAX_DECODE]]:
-                mime_type = "image/tiff"
+                extension = ".tiff"  # mime_type = "image/tiff"
             else:
-                mime_type = "image/png"
+                extension = ".png"  # mime_type = "image/png"
             data = b_(data)
         elif x_object_obj[SA.FILTER] == FT.DCT_DECODE:
-            mime_type = "image/jpeg"
+            extension = ".jpg"  # mime_type = "image/jpeg"
         elif x_object_obj[SA.FILTER] == "/JPXDecode":
-            mime_type = "image/x-jp2"
+            extension = ".jp2"  # mime_type = "image/x-jp2"
         elif x_object_obj[SA.FILTER] == FT.CCITT_FAX_DECODE:
-            mime_type = "image/tiff"
+            extension = ".tiff"  # mime_type = "image/tiff"
     else:
-        mime_type = "image/png"
+        extension = ".png"  # mime_type = "image/png"
         img = Image.frombytes(mode, size, data)
         img_byte_arr = BytesIO()
         img.save(img_byte_arr, format="PNG")
         data = img_byte_arr.getvalue()
 
-    return mime_type, data
+    return extension, data

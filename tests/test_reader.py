@@ -201,8 +201,10 @@ def test_get_images(src, expected_images):
         assert image.name == expected_image
         with open(f"test-out-{src}-{image.name}", "wb") as fp:
             fp.write(image.data)
-        assert image.format.upper() == Image.open(io.BytesIO(image.data)).format
-        assert image.mime_type == expected_mime
+        assert (
+            image.name.split(".")[-1].upper()
+            == Image.open(io.BytesIO(image.data)).format
+        )
 
 
 @pytest.mark.parametrize(

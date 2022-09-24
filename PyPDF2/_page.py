@@ -377,12 +377,10 @@ class PageObject(DictionaryObject):
         x_object = self[PG.RESOURCES][RES.XOBJECT].get_object()  # type: ignore
         for obj in x_object:
             if x_object[obj][IA.SUBTYPE] == "/Image":
-                mime_type, byte_stream = _xobj_to_image(x_object[obj])
-                if mime_type is not None:
-                    filename = f"{obj[1:]}.{File._mime2extension(mime_type)}"
-                    images_extracted.append(
-                        File(name=filename, data=byte_stream, mime_type=mime_type)
-                    )
+                extension, byte_stream = _xobj_to_image(x_object[obj])
+                if extension is not None:
+                    filename = f"{obj[1:]}{extension}"
+                    images_extracted.append(File(name=filename, data=byte_stream))
         return images_extracted
 
     @property

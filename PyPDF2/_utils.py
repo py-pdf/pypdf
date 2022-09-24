@@ -420,19 +420,3 @@ def rename_kwargs(  # type: ignore
 class File:
     name: str
     data: bytes
-    mime_type: str
-
-    @property
-    def format(self) -> str:
-        return File._mime2extension(self.mime_type)
-
-    @staticmethod
-    def _mime2extension(mime_type: str) -> str:
-        mapping = {
-            "image/png": "png",
-            "image/jpeg": "jpg",
-            "image/x-jp2": "jp2",
-            "image/gif": "gif",
-            "image/tiff": "tiff",
-        }
-        return mapping.get(mime_type, "unknown")
