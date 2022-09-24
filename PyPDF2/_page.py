@@ -1754,8 +1754,8 @@ class PageObject(DictionaryObject):
         orientations: Union[int, Tuple[int, ...]] = (0, 90, 180, 270),
         space_width: float = 200.0,
         visitor_operand_before: Optional[Callable[[Any, Any, Any, Any], None]] = None,
-        visitor_operand_after: Optional[Callable[[Any, Any, Any, Any], None] = None,
-        visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None] = None,
+        visitor_operand_after: Optional[Callable[[Any, Any, Any, Any], None]] = None,
+        visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None,
     ) -> str:
         """
         Locate all text drawing commands, in the order they are provided in the
