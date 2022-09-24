@@ -35,6 +35,7 @@ import random
 import struct
 import time
 import uuid
+import warnings
 from hashlib import md5
 from io import BufferedReader, BufferedWriter, BytesIO, FileIO
 from pathlib import Path
@@ -579,10 +580,10 @@ class PdfWriter:
         writer_num_pages = len(self.pages)
 
         # Copy pages from reader to writer
-        for rpagenum in range(reader_num_pages):
-            reader_page = reader.pages[rpagenum]
+        for reader_page_number in range(reader_num_pages):
+            reader_page = reader.pages[reader_page_number]
             self.add_page(reader_page)
-            writer_page = self.pages[writer_num_pages + rpagenum]
+            writer_page = self.pages[writer_num_pages + reader_page_number]
             # Trigger callback, pass writer page as parameter
             if callable(after_page_append):
                 after_page_append(writer_page)
@@ -1204,19 +1205,20 @@ class PdfWriter:
     def add_outline_item(
         self,
         title: str,
-        pagenum: int,
+        pagenum: Optional[int] = None,  # deprecated
         parent: Union[None, TreeObject, IndirectObject] = None,
         color: Optional[Union[Tuple[float, float, float], str]] = None,
         bold: bool = False,
         italic: bool = False,
         fit: FitType = "/Fit",
         *args: ZoomArgType,
+        page_number: Optional[int] = None,
     ) -> IndirectObject:
         """
         Add an outline item (commonly referred to as a "Bookmark") to this PDF file.
 
         :param str title: Title to use for this outline item.
-        :param int pagenum: Page number this outline item will point to.
+        :param int page_number: Page number this outline item will point to.
         :param parent: A reference to a parent outline item to create nested
             outline items.
         :param tuple color: Color of the outline item's font as a red, green, blue tuple
@@ -1226,7 +1228,22 @@ class PdfWriter:
         :param str fit: The fit of the destination page. See
             :meth:`add_link()<add_link>` for details.
         """
-        page_ref = NumberObject(pagenum)
+        if page_number is not None and pagenum is not None:
+            raise ValueError(
+                "The argument pagenum of add_outline_item is deprecated. Use page_number only."
+            )
+        if pagenum is not None:
+            old_term = "pagenum"
+            new_term = "page_number"
+            warnings.warn(
+                message=(
+                    f"{old_term} is deprecated as an argument. Use {new_term} instead"
+                )
+            )
+            page_number = pagenum
+        if page_number is None:
+            raise ValueError("page_number may not be None")
+        page_ref = NumberObject(page_number)
         zoom_args: ZoomArgsType = [
             NullObject() if a is None else NumberObject(a) for a in args
         ]
@@ -1254,7 +1271,7 @@ class PdfWriter:
     def add_bookmark(
         self,
         title: str,
-        pagenum: int,
+        pagenum: int,  # deprecated, but the whole method is deprecated
         parent: Union[None, TreeObject, IndirectObject] = None,
         color: Optional[Tuple[float, float, float]] = None,
         bold: bool = False,
@@ -1318,8 +1335,28 @@ class PdfWriter:
         )
         return self.add_named_destination_object(dest)
 
-    def add_named_destination(self, title: str, pagenum: int) -> IndirectObject:
-        page_ref = self.get_object(self._pages)[PA.KIDS][pagenum]  # type: ignore
+    def add_named_destination(
+        self,
+        title: str,
+        page_number: Optional[int] = None,
+        pagenum: Optional[int] = None,
+    ) -> IndirectObject:
+        if page_number is not None and pagenum is not None:
+            raise ValueError(
+                "The argument pagenum of add_outline_item is deprecated. Use page_number only."
+            )
+        if pagenum is not None:
+            old_term = "pagenum"
+            new_term = "page_number"
+            warnings.warn(
+                message=(
+                    f"{old_term} is deprecated as an argument. Use {new_term} instead"
+                )
+            )
+            page_number = pagenum
+        if page_number is None:
+            raise ValueError("page_number may not be None")
+        page_ref = self.get_object(self._pages)[PA.KIDS][page_number]  # type: ignore
         dest = DictionaryObject()
         dest.update(
             {
@@ -1509,16 +1546,17 @@ class PdfWriter:
 
     def add_uri(
         self,
-        pagenum: int,
+        page_number: int,
         uri: str,
         rect: RectangleObject,
         border: Optional[ArrayObject] = None,
+        pagenum: Optional[int] = None,
     ) -> None:
         """
         Add an URI from a rectangular area to the specified page.
         This uses the basic structure of :meth:`add_link`
 
-        :param int pagenum: index of the page on which to place the URI action.
+        :param int page_number: index of the page on which to place the URI action.
         :param str uri: URI of resource to link to.
         :param Tuple[int, int, int, int] rect: :class:`RectangleObject<PyPDF2.generic.RectangleObject>` or array of four
             integers specifying the clickable rectangular area
@@ -1527,7 +1565,12 @@ class PdfWriter:
             properties. See the PDF spec for details. No border will be
             drawn if this argument is omitted.
         """
-        page_link = self.get_object(self._pages)[PA.KIDS][pagenum]  # type: ignore
+        if pagenum is not None:
+            warnings.warn(
+                "The 'pagenum' argument of add_uri is deprecated. Use 'page_number' instead."
+            )
+            page_number = pagenum
+        page_link = self.get_object(self._pages)[PA.KIDS][page_number]  # type: ignore
         page_ref = cast(Dict[str, Any], self.get_object(page_link))
 
         border_arr: BorderArrayType
@@ -1576,7 +1619,7 @@ class PdfWriter:
 
     def addURI(
         self,
-        pagenum: int,
+        pagenum: int,  # deprecated, but method is deprecated already
         uri: str,
         rect: RectangleObject,
         border: Optional[ArrayObject] = None,
@@ -1591,7 +1634,7 @@ class PdfWriter:
 
     def add_link(
         self,
-        pagenum: int,
+        pagenum: int,  # deprecated, but method is deprecated already
         pagedest: int,
         rect: RectangleObject,
         border: Optional[ArrayObject] = None,
@@ -1623,7 +1666,7 @@ class PdfWriter:
 
     def addLink(
         self,
-        pagenum: int,
+        pagenum: int,  # deprecated, but method is deprecated already
         pagedest: int,
         rect: RectangleObject,
         border: Optional[ArrayObject] = None,
@@ -1924,11 +1967,13 @@ def _create_outline_item(
     if color:
         if isinstance(color, str):
             color = hex_to_rgb(color)
-        prec = decimal.Decimal('1.00000')
+        prec = decimal.Decimal("1.00000")
         outline_item.update(
-            {NameObject("/C"): ArrayObject([
-                FloatObject(decimal.Decimal(c).quantize(prec)) for c in color
-            ])}
+            {
+                NameObject("/C"): ArrayObject(
+                    [FloatObject(decimal.Decimal(c).quantize(prec)) for c in color]
+                )
+            }
         )
     if italic or bold:
         format_flag = 0

@@ -25,6 +25,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import warnings
 from io import BytesIO, FileIO, IOBase
 from pathlib import Path
 from types import TracebackType
@@ -623,19 +624,20 @@ class PdfMerger:
     def add_outline_item(
         self,
         title: str,
-        pagenum: int,
+        pagenum: Optional[int] = None,  # deprecated
         parent: Union[None, TreeObject, IndirectObject] = None,
         color: Optional[Tuple[float, float, float]] = None,
         bold: bool = False,
         italic: bool = False,
         fit: FitType = "/Fit",
         *args: ZoomArgType,
+        page_number: Optional[int] = None,
     ) -> IndirectObject:
         """
         Add an outline item (commonly referred to as a "Bookmark") to this PDF file.
 
         :param str title: Title to use for this outline item.
-        :param int pagenum: Page number this outline item will point to.
+        :param int page_number: Page number this outline item will point to.
         :param parent: A reference to a parent outline item to create nested
             outline items.
         :param tuple color: Color of the outline item's font as a red, green, blue tuple
@@ -645,17 +647,32 @@ class PdfMerger:
         :param str fit: The fit of the destination page. See
             :meth:`add_link()<add_link>` for details.
         """
+        if page_number is not None and pagenum is not None:
+            raise ValueError(
+                "The argument pagenum of add_outline_item is deprecated. Use page_number only."
+            )
+        if pagenum is not None:
+            old_term = "pagenum"
+            new_term = "page_number"
+            warnings.warn(
+                message=(
+                    f"{old_term} is deprecated as an argument. Use {new_term} instead"
+                )
+            )
+            page_number = pagenum
+        if page_number is None:
+            raise ValueError("page_number may not be None")
         writer = self.output
         if writer is None:
             raise RuntimeError(ERR_CLOSED_WRITER)
         return writer.add_outline_item(
-            title, pagenum, parent, color, bold, italic, fit, *args
+            title, page_number, parent, color, bold, italic, fit, *args
         )
 
     def addBookmark(
         self,
         title: str,
-        pagenum: int,
+        pagenum: int,  # deprecated, but the whole method is deprecated
         parent: Union[None, TreeObject, IndirectObject] = None,
         color: Optional[Tuple[float, float, float]] = None,
         bold: bool = False,
@@ -675,7 +692,7 @@ class PdfMerger:
     def add_bookmark(
         self,
         title: str,
-        pagenum: int,
+        pagenum: int,  # deprecated, but the whole method is deprecated already
         parent: Union[None, TreeObject, IndirectObject] = None,
         color: Optional[Tuple[float, float, float]] = None,
         bold: bool = False,
@@ -700,16 +717,36 @@ class PdfMerger:
         deprecate_with_replacement("addNamedDestination", "add_named_destination")
         return self.add_named_destination(title, pagenum)
 
-    def add_named_destination(self, title: str, pagenum: int) -> None:
+    def add_named_destination(
+        self,
+        title: str,
+        page_number: Optional[int] = None,
+        pagenum: Optional[int] = None,
+    ) -> None:
         """
         Add a destination to the output.
 
         :param str title: Title to use
-        :param int pagenum: Page number this destination points at.
+        :param int page_number: Page number this destination points at.
         """
+        if page_number is not None and pagenum is not None:
+            raise ValueError(
+                "The argument pagenum of add_named_destination is deprecated. Use page_number only."
+            )
+        if pagenum is not None:
+            old_term = "pagenum"
+            new_term = "page_number"
+            warnings.warn(
+                message=(
+                    f"{old_term} is deprecated as an argument. Use {new_term} instead"
+                )
+            )
+            page_number = pagenum
+        if page_number is None:
+            raise ValueError("page_number may not be None")
         dest = Destination(
             TextStringObject(title),
-            NumberObject(pagenum),
+            NumberObject(page_number),
             NameObject(TypFitArguments.FIT_H),
             NumberObject(826),
         )
