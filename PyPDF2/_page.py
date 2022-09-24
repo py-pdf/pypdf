@@ -1304,7 +1304,10 @@ class PageObject(DictionaryObject):
         output: str = ""
         rtl_dir: bool = False  # right-to-left
         cmaps: Dict[
-            str, Tuple[str, float, Union[str, Dict[int, str]], Dict[str, str]]
+            str,
+            Tuple[
+                str, float, Union[str, Dict[int, str]], Dict[str, str], DictionaryObject
+            ],
         ] = {}
         try:
             objr = obj
