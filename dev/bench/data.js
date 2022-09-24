@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1663989626978,
+  "lastUpdate": 1663994814846,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -16564,6 +16564,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.008814258450953053",
             "extra": "mean: 4.006249245000004 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "dcab241e4ab386834d6864538b99b556b04a3f7c",
+          "message": "BUG: 'IndexError: index out of range' when using extract_text (#1361)\n\nFixes #1358\r\n\r\nCo-authored-by: diavral <73272031+diavral@users.noreply.github.com>",
+          "timestamp": "2022-09-24T06:45:33+02:00",
+          "tree_id": "3bb00ebf8c23f6bf4ff934d6226ef3e0540fc0c4",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/dcab241e4ab386834d6864538b99b556b04a3f7c"
+        },
+        "date": 1663994813953,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7740802987014608,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014000307163367968",
+            "extra": "mean: 1.2918556404000014 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.074723471872899,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010185591047150866",
+            "extra": "mean: 110.1961953 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.1995728793205561,
+            "unit": "iter/sec",
+            "range": "stddev: 0.10213553189027288",
+            "extra": "mean: 5.0107008697999955 sec\nrounds: 5"
           }
         ]
       }
