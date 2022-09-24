@@ -624,14 +624,14 @@ class PdfMerger:
     def add_outline_item(
         self,
         title: str,
-        pagenum: Optional[int] = None,  # deprecated
+        page_number: Optional[int] = None,  # deprecated
         parent: Union[None, TreeObject, IndirectObject] = None,
         color: Optional[Tuple[float, float, float]] = None,
         bold: bool = False,
         italic: bool = False,
         fit: FitType = "/Fit",
         *args: ZoomArgType,
-        page_number: Optional[int] = None,
+        pagenum: Optional[int] = None,
     ) -> IndirectObject:
         """
         Add an outline item (commonly referred to as a "Bookmark") to this PDF file.
