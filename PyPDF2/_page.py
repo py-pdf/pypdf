@@ -1274,8 +1274,8 @@ class PageObject(DictionaryObject):
         space_width: float = 200.0,
         content_key: Optional[str] = PG.CONTENTS,
         visitor_operand_before: Optional[Callable[[Any, Any, Any, Any], None]] = None,
-        visitor_operand_after: Optional[Callable[[Any, Any, Any, Any], None] = None,
-        visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None] = None,
+        visitor_operand_after: Optional[Callable[[Any, Any, Any, Any], None]] = None,
+        visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None,
     ) -> str:
         """
         Locate all text drawing commands, in the order they are provided in the
