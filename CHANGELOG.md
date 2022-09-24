@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## Version 2.10.9, 2022-09-18
+
+### New Features (ENH)
+-  Add rotation property and transfer_rotate_to_content (#1348)
+
+### Performance Improvements (PI)
+-  Avoid string concatenation with large embedded base64-encoded images (#1350)
+
+### Bug Fixes (BUG)
+-  Format floats using their intrinsic decimal precision (#1267)
+
+### Robustness (ROB)
+-  Fix merge_page for pages without resources (#1349)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.10.8...2.10.9
+
 ## Version 2.10.8, 2022-09-14
 
 ### New Features (ENH)

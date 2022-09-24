@@ -20,6 +20,7 @@ history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/PyPDF2/gr
 * [Lightup1](https://github.com/Lightup1)
 * [Mérino, Antoine](https://github.com/Merinorus)
 * [Pinheiro, Arthur](https://github.com/xilopaint)
+* [programmarchy](https://github.com/programmarchy)
 * [pubpub-zz](https://github.com/pubpub-zz): involved in community development
 * [sietzeberends](https://github.com/sietzeberends)
 * [Stüber, Timo](https://github.com/omit66)

@@ -210,12 +210,29 @@ def test_page_properties():
     assert page.bleedbox == RectangleObject((0, 1, 100, 101))
 
 
-def test_page_rotation_non90():
+def test_page_rotation():
     reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
     page = reader.pages[0]
     with pytest.raises(ValueError) as exc:
         page.rotate(91)
     assert exc.value.args[0] == "Rotation angle must be a multiple of 90"
+
+    # test rotation
+    assert page.rotation == 0
+    page.rotation = 180
+    assert page.rotation == 180
+    page.rotation += 190
+    assert page.rotation == 0
+
+    # test transfer_rotate_to_content
+    page.rotation -= 90
+    page.transfer_rotation_to_content()
+    assert (
+        abs(float(page.mediabox.left) - 0) < 0.1
+        and abs(float(page.mediabox.bottom) - 0) < 0.1
+        and abs(float(page.mediabox.right) - 792) < 0.1
+        and abs(float(page.mediabox.top) - 612) < 0.1
+    )
 
 
 def test_page_scale():
@@ -795,3 +812,12 @@ def test_read_link_annotation():
     del expected["/Rect"]
     del annot["/Rect"]
     assert annot == expected
+
+
+def test_no_resources():
+    url = "https://github.com/py-pdf/PyPDF2/files/9572045/108.pdf"
+    name = "108.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    page_one = reader.pages[0]
+    page_two = reader.pages[0]
+    page_one.merge_page(page_two)

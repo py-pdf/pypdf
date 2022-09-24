@@ -622,6 +622,9 @@ class PdfWriter:
         """
         self.set_need_appearances_writer()
         # Iterate through pages, update field values
+        if PG.ANNOTS not in page:
+            logger_warning("No fields to update on this page", __name__)
+            return
         for j in range(len(page[PG.ANNOTS])):  # type: ignore
             writer_annot = page[PG.ANNOTS][j].get_object()  # type: ignore
             # retrieve parent field values, if present
@@ -1921,8 +1924,11 @@ def _create_outline_item(
     if color:
         if isinstance(color, str):
             color = hex_to_rgb(color)
+        prec = decimal.Decimal('1.00000')
         outline_item.update(
-            {NameObject("/C"): ArrayObject([FloatObject(c) for c in color])}
+            {NameObject("/C"): ArrayObject([
+                FloatObject(decimal.Decimal(c).quantize(prec)) for c in color
+            ])}
         )
     if italic or bold:
         format_flag = 0

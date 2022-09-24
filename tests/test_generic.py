@@ -427,6 +427,10 @@ def test_RectangleObject():
     ro.lower_left = (5, 6)
     assert ro.lower_left == (5, 6)
 
+    ro.bottom -= 2
+    ro.left -= 2
+    assert ro.lower_left == (3, 4)
+
     ro.lower_right = (7, 8)
     assert ro.lower_right == (7, 8)
 
@@ -435,6 +439,9 @@ def test_RectangleObject():
 
     ro.upper_right = (13, 17)
     assert ro.upper_right == (13, 17)
+    ro.top += 1
+    ro.right += 1
+    assert ro.upper_right == (14, 18)
 
 
 def test_TextStringObject_exc():
@@ -862,3 +869,35 @@ def test_create_string_object_force():
     assert create_string_object(b"Hello World", []) == "Hello World"
     assert create_string_object(b"Hello World", {72: "A"}) == "Aello World"
     assert create_string_object(b"Hello World", "utf8") == "Hello World"
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("0.000000", "0"),
+        ("0.0", "0"),
+        ("1.0", "1"),
+        ("0.123000", "0.123"),
+        ("0.000123000", "0.000123"),
+        ("0.0", "0"),
+        ("0", "0"),
+        ("1", "1"),
+        ("1.0", "1"),
+        ("1.01", "1.01"),
+        ("1.010", "1.01"),
+        ("0000.0000", "0"),
+        ("0.10101010", "0.1010101"),
+        ("50000000000", "50000000000"),
+        ("99900000000000000123", "99900000000000000123"),
+        ("99900000000000000123.456000", "99900000000000000123.456"),
+        ("0.00000000000000000000123", "0.00000000000000000000123"),
+        ("0.00000000000000000000123000", "0.00000000000000000000123"),
+        ("50032481330523882508234.00000000000000000000123000", "50032481330523882508234.00000000000000000000123"),
+        (
+            "928457298572093487502198745102973402987412908743.75249875981374981237498213740000",
+            "928457298572093487502198745102973402987412908743.7524987598137498123749821374"
+        ),
+    ]
+)
+def test_float_object_decimal_to_string(value, expected):
+    assert repr(FloatObject(value)) == expected
