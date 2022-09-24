@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1663994814846,
+  "lastUpdate": 1663998069218,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -16609,6 +16609,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.10213553189027288",
             "extra": "mean: 5.0107008697999955 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "85b3e8785830bf35fc1c21f5c2edf29636281290",
+          "message": "ENH: Add PageObject.images attribute (#1330)",
+          "timestamp": "2022-09-24T07:39:46+02:00",
+          "tree_id": "d18a824240011eb5290e06b4b24ba84a926adbb0",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/85b3e8785830bf35fc1c21f5c2edf29636281290"
+        },
+        "date": 1663998066961,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8860711255285805,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011808193474007207",
+            "extra": "mean: 1.1285775726000054 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.642001788987075,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00791500847486989",
+            "extra": "mean: 93.96728358332496 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21952163398681096,
+            "unit": "iter/sec",
+            "range": "stddev: 0.042785993240842736",
+            "extra": "mean: 4.555359678399992 sec\nrounds: 5"
           }
         ]
       }
