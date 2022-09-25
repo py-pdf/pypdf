@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1664124075101,
+  "lastUpdate": 1664124671304,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -16924,6 +16924,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.010354597710917198",
             "extra": "mean: 3.8477615538000065 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "67a5ccfad2664c7854c3fac4fc6fac6500a52232",
+          "message": "REL: 2.11.0\n\nNew Features (ENH):\n-  Addition of optional visitor-functions in extract_text() (#1252)\n-  Add metadata.creation_date and modification_date (#1364)\n-  Add PageObject.images attribute (#1330)\n\nBug Fixes (BUG):\n-  Lookup index in _xobj_to_image can be ByteStringObject (#1366)\n-  \\'IndexError: index out of range\\' when using extract_text (#1361)\n-  Errors in transfer_rotation_to_content() (#1356)\n\nRobustness (ROB):\n-  Ensure update_page_form_field_values does not fail if no fields (#1346)\n\nTesting (TST):\n-  read_string_from_stream performance (#1355)\n\nFull Changelog: https://github.com/py-pdf/PyPDF2/compare/2.10.9...2.11.0",
+          "timestamp": "2022-09-25T18:49:39+02:00",
+          "tree_id": "1e4856d3f6d19b13c436ddbccb2da714e4dcfa66",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/67a5ccfad2664c7854c3fac4fc6fac6500a52232"
+        },
+        "date": 1664124670574,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.028173160727135,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00826957765584864",
+            "extra": "mean: 972.5988172000029 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.598792327643986,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0065738009991870554",
+            "extra": "mean: 79.37268699999305 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.25296824508617344,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020067402657176336",
+            "extra": "mean: 3.9530653330000005 sec\nrounds: 5"
           }
         ]
       }
