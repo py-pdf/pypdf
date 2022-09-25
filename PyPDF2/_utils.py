@@ -432,8 +432,8 @@ class File:
     name: str
     data: bytes
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"File(name={self.name}, data: {_human_readable_bytes(len(self.data))})"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"File(name={self.name}, data: {_human_readable_bytes(len(self.data))}, hash: {hash(self.data)})"
