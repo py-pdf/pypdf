@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1664024364128,
+  "lastUpdate": 1664087574099,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -16699,6 +16699,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.043022811604254904",
             "extra": "mean: 4.546453921399996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "61194539+mergezalot@users.noreply.github.com",
+            "name": "Michael Karlen",
+            "username": "mergezalot"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "30a9e68beecb0d710339e85b991add63d9141c93",
+          "message": "TST: read_string_from_stream performance (#1355)\n\nThere is a saftey margin of a factor of 10 in both directions,\r\nso the test should be fairly stable.\r\n\r\nTests #1350.\r\n\r\nCo-authored-by: Michael Karlen <michael.karlen@gmail.com>",
+          "timestamp": "2022-09-25T08:31:40+02:00",
+          "tree_id": "abeed7a9eed8aea364d7120ea37bdfbf90fb22f0",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/30a9e68beecb0d710339e85b991add63d9141c93"
+        },
+        "date": 1664087573292,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9142626711048651,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012020139850162639",
+            "extra": "mean: 1.0937775669999994 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.3773641123255,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006328296813346617",
+            "extra": "mean: 87.89382058333395 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22219162599093986,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05791000906966937",
+            "extra": "mean: 4.500619659000003 sec\nrounds: 5"
           }
         ]
       }
