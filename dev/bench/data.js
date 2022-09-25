@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1664087574099,
+  "lastUpdate": 1664095433410,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -16744,6 +16744,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.05791000906966937",
             "extra": "mean: 4.500619659000003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "59577610+srogmann@users.noreply.github.com",
+            "name": "Sascha Rogmann",
+            "username": "srogmann"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ebb3b83c3aa6e2305b32710c609e0e7534186934",
+          "message": "ENH: Addition of optional visitor-functions in extract_text() (#1252)\n\nOptional visitor-callback were added to extract_text().\r\n\r\n_extract_text() calls these visitor-methods while scanning the text-objects of a page. So one can analyze the operations in the page and the positions of the texts.\r\n\r\nIt can also be used to extract the rectangles of a table and the text in the cells.\r\n\r\ntests/test_page.py extracts the texts of labels in a Figure and serves as an example how to use this enhancement.",
+          "timestamp": "2022-09-25T10:42:38+02:00",
+          "tree_id": "7e61d824d7e7b07f782333f3b036178b3ab50b5e",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/ebb3b83c3aa6e2305b32710c609e0e7534186934"
+        },
+        "date": 1664095432696,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0401711833016192,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01561085702181688",
+            "extra": "mean: 961.3802190000001 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.694411373890373,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006510090549569157",
+            "extra": "mean: 78.7748222857171 msec\nrounds: 14"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2573582380007235,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02050986545427886",
+            "extra": "mean: 3.8856343117999925 sec\nrounds: 5"
           }
         ]
       }
