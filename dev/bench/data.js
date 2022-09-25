@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1664119008741,
+  "lastUpdate": 1664124075101,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -16879,6 +16879,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.074569126704801",
             "extra": "mean: 4.511159798999995 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "eca1a848633871548dd700a147060dfbfa0da7c2",
+          "message": "BUG: Lookup index in _xobj_to_image can be ByteStringObject (#1366)\n\nDEV: Adjusted File classes __str__ and __repr__ to easy debugging",
+          "timestamp": "2022-09-25T18:40:11+02:00",
+          "tree_id": "ff6f6d212c2ac37f4392311a27ecb0557ff4e4f6",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/eca1a848633871548dd700a147060dfbfa0da7c2"
+        },
+        "date": 1664124074001,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0605481365199423,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005463334734702151",
+            "extra": "mean: 942.9086389999952 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.573549801682004,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004714931055203965",
+            "extra": "mean: 79.53203476922856 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2598913643732448,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010354597710917198",
+            "extra": "mean: 3.8477615538000065 sec\nrounds: 5"
           }
         ]
       }
