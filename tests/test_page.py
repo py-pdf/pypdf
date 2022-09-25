@@ -348,6 +348,260 @@ def test_extract_text_operator_t_star():  # L1266, L1267
         page.extract_text()
 
 
+def test_extract_text_visitor_callbacks():
+    """
+    Extract text in rectangle-objects or simple tables.
+
+    This test uses GeoBase_NHNC1_Data_Model_UML_EN.pdf.
+    It extracts the labels of package-boxes in Figure 2.
+    It extracts the texts in table "REVISION HISTORY".
+
+    """
+    import logging
+
+    class PositionedText:
+        """Specify a text with coordinates, font-dictionary and font-size.
+
+        The font-dictionary may be None in case of an unknown font.
+        """
+
+        def __init__(self, text, x, y, font_dict, font_size) -> None:
+            # TODO \0-replace: Encoding issue in some files?
+            self.text = text.replace("\0", "")
+            self.x = x
+            self.y = y
+            self.font_dict = font_dict
+            self.font_size = font_size
+
+        def get_base_font(self) -> str:
+            """Gets the base font of the text.
+
+            Return UNKNOWN in case of an unknown font."""
+            if (self.font_dict is None) or "/BaseFont" not in self.font_dict:
+                return "UNKNOWN"
+            return self.font_dict["/BaseFont"]
+
+    class Rectangle:
+        """Specify a rectangle."""
+
+        def __init__(self, x, y, w, h) -> None:
+            self.x = x.as_numeric()
+            self.y = y.as_numeric()
+            self.w = w.as_numeric()
+            self.h = h.as_numeric()
+
+        def contains(self, x, y) -> bool:
+            return (
+                x >= self.x
+                and x <= (self.x + self.w)
+                and y >= self.y
+                and y <= (self.y + self.h)
+            )
+
+    def extractTextAndRectangles(page: PageObject, rectFilter=None) -> tuple:
+        """
+        Extracts texts and rectangles of a page of type PyPDF2._page.PageObject.
+
+        This function supports simple coordinate transformations only.
+        The optional rectFilter-lambda can be used to filter wanted rectangles.
+        rectFilter has Rectangle as argument and must return a boolean.
+
+        It returns a tuple containing a list of extracted texts (type PositionedText)
+        and a list of extracted rectangles (type Rectangle).
+        """
+
+        logger = logging.getLogger("extractTextAndRectangles")
+
+        listRects = []
+        listTexts = []
+
+        def print_op_b(op, args, cm_matrix, tm_matrix):
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug(f"before: {op} at {cm_matrix}, {tm_matrix}")
+            if op == b"re":
+                if logger.isEnabledFor(logging.DEBUG):
+                    logger.debug(f"  add rectangle: {args}")
+                w = args[2]
+                h = args[3]
+                r = Rectangle(args[0], args[1], w, h)
+                if (rectFilter is None) or rectFilter(r):
+                    listRects.append(r)
+
+        def print_visi(text, cm_matrix, tm_matrix, font_dict, font_size):
+            if text.strip() != "":
+                if logger.isEnabledFor(logging.DEBUG):
+                    logger.debug(f"at {cm_matrix}, {tm_matrix}, fontSize={font_size}")
+                listTexts.append(
+                    PositionedText(
+                        text, tm_matrix[4], tm_matrix[5], font_dict, font_size
+                    )
+                )
+
+        visitor_before = print_op_b
+        visitor_text = print_visi
+
+        page.extract_text(
+            visitor_operand_before=visitor_before, visitor_text=visitor_text
+        )
+
+        return (listTexts, listRects)
+
+    def extractTable(listTexts: list, listRects: list) -> list:
+        """
+        Extracts a table containing text.
+
+        It is expected that each cell is marked by a rectangle-object.
+        It is expected that the page contains one table only.
+        It is expected that the table contains at least 3 columns and 2 rows.
+
+        A list of rows is returned.
+        Each row contains a list of cells.
+        Each cell contains a list of PositionedText-elements.
+        """
+        logger = logging.getLogger("extractTable")
+
+        # Step 1: Count number of x- and y-coordinates of rectangles.
+        # Remove duplicate rectangles. the new list is listRectsFiltered.
+        mapColCount = {}
+        mapRowCount = {}
+        mapKnownRects = {}
+        listRectsFiltered = []
+        for r in listRects:
+            # Coordinates may be inaccurate, we have to round.
+            # cell: x=72.264, y=386.57, w=93.96, h=46.584
+            # cell: x=72.271, y=386.56, w=93.96, h=46.59
+            key = f"{round(r.x, 0)} {round(r.y, 0)} {round(r.w, 0)} {round(r.h, 0)}"
+            if key in mapKnownRects:
+                # Ignore duplicate rectangles
+                continue
+            mapKnownRects[key] = r
+            if r.x not in mapColCount:
+                mapColCount[r.x] = 0
+            if r.y not in mapRowCount:
+                mapRowCount[r.y] = 0
+            mapColCount[r.x] += 1
+            mapRowCount[r.y] += 1
+            listRectsFiltered.append(r)
+
+        # Step 2: Look for texts in rectangles.
+        mapRectText = {}
+        for t in listTexts:
+            for r in listRectsFiltered:
+                if r.contains(t.x, t.y):
+                    if r not in mapRectText:
+                        mapRectText[r] = []
+                    mapRectText[r].append(t)
+                    break
+
+        # PDF: y = 0 is expected at the bottom of the page.
+        # So the header-row is expected to have the highest y-value.
+        listRects.sort(key=lambda r: (-r.y, r.x))
+
+        # Step 3: Build the list of rows containing list of cell-texts.
+        listRows = []
+        rowNr = 0
+        colNr = 0
+        currY = None
+        currRow = None
+        for r in listRectsFiltered:
+            if mapColCount[r.x] < 3 or mapRowCount[r.y] < 2:
+                # We expect at least 3 columns and 2 rows.
+                continue
+            if currY is None or r.y != currY:
+                # next row
+                currY = r.y
+                colNr = 0
+                rowNr += 1
+                currRow = []
+                listRows.append(currRow)
+            colNr += 1
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug(f"cell: x={r.x}, y={r.y}, w={r.w}, h={r.h}")
+            if r not in mapRectText:
+                currRow.append("")
+                continue
+            cellTexts = [t for t in mapRectText[r]]
+            currRow.append(cellTexts)
+
+        return listRows
+
+    def extract_cell_text(cellTexts: list) -> str:
+        """Joins the text-objects of a cell."""
+        return ("".join(t.text for t in cellTexts)).strip()
+
+    # Test 1: We test the analysis of page 7 "2.1 LRS model".
+    reader = PdfReader(RESOURCE_ROOT / "GeoBase_NHNC1_Data_Model_UML_EN.pdf")
+    pageLrsModel = reader.pages[6]
+
+    # We ignore the invisible large rectangles.
+    def ignoreLargeRectangles(r):
+        return r.w < 400 and r.h < 400
+
+    (listTexts, listRects) = extractTextAndRectangles(
+        pageLrsModel, rectFilter=ignoreLargeRectangles
+    )
+
+    # We see ten rectangles (5 tabs, 5 boxes) but there are 64 rectangles (including some invisible ones).
+    assert 60 == len(listRects)
+    mapRectTexts = {}
+    for t in listTexts:
+        for r in listRects:
+            if r.contains(t.x, t.y):
+                texts = mapRectTexts.setdefault(r, [])
+                texts.append(t.text.strip())
+                break
+    # Five boxes and the figure-description below.
+    assert 6 == len(mapRectTexts)
+    boxTexts = [" ".join(texts) for texts in mapRectTexts.values()]
+    assert "Hydro Network" in boxTexts
+    assert "Hydro Events" in boxTexts
+    assert "Metadata" in boxTexts
+    assert "Hydrography" in boxTexts
+    assert "Toponymy (external model)" in boxTexts
+
+    # Test 2: Parse table "REVISION HISTORY" on page 3.
+    pageRevisions = reader.pages[2]
+    # We ignore the second table, therefore: r.y > 350
+
+    def filterFirstTable(r):
+        return r.w > 1 and r.h > 1 and r.w < 400 and r.h < 400 and r.y > 350
+
+    (listTexts, listRects) = extractTextAndRectangles(
+        pageRevisions, rectFilter=filterFirstTable
+    )
+    listRows = extractTable(listTexts, listRects)
+
+    assert len(listRows) == 9
+    assert extract_cell_text(listRows[0][0]) == "Date"
+    assert extract_cell_text(listRows[0][1]) == "Version"
+    assert extract_cell_text(listRows[0][2]) == "Description"
+    assert extract_cell_text(listRows[1][0]) == "September 2002"
+    # The line break between "English review;"
+    # and "Remove" is not detected.
+    assert (
+        extract_cell_text(listRows[6][2])
+        == "English review;Remove the UML model for the Segmented view."
+    )
+    assert (
+        extract_cell_text(listRows[7][2]) == "Update from the March Workshop comments."
+    )
+
+    # Check the fonts. We check: /F2 9.96 Tf [...] [(Dat)-2(e)] TJ
+    textDatOfDate = listRows[0][0][0]
+    assert textDatOfDate.font_dict is not None
+    assert textDatOfDate.font_dict["/Name"] == "/F2"
+    assert textDatOfDate.get_base_font() == "/Arial,Bold"
+    assert textDatOfDate.font_dict["/Encoding"] == "/WinAnsiEncoding"
+    assert textDatOfDate.font_size == 9.96
+    # Check: /F1 9.96 Tf [...] [(S)4(ep)4(t)-10(em)-20(be)4(r)-3( 20)4(02)] TJ
+    textS = listRows[1][0][0]
+    assert textS.font_dict is not None
+    assert textS.font_dict["/Name"] == "/F1"
+    assert textS.get_base_font() == "/Arial"
+    assert textS.font_dict["/Encoding"] == "/WinAnsiEncoding"
+    assert textDatOfDate.font_size == 9.96
+
+
 @pytest.mark.parametrize(
     ("pdf_path", "password", "embedded", "unembedded"),
     [
