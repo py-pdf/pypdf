@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## Version 2.11.0, 2022-09-25
+
+### New Features (ENH)
+-  Addition of optional visitor-functions in extract_text() (#1252)
+-  Add metadata.creation_date and modification_date (#1364)
+-  Add PageObject.images attribute (#1330)
+
+### Bug Fixes (BUG)
+-  Lookup index in _xobj_to_image can be ByteStringObject (#1366)
+-  'IndexError: index out of range' when using extract_text (#1361)
+-  Errors in transfer_rotation_to_content() (#1356)
+
+### Robustness (ROB)
+-  Ensure update_page_form_field_values does not fail if no fields (#1346)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.10.9...2.11.0
+
 ## Version 2.10.9, 2022-09-18
 
 ### New Features (ENH)
