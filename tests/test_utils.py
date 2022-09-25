@@ -8,6 +8,7 @@ import PyPDF2._utils
 from PyPDF2 import PdfReader
 from PyPDF2._utils import (
     _get_max_pdf_version_header,
+    _human_readable_bytes,
     deprecate_bookmark,
     mark_location,
     matrix_multiply,
@@ -256,3 +257,18 @@ def test_escapedcode_followed_by_int():
     reader = PdfReader(io.BytesIO(get_pdf_from_url(url, name=name)))
     for page in reader.pages:
         page.extract_text()
+
+
+@pytest.mark.parametrize(
+    ("input_int", "expected_output"),
+    [
+        (123, "123 Byte"),
+        (1234, "1.2 kB"),
+        (123_456, "123.5 kB"),
+        (1_234_567, "1.2 MB"),
+        (1_234_567_890, "1.2 GB"),
+        (1_234_567_890_000, "1234.6 GB"),
+    ],
+)
+def test_human_readable_bytes(input_int, expected_output):
+    assert _human_readable_bytes(input_int) == expected_output
