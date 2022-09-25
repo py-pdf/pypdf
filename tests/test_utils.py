@@ -7,6 +7,7 @@ import pytest
 import PyPDF2._utils
 from PyPDF2 import PdfReader
 from PyPDF2._utils import (
+    File,
     _get_max_pdf_version_header,
     _human_readable_bytes,
     deprecate_bookmark,
@@ -272,3 +273,9 @@ def test_escapedcode_followed_by_int():
 )
 def test_human_readable_bytes(input_int, expected_output):
     assert _human_readable_bytes(input_int) == expected_output
+
+
+def test_file():
+    f = File(name="image.png", data=b"")
+    assert str(f) == "File(name=image.png, data: 0 Byte)"
+    assert repr(f) == "File(name=image.png, data: 0 Byte, hash: 0)"
