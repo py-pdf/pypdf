@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1664124671304,
+  "lastUpdate": 1664173024418,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -16969,6 +16969,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.020067402657176336",
             "extra": "mean: 3.9530653330000005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d508c69c3dba15bc834d3d43df14415d46643ffa",
+          "message": "STY: Variable naming, black, and isort (#1367)\n\nType annotations as well",
+          "timestamp": "2022-09-26T08:15:46+02:00",
+          "tree_id": "ea43867258da4d34d754a57db44817d5d989191e",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/d508c69c3dba15bc834d3d43df14415d46643ffa"
+        },
+        "date": 1664173021958,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.898226400234903,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010076081175121635",
+            "extra": "mean: 1.1133050639999909 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.854901926219426,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009236011964900512",
+            "extra": "mean: 92.12427774999554 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.22050797257448113,
+            "unit": "iter/sec",
+            "range": "stddev: 0.050225582900601744",
+            "extra": "mean: 4.534983421799995 sec\nrounds: 5"
           }
         ]
       }
