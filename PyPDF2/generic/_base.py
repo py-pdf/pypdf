@@ -66,6 +66,31 @@ class PdfObject:
             )
         ).encode()
 
+    def _reference_clone(self, clone: Any, pdf_dest: Any) -> "PdfObject":
+        try:
+            if clone.indirect_ref.pdf == pdf_dest:
+                return clone
+        except Exception:
+            pass
+        if hasattr(self, "indirect_ref"):
+            ind = self.indirect_ref
+            i = len(pdf_dest._objects) + 1
+            if ind is not None:
+                if id(ind.pdf) not in pdf_dest._id_translated:
+                    pdf_dest._id_translated[id(ind.pdf)] = {}
+                if ind.idnum in pdf_dest._id_translated[id(ind.pdf)]:
+                    return pdf_dest.get_object(
+                        pdf_dest._id_translated[id(ind.pdf)][ind.idnum]
+                    )
+                pdf_dest._id_translated[id(ind.pdf)][ind.idnum] = i
+            pdf_dest._objects.append(clone)
+            clone.indirect_ref = IndirectObject(i, 0, pdf_dest)
+        return clone
+
+    def clone(self, pdf_dest: Any, force_duplicate: bool = False) -> "PdfObject":
+        """clone object into pdf_dest"""
+        raise Exception("clone PdfObject")
+
     def get_object(self) -> Optional["PdfObject"]:
         """Resolve indirect references."""
         return self
@@ -81,6 +106,12 @@ class PdfObject:
 
 
 class NullObject(PdfObject):
+    def clone(self, pdf_dest: Any, force_duplicate: bool = False) -> "NullObject":
+        """clone object into pdf_dest"""
+        return self._reference_clone(NullObject(), pdf_dest)
+
+        return self._reference_clone(NullObject(), pdf_dest)
+
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
@@ -111,6 +142,10 @@ class NullObject(PdfObject):
 class BooleanObject(PdfObject):
     def __init__(self, value: Any) -> None:
         self.value = value
+
+    def clone(self, pdf_dest: Any, force_duplicate: bool = False) -> "BooleanObject":
+        """clone object into pdf_dest"""
+        return self._reference_clone(BooleanObject(self.value), pdf_dest)
 
     def __eq__(self, __o: object) -> bool:
         if isinstance(__o, BooleanObject):
@@ -160,7 +195,23 @@ class IndirectObject(PdfObject):
         self.generation = generation
         self.pdf = pdf
 
-    def get_object(self) -> Optional[PdfObject]:
+    def clone(
+        self, pdf_dest: Any, force_duplicate: bool = False
+    ) -> "IndirectObject":  # PPzz
+        """clone object into pdf_dest"""
+        if self.pdf == pdf_dest and not force_duplicate:
+            # Already duplicated and no extra duplication required
+            return self
+        if id(self.pdf) not in pdf_dest._id_translated:
+            pdf_dest._id_translated[id(self.pdf)] = {}
+
+        if not force_duplicate and self.idnum in pdf_dest._id_translated[id(self.pdf)]:
+            dup = pdf_dest.get_object(pdf_dest._id_translated[id(self.pdf)][self.idnum])
+        else:
+            dup = self.get_object().clone(pdf_dest)
+        return dup.indirect_ref
+
+    def get_object(self) -> Optional["PdfObject"]:
         obj = self.pdf.get_object(self)
         if obj is None:
             return None
@@ -239,6 +290,10 @@ class FloatObject(decimal.Decimal, PdfObject):
             logger_warning(f"FloatObject ({value}) invalid; use 0.0 instead", __name__)
             return decimal.Decimal.__new__(cls, "0.0")
 
+    def clone(self, pdf_dest: Any, force_duplicate: bool = False) -> "FloatObject":
+        """clone object into pdf_dest"""
+        return self._reference_clone(FloatObject(self), pdf_dest)
+
     def __repr__(self) -> str:
         if self == self.to_integral():
             # If this is an integer, format it with no decimal place.
@@ -273,6 +328,10 @@ class NumberObject(int, PdfObject):
             logger_warning(f"NumberObject({value}) invalid; use 0 instead", __name__)
             return int.__new__(cls, 0)
 
+    def clone(self, pdf_dest: Any, force_duplicate: bool = False) -> "FloatObject":
+        """clone object into pdf_dest"""
+        return self._reference_clone(NumberObject(self), pdf_dest)
+
     def as_numeric(self) -> int:
         return int(repr(self).encode("utf8"))
 
@@ -288,7 +347,7 @@ class NumberObject(int, PdfObject):
         self.write_to_stream(stream, encryption_key)
 
     @staticmethod
-    def read_from_stream(stream: StreamType) -> Union["NumberObject", FloatObject]:
+    def read_from_stream(stream: StreamType) -> Union["NumberObject", "FloatObject"]:
         num = read_until_regex(stream, NumberObject.NumberPattern)
         if num.find(b".") != -1:
             return FloatObject(num)
@@ -297,7 +356,7 @@ class NumberObject(int, PdfObject):
     @staticmethod
     def readFromStream(
         stream: StreamType,
-    ) -> Union["NumberObject", FloatObject]:  # pragma: no cover
+    ) -> Union["NumberObject", "FloatObject"]:  # pragma: no cover
         deprecate_with_replacement("readFromStream", "read_from_stream")
         return NumberObject.read_from_stream(stream)
 
@@ -309,6 +368,10 @@ class ByteStringObject(bytes, PdfObject):
     represent strings -- for example, the encryption data stored in files (like
     /O) is clearly not text, but is still stored in a "String" object.
     """
+
+    def clone(self, pdf_dest: Any, force_duplicate: bool = False) -> "ByteStringObject":
+        """clone object into pdf_dest"""
+        return self._reference_clone(ByteStringObject(bytes(self)), pdf_dest)
 
     @property
     def original_bytes(self) -> bytes:
@@ -341,6 +404,13 @@ class TextStringObject(str, PdfObject):
     PDFDocEncoding, or contained a UTF-16BE BOM mark to cause UTF-16 decoding to
     occur.
     """
+
+    def clone(self, pdf_dest: Any, force_duplicate: bool = False) -> ByteStringObject:
+        """clone object into pdf_dest"""
+        obj = TextStringObject(self)
+        obj.autodetect_pdfdocencoding = self.autodetect_pdfdocencoding
+        obj.autodetect_utf16 = self.autodetect_utf16
+        return self._reference_clone(obj, pdf_dest)
 
     autodetect_pdfdocencoding = False
     autodetect_utf16 = False
@@ -414,6 +484,10 @@ class NameObject(str, PdfObject):
         "/": b"#2F",
         **{chr(i): f"#{i:02X}".encode() for i in range(33)},
     }
+
+    def clone(self, pdf_dest: Any, force_duplicate: bool = False) -> "NameObject":
+        """clone object into pdf_dest"""
+        return self._reference_clone(NameObject(self), pdf_dest)
 
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]

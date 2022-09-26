@@ -130,6 +130,7 @@ class PdfWriter:
         self._header = b"%PDF-1.3"
         self._objects: List[Optional[PdfObject]] = []  # array of indirect objects
         self._idnum_hash: Dict[bytes, IndirectObject] = {}
+        self._id_translated = {}
 
         # The root of our page tree node.
         pages = DictionaryObject()
@@ -196,16 +197,27 @@ class PdfWriter:
     def pdf_header(self, new_header: bytes) -> None:
         self._header = new_header
 
-    def _add_object(self, obj: Optional[PdfObject]) -> IndirectObject:
-        self._objects.append(obj)
+    def _add_object(
+        self, obj: Optional[PdfObject], noclone: bool = True
+    ) -> IndirectObject:
+        if noclone:
+            new_obj = obj
+        else:
+            new_obj = obj.clone(self)
+        self._objects.append(new_obj)
+        new_obj.new_id = len(self._objects)
         return IndirectObject(len(self._objects), 0, self)
 
-    def get_object(self, ido: IndirectObject) -> PdfObject:
+    def get_object(self, ido: Union[int, IndirectObject]) -> PdfObject:
+        if isinstance(ido, int):
+            return self._objects[ido - 1]
         if ido.pdf != self:
             raise ValueError("pdf must be self")
         return self._objects[ido.idnum - 1]  # type: ignore
 
-    def getObject(self, ido: IndirectObject) -> PdfObject:  # pragma: no cover
+    def getObject(
+        self, ido: Union[int, IndirectObject]
+    ) -> PdfObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
@@ -215,20 +227,33 @@ class PdfWriter:
         return self.get_object(ido)
 
     def _add_page(
-        self, page: PageObject, action: Callable[[Any, IndirectObject], None]
-    ) -> None:
+        self,
+        page: PageObject,
+        action: Callable[[Any, IndirectObject], None],
+        excluded_keys: Union[Tuple[str, ...], List[str], None] = None,
+    ) -> PageObject:
         assert cast(str, page[PA.TYPE]) == CO.PAGE
-        if page.pdf is not None:
-            other = page.pdf.pdf_header
+        page_org = page
+        if excluded_keys is None:
+            excluded_keys = []
+        else:
+            excluded_keys = list(excluded_keys)
+        for k in [PA.PARENT, "/StructParents"]:
+            if k not in excluded_keys:
+                excluded_keys.append(k)
+        page = page_org.clone(self, False, excluded_keys)
+        # page_ind = self._add_object(page)
+        if page_org.pdf is not None:
+            other = page_org.pdf.pdf_header
             if isinstance(other, str):
                 other = other.encode()  # type: ignore
             self.pdf_header = _get_max_pdf_version_header(self.pdf_header, other)  # type: ignore
         page[NameObject(PA.PARENT)] = self._pages
-        page_ind = self._add_object(page)
         pages = cast(DictionaryObject, self.get_object(self._pages))
-        action(pages[PA.KIDS], page_ind)
+        action(pages[PA.KIDS], page.indirect_ref)
         page_count = cast(int, pages[PA.COUNT])
         pages[NameObject(PA.COUNT)] = NumberObject(page_count + 1)
+        return page
 
     def set_need_appearances_writer(self) -> None:
         # See 12.7.2 and 7.7.2 for more information:
@@ -250,7 +275,11 @@ class PdfWriter:
         except Exception as exc:
             logger.error("set_need_appearances_writer() catch : ", repr(exc))
 
-    def add_page(self, page: PageObject) -> None:
+    def add_page(
+        self,
+        page: PageObject,
+        excluded_keys: Union[Tuple[str, ...], List[str], None] = None,
+    ) -> PageObject:
         """
         Add a page to this PDF file.
 
@@ -260,18 +289,27 @@ class PdfWriter:
         :param PageObject page: The page to add to the document. Should be
             an instance of :class:`PageObject<PyPDF2._page.PageObject>`
         """
-        self._add_page(page, list.append)
+        return self._add_page(page, list.append, excluded_keys)
 
-    def addPage(self, page: PageObject) -> None:  # pragma: no cover
+    def addPage(
+        self,
+        page: PageObject,
+        excluded_keys: Union[Tuple[str, ...], List[str], None] = None,
+    ) -> PageObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`add_page` instead.
         """
         deprecate_with_replacement("addPage", "add_page")
-        self.add_page(page)
+        return self.add_page(page, excluded_keys)
 
-    def insert_page(self, page: PageObject, index: int = 0) -> None:
+    def insert_page(
+        self,
+        page: PageObject,
+        index: int = 0,
+        excluded_keys: Union[Tuple[str, ...], List[str], None] = None,
+    ) -> PageObject:
         """
         Insert a page in this PDF file. The page is usually acquired from a
         :class:`PdfReader<PyPDF2.PdfReader>` instance.
@@ -279,16 +317,21 @@ class PdfWriter:
         :param PageObject page: The page to add to the document.
         :param int index: Position at which the page will be inserted.
         """
-        self._add_page(page, lambda l, p: l.insert(index, p))
+        return self._add_page(page, lambda l, p: l.insert(index, p))
 
-    def insertPage(self, page: PageObject, index: int = 0) -> None:  # pragma: no cover
+    def insertPage(
+        self,
+        page: PageObject,
+        index: int = 0,
+        excluded_keys: Union[Tuple[str, ...], List[str], None] = None,
+    ) -> PageObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
 
             Use :meth:`insert_page` instead.
         """
         deprecate_with_replacement("insertPage", "insert_page")
-        self.insert_page(page, index)
+        return self.insert_page(page, index, excluded_keys)
 
     def get_page(
         self, page_number: Optional[int] = None, pageNumber: Optional[int] = None
@@ -576,13 +619,10 @@ class PdfWriter:
         """
         # Get page count from writer and reader
         reader_num_pages = len(reader.pages)
-        writer_num_pages = len(self.pages)
-
         # Copy pages from reader to writer
         for rpagenum in range(reader_num_pages):
             reader_page = reader.pages[rpagenum]
-            self.add_page(reader_page)
-            writer_page = self.pages[writer_num_pages + rpagenum]
+            writer_page = self.add_page(reader_page)
             # Trigger callback, pass writer page as parameter
             if callable(after_page_append):
                 after_page_append(writer_page)
@@ -716,6 +756,7 @@ class PdfWriter:
             (delegates to append_pages_from_reader). The single parameter of the
             callback is a reference to the page just appended to the document.
         """
+        # TODO : ppZZ may be limited because we do not copy all info...
         self.clone_reader_document_root(reader)
         self.append_pages_from_reader(reader, after_page_append)
 
@@ -836,6 +877,7 @@ class PdfWriter:
 
         if isinstance(stream, (str, Path)):
             stream = FileIO(stream, "wb")
+            self.with_as_usage = True  #
             my_file = True
 
         self.write_stream(stream)
@@ -960,11 +1002,12 @@ class PdfWriter:
                         )
                     )
             elif isinstance(data, IndirectObject):
-                data = self._resolve_indirect_object(data)
+                if data.pdf != self:
+                    data = self._resolve_indirect_object(data)
 
-                if str(data) not in discovered:
-                    discovered.append(str(data))
-                    stack.append((data.get_object(), None, None, []))
+                    if str(data) not in discovered:
+                        discovered.append(str(data))
+                        stack.append((data.get_object(), None, None, []))
 
             # Check if data has a parent and if it is a dict or an array update the value
             if isinstance(parent, (DictionaryObject, ArrayObject)):
@@ -1003,6 +1046,9 @@ class PdfWriter:
         """
         if hasattr(data.pdf, "stream") and data.pdf.stream.closed:
             raise ValueError(f"I/O operation on closed file: {data.pdf.stream.name}")
+
+        if data.pdf == self:
+            return data
 
         # Get real object indirect object
         real_obj = data.pdf.get_object(data)
@@ -1332,6 +1378,8 @@ class PdfWriter:
 
         dest_ref = self._add_object(dest)
         nd = self.get_named_dest_root()
+        if not isinstance(title, TextStringObject):
+            title = TextStringObject(str(title))
         nd.extend([title, dest_ref])
         return dest_ref
 
