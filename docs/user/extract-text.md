@@ -26,7 +26,7 @@ Refer to [extract\_text](../modules/PageObject.html#PyPDF2._page.PageObject.extr
 
 You can use visitor-functions to control which part of a page you want to process and extract. The visitor-functions you provide will get called for each operator or for each text fragment.
 
-The function provided in argument visitor_text has five arguments:
+The function provided in argument visitor_text of function extract_text has five arguments:
 current transformation matrix, text matrix, font-dictionary and font-size.
 In most cases the x and y coordinates of the current position
 are in index 4 and 5 of the current transformation matrix.
