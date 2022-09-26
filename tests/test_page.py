@@ -398,22 +398,22 @@ def test_extract_text_visitor_callbacks():
                 and y <= (self.y + self.h)
             )
 
-    def extractTextAndRectangles(page: PageObject, rectFilter=None) -> tuple:
+    def extract_text_and_rectangles(page: PageObject, rect_filter=None) -> tuple:
         """
         Extracts texts and rectangles of a page of type PyPDF2._page.PageObject.
 
         This function supports simple coordinate transformations only.
-        The optional rectFilter-lambda can be used to filter wanted rectangles.
-        rectFilter has Rectangle as argument and must return a boolean.
+        The optional rect_filter-lambda can be used to filter wanted rectangles.
+        rect_filter has Rectangle as argument and must return a boolean.
 
         It returns a tuple containing a list of extracted texts (type PositionedText)
         and a list of extracted rectangles (type Rectangle).
         """
 
-        logger = logging.getLogger("extractTextAndRectangles")
+        logger = logging.getLogger("extract_text_and_rectangles")
 
-        listRects = []
-        listTexts = []
+        rectangles = []
+        texts = []
 
         def print_op_b(op, args, cm_matrix, tm_matrix):
             if logger.isEnabledFor(logging.DEBUG):
@@ -424,14 +424,14 @@ def test_extract_text_visitor_callbacks():
                 w = args[2]
                 h = args[3]
                 r = Rectangle(args[0], args[1], w, h)
-                if (rectFilter is None) or rectFilter(r):
-                    listRects.append(r)
+                if (rect_filter is None) or rect_filter(r):
+                    rectangles.append(r)
 
         def print_visi(text, cm_matrix, tm_matrix, font_dict, font_size):
             if text.strip() != "":
                 if logger.isEnabledFor(logging.DEBUG):
-                    logger.debug(f"at {cm_matrix}, {tm_matrix}, fontSize={font_size}")
-                listTexts.append(
+                    logger.debug(f"at {cm_matrix}, {tm_matrix}, font size={font_size}")
+                texts.append(
                     PositionedText(
                         text, tm_matrix[4], tm_matrix[5], font_dict, font_size
                     )
@@ -444,9 +444,9 @@ def test_extract_text_visitor_callbacks():
             visitor_operand_before=visitor_before, visitor_text=visitor_text
         )
 
-        return (listTexts, listRects)
+        return (texts, rectangles)
 
-    def extractTable(listTexts: list, listRects: list) -> list:
+    def extract_table(texts: list, rectangles: list) -> list:
         """
         Extracts a table containing text.
 
@@ -461,145 +461,145 @@ def test_extract_text_visitor_callbacks():
         logger = logging.getLogger("extractTable")
 
         # Step 1: Count number of x- and y-coordinates of rectangles.
-        # Remove duplicate rectangles. the new list is listRectsFiltered.
-        mapColCount = {}
-        mapRowCount = {}
-        mapKnownRects = {}
-        listRectsFiltered = []
-        for r in listRects:
+        # Remove duplicate rectangles. the new list is list_rects_filtered.
+        map_col_count = {}
+        map_row_count = {}
+        map_known_rects = {}
+        list_rects_filtered = []
+        for r in rectangles:
             # Coordinates may be inaccurate, we have to round.
             # cell: x=72.264, y=386.57, w=93.96, h=46.584
             # cell: x=72.271, y=386.56, w=93.96, h=46.59
             key = f"{round(r.x, 0)} {round(r.y, 0)} {round(r.w, 0)} {round(r.h, 0)}"
-            if key in mapKnownRects:
+            if key in map_known_rects:
                 # Ignore duplicate rectangles
                 continue
-            mapKnownRects[key] = r
-            if r.x not in mapColCount:
-                mapColCount[r.x] = 0
-            if r.y not in mapRowCount:
-                mapRowCount[r.y] = 0
-            mapColCount[r.x] += 1
-            mapRowCount[r.y] += 1
-            listRectsFiltered.append(r)
+            map_known_rects[key] = r
+            if r.x not in map_col_count:
+                map_col_count[r.x] = 0
+            if r.y not in map_row_count:
+                map_row_count[r.y] = 0
+            map_col_count[r.x] += 1
+            map_row_count[r.y] += 1
+            list_rects_filtered.append(r)
 
         # Step 2: Look for texts in rectangles.
-        mapRectText = {}
-        for t in listTexts:
-            for r in listRectsFiltered:
+        map_rect_text = {}
+        for t in texts:
+            for r in list_rects_filtered:
                 if r.contains(t.x, t.y):
-                    if r not in mapRectText:
-                        mapRectText[r] = []
-                    mapRectText[r].append(t)
+                    if r not in map_rect_text:
+                        map_rect_text[r] = []
+                    map_rect_text[r].append(t)
                     break
 
         # PDF: y = 0 is expected at the bottom of the page.
         # So the header-row is expected to have the highest y-value.
-        listRects.sort(key=lambda r: (-r.y, r.x))
+        rectangles.sort(key=lambda r: (-r.y, r.x))
 
         # Step 3: Build the list of rows containing list of cell-texts.
-        listRows = []
-        rowNr = 0
-        colNr = 0
-        currY = None
-        currRow = None
-        for r in listRectsFiltered:
-            if mapColCount[r.x] < 3 or mapRowCount[r.y] < 2:
+        list_rows = []
+        row_nr = 0
+        col_nr = 0
+        curr_y = None
+        curr_row = None
+        for r in list_rects_filtered:
+            if map_col_count[r.x] < 3 or map_row_count[r.y] < 2:
                 # We expect at least 3 columns and 2 rows.
                 continue
-            if currY is None or r.y != currY:
+            if curr_y is None or r.y != curr_y:
                 # next row
-                currY = r.y
-                colNr = 0
-                rowNr += 1
-                currRow = []
-                listRows.append(currRow)
-            colNr += 1
+                curr_y = r.y
+                col_nr = 0
+                row_nr += 1
+                curr_row = []
+                list_rows.append(curr_row)
+            col_nr += 1
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug(f"cell: x={r.x}, y={r.y}, w={r.w}, h={r.h}")
-            if r not in mapRectText:
-                currRow.append("")
+            if r not in map_rect_text:
+                curr_row.append("")
                 continue
-            cellTexts = [t for t in mapRectText[r]]
-            currRow.append(cellTexts)
+            cell_texts = [t for t in map_rect_text[r]]
+            curr_row.append(cell_texts)
 
-        return listRows
+        return list_rows
 
-    def extract_cell_text(cellTexts: list) -> str:
+    def extract_cell_text(cell_texts: list) -> str:
         """Joins the text-objects of a cell."""
-        return ("".join(t.text for t in cellTexts)).strip()
+        return ("".join(t.text for t in cell_texts)).strip()
 
     # Test 1: We test the analysis of page 7 "2.1 LRS model".
     reader = PdfReader(RESOURCE_ROOT / "GeoBase_NHNC1_Data_Model_UML_EN.pdf")
-    pageLrsModel = reader.pages[6]
+    page_lrs_model = reader.pages[6]
 
     # We ignore the invisible large rectangles.
-    def ignoreLargeRectangles(r):
+    def ignore_large_rectangles(r):
         return r.w < 400 and r.h < 400
 
-    (listTexts, listRects) = extractTextAndRectangles(
-        pageLrsModel, rectFilter=ignoreLargeRectangles
+    (texts, rectangles) = extract_text_and_rectangles(
+        page_lrs_model, rect_filter=ignore_large_rectangles
     )
 
     # We see ten rectangles (5 tabs, 5 boxes) but there are 64 rectangles (including some invisible ones).
-    assert 60 == len(listRects)
-    mapRectTexts = {}
-    for t in listTexts:
-        for r in listRects:
+    assert 60 == len(rectangles)
+    map_rect_texts = {}
+    for t in texts:
+        for r in rectangles:
             if r.contains(t.x, t.y):
-                texts = mapRectTexts.setdefault(r, [])
+                texts = map_rect_texts.setdefault(r, [])
                 texts.append(t.text.strip())
                 break
     # Five boxes and the figure-description below.
-    assert 6 == len(mapRectTexts)
-    boxTexts = [" ".join(texts) for texts in mapRectTexts.values()]
-    assert "Hydro Network" in boxTexts
-    assert "Hydro Events" in boxTexts
-    assert "Metadata" in boxTexts
-    assert "Hydrography" in boxTexts
-    assert "Toponymy (external model)" in boxTexts
+    assert 6 == len(map_rect_texts)
+    box_texts = [" ".join(texts) for texts in map_rect_texts.values()]
+    assert "Hydro Network" in box_texts
+    assert "Hydro Events" in box_texts
+    assert "Metadata" in box_texts
+    assert "Hydrography" in box_texts
+    assert "Toponymy (external model)" in box_texts
 
     # Test 2: Parse table "REVISION HISTORY" on page 3.
-    pageRevisions = reader.pages[2]
+    page_revisions = reader.pages[2]
     # We ignore the second table, therefore: r.y > 350
 
-    def filterFirstTable(r):
+    def filter_first_table(r):
         return r.w > 1 and r.h > 1 and r.w < 400 and r.h < 400 and r.y > 350
 
-    (listTexts, listRects) = extractTextAndRectangles(
-        pageRevisions, rectFilter=filterFirstTable
+    (texts, rectangles) = extract_text_and_rectangles(
+        page_revisions, rect_filter=filter_first_table
     )
-    listRows = extractTable(listTexts, listRects)
+    list_rows = extract_table(texts, rectangles)
 
-    assert len(listRows) == 9
-    assert extract_cell_text(listRows[0][0]) == "Date"
-    assert extract_cell_text(listRows[0][1]) == "Version"
-    assert extract_cell_text(listRows[0][2]) == "Description"
-    assert extract_cell_text(listRows[1][0]) == "September 2002"
+    assert len(list_rows) == 9
+    assert extract_cell_text(list_rows[0][0]) == "Date"
+    assert extract_cell_text(list_rows[0][1]) == "Version"
+    assert extract_cell_text(list_rows[0][2]) == "Description"
+    assert extract_cell_text(list_rows[1][0]) == "September 2002"
     # The line break between "English review;"
     # and "Remove" is not detected.
     assert (
-        extract_cell_text(listRows[6][2])
+        extract_cell_text(list_rows[6][2])
         == "English review;Remove the UML model for the Segmented view."
     )
     assert (
-        extract_cell_text(listRows[7][2]) == "Update from the March Workshop comments."
+        extract_cell_text(list_rows[7][2]) == "Update from the March Workshop comments."
     )
 
     # Check the fonts. We check: /F2 9.96 Tf [...] [(Dat)-2(e)] TJ
-    textDatOfDate = listRows[0][0][0]
-    assert textDatOfDate.font_dict is not None
-    assert textDatOfDate.font_dict["/Name"] == "/F2"
-    assert textDatOfDate.get_base_font() == "/Arial,Bold"
-    assert textDatOfDate.font_dict["/Encoding"] == "/WinAnsiEncoding"
-    assert textDatOfDate.font_size == 9.96
+    text_dat_of_date = list_rows[0][0][0]
+    assert text_dat_of_date.font_dict is not None
+    assert text_dat_of_date.font_dict["/Name"] == "/F2"
+    assert text_dat_of_date.get_base_font() == "/Arial,Bold"
+    assert text_dat_of_date.font_dict["/Encoding"] == "/WinAnsiEncoding"
+    assert text_dat_of_date.font_size == 9.96
     # Check: /F1 9.96 Tf [...] [(S)4(ep)4(t)-10(em)-20(be)4(r)-3( 20)4(02)] TJ
-    textS = listRows[1][0][0]
-    assert textS.font_dict is not None
-    assert textS.font_dict["/Name"] == "/F1"
-    assert textS.get_base_font() == "/Arial"
-    assert textS.font_dict["/Encoding"] == "/WinAnsiEncoding"
-    assert textDatOfDate.font_size == 9.96
+    texts = list_rows[1][0][0]
+    assert texts.font_dict is not None
+    assert texts.font_dict["/Name"] == "/F1"
+    assert texts.get_base_font() == "/Arial"
+    assert texts.font_dict["/Encoding"] == "/WinAnsiEncoding"
+    assert text_dat_of_date.font_size == 9.96
 
 
 @pytest.mark.parametrize(
