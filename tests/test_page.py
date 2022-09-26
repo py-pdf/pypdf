@@ -3,6 +3,7 @@ import os
 from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
+from typing import List, Tuple
 
 import pytest
 
@@ -398,7 +399,9 @@ def test_extract_text_visitor_callbacks():
                 and y <= (self.y + self.h)
             )
 
-    def extract_text_and_rectangles(page: PageObject, rect_filter=None) -> tuple:
+    def extract_text_and_rectangles(
+        page: PageObject, rect_filter=None
+    ) -> Tuple[List[PositionedText], List[Rectangle]]:
         """
         Extracts texts and rectangles of a page of type PyPDF2._page.PageObject.
 
@@ -406,8 +409,8 @@ def test_extract_text_visitor_callbacks():
         The optional rect_filter-lambda can be used to filter wanted rectangles.
         rect_filter has Rectangle as argument and must return a boolean.
 
-        It returns a tuple containing a list of extracted texts (type PositionedText)
-        and a list of extracted rectangles (type Rectangle).
+        It returns a tuple containing a list of extracted texts and
+        a list of extracted rectangles.
         """
 
         logger = logging.getLogger("extract_text_and_rectangles")
@@ -446,7 +449,9 @@ def test_extract_text_visitor_callbacks():
 
         return (texts, rectangles)
 
-    def extract_table(texts: list, rectangles: list) -> list:
+    def extract_table(
+        texts: List[PositionedText], rectangles: List[Rectangle]
+    ) -> List[List[List[PositionedText]]]:
         """
         Extracts a table containing text.
 
@@ -461,36 +466,36 @@ def test_extract_text_visitor_callbacks():
         logger = logging.getLogger("extractTable")
 
         # Step 1: Count number of x- and y-coordinates of rectangles.
-        # Remove duplicate rectangles. the new list is list_rects_filtered.
-        map_col_count = {}
-        map_row_count = {}
-        map_known_rects = {}
-        list_rects_filtered = []
+        # Remove duplicate rectangles. The new list is rectangles_filtered.
+        col2count = {}
+        row2count = {}
+        key2rectangle = {}
+        rectangles_filtered = []
         for r in rectangles:
             # Coordinates may be inaccurate, we have to round.
             # cell: x=72.264, y=386.57, w=93.96, h=46.584
             # cell: x=72.271, y=386.56, w=93.96, h=46.59
             key = f"{round(r.x, 0)} {round(r.y, 0)} {round(r.w, 0)} {round(r.h, 0)}"
-            if key in map_known_rects:
+            if key in key2rectangle:
                 # Ignore duplicate rectangles
                 continue
-            map_known_rects[key] = r
-            if r.x not in map_col_count:
-                map_col_count[r.x] = 0
-            if r.y not in map_row_count:
-                map_row_count[r.y] = 0
-            map_col_count[r.x] += 1
-            map_row_count[r.y] += 1
-            list_rects_filtered.append(r)
+            key2rectangle[key] = r
+            if r.x not in col2count:
+                col2count[r.x] = 0
+            if r.y not in row2count:
+                row2count[r.y] = 0
+            col2count[r.x] += 1
+            row2count[r.y] += 1
+            rectangles_filtered.append(r)
 
         # Step 2: Look for texts in rectangles.
-        map_rect_text = {}
-        for t in texts:
-            for r in list_rects_filtered:
-                if r.contains(t.x, t.y):
-                    if r not in map_rect_text:
-                        map_rect_text[r] = []
-                    map_rect_text[r].append(t)
+        rectangle2texts = {}
+        for text in texts:
+            for r in rectangles_filtered:
+                if r.contains(text.x, text.y):
+                    if r not in rectangle2texts:
+                        rectangle2texts[r] = []
+                    rectangle2texts[r].append(text)
                     break
 
         # PDF: y = 0 is expected at the bottom of the page.
@@ -498,13 +503,13 @@ def test_extract_text_visitor_callbacks():
         rectangles.sort(key=lambda r: (-r.y, r.x))
 
         # Step 3: Build the list of rows containing list of cell-texts.
-        list_rows = []
+        rows = []
         row_nr = 0
         col_nr = 0
         curr_y = None
         curr_row = None
-        for r in list_rects_filtered:
-            if map_col_count[r.x] < 3 or map_row_count[r.y] < 2:
+        for r in rectangles_filtered:
+            if col2count[r.x] < 3 or row2count[r.y] < 2:
                 # We expect at least 3 columns and 2 rows.
                 continue
             if curr_y is None or r.y != curr_y:
@@ -513,19 +518,19 @@ def test_extract_text_visitor_callbacks():
                 col_nr = 0
                 row_nr += 1
                 curr_row = []
-                list_rows.append(curr_row)
+                rows.append(curr_row)
             col_nr += 1
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug(f"cell: x={r.x}, y={r.y}, w={r.w}, h={r.h}")
-            if r not in map_rect_text:
+            if r not in rectangle2texts:
                 curr_row.append("")
                 continue
-            cell_texts = [t for t in map_rect_text[r]]
+            cell_texts = [t for t in rectangle2texts[r]]
             curr_row.append(cell_texts)
 
-        return list_rows
+        return rows
 
-    def extract_cell_text(cell_texts: list) -> str:
+    def extract_cell_text(cell_texts: List[PositionedText]) -> str:
         """Joins the text-objects of a cell."""
         return ("".join(t.text for t in cell_texts)).strip()
 
@@ -543,16 +548,16 @@ def test_extract_text_visitor_callbacks():
 
     # We see ten rectangles (5 tabs, 5 boxes) but there are 64 rectangles (including some invisible ones).
     assert 60 == len(rectangles)
-    map_rect_texts = {}
+    rectangle2texts = {}
     for t in texts:
         for r in rectangles:
             if r.contains(t.x, t.y):
-                texts = map_rect_texts.setdefault(r, [])
+                texts = rectangle2texts.setdefault(r, [])
                 texts.append(t.text.strip())
                 break
     # Five boxes and the figure-description below.
-    assert 6 == len(map_rect_texts)
-    box_texts = [" ".join(texts) for texts in map_rect_texts.values()]
+    assert 6 == len(rectangle2texts)
+    box_texts = [" ".join(texts) for texts in rectangle2texts.values()]
     assert "Hydro Network" in box_texts
     assert "Hydro Events" in box_texts
     assert "Metadata" in box_texts
@@ -569,32 +574,30 @@ def test_extract_text_visitor_callbacks():
     (texts, rectangles) = extract_text_and_rectangles(
         page_revisions, rect_filter=filter_first_table
     )
-    list_rows = extract_table(texts, rectangles)
+    rows = extract_table(texts, rectangles)
 
-    assert len(list_rows) == 9
-    assert extract_cell_text(list_rows[0][0]) == "Date"
-    assert extract_cell_text(list_rows[0][1]) == "Version"
-    assert extract_cell_text(list_rows[0][2]) == "Description"
-    assert extract_cell_text(list_rows[1][0]) == "September 2002"
+    assert len(rows) == 9
+    assert extract_cell_text(rows[0][0]) == "Date"
+    assert extract_cell_text(rows[0][1]) == "Version"
+    assert extract_cell_text(rows[0][2]) == "Description"
+    assert extract_cell_text(rows[1][0]) == "September 2002"
     # The line break between "English review;"
     # and "Remove" is not detected.
     assert (
-        extract_cell_text(list_rows[6][2])
+        extract_cell_text(rows[6][2])
         == "English review;Remove the UML model for the Segmented view."
     )
-    assert (
-        extract_cell_text(list_rows[7][2]) == "Update from the March Workshop comments."
-    )
+    assert extract_cell_text(rows[7][2]) == "Update from the March Workshop comments."
 
     # Check the fonts. We check: /F2 9.96 Tf [...] [(Dat)-2(e)] TJ
-    text_dat_of_date = list_rows[0][0][0]
+    text_dat_of_date = rows[0][0][0]
     assert text_dat_of_date.font_dict is not None
     assert text_dat_of_date.font_dict["/Name"] == "/F2"
     assert text_dat_of_date.get_base_font() == "/Arial,Bold"
     assert text_dat_of_date.font_dict["/Encoding"] == "/WinAnsiEncoding"
     assert text_dat_of_date.font_size == 9.96
     # Check: /F1 9.96 Tf [...] [(S)4(ep)4(t)-10(em)-20(be)4(r)-3( 20)4(02)] TJ
-    texts = list_rows[1][0][0]
+    texts = rows[1][0][0]
     assert texts.font_dict is not None
     assert texts.font_dict["/Name"] == "/F1"
     assert texts.get_base_font() == "/Arial"
