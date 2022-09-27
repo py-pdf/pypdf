@@ -41,7 +41,7 @@ operand, operand-arguments, current transformation matrix and text matrix.
 
 ### Example 1: Ignore header and footer
 
-The following example reads the text of page 4 but ignores header (y < 720) and footer (y > 50).
+The following example reads the text of page 4 of [this PDF document](https://github.com/py-pdf/PyPDF2/blob/main/resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf), but ignores header (y < 720) and footer (y > 50).
 
 ```python
 from PyPDF2 import PdfReader
@@ -62,7 +62,7 @@ print(textBody)
 
 ### Example 2: Extract rectangles and texts into a SVG-file
 
-The following example converts page 3 into a
+The following example converts page 3 of [this PDF document](https://github.com/py-pdf/PyPDF2/blob/main/resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf) into a
 [SVG file](https://en.wikipedia.org/wiki/Scalable_Vector_Graphics).
 
 Such a SVG export may help to understand whats going on in a page.
