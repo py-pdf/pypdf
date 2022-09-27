@@ -155,15 +155,14 @@ class PdfWriter:
         self._info = self._add_object(info)
 
         # root object
-        root = DictionaryObject()
-        root.update(
+        self._root_object = DictionaryObject()
+        self._root_object.update(
             {
                 NameObject(PA.TYPE): NameObject(CO.CATALOG),
                 NameObject(CO.PAGES): self._pages,
             }
         )
-        self._root: Optional[IndirectObject] = None
-        self._root_object = root
+        self._root = self._add_object(self._root_object)
         self.fileobj = fileobj
         self.with_as_usage = False
 
