@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1664173024418,
+  "lastUpdate": 1664280649403,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -17014,6 +17014,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.050225582900601744",
             "extra": "mean: 4.534983421799995 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "59577610+srogmann@users.noreply.github.com",
+            "name": "Sascha Rogmann",
+            "username": "srogmann"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a5f4f41e5675f78902f9881545e2afb9d8455112",
+          "message": "DOC: How to use visitor functions (#1369)\n\nAdd two samples using visitor-functions when calling extract_text.\r\n\r\nThe first example may be of help in #1354.\r\n\r\nThe second one may be of help when debugging extract_text.",
+          "timestamp": "2022-09-27T14:09:42+02:00",
+          "tree_id": "8bdec9aab871e3fe20fb451aa989798760dbe49b",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/a5f4f41e5675f78902f9881545e2afb9d8455112"
+        },
+        "date": 1664280648220,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.017408702050783,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01132853420118732",
+            "extra": "mean: 982.8891752000033 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.420098591812467,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007526816819196323",
+            "extra": "mean: 80.51465876923203 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24891065089973516,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0278825837447945",
+            "extra": "mean: 4.0175058656000004 sec\nrounds: 5"
           }
         ]
       }
