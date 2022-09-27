@@ -30,7 +30,7 @@ import decimal
 import hashlib
 import re
 from binascii import unhexlify
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, List, Optional, Tuple, Union
 
 from .._codecs import _pdfdoc_encoding_rev
 from .._utils import (
@@ -66,6 +66,15 @@ class PdfObject:
             )
         ).encode()
 
+    def clone(
+        self,
+        pdf_dest: Any,
+        force_duplicate: bool = False,
+        ignore_fields: Union[Tuple[str], List[str], None] = None,
+    ) -> "PdfObject":
+        """clone object into pdf_dest"""
+        raise Exception("clone PdfObject")
+
     def _reference_clone(self, clone: Any, pdf_dest: Any) -> "PdfObject":
         try:
             if clone.indirect_ref.pdf == pdf_dest:
@@ -87,10 +96,6 @@ class PdfObject:
             clone.indirect_ref = IndirectObject(i, 0, pdf_dest)
         return clone
 
-    def clone(self, pdf_dest: Any, force_duplicate: bool = False) -> "PdfObject":
-        """clone object into pdf_dest"""
-        raise Exception("clone PdfObject")
-
     def get_object(self) -> Optional["PdfObject"]:
         """Resolve indirect references."""
         return self
@@ -106,7 +111,12 @@ class PdfObject:
 
 
 class NullObject(PdfObject):
-    def clone(self, pdf_dest: Any, force_duplicate: bool = False) -> "NullObject":
+    def clone(
+        self,
+        pdf_dest: Any,
+        force_duplicate: bool = False,
+        ignore_fields: Union[Tuple[str], List[str], None] = None,
+    ) -> "NullObject":
         """clone object into pdf_dest"""
         return self._reference_clone(NullObject(), pdf_dest)
 
@@ -143,7 +153,12 @@ class BooleanObject(PdfObject):
     def __init__(self, value: Any) -> None:
         self.value = value
 
-    def clone(self, pdf_dest: Any, force_duplicate: bool = False) -> "BooleanObject":
+    def clone(
+        self,
+        pdf_dest: Any,
+        force_duplicate: bool = False,
+        ignore_fields: Union[Tuple[str], List[str], None] = None,
+    ) -> "BooleanObject":
         """clone object into pdf_dest"""
         return self._reference_clone(BooleanObject(self.value), pdf_dest)
 
@@ -196,7 +211,10 @@ class IndirectObject(PdfObject):
         self.pdf = pdf
 
     def clone(
-        self, pdf_dest: Any, force_duplicate: bool = False
+        self,
+        pdf_dest: Any,
+        force_duplicate: bool = False,
+        ignore_fields: Union[Tuple[str], List[str], None] = None,
     ) -> "IndirectObject":  # PPzz
         """clone object into pdf_dest"""
         if self.pdf == pdf_dest and not force_duplicate:
@@ -208,7 +226,7 @@ class IndirectObject(PdfObject):
         if not force_duplicate and self.idnum in pdf_dest._id_translated[id(self.pdf)]:
             dup = pdf_dest.get_object(pdf_dest._id_translated[id(self.pdf)][self.idnum])
         else:
-            dup = self.get_object().clone(pdf_dest)
+            dup = self.get_object().clone(pdf_dest, force_duplicate, ignore_fields)
         return dup.indirect_ref
 
     def get_object(self) -> Optional["PdfObject"]:
@@ -290,7 +308,12 @@ class FloatObject(decimal.Decimal, PdfObject):
             logger_warning(f"FloatObject ({value}) invalid; use 0.0 instead", __name__)
             return decimal.Decimal.__new__(cls, "0.0")
 
-    def clone(self, pdf_dest: Any, force_duplicate: bool = False) -> "FloatObject":
+    def clone(
+        self,
+        pdf_dest: Any,
+        force_duplicate: bool = False,
+        ignore_fields: Union[Tuple[str], List[str], None] = None,
+    ) -> "FloatObject":
         """clone object into pdf_dest"""
         return self._reference_clone(FloatObject(self), pdf_dest)
 
@@ -328,7 +351,12 @@ class NumberObject(int, PdfObject):
             logger_warning(f"NumberObject({value}) invalid; use 0 instead", __name__)
             return int.__new__(cls, 0)
 
-    def clone(self, pdf_dest: Any, force_duplicate: bool = False) -> "FloatObject":
+    def clone(
+        self,
+        pdf_dest: Any,
+        force_duplicate: bool = False,
+        ignore_fields: Union[Tuple[str], List[str], None] = None,
+    ) -> "FloatObject":
         """clone object into pdf_dest"""
         return self._reference_clone(NumberObject(self), pdf_dest)
 
@@ -369,7 +397,12 @@ class ByteStringObject(bytes, PdfObject):
     /O) is clearly not text, but is still stored in a "String" object.
     """
 
-    def clone(self, pdf_dest: Any, force_duplicate: bool = False) -> "ByteStringObject":
+    def clone(
+        self,
+        pdf_dest: Any,
+        force_duplicate: bool = False,
+        ignore_fields: Union[Tuple[str], List[str], None] = None,
+    ) -> "ByteStringObject":
         """clone object into pdf_dest"""
         return self._reference_clone(ByteStringObject(bytes(self)), pdf_dest)
 
@@ -405,7 +438,12 @@ class TextStringObject(str, PdfObject):
     occur.
     """
 
-    def clone(self, pdf_dest: Any, force_duplicate: bool = False) -> ByteStringObject:
+    def clone(
+        self,
+        pdf_dest: Any,
+        force_duplicate: bool = False,
+        ignore_fields: Union[Tuple[str], List[str], None] = None,
+    ) -> ByteStringObject:
         """clone object into pdf_dest"""
         obj = TextStringObject(self)
         obj.autodetect_pdfdocencoding = self.autodetect_pdfdocencoding
@@ -485,7 +523,12 @@ class NameObject(str, PdfObject):
         **{chr(i): f"#{i:02X}".encode() for i in range(33)},
     }
 
-    def clone(self, pdf_dest: Any, force_duplicate: bool = False) -> "NameObject":
+    def clone(
+        self,
+        pdf_dest: Any,
+        force_duplicate: bool = False,
+        ignore_fields: Union[Tuple[str], List[str], None] = None,
+    ) -> "NameObject":
         """clone object into pdf_dest"""
         return self._reference_clone(NameObject(self), pdf_dest)
 
