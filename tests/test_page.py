@@ -617,9 +617,11 @@ def test_extract_text_visitor_callbacks():
     page_td_model = reader.pages[0]
     # We store the translations of the Td-executions.
     list_Td = []
+
     def visitor_td(op, args, cm, tm):
         if op == b"Td":
             list_Td.append((tm[4], tm[5]))
+
     page_td_model.extract_text(visitor_operand_after=visitor_td)
     assert len(list_Td) == 4
     # Check the translations of the four Td-executions.
