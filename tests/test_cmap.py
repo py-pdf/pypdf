@@ -77,3 +77,10 @@ def test_ascii_charset():
     name = "ascii charset.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     assert "/a" not in reader.pages[0].extract_text()
+
+
+def test_iss1370():
+    url = "https://github.com/py-pdf/PyPDF2/files/9667138/cmap1370.pdf"
+    name = "cmap1370.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader.pages[0].extract_text()
