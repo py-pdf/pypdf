@@ -86,7 +86,7 @@ def test_iss1370():
     reader.pages[0].extract_text()
 
 
-def test_iss1370():
+def test_iss1379():
     url = "https://github.com/py-pdf/PyPDF2/files/9712729/02voc.pdf"
     name = "02voc.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
