@@ -84,3 +84,10 @@ def test_iss1370():
     name = "cmap1370.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     reader.pages[0].extract_text()
+
+
+def test_iss1370():
+    url = "https://github.com/py-pdf/PyPDF2/files/9712729/02voc.pdf"
+    name = "02voc.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader.pages[2].extract_text()

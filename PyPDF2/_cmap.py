@@ -205,6 +205,8 @@ def parse_to_unicode(
 
 def prepare_cm(ft: DictionaryObject) -> bytes:
     cm: bytes = cast(DecodedStreamObject, ft["/ToUnicode"]).get_data()
+    if isinstance(cm, str):
+        cm = cm.encode()
     # we need to prepare cm before due to missing return line in pdf printed to pdf from word
     cm = (
         cm.strip()
