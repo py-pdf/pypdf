@@ -229,6 +229,10 @@ class IndirectObject(PdfObject):
             dup = self.get_object().clone(pdf_dest, force_duplicate, ignore_fields)
         return dup.indirect_ref
 
+    @property
+    def indirect_ref(self):
+        return self
+
     def get_object(self) -> Optional["PdfObject"]:
         obj = self.pdf.get_object(self)
         if obj is None:

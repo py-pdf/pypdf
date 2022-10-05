@@ -863,7 +863,9 @@ class PdfReader:
     def _build_destination(
         self,
         title: str,
-        array: List[Union[NumberObject, IndirectObject, NullObject, DictionaryObject]],
+        array: List[
+            Union[NumberObject, IndirectObject, None, NullObject, DictionaryObject]
+        ],
     ) -> Destination:
         page, typ = None, None
         # handle outline items with missing or invalid destination
@@ -918,7 +920,7 @@ class PdfReader:
                 dest = dest["/D"]
 
         if isinstance(dest, ArrayObject):
-            outline_item = self._build_destination(title, dest)  # type: ignore
+            outline_item = self._build_destination(title, dest)
         elif isinstance(dest, str):
             # named destination, addresses NameObject Issue #193
             try:
@@ -928,13 +930,18 @@ class PdfReader:
             except KeyError:
                 # named destination not found in Name Dict
                 outline_item = self._build_destination(title, None)
-        elif isinstance(dest, type(None)):
+        elif dest is None:
             # outline item not required to have destination or action
             # PDFv1.7 Table 153
-            outline_item = self._build_destination(title, dest)  # type: ignore
+            outline_item = self._build_destination(title, dest)
         else:
             if self.strict:
                 raise PdfReadError(f"Unexpected destination {dest!r}")
+            else:
+                logger_warning(
+                    f"Removed unexpected destination {dest!r} from destination",
+                    __name__,
+                )
             outline_item = self._build_destination(title, None)  # type: ignore
 
         # if outline item created, add color, format, and child count if present
@@ -950,7 +957,7 @@ class PdfReader:
                 # absolute value = num. visible children
                 # positive = open/unfolded, negative = closed/folded
                 outline_item[NameObject("/Count")] = node["/Count"]
-
+        outline_item.node = node
         return outline_item
 
     @property

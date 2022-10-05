@@ -62,6 +62,7 @@ from ._base import (
     NullObject,
     NumberObject,
     PdfObject,
+    TextStringObject,
 )
 from ._utils import read_hex_string_from_stream, read_string_from_stream
 
@@ -496,32 +497,50 @@ class TreeObject(DictionaryObject):
         self.add_child(child, pdf)
 
     def add_child(self, child: Any, pdf: Any) -> None:  # PdfWriter
+        self.insert_child(child, None, pdf)
+
+    def insert_child(self, child: Any, before: Any, pdf: Any) -> None:  # PdfWriter
         child_obj = child.get_object()
-        child = pdf.get_reference(child_obj)
-        assert isinstance(child, IndirectObject)
+        child = child.indirect_ref  # get_reference(child_obj)
+        # assert isinstance(child, IndirectObject)
 
         prev: Optional[DictionaryObject]
-        if "/First" not in self:
+        if "/First" not in self:  # no child yet
             self[NameObject("/First")] = child
-            self[NameObject("/Count")] = NumberObject(0)
-            prev = None
+            self[NameObject("/Count")] = NumberObject(1)
+            self[NameObject("/Last")] = child
+            child_obj[NameObject("/Parent")] = self.indirect_ref
+            if "/Next" in child_obj:
+                del child_obj["/Next"]
+            if "/Prev" in child_obj:
+                del child_obj["/Prev"]
+            return
         else:
-            prev = cast(
-                DictionaryObject, self["/Last"]
-            )  # TABLE 8.3 Entries in the outline dictionary
+            prev = self["/Last"]
 
-        self[NameObject("/Last")] = child
-        self[NameObject("/Count")] = NumberObject(self[NameObject("/Count")] + 1)  # type: ignore
-
-        if prev:
-            prev_ref = pdf.get_reference(prev)
-            assert isinstance(prev_ref, IndirectObject)
-            child_obj[NameObject("/Prev")] = prev_ref
-            prev[NameObject("/Next")] = child
-
-        parent_ref = pdf.get_reference(self)
-        assert isinstance(parent_ref, IndirectObject)
+        while prev.indirect_ref != before:
+            if "/Next" in prev:
+                prev = prev["/Next"]
+            else:  # append at the end
+                prev[NameObject("/Next")] = child
+                child_obj[NameObject("/Prev")] = prev.indirect_ref
+                child_obj[NameObject("/Parent")] = self.indirect_ref
+                if "/Next" in child_obj:
+                    del child_obj["/Next"]
+                self[NameObject("/Last")] = child
+                self[NameObject("/Count")] = NumberObject(
+                    self[NameObject("/Count")] + 1
+                )
+                return
+        try:  # insert as first or in the middle
+            prev["/Prev"][NameObject("/Next")] = child
+            child_obj[NameObject("/Prev")] = prev["/Prev"]
+        except Exception:  # it means we are inserting in first position
+            del child_obj["/Next"]
+        child_obj[NameObject("/Next")] = prev
+        prev[NameObject("/Prev")] = child
         child_obj[NameObject("/Parent")] = parent_ref
+        self[NameObject("/Count")] = NumberObject(self[NameObject("/Count")] + 1)  # type: ignore
 
     def removeChild(self, child: Any) -> None:  # pragma: no cover
         deprecate_with_replacement("removeChild", "remove_child")
@@ -564,6 +583,7 @@ class TreeObject(DictionaryObject):
 
     def remove_child(self, child: Any) -> None:
         child_obj = child.get_object()
+        child = child_obj.indirect_ref
 
         if NameObject("/Parent") not in child_obj:
             raise ValueError("Removed child does not appear to be a tree item")
@@ -1205,7 +1225,7 @@ class Destination(TreeObject):
         *args: Any,  # ZoomArgType
     ) -> None:
         DictionaryObject.__init__(self)
-        self[NameObject("/Title")] = title
+        self[NameObject("/Title")] = TextStringObject(title)
         self[NameObject("/Page")] = page
         self[NameObject("/Type")] = typ
 
