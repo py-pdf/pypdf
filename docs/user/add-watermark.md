@@ -62,9 +62,6 @@ def watermark(
     if page_indices == "ALL":
         page_indices = list(range(0, len(reader.pages)))
 
-    reader_stamp = PdfReader(stamp_pdf)
-    image_page = reader_stamp.pages[0]
-
     writer = PdfWriter()
     for index in page_indices:
         content_page = reader.pages[index]
