@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1665210668307,
+  "lastUpdate": 1665211483586,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -17239,6 +17239,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.023637424857257696",
             "extra": "mean: 4.074944655599995 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "52149614+cs2sandeep@users.noreply.github.com",
+            "name": "Sandeep Patel",
+            "username": "cs2sandeep"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7faa9b321c694fdadaba71f4fe1700fe81cf6ccd",
+          "message": "DOC: Remove watermark PageObject declaration as it is already present inside for-loop (#1384)",
+          "timestamp": "2022-10-08T08:43:08+02:00",
+          "tree_id": "8e1d6dbf9d51b499e5b0a622e3bbf0b362361f3d",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/7faa9b321c694fdadaba71f4fe1700fe81cf6ccd"
+        },
+        "date": 1665211482715,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7687544664672956,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020589431600069583",
+            "extra": "mean: 1.3008054503999973 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.607546169509845,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007548077155852558",
+            "extra": "mean: 104.08484980000026 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.1965397756931149,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07874586742918387",
+            "extra": "mean: 5.088028601199994 sec\nrounds: 5"
           }
         ]
       }
