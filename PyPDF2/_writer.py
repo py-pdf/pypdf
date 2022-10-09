@@ -82,7 +82,7 @@ from .constants import PagesAttributes as PA
 from .constants import StreamAttributes as SA
 from .constants import TrailerKeys as TK
 from .constants import TypFitArguments, UserAccessPermissions
-from .generic import (  # OutlineItem,
+from .generic import (
     AnnotationBuilder,
     ArrayObject,
     BooleanObject,
@@ -2156,9 +2156,9 @@ class PdfWriter:
                 outline, outline_item_typ, None
             )  # TODO : use before parameter
 
-        for (i, p) in srcpages.items():
-            # reserved for links
-            pass
+        # for (i, p) in srcpages.items():
+        #    reserved for links
+        #    pass
 
         return
 
