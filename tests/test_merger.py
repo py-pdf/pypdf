@@ -275,7 +275,7 @@ def test_merge_write_closed_fh_with_writer():
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     merger.append(pdf_path)
 
-    err_closed = "close() was called and thus the writer cannot be used anymore"
+    # err_closed = "close() was called and thus the writer cannot be used anymore"
 
     merger.close()
     # with pytest.raises(RuntimeError) as exc:
