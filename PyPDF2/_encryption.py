@@ -31,9 +31,9 @@ import struct
 from enum import IntEnum
 from typing import Any, Dict, Optional, Tuple, Union, cast
 
-from PyPDF2._utils import logger_warning
-from PyPDF2.errors import DependencyError
-from PyPDF2.generic import (
+from ._utils import logger_warning
+from .errors import DependencyError
+from .generic import (
     ArrayObject,
     ByteStringObject,
     DictionaryObject,
