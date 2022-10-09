@@ -1282,6 +1282,8 @@ class PdfWriter:
             :meth:`add_link()<add_link>` for details.
         """
         if isinstance(italic, str):  # it means that we are on the old params
+            if fit == "/Fit":
+                fit = None
             return self.add_outline_item(
                 title, pagenum, parent, None, before, color, bold, italic, fit, *args
             )
@@ -1777,6 +1779,32 @@ class PdfWriter:
             layout = NameObject(layout)
         self._root_object.update({NameObject("/PageLayout"): layout})
 
+    def set_page_layout(self, layout: LayoutType) -> None:
+        """
+        Set the page layout.
+
+        :param str layout: The page layout to be used
+
+        .. list-table:: Valid ``layout`` arguments
+           :widths: 50 200
+
+           * - /NoLayout
+             - Layout explicitly not specified
+           * - /SinglePage
+             - Show one page at a time
+           * - /OneColumn
+             - Show one column at a time
+           * - /TwoColumnLeft
+             - Show pages in two columns, odd-numbered pages on the left
+           * - /TwoColumnRight
+             - Show pages in two columns, odd-numbered pages on the right
+           * - /TwoPageLeft
+             - Show two pages at a time, odd-numbered pages on the left
+           * - /TwoPageRight
+             - Show two pages at a time, odd-numbered pages on the right
+        """
+        self._set_page_layout(layout)
+
     def setPageLayout(self, layout: LayoutType) -> None:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
@@ -1970,7 +1998,8 @@ class PdfWriter:
         encryption_obj = None
         stream: IOBase
         if isinstance(fileobj, (str, Path)):
-            stream = FileIO(fileobj, "rb")
+            with FileIO(fileobj, "rb") as f:
+                stream = BytesIO(f.read())
         elif isinstance(fileobj, PdfReader):
             if fileobj._encryption:
                 encryption_obj = fileobj._encryption
@@ -2027,6 +2056,7 @@ class PdfWriter:
             excluded_fields = ["/B", "/Annots"]
         self.merge(None, fileobj, outline_item, pages, import_outline, excluded_fields)
 
+    @deprecate_bookmark(bookmark="outline_item", import_bookmarks="import_outline")
     def merge(
         self,
         position: Optional[int],
@@ -2122,15 +2152,16 @@ class PdfWriter:
         else:
             outline_item_typ = self.get_outline_root()
 
-        if import_outline:
+        if import_outline and CO.OUTLINES in reader.trailer[TK.ROOT]:
             outline = self._get_filtered_outline(
                 reader.trailer[TK.ROOT].get(CO.OUTLINES, None), srcpages, reader
             )
-            outline = self._insert_filtered_outline(
+            self._insert_filtered_outline(
                 outline, outline_item_typ, None
             )  # TODO : use before parameter
 
         for (i, p) in srcpages.items():
+            # reserved for links
             pass
 
         return
@@ -2149,18 +2180,17 @@ class PdfWriter:
         """Extract outline item entries that are part of the specified page set."""
         new_outline = []
         node = node.get_object()
-        if node.get("/Type", "") == "/Outlines":
+        if node.get("/Type", "") == "/Outlines" or "/Title" not in node:
             node = node.get("/First", None)
-            while node is not None:
+            if node is not None:
                 node = node.get_object()
                 new_outline += self._get_filtered_outline(node, pages, pdf)
-                node = node.get("/Next", None)
         else:
             while node is not None:
                 node = node.get_object()
                 o = pdf._build_outline_item(node)
-                if "/Title" not in node:
-                    del o["/Title"]
+                ##                if "/Title" not in node:
+                ##                    del(o["/Title"])
                 if isinstance(o["/Page"], int):
                     o[NameObject("/Page")] = pdf.pages[o["/Page"]].indirect_ref
                 if (
@@ -2220,32 +2250,37 @@ class PdfWriter:
                 cast(TreeObject, parent.get_object()).insert_child(np, self, before)
             self._insert_filtered_outline(dest.childs, np, None)
 
+    def close(self) -> None:
+        """To match the functions from Merger"""
+        return
 
-## TO BE done
-##    @deprecate_bookmark(bookmark="outline_item")
-##    def find_outline_item(
-##        self,
-##        outline_item: Dict[str, Any],
-##        root: Optional[OutlineType] = None,
-##    ) -> Optional[List[int]]:
-##        if root is None:
-##            root = self.outline
-##
-##        for i, oi_enum in enumerate(root):
-##            if isinstance(oi_enum, list):
-##                # oi_enum is still an inner node
-##                # (OutlineType, if recursive types were supported by mypy)
-##                res = self.find_outline_item(outline_item, oi_enum)  # type: ignore
-##                if res:
-##                    return [i] + res
-##            elif (
-##                oi_enum == outline_item
-##                or cast(Dict[Any, Any], oi_enum["/Title"]) == outline_item
-##            ):
-##                # we found a leaf node
-##                return [i]
-##
-##        return None
+    # @deprecate_bookmark(bookmark="outline_item")
+    def find_outline_item(
+        self,
+        outline_item: Dict[str, Any],
+        root: Optional[OutlineType] = None,
+    ) -> Optional[List[int]]:
+        if root is None:
+            o = self.get_outline_root()
+        else:
+            o = root
+
+        i = 0
+        while o is not None:
+            if o.indirect_ref == outline_item or o.get("/Title", None) == outline_item:
+                return [i]
+            else:
+                if "/First" in o:
+                    res = self.find_outline_item(outline_item, o["/First"])
+                    if res:
+                        return ([i] if "/Title" in o else []) + res
+            if "/Next" in o:
+                i += 1
+                o = o["/Next"]
+            else:
+                return None
+
+
 ##
 ##    @deprecate_bookmark(bookmark="outline_item")
 ##    def find_bookmark(
