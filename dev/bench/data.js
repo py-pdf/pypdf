@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1665307771313,
+  "lastUpdate": 1665308543418,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -17329,6 +17329,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.021807122925256554",
             "extra": "mean: 4.610529840000003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d5111e1a056e17ea32f01429258ad12aa02d7450",
+          "message": "STY: Use relative imports (#1387)",
+          "timestamp": "2022-10-09T11:41:08+02:00",
+          "tree_id": "69614a185f43f8b2449845dc80f61d90147b663f",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/d5111e1a056e17ea32f01429258ad12aa02d7450"
+        },
+        "date": 1665308542141,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8253524713742411,
+            "unit": "iter/sec",
+            "range": "stddev: 0.061597198196871844",
+            "extra": "mean: 1.2116035689999989 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.15920595788431,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010733124882517044",
+            "extra": "mean: 98.43288975000301 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21072653608606845,
+            "unit": "iter/sec",
+            "range": "stddev: 0.12747530071582788",
+            "extra": "mean: 4.7454868218 sec\nrounds: 5"
           }
         ]
       }
