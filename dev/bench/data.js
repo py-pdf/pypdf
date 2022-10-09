@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1665211483586,
+  "lastUpdate": 1665307771313,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -17284,6 +17284,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.07874586742918387",
             "extra": "mean: 5.088028601199994 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "59577610+srogmann@users.noreply.github.com",
+            "name": "Sascha Rogmann",
+            "username": "srogmann"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "50c1b527361ff9da4ea8ce6db77b67f2e2d837a4",
+          "message": "BUG: td matrix (#1373)",
+          "timestamp": "2022-10-09T11:28:12+02:00",
+          "tree_id": "0ece67f4da5025dcbaa27169695e8c6e138dd46f",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/50c1b527361ff9da4ea8ce6db77b67f2e2d837a4"
+        },
+        "date": 1665307769079,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8511602444387387,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02647348935240713",
+            "extra": "mean: 1.1748669026000003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.660694537833141,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00836478554734924",
+            "extra": "mean: 93.80251881818356 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21689481137812117,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021807122925256554",
+            "extra": "mean: 4.610529840000003 sec\nrounds: 5"
           }
         ]
       }
