@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## Version 2.11.1, 2022-10-09
+
+### Bug Fixes (BUG)
+- td matrix (#1373)
+- Cope with cmap from #1322 (#1372)
+
+### Robustness (ROB)
+-  Cope with str returned from get_data in cmap (#1380)
+
+Full Changelog: https://github.com/py-pdf/PyPDF2/compare/2.11.0...2.11.1
+
 ## Version 2.11.0, 2022-09-25
 
 ### New Features (ENH)
