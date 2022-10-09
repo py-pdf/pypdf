@@ -1490,8 +1490,13 @@ class PageObject(DictionaryObject):
             # Table 5.5 page 406
             elif operator == b"Td":
                 check_crlf_space = True
-                tm_matrix[4] += float(operands[0])
-                tm_matrix[5] += float(operands[1])
+                # A special case is a translating only tm:
+                # tm[0..5] = 1 0 0 1 e f,
+                # i.e. tm[4] += tx, tm[5] += ty.
+                tx = float(operands[0])
+                ty = float(operands[1])
+                tm_matrix[4] += tx * tm_matrix[0] + ty * tm_matrix[2]
+                tm_matrix[5] += tx * tm_matrix[1] + ty * tm_matrix[3]
             elif operator == b"Tm":
                 check_crlf_space = True
                 tm_matrix = [
