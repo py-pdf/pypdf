@@ -31,7 +31,7 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 import logging
 import re
 from io import BytesIO
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from .._utils import (
     WHITESPACES,
@@ -500,6 +500,16 @@ class TreeObject(DictionaryObject):
         self.insert_child(child, None, pdf)
 
     def insert_child(self, child: Any, before: Any, pdf: Any) -> None:  # PdfWriter
+        def inc_parent_counter(parent: Optional[TreeObject], n: int) -> None:
+            if parent is None:
+                return
+            parent = parent.get_object()
+            if "/Count" in parent:
+                parent[NameObject("/Count")] = NumberObject(
+                    parent[NameObject("/Count")] + n
+                )
+                inc_parent_counter(parent.get("/Parent", None), n)
+
         child_obj = child.get_object()
         child = child.indirect_ref  # get_reference(child_obj)
         # assert isinstance(child, IndirectObject)
@@ -507,9 +517,10 @@ class TreeObject(DictionaryObject):
         prev: Optional[DictionaryObject]
         if "/First" not in self:  # no child yet
             self[NameObject("/First")] = child
-            self[NameObject("/Count")] = NumberObject(1)
+            self[NameObject("/Count")] = NumberObject(0)
             self[NameObject("/Last")] = child
             child_obj[NameObject("/Parent")] = self.indirect_ref
+            inc_parent_counter(self, child_obj.get("/Count", 1))
             if "/Next" in child_obj:
                 del child_obj["/Next"]
             if "/Prev" in child_obj:
@@ -528,9 +539,7 @@ class TreeObject(DictionaryObject):
                 if "/Next" in child_obj:
                     del child_obj["/Next"]
                 self[NameObject("/Last")] = child
-                self[NameObject("/Count")] = NumberObject(
-                    self[NameObject("/Count")] + 1
-                )
+                inc_parent_counter(self, child_obj.get("/Count", 1))
                 return
         try:  # insert as first or in the middle
             prev["/Prev"][NameObject("/Next")] = child
@@ -539,8 +548,8 @@ class TreeObject(DictionaryObject):
             del child_obj["/Next"]
         child_obj[NameObject("/Next")] = prev
         prev[NameObject("/Prev")] = child
-        child_obj[NameObject("/Parent")] = parent_ref
-        self[NameObject("/Count")] = NumberObject(self[NameObject("/Count")] + 1)  # type: ignore
+        child_obj[NameObject("/Parent")] = self.indirect_ref
+        inc_parent_counter(self, child_obj.get("/Count", 1))
 
     def removeChild(self, child: Any) -> None:  # pragma: no cover
         deprecate_with_replacement("removeChild", "remove_child")

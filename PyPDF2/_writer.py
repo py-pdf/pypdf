@@ -82,7 +82,7 @@ from .constants import PagesAttributes as PA
 from .constants import StreamAttributes as SA
 from .constants import TrailerKeys as TK
 from .constants import TypFitArguments, UserAccessPermissions
-from .generic import (
+from .generic import (  # OutlineItem,
     AnnotationBuilder,
     ArrayObject,
     BooleanObject,
@@ -96,7 +96,6 @@ from .generic import (
     NameObject,
     NullObject,
     NumberObject,
-    OutlineItem,
     PdfObject,
     RectangleObject,
     StreamObject,
@@ -2097,9 +2096,6 @@ class PdfWriter:
             # Create a new PdfReader instance using the stream
             # (either file or BytesIO or StringIO) created above
             reader = PdfReader(stream, strict=False)  # type: ignore[arg-type]
-        ##        self.inputs.append((stream, reader))
-        ##        if encryption_obj is not None:
-        ##            reader._encryption = encryption_obj
 
         # Find the range of pages to merge.
         if pages is None:
@@ -2165,11 +2161,6 @@ class PdfWriter:
             pass
 
         return
-        trimmed_dests = self._trim_dests(reader, dests, pages)
-        self.named_dests += trimmed_dests
-
-        self._associate_dests_to_pages(srcpages)
-        self._associate_outline_items_to_pages(srcpages)
 
     def _get_filtered_outline(
         self,
@@ -2189,8 +2180,6 @@ class PdfWriter:
             while node is not None:
                 node = node.get_object()
                 o = pdf._build_outline_item(node)
-                ##                if "/Title" not in node:
-                ##                    del(o["/Title"])
                 if isinstance(o["/Page"], int):
                     o[NameObject("/Page")] = pdf.pages[o["/Page"]].indirect_ref
                 if (
@@ -2280,19 +2269,17 @@ class PdfWriter:
             else:
                 return None
 
-
-##
-##    @deprecate_bookmark(bookmark="outline_item")
-##    def find_bookmark(
-##        self,
-##        outline_item: Dict[str, Any],
-##        root: Optional[OutlineType] = None,
-##    ) -> Optional[List[int]]:  # pragma: no cover
-##        """
-##        .. deprecated:: 2.9.0
-##            Use :meth:`find_outline_item` instead.
-##        """
-##        return self.find_outline_item(outline_item, root)
+    @deprecate_bookmark(bookmark="outline_item")
+    def find_bookmark(
+        self,
+        outline_item: Dict[str, Any],
+        root: Optional[OutlineType] = None,
+    ) -> Optional[List[int]]:  # pragma: no cover
+        """
+        .. deprecated:: 2.9.0
+            Use :meth:`find_outline_item` instead.
+        """
+        return self.find_outline_item(outline_item, root)
 
 
 def _pdf_objectify(obj: Union[Dict[str, Any], str, int, List[Any]]) -> PdfObject:
