@@ -766,7 +766,34 @@ def test_annotation_builder_line():
     writer.add_annotation(0, line_annotation)
 
     # Assert: You need to inspect the file manually
-    target = "annotated-pdf.pd"
+    target = "annotated-pdf.pdf"
+    with open(target, "wb") as fp:
+        writer.write(fp)
+
+    os.remove(target)  # comment this out for manual inspection
+
+
+def test_annotation_builder_square():
+    # Arrange
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    writer = PdfWriter()
+    writer.add_page(page)
+
+    # Act
+    square_annotation = AnnotationBuilder.square(
+        rect=(50, 550, 200, 650), interiour_color="ff0000"
+    )
+    writer.add_annotation(0, square_annotation)
+
+    square_annotation = AnnotationBuilder.square(
+        rect=(40, 400, 150, 450),
+    )
+    writer.add_annotation(0, square_annotation)
+
+    # Assert: You need to inspect the file manually
+    target = "annotated-pdf-square.pdf"
     with open(target, "wb") as fp:
         writer.write(fp)
 
