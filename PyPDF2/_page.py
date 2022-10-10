@@ -1392,8 +1392,6 @@ class PageObject(DictionaryObject):
                 tm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
                 # tm_prev = tm_matrix
                 output += text
-                if visitor_text is not None:
-                    visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
                 # based
                 # if output != "" and output[-1]!="\n":
                 #    output += "\n"
@@ -1401,8 +1399,6 @@ class PageObject(DictionaryObject):
                 return None
             elif operator == b"ET":
                 output += text
-                if visitor_text is not None:
-                    visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
                 text = ""
             # table 4.7 "Graphics state operators", page 219
             # cm_matrix calculation is a reserved for the moment
@@ -1434,8 +1430,6 @@ class PageObject(DictionaryObject):
                 # rtl_dir = False
             elif operator == b"cm":
                 output += text
-                if visitor_text is not None:
-                    visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
                 text = ""
                 cm_matrix = mult(
                     [
@@ -1459,8 +1453,6 @@ class PageObject(DictionaryObject):
             elif operator == b"Tf":
                 if text != "":
                     output += text  # .translate(cmap)
-                    if visitor_text is not None:
-                        visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
                 text = ""
                 # rtl_dir = False
                 try:
@@ -1518,6 +1510,10 @@ class PageObject(DictionaryObject):
                 if o in orientations:
                     if isinstance(operands[0], str):
                         text += operands[0]
+                        if visitor_text is not None:
+                            visitor_text(
+                                operands[0], cm_matrix, tm_matrix, cmap[3], font_size
+                            )
                     else:
                         t: str = ""
                         tt: bytes = (
@@ -1543,6 +1539,7 @@ class PageObject(DictionaryObject):
                                 ]
                             )
                         # "\u0590 - \u08FF \uFB50 - \uFDFF"
+                        tj_text = ""
                         for x in "".join(
                             [cmap[1][x] if x in cmap[1] else x for x in t]
                         ):
@@ -1555,7 +1552,7 @@ class PageObject(DictionaryObject):
                                 or (0x20A0 <= xx and xx <= 0x21FF)  # but (numbers) indices/exponents
                                 or xx in CUSTOM_RTL_SPECIAL_CHARS   # customized....
                             ):
-                                text = x + text if rtl_dir else text + x
+                                tj_text = x + tj_text if rtl_dir else tj_text + x
                             elif (  # right-to-left characters set
                                 (0x0590 <= xx and xx <= 0x08FF)
                                 or (0xFB1D <= xx and xx <= 0xFDFF)
@@ -1567,21 +1564,22 @@ class PageObject(DictionaryObject):
                                     rtl_dir = True
                                     # print("RTL",text,"*")
                                     output += text
-                                    if visitor_text is not None:
-                                        visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
                                     text = ""
-                                text = x + text
+                                tj_text = x + tj_text
                             else:  # left-to-right
                                 # print(">",xx,x,end="")
                                 if rtl_dir:
                                     rtl_dir = False
                                     # print("LTR",text,"*")
                                     output += text
-                                    if visitor_text is not None:
-                                        visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
                                     text = ""
-                                text = text + x
+                                tj_text = tj_text + x
                             # fmt: on
+                        text = tj_text + text if rtl_dir else text + tj_text
+                        if visitor_text is not None:
+                            visitor_text(
+                                tj_text, cm_matrix, tm_matrix, cmap[3], font_size
+                            )
             else:
                 return None
             if check_crlf_space:
@@ -1601,7 +1599,7 @@ class PageObject(DictionaryObject):
                                 output += text + "\n"
                                 if visitor_text is not None:
                                     visitor_text(
-                                        text + "\n",
+                                        "\n",
                                         cm_matrix,
                                         tm_matrix,
                                         cmap[3],
@@ -1614,13 +1612,21 @@ class PageObject(DictionaryObject):
                         ):
                             if (output + text)[-1] != " ":
                                 text += " "
+                                if visitor_text is not None:
+                                    visitor_text(
+                                        " ",
+                                        cm_matrix,
+                                        tm_matrix,
+                                        cmap[3],
+                                        font_size,
+                                    )
                     elif o == 180:
                         if deltaY > 0.8 * f:
                             if (output + text)[-1] != "\n":
                                 output += text + "\n"
                                 if visitor_text is not None:
                                     visitor_text(
-                                        text + "\n",
+                                        "\n",
                                         cm_matrix,
                                         tm_matrix,
                                         cmap[3],
@@ -1633,13 +1639,21 @@ class PageObject(DictionaryObject):
                         ):
                             if (output + text)[-1] != " ":
                                 text += " "
+                                if visitor_text is not None:
+                                    visitor_text(
+                                        " ",
+                                        cm_matrix,
+                                        tm_matrix,
+                                        cmap[3],
+                                        font_size,
+                                    )
                     elif o == 90:
                         if deltaX > 0.8 * f:
                             if (output + text)[-1] != "\n":
                                 output += text + "\n"
                                 if visitor_text is not None:
                                     visitor_text(
-                                        text + "\n",
+                                        "\n",
                                         cm_matrix,
                                         tm_matrix,
                                         cmap[3],
@@ -1652,13 +1666,21 @@ class PageObject(DictionaryObject):
                         ):
                             if (output + text)[-1] != " ":
                                 text += " "
+                                if visitor_text is not None:
+                                    visitor_text(
+                                        " ",
+                                        cm_matrix,
+                                        tm_matrix,
+                                        cmap[3],
+                                        font_size,
+                                    )
                     elif o == 270:
                         if deltaX < -0.8 * f:
                             if (output + text)[-1] != "\n":
                                 output += text + "\n"
                                 if visitor_text is not None:
                                     visitor_text(
-                                        text + "\n",
+                                        "\n",
                                         cm_matrix,
                                         tm_matrix,
                                         cmap[3],
@@ -1671,6 +1693,14 @@ class PageObject(DictionaryObject):
                         ):
                             if (output + text)[-1] != " ":
                                 text += " "
+                                if visitor_text is not None:
+                                    visitor_text(
+                                        " ",
+                                        cm_matrix,
+                                        tm_matrix,
+                                        cmap[3],
+                                        font_size,
+                                    )
                 except Exception:
                     pass
 
@@ -1702,8 +1732,6 @@ class PageObject(DictionaryObject):
                             process_operation(b"Tj", [" "])
             elif operator == b"Do":
                 output += text
-                if visitor_text is not None:
-                    visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
                 try:
                     if output[-1] != "\n":
                         output += "\n"
@@ -1724,8 +1752,6 @@ class PageObject(DictionaryObject):
                             visitor_text,
                         )
                         output += text
-                        if visitor_text is not None:
-                            visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
                 except Exception:
                     logger_warning(
                         f" impossible to decode XFormObject {operands[0]}",
@@ -1738,8 +1764,6 @@ class PageObject(DictionaryObject):
             if visitor_operand_after is not None:
                 visitor_operand_after(operator, operands, cm_matrix, tm_matrix)
         output += text  # just in case of
-        if text != "" and visitor_text is not None:
-            visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
         return output
 
     def extract_text(
