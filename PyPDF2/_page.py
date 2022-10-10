@@ -1720,6 +1720,15 @@ class PageObject(DictionaryObject):
                 process_operation(b"TL", [-operands[1]])
                 process_operation(b"Td", operands)
             elif operator == b"TJ":
+                if visitor_text is not None:
+                    # To prevent sending letters instead of words we
+                    # override the visitor temporarily.
+                    visitor_text_before = visitor_text
+                    tm_matrix_before = [tm_matrix[0], tm_matrix[1],
+                        tm_matrix[2], tm_matrix[3], tm_matrix[4], tm_matrix[5]]
+                    text_TJ = []
+                    def visitor_text(text, cm_matrix, tm_matrix, font_dict, font_size): 
+                        text_TJ.append(text)
                 for op in operands[0]:
                     if isinstance(op, (str, bytes)):
                         process_operation(b"Tj", [op])
@@ -1730,6 +1739,9 @@ class PageObject(DictionaryObject):
                             and (text[-1] != " ")
                         ):
                             process_operation(b"Tj", [" "])
+                if visitor_text is not None:
+                    visitor_text = visitor_text_before
+                    visitor_text("".join(text_TJ), cm_matrix, tm_matrix_before, cmap[3], font_size)
             elif operator == b"Do":
                 output += text
                 try:
