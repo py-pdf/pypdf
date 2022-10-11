@@ -89,7 +89,7 @@ with open("annotated-pdf.pdf", "wb") as fp:
     writer.write(fp)
 ```
 
-## Square (or rather rectangle)
+## Rectangle
 
 If you want to add a rectangle like this:
 
@@ -105,7 +105,7 @@ writer = PdfWriter()
 writer.add_page(page)
 
 # Add the line
-annotation = AnnotationBuilder.square(
+annotation = AnnotationBuilder.rectangle(
     rect=(50, 550, 200, 650),
 )
 writer.add_annotation(page_number=0, annotation=annotation)
@@ -117,8 +117,7 @@ with open("annotated-pdf.pdf", "wb") as fp:
 
 If you want the rectangle to be filled, use the `interiour_color="ff0000"` parameter.
 
-The method is called `square` because that is how the underlying PDF object is
-called by the PDF specification, although it can represent non-square rectangles.
+This method uses the "square" annotation type of the PDF format.
 
 ## Link
 

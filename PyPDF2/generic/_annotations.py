@@ -166,7 +166,7 @@ class AnnotationBuilder:
         return line_obj
 
     @staticmethod
-    def square(
+    def rectangle(
         rect: Union[RectangleObject, Tuple[float, float, float, float]],
         interiour_color: Optional[str] = None,
     ) -> DictionaryObject:

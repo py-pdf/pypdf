@@ -782,12 +782,12 @@ def test_annotation_builder_square():
     writer.add_page(page)
 
     # Act
-    square_annotation = AnnotationBuilder.square(
+    square_annotation = AnnotationBuilder.rectangle(
         rect=(50, 550, 200, 650), interiour_color="ff0000"
     )
     writer.add_annotation(0, square_annotation)
 
-    square_annotation = AnnotationBuilder.square(
+    square_annotation = AnnotationBuilder.rectangle(
         rect=(40, 400, 150, 450),
     )
     writer.add_annotation(0, square_annotation)
