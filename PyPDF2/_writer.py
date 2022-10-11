@@ -1118,15 +1118,11 @@ class PdfWriter:
             self._root_object[CA.NAMES], DictionaryObject
         ):
             names = cast(DictionaryObject, self._root_object[CA.NAMES])
-            idnum = self._objects.index(names) + 1
-            names_ref = IndirectObject(idnum, 0, self)
-            assert names_ref.get_object() == names
+            names_ref = names.indirect_ref
             if CA.DESTS in names and isinstance(names[CA.DESTS], DictionaryObject):
                 # 3.6.3 Name Dictionary (PDF spec 1.7)
                 dests = cast(DictionaryObject, names[CA.DESTS])
-                idnum = self._objects.index(dests) + 1
-                dests_ref = IndirectObject(idnum, 0, self)
-                assert dests_ref.get_object() == dests
+                dests_ref = dests.indirect_ref
                 if CA.NAMES in dests:
                     # TABLE 3.33 Entries in a name tree node dictionary
                     nd = cast(ArrayObject, dests[CA.NAMES])
@@ -1373,14 +1369,20 @@ class PdfWriter:
         self, title: TextStringObject, dest: ArrayObject
     ) -> None:
         nd = self.get_named_dest_root()
-        nd.extend([title, dest])  # type: ignore
+        i = 0
+        while i < len(nd):
+            if title < nd[i]:
+                nd.insert(i, dest)
+                nd.insert(i, TextStringObject(title))
+                return
+            else:
+                i += 2
+        nd.extend([TextStringObject(title), dest])
         return
 
     def add_named_destination_object(self, dest: PdfObject) -> IndirectObject:
         dest_ref = self._add_object(dest)
-
-        nd = self.get_named_dest_root()
-        nd.extend([dest["/Title"], dest_ref])  # type: ignore
+        add_named_destination(dest["/Title"], dest_ref)
         return dest_ref
 
     def addNamedDestinationObject(
@@ -1984,6 +1986,22 @@ class PdfWriter:
 
         page.annotations.append(ind_obj)
 
+    def clean_page(self, page: Union[PageObject, IndirectObject]) -> PageObject:
+        page = page.get_object()
+        for a in page.get("/Annots", []):
+            a_obj = a.get_object()
+            d = a_obj.get("/Dest", None)
+            act = a_obj.get("/A", None)
+            if isinstance(d, NameObject):
+                a_obj[NameObject("/Dest")] = TextStringObject(d)
+            elif act is not None:
+                act = act.get_object()
+                d = act.get("/D", None)
+                if isinstance(d, NameObject):
+                    act[NameObject("/D")] = TextStringObject(d)
+
+        return page
+
     # from PdfMerger:
     def _create_stream(
         self, fileobj: Union[Path, StrByteType, PdfReader]
@@ -2122,6 +2140,7 @@ class PdfWriter:
                     reader.pages[i], position, excluded_fields
                 )
                 position += 1
+            self.clean_page(srcpages[reader.pages[i].indirect_ref.idnum])
 
         reader._namedDests = (
             reader.named_destinations
