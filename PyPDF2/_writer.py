@@ -1381,8 +1381,8 @@ class PdfWriter:
         return
 
     def add_named_destination_object(self, dest: PdfObject) -> IndirectObject:
-        dest_ref = self._add_object(dest)
-        add_named_destination(dest["/Title"], dest_ref)
+        dest_ref = self._add_object(dest.dest_array)
+        self.add_named_destination_array(dest["/Title"], dest_ref)
         return dest_ref
 
     def addNamedDestinationObject(
