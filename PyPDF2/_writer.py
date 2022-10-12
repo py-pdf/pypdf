@@ -133,7 +133,7 @@ class PdfWriter:
         self._header = b"%PDF-1.3"
         self._objects: List[Optional[PdfObject]] = []  # array of indirect objects
         self._idnum_hash: Dict[bytes, IndirectObject] = {}
-        self._id_translated = {}
+        self._id_translated: Dict[int, Dict[int, int]] = {}
 
         # The root of our page tree node.
         pages = DictionaryObject()
@@ -200,8 +200,8 @@ class PdfWriter:
         self._header = new_header
 
     def _add_object(self, obj: Optional[PdfObject]) -> IndirectObject:
-        if hasattr(obj, "indirect_ref") and obj.indirect_ref.pdf == self:
-            return obj
+        if hasattr(obj, "indirect_ref") and obj.indirect_ref.pdf == self:  # type: ignore
+            return obj.indirect_ref
         self._objects.append(obj)
         obj.new_id = len(self._objects)
         obj.indirect_ref = IndirectObject(len(self._objects), 0, self)

@@ -649,7 +649,7 @@ class PdfMerger:
         if writer is None:
             raise RuntimeError(ERR_CLOSED_WRITER)
         return writer.add_outline_item(
-            title, pagenum, parent, color, bold, italic, fit, *args
+            title, pagenum, parent, None, color, bold, italic, fit, *args
         )
 
     def addBookmark(
