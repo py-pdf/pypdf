@@ -12,7 +12,7 @@ merging, cropping, and transforming the pages of PDF files. It can also add
 custom data, viewing options, and passwords to PDF files.
 PyPDF2 can retrieve text and metadata from PDFs as well.
 
-You can contribute to `PyPDF2 on Github <https://github.com/py-pdf/PyPDF2>`_.
+You can contribute to `PyPDF2 on GitHub <https://github.com/py-pdf/PyPDF2>`_.
 
 .. toctree::
    :caption: User Guide
