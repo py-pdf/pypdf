@@ -564,7 +564,13 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
 
     :return: Tuple[file extension, bytes]
     """
-    from PIL import Image
+    try:
+        from PIL import Image
+    except ImportError:
+        raise ImportError(
+            "pillow is required to do image extraction. "
+            "It can be installed via 'pip install PyPDF2[image]'"
+        )
 
     size = (x_object_obj[IA.WIDTH], x_object_obj[IA.HEIGHT])
     data = x_object_obj.get_data()  # type: ignore
