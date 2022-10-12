@@ -171,7 +171,7 @@ class AnnotationBuilder:
         interiour_color: Optional[str] = None,
     ) -> DictionaryObject:
         """
-        Draw a square on the PDF.
+        Draw a rectangle on the PDF.
 
         :param RectangleObject rect: or array of four
                 integers specifying the clickable rectangular area
