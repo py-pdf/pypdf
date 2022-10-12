@@ -20,6 +20,20 @@ install PyPDF2 for your current user:
 pip install --user PyPDF2
 ```
 
+### Optional dependencies
+
+PyPDF2 tries to be as self-contained as possible, but for some tasks the amout
+of work to properly maintain the code would be too high. This is especially the
+case for cryptography and image formats.
+
+If you simply want to unstall all optional dependencies, please run
+
+```
+pip install PyPDF2[full]
+```
+
+Alternatively, you can install just some:
+
 If you plan to use PyPDF2 for encrypting or decrypting PDFs that use AES, you
 will need to install some extra dependencies. Encryption using RC4 is supported
 using the regular installation.
@@ -28,6 +42,11 @@ using the regular installation.
 pip install PyPDF2[crypto]
 ```
 
+If you plan to use image extraction, you need Pillow:
+
+```
+pip install PyPDF2[image]
+```
 
 ## Python Version Support
 
