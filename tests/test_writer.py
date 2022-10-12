@@ -800,3 +800,15 @@ def test_write_empty_stream():
     with pytest.raises(ValueError) as exc:
         writer.write("")
     assert exc.value.args[0] == "Output(stream=) is empty."
+
+
+def test_iss471():
+    url = "https://github.com/py-pdf/PyPDF2/files/9139245/book.pdf"
+    name = "book_471.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+
+    writer = PdfWriter()
+    writer.append(reader, excluded_fields=[])
+    assert isinstance(
+        writer.pages[0]["/Annots"][0].get_object()["/Dest"], TextStringObject
+    )
