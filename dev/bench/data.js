@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1665308543418,
+  "lastUpdate": 1665589489749,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -17374,6 +17374,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.12747530071582788",
             "extra": "mean: 4.7454868218 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": false,
+          "id": "d14f1deb54d5767407b5f51c51cc1f560008bb63",
+          "message": "REL: 2.11.1\n\nBug Fixes (BUG):\n- td matrix (#1373)\n- Cope with cmap from #1322 (#1372)\n\nRobustness (ROB):\n-  Cope with str returned from get_data in cmap (#1380)\n\nFull Changelog: https://github.com/py-pdf/PyPDF2/compare/2.11.0...2.11.1",
+          "timestamp": "2022-10-09T12:07:47+02:00",
+          "tree_id": "baea9e26a40abdfe7a5d6a61931822b79ab98da4",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/d14f1deb54d5767407b5f51c51cc1f560008bb63"
+        },
+        "date": 1665589487323,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.788329678437233,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026553266805010363",
+            "extra": "mean: 1.2685048240000014 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.372485198202693,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00700302366266033",
+            "extra": "mean: 106.69528720000159 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.20021381357712095,
+            "unit": "iter/sec",
+            "range": "stddev: 0.052512277390144656",
+            "extra": "mean: 4.994660368999999 sec\nrounds: 5"
           }
         ]
       }
