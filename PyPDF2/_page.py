@@ -373,6 +373,8 @@ class PageObject(DictionaryObject):
         """
         Get a list of all images of the page.
 
+        This requires pillow. You can install it via 'pip install PyPDF2[image]'.
+
         For the moment, this does NOT include inline images. They will be added
         in future.
         """
