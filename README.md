@@ -89,7 +89,7 @@ PyPDF2 includes a test suite which can be executed with `pytest`:
 $ pytest
 ===================== test session starts =====================
 platform linux -- Python 3.6.15, pytest-7.0.1, pluggy-1.0.0
-rootdir: /home/moose/Github/Martin/PyPDF2
+rootdir: /home/moose/GitHub/Martin/PyPDF2
 plugins: cov-3.0.0
 collected 233 items
 
