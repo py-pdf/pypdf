@@ -82,12 +82,10 @@ jobs:
         with:
           python-version: ${{env.PYTHON_LATEST}}
 
-      - run: python -m pip install build twine check-wheel-contents
-      - run: python -m build --sdist --wheel .
+      - run: python -m pip install flit check-wheel-contents
+      - run: flit build
       - run: ls -l dist
       - run: check-wheel-contents dist/*.whl
-      - name: Check long_description
-        run: python -m twine check dist/*
 
       - name: Test installing package
         run: python -m pip install .
