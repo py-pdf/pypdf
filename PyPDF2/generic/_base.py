@@ -30,7 +30,16 @@ import decimal
 import hashlib
 import re
 from binascii import unhexlify
-from typing import Any, Callable, List, Optional, Tuple, TypeVar, Union, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    List,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+)
 
 from .._codecs import _pdfdoc_encoding_rev
 from .._utils import (
@@ -45,6 +54,9 @@ from .._utils import (
     str_,
 )
 from ..errors import STREAM_TRUNCATED_PREMATURELY, PdfReadError, PdfStreamError
+
+if TYPE_CHECKING:
+    from .._writer import PdfWriter
 
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
