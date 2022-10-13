@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1665589742243,
+  "lastUpdate": 1665681466118,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -17509,6 +17509,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03299047114434124",
             "extra": "mean: 4.0842384444 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "664ddf28e9c7037c5e95566a7f5538e85dad0df5",
+          "message": "PKG: Declare Pillow as optional dependency (#1392)\n\nCloses #1390",
+          "timestamp": "2022-10-13T19:16:12+02:00",
+          "tree_id": "33bb2281a16e54163e57004fb3d60f53212ab6b7",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/664ddf28e9c7037c5e95566a7f5538e85dad0df5"
+        },
+        "date": 1665681463602,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7769491557020038,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04824442841554128",
+            "extra": "mean: 1.2870855095999958 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.654739720319412,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009280499305506444",
+            "extra": "mean: 103.5760702999994 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.19771662208252996,
+            "unit": "iter/sec",
+            "range": "stddev: 0.049172863176004146",
+            "extra": "mean: 5.0577437014 sec\nrounds: 5"
           }
         ]
       }
