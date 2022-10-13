@@ -31,7 +31,7 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 import logging
 import re
 from io import BytesIO
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 
 from .._utils import (
     WHITESPACES,
@@ -76,7 +76,7 @@ class ArrayObject(list, PdfObject):
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str], List[str], None] = None,
+        ignore_fields: Union[Tuple[str], List[str], None] = [],
     ) -> "ArrayObject":
         """clone object into pdf_dest"""
         try:
@@ -84,11 +84,11 @@ class ArrayObject(list, PdfObject):
                 return self
         except Exception:
             pass
-        arr = self._reference_clone(ArrayObject(), pdf_dest)
+        arr = cast("ArrayObject", self._reference_clone(ArrayObject(), pdf_dest))
         for data in self:
             if isinstance(data, StreamObject):
-                if not hasattr(data, "indirect_ref"):
-                    data.indirect_ref = None
+                # if not hasattr(data, "indirect_ref"):
+                #    data.indirect_ref = None
                 dup = data._reference_clone(
                     data.clone(pdf_dest, force_duplicate, ignore_fields), pdf_dest
                 )
@@ -97,7 +97,7 @@ class ArrayObject(list, PdfObject):
                 arr.append(data.clone(pdf_dest, force_duplicate, ignore_fields))
             else:
                 arr.append(data)
-        return arr
+        return cast("ArrayObject", arr)
 
     def items(self) -> Iterable[Any]:
         """
@@ -159,7 +159,7 @@ class DictionaryObject(dict, PdfObject):
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str], List[str], None] = None,
+        ignore_fields: Union[Tuple[str], List[str], None] = [],
     ) -> "DictionaryObject":
         """clone object into pdf_dest"""
         try:
@@ -168,7 +168,9 @@ class DictionaryObject(dict, PdfObject):
         except Exception:
             pass
 
-        d__ = self._reference_clone(self.__class__(), pdf_dest)
+        d__ = cast(
+            "DictionaryObject", self._reference_clone(self.__class__(), pdf_dest)
+        )
         if ignore_fields is None:
             ignore_fields = []
         if len(d__.keys()) == 0:
@@ -200,20 +202,23 @@ class DictionaryObject(dict, PdfObject):
                         and k not in self
                         and isinstance(src.raw_get(k), IndirectObject)
                     ):
-                        cur_obj = src[k]
-                        prev_obj = self
+                        cur_obj: Optional["DictionaryObject"] = cast(
+                            "DictionaryObject", src[k]
+                        )
+                        prev_obj: Optional["DictionaryObject"] = self
                         while cur_obj is not None:
-                            clon = cur_obj._reference_clone(
-                                cur_obj.__class__(), pdf_dest
+                            clon = cast(
+                                "DictionaryObject",
+                                cur_obj._reference_clone(cur_obj.__class__(), pdf_dest),
                             )
                             objs.append((cur_obj, clon))
-                            prev_obj[NameObject(k)] = clon.indirect_ref
+                            prev_obj[NameObject(k)] = clon.indirect_ref  # type: ignore
                             prev_obj = clon
                             try:
                                 if cur_obj == src:
                                     cur_obj = None
                                 else:
-                                    cur_obj = cur_obj[k]
+                                    cur_obj = cast("DictionaryObject", cur_obj[k])
                             except Exception:
                                 cur_obj = None
                         for (s, c) in objs:
@@ -223,19 +228,16 @@ class DictionaryObject(dict, PdfObject):
             if k not in ignore_fields:
                 if isinstance(v, StreamObject):
                     if not hasattr(v, "indirect_ref"):
-                        v.indirect_ref = None
+                        v.indirect_ref = None  # type: ignore
                     vv = v.clone(pdf_dest, force_duplicate, ignore_fields)
-                    self[k.clone(pdf_dest)] = vv.indirect_ref
+                    assert vv.indirect_ref is not None
+                    self[k.clone(pdf_dest)] = vv.indirect_ref  # type: ignore
                 else:
                     if k not in self:
-                        self.update(
-                            {
-                                (k.clone(pdf_dest) if hasattr(k, "clone") else k): (
-                                    v.clone(pdf_dest, force_duplicate, ignore_fields)
-                                    if hasattr(v, "clone")
-                                    else v
-                                )
-                            }
+                        self[NameObject(k)] = (
+                            v.clone(pdf_dest, force_duplicate, ignore_fields)
+                            if hasattr(v, "clone")
+                            else v
                         )
 
     def raw_get(self, key: Any) -> Any:
@@ -500,13 +502,15 @@ class TreeObject(DictionaryObject):
         self.insert_child(child, None, pdf)
 
     def insert_child(self, child: Any, before: Any, pdf: Any) -> None:  # PdfWriter
-        def inc_parent_counter(parent: Optional[TreeObject], n: int) -> None:
+        def inc_parent_counter(
+            parent: Union[None, IndirectObject, TreeObject], n: int
+        ) -> None:
             if parent is None:
                 return
-            parent = parent.get_object()
+            parent = cast("TreeObject", parent.get_object())
             if "/Count" in parent:
                 parent[NameObject("/Count")] = NumberObject(
-                    parent[NameObject("/Count")] + n
+                    cast(int, parent[NameObject("/Count")]) + n
                 )
                 inc_parent_counter(parent.get("/Parent", None), n)
 
@@ -527,13 +531,13 @@ class TreeObject(DictionaryObject):
                 del child_obj["/Prev"]
             return
         else:
-            prev = self["/Last"]
+            prev = cast("DictionaryObject", self["/Last"])
 
         while prev.indirect_ref != before:
             if "/Next" in prev:
-                prev = prev["/Next"]
+                prev = cast("TreeObject", prev["/Next"])
             else:  # append at the end
-                prev[NameObject("/Next")] = child
+                prev[NameObject("/Next")] = cast("TreeObject", child)
                 child_obj[NameObject("/Prev")] = prev.indirect_ref
                 child_obj[NameObject("/Parent")] = self.indirect_ref
                 if "/Next" in child_obj:
@@ -542,7 +546,7 @@ class TreeObject(DictionaryObject):
                 inc_parent_counter(self, child_obj.get("/Count", 1))
                 return
         try:  # insert as first or in the middle
-            prev["/Prev"][NameObject("/Next")] = child
+            prev["/Prev"][NameObject("/Next")] = child  # type: ignore
             child_obj[NameObject("/Prev")] = prev["/Prev"]
         except Exception:  # it means we are inserting in first position
             del child_obj["/Next"]
@@ -664,22 +668,22 @@ class StreamObject(DictionaryObject):
 
     def _clone(
         self,
-        src: DictionaryObject,
+        src: DictionaryObject,  # type: ignore
         pdf_dest: Any,
         force_duplicate: bool,
         ignore_fields: Union[Tuple[str], List[str]],
     ) -> None:
         """update the object from src"""
-        self._data = src._data
+        self._data = cast("StreamObject", src)._data
         try:
-            if src.decoded_self is None:
+            if cast("StreamObject", src).decoded_self is None:
                 self.decoded_self = None
             else:
-                self.decoded_self = src.decoded_self.clone(pdf_dest, True, ignore_fields)  # type: ignore
+                self.decoded_self = cast("StreamObject", src).decoded_self.clone(pdf_dest, True, ignore_fields)  # type: ignore
         except Exception:
             pass
         super()._clone(src, pdf_dest, force_duplicate, ignore_fields)
-        return self
+        return
 
     def hash_value_data(self) -> bytes:
         data = super().hash_value_data()
@@ -860,8 +864,8 @@ class ContentStream(DecodedStreamObject):
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str], List[str], None] = None,
-    ) -> DictionaryObject:
+        ignore_fields: Union[Tuple[str], List[str], None] = [],
+    ) -> "ContentStream":
         """clone object into pdf_dest"""
         try:
             if self.indirect_ref.pdf == pdf_dest and not force_duplicate:
@@ -869,7 +873,11 @@ class ContentStream(DecodedStreamObject):
         except Exception:
             pass
 
-        d__ = self._reference_clone(self.__class__(None, None), pdf_dest)
+        d__ = cast(
+            "ContentStream", self._reference_clone(self.__class__(None, None), pdf_dest)
+        )
+        if ignore_fields is None:
+            ignore_fields = []
         if len(d__.keys()) == 0:
             d__._clone(self, pdf_dest, force_duplicate, ignore_fields)
         return d__
@@ -879,16 +887,16 @@ class ContentStream(DecodedStreamObject):
         src: DictionaryObject,
         pdf_dest: Any,
         force_duplicate: bool,
-        ignore_fields: Union[Tuple[str], List[str], None],
+        ignore_fields: Union[Tuple[str], List[str]],
     ) -> None:
         """update the object from src"""
         self.pdf = pdf_dest
-        self.operations = list(src.operations)
-        self.forced_encoding = src.forced_encoding
+        self.operations = list(cast("ContentStream", src).operations)
+        self.forced_encoding = cast("ContentStream", src).forced_encoding
 
-        super()._clone(self, pdf_dest, force_duplicate, ignore_fields)
+        super()._clone(src, pdf_dest, force_duplicate, ignore_fields)
 
-        return self
+        return
 
     def __parse_content_stream(self, stream: StreamType) -> None:
         stream.seek(0, 0)
