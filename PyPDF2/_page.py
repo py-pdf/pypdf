@@ -1735,7 +1735,12 @@ class PageObject(DictionaryObject):
                     text_TJ = []
 
                     def visitor_text(text, cm_matrix, tm_matrix, font_dict, font_size):
-                        text_TJ.append(text)
+                        # TODO cases where the current inserting order is kept
+                        if rtl_dir:
+                            # right-to-left
+                            text_TJ.insert(0, text)
+                        else:
+                            text_TJ.append(text)
 
                 for op in operands[0]:
                     if isinstance(op, (str, bytes)):
