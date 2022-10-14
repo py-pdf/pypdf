@@ -296,7 +296,7 @@ class PageObject(DictionaryObject):
 
         DictionaryObject.__init__(self)
         self.pdf: Optional[PdfReader] = pdf
-        self.indirect_ref = indirect_ref
+        self.indirect_ref = indirect_ref  # type:ignore
 
     def hash_value_data(self) -> bytes:
         data = super().hash_value_data()

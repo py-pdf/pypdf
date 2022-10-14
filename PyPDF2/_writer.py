@@ -131,7 +131,7 @@ class PdfWriter:
 
     def __init__(self, fileobj: StrByteType = "") -> None:
         self._header = b"%PDF-1.3"
-        self._objects: List[Optional[PdfObject]] = []  # array of indirect objects
+        self._objects: List[PdfObject] = []  # array of indirect objects
         self._idnum_hash: Dict[bytes, IndirectObject] = {}
         self._id_translated: Dict[int, Dict[int, int]] = {}
 
@@ -199,11 +199,10 @@ class PdfWriter:
     def pdf_header(self, new_header: bytes) -> None:
         self._header = new_header
 
-    def _add_object(self, obj: Optional[PdfObject]) -> IndirectObject:
+    def _add_object(self, obj: PdfObject) -> IndirectObject:
         if hasattr(obj, "indirect_ref") and obj.indirect_ref.pdf == self:  # type: ignore
             return obj.indirect_ref
         self._objects.append(obj)
-        obj.new_id = len(self._objects)
         obj.indirect_ref = IndirectObject(len(self._objects), 0, self)
         return obj.indirect_ref
 
@@ -240,7 +239,7 @@ class PdfWriter:
         for k in [PA.PARENT, "/StructParents"]:
             if k not in excluded_keys:
                 excluded_keys.append(k)
-        page = page_org.clone(self, False, excluded_keys)
+        page = cast("PageObject", page_org.clone(self, False, excluded_keys))
         # page_ind = self._add_object(page)
         if page_org.pdf is not None:
             other = page_org.pdf.pdf_header
@@ -1276,6 +1275,7 @@ class PdfWriter:
         :param str fit: The fit of the destination page. See
             :meth:`add_link()<add_link>` for details.
         """
+        page_ref: Union[IndirectObject, NumberObject]
         if isinstance(italic, str):  # it means that we are on the old params
             if fit == "/Fit":
                 fit = None
@@ -1366,7 +1366,7 @@ class PdfWriter:
         )
 
     def add_named_destination_array(
-        self, title: TextStringObject, dest: ArrayObject
+        self, title: TextStringObject, dest: Union[IndirectObject, ArrayObject]
     ) -> None:
         nd = self.get_named_dest_root()
         i = 0
@@ -1380,13 +1380,15 @@ class PdfWriter:
         nd.extend([TextStringObject(title), dest])
         return
 
-    def add_named_destination_object(self, dest: PdfObject) -> IndirectObject:
+    def add_named_destination_object(self, dest: Destination) -> IndirectObject:
         dest_ref = self._add_object(dest.dest_array)
-        self.add_named_destination_array(dest["/Title"], dest_ref)
+        self.add_named_destination_array(
+            cast("TextStringObject", dest["/Title"]), dest_ref
+        )
         return dest_ref
 
     def addNamedDestinationObject(
-        self, dest: PdfObject
+        self, dest: Destination
     ) -> IndirectObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
@@ -1987,7 +1989,7 @@ class PdfWriter:
         page.annotations.append(ind_obj)
 
     def clean_page(self, page: Union[PageObject, IndirectObject]) -> PageObject:
-        page = page.get_object()
+        page = cast("PageObject", page.get_object())
         for a in page.get("/Annots", []):
             a_obj = a.get_object()
             d = a_obj.get("/Dest", None)
@@ -2158,18 +2160,23 @@ class PdfWriter:
             # except Exception as e:
             #    logger_warning(f"can not insert {dest} : {e.msg}",__name__)
 
+        outline_item_typ: TreeObject
         if outline_item is not None:
-            outline_item_typ = self.add_outline_item(
-                TextStringObject(outline_item),
-                list(srcpages.values())[0].indirect_ref,
-                fit=NameObject(TypFitArguments.FIT),
+            outline_item_typ = cast(
+                "TreeObject",
+                self.add_outline_item(
+                    TextStringObject(outline_item),
+                    list(srcpages.values())[0].indirect_ref,
+                    fit=cast("FitType", TypFitArguments.FIT),
+                ).get_object(),
             )
         else:
             outline_item_typ = self.get_outline_root()
 
-        if import_outline and CO.OUTLINES in reader.trailer[TK.ROOT]:
+        _ro = cast("DictionaryObject", reader.trailer[TK.ROOT])
+        if import_outline and CO.OUTLINES in _ro:
             outline = self._get_filtered_outline(
-                reader.trailer[TK.ROOT].get(CO.OUTLINES, None), srcpages, reader
+                _ro.get(CO.OUTLINES, None), srcpages, reader
             )
             self._insert_filtered_outline(
                 outline, outline_item_typ, None
@@ -2198,7 +2205,7 @@ class PdfWriter:
         else:
             while node is not None:
                 node = node.get_object()
-                o = pdf._build_outline_item(node)
+                o = cast("Destination", pdf._build_outline_item(node))
                 if isinstance(o["/Page"], int):
                     o[NameObject("/Page")] = pdf.pages[o["/Page"]].indirect_ref
                 if (
@@ -2245,7 +2252,7 @@ class PdfWriter:
     def _insert_filtered_outline(
         self,
         outlines: List[Destination],
-        parent: Union[None, TreeObject, IndirectObject] = None,
+        parent: Union[TreeObject, IndirectObject],
         before: Union[None, TreeObject, IndirectObject] = None,
     ) -> None:
         for dest in outlines:
@@ -2271,7 +2278,7 @@ class PdfWriter:
         if root is None:
             o = self.get_outline_root()
         else:
-            o = root
+            o = cast("TreeObject", root)
 
         i = 0
         while o is not None:
@@ -2279,12 +2286,14 @@ class PdfWriter:
                 return [i]
             else:
                 if "/First" in o:
-                    res = self.find_outline_item(outline_item, o["/First"])
+                    res = self.find_outline_item(
+                        outline_item, cast(OutlineType, o["/First"])
+                    )
                     if res:
                         return ([i] if "/Title" in o else []) + res
             if "/Next" in o:
                 i += 1
-                o = o["/Next"]
+                o = cast(TreeObject, o["/Next"])
             else:
                 return None
 

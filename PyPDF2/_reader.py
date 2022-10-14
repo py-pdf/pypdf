@@ -863,16 +863,18 @@ class PdfReader:
     def _build_destination(
         self,
         title: str,
-        array: List[
-            Union[NumberObject, IndirectObject, None, NullObject, DictionaryObject]
+        array: Optional[
+            List[
+                Union[NumberObject, IndirectObject, None, NullObject, DictionaryObject]
+            ]
         ],
     ) -> Destination:
         page, typ = None, None
         # handle outline items with missing or invalid destination
         if (
-            isinstance(array, (type(None), NullObject))
+            isinstance(array, (NullObject, str))
             or (isinstance(array, ArrayObject) and len(array) == 0)
-            or (isinstance(array, str))
+            or array is None
         ):
 
             page = NullObject()
@@ -900,7 +902,7 @@ class PdfReader:
         # title required for valid outline
         # PDF Reference 1.7: TABLE 8.4 Entries in an outline item dictionary
         try:
-            title = node["/Title"]
+            title = cast("str", node["/Title"])
         except KeyError:
             if self.strict:
                 raise PdfReadError(f"Outline Entry Missing /Title attribute: {node!r}")

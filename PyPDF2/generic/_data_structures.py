@@ -1234,6 +1234,9 @@ class Destination(TreeObject):
          - [left]
     """
 
+    node: DictionaryObject  # node provide access to the originalObject ; created only when pertinent
+    childs: List[Any]  # used in PdfWriter
+
     def __init__(
         self,
         title: str,
