@@ -5,7 +5,6 @@ from io import BytesIO
 from pathlib import Path
 
 import pytest
-from PIL import Image
 
 from PyPDF2 import PdfReader
 from PyPDF2._reader import convert_to_int, convertToInt
@@ -188,6 +187,8 @@ def test_get_outline(src, outline_elements):
     ],
 )
 def test_get_images(src, expected_images):
+    from PIL import Image
+
     src_abs = RESOURCE_ROOT / src
     reader = PdfReader(src_abs)
 

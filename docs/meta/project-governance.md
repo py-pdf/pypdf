@@ -136,5 +136,5 @@ maintainers do their best to fix that in a timely manner - please
 * Martin Thoma is benevolent dictator since April 2022.
 * Maintainers:
     * Matthew Stamy (mstamy2) was the benevolent dictator for a long time.
-      He still is around on Github once in a while and has permissions on PyPI and Github.
-    * Matthew Peveler (MasterOdin) is a maintainer on Github.
+      He still is around on GitHub once in a while and has permissions on PyPI and GitHub.
+    * Matthew Peveler (MasterOdin) is a maintainer on GitHub.

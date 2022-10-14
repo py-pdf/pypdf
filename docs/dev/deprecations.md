@@ -21,7 +21,7 @@ If you are using [Poetry](https://pypi.org/project/poetry/) it is done with the
 ## How PyPDF2 deprecates features
 
 Assume the current version of PyPDF2 is `x.y.z`. After a discussion (e.g. via
-Github issues) we decided to remove a class / function / method. This is how
+GitHub issues) we decided to remove a class / function / method. This is how
 we do it:
 
 1. `x.y.(z+1)`: Add a PendingDeprecationWarning. If there is a replacement,

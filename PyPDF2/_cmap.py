@@ -1,5 +1,6 @@
 import warnings
 from binascii import unhexlify
+from math import ceil
 from typing import Any, Dict, List, Tuple, Union, cast
 
 from ._codecs import adobe_glyphs, charset_encoding
@@ -204,6 +205,8 @@ def parse_to_unicode(
 
 def prepare_cm(ft: DictionaryObject) -> bytes:
     cm: bytes = cast(DecodedStreamObject, ft["/ToUnicode"]).get_data()
+    if isinstance(cm, str):
+        cm = cm.encode()
     # we need to prepare cm before due to missing return line in pdf printed to pdf from word
     cm = (
         cm.strip()
@@ -267,9 +270,9 @@ def parse_bfrange(
 ) -> Union[None, Tuple[int, int]]:
     lst = [x for x in l.split(b" ") if x]
     closure_found = False
-    nbi = len(lst[0])
-    map_dict[-1] = nbi // 2
-    fmt = b"%%0%dX" % nbi
+    nbi = max(len(lst[0]), len(lst[1]))
+    map_dict[-1] = ceil(nbi / 2)
+    fmt = b"%%0%dX" % (map_dict[-1] * 2)
     if multiline_rg is not None:
         a = multiline_rg[0]  # a, b not in the current line
         b = multiline_rg[1]

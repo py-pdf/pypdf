@@ -297,7 +297,14 @@ def test_iss_1142():
     name = "st2019.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     txt = reader.pages[3].extract_text()
-    assert txt.find("有限公司郑州分公司") > 0
+    # The following text is contained in two different cells:
+    # assert txt.find("有限公司郑州分公司") > 0
+    # 有限公司 = limited company
+    # 郑州分公司 = branch office in Zhengzhou
+    # First cell (see page 4/254):
+    assert txt.find("郑州药素电子商务有限公司") > 0
+    # Next cell (first cell in next line):
+    assert txt.find("郑州分公司") > 0
 
 
 @pytest.mark.parametrize(
@@ -603,6 +610,25 @@ def test_extract_text_visitor_callbacks():
     assert texts.get_base_font() == "/Arial"
     assert texts.font_dict["/Encoding"] == "/WinAnsiEncoding"
     assert text_dat_of_date.font_size == 9.96
+
+    # Test 3: Read a table in a document using a non-translating
+    #         but scaling Tm-operand
+    reader = PdfReader(RESOURCE_ROOT / "Sample_Td-matrix.pdf")
+    page_td_model = reader.pages[0]
+    # We store the translations of the Td-executions.
+    list_Td = []
+
+    def visitor_td(op, args, cm, tm):
+        if op == b"Td":
+            list_Td.append((tm[4], tm[5]))
+
+    page_td_model.extract_text(visitor_operand_after=visitor_td)
+    assert len(list_Td) == 4
+    # Check the translations of the four Td-executions.
+    assert list_Td[0] == (210.0, 110.0)
+    assert list_Td[1] == (410.0, 110.0)
+    assert list_Td[2] == (210.0, 210.0)
+    assert list_Td[3] == (410.0, 210.0)
 
 
 @pytest.mark.parametrize(
