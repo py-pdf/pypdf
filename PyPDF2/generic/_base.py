@@ -243,7 +243,7 @@ class IndirectObject(PdfObject):
         return dup.indirect_ref
 
     @property
-    def indirect_ref(self):
+    def indirect_ref(self) -> "IndirectObject":  # type: ignore
         return self
 
     def get_object(self) -> Optional["PdfObject"]:

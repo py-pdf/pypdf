@@ -2227,16 +2227,12 @@ class PdfWriter:
                 node = node.get("/Next", None)
         return new_outline
 
-    def _clone_outline(self, dest):
+    def _clone_outline(self, dest: Destination) -> TreeObject:
         n_ol = TreeObject()
         self._add_object(n_ol)
         n_ol[NameObject("/Title")] = TextStringObject(dest["/Title"])
-        n_ol[NameObject("/F")] = NumberObject(dest.node.get("/F", 0))
-        n_ol[NameObject("/C")] = ArrayObject(
-            dest.node.get("/C", [FloatObject(0.0), FloatObject(0.0), FloatObject(0.0)])
-        )
         if not isinstance(dest["/Page"], NullObject):
-            if "/A" in dest.node:
+            if dest.node is not None and "/A" in dest.node:
                 n_ol[NameObject("/A")] = dest.node["/A"].clone(self)
             # elif "/D" in dest.node:
             #    n_ol[NameObject("/Dest")] = dest.node["/D"].clone(self)
@@ -2245,8 +2241,13 @@ class PdfWriter:
             else:
                 n_ol[NameObject("/Dest")] = dest.dest_array
         # TODO: /SE
-        # n_ol = ol.clone(self,True,["/Parent","/First","/Last","/Prev","/Next","/Count","/SE","/A"])
-        # destination will have be converted by cloning
+        if dest.node is not None:
+            n_ol[NameObject("/F")] = NumberObject(dest.node.get("/F", 0))
+            n_ol[NameObject("/C")] = ArrayObject(
+                dest.node.get(
+                    "/C", [FloatObject(0.0), FloatObject(0.0), FloatObject(0.0)]
+                )
+            )
         return n_ol
 
     def _insert_filtered_outline(
