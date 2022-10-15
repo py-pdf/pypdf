@@ -76,7 +76,7 @@ class ArrayObject(list, PdfObject):
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str], List[str], None] = [],
+        ignore_fields: Union[Tuple[str], List[str], None] = (),
     ) -> "ArrayObject":
         """clone object into pdf_dest"""
         try:
@@ -159,7 +159,7 @@ class DictionaryObject(dict, PdfObject):
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str], List[str], None] = [],
+        ignore_fields: Union[Tuple[str], List[str], None] = (),
     ) -> "DictionaryObject":
         """clone object into pdf_dest"""
         try:
@@ -864,7 +864,7 @@ class ContentStream(DecodedStreamObject):
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str], List[str], None] = [],
+        ignore_fields: Union[Tuple[str], List[str], None] = (),
     ) -> "ContentStream":
         """clone object into pdf_dest"""
         try:
@@ -1234,8 +1234,8 @@ class Destination(TreeObject):
          - [left]
     """
 
-    node: DictionaryObject  # node provide access to the originalObject ; created only when pertinent
-    childs: List[Any]  # used in PdfWriter
+    node: DictionaryObject = None  # node provide access to the original Object
+    childs: List[Any] = []  # used in PdfWriter
 
     def __init__(
         self,
