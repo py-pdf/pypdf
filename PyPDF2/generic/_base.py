@@ -83,7 +83,7 @@ class PdfObject:
         self,
         pdf_dest: "PdfWriter",  # type: ignore
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str], List[str], None] = [],
+        ignore_fields: Union[Tuple[str], List[str], None] = (),
     ) -> "PdfObject":
         """clone object into pdf_dest"""
         raise Exception("clone PdfObject")
@@ -128,7 +128,7 @@ class NullObject(PdfObject):
         self,
         pdf_dest: "PdfWriter",  # type: ignore
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str], List[str], None] = [],
+        ignore_fields: Union[Tuple[str], List[str], None] = (),
     ) -> "NullObject":
         """clone object into pdf_dest"""
         return cast("NullObject", self._reference_clone(NullObject(), pdf_dest))
@@ -168,7 +168,7 @@ class BooleanObject(PdfObject):
         self,
         pdf_dest: "PdfWriter",  # type: ignore
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str], List[str], None] = [],
+        ignore_fields: Union[Tuple[str], List[str], None] = (),
     ) -> "BooleanObject":
         """clone object into pdf_dest"""
         return cast(
@@ -227,7 +227,7 @@ class IndirectObject(PdfObject):
         self,
         pdf_dest: "PdfWriter",  # type: ignore
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str], List[str], None] = [],
+        ignore_fields: Union[Tuple[str], List[str], None] = (),
     ) -> "IndirectObject":  # PPzz
         """clone object into pdf_dest"""
         if self.pdf == pdf_dest and not force_duplicate:
@@ -329,7 +329,7 @@ class FloatObject(decimal.Decimal, PdfObject):
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str], List[str], None] = [],
+        ignore_fields: Union[Tuple[str], List[str], None] = (),
     ) -> "FloatObject":
         """clone object into pdf_dest"""
         return cast("FloatObject", self._reference_clone(FloatObject(self), pdf_dest))
@@ -372,7 +372,7 @@ class NumberObject(int, PdfObject):
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str], List[str], None] = [],
+        ignore_fields: Union[Tuple[str], List[str], None] = (),
     ) -> "NumberObject":
         """clone object into pdf_dest"""
         return cast("NumberObject", self._reference_clone(NumberObject(self), pdf_dest))
@@ -418,7 +418,7 @@ class ByteStringObject(bytes, PdfObject):
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str], List[str], None] = [],
+        ignore_fields: Union[Tuple[str], List[str], None] = (),
     ) -> "ByteStringObject":
         """clone object into pdf_dest"""
         return cast(
@@ -462,7 +462,7 @@ class TextStringObject(str, PdfObject):
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str], List[str], None] = [],
+        ignore_fields: Union[Tuple[str], List[str], None] = (),
     ) -> "TextStringObject":
         """clone object into pdf_dest"""
         obj = TextStringObject(self)
@@ -547,7 +547,7 @@ class NameObject(str, PdfObject):
         self,
         pdf_dest: Any,
         force_duplicate: bool = False,
-        ignore_fields: Union[Tuple[str], List[str], None] = [],
+        ignore_fields: Union[Tuple[str], List[str], None] = (),
     ) -> "NameObject":
         """clone object into pdf_dest"""
         return cast("NameObject", self._reference_clone(NameObject(self), pdf_dest))
