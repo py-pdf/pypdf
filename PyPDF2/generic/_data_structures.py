@@ -231,7 +231,7 @@ class DictionaryObject(dict, PdfObject):
                         v.indirect_ref = None  # type: ignore
                     vv = v.clone(pdf_dest, force_duplicate, ignore_fields)
                     assert vv.indirect_ref is not None
-                    self[k.clone(pdf_dest)] = vv.indirect_ref  # type: ignore
+                    self[k.clone(pdf_dest)] = vv.indirect_ref  # type: ignore[attr-defined]
                 else:
                     if k not in self:
                         self[NameObject(k)] = (
