@@ -32,3 +32,4 @@ Projects that depend on PyPDF2:
   * [rst2pdf](https://github.com/rst2pdf/rst2pdf)
   * [xhtml2pdf](https://github.com/xhtml2pdf/xhtml2pdf)
   * [doc2text](https://github.com/jlsutherland/doc2text)
+* [pdfalyzer](https://pypi.org/project/pdfalyzer/): A PDF analysis tool for visualizing the inner tree-like data structure of a PDF in spectacularly large and colorful diagrams as well as scanning the binary streams embedded in the PDF for hidden potentially malicious content.
