@@ -1264,6 +1264,7 @@ class PageObject(DictionaryObject):
         visitor_operand_before: Optional[Callable[[Any, Any, Any, Any], None]] = None,
         visitor_operand_after: Optional[Callable[[Any, Any, Any, Any], None]] = None,
         visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None,
+        group_TJ: bool = True,
     ) -> str:
         """
         Locate all text drawing commands, in the order they are provided in the
@@ -1298,6 +1299,8 @@ class PageObject(DictionaryObject):
                 current transformation matrix, text matrix, font-dictionary and font-size.
             The font-dictionary may be None in case of unknown fonts.
             If not None it may e.g. contain key "/BaseFont" with value "/Arial,Bold".
+        :param Optional[bool] group_TJ: True for one call of visitor_text at each TJ,
+               False for calls of visitor_text at each text-fragment of TJ.
         :return: a string object.
         """
         text: str = ""
@@ -1720,7 +1723,7 @@ class PageObject(DictionaryObject):
                 process_operation(b"TL", [-operands[1]])
                 process_operation(b"Td", operands)
             elif operator == b"TJ":
-                if visitor_text is not None:
+                if visitor_text is not None and group_TJ:
                     # To prevent sending letters instead of words we
                     # override the visitor temporarily.
                     visitor_text_before = visitor_text
@@ -1752,7 +1755,7 @@ class PageObject(DictionaryObject):
                             and (text[-1] != " ")
                         ):
                             process_operation(b"Tj", [" "])
-                if visitor_text is not None:
+                if visitor_text is not None and group_TJ:
                     visitor_text = visitor_text_before
                     visitor_text(
                         "".join(text_TJ),
@@ -1781,6 +1784,7 @@ class PageObject(DictionaryObject):
                             visitor_operand_before,
                             visitor_operand_after,
                             visitor_text,
+                            group_TJ,
                         )
                         output += text
                 except Exception:
@@ -1807,6 +1811,7 @@ class PageObject(DictionaryObject):
         visitor_operand_before: Optional[Callable[[Any, Any, Any, Any], None]] = None,
         visitor_operand_after: Optional[Callable[[Any, Any, Any, Any], None]] = None,
         visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None,
+        group_TJ: bool = True,
     ) -> str:
         """
         Locate all text drawing commands, in the order they are provided in the
@@ -1835,8 +1840,12 @@ class PageObject(DictionaryObject):
             It has four arguments: operand, operand-arguments,
                 current transformation matrix and text matrix.
         :param Optional[Function] visitor_text: function to be called when extracting some text at some position.
-            It has three arguments: text,
-                current transformation matrix and text matrix.
+            It has five arguments: text,
+                current transformation matrix, text matrix, font-dictionary and font-size.
+            The font-dictionary may be None in case of unknown fonts.
+            If not None it may e.g. contain key "/BaseFont" with value "/Arial,Bold".
+        :param Optional[bool] group_TJ: True for one call of visitor_text at each TJ,
+               False for calls of visitor_text at each text-fragment of TJ.
         :return: The extracted text
         """
         if len(args) >= 1:
@@ -1884,6 +1893,7 @@ class PageObject(DictionaryObject):
             visitor_operand_before,
             visitor_operand_after,
             visitor_text,
+            group_TJ,
         )
 
     def extract_xform_text(
@@ -1894,11 +1904,14 @@ class PageObject(DictionaryObject):
         visitor_operand_before: Optional[Callable[[Any, Any, Any, Any], None]] = None,
         visitor_operand_after: Optional[Callable[[Any, Any, Any, Any], None]] = None,
         visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None,
+        group_TJ: bool = True,
     ) -> str:
         """
         Extract text from an XObject.
 
         :param float space_width:  force default space width (if not extracted from font (default 200)
+        :param Optional[bool] group_TJ: True for one call of visitor_text at each TJ,
+               False for calls of visitor_text at each text-fragment of TJ.
 
         :return: The extracted text
         """
