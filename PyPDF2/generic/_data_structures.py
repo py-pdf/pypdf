@@ -880,8 +880,7 @@ class ContentStream(DecodedStreamObject):
         )
         if ignore_fields is None:
             ignore_fields = []
-        if len(d__.keys()) == 0:
-            d__._clone(self, pdf_dest, force_duplicate, ignore_fields)
+        d__._clone(self, pdf_dest, force_duplicate, ignore_fields)
         return d__
 
     def _clone(
@@ -895,9 +894,8 @@ class ContentStream(DecodedStreamObject):
         self.pdf = pdf_dest
         self.operations = list(cast("ContentStream", src).operations)
         self.forced_encoding = cast("ContentStream", src).forced_encoding
-
-        super()._clone(src, pdf_dest, force_duplicate, ignore_fields)
-
+        # no need to call DictionaryObjection or any
+        # super(DictionaryObject,self)._clone(src, pdf_dest, force_duplicate, ignore_fields)
         return
 
     def __parse_content_stream(self, stream: StreamType) -> None:
