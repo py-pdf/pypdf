@@ -85,10 +85,20 @@ class PdfObject:
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "PdfObject":
-        """clone object into pdf_dest"""
+        """
+        clone object into pdf_dest (PdfWriterOnly)
+        force_duplicate: in standard if the object has been already cloned and reference,
+                         the copy is returned; when force_duplicate == True, a new copy is always performed
+        ignore_fields : list/tuple of Fields names (for dictionaries that will be ignored during cloning (apply also to childs duplication)
+        in standard, clone function call _reference_clone (see _reference)
+        """
         raise Exception("clone PdfObject")
 
     def _reference_clone(self, clone: Any, pdf_dest: "PdfWriter") -> "PdfObject":
+        """
+        reference the object within the _objects of pdf_dest only if indirect_ref attribute exists (which means the objects was already identified in xref/xobjstm)
+        if object has been already referenced do nothing
+        """
         try:
             if clone.indirect_ref.pdf == pdf_dest:
                 return clone
