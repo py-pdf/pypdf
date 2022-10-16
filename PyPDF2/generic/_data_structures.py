@@ -669,7 +669,7 @@ class StreamObject(DictionaryObject):
 
     def _clone(
         self,
-        src: DictionaryObject,  # type: ignore
+        src: DictionaryObject,
         pdf_dest: Any,
         force_duplicate: bool,
         ignore_fields: Union[Tuple[str, ...], List[str]],
