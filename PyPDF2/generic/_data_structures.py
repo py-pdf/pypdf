@@ -546,7 +546,8 @@ class TreeObject(DictionaryObject):
                 inc_parent_counter(self, child_obj.get("/Count", 1))
                 return
         try:  # insert as first or in the middle
-            prev["/Prev"][NameObject("/Next")] = child  # type: ignore
+            assert isinstance(prev["/Prev"], DictionaryObject)
+            prev["/Prev"][NameObject("/Next")] = child
             child_obj[NameObject("/Prev")] = prev["/Prev"]
         except Exception:  # it means we are inserting in first position
             del child_obj["/Next"]
