@@ -166,7 +166,7 @@ class BooleanObject(PdfObject):
 
     def clone(
         self,
-        pdf_dest: "PdfWriter",  # type: ignore
+        pdf_dest: "PdfWriter",
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "BooleanObject":
