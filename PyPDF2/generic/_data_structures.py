@@ -677,10 +677,11 @@ class StreamObject(DictionaryObject):
         """update the object from src"""
         self._data = cast("StreamObject", src)._data
         try:
-            if cast("StreamObject", src).decoded_self is None:
+            decoded_self = cast("StreamObject", src).decoded_self
+            if decoded_self is None:
                 self.decoded_self = None
             else:
-                self.decoded_self = cast("StreamObject", src).decoded_self.clone(pdf_dest, True, ignore_fields)  # type: ignore
+                self.decoded_self = decoded_self.clone(pdf_dest, True, ignore_fields)  # type: ignore[assignment]
         except Exception:
             pass
         super()._clone(src, pdf_dest, force_duplicate, ignore_fields)
