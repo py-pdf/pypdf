@@ -212,7 +212,8 @@ class DictionaryObject(dict, PdfObject):
                                 cur_obj._reference_clone(cur_obj.__class__(), pdf_dest),
                             )
                             objs.append((cur_obj, clon))
-                            prev_obj[NameObject(k)] = clon.indirect_ref  # type: ignore
+                            assert prev_obj is not None
+                            prev_obj[NameObject(k)] = clon.indirect_ref
                             prev_obj = clon
                             try:
                                 if cur_obj == src:
@@ -228,10 +229,10 @@ class DictionaryObject(dict, PdfObject):
             if k not in ignore_fields:
                 if isinstance(v, StreamObject):
                     if not hasattr(v, "indirect_ref"):
-                        v.indirect_ref = None  # type: ignore
+                        v.indirect_ref = None  # type: ignore[assignment]
                     vv = v.clone(pdf_dest, force_duplicate, ignore_fields)
                     assert vv.indirect_ref is not None
-                    self[k.clone(pdf_dest)] = vv.indirect_ref  # type: ignore
+                    self[k.clone(pdf_dest)] = vv.indirect_ref  # type: ignore[attr-defined]
                 else:
                     if k not in self:
                         self[NameObject(k)] = (
@@ -546,7 +547,8 @@ class TreeObject(DictionaryObject):
                 inc_parent_counter(self, child_obj.get("/Count", 1))
                 return
         try:  # insert as first or in the middle
-            prev["/Prev"][NameObject("/Next")] = child  # type: ignore
+            assert isinstance(prev["/Prev"], DictionaryObject)
+            prev["/Prev"][NameObject("/Next")] = child
             child_obj[NameObject("/Prev")] = prev["/Prev"]
         except Exception:  # it means we are inserting in first position
             del child_obj["/Next"]
@@ -668,7 +670,7 @@ class StreamObject(DictionaryObject):
 
     def _clone(
         self,
-        src: DictionaryObject,  # type: ignore
+        src: DictionaryObject,
         pdf_dest: Any,
         force_duplicate: bool,
         ignore_fields: Union[Tuple[str, ...], List[str]],
@@ -676,10 +678,11 @@ class StreamObject(DictionaryObject):
         """update the object from src"""
         self._data = cast("StreamObject", src)._data
         try:
-            if cast("StreamObject", src).decoded_self is None:
+            decoded_self = cast("StreamObject", src).decoded_self
+            if decoded_self is None:
                 self.decoded_self = None
             else:
-                self.decoded_self = cast("StreamObject", src).decoded_self.clone(pdf_dest, True, ignore_fields)  # type: ignore
+                self.decoded_self = decoded_self.clone(pdf_dest, True, ignore_fields)  # type: ignore[assignment]
         except Exception:
             pass
         super()._clone(src, pdf_dest, force_duplicate, ignore_fields)
@@ -1061,7 +1064,7 @@ def read_object(
     else:
         stream.read(-20)
         raise PdfReadError(
-            f"Invalid Elementary Object starting with {tok} @{stream.tell()}: {stream.read(80).__repr__()}"  # type: ignore
+            f"Invalid Elementary Object starting with {tok!r} @{stream.tell()}: {stream.read(80).__repr__()}"
         )
 
 

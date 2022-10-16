@@ -81,14 +81,14 @@ class PdfObject:
 
     def clone(
         self,
-        pdf_dest: "PdfWriter",  # type: ignore
+        pdf_dest: "PdfWriter",
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "PdfObject":
         """clone object into pdf_dest"""
         raise Exception("clone PdfObject")
 
-    def _reference_clone(self, clone: Any, pdf_dest: "PdfWriter") -> "PdfObject":  # type: ignore
+    def _reference_clone(self, clone: Any, pdf_dest: "PdfWriter") -> "PdfObject":
         try:
             if clone.indirect_ref.pdf == pdf_dest:
                 return clone
@@ -126,7 +126,7 @@ class PdfObject:
 class NullObject(PdfObject):
     def clone(
         self,
-        pdf_dest: "PdfWriter",  # type: ignore
+        pdf_dest: "PdfWriter",
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "NullObject":
@@ -166,7 +166,7 @@ class BooleanObject(PdfObject):
 
     def clone(
         self,
-        pdf_dest: "PdfWriter",  # type: ignore
+        pdf_dest: "PdfWriter",
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "BooleanObject":
@@ -225,7 +225,7 @@ class IndirectObject(PdfObject):
 
     def clone(
         self,
-        pdf_dest: "PdfWriter",  # type: ignore
+        pdf_dest: "PdfWriter",
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "IndirectObject":  # PPzz
@@ -239,11 +239,13 @@ class IndirectObject(PdfObject):
         if not force_duplicate and self.idnum in pdf_dest._id_translated[id(self.pdf)]:
             dup = pdf_dest.get_object(pdf_dest._id_translated[id(self.pdf)][self.idnum])
         else:
-            dup = self.get_object().clone(pdf_dest, force_duplicate, ignore_fields)  # type: ignore
+            obj = self.get_object()
+            assert obj is not None
+            dup = obj.clone(pdf_dest, force_duplicate, ignore_fields)
         return dup.indirect_ref
 
     @property
-    def indirect_ref(self) -> "IndirectObject":  # type: ignore
+    def indirect_ref(self) -> "IndirectObject":  # type: ignore[override]
         return self
 
     def get_object(self) -> Optional["PdfObject"]:
