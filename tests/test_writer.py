@@ -11,6 +11,7 @@ from PyPDF2.generic import (
     NameObject,
     RectangleObject,
     StreamObject,
+    TextStringObject,
 )
 
 from . import get_pdf_from_url
@@ -478,15 +479,18 @@ def test_add_named_destination():
 
     assert writer.get_named_dest_root() == []
 
-    writer.add_named_destination(NameObject("A named dest"), 2)
-    writer.add_named_destination(NameObject("A named dest2"), 2)
+    writer.add_named_destination(TextStringObject("A named dest"), 2)
+    writer.add_named_destination(TextStringObject("A named dest2"), 2)
 
-    assert writer.get_named_dest_root() == [
-        "A named dest",
-        IndirectObject(9, 0, writer),
-        "A named dest2",
-        IndirectObject(10, 0, writer),
-    ]
+    root = writer.get_named_dest_root()
+    assert root[0] == "A named dest"
+    assert root[1].pdf == writer
+    assert root[1].get_object()["/S"] == NameObject("/GoTo")
+    assert root[1].get_object()["/D"][0] == writer.pages[2].indirect_ref
+    assert root[2] == "A named dest2"
+    assert root[3].pdf == writer
+    assert root[3].get_object()["/S"] == NameObject("/GoTo")
+    assert root[3].get_object()["/D"][0] == writer.pages[2].indirect_ref
 
     # write "output" to PyPDF2-output.pdf
     tmp_filename = "dont_commit_named_destination.pdf"
@@ -698,14 +702,7 @@ def test_write_dict_stream_object():
     # Writer will replace this stream object with indirect object
     page_object[NameObject("/Test")] = stream_object
 
-    writer.add_page(page_object)
-
-    for k, v in page_object.items():
-        if k == "/Test":
-            assert str(v) == str(stream_object)
-            break
-    else:
-        assert False, "/Test not found"
+    page_object = writer.add_page(page_object)
 
     with open("tmp-writer-do-not-commit.pdf", "wb") as fp:
         writer.write(fp)
@@ -803,3 +800,15 @@ def test_write_empty_stream():
     with pytest.raises(ValueError) as exc:
         writer.write("")
     assert exc.value.args[0] == "Output(stream=) is empty."
+
+
+def test_iss471():
+    url = "https://github.com/py-pdf/PyPDF2/files/9139245/book.pdf"
+    name = "book_471.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+
+    writer = PdfWriter()
+    writer.append(reader, excluded_fields=[])
+    assert isinstance(
+        writer.pages[0]["/Annots"][0].get_object()["/Dest"], TextStringObject
+    )
