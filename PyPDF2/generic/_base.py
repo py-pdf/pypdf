@@ -88,7 +88,7 @@ class PdfObject:
         """clone object into pdf_dest"""
         raise Exception("clone PdfObject")
 
-    def _reference_clone(self, clone: Any, pdf_dest: "PdfWriter") -> "PdfObject":  # type: ignore
+    def _reference_clone(self, clone: Any, pdf_dest: "PdfWriter") -> "PdfObject":
         try:
             if clone.indirect_ref.pdf == pdf_dest:
                 return clone
