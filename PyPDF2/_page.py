@@ -287,6 +287,8 @@ class PageObject(DictionaryObject):
         this object in its source PDF
     """
 
+    original_page: "PageObject"  # very local use in writer when appending
+
     def __init__(
         self,
         pdf: Optional[Any] = None,  # PdfReader

@@ -44,6 +44,7 @@ from typing import (
     Callable,
     Deque,
     Dict,
+    Iterable,
     List,
     Optional,
     Tuple,
@@ -228,7 +229,7 @@ class PdfWriter:
         self,
         page: PageObject,
         action: Callable[[Any, IndirectObject], None],
-        excluded_keys: Union[Tuple[str, ...], List[str]] = (),
+        excluded_keys: Iterable[str] = (),
     ) -> PageObject:
         assert cast(str, page[PA.TYPE]) == CO.PAGE
         page_org = page
@@ -276,7 +277,7 @@ class PdfWriter:
     def add_page(
         self,
         page: PageObject,
-        excluded_keys: Union[Tuple[str, ...], List[str]] = (),
+        excluded_keys: Iterable[str] = (),
     ) -> PageObject:
         """
         Add a page to this PDF file.
@@ -292,7 +293,7 @@ class PdfWriter:
     def addPage(
         self,
         page: PageObject,
-        excluded_keys: Union[Tuple[str, ...], List[str]] = (),
+        excluded_keys: Iterable[str] = (),
     ) -> PageObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
@@ -306,7 +307,7 @@ class PdfWriter:
         self,
         page: PageObject,
         index: int = 0,
-        excluded_keys: Union[Tuple[str, ...], List[str]] = (),
+        excluded_keys: Iterable[str] = (),
     ) -> PageObject:
         """
         Insert a page in this PDF file. The page is usually acquired from a
@@ -321,7 +322,7 @@ class PdfWriter:
         self,
         page: PageObject,
         index: int = 0,
-        excluded_keys: Union[Tuple[str, ...], List[str]] = (),
+        excluded_keys: Iterable[str] = (),
     ) -> PageObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
@@ -2084,7 +2085,7 @@ class PdfWriter:
             excluded_fields = ["/B", "/Annots"]
         if isinstance(outline_item, (tuple, list, PageRange)):
             if isinstance(pages, bool):
-                if not instance(import_outline, bool):
+                if not isinstance(import_outline, bool):
                     excluded_fields = import_outline
                 import_outline = pages
             pages = outline_item
@@ -2155,11 +2156,11 @@ class PdfWriter:
             pg = reader.pages[i]
             if position is None:
                 srcpages[pg.indirect_ref.idnum] = self.add_page(
-                    pg, list(excluded_fields) + ["/Annots"]
+                    pg, list(excluded_fields) + ["/Annots"]  # type: ignore
                 )
             else:
                 srcpages[pg.indirect_ref.idnum] = self.insert_page(
-                    pg, position, list(excluded_fields) + ["/Annots"]
+                    pg, position, list(excluded_fields) + ["/Annots"]  # type: ignore
                 )
                 position += 1
             srcpages[pg.indirect_ref.idnum].original_page = pg
@@ -2244,13 +2245,13 @@ class PdfWriter:
     ) -> List[Destination]:
         outlist = ArrayObject()
         if isinstance(annots, IndirectObject):
-            annots = annots.get_object()
+            annots = cast("List", annots.get_object())
         for an in annots:
-            ano = an.get_object()
+            ano = cast("DictionaryObject", an.get_object())
             if (
                 ano["/Subtype"] != "/Link"
                 or "/A" not in ano
-                or ano["/A"]["/S"] != "/GoTo"
+                or cast("DictionaryObject", ano["/A"])["/S"] != "/GoTo"
                 or "/Dest" in ano
             ):
                 if "/Dest" not in ano:
@@ -2262,22 +2263,27 @@ class PdfWriter:
                         if str(d) in self.get_named_dest_root():
                             outlist.append(ano.clone(self).indirect_ref)
                     else:
+                        d = cast("ArrayObject", d)
                         p = self._get_cloned_page(d[0], pages, pdf)
                         if p is not None:
                             anc = ano.clone(self, ignore_fields=("/Dest",))
                             anc[NameObject("/Dest")] = ArrayObject([p] + d[1:])
                             outlist.append(anc.indirect_ref)
             else:
-                d = ano["/A"]["/D"]
+                d = cast("DictionaryObject", ano["/A"])["/D"]
                 if isinstance(d, str):
                     # it is a named dest
                     if str(d) in self.get_named_dest_root():
                         outlist.append(ano.clone(self).indirect_ref)
                 else:
+                    d = cast("ArrayObject", d)
                     p = self._get_cloned_page(d[0], pages, pdf)
                     if p is not None:
                         anc = ano.clone(self, ignore_fields=("/D",))
-                        anc["/A"][NameObject("/D")] = ArrayObject([p] + d[1:])
+                        anc = cast("DictionaryObject", anc)
+                        cast("DictionaryObject", anc["/A"])[
+                            NameObject("/D")
+                        ] = ArrayObject([p] + d[1:])
                         outlist.append(anc.indirect_ref)
         return outlist
 
@@ -2296,10 +2302,11 @@ class PdfWriter:
                 node = node.get_object()
                 new_outline += self._get_filtered_outline(node, pages, pdf)
         else:
+            v: Union[None, IndirectObject, NullObject]
             while node is not None:
                 node = node.get_object()
                 o = cast("Destination", pdf._build_outline_item(node))
-                v = self._get_cloned_page(o["/Page"], pages, pdf)
+                v = self._get_cloned_page(cast("PageObject", o["/Page"]), pages, pdf)
                 if v is None:
                     v = NullObject()
                 o[NameObject("/Page")] = v
