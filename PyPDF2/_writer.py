@@ -2203,7 +2203,7 @@ class PdfWriter:
                 outline, outline_item_typ, None
             )  # TODO : use before parameter
 
-        for (idn, pag) in srcpages.items():
+        for pag in srcpages.values():
             lst = self._insert_filtered_annotations(
                 pag.original_page.get("/Annots", ()), pag, srcpages, reader
             )
