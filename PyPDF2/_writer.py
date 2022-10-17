@@ -228,7 +228,7 @@ class PdfWriter:
         self,
         page: PageObject,
         action: Callable[[Any, IndirectObject], None],
-        excluded_keys: Union[Tuple[str, ...], List[str], None] = None,
+        excluded_keys: Union[Tuple[str, ...], List[str]] = (),
     ) -> PageObject:
         assert cast(str, page[PA.TYPE]) == CO.PAGE
         page_org = page
@@ -276,7 +276,7 @@ class PdfWriter:
     def add_page(
         self,
         page: PageObject,
-        excluded_keys: Union[Tuple[str, ...], List[str], None] = None,
+        excluded_keys: Union[Tuple[str, ...], List[str]] = (),
     ) -> PageObject:
         """
         Add a page to this PDF file.
@@ -292,7 +292,7 @@ class PdfWriter:
     def addPage(
         self,
         page: PageObject,
-        excluded_keys: Union[Tuple[str, ...], List[str], None] = None,
+        excluded_keys: Union[Tuple[str, ...], List[str]] = (),
     ) -> PageObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
@@ -306,7 +306,7 @@ class PdfWriter:
         self,
         page: PageObject,
         index: int = 0,
-        excluded_keys: Union[Tuple[str, ...], List[str], None] = None,
+        excluded_keys: Union[Tuple[str, ...], List[str]] = (),
     ) -> PageObject:
         """
         Insert a page in this PDF file. The page is usually acquired from a
@@ -321,7 +321,7 @@ class PdfWriter:
         self,
         page: PageObject,
         index: int = 0,
-        excluded_keys: Union[Tuple[str, ...], List[str], None] = None,
+        excluded_keys: Union[Tuple[str, ...], List[str]] = (),
     ) -> PageObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
@@ -1989,6 +1989,10 @@ class PdfWriter:
         page.annotations.append(ind_obj)
 
     def clean_page(self, page: Union[PageObject, IndirectObject]) -> PageObject:
+        """
+        Perform some clean up in the page.
+        Currently: convert NameObject nameddestination to TextStringObject (required for names/dests list)
+        """
         page = cast("PageObject", page.get_object())
         for a in page.get("/Annots", []):
             a_obj = a.get_object()
@@ -2001,7 +2005,6 @@ class PdfWriter:
                 d = act.get("/D", None)
                 if isinstance(d, NameObject):
                     act[NameObject("/D")] = TextStringObject(d)
-
         return page
 
     # from PdfMerger:
@@ -2044,8 +2047,12 @@ class PdfWriter:
     def append(
         self,
         fileobj: Union[StrByteType, PdfReader, Path],
-        outline_item: Optional[str] = None,
-        pages: Union[None, PageRange, Tuple[int, int], Tuple[int, int, int]] = None,
+        outline_item: Union[
+            str, None, PageRange, Tuple[int, int], Tuple[int, int, int], List[int]
+        ] = None,
+        pages: Union[
+            None, PageRange, Tuple[int, int], Tuple[int, int, int], List[int]
+        ] = None,
         import_outline: bool = True,
         excluded_fields: Optional[Union[List[str], Tuple[str, ...]]] = None,
     ) -> None:
@@ -2061,9 +2068,11 @@ class PdfWriter:
         :param str outline_item: Optionally, you may specify an outline item
             (previously referred to as a 'bookmark') to be applied at the
             beginning of the included file by supplying the text of the outline item.
+            if it is a tuple, list, pagerange, will be transfered to pages
 
         :param pages: can be a :class:`PageRange<PyPDF2.pagerange.PageRange>`
             or a ``(start, stop[, step])`` tuple
+            or a list of pages to be processed
             to merge only the specified range of pages from the source
             document into the output document.
 
@@ -2073,7 +2082,17 @@ class PdfWriter:
         """
         if excluded_fields is None:
             excluded_fields = ["/B", "/Annots"]
-        self.merge(None, fileobj, outline_item, pages, import_outline, excluded_fields)
+        if isinstance(outline_item, (tuple, list, PageRange)):
+            if isinstance(pages, bool):
+                if not instance(import_outline, bool):
+                    excluded_fields = import_outline
+                import_outline = pages
+            pages = outline_item
+            self.merge(None, fileobj, None, pages, import_outline, excluded_fields)
+        else:  # if isinstance(outline_item,str):
+            self.merge(
+                None, fileobj, outline_item, pages, import_outline, excluded_fields
+            )
 
     @deprecate_bookmark(bookmark="outline_item", import_bookmarks="import_outline")
     def merge(
@@ -2083,7 +2102,7 @@ class PdfWriter:
         outline_item: Optional[str] = None,
         pages: Optional[PageRangeSpec] = None,
         import_outline: bool = True,
-        excluded_fields: Optional[Union[List[str], Tuple[str, ...]]] = None,
+        excluded_fields: Optional[Union[List[str], Tuple[str, ...]]] = (),
     ) -> None:
         """
         Merge the pages from the given file into the output file at the
@@ -2133,16 +2152,17 @@ class PdfWriter:
 
         srcpages = {}
         for i in pages:
+            pg = reader.pages[i]
             if position is None:
-                srcpages[reader.pages[i].indirect_ref.idnum] = self.add_page(
-                    reader.pages[i], excluded_fields
+                srcpages[pg.indirect_ref.idnum] = self.add_page(
+                    pg, list(excluded_fields) + ["/Annots"]
                 )
             else:
-                srcpages[reader.pages[i].indirect_ref.idnum] = self.insert_page(
-                    reader.pages[i], position, excluded_fields
+                srcpages[pg.indirect_ref.idnum] = self.insert_page(
+                    pg, position, list(excluded_fields) + ["/Annots"]
                 )
                 position += 1
-            self.clean_page(srcpages[reader.pages[i].indirect_ref.idnum])
+            srcpages[pg.indirect_ref.idnum].original_page = pg
 
         reader._namedDests = (
             reader.named_destinations
@@ -2182,11 +2202,84 @@ class PdfWriter:
                 outline, outline_item_typ, None
             )  # TODO : use before parameter
 
-        # for (i, p) in srcpages.items():
-        #    reserved for links
-        #    pass
+        for (idn, pag) in srcpages.items():
+            lst = self._insert_filtered_annotations(
+                pag.original_page.get("/Annots", ()), pag, srcpages, reader
+            )
+            if len(lst) > 0:
+                pag[NameObject("/Annots")] = lst
+            self.clean_page(pag)
+
+        self.srcpages = srcpages
 
         return
+
+    def _get_cloned_page(
+        self,
+        page: Union[None, int, IndirectObject, PageObject, NullObject],
+        pages: Dict[int, PageObject],
+        pdf: PdfReader,
+    ) -> Optional[IndirectObject]:
+        if isinstance(page, NullObject):
+            return None
+        if isinstance(page, int):
+            _i = pdf.pages[page].indirect_ref
+        # elif isinstance(page, PageObject):
+        #    _i = page.indirect_ref
+        elif isinstance(page, DictionaryObject) and page.get("/Type", "") == "/Page":
+            _i = page.indirect_ref
+        elif isinstance(page, IndirectObject):
+            _i = page
+        try:
+            return pages[_i.idnum].indirect_ref
+        except Exception:
+            return None
+
+    def _insert_filtered_annotations(
+        self,
+        annots: Union[IndirectObject, List[DictionaryObject]],
+        page: PageObject,
+        pages: Dict[int, PageObject],
+        pdf: PdfReader,
+    ) -> List[Destination]:
+        outlist = ArrayObject()
+        if isinstance(annots, IndirectObject):
+            annots = annots.get_object()
+        for an in annots:
+            ano = an.get_object()
+            if (
+                ano["/Subtype"] != "/Link"
+                or "/A" not in ano
+                or ano["/A"]["/S"] != "/GoTo"
+                or "/Dest" in ano
+            ):
+                if "/Dest" not in ano:
+                    outlist.append(ano.clone(self).indirect_ref)
+                else:
+                    d = ano["/Dest"]
+                    if isinstance(d, str):
+                        # it is a named dest
+                        if str(d) in self.get_named_dest_root():
+                            outlist.append(ano.clone(self).indirect_ref)
+                    else:
+                        p = self._get_cloned_page(d[0], pages, pdf)
+                        if p is not None:
+                            anc = ano.clone(self, ignore_fields=("/Dest",))
+                            anc[NameObject("/Dest")] = ArrayObject([p] + d[1:])
+                            outlist.append(anc.indirect_ref)
+            else:
+                d = ano["/A"]["/D"]
+                if isinstance(d, str):
+                    # it is a named dest
+                    if str(d) in self.get_named_dest_root():
+                        outlist.append(ano.clone(self).indirect_ref)
+                else:
+                    p = self._get_cloned_page(d[0], pages, pdf)
+                    if p is not None:
+                        anc = ano.clone(self, ignore_fields=("/D",))
+                        anc["/A"][NameObject("/D")] = ArrayObject([p] + d[1:])
+                        outlist.append(anc.indirect_ref)
+        return outlist
 
     def _get_filtered_outline(
         self,
@@ -2206,18 +2299,10 @@ class PdfWriter:
             while node is not None:
                 node = node.get_object()
                 o = cast("Destination", pdf._build_outline_item(node))
-                if isinstance(o["/Page"], int):
-                    o[NameObject("/Page")] = pdf.pages[o["/Page"]].indirect_ref
-                if (
-                    "/Page" not in o
-                    or isinstance(o["/Page"], NullObject)
-                    or o["/Page"].indirect_ref.idnum not in pages
-                ):
-                    o[NameObject("/Page")] = NullObject()
-                else:
-                    o[NameObject("/Page")] = pages[
-                        o["/Page"].indirect_ref.idnum
-                    ].indirect_ref
+                v = self._get_cloned_page(o["/Page"], pages, pdf)
+                if v is None:
+                    v = NullObject()
+                o[NameObject("/Page")] = v
                 if "/First" in node:
                     o.childs = self._get_filtered_outline(node["/First"], pages, pdf)
                 else:

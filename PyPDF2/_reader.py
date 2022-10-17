@@ -925,6 +925,7 @@ class PdfReader:
             outline_item = self._build_destination(title, dest)
         elif isinstance(dest, str):
             # named destination, addresses NameObject Issue #193
+            # TODO : keep named destination instead of replacing it ?
             try:
                 outline_item = self._build_destination(
                     title, self._namedDests[dest].dest_array
