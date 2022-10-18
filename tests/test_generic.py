@@ -23,6 +23,7 @@ from PyPDF2.generic import (
     NullObject,
     NumberObject,
     OutlineItem,
+    PdfObject,
     RectangleObject,
     TextStringObject,
     TreeObject,
@@ -947,3 +948,28 @@ def test_create_string_object_force():
 )
 def test_float_object_decimal_to_string(value, expected):
     assert repr(FloatObject(value)) == expected
+
+
+def test_cloning(caplog):
+    # pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    # reader = PdfReader(pdf_path)
+    # page = reader.pages[0]
+    writer = PdfWriter()
+    with pytest.raises(Exception) as exc:
+        PdfObject().clone(writer)
+    assert "clone PdfObject" in exc.value.args[0]
+
+    obj1 = DictionaryObject()
+    obj1.indirect_ref = None
+    n = len(writer._objects)
+    obj2 = obj1.clone(writer)
+    assert len(writer._objects) == n + 1
+    obj3 = obj2.clone(writer)
+    assert len(writer._objects) == n + 1
+    assert obj2.indirect_ref == obj3.indirect_ref
+    obj3 = obj2.indirect_ref.clone(writer)
+    assert len(writer._objects) == n + 1
+    assert obj2.indirect_ref == obj3.indirect_ref
+    obj3 = obj2.indirect_ref.clone(writer, True)
+    assert len(writer._objects) == n + 2
+    assert obj2.indirect_ref != obj3.indirect_ref
