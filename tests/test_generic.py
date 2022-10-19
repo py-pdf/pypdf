@@ -25,6 +25,7 @@ from PyPDF2.generic import (
     OutlineItem,
     PdfObject,
     RectangleObject,
+    StreamObject,
     TextStringObject,
     TreeObject,
     create_string_object,
@@ -970,6 +971,26 @@ def test_cloning(caplog):
     obj3 = obj2.indirect_ref.clone(writer)
     assert len(writer._objects) == n + 1
     assert obj2.indirect_ref == obj3.indirect_ref
+    assert obj2.indirect_ref == obj2._reference_clone(obj2, writer).indirect_ref
+    assert len(writer._objects) == n + 1
+    assert obj2.indirect_ref == obj3.indirect_ref
+
     obj3 = obj2.indirect_ref.clone(writer, True)
     assert len(writer._objects) == n + 2
     assert obj2.indirect_ref != obj3.indirect_ref
+
+    arr1 = ArrayObject([obj2])
+    arr2 = arr1.clone(writer)
+    arr3 = arr2.clone(writer)
+    assert arr2 == arr3
+    obj10 = StreamObject()
+    arr1 = ArrayObject([obj10])
+    obj11 = obj10.clone(writer)
+    assert arr1[0] == obj11
+
+    obj20 = DictionaryObject(
+        {NameObject("/Test"): NumberObject(1), NameObject("/Test2"): StreamObject()}
+    )
+    obj21 = obj20.clone(writer, ignore_fields=None)
+    assert "/Test" in obj21
+    assert isinstance(obj21.get("/Test2"), IndirectObject)
