@@ -2253,14 +2253,12 @@ class PdfWriter:
         )  # use of clone to keep link between reader and writer
         self.threads.append(nthread.indirect_ref)
         first_article = cast("DictionaryObject", thread["/F"])
-        print(thread["/I"])
         current_article: Optional[DictionaryObject] = first_article
         new_article: Optional[DictionaryObject] = None
         while current_article is not None:
             pag = self._get_cloned_page(
                 cast("PageObject", current_article["/P"]), pages, reader
             )
-            print(pag)
             if pag is not None:
                 if new_article is None:
                     new_article = cast(
