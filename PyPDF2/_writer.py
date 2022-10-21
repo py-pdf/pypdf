@@ -48,6 +48,7 @@ from typing import (
     Iterable,
     List,
     Optional,
+    Pattern,
     Tuple,
     Type,
     Union,
@@ -2294,7 +2295,7 @@ class PdfWriter:
 
     def add_filtered_articles(
         self,
-        fltr: Union[re.Pattern, str],  # thread entry from the reader's array of threads
+        fltr: Union[Pattern, str],  # thread entry from the reader's array of threads
         pages: Dict[int, PageObject],
         reader: PdfReader,
     ) -> None:
