@@ -32,6 +32,7 @@ import collections
 import decimal
 import logging
 import random
+import re
 import struct
 import time
 import uuid
@@ -1104,6 +1105,29 @@ class PdfWriter:
 
         return outline
 
+    def get_threads_root(self) -> ArrayObject:
+        """
+        the list of threads see §8.3.2 from PDF 1.7 spec
+
+                :return: an Array (possibly empty) of Dictionnaries with "/F" and "/I" properties
+        """
+        if CO.THREADS in self._root_object:
+            # TABLE 3.25 Entries in the catalog dictionary
+            threads = cast(ArrayObject, self._root_object[CO.THREADS])
+        else:
+            threads = ArrayObject()
+            self._root_object[NameObject(CO.THREADS)] = threads
+        return threads
+
+    @property
+    def threads(self) -> ArrayObject:
+        """
+        Read-only property for the list of threads see §8.3.2 from PDF 1.7 spec
+
+        :return: an Array (possibly empty) of Dictionnaries with "/F" and "/I" properties
+        """
+        return self.get_threads_root()
+
     def getOutlineRoot(self) -> TreeObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
@@ -2008,7 +2032,6 @@ class PdfWriter:
                     act[NameObject("/D")] = TextStringObject(d)
         return page
 
-    # from PdfMerger:
     def _create_stream(
         self, fileobj: Union[Path, StrByteType, PdfReader]
     ) -> Tuple[IOBase, Optional[Encryption]]:
@@ -2211,20 +2234,98 @@ class PdfWriter:
                 pag[NameObject("/Annots")] = lst
             self.clean_page(pag)
 
-        self.srcpages = srcpages
+        self.add_filtered_articles("", srcpages, reader)
 
         return
+
+    def _add_articles_thread(
+        self,
+        thread: DictionaryObject,  # thread entry from the reader's array of threads
+        pages: Dict[int, PageObject],
+        reader: PdfReader,
+    ) -> IndirectObject:
+        """
+        clone the thread with only the applicable articles
+
+        """
+        nthread = thread.clone(
+            self, force_duplicate=True, ignore_fields=("/F",)
+        )  # use of clone to keep link between reader and writer
+        self.threads.append(nthread.indirect_ref)
+        first_article = cast("DictionaryObject", thread["/F"])
+        print(thread["/I"])
+        current_article: Optional[DictionaryObject] = first_article
+        new_article: Optional[DictionaryObject] = None
+        while current_article is not None:
+            pag = self._get_cloned_page(
+                cast("PageObject", current_article["/P"]), pages, reader
+            )
+            print(pag)
+            if pag is not None:
+                if new_article is None:
+                    new_article = cast(
+                        "DictionaryObject",
+                        self._add_object(DictionaryObject()).get_object(),
+                    )
+                    new_first = new_article
+                    nthread[NameObject("/F")] = new_article.indirect_ref
+                else:
+                    new_article2 = cast(
+                        "DictionaryObject",
+                        self._add_object(
+                            DictionaryObject(
+                                {NameObject("/V"): new_article.indirect_ref}
+                            )
+                        ).get_object(),
+                    )
+                    new_article[NameObject("/N")] = new_article2.indirect_ref
+                    new_article = new_article2
+                new_article[NameObject("/P")] = pag
+                new_article[NameObject("/T")] = nthread.indirect_ref
+                new_article[NameObject("/R")] = current_article["/R"]
+                pag_obj = cast("PageObject", pag.get_object())
+                if "/B" not in pag_obj:
+                    pag_obj[NameObject("/B")] = ArrayObject()
+                cast("ArrayObject", pag_obj["/B"]).append(new_article.indirect_ref)
+            current_article = cast("DictionaryObject", current_article["/N"])
+            if current_article == first_article:
+                new_article[NameObject("/N")] = new_first.indirect_ref  # type: ignore
+                new_first[NameObject("/V")] = new_article.indirect_ref  # type: ignore
+                current_article = None
+        return nthread.indirect_ref
+
+    def add_filtered_articles(
+        self,
+        fltr: Union[re.Pattern, str],  # thread entry from the reader's array of threads
+        pages: Dict[int, PageObject],
+        reader: PdfReader,
+    ) -> None:
+        """
+        Add articles matching the defined criteria
+        """
+        if isinstance(fltr, str):
+            fltr = re.compile(fltr)
+        elif not isinstance(fltr, re.Pattern):
+            fltr = re.compile("")
+        for p in pages.values():
+            pp = p.original_page
+            for a in pp.get("/B", ()):
+                thr = a.get_object()["/T"]
+                if thr.indirect_ref.idnum not in self._id_translated[
+                    id(reader)
+                ] and fltr.search(thr["/I"]["/Title"]):
+                    self._add_articles_thread(thr, pages, reader)
 
     def _get_cloned_page(
         self,
         page: Union[None, int, IndirectObject, PageObject, NullObject],
         pages: Dict[int, PageObject],
-        pdf: PdfReader,
+        reader: PdfReader,
     ) -> Optional[IndirectObject]:
         if isinstance(page, NullObject):
             return None
         if isinstance(page, int):
-            _i = pdf.pages[page].indirect_ref
+            _i = reader.pages[page].indirect_ref
         # elif isinstance(page, PageObject):
         #    _i = page.indirect_ref
         elif isinstance(page, DictionaryObject) and page.get("/Type", "") == "/Page":
@@ -2241,7 +2342,7 @@ class PdfWriter:
         annots: Union[IndirectObject, List[DictionaryObject]],
         page: PageObject,
         pages: Dict[int, PageObject],
-        pdf: PdfReader,
+        reader: PdfReader,
     ) -> List[Destination]:
         outlist = ArrayObject()
         if isinstance(annots, IndirectObject):
@@ -2264,7 +2365,7 @@ class PdfWriter:
                             outlist.append(ano.clone(self).indirect_ref)
                     else:
                         d = cast("ArrayObject", d)
-                        p = self._get_cloned_page(d[0], pages, pdf)
+                        p = self._get_cloned_page(d[0], pages, reader)
                         if p is not None:
                             anc = ano.clone(self, ignore_fields=("/Dest",))
                             anc[NameObject("/Dest")] = ArrayObject([p] + d[1:])
@@ -2277,7 +2378,7 @@ class PdfWriter:
                         outlist.append(ano.clone(self).indirect_ref)
                 else:
                     d = cast("ArrayObject", d)
-                    p = self._get_cloned_page(d[0], pages, pdf)
+                    p = self._get_cloned_page(d[0], pages, reader)
                     if p is not None:
                         anc = ano.clone(self, ignore_fields=("/D",))
                         anc = cast("DictionaryObject", anc)
@@ -2291,7 +2392,7 @@ class PdfWriter:
         self,
         node: Any,
         pages: Dict[int, PageObject],
-        pdf: PdfReader,
+        reader: PdfReader,
     ) -> List[Destination]:
         """Extract outline item entries that are part of the specified page set."""
         new_outline = []
@@ -2300,18 +2401,18 @@ class PdfWriter:
             node = node.get("/First", None)
             if node is not None:
                 node = node.get_object()
-                new_outline += self._get_filtered_outline(node, pages, pdf)
+                new_outline += self._get_filtered_outline(node, pages, reader)
         else:
             v: Union[None, IndirectObject, NullObject]
             while node is not None:
                 node = node.get_object()
-                o = cast("Destination", pdf._build_outline_item(node))
-                v = self._get_cloned_page(cast("PageObject", o["/Page"]), pages, pdf)
+                o = cast("Destination", reader._build_outline_item(node))
+                v = self._get_cloned_page(cast("PageObject", o["/Page"]), pages, reader)
                 if v is None:
                     v = NullObject()
                 o[NameObject("/Page")] = v
                 if "/First" in node:
-                    o.childs = self._get_filtered_outline(node["/First"], pages, pdf)
+                    o.childs = self._get_filtered_outline(node["/First"], pages, reader)
                 else:
                     o.childs = []
                 if not isinstance(o["/Page"], NullObject) or len(o.childs) > 0:

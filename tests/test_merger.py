@@ -667,3 +667,15 @@ def test_iss1344_with_writer(caplog):
     p = PdfReader(b).pages[0]
     assert "/DIJMAC+Arial Black" in p._debug_for_extract()
     assert "adresse où le malade peut être visité" in p.extract_text()
+
+
+def test_articles_with_writer(caplog):
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
+    name = "924666.pdf"
+    m = PdfWriter()
+    m.append(PdfReader(BytesIO(get_pdf_from_url(url, name=name))), (2, 10))
+    b = BytesIO()
+    m.write(b)
+    r = PdfReader(b)
+    assert len(r.threads) == 4
+    assert r.threads[0].get_object()["/F"]["/P"] == r.pages[0]
