@@ -2304,7 +2304,7 @@ class PdfWriter:
         """
         if isinstance(fltr, str):
             fltr = re.compile(fltr)
-        elif not isinstance(fltr, re.Pattern):
+        elif not isinstance(fltr, Pattern):
             fltr = re.compile("")
         for p in pages.values():
             pp = p.original_page
