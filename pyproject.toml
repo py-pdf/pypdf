@@ -9,7 +9,7 @@ maintainers = [{ name = "Martin Thoma", email = "info@martin-thoma.de" }]
 description = "A pure-python PDF library capable of splitting, merging, cropping, and transforming PDF files"
 readme = "README.md"
 dynamic = ["version"]
-license = "BSD-3-Clause"
+license = { file = "LICENSE" }
 requires-python = ">=3.6"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
