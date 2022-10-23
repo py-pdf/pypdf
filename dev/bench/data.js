@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1665902141799,
+  "lastUpdate": 1666528545400,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -17599,6 +17599,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.018852430495339644",
             "extra": "mean: 3.8481034040000055 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "david@davidbaumgold.com",
+            "name": "David Baumgold",
+            "username": "singingwolfboy"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "abe01995304470d7c110bf74f24e972073030426",
+          "message": "DEV: Move project configuration to pyproject.toml (#1382)\n\nThe pyproject.toml file is the new standard for project configuration in Python defined by PEP-621.\r\nIt is the preferred configuration file for pip. setup.py is now considered \"legacy\" by pip: https://pip.pypa.io/en/stable/reference/build-system/pyproject-toml/\r\n\r\nFor this reason, this PR:\r\n* Moves project configuration to pyproject.toml\r\n* Replaces twine with flit",
+          "timestamp": "2022-10-23T14:34:27+02:00",
+          "tree_id": "9cfe3183411da9f699f2befa33754994089814ec",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/abe01995304470d7c110bf74f24e972073030426"
+        },
+        "date": 1666528543703,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8493774318832089,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010355287772016967",
+            "extra": "mean: 1.1773329058000002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.521655109071466,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008052655928241248",
+            "extra": "mean: 95.04208127272952 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21119823959177783,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022404354902795895",
+            "extra": "mean: 4.734887951400003 sec\nrounds: 5"
           }
         ]
       }
