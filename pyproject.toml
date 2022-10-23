@@ -51,6 +51,9 @@ tests_dir = "tests/"
 [tool.check-wheel-contents]
 package = "./PyPDF2"
 
+[tool.flit.sdist]
+exclude = [".github/*", "docs/*", "resources/*", "sample-files/*", "sample-files/.github/*", "sample-files/.gitignore", "sample-files/.pre-commit-config.yaml",  "requirements/*", "tests/*", ".flake8", ".gitignore", ".gitmodules", ".pylintrc", "tox.ini", "make_changelog.py", "mutmut-test.sh", ".pre-commit-config.yaml", ".gitblame-ignore-revs", "Makefile", "mutmut_config.py"]
+
 [tool.pytest.ini_options]
 filterwarnings = ["error"]
 markers = [
