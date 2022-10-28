@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1666528545400,
+  "lastUpdate": 1666983395245,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -17644,6 +17644,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.022404354902795895",
             "extra": "mean: 4.734887951400003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b49034e8fdcd854e775e6c6e36699c0357956619",
+          "message": "MAINT: Update isort config (#1408)",
+          "timestamp": "2022-10-28T20:55:29+02:00",
+          "tree_id": "41768d9cd70eb08ec91798bc5426ce6cf6df26a0",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/b49034e8fdcd854e775e6c6e36699c0357956619"
+        },
+        "date": 1666983394402,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0128628347564566,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007540628237383689",
+            "extra": "mean: 987.3005166000098 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.486262961662685,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0065770667985844775",
+            "extra": "mean: 80.08801376924059 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2470697184383789,
+            "unit": "iter/sec",
+            "range": "stddev: 0.031024613424261712",
+            "extra": "mean: 4.047440561799999 sec\nrounds: 5"
           }
         ]
       }
