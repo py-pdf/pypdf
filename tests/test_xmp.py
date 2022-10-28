@@ -87,6 +87,7 @@ def test_identity(x):
     assert PyPDF2.xmp._identity(x) == x
 
 
+@pytest.mark.samples()
 @pytest.mark.parametrize(
     ("url", "name", "xmpmm_instance_id"),
     [
@@ -105,6 +106,7 @@ def test_xmpmm(url, name, xmpmm_instance_id):
     assert xmp_metadata.xmpmm_instance_id == xmpmm_instance_id
 
 
+@pytest.mark.samples()
 def test_dc_description():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/953/953770.pdf"
     name = "tika-953770.pdf"
@@ -119,6 +121,7 @@ def test_dc_description():
     }
 
 
+@pytest.mark.samples()
 def test_dc_creator():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/953/953770.pdf"
     name = "tika-953770.pdf"
@@ -129,6 +132,7 @@ def test_dc_creator():
     assert xmp_metadata.dc_creator == ["U.S. Fish and Wildlife Service"]
 
 
+@pytest.mark.samples()
 def test_custom_properties():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/986/986065.pdf"
     name = "tika-986065.pdf"
@@ -139,6 +143,7 @@ def test_custom_properties():
     assert xmp_metadata.custom_properties == {"Style": "Searchable Image (Exact)"}
 
 
+@pytest.mark.samples()
 def test_dc_subject():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/959/959519.pdf"
     name = "tika-959519.pdf"
@@ -169,6 +174,7 @@ def test_dc_subject():
     ]
 
 
+@pytest.mark.samples()
 def test_issue585():
     url = "https://github.com/mstamy2/PyPDF2/files/5536984/test.pdf"
     name = "mstamy2-5536984.pdf"
