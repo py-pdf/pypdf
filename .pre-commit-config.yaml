@@ -25,10 +25,12 @@ repos:
 #     rev: v0.942
 #     hooks:
 #     -   id: mypy
--   repo: https://github.com/pre-commit/mirrors-isort
-    rev: v5.10.1
+-   repo: https://github.com/pycqa/isort
+    rev: 5.10.1
     hooks:
     -   id: isort
+        name: isort (python)
+        additional_dependencies: [toml]
 -   repo: https://github.com/psf/black
     rev: 22.6.0
     hooks:
