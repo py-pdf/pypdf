@@ -175,7 +175,7 @@ def test_rotate_45():
         assert exc.value.args[0] == "Rotation angle must be a multiple of 90"
 
 
-@pytest.mark.samples()
+@pytest.mark.external()
 @pytest.mark.parametrize(
     ("enable", "url", "pages"),
     [

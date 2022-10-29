@@ -18,7 +18,7 @@ from . import get_pdf_from_url
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
-EXTERNAL_ROOT = Path(PROJECT_ROOT) / "sample-files"
+SAMPLE_ROOT = Path(PROJECT_ROOT) / "sample-files"
 
 
 def test_writer_exception_non_binary(tmp_path, caplog):
@@ -775,8 +775,9 @@ def test_deprecate_bookmark_decorator():
         writer.add_outline_item_dict(bookmark=outline_item)
 
 
+@pytest.mark.samples()
 def test_colors_in_outline_item():
-    reader = PdfReader(EXTERNAL_ROOT / "004-pdflatex-4-pages/pdflatex-4-pages.pdf")
+    reader = PdfReader(SAMPLE_ROOT / "004-pdflatex-4-pages/pdflatex-4-pages.pdf")
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
     purple_rgb = (0.50196, 0, 0.50196)
@@ -797,8 +798,9 @@ def test_colors_in_outline_item():
     os.remove(target)  # remove for testing
 
 
+@pytest.mark.samples()
 def test_write_empty_stream():
-    reader = PdfReader(EXTERNAL_ROOT / "004-pdflatex-4-pages/pdflatex-4-pages.pdf")
+    reader = PdfReader(SAMPLE_ROOT / "004-pdflatex-4-pages/pdflatex-4-pages.pdf")
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
 

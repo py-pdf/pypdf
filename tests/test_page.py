@@ -26,11 +26,11 @@ from . import get_pdf_from_url, normalize_warnings
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
-EXTERNAL_ROOT = PROJECT_ROOT / "sample-files"
+SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 
 
 def get_all_sample_files():
-    with open(EXTERNAL_ROOT / "files.json") as fp:
+    with open(SAMPLE_ROOT / "files.json") as fp:
         data = fp.read()
     meta = json.loads(data)
     return meta
@@ -39,7 +39,7 @@ def get_all_sample_files():
 all_files_meta = get_all_sample_files()
 
 
-@pytest.mark.external()
+@pytest.mark.samples()
 @pytest.mark.parametrize(
     "meta",
     [m for m in all_files_meta["data"] if not m["encrypted"]],
@@ -47,7 +47,7 @@ all_files_meta = get_all_sample_files()
 )
 @pytest.mark.filterwarnings("ignore::PyPDF2.errors.PdfReadWarning")
 def test_read(meta):
-    pdf_path = EXTERNAL_ROOT / meta["path"]
+    pdf_path = SAMPLE_ROOT / meta["path"]
     reader = PdfReader(pdf_path)
     try:
         reader.pages[0]
@@ -57,6 +57,7 @@ def test_read(meta):
 
 
 @pytest.mark.samples()
+@pytest.mark.external()
 @pytest.mark.parametrize(
     ("pdf_path", "password"),
     [
@@ -819,12 +820,12 @@ def test_empyt_password_1088():
 
 @pytest.mark.xfail(reason="#1088 / #1126")
 def test_arab_text_extraction():
-    reader = PdfReader(EXTERNAL_ROOT / "015-arabic/habibi.pdf")
+    reader = PdfReader(SAMPLE_ROOT / "015-arabic/habibi.pdf")
     assert reader.pages[0].extract_text() == "habibi حَبيبي"
 
 
 def test_read_link_annotation():
-    reader = PdfReader(EXTERNAL_ROOT / "016-libre-office-link/libre-office-link.pdf")
+    reader = PdfReader(SAMPLE_ROOT / "016-libre-office-link/libre-office-link.pdf")
     assert len(reader.pages[0].annotations) == 1
     annot = dict(reader.pages[0].annotations[0].get_object())
     expected = {

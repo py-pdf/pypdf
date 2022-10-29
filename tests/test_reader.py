@@ -31,7 +31,7 @@ except ImportError:
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
-EXTERNAL_ROOT = PROJECT_ROOT / "sample-files"
+SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 
 
 @pytest.mark.parametrize(
@@ -102,8 +102,9 @@ def test_read_metadata(pdf_path, expected):
             assert metadict["/Title"] == docinfo.title
 
 
+@pytest.mark.samples()
 @pytest.mark.parametrize(
-    "pdf_path", [EXTERNAL_ROOT / "017-unreadable-meta-data/unreadablemetadata.pdf"]
+    "pdf_path", [SAMPLE_ROOT / "017-unreadable-meta-data/unreadablemetadata.pdf"]
 )
 def test_broken_meta_data(pdf_path):
     with open(pdf_path, "rb") as f:
@@ -959,7 +960,7 @@ def get_outline_property(outline, attribute_name: str):
 
 
 def test_outline_title_issue_1121():
-    reader = PdfReader(EXTERNAL_ROOT / "014-outlines/mistitled_outlines_example.pdf")
+    reader = PdfReader(SAMPLE_ROOT / "014-outlines/mistitled_outlines_example.pdf")
 
     assert get_outline_property(reader.outline, "title") == [
         "First",
@@ -1005,7 +1006,7 @@ def test_outline_title_issue_1121():
 
 
 def test_outline_count():
-    reader = PdfReader(EXTERNAL_ROOT / "014-outlines/mistitled_outlines_example.pdf")
+    reader = PdfReader(SAMPLE_ROOT / "014-outlines/mistitled_outlines_example.pdf")
 
     assert get_outline_property(reader.outline, "outline_count") == [
         5,
