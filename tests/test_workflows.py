@@ -176,6 +176,7 @@ def test_rotate_45():
 
 
 @pytest.mark.external
+@pytest.mark.slow
 @pytest.mark.parametrize(
     ("enable", "url", "pages"),
     [
@@ -256,6 +257,7 @@ def test_extract_textbench(enable, url, pages, print_result=False):
         pass
 
 
+@pytest.mark.slow
 def test_orientations():
     p = PdfReader(RESOURCE_ROOT / "test Orient.pdf").pages[0]
     with pytest.warns(DeprecationWarning):
@@ -333,6 +335,7 @@ def test_overlay(base_path, overlay_path):
 
 
 @pytest.mark.external
+@pytest.mark.slow
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -494,6 +497,7 @@ def test_compress_raised(url, name):
 
 
 @pytest.mark.external
+@pytest.mark.slow
 @pytest.mark.parametrize(
     ("url", "name", "strict"),
     [

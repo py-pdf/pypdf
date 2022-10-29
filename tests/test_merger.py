@@ -271,6 +271,7 @@ def test_outline_item():
 
 
 @pytest.mark.external
+@pytest.mark.slow
 def test_trim_outline():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/982/982336.pdf"
     name = "tika-982336.pdf"
@@ -285,6 +286,7 @@ def test_trim_outline():
 
 
 @pytest.mark.external
+@pytest.mark.slow
 def test1():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/923/923621.pdf"
     name = "tika-923621.pdf"
@@ -299,6 +301,7 @@ def test1():
 
 
 @pytest.mark.external
+@pytest.mark.slow
 def test_sweep_recursion1():
     # TODO: This test looks like an infinite loop.
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
@@ -317,6 +320,7 @@ def test_sweep_recursion1():
 
 
 @pytest.mark.external
+@pytest.mark.slow
 @pytest.mark.parametrize(
     ("url", "name"),
     [

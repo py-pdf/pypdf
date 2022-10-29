@@ -640,6 +640,7 @@ def test_read_inline_image_loc_neg_1():
         page.extract_text()
 
 
+@pytest.mark.slow
 @pytest.mark.external
 def test_text_string_write_to_stream():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924562.pdf"

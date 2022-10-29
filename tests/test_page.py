@@ -159,6 +159,7 @@ def compare_dict_objects(d1, d2):
             assert d1[k] == d2[k]
 
 
+@pytest.mark.slow
 def test_page_transformations():
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
@@ -316,6 +317,7 @@ def test_iss_1142():
 
 
 @pytest.mark.external
+@pytest.mark.slow
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -348,6 +350,7 @@ def test_extract_text_page_pdf(url, name):
 
 
 @pytest.mark.external
+@pytest.mark.slow
 def test_extract_text_page_pdf_impossible_decode_xform(caplog):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/972/972962.pdf"
     name = "tika-972962.pdf"
@@ -359,6 +362,7 @@ def test_extract_text_page_pdf_impossible_decode_xform(caplog):
 
 
 @pytest.mark.external
+@pytest.mark.slow
 def test_extract_text_operator_t_star():  # L1266, L1267
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/967/967943.pdf"
     name = "tika-967943.pdf"

@@ -9,6 +9,7 @@ from . import get_pdf_from_url
 
 
 @pytest.mark.external
+@pytest.mark.slow
 def test_compute_space_width():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/923/923406.pdf"
     name = "tika-923406.pdf"
@@ -19,6 +20,7 @@ def test_compute_space_width():
 
 
 @pytest.mark.external
+@pytest.mark.slow
 def test_parse_to_unicode_process_rg():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/959/959173.pdf"
     name = "tika-959173.pdf"

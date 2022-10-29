@@ -805,6 +805,7 @@ def test_extract_text_xref_issue_2(caplog):
 
 
 @pytest.mark.external
+@pytest.mark.slow
 def test_extract_text_xref_issue_3(caplog):
     # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/977/977774.pdf"

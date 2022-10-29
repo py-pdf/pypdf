@@ -639,6 +639,7 @@ def test_append_pages_from_reader_append():
 
 
 @pytest.mark.external
+@pytest.mark.slow
 def test_sweep_indirect_references_nullobject_exception():
     # TODO: Check this more closely... this looks weird
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
@@ -653,6 +654,7 @@ def test_sweep_indirect_references_nullobject_exception():
 
 
 @pytest.mark.external
+@pytest.mark.slow
 def test_write_outline_item_on_page_fitv():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/922/922840.pdf"
     name = "tika-922840.pdf"
