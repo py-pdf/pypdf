@@ -65,7 +65,7 @@ norecursedirs = ["tests/pdf_cache"]
 
 [tool.isort]
 line_length = 79
-indent = "    "
+indent = '    '
 multi_line_output = 3
 include_trailing_comma = true
 known_third_party = ["pytest", "setuptools"]
