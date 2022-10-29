@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1666983395245,
+  "lastUpdate": 1667037483858,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -17689,6 +17689,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.031024613424261712",
             "extra": "mean: 4.047440561799999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4b8d849e4d1042c139542cfbfd0c0e2ed430e831",
+          "message": "DEV: Use correct pytest markers (#1407)\n\nIt was tested like this:\r\n\r\n## slow\r\n\r\n$ pytest --durations=50 -m \"not slow\"\r\n\r\n## external\r\n\r\nDisable internet connect, delete the `tests/pdf_cache` directory and run\r\n\r\n$ pytest -m \"not external\"\r\n\r\n## samples\r\n\r\nRemove the sample-files directory and run\r\n\r\n$ pytest -m \"not samples\"",
+          "timestamp": "2022-10-29T11:56:54+02:00",
+          "tree_id": "fad30b2c85029a7aeb7a60e1ed9578694877a364",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/4b8d849e4d1042c139542cfbfd0c0e2ed430e831"
+        },
+        "date": 1667037483064,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0207465999248186,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008667874647581736",
+            "extra": "mean: 979.6750732000021 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.6287141619078,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005838383791914799",
+            "extra": "mean: 79.18462538461094 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.25420575924517136,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02383410960587767",
+            "extra": "mean: 3.933821180799998 sec\nrounds: 5"
           }
         ]
       }
