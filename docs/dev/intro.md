@@ -11,15 +11,7 @@ pip install -r requirements/dev.txt
 
 ## Running Tests
 
-```
-pytest .
-```
-
-We have the following pytest markers defined:
-
-* `external`: Tests which use files from [the `sample-files` git submodule](https://github.com/py-pdf/sample-files)
-
-You can locally choose not to run those via `pytest -m "not external"`.
+See [testing PyPDF2 with pytest](testing.html)
 
 ## The sample-files git submodule
 The reason for having the submodule `sample-files` is that we want to keep
