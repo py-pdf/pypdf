@@ -175,6 +175,8 @@ def test_rotate_45():
         assert exc.value.args[0] == "Rotation angle must be a multiple of 90"
 
 
+@pytest.mark.external
+@pytest.mark.slow
 @pytest.mark.parametrize(
     ("enable", "url", "pages"),
     [
@@ -255,6 +257,7 @@ def test_extract_textbench(enable, url, pages, print_result=False):
         pass
 
 
+@pytest.mark.slow
 def test_orientations():
     p = PdfReader(RESOURCE_ROOT / "test Orient.pdf").pages[0]
     with pytest.warns(DeprecationWarning):
@@ -295,6 +298,8 @@ def test_orientations():
         ), f"extract_text({req}) => {rst}"
 
 
+@pytest.mark.samples
+@pytest.mark.external
 @pytest.mark.parametrize(
     ("base_path", "overlay_path"),
     [
@@ -329,6 +334,8 @@ def test_overlay(base_path, overlay_path):
     os.remove("dont_commit_overlay.pdf")  # remove for manual inspection
 
 
+@pytest.mark.external
+@pytest.mark.slow
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -347,6 +354,7 @@ def test_merge_with_warning(tmp_path, url, name):
     merger.write(tmp_path / "tmp.merged.pdf")
 
 
+@pytest.mark.external
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -364,6 +372,7 @@ def test_merge(tmp_path, url, name):
     merger.write(tmp_path / "tmp.merged.pdf")
 
 
+@pytest.mark.external
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -379,6 +388,7 @@ def test_get_metadata(url, name):
     reader.metadata
 
 
+@pytest.mark.external
 @pytest.mark.parametrize(
     ("url", "name", "strict", "exception"),
     [
@@ -464,6 +474,7 @@ def test_extract_text(url, name, strict, exception):
         assert ex_info.value.args[0] == exc_text
 
 
+@pytest.mark.external
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -485,6 +496,8 @@ def test_compress_raised(url, name):
         page.compress_content_streams()
 
 
+@pytest.mark.external
+@pytest.mark.slow
 @pytest.mark.parametrize(
     ("url", "name", "strict"),
     [
@@ -514,6 +527,7 @@ def test_compress(url, name, strict):
         page.compress_content_streams()
 
 
+@pytest.mark.external
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -534,6 +548,7 @@ def test_get_fields_warns(tmp_path, caplog, url, name):
     assert normalize_warnings(caplog.text) == ["Object 2 0 not defined."]
 
 
+@pytest.mark.external
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -553,6 +568,7 @@ def test_get_fields_no_warning(tmp_path, url, name):
     assert len(retrieved_fields) == 10
 
 
+@pytest.mark.external
 def test_scale_rectangle_indirect_object():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/999/999944.pdf"
     name = "tika-999944.pdf"
@@ -593,6 +609,7 @@ def test_merge_output(caplog):
     merger.close()
 
 
+@pytest.mark.external
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -663,6 +680,7 @@ def test_image_extraction(url, name):
                 os.remove(filepath)
 
 
+@pytest.mark.external
 def test_image_extraction_strict():
     # Emits log messages
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/914/914102.pdf"
@@ -690,6 +708,7 @@ def test_image_extraction_strict():
                 os.remove(filepath)
 
 
+@pytest.mark.external
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -723,6 +742,7 @@ def test_image_extraction2(url, name):
                 os.remove(filepath)
 
 
+@pytest.mark.external
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -742,6 +762,7 @@ def test_get_outline(url, name):
     reader.outline
 
 
+@pytest.mark.external
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -761,6 +782,7 @@ def test_get_xfa(url, name):
     reader.xfa
 
 
+@pytest.mark.external
 @pytest.mark.parametrize(
     ("url", "name", "strict"),
     [
@@ -793,6 +815,7 @@ def test_get_fonts(url, name, strict):
         page._get_fonts()
 
 
+@pytest.mark.external
 @pytest.mark.parametrize(
     ("url", "name", "strict"),
     [

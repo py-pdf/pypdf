@@ -58,7 +58,9 @@ exclude = [".github/*", "docs/*", "resources/*", "sample-files/*", "sample-files
 [tool.pytest.ini_options]
 filterwarnings = ["error"]
 markers = [
-    "external: Tests which use files from https://github.com/py-pdf/sample-files",
+    "slow: Test which require more than a second",
+    "samples: Tests which use files from https://github.com/py-pdf/sample-files",
+    "external: Tests which need to download files"
 ]
 testpaths = ["tests"]
 norecursedirs = ["tests/pdf_cache"]
@@ -67,7 +69,6 @@ norecursedirs = ["tests/pdf_cache"]
 line_length = 79
 indent = '    '
 multi_line_output = 3
-length_sort = 0
 include_trailing_comma = true
 known_third_party = ["pytest", "setuptools"]
 

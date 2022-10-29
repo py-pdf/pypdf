@@ -595,6 +595,7 @@ def test_remove_child_in_tree():
     tree.empty_tree()
 
 
+@pytest.mark.external
 def test_dict_read_from_stream(caplog):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/984/984877.pdf"
     name = "tika-984877.pdf"
@@ -608,6 +609,7 @@ def test_dict_read_from_stream(caplog):
     )
 
 
+@pytest.mark.external
 def test_parse_content_stream_peek_percentage():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/985/985770.pdf"
     name = "tika-985770.pdf"
@@ -617,6 +619,7 @@ def test_parse_content_stream_peek_percentage():
         page.extract_text()
 
 
+@pytest.mark.external
 def test_read_inline_image_no_has_q():
     # pdf/df7e1add3156af17a372bc165e47a244.pdf
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/998/998719.pdf"
@@ -627,6 +630,7 @@ def test_read_inline_image_no_has_q():
         page.extract_text()
 
 
+@pytest.mark.external
 def test_read_inline_image_loc_neg_1():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/935/935066.pdf"
     name = "tika-935066.pdf"
@@ -636,6 +640,8 @@ def test_read_inline_image_loc_neg_1():
         page.extract_text()
 
 
+@pytest.mark.slow
+@pytest.mark.external
 def test_text_string_write_to_stream():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924562.pdf"
     name = "tika-924562.pdf"
@@ -645,6 +651,7 @@ def test_text_string_write_to_stream():
         page.compress_content_streams()
 
 
+@pytest.mark.external
 def test_name_object_read_from_stream_unicode_error():  # L588
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/974/974966.pdf"
     name = "tika-974966.pdf"
@@ -654,6 +661,7 @@ def test_name_object_read_from_stream_unicode_error():  # L588
         page.extract_text()
 
 
+@pytest.mark.external
 def test_bool_repr(tmp_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/932/932449.pdf"
     name = "tika-932449.pdf"
@@ -673,6 +681,7 @@ def test_bool_repr(tmp_path):
     )
 
 
+@pytest.mark.external
 @patch("PyPDF2._reader.logger_warning")
 def test_issue_997(mock_logger_warning):
     url = "https://github.com/py-pdf/PyPDF2/files/8908874/Exhibit_A-2_930_Enterprise_Zone_Tax_Credits_final.pdf"
