@@ -39,10 +39,18 @@ jobs:
         key: cache-downloaded-files
     - name: Setup Python
       uses: actions/setup-python@v4
+      if: matrix.python-version != '3.11'
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
         cache-dependency-path: '**/requirements/ci.txt'
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      if: matrix.python-version == '3.11'
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+        cache-dependency-path: '**/requirements/ci-3.11.txt'
     - name: Upgrade pip
       run: |
         python -m pip install --upgrade pip
