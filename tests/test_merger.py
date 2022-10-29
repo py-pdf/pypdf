@@ -652,9 +652,11 @@ def test_iss1344(caplog):
     m.append(PdfReader(BytesIO(get_pdf_from_url(url, name=name))))
     b = BytesIO()
     m.write(b)
-    p = PdfReader(b).pages[0]
+    r = PdfReader(b)
+    p = r.pages[0]
     assert "/DIJMAC+Arial Black" in p._debug_for_extract()
     assert "adresse où le malade peut être visité" in p.extract_text()
+    assert r.threads is None
 
 
 def test_iss1344_with_writer(caplog):

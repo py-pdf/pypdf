@@ -2106,7 +2106,7 @@ class PdfWriter:
             'bookmarks') from being imported by specifying this as ``False``.
         """
         if excluded_fields is None:
-            excluded_fields = ["/B", "/Annots"]
+            excluded_fields = ()
         if isinstance(outline_item, (tuple, list, PageRange)):
             if isinstance(pages, bool):
                 if not isinstance(import_outline, bool):
@@ -2180,11 +2180,11 @@ class PdfWriter:
             pg = reader.pages[i]
             if position is None:
                 srcpages[pg.indirect_ref.idnum] = self.add_page(
-                    pg, list(excluded_fields) + ["/Annots"]  # type: ignore
+                    pg, list(excluded_fields) + ["/B", "/Annots"]  # type: ignore
                 )
             else:
                 srcpages[pg.indirect_ref.idnum] = self.insert_page(
-                    pg, position, list(excluded_fields) + ["/Annots"]  # type: ignore
+                    pg, position, list(excluded_fields) + ["/B", "/Annots"]  # type: ignore
                 )
                 position += 1
             srcpages[pg.indirect_ref.idnum].original_page = pg
