@@ -44,7 +44,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
         cache-dependency-path: '**/requirements/ci.txt'
-    - name: Setup Python
+    - name: Setup Python (3.11)
       uses: actions/setup-python@v4
       if: matrix.python-version == '3.11'
       with:
@@ -57,6 +57,11 @@ jobs:
     - name: Install requirements (Python 3)
       run: |
         pip install -r requirements/ci.txt
+      if: matrix.python-version != '3.11'
+    - name: Install requirements (Python 3.11)
+      run: |
+        pip install -r requirements/ci-3.11.txt
+      if: matrix.python-version == '3.11'
     - name: Remove cryptodome
       run: |
         pip uninstall pycryptodome -y
