@@ -30,7 +30,10 @@ SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 
 
 def get_all_sample_files():
-    with open(SAMPLE_ROOT / "files.json") as fp:
+    meta_file = SAMPLE_ROOT / "files.json"
+    if not os.path.isfile(meta_file):
+        return {"data": []}
+    with open(meta_file) as fp:
         data = fp.read()
     meta = json.loads(data)
     return meta
