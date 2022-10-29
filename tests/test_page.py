@@ -26,11 +26,14 @@ from . import get_pdf_from_url, normalize_warnings
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
-EXTERNAL_ROOT = PROJECT_ROOT / "sample-files"
+SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 
 
 def get_all_sample_files():
-    with open(EXTERNAL_ROOT / "files.json") as fp:
+    meta_file = SAMPLE_ROOT / "files.json"
+    if not os.path.isfile(meta_file):
+        return {"data": []}
+    with open(meta_file) as fp:
         data = fp.read()
     meta = json.loads(data)
     return meta
@@ -39,7 +42,7 @@ def get_all_sample_files():
 all_files_meta = get_all_sample_files()
 
 
-@pytest.mark.external()
+@pytest.mark.samples
 @pytest.mark.parametrize(
     "meta",
     [m for m in all_files_meta["data"] if not m["encrypted"]],
@@ -47,7 +50,7 @@ all_files_meta = get_all_sample_files()
 )
 @pytest.mark.filterwarnings("ignore::PyPDF2.errors.PdfReadWarning")
 def test_read(meta):
-    pdf_path = EXTERNAL_ROOT / meta["path"]
+    pdf_path = SAMPLE_ROOT / meta["path"]
     reader = PdfReader(pdf_path)
     try:
         reader.pages[0]
@@ -56,6 +59,8 @@ def test_read(meta):
     assert len(reader.pages) == meta["pages"]
 
 
+@pytest.mark.samples
+@pytest.mark.external
 @pytest.mark.parametrize(
     ("pdf_path", "password"),
     [
@@ -154,6 +159,7 @@ def compare_dict_objects(d1, d2):
             assert d1[k] == d2[k]
 
 
+@pytest.mark.slow
 def test_page_transformations():
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
@@ -277,6 +283,7 @@ def test_multi_language():
     set_custom_rtl(-1, -1, [])  # to prevent further errors
 
 
+@pytest.mark.external
 def test_extract_text_single_quote_op():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/964/964029.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-964029.pdf")))
@@ -284,6 +291,7 @@ def test_extract_text_single_quote_op():
         page.extract_text()
 
 
+@pytest.mark.external
 def test_no_ressources_on_text_extract():
     url = "https://github.com/py-pdf/PyPDF2/files/9428434/TelemetryTX_EM.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-964029.pdf")))
@@ -291,6 +299,7 @@ def test_no_ressources_on_text_extract():
         page.extract_text()
 
 
+@pytest.mark.external
 def test_iss_1142():
     # check fix for problem of context save/restore (q/Q)
     url = "https://github.com/py-pdf/PyPDF2/files/9150656/ST.2019.PDF"
@@ -307,6 +316,8 @@ def test_iss_1142():
     assert txt.find("郑州分公司") > 0
 
 
+@pytest.mark.external
+@pytest.mark.slow
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -338,6 +349,8 @@ def test_extract_text_page_pdf(url, name):
         page.extract_text()
 
 
+@pytest.mark.external
+@pytest.mark.slow
 def test_extract_text_page_pdf_impossible_decode_xform(caplog):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/972/972962.pdf"
     name = "tika-972962.pdf"
@@ -348,6 +361,8 @@ def test_extract_text_page_pdf_impossible_decode_xform(caplog):
     assert warn_msgs == [""]  # text extraction recognise no text
 
 
+@pytest.mark.external
+@pytest.mark.slow
 def test_extract_text_operator_t_star():  # L1266, L1267
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/967/967943.pdf"
     name = "tika-967943.pdf"
@@ -789,6 +804,7 @@ def test_annotation_setter():
     os.remove(target)  # remove for testing
 
 
+@pytest.mark.external
 @pytest.mark.xfail(reason="#1091")
 def test_text_extraction_issue_1091():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/966/966635.pdf"
@@ -800,6 +816,7 @@ def test_text_extraction_issue_1091():
         page.extract_text()
 
 
+@pytest.mark.external
 def test_empyt_password_1088():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/941/941536.pdf"
     name = "tika-941536.pdf"
@@ -810,12 +827,13 @@ def test_empyt_password_1088():
 
 @pytest.mark.xfail(reason="#1088 / #1126")
 def test_arab_text_extraction():
-    reader = PdfReader(EXTERNAL_ROOT / "015-arabic/habibi.pdf")
+    reader = PdfReader(SAMPLE_ROOT / "015-arabic/habibi.pdf")
     assert reader.pages[0].extract_text() == "habibi حَبيبي"
 
 
+@pytest.mark.samples
 def test_read_link_annotation():
-    reader = PdfReader(EXTERNAL_ROOT / "016-libre-office-link/libre-office-link.pdf")
+    reader = PdfReader(SAMPLE_ROOT / "016-libre-office-link/libre-office-link.pdf")
     assert len(reader.pages[0].annotations) == 1
     annot = dict(reader.pages[0].annotations[0].get_object())
     expected = {
@@ -843,6 +861,7 @@ def test_read_link_annotation():
     assert annot == expected
 
 
+@pytest.mark.external
 def test_no_resources():
     url = "https://github.com/py-pdf/PyPDF2/files/9572045/108.pdf"
     name = "108.pdf"
