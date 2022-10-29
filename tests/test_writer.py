@@ -638,7 +638,7 @@ def test_append_pages_from_reader_append():
         writer.write(o)
 
 
-@pytest.mark.samples()
+@pytest.mark.samples
 def test_sweep_indirect_references_nullobject_exception():
     # TODO: Check this more closely... this looks weird
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
@@ -652,7 +652,7 @@ def test_sweep_indirect_references_nullobject_exception():
     os.remove("tmp-merger-do-not-commit.pdf")
 
 
-@pytest.mark.samples()
+@pytest.mark.samples
 def test_write_outline_item_on_page_fitv():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/922/922840.pdf"
     name = "tika-922840.pdf"
@@ -775,7 +775,7 @@ def test_deprecate_bookmark_decorator():
         writer.add_outline_item_dict(bookmark=outline_item)
 
 
-@pytest.mark.samples()
+@pytest.mark.samples
 def test_colors_in_outline_item():
     reader = PdfReader(SAMPLE_ROOT / "004-pdflatex-4-pages/pdflatex-4-pages.pdf")
     writer = PdfWriter()
@@ -798,7 +798,7 @@ def test_colors_in_outline_item():
     os.remove(target)  # remove for testing
 
 
-@pytest.mark.samples()
+@pytest.mark.samples
 def test_write_empty_stream():
     reader = PdfReader(SAMPLE_ROOT / "004-pdflatex-4-pages/pdflatex-4-pages.pdf")
     writer = PdfWriter()
