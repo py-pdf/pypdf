@@ -282,7 +282,7 @@ def test_multi_language():
     set_custom_rtl(-1, -1, [])  # to prevent further errors
 
 
-@pytest.mark.samples
+@pytest.mark.external
 def test_extract_text_single_quote_op():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/964/964029.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-964029.pdf")))
@@ -290,7 +290,7 @@ def test_extract_text_single_quote_op():
         page.extract_text()
 
 
-@pytest.mark.samples
+@pytest.mark.external
 def test_no_ressources_on_text_extract():
     url = "https://github.com/py-pdf/PyPDF2/files/9428434/TelemetryTX_EM.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-964029.pdf")))
@@ -298,7 +298,7 @@ def test_no_ressources_on_text_extract():
         page.extract_text()
 
 
-@pytest.mark.samples
+@pytest.mark.external
 def test_iss_1142():
     # check fix for problem of context save/restore (q/Q)
     url = "https://github.com/py-pdf/PyPDF2/files/9150656/ST.2019.PDF"
@@ -315,7 +315,7 @@ def test_iss_1142():
     assert txt.find("郑州分公司") > 0
 
 
-@pytest.mark.samples
+@pytest.mark.external
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -347,7 +347,7 @@ def test_extract_text_page_pdf(url, name):
         page.extract_text()
 
 
-@pytest.mark.samples
+@pytest.mark.external
 def test_extract_text_page_pdf_impossible_decode_xform(caplog):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/972/972962.pdf"
     name = "tika-972962.pdf"
@@ -358,7 +358,7 @@ def test_extract_text_page_pdf_impossible_decode_xform(caplog):
     assert warn_msgs == [""]  # text extraction recognise no text
 
 
-@pytest.mark.samples
+@pytest.mark.external
 def test_extract_text_operator_t_star():  # L1266, L1267
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/967/967943.pdf"
     name = "tika-967943.pdf"
@@ -800,7 +800,7 @@ def test_annotation_setter():
     os.remove(target)  # remove for testing
 
 
-@pytest.mark.samples
+@pytest.mark.external
 @pytest.mark.xfail(reason="#1091")
 def test_text_extraction_issue_1091():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/966/966635.pdf"
@@ -812,7 +812,7 @@ def test_text_extraction_issue_1091():
         page.extract_text()
 
 
-@pytest.mark.samples
+@pytest.mark.external
 def test_empyt_password_1088():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/941/941536.pdf"
     name = "tika-941536.pdf"
@@ -857,7 +857,7 @@ def test_read_link_annotation():
     assert annot == expected
 
 
-@pytest.mark.samples
+@pytest.mark.external
 def test_no_resources():
     url = "https://github.com/py-pdf/PyPDF2/files/9572045/108.pdf"
     name = "108.pdf"
