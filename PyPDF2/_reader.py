@@ -1178,7 +1178,18 @@ class PdfReader:
             raise PdfReadError("This is a fatal error in strict mode.")
         return NullObject()
 
-    def get_object(self, indirect_reference: IndirectObject) -> Optional[PdfObject]:
+    def _get_indirect_object(self, num: int, gen: int) -> Optional[PdfObject]:
+        """
+        used to ease development
+        equivalent to generic.IndirectObject(num,gen,self).get_object()
+        """
+        return IndirectObject(num, gen, self).get_object()
+
+    def get_object(
+        self, indirect_reference: Union[int, IndirectObject]
+    ) -> Optional[PdfObject]:
+        if isinstance(indirect_reference, int):
+            indirect_reference = IndirectObject(indirect_reference, 0, self)
         retval = self.cache_get_indirect_object(
             indirect_reference.generation, indirect_reference.idnum
         )
@@ -1953,13 +1964,6 @@ class PdfReader:
                         es = zlib.decompress(field._data)
                         retval[tag] = es
         return retval
-
-    def _get_indirect_object(self, num: int, gen: int) -> Optional[PdfObject]:
-        """
-        used to ease development
-        equivalent to generic.IndirectObject(num,gen,self).get_object()
-        """
-        return IndirectObject(num, gen, self).get_object()
 
 
 class PdfFileReader(PdfReader):  # pragma: no cover

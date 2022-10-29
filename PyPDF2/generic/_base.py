@@ -30,10 +30,13 @@ import decimal
 import hashlib
 import re
 from binascii import unhexlify
+from io import BufferedReader, BufferedWriter, BytesIO, FileIO, IOBase
+from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
+    Dict,
     List,
     Optional,
     Tuple,
@@ -43,6 +46,7 @@ from typing import (
 
 from .._codecs import _pdfdoc_encoding_rev
 from .._utils import (
+    StrByteType,
     StreamType,
     b_,
     deprecate_with_replacement,
@@ -55,11 +59,23 @@ from .._utils import (
 )
 from ..errors import STREAM_TRUNCATED_PREMATURELY, PdfReadError, PdfStreamError
 
-if TYPE_CHECKING:
-    from .._writer import PdfWriter
-
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
+
+
+class _PdfDocumentInterface:
+    def get_object(self, ido: Union[int, "IndirectObject"]) -> "PdfObject":
+        pass
+
+
+class _PdfWriterInterface(_PdfDocumentInterface):
+    _objects: List["PdfObject"]
+    _id_translated: Dict[int, Dict[int, int]]
+
+    def write(
+        self, stream: Union[Path, StrByteType]
+    ) -> Tuple[bool, Union[FileIO, BytesIO, BufferedReader, BufferedWriter]]:
+        pass
 
 
 class PdfObject:
@@ -81,7 +97,7 @@ class PdfObject:
 
     def clone(
         self,
-        pdf_dest: "PdfWriter",
+        pdf_dest: _PdfWriterInterface,
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "PdfObject":
@@ -94,7 +110,9 @@ class PdfObject:
         """
         raise Exception("clone PdfObject")
 
-    def _reference_clone(self, clone: Any, pdf_dest: "PdfWriter") -> "PdfObject":
+    def _reference_clone(
+        self, clone: Any, pdf_dest: _PdfWriterInterface
+    ) -> "PdfObject":
         """
         reference the object within the _objects of pdf_dest only if indirect_ref attribute exists (which means the objects was already identified in xref/xobjstm)
         if object has been already referenced do nothing
@@ -136,7 +154,7 @@ class PdfObject:
 class NullObject(PdfObject):
     def clone(
         self,
-        pdf_dest: "PdfWriter",
+        pdf_dest: _PdfWriterInterface,
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "NullObject":
@@ -176,7 +194,7 @@ class BooleanObject(PdfObject):
 
     def clone(
         self,
-        pdf_dest: "PdfWriter",
+        pdf_dest: _PdfWriterInterface,
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "BooleanObject":
@@ -235,7 +253,7 @@ class IndirectObject(PdfObject):
 
     def clone(
         self,
-        pdf_dest: "PdfWriter",  # type: ignore
+        pdf_dest: _PdfWriterInterface,  # type: ignore
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "IndirectObject":  # PPzz

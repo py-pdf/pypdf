@@ -104,6 +104,7 @@ from .generic import (
     StreamObject,
     TextStringObject,
     TreeObject,
+    _PdfWriterInterface,
     create_string_object,
     hex_to_rgb,
 )
@@ -126,7 +127,7 @@ OPTIONAL_READ_WRITE_FIELD = FieldFlag(0)
 ALL_DOCUMENT_PERMISSIONS = UserAccessPermissions((2**31 - 1) - 3)
 
 
-class PdfWriter:
+class PdfWriter(_PdfWriterInterface):
     """
     This class supports writing PDF files out, given pages produced by another
     class (typically :class:`PdfReader<PyPDF2.PdfReader>`).
@@ -134,9 +135,9 @@ class PdfWriter:
 
     def __init__(self, fileobj: StrByteType = "") -> None:
         self._header = b"%PDF-1.3"
-        self._objects: List[PdfObject] = []  # array of indirect objects
+        self._objects = []  # array of indirect objects
         self._idnum_hash: Dict[bytes, IndirectObject] = {}
-        self._id_translated: Dict[int, Dict[int, int]] = {}
+        self._id_translated = {}
 
         # The root of our page tree node.
         pages = DictionaryObject()
@@ -2455,7 +2456,7 @@ class PdfWriter:
                 np = parent
             else:
                 np = self._clone_outline(dest)
-                cast(TreeObject, parent.get_object()).insert_child(np, self, before)
+                cast(TreeObject, parent.get_object()).insert_child(np, before, self)
             self._insert_filtered_outline(dest.childs, np, None)
 
     def close(self) -> None:

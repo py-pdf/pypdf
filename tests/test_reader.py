@@ -751,7 +751,12 @@ def test_iss925():
                 annot.get_object()
 
 
-@pytest.mark.xfail(reason="#591")
+def test_get_object():
+    reader = PdfReader(RESOURCE_ROOT / "hello-world.pdf")
+    assert reader.get_object(22)["/Type"] == "/Catalog"
+    assert reader._get_indirect_object(22, 0)["/Type"] == "/Catalog"
+
+
 def test_extract_text_hello_world():
     reader = PdfReader(RESOURCE_ROOT / "hello-world.pdf")
     text = reader.pages[0].extract_text().split("\n")

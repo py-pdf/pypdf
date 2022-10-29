@@ -44,6 +44,7 @@ from ._base import (
     NumberObject,
     PdfObject,
     TextStringObject,
+    _PdfWriterInterface,
     encode_pdfdocencoding,
 )
 from ._data_structures import (
