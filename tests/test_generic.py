@@ -23,7 +23,9 @@ from PyPDF2.generic import (
     NullObject,
     NumberObject,
     OutlineItem,
+    PdfObject,
     RectangleObject,
+    StreamObject,
     TextStringObject,
     TreeObject,
     create_string_object,
@@ -38,6 +40,12 @@ from . import ReaderDummy, get_pdf_from_url
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
+
+
+class ChildDummy(DictionaryObject):
+    @property
+    def indirect_ref(self):
+        return self
 
 
 def test_float_object_exception(caplog):
@@ -472,23 +480,17 @@ def test_TextStringObject_autodetect_utf16():
 
 
 def test_remove_child_not_in_tree():
+
     tree = TreeObject()
     with pytest.raises(ValueError) as exc:
-        tree.remove_child(NameObject("foo"))
+        tree.remove_child(ChildDummy())
     assert exc.value.args[0] == "Removed child does not appear to be a tree item"
 
 
 def test_remove_child_not_in_that_tree():
-    class ChildDummy:
-        def __init__(self, parent):
-            self.parent = parent
-
-        def get_object(self):
-            tree = DictionaryObject()
-            tree[NameObject("/Parent")] = self.parent
-            return tree
 
     tree = TreeObject()
+    tree.indirect_ref = NullObject()
     child = ChildDummy(TreeObject())
     tree.add_child(child, ReaderDummy())
     with pytest.raises(ValueError) as exc:
@@ -497,20 +499,19 @@ def test_remove_child_not_in_that_tree():
 
 
 def test_remove_child_not_found_in_tree():
-    class ChildDummy:
-        def __init__(self, parent):
-            self.parent = parent
-
-        def get_object(self):
-            tree = DictionaryObject()
-            tree[NameObject("/Parent")] = self.parent
-            return tree
+    class ChildDummy(DictionaryObject):
+        @property
+        def indirect_ref(self):
+            return self
 
     tree = TreeObject()
-    child = ChildDummy(tree)
+    tree.indirect_ref = NullObject()
+    child = ChildDummy(TreeObject())
     tree.add_child(child, ReaderDummy())
+    child2 = ChildDummy(TreeObject())
+    child2[NameObject("/Parent")] = tree
     with pytest.raises(ValueError) as exc:
-        tree.remove_child(child)
+        tree.remove_child(child2)
     assert exc.value.args[0] == "Removal couldn't find item in tree"
 
 
@@ -540,7 +541,7 @@ def test_remove_child_found_in_tree():
     assert len([el for el in tree.children()]) == 2
 
     # Remove last child
-    tree.remove_child(child2)
+    tree.remove_child(child2_ref)
     assert tree[NameObject("/Count")] == 1
     assert len([el for el in tree.children()]) == 1
 
@@ -586,6 +587,7 @@ def test_remove_child_in_tree():
     tree = TreeObject()
     reader = PdfReader(pdf)
     writer = PdfWriter()
+    writer._add_object(tree)
     writer.add_page(reader.pages[0])
     writer.add_outline_item("foo", pagenum=0)
     obj = writer._objects[-1]
