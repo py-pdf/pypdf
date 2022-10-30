@@ -1064,7 +1064,7 @@ def test_outline_missing_title(caplog):
 
     # Non-strict : no errors
     reader = PdfReader(RESOURCE_ROOT / "outline-without-title.pdf", strict=False)
-    reader.outline
+    assert reader.outline[0]["/Title"] == ""
 
 
 @pytest.mark.external
