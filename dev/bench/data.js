@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1667079499793,
+  "lastUpdate": 1667114135750,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -17779,6 +17779,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02472254851996664",
             "extra": "mean: 3.935252070400003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "613b3706e072259f50299387945afcc0ada0cffb",
+          "message": "DEV: Extend Flake8 ignore list (#1410)",
+          "timestamp": "2022-10-30T08:14:32+01:00",
+          "tree_id": "e92a384b1b016a097cc644d275d81838520e0cef",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/613b3706e072259f50299387945afcc0ada0cffb"
+        },
+        "date": 1667114134819,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0255037612789102,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005164743372822728",
+            "extra": "mean: 975.1305043999992 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.18300421636271,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004608900687885118",
+            "extra": "mean: 82.08156069230637 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2526444888190607,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01797870049201751",
+            "extra": "mean: 3.958131066599998 sec\nrounds: 5"
           }
         ]
       }
