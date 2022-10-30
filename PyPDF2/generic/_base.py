@@ -81,7 +81,7 @@ class _PdfWriterInterface(_PdfDocumentInterface):
 class PdfObject:
     # function for calculating a hash value
     hash_func: Callable[..., "hashlib._Hash"] = hashlib.sha1
-    indirect_ref: "IndirectObject"
+    indirect_ref: Optional["IndirectObject"]
 
     def hash_value_data(self) -> bytes:
         return ("%s" % self).encode()
@@ -268,6 +268,7 @@ class IndirectObject(PdfObject):
             dup = pdf_dest.get_object(pdf_dest._id_translated[id(self.pdf)][self.idnum])
         else:
             dup = self.get_object().clone(pdf_dest, force_duplicate, ignore_fields)  # type: ignore
+        assert dup.indirect_ref is not None
         return dup.indirect_ref
 
     @property

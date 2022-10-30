@@ -205,7 +205,7 @@ class PdfWriter(_PdfWriterInterface):
 
     def _add_object(self, obj: PdfObject) -> IndirectObject:
         if hasattr(obj, "indirect_ref") and obj.indirect_ref.pdf == self:  # type: ignore
-            return obj.indirect_ref
+            return obj.indirect_ref  # type: ignore
         self._objects.append(obj)
         obj.indirect_ref = IndirectObject(len(self._objects), 0, self)
         return obj.indirect_ref
@@ -252,6 +252,7 @@ class PdfWriter(_PdfWriterInterface):
             self.pdf_header = _get_max_pdf_version_header(self.pdf_header, other)  # type: ignore
         page[NameObject(PA.PARENT)] = self._pages
         pages = cast(DictionaryObject, self.get_object(self._pages))
+        assert page.indirect_ref is not None
         action(pages[PA.KIDS], page.indirect_ref)
         page_count = cast(int, pages[PA.COUNT])
         pages[NameObject(PA.COUNT)] = NumberObject(page_count + 1)
@@ -1302,7 +1303,7 @@ class PdfWriter(_PdfWriterInterface):
         :param str fit: The fit of the destination page. See
             :meth:`add_link()<add_link>` for details.
         """
-        page_ref: Union[IndirectObject, NumberObject]
+        page_ref: Union[None, NullObject, IndirectObject, NumberObject]
         if isinstance(italic, str):  # it means that we are on the old params
             if fit == "/Fit":
                 fit = None
@@ -1324,6 +1325,12 @@ class PdfWriter(_PdfWriterInterface):
             zoom_args: ZoomArgsType = [
                 NullObject() if a is None else NumberObject(a) for a in args
             ]
+            if page_ref is None:
+                logger_warning(
+                    f"can not find reference of page {pagenum}",
+                    __name__,
+                )
+                page_ref = NullObject()
             dest = Destination(
                 NameObject("/" + title + " outline item"),
                 page_ref,
@@ -2179,6 +2186,7 @@ class PdfWriter(_PdfWriterInterface):
         srcpages = {}
         for i in pages:
             pg = reader.pages[i]
+            assert pg.indirect_ref is not None
             if position is None:
                 srcpages[pg.indirect_ref.idnum] = self.add_page(
                     pg, list(excluded_fields) + ["/B", "/Annots"]  # type: ignore
@@ -2292,6 +2300,7 @@ class PdfWriter(_PdfWriterInterface):
                 new_article[NameObject("/N")] = new_first.indirect_ref  # type: ignore
                 new_first[NameObject("/V")] = new_article.indirect_ref  # type: ignore
                 current_article = None
+        assert nthread.indirect_ref is not None
         return nthread.indirect_ref
 
     def add_filtered_articles(
@@ -2333,7 +2342,7 @@ class PdfWriter(_PdfWriterInterface):
         elif isinstance(page, IndirectObject):
             _i = page
         try:
-            return pages[_i.idnum].indirect_ref
+            return pages[_i.idnum].indirect_ref  # type: ignore
         except Exception:
             return None
 

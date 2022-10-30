@@ -81,7 +81,7 @@ class ArrayObject(list, PdfObject):
     ) -> "ArrayObject":
         """clone object into pdf_dest"""
         try:
-            if self.indirect_ref.pdf == pdf_dest and not force_duplicate:
+            if self.indirect_ref.pdf == pdf_dest and not force_duplicate:  # type: ignore
                 return self
         except Exception:
             pass
@@ -164,7 +164,7 @@ class DictionaryObject(dict, PdfObject):
     ) -> "DictionaryObject":
         """clone object into pdf_dest"""
         try:
-            if self.indirect_ref.pdf == pdf_dest and not force_duplicate:
+            if self.indirect_ref.pdf == pdf_dest and not force_duplicate:  # type: ignore
                 return self
         except Exception:
             pass
@@ -871,7 +871,7 @@ class ContentStream(DecodedStreamObject):
     ) -> "ContentStream":
         """clone object into pdf_dest"""
         try:
-            if self.indirect_ref.pdf == pdf_dest and not force_duplicate:
+            if self.indirect_ref.pdf == pdf_dest and not force_duplicate:  # type: ignore
                 return self
         except Exception:
             pass
