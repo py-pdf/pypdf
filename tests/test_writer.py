@@ -11,6 +11,7 @@ from PyPDF2.generic import (
     NameObject,
     RectangleObject,
     StreamObject,
+    TextStringObject,
 )
 
 from . import get_pdf_from_url
@@ -478,15 +479,18 @@ def test_add_named_destination():
 
     assert writer.get_named_dest_root() == []
 
-    writer.add_named_destination(NameObject("A named dest"), 2)
-    writer.add_named_destination(NameObject("A named dest2"), 2)
+    writer.add_named_destination(TextStringObject("A named dest"), 2)
+    writer.add_named_destination(TextStringObject("A named dest2"), 2)
 
-    assert writer.get_named_dest_root() == [
-        "A named dest",
-        IndirectObject(9, 0, writer),
-        "A named dest2",
-        IndirectObject(10, 0, writer),
-    ]
+    root = writer.get_named_dest_root()
+    assert root[0] == "A named dest"
+    assert root[1].pdf == writer
+    assert root[1].get_object()["/S"] == NameObject("/GoTo")
+    assert root[1].get_object()["/D"][0].get_object() == writer.pages[2]
+    assert root[2] == "A named dest2"
+    assert root[3].pdf == writer
+    assert root[3].get_object()["/S"] == NameObject("/GoTo")
+    assert root[3].get_object()["/D"][0].get_object() == writer.pages[2]
 
     # write "output" to PyPDF2-output.pdf
     tmp_filename = "dont_commit_named_destination.pdf"

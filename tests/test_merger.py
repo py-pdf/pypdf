@@ -51,6 +51,9 @@ def merger_operate(merger):
     with open(pdf_path, "rb") as fh:
         merger.append(fh)
 
+    merger.write(
+        BytesIO()
+    )  # to force to build outlines and ensur the add_outline_item is at end of the list
     outline_item = merger.add_outline_item("An outline item", 0)
     oi2 = merger.add_outline_item(
         "deeper", 0, parent=outline_item, italic=True, bold=True
@@ -96,8 +99,8 @@ def merger_operate(merger):
     found_oi = merger.find_outline_item("foo")
     assert found_oi == [9]
 
-    merger.add_metadata({"author": "Martin Thoma"})
-    merger.add_named_destination("title", 0)
+    merger.add_metadata({"/Author": "Martin Thoma"})
+    merger.add_named_destination("/Title", 0)
     merger.set_page_layout("/SinglePage")
     merger.set_page_mode("/UseThumbs")
 
@@ -106,7 +109,6 @@ def check_outline(tmp_path):
     # Check if outline is correct
     reader = PyPDF2.PdfReader(tmp_path)
     assert [el.title for el in reader.outline if isinstance(el, Destination)] == [
-        "An outline item",
         "Foo",
         "Bar",
         "Baz",
@@ -117,6 +119,7 @@ def check_outline(tmp_path):
         "Bar",
         "Baz",
         "foo",
+        "An outline item",  # this has been moved to end normal???
     ]
 
     # TODO: There seem to be no destinations for those links?
