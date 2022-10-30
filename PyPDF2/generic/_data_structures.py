@@ -63,6 +63,7 @@ from ._base import (
     NullObject,
     NumberObject,
     PdfObject,
+    TextStringObject,
 )
 from ._utils import read_hex_string_from_stream, read_string_from_stream
 
@@ -1041,7 +1042,7 @@ class Destination(TreeObject):
         *args: Any,  # ZoomArgType
     ) -> None:
         DictionaryObject.__init__(self)
-        self[NameObject("/Title")] = title
+        self[NameObject("/Title")] = TextStringObject(title)
         self[NameObject("/Page")] = page
         self[NameObject("/Type")] = typ
 
