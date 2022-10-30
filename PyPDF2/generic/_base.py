@@ -30,19 +30,9 @@ import decimal
 import hashlib
 import re
 from binascii import unhexlify
-from io import BufferedReader, BufferedWriter, BytesIO, FileIO, IOBase
+from io import BufferedReader, BufferedWriter, BytesIO, FileIO
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Tuple,
-    Union,
-    cast,
-)
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 
 from .._codecs import _pdfdoc_encoding_rev
 from .._utils import (

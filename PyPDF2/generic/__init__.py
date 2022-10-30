@@ -97,6 +97,9 @@ def createStringObject(
     return create_string_object(string, forced_encoding)
 
 
+_PdfWriterInterface  # to prevent error
+
+
 __all__ = [
     # Base types
     "BooleanObject",
