@@ -63,8 +63,8 @@ from ._base import (
     NumberObject,
     PdfObject,
     TextStringObject,
-    _PdfWriterInterface,
 )
+from ._base import _PdfWriterInterface as PdfWriter
 from ._utils import read_hex_string_from_stream, read_string_from_stream
 
 logger = logging.getLogger(__name__)
@@ -75,7 +75,7 @@ IndirectPattern = re.compile(rb"[+-]?(\d+)\s+(\d+)\s+R[^a-zA-Z]")
 class ArrayObject(list, PdfObject):
     def clone(
         self,
-        pdf_dest: _PdfWriterInterface,
+        pdf_dest: PdfWriter,
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "ArrayObject":
@@ -158,7 +158,7 @@ class ArrayObject(list, PdfObject):
 class DictionaryObject(dict, PdfObject):
     def clone(
         self,
-        pdf_dest: _PdfWriterInterface,
+        pdf_dest: PdfWriter,
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "DictionaryObject":
@@ -181,7 +181,7 @@ class DictionaryObject(dict, PdfObject):
     def _clone(
         self,
         src: "DictionaryObject",
-        pdf_dest: _PdfWriterInterface,
+        pdf_dest: PdfWriter,
         force_duplicate: bool,
         ignore_fields: Union[Tuple[str, ...], List[str]],
     ) -> None:
@@ -229,7 +229,7 @@ class DictionaryObject(dict, PdfObject):
             if k not in ignore_fields:
                 if isinstance(v, StreamObject):
                     if not hasattr(v, "indirect_ref"):
-                        v.indirect_ref = None  # type: ignore
+                        v.indirect_ref = None
                     vv = v.clone(pdf_dest, force_duplicate, ignore_fields)
                     assert vv.indirect_ref is not None
                     self[k.clone(pdf_dest)] = vv.indirect_ref  # type: ignore[attr-defined]
@@ -499,10 +499,10 @@ class TreeObject(DictionaryObject):
         deprecate_with_replacement("addChild", "add_child")
         self.add_child(child, pdf)
 
-    def add_child(self, child: Any, pdf: _PdfWriterInterface) -> None:
+    def add_child(self, child: Any, pdf: PdfWriter) -> None:
         self.insert_child(child, None, pdf)
 
-    def insert_child(self, child: Any, before: Any, pdf: _PdfWriterInterface) -> None:
+    def insert_child(self, child: Any, before: Any, pdf: PdfWriter) -> None:
         def inc_parent_counter(
             parent: Union[None, IndirectObject, TreeObject], n: int
         ) -> None:
@@ -671,7 +671,7 @@ class StreamObject(DictionaryObject):
     def _clone(
         self,
         src: DictionaryObject,
-        pdf_dest: _PdfWriterInterface,
+        pdf_dest: PdfWriter,
         force_duplicate: bool,
         ignore_fields: Union[Tuple[str, ...], List[str]],
     ) -> None:
@@ -887,7 +887,7 @@ class ContentStream(DecodedStreamObject):
     def _clone(
         self,
         src: DictionaryObject,
-        pdf_dest: _PdfWriterInterface,
+        pdf_dest: PdfWriter,
         force_duplicate: bool,
         ignore_fields: Union[Tuple[str, ...], List[str]],
     ) -> None:

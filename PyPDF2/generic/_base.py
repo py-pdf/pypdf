@@ -78,6 +78,11 @@ class _PdfWriterInterface(_PdfDocumentInterface):
         pass
 
 
+PdfWriter = (
+    _PdfWriterInterface  # local alias to ease annotation reading and auto comments
+)
+
+
 class PdfObject:
     # function for calculating a hash value
     hash_func: Callable[..., "hashlib._Hash"] = hashlib.sha1
@@ -97,7 +102,7 @@ class PdfObject:
 
     def clone(
         self,
-        pdf_dest: _PdfWriterInterface,
+        pdf_dest: PdfWriter,
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "PdfObject":
@@ -110,9 +115,7 @@ class PdfObject:
         """
         raise Exception("clone PdfObject")
 
-    def _reference_clone(
-        self, clone: Any, pdf_dest: _PdfWriterInterface
-    ) -> "PdfObject":
+    def _reference_clone(self, clone: Any, pdf_dest: PdfWriter) -> "PdfObject":
         """
         reference the object within the _objects of pdf_dest only if indirect_ref attribute exists (which means the objects was already identified in xref/xobjstm)
         if object has been already referenced do nothing
@@ -154,7 +157,7 @@ class PdfObject:
 class NullObject(PdfObject):
     def clone(
         self,
-        pdf_dest: _PdfWriterInterface,
+        pdf_dest: PdfWriter,
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "NullObject":
@@ -194,7 +197,7 @@ class BooleanObject(PdfObject):
 
     def clone(
         self,
-        pdf_dest: _PdfWriterInterface,
+        pdf_dest: PdfWriter,
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "BooleanObject":
@@ -253,7 +256,7 @@ class IndirectObject(PdfObject):
 
     def clone(
         self,
-        pdf_dest: _PdfWriterInterface,  # type: ignore
+        pdf_dest: PdfWriter,
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "IndirectObject":  # PPzz
