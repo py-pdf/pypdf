@@ -2040,7 +2040,7 @@ class _VirtualList:
         if isinstance(index, slice):
             indices = range(*index.indices(len(self)))
             cls = type(self)
-            return cls(indices.__len__, lambda idx: self[indices[idx]])
+            return cls(indices.__len__, lambda idx: self[indices[idx]])  # type: ignore
         if not isinstance(index, int):
             raise TypeError("sequence indices must be integers")
         len_self = len(self)
