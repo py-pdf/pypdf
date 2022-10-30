@@ -860,7 +860,7 @@ def read_object(
             return NumberObject.read_from_stream(stream)
     else:
         raise PdfReadError(
-            f"Invalid Elementary Object starting with {tok} @{stream.tell()}"  # type: ignore
+            f"Invalid Elementary Object starting with {tok!r} @{stream.tell()}: {stream.read(80).__repr__()}"  # type: ignore
         )
 
 
