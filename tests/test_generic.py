@@ -181,7 +181,7 @@ def test_readStringFromStream_performance():
     start = time.process_time()
     assert read_string_from_stream(stream)
     end = time.process_time()
-    assert end - start < 2, test_readStringFromStream_performance.__doc__
+    assert end - start < 4, test_readStringFromStream_performance.__doc__
 
 
 def test_NameObject(caplog):
