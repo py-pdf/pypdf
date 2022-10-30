@@ -289,7 +289,7 @@ def test_outline_item_write_to_stream():
     )
     oi.write_to_stream(stream, None)
     stream.seek(0, 0)
-    assert stream.read() == b"<<\n/Title title\n/Dest [ null /FitV 0 ]\n>>"
+    assert stream.read() == b"<<\n/Title (title)\n/Dest [ null /FitV 0 ]\n>>"
 
 
 def test_encode_pdfdocencoding_keyerror():
