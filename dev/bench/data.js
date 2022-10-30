@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1667114135750,
+  "lastUpdate": 1667119386753,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -17824,6 +17824,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01797870049201751",
             "extra": "mean: 3.958131066599998 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1d551af8d7bd73ccc6d6981a9b7a81026df73632",
+          "message": "DEV: Test Python 3.11 (#1404)",
+          "timestamp": "2022-10-30T09:42:00+01:00",
+          "tree_id": "d1d2a9c55a0a4ae2672c2bc95cf7bd4936f2b9a4",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/1d551af8d7bd73ccc6d6981a9b7a81026df73632"
+        },
+        "date": 1667119385557,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0296106486291965,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0038876523688473365",
+            "extra": "mean: 971.2409261999966 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.393830290646747,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004526894001394842",
+            "extra": "mean: 80.68530684615475 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2563256131183783,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01996943997274608",
+            "extra": "mean: 3.9012878496000014 sec\nrounds: 5"
           }
         ]
       }
