@@ -1066,7 +1066,6 @@ def test_outline_count():
     ]
 
 
-@pytest.mark.xfail(reason="Non-Strict does not raise error now")
 def test_outline_missing_title():
     # Strict
     reader = PdfReader(RESOURCE_ROOT / "outline-without-title.pdf", strict=True)
@@ -1074,11 +1073,9 @@ def test_outline_missing_title():
         reader.outline
     assert exc.value.args[0].startswith("Outline Entry Missing /Title attribute:")
 
-    # Non-strict
-    with pytest.raises(ValueError) as exc:
-        reader = PdfReader(RESOURCE_ROOT / "outline-without-title.pdf", strict=False)
-        reader.outline
-    assert exc.value.args[0] == "value must be PdfObject"
+    # Non-strict : no errors should be reported
+    reader = PdfReader(RESOURCE_ROOT / "outline-without-title.pdf", strict=False)
+    assert reader.outline[0]["/Title"] == ""
 
 
 @pytest.mark.external
