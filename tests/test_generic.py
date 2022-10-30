@@ -178,9 +178,9 @@ def test_readStringFromStream_performance():
     Runs < 100ms on a 2019 notebook. Takes 10 seconds prior to #1350.
     """
     stream = BytesIO(b"(" + b"".join([b"x"] * 1024 * 256) + b")")
-    start = time.time()
+    start = time.process_time()
     assert read_string_from_stream(stream)
-    end = time.time()
+    end = time.process_time()
     assert end - start < 2, test_readStringFromStream_performance.__doc__
 
 
