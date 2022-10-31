@@ -176,12 +176,17 @@ def test_readStringFromStream_performance():
     This test simulates reading an embedded base64 image of 256kb.
     It should be faster than a second, even on ancient machines.
     Runs < 100ms on a 2019 notebook. Takes 10 seconds prior to #1350.
+
+    `time.thread_time` is available in python >= 3.7. We are running tests in
+    parallel in CI, and we don't want the other tests to fail this test due to
+    total time. So simply skip it on lower python versions.
     """
-    stream = BytesIO(b"(" + b"".join([b"x"] * 1024 * 256) + b")")
-    start = time.process_time()
-    assert read_string_from_stream(stream)
-    end = time.process_time()
-    assert end - start < 2, test_readStringFromStream_performance.__doc__
+    if getattr(time, "thread_time"):
+        stream = BytesIO(b"(" + b"".join([b"x"] * 1024 * 256) + b")")
+        start = time.thread_time()
+        assert read_string_from_stream(stream)
+        end = time.thread_time()
+        assert end - start < 2, test_readStringFromStream_performance.__doc__
 
 
 def test_NameObject(caplog):
