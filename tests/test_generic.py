@@ -181,7 +181,7 @@ def test_readStringFromStream_performance():
     parallel in CI, and we don't want the other tests to fail this test due to
     total time. So simply skip it on lower python versions.
     """
-    if getattr(time, "thread_time"):
+    if getattr(time, "thread_time", None):
         stream = BytesIO(b"(" + b"".join([b"x"] * 1024 * 256) + b")")
         start = time.thread_time()
         assert read_string_from_stream(stream)
