@@ -1,5 +1,4 @@
 import os
-import time
 from io import BytesIO
 from pathlib import Path
 from unittest.mock import patch
@@ -169,19 +168,6 @@ def test_readStringFromStream_excape_digit():
 def test_readStringFromStream_excape_digit2():
     stream = BytesIO(b"(hello \\1\\2\\3\\4)")
     assert read_string_from_stream(stream) == "hello \x01\x02\x03\x04"
-
-
-def test_readStringFromStream_performance():
-    """
-    This test simulates reading an embedded base64 image of 256kb.
-    It should be faster than a second, even on ancient machines.
-    Runs < 100ms on a 2019 notebook. Takes 10 seconds prior to #1350.
-    """
-    stream = BytesIO(b"(" + b"".join([b"x"] * 1024 * 256) + b")")
-    start = time.process_time()
-    assert read_string_from_stream(stream)
-    end = time.process_time()
-    assert end - start < 4, test_readStringFromStream_performance.__doc__
 
 
 def test_NameObject(caplog):
