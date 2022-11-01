@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1667119386753,
+  "lastUpdate": 1667304187178,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -17869,6 +17869,51 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01996943997274608",
             "extra": "mean: 3.9012878496000014 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d82172374c1322ece2919d45263f7232f63d23fd",
+          "message": "DEV: Improve error reporting of read_object (#1412)\n\nAdditionally, use time.process_time instead of time.time for test_readStringFromStream_performance",
+          "timestamp": "2022-11-01T13:01:38+01:00",
+          "tree_id": "81b78be0e36e7d86ae43271ef531fa3d589eb937",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/d82172374c1322ece2919d45263f7232f63d23fd"
+        },
+        "date": 1667304184858,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8932850889447025,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016806418500965526",
+            "extra": "mean: 1.1194634416000013 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.89273816611395,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0067961747039971335",
+            "extra": "mean: 91.80428141666752 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2200024483245264,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07180474666189568",
+            "extra": "mean: 4.545403960800002 sec\nrounds: 5"
           }
         ]
       }
