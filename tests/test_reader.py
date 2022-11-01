@@ -135,13 +135,13 @@ def test_get_annotations(src):
 
 
 @pytest.mark.parametrize(
-    "src",
+    ("src", "nb_attachments"),
     [
-        RESOURCE_ROOT / "attachment.pdf",
-        RESOURCE_ROOT / "crazyones.pdf",
+        (RESOURCE_ROOT / "attachment.pdf", 1),
+        (RESOURCE_ROOT / "crazyones.pdf", 0),
     ],
 )
-def test_get_attachments(src):
+def test_get_attachments(src, nb_attachments):
     reader = PdfReader(src)
 
     attachments = {}
@@ -152,7 +152,7 @@ def test_get_attachments(src):
                 if annotobj[IA.SUBTYPE] == "/FileAttachment":
                     fileobj = annotobj["/FS"]
                     attachments[fileobj["/F"]] = fileobj["/EF"]["/F"].get_data()
-    return attachments
+    assert len(attachments) == nb_attachments
 
 
 @pytest.mark.parametrize(
