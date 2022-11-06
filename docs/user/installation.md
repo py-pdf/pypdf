@@ -22,11 +22,11 @@ pip install --user PyPDF2
 
 ### Optional dependencies
 
-PyPDF2 tries to be as self-contained as possible, but for some tasks the amout
+PyPDF2 tries to be as self-contained as possible, but for some tasks the amount
 of work to properly maintain the code would be too high. This is especially the
 case for cryptography and image formats.
 
-If you simply want to unstall all optional dependencies, please run
+If you simply want to install all optional dependencies, run:
 
 ```
 pip install PyPDF2[full]

@@ -1066,14 +1066,14 @@ def test_outline_count():
     ]
 
 
-def test_outline_missing_title():
+def test_outline_missing_title(caplog):
     # Strict
     reader = PdfReader(RESOURCE_ROOT / "outline-without-title.pdf", strict=True)
     with pytest.raises(PdfReadError) as exc:
         reader.outline
     assert exc.value.args[0].startswith("Outline Entry Missing /Title attribute:")
 
-    # Non-strict : no errors should be reported
+    # Non-strict : no errors
     reader = PdfReader(RESOURCE_ROOT / "outline-without-title.pdf", strict=False)
     assert reader.outline[0]["/Title"] == ""
 

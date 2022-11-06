@@ -1,5 +1,4 @@
 import os
-import time
 from io import BytesIO
 from pathlib import Path
 from unittest.mock import patch
@@ -40,6 +39,12 @@ from . import ReaderDummy, get_pdf_from_url
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
+
+
+class ChildDummy(DictionaryObject):
+    @property
+    def indirect_ref(self):
+        return self
 
 
 def test_float_object_exception(caplog):
@@ -171,19 +176,6 @@ def test_readStringFromStream_excape_digit():
 def test_readStringFromStream_excape_digit2():
     stream = BytesIO(b"(hello \\1\\2\\3\\4)")
     assert read_string_from_stream(stream) == "hello \x01\x02\x03\x04"
-
-
-def test_readStringFromStream_performance():
-    """
-    This test simulates reading an embedded base64 image of 256kb.
-    It should be faster than a second, even on ancient machines.
-    Runs < 100ms on a 2019 notebook. Takes 10 seconds prior to #1350.
-    """
-    stream = BytesIO(b"(" + b"".join([b"x"] * 1024 * 256) + b")")
-    start = time.time()
-    assert read_string_from_stream(stream)
-    end = time.time()
-    assert end - start < 2, test_readStringFromStream_performance.__doc__
 
 
 def test_NameObject(caplog):
@@ -474,10 +466,6 @@ def test_TextStringObject_autodetect_utf16():
 
 
 def test_remove_child_not_in_tree():
-    class ChildDummy(DictionaryObject):
-        @property
-        def indirect_ref(self):
-            return self
 
     tree = TreeObject()
     with pytest.raises(ValueError) as exc:
@@ -486,10 +474,6 @@ def test_remove_child_not_in_tree():
 
 
 def test_remove_child_not_in_that_tree():
-    class ChildDummy(DictionaryObject):
-        @property
-        def indirect_ref(self):
-            return self
 
     tree = TreeObject()
     tree.indirect_ref = NullObject()
