@@ -342,6 +342,7 @@ def test_write_metadata():
     reader = PdfReader(pdf_path)
     writer = PdfWriter()
 
+    writer.add_page(reader.pages[0], None)
     for page in reader.pages:
         writer.add_page(page)
 
@@ -491,6 +492,13 @@ def test_add_named_destination():
     assert root[3].pdf == writer
     assert root[3].get_object()["/S"] == NameObject("/GoTo")
     assert root[3].get_object()["/D"][0] == writer.pages[2].indirect_ref
+
+    # test get_object
+
+    assert writer.get_object(root[1].idnum) == writer.get_object(root[1])
+    with pytest.raises(ValueError) as exc:
+        writer.get_object(reader.pages[0].indirect_ref)
+    assert exc.value.args[0] == "pdf must be self"
 
     # write "output" to PyPDF2-output.pdf
     tmp_filename = "dont_commit_named_destination.pdf"

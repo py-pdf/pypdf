@@ -240,9 +240,8 @@ class PdfWriter(_PdfWriterInterface):
             excluded_keys = []
         else:
             excluded_keys = list(excluded_keys)
-        for k in [PA.PARENT, "/StructParents"]:
-            if k not in excluded_keys:
-                excluded_keys.append(k)
+        excluded_keys += [PA.PARENT, "/StructParents"]
+
         page = cast("PageObject", page_org.clone(self, False, excluded_keys))
         # page_ind = self._add_object(page)
         if page_org.pdf is not None:
