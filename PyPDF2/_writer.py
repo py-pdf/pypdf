@@ -2533,7 +2533,7 @@ class PdfWriter(_PdfWriterInterface):
         :param reader: PdfReader or IndirectObject refering a PdfReader object.
                        if set to None or omitted, all tables will be reset.
         """
-        if reader == None:
+        if reader is None:
             self._id_translated = {}
         elif isinstance(reader, PdfReader):
             try:
