@@ -818,3 +818,43 @@ def test_iss471():
     assert isinstance(
         writer.pages[0]["/Annots"][0].get_object()["/Dest"], TextStringObject
     )
+
+
+def test_reset_translation():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
+    name = "tika-924666.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    writer = PdfWriter()
+    writer.append(reader, (0, 10))
+    nb = len(writer._objects)
+    writer.append(reader, (0, 10))
+    assert len(writer._objects) == nb + 1  # +1 because of the added outline
+    nb += 1
+    writer.reset_translation(reader)
+    writer.append(reader, (0, 10))
+    assert len(writer._objects) >= nb + 200
+    nb = len(writer._objects)
+    writer.reset_translation(reader.pages[0].indirect_ref)
+    writer.append(reader, (0, 10))
+    assert len(writer._objects) >= nb + 200
+    nb = len(writer._objects)
+    writer.reset_translation()
+    writer.append(reader, (0, 10))
+    assert len(writer._objects) >= nb + 200
+    nb = len(writer._objects)
+
+
+def test_append_without_annots_and_articles():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
+    name = "tika-924666.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    writer = PdfWriter()
+    writer.append(reader, None, (0, 10), True, ["/B"])
+    assert writer.threads == []
+    writer = PdfWriter()
+    writer.append(reader, None, (0, 10), True, ["/Annots"])
+    assert "/Annots" not in writer.pages[5]
+    writer = PdfWriter()
+    writer.append(reader, None, (0, 10), True, [])
+    assert "/Annots" in writer.pages[5]
+    assert len(writer.threads) >= 1
