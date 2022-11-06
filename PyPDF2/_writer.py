@@ -285,6 +285,7 @@ class PdfWriter(_PdfWriterInterface):
     ) -> PageObject:
         """
         Add a page to this PDF file.
+        Recommended for advanced usage including the adequate excluded_keys
 
         The page is usually acquired from a :class:`PdfReader<PyPDF2.PdfReader>`
         instance.
@@ -2114,7 +2115,7 @@ class PdfWriter(_PdfWriterInterface):
 
         :param List excluded_fields: provide the list of fields/keys to be ignored
             if "/Annots" is part of the list, the annotation will be ignored
-            if "/B" is part of the list, the articles will be ignored        
+            if "/B" is part of the list, the articles will be ignored
         """
         if excluded_fields is None:
             excluded_fields = ()
@@ -2167,7 +2168,7 @@ class PdfWriter(_PdfWriterInterface):
 
         :param List excluded_fields: provide the list of fields/keys to be ignored
             if "/Annots" is part of the list, the annotation will be ignored
-            if "/B" is part of the list, the articles will be ignored        
+            if "/B" is part of the list, the articles will be ignored
         """
         if isinstance(fileobj, PdfReader):
             reader = fileobj
@@ -2248,8 +2249,8 @@ class PdfWriter(_PdfWriterInterface):
             for pag in srcpages.values():
                 lst = self._insert_filtered_annotations(
                     pag.original_page.get("/Annots", ()), pag, srcpages, reader
-            )
-            if len(lst) > 0:
+                )
+                if len(lst) > 0:
                     pag[NameObject("/Annots")] = lst
                 self.clean_page(pag)
 
@@ -2521,6 +2522,31 @@ class PdfWriter(_PdfWriterInterface):
             Use :meth:`find_outline_item` instead.
         """
         return self.find_outline_item(outline_item, root)
+
+    def reset_translation(
+        self, reader: Union[None, PdfReader, IndirectObject] = None
+    ) -> None:
+        """
+        reset the translation table between reader and the writer object.
+        late cloning will create new independent objects
+
+        :param reader: PdfReader or IndirectObject refering a PdfReader object.
+                       if set to None or omitted, all tables will be reset.
+        """
+        if reader == None:
+            self._id_translated = {}
+        elif isinstance(reader, PdfReader):
+            try:
+                del self._id_translated[id(reader)]
+            except Exception:
+                pass
+        elif isinstance(reader, IndirectObject):
+            try:
+                del self._id_translated[id(reader.pdf)]
+            except Exception:
+                pass
+        else:
+            raise Exception("invalid parameter {reader}")
 
 
 def _pdf_objectify(obj: Union[Dict[str, Any], str, int, List[Any]]) -> PdfObject:
