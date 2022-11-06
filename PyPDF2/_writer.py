@@ -2098,10 +2098,9 @@ class PdfWriter(_PdfWriterInterface):
             read and seek methods similar to a File Object. Could also be a
             string representing a path to a PDF file.
 
-        :param str outline_item: Optionally, you may specify an outline item
-            (previously referred to as a 'bookmark') to be applied at the
-            beginning of the included file by supplying the text of the outline item.
-            if it is a tuple, list, pagerange, will be transfered to pages
+        :param str outline_item: Optionally, you may specify a string to build an outline
+            (aka 'bookmark') to identify the
+            beginning of the included file.
 
         :param pages: can be a :class:`PageRange<PyPDF2.pagerange.PageRange>`
             or a ``(start, stop[, step])`` tuple
@@ -2112,6 +2111,10 @@ class PdfWriter(_PdfWriterInterface):
         :param bool import_outline: You may prevent the source document's
             outline (collection of outline items, previously referred to as
             'bookmarks') from being imported by specifying this as ``False``.
+
+        :param List excluded_fields: provide the list of fields/keys to be ignored
+            if "/Annots" is part of the list, the annotation will be ignored
+            if "/B" is part of the list, the articles will be ignored        
         """
         if excluded_fields is None:
             excluded_fields = ()
@@ -2148,18 +2151,23 @@ class PdfWriter(_PdfWriterInterface):
             read and seek methods similar to a File Object. Could also be a
             string representing a path to a PDF file.
 
-        :param str outline_item: Optionally, you may specify an outline item
-            (previously referred to as a 'bookmark') to be applied at the
-            beginning of the included file by supplying the text of the outline item.
+        :param str outline_item: Optionally, you may specify a string to build an outline
+            (aka 'bookmark') to identify the
+            beginning of the included file.
 
         :param pages: can be a :class:`PageRange<PyPDF2.pagerange.PageRange>`
             or a ``(start, stop[, step])`` tuple
+            or a list of pages to be processed
             to merge only the specified range of pages from the source
             document into the output document.
 
         :param bool import_outline: You may prevent the source document's
             outline (collection of outline items, previously referred to as
             'bookmarks') from being imported by specifying this as ``False``.
+
+        :param List excluded_fields: provide the list of fields/keys to be ignored
+            if "/Annots" is part of the list, the annotation will be ignored
+            if "/B" is part of the list, the articles will be ignored        
         """
         if isinstance(fileobj, PdfReader):
             reader = fileobj
@@ -2236,15 +2244,17 @@ class PdfWriter(_PdfWriterInterface):
                 outline, outline_item_typ, None
             )  # TODO : use before parameter
 
-        for pag in srcpages.values():
-            lst = self._insert_filtered_annotations(
-                pag.original_page.get("/Annots", ()), pag, srcpages, reader
+        if "/Annots" not in excluded_fields:
+            for pag in srcpages.values():
+                lst = self._insert_filtered_annotations(
+                    pag.original_page.get("/Annots", ()), pag, srcpages, reader
             )
             if len(lst) > 0:
-                pag[NameObject("/Annots")] = lst
-            self.clean_page(pag)
+                    pag[NameObject("/Annots")] = lst
+                self.clean_page(pag)
 
-        self.add_filtered_articles("", srcpages, reader)
+        if "/B" not in excluded_fields:
+            self.add_filtered_articles("", srcpages, reader)
 
         return
 
