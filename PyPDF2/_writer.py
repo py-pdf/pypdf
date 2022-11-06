@@ -2178,6 +2178,8 @@ class PdfWriter(_PdfWriterInterface):
             # (either file or BytesIO or StringIO) created above
             reader = PdfReader(stream, strict=False)  # type: ignore[arg-type]
 
+        if excluded_fields is None:
+            excluded_fields = ()
         # Find the range of pages to merge.
         if pages is None:
             pages = list(range(0, len(reader.pages)))
