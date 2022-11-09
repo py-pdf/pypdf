@@ -248,7 +248,7 @@ class PdfWriter(_PdfWriterInterface):
             del self._id_translated[id(page_org.indirect_ref.pdf)][
                 page_org.indirect_ref.idnum
             ]
-        except:
+        except Exception:
             pass
         page = cast("PageObject", page_org.clone(self, False, excluded_keys))
         # page_ind = self._add_object(page)
