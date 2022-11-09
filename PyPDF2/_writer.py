@@ -241,7 +241,15 @@ class PdfWriter(_PdfWriterInterface):
         else:
             excluded_keys = list(excluded_keys)
         excluded_keys += [PA.PARENT, "/StructParents"]
-
+        # acrobat does not accept to have two indirect ref pointing on the same page;
+        # therefore in order to add easily multiple copies of the same page, we need to create a new
+        # dictionnary for the page, however the objects below (including content) is not duplicated
+        try:  # delete an already existing page
+            del self._id_translated[id(page_org.indirect_ref.pdf)][
+                page_org.indirect_ref.idnum
+            ]
+        except:
+            pass
         page = cast("PageObject", page_org.clone(self, False, excluded_keys))
         # page_ind = self._add_object(page)
         if page_org.pdf is not None:

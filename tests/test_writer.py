@@ -836,7 +836,9 @@ def test_reset_translation():
     writer.append(reader, (0, 10))
     nb = len(writer._objects)
     writer.append(reader, (0, 10))
-    assert len(writer._objects) == nb + 1  # +1 because of the added outline
+    assert (
+        len(writer._objects) == nb + 11
+    )  # +10 (pages) +1 because of the added outline
     nb += 1
     writer.reset_translation(reader)
     writer.append(reader, (0, 10))
@@ -866,3 +868,17 @@ def test_append_without_annots_and_articles():
     writer.append(reader, None, (0, 10), True, [])
     assert "/Annots" in writer.pages[5]
     assert len(writer.threads) >= 1
+
+
+def test_append_multiple():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
+    name = "tika-924666.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    writer = PdfWriter()
+    writer.append(
+        reader, [0, 0, 0]
+    )  # to demonstre multiple insertion of same page at once
+    writer.append(reader, [0, 0, 0])  # second pack
+    pages = writer._root_object["/Pages"]["/Kids"]
+    assert pages[0] not in pages[1:]  # page not repeated
+    assert pages[-1] not in pages[0:-1]  # page not repeated

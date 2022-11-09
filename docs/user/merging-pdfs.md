@@ -70,9 +70,15 @@ examples:
 
 `writer.append(reader,"page 1 and 10",[0,9]) #append first and 10th page from reader and create an outline)`
 
-during the merging, the relevant named destination will also imported.
+During the merging, the relevant named destination will also imported.
 
-if you want to insert pages in the middle of the destination, use merge (which provides (insert) position)
+If you want to insert pages in the middle of the destination, use merge (which provides (insert) position)
+
+You can now insert the same page multiple times. You can also insert the same page many time at once with a list:
+
+eg:
+`writer.append(reader,[0,1,0,2,0])`
+will insert the pages (1), (2), with page (0) before, in the middle and after
 
 ## add_page / insert_page
 It is recommended to use `append` or `merge` instead
