@@ -245,6 +245,7 @@ class PdfWriter(_PdfWriterInterface):
         # therefore in order to add easily multiple copies of the same page, we need to create a new
         # dictionnary for the page, however the objects below (including content) is not duplicated
         try:  # delete an already existing page
+            assert page_org.indirect_ref is not None
             del self._id_translated[id(page_org.indirect_ref.pdf)][
                 page_org.indirect_ref.idnum
             ]
