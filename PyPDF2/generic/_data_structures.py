@@ -33,7 +33,7 @@ import re
 from io import BytesIO
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 
-from .._protocols import PdfObjectProtocol, PdfWriterProtocol
+from .._protocols import PdfWriterProtocol
 from .._utils import (
     WHITESPACES,
     StreamType,

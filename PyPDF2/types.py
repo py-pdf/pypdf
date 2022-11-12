@@ -1,12 +1,12 @@
 """Helpers for working with PDF types."""
 
-from typing import Any, Dict, List, Optional, Union
+from typing import List, Union
 
 try:
     # Python 3.8+: https://peps.python.org/pep-0586
-    from typing import Literal, Protocol  # type: ignore[attr-defined]
+    from typing import Literal  # type: ignore[attr-defined]
 except ImportError:
-    from typing_extensions import Literal, Protocol  # type: ignore[misc]
+    from typing_extensions import Literal  # type: ignore[misc]
 
 try:
     # Python 3.10+: https://www.python.org/dev/peps/pep-0484/
