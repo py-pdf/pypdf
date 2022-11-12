@@ -35,6 +35,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 
 from .._codecs import _pdfdoc_encoding_rev
+from .._protocols import PdfObjectProtocol, PdfWriterProtocol
 from .._utils import (
     StrByteType,
     StreamType,
@@ -53,27 +54,7 @@ __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
 
-class _PdfDocumentInterface:
-    def get_object(self, ido: Union[int, "IndirectObject"]) -> "PdfObject":
-        pass
-
-
-class _PdfWriterInterface(_PdfDocumentInterface):
-    _objects: List["PdfObject"]
-    _id_translated: Dict[int, Dict[int, int]]
-
-    def write(
-        self, stream: Union[Path, StrByteType]
-    ) -> Tuple[bool, Union[FileIO, BytesIO, BufferedReader, BufferedWriter]]:
-        pass
-
-
-PdfWriter = (
-    _PdfWriterInterface  # local alias to ease annotation reading and auto comments
-)
-
-
-class PdfObject:
+class PdfObject(PdfObjectProtocol):
     # function for calculating a hash value
     hash_func: Callable[..., "hashlib._Hash"] = hashlib.sha1
     indirect_ref: Optional["IndirectObject"]
@@ -92,12 +73,12 @@ class PdfObject:
 
     def clone(
         self,
-        pdf_dest: PdfWriter,
+        pdf_dest: PdfWriterProtocol,
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "PdfObject":
         """
-        clone object into pdf_dest (PdfWriterOnly)
+        clone object into pdf_dest (PdfWriterProtocol which is an interface for PdfWriter)
         force_duplicate: in standard if the object has been already cloned and reference,
                          the copy is returned; when force_duplicate == True, a new copy is always performed
         ignore_fields : list/tuple of Fields names (for dictionaries that will be ignored during cloning (apply also to childs duplication)
@@ -105,7 +86,9 @@ class PdfObject:
         """
         raise Exception("clone PdfObject")
 
-    def _reference_clone(self, clone: Any, pdf_dest: PdfWriter) -> "PdfObject":
+    def _reference_clone(
+        self, clone: Any, pdf_dest: PdfWriterProtocol
+    ) -> PdfObjectProtocol:
         """
         reference the object within the _objects of pdf_dest only if indirect_ref attribute exists (which means the objects was already identified in xref/xobjstm)
         if object has been already referenced do nothing
@@ -122,9 +105,11 @@ class PdfObject:
                 if id(ind.pdf) not in pdf_dest._id_translated:
                     pdf_dest._id_translated[id(ind.pdf)] = {}
                 if ind.idnum in pdf_dest._id_translated[id(ind.pdf)]:
-                    return pdf_dest.get_object(
+                    obj = pdf_dest.get_object(
                         pdf_dest._id_translated[id(ind.pdf)][ind.idnum]
                     )
+                    assert obj is not None
+                    return obj
                 pdf_dest._id_translated[id(ind.pdf)][ind.idnum] = i
             pdf_dest._objects.append(clone)
             clone.indirect_ref = IndirectObject(i, 0, pdf_dest)
@@ -147,7 +132,7 @@ class PdfObject:
 class NullObject(PdfObject):
     def clone(
         self,
-        pdf_dest: PdfWriter,
+        pdf_dest: PdfWriterProtocol,
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "NullObject":
@@ -187,7 +172,7 @@ class BooleanObject(PdfObject):
 
     def clone(
         self,
-        pdf_dest: PdfWriter,
+        pdf_dest: PdfWriterProtocol,
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "BooleanObject":
@@ -246,7 +231,7 @@ class IndirectObject(PdfObject):
 
     def clone(
         self,
-        pdf_dest: PdfWriter,
+        pdf_dest: PdfWriterProtocol,
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "IndirectObject":  # PPzz
@@ -261,6 +246,7 @@ class IndirectObject(PdfObject):
             dup = pdf_dest.get_object(pdf_dest._id_translated[id(self.pdf)][self.idnum])
         else:
             dup = self.get_object().clone(pdf_dest, force_duplicate, ignore_fields)  # type: ignore
+        assert dup is not None
         assert dup.indirect_ref is not None
         return dup.indirect_ref
 

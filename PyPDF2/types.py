@@ -54,24 +54,3 @@ PagemodeType: TypeAlias = Literal[
     "/UseOC",
     "/UseAttachments",
 ]
-
-
-class PdfReaderProtocol(Protocol):  # pragma: no cover
-    @property
-    def pdf_header(self) -> str:
-        ...
-
-    @property
-    def strict(self) -> bool:
-        ...
-
-    @property
-    def xref(self) -> Dict[int, Dict[int, Any]]:
-        ...
-
-    @property
-    def pages(self) -> List[Any]:
-        ...
-
-    def get_object(self, indirect_reference: Any) -> Optional[Any]:
-        ...

@@ -57,6 +57,7 @@ from typing import (
 
 from ._encryption import Encryption
 from ._page import PageObject, _VirtualList
+from ._protocols import PdfWriterProtocol
 from ._reader import PdfReader
 from ._security import _alg33, _alg34, _alg35
 from ._utils import (
@@ -104,7 +105,6 @@ from .generic import (
     StreamObject,
     TextStringObject,
     TreeObject,
-    _PdfWriterInterface,
     create_string_object,
     hex_to_rgb,
 )
@@ -127,7 +127,7 @@ OPTIONAL_READ_WRITE_FIELD = FieldFlag(0)
 ALL_DOCUMENT_PERMISSIONS = UserAccessPermissions((2**31 - 1) - 3)
 
 
-class PdfWriter(_PdfWriterInterface):
+class PdfWriter:
     """
     This class supports writing PDF files out, given pages produced by another
     class (typically :class:`PdfReader<PyPDF2.PdfReader>`).
@@ -135,9 +135,9 @@ class PdfWriter(_PdfWriterInterface):
 
     def __init__(self, fileobj: StrByteType = "") -> None:
         self._header = b"%PDF-1.3"
-        self._objects = []  # array of indirect objects
+        self._objects: List[PdfObject] = []  # array of indirect objects
         self._idnum_hash: Dict[bytes, IndirectObject] = {}
-        self._id_translated = {}
+        self._id_translated: Dict[int, Dict[int, int]] = {}
 
         # The root of our page tree node.
         pages = DictionaryObject()

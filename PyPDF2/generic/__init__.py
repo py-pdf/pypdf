@@ -44,7 +44,6 @@ from ._base import (
     NumberObject,
     PdfObject,
     TextStringObject,
-    _PdfWriterInterface,
     encode_pdfdocencoding,
 )
 from ._data_structures import (
@@ -95,9 +94,6 @@ def createStringObject(
 ) -> Union[TextStringObject, ByteStringObject]:  # pragma: no cover
     deprecate_with_replacement("createStringObject", "create_string_object", "4.0.0")
     return create_string_object(string, forced_encoding)
-
-
-_PdfWriterInterface  # to prevent error
 
 
 __all__ = [

@@ -46,6 +46,7 @@ from typing import (
 )
 
 from ._cmap import build_char_map, unknown_char_map
+from ._protocols import PdfReaderProtocol
 from ._utils import (
     CompressedTransformationMatrix,
     File,
@@ -291,13 +292,13 @@ class PageObject(DictionaryObject):
 
     def __init__(
         self,
-        pdf: Optional[Any] = None,  # PdfReader
+        pdf: Optional[PdfReaderProtocol] = None,
         indirect_ref: Optional[IndirectObject] = None,
     ) -> None:
         from ._reader import PdfReader
 
         DictionaryObject.__init__(self)
-        self.pdf: Optional[PdfReader] = pdf
+        self.pdf: Optional[PdfReaderProtocol] = pdf
         self.indirect_ref = indirect_ref
 
     def hash_value_data(self) -> bytes:
