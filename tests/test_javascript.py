@@ -82,7 +82,7 @@ def test_startup_dest(pdf_file_writer):
 
     # irrelevant, this is just for coverage
     pdf_file_writer._root_object[NameObject("/OpenAction")] = NumberObject(0)
-    assert pdf_file_writer.opening == None
+    assert pdf_file_writer.opening is None
     pdf_file_writer.opening = None
     assert "/OpenAction" not in pdf_file_writer._root_object
     pdf_file_writer.opening = None
