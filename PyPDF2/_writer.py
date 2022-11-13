@@ -426,11 +426,11 @@ class PdfWriter:
         if isinstance(oa, (str, bytes)):
             return create_string_object(str(oa))
         elif isinstance(oa, ArrayObject):
-            page, typ = oa[0:2]  # type: ignore
-            array = oa[2:]
             try:
+                page, typ = oa[0:2]  # type: ignore
+                array = oa[2:]
                 return Destination("OpenAction", page, typ, *array)  # type: ignore
-            except PdfReadError:
+            except Exception as e:
                 raise Exception(f"Invalid Destination {oa}")
         else:
             return None

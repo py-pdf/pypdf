@@ -3,7 +3,12 @@ from pathlib import Path
 import pytest
 
 from PyPDF2 import PdfReader, PdfWriter
-from PyPDF2.generic import TextStringObject
+from PyPDF2.generic import (
+    DictionaryObject,
+    NameObject,
+    NumberObject,
+    TextStringObject,
+)
 
 # Configure path environment
 TESTS_ROOT = Path(__file__).parent.resolve()
@@ -60,8 +65,29 @@ def test_startup_dest(pdf_file_writer):
     op = pdf_file_writer.opening
     assert op.raw_get("/Page") == pdf_file_writer.pages[9].indirect_ref
     assert op["/Type"] == "/Fit"
-    pdf_file_writer.opening = "Test"
+    pdf_file_writer.opening = op
+    assert pdf_file_writer.opening == op
 
+    # irrelevant, just for coverage
+    pdf_file_writer._root_object[NameObject("/OpenAction")][0] = NumberObject(0)
+    pdf_file_writer.opening
+    with pytest.raises(Exception) as exc:
+        del pdf_file_writer._root_object[NameObject("/OpenAction")][0]
+        pdf_file_writer.opening
+    assert "Invalid Destination" in str(exc.value)
+
+    pdf_file_writer.opening = "Test"
+    # checked also using Acrobrat to verify opening
     op = pdf_file_writer._root_object["/OpenAction"]
     assert isinstance(op, TextStringObject)
-    assert op == "Test"  # checked also using Acrobrat to verify opening
+    assert op == "Test"
+    op = pdf_file_writer.opening
+    assert isinstance(op, TextStringObject)
+    assert op == "Test"
+
+    # irrelevant, this is just for coverage
+    pdf_file_writer._root_object[NameObject("/OpenAction")] = NumberObject(0)
+
+    pdf_file_writer.opening = None
+    assert "/OpenAction" not in pdf_file_writer._root_object
+    pdf_file_writer.opening = None
