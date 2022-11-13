@@ -51,7 +51,7 @@ def test_added_js(pdf_file_writer):
 
 
 def test_startup_dest(pdf_file_writer):
-    assert pdf_file_writer.opening == None
+    assert pdf_file_writer.opening is None
     pdf_file_writer.opening = pdf_file_writer.pages[9]
     # checked also using Acrobrat to verify the good page is opened
     op = pdf_file_writer._root_object["/OpenAction"]
