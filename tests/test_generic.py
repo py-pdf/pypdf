@@ -475,7 +475,11 @@ def test_remove_child_not_in_that_tree():
 
     tree = TreeObject()
     tree.indirect_ref = NullObject()
-    child = ChildDummy(TreeObject())
+    # child = ChildDummy(TreeObject())
+    child = TreeObject()
+    with pytest.raises(ValueError) as exc:
+        child.remove_from_tree()
+    assert exc.value.args[0] == "Removed child does not appear to be a tree item"
     tree.add_child(child, ReaderDummy())
     with pytest.raises(ValueError) as exc:
         tree.remove_child(child)
@@ -558,7 +562,8 @@ def test_remove_child_found_in_tree():
     assert len([el for el in tree.children()]) == 3
 
     # Remove middle child
-    tree.remove_child(child4)
+    # tree.remove_child(child4)
+    child4.remove_from_tree()
     assert tree[NameObject("/Count")] == 2
     assert len([el for el in tree.children()]) == 2
 
