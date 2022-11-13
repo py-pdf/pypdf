@@ -876,6 +876,6 @@ def test_get_xmp(url, name, strict):
 def test_tounicode_is_identity():
     url = "https://github.com/py-pdf/PyPDF2/files/9998335/FP_Thesis.pdf"
     name = "FP_Thesis.pdf"
-    data = BytesIO(get_pdf_from_url(url, name=False))
-    reader = PdfReader(data, strict=strict)
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data, strict=False)
     reader.pages[0].extract_text()
