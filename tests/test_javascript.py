@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 from PyPDF2 import PdfReader, PdfWriter
+from PyPDF2.generic import TextStringObject
 
 # Configure path environment
 TESTS_ROOT = Path(__file__).parent.resolve()
@@ -12,7 +13,7 @@ RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 @pytest.fixture()
 def pdf_file_writer():
-    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    reader = PdfReader(RESOURCE_ROOT / "issue-604.pdf")
     writer = PdfWriter()
     writer.append_pages_from_reader(reader)
     return writer
@@ -27,17 +28,16 @@ def test_add_js(pdf_file_writer):
     assert (
         "/JavaScript" in pdf_file_writer._root_object["/Names"]
     ), "add_js should add a JavaScript name tree under the name catalog."
-    assert (
-        "/OpenAction" in pdf_file_writer._root_object
-    ), "add_js should add an OpenAction to the catalog."
 
 
-def test_overwrite_js(pdf_file_writer):
+def test_added_js(pdf_file_writer):
     def get_javascript_name():
         assert "/Names" in pdf_file_writer._root_object
         assert "/JavaScript" in pdf_file_writer._root_object["/Names"]
         assert "/Names" in pdf_file_writer._root_object["/Names"]["/JavaScript"]
-        return pdf_file_writer._root_object["/Names"]["/JavaScript"]["/Names"][0]
+        return pdf_file_writer._root_object["/Names"]["/JavaScript"]["/Names"][
+            -2
+        ]  # return -2 in order to get the latest javascript
 
     pdf_file_writer.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
     first_js = get_javascript_name()
@@ -47,4 +47,21 @@ def test_overwrite_js(pdf_file_writer):
 
     assert (
         first_js != second_js
-    ), "add_js should overwrite the previous script in the catalog."
+    ), "add_js should add to the previous script in the catalog."
+
+
+def test_startup_dest(pdf_file_writer):
+    assert pdf_file_writer.opening == None
+    pdf_file_writer.opening = pdf_file_writer.pages[9]
+    # checked also using Acrobrat to verify the good page is opened
+    op = pdf_file_writer._root_object["/OpenAction"]
+    assert op[0] == pdf_file_writer.pages[9].indirect_ref
+    assert op[1] == "/Fit"
+    op = pdf_file_writer.opening
+    assert op.raw_get("/Page") == pdf_file_writer.pages[9].indirect_ref
+    assert op["/Type"] == "/Fit"
+    pdf_file_writer.opening = "Test"
+
+    op = pdf_file_writer._root_object["/OpenAction"]
+    assert isinstance(op, TextStringObject)
+    assert op == "Test"  # checked also using Acrobrat to verify opening
