@@ -81,7 +81,6 @@ from .constants import PagesAttributes as PA
 from .constants import StreamAttributes as SA
 from .constants import TrailerKeys as TK
 from .constants import TypFitArguments, UserAccessPermissions
-from .errors import PdfReadError
 from .generic import (
     AnnotationBuilder,
     ArrayObject,
@@ -418,7 +417,7 @@ class PdfWriter:
         property returning the opening Destination
         returns None if no destination is set
 
-        (value stored in "/OpenAction" entry in the Pdf Catalog
+        (value stored in "/OpenAction" entry in the Pdf Catalog)
         """
         if "/OpenAction" not in self._root_object:
             return None
@@ -430,7 +429,7 @@ class PdfWriter:
                 page, typ = oa[0:2]  # type: ignore
                 array = oa[2:]
                 return Destination("OpenAction", page, typ, *array)  # type: ignore
-            except Exception as e:
+            except Exception:
                 raise Exception(f"Invalid Destination {oa}")
         else:
             return None
@@ -442,7 +441,7 @@ class PdfWriter:
         None:  removes the opening entry
         :param destination:.
 
-        (value stored in "/OpenAction" entry in the Pdf Catalog
+        (value stored in "/OpenAction" entry in the Pdf Catalog)
         """
         if dest is None:
             try:
