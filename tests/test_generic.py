@@ -1,5 +1,4 @@
 import os
-import time
 from io import BytesIO
 from pathlib import Path
 from unittest.mock import patch
@@ -38,6 +37,12 @@ from . import ReaderDummy, get_pdf_from_url
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
+
+
+class ChildDummy(DictionaryObject):
+    @property
+    def indirect_ref(self):
+        return self
 
 
 def test_float_object_exception(caplog):
@@ -171,19 +176,6 @@ def test_readStringFromStream_excape_digit2():
     assert read_string_from_stream(stream) == "hello \x01\x02\x03\x04"
 
 
-def test_readStringFromStream_performance():
-    """
-    This test simulates reading an embedded base64 image of 256kb.
-    It should be faster than a second, even on ancient machines.
-    Runs < 100ms on a 2019 notebook. Takes 10 seconds prior to #1350.
-    """
-    stream = BytesIO(b"(" + b"".join([b"x"] * 1024 * 256) + b")")
-    start = time.time()
-    assert read_string_from_stream(stream)
-    end = time.time()
-    assert end - start < 2, test_readStringFromStream_performance.__doc__
-
-
 def test_NameObject(caplog):
     stream = BytesIO(b"x")
     with pytest.raises(PdfReadError) as exc:
@@ -283,7 +275,7 @@ def test_outline_item_write_to_stream():
     )
     oi.write_to_stream(stream, None)
     stream.seek(0, 0)
-    assert stream.read() == b"<<\n/Title title\n/Dest [ null /FitV 0 ]\n>>"
+    assert stream.read() == b"<<\n/Title (title)\n/Dest [ null /FitV 0 ]\n>>"
 
 
 def test_encode_pdfdocencoding_keyerror():
@@ -472,23 +464,17 @@ def test_TextStringObject_autodetect_utf16():
 
 
 def test_remove_child_not_in_tree():
+
     tree = TreeObject()
     with pytest.raises(ValueError) as exc:
-        tree.remove_child(NameObject("foo"))
+        tree.remove_child(ChildDummy())
     assert exc.value.args[0] == "Removed child does not appear to be a tree item"
 
 
 def test_remove_child_not_in_that_tree():
-    class ChildDummy:
-        def __init__(self, parent):
-            self.parent = parent
-
-        def get_object(self):
-            tree = DictionaryObject()
-            tree[NameObject("/Parent")] = self.parent
-            return tree
 
     tree = TreeObject()
+    tree.indirect_ref = NullObject()
     child = ChildDummy(TreeObject())
     tree.add_child(child, ReaderDummy())
     with pytest.raises(ValueError) as exc:
@@ -497,20 +483,19 @@ def test_remove_child_not_in_that_tree():
 
 
 def test_remove_child_not_found_in_tree():
-    class ChildDummy:
-        def __init__(self, parent):
-            self.parent = parent
-
-        def get_object(self):
-            tree = DictionaryObject()
-            tree[NameObject("/Parent")] = self.parent
-            return tree
+    class ChildDummy(DictionaryObject):
+        @property
+        def indirect_ref(self):
+            return self
 
     tree = TreeObject()
-    child = ChildDummy(tree)
+    tree.indirect_ref = NullObject()
+    child = ChildDummy(TreeObject())
     tree.add_child(child, ReaderDummy())
+    child2 = ChildDummy(TreeObject())
+    child2[NameObject("/Parent")] = tree
     with pytest.raises(ValueError) as exc:
-        tree.remove_child(child)
+        tree.remove_child(child2)
     assert exc.value.args[0] == "Removal couldn't find item in tree"
 
 
@@ -540,7 +525,7 @@ def test_remove_child_found_in_tree():
     assert len([el for el in tree.children()]) == 2
 
     # Remove last child
-    tree.remove_child(child2)
+    tree.remove_child(child2_ref)
     assert tree[NameObject("/Count")] == 1
     assert len([el for el in tree.children()]) == 1
 
@@ -586,6 +571,7 @@ def test_remove_child_in_tree():
     tree = TreeObject()
     reader = PdfReader(pdf)
     writer = PdfWriter()
+    writer._add_object(tree)
     writer.add_page(reader.pages[0])
     writer.add_outline_item("foo", pagenum=0)
     obj = writer._objects[-1]

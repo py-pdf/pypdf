@@ -63,6 +63,7 @@ from ._base import (
     NullObject,
     NumberObject,
     PdfObject,
+    TextStringObject,
 )
 from ._utils import read_hex_string_from_stream, read_string_from_stream
 
@@ -859,8 +860,9 @@ def read_object(
         else:
             return NumberObject.read_from_stream(stream)
     else:
+        stream.read(-20)
         raise PdfReadError(
-            f"Invalid Elementary Object starting with {tok} @{stream.tell()}"  # type: ignore
+            f"Invalid Elementary Object starting with {tok!r} @{stream.tell()}: {stream.read(80).__repr__()}"
         )
 
 
@@ -1041,7 +1043,7 @@ class Destination(TreeObject):
         *args: Any,  # ZoomArgType
     ) -> None:
         DictionaryObject.__init__(self)
-        self[NameObject("/Title")] = title
+        self[NameObject("/Title")] = TextStringObject(title)
         self[NameObject("/Page")] = page
         self[NameObject("/Type")] = typ
 
