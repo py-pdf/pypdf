@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1668805115324,
+  "lastUpdate": 1668805868075,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -18122,6 +18122,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004942494309674451",
             "extra": "mean: 114.21368666666847 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "df933f2401292d19f6d612475b944724a9aad15e",
+          "message": "ENH: Add remove_from_tree (#1432)\n\nThe remove_from_tree method can be used to remove an outline item\r\n\r\nFixes #1427",
+          "timestamp": "2022-11-18T22:09:56+01:00",
+          "tree_id": "544989b66e62a97eb4b82205c252bccb6cfa99c6",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/df933f2401292d19f6d612475b944724a9aad15e"
+        },
+        "date": 1668805867077,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0068864932391637,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0071495724612787555",
+            "extra": "mean: 993.1606062000001 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.401864534855353,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006972153436037305",
+            "extra": "mean: 80.63303684615383 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24659650422110685,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020279193568240712",
+            "extra": "mean: 4.0552075267999985 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.714395423097725,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00019882432654808938",
+            "extra": "mean: 85.36505418181987 msec\nrounds: 11"
           }
         ]
       }
