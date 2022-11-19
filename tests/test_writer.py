@@ -577,17 +577,20 @@ def test_add_link():
             2,
             RectangleObject([0, 0, 100, 100]),
             border=[1, 2, 3, [4]],
-            fit=Fit.fit(),
+            fit="/Fit",
         )
         writer.add_link(
-            2,
+            2, 3, RectangleObject([20, 30, 50, 80]), [1, 2, 3], "/FitH", None
+        )
+        writer.add_link(
             3,
-            RectangleObject([20, 30, 50, 80]),
-            [1, 2, 3],
-            Fit.fit_horizontally(top=None),
-        )
-        writer.add_link(
-            3, 0, "[ 200 300 250 350 ]", [0, 0, 0], Fit.xyz(left=0, top=0, zoom=2)
+            0,
+            "[ 200 300 250 350 ]",
+            [0, 0, 0],
+            "/XYZ",
+            0,
+            0,
+            2,
         )
         writer.add_link(
             3,
