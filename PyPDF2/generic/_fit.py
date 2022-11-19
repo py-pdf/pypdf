@@ -1,9 +1,9 @@
-from typing import Tuple, Union
+from typing import Any, Optional, Tuple, Union
 
 
 class Fit:
     def __init__(
-        self, fit_type: str, fit_args: Tuple[Union[None, float], ...] = tuple()
+        self, fit_type: str, fit_args: Tuple[Union[None, float, Any], ...] = tuple()
     ):
         from ._base import NameObject, NullObject, NumberObject
 
@@ -14,7 +14,12 @@ class Fit:
         ]
 
     @classmethod
-    def xyz(cls, left=None, top=None, zoom=None) -> "Fit":
+    def xyz(
+        cls,
+        left: Optional[float] = None,
+        top: Optional[float] = None,
+        zoom: Optional[float] = None,
+    ) -> "Fit":
         """
         Display the page designated by page, with the coordinates ( left , top )
         positioned at the upper-left corner of the window and the contents
@@ -39,7 +44,7 @@ class Fit:
         return Fit(fit_type="/Fit")
 
     @classmethod
-    def fit_horizontally(cls, top=None) -> "Fit":
+    def fit_horizontally(cls, top: Optional[float] = None) -> "Fit":
         """
         Display the page designated by page , with the vertical coordinate top
         positioned at the top edge of the window and the contents of the page
@@ -52,11 +57,17 @@ class Fit:
         return Fit(fit_type="/FitH", fit_args=(top,))
 
     @classmethod
-    def fit_vertically(cls, left=None) -> "Fit":
+    def fit_vertically(cls, left: Optional[float] = None) -> "Fit":
         return Fit(fit_type="/FitV", fit_args=(left,))
 
     @classmethod
-    def fit_rectangle(cls, left=None, bottom=None, right=None, top=None) -> "Fit":
+    def fit_rectangle(
+        cls,
+        left: Optional[float] = None,
+        bottom: Optional[float] = None,
+        right: Optional[float] = None,
+        top: Optional[float] = None,
+    ) -> "Fit":
         """
         Display the page designated by page , with its contents magnified
         just enough to fit the rectangle specified by the coordinates
@@ -84,7 +95,7 @@ class Fit:
         return Fit(fit_type="/FitB")
 
     @classmethod
-    def fit_box_horizontally(cls, top=None) -> "Fit":
+    def fit_box_horizontally(cls, top: Optional[float] = None) -> "Fit":
         """
         Display the page designated by page , with the vertical coordinate
         top positioned at the top edge of the window and the contents of the
@@ -97,7 +108,7 @@ class Fit:
         return Fit(fit_type="/FitBH", fit_args=(top,))
 
     @classmethod
-    def fit_box_vertically(cls, left=None) -> "Fit":
+    def fit_box_vertically(cls, left: Optional[float] = None) -> "Fit":
         """
         Display the page designated by page , with the horizontal coordinate
         left positioned at the left edge of the window and the contents of
@@ -109,7 +120,7 @@ class Fit:
         """
         return Fit(fit_type="/FitBV", fit_args=(left,))
 
-    def __str__(self):
+    def __str__(self) -> str:
         if not self.fit_args:
             return f"Fit({self.fit_type})"
         return f"Fit({self.fit_type}, {self.fit_args})"
