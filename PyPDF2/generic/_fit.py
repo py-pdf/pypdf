@@ -1,13 +1,9 @@
 from typing import Tuple, Union
 
-from ..types import FitType, ZoomArgType
-
 
 class Fit:
     def __init__(
-        self,
-        fit_type: FitType,
-        fit_args: Tuple[Union[ZoomArgType, None, float], ...] = tuple(),
+        self, fit_type: str, fit_args: Tuple[Union[None, float], ...] = tuple()
     ):
         from ._base import NameObject, NullObject, NumberObject
 
