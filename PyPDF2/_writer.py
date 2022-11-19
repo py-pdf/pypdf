@@ -1875,7 +1875,9 @@ class PdfWriter:
             dest = Destination(
                 NameObject("/LinkName"),
                 tmp["target_page_index"],
-                Fit(fit_type=tmp["fit"], fit_args=tmp["fit_args"]),
+                Fit(
+                    fit_type=tmp["fit"], fit_args=dict(tmp)["fit_args"]
+                ),  # I have no clue why this dict-hack is necessary
             )
             to_add[NameObject("/Dest")] = dest.dest_array
 
