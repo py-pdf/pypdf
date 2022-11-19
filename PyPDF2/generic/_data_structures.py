@@ -65,6 +65,7 @@ from ._base import (
     PdfObject,
     TextStringObject,
 )
+from ._fit import Fit
 from ._utils import read_hex_string_from_stream, read_string_from_stream
 
 logger = logging.getLogger(__name__)
@@ -1019,38 +1020,21 @@ class Destination(TreeObject):
     :param str title: Title of this destination.
     :param IndirectObject page: Reference to the page of this destination. Should
         be an instance of :class:`IndirectObject<PyPDF2.generic.IndirectObject>`.
-    :param str typ: How the destination is displayed.
-    :param args: Additional arguments may be necessary depending on the type.
+    :param Fit fit: How the destination is displayed.
     :raises PdfReadError: If destination type is invalid.
 
-    .. list-table:: Valid ``typ`` arguments (see PDF spec for details)
-       :widths: 50 50
 
-       * - /Fit
-         - No additional arguments
-       * - /XYZ
-         - [left] [top] [zoomFactor]
-       * - /FitH
-         - [top]
-       * - /FitV
-         - [left]
-       * - /FitR
-         - [left] [bottom] [right] [top]
-       * - /FitB
-         - No additional arguments
-       * - /FitBH
-         - [top]
-       * - /FitBV
-         - [left]
     """
 
     def __init__(
         self,
         title: str,
         page: Union[NumberObject, IndirectObject, NullObject, DictionaryObject],
-        typ: Union[str, NumberObject],
-        *args: Any,  # ZoomArgType
+        fit: Fit,
     ) -> None:
+        typ = fit.fit_type
+        args = fit.fit_args
+
         DictionaryObject.__init__(self)
         self[NameObject("/Title")] = TextStringObject(title)
         self[NameObject("/Page")] = page

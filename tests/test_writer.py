@@ -7,6 +7,7 @@ import pytest
 from PyPDF2 import PageObject, PdfMerger, PdfReader, PdfWriter
 from PyPDF2.errors import PageSizeNotDefinedError
 from PyPDF2.generic import (
+    Fit,
     IndirectObject,
     NameObject,
     RectangleObject,
@@ -66,26 +67,46 @@ def writer_operate(writer):
     writer.remove_links()
     writer.add_outline_item_destination(page)
     oi = writer.add_outline_item(
-        "An outline item", 0, None, (255, 0, 15), True, True, "/FitBV", 10
+        "An outline item", 0, None, (255, 0, 15), True, True, Fit.fit_box_vertically(10)
     )
     writer.add_outline_item(
-        "The XYZ fit", 0, oi, (255, 0, 15), True, True, "/XYZ", 10, 20, 3
+        "The XYZ fit", 0, oi, (255, 0, 15), True, True, Fit.xyz(left=10, top=20, zoom=3)
     )
     writer.add_outline_item(
-        "The FitH fit", 0, oi, (255, 0, 15), True, True, "/FitH", 10
+        "The FitH fit", 0, oi, (255, 0, 15), True, True, Fit.fit_horizontally(top=10)
     )
     writer.add_outline_item(
-        "The FitV fit", 0, oi, (255, 0, 15), True, True, "/FitV", 10
+        "The FitV fit", 0, oi, (255, 0, 15), True, True, Fit.fit_vertically(left=10)
     )
     writer.add_outline_item(
-        "The FitR fit", 0, oi, (255, 0, 15), True, True, "/FitR", 10, 20, 30, 40
+        "The FitR fit",
+        0,
+        oi,
+        (255, 0, 15),
+        True,
+        True,
+        Fit.fit_rectangle(left=10, bottom=20, right=30, top=40),
     )
-    writer.add_outline_item("The FitB fit", 0, oi, (255, 0, 15), True, True, "/FitB")
     writer.add_outline_item(
-        "The FitBH fit", 0, oi, (255, 0, 15), True, True, "/FitBH", 10
+        "The FitB fit", 0, oi, (255, 0, 15), True, True, Fit.fit_box()
     )
     writer.add_outline_item(
-        "The FitBV fit", 0, oi, (255, 0, 15), True, True, "/FitBV", 10
+        "The FitBH fit",
+        0,
+        oi,
+        (255, 0, 15),
+        True,
+        True,
+        Fit.fit_box_horizontally(top=10),
+    )
+    writer.add_outline_item(
+        "The FitBV fit",
+        0,
+        oi,
+        (255, 0, 15),
+        True,
+        True,
+        Fit.fit_box_vertically(left=10),
     )
     writer.add_blank_page()
     writer.add_uri(2, "https://example.com", RectangleObject([0, 0, 100, 100]))
@@ -454,11 +475,9 @@ def test_add_outline_item():
         writer.add_page(page)
 
     outline_item = writer.add_outline_item(
-        "An outline item", 1, None, (255, 0, 15), True, True, "/Fit", 200, 0, None
+        "An outline item", 1, None, (255, 0, 15), True, True, Fit.fit()
     )
-    writer.add_outline_item(
-        "Another", 2, outline_item, None, False, False, "/Fit", 0, 0, None
-    )
+    writer.add_outline_item("Another", 2, outline_item, None, False, False, Fit.fit())
 
     # write "output" to PyPDF2-output.pdf
     tmp_filename = "dont_commit_outline_item.pdf"
@@ -558,20 +577,17 @@ def test_add_link():
             2,
             RectangleObject([0, 0, 100, 100]),
             border=[1, 2, 3, [4]],
-            fit="/Fit",
+            fit=Fit.fit(),
         )
         writer.add_link(
-            2, 3, RectangleObject([20, 30, 50, 80]), [1, 2, 3], "/FitH", None
-        )
-        writer.add_link(
-            3,
-            0,
-            "[ 200 300 250 350 ]",
-            [0, 0, 0],
-            "/XYZ",
-            0,
-            0,
             2,
+            3,
+            RectangleObject([20, 30, 50, 80]),
+            [1, 2, 3],
+            Fit.fit_horizontally(top=None),
+        )
+        writer.add_link(
+            3, 0, "[ 200 300 250 350 ]", [0, 0, 0], Fit.xyz(left=0, top=0, zoom=2)
         )
         writer.add_link(
             3,

@@ -82,6 +82,7 @@ from .constants import StreamAttributes as SA
 from .constants import TrailerKeys as TK
 from .constants import TypFitArguments, UserAccessPermissions
 from .generic import (
+    DEFAULT_FIT,
     AnnotationBuilder,
     ArrayObject,
     BooleanObject,
@@ -90,6 +91,7 @@ from .generic import (
     DecodedStreamObject,
     Destination,
     DictionaryObject,
+    Fit,
     FloatObject,
     IndirectObject,
     NameObject,
@@ -109,7 +111,6 @@ from .types import (
     LayoutType,
     OutlineItemType,
     PagemodeType,
-    ZoomArgsType,
     ZoomArgType,
 )
 
@@ -1209,8 +1210,7 @@ class PdfWriter:
         color: Optional[Union[Tuple[float, float, float], str]] = None,
         bold: bool = False,
         italic: bool = False,
-        fit: FitType = "/Fit",
-        *args: ZoomArgType,
+        fit: Fit = DEFAULT_FIT,
     ) -> IndirectObject:
         """
         Add an outline item (commonly referred to as a "Bookmark") to this PDF file.
@@ -1223,18 +1223,13 @@ class PdfWriter:
             from 0.0 to 1.0 or as a Hex String (#RRGGBB)
         :param bool bold: Outline item font is bold
         :param bool italic: Outline item font is italic
-        :param str fit: The fit of the destination page. See
-            :meth:`add_link()<add_link>` for details.
+        :param Fit fit: The fit of the destination page.
         """
         page_ref = NumberObject(pagenum)
-        zoom_args: ZoomArgsType = [
-            NullObject() if a is None else NumberObject(a) for a in args
-        ]
         dest = Destination(
             NameObject("/" + title + " outline item"),
             page_ref,
-            NameObject(fit),
-            *zoom_args,
+            fit,
         )
 
         action_ref = self._add_object(
@@ -1269,7 +1264,13 @@ class PdfWriter:
         """
         deprecate_with_replacement("add_bookmark", "add_outline_item")
         return self.add_outline_item(
-            title, pagenum, parent, color, bold, italic, fit, *args
+            title,
+            pagenum,
+            parent,
+            color,
+            bold,
+            italic,
+            Fit(fit_type=fit, fit_args=args),
         )
 
     def addBookmark(
@@ -1290,7 +1291,13 @@ class PdfWriter:
         """
         deprecate_with_replacement("addBookmark", "add_outline_item")
         return self.add_outline_item(
-            title, pagenum, parent, color, bold, italic, fit, *args
+            title,
+            pagenum,
+            parent,
+            color,
+            bold,
+            italic,
+            Fit(fit_type=fit, fit_args=args),
         )
 
     def add_outline(self) -> None:
@@ -1616,8 +1623,7 @@ class PdfWriter:
             rect=rect,
             border=border,
             target_page_index=pagedest,
-            fit=fit,
-            fit_args=args,
+            fit=Fit(fit_type=fit, fit_args=args),
         )
         return self.add_annotation(page_number=pagenum, annotation=annotation)
 
@@ -1869,8 +1875,7 @@ class PdfWriter:
             dest = Destination(
                 NameObject("/LinkName"),
                 tmp["target_page_index"],
-                tmp["fit"],
-                *tmp["fit_args"],
+                Fit(fit_type=tmp["fit"], fit_args=tmp["fit_args"]),
             )
             to_add[NameObject("/Dest")] = dest.dest_array
 

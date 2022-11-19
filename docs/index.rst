@@ -53,6 +53,7 @@ You can contribute to `PyPDF2 on GitHub <https://github.com/py-pdf/PyPDF2>`_.
    modules/Field
    modules/PageRange
    modules/AnnotationBuilder
+   modules/Fit
 
 .. toctree::
    :caption: Developer Guide

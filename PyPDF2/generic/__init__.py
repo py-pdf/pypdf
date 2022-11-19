@@ -58,6 +58,7 @@ from ._data_structures import (
     TreeObject,
     read_object,
 )
+from ._fit import Fit
 from ._outline import Bookmark, OutlineItem
 from ._rectangle import RectangleObject
 from ._utils import (
@@ -96,6 +97,9 @@ def createStringObject(
     return create_string_object(string, forced_encoding)
 
 
+DEFAULT_FIT = Fit.fit()
+
+
 __all__ = [
     # Base types
     "BooleanObject",
@@ -109,6 +113,9 @@ __all__ = [
     "ByteStringObject",
     # Annotations
     "AnnotationBuilder",
+    # Fit
+    "Fit",
+    "DEFAULT_FIT",
     # Data structures
     "ArrayObject",
     "DictionaryObject",

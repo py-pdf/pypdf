@@ -7,7 +7,6 @@ import pytest
 
 from PyPDF2 import PdfMerger, PdfReader, PdfWriter
 from PyPDF2.constants import CheckboxRadioButtonAttributes
-from PyPDF2.constants import TypFitArguments as TF
 from PyPDF2.errors import PdfReadError, PdfStreamError
 from PyPDF2.generic import (
     AnnotationBuilder,
@@ -16,6 +15,7 @@ from PyPDF2.generic import (
     ByteStringObject,
     Destination,
     DictionaryObject,
+    Fit,
     FloatObject,
     IndirectObject,
     NameObject,
@@ -234,13 +234,7 @@ def test_NameObject(caplog):
 
 def test_destination_fit_r():
     d = Destination(
-        TextStringObject("title"),
-        NullObject(),
-        NameObject(TF.FIT_R),
-        FloatObject(0),
-        FloatObject(0),
-        FloatObject(0),
-        FloatObject(0),
+        TextStringObject("title"), NullObject(), Fit.fit_rectangle(0, 0, 0, 0)
     )
     assert d.title == NameObject("title")
     assert d.typ == "/FitR"
@@ -254,25 +248,15 @@ def test_destination_fit_r():
 
 
 def test_destination_fit_v():
-    Destination(NameObject("title"), NullObject(), NameObject(TF.FIT_V), FloatObject(0))
+    Destination(NameObject("title"), NullObject(), Fit.fit_vertically(left=0))
 
     # Trigger Exception
-    Destination(NameObject("title"), NullObject(), NameObject(TF.FIT_V), None)
-
-
-def test_destination_exception():
-    with pytest.raises(PdfReadError) as exc:
-        Destination(
-            NameObject("title"), NullObject(), NameObject("foo"), FloatObject(0)
-        )
-    assert exc.value.args[0] == "Unknown Destination Type: 'foo'"
+    Destination(NameObject("title"), NullObject(), Fit.fit_vertically(left=None))
 
 
 def test_outline_item_write_to_stream():
     stream = BytesIO()
-    oi = OutlineItem(
-        NameObject("title"), NullObject(), NameObject(TF.FIT_V), FloatObject(0)
-    )
+    oi = OutlineItem(NameObject("title"), NullObject(), Fit.fit_vertically(left=0))
     oi.write_to_stream(stream, None)
     stream.seek(0, 0)
     assert stream.read() == b"<<\n/Title (title)\n/Dest [ null /FitV 0 ]\n>>"

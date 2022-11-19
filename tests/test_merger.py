@@ -7,7 +7,7 @@ import pytest
 
 import PyPDF2
 from PyPDF2 import PdfMerger, PdfReader
-from PyPDF2.generic import Destination
+from PyPDF2.generic import Destination, Fit
 
 from . import get_pdf_from_url
 
@@ -59,16 +59,34 @@ def merger_operate(merger):
         "deeper", 0, parent=outline_item, italic=True, bold=True
     )
     merger.add_outline_item(
-        "Let's see", 2, oi2, (255, 255, 0), True, True, "/FitBV", 12
+        "Let's see", 2, oi2, (255, 255, 0), True, True, Fit.fit_box_vertically(left=12)
     )
     merger.add_outline_item(
-        "The XYZ fit", 0, outline_item, (255, 0, 15), True, True, "/XYZ", 10, 20, 3
+        "The XYZ fit",
+        0,
+        outline_item,
+        (255, 0, 15),
+        True,
+        True,
+        Fit.xyz(left=10, top=20, zoom=3),
     )
     merger.add_outline_item(
-        "The FitH fit", 0, outline_item, (255, 0, 15), True, True, "/FitH", 10
+        "The FitH fit",
+        0,
+        outline_item,
+        (255, 0, 15),
+        True,
+        True,
+        Fit.fit_horizontally(top=10),
     )
     merger.add_outline_item(
-        "The FitV fit", 0, outline_item, (255, 0, 15), True, True, "/FitV", 10
+        "The FitV fit",
+        0,
+        outline_item,
+        (255, 0, 15),
+        True,
+        True,
+        Fit.fit_vertically(left=10),
     )
     merger.add_outline_item(
         "The FitR fit",
@@ -77,20 +95,28 @@ def merger_operate(merger):
         (255, 0, 15),
         True,
         True,
-        "/FitR",
-        10,
-        20,
-        30,
-        40,
+        Fit.fit_rectangle(left=10, bottom=20, right=30, top=40),
     )
     merger.add_outline_item(
-        "The FitB fit", 0, outline_item, (255, 0, 15), True, True, "/FitB"
+        "The FitB fit", 0, outline_item, (255, 0, 15), True, True, Fit.fit_box()
     )
     merger.add_outline_item(
-        "The FitBH fit", 0, outline_item, (255, 0, 15), True, True, "/FitBH", 10
+        "The FitBH fit",
+        0,
+        outline_item,
+        (255, 0, 15),
+        True,
+        True,
+        Fit.fit_box_horizontally(top=10),
     )
     merger.add_outline_item(
-        "The FitBV fit", 0, outline_item, (255, 0, 15), True, True, "/FitBV", 10
+        "The FitBV fit",
+        0,
+        outline_item,
+        (255, 0, 15),
+        True,
+        True,
+        Fit.fit_box_vertically(left=10),
     )
 
     found_oi = merger.find_outline_item("nothing here")
