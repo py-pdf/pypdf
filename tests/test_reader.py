@@ -401,17 +401,17 @@ def test_get_form(src, expected, expected_get_fields):
 
 
 @pytest.mark.parametrize(
-    ("src", "page_nb"),
+    ("src", "page_number"),
     [
         ("form.pdf", 0),
         ("pdflatex-outline.pdf", 2),
     ],
 )
-def test_get_page_number(src, page_nb):
+def test_get_page_number(src, page_number):
     src = RESOURCE_ROOT / src
     reader = PdfReader(src)
-    page = reader.pages[page_nb]
-    assert reader.get_page_number(page) == page_nb
+    page = reader.pages[page_number]
+    assert reader.get_page_number(page) == page_number
 
 
 @pytest.mark.parametrize(
