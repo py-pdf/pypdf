@@ -1,5 +1,27 @@
 # CHANGELOG
 
+## Version 2.11.2, 2022-11-20
+
+### New Features (ENH)
+-  Add remove_from_tree (#1432)
+-  Add AnnotationBuilder.rectangle (#1388)
+
+### Bug Fixes (BUG)
+-  JavaScript executed twice (#1439)
+-  ToUnicode stores /Identity-H instead of stream (#1433)
+-  Declare Pillow as optional dependency (#1392)
+
+### Developer Experience (DEV)
+-  Link 'Full Changelog' automatically
+-  Modify read_string_from_stream to a benchmark (#1415)
+-  Improve error reporting of read_object (#1412)
+-  Test Python 3.11 (#1404)
+-  Extend Flake8 ignore list (#1410)
+-  Use correct pytest markers (#1407)
+-  Move project configuration to pyproject.toml (#1382)
+
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/2.11.1...2.11.2)
+
 ## Version 2.11.1, 2022-10-09
 
 ### Bug Fixes (BUG)
