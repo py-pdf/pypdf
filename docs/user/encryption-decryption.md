@@ -1,6 +1,6 @@
 # Encryption and Decryption of PDFs
 
-> Please see the note in the [installation guide](installation.html)
+> Please see the note in the [installation guide](installation.md)
 > for installing the extra dependencies if interacting with PDFs that use AES.
 
 ## Encrypt
