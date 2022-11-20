@@ -420,39 +420,30 @@ class PdfWriter:
         >>> output.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
         # Example: This will launch the print window when the PDF is opened.
         """
+        # Names / JavaScript prefered to be able to add multiple scripts
+        if "/Names" not in self._root_object:
+            self._root_object[NameObject(CA.NAMES)] = DictionaryObject()
+        names = cast(DictionaryObject, self._root_object[CA.NAMES])
+        if "/JavaScript" not in names:
+            names[NameObject("/JavaScript")] = DictionaryObject(
+                {NameObject("/Names"): ArrayObject()}
+            )
+            # cast(DictionaryObject, names[NameObject("/JavaScript")])[NameObject("/Names")] = ArrayObject()
+        js_list = cast(
+            ArrayObject, cast(DictionaryObject, names["/JavaScript"])["/Names"]
+        )
+
         js = DictionaryObject()
         js.update(
             {
                 NameObject(PA.TYPE): NameObject("/Action"),
                 NameObject("/S"): NameObject("/JavaScript"),
-                NameObject("/JS"): NameObject(f"({javascript})"),
+                NameObject("/JS"): TextStringObject(f"{javascript}"),
             }
         )
-        js_indirect_object = self._add_object(js)
-
         # We need a name for parameterized javascript in the pdf file, but it can be anything.
-        js_string_name = str(uuid.uuid4())
-
-        js_name_tree = DictionaryObject()
-        js_name_tree.update(
-            {
-                NameObject("/JavaScript"): DictionaryObject(
-                    {
-                        NameObject(CA.NAMES): ArrayObject(
-                            [create_string_object(js_string_name), js_indirect_object]
-                        )
-                    }
-                )
-            }
-        )
-        self._add_object(js_name_tree)
-
-        self._root_object.update(
-            {
-                NameObject("/OpenAction"): js_indirect_object,
-                NameObject(CA.NAMES): js_name_tree,
-            }
-        )
+        js_list.append(create_string_object(str(uuid.uuid4())))
+        js_list.append(self._add_object(js))
 
     def addJS(self, javascript: str) -> None:  # pragma: no cover
         """

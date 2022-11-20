@@ -12,7 +12,7 @@ RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 @pytest.fixture()
 def pdf_file_writer():
-    reader = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    reader = PdfReader(RESOURCE_ROOT / "issue-604.pdf")
     writer = PdfWriter()
     writer.append_pages_from_reader(reader)
     return writer
@@ -27,17 +27,16 @@ def test_add_js(pdf_file_writer):
     assert (
         "/JavaScript" in pdf_file_writer._root_object["/Names"]
     ), "add_js should add a JavaScript name tree under the name catalog."
-    assert (
-        "/OpenAction" in pdf_file_writer._root_object
-    ), "add_js should add an OpenAction to the catalog."
 
 
-def test_overwrite_js(pdf_file_writer):
+def test_added_js(pdf_file_writer):
     def get_javascript_name():
         assert "/Names" in pdf_file_writer._root_object
         assert "/JavaScript" in pdf_file_writer._root_object["/Names"]
         assert "/Names" in pdf_file_writer._root_object["/Names"]["/JavaScript"]
-        return pdf_file_writer._root_object["/Names"]["/JavaScript"]["/Names"][0]
+        return pdf_file_writer._root_object["/Names"]["/JavaScript"]["/Names"][
+            -2
+        ]  # return -2 in order to get the latest javascript
 
     pdf_file_writer.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
     first_js = get_javascript_name()
@@ -47,4 +46,4 @@ def test_overwrite_js(pdf_file_writer):
 
     assert (
         first_js != second_js
-    ), "add_js should overwrite the previous script in the catalog."
+    ), "add_js should add to the previous script in the catalog."
