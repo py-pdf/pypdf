@@ -107,7 +107,7 @@ def read_string_from_stream(
                     msg = rf"Unexpected escaped string: {tok.decode('utf8')}"
                     logger_warning(msg, __name__)
         txt.append(tok)
-    return create_string_object(b''.join(txt), forced_encoding)
+    return create_string_object(b"".join(txt), forced_encoding)
 
 
 def create_string_object(

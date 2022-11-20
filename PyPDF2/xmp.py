@@ -23,9 +23,8 @@ from xml.dom.minidom import Element as XmlElement
 from xml.dom.minidom import parseString
 from xml.parsers.expat import ExpatError
 
-from PyPDF2.errors import PdfReadError
-
 from ._utils import StreamType, deprecate_with_replacement
+from .errors import PdfReadError
 from .generic import ContentStream, PdfObject
 
 RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"

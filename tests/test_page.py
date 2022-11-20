@@ -3,6 +3,7 @@ import os
 from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
+from typing import List, Tuple
 
 import pytest
 
@@ -25,11 +26,14 @@ from . import get_pdf_from_url, normalize_warnings
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
-EXTERNAL_ROOT = PROJECT_ROOT / "sample-files"
+SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 
 
 def get_all_sample_files():
-    with open(EXTERNAL_ROOT / "files.json") as fp:
+    meta_file = SAMPLE_ROOT / "files.json"
+    if not os.path.isfile(meta_file):
+        return {"data": []}
+    with open(meta_file) as fp:
         data = fp.read()
     meta = json.loads(data)
     return meta
@@ -38,7 +42,7 @@ def get_all_sample_files():
 all_files_meta = get_all_sample_files()
 
 
-@pytest.mark.external()
+@pytest.mark.samples
 @pytest.mark.parametrize(
     "meta",
     [m for m in all_files_meta["data"] if not m["encrypted"]],
@@ -46,7 +50,7 @@ all_files_meta = get_all_sample_files()
 )
 @pytest.mark.filterwarnings("ignore::PyPDF2.errors.PdfReadWarning")
 def test_read(meta):
-    pdf_path = EXTERNAL_ROOT / meta["path"]
+    pdf_path = SAMPLE_ROOT / meta["path"]
     reader = PdfReader(pdf_path)
     try:
         reader.pages[0]
@@ -55,6 +59,8 @@ def test_read(meta):
     assert len(reader.pages) == meta["pages"]
 
 
+@pytest.mark.samples
+@pytest.mark.external
 @pytest.mark.parametrize(
     ("pdf_path", "password"),
     [
@@ -153,6 +159,7 @@ def compare_dict_objects(d1, d2):
             assert d1[k] == d2[k]
 
 
+@pytest.mark.slow
 def test_page_transformations():
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
@@ -276,6 +283,7 @@ def test_multi_language():
     set_custom_rtl(-1, -1, [])  # to prevent further errors
 
 
+@pytest.mark.external
 def test_extract_text_single_quote_op():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/964/964029.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-964029.pdf")))
@@ -283,6 +291,7 @@ def test_extract_text_single_quote_op():
         page.extract_text()
 
 
+@pytest.mark.external
 def test_no_ressources_on_text_extract():
     url = "https://github.com/py-pdf/PyPDF2/files/9428434/TelemetryTX_EM.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-964029.pdf")))
@@ -290,15 +299,25 @@ def test_no_ressources_on_text_extract():
         page.extract_text()
 
 
+@pytest.mark.external
 def test_iss_1142():
     # check fix for problem of context save/restore (q/Q)
     url = "https://github.com/py-pdf/PyPDF2/files/9150656/ST.2019.PDF"
     name = "st2019.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     txt = reader.pages[3].extract_text()
-    assert txt.find("有限公司郑州分公司") > 0
+    # The following text is contained in two different cells:
+    # assert txt.find("有限公司郑州分公司") > 0
+    # 有限公司 = limited company
+    # 郑州分公司 = branch office in Zhengzhou
+    # First cell (see page 4/254):
+    assert txt.find("郑州药素电子商务有限公司") > 0
+    # Next cell (first cell in next line):
+    assert txt.find("郑州分公司") > 0
 
 
+@pytest.mark.external
+@pytest.mark.slow
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -330,6 +349,8 @@ def test_extract_text_page_pdf(url, name):
         page.extract_text()
 
 
+@pytest.mark.external
+@pytest.mark.slow
 def test_extract_text_page_pdf_impossible_decode_xform(caplog):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/972/972962.pdf"
     name = "tika-972962.pdf"
@@ -340,12 +361,289 @@ def test_extract_text_page_pdf_impossible_decode_xform(caplog):
     assert warn_msgs == [""]  # text extraction recognise no text
 
 
+@pytest.mark.external
+@pytest.mark.slow
 def test_extract_text_operator_t_star():  # L1266, L1267
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/967/967943.pdf"
     name = "tika-967943.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     for page in reader.pages:
         page.extract_text()
+
+
+def test_extract_text_visitor_callbacks():
+    """
+    Extract text in rectangle-objects or simple tables.
+
+    This test uses GeoBase_NHNC1_Data_Model_UML_EN.pdf.
+    It extracts the labels of package-boxes in Figure 2.
+    It extracts the texts in table "REVISION HISTORY".
+
+    """
+    import logging
+
+    class PositionedText:
+        """Specify a text with coordinates, font-dictionary and font-size.
+
+        The font-dictionary may be None in case of an unknown font.
+        """
+
+        def __init__(self, text, x, y, font_dict, font_size) -> None:
+            # TODO \0-replace: Encoding issue in some files?
+            self.text = text.replace("\0", "")
+            self.x = x
+            self.y = y
+            self.font_dict = font_dict
+            self.font_size = font_size
+
+        def get_base_font(self) -> str:
+            """Gets the base font of the text.
+
+            Return UNKNOWN in case of an unknown font."""
+            if (self.font_dict is None) or "/BaseFont" not in self.font_dict:
+                return "UNKNOWN"
+            return self.font_dict["/BaseFont"]
+
+    class Rectangle:
+        """Specify a rectangle."""
+
+        def __init__(self, x, y, w, h) -> None:
+            self.x = x.as_numeric()
+            self.y = y.as_numeric()
+            self.w = w.as_numeric()
+            self.h = h.as_numeric()
+
+        def contains(self, x, y) -> bool:
+            return (
+                x >= self.x
+                and x <= (self.x + self.w)
+                and y >= self.y
+                and y <= (self.y + self.h)
+            )
+
+    def extract_text_and_rectangles(
+        page: PageObject, rect_filter=None
+    ) -> Tuple[List[PositionedText], List[Rectangle]]:
+        """
+        Extracts texts and rectangles of a page of type PyPDF2._page.PageObject.
+
+        This function supports simple coordinate transformations only.
+        The optional rect_filter-lambda can be used to filter wanted rectangles.
+        rect_filter has Rectangle as argument and must return a boolean.
+
+        It returns a tuple containing a list of extracted texts and
+        a list of extracted rectangles.
+        """
+
+        logger = logging.getLogger("extract_text_and_rectangles")
+
+        rectangles = []
+        texts = []
+
+        def print_op_b(op, args, cm_matrix, tm_matrix):
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug(f"before: {op} at {cm_matrix}, {tm_matrix}")
+            if op == b"re":
+                if logger.isEnabledFor(logging.DEBUG):
+                    logger.debug(f"  add rectangle: {args}")
+                w = args[2]
+                h = args[3]
+                r = Rectangle(args[0], args[1], w, h)
+                if (rect_filter is None) or rect_filter(r):
+                    rectangles.append(r)
+
+        def print_visi(text, cm_matrix, tm_matrix, font_dict, font_size):
+            if text.strip() != "":
+                if logger.isEnabledFor(logging.DEBUG):
+                    logger.debug(f"at {cm_matrix}, {tm_matrix}, font size={font_size}")
+                texts.append(
+                    PositionedText(
+                        text, tm_matrix[4], tm_matrix[5], font_dict, font_size
+                    )
+                )
+
+        visitor_before = print_op_b
+        visitor_text = print_visi
+
+        page.extract_text(
+            visitor_operand_before=visitor_before, visitor_text=visitor_text
+        )
+
+        return (texts, rectangles)
+
+    def extract_table(
+        texts: List[PositionedText], rectangles: List[Rectangle]
+    ) -> List[List[List[PositionedText]]]:
+        """
+        Extracts a table containing text.
+
+        It is expected that each cell is marked by a rectangle-object.
+        It is expected that the page contains one table only.
+        It is expected that the table contains at least 3 columns and 2 rows.
+
+        A list of rows is returned.
+        Each row contains a list of cells.
+        Each cell contains a list of PositionedText-elements.
+        """
+        logger = logging.getLogger("extractTable")
+
+        # Step 1: Count number of x- and y-coordinates of rectangles.
+        # Remove duplicate rectangles. The new list is rectangles_filtered.
+        col2count = {}
+        row2count = {}
+        key2rectangle = {}
+        rectangles_filtered = []
+        for r in rectangles:
+            # Coordinates may be inaccurate, we have to round.
+            # cell: x=72.264, y=386.57, w=93.96, h=46.584
+            # cell: x=72.271, y=386.56, w=93.96, h=46.59
+            key = f"{round(r.x, 0)} {round(r.y, 0)} {round(r.w, 0)} {round(r.h, 0)}"
+            if key in key2rectangle:
+                # Ignore duplicate rectangles
+                continue
+            key2rectangle[key] = r
+            if r.x not in col2count:
+                col2count[r.x] = 0
+            if r.y not in row2count:
+                row2count[r.y] = 0
+            col2count[r.x] += 1
+            row2count[r.y] += 1
+            rectangles_filtered.append(r)
+
+        # Step 2: Look for texts in rectangles.
+        rectangle2texts = {}
+        for text in texts:
+            for r in rectangles_filtered:
+                if r.contains(text.x, text.y):
+                    if r not in rectangle2texts:
+                        rectangle2texts[r] = []
+                    rectangle2texts[r].append(text)
+                    break
+
+        # PDF: y = 0 is expected at the bottom of the page.
+        # So the header-row is expected to have the highest y-value.
+        rectangles.sort(key=lambda r: (-r.y, r.x))
+
+        # Step 3: Build the list of rows containing list of cell-texts.
+        rows = []
+        row_nr = 0
+        col_nr = 0
+        curr_y = None
+        curr_row = None
+        for r in rectangles_filtered:
+            if col2count[r.x] < 3 or row2count[r.y] < 2:
+                # We expect at least 3 columns and 2 rows.
+                continue
+            if curr_y is None or r.y != curr_y:
+                # next row
+                curr_y = r.y
+                col_nr = 0
+                row_nr += 1
+                curr_row = []
+                rows.append(curr_row)
+            col_nr += 1
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug(f"cell: x={r.x}, y={r.y}, w={r.w}, h={r.h}")
+            if r not in rectangle2texts:
+                curr_row.append("")
+                continue
+            cell_texts = [t for t in rectangle2texts[r]]
+            curr_row.append(cell_texts)
+
+        return rows
+
+    def extract_cell_text(cell_texts: List[PositionedText]) -> str:
+        """Joins the text-objects of a cell."""
+        return ("".join(t.text for t in cell_texts)).strip()
+
+    # Test 1: We test the analysis of page 7 "2.1 LRS model".
+    reader = PdfReader(RESOURCE_ROOT / "GeoBase_NHNC1_Data_Model_UML_EN.pdf")
+    page_lrs_model = reader.pages[6]
+
+    # We ignore the invisible large rectangles.
+    def ignore_large_rectangles(r):
+        return r.w < 400 and r.h < 400
+
+    (texts, rectangles) = extract_text_and_rectangles(
+        page_lrs_model, rect_filter=ignore_large_rectangles
+    )
+
+    # We see ten rectangles (5 tabs, 5 boxes) but there are 64 rectangles (including some invisible ones).
+    assert 60 == len(rectangles)
+    rectangle2texts = {}
+    for t in texts:
+        for r in rectangles:
+            if r.contains(t.x, t.y):
+                texts = rectangle2texts.setdefault(r, [])
+                texts.append(t.text.strip())
+                break
+    # Five boxes and the figure-description below.
+    assert 6 == len(rectangle2texts)
+    box_texts = [" ".join(texts) for texts in rectangle2texts.values()]
+    assert "Hydro Network" in box_texts
+    assert "Hydro Events" in box_texts
+    assert "Metadata" in box_texts
+    assert "Hydrography" in box_texts
+    assert "Toponymy (external model)" in box_texts
+
+    # Test 2: Parse table "REVISION HISTORY" on page 3.
+    page_revisions = reader.pages[2]
+    # We ignore the second table, therefore: r.y > 350
+
+    def filter_first_table(r):
+        return r.w > 1 and r.h > 1 and r.w < 400 and r.h < 400 and r.y > 350
+
+    (texts, rectangles) = extract_text_and_rectangles(
+        page_revisions, rect_filter=filter_first_table
+    )
+    rows = extract_table(texts, rectangles)
+
+    assert len(rows) == 9
+    assert extract_cell_text(rows[0][0]) == "Date"
+    assert extract_cell_text(rows[0][1]) == "Version"
+    assert extract_cell_text(rows[0][2]) == "Description"
+    assert extract_cell_text(rows[1][0]) == "September 2002"
+    # The line break between "English review;"
+    # and "Remove" is not detected.
+    assert (
+        extract_cell_text(rows[6][2])
+        == "English review;Remove the UML model for the Segmented view."
+    )
+    assert extract_cell_text(rows[7][2]) == "Update from the March Workshop comments."
+
+    # Check the fonts. We check: /F2 9.96 Tf [...] [(Dat)-2(e)] TJ
+    text_dat_of_date = rows[0][0][0]
+    assert text_dat_of_date.font_dict is not None
+    assert text_dat_of_date.font_dict["/Name"] == "/F2"
+    assert text_dat_of_date.get_base_font() == "/Arial,Bold"
+    assert text_dat_of_date.font_dict["/Encoding"] == "/WinAnsiEncoding"
+    assert text_dat_of_date.font_size == 9.96
+    # Check: /F1 9.96 Tf [...] [(S)4(ep)4(t)-10(em)-20(be)4(r)-3( 20)4(02)] TJ
+    texts = rows[1][0][0]
+    assert texts.font_dict is not None
+    assert texts.font_dict["/Name"] == "/F1"
+    assert texts.get_base_font() == "/Arial"
+    assert texts.font_dict["/Encoding"] == "/WinAnsiEncoding"
+    assert text_dat_of_date.font_size == 9.96
+
+    # Test 3: Read a table in a document using a non-translating
+    #         but scaling Tm-operand
+    reader = PdfReader(RESOURCE_ROOT / "Sample_Td-matrix.pdf")
+    page_td_model = reader.pages[0]
+    # We store the translations of the Td-executions.
+    list_Td = []
+
+    def visitor_td(op, args, cm, tm):
+        if op == b"Td":
+            list_Td.append((tm[4], tm[5]))
+
+    page_td_model.extract_text(visitor_operand_after=visitor_td)
+    assert len(list_Td) == 4
+    # Check the translations of the four Td-executions.
+    assert list_Td[0] == (210.0, 110.0)
+    assert list_Td[1] == (410.0, 110.0)
+    assert list_Td[2] == (210.0, 210.0)
+    assert list_Td[3] == (410.0, 210.0)
 
 
 @pytest.mark.parametrize(
@@ -506,6 +804,7 @@ def test_annotation_setter():
     os.remove(target)  # remove for testing
 
 
+@pytest.mark.external
 @pytest.mark.xfail(reason="#1091")
 def test_text_extraction_issue_1091():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/966/966635.pdf"
@@ -517,6 +816,7 @@ def test_text_extraction_issue_1091():
         page.extract_text()
 
 
+@pytest.mark.external
 def test_empyt_password_1088():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/941/941536.pdf"
     name = "tika-941536.pdf"
@@ -527,12 +827,13 @@ def test_empyt_password_1088():
 
 @pytest.mark.xfail(reason="#1088 / #1126")
 def test_arab_text_extraction():
-    reader = PdfReader(EXTERNAL_ROOT / "015-arabic/habibi.pdf")
+    reader = PdfReader(SAMPLE_ROOT / "015-arabic/habibi.pdf")
     assert reader.pages[0].extract_text() == "habibi حَبيبي"
 
 
+@pytest.mark.samples
 def test_read_link_annotation():
-    reader = PdfReader(EXTERNAL_ROOT / "016-libre-office-link/libre-office-link.pdf")
+    reader = PdfReader(SAMPLE_ROOT / "016-libre-office-link/libre-office-link.pdf")
     assert len(reader.pages[0].annotations) == 1
     annot = dict(reader.pages[0].annotations[0].get_object())
     expected = {
@@ -560,6 +861,7 @@ def test_read_link_annotation():
     assert annot == expected
 
 
+@pytest.mark.external
 def test_no_resources():
     url = "https://github.com/py-pdf/PyPDF2/files/9572045/108.pdf"
     name = "108.pdf"

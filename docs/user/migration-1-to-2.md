@@ -1,7 +1,7 @@
 # Migration Guide: 1.x to 2.x
 
 `PyPDF2<2.0.0` ([docs](https://pypdf2.readthedocs.io/en/1.27.12/meta/history.html))
-is very different from `PyPDF2>=2.0.0` ([docs](https://pypdf2.readthedocs.io/en/latest/meta/history.html)).
+is very different from `PyPDF2>=2.0.0` ([docs](../meta/history.md)).
 
 Luckily, most changes are simple naming adjustments. This guide helps you to
 make the step from `PyPDF2 1.x` (or even the original PyPpdf) to `PyPDF2>=2.0.0`.

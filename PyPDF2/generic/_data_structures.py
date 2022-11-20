@@ -63,6 +63,7 @@ from ._base import (
     NullObject,
     NumberObject,
     PdfObject,
+    TextStringObject,
 )
 from ._utils import read_hex_string_from_stream, read_string_from_stream
 
@@ -489,6 +490,15 @@ class TreeObject(DictionaryObject):
 
         _reset_node_tree_relationship(child_obj)
 
+    def remove_from_tree(self) -> None:
+        """
+        remove the object from the tree it is in
+        """
+        if NameObject("/Parent") not in self:
+            raise ValueError("Removed child does not appear to be a tree item")
+        else:
+            cast("TreeObject", self["/Parent"]).remove_child(self)
+
     def emptyTree(self) -> None:  # pragma: no cover
         deprecate_with_replacement("emptyTree", "empty_tree", "4.0.0")
         self.empty_tree()
@@ -859,8 +869,9 @@ def read_object(
         else:
             return NumberObject.read_from_stream(stream)
     else:
+        stream.read(-20)
         raise PdfReadError(
-            f"Invalid Elementary Object starting with {tok} @{stream.tell()}"  # type: ignore
+            f"Invalid Elementary Object starting with {tok!r} @{stream.tell()}: {stream.read(80).__repr__()}"
         )
 
 
@@ -1041,7 +1052,7 @@ class Destination(TreeObject):
         *args: Any,  # ZoomArgType
     ) -> None:
         DictionaryObject.__init__(self)
-        self[NameObject("/Title")] = title
+        self[NameObject("/Title")] = TextStringObject(title)
         self[NameObject("/Page")] = page
         self[NameObject("/Type")] = typ
 

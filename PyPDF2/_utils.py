@@ -416,7 +416,24 @@ def rename_kwargs(  # type: ignore
             )
 
 
+def _human_readable_bytes(bytes: int) -> str:
+    if bytes < 10**3:
+        return f"{bytes} Byte"
+    elif bytes < 10**6:
+        return f"{bytes / 10**3:.1f} kB"
+    elif bytes < 10**9:
+        return f"{bytes / 10**6:.1f} MB"
+    else:
+        return f"{bytes / 10**9:.1f} GB"
+
+
 @dataclass
 class File:
     name: str
     data: bytes
+
+    def __str__(self) -> str:
+        return f"File(name={self.name}, data: {_human_readable_bytes(len(self.data))})"
+
+    def __repr__(self) -> str:
+        return f"File(name={self.name}, data: {_human_readable_bytes(len(self.data))}, hash: {hash(self.data)})"

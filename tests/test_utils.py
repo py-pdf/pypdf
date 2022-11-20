@@ -7,7 +7,9 @@ import pytest
 import PyPDF2._utils
 from PyPDF2 import PdfReader
 from PyPDF2._utils import (
+    File,
     _get_max_pdf_version_header,
+    _human_readable_bytes,
     deprecate_bookmark,
     mark_location,
     matrix_multiply,
@@ -248,6 +250,7 @@ def test_deprecate_bookmark():
     assert exc.value.args[0] == expected_msg
 
 
+@pytest.mark.external
 def test_escapedcode_followed_by_int():
     # iss #1294
     url = "https://github.com/timedegree/playground_files/raw/main/%E8%AE%BA%E6%96%87/AN%20EXACT%20ANALYTICAL%20SOLUTION%20OF%20KEPLER'S%20EQUATION.pdf"
@@ -256,3 +259,24 @@ def test_escapedcode_followed_by_int():
     reader = PdfReader(io.BytesIO(get_pdf_from_url(url, name=name)))
     for page in reader.pages:
         page.extract_text()
+
+
+@pytest.mark.parametrize(
+    ("input_int", "expected_output"),
+    [
+        (123, "123 Byte"),
+        (1234, "1.2 kB"),
+        (123_456, "123.5 kB"),
+        (1_234_567, "1.2 MB"),
+        (1_234_567_890, "1.2 GB"),
+        (1_234_567_890_000, "1234.6 GB"),
+    ],
+)
+def test_human_readable_bytes(input_int, expected_output):
+    assert _human_readable_bytes(input_int) == expected_output
+
+
+def test_file():
+    f = File(name="image.png", data=b"")
+    assert str(f) == "File(name=image.png, data: 0 Byte)"
+    assert repr(f) == "File(name=image.png, data: 0 Byte, hash: 0)"

@@ -22,6 +22,86 @@ print(page.extract_text((0, 90)))
 
 Refer to [extract\_text](../modules/PageObject.html#PyPDF2._page.PageObject.extract_text) for more details.
 
+## Using a visitor
+
+You can use visitor-functions to control which part of a page you want to process and extract. The visitor-functions you provide will get called for each operator or for each text fragment.
+
+The function provided in argument visitor_text of function extract_text has five arguments:
+current transformation matrix, text matrix, font-dictionary and font-size.
+In most cases the x and y coordinates of the current position
+are in index 4 and 5 of the current transformation matrix.
+
+The font-dictionary may be None in case of unknown fonts.
+If not None it may e.g. contain key "/BaseFont" with value "/Arial,Bold".
+
+**Caveat**: In complicated documents the calculated positions might be wrong.
+
+The function provided in argument visitor_operand_before has four arguments:
+operand, operand-arguments, current transformation matrix and text matrix.
+
+### Example 1: Ignore header and footer
+
+The following example reads the text of page 4 of [this PDF document](https://github.com/py-pdf/PyPDF2/blob/main/resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf), but ignores header (y < 720) and footer (y > 50).
+
+```python
+from PyPDF2 import PdfReader
+
+reader = PdfReader("GeoBase_NHNC1_Data_Model_UML_EN.pdf")
+page = reader.pages[3]
+
+parts = []
+
+
+def visitor_body(text, cm, tm, fontDict, fontSize):
+    y = tm[5]
+    if y > 50 and y < 720:
+        parts.append(text)
+
+
+page.extract_text(visitor_text=visitor_body)
+text_body = "".join(parts)
+
+print(text_body)
+```
+
+### Example 2: Extract rectangles and texts into a SVG-file
+
+The following example converts page 3 of [this PDF document](https://github.com/py-pdf/PyPDF2/blob/main/resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf) into a
+[SVG file](https://en.wikipedia.org/wiki/Scalable_Vector_Graphics).
+
+Such a SVG export may help to understand whats going on in a page.
+
+```python
+from PyPDF2 import PdfReader
+import svgwrite
+
+reader = PdfReader("GeoBase_NHNC1_Data_Model_UML_EN.pdf")
+page = reader.pages[2]
+
+dwg = svgwrite.Drawing("GeoBase_test.svg", profile="tiny")
+
+
+def visitor_svg_rect(op, args, cm, tm):
+    if op == b"re":
+        (x, y, w, h) = (args[i].as_numeric() for i in range(4))
+        dwg.add(dwg.rect((x, y), (w, h), stroke="red", fill_opacity=0.05))
+
+
+def visitor_svg_text(text, cm, tm, fontDict, fontSize):
+    (x, y) = (tm[4], tm[5])
+    dwg.add(dwg.text(text, insert=(x, y), fill="blue"))
+
+
+page.extract_text(
+    visitor_operand_before=visitor_svg_rect, visitor_text=visitor_svg_text
+)
+dwg.save()
+```
+
+The SVG generated here is bottom-up because the coordinate systems of PDF and SVG differ.
+
+Unfortunately in complicated PDF documents the coordinates given to the visitor-functions may be wrong.
+
 ## Why Text Extraction is hard
 
 Extracting text from a PDF can be pretty tricky. In several cases there is no

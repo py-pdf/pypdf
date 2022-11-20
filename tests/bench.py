@@ -1,8 +1,9 @@
+from io import BytesIO
 from pathlib import Path
 
 import PyPDF2
 from PyPDF2 import PdfReader, Transformation
-from PyPDF2.generic import Destination
+from PyPDF2.generic import Destination, read_string_from_stream
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
@@ -125,3 +126,17 @@ def text_extraction(pdf_path):
 def test_text_extraction(benchmark):
     file_path = SAMPLE_ROOT / "009-pdflatex-geotopo/GeoTopo.pdf"
     benchmark(text_extraction, file_path)
+
+
+def read_string_from_stream_performance():
+    stream = BytesIO(b"(" + b"".join([b"x"] * 1024 * 256) + b")")
+    assert read_string_from_stream(stream)
+
+
+def test_read_string_from_stream_performance(benchmark):
+    """
+    This test simulates reading an embedded base64 image of 256kb.
+    It should be faster than a second, even on ancient machines.
+    Runs < 100ms on a 2019 notebook. Takes 10 seconds prior to #1350.
+    """
+    benchmark(read_string_from_stream_performance)

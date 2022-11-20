@@ -39,6 +39,12 @@ PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 
+class ChildDummy(DictionaryObject):
+    @property
+    def indirect_ref(self):
+        return self
+
+
 def test_float_object_exception(caplog):
     assert FloatObject("abc") == 0
     assert caplog.text != ""
@@ -269,7 +275,7 @@ def test_outline_item_write_to_stream():
     )
     oi.write_to_stream(stream, None)
     stream.seek(0, 0)
-    assert stream.read() == b"<<\n/Title title\n/Dest [ null /FitV 0 ]\n>>"
+    assert stream.read() == b"<<\n/Title (title)\n/Dest [ null /FitV 0 ]\n>>"
 
 
 def test_encode_pdfdocencoding_keyerror():
@@ -458,24 +464,22 @@ def test_TextStringObject_autodetect_utf16():
 
 
 def test_remove_child_not_in_tree():
+
     tree = TreeObject()
     with pytest.raises(ValueError) as exc:
-        tree.remove_child(NameObject("foo"))
+        tree.remove_child(ChildDummy())
     assert exc.value.args[0] == "Removed child does not appear to be a tree item"
 
 
 def test_remove_child_not_in_that_tree():
-    class ChildDummy:
-        def __init__(self, parent):
-            self.parent = parent
-
-        def get_object(self):
-            tree = DictionaryObject()
-            tree[NameObject("/Parent")] = self.parent
-            return tree
 
     tree = TreeObject()
-    child = ChildDummy(TreeObject())
+    tree.indirect_ref = NullObject()
+    # child = ChildDummy(TreeObject())
+    child = TreeObject()
+    with pytest.raises(ValueError) as exc:
+        child.remove_from_tree()
+    assert exc.value.args[0] == "Removed child does not appear to be a tree item"
     tree.add_child(child, ReaderDummy())
     with pytest.raises(ValueError) as exc:
         tree.remove_child(child)
@@ -483,20 +487,19 @@ def test_remove_child_not_in_that_tree():
 
 
 def test_remove_child_not_found_in_tree():
-    class ChildDummy:
-        def __init__(self, parent):
-            self.parent = parent
-
-        def get_object(self):
-            tree = DictionaryObject()
-            tree[NameObject("/Parent")] = self.parent
-            return tree
+    class ChildDummy(DictionaryObject):
+        @property
+        def indirect_ref(self):
+            return self
 
     tree = TreeObject()
-    child = ChildDummy(tree)
+    tree.indirect_ref = NullObject()
+    child = ChildDummy(TreeObject())
     tree.add_child(child, ReaderDummy())
+    child2 = ChildDummy(TreeObject())
+    child2[NameObject("/Parent")] = tree
     with pytest.raises(ValueError) as exc:
-        tree.remove_child(child)
+        tree.remove_child(child2)
     assert exc.value.args[0] == "Removal couldn't find item in tree"
 
 
@@ -526,7 +529,7 @@ def test_remove_child_found_in_tree():
     assert len([el for el in tree.children()]) == 2
 
     # Remove last child
-    tree.remove_child(child2)
+    tree.remove_child(child2_ref)
     assert tree[NameObject("/Count")] == 1
     assert len([el for el in tree.children()]) == 1
 
@@ -559,7 +562,8 @@ def test_remove_child_found_in_tree():
     assert len([el for el in tree.children()]) == 3
 
     # Remove middle child
-    tree.remove_child(child4)
+    # tree.remove_child(child4)
+    child4.remove_from_tree()
     assert tree[NameObject("/Count")] == 2
     assert len([el for el in tree.children()]) == 2
 
@@ -572,6 +576,7 @@ def test_remove_child_in_tree():
     tree = TreeObject()
     reader = PdfReader(pdf)
     writer = PdfWriter()
+    writer._add_object(tree)
     writer.add_page(reader.pages[0])
     writer.add_outline_item("foo", page_number=0)
     obj = writer._objects[-1]
@@ -581,6 +586,7 @@ def test_remove_child_in_tree():
     tree.empty_tree()
 
 
+@pytest.mark.external
 def test_dict_read_from_stream(caplog):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/984/984877.pdf"
     name = "tika-984877.pdf"
@@ -594,6 +600,7 @@ def test_dict_read_from_stream(caplog):
     )
 
 
+@pytest.mark.external
 def test_parse_content_stream_peek_percentage():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/985/985770.pdf"
     name = "tika-985770.pdf"
@@ -603,6 +610,7 @@ def test_parse_content_stream_peek_percentage():
         page.extract_text()
 
 
+@pytest.mark.external
 def test_read_inline_image_no_has_q():
     # pdf/df7e1add3156af17a372bc165e47a244.pdf
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/998/998719.pdf"
@@ -613,6 +621,7 @@ def test_read_inline_image_no_has_q():
         page.extract_text()
 
 
+@pytest.mark.external
 def test_read_inline_image_loc_neg_1():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/935/935066.pdf"
     name = "tika-935066.pdf"
@@ -622,6 +631,8 @@ def test_read_inline_image_loc_neg_1():
         page.extract_text()
 
 
+@pytest.mark.slow
+@pytest.mark.external
 def test_text_string_write_to_stream():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924562.pdf"
     name = "tika-924562.pdf"
@@ -631,6 +642,7 @@ def test_text_string_write_to_stream():
         page.compress_content_streams()
 
 
+@pytest.mark.external
 def test_name_object_read_from_stream_unicode_error():  # L588
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/974/974966.pdf"
     name = "tika-974966.pdf"
@@ -640,6 +652,7 @@ def test_name_object_read_from_stream_unicode_error():  # L588
         page.extract_text()
 
 
+@pytest.mark.external
 def test_bool_repr(tmp_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/932/932449.pdf"
     name = "tika-932449.pdf"
@@ -659,6 +672,7 @@ def test_bool_repr(tmp_path):
     )
 
 
+@pytest.mark.external
 @patch("PyPDF2._reader.logger_warning")
 def test_issue_997(mock_logger_warning):
     url = "https://github.com/py-pdf/PyPDF2/files/8908874/Exhibit_A-2_930_Enterprise_Zone_Tax_Credits_final.pdf"
@@ -752,7 +766,34 @@ def test_annotation_builder_line():
     writer.add_annotation(0, line_annotation)
 
     # Assert: You need to inspect the file manually
-    target = "annotated-pdf.pd"
+    target = "annotated-pdf.pdf"
+    with open(target, "wb") as fp:
+        writer.write(fp)
+
+    os.remove(target)  # comment this out for manual inspection
+
+
+def test_annotation_builder_square():
+    # Arrange
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    writer = PdfWriter()
+    writer.add_page(page)
+
+    # Act
+    square_annotation = AnnotationBuilder.rectangle(
+        rect=(50, 550, 200, 650), interiour_color="ff0000"
+    )
+    writer.add_annotation(0, square_annotation)
+
+    square_annotation = AnnotationBuilder.rectangle(
+        rect=(40, 400, 150, 450),
+    )
+    writer.add_annotation(0, square_annotation)
+
+    # Assert: You need to inspect the file manually
+    target = "annotated-pdf-square.pdf"
     with open(target, "wb") as fp:
         writer.write(fp)
 

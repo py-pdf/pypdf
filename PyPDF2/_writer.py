@@ -129,7 +129,7 @@ class PdfWriter:
 
     def __init__(self, fileobj: StrByteType = "") -> None:
         self._header = b"%PDF-1.3"
-        self._objects: List[Optional[PdfObject]] = []  # array of indirect objects
+        self._objects: List[PdfObject] = []  # array of indirect objects
         self._idnum_hash: Dict[bytes, IndirectObject] = {}
 
         # The root of our page tree node.
@@ -197,7 +197,7 @@ class PdfWriter:
     def pdf_header(self, new_header: bytes) -> None:
         self._header = new_header
 
-    def _add_object(self, obj: Optional[PdfObject]) -> IndirectObject:
+    def _add_object(self, obj: PdfObject) -> IndirectObject:
         self._objects.append(obj)
         return IndirectObject(len(self._objects), 0, self)
 
