@@ -16,8 +16,8 @@ repos:
         args: ['--fix=lf']
     -   id: check-added-large-files
         args: ['--maxkb=1000']
--   repo: https://gitlab.com/pycqa/flake8
-    rev: 3.9.2
+-   repo: https://github.com/pycqa/flake8
+    rev: 5.0.4
     hooks:
     -   id: flake8
         args: ["--ignore", "E,W,F"]
@@ -32,7 +32,7 @@ repos:
         name: isort (python)
         additional_dependencies: [toml]
 -   repo: https://github.com/psf/black
-    rev: 22.6.0
+    rev: 22.10.0
     hooks:
     -   id: black
         args: [--target-version, py36]
@@ -42,7 +42,7 @@ repos:
     -   id: blacken-docs
         additional_dependencies: [black==22.1.0]
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v2.37.3
+    rev: v3.2.2
     hooks:
     -   id: pyupgrade
         args: [--py36-plus]
