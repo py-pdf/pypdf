@@ -444,7 +444,7 @@ class PdfWriter:
         if dest is None:
             try:
                 del self._root_object["/OpenAction"]
-            except Exception:
+            except KeyError:
                 pass
         elif isinstance(dest, str):
             self._root_object[NameObject("/OpenAction")] = TextStringObject(dest)
