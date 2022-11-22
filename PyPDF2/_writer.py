@@ -414,10 +414,8 @@ class PdfWriter:
     @property
     def opening(self) -> Union[None, Destination, TextStringObject, ByteStringObject]:
         """
-        property returning the opening Destination
-        returns None if no destination is set
-
-        (value stored in "/OpenAction" entry in the Pdf Catalog)
+        Property returning the opening destination ("/OpenAction" entry in the
+        PDF catalog). Set to `None` to default to opening at top of first page.
         """
         if "/OpenAction" not in self._root_object:
             return None
