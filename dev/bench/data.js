@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1668947305259,
+  "lastUpdate": 1669191209247,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -18590,6 +18590,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0006944639986497241",
             "extra": "mean: 85.3896619090852 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "matt.peveler@gmail.com",
+            "name": "Matthew Peveler",
+            "username": "MasterOdin"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "420a545836630585f9e03b1df855c423e77c7731",
+          "message": "TST: Use Ubuntu 20.04 for running CI test suite (#1452)\n\nCloses #1451\r\n\r\nThis sets the test suite to use ubuntu-20.04 as opposed to ubuntu-latest as the latter switched over in the last day or so to using ubuntu-22.04 and that broke testing Python 3.6. Ubuntu 20.04 has maintenance fixes for another ~2.5 years, and is supported critically for another 5 years after that\r\n\r\nSigned-off-by: Matthew Peveler <matt.peveler@gmail.com>\r\n\r\nSigned-off-by: Matthew Peveler <matt.peveler@gmail.com>",
+          "timestamp": "2022-11-23T09:12:19+01:00",
+          "tree_id": "c7f9dbc3799bd5a71000ed291b8da17fe92b11ba",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/420a545836630585f9e03b1df855c423e77c7731"
+        },
+        "date": 1669191208311,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0440245722375077,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005582765200588878",
+            "extra": "mean: 957.8318619999948 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.523041818960154,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00524742395649717",
+            "extra": "mean: 79.8528036923089 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2576742703019142,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021481377880605026",
+            "extra": "mean: 3.880868659600009 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.709206795856527,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00025906621272840647",
+            "extra": "mean: 78.68311658332772 msec\nrounds: 12"
           }
         ]
       }
