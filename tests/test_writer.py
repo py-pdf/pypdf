@@ -9,6 +9,7 @@ from PyPDF2.errors import PageSizeNotDefinedError
 from PyPDF2.generic import (
     IndirectObject,
     NameObject,
+    NumberObject,
     RectangleObject,
     StreamObject,
     TextStringObject,
@@ -815,7 +816,7 @@ def test_write_empty_stream():
     assert exc.value.args[0] == "Output(stream=) is empty."
 
 
-def test_startup_dest(pdf_file_writer):
+def test_startup_dest():
     pdf_file_writer = PdfWriter()
     pdf_file_writer.append_pages_from_reader(PdfReader(RESOURCE_ROOT / "issue-604.pdf"))
 

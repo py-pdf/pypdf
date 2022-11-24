@@ -3,7 +3,6 @@ from pathlib import Path
 import pytest
 
 from PyPDF2 import PdfReader, PdfWriter
-from PyPDF2.generic import NameObject, NumberObject, TextStringObject
 
 # Configure path environment
 TESTS_ROOT = Path(__file__).parent.resolve()
