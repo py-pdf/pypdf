@@ -412,10 +412,19 @@ class PdfWriter:
         return self.insert_blank_page(width, height, index)
 
     @property
-    def opening(self) -> Union[None, Destination, TextStringObject, ByteStringObject]:
+    def open_destination(
+        self,
+    ) -> Union[None, Destination, TextStringObject, ByteStringObject]:
         """
-        Property returning the opening destination ("/OpenAction" entry in the
-        PDF catalog). Set to `None` to default to opening at top of first page.
+        Property to access the opening destination ("/OpenAction" entry in the
+        PDF catalog).
+        it returns `None` if the entry does not exist is not set.
+
+        :param destination:.
+        the property can be set to a Destination, a Page or an string(NamedDest) or
+            None (to remove "/OpenAction")
+
+        (value stored in "/OpenAction" entry in the Pdf Catalog)
         """
         if "/OpenAction" not in self._root_object:
             return None
@@ -432,15 +441,8 @@ class PdfWriter:
         else:
             return None
 
-    @opening.setter
-    def opening(self, dest: Union[None, str, Destination, PageObject]) -> None:
-        """
-        property setting the opening Destination or Page or NamedDest (`str`)
-        None:  removes the opening entry
-        :param destination:.
-
-        (value stored in "/OpenAction" entry in the Pdf Catalog)
-        """
+    @open_destination.setter
+    def open_destination(self, dest: Union[None, str, Destination, PageObject]) -> None:
         if dest is None:
             try:
                 del self._root_object["/OpenAction"]
