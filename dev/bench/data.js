@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1669396964346,
+  "lastUpdate": 1669397037781,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -18746,6 +18746,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0034821809085856074",
             "extra": "mean: 103.56741329999863 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "104113007+MagnumBarrage@users.noreply.github.com",
+            "name": "Sandro Panchame",
+            "username": "MagnumBarrage"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b6bfc17c38a2a75b1eb89dbcb997ab30210fd599",
+          "message": "DOC: Add module documentation the PaperSize class (#1447)",
+          "timestamp": "2022-11-25T18:22:47+01:00",
+          "tree_id": "ceddc8362389fed91327daf2c7d1069e3185388a",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/b6bfc17c38a2a75b1eb89dbcb997ab30210fd599"
+        },
+        "date": 1669397036084,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0100164233680111,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011828520024533171",
+            "extra": "mean: 990.0829104000011 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.305341180762621,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0077010016042953185",
+            "extra": "mean: 81.26552407692162 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24762903352349042,
+            "unit": "iter/sec",
+            "range": "stddev: 0.034438550677621124",
+            "extra": "mean: 4.0382986832 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.618986788269927,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00041339610293266647",
+            "extra": "mean: 86.06602436363562 msec\nrounds: 11"
           }
         ]
       }
