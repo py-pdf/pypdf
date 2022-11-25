@@ -411,6 +411,54 @@ class PdfWriter:
         deprecate_with_replacement("insertBlankPage", "insert_blank_page")
         return self.insert_blank_page(width, height, index)
 
+    @property
+    def open_destination(
+        self,
+    ) -> Union[None, Destination, TextStringObject, ByteStringObject]:
+        """
+        Property to access the opening destination ("/OpenAction" entry in the
+        PDF catalog).
+        it returns `None` if the entry does not exist is not set.
+
+        :param destination:.
+        the property can be set to a Destination, a Page or an string(NamedDest) or
+            None (to remove "/OpenAction")
+
+        (value stored in "/OpenAction" entry in the Pdf Catalog)
+        """
+        if "/OpenAction" not in self._root_object:
+            return None
+        oa = self._root_object["/OpenAction"]
+        if isinstance(oa, (str, bytes)):
+            return create_string_object(str(oa))
+        elif isinstance(oa, ArrayObject):
+            try:
+                page, typ = oa[0:2]  # type: ignore
+                array = oa[2:]
+                return Destination("OpenAction", page, typ, *array)  # type: ignore
+            except Exception:
+                raise Exception(f"Invalid Destination {oa}")
+        else:
+            return None
+
+    @open_destination.setter
+    def open_destination(self, dest: Union[None, str, Destination, PageObject]) -> None:
+        if dest is None:
+            try:
+                del self._root_object["/OpenAction"]
+            except KeyError:
+                pass
+        elif isinstance(dest, str):
+            self._root_object[NameObject("/OpenAction")] = TextStringObject(dest)
+        elif isinstance(dest, Destination):
+            self._root_object[NameObject("/OpenAction")] = dest.dest_array
+        elif isinstance(dest, PageObject):
+            self._root_object[NameObject("/OpenAction")] = Destination(
+                "Opening",
+                dest.indirect_ref if dest.indirect_ref is not None else NullObject(),
+                TextStringObject("/Fit"),
+            ).dest_array
+
     def add_js(self, javascript: str) -> None:
         """
         Add Javascript which will launch upon opening this PDF.
