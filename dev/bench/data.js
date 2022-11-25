@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1669191600392,
+  "lastUpdate": 1669396964346,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -18694,6 +18694,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0003299438405269871",
             "extra": "mean: 80.18317866666536 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "fdd105812e201e9f466030711a20a669b9acf4af",
+          "message": "ENH: Add PdfWriter.open_destination property (#1431)",
+          "timestamp": "2022-11-25T18:21:12+01:00",
+          "tree_id": "9e726379d680c6d5855df2dec3fe71f5130dfd0f",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/fdd105812e201e9f466030711a20a669b9acf4af"
+        },
+        "date": 1669396962796,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.775666499716238,
+            "unit": "iter/sec",
+            "range": "stddev: 0.039750516552928654",
+            "extra": "mean: 1.2892138572000078 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.085034469024572,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00926636720828905",
+            "extra": "mean: 110.07112888888868 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2021936380369796,
+            "unit": "iter/sec",
+            "range": "stddev: 0.15035407854157298",
+            "extra": "mean: 4.945754029200009 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.6555467413611,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0034821809085856074",
+            "extra": "mean: 103.56741329999863 msec\nrounds: 10"
           }
         ]
       }
