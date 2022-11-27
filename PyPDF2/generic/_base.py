@@ -231,7 +231,7 @@ class IndirectObject(PdfObject):
         pdf_dest: PdfWriterProtocol,
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
-    ) -> "IndirectObject":  # PPzz
+    ) -> "IndirectObject":
         """clone object into pdf_dest"""
         if self.pdf == pdf_dest and not force_duplicate:
             # Already duplicated and no extra duplication required
@@ -242,13 +242,15 @@ class IndirectObject(PdfObject):
         if not force_duplicate and self.idnum in pdf_dest._id_translated[id(self.pdf)]:
             dup = pdf_dest.get_object(pdf_dest._id_translated[id(self.pdf)][self.idnum])
         else:
-            dup = self.get_object().clone(pdf_dest, force_duplicate, ignore_fields)  # type: ignore
+            obj = self.get_object()
+            assert obj is not None
+            dup = obj.clone(pdf_dest, force_duplicate, ignore_fields)
         assert dup is not None
         assert dup.indirect_ref is not None
         return dup.indirect_ref
 
     @property
-    def indirect_ref(self) -> "IndirectObject":  # type: ignore
+    def indirect_ref(self) -> "IndirectObject":  # type: ignore[override]
         return self
 
     def get_object(self) -> Optional["PdfObject"]:

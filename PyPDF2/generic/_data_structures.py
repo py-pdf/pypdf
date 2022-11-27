@@ -213,7 +213,8 @@ class DictionaryObject(dict, PdfObject):
                                 cur_obj._reference_clone(cur_obj.__class__(), pdf_dest),
                             )
                             objs.append((cur_obj, clon))
-                            prev_obj[NameObject(k)] = clon.indirect_ref  # type: ignore
+                            assert prev_obj is not None
+                            prev_obj[NameObject(k)] = clon.indirect_ref
                             prev_obj = clon
                             try:
                                 if cur_obj == src:

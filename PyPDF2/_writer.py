@@ -235,14 +235,11 @@ class PdfWriter:
     ) -> PageObject:
         assert cast(str, page[PA.TYPE]) == CO.PAGE
         page_org = page
-        if excluded_keys is None:
-            excluded_keys = []
-        else:
-            excluded_keys = list(excluded_keys)
+        excluded_keys = list(excluded_keys)
         excluded_keys += [PA.PARENT, "/StructParents"]
         # acrobat does not accept to have two indirect ref pointing on the same page;
         # therefore in order to add easily multiple copies of the same page, we need to create a new
-        # dictionnary for the page, however the objects below (including content) is not duplicated
+        # dictionary for the page, however the objects below (including content) is not duplicated
         try:  # delete an already existing page
             del self._id_translated[id(page_org.indirect_ref.pdf)][  # type: ignore
                 page_org.indirect_ref.idnum  # type: ignore
@@ -1119,7 +1116,7 @@ class PdfWriter:
         """
         the list of threads see §8.3.2 from PDF 1.7 spec
 
-                :return: an Array (possibly empty) of Dictionnaries with "/F" and "/I" properties
+                :return: an Array (possibly empty) of Dictionaries with "/F" and "/I" properties
         """
         if CO.THREADS in self._root_object:
             # TABLE 3.25 Entries in the catalog dictionary
@@ -1134,7 +1131,7 @@ class PdfWriter:
         """
         Read-only property for the list of threads see §8.3.2 from PDF 1.7 spec
 
-        :return: an Array (possibly empty) of Dictionnaries with "/F" and "/I" properties
+        :return: an Array (possibly empty) of Dictionaries with "/F" and "/I" properties
         """
         return self.get_threads_root()
 
