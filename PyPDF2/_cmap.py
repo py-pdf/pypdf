@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Tuple, Union, cast
 from ._codecs import adobe_glyphs, charset_encoding
 from ._utils import logger_warning
 from .errors import PdfReadWarning
-from .generic import DecodedStreamObject, DictionaryObject
+from .generic import DecodedStreamObject, DictionaryObject, StreamObject
 
 
 # code freely inspired from @twiggy ; see #711
@@ -204,7 +204,12 @@ def parse_to_unicode(
 
 
 def prepare_cm(ft: DictionaryObject) -> bytes:
-    cm: bytes = cast(DecodedStreamObject, ft["/ToUnicode"]).get_data()
+    tu = ft["/ToUnicode"]
+    cm: bytes
+    if isinstance(tu, StreamObject):
+        cm = cast(DecodedStreamObject, ft["/ToUnicode"]).get_data()
+    elif isinstance(tu, str) and tu.startswith("/Identity"):
+        cm = b"beginbfrange\n<0000> <0001> <0000>\nendbfrange"  # the full range 0000-FFFF will be processed
     if isinstance(cm, str):
         cm = cm.encode()
     # we need to prepare cm before due to missing return line in pdf printed to pdf from word

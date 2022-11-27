@@ -209,12 +209,19 @@ def test_get_images(src, expected_images):
     assert len(images_extracted) == len(expected_images)
     for image, expected_image in zip(images_extracted, expected_images):
         assert image.name == expected_image
-        with open(f"test-out-{src}-{image.name}", "wb") as fp:
-            fp.write(image.data)
-        assert (
-            image.name.split(".")[-1].upper()
-            == Image.open(io.BytesIO(image.data)).format
-        )
+        try:
+            fn = f"test-out-{src}-{image.name}"
+            with open(fn, "wb") as fp:
+                fp.write(image.data)
+                assert (
+                    image.name.split(".")[-1].upper()
+                    == Image.open(io.BytesIO(image.data)).format
+                )
+        finally:
+            try:
+                os.remove(fn)
+            except Exception:
+                pass
 
 
 @pytest.mark.parametrize(

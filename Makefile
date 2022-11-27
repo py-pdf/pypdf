@@ -12,7 +12,6 @@ upload:
 	flit publish
 
 clean:
-	python setup.py clean --all
 	pyclean .
 	rm -rf tests/__pycache__ PyPDF2/__pycache__ Image9.png htmlcov docs/_build dist dont_commit_merged.pdf dont_commit_writer.pdf PyPDF2.egg-info PyPDF2_pdfLocation.txt .pytest_cache .mypy_cache .benchmarks
 

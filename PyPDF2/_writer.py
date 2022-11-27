@@ -461,6 +461,54 @@ class PdfWriter:
         deprecate_with_replacement("insertBlankPage", "insert_blank_page")
         return self.insert_blank_page(width, height, index)
 
+    @property
+    def open_destination(
+        self,
+    ) -> Union[None, Destination, TextStringObject, ByteStringObject]:
+        """
+        Property to access the opening destination ("/OpenAction" entry in the
+        PDF catalog).
+        it returns `None` if the entry does not exist is not set.
+
+        :param destination:.
+        the property can be set to a Destination, a Page or an string(NamedDest) or
+            None (to remove "/OpenAction")
+
+        (value stored in "/OpenAction" entry in the Pdf Catalog)
+        """
+        if "/OpenAction" not in self._root_object:
+            return None
+        oa = self._root_object["/OpenAction"]
+        if isinstance(oa, (str, bytes)):
+            return create_string_object(str(oa))
+        elif isinstance(oa, ArrayObject):
+            try:
+                page, typ = oa[0:2]  # type: ignore
+                array = oa[2:]
+                return Destination("OpenAction", page, typ, *array)  # type: ignore
+            except Exception:
+                raise Exception(f"Invalid Destination {oa}")
+        else:
+            return None
+
+    @open_destination.setter
+    def open_destination(self, dest: Union[None, str, Destination, PageObject]) -> None:
+        if dest is None:
+            try:
+                del self._root_object["/OpenAction"]
+            except KeyError:
+                pass
+        elif isinstance(dest, str):
+            self._root_object[NameObject("/OpenAction")] = TextStringObject(dest)
+        elif isinstance(dest, Destination):
+            self._root_object[NameObject("/OpenAction")] = dest.dest_array
+        elif isinstance(dest, PageObject):
+            self._root_object[NameObject("/OpenAction")] = Destination(
+                "Opening",
+                dest.indirect_ref if dest.indirect_ref is not None else NullObject(),
+                TextStringObject("/Fit"),
+            ).dest_array
+
     def add_js(self, javascript: str) -> None:
         """
         Add Javascript which will launch upon opening this PDF.
@@ -470,39 +518,30 @@ class PdfWriter:
         >>> output.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
         # Example: This will launch the print window when the PDF is opened.
         """
+        # Names / JavaScript prefered to be able to add multiple scripts
+        if "/Names" not in self._root_object:
+            self._root_object[NameObject(CA.NAMES)] = DictionaryObject()
+        names = cast(DictionaryObject, self._root_object[CA.NAMES])
+        if "/JavaScript" not in names:
+            names[NameObject("/JavaScript")] = DictionaryObject(
+                {NameObject("/Names"): ArrayObject()}
+            )
+            # cast(DictionaryObject, names[NameObject("/JavaScript")])[NameObject("/Names")] = ArrayObject()
+        js_list = cast(
+            ArrayObject, cast(DictionaryObject, names["/JavaScript"])["/Names"]
+        )
+
         js = DictionaryObject()
         js.update(
             {
                 NameObject(PA.TYPE): NameObject("/Action"),
                 NameObject("/S"): NameObject("/JavaScript"),
-                NameObject("/JS"): NameObject(f"({javascript})"),
+                NameObject("/JS"): TextStringObject(f"{javascript}"),
             }
         )
-        js_indirect_object = self._add_object(js)
-
         # We need a name for parameterized javascript in the pdf file, but it can be anything.
-        js_string_name = str(uuid.uuid4())
-
-        js_name_tree = DictionaryObject()
-        js_name_tree.update(
-            {
-                NameObject("/JavaScript"): DictionaryObject(
-                    {
-                        NameObject(CA.NAMES): ArrayObject(
-                            [create_string_object(js_string_name), js_indirect_object]
-                        )
-                    }
-                )
-            }
-        )
-        self._add_object(js_name_tree)
-
-        self._root_object.update(
-            {
-                NameObject("/OpenAction"): js_indirect_object,
-                NameObject(CA.NAMES): js_name_tree,
-            }
-        )
+        js_list.append(create_string_object(str(uuid.uuid4())))
+        js_list.append(self._add_object(js))
 
     def addJS(self, javascript: str) -> None:  # pragma: no cover
         """

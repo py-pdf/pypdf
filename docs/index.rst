@@ -53,6 +53,7 @@ You can contribute to `PyPDF2 on GitHub <https://github.com/py-pdf/PyPDF2>`_.
    modules/Field
    modules/PageRange
    modules/AnnotationBuilder
+   modules/PaperSize
 
 .. toctree::
    :caption: Developer Guide
@@ -69,6 +70,7 @@ You can contribute to `PyPDF2 on GitHub <https://github.com/py-pdf/PyPDF2>`_.
    :maxdepth: 1
 
    meta/CHANGELOG
+   meta/changelog-v1
    meta/project-governance
    meta/history
    meta/CONTRIBUTORS

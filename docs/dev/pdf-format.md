@@ -30,8 +30,8 @@ xref 42 5
 
 Let's go through it step-by-step:
 
-* `xref` is justa keyword that specifies the start of the xref table.
-* `42` is TODO; `6` is the number of entries in the xref table.
+* `xref` is just a keyword that specifies the start of the xref table.
+* `42` is the numerical ID of the first object in this xref section; `5` is the number of entries in the xref table.
 * Now every object has 3 entries `nnnnnnnnnn ggggg n`: The 10-digit byte offset,
   a 5-digit generation number, and a literal keyword which is either `n` or `f`.
     * `nnnnnnnnnn` is the byte offset of the object. It tells the reader where
