@@ -1098,6 +1098,29 @@ class PdfWriter:
 
         return outline
 
+    def get_threads_root(self) -> ArrayObject:
+        """
+        the list of threads see §8.3.2 from PDF 1.7 spec
+
+                :return: an Array (possibly empty) of Dictionaries with "/F" and "/I" properties
+        """
+        if CO.THREADS in self._root_object:
+            # TABLE 3.25 Entries in the catalog dictionary
+            threads = cast(ArrayObject, self._root_object[CO.THREADS])
+        else:
+            threads = ArrayObject()
+            self._root_object[NameObject(CO.THREADS)] = threads
+        return threads
+
+    @property
+    def threads(self) -> ArrayObject:
+        """
+        Read-only property for the list of threads see §8.3.2 from PDF 1.7 spec
+
+        :return: an Array (possibly empty) of Dictionaries with "/F" and "/I" properties
+        """
+        return self.get_threads_root()
+
     def getOutlineRoot(self) -> TreeObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0

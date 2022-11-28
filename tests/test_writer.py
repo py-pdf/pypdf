@@ -7,6 +7,7 @@ import pytest
 from PyPDF2 import PageObject, PdfMerger, PdfReader, PdfWriter
 from PyPDF2.errors import PageSizeNotDefinedError
 from PyPDF2.generic import (
+    ArrayObject,
     IndirectObject,
     NameObject,
     NumberObject,
@@ -855,3 +856,10 @@ def test_startup_dest():
     pdf_file_writer.open_destination = None
     assert "/OpenAction" not in pdf_file_writer._root_object
     pdf_file_writer.open_destination = None
+
+
+def test_threads_empty():
+    writer = PdfWriter()
+    thr = writer.threads
+    assert isinstance(thr, ArrayObject)
+    assert len(thr) == 0
