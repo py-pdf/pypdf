@@ -7,6 +7,7 @@ import pytest
 from PyPDF2 import PageObject, PdfMerger, PdfReader, PdfWriter
 from PyPDF2.errors import PageSizeNotDefinedError
 from PyPDF2.generic import (
+    ArrayObject,
     IndirectObject,
     NameObject,
     NumberObject,
