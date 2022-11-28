@@ -863,3 +863,5 @@ def test_threads_empty():
     thr = writer.threads
     assert isinstance(thr, ArrayObject)
     assert len(thr) == 0
+    thr2 = writer.threads
+    assert thr == thr2
