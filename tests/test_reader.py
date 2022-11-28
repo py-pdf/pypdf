@@ -17,7 +17,7 @@ from PyPDF2.errors import (
     PdfReadWarning,
     WrongPasswordError,
 )
-from PyPDF2.generic import Destination
+from PyPDF2.generic import ArrayObject, Destination
 
 from . import get_pdf_from_url, normalize_warnings
 
@@ -1179,3 +1179,15 @@ def test_zeroing_xref():
     name = "UTA_OSHA.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     len(reader.pages)
+
+
+def test_thread():
+    url = "https://github.com/py-pdf/PyPDF2/files/9066120/UTA_OSHA_3115_Fall_Protection_Training_09162021_.pdf"
+    name = "UTA_OSHA.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    assert reader.threads is None
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
+    name = "tika-924666.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    assert isinstance(reader.threads, ArrayObject)
+    assert len(reader.threads) >= 1
