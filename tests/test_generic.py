@@ -477,8 +477,8 @@ def test_remove_child_not_in_that_tree():
 
     tree = TreeObject()
     tree.indirect_ref = NullObject()
-    # child = ChildDummy(TreeObject())
     child = TreeObject()
+    child.indirect_ref = NullObject()
     with pytest.raises(ValueError) as exc:
         child.remove_from_tree()
     assert exc.value.args[0] == "Removed child does not appear to be a tree item"
