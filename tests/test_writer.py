@@ -896,6 +896,15 @@ def test_reset_translation():
     nb = len(writer._objects)
 
 
+def test_threads_empty():
+    writer = PdfWriter()
+    thr = writer.threads
+    assert isinstance(thr, ArrayObject)
+    assert len(thr) == 0
+    thr2 = writer.threads
+    assert thr == thr2
+
+
 def test_append_without_annots_and_articles():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
     name = "tika-924666.pdf"
