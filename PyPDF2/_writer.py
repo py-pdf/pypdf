@@ -704,6 +704,52 @@ class PdfWriter:
                         }
                     )
 
+    def update_page_form_field_alt_field_name(
+        self,
+        page: PageObject,
+        fields: Dict[str, Any],
+    ) -> None:
+        """
+        Update the form field values for a given page from a fields dictionary.
+
+        Copy field texts and values from fields to page.
+        If the field links to a parent object, add the information to the parent.
+
+        :param PageObject page: Page reference from PDF writer where the
+            annotations and field data will be updated.
+        :param dict fields: a Python dictionary of field names (/T) and Alternate
+        Field Name (/TU)
+        """
+        self.set_need_appearances_writer()
+        # Iterate through pages, update field values
+        if PG.ANNOTS not in page:
+            logger_warning("No fields to update on this page", __name__)
+            return
+        for j in range(len(page[PG.ANNOTS])):  # type: ignore
+            writer_annot = page[PG.ANNOTS][j].get_object()  # type: ignore
+            # retrieve parent field values, if present
+            writer_parent_annot = {}  # fallback if it's not there
+            if PG.PARENT in writer_annot:
+                writer_parent_annot = writer_annot[PG.PARENT]
+            for field in fields:
+                if writer_annot.get(FieldDictionaryAttributes.T) == field:
+                    writer_annot.update(
+                        {
+                            NameObject(FieldDictionaryAttributes.TU): TextStringObject(
+                                fields[field]
+                            )
+                        }
+                    )
+                elif writer_parent_annot.get(FieldDictionaryAttributes.T) == field:
+                    writer_parent_annot.update(
+                        {
+                            NameObject(FieldDictionaryAttributes.TU): TextStringObject(
+                                fields[field]
+                            )
+                        }
+                    )
+
+
     def updatePageFormFieldValues(
         self,
         page: PageObject,
