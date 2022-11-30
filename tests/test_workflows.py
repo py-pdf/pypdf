@@ -501,6 +501,7 @@ def test_extract_text_include(url, name, text):
 
     full_content = ' '.join(full_content)
 
+
 @pytest.mark.external
 @pytest.mark.parametrize(
     ("url", "name"),
