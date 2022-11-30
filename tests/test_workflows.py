@@ -485,9 +485,9 @@ def test_extract_text(url, name, strict, exception):
     ("url", "name", "text"),
     [
         (
-                "https://github.com/CronosUnder/PyPDF2/raw/fix-extract-text-spacing-problem/resources/white-space-problems.pdf",
-                "white-space-problems.pdf",
-                " Chile ",
+            "https://github.com/CronosUnder/PyPDF2/raw/fix-extract-text-spacing-problem/resources/white-space-problems.pdf",
+            "white-space-problems.pdf",
+            " Chile ",
         ),
     ],
 )
