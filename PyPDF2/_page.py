@@ -1600,6 +1600,8 @@ class PageObject(DictionaryObject):
                     if o == 0:
                         if deltaY < -0.8 * f:
                             if (output + text)[-1] != "\n":
+                                if len(output) > 1 and output[-1] != ' ' and text[1] != ' ':
+                                    output += " "
                                 output += text + "\n"
                                 if visitor_text is not None:
                                     visitor_text(

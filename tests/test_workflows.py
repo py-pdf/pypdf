@@ -458,6 +458,12 @@ def test_get_metadata(url, name):
             True,
             None,
         ),
+        (
+            "https://github.com/CronosUnder/PyPDF2/raw/fix-extract-text-spacing-problem/resources/white-space-problems.pdf",
+            "white-space-problems.pdf",
+            True,
+            None,
+        ),
     ],
 )
 def test_extract_text(url, name, strict, exception):
@@ -473,6 +479,27 @@ def test_extract_text(url, name, strict, exception):
                 page.extract_text()
         assert ex_info.value.args[0] == exc_text
 
+
+@pytest.mark.external
+@pytest.mark.parametrize(
+    ("url", "name", "text"),
+    [
+        (
+                "https://github.com/CronosUnder/PyPDF2/raw/fix-extract-text-spacing-problem/resources/white-space-problems.pdf",
+                "white-space-problems.pdf",
+                " Chile ",
+        ),
+    ],
+)
+def test_extract_text_include(url, name, text):
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data)
+    full_content = []
+    for page in reader.pages:
+        content = page.extract_text()
+        full_content.append(content)
+
+    full_content = ' '.join(full_content)
 
 @pytest.mark.external
 @pytest.mark.parametrize(
