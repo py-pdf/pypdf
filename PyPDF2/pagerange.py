@@ -170,4 +170,4 @@ def parse_filename_page_ranges(
     return pairs
 
 
-PageRangeSpec = Union[str, PageRange, Tuple[int, int], Tuple[int, int, int]]
+PageRangeSpec = Union[str, PageRange, Tuple[int, int], Tuple[int, int, int], List[int]]
