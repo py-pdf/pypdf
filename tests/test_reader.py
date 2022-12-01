@@ -17,7 +17,14 @@ from PyPDF2.errors import (
     PdfReadWarning,
     WrongPasswordError,
 )
-from PyPDF2.generic import ArrayObject, Destination
+from PyPDF2.generic import (
+    ArrayObject,
+    Destination,
+    DictionaryObject,
+    NameObject,
+    NumberObject,
+    TextStringObject,
+)
 
 from . import get_pdf_from_url, normalize_warnings
 
@@ -755,6 +762,12 @@ def test_iss925():
                 annot.get_object()
 
 
+def test_get_object():
+    reader = PdfReader(RESOURCE_ROOT / "hello-world.pdf")
+    assert reader.get_object(22)["/Type"] == "/Catalog"
+    assert reader._get_indirect_object(22, 0)["/Type"] == "/Catalog"
+
+
 @pytest.mark.xfail(reason="#591")
 def test_extract_text_hello_world():
     reader = PdfReader(RESOURCE_ROOT / "hello-world.pdf")
@@ -1191,3 +1204,30 @@ def test_thread():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     assert isinstance(reader.threads, ArrayObject)
     assert len(reader.threads) >= 1
+
+
+def test_build_outline_item(caplog):
+    url = "https://github.com/py-pdf/PyPDF2/files/9464742/shiv_resume.pdf"
+    name = "shiv_resume.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    outline = reader._build_outline_item(
+        DictionaryObject(
+            {
+                NameObject("/Title"): TextStringObject("Toto"),
+                NameObject("/Dest"): NumberObject(2),
+            }
+        )
+    )
+    assert "Removed unexpected destination 2 from destination" in caplog.text
+    assert outline["/Title"] == "Toto"
+    reader.strict = True
+    with pytest.raises(PdfReadError) as exc:
+        reader._build_outline_item(
+            DictionaryObject(
+                {
+                    NameObject("/Title"): TextStringObject("Toto"),
+                    NameObject("/Dest"): NumberObject(2),
+                }
+            )
+        )
+    assert "Unexpected destination 2" in exc.value.args[0]
