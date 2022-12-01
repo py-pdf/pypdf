@@ -343,6 +343,7 @@ def test_write_metadata():
     reader = PdfReader(pdf_path)
     writer = PdfWriter()
 
+    writer.add_page(reader.pages[0])
     for page in reader.pages:
         writer.add_page(page)
 
