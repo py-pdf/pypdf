@@ -16,6 +16,7 @@ class Core:
     """Keywords that don't quite belong anywhere else."""
 
     OUTLINES = "/Outlines"
+    THREADS = "/Threads"
     PAGE = "/Page"
     PAGES = "/Pages"
     CATALOG = "/Catalog"
