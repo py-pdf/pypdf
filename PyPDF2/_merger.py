@@ -155,6 +155,7 @@ class PdfMerger:
             or a ``(start, stop[, step])`` tuple
             to merge only the specified range of pages from the source
             document into the output document.
+            Can also be a list of pages to merge.
 
         :param bool import_outline: You may prevent the source document's
             outline (collection of outline items, previously referred to as
@@ -174,6 +175,8 @@ class PdfMerger:
             pages = (0, len(reader.pages))
         elif isinstance(pages, PageRange):
             pages = pages.indices(len(reader.pages))
+        elif isinstance(pages, list):
+            pass
         elif not isinstance(pages, tuple):
             raise TypeError('"pages" must be a tuple of (start, stop[, step])')
 
@@ -255,7 +258,9 @@ class PdfMerger:
         self,
         fileobj: Union[StrByteType, PdfReader, Path],
         outline_item: Optional[str] = None,
-        pages: Union[None, PageRange, Tuple[int, int], Tuple[int, int, int]] = None,
+        pages: Union[
+            None, PageRange, Tuple[int, int], Tuple[int, int, int], List[int]
+        ] = None,
         import_outline: bool = True,
     ) -> None:
         """
@@ -275,6 +280,7 @@ class PdfMerger:
             or a ``(start, stop[, step])`` tuple
             to merge only the specified range of pages from the source
             document into the output document.
+            Can also be a list of pages to append.
 
         :param bool import_outline: You may prevent the source document's
             outline (collection of outline items, previously referred to as
@@ -420,12 +426,13 @@ class PdfMerger:
         self,
         pdf: PdfReader,
         dests: Dict[str, Dict[str, Any]],
-        pages: Union[Tuple[int, int], Tuple[int, int, int]],
+        pages: Union[Tuple[int, int], Tuple[int, int, int], List[int]],
     ) -> List[Dict[str, Any]]:
         """Remove named destinations that are not a part of the specified page set."""
         new_dests = []
+        lst = pages if isinstance(pages, list) else list(range(*pages))
         for key, obj in dests.items():
-            for j in range(*pages):
+            for j in lst:
                 if pdf.pages[j].get_object() == obj["/Page"].get_object():
                     obj[NameObject("/Page")] = obj["/Page"].get_object()
                     assert str_(key) == str_(obj["/Title"])
@@ -437,21 +444,22 @@ class PdfMerger:
         self,
         pdf: PdfReader,
         outline: OutlineType,
-        pages: Union[Tuple[int, int], Tuple[int, int, int]],
+        pages: Union[Tuple[int, int], Tuple[int, int, int], List[int]],
     ) -> OutlineType:
         """Remove outline item entries that are not a part of the specified page set."""
         new_outline = []
         prev_header_added = True
+        lst = pages if isinstance(pages, list) else list(range(*pages))
         for i, outline_item in enumerate(outline):
             if isinstance(outline_item, list):
-                sub = self._trim_outline(pdf, outline_item, pages)  # type: ignore
+                sub = self._trim_outline(pdf, outline_item, lst)  # type: ignore
                 if sub:
                     if not prev_header_added:
                         new_outline.append(outline[i - 1])
                     new_outline.append(sub)  # type: ignore
             else:
                 prev_header_added = False
-                for j in range(*pages):
+                for j in lst:
                     if outline_item["/Page"] is None:
                         continue
                     if pdf.pages[j].get_object() == outline_item["/Page"].get_object():
