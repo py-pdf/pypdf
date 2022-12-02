@@ -1110,11 +1110,11 @@ class PdfReader:
             self.flattened_pages.append(page_obj)  # type: ignore
 
     def _get_object_from_stream(
-        self, indirect_reference: IndirectObject
+        self, indirect_ref: IndirectObject
     ) -> Union[int, PdfObject, str]:
         # indirect reference to object in object stream
         # read the entire object stream into memory
-        stmnum, idx = self.xref_objStm[indirect_reference.idnum]
+        stmnum, idx = self.xref_objStm[indirect_ref.idnum]
         obj_stm: EncodedStreamObject = IndirectObject(stmnum, 0, self).get_object()  # type: ignore
         # This is an xref to a stream, so its type better be a stream
         assert cast(str, obj_stm["/Type"]) == "/ObjStm"
@@ -1130,7 +1130,7 @@ class PdfReader:
             offset = NumberObject.read_from_stream(stream_data)
             read_non_whitespace(stream_data)
             stream_data.seek(-1, 1)
-            if objnum != indirect_reference.idnum:
+            if objnum != indirect_ref.idnum:
                 # We're only interested in one object
                 continue
             if self.strict and idx != i:
@@ -1148,7 +1148,7 @@ class PdfReader:
                 # Adobe Reader doesn't complain, so continue (in strict mode?)
                 logger_warning(
                     f"Invalid stream (index {i}) within object "
-                    f"{indirect_reference.idnum} {indirect_reference.generation}: "
+                    f"{indirect_ref.idnum} {indirect_ref.generation}: "
                     f"{exc}",
                     __name__,
                 )

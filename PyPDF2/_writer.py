@@ -200,10 +200,10 @@ class PdfWriter:
         self._objects.append(obj)
         return IndirectObject(len(self._objects), 0, self)
 
-    def get_object(self, ido: IndirectObject) -> PdfObject:
-        if ido.pdf != self:
+    def get_object(self, indirect_ref: IndirectObject) -> PdfObject:
+        if indirect_ref.pdf != self:
             raise ValueError("pdf must be self")
-        return self._objects[ido.idnum - 1]  # type: ignore
+        return self._objects[indirect_ref.idnum - 1]  # type: ignore
 
     def getObject(self, ido: IndirectObject) -> PdfObject:  # pragma: no cover
         """
