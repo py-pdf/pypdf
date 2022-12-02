@@ -1157,17 +1157,17 @@ class PdfWriter:
 
     def add_outline_item_destination(
         self,
-        dest: Union[PageObject, TreeObject],
+        pagedest: Union[PageObject, TreeObject],
         parent: Union[None, TreeObject, IndirectObject] = None,
     ) -> IndirectObject:
         if parent is None:
             parent = self.get_outline_root()
 
         parent = cast(TreeObject, parent.get_object())
-        dest_ref = self._add_object(dest)
-        parent.add_child(dest_ref, self)
+        pagedest_ref = self._add_object(pagedest)
+        parent.add_child(pagedest_ref, self)
 
-        return dest_ref
+        return pagedest_ref
 
     def add_bookmark_destination(
         self,
@@ -1337,12 +1337,12 @@ class PdfWriter:
             "This method is not yet implemented. Use :meth:`add_outline_item` instead."
         )
 
-    def add_named_destination_object(self, dest: PdfObject) -> IndirectObject:
-        dest_ref = self._add_object(dest)
+    def add_named_destination_object(self, pagedest: PdfObject) -> IndirectObject:
+        pagedest_ref = self._add_object(pagedest)
 
         nd = self.get_named_dest_root()
-        nd.extend([dest["/Title"], dest_ref])  # type: ignore
-        return dest_ref
+        nd.extend([pagedest["/Title"], pagedest_ref])  # type: ignore
+        return pagedest_ref
 
     def addNamedDestinationObject(
         self, dest: PdfObject
