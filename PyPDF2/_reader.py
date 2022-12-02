@@ -800,6 +800,20 @@ class PdfReader:
         deprecate_with_replacement("getOutlines", "outline")
         return self._get_outline(node, outline)
 
+    @property
+    def threads(self) -> Optional[ArrayObject]:
+        """
+        Read-only property for the list of threads see §8.3.2 from PDF 1.7 spec
+
+        :return: an Array of Dictionnaries with "/F" and "/I" properties
+                 or None if no articles.
+        """
+        catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
+        if CO.THREADS in catalog:
+            return cast("ArrayObject", catalog[CO.THREADS])
+        else:
+            return None
+
     def _get_page_number_by_indirect(
         self, indirect_ref: Union[None, int, NullObject, IndirectObject]
     ) -> int:
