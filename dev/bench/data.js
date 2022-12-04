@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1669969533842,
+  "lastUpdate": 1670169813231,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -19006,6 +19006,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0002621730999109791",
             "extra": "mean: 87.40470109090897 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "deb0667321bb1e60bea2d9b21700054f66e6b445",
+          "message": "MAINT: Use 'page_number' instead of 'pagenum' (#1365)\n\nThis PR ensures PyPDF2 uses page_number instead of pagenum as a parameter name.\r\n\r\n* It does not touch functions that are deprecated anyway.\r\n* The position of the new parameter is the same as the old one\r\n* The old parameter name is added to ensure that people who use the keyword-parameter don't have a breaking change.\r\n\r\nCredits to @mtd91429 who pointed out those inconsistencies in #1187",
+          "timestamp": "2022-12-04T17:02:25+01:00",
+          "tree_id": "823e20ad0e550c48d0cabfe42dc9703ec36729a3",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/deb0667321bb1e60bea2d9b21700054f66e6b445"
+        },
+        "date": 1670169812303,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0540174774597886,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0070732586669166285",
+            "extra": "mean: 948.7508711999993 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.602839973983164,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004584358572955942",
+            "extra": "mean: 79.3471949230779 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2588917092670784,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02262272336958778",
+            "extra": "mean: 3.8626188642000043 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.726050124067887,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005668744181589093",
+            "extra": "mean: 78.57897700000176 msec\nrounds: 12"
           }
         ]
       }
