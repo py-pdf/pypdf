@@ -469,10 +469,10 @@ class PdfReader:
         """
         .. deprecated:: 1.28.0
 
-            Use :code:`reader.pages[pageNumber]` instead.
+            Use :code:`reader.pages[page_number]` instead.
         """
         deprecate_with_replacement(
-            "reader.getPage(pageNumber)", "reader.pages[pageNumber]"
+            "reader.getPage(pageNumber)", "reader.pages[page_number]"
         )
         return self._get_page(pageNumber)
 
