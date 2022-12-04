@@ -578,7 +578,7 @@ def test_remove_child_in_tree():
     writer = PdfWriter()
     writer._add_object(tree)
     writer.add_page(reader.pages[0])
-    writer.add_outline_item("foo", pagenum=0)
+    writer.add_outline_item("foo", page_number=0)
     obj = writer._objects[-1]
     tree.add_child(obj, writer)
     tree.remove_child(obj)
