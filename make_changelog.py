@@ -8,12 +8,15 @@ from typing import List
 
 @dataclass(frozen=True)
 class Change:
+    """Capture the data of a git commit."""
+
     commit_hash: str
     prefix: str
     message: str
 
 
 def main(changelog_path: str):
+    """Create a changelog."""
     changelog = get_changelog(changelog_path)
     git_tag = get_most_recent_git_tag()
     changes = get_formatted_changes(git_tag)

@@ -175,7 +175,7 @@ class CryptFilter:
         return NotImplemented
 
     def decrypt_object(self, obj: PdfObject) -> PdfObject:
-        if isinstance(obj, ByteStringObject) or isinstance(obj, TextStringObject):
+        if isinstance(obj, (ByteStringObject, TextStringObject)):
             data = self.strCrypt.decrypt(obj.original_bytes)
             obj = create_string_object(data)
         elif isinstance(obj, StreamObject):

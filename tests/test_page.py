@@ -569,7 +569,7 @@ def test_extract_text_visitor_callbacks():
     )
 
     # We see ten rectangles (5 tabs, 5 boxes) but there are 64 rectangles (including some invisible ones).
-    assert 60 == len(rectangles)
+    assert len(rectangles) == 60
     rectangle2texts = {}
     for t in texts:
         for r in rectangles:
@@ -578,7 +578,7 @@ def test_extract_text_visitor_callbacks():
                 texts.append(t.text.strip())
                 break
     # Five boxes and the figure-description below.
-    assert 6 == len(rectangle2texts)
+    assert len(rectangle2texts) == 6
     box_texts = [" ".join(texts) for texts in rectangle2texts.values()]
     assert "Hydro Network" in box_texts
     assert "Hydro Events" in box_texts
