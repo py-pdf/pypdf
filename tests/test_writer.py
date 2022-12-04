@@ -7,8 +7,10 @@ import pytest
 from PyPDF2 import PageObject, PdfMerger, PdfReader, PdfWriter
 from PyPDF2.errors import PageSizeNotDefinedError
 from PyPDF2.generic import (
+    ArrayObject,
     IndirectObject,
     NameObject,
+    NumberObject,
     RectangleObject,
     StreamObject,
     TextStringObject,
@@ -342,6 +344,7 @@ def test_write_metadata():
     reader = PdfReader(pdf_path)
     writer = PdfWriter()
 
+    writer.add_page(reader.pages[0])
     for page in reader.pages:
         writer.add_page(page)
 
@@ -813,3 +816,53 @@ def test_write_empty_stream():
     with pytest.raises(ValueError) as exc:
         writer.write("")
     assert exc.value.args[0] == "Output(stream=) is empty."
+
+
+def test_startup_dest():
+    pdf_file_writer = PdfWriter()
+    pdf_file_writer.append_pages_from_reader(PdfReader(RESOURCE_ROOT / "issue-604.pdf"))
+
+    assert pdf_file_writer.open_destination is None
+    pdf_file_writer.open_destination = pdf_file_writer.pages[9]
+    # checked also using Acrobrat to verify the good page is opened
+    op = pdf_file_writer._root_object["/OpenAction"]
+    assert op[0] == pdf_file_writer.pages[9].indirect_ref
+    assert op[1] == "/Fit"
+    op = pdf_file_writer.open_destination
+    assert op.raw_get("/Page") == pdf_file_writer.pages[9].indirect_ref
+    assert op["/Type"] == "/Fit"
+    pdf_file_writer.open_destination = op
+    assert pdf_file_writer.open_destination == op
+
+    # irrelevant, just for coverage
+    pdf_file_writer._root_object[NameObject("/OpenAction")][0] = NumberObject(0)
+    pdf_file_writer.open_destination
+    with pytest.raises(Exception) as exc:
+        del pdf_file_writer._root_object[NameObject("/OpenAction")][0]
+        pdf_file_writer.open_destination
+    assert "Invalid Destination" in str(exc.value)
+
+    pdf_file_writer.open_destination = "Test"
+    # checked also using Acrobrat to verify open_destination
+    op = pdf_file_writer._root_object["/OpenAction"]
+    assert isinstance(op, TextStringObject)
+    assert op == "Test"
+    op = pdf_file_writer.open_destination
+    assert isinstance(op, TextStringObject)
+    assert op == "Test"
+
+    # irrelevant, this is just for coverage
+    pdf_file_writer._root_object[NameObject("/OpenAction")] = NumberObject(0)
+    assert pdf_file_writer.open_destination is None
+    pdf_file_writer.open_destination = None
+    assert "/OpenAction" not in pdf_file_writer._root_object
+    pdf_file_writer.open_destination = None
+
+
+def test_threads_empty():
+    writer = PdfWriter()
+    thr = writer.threads
+    assert isinstance(thr, ArrayObject)
+    assert len(thr) == 0
+    thr2 = writer.threads
+    assert thr == thr2
