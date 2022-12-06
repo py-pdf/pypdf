@@ -201,10 +201,10 @@ class PdfWriter:
         self._objects.append(obj)
         return IndirectObject(len(self._objects), 0, self)
 
-    def get_object(self, indirect_ref: IndirectObject) -> PdfObject:
-        if indirect_ref.pdf != self:
+    def get_object(self, indirect_reference: IndirectObject) -> PdfObject:
+        if indirect_reference.pdf != self:
             raise ValueError("pdf must be self")
-        return self._objects[indirect_ref.idnum - 1]  # type: ignore
+        return self._objects[indirect_reference.idnum - 1]  # type: ignore
 
     def getObject(self, ido: IndirectObject) -> PdfObject:  # pragma: no cover
         """
@@ -456,7 +456,7 @@ class PdfWriter:
         elif isinstance(dest, PageObject):
             self._root_object[NameObject("/OpenAction")] = Destination(
                 "Opening",
-                dest.indirect_ref if dest.indirect_ref is not None else NullObject(),
+                dest.indirect_reference if dest.indirect_reference is not None else NullObject(),
                 TextStringObject("/Fit"),
             ).dest_array
 
@@ -1024,15 +1024,15 @@ class PdfWriter:
 
                 # Update old hash value to new hash value
                 for old_hash in update_hashes:
-                    indirect_ref = self._idnum_hash.pop(old_hash, None)
+                    indirect_reference = self._idnum_hash.pop(old_hash, None)
 
-                    if indirect_ref is not None:
-                        indirect_ref_obj = indirect_ref.get_object()
+                    if indirect_reference is not None:
+                        indirect_reference_obj = indirect_reference.get_object()
 
-                        if indirect_ref_obj is not None:
+                        if indirect_reference_obj is not None:
                             self._idnum_hash[
-                                indirect_ref_obj.hash_value()
-                            ] = indirect_ref
+                                indirect_reference_obj.hash_value()
+                            ] = indirect_reference
 
     def _resolve_indirect_object(self, data: IndirectObject) -> IndirectObject:
         """
@@ -1181,17 +1181,17 @@ class PdfWriter:
 
     def add_outline_item_destination(
         self,
-        pagedest: Union[PageObject, TreeObject],
+        page_destination: Union[PageObject, TreeObject],
         parent: Union[None, TreeObject, IndirectObject] = None,
     ) -> IndirectObject:
         if parent is None:
             parent = self.get_outline_root()
 
         parent = cast(TreeObject, parent.get_object())
-        pagedest_ref = self._add_object(pagedest)
-        parent.add_child(pagedest_ref, self)
+        page_destination_ref = self._add_object(page_destination)
+        parent.add_child(page_destination_ref, self)
 
-        return pagedest_ref
+        return page_destination_ref
 
     def add_bookmark_destination(
         self,
@@ -1377,12 +1377,12 @@ class PdfWriter:
             "This method is not yet implemented. Use :meth:`add_outline_item` instead."
         )
 
-    def add_named_destination_object(self, pagedest: PdfObject) -> IndirectObject:
-        pagedest_ref = self._add_object(pagedest)
+    def add_named_destination_object(self, page_destination: PdfObject) -> IndirectObject:
+        page_destination_ref = self._add_object(page_destination)
 
         nd = self.get_named_dest_root()
-        nd.extend([pagedest["/Title"], pagedest_ref])  # type: ignore
-        return pagedest_ref
+        nd.extend([page_destination["/Title"], page_destination_ref])  # type: ignore
+        return page_destination_ref
 
     def addNamedDestinationObject(
         self, dest: PdfObject
@@ -1697,7 +1697,7 @@ class PdfWriter:
     def add_link(
         self,
         pagenum: int,  # deprecated, but method is deprecated already
-        pagedest: int,
+        page_destination: int,
         rect: RectangleObject,
         border: Optional[ArrayObject] = None,
         fit: FitType = "/Fit",
@@ -1720,7 +1720,7 @@ class PdfWriter:
         annotation = AnnotationBuilder.link(
             rect=rect,
             border=border,
-            target_page_index=pagedest,
+            target_page_index=page_destination,
             fit=fit,
             fit_args=args,
         )
@@ -1729,7 +1729,7 @@ class PdfWriter:
     def addLink(
         self,
         pagenum: int,  # deprecated, but method is deprecated already
-        pagedest: int,
+        page_destination: int,
         rect: RectangleObject,
         border: Optional[ArrayObject] = None,
         fit: FitType = "/Fit",
@@ -1743,7 +1743,7 @@ class PdfWriter:
         deprecate_with_replacement(
             "addLink", "add_annotation(AnnotationBuilder.link(...))", "4.0.0"
         )
-        return self.add_link(pagenum, pagedest, rect, border, fit, *args)
+        return self.add_link(pagenum, page_destination, rect, border, fit, *args)
 
     _valid_layouts = (
         "/NoLayout",

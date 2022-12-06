@@ -304,7 +304,7 @@ class PdfReader:
         self.xref_index = 0
         self._page_id2num: Optional[
             Dict[Any, Any]
-        ] = None  # map page indirect_ref number to Page Number
+        ] = None  # map page indirect_reference number to Page Number
         if hasattr(stream, "mode") and "b" not in stream.mode:  # type: ignore
             logger_warning(
                 "PdfReader stream/file object is not in binary mode. "
@@ -815,20 +815,20 @@ class PdfReader:
             return None
 
     def _get_page_number_by_indirect(
-        self, indirect_ref: Union[None, int, NullObject, IndirectObject]
+        self, indirect_reference: Union[None, int, NullObject, IndirectObject]
     ) -> int:
         """Generate _page_id2num"""
         if self._page_id2num is None:
             self._page_id2num = {
-                x.indirect_ref.idnum: i for i, x in enumerate(self.pages)  # type: ignore
+                x.indirect_reference.idnum: i for i, x in enumerate(self.pages)  # type: ignore
             }
 
-        if indirect_ref is None or isinstance(indirect_ref, NullObject):
+        if indirect_reference is None or isinstance(indirect_reference, NullObject):
             return -1
-        if isinstance(indirect_ref, int):
-            idnum = indirect_ref
+        if isinstance(indirect_reference, int):
+            idnum = indirect_reference
         else:
-            idnum = indirect_ref.idnum
+            idnum = indirect_reference.idnum
         assert self._page_id2num is not None, "hint for mypy"
         ret = self._page_id2num.get(idnum, -1)
         return ret
@@ -841,7 +841,7 @@ class PdfReader:
             an instance of :class:`PageObject<PyPDF2._page.PageObject>`
         :return: the page number or -1 if page not found
         """
-        return self._get_page_number_by_indirect(page.indirect_ref)
+        return self._get_page_number_by_indirect(page.indirect_reference)
 
     def getPageNumber(self, page: PageObject) -> int:  # pragma: no cover
         """
@@ -904,10 +904,10 @@ class PdfReader:
                 if self.strict:
                     raise
                 # create a link to first Page
-                tmp = self.pages[0].indirect_ref
-                indirect_ref = NullObject() if tmp is None else tmp
+                tmp = self.pages[0].indirect_reference
+                indirect_reference = NullObject() if tmp is None else tmp
                 return Destination(
-                    title, indirect_ref, TextStringObject("/Fit")  # type: ignore
+                    title, indirect_reference, TextStringObject("/Fit")  # type: ignore
                 )
 
     def _build_outline_item(self, node: DictionaryObject) -> Optional[Destination]:
@@ -1081,7 +1081,7 @@ class PdfReader:
         self,
         pages: Union[None, DictionaryObject, PageObject] = None,
         inherit: Optional[Dict[str, Any]] = None,
-        indirect_ref: Optional[IndirectObject] = None,
+        indirect_reference: Optional[IndirectObject] = None,
     ) -> None:
         inheritable_page_attributes = (
             NameObject(PG.RESOURCES),
@@ -1109,7 +1109,7 @@ class PdfReader:
             for page in pages[PA.KIDS]:  # type: ignore
                 addt = {}
                 if isinstance(page, IndirectObject):
-                    addt["indirect_ref"] = page
+                    addt["indirect_reference"] = page
                 self._flatten(page.get_object(), inherit, **addt)
         elif t == "/Page":
             for attr_in, value in list(inherit.items()):
@@ -1117,18 +1117,18 @@ class PdfReader:
                 # parent's value:
                 if attr_in not in pages:
                     pages[attr_in] = value
-            page_obj = PageObject(self, indirect_ref)
+            page_obj = PageObject(self, indirect_reference)
             page_obj.update(pages)
 
             # TODO: Could flattened_pages be None at this point?
             self.flattened_pages.append(page_obj)  # type: ignore
 
     def _get_object_from_stream(
-        self, indirect_ref: IndirectObject
+        self, indirect_reference: IndirectObject
     ) -> Union[int, PdfObject, str]:
         # indirect reference to object in object stream
         # read the entire object stream into memory
-        stmnum, idx = self.xref_objStm[indirect_ref.idnum]
+        stmnum, idx = self.xref_objStm[indirect_reference.idnum]
         obj_stm: EncodedStreamObject = IndirectObject(stmnum, 0, self).get_object()  # type: ignore
         # This is an xref to a stream, so its type better be a stream
         assert cast(str, obj_stm["/Type"]) == "/ObjStm"
@@ -1144,7 +1144,7 @@ class PdfReader:
             offset = NumberObject.read_from_stream(stream_data)
             read_non_whitespace(stream_data)
             stream_data.seek(-1, 1)
-            if objnum != indirect_ref.idnum:
+            if objnum != indirect_reference.idnum:
                 # We're only interested in one object
                 continue
             if self.strict and idx != i:
@@ -1162,7 +1162,7 @@ class PdfReader:
                 # Adobe Reader doesn't complain, so continue (in strict mode?)
                 logger_warning(
                     f"Invalid stream (index {i}) within object "
-                    f"{indirect_ref.idnum} {indirect_ref.generation}: "
+                    f"{indirect_reference.idnum} {indirect_reference.generation}: "
                     f"{exc}",
                     __name__,
                 )
