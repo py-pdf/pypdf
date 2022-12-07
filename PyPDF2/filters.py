@@ -602,7 +602,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
                 from .generic import ByteStringObject
 
                 if isinstance(lookup, ByteStringObject):
-                    if base == ColorSpaces.DEVICE_GRAY and len(lookup) <= 256:
+                    if base == ColorSpaces.DEVICE_GRAY and len(lookup) == hival + 1:
                         lookup = b"".join([lookup[i:i + 1] * 3 for i in range(len(lookup))])
                     img.putpalette(lookup)
                 else:
