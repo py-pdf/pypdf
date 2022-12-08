@@ -33,3 +33,21 @@ Projects that depend on PyPDF2:
   * [xhtml2pdf](https://github.com/xhtml2pdf/xhtml2pdf)
   * [doc2text](https://github.com/jlsutherland/doc2text)
 * [pdfalyzer](https://pypi.org/project/pdfalyzer/): A PDF analysis tool for visualizing the inner tree-like data structure of a PDF in spectacularly large and colorful diagrams as well as scanning the binary streams embedded in the PDF for hidden potentially malicious content.
+
+## How do I cite PyPDF2?
+
+In BibTeX format:
+
+```
+@misc{fenniak2022,
+ title         = {The {PyPDF2} library},
+ author        = {Mathieu Fenniak and
+                  Matthew Stamy and
+                  pubpub-zz and
+                  Martin Thoma and
+                  Matthew Peveler and
+                  exiledkingcc},
+ year          = {2022},
+ url           = {https://pypi.org/project/PyPDF2/}
+}
+```
