@@ -39,7 +39,7 @@ Projects that depend on PyPDF2:
 In BibTeX format:
 
 ```
-@misc{fenniak2022,
+@misc{pypdf2,
  title         = {The {PyPDF2} library},
  author        = {Mathieu Fenniak and
                   Matthew Stamy and
