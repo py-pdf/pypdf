@@ -46,7 +46,7 @@ In BibTeX format:
                   pubpub-zz and
                   Martin Thoma and
                   Matthew Peveler and
-                  exiledkingcc},
+                  exiledkingcc and {PyPDF2 Contributors}},
  year          = {2022},
  url           = {https://pypi.org/project/PyPDF2/}
 }
