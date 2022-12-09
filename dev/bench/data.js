@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1670537170756,
+  "lastUpdate": 1670614362178,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -19162,6 +19162,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0013155437450380273",
             "extra": "mean: 85.5470596363649 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "b05901143@ntu.edu.tw",
+            "name": "joeywang4",
+            "username": "joeywang4"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "22214e83d24c346e4633f32ec6d77c62f799c79d",
+          "message": "Add support to extract gray scale images (#1460)",
+          "timestamp": "2022-12-09T20:31:17+01:00",
+          "tree_id": "03a2a91b205013070cf9a48058cbe21d3f15fa81",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/22214e83d24c346e4633f32ec6d77c62f799c79d"
+        },
+        "date": 1670614360533,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8692325989613738,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023213950863804917",
+            "extra": "mean: 1.1504400562000057 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.387017349419128,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006171249760456715",
+            "extra": "mean: 96.27402808332874 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21361145501028087,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0730600754909929",
+            "extra": "mean: 4.681396884599991 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.17721873917252,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002320193458948737",
+            "extra": "mean: 98.25867219999509 msec\nrounds: 10"
           }
         ]
       }
