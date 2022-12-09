@@ -185,7 +185,7 @@ def test_get_outline(src, outline_elements):
             marks=pytest.mark.xfail(reason="broken image extraction"),
         ),
         ("imagemagick-CCITTFaxDecode.pdf", ["Im0.tiff"]),
-        ("grayscale.pdf", ["X0.png"]),
+        (SAMPLE_ROOT / "019-grayscale-image/grayscale-image.pdf", ["X0.png"]),
     ],
 )
 def test_get_images(src, expected_images):
@@ -205,7 +205,7 @@ def test_get_images(src, expected_images):
     for image, expected_image in zip(images_extracted, expected_images):
         assert image.name == expected_image
         try:
-            fn = f"test-out-{src}-{image.name}"
+            fn = f"{src}-test-out-{image.name}"
             with open(fn, "wb") as fp:
                 fp.write(image.data)
                 assert (
