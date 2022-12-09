@@ -10,7 +10,7 @@ attrs==21.4.0
     # via markdown-it-py
 babel==2.10.3
     # via sphinx
-certifi==2022.6.15
+certifi==2022.12.7
     # via requests
 charset-normalizer==2.0.12
     # via requests
@@ -22,8 +22,6 @@ docutils==0.17.1
 idna==3.3
     # via requests
 imagesize==1.4.1
-    # via sphinx
-importlib-metadata==4.8.3
     # via sphinx
 jinja2==3.0.3
     # via
@@ -40,7 +38,7 @@ mdit-py-plugins==0.3.0
 mdurl==0.1.0
     # via markdown-it-py
 myst-parser==0.16.1
-    # via -r requirements/docs.in
+    # via -r docs.in
 packaging==21.3
     # via sphinx
 pygments==2.12.0
@@ -57,11 +55,11 @@ snowballstemmer==2.2.0
     # via sphinx
 sphinx==4.5.0
     # via
-    #   -r requirements/docs.in
+    #   -r docs.in
     #   myst-parser
     #   sphinx-rtd-theme
 sphinx-rtd-theme==1.0.0
-    # via -r requirements/docs.in
+    # via -r docs.in
 sphinxcontrib-applehelp==1.0.2
     # via sphinx
 sphinxcontrib-devhelp==1.0.2
@@ -74,11 +72,5 @@ sphinxcontrib-qthelp==1.0.3
     # via sphinx
 sphinxcontrib-serializinghtml==1.1.5
     # via sphinx
-typing-extensions==4.1.1
-    # via
-    #   importlib-metadata
-    #   markdown-it-py
 urllib3==1.26.10
     # via requests
-zipp==3.6.0
-    # via importlib-metadata
