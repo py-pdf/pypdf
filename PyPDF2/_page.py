@@ -58,6 +58,7 @@ from ._utils import (
 from .constants import ImageAttributes as IA
 from .constants import PageAttributes as PG
 from .constants import Ressources as RES
+from .constants import AnnotationDictionaryAttributes as ADA
 from .errors import PageSizeNotDefinedError
 from .filters import _xobj_to_image
 from .generic import (
@@ -1057,6 +1058,19 @@ class PageObject(DictionaryObject):
         self.bleedbox = self.bleedbox.scale(sx, sy)
         self.trimbox = self.trimbox.scale(sx, sy)
         self.mediabox = self.mediabox.scale(sx, sy)
+
+        if PG.ANNOTS in self:
+            annotations = self[PG.ANNOTS]
+            for annotation in annotations:
+                annotation_obj = annotation.get_object()
+                if ADA.Rect in annotation_obj:
+                    rectangle = annotation_obj[ADA.Rect]
+                    if isinstance(rectangle, ArrayObject):
+                        rectangle[0] = FloatObject(float(rectangle[0]) * sx)
+                        rectangle[1] = FloatObject(float(rectangle[1]) * sy)
+                        rectangle[2] = FloatObject(float(rectangle[2]) * sx)
+                        rectangle[3] = FloatObject(float(rectangle[3]) * sy)
+
         if PG.VP in self:
             viewport = self[PG.VP]
             if isinstance(viewport, ArrayObject):
