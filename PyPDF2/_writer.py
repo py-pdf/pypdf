@@ -842,19 +842,20 @@ class PdfWriter:
         if user_password is None:
             raise ValueError("user_password may not be None")
 
-        if owner_password is not None and owner_pwd is not None:
-            raise ValueError(
-                "The argument owner_pwd of encrypt is deprecated. Use owner_password only."
-            )
         if owner_pwd is not None:
-            old_term = "owner_pwd"
-            new_term = "owner_password"
-            warnings.warn(
-                message=(
-                    f"{old_term} is deprecated as an argument. Use {new_term} instead"
+            if owner_password is not None:
+                raise ValueError(
+                    "The argument owner_pwd of encrypt is deprecated. Use owner_password only."
                 )
-            )
-            owner_password = owner_pwd
+            else:
+                old_term = "owner_pwd"
+                new_term = "owner_password"
+                warnings.warn(
+                    message=(
+                        f"{old_term} is deprecated as an argument. Use {new_term} instead"
+                    )
+                )
+                owner_password = owner_pwd
 
         if owner_password is None:
             owner_password = user_password
