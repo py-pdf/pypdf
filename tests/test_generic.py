@@ -476,7 +476,7 @@ def test_remove_child_not_in_that_tree():
     tree = TreeObject()
     tree.indirect_reference = NullObject()
     child = TreeObject()
-    child.indirect_ref = NullObject()
+    child.indirect_reference = NullObject()
     with pytest.raises(ValueError) as exc:
         child.remove_from_tree()
     assert exc.value.args[0] == "Removed child does not appear to be a tree item"
@@ -957,23 +957,23 @@ def test_cloning(caplog):
     assert "clone PdfObject" in exc.value.args[0]
 
     obj1 = DictionaryObject()
-    obj1.indirect_ref = None
+    obj1.indirect_reference = None
     n = len(writer._objects)
     obj2 = obj1.clone(writer)
     assert len(writer._objects) == n + 1
     obj3 = obj2.clone(writer)
     assert len(writer._objects) == n + 1
-    assert obj2.indirect_ref == obj3.indirect_ref
+    assert obj2.indirect_reference == obj3.indirect_ref
     obj3 = obj2.indirect_reference.clone(writer)
     assert len(writer._objects) == n + 1
-    assert obj2.indirect_ref == obj3.indirect_ref
-    assert obj2.indirect_ref == obj2._reference_clone(obj2, writer).indirect_ref
+    assert obj2.indirect_reference == obj3.indirect_ref
+    assert obj2.indirect_reference == obj2._reference_clone(obj2, writer).indirect_reference
     assert len(writer._objects) == n + 1
-    assert obj2.indirect_ref == obj3.indirect_ref
+    assert obj2.indirect_reference == obj3.indirect_reference
 
     obj3 = obj2.indirect_reference.clone(writer, True)
     assert len(writer._objects) == n + 2
-    assert obj2.indirect_ref != obj3.indirect_ref
+    assert obj2.indirect_reference != obj3.indirect_reference
 
     arr1 = ArrayObject([obj2])
     arr2 = arr1.clone(writer)

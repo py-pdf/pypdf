@@ -90,8 +90,8 @@ class ArrayObject(list, PdfObject):
         arr = cast("ArrayObject", self._reference_clone(ArrayObject(), pdf_dest))
         for data in self:
             if isinstance(data, StreamObject):
-                # if not hasattr(data, "indirect_ref"):
-                #    data.indirect_ref = None
+                # if not hasattr(data, "indirect_reference"):
+                #    data.indirect_reference = None
                 dup = data._reference_clone(
                     data.clone(pdf_dest, force_duplicate, ignore_fields), pdf_dest
                 )
@@ -232,10 +232,10 @@ class DictionaryObject(dict, PdfObject):
             if k not in ignore_fields:
                 if isinstance(v, StreamObject):
                     if not hasattr(v, "indirect_ref"):
-                        v.indirect_ref = None
+                        v.indirect_reference = None
                     vv = v.clone(pdf_dest, force_duplicate, ignore_fields)
-                    assert vv.indirect_ref is not None
-                    self[k.clone(pdf_dest)] = vv.indirect_ref  # type: ignore[attr-defined]
+                    assert vv.indirect_reference is not None
+                    self[k.clone(pdf_dest)] = vv.indirect_reference  # type: ignore[attr-defined]
                 else:
                     if k not in self:
                         self[NameObject(k)] = (
@@ -519,7 +519,7 @@ class TreeObject(DictionaryObject):
                 inc_parent_counter(parent.get("/Parent", None), n)
 
         child_obj = child.get_object()
-        child = child.indirect_ref  # get_reference(child_obj)
+        child = child.indirect_reference  # get_reference(child_obj)
         # assert isinstance(child, IndirectObject)
 
         prev: Optional[DictionaryObject]
@@ -537,7 +537,7 @@ class TreeObject(DictionaryObject):
         else:
             prev = cast("DictionaryObject", self["/Last"])
 
-        while prev.indirect_ref != before:
+        while prev.indirect_reference != before:
             if "/Next" in prev:
                 prev = cast("TreeObject", prev["/Next"])
             else:  # append at the end

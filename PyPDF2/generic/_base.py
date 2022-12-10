@@ -248,8 +248,8 @@ class IndirectObject(PdfObject):
             assert obj is not None
             dup = obj.clone(pdf_dest, force_duplicate, ignore_fields)
         assert dup is not None
-        assert dup.indirect_ref is not None
-        return dup.indirect_ref
+        assert dup.indirect_reference is not None
+        return dup.indirect_reference
 
     @property
     def indirect_ref(self) -> "IndirectObject":  # type: ignore[override]
