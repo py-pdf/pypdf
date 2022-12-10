@@ -261,8 +261,8 @@ class PdfWriter:
         # therefore in order to add easily multiple copies of the same page, we need to create a new
         # dictionary for the page, however the objects below (including content) is not duplicated
         try:  # delete an already existing page
-            del self._id_translated[id(page_org.indirect_ref.pdf)][  # type: ignore
-                page_org.indirect_ref.idnum  # type: ignore
+            del self._id_translated[id(page_org.indirect_reference.pdf)][  # type: ignore
+                page_org.indirect_reference.idnum  # type: ignore
             ]
         except Exception:
             pass
@@ -2373,15 +2373,15 @@ class PdfWriter:
             pg = reader.pages[i]
             assert pg.indirect_reference is not None
             if position is None:
-                srcpages[pg.indirect_ref.idnum] = self.add_page(
+                srcpages[pg.indirect_reference.idnum] = self.add_page(
                     pg, list(excluded_fields) + ["/B", "/Annots"]  # type: ignore
                 )
             else:
-                srcpages[pg.indirect_ref.idnum] = self.insert_page(
+                srcpages[pg.indirect_reference.idnum] = self.insert_page(
                     pg, position, list(excluded_fields) + ["/B", "/Annots"]  # type: ignore
                 )
                 position += 1
-            srcpages[pg.indirect_ref.idnum].original_page = pg
+            srcpages[pg.indirect_reference.idnum].original_page = pg
 
         reader._namedDests = (
             reader.named_destinations
@@ -2391,9 +2391,9 @@ class PdfWriter:
             # try:
             if isinstance(dest["/Page"], NullObject):
                 pass  # self.add_named_destination_array(dest["/Title"],arr)
-            elif dest["/Page"].indirect_ref.idnum in srcpages:
+            elif dest["/Page"].indirect_reference.idnum in srcpages:
                 arr[NumberObject(0)] = srcpages[
-                    dest["/Page"].indirect_ref.idnum
+                    dest["/Page"].indirect_reference.idnum
                 ].indirect_ref
                 self.add_named_destination_array(dest["/Title"], arr)
             # except Exception as e:
@@ -2507,7 +2507,7 @@ class PdfWriter:
             pp = p.original_page
             for a in pp.get("/B", ()):
                 thr = a.get_object()["/T"]
-                if thr.indirect_ref.idnum not in self._id_translated[
+                if thr.indirect_reference.idnum not in self._id_translated[
                     id(reader)
                 ] and fltr.search(thr["/I"]["/Title"]):
                     self._add_articles_thread(thr, pages, reader)
