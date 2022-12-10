@@ -216,7 +216,7 @@ class DictionaryObject(dict, PdfObject):
                             )
                             objs.append((cur_obj, clon))
                             assert prev_obj is not None
-                            prev_obj[NameObject(k)] = clon.indirect_ref
+                            prev_obj[NameObject(k)] = clon.indirect_reference
                             prev_obj = clon
                             try:
                                 if cur_obj == src:
