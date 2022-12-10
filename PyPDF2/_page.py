@@ -1304,39 +1304,11 @@ class PageObject(DictionaryObject):
         visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None,
     ) -> str:
         """
-        Locate all text drawing commands, in the order they are provided in the
-        content stream, and extract the text.  This works well for some PDF
-        files, but poorly for others, depending on the generator used.  This will
-        be refined in the future.  Do not rely on the order of text coming out of
-        this function, as it will change if this function is made more
-        sophisticated.
+        See extract_text for most arguments.
 
-        Arabic, Hebrew,... are extracted in the good order. If required an custom RTL range of characters
-        can be defined; see function set_custom_rtl
-
-        Additionally you can provide visitor-methods to get informed on all operands and all text-objects.
-        For example in some PDF files this can be useful to parse tables.
-
-        :param Tuple[int, ...] orientations: list of orientations text_extraction will look for
-                    default = (0, 90, 180, 270)
-                note: currently only 0(Up),90(turned Left), 180(upside Down), 270 (turned Right)
-        :param float space_width: force default space width
-                    (if not extracted from font (default 200)
         :param Optional[str] content_key: indicate the default key where to extract data
             None = the object; this allow to reuse the function on XObject
             default = "/Content"
-        :param Optional[Function] visitor_operand_before: function to be called before processing an operand.
-            It has four arguments: operand, operand-arguments,
-                current transformation matrix and text matrix.
-        :param Optional[Function] visitor_operand_after: function to be called after processing an operand.
-            It has four arguments: operand, operand-arguments,
-                current transformation matrix and text matrix.
-        :param Optional[Function] visitor_text: function to be called when extracting some text at some position.
-            It has five arguments: text,
-                current transformation matrix, text matrix, font-dictionary and font-size.
-            The font-dictionary may be None in case of unknown fonts.
-            If not None it may e.g. contain key "/BaseFont" with value "/Arial,Bold".
-        :return: a string object.
         """
         text: str = ""
         output: str = ""
@@ -1796,30 +1768,36 @@ class PageObject(DictionaryObject):
         content stream, and extract the text.
 
         This works well for some PDF files, but poorly for others, depending on
-        the generator used.  This will be refined in the future.
+        the generator used. This will be refined in the future.
 
         Do not rely on the order of text coming out of this function, as it
         will change if this function is made more sophisticated.
 
-        Additionally you can provide visitor-methods to get informed on
-        all operations and all text-objects.
+        Arabic, Hebrew,... are extracted in the good order.
+        If required an custom RTL range of characters can be defined; see function set_custom_rtl
+
+        Additionally you can provide visitor-methods to get informed on all operands and all text-objects.
         For example in some PDF files this can be useful to parse tables.
 
         :param Tj_sep: Deprecated. Kept for compatibility until PyPDF2==4.0.0
         :param TJ_sep: Deprecated. Kept for compatibility until PyPDF2==4.0.0
-        :param orientations: (list of) orientations (of the characters) (default: (0,90,270,360))
-                single int is equivalent to a singleton ( 0 == (0,) )
-                note: currently only 0(Up),90(turned Left), 180(upside Down),270 (turned Right)
-        :param float space_width: force default space width (if not extracted from font (default: 200)
+        :param Tuple[int, ...] orientations: list of orientations text_extraction will look for
+            default = (0, 90, 180, 270)
+            note: currently only 0(Up),90(turned Left), 180(upside Down),
+            270 (turned Right)
+        :param float space_width: force default space width
+            if not extracted from font (default: 200)
         :param Optional[Function] visitor_operand_before: function to be called before processing an operand.
-            It has four arguments: operator, operand-arguments,
-                current transformation matrix and text matrix.
+            It has four arguments: operand, operand-arguments,
+            current transformation matrix and text matrix.
         :param Optional[Function] visitor_operand_after: function to be called after processing an operand.
             It has four arguments: operand, operand-arguments,
-                current transformation matrix and text matrix.
+            current transformation matrix and text matrix.
         :param Optional[Function] visitor_text: function to be called when extracting some text at some position.
-            It has three arguments: text,
-                current transformation matrix and text matrix.
+            It has five arguments: text, current transformation matrix,
+            text matrix, font-dictionary and font-size.
+            The font-dictionary may be None in case of unknown fonts.
+            If not None it may e.g. contain key "/BaseFont" with value "/Arial,Bold".
         :return: The extracted text
         """
         if len(args) >= 1:
