@@ -298,7 +298,7 @@ class PageObject(DictionaryObject):
 
         DictionaryObject.__init__(self)
         self.pdf: Optional[PdfReader] = pdf
-        if indirect_ref is not None:
+        if indirect_ref is not None:  # deprecated
             warnings.warn(
                 "Use indirect_reference instead of indirect_ref.", DeprecationWarning
             )
