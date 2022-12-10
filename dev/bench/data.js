@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1670696278474,
+  "lastUpdate": 1670697069753,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -19786,6 +19786,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.001668697703641032",
             "extra": "mean: 97.82889200000113 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "ce0e190b702dba15fe1238f1491dbf9b6c5b080e",
+          "message": "REL: 2.12.1\n\nDocumentation (DOC)\n-  Deduplicate extract_text docstring (#1485)\n-  How to cite PyPDF2 (#1476)\n\nMaintenance (MAINT)\n  Consistency changes:\n  -  indirect_ref/ido ➔ indirect_reference, dest➔ page_destination (#1467)\n  -  owner_pwd/user_pwd ➔ owner_password/user_password (#1483)\n  -  position ➜ page_number in Merger.merge (#1482)\n  -  indirect_ref ➜ indirect_reference (#1484)\n\n[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/2.12.0...2.12.1)",
+          "timestamp": "2022-12-10T19:29:12+01:00",
+          "tree_id": "00b3fd6bc678640a6fa029739df9dd8b81c8f713",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/ce0e190b702dba15fe1238f1491dbf9b6c5b080e"
+        },
+        "date": 1670697068253,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0059594142254136,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012221695025137223",
+            "extra": "mean: 994.0758899999935 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.378071744307778,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006976526732263268",
+            "extra": "mean: 80.78802746153603 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24417428716767758,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013714719771839332",
+            "extra": "mean: 4.095435320400003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.271882448677697,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006789769778946952",
+            "extra": "mean: 88.716326181818 msec\nrounds: 11"
           }
         ]
       }
