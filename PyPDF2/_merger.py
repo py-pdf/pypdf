@@ -171,12 +171,12 @@ class PdfMerger:
             old_term = "position"
             new_term = "page_number"
             warnings.warn(
-                message = (
+                message=(
                     f"{old_term} is deprecated as an argument. Use {new_term} instead"
                 )
             )
             page_number = position
-        if(page_number is None):
+        if page_number is None:
             raise ValueError("page_number may not be None")
 
         stream, encryption_obj = self._create_stream(fileobj)

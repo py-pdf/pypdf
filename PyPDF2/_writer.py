@@ -810,14 +810,14 @@ class PdfWriter:
             old_term = "user_pwd"
             new_term = "user_password"
             warnings.warn(
-                message = (
+                message=(
                     f"{old_term} is deprecated as an argument. Use {new_term} instead"
                 )
             )
             user_password = user_pwd
-        if(user_password is None):
+        if user_password is None:
             raise ValueError("page_destination may not be None")
-        
+
         if owner_password is not None and owner_pwd is not None:
             raise ValueError(
                 "The argument owner_pwd of encrypt is deprecated. Use owner_password only."
@@ -826,7 +826,7 @@ class PdfWriter:
             old_term = "owner_pwd"
             new_term = "owner_password"
             warnings.warn(
-                message = (
+                message=(
                     f"{old_term} is deprecated as an argument. Use {new_term} instead"
                 )
             )
@@ -1225,14 +1225,14 @@ class PdfWriter:
             old_term = "dest"
             new_term = "page_destination"
             warnings.warn(
-                message = (
+                message=(
                     f"{old_term} is deprecated as an argument. Use {new_term} instead"
                 )
             )
             page_destination = dest
-        if(page_destination is None):
+        if page_destination is None:
             raise ValueError("page_destination may not be None")
-        
+
         if parent is None:
             parent = self.get_outline_root()
 
@@ -1433,20 +1433,20 @@ class PdfWriter:
     ) -> IndirectObject:
         if page_destination is not None and dest is not None:
             raise ValueError(
-                "The argument dest of add_named_destination is deprecated. Use page_destination only."
+                "The argument dest of add_named_destination_object is deprecated. Use page_destination only."
             )
         if dest is not None:
             old_term = "dest"
             new_term = "page_destination"
             warnings.warn(
-                message = (
+                message=(
                     f"{old_term} is deprecated as an argument. Use {new_term} instead"
                 )
             )
             page_destination = dest
-        if(page_destination is None):
+        if page_destination is None:
             raise ValueError("page_destination may not be None")
-        
+
         dest_ref = self._add_object(page_destination)
 
         nd = self.get_named_dest_root()
