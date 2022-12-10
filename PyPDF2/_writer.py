@@ -2581,7 +2581,7 @@ class PdfWriter:
                         cast("DictionaryObject", anc["/A"])[
                             NameObject("/D")
                         ] = ArrayObject([p] + d[1:])
-                        outlist.append(anc.indirect_ref)
+                        outlist.append(anc.indirect_reference)
         return outlist
 
     def _get_filtered_outline(
