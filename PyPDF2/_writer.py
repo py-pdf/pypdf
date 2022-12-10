@@ -836,7 +836,7 @@ class PdfWriter:
             )
             user_password = user_pwd
         if user_password is None:
-            raise ValueError("page_destination may not be None")
+            raise ValueError("user_password may not be None")
 
         if owner_password is not None and owner_pwd is not None:
             raise ValueError(
