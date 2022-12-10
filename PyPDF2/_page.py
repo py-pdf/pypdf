@@ -1301,6 +1301,13 @@ class PageObject(DictionaryObject):
         visitor_operand_after: Optional[Callable[[Any, Any, Any, Any], None]] = None,
         visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]] = None,
     ) -> str:
+        """
+        See extract_text for most arguments.
+
+        :param Optional[str] content_key: indicate the default key where to extract data
+            None = the object; this allow to reuse the function on XObject
+            default = "/Content"
+        """
         text: str = ""
         output: str = ""
         rtl_dir: bool = False  # right-to-left
@@ -1777,10 +1784,7 @@ class PageObject(DictionaryObject):
             note: currently only 0(Up),90(turned Left), 180(upside Down),
             270 (turned Right)
         :param float space_width: force default space width
-            (if not extracted from font (default 200)
-        :param Optional[str] content_key: indicate the default key where to extract data
-            None = the object; this allow to reuse the function on XObject
-            default = "/Content"
+            if not extracted from font (default: 200)
         :param Optional[Function] visitor_operand_before: function to be called before processing an operand.
             It has four arguments: operand, operand-arguments,
             current transformation matrix and text matrix.
