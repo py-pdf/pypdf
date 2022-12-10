@@ -1542,7 +1542,7 @@ class PdfWriter:
         nd.extend([TextStringObject(title), destination])
         return
 
-    def add_named_destination_array(
+    def add_named_destination_object(
         self,
         page_destination: Optional[PdfObject] = None,
         dest: Optional[PdfObject] = None,
@@ -1567,13 +1567,7 @@ class PdfWriter:
         self.add_named_destination_array(
             cast("TextStringObject", dest["/Title"]), page_destination_ref
         )
-        return page_destination_ref
 
-    def add_named_destination_object(self, page_destination: Destination) -> IndirectObject:
-        page_destination_ref = self._add_object(page_destination.dest_array)
-        self.add_named_destination_array(
-            cast("TextStringObject", page_destination["/Title"]), page_destination_ref
-        )
         return page_destination_ref
 
     def addNamedDestinationObject(
