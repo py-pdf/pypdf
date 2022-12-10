@@ -133,17 +133,18 @@ class PdfMerger:
     @deprecate_bookmark(bookmark="outline_item", import_bookmarks="import_outline")
     def merge(
         self,
-        position: int,
-        fileobj: Union[Path, StrByteType, PdfReader],
+        page_number: Optional[int] = None,
+        fileobj: Union[Path, StrByteType, PdfReader] = None,
         outline_item: Optional[str] = None,
         pages: Optional[PageRangeSpec] = None,
         import_outline: bool = True,
+        position: Optional[int] = None,  # deprecated
     ) -> None:
         """
         Merge the pages from the given file into the output file at the
         specified page number.
 
-        :param int position: The *page number* to insert this file. File will
+        :param int page_number: The *page number* to insert this file. File will
             be inserted after the given number.
 
         :param fileobj: A File Object or an object that supports the standard
@@ -164,6 +165,30 @@ class PdfMerger:
             outline (collection of outline items, previously referred to as
             'bookmarks') from being imported by specifying this as ``False``.
         """
+        if position is not None:  # deprecated
+            if page_number is None:
+                page_number = position
+                old_term = "position"
+                new_term = "page_number"
+                warnings.warn(
+                    message=(
+                        f"{old_term} is deprecated as an argument. Use {new_term} instead"
+                    )
+                )
+            else:
+                raise ValueError(
+                    "The argument position of merge is deprecated. Use page_number only."
+                )
+
+        if page_number is None:  # deprecated
+            # The paremter is only marked as Optional as long as
+            # position is not fully deprecated
+            raise ValueError("page_number may not be None")
+        if fileobj is None:  # deprecated
+            # The argument is only Optional due to the deprecated position
+            # argument
+            raise ValueError("fileobj may not be None")
+
         stream, encryption_obj = self._create_stream(fileobj)
 
         # Create a new PdfReader instance using the stream
@@ -218,8 +243,8 @@ class PdfMerger:
         self._associate_dests_to_pages(srcpages)
         self._associate_outline_items_to_pages(srcpages)
 
-        # Slice to insert the pages at the specified position
-        self.pages[position:position] = srcpages
+        # Slice to insert the pages at the specified page_number
+        self.pages[page_number:page_number] = srcpages
 
     def _create_stream(
         self, fileobj: Union[Path, StrByteType, PdfReader]
