@@ -131,12 +131,12 @@ class PdfMerger:
     @deprecate_bookmark(bookmark="outline_item", import_bookmarks="import_outline")
     def merge(
         self,
-        fileobj: Union[Path, StrByteType, PdfReader],
         page_number: Optional[int] = None,
+        fileobj: Union[Path, StrByteType, PdfReader] = None,
         outline_item: Optional[str] = None,
         pages: Optional[PageRangeSpec] = None,
         import_outline: bool = True,
-        position: Optional[int] = None,     # deprecated
+        position: Optional[int] = None,  # deprecated
     ) -> None:
         """
         Merge the pages from the given file into the output file at the
@@ -178,6 +178,8 @@ class PdfMerger:
             page_number = position
         if page_number is None:
             raise ValueError("page_number may not be None")
+        if fileobj is None:
+            raise ValueError("fileobj may not be None")
 
         stream, encryption_obj = self._create_stream(fileobj)
 
