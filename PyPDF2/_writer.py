@@ -822,10 +822,6 @@ class PdfWriter:
             control annotations, 9 for form fields, 10 for extraction of
             text and graphics.
         """
-        if user_password is not None and user_pwd is not None:
-            raise ValueError(
-                "The argument user_pwd of encrypt is deprecated. Use user_password only."
-            )
         if user_pwd is not None:
             if user_password is not None:
                 raise ValueError(
