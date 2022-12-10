@@ -164,6 +164,11 @@ utils.py:
 * `PyPDF2.filters` (all classes): `decodeParms` ➔ `decode_parms`
 * `PyPDF2.filters` (all classes): `decodeStreamData` ➔ `decode_stream_data`
 * `pagenum` ➔ `page_number`
+* `PdfMerger.merge`: `position` ➔ `page_number`
+* `PdfWriter.add_outline_item_destination`: `dest` ➔ `page_destination`
+* `PdfWriter.add_named_destination_object`: `dest` ➔ `page_destination`
+* `PdfWriter.encrypt`: `user_pwd` ➔ `user_password`
+* `PdfWriter.encrypt`: `owner_pwd` ➔ `owner_password`
 
 ## Deprecations
 
