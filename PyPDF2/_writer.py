@@ -455,7 +455,7 @@ class PdfWriter:
             try:
                 page, typ = oa[0:2]  # type: ignore
                 array = oa[2:]
-                fit = Fit(typ, array)
+                fit = Fit(typ, tuple(array))
                 return Destination("OpenAction", page, fit)
             except Exception as exc:
                 raise Exception(f"Invalid Destination {oa}: {exc}")
