@@ -306,7 +306,7 @@ class PdfMerger:
             outline (collection of outline items, previously referred to as
             'bookmarks') from being imported by specifying this as ``False``.
         """
-        self.merge(fileobj, len(self.pages), outline_item, pages, import_outline)
+        self.merge(len(self.pages), fileobj, outline_item, pages, import_outline)
 
     def write(self, fileobj: Union[Path, StrByteType]) -> None:
         """

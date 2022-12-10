@@ -590,7 +590,7 @@ def test_merge_output(caplog):
     merger.append(base)
     msg = "Xref table not zero-indexed. ID numbers for objects will be corrected."
     assert normalize_warnings(caplog.text) == [msg]
-    merger.merge(crazy, 1)
+    merger.merge(1, crazy)
     stream = BytesIO()
     merger.write(stream)
 

@@ -29,7 +29,7 @@ def merger_operate(merger):
     merger.append(outline)
     merger.append(pdf_path, pages=PyPDF2.pagerange.PageRange(slice(0, 0)))
     merger.append(pdf_forms)
-    merger.merge(pdf_path, 0, import_outline=False)
+    merger.merge(0, pdf_path, import_outline=False)
     with pytest.raises(NotImplementedError) as exc:
         with open(pdf_path, "rb") as fp:
             data = fp.read()
@@ -172,7 +172,7 @@ def test_merge_page_exception():
     merger = PyPDF2.PdfMerger()
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     with pytest.raises(TypeError) as exc:
-        merger.merge(pdf_path, 0, pages="a:b")
+        merger.merge(0, pdf_path, pages="a:b")
     assert exc.value.args[0] == '"pages" must be a tuple of (start, stop[, step])'
     merger.close()
 
@@ -180,7 +180,7 @@ def test_merge_page_exception():
 def test_merge_page_tuple():
     merger = PyPDF2.PdfMerger()
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    merger.merge(pdf_path, 0, pages=(0, 1))
+    merger.merge(0, pdf_path, pages=(0, 1))
     merger.close()
 
 
@@ -391,14 +391,14 @@ def test_deprecate_bookmark_decorator_warning():
         UserWarning,
         match="import_bookmarks is deprecated as an argument. Use import_outline instead",
     ):
-        merger.merge(reader, 0, import_bookmarks=True)
+        merger.merge(0, reader, import_bookmarks=True)
 
 
 @pytest.mark.filterwarnings("ignore::UserWarning")
 def test_deprecate_bookmark_decorator_output():
     reader = PdfReader(RESOURCE_ROOT / "outlines-with-invalid-destinations.pdf")
     merger = PdfMerger()
-    merger.merge(reader, 0, import_bookmarks=True)
+    merger.merge(0, reader, import_bookmarks=True)
     first_oi_title = 'Valid Destination: Action /GoTo Named Destination "section.1"'
     assert merger.outline[0].title == first_oi_title
 
