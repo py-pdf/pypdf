@@ -688,7 +688,7 @@ class PdfWriter:
         reader_num_pages = len(reader.pages)
         # Copy pages from reader to writer
         for reader_page_number in range(reader_num_pages):
-            reader_page = reader.pages[rpagenum]
+            reader_page = reader.pages[reader_page_number]
             writer_page = self.add_page(reader_page)
             # Trigger callback, pass writer page as parameter
             if callable(after_page_append):
@@ -1520,7 +1520,6 @@ class PdfWriter:
             "This method is not yet implemented. Use :meth:`add_outline_item` instead."
         )
 
-
     def add_named_destination_array(
         self, title: TextStringObject, destination: Union[IndirectObject, ArrayObject]
     ) -> None:
@@ -1535,7 +1534,6 @@ class PdfWriter:
                 i += 2
         nd.extend([TextStringObject(title), destination])
         return
-
 
     def add_named_destination_object(
         self,
@@ -1567,7 +1565,7 @@ class PdfWriter:
     def add_named_destination_object(self, page_destination: Destination) -> IndirectObject:
         page_destination_ref = self._add_object(page_destination.dest_array)
         self.add_named_destination_array(
-            cast("TextStringObject", dest["/Title"]), page_destination_ref
+            cast("TextStringObject", page_destination["/Title"]), page_destination_ref
         )
         return page_destination_ref
 
