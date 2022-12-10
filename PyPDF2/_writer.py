@@ -230,8 +230,8 @@ class PdfWriter:
         assert (
             indirect_reference is not None
         )  # the None value is only there to keep the deprecated name
-        if isinstance(ido, int):
-            return self._objects[ido - 1]
+        if isinstance(indirect_reference, int):
+            return self._objects[indirect_reference - 1]
         if indirect_reference.pdf != self:
             raise ValueError("pdf must be self")
         return self._objects[indirect_reference.idnum - 1]  # type: ignore
