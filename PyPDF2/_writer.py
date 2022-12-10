@@ -2405,7 +2405,7 @@ class PdfWriter:
                 "TreeObject",
                 self.add_outline_item(
                     TextStringObject(outline_item),
-                    list(srcpages.values())[0].indirect_ref,
+                    list(srcpages.values())[0].indirect_reference,
                     fit=cast("FitType", TypFitArguments.FIT),
                 ).get_object(),
             )
