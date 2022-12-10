@@ -1,7 +1,10 @@
 maint:
+	pyenv local 3.6.15
 	pre-commit autoupdate
 	pip-compile -U requirements/ci.in
+	pyenv local 3.7.15
 	pip-compile -U requirements/dev.in
+	pyenv local 3.7.9
 	pip-compile -U requirements/docs.in
 
 changelog:
