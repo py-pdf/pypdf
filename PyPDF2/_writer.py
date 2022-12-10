@@ -276,7 +276,7 @@ class PdfWriter:
         page[NameObject(PA.PARENT)] = self._pages
         pages = cast(DictionaryObject, self.get_object(self._pages))
         assert page.indirect_ref is not None
-        action(pages[PA.KIDS], page.indirect_ref)
+        action(pages[PA.KIDS], page.indirect_reference)
         page_count = cast(int, pages[PA.COUNT])
         pages[NameObject(PA.COUNT)] = NumberObject(page_count + 1)
         return page
@@ -2371,7 +2371,7 @@ class PdfWriter:
         srcpages = {}
         for i in pages:
             pg = reader.pages[i]
-            assert pg.indirect_ref is not None
+            assert pg.indirect_reference is not None
             if position is None:
                 srcpages[pg.indirect_ref.idnum] = self.add_page(
                     pg, list(excluded_fields) + ["/B", "/Annots"]  # type: ignore
@@ -2672,7 +2672,7 @@ class PdfWriter:
 
         i = 0
         while o is not None:
-            if o.indirect_ref == outline_item or o.get("/Title", None) == outline_item:
+            if o.indirect_reference == outline_item or o.get("/Title", None) == outline_item:
                 return [i]
             else:
                 if "/First" in o:
