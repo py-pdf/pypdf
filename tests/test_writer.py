@@ -512,17 +512,17 @@ def test_add_named_destination():
     assert root[0] == "A named dest"
     assert root[1].pdf == writer
     assert root[1].get_object()["/S"] == NameObject("/GoTo")
-    assert root[1].get_object()["/D"][0] == writer.pages[2].indirect_ref
+    assert root[1].get_object()["/D"][0] == writer.pages[2].indirect_reference
     assert root[2] == "A named dest2"
     assert root[3].pdf == writer
     assert root[3].get_object()["/S"] == NameObject("/GoTo")
-    assert root[3].get_object()["/D"][0] == writer.pages[2].indirect_ref
+    assert root[3].get_object()["/D"][0] == writer.pages[2].indirect_reference
 
     # test get_object
 
     assert writer.get_object(root[1].idnum) == writer.get_object(root[1])
     with pytest.raises(ValueError) as exc:
-        writer.get_object(reader.pages[0].indirect_ref)
+        writer.get_object(reader.pages[0].indirect_reference)
     assert exc.value.args[0] == "pdf must be self"
 
     # write "output" to PyPDF2-output.pdf
@@ -910,7 +910,7 @@ def test_reset_translation():
     writer.append(reader, (0, 10))
     assert len(writer._objects) >= nb + 200
     nb = len(writer._objects)
-    writer.reset_translation(reader.pages[0].indirect_ref)
+    writer.reset_translation(reader.pages[0].indirect_reference)
     writer.append(reader, (0, 10))
     assert len(writer._objects) >= nb + 200
     nb = len(writer._objects)

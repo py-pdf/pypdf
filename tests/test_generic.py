@@ -964,7 +964,7 @@ def test_cloning(caplog):
     obj3 = obj2.clone(writer)
     assert len(writer._objects) == n + 1
     assert obj2.indirect_ref == obj3.indirect_ref
-    obj3 = obj2.indirect_ref.clone(writer)
+    obj3 = obj2.indirect_reference.clone(writer)
     assert len(writer._objects) == n + 1
     assert obj2.indirect_ref == obj3.indirect_ref
     assert obj2.indirect_ref == obj2._reference_clone(obj2, writer).indirect_ref
