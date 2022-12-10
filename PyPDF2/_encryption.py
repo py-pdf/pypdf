@@ -58,6 +58,7 @@ class CryptIdentity(CryptBase):
 
 try:
     from Crypto.Cipher import AES, ARC4  # type: ignore[import]
+    from Crypto.Util.Padding import pad  # type: ignore[import]
 
     class CryptRC4(CryptBase):
         def __init__(self, key: bytes) -> None:
@@ -84,6 +85,8 @@ try:
             iv = data[:16]
             data = data[16:]
             aes = AES.new(self.key, AES.MODE_CBC, iv)
+            if len(data) % 16:
+                data = pad(data, 16)
             d = aes.decrypt(data)
             if len(d) == 0:
                 return d
