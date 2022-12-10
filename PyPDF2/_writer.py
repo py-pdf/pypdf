@@ -1324,7 +1324,6 @@ class PdfWriter:
         :param bool italic: Outline item font is italic
         :param Fit fit: The fit of the destination page.
         """
-        page_ref = NumberObject(pagenum)
         if page_number is not None and pagenum is not None:
             raise ValueError(
                 "The argument pagenum of add_outline_item is deprecated. Use page_number only."

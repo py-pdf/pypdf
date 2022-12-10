@@ -5,11 +5,11 @@ class Fit:
     def __init__(
         self, fit_type: str, fit_args: Tuple[Union[None, float, Any], ...] = tuple()
     ):
-        from ._base import NameObject, NullObject, NumberObject
+        from ._base import FloatObject, NameObject, NullObject
 
         self.fit_type = NameObject(fit_type)
         self.fit_args = [
-            NullObject() if a is None or isinstance(a, NullObject) else NumberObject(a)
+            NullObject() if a is None or isinstance(a, NullObject) else FloatObject(a)
             for a in fit_args
         ]
 
