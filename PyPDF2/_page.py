@@ -1516,8 +1516,8 @@ class PageObject(DictionaryObject):
             elif operator == b"Tj":
                 check_crlf_space = True
                 m = mult(tm_matrix, cm_matrix)
-                o = orient(m)
-                if o in orientations:
+                orientation = orient(m)
+                if orientation in orientations:
                     if isinstance(operands[0], str):
                         text += operands[0]
                     else:
@@ -1588,17 +1588,17 @@ class PageObject(DictionaryObject):
                 return None
             if check_crlf_space:
                 m = mult(tm_matrix, cm_matrix)
-                o = orient(m)
-                deltaX = m[4] - tm_prev[4]
-                deltaY = m[5] - tm_prev[5]
+                orientation = orient(m)
+                delta_x = m[4] - tm_prev[4]
+                delta_y = m[5] - tm_prev[5]
                 k = math.sqrt(abs(m[0] * m[3]) + abs(m[1] * m[2]))
                 f = font_size * k
                 tm_prev = m
-                if o not in orientations:
+                if orientation not in orientations:
                     return None
                 try:
-                    if o == 0:
-                        if deltaY < -0.8 * f:
+                    if orientation == 0:
+                        if delta_y < -0.8 * f:
                             if (output + text)[-1] != "\n":
                                 output += text + "\n"
                                 if visitor_text is not None:
@@ -1611,13 +1611,13 @@ class PageObject(DictionaryObject):
                                     )
                                 text = ""
                         elif (
-                            abs(deltaY) < f * 0.3
-                            and abs(deltaX) > current_spacewidth() * f * 15
+                            abs(delta_y) < f * 0.3
+                            and abs(delta_x) > current_spacewidth() * f * 15
                         ):
                             if (output + text)[-1] != " ":
                                 text += " "
-                    elif o == 180:
-                        if deltaY > 0.8 * f:
+                    elif orientation == 180:
+                        if delta_y > 0.8 * f:
                             if (output + text)[-1] != "\n":
                                 output += text + "\n"
                                 if visitor_text is not None:
@@ -1630,13 +1630,13 @@ class PageObject(DictionaryObject):
                                     )
                                 text = ""
                         elif (
-                            abs(deltaY) < f * 0.3
-                            and abs(deltaX) > current_spacewidth() * f * 15
+                            abs(delta_y) < f * 0.3
+                            and abs(delta_x) > current_spacewidth() * f * 15
                         ):
                             if (output + text)[-1] != " ":
                                 text += " "
-                    elif o == 90:
-                        if deltaX > 0.8 * f:
+                    elif orientation == 90:
+                        if delta_x > 0.8 * f:
                             if (output + text)[-1] != "\n":
                                 output += text + "\n"
                                 if visitor_text is not None:
@@ -1649,13 +1649,13 @@ class PageObject(DictionaryObject):
                                     )
                                 text = ""
                         elif (
-                            abs(deltaX) < f * 0.3
-                            and abs(deltaY) > current_spacewidth() * f * 15
+                            abs(delta_x) < f * 0.3
+                            and abs(delta_y) > current_spacewidth() * f * 15
                         ):
                             if (output + text)[-1] != " ":
                                 text += " "
-                    elif o == 270:
-                        if deltaX < -0.8 * f:
+                    elif orientation == 270:
+                        if delta_x < -0.8 * f:
                             if (output + text)[-1] != "\n":
                                 output += text + "\n"
                                 if visitor_text is not None:
@@ -1668,8 +1668,8 @@ class PageObject(DictionaryObject):
                                     )
                                 text = ""
                         elif (
-                            abs(deltaX) < f * 0.3
-                            and abs(deltaY) > current_spacewidth() * f * 15
+                            abs(delta_x) < f * 0.3
+                            and abs(delta_y) > current_spacewidth() * f * 15
                         ):
                             if (output + text)[-1] != " ":
                                 text += " "
