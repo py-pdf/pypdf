@@ -183,7 +183,9 @@ class PdfMerger:
             # position is not fully deprecated
             raise ValueError("page_number may not be None")
             raise ValueError("page_number may not be None")
-        if fileobj is None:
+        if fileobj is None:  # deprecated
+            # The argument is only Optional due to the deprecated position
+            # argument
             raise ValueError("fileobj may not be None")
 
         stream, encryption_obj = self._create_stream(fileobj)
