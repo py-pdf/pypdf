@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1670685978088,
+  "lastUpdate": 1670694585811,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -19682,6 +19682,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003255320641418402",
             "extra": "mean: 88.38228918181751 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "omarmuhammetkuliyev@gmail.com",
+            "name": "Omar Muhammetkulyyev",
+            "username": "Infus3d"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "40086e1fb98927320c1aa88456275d24e27f6b0b",
+          "message": "MAINT: position ➔ page_number in Merger.merge (#1482)\n\nChanged method parameter name for consistency as mentioned in #1187 \r\n\r\n- `position` ➔ `page_number` in `PdfMerger.merge`\r\n\r\nImproved the deprecation message of:\r\n\r\n- `dest` ➔ `page_destination` in `PdfWriter.add_outline_item_destination` and `PdfWriter.add_named_destination_object`\r\n- `user_pwd` ➔ `user_password` and `owner_pwd` ➔ `owner_password` in `PdfWriter.encrypt`",
+          "timestamp": "2022-12-10T18:48:38+01:00",
+          "tree_id": "118f6c1f5a9f3bc274dd9754bc93f918c6294f4c",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/40086e1fb98927320c1aa88456275d24e27f6b0b"
+        },
+        "date": 1670694584881,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0542502943807381,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006212901753969514",
+            "extra": "mean: 948.5413523999966 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.616821540561793,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004723606773696654",
+            "extra": "mean: 79.25926484615022 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2617701032850049,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014952613449346966",
+            "extra": "mean: 3.8201459503999957 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.852777273633237,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0010950981634239524",
+            "extra": "mean: 77.80419583333516 msec\nrounds: 12"
           }
         ]
       }
