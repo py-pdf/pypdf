@@ -304,7 +304,7 @@ class PdfReader:
         self.xref_index = 0
         self._page_id2num: Optional[
             Dict[Any, Any]
-        ] = None  # map page indirect_ref number to Page Number
+        ] = None  # map page indirect_reference number to Page Number
         if hasattr(stream, "mode") and "b" not in stream.mode:  # type: ignore
             logger_warning(
                 "PdfReader stream/file object is not in binary mode. "
@@ -815,7 +815,7 @@ class PdfReader:
             return None
 
     def _get_page_number_by_indirect(
-        self, indirect_ref: Union[None, int, NullObject, IndirectObject]
+        self, indirect_reference: Union[None, int, NullObject, IndirectObject]
     ) -> int:
         """Generate _page_id2num"""
         if self._page_id2num is None:
@@ -823,12 +823,12 @@ class PdfReader:
                 x.indirect_ref.idnum: i for i, x in enumerate(self.pages)  # type: ignore
             }
 
-        if indirect_ref is None or isinstance(indirect_ref, NullObject):
+        if indirect_reference is None or isinstance(indirect_reference, NullObject):
             return -1
-        if isinstance(indirect_ref, int):
-            idnum = indirect_ref
+        if isinstance(indirect_reference, int):
+            idnum = indirect_reference
         else:
-            idnum = indirect_ref.idnum
+            idnum = indirect_reference.idnum
         assert self._page_id2num is not None, "hint for mypy"
         ret = self._page_id2num.get(idnum, -1)
         return ret
@@ -905,9 +905,9 @@ class PdfReader:
                     raise
                 # create a link to first Page
                 tmp = self.pages[0].indirect_ref
-                indirect_ref = NullObject() if tmp is None else tmp
+                indirect_reference = NullObject() if tmp is None else tmp
                 return Destination(
-                    title, indirect_ref, TextStringObject("/Fit")  # type: ignore
+                    title, indirect_reference, TextStringObject("/Fit")  # type: ignore
                 )
 
     def _build_outline_item(self, node: DictionaryObject) -> Optional[Destination]:
@@ -1081,7 +1081,7 @@ class PdfReader:
         self,
         pages: Union[None, DictionaryObject, PageObject] = None,
         inherit: Optional[Dict[str, Any]] = None,
-        indirect_ref: Optional[IndirectObject] = None,
+        indirect_reference: Optional[IndirectObject] = None,
     ) -> None:
         inheritable_page_attributes = (
             NameObject(PG.RESOURCES),
@@ -1109,7 +1109,7 @@ class PdfReader:
             for page in pages[PA.KIDS]:  # type: ignore
                 addt = {}
                 if isinstance(page, IndirectObject):
-                    addt["indirect_ref"] = page
+                    addt["indirect_reference"] = page
                 self._flatten(page.get_object(), inherit, **addt)
         elif t == "/Page":
             for attr_in, value in list(inherit.items()):
@@ -1117,7 +1117,7 @@ class PdfReader:
                 # parent's value:
                 if attr_in not in pages:
                     pages[attr_in] = value
-            page_obj = PageObject(self, indirect_ref)
+            page_obj = PageObject(self, indirect_reference)
             page_obj.update(pages)
 
             # TODO: Could flattened_pages be None at this point?
