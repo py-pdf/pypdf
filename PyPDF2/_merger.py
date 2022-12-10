@@ -131,17 +131,18 @@ class PdfMerger:
     @deprecate_bookmark(bookmark="outline_item", import_bookmarks="import_outline")
     def merge(
         self,
-        position: int,
         fileobj: Union[Path, StrByteType, PdfReader],
+        page_number: Optional[int] = None,
         outline_item: Optional[str] = None,
         pages: Optional[PageRangeSpec] = None,
         import_outline: bool = True,
+        position: Optional[int] = None,     # deprecated
     ) -> None:
         """
         Merge the pages from the given file into the output file at the
         specified page number.
 
-        :param int position: The *page number* to insert this file. File will
+        :param int page_number: The *page number* to insert this file. File will
             be inserted after the given number.
 
         :param fileobj: A File Object or an object that supports the standard
@@ -162,6 +163,22 @@ class PdfMerger:
             outline (collection of outline items, previously referred to as
             'bookmarks') from being imported by specifying this as ``False``.
         """
+        if page_number is not None and position is not None:
+            raise ValueError(
+                "The argument position of merge is deprecated. Use page_number only."
+            )
+        if position is not None:
+            old_term = "position"
+            new_term = "page_number"
+            warnings.warn(
+                message = (
+                    f"{old_term} is deprecated as an argument. Use {new_term} instead"
+                )
+            )
+            page_number = position
+        if(page_number is None):
+            raise ValueError("page_number may not be None")
+
         stream, encryption_obj = self._create_stream(fileobj)
 
         # Create a new PdfReader instance using the stream
@@ -216,8 +233,8 @@ class PdfMerger:
         self._associate_dests_to_pages(srcpages)
         self._associate_outline_items_to_pages(srcpages)
 
-        # Slice to insert the pages at the specified position
-        self.pages[position:position] = srcpages
+        # Slice to insert the pages at the specified page_number
+        self.pages[page_number:page_number] = srcpages
 
     def _create_stream(
         self, fileobj: Union[Path, StrByteType, PdfReader]
@@ -287,7 +304,7 @@ class PdfMerger:
             outline (collection of outline items, previously referred to as
             'bookmarks') from being imported by specifying this as ``False``.
         """
-        self.merge(len(self.pages), fileobj, outline_item, pages, import_outline)
+        self.merge(fileobj, len(self.pages), outline_item, pages, import_outline)
 
     def write(self, fileobj: Union[Path, StrByteType]) -> None:
         """
