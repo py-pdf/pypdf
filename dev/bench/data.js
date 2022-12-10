@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1670680946703,
+  "lastUpdate": 1670683761823,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -19578,6 +19578,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00022556255105296786",
             "extra": "mean: 78.37542474999992 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "94386252+kygoben@users.noreply.github.com",
+            "name": "Kyle Goben",
+            "username": "kygoben"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "25770098719338b2715ff1f97be18edf2467020c",
+          "message": "MAINT: Consistent method keywords (#1467)\n\n* indirect_reference ➔ indirect_ref and ido ➔ indirect_ref in PdfReader._get_object_from_stream and PdfWriter.get_object\r\n* dest➔ pagedest and dest_ref ➔ pagedest_ref in PdfWriter.add_outline_item_destination and PdfWriter.add_named_destination_object\r\n\r\nSee #1187",
+          "timestamp": "2022-12-10T15:48:13+01:00",
+          "tree_id": "d0960be989b918854a0fa78c2194d0f87fdd302f",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/25770098719338b2715ff1f97be18edf2467020c"
+        },
+        "date": 1670683760415,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0525072906880057,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0036627254256668866",
+            "extra": "mean: 950.1121834000003 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.543782214374419,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004771742799725944",
+            "extra": "mean: 79.720771846155 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.25883579456209405,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028468545889155927",
+            "extra": "mean: 3.8634532820000005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.454680220979407,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006565761269938365",
+            "extra": "mean: 80.29110199999678 msec\nrounds: 12"
           }
         ]
       }
