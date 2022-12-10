@@ -14,7 +14,7 @@ from ._utils import StrByteType
 
 
 class PdfObjectProtocol(Protocol):
-    indirect_ref: Any
+    indirect_reference: Any
 
     def clone(
         self,

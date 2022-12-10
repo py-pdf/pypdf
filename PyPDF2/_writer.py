@@ -204,11 +204,11 @@ class PdfWriter:
         self._header = new_header
 
     def _add_object(self, obj: PdfObject) -> IndirectObject:
-        if hasattr(obj, "indirect_ref") and obj.indirect_ref.pdf == self:  # type: ignore
-            return obj.indirect_ref  # type: ignore
+        if hasattr(obj, "indirect_reference") and obj.indirect_reference.pdf == self:  # type: ignore
+            return obj.indirect_reference  # type: ignore
         self._objects.append(obj)
-        obj.indirect_ref = IndirectObject(len(self._objects), 0, self)
-        return obj.indirect_ref
+        obj.indirect_reference = IndirectObject(len(self._objects), 0, self)
+        return obj.indirect_reference
 
     def get_object(
         self,
