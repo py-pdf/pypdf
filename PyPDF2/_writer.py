@@ -1245,11 +1245,11 @@ class PdfWriter:
             self._root_object[CA.NAMES], DictionaryObject
         ):
             names = cast(DictionaryObject, self._root_object[CA.NAMES])
-            names_ref = names.indirect_ref
+            names_ref = names.indirect_reference
             if CA.DESTS in names and isinstance(names[CA.DESTS], DictionaryObject):
                 # 3.6.3 Name Dictionary (PDF spec 1.7)
                 dests = cast(DictionaryObject, names[CA.DESTS])
-                dests_ref = dests.indirect_ref
+                dests_ref = dests.indirect_reference
                 if CA.NAMES in dests:
                     # TABLE 3.33 Entries in a name tree node dictionary
                     nd = cast(ArrayObject, dests[CA.NAMES])
@@ -2473,10 +2473,10 @@ class PdfWriter:
                             )
                         ).get_object(),
                     )
-                    new_article[NameObject("/N")] = new_article2.indirect_ref
+                    new_article[NameObject("/N")] = new_article2.indirect_reference
                     new_article = new_article2
                 new_article[NameObject("/P")] = pag
-                new_article[NameObject("/T")] = nthread.indirect_ref
+                new_article[NameObject("/T")] = nthread.indirect_reference
                 new_article[NameObject("/R")] = current_article["/R"]
                 pag_obj = cast("PageObject", pag.get_object())
                 if "/B" not in pag_obj:
@@ -2488,7 +2488,7 @@ class PdfWriter:
                 new_first[NameObject("/V")] = new_article.indirect_reference  # type: ignore
                 current_article = None
         assert nthread.indirect_reference is not None
-        return nthread.indirect_ref
+        return nthread.indirect_reference
 
     def add_filtered_articles(
         self,
