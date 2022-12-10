@@ -1470,7 +1470,7 @@ class PdfWriter:
         page_destination_ref = self._add_object(page_destination)
 
         nd = self.get_named_dest_root()
-        nd.extend([page_destination["/Title"], dest_ref])  # type: ignore
+        nd.extend([page_destination["/Title"], page_destination_ref])  # type: ignore
         return page_destination_ref
 
     def addNamedDestinationObject(
