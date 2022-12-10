@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1670664046695,
+  "lastUpdate": 1670673928517,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -19422,6 +19422,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0004679954199163658",
             "extra": "mean: 88.0180323636301 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "f64f36a8abfde3baeca2aff2562d0305d5cf6e14",
+          "message": "REL: 2.12.0\n\nNew Features (ENH):\n-  Add support to extract gray scale images (#1460)\n-  Add 'threads' property to PdfWriter (#1458)\n-  Add 'open_destination' property to PdfWriter (#1431)\n-  Make PdfReader.get_object accept integer arguments (#1459)\n\nBug Fixes (BUG):\n-  Scale PDF annotations (#1479)\n\nRobustness (ROB):\n-  Padding issue with AES encryption (#1469)\n-  Accept empty object as null objects (#1477)\n\nDocumentation (DOC):\n-  Add module documentation the PaperSize class (#1447)\n\nMaintenance (MAINT):\n-  Use 'page_number' instead of 'pagenum' (#1365)\n-  Add List of pages to PageRangeSpec (#1456)\n\nTesting (TST):\n-  Cleanup temporary files (#1454)\n-  Mark test_tounicode_is_identity as external (#1449)\n-  Use Ubuntu 20.04 for running CI test suite (#1452)\n\n[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/2.11.2...2.12.0)",
+          "timestamp": "2022-12-10T13:02:29+01:00",
+          "tree_id": "fca0194e8cacd23819673cab85d87d7208d3e0f0",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/f64f36a8abfde3baeca2aff2562d0305d5cf6e14"
+        },
+        "date": 1670673926648,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0363795874288433,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007695140612888748",
+            "extra": "mean: 964.8974296000006 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.355491067495443,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007366952298178314",
+            "extra": "mean: 80.93567423077002 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24934954278064242,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05135147805696417",
+            "extra": "mean: 4.010434464199998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.787635190324764,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00047618776717917727",
+            "extra": "mean: 84.83465800000286 msec\nrounds: 11"
           }
         ]
       }
