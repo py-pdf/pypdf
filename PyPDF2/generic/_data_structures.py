@@ -542,8 +542,8 @@ class TreeObject(DictionaryObject):
                 prev = cast("TreeObject", prev["/Next"])
             else:  # append at the end
                 prev[NameObject("/Next")] = cast("TreeObject", child)
-                child_obj[NameObject("/Prev")] = prev.indirect_ref
-                child_obj[NameObject("/Parent")] = self.indirect_ref
+                child_obj[NameObject("/Prev")] = prev.indirect_reference
+                child_obj[NameObject("/Parent")] = self.indirect_reference
                 if "/Next" in child_obj:
                     del child_obj["/Next"]
                 self[NameObject("/Last")] = child
@@ -557,7 +557,7 @@ class TreeObject(DictionaryObject):
             del child_obj["/Next"]
         child_obj[NameObject("/Next")] = prev
         prev[NameObject("/Prev")] = child
-        child_obj[NameObject("/Parent")] = self.indirect_ref
+        child_obj[NameObject("/Parent")] = self.indirect_reference
         inc_parent_counter(self, child_obj.get("/Count", 1))
 
     def removeChild(self, child: Any) -> None:  # pragma: no cover

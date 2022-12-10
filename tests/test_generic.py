@@ -963,10 +963,10 @@ def test_cloning(caplog):
     assert len(writer._objects) == n + 1
     obj3 = obj2.clone(writer)
     assert len(writer._objects) == n + 1
-    assert obj2.indirect_reference == obj3.indirect_ref
+    assert obj2.indirect_reference == obj3.indirect_reference
     obj3 = obj2.indirect_reference.clone(writer)
     assert len(writer._objects) == n + 1
-    assert obj2.indirect_reference == obj3.indirect_ref
+    assert obj2.indirect_reference == obj3.indirect_reference
     assert obj2.indirect_reference == obj2._reference_clone(obj2, writer).indirect_reference
     assert len(writer._objects) == n + 1
     assert obj2.indirect_reference == obj3.indirect_reference
