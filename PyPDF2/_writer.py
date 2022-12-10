@@ -827,11 +827,16 @@ class PdfWriter:
                 "The argument user_pwd of encrypt is deprecated. Use user_password only."
             )
         if user_pwd is not None:
-            old_term = "user_pwd"
-            new_term = "user_password"
-            warnings.warn(
-                message=(
-                    f"{old_term} is deprecated as an argument. Use {new_term} instead"
+            if user_password is not None:
+                raise ValueError(
+                    "Please only set 'user_password'. "
+                    "The 'user_pwd' argument is deprecated."
+                )
+            else:
+                warnings.warn(
+                    "Please use 'user_password' instead of 'user_pwd'. "
+                    "The 'user_pwd' argument is deprecated and will be removed "
+                    "in PyPDF2==3.0.0."
                 )
             )
             user_password = user_pwd
