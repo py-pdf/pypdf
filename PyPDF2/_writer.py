@@ -2463,7 +2463,7 @@ class PdfWriter:
                         self._add_object(DictionaryObject()).get_object(),
                     )
                     new_first = new_article
-                    nthread[NameObject("/F")] = new_article.indirect_ref
+                    nthread[NameObject("/F")] = new_article.indirect_reference
                 else:
                     new_article2 = cast(
                         "DictionaryObject",
