@@ -830,10 +830,10 @@ def test_startup_dest():
     pdf_file_writer.open_destination = pdf_file_writer.pages[9]
     # checked also using Acrobrat to verify the good page is opened
     op = pdf_file_writer._root_object["/OpenAction"]
-    assert op[0] == pdf_file_writer.pages[9].indirect_reference
+    assert op[0] == pdf_file_writer.pages[9].indirect_ref
     assert op[1] == "/Fit"
     op = pdf_file_writer.open_destination
-    assert op.raw_get("/Page") == pdf_file_writer.pages[9].indirect_reference
+    assert op.raw_get("/Page") == pdf_file_writer.pages[9].indirect_ref
     assert op["/Type"] == "/Fit"
     pdf_file_writer.open_destination = op
     assert pdf_file_writer.open_destination == op

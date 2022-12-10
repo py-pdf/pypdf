@@ -820,7 +820,7 @@ class PdfReader:
         """Generate _page_id2num"""
         if self._page_id2num is None:
             self._page_id2num = {
-                x.indirect_reference.idnum: i for i, x in enumerate(self.pages)  # type: ignore
+                x.indirect_ref.idnum: i for i, x in enumerate(self.pages)  # type: ignore
             }
 
         if indirect_reference is None or isinstance(indirect_reference, NullObject):
@@ -841,7 +841,7 @@ class PdfReader:
             an instance of :class:`PageObject<PyPDF2._page.PageObject>`
         :return: the page number or -1 if page not found
         """
-        return self._get_page_number_by_indirect(page.indirect_reference)
+        return self._get_page_number_by_indirect(page.indirect_ref)
 
     def getPageNumber(self, page: PageObject) -> int:  # pragma: no cover
         """
@@ -904,7 +904,7 @@ class PdfReader:
                 if self.strict:
                     raise
                 # create a link to first Page
-                tmp = self.pages[0].indirect_reference
+                tmp = self.pages[0].indirect_ref
                 indirect_reference = NullObject() if tmp is None else tmp
                 return Destination(
                     title, indirect_reference, TextStringObject("/Fit")  # type: ignore
