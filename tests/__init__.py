@@ -58,7 +58,7 @@ class ReaderDummy:
     def __init__(self, strict=False):
         self.strict = strict
 
-    def get_object(self, indirect_ref):
+    def get_object(self, indirect_reference):
         class DummyObj:
             def get_object(self):
                 return self
