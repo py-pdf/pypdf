@@ -839,7 +839,7 @@ class PdfWriter:
             # user_password is only Optional for due to the deprecated user_pwd
             raise ValueError("user_password may not be None")
 
-        if owner_pwd is not None:
+        if owner_pwd is not None:  # deprecated
             if owner_password is not None:
                 raise ValueError(
                     "The argument owner_pwd of encrypt is deprecated. Use owner_password only."
@@ -1239,11 +1239,11 @@ class PdfWriter:
         parent: Union[None, TreeObject, IndirectObject] = None,
         dest: Union[None, PageObject, TreeObject] = None,   # deprecated
     ) -> IndirectObject:
-        if page_destination is not None and dest is not None:
+        if page_destination is not None and dest is not None:  # deprecated
             raise ValueError(
                 "The argument dest of add_outline_item_destination is deprecated. Use page_destination only."
             )
-        if dest is not None:
+        if dest is not None:  # deprecated
             old_term = "dest"
             new_term = "page_destination"
             warnings.warn(
@@ -1457,7 +1457,7 @@ class PdfWriter:
             raise ValueError(
                 "The argument dest of add_named_destination_object is deprecated. Use page_destination only."
             )
-        if dest is not None:
+        if dest is not None:  # deprecated
             old_term = "dest"
             new_term = "page_destination"
             warnings.warn(
@@ -1466,7 +1466,7 @@ class PdfWriter:
                 )
             )
             page_destination = dest
-        if page_destination is None:
+        if page_destination is None:  # deprecated
             raise ValueError("page_destination may not be None")
 
         page_destination_ref = self._add_object(page_destination)
