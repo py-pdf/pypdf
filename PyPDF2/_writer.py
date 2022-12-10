@@ -2394,7 +2394,7 @@ class PdfWriter:
             elif dest["/Page"].indirect_reference.idnum in srcpages:
                 arr[NumberObject(0)] = srcpages[
                     dest["/Page"].indirect_reference.idnum
-                ].indirect_ref
+                ].indirect_reference
                 self.add_named_destination_array(dest["/Title"], arr)
             # except Exception as e:
             #    logger_warning(f"can not insert {dest} : {e.msg}",__name__)
