@@ -774,9 +774,6 @@ class PdfMerger:
             TextStringObject(title),
             NumberObject(page_number),
             Fit.fit_horizontally(top=826),
-            NumberObject(page_number),
-            NameObject(TypFitArguments.FIT_H),
-            NumberObject(826),
         )
         self.named_dests.append(dest)
 

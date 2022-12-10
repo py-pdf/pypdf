@@ -455,9 +455,10 @@ class PdfWriter:
             try:
                 page, typ = oa[0:2]  # type: ignore
                 array = oa[2:]
-                return Destination("OpenAction", page, typ, *array)  # type: ignore
-            except Exception:
-                raise Exception(f"Invalid Destination {oa}")
+                fit = Fit(typ, array)
+                return Destination("OpenAction", page, fit)
+            except Exception as exc:
+                raise Exception(f"Invalid Destination {oa}: {exc}")
         else:
             return None
 
@@ -478,7 +479,7 @@ class PdfWriter:
                 dest.indirect_reference
                 if dest.indirect_reference is not None
                 else NullObject(),
-                TextStringObject("/Fit"),
+                DEFAULT_FIT,
             ).dest_array
 
     def add_js(self, javascript: str) -> None:
