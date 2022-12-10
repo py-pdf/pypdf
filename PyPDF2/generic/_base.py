@@ -87,16 +87,18 @@ class PdfObject(PdfObjectProtocol):
         self, clone: Any, pdf_dest: PdfWriterProtocol
     ) -> PdfObjectProtocol:
         """
-        reference the object within the _objects of pdf_dest only if indirect_ref attribute exists (which means the objects was already identified in xref/xobjstm)
+        reference the object within the _objects of pdf_dest only if
+        indirect_reference attribute exists (which means the objects
+        was already identified in xref/xobjstm)
         if object has been already referenced do nothing
         """
         try:
-            if clone.indirect_ref.pdf == pdf_dest:
+            if clone.indirect_reference.pdf == pdf_dest:
                 return clone
         except Exception:
             pass
-        if hasattr(self, "indirect_ref"):
-            ind = self.indirect_ref
+        if hasattr(self, "indirect_reference"):
+            ind = self.indirect_reference
             i = len(pdf_dest._objects) + 1
             if ind is not None:
                 if id(ind.pdf) not in pdf_dest._id_translated:
@@ -109,7 +111,7 @@ class PdfObject(PdfObjectProtocol):
                     return obj
                 pdf_dest._id_translated[id(ind.pdf)][ind.idnum] = i
             pdf_dest._objects.append(clone)
-            clone.indirect_ref = IndirectObject(i, 0, pdf_dest)
+            clone.indirect_reference = IndirectObject(i, 0, pdf_dest)
         return clone
 
     def get_object(self) -> Optional["PdfObject"]:
