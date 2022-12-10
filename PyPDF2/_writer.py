@@ -211,6 +211,7 @@ class PdfWriter:
                     "The parameter 'ido' is depreciated and will be removed in PyPDF2 3.0.0.",
                     DeprecationWarning,
                 )
+        assert indirect_reference is not None  # the None value is only there to keep the deprecated name
         if indirect_reference.pdf != self:
             raise ValueError("pdf must be self")
         return self._objects[indirect_reference.idnum - 1]  # type: ignore
