@@ -47,7 +47,7 @@ from ._reader import PdfReader
 from ._utils import (
     StrByteType,
     deprecate_bookmark,
-    deprecate_with_replacement,
+    deprecation_with_replacement,
     str_,
 )
 from ._writer import PdfWriter
@@ -375,7 +375,7 @@ class PdfMerger:
 
             Use :meth:`add_metadata` instead.
         """
-        deprecate_with_replacement("addMetadata", "add_metadata")
+        deprecation_with_replacement("addMetadata", "add_metadata")
         self.add_metadata(infos)
 
     def setPageLayout(self, layout: LayoutType) -> None:  # pragma: no cover
@@ -384,7 +384,7 @@ class PdfMerger:
 
             Use :meth:`set_page_layout` instead.
         """
-        deprecate_with_replacement("setPageLayout", "set_page_layout")
+        deprecation_with_replacement("setPageLayout", "set_page_layout")
         self.set_page_layout(layout)
 
     def set_page_layout(self, layout: LayoutType) -> None:
@@ -421,7 +421,7 @@ class PdfMerger:
 
             Use :meth:`set_page_mode` instead.
         """
-        deprecate_with_replacement("setPageMode", "set_page_mode")
+        deprecation_with_replacement("setPageMode", "set_page_mode", "3.0.0")
         self.set_page_mode(mode)
 
     def set_page_mode(self, mode: PagemodeType) -> None:
@@ -723,7 +723,7 @@ class PdfMerger:
         .. deprecated:: 1.28.0
             Use :meth:`add_outline_item` instead.
         """
-        deprecate_with_replacement("addBookmark", "add_outline_item")
+        deprecation_with_replacement("addBookmark", "add_outline_item", "3.0.0")
         return self.add_outline_item(
             title,
             pagenum,
@@ -749,7 +749,7 @@ class PdfMerger:
         .. deprecated:: 2.9.0
             Use :meth:`add_outline_item` instead.
         """
-        deprecate_with_replacement("addBookmark", "add_outline_item")
+        deprecation_with_replacement("addBookmark", "add_outline_item", "3.0.0")
         return self.add_outline_item(
             title,
             pagenum,
@@ -765,7 +765,9 @@ class PdfMerger:
         .. deprecated:: 1.28.0
             Use :meth:`add_named_destination` instead.
         """
-        deprecate_with_replacement("addNamedDestination", "add_named_destination")
+        deprecation_with_replacement(
+            "addNamedDestination", "add_named_destination", "3.0.0"
+        )
         return self.add_named_destination(title, pagenum)
 
     def add_named_destination(
@@ -805,7 +807,7 @@ class PdfMerger:
 
 class PdfFileMerger(PdfMerger):  # pragma: no cover
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        deprecate_with_replacement("PdfFileMerger", "PdfMerger")
+        deprecation_with_replacement("PdfFileMerger", "PdfMerger", "3.0.0")
 
         if "strict" not in kwargs and len(args) < 1:
             kwargs["strict"] = True  # maintain the default

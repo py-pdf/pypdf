@@ -1,7 +1,7 @@
 import decimal
 from typing import Any, List, Tuple, Union
 
-from .._utils import deprecate_no_replacement, deprecate_with_replacement
+from .._utils import deprecate_with_replacement, deprecation_no_replacement
 from ._base import FloatObject, NumberObject
 from ._data_structures import ArrayObject
 
@@ -42,7 +42,7 @@ class RectangleObject(ArrayObject):
     def ensureIsNumber(
         self, value: Any
     ) -> Union[FloatObject, NumberObject]:  # pragma: no cover
-        deprecate_no_replacement("ensureIsNumber")
+        deprecation_no_replacement("ensureIsNumber", "3.0.0")
         return self._ensure_is_number(value)
 
     def __repr__(self) -> str:

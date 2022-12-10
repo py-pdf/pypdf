@@ -54,6 +54,7 @@ from ._utils import (
     b_,
     deprecate_no_replacement,
     deprecate_with_replacement,
+    deprecation_no_replacement,
     logger_warning,
     read_non_whitespace,
     read_previous_line,
@@ -146,7 +147,7 @@ class DocumentInformation(DictionaryObject):
 
             Use the attributes (e.g. :py:attr:`title` / :py:attr:`author`).
         """
-        deprecate_no_replacement("getText")
+        deprecation_no_replacement("getText", "3.0.0")
         return self._get_text(key)
 
     @property
@@ -1870,7 +1871,7 @@ class PdfReader:
         self, stream: StreamType, limit_offset: int = 0
     ) -> bytes:  # pragma: no cover
         """.. deprecated:: 1.28.0"""
-        deprecate_no_replacement("readNextEndLine")
+        deprecation_no_replacement("readNextEndLine", "3.0.0")
         return self.read_next_end_line(stream, limit_offset)
 
     def decrypt(self, password: Union[str, bytes]) -> PasswordType:

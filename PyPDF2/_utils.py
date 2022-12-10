@@ -59,7 +59,11 @@ try:
 except ImportError:
     from typing_extensions import TypeAlias
 
-from .errors import STREAM_TRUNCATED_PREMATURELY, PdfStreamError
+from .errors import (
+    STREAM_TRUNCATED_PREMATURELY,
+    DeprecationError,
+    PdfStreamError,
+)
 
 TransformationMatrixType: TypeAlias = Tuple[
     Tuple[float, float, float], Tuple[float, float, float], Tuple[float, float, float]
@@ -72,7 +76,9 @@ StreamType = Union[BytesIO, BufferedReader, BufferedWriter, FileIO]
 StrByteType = Union[str, StreamType]
 
 DEPR_MSG_NO_REPLACEMENT = "{} is deprecated and will be removed in PyPDF2 {}."
+DEPR_MSG_NO_REPLACEMENT_HAPPENED = "{} is deprecated and was removed in PyPDF2 {}."
 DEPR_MSG = "{} is deprecated and will be removed in PyPDF2 3.0.0. Use {} instead."
+DEPR_MSG_HAPPENED = "{} is deprecated and was removed in PyPDF2 {}. Use {} instead."
 
 
 def _get_max_pdf_version_header(header1: bytes, header2: bytes) -> bytes:
@@ -346,14 +352,40 @@ def deprecate(msg: str, stacklevel: int = 3) -> None:
     warnings.warn(msg, PendingDeprecationWarning, stacklevel=stacklevel)
 
 
+def deprecation(msg: str) -> None:
+    raise DeprecationError(msg)
+
+
 def deprecate_with_replacement(
     old_name: str, new_name: str, removed_in: str = "3.0.0"
 ) -> None:
+    """
+    Raise an exception that a feature will be removed, but has a replacement.
+    """
     deprecate(DEPR_MSG.format(old_name, new_name, removed_in), 4)
 
 
+def deprecation_with_replacement(
+    old_name: str, new_name: str, removed_in: str = "3.0.0"
+) -> None:
+    """
+    Raise an exception that a feature was already removed, but has a replacement.
+    """
+    deprecation(DEPR_MSG_HAPPENED.format(old_name, removed_in, new_name))
+
+
 def deprecate_no_replacement(name: str, removed_in: str = "3.0.0") -> None:
+    """
+    Raise an exception that a feature will be removed without replacement.
+    """
     deprecate(DEPR_MSG_NO_REPLACEMENT.format(name, removed_in), 4)
+
+
+def deprecation_no_replacement(name: str, removed_in: str = "3.0.0") -> None:
+    """
+    Raise an exception that a feature was already removed without replacement.
+    """
+    deprecation(DEPR_MSG_NO_REPLACEMENT_HAPPENED.format(name, removed_in))
 
 
 def logger_warning(msg: str, src: str) -> None:
