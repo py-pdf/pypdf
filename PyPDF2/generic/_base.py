@@ -54,7 +54,7 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 class PdfObject(PdfObjectProtocol):
     # function for calculating a hash value
     hash_func: Callable[..., "hashlib._Hash"] = hashlib.sha1
-    indirect_ref: Optional["IndirectObject"]
+    indirect_reference: Optional["IndirectObject"]
 
     def hash_value_data(self) -> bytes:
         return ("%s" % self).encode()
