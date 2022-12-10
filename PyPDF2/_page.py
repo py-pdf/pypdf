@@ -58,6 +58,7 @@ from ._utils import (
 from .constants import ImageAttributes as IA
 from .constants import PageAttributes as PG
 from .constants import Ressources as RES
+from .constants import AnnotationDictionaryAttributes as ADA
 from .errors import PageSizeNotDefinedError
 from .filters import _xobj_to_image
 from .generic import (
@@ -1057,6 +1058,20 @@ class PageObject(DictionaryObject):
         self.bleedbox = self.bleedbox.scale(sx, sy)
         self.trimbox = self.trimbox.scale(sx, sy)
         self.mediabox = self.mediabox.scale(sx, sy)
+
+        if PG.ANNOTS in self:
+            annotations = self[PG.ANNOTS]
+            if isinstance(annotations, ArrayObject):
+                for annotation in annotations:
+                    annotation_obj = annotation.get_object()
+                    if ADA.Rect in annotation_obj:
+                        rectangle = annotation_obj[ADA.Rect]
+                        if isinstance(rectangle, ArrayObject):
+                            rectangle[0] = FloatObject(float(rectangle[0]) * sx)
+                            rectangle[1] = FloatObject(float(rectangle[1]) * sy)
+                            rectangle[2] = FloatObject(float(rectangle[2]) * sx)
+                            rectangle[3] = FloatObject(float(rectangle[3]) * sy)
+
         if PG.VP in self:
             viewport = self[PG.VP]
             if isinstance(viewport, ArrayObject):
@@ -1516,8 +1531,8 @@ class PageObject(DictionaryObject):
             elif operator == b"Tj":
                 check_crlf_space = True
                 m = mult(tm_matrix, cm_matrix)
-                o = orient(m)
-                if o in orientations:
+                orientation = orient(m)
+                if orientation in orientations:
                     if isinstance(operands[0], str):
                         text += operands[0]
                     else:
@@ -1588,17 +1603,17 @@ class PageObject(DictionaryObject):
                 return None
             if check_crlf_space:
                 m = mult(tm_matrix, cm_matrix)
-                o = orient(m)
-                deltaX = m[4] - tm_prev[4]
-                deltaY = m[5] - tm_prev[5]
+                orientation = orient(m)
+                delta_x = m[4] - tm_prev[4]
+                delta_y = m[5] - tm_prev[5]
                 k = math.sqrt(abs(m[0] * m[3]) + abs(m[1] * m[2]))
                 f = font_size * k
                 tm_prev = m
-                if o not in orientations:
+                if orientation not in orientations:
                     return None
                 try:
-                    if o == 0:
-                        if deltaY < -0.8 * f:
+                    if orientation == 0:
+                        if delta_y < -0.8 * f:
                             if (output + text)[-1] != "\n":
                                 output += text + "\n"
                                 if visitor_text is not None:
@@ -1611,13 +1626,13 @@ class PageObject(DictionaryObject):
                                     )
                                 text = ""
                         elif (
-                            abs(deltaY) < f * 0.3
-                            and abs(deltaX) > current_spacewidth() * f * 15
+                            abs(delta_y) < f * 0.3
+                            and abs(delta_x) > current_spacewidth() * f * 15
                         ):
                             if (output + text)[-1] != " ":
                                 text += " "
-                    elif o == 180:
-                        if deltaY > 0.8 * f:
+                    elif orientation == 180:
+                        if delta_y > 0.8 * f:
                             if (output + text)[-1] != "\n":
                                 output += text + "\n"
                                 if visitor_text is not None:
@@ -1630,13 +1645,13 @@ class PageObject(DictionaryObject):
                                     )
                                 text = ""
                         elif (
-                            abs(deltaY) < f * 0.3
-                            and abs(deltaX) > current_spacewidth() * f * 15
+                            abs(delta_y) < f * 0.3
+                            and abs(delta_x) > current_spacewidth() * f * 15
                         ):
                             if (output + text)[-1] != " ":
                                 text += " "
-                    elif o == 90:
-                        if deltaX > 0.8 * f:
+                    elif orientation == 90:
+                        if delta_x > 0.8 * f:
                             if (output + text)[-1] != "\n":
                                 output += text + "\n"
                                 if visitor_text is not None:
@@ -1649,13 +1664,13 @@ class PageObject(DictionaryObject):
                                     )
                                 text = ""
                         elif (
-                            abs(deltaX) < f * 0.3
-                            and abs(deltaY) > current_spacewidth() * f * 15
+                            abs(delta_x) < f * 0.3
+                            and abs(delta_y) > current_spacewidth() * f * 15
                         ):
                             if (output + text)[-1] != " ":
                                 text += " "
-                    elif o == 270:
-                        if deltaX < -0.8 * f:
+                    elif orientation == 270:
+                        if delta_x < -0.8 * f:
                             if (output + text)[-1] != "\n":
                                 output += text + "\n"
                                 if visitor_text is not None:
@@ -1668,8 +1683,8 @@ class PageObject(DictionaryObject):
                                     )
                                 text = ""
                         elif (
-                            abs(deltaX) < f * 0.3
-                            and abs(deltaY) > current_spacewidth() * f * 15
+                            abs(delta_x) < f * 0.3
+                            and abs(delta_y) > current_spacewidth() * f * 15
                         ):
                             if (output + text)[-1] != " ":
                                 text += " "

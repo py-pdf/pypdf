@@ -35,6 +35,7 @@ import random
 import struct
 import time
 import uuid
+import warnings
 from hashlib import md5
 from io import BufferedReader, BufferedWriter, BytesIO, FileIO
 from pathlib import Path
@@ -412,6 +413,54 @@ class PdfWriter:
         deprecate_with_replacement("insertBlankPage", "insert_blank_page")
         return self.insert_blank_page(width, height, index)
 
+    @property
+    def open_destination(
+        self,
+    ) -> Union[None, Destination, TextStringObject, ByteStringObject]:
+        """
+        Property to access the opening destination ("/OpenAction" entry in the
+        PDF catalog).
+        it returns `None` if the entry does not exist is not set.
+
+        :param destination:.
+        the property can be set to a Destination, a Page or an string(NamedDest) or
+            None (to remove "/OpenAction")
+
+        (value stored in "/OpenAction" entry in the Pdf Catalog)
+        """
+        if "/OpenAction" not in self._root_object:
+            return None
+        oa = self._root_object["/OpenAction"]
+        if isinstance(oa, (str, bytes)):
+            return create_string_object(str(oa))
+        elif isinstance(oa, ArrayObject):
+            try:
+                page, typ = oa[0:2]  # type: ignore
+                array = oa[2:]
+                return Destination("OpenAction", page, typ, *array)  # type: ignore
+            except Exception:
+                raise Exception(f"Invalid Destination {oa}")
+        else:
+            return None
+
+    @open_destination.setter
+    def open_destination(self, dest: Union[None, str, Destination, PageObject]) -> None:
+        if dest is None:
+            try:
+                del self._root_object["/OpenAction"]
+            except KeyError:
+                pass
+        elif isinstance(dest, str):
+            self._root_object[NameObject("/OpenAction")] = TextStringObject(dest)
+        elif isinstance(dest, Destination):
+            self._root_object[NameObject("/OpenAction")] = dest.dest_array
+        elif isinstance(dest, PageObject):
+            self._root_object[NameObject("/OpenAction")] = Destination(
+                "Opening",
+                dest.indirect_ref if dest.indirect_ref is not None else NullObject(),
+                TextStringObject("/Fit"),
+            ).dest_array
+
     def add_js(self, javascript: str) -> None:
         """
         Add Javascript which will launch upon opening this PDF.
@@ -421,39 +470,30 @@ class PdfWriter:
         >>> output.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
         # Example: This will launch the print window when the PDF is opened.
         """
+        # Names / JavaScript prefered to be able to add multiple scripts
+        if "/Names" not in self._root_object:
+            self._root_object[NameObject(CA.NAMES)] = DictionaryObject()
+        names = cast(DictionaryObject, self._root_object[CA.NAMES])
+        if "/JavaScript" not in names:
+            names[NameObject("/JavaScript")] = DictionaryObject(
+                {NameObject("/Names"): ArrayObject()}
+            )
+            # cast(DictionaryObject, names[NameObject("/JavaScript")])[NameObject("/Names")] = ArrayObject()
+        js_list = cast(
+            ArrayObject, cast(DictionaryObject, names["/JavaScript"])["/Names"]
+        )
+
         js = DictionaryObject()
         js.update(
             {
                 NameObject(PA.TYPE): NameObject("/Action"),
                 NameObject("/S"): NameObject("/JavaScript"),
-                NameObject("/JS"): NameObject(f"({javascript})"),
+                NameObject("/JS"): TextStringObject(f"{javascript}"),
             }
         )
-        js_indirect_object = self._add_object(js)
-
         # We need a name for parameterized javascript in the pdf file, but it can be anything.
-        js_string_name = str(uuid.uuid4())
-
-        js_name_tree = DictionaryObject()
-        js_name_tree.update(
-            {
-                NameObject("/JavaScript"): DictionaryObject(
-                    {
-                        NameObject(CA.NAMES): ArrayObject(
-                            [create_string_object(js_string_name), js_indirect_object]
-                        )
-                    }
-                )
-            }
-        )
-        self._add_object(js_name_tree)
-
-        self._root_object.update(
-            {
-                NameObject("/OpenAction"): js_indirect_object,
-                NameObject(CA.NAMES): js_name_tree,
-            }
-        )
+        js_list.append(create_string_object(str(uuid.uuid4())))
+        js_list.append(self._add_object(js))
 
     def addJS(self, javascript: str) -> None:  # pragma: no cover
         """
@@ -580,10 +620,10 @@ class PdfWriter:
         writer_num_pages = len(self.pages)
 
         # Copy pages from reader to writer
-        for rpagenum in range(reader_num_pages):
-            reader_page = reader.pages[rpagenum]
+        for reader_page_number in range(reader_num_pages):
+            reader_page = reader.pages[reader_page_number]
             self.add_page(reader_page)
-            writer_page = self.pages[writer_num_pages + rpagenum]
+            writer_page = self.pages[writer_num_pages + reader_page_number]
             # Trigger callback, pass writer page as parameter
             if callable(after_page_append):
                 after_page_append(writer_page)
@@ -1060,6 +1100,29 @@ class PdfWriter:
 
         return outline
 
+    def get_threads_root(self) -> ArrayObject:
+        """
+        the list of threads see §8.3.2 from PDF 1.7 spec
+
+                :return: an Array (possibly empty) of Dictionaries with "/F" and "/I" properties
+        """
+        if CO.THREADS in self._root_object:
+            # TABLE 3.25 Entries in the catalog dictionary
+            threads = cast(ArrayObject, self._root_object[CO.THREADS])
+        else:
+            threads = ArrayObject()
+            self._root_object[NameObject(CO.THREADS)] = threads
+        return threads
+
+    @property
+    def threads(self) -> ArrayObject:
+        """
+        Read-only property for the list of threads see §8.3.2 from PDF 1.7 spec
+
+        :return: an Array (possibly empty) of Dictionaries with "/F" and "/I" properties
+        """
+        return self.get_threads_root()
+
     def getOutlineRoot(self) -> TreeObject:  # pragma: no cover
         """
         .. deprecated:: 1.28.0
@@ -1205,18 +1268,19 @@ class PdfWriter:
     def add_outline_item(
         self,
         title: str,
-        pagenum: int,
+        page_number: Optional[int] = None,
         parent: Union[None, TreeObject, IndirectObject] = None,
         color: Optional[Union[Tuple[float, float, float], str]] = None,
         bold: bool = False,
         italic: bool = False,
         fit: Fit = DEFAULT_FIT,
+        pagenum: Optional[int] = None,  # deprecated
     ) -> IndirectObject:
         """
         Add an outline item (commonly referred to as a "Bookmark") to this PDF file.
 
         :param str title: Title to use for this outline item.
-        :param int pagenum: Page number this outline item will point to.
+        :param int page_number: Page number this outline item will point to.
         :param parent: A reference to a parent outline item to create nested
             outline items.
         :param tuple color: Color of the outline item's font as a red, green, blue tuple
@@ -1226,6 +1290,23 @@ class PdfWriter:
         :param Fit fit: The fit of the destination page.
         """
         page_ref = NumberObject(pagenum)
+        if page_number is not None and pagenum is not None:
+            raise ValueError(
+                "The argument pagenum of add_outline_item is deprecated. Use page_number only."
+            )
+        if pagenum is not None:
+            old_term = "pagenum"
+            new_term = "page_number"
+            warnings.warn(
+                message=(
+                    f"{old_term} is deprecated as an argument. Use {new_term} instead"
+                )
+            )
+            page_number = pagenum
+        if page_number is None:
+            raise ValueError("page_number may not be None")
+        page_ref = NumberObject(page_number)
+
         dest = Destination(
             NameObject("/" + title + " outline item"),
             page_ref,
@@ -1249,7 +1330,7 @@ class PdfWriter:
     def add_bookmark(
         self,
         title: str,
-        pagenum: int,
+        pagenum: int,  # deprecated, but the whole method is deprecated
         parent: Union[None, TreeObject, IndirectObject] = None,
         color: Optional[Tuple[float, float, float]] = None,
         bold: bool = False,
@@ -1325,8 +1406,28 @@ class PdfWriter:
         )
         return self.add_named_destination_object(dest)
 
-    def add_named_destination(self, title: str, pagenum: int) -> IndirectObject:
-        page_ref = self.get_object(self._pages)[PA.KIDS][pagenum]  # type: ignore
+    def add_named_destination(
+        self,
+        title: str,
+        page_number: Optional[int] = None,
+        pagenum: Optional[int] = None,
+    ) -> IndirectObject:
+        if page_number is not None and pagenum is not None:
+            raise ValueError(
+                "The argument pagenum of add_outline_item is deprecated. Use page_number only."
+            )
+        if pagenum is not None:
+            old_term = "pagenum"
+            new_term = "page_number"
+            warnings.warn(
+                message=(
+                    f"{old_term} is deprecated as an argument. Use {new_term} instead"
+                )
+            )
+            page_number = pagenum
+        if page_number is None:
+            raise ValueError("page_number may not be None")
+        page_ref = self.get_object(self._pages)[PA.KIDS][page_number]  # type: ignore
         dest = DictionaryObject()
         dest.update(
             {
@@ -1516,16 +1617,17 @@ class PdfWriter:
 
     def add_uri(
         self,
-        pagenum: int,
+        page_number: int,
         uri: str,
         rect: RectangleObject,
         border: Optional[ArrayObject] = None,
+        pagenum: Optional[int] = None,
     ) -> None:
         """
         Add an URI from a rectangular area to the specified page.
         This uses the basic structure of :meth:`add_link`
 
-        :param int pagenum: index of the page on which to place the URI action.
+        :param int page_number: index of the page on which to place the URI action.
         :param str uri: URI of resource to link to.
         :param Tuple[int, int, int, int] rect: :class:`RectangleObject<PyPDF2.generic.RectangleObject>` or array of four
             integers specifying the clickable rectangular area
@@ -1534,7 +1636,12 @@ class PdfWriter:
             properties. See the PDF spec for details. No border will be
             drawn if this argument is omitted.
         """
-        page_link = self.get_object(self._pages)[PA.KIDS][pagenum]  # type: ignore
+        if pagenum is not None:
+            warnings.warn(
+                "The 'pagenum' argument of add_uri is deprecated. Use 'page_number' instead."
+            )
+            page_number = pagenum
+        page_link = self.get_object(self._pages)[PA.KIDS][page_number]  # type: ignore
         page_ref = cast(Dict[str, Any], self.get_object(page_link))
 
         border_arr: BorderArrayType
@@ -1583,7 +1690,7 @@ class PdfWriter:
 
     def addURI(
         self,
-        pagenum: int,
+        pagenum: int,  # deprecated, but method is deprecated already
         uri: str,
         rect: RectangleObject,
         border: Optional[ArrayObject] = None,
@@ -1598,7 +1705,7 @@ class PdfWriter:
 
     def add_link(
         self,
-        pagenum: int,
+        pagenum: int,  # deprecated, but method is deprecated already
         pagedest: int,
         rect: RectangleObject,
         border: Optional[ArrayObject] = None,
@@ -1629,7 +1736,7 @@ class PdfWriter:
 
     def addLink(
         self,
-        pagenum: int,
+        pagenum: int,  # deprecated, but method is deprecated already
         pagedest: int,
         rect: RectangleObject,
         border: Optional[ArrayObject] = None,

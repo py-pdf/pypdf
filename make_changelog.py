@@ -8,12 +8,15 @@ from typing import List
 
 @dataclass(frozen=True)
 class Change:
+    """Capture the data of a git commit."""
+
     commit_hash: str
     prefix: str
     message: str
 
 
 def main(changelog_path: str):
+    """Create a changelog."""
     changelog = get_changelog(changelog_path)
     git_tag = get_most_recent_git_tag()
     changes = get_formatted_changes(git_tag)
@@ -24,7 +27,7 @@ def main(changelog_path: str):
     today = datetime.now()
     header = f"Version {new_version}, {today:%Y-%m-%d}\n"
     header = header + "-" * (len(header) - 1) + "\n"
-    trailer = f"\nFull Changelog: https://github.com/py-pdf/PyPDF2/compare/{git_tag}...{new_version}\n\n"
+    trailer = f"\n[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/{git_tag}...{new_version})\n\n"
     new_entry = header + changes + trailer
     print(new_entry)
 

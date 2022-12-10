@@ -1,3 +1,10 @@
+"""
+Configuration for mutmut.
+
+See https://mutmut.readthedocs.io/en/latest/
+"""
+
+
 def pre_mutation(context):
     if "_codecs" in context.filename:
         context.skip = True

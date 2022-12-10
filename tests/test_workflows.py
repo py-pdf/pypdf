@@ -873,6 +873,7 @@ def test_get_xmp(url, name, strict):
         xmp_info.custom_properties
 
 
+@pytest.mark.external
 def test_tounicode_is_identity():
     url = "https://github.com/py-pdf/PyPDF2/files/9998335/FP_Thesis.pdf"
     name = "FP_Thesis.pdf"

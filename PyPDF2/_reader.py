@@ -470,10 +470,10 @@ class PdfReader:
         """
         .. deprecated:: 1.28.0
 
-            Use :code:`reader.pages[pageNumber]` instead.
+            Use :code:`reader.pages[page_number]` instead.
         """
         deprecate_with_replacement(
-            "reader.getPage(pageNumber)", "reader.pages[pageNumber]"
+            "reader.getPage(pageNumber)", "reader.pages[page_number]"
         )
         return self._get_page(pageNumber)
 
@@ -801,6 +801,20 @@ class PdfReader:
         deprecate_with_replacement("getOutlines", "outline")
         return self._get_outline(node, outline)
 
+    @property
+    def threads(self) -> Optional[ArrayObject]:
+        """
+        Read-only property for the list of threads see §8.3.2 from PDF 1.7 spec
+
+        :return: an Array of Dictionnaries with "/F" and "/I" properties
+                 or None if no articles.
+        """
+        catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
+        if CO.THREADS in catalog:
+            return cast("ArrayObject", catalog[CO.THREADS])
+        else:
+            return None
+
     def _get_page_number_by_indirect(
         self, indirect_ref: Union[None, int, NullObject, IndirectObject]
     ) -> int:
@@ -864,14 +878,18 @@ class PdfReader:
     def _build_destination(
         self,
         title: str,
-        array: List[Union[NumberObject, IndirectObject, NullObject, DictionaryObject]],
+        array: Optional[
+            List[
+                Union[NumberObject, IndirectObject, None, NullObject, DictionaryObject]
+            ]
+        ],
     ) -> Destination:
         page, typ = None, None
         # handle outline items with missing or invalid destination
         if (
-            isinstance(array, (type(None), NullObject))
+            isinstance(array, (NullObject, str))
             or (isinstance(array, ArrayObject) and len(array) == 0)
-            or (isinstance(array, str))
+            or array is None
         ):
 
             page = NullObject()
@@ -896,7 +914,7 @@ class PdfReader:
         # title required for valid outline
         # PDF Reference 1.7: TABLE 8.4 Entries in an outline item dictionary
         try:
-            title = node["/Title"]
+            title = cast("str", node["/Title"])
         except KeyError:
             if self.strict:
                 raise PdfReadError(f"Outline Entry Missing /Title attribute: {node!r}")
@@ -916,9 +934,10 @@ class PdfReader:
                 dest = dest["/D"]
 
         if isinstance(dest, ArrayObject):
-            outline_item = self._build_destination(title, dest)  # type: ignore
+            outline_item = self._build_destination(title, dest)
         elif isinstance(dest, str):
             # named destination, addresses NameObject Issue #193
+            # TODO : keep named destination instead of replacing it ?
             try:
                 outline_item = self._build_destination(
                     title, self._namedDests[dest].dest_array
@@ -926,13 +945,18 @@ class PdfReader:
             except KeyError:
                 # named destination not found in Name Dict
                 outline_item = self._build_destination(title, None)
-        elif isinstance(dest, type(None)):
+        elif dest is None:
             # outline item not required to have destination or action
             # PDFv1.7 Table 153
-            outline_item = self._build_destination(title, dest)  # type: ignore
+            outline_item = self._build_destination(title, dest)
         else:
             if self.strict:
                 raise PdfReadError(f"Unexpected destination {dest!r}")
+            else:
+                logger_warning(
+                    f"Removed unexpected destination {dest!r} from destination",
+                    __name__,
+                )
             outline_item = self._build_destination(title, None)  # type: ignore
 
         # if outline item created, add color, format, and child count if present
@@ -948,7 +972,6 @@ class PdfReader:
                 # absolute value = num. visible children
                 # positive = open/unfolded, negative = closed/folded
                 outline_item[NameObject("/Count")] = node["/Count"]
-
         return outline_item
 
     @property
@@ -1152,7 +1175,18 @@ class PdfReader:
             raise PdfReadError("This is a fatal error in strict mode.")
         return NullObject()
 
-    def get_object(self, indirect_reference: IndirectObject) -> Optional[PdfObject]:
+    def _get_indirect_object(self, num: int, gen: int) -> Optional[PdfObject]:
+        """
+        used to ease development
+        equivalent to generic.IndirectObject(num,gen,self).get_object()
+        """
+        return IndirectObject(num, gen, self).get_object()
+
+    def get_object(
+        self, indirect_reference: Union[int, IndirectObject]
+    ) -> Optional[PdfObject]:
+        if isinstance(indirect_reference, int):
+            indirect_reference = IndirectObject(indirect_reference, 0, self)
         retval = self.cache_get_indirect_object(
             indirect_reference.generation, indirect_reference.idnum
         )
@@ -1925,13 +1959,6 @@ class PdfReader:
                         es = zlib.decompress(field._data)
                         retval[tag] = es
         return retval
-
-    def _get_indirect_object(self, num: int, gen: int) -> Optional[PdfObject]:
-        """
-        used to ease development
-        equivalent to generic.IndirectObject(num,gen,self).get_object()
-        """
-        return IndirectObject(num, gen, self).get_object()
 
 
 class PdfFileReader(PdfReader):  # pragma: no cover

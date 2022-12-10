@@ -25,6 +25,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import warnings
 from io import BytesIO, FileIO, IOBase
 from pathlib import Path
 from types import TracebackType
@@ -157,6 +158,7 @@ class PdfMerger:
             or a ``(start, stop[, step])`` tuple
             to merge only the specified range of pages from the source
             document into the output document.
+            Can also be a list of pages to merge.
 
         :param bool import_outline: You may prevent the source document's
             outline (collection of outline items, previously referred to as
@@ -176,6 +178,8 @@ class PdfMerger:
             pages = (0, len(reader.pages))
         elif isinstance(pages, PageRange):
             pages = pages.indices(len(reader.pages))
+        elif isinstance(pages, list):
+            pass
         elif not isinstance(pages, tuple):
             raise TypeError('"pages" must be a tuple of (start, stop[, step])')
 
@@ -257,7 +261,9 @@ class PdfMerger:
         self,
         fileobj: Union[StrByteType, PdfReader, Path],
         outline_item: Optional[str] = None,
-        pages: Union[None, PageRange, Tuple[int, int], Tuple[int, int, int]] = None,
+        pages: Union[
+            None, PageRange, Tuple[int, int], Tuple[int, int, int], List[int]
+        ] = None,
         import_outline: bool = True,
     ) -> None:
         """
@@ -277,6 +283,7 @@ class PdfMerger:
             or a ``(start, stop[, step])`` tuple
             to merge only the specified range of pages from the source
             document into the output document.
+            Can also be a list of pages to append.
 
         :param bool import_outline: You may prevent the source document's
             outline (collection of outline items, previously referred to as
@@ -422,12 +429,13 @@ class PdfMerger:
         self,
         pdf: PdfReader,
         dests: Dict[str, Dict[str, Any]],
-        pages: Union[Tuple[int, int], Tuple[int, int, int]],
+        pages: Union[Tuple[int, int], Tuple[int, int, int], List[int]],
     ) -> List[Dict[str, Any]]:
         """Remove named destinations that are not a part of the specified page set."""
         new_dests = []
+        lst = pages if isinstance(pages, list) else list(range(*pages))
         for key, obj in dests.items():
-            for j in range(*pages):
+            for j in lst:
                 if pdf.pages[j].get_object() == obj["/Page"].get_object():
                     obj[NameObject("/Page")] = obj["/Page"].get_object()
                     assert str_(key) == str_(obj["/Title"])
@@ -439,21 +447,22 @@ class PdfMerger:
         self,
         pdf: PdfReader,
         outline: OutlineType,
-        pages: Union[Tuple[int, int], Tuple[int, int, int]],
+        pages: Union[Tuple[int, int], Tuple[int, int, int], List[int]],
     ) -> OutlineType:
         """Remove outline item entries that are not a part of the specified page set."""
         new_outline = []
         prev_header_added = True
+        lst = pages if isinstance(pages, list) else list(range(*pages))
         for i, outline_item in enumerate(outline):
             if isinstance(outline_item, list):
-                sub = self._trim_outline(pdf, outline_item, pages)  # type: ignore
+                sub = self._trim_outline(pdf, outline_item, lst)  # type: ignore
                 if sub:
                     if not prev_header_added:
                         new_outline.append(outline[i - 1])
                     new_outline.append(sub)  # type: ignore
             else:
                 prev_header_added = False
-                for j in range(*pages):
+                for j in lst:
                     if outline_item["/Page"] is None:
                         continue
                     if pdf.pages[j].get_object() == outline_item["/Page"].get_object():
@@ -625,18 +634,19 @@ class PdfMerger:
     def add_outline_item(
         self,
         title: str,
-        pagenum: int,
+        page_number: Optional[int] = None,
         parent: Union[None, TreeObject, IndirectObject] = None,
         color: Optional[Tuple[float, float, float]] = None,
         bold: bool = False,
         italic: bool = False,
         fit: Fit = DEFAULT_FIT,
+        pagenum: Optional[int] = None,  # deprecated
     ) -> IndirectObject:
         """
         Add an outline item (commonly referred to as a "Bookmark") to this PDF file.
 
         :param str title: Title to use for this outline item.
-        :param int pagenum: Page number this outline item will point to.
+        :param int page_number: Page number this outline item will point to.
         :param parent: A reference to a parent outline item to create nested
             outline items.
         :param tuple color: Color of the outline item's font as a red, green, blue tuple
@@ -645,12 +655,27 @@ class PdfMerger:
         :param bool italic: Outline item font is italic
         :param Fit fit: The fit of the destination page.
         """
+        if page_number is not None and pagenum is not None:
+            raise ValueError(
+                "The argument pagenum of add_outline_item is deprecated. Use page_number only."
+            )
+        if pagenum is not None:
+            old_term = "pagenum"
+            new_term = "page_number"
+            warnings.warn(
+                message=(
+                    f"{old_term} is deprecated as an argument. Use {new_term} instead"
+                )
+            )
+            page_number = pagenum
+        if page_number is None:
+            raise ValueError("page_number may not be None")
         writer = self.output
         if writer is None:
             raise RuntimeError(ERR_CLOSED_WRITER)
         return writer.add_outline_item(
             title,
-            pagenum,
+            page_number,
             parent,
             color,
             bold,
@@ -661,7 +686,7 @@ class PdfMerger:
     def addBookmark(
         self,
         title: str,
-        pagenum: int,
+        pagenum: int,  # deprecated, but the whole method is deprecated
         parent: Union[None, TreeObject, IndirectObject] = None,
         color: Optional[Tuple[float, float, float]] = None,
         bold: bool = False,
@@ -687,7 +712,7 @@ class PdfMerger:
     def add_bookmark(
         self,
         title: str,
-        pagenum: int,
+        pagenum: int,  # deprecated, but the whole method is deprecated already
         parent: Union[None, TreeObject, IndirectObject] = None,
         color: Optional[Tuple[float, float, float]] = None,
         bold: bool = False,
@@ -718,17 +743,40 @@ class PdfMerger:
         deprecate_with_replacement("addNamedDestination", "add_named_destination")
         return self.add_named_destination(title, pagenum)
 
-    def add_named_destination(self, title: str, pagenum: int) -> None:
+    def add_named_destination(
+        self,
+        title: str,
+        page_number: Optional[int] = None,
+        pagenum: Optional[int] = None,
+    ) -> None:
         """
         Add a destination to the output.
 
         :param str title: Title to use
-        :param int pagenum: Page number this destination points at.
+        :param int page_number: Page number this destination points at.
         """
+        if page_number is not None and pagenum is not None:
+            raise ValueError(
+                "The argument pagenum of add_named_destination is deprecated. Use page_number only."
+            )
+        if pagenum is not None:
+            old_term = "pagenum"
+            new_term = "page_number"
+            warnings.warn(
+                message=(
+                    f"{old_term} is deprecated as an argument. Use {new_term} instead"
+                )
+            )
+            page_number = pagenum
+        if page_number is None:
+            raise ValueError("page_number may not be None")
         dest = Destination(
             TextStringObject(title),
-            NumberObject(pagenum),
+            NumberObject(page_number),
             Fit.fit_horizontally(top=826),
+            NumberObject(page_number),
+            NameObject(TypFitArguments.FIT_H),
+            NumberObject(826),
         )
         self.named_dests.append(dest)
 

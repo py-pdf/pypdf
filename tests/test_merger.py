@@ -45,7 +45,11 @@ def merger_operate(merger):
     merger.append(reader)
 
     # PdfReader object:
-    merger.append(PyPDF2.PdfReader(pdf_path), outline_item="foo")
+    r = PyPDF2.PdfReader(pdf_path)
+    merger.append(r, outline_item="foo", pages=list(range(len(r.pages))))
+
+    # PdfReader object with List:
+    # merger.append(PyPDF2.PdfReader(pdf_path), outline_item="foo")
 
     # File handle
     with open(pdf_path, "rb") as fh:
