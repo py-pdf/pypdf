@@ -409,7 +409,11 @@ def test_encrypt(use_128bit, user_password, owner_password):
     orig_text = page.extract_text()
 
     writer.add_page(page)
-    writer.encrypt(user_password=user_password, owner_password=owner_password, use_128bit=use_128bit)
+    writer.encrypt(
+        user_password=user_password,
+        owner_password=owner_password,
+        use_128bit=use_128bit,
+    )
 
     # write "output" to PyPDF2-output.pdf
     tmp_filename = "dont_commit_encrypted.pdf"

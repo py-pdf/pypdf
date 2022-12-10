@@ -789,6 +789,8 @@ class PdfWriter:
         owner_password: Optional[str] = None,
         use_128bit: bool = True,
         permissions_flag: UserAccessPermissions = ALL_DOCUMENT_PERMISSIONS,
+        user_pwd: Optional[str] = None,  # deprecated
+        owner_pwd: Optional[str] = None,  # deprecated
     ) -> None:
         """
         Encrypt this PDF file with the PDF Standard encryption handler.
@@ -809,6 +811,19 @@ class PdfWriter:
             control annotations, 9 for form fields, 10 for extraction of
             text and graphics.
         """
+        if user_pwd is not None:
+            if user_password is not None:
+                raise ValueError(
+                    "Please only set 'user_password'. "
+                    "The 'user_pwd' argument is deprecated."
+                )
+            else:
+                warnings.warn(
+                    "Please use 'user_password' instead of 'user_pwd'. "
+                    "The 'user_pwd' argument is deprecated and will be removed "
+                    "in PyPDF2==3.0.0."
+                )
+                user_password = user_pwd
         if owner_password is None:
             owner_password = user_password
         if use_128bit:
