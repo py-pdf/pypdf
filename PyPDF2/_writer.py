@@ -1414,7 +1414,7 @@ class PdfWriter:
             outline items.
         :param parent: A reference to a parent outline item to create nested
             outline items.
-        :param tuple colo r: Color of the outline item's font as a red, green, blue tuple
+        :param tuple color: Color of the outline item's font as a red, green, blue tuple
             from 0.0 to 1.0 or as a Hex String (#RRGGBB)
         :param bool bold: Outline item font is bold
         :param bool italic: Outline item font is italic
@@ -1488,7 +1488,6 @@ class PdfWriter:
             title,
             pagenum,
             parent,
-            None, c
             color,
             bold,
             italic,
