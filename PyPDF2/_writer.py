@@ -1421,7 +1421,7 @@ class PdfWriter:
         :param Fit fit: The fit of the destination page.
         """
         page_ref: Union[None, NullObject, IndirectObject, NumberObject]
-        if isinstance(italic, str):  # it means that we are on the old params
+        if isinstance(italic, Fit):  # it means that we are on the old params
             return self.add_outline_item(
                 title, pagenum, parent, None, before, color, bold, italic, fit,
             )
