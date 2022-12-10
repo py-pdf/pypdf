@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1670697069753,
+  "lastUpdate": 1670702128003,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -19838,6 +19838,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0006789769778946952",
             "extra": "mean: 88.716326181818 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "76334777b5d54342b25eb3e030f02df9bf01b2ca",
+          "message": "MAINT: Refactor Fit / Zoom parameters (#1437)\n\nIntroduce a new `PyPDF2.generic.Fit` class which captures the type and parameter for how a page should be fit in the viewer (e.g. when clicking on a PDF-internal link).\r\n\r\nThe class has one method for each fit type which allows users to discover the different types via their IDE, e.g. `Fit.xyz(left=123, top=456, zoom=2)`.\r\n\r\n## Breaking Change\r\n\r\nThis **introduces a breaking change** that needs a major version bump. Affected are the following methods:\r\n\r\n* `PdfMerger.add_outline_item` used `fit: FitType` and `*args: ZoomArgType` parameters\r\n* `PdfWriter.add_outline_item` used `fit: FitType` and `*args: ZoomArgType` parameters\r\n* `AnnotationBuilder.link`  used `fit: FitType = \"/Fit\"` and `fit_args: Tuple[ZoomArgType, ...] = tuple()` instead.\r\n\r\nInstead of having two arguments, we now have only one. To that argument, an object of the new `Fit` class must be passed.\r\n\r\n## Why *args is problematic\r\n\r\nUsing the `*args` pattern is problematic for two reasons:\r\n\r\n* **User-code readability**:\r\n  * People cannot use the more expressive keyword-argument syntax in their code for the non-fit parameters\r\n  * People may or may not use the keyword-parameter for the fit parameters\r\n* **Library extensions**: PyPDF2 cannot easily add new parameter to those functions; #1371 is the latest PR that stumbled over this issue\r\n* **Two parameter for one thing**: In general I don't like if we have two parameters for one topic",
+          "timestamp": "2022-12-10T20:53:59+01:00",
+          "tree_id": "a1c830a381881f4c09b25c9abdb1ed5ae7a4e836",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/76334777b5d54342b25eb3e030f02df9bf01b2ca"
+        },
+        "date": 1670702125900,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.6975101012188722,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023873768792434025",
+            "extra": "mean: 1.4336709938000012 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 8.636220699452501,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009198257037287438",
+            "extra": "mean: 115.79139010000006 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.1822402865312765,
+            "unit": "iter/sec",
+            "range": "stddev: 0.10775497957496948",
+            "extra": "mean: 5.487260907199999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 8.813831544275661,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0030169387983768887",
+            "extra": "mean: 113.4580341111094 msec\nrounds: 9"
           }
         ]
       }
