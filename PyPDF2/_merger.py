@@ -55,9 +55,11 @@ from .constants import GoToActionArguments
 from .constants import PagesAttributes as PA
 from .constants import TypArguments, TypFitArguments
 from .generic import (
+    PAGE_FIT,
     ArrayObject,
     Destination,
     DictionaryObject,
+    Fit,
     FloatObject,
     IndirectObject,
     NameObject,
@@ -217,7 +219,7 @@ class PdfMerger:
             outline_item_typ = OutlineItem(
                 TextStringObject(outline_item),
                 NumberObject(self.id_count),
-                NameObject(TypFitArguments.FIT),
+                Fit.fit(),
             )
             self.outline += [outline_item_typ, outline]  # type: ignore
         else:
@@ -662,8 +664,7 @@ class PdfMerger:
         color: Optional[Tuple[float, float, float]] = None,
         bold: bool = False,
         italic: bool = False,
-        fit: FitType = "/Fit",
-        *args: ZoomArgType,
+        fit: Fit = PAGE_FIT,
         pagenum: Optional[int] = None,  # deprecated
     ) -> IndirectObject:
         """
@@ -677,8 +678,7 @@ class PdfMerger:
             from 0.0 to 1.0
         :param bool bold: Outline item font is bold
         :param bool italic: Outline item font is italic
-        :param str fit: The fit of the destination page. See
-            :meth:`add_link()<add_link>` for details.
+        :param Fit fit: The fit of the destination page.
         """
         if page_number is not None and pagenum is not None:
             raise ValueError(
@@ -699,7 +699,13 @@ class PdfMerger:
         if writer is None:
             raise RuntimeError(ERR_CLOSED_WRITER)
         return writer.add_outline_item(
-            title, page_number, parent, color, bold, italic, fit, *args
+            title,
+            page_number,
+            parent,
+            color,
+            bold,
+            italic,
+            fit,
         )
 
     def addBookmark(
@@ -719,7 +725,13 @@ class PdfMerger:
         """
         deprecate_with_replacement("addBookmark", "add_outline_item")
         return self.add_outline_item(
-            title, pagenum, parent, color, bold, italic, fit, *args
+            title,
+            pagenum,
+            parent,
+            color,
+            bold,
+            italic,
+            Fit(fit_type=fit, fit_args=args),
         )
 
     def add_bookmark(
@@ -739,7 +751,13 @@ class PdfMerger:
         """
         deprecate_with_replacement("addBookmark", "add_outline_item")
         return self.add_outline_item(
-            title, pagenum, parent, color, bold, italic, fit, *args
+            title,
+            pagenum,
+            parent,
+            color,
+            bold,
+            italic,
+            Fit(fit_type=fit, fit_args=args),
         )
 
     def addNamedDestination(self, title: str, pagenum: int) -> None:  # pragma: no cover
@@ -780,8 +798,7 @@ class PdfMerger:
         dest = Destination(
             TextStringObject(title),
             NumberObject(page_number),
-            NameObject(TypFitArguments.FIT_H),
-            NumberObject(826),
+            Fit.fit_horizontally(top=826),
         )
         self.named_dests.append(dest)
 

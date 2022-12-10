@@ -83,6 +83,7 @@ from .constants import StreamAttributes as SA
 from .constants import TrailerKeys as TK
 from .constants import TypFitArguments, UserAccessPermissions
 from .generic import (
+    PAGE_FIT,
     AnnotationBuilder,
     ArrayObject,
     BooleanObject,
@@ -91,6 +92,7 @@ from .generic import (
     DecodedStreamObject,
     Destination,
     DictionaryObject,
+    Fit,
     FloatObject,
     IndirectObject,
     NameObject,
@@ -110,7 +112,6 @@ from .types import (
     LayoutType,
     OutlineItemType,
     PagemodeType,
-    ZoomArgsType,
     ZoomArgType,
 )
 
@@ -454,9 +455,10 @@ class PdfWriter:
             try:
                 page, typ = oa[0:2]  # type: ignore
                 array = oa[2:]
-                return Destination("OpenAction", page, typ, *array)  # type: ignore
-            except Exception:
-                raise Exception(f"Invalid Destination {oa}")
+                fit = Fit(typ, tuple(array))
+                return Destination("OpenAction", page, fit)
+            except Exception as exc:
+                raise Exception(f"Invalid Destination {oa}: {exc}")
         else:
             return None
 
@@ -477,7 +479,7 @@ class PdfWriter:
                 dest.indirect_reference
                 if dest.indirect_reference is not None
                 else NullObject(),
-                TextStringObject("/Fit"),
+                PAGE_FIT,
             ).dest_array
 
     def add_js(self, javascript: str) -> None:
@@ -1344,8 +1346,7 @@ class PdfWriter:
         color: Optional[Union[Tuple[float, float, float], str]] = None,
         bold: bool = False,
         italic: bool = False,
-        fit: FitType = "/Fit",
-        *args: ZoomArgType,
+        fit: Fit = PAGE_FIT,
         pagenum: Optional[int] = None,  # deprecated
     ) -> IndirectObject:
         """
@@ -1359,8 +1360,7 @@ class PdfWriter:
             from 0.0 to 1.0 or as a Hex String (#RRGGBB)
         :param bool bold: Outline item font is bold
         :param bool italic: Outline item font is italic
-        :param str fit: The fit of the destination page. See
-            :meth:`add_link()<add_link>` for details.
+        :param Fit fit: The fit of the destination page.
         """
         if page_number is not None and pagenum is not None:
             raise ValueError(
@@ -1378,14 +1378,11 @@ class PdfWriter:
         if page_number is None:
             raise ValueError("page_number may not be None")
         page_ref = NumberObject(page_number)
-        zoom_args: ZoomArgsType = [
-            NullObject() if a is None else NumberObject(a) for a in args
-        ]
+
         dest = Destination(
             NameObject("/" + title + " outline item"),
             page_ref,
-            NameObject(fit),
-            *zoom_args,
+            fit,
         )
 
         action_ref = self._add_object(
@@ -1420,7 +1417,13 @@ class PdfWriter:
         """
         deprecate_with_replacement("add_bookmark", "add_outline_item")
         return self.add_outline_item(
-            title, pagenum, parent, color, bold, italic, fit, *args
+            title,
+            pagenum,
+            parent,
+            color,
+            bold,
+            italic,
+            Fit(fit_type=fit, fit_args=args),
         )
 
     def addBookmark(
@@ -1441,7 +1444,13 @@ class PdfWriter:
         """
         deprecate_with_replacement("addBookmark", "add_outline_item")
         return self.add_outline_item(
-            title, pagenum, parent, color, bold, italic, fit, *args
+            title,
+            pagenum,
+            parent,
+            color,
+            bold,
+            italic,
+            Fit(fit_type=fit, fit_args=args),
         )
 
     def add_outline(self) -> None:
@@ -1813,8 +1822,7 @@ class PdfWriter:
             rect=rect,
             border=border,
             target_page_index=page_destination,
-            fit=fit,
-            fit_args=args,
+            fit=Fit(fit_type=fit, fit_args=args),
         )
         return self.add_annotation(page_number=pagenum, annotation=annotation)
 
@@ -2066,8 +2074,9 @@ class PdfWriter:
             dest = Destination(
                 NameObject("/LinkName"),
                 tmp["target_page_index"],
-                tmp["fit"],
-                *tmp["fit_args"],
+                Fit(
+                    fit_type=tmp["fit"], fit_args=dict(tmp)["fit_args"]
+                ),  # I have no clue why this dict-hack is necessary
             )
             to_add[NameObject("/Dest")] = dest.dest_array
 

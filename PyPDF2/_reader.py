@@ -85,6 +85,7 @@ from .generic import (
     DictionaryObject,
     EncodedStreamObject,
     Field,
+    Fit,
     FloatObject,
     IndirectObject,
     NameObject,
@@ -892,13 +893,12 @@ class PdfReader:
         ):
 
             page = NullObject()
-            typ = TextStringObject("/Fit")
-            return Destination(title, page, typ)
+            return Destination(title, page, Fit.fit())
         else:
             page, typ = array[0:2]  # type: ignore
             array = array[2:]
             try:
-                return Destination(title, page, typ, *array)  # type: ignore
+                return Destination(title, page, Fit(fit_type=typ, fit_args=array))  # type: ignore
             except PdfReadError:
                 logger_warning(f"Unknown destination: {title} {array}", __name__)
                 if self.strict:
@@ -906,9 +906,7 @@ class PdfReader:
                 # create a link to first Page
                 tmp = self.pages[0].indirect_reference
                 indirect_reference = NullObject() if tmp is None else tmp
-                return Destination(
-                    title, indirect_reference, TextStringObject("/Fit")  # type: ignore
-                )
+                return Destination(title, indirect_reference, Fit.fit())  # type: ignore
 
     def _build_outline_item(self, node: DictionaryObject) -> Optional[Destination]:
         dest, title, outline_item = None, None, None
