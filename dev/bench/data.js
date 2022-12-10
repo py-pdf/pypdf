@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1670657092278,
+  "lastUpdate": 1670660227165,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -19266,6 +19266,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0020833357125315216",
             "extra": "mean: 86.80678354545019 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f804f3af83b1856492ea94e537de1c5350585add",
+          "message": "ROB: Padding issue with AES encryption (#1469)\n\nFixes #1221\r\n\r\nCredit goes to Alper Ahmetoglu for the fix\r\n\r\nCo-authored-by: Alper Ahmetoglu <ahmetoglu.alper@gmail.com>",
+          "timestamp": "2022-12-10T09:16:02+01:00",
+          "tree_id": "6da32bb3da1abffafc3da39e414576544b60ddb8",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/f804f3af83b1856492ea94e537de1c5350585add"
+        },
+        "date": 1670660225858,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0626452470811483,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006428982107877837",
+            "extra": "mean: 941.0478263999948 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.62678628960207,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004551923517672288",
+            "extra": "mean: 79.19671538461706 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.25981157800492555,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015362424146912343",
+            "extra": "mean: 3.8489431751999974 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 13.01931720359181,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00069387926641147",
+            "extra": "mean: 76.80894353846121 msec\nrounds: 13"
           }
         ]
       }
