@@ -163,20 +163,25 @@ class PdfMerger:
             outline (collection of outline items, previously referred to as
             'bookmarks') from being imported by specifying this as ``False``.
         """
-        if page_number is not None and position is not None:
-            raise ValueError(
-                "The argument position of merge is deprecated. Use page_number only."
-            )
-        if position is not None:
-            old_term = "position"
-            new_term = "page_number"
-            warnings.warn(
-                message=(
-                    f"{old_term} is deprecated as an argument. Use {new_term} instead"
+        if position is not None:  # deprecated
+            if page_number is None:
+                page_number = position
+                old_term = "position"
+                new_term = "page_number"
+                warnings.warn(
+                    message=(
+                        f"{old_term} is deprecated as an argument. Use {new_term} instead"
+                    )
                 )
-            )
-            page_number = position
-        if page_number is None:
+            else:
+                raise ValueError(
+                    "The argument position of merge is deprecated. Use page_number only."
+                )
+
+        if page_number is None:  # deprecated
+            # The paremter is only marked as Optional as long as
+            # position is not fully deprecated
+            raise ValueError("page_number may not be None")
             raise ValueError("page_number may not be None")
         if fileobj is None:
             raise ValueError("fileobj may not be None")
