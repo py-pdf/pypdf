@@ -292,6 +292,20 @@ def test_read_object_comment_exception():
     assert exc.value.args[0] == "File ended unexpectedly."
 
 
+def test_read_object_empty():
+    stream = BytesIO(b"endobj")
+    pdf = None
+    assert isinstance(read_object(stream, pdf), NullObject)
+
+
+def test_read_object_invalid():
+    stream = BytesIO(b"hello")
+    pdf = None
+    with pytest.raises(PdfReadError) as exc:
+        read_object(stream, pdf)
+    assert "hello" in exc.value.args[0]
+
+
 def test_read_object_comment():
     stream = BytesIO(b"% foobar\n1 ")
     pdf = None
