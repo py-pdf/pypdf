@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1670662483294,
+  "lastUpdate": 1670664046695,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -19370,6 +19370,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00048527346202386224",
             "extra": "mean: 79.71918758333156 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "github@joshhendo.com",
+            "name": "Josh Henderson",
+            "username": "joshhendo"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5fd96d01c1febe6d38ba9b90ba774e95ceaca784",
+          "message": "BUG: Scale PDF annotations (#1479)\n\nPDF annotations - for example hyperlinks and comments - were not properly scaled when using the scale function.\r\n\r\nFixes #1386",
+          "timestamp": "2022-12-10T10:19:37+01:00",
+          "tree_id": "786d7415b2ceded051b25a3aa223dce8db439821",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/5fd96d01c1febe6d38ba9b90ba774e95ceaca784"
+        },
+        "date": 1670664045375,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.006305813717976,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011480287884611551",
+            "extra": "mean: 993.7337004000028 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.335055085940692,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007322380847554544",
+            "extra": "mean: 81.06976361538788 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24486567539741094,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024733451574378125",
+            "extra": "mean: 4.083871691599995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.361308281338152,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0004679954199163658",
+            "extra": "mean: 88.0180323636301 msec\nrounds: 11"
           }
         ]
       }
