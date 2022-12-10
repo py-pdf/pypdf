@@ -176,7 +176,11 @@ def test_generate_values():
         return
     key = b"0123456789123451"
     values = AlgV5.generate_values(
-        user_pwd=b"foo", owner_pwd=b"bar", key=key, p=0, metadata_encrypted=True
+        user_password=b"foo",
+        owner_password=b"bar",
+        key=key,
+        p=0,
+        metadata_encrypted=True,
     )
     assert values == {
         "/U": values["/U"],

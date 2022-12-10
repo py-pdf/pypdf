@@ -398,10 +398,10 @@ def test_fill_form():
 
 
 @pytest.mark.parametrize(
-    ("use_128bit", "user_pwd", "owner_pwd"),
+    ("use_128bit", "user_password", "owner_password"),
     [(True, "userpwd", "ownerpwd"), (False, "userpwd", "ownerpwd")],
 )
-def test_encrypt(use_128bit, user_pwd, owner_pwd):
+def test_encrypt(use_128bit, user_password, owner_password):
     reader = PdfReader(RESOURCE_ROOT / "form.pdf")
     writer = PdfWriter()
 
@@ -409,7 +409,11 @@ def test_encrypt(use_128bit, user_pwd, owner_pwd):
     orig_text = page.extract_text()
 
     writer.add_page(page)
-    writer.encrypt(user_pwd=user_pwd, owner_pwd=owner_pwd, use_128bit=use_128bit)
+    writer.encrypt(
+        user_password=user_password,
+        owner_password=owner_password,
+        use_128bit=use_128bit,
+    )
 
     # write "output" to PyPDF2-output.pdf
     tmp_filename = "dont_commit_encrypted.pdf"
@@ -826,10 +830,10 @@ def test_startup_dest():
     pdf_file_writer.open_destination = pdf_file_writer.pages[9]
     # checked also using Acrobrat to verify the good page is opened
     op = pdf_file_writer._root_object["/OpenAction"]
-    assert op[0] == pdf_file_writer.pages[9].indirect_ref
+    assert op[0] == pdf_file_writer.pages[9].indirect_reference
     assert op[1] == "/Fit"
     op = pdf_file_writer.open_destination
-    assert op.raw_get("/Page") == pdf_file_writer.pages[9].indirect_ref
+    assert op.raw_get("/Page") == pdf_file_writer.pages[9].indirect_reference
     assert op["/Type"] == "/Fit"
     pdf_file_writer.open_destination = op
     assert pdf_file_writer.open_destination == op

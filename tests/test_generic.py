@@ -43,7 +43,7 @@ RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 class ChildDummy(DictionaryObject):
     @property
-    def indirect_ref(self):
+    def indirect_reference(self):
         return self
 
 
@@ -490,7 +490,7 @@ def test_remove_child_not_in_tree():
 def test_remove_child_not_in_that_tree():
 
     tree = TreeObject()
-    tree.indirect_ref = NullObject()
+    tree.indirect_reference = NullObject()
     child = TreeObject()
     child.indirect_ref = NullObject()
     with pytest.raises(ValueError) as exc:
@@ -505,11 +505,11 @@ def test_remove_child_not_in_that_tree():
 def test_remove_child_not_found_in_tree():
     class ChildDummy(DictionaryObject):
         @property
-        def indirect_ref(self):
+        def indirect_reference(self):
             return self
 
     tree = TreeObject()
-    tree.indirect_ref = NullObject()
+    tree.indirect_reference = NullObject()
     child = ChildDummy(TreeObject())
     tree.add_child(child, ReaderDummy())
     child2 = ChildDummy(TreeObject())
