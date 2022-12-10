@@ -2448,7 +2448,7 @@ class PdfWriter:
         nthread = thread.clone(
             self, force_duplicate=True, ignore_fields=("/F",)
         )  # use of clone to keep link between reader and writer
-        self.threads.append(nthread.indirect_ref)
+        self.threads.append(nthread.indirect_reference)
         first_article = cast("DictionaryObject", thread["/F"])
         current_article: Optional[DictionaryObject] = first_article
         new_article: Optional[DictionaryObject] = None
@@ -2481,13 +2481,13 @@ class PdfWriter:
                 pag_obj = cast("PageObject", pag.get_object())
                 if "/B" not in pag_obj:
                     pag_obj[NameObject("/B")] = ArrayObject()
-                cast("ArrayObject", pag_obj["/B"]).append(new_article.indirect_ref)
+                cast("ArrayObject", pag_obj["/B"]).append(new_article.indirect_reference)
             current_article = cast("DictionaryObject", current_article["/N"])
             if current_article == first_article:
-                new_article[NameObject("/N")] = new_first.indirect_ref  # type: ignore
-                new_first[NameObject("/V")] = new_article.indirect_ref  # type: ignore
+                new_article[NameObject("/N")] = new_first.indirect_reference  # type: ignore
+                new_first[NameObject("/V")] = new_article.indirect_reference  # type: ignore
                 current_article = None
-        assert nthread.indirect_ref is not None
+        assert nthread.indirect_reference is not None
         return nthread.indirect_ref
 
     def add_filtered_articles(
@@ -2529,7 +2529,7 @@ class PdfWriter:
         elif isinstance(page, IndirectObject):
             _i = page
         try:
-            return pages[_i.idnum].indirect_ref  # type: ignore
+            return pages[_i.idnum].indirect_reference  # type: ignore
         except Exception:
             return None
 
