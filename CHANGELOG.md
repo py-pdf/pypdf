@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## Version 2.12.1, 2022-12-10
+
+### Documentation (DOC)
+-  Deduplicate extract_text docstring (#1485)
+-  How to cite PyPDF2 (#1476)
+
+### Maintenance (MAINT)
+Consistency changes:
+  -  indirect_ref/ido ➔ indirect_reference, dest➔ page_destination (#1467)
+  -  owner_pwd/user_pwd ➔ owner_password/user_password (#1483)
+  -  position ➜ page_number in Merger.merge (#1482)
+  -  indirect_ref ➜ indirect_reference (#1484)
+
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/2.12.0...2.12.1)
+
+
 ## Version 2.12.0, 2022-12-10
 
 ### New Features (ENH)
