@@ -838,7 +838,7 @@ class PdfWriter:
                     "The 'user_pwd' argument is deprecated and will be removed "
                     "in PyPDF2==3.0.0."
                 )
-            user_password = user_pwd
+                user_password = user_pwd
         if user_password is None:
             raise ValueError("user_password may not be None")
 
