@@ -776,17 +776,19 @@ class PdfWriter:
 
     def encrypt(
         self,
-        user_pwd: str,
-        owner_pwd: Optional[str] = None,
+        user_password: Optional[str] = None,
+        owner_password: Optional[str] = None,
         use_128bit: bool = True,
         permissions_flag: UserAccessPermissions = ALL_DOCUMENT_PERMISSIONS,
+        user_pwd: Optional[str] = None,     # deprecated
+        owner_pwd: Optional[str] = None,    # deprecated
     ) -> None:
         """
         Encrypt this PDF file with the PDF Standard encryption handler.
 
-        :param str user_pwd: The "user password", which allows for opening
+        :param str user_password: The "user password", which allows for opening
             and reading the PDF file with the restrictions provided.
-        :param str owner_pwd: The "owner password", which allows for
+        :param str owner_password: The "owner password", which allows for
             opening the PDF files without any restrictions.  By default,
             the owner password is the same as the user password.
         :param bool use_128bit: flag as to whether to use 128bit
@@ -800,8 +802,38 @@ class PdfWriter:
             control annotations, 9 for form fields, 10 for extraction of
             text and graphics.
         """
-        if owner_pwd is None:
-            owner_pwd = user_pwd
+        if user_password is not None and user_pwd is not None:
+            raise ValueError(
+                "The argument user_pwd of encrypt is deprecated. Use user_password only."
+            )
+        if user_pwd is not None:
+            old_term = "user_pwd"
+            new_term = "user_password"
+            warnings.warn(
+                message = (
+                    f"{old_term} is deprecated as an argument. Use {new_term} instead"
+                )
+            )
+            user_password = user_pwd
+        if(user_password is None):
+            raise ValueError("page_destination may not be None")
+        
+        if owner_password is not None and owner_pwd is not None:
+            raise ValueError(
+                "The argument owner_pwd of encrypt is deprecated. Use owner_password only."
+            )
+        if owner_pwd is not None:
+            old_term = "owner_pwd"
+            new_term = "owner_password"
+            warnings.warn(
+                message = (
+                    f"{old_term} is deprecated as an argument. Use {new_term} instead"
+                )
+            )
+            owner_password = owner_pwd
+
+        if owner_password is None:
+            owner_password = user_password
         if use_128bit:
             V = 2
             rev = 3
@@ -811,15 +843,15 @@ class PdfWriter:
             rev = 2
             keylen = int(40 / 8)
         P = permissions_flag
-        O = ByteStringObject(_alg33(owner_pwd, user_pwd, rev, keylen))  # type: ignore[arg-type]
+        O = ByteStringObject(_alg33(owner_password, user_password, rev, keylen))  # type: ignore[arg-type]
         ID_1 = ByteStringObject(md5((repr(time.time())).encode("utf8")).digest())
         ID_2 = ByteStringObject(md5((repr(random.random())).encode("utf8")).digest())
         self._ID = ArrayObject((ID_1, ID_2))
         if rev == 2:
-            U, key = _alg34(user_pwd, O, P, ID_1)
+            U, key = _alg34(user_password, O, P, ID_1)
         else:
             assert rev == 3
-            U, key = _alg35(user_pwd, rev, keylen, O, P, ID_1, False)  # type: ignore[arg-type]
+            U, key = _alg35(user_password, rev, keylen, O, P, ID_1, False)  # type: ignore[arg-type]
         encrypt = DictionaryObject()
         encrypt[NameObject(SA.FILTER)] = NameObject("/Standard")
         encrypt[NameObject("/V")] = NumberObject(V)
@@ -1187,7 +1219,7 @@ class PdfWriter:
     ) -> IndirectObject:
         if page_destination is not None and dest is not None:
             raise ValueError(
-                "The argument dest of merge is deprecated. Use page_destination only."
+                "The argument dest of add_outline_item_destination is deprecated. Use page_destination only."
             )
         if dest is not None:
             old_term = "dest"
@@ -1401,7 +1433,7 @@ class PdfWriter:
     ) -> IndirectObject:
         if page_destination is not None and dest is not None:
             raise ValueError(
-                "The argument dest of merge is deprecated. Use page_destination only."
+                "The argument dest of add_named_destination is deprecated. Use page_destination only."
             )
         if dest is not None:
             old_term = "dest"
