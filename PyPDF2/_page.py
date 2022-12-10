@@ -55,10 +55,10 @@ from ._utils import (
     logger_warning,
     matrix_multiply,
 )
+from .constants import AnnotationDictionaryAttributes as ADA
 from .constants import ImageAttributes as IA
 from .constants import PageAttributes as PG
 from .constants import Ressources as RES
-from .constants import AnnotationDictionaryAttributes as ADA
 from .errors import PageSizeNotDefinedError
 from .filters import _xobj_to_image
 from .generic import (
@@ -284,20 +284,39 @@ class PageObject(DictionaryObject):
     :meth:`create_blank_page()<PyPDF2._page.PageObject.create_blank_page>` static method.
 
     :param pdf: PDF file the page belongs to.
-    :param indirect_ref: Stores the original indirect reference to
+    :param indirect_reference: Stores the original indirect reference to
         this object in its source PDF
     """
 
     def __init__(
         self,
         pdf: Optional[Any] = None,  # PdfReader
+        indirect_reference: Optional[IndirectObject] = None,
         indirect_ref: Optional[IndirectObject] = None,
     ) -> None:
         from ._reader import PdfReader
 
         DictionaryObject.__init__(self)
         self.pdf: Optional[PdfReader] = pdf
-        self.indirect_ref = indirect_ref
+        if indirect_ref is not None:
+            warnings.warn(
+                "Use indirect_reference instead of indirect_ref.", DeprecationWarning
+            )
+            if indirect_reference is not None:
+                raise ValueError("Use indirect_reference instead of indirect_ref.")
+            indirect_reference = indirect_ref
+        self.indirect_reference = indirect_reference
+
+    @property
+    def indirect_ref(self) -> Optional[IndirectObject]:  # deprecated
+        warnings.warn(
+            "Use indirect_reference instead of indirect_ref.", DeprecationWarning
+        )
+        return self.indirect_reference
+
+    @indirect_ref.setter
+    def indirect_ref(self, value: Optional[IndirectObject]) -> None:  # deprecated
+        self.indirect_reference = value
 
     def hash_value_data(self) -> bytes:
         data = super().hash_value_data()
