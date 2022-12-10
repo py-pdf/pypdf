@@ -163,6 +163,7 @@ utils.py:
 * `PdfWriter.get_page`: `pageNumber` ➔ `page_number`
 * `PyPDF2.filters` (all classes): `decodeParms` ➔ `decode_parms`
 * `PyPDF2.filters` (all classes): `decodeStreamData` ➔ `decode_stream_data`
+* `pagenum` ➔ `page_number`
 
 ## Deprecations
 

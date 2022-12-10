@@ -1049,6 +1049,9 @@ def read_object(
         return BooleanObject.read_from_stream(stream)
     elif tok == b"(":
         return read_string_from_stream(stream, forced_encoding)
+    elif tok == b"e" and stream.read(6) == b"endobj":
+        stream.seek(-6, 1)
+        return NullObject()
     elif tok == b"n":
         return NullObject.read_from_stream(stream)
     elif tok == b"%":
@@ -1071,7 +1074,7 @@ def read_object(
         else:
             return NumberObject.read_from_stream(stream)
     else:
-        stream.read(-20)
+        stream.seek(-20, 1)
         raise PdfReadError(
             f"Invalid Elementary Object starting with {tok!r} @{stream.tell()}: {stream.read(80).__repr__()}"
         )

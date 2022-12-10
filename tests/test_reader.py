@@ -192,6 +192,7 @@ def test_get_outline(src, outline_elements):
             marks=pytest.mark.xfail(reason="broken image extraction"),
         ),
         ("imagemagick-CCITTFaxDecode.pdf", ["Im0.tiff"]),
+        (SAMPLE_ROOT / "019-grayscale-image/grayscale-image.pdf", ["X0.png"]),
     ],
 )
 def test_get_images(src, expected_images):
@@ -211,7 +212,7 @@ def test_get_images(src, expected_images):
     for image, expected_image in zip(images_extracted, expected_images):
         assert image.name == expected_image
         try:
-            fn = f"test-out-{src}-{image.name}"
+            fn = f"{src}-test-out-{image.name}"
             with open(fn, "wb") as fp:
                 fp.write(image.data)
                 assert (
@@ -415,17 +416,17 @@ def test_get_form(src, expected, expected_get_fields):
 
 
 @pytest.mark.parametrize(
-    ("src", "page_nb"),
+    ("src", "page_number"),
     [
         ("form.pdf", 0),
         ("pdflatex-outline.pdf", 2),
     ],
 )
-def test_get_page_number(src, page_nb):
+def test_get_page_number(src, page_number):
     src = RESOURCE_ROOT / src
     reader = PdfReader(src)
-    page = reader.pages[page_nb]
-    assert reader.get_page_number(page) == page_nb
+    page = reader.pages[page_number]
+    assert reader.get_page_number(page) == page_number
 
 
 @pytest.mark.parametrize(
