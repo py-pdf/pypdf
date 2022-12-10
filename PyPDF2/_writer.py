@@ -1252,7 +1252,8 @@ class PdfWriter:
                 )
             )
             page_destination = dest
-        if page_destination is None:
+        if page_destination is None:  # deprecated
+            # argument is only Optional due to deprecated argument.
             raise ValueError("page_destination may not be None")
 
         if parent is None:
