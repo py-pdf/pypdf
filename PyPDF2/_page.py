@@ -1061,15 +1061,16 @@ class PageObject(DictionaryObject):
 
         if PG.ANNOTS in self:
             annotations = self[PG.ANNOTS]
-            for annotation in annotations:
-                annotation_obj = annotation.get_object()
-                if ADA.Rect in annotation_obj:
-                    rectangle = annotation_obj[ADA.Rect]
-                    if isinstance(rectangle, ArrayObject):
-                        rectangle[0] = FloatObject(float(rectangle[0]) * sx)
-                        rectangle[1] = FloatObject(float(rectangle[1]) * sy)
-                        rectangle[2] = FloatObject(float(rectangle[2]) * sx)
-                        rectangle[3] = FloatObject(float(rectangle[3]) * sy)
+            if isinstance(annotations, ArrayObject):
+                for annotation in annotations:
+                    annotation_obj = annotation.get_object()
+                    if ADA.Rect in annotation_obj:
+                        rectangle = annotation_obj[ADA.Rect]
+                        if isinstance(rectangle, ArrayObject):
+                            rectangle[0] = FloatObject(float(rectangle[0]) * sx)
+                            rectangle[1] = FloatObject(float(rectangle[1]) * sy)
+                            rectangle[2] = FloatObject(float(rectangle[2]) * sx)
+                            rectangle[3] = FloatObject(float(rectangle[3]) * sy)
 
         if PG.VP in self:
             viewport = self[PG.VP]
