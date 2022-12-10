@@ -465,7 +465,7 @@ class PdfWriter:
         elif isinstance(dest, PageObject):
             self._root_object[NameObject("/OpenAction")] = Destination(
                 "Opening",
-                dest.indirect_reference if dest.indirect_reference is not None else NullObject(),
+                dest.indirect_ref if dest.indirect_ref is not None else NullObject(),
                 TextStringObject("/Fit"),
             ).dest_array
 
