@@ -48,6 +48,7 @@ In BibTeX format:
                   Matthew Peveler and
                   exiledkingcc and {PyPDF2 Contributors}},
  year          = {2022},
- url           = {https://pypdf2.readthedocs.io/en/latest/meta/CONTRIBUTORS.html}
+ url           = {https://pypi.org/project/PyPDF2/}
+ note          = {See https://pypdf2.readthedocs.io/en/latest/meta/CONTRIBUTORS.html for all contributors}
 }
 ```
