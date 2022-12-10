@@ -2552,26 +2552,26 @@ class PdfWriter:
                 or "/Dest" in ano
             ):
                 if "/Dest" not in ano:
-                    outlist.append(ano.clone(self).indirect_ref)
+                    outlist.append(ano.clone(self).indirect_reference)
                 else:
                     d = ano["/Dest"]
                     if isinstance(d, str):
                         # it is a named dest
                         if str(d) in self.get_named_dest_root():
-                            outlist.append(ano.clone(self).indirect_ref)
+                            outlist.append(ano.clone(self).indirect_reference)
                     else:
                         d = cast("ArrayObject", d)
                         p = self._get_cloned_page(d[0], pages, reader)
                         if p is not None:
                             anc = ano.clone(self, ignore_fields=("/Dest",))
                             anc[NameObject("/Dest")] = ArrayObject([p] + d[1:])
-                            outlist.append(anc.indirect_ref)
+                            outlist.append(anc.indirect_reference)
             else:
                 d = cast("DictionaryObject", ano["/A"])["/D"]
                 if isinstance(d, str):
                     # it is a named dest
                     if str(d) in self.get_named_dest_root():
-                        outlist.append(ano.clone(self).indirect_ref)
+                        outlist.append(ano.clone(self).indirect_reference)
                 else:
                     d = cast("ArrayObject", d)
                     p = self._get_cloned_page(d[0], pages, reader)
