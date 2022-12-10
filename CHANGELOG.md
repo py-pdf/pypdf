@@ -1,5 +1,35 @@
 # CHANGELOG
 
+## Version 2.12.0, 2022-12-10
+
+### New Features (ENH)
+-  Add support to extract gray scale images (#1460)
+-  Add 'threads' property to PdfWriter (#1458)
+-  Add 'open_destination' property to PdfWriter (#1431)
+-  Make PdfReader.get_object accept integer arguments (#1459)
+
+### Bug Fixes (BUG)
+-  Scale PDF annotations (#1479)
+
+### Robustness (ROB)
+-  Padding issue with AES encryption (#1469)
+-  Accept empty object as null objects (#1477)
+
+### Documentation (DOC)
+-  Add module documentation the PaperSize class (#1447)
+
+### Maintenance (MAINT)
+-  Use 'page_number' instead of 'pagenum' (#1365)
+-  Add List of pages to PageRangeSpec (#1456)
+
+### Testing (TST)
+-  Cleanup temporary files (#1454)
+-  Mark test_tounicode_is_identity as external (#1449)
+-  Use Ubuntu 20.04 for running CI test suite (#1452)
+
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/2.11.2...2.12.0)
+
+
 ## Version 2.11.2, 2022-11-20
 
 ### New Features (ENH)
