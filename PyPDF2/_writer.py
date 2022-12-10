@@ -201,7 +201,7 @@ class PdfWriter:
         self._objects.append(obj)
         return IndirectObject(len(self._objects), 0, self)
 
-    def get_object(self, indirect_reference: Optional[IndirectObject]=None, ido: Optional[IndirectObject]=None) -> PdfObject:
+    def get_object(self, indirect_reference: Optional[IndirectObject] = None, ido: Optional[IndirectObject] = None) -> PdfObject:
         if ido is not None:
             if indirect_reference is not None:
                 raise ValueError("Please only set 'indirect_reference'. The 'ido' argument is deprecated.")
