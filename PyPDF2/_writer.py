@@ -796,7 +796,7 @@ class PdfWriter:
 
     def encrypt(
         self,
-        user_password: str,
+        user_password: Optional[str] = None,
         owner_password: Optional[str] = None,
         use_128bit: bool = True,
         permissions_flag: UserAccessPermissions = ALL_DOCUMENT_PERMISSIONS,
@@ -835,6 +835,25 @@ class PdfWriter:
                     "in PyPDF2==3.0.0."
                 )
                 user_password = user_pwd
+        if user_password is None:  # deprecated
+            # user_password is only Optional for due to the deprecated user_pwd
+            raise ValueError("user_password may not be None")
+
+        if owner_pwd is not None:  # deprecated
+            if owner_password is not None:
+                raise ValueError(
+                    "The argument owner_pwd of encrypt is deprecated. Use owner_password only."
+                )
+            else:
+                old_term = "owner_pwd"
+                new_term = "owner_password"
+                warnings.warn(
+                    message=(
+                        f"{old_term} is deprecated as an argument. Use {new_term} instead"
+                    )
+                )
+                owner_password = owner_pwd
+
         if owner_password is None:
             owner_password = user_password
         if use_128bit:
@@ -1216,9 +1235,27 @@ class PdfWriter:
 
     def add_outline_item_destination(
         self,
-        page_destination: Union[PageObject, TreeObject],
+        page_destination: Union[None, PageObject, TreeObject] = None,
         parent: Union[None, TreeObject, IndirectObject] = None,
+        dest: Union[None, PageObject, TreeObject] = None,   # deprecated
     ) -> IndirectObject:
+        if page_destination is not None and dest is not None:  # deprecated
+            raise ValueError(
+                "The argument dest of add_outline_item_destination is deprecated. Use page_destination only."
+            )
+        if dest is not None:  # deprecated
+            old_term = "dest"
+            new_term = "page_destination"
+            warnings.warn(
+                message=(
+                    f"{old_term} is deprecated as an argument. Use {new_term} instead"
+                )
+            )
+            page_destination = dest
+        if page_destination is None:  # deprecated
+            # argument is only Optional due to deprecated argument.
+            raise ValueError("page_destination may not be None")
+
         if parent is None:
             parent = self.get_outline_root()
 
@@ -1413,8 +1450,26 @@ class PdfWriter:
         )
 
     def add_named_destination_object(
-        self, page_destination: PdfObject
+        self,
+        page_destination: Optional[PdfObject] = None,
+        dest: Optional[PdfObject] = None,
     ) -> IndirectObject:
+        if page_destination is not None and dest is not None:
+            raise ValueError(
+                "The argument dest of add_named_destination_object is deprecated. Use page_destination only."
+            )
+        if dest is not None:  # deprecated
+            old_term = "dest"
+            new_term = "page_destination"
+            warnings.warn(
+                message=(
+                    f"{old_term} is deprecated as an argument. Use {new_term} instead"
+                )
+            )
+            page_destination = dest
+        if page_destination is None:  # deprecated
+            raise ValueError("page_destination may not be None")
+
         page_destination_ref = self._add_object(page_destination)
 
         nd = self.get_named_dest_root()
@@ -1438,7 +1493,7 @@ class PdfWriter:
         self,
         title: str,
         page_number: Optional[int] = None,
-        pagenum: Optional[int] = None,
+        pagenum: Optional[int] = None,  # deprecated
     ) -> IndirectObject:
         if page_number is not None and pagenum is not None:
             raise ValueError(
