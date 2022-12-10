@@ -55,7 +55,7 @@ from .constants import GoToActionArguments
 from .constants import PagesAttributes as PA
 from .constants import TypArguments, TypFitArguments
 from .generic import (
-    DEFAULT_FIT,
+    PAGE_FIT,
     ArrayObject,
     Destination,
     DictionaryObject,
@@ -639,7 +639,7 @@ class PdfMerger:
         color: Optional[Tuple[float, float, float]] = None,
         bold: bool = False,
         italic: bool = False,
-        fit: Fit = DEFAULT_FIT,
+        fit: Fit = PAGE_FIT,
         pagenum: Optional[int] = None,  # deprecated
     ) -> IndirectObject:
         """

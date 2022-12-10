@@ -97,7 +97,7 @@ def createStringObject(
     return create_string_object(string, forced_encoding)
 
 
-DEFAULT_FIT = Fit.fit()
+PAGE_FIT = Fit.fit()
 
 
 __all__ = [
@@ -115,7 +115,7 @@ __all__ = [
     "AnnotationBuilder",
     # Fit
     "Fit",
-    "DEFAULT_FIT",
+    "PAGE_FIT",
     # Data structures
     "ArrayObject",
     "DictionaryObject",

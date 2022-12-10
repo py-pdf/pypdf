@@ -83,7 +83,7 @@ from .constants import StreamAttributes as SA
 from .constants import TrailerKeys as TK
 from .constants import TypFitArguments, UserAccessPermissions
 from .generic import (
-    DEFAULT_FIT,
+    PAGE_FIT,
     AnnotationBuilder,
     ArrayObject,
     BooleanObject,
@@ -479,7 +479,7 @@ class PdfWriter:
                 dest.indirect_reference
                 if dest.indirect_reference is not None
                 else NullObject(),
-                DEFAULT_FIT,
+                PAGE_FIT,
             ).dest_array
 
     def add_js(self, javascript: str) -> None:
@@ -1309,7 +1309,7 @@ class PdfWriter:
         color: Optional[Union[Tuple[float, float, float], str]] = None,
         bold: bool = False,
         italic: bool = False,
-        fit: Fit = DEFAULT_FIT,
+        fit: Fit = PAGE_FIT,
         pagenum: Optional[int] = None,  # deprecated
     ) -> IndirectObject:
         """
