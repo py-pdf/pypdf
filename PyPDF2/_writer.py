@@ -1565,7 +1565,7 @@ class PdfWriter:
 
         page_destination_ref = self._add_object(page_destination.dest_array)
         self.add_named_destination_array(
-            cast("TextStringObject", dest["/Title"]), page_destination_ref
+            cast("TextStringObject", page_destination["/Title"]), page_destination_ref
         )
 
         return page_destination_ref
