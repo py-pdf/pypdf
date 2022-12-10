@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1670660227165,
+  "lastUpdate": 1670662483294,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -19318,6 +19318,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00069387926641147",
             "extra": "mean: 76.80894353846121 msec\nrounds: 13"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b1938aaa9ec950bdc188c072f557e21ebd7ccc4b",
+          "message": "MAINT: Package updates 🌱 (#1481)\n\n* Update docs.txt to 3.7 as https://readthedocs.io/ seems to use 3.7\r\n* Update dev.txt to 3.7 as we cannot expect developers to use a deprecated Python version (although we still keep it in CI and want to keep compatibility if possible)",
+          "timestamp": "2022-12-10T09:53:39+01:00",
+          "tree_id": "dfb55e6b313e6bc4331aeed4234203d1a8adf1e4",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/b1938aaa9ec950bdc188c072f557e21ebd7ccc4b"
+        },
+        "date": 1670662482383,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.058278566971263,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006111627211741489",
+            "extra": "mean: 944.93078779999 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 12.624703703423103,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004679585291396593",
+            "extra": "mean: 79.20977976923584 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2595931283156597,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022967225914955047",
+            "extra": "mean: 3.8521820915999796 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.544031497494707,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00048527346202386224",
+            "extra": "mean: 79.71918758333156 msec\nrounds: 12"
           }
         ]
       }
