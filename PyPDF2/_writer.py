@@ -275,7 +275,7 @@ class PdfWriter:
             self.pdf_header = _get_max_pdf_version_header(self.pdf_header, other)  # type: ignore
         page[NameObject(PA.PARENT)] = self._pages
         pages = cast(DictionaryObject, self.get_object(self._pages))
-        assert page.indirect_ref is not None
+        assert page.indirect_reference is not None
         action(pages[PA.KIDS], page.indirect_reference)
         page_count = cast(int, pages[PA.COUNT])
         pages[NameObject(PA.COUNT)] = NumberObject(page_count + 1)

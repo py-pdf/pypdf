@@ -231,7 +231,7 @@ class DictionaryObject(dict, PdfObject):
         for k, v in src.items():
             if k not in ignore_fields:
                 if isinstance(v, StreamObject):
-                    if not hasattr(v, "indirect_ref"):
+                    if not hasattr(v, "indirect_reference"):
                         v.indirect_reference = None
                     vv = v.clone(pdf_dest, force_duplicate, ignore_fields)
                     assert vv.indirect_reference is not None
