@@ -2521,11 +2521,11 @@ class PdfWriter:
         if isinstance(page, NullObject):
             return None
         if isinstance(page, int):
-            _i = reader.pages[page].indirect_ref
+            _i = reader.pages[page].indirect_reference
         # elif isinstance(page, PageObject):
-        #    _i = page.indirect_ref
+        #    _i = page.indirect_reference
         elif isinstance(page, DictionaryObject) and page.get("/Type", "") == "/Page":
-            _i = page.indirect_ref
+            _i = page.indirect_reference
         elif isinstance(page, IndirectObject):
             _i = page
         try:
