@@ -2469,7 +2469,7 @@ class PdfWriter:
                         "DictionaryObject",
                         self._add_object(
                             DictionaryObject(
-                                {NameObject("/V"): new_article.indirect_ref}
+                                {NameObject("/V"): new_article.indirect_reference}
                             )
                         ).get_object(),
                     )
