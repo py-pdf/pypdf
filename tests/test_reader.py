@@ -769,7 +769,6 @@ def test_get_object():
     assert reader._get_indirect_object(22, 0)["/Type"] == "/Catalog"
 
 
-@pytest.mark.xfail(reason="#591")
 def test_extract_text_hello_world():
     reader = PdfReader(RESOURCE_ROOT / "hello-world.pdf")
     text = reader.pages[0].extract_text().split("\n")

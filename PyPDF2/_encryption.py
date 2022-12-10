@@ -304,7 +304,7 @@ class AlgV4:
         return u_hash_digest[:length]
 
     @staticmethod
-    def compute_O_value_key(owner_pwd: bytes, rev: int, key_size: int) -> bytes:
+    def compute_O_value_key(owner_password: bytes, rev: int, key_size: int) -> bytes:
         """
         Algorithm 3: Computing the encryption dictionary’s O (owner password) value.
 
@@ -336,7 +336,7 @@ class AlgV4:
         h) Store the output from the final invocation of the RC4 function as
            the value of the O entry in the encryption dictionary.
         """
-        a = _padding(owner_pwd)
+        a = _padding(owner_password)
         o_hash_digest = hashlib.md5(a).digest()
 
         if rev >= 3:
@@ -347,9 +347,9 @@ class AlgV4:
         return rc4_key
 
     @staticmethod
-    def compute_O_value(rc4_key: bytes, user_pwd: bytes, rev: int) -> bytes:
+    def compute_O_value(rc4_key: bytes, user_password: bytes, rev: int) -> bytes:
         """See :func:`compute_O_value_key`."""
-        a = _padding(user_pwd)
+        a = _padding(user_password)
         rc4_enc = RC4_encrypt(rc4_key, a)
         if rev >= 3:
             for i in range(1, 20):
@@ -411,7 +411,7 @@ class AlgV4:
 
     @staticmethod
     def verify_user_password(
-        user_pwd: bytes,
+        user_password: bytes,
         rev: int,
         key_size: int,
         o_entry: bytes,
@@ -434,7 +434,7 @@ class AlgV4:
            to decrypt the document.
         """
         key = AlgV4.compute_key(
-            user_pwd, rev, key_size, o_entry, P, id1_entry, metadata_encrypted
+            user_password, rev, key_size, o_entry, P, id1_entry, metadata_encrypted
         )
         u_value = AlgV4.compute_U_value(key, rev, id1_entry)
         if rev >= 3:
@@ -446,7 +446,7 @@ class AlgV4:
 
     @staticmethod
     def verify_owner_password(
-        owner_pwd: bytes,
+        owner_password: bytes,
         rev: int,
         key_size: int,
         o_entry: bytes,
@@ -470,17 +470,24 @@ class AlgV4:
         c) The result of step (b) purports to be the user password. Authenticate this user password using "Algorithm 6:
            Authenticating the user password". If it is correct, the password supplied is the correct owner password.
         """
-        rc4_key = AlgV4.compute_O_value_key(owner_pwd, rev, key_size)
+        rc4_key = AlgV4.compute_O_value_key(owner_password, rev, key_size)
 
         if rev <= 2:
-            u_pwd = RC4_decrypt(rc4_key, o_entry)
+            user_password = RC4_decrypt(rc4_key, o_entry)
         else:
-            u_pwd = o_entry
+            user_password = o_entry
             for i in range(19, -1, -1):
                 key = bytes(bytearray(x ^ i for x in rc4_key))
-                u_pwd = RC4_decrypt(key, u_pwd)
+                user_password = RC4_decrypt(key, user_password)
         return AlgV4.verify_user_password(
-            u_pwd, rev, key_size, o_entry, u_entry, P, id1_entry, metadata_encrypted
+            user_password,
+            rev,
+            key_size,
+            o_entry,
+            u_entry,
+            P,
+            id1_entry,
+            metadata_encrypted,
         )
 
 
@@ -574,10 +581,14 @@ class AlgV5:
 
     @staticmethod
     def generate_values(
-        user_pwd: bytes, owner_pwd: bytes, key: bytes, p: int, metadata_encrypted: bool
+        user_password: bytes,
+        owner_password: bytes,
+        key: bytes,
+        p: int,
+        metadata_encrypted: bool,
     ) -> Dict[Any, Any]:
-        u_value, ue_value = AlgV5.compute_U_value(user_pwd, key)
-        o_value, oe_value = AlgV5.compute_O_value(owner_pwd, key, u_value)
+        u_value, ue_value = AlgV5.compute_U_value(user_password, key)
+        o_value, oe_value = AlgV5.compute_O_value(owner_password, key, u_value)
         perms = AlgV5.compute_Perms_value(key, p, metadata_encrypted)
         return {
             "/U": u_value,

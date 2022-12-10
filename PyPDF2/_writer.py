@@ -202,10 +202,28 @@ class PdfWriter:
         self._objects.append(obj)
         return IndirectObject(len(self._objects), 0, self)
 
-    def get_object(self, ido: IndirectObject) -> PdfObject:
-        if ido.pdf != self:
+    def get_object(
+        self,
+        indirect_reference: Optional[IndirectObject] = None,
+        ido: Optional[IndirectObject] = None,
+    ) -> PdfObject:
+        if ido is not None:  # deprecated
+            if indirect_reference is not None:
+                raise ValueError(
+                    "Please only set 'indirect_reference'. The 'ido' argument is deprecated."
+                )
+            else:
+                indirect_reference = ido
+                warnings.warn(
+                    "The parameter 'ido' is depreciated and will be removed in PyPDF2 3.0.0.",
+                    DeprecationWarning,
+                )
+        assert (
+            indirect_reference is not None
+        )  # the None value is only there to keep the deprecated name
+        if indirect_reference.pdf != self:
             raise ValueError("pdf must be self")
-        return self._objects[ido.idnum - 1]  # type: ignore
+        return self._objects[indirect_reference.idnum - 1]  # type: ignore
 
     def getObject(self, ido: IndirectObject) -> PdfObject:  # pragma: no cover
         """
@@ -457,7 +475,9 @@ class PdfWriter:
         elif isinstance(dest, PageObject):
             self._root_object[NameObject("/OpenAction")] = Destination(
                 "Opening",
-                dest.indirect_ref if dest.indirect_ref is not None else NullObject(),
+                dest.indirect_reference
+                if dest.indirect_reference is not None
+                else NullObject(),
                 TextStringObject("/Fit"),
             ).dest_array
 
@@ -777,17 +797,19 @@ class PdfWriter:
 
     def encrypt(
         self,
-        user_pwd: str,
-        owner_pwd: Optional[str] = None,
+        user_password: str,
+        owner_password: Optional[str] = None,
         use_128bit: bool = True,
         permissions_flag: UserAccessPermissions = ALL_DOCUMENT_PERMISSIONS,
+        user_pwd: Optional[str] = None,  # deprecated
+        owner_pwd: Optional[str] = None,  # deprecated
     ) -> None:
         """
         Encrypt this PDF file with the PDF Standard encryption handler.
 
-        :param str user_pwd: The "user password", which allows for opening
+        :param str user_password: The "user password", which allows for opening
             and reading the PDF file with the restrictions provided.
-        :param str owner_pwd: The "owner password", which allows for
+        :param str owner_password: The "owner password", which allows for
             opening the PDF files without any restrictions.  By default,
             the owner password is the same as the user password.
         :param bool use_128bit: flag as to whether to use 128bit
@@ -801,8 +823,21 @@ class PdfWriter:
             control annotations, 9 for form fields, 10 for extraction of
             text and graphics.
         """
-        if owner_pwd is None:
-            owner_pwd = user_pwd
+        if user_pwd is not None:
+            if user_password is not None:
+                raise ValueError(
+                    "Please only set 'user_password'. "
+                    "The 'user_pwd' argument is deprecated."
+                )
+            else:
+                warnings.warn(
+                    "Please use 'user_password' instead of 'user_pwd'. "
+                    "The 'user_pwd' argument is deprecated and will be removed "
+                    "in PyPDF2==3.0.0."
+                )
+                user_password = user_pwd
+        if owner_password is None:
+            owner_password = user_password
         if use_128bit:
             V = 2
             rev = 3
@@ -812,15 +847,15 @@ class PdfWriter:
             rev = 2
             keylen = int(40 / 8)
         P = permissions_flag
-        O = ByteStringObject(_alg33(owner_pwd, user_pwd, rev, keylen))  # type: ignore[arg-type]
+        O = ByteStringObject(_alg33(owner_password, user_password, rev, keylen))  # type: ignore[arg-type]
         ID_1 = ByteStringObject(md5((repr(time.time())).encode("utf8")).digest())
         ID_2 = ByteStringObject(md5((repr(random.random())).encode("utf8")).digest())
         self._ID = ArrayObject((ID_1, ID_2))
         if rev == 2:
-            U, key = _alg34(user_pwd, O, P, ID_1)
+            U, key = _alg34(user_password, O, P, ID_1)
         else:
             assert rev == 3
-            U, key = _alg35(user_pwd, rev, keylen, O, P, ID_1, False)  # type: ignore[arg-type]
+            U, key = _alg35(user_password, rev, keylen, O, P, ID_1, False)  # type: ignore[arg-type]
         encrypt = DictionaryObject()
         encrypt[NameObject(SA.FILTER)] = NameObject("/Standard")
         encrypt[NameObject("/V")] = NumberObject(V)
@@ -1025,15 +1060,15 @@ class PdfWriter:
 
                 # Update old hash value to new hash value
                 for old_hash in update_hashes:
-                    indirect_ref = self._idnum_hash.pop(old_hash, None)
+                    indirect_reference = self._idnum_hash.pop(old_hash, None)
 
-                    if indirect_ref is not None:
-                        indirect_ref_obj = indirect_ref.get_object()
+                    if indirect_reference is not None:
+                        indirect_reference_obj = indirect_reference.get_object()
 
-                        if indirect_ref_obj is not None:
+                        if indirect_reference_obj is not None:
                             self._idnum_hash[
-                                indirect_ref_obj.hash_value()
-                            ] = indirect_ref
+                                indirect_reference_obj.hash_value()
+                            ] = indirect_reference
 
     def _resolve_indirect_object(self, data: IndirectObject) -> IndirectObject:
         """
@@ -1182,17 +1217,17 @@ class PdfWriter:
 
     def add_outline_item_destination(
         self,
-        dest: Union[PageObject, TreeObject],
+        page_destination: Union[PageObject, TreeObject],
         parent: Union[None, TreeObject, IndirectObject] = None,
     ) -> IndirectObject:
         if parent is None:
             parent = self.get_outline_root()
 
         parent = cast(TreeObject, parent.get_object())
-        dest_ref = self._add_object(dest)
-        parent.add_child(dest_ref, self)
+        page_destination_ref = self._add_object(page_destination)
+        parent.add_child(page_destination_ref, self)
 
-        return dest_ref
+        return page_destination_ref
 
     def add_bookmark_destination(
         self,
@@ -1386,12 +1421,14 @@ class PdfWriter:
             "This method is not yet implemented. Use :meth:`add_outline_item` instead."
         )
 
-    def add_named_destination_object(self, dest: PdfObject) -> IndirectObject:
-        dest_ref = self._add_object(dest)
+    def add_named_destination_object(
+        self, page_destination: PdfObject
+    ) -> IndirectObject:
+        page_destination_ref = self._add_object(page_destination)
 
         nd = self.get_named_dest_root()
-        nd.extend([dest["/Title"], dest_ref])  # type: ignore
-        return dest_ref
+        nd.extend([page_destination["/Title"], page_destination_ref])  # type: ignore
+        return page_destination_ref
 
     def addNamedDestinationObject(
         self, dest: PdfObject
@@ -1706,7 +1743,7 @@ class PdfWriter:
     def add_link(
         self,
         pagenum: int,  # deprecated, but method is deprecated already
-        pagedest: int,
+        page_destination: int,
         rect: RectangleObject,
         border: Optional[ArrayObject] = None,
         fit: FitType = "/Fit",
@@ -1729,7 +1766,7 @@ class PdfWriter:
         annotation = AnnotationBuilder.link(
             rect=rect,
             border=border,
-            target_page_index=pagedest,
+            target_page_index=page_destination,
             fit=Fit(fit_type=fit, fit_args=args),
         )
         return self.add_annotation(page_number=pagenum, annotation=annotation)
@@ -1737,7 +1774,7 @@ class PdfWriter:
     def addLink(
         self,
         pagenum: int,  # deprecated, but method is deprecated already
-        pagedest: int,
+        page_destination: int,
         rect: RectangleObject,
         border: Optional[ArrayObject] = None,
         fit: FitType = "/Fit",
@@ -1751,7 +1788,7 @@ class PdfWriter:
         deprecate_with_replacement(
             "addLink", "add_annotation(AnnotationBuilder.link(...))", "4.0.0"
         )
-        return self.add_link(pagenum, pagedest, rect, border, fit, *args)
+        return self.add_link(pagenum, page_destination, rect, border, fit, *args)
 
     _valid_layouts = (
         "/NoLayout",
