@@ -1181,14 +1181,31 @@ class PdfWriter:
 
     def add_outline_item_destination(
         self,
-        dest: Union[PageObject, TreeObject],
+        page_destination: Union[None, PageObject, TreeObject] = None,
         parent: Union[None, TreeObject, IndirectObject] = None,
+        dest: Union[None, PageObject, TreeObject] = None,   # deprecated
     ) -> IndirectObject:
+        if page_destination is not None and dest is not None:
+            raise ValueError(
+                "The argument dest of merge is deprecated. Use page_destination only."
+            )
+        if dest is not None:
+            old_term = "dest"
+            new_term = "page_destination"
+            warnings.warn(
+                message = (
+                    f"{old_term} is deprecated as an argument. Use {new_term} instead"
+                )
+            )
+            page_destination = dest
+        if(page_destination is None):
+            raise ValueError("page_destination may not be None")
+        
         if parent is None:
             parent = self.get_outline_root()
 
         parent = cast(TreeObject, parent.get_object())
-        dest_ref = self._add_object(dest)
+        dest_ref = self._add_object(page_destination)
         parent.add_child(dest_ref, self)
 
         return dest_ref
@@ -1377,11 +1394,31 @@ class PdfWriter:
             "This method is not yet implemented. Use :meth:`add_outline_item` instead."
         )
 
-    def add_named_destination_object(self, dest: PdfObject) -> IndirectObject:
-        dest_ref = self._add_object(dest)
+    def add_named_destination_object(
+        self,
+        page_destination: Optional[PdfObject] = None,
+        dest: Optional[PdfObject] = None,
+    ) -> IndirectObject:
+        if page_destination is not None and dest is not None:
+            raise ValueError(
+                "The argument dest of merge is deprecated. Use page_destination only."
+            )
+        if dest is not None:
+            old_term = "dest"
+            new_term = "page_destination"
+            warnings.warn(
+                message = (
+                    f"{old_term} is deprecated as an argument. Use {new_term} instead"
+                )
+            )
+            page_destination = dest
+        if(page_destination is None):
+            raise ValueError("page_destination may not be None")
+        
+        dest_ref = self._add_object(page_destination)
 
         nd = self.get_named_dest_root()
-        nd.extend([dest["/Title"], dest_ref])  # type: ignore
+        nd.extend([page_destination["/Title"], dest_ref])  # type: ignore
         return dest_ref
 
     def addNamedDestinationObject(
@@ -1401,7 +1438,7 @@ class PdfWriter:
         self,
         title: str,
         page_number: Optional[int] = None,
-        pagenum: Optional[int] = None,
+        pagenum: Optional[int] = None,  # deprecated
     ) -> IndirectObject:
         if page_number is not None and pagenum is not None:
             raise ValueError(
