@@ -527,7 +527,7 @@ class TreeObject(DictionaryObject):
             self[NameObject("/First")] = child
             self[NameObject("/Count")] = NumberObject(0)
             self[NameObject("/Last")] = child
-            child_obj[NameObject("/Parent")] = self.indirect_ref
+            child_obj[NameObject("/Parent")] = self.indirect_reference
             inc_parent_counter(self, child_obj.get("/Count", 1))
             if "/Next" in child_obj:
                 del child_obj["/Next"]
@@ -601,7 +601,7 @@ class TreeObject(DictionaryObject):
 
     def remove_child(self, child: Any) -> None:
         child_obj = child.get_object()
-        child = child_obj.indirect_ref
+        child = child_obj.indirect_reference
 
         if NameObject("/Parent") not in child_obj:
             raise ValueError("Removed child does not appear to be a tree item")
