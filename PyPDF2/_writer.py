@@ -204,7 +204,7 @@ class PdfWriter:
 
     def get_object(
         self,
-        indirect_reference: Optional[IndirectObject] = None,
+        indirect_reference: Union[None, int, IndirectObject] = None,
         ido: Optional[IndirectObject] = None,
     ) -> PdfObject:
         if ido is not None:  # deprecated
@@ -221,6 +221,8 @@ class PdfWriter:
         assert (
             indirect_reference is not None
         )  # the None value is only there to keep the deprecated name
+        if isinstance(indirect_reference, int):
+            return self._objects[indirect_reference - 1]
         if indirect_reference.pdf != self:
             raise ValueError("pdf must be self")
         return self._objects[indirect_reference.idnum - 1]  # type: ignore
