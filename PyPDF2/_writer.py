@@ -1422,10 +1422,10 @@ class PdfWriter:
             title,
             pagenum,
             parent,
-            color,
-            bold,
+            color,  # type: ignore
+            bold,  # type: ignore
             italic,
-            Fit(fit_type=fit, fit_args=args),
+            Fit(fit_type=fit, fit_args=args),  # type: ignore
         )
 
     def addBookmark(
