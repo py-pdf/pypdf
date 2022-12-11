@@ -23,7 +23,7 @@ from xml.dom.minidom import Element as XmlElement
 from xml.dom.minidom import parseString
 from xml.parsers.expat import ExpatError
 
-from ._utils import StreamType, deprecate_with_replacement
+from ._utils import StreamType, deprecate_with_replacement, deprecation_with_replacement
 from .errors import PdfReadError
 from .generic import ContentStream, PdfObject
 
@@ -242,7 +242,7 @@ class XmpInformation(PdfObject):
 
             Use :meth:`write_to_stream` instead.
         """
-        deprecate_with_replacement("writeToStream", "write_to_stream")
+        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
         self.write_to_stream(stream, encryption_key)
 
     def get_element(self, about_uri: str, namespace: str, name: str) -> Iterator[Any]:
@@ -261,7 +261,7 @@ class XmpInformation(PdfObject):
 
             Use :meth:`get_element` instead.
         """
-        deprecate_with_replacement("getElement", "get_element")
+        deprecation_with_replacement("getElement", "get_element", "3.0.0")
         return self.get_element(aboutUri, namespace, name)
 
     def get_nodes_in_namespace(self, about_uri: str, namespace: str) -> Iterator[Any]:
@@ -283,7 +283,7 @@ class XmpInformation(PdfObject):
 
             Use :meth:`get_nodes_in_namespace` instead.
         """
-        deprecate_with_replacement("getNodesInNamespace", "get_nodes_in_namespace")
+        deprecation_with_replacement("getNodesInNamespace", "get_nodes_in_namespace", "3.0.0")
         return self.get_nodes_in_namespace(aboutUri, namespace)
 
     def _get_text(self, element: XmlElement) -> str:
@@ -450,12 +450,12 @@ class XmpInformation(PdfObject):
 
     @property
     def xmp_creatorTool(self) -> str:  # pragma: no cover
-        deprecate_with_replacement("xmp_creatorTool", "xmp_creator_tool")
+        deprecation_with_replacement("xmp_creatorTool", "xmp_creator_tool", "3.0.0")
         return self.xmp_creator_tool
 
     @xmp_creatorTool.setter
     def xmp_creatorTool(self, value: str) -> None:  # pragma: no cover
-        deprecate_with_replacement("xmp_creatorTool", "xmp_creator_tool")
+        deprecation_with_replacement("xmp_creatorTool", "xmp_creator_tool", "3.0.0")
         self.xmp_creator_tool = value
 
     xmpmm_document_id = property(_getter_single(XMPMM_NAMESPACE, "DocumentID"))
@@ -465,12 +465,12 @@ class XmpInformation(PdfObject):
 
     @property
     def xmpmm_documentId(self) -> str:  # pragma: no cover
-        deprecate_with_replacement("xmpmm_documentId", "xmpmm_document_id")
+        deprecation_with_replacement("xmpmm_documentId", "xmpmm_document_id", "3.0.0")
         return self.xmpmm_document_id
 
     @xmpmm_documentId.setter
     def xmpmm_documentId(self, value: str) -> None:  # pragma: no cover
-        deprecate_with_replacement("xmpmm_documentId", "xmpmm_document_id")
+        deprecation_with_replacement("xmpmm_documentId", "xmpmm_document_id", "3.0.0")
         self.xmpmm_document_id = value
 
     xmpmm_instance_id = property(_getter_single(XMPMM_NAMESPACE, "InstanceID"))
@@ -481,12 +481,12 @@ class XmpInformation(PdfObject):
 
     @property
     def xmpmm_instanceId(self) -> str:  # pragma: no cover
-        deprecate_with_replacement("xmpmm_instanceId", "xmpmm_instance_id")
+        deprecation_with_replacement("xmpmm_instanceId", "xmpmm_instance_id", "3.0.0")
         return cast(str, self.xmpmm_instance_id)
 
     @xmpmm_instanceId.setter
     def xmpmm_instanceId(self, value: str) -> None:  # pragma: no cover
-        deprecate_with_replacement("xmpmm_instanceId", "xmpmm_instance_id")
+        deprecation_with_replacement("xmpmm_instanceId", "xmpmm_instance_id", "3.0.0")
         self.xmpmm_instance_id = value
 
     @property

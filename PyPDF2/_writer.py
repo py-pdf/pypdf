@@ -245,7 +245,7 @@ class PdfWriter:
 
             Use :meth:`get_object` instead.
         """
-        deprecate_with_replacement("getObject", "get_object")
+        deprecation_with_replacement("getObject", "get_object", "3.0.0")
         return self.get_object(ido)
 
     def _add_page(
@@ -329,7 +329,7 @@ class PdfWriter:
 
             Use :meth:`add_page` instead.
         """
-        deprecate_with_replacement("addPage", "add_page")
+        deprecation_with_replacement("addPage", "add_page", "3.0.0")
         return self.add_page(page, excluded_keys)
 
     def insert_page(
@@ -358,7 +358,7 @@ class PdfWriter:
 
             Use :meth:`insert_page` instead.
         """
-        deprecate_with_replacement("insertPage", "insert_page")
+        deprecation_with_replacement("insertPage", "insert_page", "3.0.0")
         return self.insert_page(page, index, excluded_keys)
 
     def get_page(
@@ -390,7 +390,7 @@ class PdfWriter:
 
             Use :code:`writer.pages[page_number]` instead.
         """
-        deprecate_with_replacement("getPage", "writer.pages[page_number]")
+        deprecation_with_replacement("getPage", "writer.pages[page_number]", "3.0.0")
         return self.get_page(pageNumber)
 
     def _get_num_pages(self) -> int:
@@ -403,7 +403,7 @@ class PdfWriter:
 
             Use :code:`len(writer.pages)` instead.
         """
-        deprecate_with_replacement("getNumPages", "len(writer.pages)")
+        deprecation_with_replacement("getNumPages", "len(writer.pages)", "3.0.0")
         return self._get_num_pages()
 
     @property
@@ -438,7 +438,7 @@ class PdfWriter:
 
             Use :meth:`add_blank_page` instead.
         """
-        deprecate_with_replacement("addBlankPage", "add_blank_page")
+        deprecation_with_replacement("addBlankPage", "add_blank_page", "3.0.0")
         return self.add_blank_page(width, height)
 
     def insert_blank_page(
@@ -479,7 +479,7 @@ class PdfWriter:
 
             Use :meth:`insertBlankPage` instead.
         """
-        deprecate_with_replacement("insertBlankPage", "insert_blank_page")
+        deprecation_with_replacement("insertBlankPage", "insert_blank_page", "3.0.0")
         return self.insert_blank_page(width, height, index)
 
     @property
@@ -573,7 +573,7 @@ class PdfWriter:
 
             Use :meth:`add_js` instead.
         """
-        deprecate_with_replacement("addJS", "add_js")
+        deprecation_with_replacement("addJS", "add_js", "3.0.0")
         return self.add_js(javascript)
 
     def add_attachment(self, filename: str, data: Union[str, bytes]) -> None:
@@ -666,7 +666,7 @@ class PdfWriter:
 
             Use :meth:`add_attachment` instead.
         """
-        deprecate_with_replacement("addAttachment", "add_attachment")
+        deprecation_with_replacement("addAttachment", "add_attachment", "3.0.0")
         return self.add_attachment(fname, fdata)
 
     def append_pages_from_reader(
@@ -707,7 +707,7 @@ class PdfWriter:
 
             Use :meth:`append_pages_from_reader` instead.
         """
-        deprecate_with_replacement("appendPagesFromReader", "append_pages_from_reader")
+        deprecation_with_replacement("appendPagesFromReader", "append_pages_from_reader", "3.0.0")
         self.append_pages_from_reader(reader, after_page_append)
 
     def update_page_form_field_values(
@@ -786,8 +786,8 @@ class PdfWriter:
 
             Use :meth:`update_page_form_field_values` instead.
         """
-        deprecate_with_replacement(
-            "updatePageFormFieldValues", "update_page_form_field_values"
+        deprecation_with_replacement(
+            "updatePageFormFieldValues", "update_page_form_field_values", "3.0.0"
         )
         return self.update_page_form_field_values(page, fields, flags)
 
@@ -805,8 +805,8 @@ class PdfWriter:
 
             Use :meth:`clone_reader_document_root` instead.
         """
-        deprecate_with_replacement(
-            "cloneReaderDocumentRoot", "clone_reader_document_root"
+        deprecation_with_replacement(
+            "cloneReaderDocumentRoot", "clone_reader_document_root", "3.0.0"
         )
         self.clone_reader_document_root(reader)
 
@@ -840,8 +840,8 @@ class PdfWriter:
 
             Use :meth:`clone_document_from_reader` instead.
         """
-        deprecate_with_replacement(
-            "cloneDocumentFromReader", "clone_document_from_reader"
+        deprecation_with_replacement(
+            "cloneDocumentFromReader", "clone_document_from_reader", "3.0.0"
         )
         self.clone_document_from_reader(reader, after_page_append)
 
@@ -1057,7 +1057,7 @@ class PdfWriter:
 
             Use :meth:`add_metadata` instead.
         """
-        deprecate_with_replacement("addMetadata", "add_metadata")
+        deprecation_with_replacement("addMetadata", "add_metadata", "3.0.0")
         self.add_metadata(infos)
 
     def _sweep_indirect_references(
@@ -1191,7 +1191,7 @@ class PdfWriter:
 
             Use :meth:`get_reference` instead.
         """
-        deprecate_with_replacement("getReference", "get_reference")
+        deprecation_with_replacement("getReference", "get_reference", "3.0.0")
         return self.get_reference(obj)
 
     def get_outline_root(self) -> TreeObject:
@@ -1238,7 +1238,7 @@ class PdfWriter:
 
             Use :meth:`get_outline_root` instead.
         """
-        deprecate_with_replacement("getOutlineRoot", "get_outline_root")
+        deprecation_with_replacement("getOutlineRoot", "get_outline_root", "3.0.0")
         return self.get_outline_root()
 
     def get_named_dest_root(self) -> ArrayObject:
@@ -1282,7 +1282,7 @@ class PdfWriter:
 
             Use :meth:`get_named_dest_root` instead.
         """
-        deprecate_with_replacement("getNamedDestRoot", "get_named_dest_root")
+        deprecation_with_replacement("getNamedDestRoot", "get_named_dest_root", "3.0.0")
         return self.get_named_dest_root()
 
     def add_outline_item_destination(
@@ -1330,8 +1330,8 @@ class PdfWriter:
 
             Use :meth:`add_outline_item_destination` instead.
         """
-        deprecate_with_replacement(
-            "add_bookmark_destination", "add_outline_item_destination"
+        deprecation_with_replacement(
+            "add_bookmark_destination", "add_outline_item_destination", "3.0.0"
         )
         return self.add_outline_item_destination(dest, parent)
 
@@ -1343,8 +1343,8 @@ class PdfWriter:
 
             Use :meth:`add_outline_item_destination` instead.
         """
-        deprecate_with_replacement(
-            "addBookmarkDestination", "add_outline_item_destination"
+        deprecation_with_replacement(
+            "addBookmarkDestination", "add_outline_item_destination", "3.0.0"
         )
         return self.add_outline_item_destination(dest, parent)
 
@@ -1379,7 +1379,7 @@ class PdfWriter:
 
             Use :meth:`add_outline_item_dict` instead.
         """
-        deprecate_with_replacement("add_bookmark_dict", "add_outline_item_dict")
+        deprecation_with_replacement("add_bookmark_dict", "add_outline_item_dict", "3.0.0")
         return self.add_outline_item_dict(outline_item, parent)
 
     @deprecate_bookmark(bookmark="outline_item")
@@ -1391,7 +1391,7 @@ class PdfWriter:
 
             Use :meth:`add_outline_item_dict` instead.
         """
-        deprecate_with_replacement("addBookmarkDict", "add_outline_item_dict")
+        deprecation_with_replacement("addBookmarkDict", "add_outline_item_dict", "3.0.0")
         return self.add_outline_item_dict(outline_item, parent)
 
     def add_outline_item(
@@ -1486,7 +1486,7 @@ class PdfWriter:
 
             Use :meth:`add_outline_item` instead.
         """
-        deprecate_with_replacement("add_bookmark", "add_outline_item")
+        deprecation_with_replacement("add_bookmark", "add_outline_item", "3.0.0")
         return self.add_outline_item(
             title,
             pagenum,
@@ -1513,7 +1513,7 @@ class PdfWriter:
 
             Use :meth:`add_outline_item` instead.
         """
-        deprecate_with_replacement("addBookmark", "add_outline_item")
+        deprecation_with_replacement("addBookmark", "add_outline_item", "3.0.0")
         return self.add_outline_item(
             title,
             pagenum,
@@ -1581,8 +1581,8 @@ class PdfWriter:
 
             Use :meth:`add_named_destination_object` instead.
         """
-        deprecate_with_replacement(
-            "addNamedDestinationObject", "add_named_destination_object"
+        deprecation_with_replacement(
+            "addNamedDestinationObject", "add_named_destination_object", "3.0.0"
         )
         return self.add_named_destination_object(dest)
 
@@ -1633,7 +1633,7 @@ class PdfWriter:
 
             Use :meth:`add_named_destination` instead.
         """
-        deprecate_with_replacement("addNamedDestination", "add_named_destination")
+        deprecation_with_replacement("addNamedDestination", "add_named_destination", "3.0.0")
         return self.add_named_destination(title, pagenum)
 
     def remove_links(self) -> None:
@@ -1651,7 +1651,7 @@ class PdfWriter:
 
             Use :meth:`remove_links` instead.
         """
-        deprecate_with_replacement("removeLinks", "remove_links")
+        deprecation_with_replacement("removeLinks", "remove_links", "3.0.0")
         return self.remove_links()
 
     def remove_images(self, ignore_byte_string_object: bool = False) -> None:
@@ -1739,7 +1739,7 @@ class PdfWriter:
 
             Use :meth:`remove_images` instead.
         """
-        deprecate_with_replacement("removeImages", "remove_images")
+        deprecation_with_replacement("removeImages", "remove_images", "3.0.0")
         return self.remove_images(ignoreByteStringObject)
 
     def remove_text(self, ignore_byte_string_object: bool = False) -> None:
@@ -1794,7 +1794,7 @@ class PdfWriter:
 
             Use :meth:`remove_text` instead.
         """
-        deprecate_with_replacement("removeText", "remove_text")
+        deprecation_with_replacement("removeText", "remove_text", "3.0.0")
         return self.remove_text(ignoreByteStringObject)
 
     def add_uri(
@@ -1882,7 +1882,7 @@ class PdfWriter:
 
             Use :meth:`add_uri` instead.
         """
-        deprecate_with_replacement("addURI", "add_uri")
+        deprecation_with_replacement("addURI", "add_uri", "3.0.0")
         return self.add_uri(pagenum, uri, rect, border)
 
     def add_link(
@@ -1957,7 +1957,7 @@ class PdfWriter:
 
             Use :py:attr:`page_layout` instead.
         """
-        deprecate_with_replacement("getPageLayout", "page_layout")
+        deprecation_with_replacement("getPageLayout", "page_layout", "3.0.0")
         return self._get_page_layout()
 
     def _set_page_layout(self, layout: Union[NameObject, LayoutType]) -> None:
@@ -2025,8 +2025,8 @@ class PdfWriter:
 
             Use :py:attr:`page_layout` instead.
         """
-        deprecate_with_replacement(
-            "writer.setPageLayout(val)", "writer.page_layout = val"
+        deprecation_with_replacement(
+            "writer.setPageLayout(val)", "writer.page_layout = val", "3.0.0"
         )
         return self._set_page_layout(layout)
 
@@ -2066,7 +2066,7 @@ class PdfWriter:
 
             Use :py:attr:`page_layout` instead.
         """
-        deprecate_with_replacement("pageLayout", "page_layout")
+        deprecation_with_replacement("pageLayout", "page_layout", "3.0.0")
         return self.page_layout
 
     @pageLayout.setter
@@ -2076,7 +2076,7 @@ class PdfWriter:
 
             Use :py:attr:`page_layout` instead.
         """
-        deprecate_with_replacement("pageLayout", "page_layout")
+        deprecation_with_replacement("pageLayout", "page_layout", "3.0.0")
         self.page_layout = layout
 
     _valid_modes = (
@@ -2100,7 +2100,7 @@ class PdfWriter:
 
             Use :py:attr:`page_mode` instead.
         """
-        deprecate_with_replacement("getPageMode", "page_mode")
+        deprecation_with_replacement("getPageMode", "page_mode", "3.0.0")
         return self._get_page_mode()
 
     def set_page_mode(self, mode: PagemodeType) -> None:
@@ -2125,7 +2125,7 @@ class PdfWriter:
 
             Use :py:attr:`page_mode` instead.
         """
-        deprecate_with_replacement("writer.setPageMode(val)", "writer.page_mode = val")
+        deprecation_with_replacement("writer.setPageMode(val)", "writer.page_mode = val", "3.0.0")
         self.set_page_mode(mode)
 
     @property
@@ -2162,7 +2162,7 @@ class PdfWriter:
 
             Use :py:attr:`page_mode` instead.
         """
-        deprecate_with_replacement("pageMode", "page_mode")
+        deprecation_with_replacement("pageMode", "page_mode", "3.0.0")
         return self.page_mode
 
     @pageMode.setter
@@ -2172,7 +2172,7 @@ class PdfWriter:
 
             Use :py:attr:`page_mode` instead.
         """
-        deprecate_with_replacement("pageMode", "page_mode")
+        deprecation_with_replacement("pageMode", "page_mode", "3.0.0")
         self.page_mode = mode
 
     def add_annotation(self, page_number: int, annotation: Dict[str, Any]) -> None:
@@ -2799,5 +2799,5 @@ def _create_outline_item(
 
 class PdfFileWriter(PdfWriter):  # pragma: no cover
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        deprecate_with_replacement("PdfFileWriter", "PdfWriter")
+        deprecation_with_replacement("PdfFileWriter", "PdfWriter", "3.0.0")
         super().__init__(*args, **kwargs)
