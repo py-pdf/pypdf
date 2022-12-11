@@ -407,7 +407,7 @@ def logger_warning(msg: str, src: str) -> None:
     logging.getLogger(src).warning(msg)
 
 
-def deprecate_bookmark(**aliases: str) -> Callable:
+def deprecation_bookmark(**aliases: str) -> Callable:
     """
     Decorator for deprecated term "bookmark"
     To be used for methods and function arguments
@@ -418,7 +418,7 @@ def deprecate_bookmark(**aliases: str) -> Callable:
     def decoration(func: Callable):  # type: ignore
         @functools.wraps(func)
         def wrapper(*args, **kwargs):  # type: ignore
-            rename_kwargs(func.__name__, kwargs, aliases)
+            rename_kwargs(func.__name__, kwargs, aliases, fail=True)
             return func(*args, **kwargs)
 
         return wrapper
@@ -427,7 +427,7 @@ def deprecate_bookmark(**aliases: str) -> Callable:
 
 
 def rename_kwargs(  # type: ignore
-    func_name: str, kwargs: Dict[str, Any], aliases: Dict[str, str]
+    func_name: str, kwargs: Dict[str, Any], aliases: Dict[str, str], fail: bool = False
 ):
     """
     Helper function to deprecate arguments.
@@ -435,6 +435,10 @@ def rename_kwargs(  # type: ignore
 
     for old_term, new_term in aliases.items():
         if old_term in kwargs:
+            if fail:
+                raise DeprecationError(
+                    f"{old_term} is deprecated as an argument. Use {new_term} instead"
+                )
             if new_term in kwargs:
                 raise TypeError(
                     f"{func_name} received both {old_term} and {new_term} as an argument. "

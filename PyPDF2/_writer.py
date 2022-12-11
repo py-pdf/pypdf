@@ -65,8 +65,8 @@ from ._utils import (
     StreamType,
     _get_max_pdf_version_header,
     b_,
-    deprecate_bookmark,
     deprecate_with_replacement,
+    deprecation_bookmark,
     deprecation_with_replacement,
     logger_warning,
 )
@@ -1350,7 +1350,7 @@ class PdfWriter:
         )
         return self.add_outline_item_destination(dest, parent)
 
-    @deprecate_bookmark(bookmark="outline_item")
+    @deprecation_bookmark(bookmark="outline_item")
     def add_outline_item_dict(
         self,
         outline_item: OutlineItemType,
@@ -1372,7 +1372,7 @@ class PdfWriter:
 
         return self.add_outline_item_destination(outline_item_object, parent, before)
 
-    @deprecate_bookmark(bookmark="outline_item")
+    @deprecation_bookmark(bookmark="outline_item")
     def add_bookmark_dict(
         self, outline_item: OutlineItemType, parent: Optional[TreeObject] = None
     ) -> IndirectObject:  # pragma: no cover
@@ -1386,7 +1386,7 @@ class PdfWriter:
         )
         return self.add_outline_item_dict(outline_item, parent)
 
-    @deprecate_bookmark(bookmark="outline_item")
+    @deprecation_bookmark(bookmark="outline_item")
     def addBookmarkDict(
         self, outline_item: OutlineItemType, parent: Optional[TreeObject] = None
     ) -> IndirectObject:  # pragma: no cover
@@ -2318,7 +2318,7 @@ class PdfWriter:
                 None, fileobj, outline_item, pages, import_outline, excluded_fields
             )
 
-    @deprecate_bookmark(bookmark="outline_item", import_bookmarks="import_outline")
+    @deprecation_bookmark(bookmark="outline_item", import_bookmarks="import_outline")
     def merge(
         self,
         position: Optional[int],
@@ -2674,7 +2674,7 @@ class PdfWriter:
         """To match the functions from Merger"""
         return
 
-    # @deprecate_bookmark(bookmark="outline_item")
+    # @deprecation_bookmark(bookmark="outline_item")
     def find_outline_item(
         self,
         outline_item: Dict[str, Any],
@@ -2705,7 +2705,7 @@ class PdfWriter:
             else:
                 return None
 
-    @deprecate_bookmark(bookmark="outline_item")
+    @deprecation_bookmark(bookmark="outline_item")
     def find_bookmark(
         self,
         outline_item: Dict[str, Any],

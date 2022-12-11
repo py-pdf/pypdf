@@ -46,7 +46,7 @@ from ._page import PageObject
 from ._reader import PdfReader
 from ._utils import (
     StrByteType,
-    deprecate_bookmark,
+    deprecation_bookmark,
     deprecation_with_replacement,
     str_,
 )
@@ -102,7 +102,7 @@ class PdfMerger:
             file-like object.
     """
 
-    @deprecate_bookmark(bookmarks="outline")
+    @deprecation_bookmark(bookmarks="outline")
     def __init__(
         self, strict: bool = False, fileobj: Union[Path, StrByteType] = ""
     ) -> None:
@@ -130,7 +130,7 @@ class PdfMerger:
             self.write(self.fileobj)
         self.close()
 
-    @deprecate_bookmark(bookmark="outline_item", import_bookmarks="import_outline")
+    @deprecation_bookmark(bookmark="outline_item", import_bookmarks="import_outline")
     def merge(
         self,
         page_number: Optional[int] = None,
@@ -281,7 +281,7 @@ class PdfMerger:
             )
         return stream, encryption_obj
 
-    @deprecate_bookmark(bookmark="outline_item", import_bookmarks="import_outline")
+    @deprecation_bookmark(bookmark="outline_item", import_bookmarks="import_outline")
     def append(
         self,
         fileobj: Union[StrByteType, PdfReader, Path],
@@ -513,7 +513,7 @@ class PdfMerger:
             if pageno is not None:
                 self.output.add_named_destination_object(named_dest)
 
-    @deprecate_bookmark(bookmarks="outline")
+    @deprecation_bookmark(bookmarks="outline")
     def _write_outline(
         self,
         outline: Optional[Iterable[OutlineItem]] = None,
@@ -541,7 +541,7 @@ class PdfMerger:
                 del outline_item["/Page"], outline_item["/Type"]
                 last_added = self.output.add_outline_item_dict(outline_item, parent)
 
-    @deprecate_bookmark(bookmark="outline_item")
+    @deprecation_bookmark(bookmark="outline_item")
     def _write_outline_item_on_page(
         self, outline_item: Union[OutlineItem, Destination], page: _MergedPage
     ) -> None:
@@ -594,7 +594,7 @@ class PdfMerger:
                 )
             named_dest[NameObject("/Page")] = NumberObject(pageno)
 
-    @deprecate_bookmark(bookmarks="outline")
+    @deprecation_bookmark(bookmarks="outline")
     def _associate_outline_items_to_pages(
         self, pages: List[_MergedPage], outline: Optional[Iterable[OutlineItem]] = None
     ) -> None:
@@ -619,7 +619,7 @@ class PdfMerger:
             if pageno is not None:
                 outline_item[NameObject("/Page")] = NumberObject(pageno)
 
-    @deprecate_bookmark(bookmark="outline_item")
+    @deprecation_bookmark(bookmark="outline_item")
     def find_outline_item(
         self,
         outline_item: Dict[str, Any],
@@ -644,7 +644,7 @@ class PdfMerger:
 
         return None
 
-    @deprecate_bookmark(bookmark="outline_item")
+    @deprecation_bookmark(bookmark="outline_item")
     def find_bookmark(
         self,
         outline_item: Dict[str, Any],
