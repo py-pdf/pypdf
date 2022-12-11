@@ -884,8 +884,8 @@ class PdfWriter:
             else:
                 warnings.warn(
                     "Please use 'user_password' instead of 'user_pwd'. "
-                    "The 'user_pwd' argument is deprecated and will be removed "
-                    "in PyPDF2==4.0.0."
+                    "The 'user_pwd' argument is deprecated and "
+                    "will be removed in PyPDF2 4.0.0."
                 )
                 user_password = user_pwd
         if user_password is None:  # deprecated
@@ -903,7 +903,7 @@ class PdfWriter:
                 warnings.warn(
                     message=(
                         f"{old_term} is deprecated as an argument and will be "
-                        f"removed in PyPDF2==4.0.0. Use {new_term} instead"
+                        f"removed in PyPDF2 4.0.0. Use {new_term} instead"
                     ),
                     category=DeprecationWarning,
                 )
@@ -1306,7 +1306,7 @@ class PdfWriter:
             warnings.warn(
                 message=(
                     f"{old_term} is deprecated as an argument and will be "
-                    f"removed in PyPDF2==4.0.0. Use {new_term} instead"
+                    f"removed in PyPDF2 4.0.0. Use {new_term} instead"
                 ),
                 category=DeprecationWarning,
             )
@@ -1570,7 +1570,7 @@ class PdfWriter:
             warnings.warn(
                 message=(
                     f"{old_term} is deprecated as an argument and will be "
-                    f"removed in PyPDF2==4.0.0. Use {new_term} instead"
+                    f"removed in PyPDF2 4.0.0. Use {new_term} instead"
                 ),
                 category=DeprecationWarning,
             )
@@ -1614,7 +1614,7 @@ class PdfWriter:
             warnings.warn(
                 message=(
                     f"{old_term} is deprecated as an argument and will be "
-                    f"removed in PyPDF2==4.0.0. Use {new_term} instead"
+                    f"removed in PyPDF2 4.0.0. Use {new_term} instead"
                 ),
                 category=DeprecationWarning,
             )
@@ -1837,7 +1837,7 @@ class PdfWriter:
         if pagenum is not None:
             warnings.warn(
                 "The 'pagenum' argument of add_uri is deprecated and will be "
-                "removed in PyPDF2==4.0.0. Use 'page_number' instead.",
+                "removed in PyPDF2 4.0.0. Use 'page_number' instead.",
                 category=DeprecationWarning,
             )
             page_number = pagenum

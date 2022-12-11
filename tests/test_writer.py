@@ -797,7 +797,7 @@ def test_add_single_annotation():
         writer.write(fp)
 
     # Cleanup
-    os.remove(target)  # remove for testing
+    os.remove(target)  # comment out for testing
 
 
 def test_deprecation_bookmark_decorator():
@@ -833,7 +833,7 @@ def test_colors_in_outline_item():
         assert [str(c) for c in outline_item.color] == [str(p) for p in purple_rgb]
 
     # Cleanup
-    os.remove(target)  # remove for testing
+    os.remove(target)  # comment out for testing
 
 
 @pytest.mark.samples

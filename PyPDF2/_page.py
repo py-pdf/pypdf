@@ -303,7 +303,7 @@ class PageObject(DictionaryObject):
             warnings.warn(
                 (
                     "indirect_ref is deprecated and will be removed in "
-                    "PyPDF2==4.0.0. Use indirect_reference instead of indirect_ref."
+                    "PyPDF2 4.0.0. Use indirect_reference instead of indirect_ref."
                 ),
                 DeprecationWarning,
             )
@@ -316,7 +316,7 @@ class PageObject(DictionaryObject):
     def indirect_ref(self) -> Optional[IndirectObject]:  # deprecated
         warnings.warn(
             (
-                "indirect_ref is deprecated and will be removed in PyPDF2==4.0.0"
+                "indirect_ref is deprecated and will be removed in PyPDF2 4.0.0"
                 "Use indirect_reference instead of indirect_ref."
             ),
             DeprecationWarning,
@@ -1718,8 +1718,8 @@ class PageObject(DictionaryObject):
         Additionally you can provide visitor-methods to get informed on all operands and all text-objects.
         For example in some PDF files this can be useful to parse tables.
 
-        :param Tj_sep: Deprecated. Kept for compatibility until PyPDF2==4.0.0
-        :param TJ_sep: Deprecated. Kept for compatibility until PyPDF2==4.0.0
+        :param Tj_sep: Deprecated. Kept for compatibility until PyPDF2 4.0.0
+        :param TJ_sep: Deprecated. Kept for compatibility until PyPDF2 4.0.0
         :param Tuple[int, ...] orientations: list of orientations text_extraction will look for
             default = (0, 90, 180, 270)
             note: currently only 0(Up),90(turned Left), 180(upside Down),

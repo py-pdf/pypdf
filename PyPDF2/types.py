@@ -20,8 +20,6 @@ from .generic._outline import OutlineItem
 
 BorderArrayType: TypeAlias = List[Union[NameObject, NumberObject, ArrayObject]]
 OutlineItemType: TypeAlias = Union[OutlineItem, Destination]
-# BookmarkTypes is deprecated. Use OutlineItemType instead
-BookmarkTypes: TypeAlias = OutlineItemType  # Remove with PyPDF2==3.0.0
 FitType: TypeAlias = Literal[
     "/Fit", "/XYZ", "/FitH", "/FitV", "/FitR", "/FitB", "/FitBH", "/FitBV"
 ]
@@ -29,13 +27,11 @@ FitType: TypeAlias = Literal[
 ZoomArgType: TypeAlias = Union[NumberObject, NullObject, float]
 ZoomArgsType: TypeAlias = List[ZoomArgType]
 
-# Recursive types are not yet supported by mypy:
-#    OutlinesType = List[Union[Destination, "OutlinesType"]]
+# Recursive types like the following are not yet supported by mypy:
+#    OutlineType = List[Union[Destination, "OutlineType"]]
 # See https://github.com/python/mypy/issues/731
 # Hence use this for the moment:
 OutlineType = List[Union[Destination, List[Union[Destination, List[Destination]]]]]
-# OutlinesType is deprecated. Use OutlineType instead
-OutlinesType: TypeAlias = OutlineType  # Remove with PyPDF2==3.0.0
 
 LayoutType: TypeAlias = Literal[
     "/NoLayout",
