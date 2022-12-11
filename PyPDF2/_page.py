@@ -73,7 +73,6 @@ from .generic import (
     NullObject,
     NumberObject,
     RectangleObject,
-    TextStringObject,
     encode_pdfdocencoding,
 )
 
@@ -303,8 +302,8 @@ class PageObject(DictionaryObject):
         if indirect_ref is not None:  # deprecated
             warnings.warn(
                 (
-                    f"indirect_ref is deprecated and will be removed in "
-                    f"PyPDF2==4.0.0. Use indirect_reference instead of indirect_ref."
+                    "indirect_ref is deprecated and will be removed in "
+                    "PyPDF2==4.0.0. Use indirect_reference instead of indirect_ref."
                 ),
                 DeprecationWarning,
             )
@@ -318,7 +317,7 @@ class PageObject(DictionaryObject):
         warnings.warn(
             (
                 "indirect_ref is deprecated and will be removed in PyPDF2==4.0.0"
-                f"Use indirect_reference instead of indirect_ref."
+                "Use indirect_reference instead of indirect_ref."
             ),
             DeprecationWarning,
         )
