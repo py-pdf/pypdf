@@ -171,9 +171,11 @@ class PdfMerger:
                 old_term = "position"
                 new_term = "page_number"
                 warnings.warn(
-                    message=(
-                        f"{old_term} is deprecated as an argument. Use {new_term} instead"
-                    )
+                    (
+                        f"{old_term} is deprecated as an argument and will be "
+                        f"removed in PyPDF2=4.0.0. Use {new_term} instead"
+                    ),
+                    DeprecationWarning,
                 )
             else:
                 raise ValueError(
@@ -688,9 +690,11 @@ class PdfMerger:
             old_term = "pagenum"
             new_term = "page_number"
             warnings.warn(
-                message=(
-                    f"{old_term} is deprecated as an argument. Use {new_term} instead"
-                )
+                (
+                    f"{old_term} is deprecated as an argument and will be "
+                    f"removed in PyPDF2==4.0.0. Use {new_term} instead"
+                ),
+                DeprecationWarning,
             )
             page_number = pagenum
         if page_number is None:
@@ -791,9 +795,11 @@ class PdfMerger:
             old_term = "pagenum"
             new_term = "page_number"
             warnings.warn(
-                message=(
-                    f"{old_term} is deprecated as an argument. Use {new_term} instead"
-                )
+                (
+                    f"{old_term} is deprecated as an argument and will be "
+                    f"removed in PyPDF2==4.0.0. Use {new_term} instead"
+                ),
+                DeprecationWarning,
             )
             page_number = pagenum
         if page_number is None:

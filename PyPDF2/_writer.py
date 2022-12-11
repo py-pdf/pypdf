@@ -225,7 +225,7 @@ class PdfWriter:
             else:
                 indirect_reference = ido
                 warnings.warn(
-                    "The parameter 'ido' is depreciated and will be removed in PyPDF2 3.0.0.",
+                    "The parameter 'ido' is depreciated and will be removed in PyPDF2 4.0.0.",
                     DeprecationWarning,
                 )
         assert (
@@ -885,7 +885,7 @@ class PdfWriter:
                 warnings.warn(
                     "Please use 'user_password' instead of 'user_pwd'. "
                     "The 'user_pwd' argument is deprecated and will be removed "
-                    "in PyPDF2==3.0.0."
+                    "in PyPDF2==4.0.0."
                 )
                 user_password = user_pwd
         if user_password is None:  # deprecated
@@ -902,8 +902,10 @@ class PdfWriter:
                 new_term = "owner_password"
                 warnings.warn(
                     message=(
-                        f"{old_term} is deprecated as an argument. Use {new_term} instead"
-                    )
+                        f"{old_term} is deprecated as an argument and will be "
+                        f"removed in PyPDF2==4.0.0. Use {new_term} instead"
+                    ),
+                    category=DeprecationWarning,
                 )
                 owner_password = owner_pwd
 
@@ -1303,8 +1305,10 @@ class PdfWriter:
             new_term = "page_destination"
             warnings.warn(
                 message=(
-                    f"{old_term} is deprecated as an argument. Use {new_term} instead"
-                )
+                    f"{old_term} is deprecated as an argument and will be "
+                    f"removed in PyPDF2==4.0.0. Use {new_term} instead"
+                ),
+                category=DeprecationWarning,
             )
             page_destination = dest
         if page_destination is None:  # deprecated
@@ -1565,8 +1569,10 @@ class PdfWriter:
             new_term = "page_destination"
             warnings.warn(
                 message=(
-                    f"{old_term} is deprecated as an argument. Use {new_term} instead"
-                )
+                    f"{old_term} is deprecated as an argument and will be "
+                    f"removed in PyPDF2==4.0.0. Use {new_term} instead"
+                ),
+                category=DeprecationWarning,
             )
             page_destination = dest
         if page_destination is None:  # deprecated
@@ -1607,8 +1613,10 @@ class PdfWriter:
             new_term = "page_number"
             warnings.warn(
                 message=(
-                    f"{old_term} is deprecated as an argument. Use {new_term} instead"
-                )
+                    f"{old_term} is deprecated as an argument and will be "
+                    f"removed in PyPDF2==4.0.0. Use {new_term} instead"
+                ),
+                category=DeprecationWarning,
             )
             page_number = pagenum
         if page_number is None:
@@ -1828,7 +1836,9 @@ class PdfWriter:
         """
         if pagenum is not None:
             warnings.warn(
-                "The 'pagenum' argument of add_uri is deprecated. Use 'page_number' instead."
+                "The 'pagenum' argument of add_uri is deprecated and will be "
+                "removed in PyPDF2==4.0.0. Use 'page_number' instead.",
+                category=DeprecationWarning,
             )
             page_number = pagenum
         page_link = self.get_object(self._pages)[PA.KIDS][page_number]  # type: ignore

@@ -302,7 +302,11 @@ class PageObject(DictionaryObject):
         self.pdf: Optional[PdfReaderProtocol] = pdf
         if indirect_ref is not None:  # deprecated
             warnings.warn(
-                "Use indirect_reference instead of indirect_ref.", DeprecationWarning
+                (
+                    f"indirect_ref is deprecated and will be removed in "
+                    f"PyPDF2==4.0.0. Use indirect_reference instead of indirect_ref."
+                ),
+                DeprecationWarning,
             )
             if indirect_reference is not None:
                 raise ValueError("Use indirect_reference instead of indirect_ref.")
@@ -312,7 +316,11 @@ class PageObject(DictionaryObject):
     @property
     def indirect_ref(self) -> Optional[IndirectObject]:  # deprecated
         warnings.warn(
-            "Use indirect_reference instead of indirect_ref.", DeprecationWarning
+            (
+                "indirect_ref is deprecated and will be removed in PyPDF2==4.0.0"
+                f"Use indirect_reference instead of indirect_ref."
+            ),
+            DeprecationWarning,
         )
         return self.indirect_reference
 
@@ -1186,84 +1194,6 @@ class PageObject(DictionaryObject):
         )
         self.compress_content_streams()
 
-    def _extract_text_old(
-        self, Tj_sep: str = "", TJ_sep: str = ""
-    ) -> str:  # pragma: no cover
-        """
-        Locate all text drawing commands, in the order they are provided in the
-        content stream, and extract the text.  This works well for some PDF
-        files, but poorly for others, depending on the generator used.  This will
-        be refined in the future.  Do not rely on the order of text coming out of
-        this function, as it will change if this function is made more
-        sophisticated.
-
-        :return: a string object.
-        """
-        text = ""
-        content = self[PG.CONTENTS].get_object()
-        if not isinstance(content, ContentStream):
-            content = ContentStream(content, self.pdf)
-        # Note: we check all strings are TextStringObjects.  ByteStringObjects
-        # are strings where the byte->string encoding was unknown, so adding
-        # them to the text here would be gibberish.
-
-        space_scale = 1.0
-
-        for operands, operator in content.operations:
-            # Missing operators:
-            #   Tf: text font
-            #  Tfs: text font size
-            #   Tc: '5.2.1 Character Spacing'
-            #   Th: '5.2.3 Horizontal Scaling'
-            #   Tl: '5.2.4 Leading'
-            # Tmode: '5.2.5 Text Rendering Mode'
-            # Trise: '5.2.6 Text Rise'
-
-            if operator in [b"Tf", b"Tfs", b"Tc", b"Th", b"Tl", b"Tmode"]:
-                pass
-            elif operator == b"Tw":  # word spacing
-                # See '5.2.2 Word Spacing'
-                space_scale = 1.0 + float(operands[0])
-            elif operator == b"Tj":
-                # See 'TABLE 5.6 Text-showing operators'
-                _text = operands[0]
-                if isinstance(_text, TextStringObject):
-                    text += Tj_sep
-                    text += _text
-                    text += "\n"
-            elif operator == b"T*":
-                # See 'TABLE 5.5 Text-positioning operators'
-                text += "\n"
-            elif operator == b"'":
-                # See 'TABLE 5.6 Text-showing operators'
-                text += "\n"
-                _text = operands[0]
-                if isinstance(_text, TextStringObject):
-                    text += operands[0]
-            elif operator == b'"':
-                # See 'TABLE 5.6 Text-showing operators'
-                _text = operands[2]
-                if isinstance(_text, TextStringObject):
-                    text += "\n"
-                    text += _text
-            elif operator == b"TJ":
-                # See 'TABLE 5.6 Text-showing operators'
-                for i in operands[0]:
-                    if isinstance(i, TextStringObject):
-                        text += TJ_sep
-                        text += i
-                    elif isinstance(i, (NumberObject, FloatObject)):
-                        # a positive value decreases and the negative value increases
-                        # space
-                        if int(i) < -space_scale * 250:
-                            if len(text) == 0 or text[-1] != " ":
-                                text += " "
-                        else:
-                            if len(text) > 1 and text[-1] == " ":
-                                text = text[:-1]
-                text += "\n"
-        return text
-
     def _debug_for_extract(self) -> str:  # pragma: no cover
         out = ""
         for ope, op in ContentStream(
@@ -1839,7 +1769,7 @@ class PageObject(DictionaryObject):
                 raise TypeError(f"Invalid positional parameter {args[0]}")
         if Tj_sep is not None or TJ_sep is not None:
             warnings.warn(
-                "parameters Tj_Sep, TJ_sep depreciated, and will be removed in PyPDF2 3.0.0.",
+                "parameters Tj_Sep, TJ_sep depreciated, and will be removed in PyPDF2 4.0.0.",
                 DeprecationWarning,
             )
 
