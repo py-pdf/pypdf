@@ -3,9 +3,10 @@ from io import BytesIO
 from pathlib import Path
 
 import pytest
+import re
 
 from PyPDF2 import PageObject, PdfMerger, PdfReader, PdfWriter
-from PyPDF2.errors import PageSizeNotDefinedError
+from PyPDF2.errors import PageSizeNotDefinedError, DeprecationError
 from PyPDF2.generic import (
     Fit,
     ArrayObject,
@@ -112,7 +113,7 @@ def writer_operate(writer):
     )
     writer.add_blank_page()
     writer.add_uri(2, "https://example.com", RectangleObject([0, 0, 100, 100]))
-    with pytest.warns(PendingDeprecationWarning):
+    with pytest.raises(DeprecationError):
         writer.add_link(2, 1, RectangleObject([0, 0, 100, 100]))
     assert writer._get_page_layout() is None
     writer.page_layout = "broken"
@@ -582,9 +583,12 @@ def test_add_link():
     for page in reader.pages:
         writer.add_page(page)
 
-    with pytest.warns(
-        PendingDeprecationWarning,
-        match="add_link is deprecated and will be removed in PyPDF2",
+    with pytest.raises(
+        DeprecationError,
+        match=(
+            re.escape("add_link is deprecated and was removed in PyPDF2 3.0.0. "
+            "Use add_annotation(AnnotationBuilder.link(...)) instead.")
+        ),
     ):
         writer.add_link(
             1,

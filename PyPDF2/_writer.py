@@ -66,6 +66,7 @@ from ._utils import (
     _get_max_pdf_version_header,
     b_,
     deprecate_bookmark,
+    deprecation_with_replacement,
     deprecate_with_replacement,
     logger_warning,
 )
@@ -1289,7 +1290,7 @@ class PdfWriter:
         page_destination: Union[None, PageObject, TreeObject] = None,
         parent: Union[None, TreeObject, IndirectObject] = None,
         before: Union[None, TreeObject, IndirectObject] = None,
-        dest: Union[None, PageObject, TreeObject] = None,   # deprecated
+        dest: Union[None, PageObject, TreeObject] = None,  # deprecated
     ) -> IndirectObject:
         if page_destination is not None and dest is not None:  # deprecated
             raise ValueError(
@@ -1893,7 +1894,7 @@ class PdfWriter:
         fit: FitType = "/Fit",
         *args: ZoomArgType,
     ) -> None:
-        deprecate_with_replacement(
+        deprecation_with_replacement(
             "add_link", "add_annotation(AnnotationBuilder.link(...))"
         )
 
@@ -2483,7 +2484,9 @@ class PdfWriter:
                 pag_obj = cast("PageObject", pag.get_object())
                 if "/B" not in pag_obj:
                     pag_obj[NameObject("/B")] = ArrayObject()
-                cast("ArrayObject", pag_obj["/B"]).append(new_article.indirect_reference)
+                cast("ArrayObject", pag_obj["/B"]).append(
+                    new_article.indirect_reference
+                )
             current_article = cast("DictionaryObject", current_article["/N"])
             if current_article == first_article:
                 new_article[NameObject("/N")] = new_first.indirect_reference  # type: ignore
@@ -2674,7 +2677,10 @@ class PdfWriter:
 
         i = 0
         while o is not None:
-            if o.indirect_reference == outline_item or o.get("/Title", None) == outline_item:
+            if (
+                o.indirect_reference == outline_item
+                or o.get("/Title", None) == outline_item
+            ):
                 return [i]
             else:
                 if "/First" in o:

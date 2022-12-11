@@ -349,7 +349,7 @@ def paeth_predictor(left: int, up: int, up_left: int) -> int:
 
 
 def deprecate(msg: str, stacklevel: int = 3) -> None:
-    warnings.warn(msg, PendingDeprecationWarning, stacklevel=stacklevel)
+    warnings.warn(msg, DeprecationWarning, stacklevel=stacklevel)
 
 
 def deprecation(msg: str) -> None:
