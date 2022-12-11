@@ -1423,9 +1423,9 @@ class PdfWriter:
         page_ref: Union[None, NullObject, IndirectObject, NumberObject]
         if isinstance(italic, Fit):  # it means that we are on the old params
             if fit is not None and page_number is None:
-                page_number = fit
+                page_number = fit  # type: ignore
             return self.add_outline_item(
-                title, page_number, parent, None, before, color, bold, italic
+                title, page_number, parent, None, before, color, bold, italic  # type: ignore
             )
         if page_number is not None and pagenum is not None:
             raise ValueError(
@@ -1565,9 +1565,9 @@ class PdfWriter:
         if page_destination is None:  # deprecated
             raise ValueError("page_destination may not be None")
 
-        page_destination_ref = self._add_object(page_destination.dest_array)
+        page_destination_ref = self._add_object(page_destination.dest_array)  # type: ignore
         self.add_named_destination_array(
-            cast("TextStringObject", page_destination["/Title"]), page_destination_ref
+            cast("TextStringObject", page_destination["/Title"]), page_destination_ref  # type: ignore
         )
 
         return page_destination_ref
