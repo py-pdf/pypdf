@@ -213,7 +213,7 @@ class PdfWriter:
 
     def get_object(
         self,
-        indirect_reference: Optional[IndirectObject] = None,
+        indirect_reference: Union[None, int, IndirectObject] = None,
         ido: Optional[IndirectObject] = None,
     ) -> PdfObject:
         if ido is not None:  # deprecated
