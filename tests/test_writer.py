@@ -512,11 +512,18 @@ def test_add_named_destination():
     assert root[0] == "A named dest"
     assert root[1].pdf == writer
     assert root[1].get_object()["/S"] == NameObject("/GoTo")
-    assert root[1].get_object()["/D"][0].get_object() == writer.pages[2]
+    assert root[1].get_object()["/D"][0] == writer.pages[2].indirect_reference
     assert root[2] == "A named dest2"
     assert root[3].pdf == writer
     assert root[3].get_object()["/S"] == NameObject("/GoTo")
-    assert root[3].get_object()["/D"][0].get_object() == writer.pages[2]
+    assert root[3].get_object()["/D"][0] == writer.pages[2].indirect_reference
+
+    # test get_object
+
+    assert writer.get_object(root[1].idnum) == writer.get_object(root[1])
+    with pytest.raises(ValueError) as exc:
+        writer.get_object(reader.pages[0].indirect_reference)
+    assert exc.value.args[0] == "pdf must be self"
 
     # write "output" to PyPDF2-output.pdf
     tmp_filename = "dont_commit_named_destination.pdf"
@@ -732,14 +739,7 @@ def test_write_dict_stream_object():
     # Writer will replace this stream object with indirect object
     page_object[NameObject("/Test")] = stream_object
 
-    writer.add_page(page_object)
-
-    for k, v in page_object.items():
-        if k == "/Test":
-            assert str(v) == str(stream_object)
-            break
-    else:
-        assert False, "/Test not found"
+    page_object = writer.add_page(page_object)
 
     with open("tmp-writer-do-not-commit.pdf", "wb") as fp:
         writer.write(fp)
@@ -882,6 +882,44 @@ def test_startup_dest():
     pdf_file_writer.open_destination = None
 
 
+def test_iss471():
+    url = "https://github.com/py-pdf/PyPDF2/files/9139245/book.pdf"
+    name = "book_471.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+
+    writer = PdfWriter()
+    writer.append(reader, excluded_fields=[])
+    assert isinstance(
+        writer.pages[0]["/Annots"][0].get_object()["/Dest"], TextStringObject
+    )
+
+
+def test_reset_translation():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
+    name = "tika-924666.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    writer = PdfWriter()
+    writer.append(reader, (0, 10))
+    nb = len(writer._objects)
+    writer.append(reader, (0, 10))
+    assert (
+        len(writer._objects) == nb + 11
+    )  # +10 (pages) +1 because of the added outline
+    nb += 1
+    writer.reset_translation(reader)
+    writer.append(reader, (0, 10))
+    assert len(writer._objects) >= nb + 200
+    nb = len(writer._objects)
+    writer.reset_translation(reader.pages[0].indirect_reference)
+    writer.append(reader, (0, 10))
+    assert len(writer._objects) >= nb + 200
+    nb = len(writer._objects)
+    writer.reset_translation()
+    writer.append(reader, (0, 10))
+    assert len(writer._objects) >= nb + 200
+    nb = len(writer._objects)
+
+
 def test_threads_empty():
     writer = PdfWriter()
     thr = writer.threads
@@ -889,3 +927,33 @@ def test_threads_empty():
     assert len(thr) == 0
     thr2 = writer.threads
     assert thr == thr2
+
+
+def test_append_without_annots_and_articles():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
+    name = "tika-924666.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    writer = PdfWriter()
+    writer.append(reader, None, (0, 10), True, ["/B"])
+    assert writer.threads == []
+    writer = PdfWriter()
+    writer.append(reader, None, (0, 10), True, ["/Annots"])
+    assert "/Annots" not in writer.pages[5]
+    writer = PdfWriter()
+    writer.append(reader, None, (0, 10), True, [])
+    assert "/Annots" in writer.pages[5]
+    assert len(writer.threads) >= 1
+
+
+def test_append_multiple():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
+    name = "tika-924666.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    writer = PdfWriter()
+    writer.append(
+        reader, [0, 0, 0]
+    )  # to demonstre multiple insertion of same page at once
+    writer.append(reader, [0, 0, 0])  # second pack
+    pages = writer._root_object["/Pages"]["/Kids"]
+    assert pages[0] not in pages[1:]  # page not repeated
+    assert pages[-1] not in pages[0:-1]  # page not repeated
