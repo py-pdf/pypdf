@@ -57,6 +57,7 @@ from typing import (
 )
 
 from ._encryption import Encryption
+from .generic import PAGE_FIT
 from ._page import PageObject, _VirtualList
 from ._reader import PdfReader
 from ._security import _alg33, _alg34, _alg35
@@ -2408,7 +2409,7 @@ class PdfWriter:
                 self.add_outline_item(
                     TextStringObject(outline_item),
                     list(srcpages.values())[0].indirect_reference,
-                    fit=cast("FitType", TypFitArguments.FIT),
+                    fit=PAGE_FIT,
                 ).get_object(),
             )
         else:
