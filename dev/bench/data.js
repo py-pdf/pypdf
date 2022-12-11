@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1670743851666,
+  "lastUpdate": 1670745115664,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -20046,6 +20046,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0033486501414586077",
             "extra": "mean: 103.60655422222622 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "74b8a6364ee806cc0510b024864502d1fdbd8204",
+          "message": "ENH: Add Cloning  (#1371)\n\nThe method `.clone(pdf_dest,[force_duplicate])` clones the objects and all referenced objects.\r\n\r\nIf an object is already cloned, the already cloned object is returned (unless force_duplicate is set)\r\nmainly for internal use but can be used on a page\r\nfor pageObject/DictionnaryObject/[Encoded/Decoded/Content]Stream an extra parameter ignore_fields list that provide the list of fields that should not be cloned.\r\n\r\nWhen available, the pointer to an object is available in `indirect_obj` attribute.\r\n\r\nNew API for add_page/insert_page that :\r\n\r\n* returns the cloned page object\r\n* ignore_fields can be provided as a parameter.\r\n\r\n## Others\r\n\r\n* file is closed at the end of PdfWriter.write when a filename is provided\r\n* Breaking Change: `add_outline_item` now has a parameter before which is not the last parameter\r\n\r\n## Update\r\n* The public API of PdfMerger has been added to PdfWriter (ready to make PdfMerger an alias of it)\r\n* Process properly Outline merging\r\n* Process properly Named destinated\r\n\r\nDeals with #1194, #1322, #471, #1337",
+          "timestamp": "2022-12-11T08:50:47+01:00",
+          "tree_id": "e7613d31aaebd0dc6c4f42e2c83329fea10508bc",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/74b8a6364ee806cc0510b024864502d1fdbd8204"
+        },
+        "date": 1670745114301,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0123866880024022,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007831628239274477",
+            "extra": "mean: 987.7648647999877 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.780695495178739,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005945967247388071",
+            "extra": "mean: 84.88463184616316 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23681022385045827,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029180082476137834",
+            "extra": "mean: 4.222790653799995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.169801862175937,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005402934598360686",
+            "extra": "mean: 82.17060650001429 msec\nrounds: 12"
           }
         ]
       }
