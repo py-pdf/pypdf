@@ -702,6 +702,7 @@ class PdfMerger:
             title,
             page_number,
             parent,
+            None,
             color,
             bold,
             italic,

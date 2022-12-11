@@ -972,6 +972,7 @@ class PdfReader:
                 # absolute value = num. visible children
                 # positive = open/unfolded, negative = closed/folded
                 outline_item[NameObject("/Count")] = node["/Count"]
+        outline_item.node = node
         return outline_item
 
     @property
@@ -1389,6 +1390,8 @@ class PdfReader:
                 raise PdfReadError(msg)
             logger_warning(msg, __name__)
         self.resolved_objects[(generation, idnum)] = obj
+        if obj is not None:
+            obj.indirect_reference = IndirectObject(idnum, generation, self)
         return obj
 
     def cacheIndirectObject(

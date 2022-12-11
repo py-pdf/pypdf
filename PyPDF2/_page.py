@@ -46,6 +46,7 @@ from typing import (
 )
 
 from ._cmap import build_char_map, unknown_char_map
+from ._protocols import PdfReaderProtocol
 from ._utils import (
     CompressedTransformationMatrix,
     File,
@@ -288,16 +289,17 @@ class PageObject(DictionaryObject):
         this object in its source PDF
     """
 
+    original_page: "PageObject"  # very local use in writer when appending
+
     def __init__(
         self,
-        pdf: Optional[Any] = None,  # PdfReader
+        pdf: Optional[PdfReaderProtocol] = None,
         indirect_reference: Optional[IndirectObject] = None,
         indirect_ref: Optional[IndirectObject] = None,
     ) -> None:
-        from ._reader import PdfReader
 
         DictionaryObject.__init__(self)
-        self.pdf: Optional[PdfReader] = pdf
+        self.pdf: Optional[PdfReaderProtocol] = pdf
         if indirect_ref is not None:  # deprecated
             warnings.warn(
                 "Use indirect_reference instead of indirect_ref.", DeprecationWarning

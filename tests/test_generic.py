@@ -22,7 +22,9 @@ from PyPDF2.generic import (
     NullObject,
     NumberObject,
     OutlineItem,
+    PdfObject,
     RectangleObject,
+    StreamObject,
     TextStringObject,
     TreeObject,
     create_string_object,
@@ -473,8 +475,8 @@ def test_remove_child_not_in_that_tree():
 
     tree = TreeObject()
     tree.indirect_reference = NullObject()
-    # child = ChildDummy(TreeObject())
     child = TreeObject()
+    child.indirect_reference = NullObject()
     with pytest.raises(ValueError) as exc:
         child.remove_from_tree()
     assert exc.value.args[0] == "Removed child does not appear to be a tree item"
@@ -943,3 +945,48 @@ def test_create_string_object_force():
 )
 def test_float_object_decimal_to_string(value, expected):
     assert repr(FloatObject(value)) == expected
+
+
+def test_cloning(caplog):
+    # pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    # reader = PdfReader(pdf_path)
+    # page = reader.pages[0]
+    writer = PdfWriter()
+    with pytest.raises(Exception) as exc:
+        PdfObject().clone(writer)
+    assert "clone PdfObject" in exc.value.args[0]
+
+    obj1 = DictionaryObject()
+    obj1.indirect_reference = None
+    n = len(writer._objects)
+    obj2 = obj1.clone(writer)
+    assert len(writer._objects) == n + 1
+    obj3 = obj2.clone(writer)
+    assert len(writer._objects) == n + 1
+    assert obj2.indirect_reference == obj3.indirect_reference
+    obj3 = obj2.indirect_reference.clone(writer)
+    assert len(writer._objects) == n + 1
+    assert obj2.indirect_reference == obj3.indirect_reference
+    assert obj2.indirect_reference == obj2._reference_clone(obj2, writer).indirect_reference
+    assert len(writer._objects) == n + 1
+    assert obj2.indirect_reference == obj3.indirect_reference
+
+    obj3 = obj2.indirect_reference.clone(writer, True)
+    assert len(writer._objects) == n + 2
+    assert obj2.indirect_reference != obj3.indirect_reference
+
+    arr1 = ArrayObject([obj2])
+    arr2 = arr1.clone(writer)
+    arr3 = arr2.clone(writer)
+    assert arr2 == arr3
+    obj10 = StreamObject()
+    arr1 = ArrayObject([obj10])
+    obj11 = obj10.clone(writer)
+    assert arr1[0] == obj11
+
+    obj20 = DictionaryObject(
+        {NameObject("/Test"): NumberObject(1), NameObject("/Test2"): StreamObject()}
+    )
+    obj21 = obj20.clone(writer, ignore_fields=None)
+    assert "/Test" in obj21
+    assert isinstance(obj21.get("/Test2"), IndirectObject)
