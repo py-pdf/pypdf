@@ -57,7 +57,6 @@ from typing import (
 )
 
 from ._encryption import Encryption
-from .generic import PAGE_FIT
 from ._page import PageObject, _VirtualList
 from ._reader import PdfReader
 from ._security import _alg33, _alg34, _alg35
