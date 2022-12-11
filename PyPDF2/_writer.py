@@ -1423,7 +1423,7 @@ class PdfWriter:
         page_ref: Union[None, NullObject, IndirectObject, NumberObject]
         if isinstance(italic, Fit):  # it means that we are on the old params
             return self.add_outline_item(
-                title, page_number, parent, None, before, color, bold, italic, fit, pagenum
+                title, page_number, parent, None, before, color, bold, italic, fit
             )
         if page_number is not None and pagenum is not None:
             raise ValueError(
