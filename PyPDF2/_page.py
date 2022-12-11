@@ -294,7 +294,7 @@ class PageObject(DictionaryObject):
         self,
         pdf: Optional[PdfReaderProtocol] = None,
         indirect_reference: Optional[IndirectObject] = None,
-        indirect_ref: Optional[IndirectObject] = None,
+        indirect_ref: Optional[IndirectObject] = None,  # deprecated
     ) -> None:
 
         DictionaryObject.__init__(self)
