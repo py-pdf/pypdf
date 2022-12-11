@@ -1423,27 +1423,27 @@ class PdfWriter:
         page_ref: Union[None, NullObject, IndirectObject, NumberObject]
         if isinstance(italic, Fit):  # it means that we are on the old params
             return self.add_outline_item(
-                title, pagenum, parent, None, before, color, bold, italic, fit,
+                title, page_number, parent, None, before, color, bold, italic, fit, pagenum
             )
         if page_number is not None and pagenum is not None:
             raise ValueError(
                 "The argument pagenum of add_outline_item is deprecated. Use page_number only."
             )
-        if pagenum is None:
+        if page_number is None:
             action_ref = None
         else:
-            if isinstance(pagenum, IndirectObject):
-                page_ref = pagenum
-            elif isinstance(pagenum, PageObject):
-                page_ref = pagenum.indirect_reference
-            elif isinstance(pagenum, int):
+            if isinstance(page_number, IndirectObject):
+                page_ref = page_number
+            elif isinstance(page_number, PageObject):
+                page_ref = page_number.indirect_reference
+            elif isinstance(page_number, int):
                 try:
-                    page_ref = self.pages[pagenum].indirect_reference
+                    page_ref = self.pages[page_number].indirect_reference
                 except IndexError:
-                    page_ref = NumberObject(pagenum)
+                    page_ref = NumberObject(page_number)
             if page_ref is None:
                 logger_warning(
-                    f"can not find reference of page {pagenum}",
+                    f"can not find reference of page {page_number}",
                     __name__,
                 )
                 page_ref = NullObject()
