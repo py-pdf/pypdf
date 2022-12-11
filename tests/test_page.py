@@ -10,7 +10,7 @@ import pytest
 from PyPDF2 import PdfReader, PdfWriter, Transformation
 from PyPDF2._page import PageObject, set_custom_rtl
 from PyPDF2.constants import PageAttributes as PG
-from PyPDF2.errors import PdfReadWarning, DeprecationError
+from PyPDF2.errors import DeprecationError, PdfReadWarning
 from PyPDF2.generic import (
     ArrayObject,
     DictionaryObject,

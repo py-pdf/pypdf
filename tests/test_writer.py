@@ -1,15 +1,15 @@
 import os
+import re
 from io import BytesIO
 from pathlib import Path
 
 import pytest
-import re
 
 from PyPDF2 import PageObject, PdfMerger, PdfReader, PdfWriter
-from PyPDF2.errors import PageSizeNotDefinedError, DeprecationError
+from PyPDF2.errors import DeprecationError, PageSizeNotDefinedError
 from PyPDF2.generic import (
-    Fit,
     ArrayObject,
+    Fit,
     IndirectObject,
     NameObject,
     NumberObject,
@@ -586,8 +586,10 @@ def test_add_link():
     with pytest.raises(
         DeprecationError,
         match=(
-            re.escape("add_link is deprecated and was removed in PyPDF2 3.0.0. "
-            "Use add_annotation(AnnotationBuilder.link(...)) instead.")
+            re.escape(
+                "add_link is deprecated and was removed in PyPDF2 3.0.0. "
+                "Use add_annotation(AnnotationBuilder.link(...)) instead."
+            )
         ),
     ):
         writer.add_link(

@@ -66,8 +66,8 @@ from ._utils import (
     _get_max_pdf_version_header,
     b_,
     deprecate_bookmark,
-    deprecation_with_replacement,
     deprecate_with_replacement,
+    deprecation_with_replacement,
     logger_warning,
 )
 from .constants import AnnotationDictionaryAttributes
@@ -707,7 +707,9 @@ class PdfWriter:
 
             Use :meth:`append_pages_from_reader` instead.
         """
-        deprecation_with_replacement("appendPagesFromReader", "append_pages_from_reader", "3.0.0")
+        deprecation_with_replacement(
+            "appendPagesFromReader", "append_pages_from_reader", "3.0.0"
+        )
         self.append_pages_from_reader(reader, after_page_append)
 
     def update_page_form_field_values(
@@ -1379,7 +1381,9 @@ class PdfWriter:
 
             Use :meth:`add_outline_item_dict` instead.
         """
-        deprecation_with_replacement("add_bookmark_dict", "add_outline_item_dict", "3.0.0")
+        deprecation_with_replacement(
+            "add_bookmark_dict", "add_outline_item_dict", "3.0.0"
+        )
         return self.add_outline_item_dict(outline_item, parent)
 
     @deprecate_bookmark(bookmark="outline_item")
@@ -1391,7 +1395,9 @@ class PdfWriter:
 
             Use :meth:`add_outline_item_dict` instead.
         """
-        deprecation_with_replacement("addBookmarkDict", "add_outline_item_dict", "3.0.0")
+        deprecation_with_replacement(
+            "addBookmarkDict", "add_outline_item_dict", "3.0.0"
+        )
         return self.add_outline_item_dict(outline_item, parent)
 
     def add_outline_item(
@@ -1633,7 +1639,9 @@ class PdfWriter:
 
             Use :meth:`add_named_destination` instead.
         """
-        deprecation_with_replacement("addNamedDestination", "add_named_destination", "3.0.0")
+        deprecation_with_replacement(
+            "addNamedDestination", "add_named_destination", "3.0.0"
+        )
         return self.add_named_destination(title, pagenum)
 
     def remove_links(self) -> None:
@@ -2125,7 +2133,9 @@ class PdfWriter:
 
             Use :py:attr:`page_mode` instead.
         """
-        deprecation_with_replacement("writer.setPageMode(val)", "writer.page_mode = val", "3.0.0")
+        deprecation_with_replacement(
+            "writer.setPageMode(val)", "writer.page_mode = val", "3.0.0"
+        )
         self.set_page_mode(mode)
 
     @property

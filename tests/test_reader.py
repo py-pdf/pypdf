@@ -11,8 +11,8 @@ from PyPDF2._reader import convert_to_int, convertToInt
 from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.errors import (
-    EmptyFileError,
     DeprecationError,
+    EmptyFileError,
     FileNotDecryptedError,
     PdfReadError,
     PdfReadWarning,

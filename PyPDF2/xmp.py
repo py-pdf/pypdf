@@ -23,7 +23,11 @@ from xml.dom.minidom import Element as XmlElement
 from xml.dom.minidom import parseString
 from xml.parsers.expat import ExpatError
 
-from ._utils import StreamType, deprecate_with_replacement, deprecation_with_replacement
+from ._utils import (
+    StreamType,
+    deprecate_with_replacement,
+    deprecation_with_replacement,
+)
 from .errors import PdfReadError
 from .generic import ContentStream, PdfObject
 
@@ -283,7 +287,9 @@ class XmpInformation(PdfObject):
 
             Use :meth:`get_nodes_in_namespace` instead.
         """
-        deprecation_with_replacement("getNodesInNamespace", "get_nodes_in_namespace", "3.0.0")
+        deprecation_with_replacement(
+            "getNodesInNamespace", "get_nodes_in_namespace", "3.0.0"
+        )
         return self.get_nodes_in_namespace(aboutUri, namespace)
 
     def _get_text(self, element: XmlElement) -> str:

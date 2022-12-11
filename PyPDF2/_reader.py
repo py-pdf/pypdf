@@ -53,8 +53,8 @@ from ._utils import (
     StreamType,
     b_,
     deprecate_no_replacement,
-    deprecation_with_replacement,
     deprecation_no_replacement,
+    deprecation_with_replacement,
     logger_warning,
     read_non_whitespace,
     read_previous_line,
@@ -665,7 +665,9 @@ class PdfReader:
 
             Use :meth:`get_form_text_fields` instead.
         """
-        deprecation_with_replacement("getFormTextFields", "get_form_text_fields", "3.0.0")
+        deprecation_with_replacement(
+            "getFormTextFields", "get_form_text_fields", "3.0.0"
+        )
         return self.get_form_text_fields()
 
     def _get_named_destinations(
@@ -727,7 +729,9 @@ class PdfReader:
 
             Use :py:attr:`named_destinations` instead.
         """
-        deprecation_with_replacement("getNamedDestinations", "named_destinations", "3.0.0")
+        deprecation_with_replacement(
+            "getNamedDestinations", "named_destinations", "3.0.0"
+        )
         return self._get_named_destinations(tree, retval)
 
     @property
