@@ -683,7 +683,7 @@ class PdfWriter:
 
     def clone_reader_document_root(self, reader: PdfReader) -> None:
         """
-        Copy the reader document root to the writer.
+       This method copys the root document like copying the text or any other information or data. 
 
         :param reader:  PdfReader from the document root should be copied.
         """
