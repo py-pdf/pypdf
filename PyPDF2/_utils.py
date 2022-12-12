@@ -34,15 +34,10 @@ import logging
 import warnings
 from codecs import getencoder
 from dataclasses import dataclass
-from io import (
-    DEFAULT_BUFFER_SIZE,
-    BufferedReader,
-    BufferedWriter,
-    BytesIO,
-    FileIO,
-)
+from io import DEFAULT_BUFFER_SIZE
 from os import SEEK_CUR
 from typing import (
+    IO,
     Any,
     Callable,
     Dict,
@@ -68,7 +63,7 @@ CompressedTransformationMatrix: TypeAlias = Tuple[
     float, float, float, float, float, float
 ]
 
-StreamType = Union[BytesIO, BufferedReader, BufferedWriter, FileIO]
+StreamType = IO
 StrByteType = Union[str, StreamType]
 
 DEPR_MSG_NO_REPLACEMENT = "{} is deprecated and will be removed in PyPDF2 {}."
