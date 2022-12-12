@@ -1,21 +1,21 @@
 [![PyPI version](https://badge.fury.io/py/PyPDF2.svg)](https://badge.fury.io/py/PyPDF2)
 [![Python Support](https://img.shields.io/pypi/pyversions/PyPDF2.svg)](https://pypi.org/project/PyPDF2/)
-[![](https://img.shields.io/badge/-documentation-green)](https://pypdf2.readthedocs.io/en/latest/)
+[![](https://img.shields.io/badge/-documentation-green)](https://pypdf2.readthedocs.io/en/stable/)
 [![GitHub last commit](https://img.shields.io/github/last-commit/py-pdf/PyPDF2)](https://github.com/py-pdf/PyPDF2)
 [![codecov](https://codecov.io/gh/py-pdf/PyPDF2/branch/main/graph/badge.svg?token=id42cGNZ5Z)](https://codecov.io/gh/py-pdf/PyPDF2)
 
 # PyPDF2
 
 PyPDF2 is a free and open-source pure-python PDF library capable of splitting,
-[merging](https://pypdf2.readthedocs.io/en/latest/user/merging-pdfs.html),
-[cropping, and transforming](https://pypdf2.readthedocs.io/en/latest/user/cropping-and-transforming.html)
+[merging](https://pypdf2.readthedocs.io/en/stable/user/merging-pdfs.html),
+[cropping, and transforming](https://pypdf2.readthedocs.io/en/stable/user/cropping-and-transforming.html)
 the pages of PDF files. It can also add
 custom data, viewing options, and
-[passwords](https://pypdf2.readthedocs.io/en/latest/user/encryption-decryption.html)
+[passwords](https://pypdf2.readthedocs.io/en/stable/user/encryption-decryption.html)
 to PDF files. PyPDF2 can
-[retrieve text](https://pypdf2.readthedocs.io/en/latest/user/extract-text.html)
+[retrieve text](https://pypdf2.readthedocs.io/en/stable/user/extract-text.html)
 and
-[metadata](https://pypdf2.readthedocs.io/en/latest/user/metadata.html)
+[metadata](https://pypdf2.readthedocs.io/en/stable/user/metadata.html)
 from PDFs as well.
 
 
@@ -49,7 +49,7 @@ text = page.extract_text()
 PyPDF2 can do a lot more, e.g. splitting, merging, reading and creating
 annotations, decrypting and encrypting, and more.
 
-Please see [the documentation](https://pypdf2.readthedocs.io/en/latest/)
+Please see [the documentation](https://pypdf2.readthedocs.io/en/stable/)
 for more usage examples!
 
 A lot of questions are asked and answered
