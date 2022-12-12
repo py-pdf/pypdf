@@ -1,8 +1,7 @@
 """Helpers for working with PDF types."""
 
-from io import BufferedReader, BufferedWriter, BytesIO, FileIO
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import IO, Any, Dict, List, Optional, Tuple, Union
 
 try:
     # Python 3.8+: https://peps.python.org/pep-0586
@@ -59,7 +58,5 @@ class PdfWriterProtocol(Protocol):  # pragma: no cover
     def get_object(self, indirect_reference: Any) -> Optional[PdfObjectProtocol]:
         ...
 
-    def write(
-        self, stream: Union[Path, StrByteType]
-    ) -> Tuple[bool, Union[FileIO, BytesIO, BufferedReader, BufferedWriter]]:
+    def write(self, stream: Union[Path, StrByteType]) -> Tuple[bool, IO]:
         ...
