@@ -686,6 +686,7 @@ class PdfWriter:
        This method copys the root document like copying the text or any other information or data.
         Another example could be copying the style of the pdf document so it can be analyzed. 
         Once the data from the root has been copied the pdf document can be processed. 
+        This way the document can be processed. 
 
         :param reader:  PdfReader from the document root should be copied.
         """
