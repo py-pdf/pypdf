@@ -3,11 +3,11 @@ import contextvars
 _current_context_var = contextvars.ContextVar('pypdf2_context')
 
 class Context(object):
-    def __init__(self, prec=None):
-        self.prec = prec
+    def __init__(self, decimal_precision=None):
+        self.prec = decimal_precision
 
     def copy(self):
-        cp = Context(prec=self.prec)
+        cp = Context(decimal_precision=self.prec)
         return cp
 
 
@@ -26,5 +26,5 @@ def set_context(context):
     _current_context_var.set(context)
 
 
-DefaultContext = Context(prec=None)
-AcrobatContext = Context(prec=19)
+DefaultContext = Context(decimal_precision=None)
+AcrobatContext = Context(decimal_precision=19)

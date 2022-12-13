@@ -7,7 +7,7 @@ from PyPDF2.generic._base import FloatObject
     [1, 2, 3, 4, 5, 6, 7,]
 )
 def test_precision(prec):
-    set_context(Context(prec=prec))
+    set_context(Context(decimal_precision=prec))
     assert get_context().prec == prec
 
 
@@ -24,10 +24,10 @@ def test_precision(prec):
     ]
 )
 def test_float_precision(prec, expected):
-    set_context(Context(prec=prec))
+    set_context(Context(decimal_precision=prec))
     assert repr(FloatObject(value=0.111111111)) == expected
 
 
 def test_float_precision_none():
-    set_context(Context(prec=None))
+    set_context(Context(decimal_precision=None))
     assert repr(FloatObject(value="99900000000000000123.456000")) == '99900000000000000123.456'
