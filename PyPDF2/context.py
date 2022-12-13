@@ -2,6 +2,7 @@ import contextvars
 
 _current_context_var = contextvars.ContextVar('pypdf2_context')
 
+
 class Context(object):
     def __init__(self, decimal_precision=None):
         self.prec = decimal_precision

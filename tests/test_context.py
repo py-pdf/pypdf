@@ -2,9 +2,10 @@ import pytest
 from PyPDF2.context import get_context, set_context, Context
 from PyPDF2.generic._base import FloatObject
 
+
 @pytest.mark.parametrize(
     ("prec"),
-    [1, 2, 3, 4, 5, 6, 7,]
+    [1, 2, 3, 4, 5, 6, 7]
 )
 def test_precision(prec):
     set_context(Context(decimal_precision=prec))
