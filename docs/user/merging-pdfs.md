@@ -3,9 +3,9 @@
 ## Basic Example
 
 ```python
-from PyPDF2 import PdfWriter
+from PyPDF2 import PdfMerger
 
-merger = PdfWriter()
+merger = PdfMerger()
 
 for pdf in ["file1.pdf", "file2.pdf", "file3.pdf"]:
     merger.append(pdf)
