@@ -31,7 +31,7 @@ import hashlib
 import re
 from binascii import unhexlify
 from typing import Any, Callable, List, Optional, Tuple, Union, cast
-from PyPDF2 import context
+from ..context import get_context
 
 from .._codecs import _pdfdoc_encoding_rev
 from .._protocols import PdfObjectProtocol, PdfWriterProtocol
@@ -351,10 +351,10 @@ class FloatObject(decimal.Decimal, PdfObject):
         else:
             # Otherwise, format it with a decimal place, taking care to
             # remove any extraneous trailing zeros.
-            precision = context.get_context().prec
-            if isinstance(precision, int):
-                if precision > 0:
-                    return f"{self:.{precision}f}".rstrip("0")
+            decimal_precision = get_context().decimal_precision
+            if isinstance(decimal_precision, int):
+                if decimal_precision > 0:
+                    return f"{self:.{decimal_precision}f}".rstrip("0")
             return f"{self:f}".rstrip("0")
 
     def as_numeric(self) -> float:
