@@ -9,7 +9,7 @@ from PyPDF2.generic._base import FloatObject
 )
 def test_precision(prec):
     set_context(Context(decimal_precision=prec))
-    assert get_context().prec == prec
+    assert get_context().decimal_precision == prec
 
 
 @pytest.mark.parametrize(

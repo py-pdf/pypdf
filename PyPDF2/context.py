@@ -5,10 +5,10 @@ _current_context_var = contextvars.ContextVar('pypdf2_context')
 
 class Context(object):
     def __init__(self, decimal_precision=None):
-        self.prec = decimal_precision
+        self.decimal_precision = decimal_precision
 
     def copy(self):
-        cp = Context(decimal_precision=self.prec)
+        cp = Context(decimal_precision=self.decimal_precision)
         return cp
 
 
