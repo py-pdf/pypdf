@@ -22,7 +22,7 @@ def get_context() -> Context:
         return context
 
 
-def set_context(context: Context):
+def set_context(context: Context) -> None:
     if context in (DefaultContext, AcrobatContext):
         context = context.copy()
     _current_context_var.set(context)
