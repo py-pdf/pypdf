@@ -1,18 +1,19 @@
+from typing import Union
 import contextvars
 
-_current_context_var = contextvars.ContextVar('pypdf2_context')
+_current_context_var: contextvars.ContextVar = contextvars.ContextVar('pypdf2_context')
 
 
 class Context(object):
-    def __init__(self, decimal_precision=None):
+    def __init__(self, decimal_precision: Union[int, None]=None):
         self.decimal_precision = decimal_precision
 
-    def copy(self):
+    def copy(self) -> 'Context':
         cp = Context(decimal_precision=self.decimal_precision)
         return cp
 
 
-def get_context():
+def get_context() -> Context:
     try:
         return _current_context_var.get()
     except LookupError:
@@ -21,7 +22,7 @@ def get_context():
         return context
 
 
-def set_context(context):
+def set_context(context: Context):
     if context in (DefaultContext, AcrobatContext):
         context = context.copy()
     _current_context_var.set(context)
