@@ -5,7 +5,7 @@ _current_context_var: contextvars.ContextVar = contextvars.ContextVar('pypdf2_co
 
 
 class Context(object):
-    def __init__(self, decimal_precision: Union[int, None]=None):
+    def __init__(self, decimal_precision: Union[int, None] = None):
         self.decimal_precision = decimal_precision
 
     def copy(self) -> 'Context':
