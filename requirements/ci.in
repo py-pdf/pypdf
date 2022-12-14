@@ -11,3 +11,4 @@ pycryptodome
 typeguard
 types-Pillow
 types-dataclasses
+types-contextvars

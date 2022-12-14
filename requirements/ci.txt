@@ -73,6 +73,8 @@ typed-ast==1.5.4
     # via mypy
 typeguard==2.13.3
     # via -r requirements/ci.in
+types-contextvars==2.4.7
+    # via -r requirements/ci.in
 types-dataclasses==0.6.6
     # via -r requirements/ci.in
 types-pillow==9.3.0.4
