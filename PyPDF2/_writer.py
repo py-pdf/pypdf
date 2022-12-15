@@ -38,10 +38,11 @@ import time
 import uuid
 import warnings
 from hashlib import md5
-from io import BufferedReader, BufferedWriter, BytesIO, FileIO, IOBase
+from io import BytesIO, FileIO, IOBase
 from pathlib import Path
 from types import TracebackType
 from typing import (
+    IO,
     Any,
     Callable,
     Deque,
@@ -962,9 +963,7 @@ class PdfWriter:
         self._write_trailer(stream)
         stream.write(b_(f"\nstartxref\n{xref_location}\n%%EOF\n"))  # eof
 
-    def write(
-        self, stream: Union[Path, StrByteType]
-    ) -> Tuple[bool, Union[FileIO, BytesIO, BufferedReader, BufferedWriter]]:
+    def write(self, stream: Union[Path, StrByteType]) -> Tuple[bool, IO]:
         """
         Write the collection of pages added to this object out as a PDF file.
 
@@ -1289,7 +1288,7 @@ class PdfWriter:
         page_destination: Union[None, PageObject, TreeObject] = None,
         parent: Union[None, TreeObject, IndirectObject] = None,
         before: Union[None, TreeObject, IndirectObject] = None,
-        dest: Union[None, PageObject, TreeObject] = None,   # deprecated
+        dest: Union[None, PageObject, TreeObject] = None,  # deprecated
     ) -> IndirectObject:
         if page_destination is not None and dest is not None:  # deprecated
             raise ValueError(
@@ -2483,7 +2482,9 @@ class PdfWriter:
                 pag_obj = cast("PageObject", pag.get_object())
                 if "/B" not in pag_obj:
                     pag_obj[NameObject("/B")] = ArrayObject()
-                cast("ArrayObject", pag_obj["/B"]).append(new_article.indirect_reference)
+                cast("ArrayObject", pag_obj["/B"]).append(
+                    new_article.indirect_reference
+                )
             current_article = cast("DictionaryObject", current_article["/N"])
             if current_article == first_article:
                 new_article[NameObject("/N")] = new_first.indirect_reference  # type: ignore
@@ -2674,7 +2675,10 @@ class PdfWriter:
 
         i = 0
         while o is not None:
-            if o.indirect_reference == outline_item or o.get("/Title", None) == outline_item:
+            if (
+                o.indirect_reference == outline_item
+                or o.get("/Title", None) == outline_item
+            ):
                 return [i]
             else:
                 if "/First" in o:
