@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1670957703587,
+  "lastUpdate": 1671140921466,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -20202,6 +20202,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0007019606308058801",
             "extra": "mean: 78.36143433333594 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "47901316+thehale@users.noreply.github.com",
+            "name": "Joseph Hale",
+            "username": "thehale"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b8f787e318125cdd0b85f3ca07c412da932b046a",
+          "message": "MAINT: Use typing.IO for file streams (#1498)\n\nIn addition, the following changes were made:\r\n\r\n* DEV: Add in-project virtual envs to .gitignore\r\n\r\nMany developers (like myself) like to use virtual environments included within\r\nthe current project. These virtual environment are local development constructs\r\nand should not be checked into source control.\r\n\r\nThis commit adds two common virtual environment directory names to the\r\n.gitignore to avoid accidental commits from future developers.\r\n\r\n* DEV: Include `pillow` in `requirements/dev.in`\r\n\r\nThe current contribution instructions in `docs/dev/intro.md` direct new code\r\ncontributors to install the `dev` requirements. After following that\r\ninstruction, the minimal test suite fails.\r\n\r\nThis commit adds `pillow` to  `requirements/dev.in` so that the minimal test\r\nsuite can pass on the first try so that new code contributors can start\r\nimplementing improvements with confidence.\r\n\r\n* STY: Use official `IO` type for file streams\r\n\r\nThe Python standard library provides the `IO` type for file streams. (Source:\r\nhttps://docs.python.org/3/library/typing.html#typing.IO)\r\n\r\nThis commit replaces the complex Union type of the `IO` implementations with the\r\nofficial `IO` type. This will improve the accuracy of type checking in users'\r\nIDEs.\r\n\r\n* STY: Use standard `IO` type hint for writers\r\n\r\nThe CI system flagged some additional conflicts with the `IO` type in the writer\r\nclasses.\r\n\r\nThis commit changes the writer classes to use the standard `IO` type instead of\r\nthe union of IO implementations.",
+          "timestamp": "2022-12-15T22:46:51+01:00",
+          "tree_id": "9d304573a05f9544c16a0b69ee54f2be7bbf76e8",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/b8f787e318125cdd0b85f3ca07c412da932b046a"
+        },
+        "date": 1671140919673,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.707377949423487,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016756214416079933",
+            "extra": "mean: 1.4136714337999934 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 8.269372371984325,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009095246634566068",
+            "extra": "mean: 120.928161777777 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.17340514020860473,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06524871940002992",
+            "extra": "mean: 5.766841737200002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 8.686309915416484,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0043672086407459156",
+            "extra": "mean: 115.12368424999408 msec\nrounds: 8"
           }
         ]
       }
