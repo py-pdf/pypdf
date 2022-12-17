@@ -87,15 +87,25 @@ def set_custom_rtl(
     specials: Union[str, List[int], None] = None,
 ) -> Tuple[int, int, List[int]]:
     """
-    changes the Right-To-Left and special characters customed parameters:
+    Change the Right-To-Left and special characters custom parameters.
 
-    _min -> CUSTOM_RTL_MIN : None does not change the value ; int or str(converted to ascii code) ; -1 by default
-    _max -> CUSTOM_RTL_MAX : None does not change the value ; int or str(converted to ascii code) ; -1 by default
-        those values define a range of custom characters that will be written right to left ;
-        [-1;-1] set no additional range to be converter
+    Args:
+        _min: The new minimum value for the range of custom characters that
+            will be written right to left.
+            If set to `None`, the value will not be changed.
+            If set to an integer or string, it will be converted to its ASCII code.
+            The default value is -1, which sets no additional range to be converted.
+        _max: The new maximum value for the range of custom characters that will be written right to left.
+            If set to `None`, the value will not be changed.
+            If set to an integer or string, it will be converted to its ASCII code.
+            The default value is -1, which sets no additional range to be converted.
+        specials: The new list of special characters to be inserted in the current insertion order.
+            If set to `None`, the current value will not be changed.
+            If set to a string, it will be converted to a list of ASCII codes.
+            The default value is an empty list.
 
-    specials -> CUSTOM_RTL_SPECIAL_CHARS: None does not change the current value; str to be converted to list or list of ascii codes ; [] by default
-        list of codes that will inserted applying the current insertion order ; this consist normally in a list of punctuation characters
+    Returns:
+        A tuple containing the new values for `CUSTOM_RTL_MIN`, `CUSTOM_RTL_MAX`, and `CUSTOM_RTL_SPECIAL_CHARS`.
     """
     global CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
     if isinstance(_min, int):
@@ -174,10 +184,10 @@ def createRectangleAccessor(
 
 class Transformation:
     """
-    Specify a 2D transformation.
+    Represent a 2D transformation.
 
     The transformation between two coordinate systems is represented by a 3-by-3
-    transformation matrix written as follows::
+    transformation matrix matrix with the following form::
 
         a b 0
         c d 0
@@ -193,12 +203,12 @@ class Transformation:
                                  e f 1
 
 
-    Usage
-    -----
+    Example
+    -------
 
-        >>> from PyPDF2 import Transformation
-        >>> op = Transformation().scale(sx=2, sy=3).translate(tx=10, ty=20)
-        >>> page.add_transformation(op)
+    >>> from PyPDF2 import Transformation
+    >>> op = Transformation().scale(sx=2, sy=3).translate(tx=10, ty=20)
+    >>> page.add_transformation(op)
     """
 
     # 9.5.4 Coordinate Systems for 3D
@@ -208,6 +218,10 @@ class Transformation:
 
     @property
     def matrix(self) -> TransformationMatrixType:
+        """
+        Return the transformation matrix as a tuple of tuples in the form:
+            ((a, b, 0), (c, d, 0), (e, f, 1))
+        """
         return (
             (self.ctm[0], self.ctm[1], 0),
             (self.ctm[2], self.ctm[3], 0),
@@ -216,6 +230,15 @@ class Transformation:
 
     @staticmethod
     def compress(matrix: TransformationMatrixType) -> CompressedTransformationMatrix:
+        """
+        Compresses the transformation matrix into a tuple of (a, b, c, d, e, f).
+
+        Args:
+            matrix: The transformation matrix as a tuple of tuples.
+
+        Returns:
+            A tuple representing the transformation matrix as (a, b, c, d, e, f)
+        """
         return (
             matrix[0][0],
             matrix[0][1],
@@ -226,6 +249,16 @@ class Transformation:
         )
 
     def translate(self, tx: float = 0, ty: float = 0) -> "Transformation":
+        """
+        Translate the contents of a page.
+
+        Args:
+            tx: The translation along the x-axis.
+            ty: The translation along the y-axis.
+
+        Returns:
+            A new `Transformation` instance
+        """
         m = self.ctm
         return Transformation(ctm=(m[0], m[1], m[2], m[3], m[4] + tx, m[5] + ty))
 
@@ -237,6 +270,13 @@ class Transformation:
 
         Typically, that is the lower-left corner of the page. That can be
         changed by translating the contents / the page boxes.
+
+        Args:
+            sx: The scale factor along the x-axis.
+            sy: The scale factor along the y-axis.
+
+        Returns:
+            A new Transformation instance with the scaled matrix.
         """
         if sx is None and sy is None:
             raise ValueError("Either sx or sy must be specified")
@@ -251,6 +291,15 @@ class Transformation:
         return Transformation(ctm)
 
     def rotate(self, rotation: float) -> "Transformation":
+        """
+        Rotate the contents of a page.
+
+        Args:
+            rotation: The angle of rotation in degrees.
+
+        Returns:
+            A new `Transformation` instance with the rotated matrix.
+        """
         rotation = math.radians(rotation)
         op: TransformationMatrixType = (
             (math.cos(rotation), math.sin(rotation), 0),
@@ -266,6 +315,15 @@ class Transformation:
     def apply_on(
         self, pt: Union[Tuple[Decimal, Decimal], Tuple[float, float], List[float]]
     ) -> Union[Tuple[float, float], List[float]]:
+        """
+        Apply the transformation matrix on the given point.
+
+        Args:
+            pt: A tuple or list representing the point in the form (x, y)
+
+        Returns:
+            A tuple or list representing the transformed point in the form (x', y')
+        """
         pt1 = (
             float(pt[0]) * self.ctm[0] + float(pt[1]) * self.ctm[2] + self.ctm[4],
             float(pt[0]) * self.ctm[1] + float(pt[1]) * self.ctm[3] + self.ctm[5],
@@ -283,9 +341,10 @@ class PageObject(DictionaryObject):
     also possible to create an empty page with the
     :meth:`create_blank_page()<PyPDF2._page.PageObject.create_blank_page>` static method.
 
-    :param pdf: PDF file the page belongs to.
-    :param indirect_reference: Stores the original indirect reference to
-        this object in its source PDF
+    Args:
+        pdf: PDF file the page belongs to.
+        indirect_reference: Stores the original indirect reference to
+            this object in its source PDF
     """
 
     original_page: "PageObject"  # very local use in writer when appending
@@ -355,14 +414,19 @@ class PageObject(DictionaryObject):
         If ``width`` or ``height`` is ``None``, try to get the page size
         from the last page of *pdf*.
 
-        :param pdf: PDF file the page belongs to
-        :param float width: The width of the new page expressed in default user
-            space units.
-        :param float height: The height of the new page expressed in default user
-            space units.
-        :return: the new blank page
-        :raises PageSizeNotDefinedError: if ``pdf`` is ``None`` or contains
-            no page
+        Args:
+            pdf: PDF file the page belongs to
+            width: The width of the new page expressed in default user
+                space units.
+            height: The height of the new page expressed in default user
+                space units.
+
+        Returns:
+            The new blank page
+
+        Raises:
+            PageSizeNotDefinedError: if ``pdf`` is ``None`` or contains
+                no page
         """
         page = PageObject(pdf)
 
@@ -472,8 +536,8 @@ class PageObject(DictionaryObject):
         """
         Rotate a page clockwise by increments of 90 degrees.
 
-        :param int angle: Angle to rotate the page.  Must be an increment
-            of 90 deg.
+        Args:
+            angle: Angle to rotate the page.  Must be an increment of 90 deg.
         """
         if angle % 90 != 0:
             raise ValueError("Rotation angle must be a multiple of 90")
@@ -612,10 +676,11 @@ class PageObject(DictionaryObject):
         be added to the end of this page's content stream, meaning that it will
         be drawn after, or "on top" of this page.
 
-        :param PageObject page2: The page to be merged into this one. Should be
-            an instance of :class:`PageObject<PageObject>`.
-        :param bool expand: If true, the current page dimensions will be
-            expanded to accommodate the dimensions of the page to be merged.
+        Args:
+            page2: The page to be merged into this one. Should be
+                an instance of :class:`PageObject<PageObject>`.
+            expand: If true, the current page dimensions will be
+                expanded to accommodate the dimensions of the page to be merged.
         """
         self._merge_page(page2, expand=expand)
 
@@ -1018,10 +1083,11 @@ class PageObject(DictionaryObject):
         """
         Apply a transformation matrix to the page.
 
-        :param tuple ctm: A 6-element tuple containing the operands of the
-            transformation matrix. Alternatively, a
-            :py:class:`Transformation<PyPDF2.Transformation>`
-            object can be passed.
+        Args:
+            ctm: A 6-element tuple containing the operands of the
+                transformation matrix. Alternatively, a
+                :py:class:`Transformation<PyPDF2.Transformation>`
+                object can be passed.
 
         See :doc:`/user/cropping-and-transforming`.
         """
@@ -1085,8 +1151,9 @@ class PageObject(DictionaryObject):
         This updates the mediabox, the cropbox, and the contents
         of the page.
 
-        :param float sx: The scaling factor on horizontal axis.
-        :param float sy: The scaling factor on vertical axis.
+        Args:
+            sx: The scaling factor on horizontal axis.
+            sy: The scaling factor on vertical axis.
         """
         self.add_transformation((sx, 0, 0, sy, 0, 0))
         self.cropbox = self.cropbox.scale(sx, sy)
@@ -1134,7 +1201,8 @@ class PageObject(DictionaryObject):
         Scale a page by the given factor by applying a transformation
         matrix to its content and updating the page size.
 
-        :param float factor: The scaling factor (for both X and Y axis).
+        Args:
+            factor: The scaling factor (for both X and Y axis).
         """
         self.scale(factor, factor)
 
@@ -1152,8 +1220,9 @@ class PageObject(DictionaryObject):
         Scale a page to the specified dimensions by applying a
         transformation matrix to its content and updating the page size.
 
-        :param float width: The new width.
-        :param float height: The new height.
+        Args:
+            width: The new width.
+            height: The new height.
         """
         sx = width / float(self.mediabox.width)
         sy = height / float(self.mediabox.height)
@@ -1245,9 +1314,10 @@ class PageObject(DictionaryObject):
         """
         See extract_text for most arguments.
 
-        :param Optional[str] content_key: indicate the default key where to extract data
-            None = the object; this allow to reuse the function on XObject
-            default = "/Content"
+        Args:
+            content_key: indicate the default key where to extract data
+                None = the object; this allow to reuse the function on XObject
+                default = "/Content"
         """
         text: str = ""
         output: str = ""
@@ -1718,26 +1788,29 @@ class PageObject(DictionaryObject):
         Additionally you can provide visitor-methods to get informed on all operands and all text-objects.
         For example in some PDF files this can be useful to parse tables.
 
-        :param Tj_sep: Deprecated. Kept for compatibility until PyPDF2 4.0.0
-        :param TJ_sep: Deprecated. Kept for compatibility until PyPDF2 4.0.0
-        :param Tuple[int, ...] orientations: list of orientations text_extraction will look for
-            default = (0, 90, 180, 270)
-            note: currently only 0(Up),90(turned Left), 180(upside Down),
-            270 (turned Right)
-        :param float space_width: force default space width
-            if not extracted from font (default: 200)
-        :param Optional[Function] visitor_operand_before: function to be called before processing an operand.
-            It has four arguments: operand, operand-arguments,
-            current transformation matrix and text matrix.
-        :param Optional[Function] visitor_operand_after: function to be called after processing an operand.
-            It has four arguments: operand, operand-arguments,
-            current transformation matrix and text matrix.
-        :param Optional[Function] visitor_text: function to be called when extracting some text at some position.
-            It has five arguments: text, current transformation matrix,
-            text matrix, font-dictionary and font-size.
-            The font-dictionary may be None in case of unknown fonts.
-            If not None it may e.g. contain key "/BaseFont" with value "/Arial,Bold".
-        :return: The extracted text
+        Args:
+            Tj_sep: Deprecated. Kept for compatibility until PyPDF2 4.0.0
+            TJ_sep: Deprecated. Kept for compatibility until PyPDF2 4.0.0
+            orientations: list of orientations text_extraction will look for
+                default = (0, 90, 180, 270)
+                note: currently only 0(Up),90(turned Left), 180(upside Down),
+                270 (turned Right)
+            space_width: force default space width
+                if not extracted from font (default: 200)
+            visitor_operand_before: function to be called before processing an operand.
+                It has four arguments: operand, operand-arguments,
+                current transformation matrix and text matrix.
+            visitor_operand_after: function to be called after processing an operand.
+                It has four arguments: operand, operand-arguments,
+                current transformation matrix and text matrix.
+            visitor_text: function to be called when extracting some text at some position.
+                It has five arguments: text, current transformation matrix,
+                text matrix, font-dictionary and font-size.
+                The font-dictionary may be None in case of unknown fonts.
+                If not None it may e.g. contain key "/BaseFont" with value "/Arial,Bold".
+
+        Returns:
+            The extracted text
         """
         if len(args) >= 1:
             if isinstance(args[0], str):
@@ -1798,9 +1871,11 @@ class PageObject(DictionaryObject):
         """
         Extract text from an XObject.
 
-        :param float space_width:  force default space width (if not extracted from font (default 200)
+        Args:
+            space_width:  force default space width (if not extracted from font (default 200)
 
-        :return: The extracted text
+        Returns:
+            The extracted text
         """
         return self._extract_text(
             xform,
