@@ -11,6 +11,7 @@ from PyPDF2._reader import convert_to_int, convertToInt
 from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.errors import (
+    DeprecationError,
     EmptyFileError,
     FileNotDecryptedError,
     PdfReadError,
@@ -739,11 +740,11 @@ def test_convert_to_int_error():
 
 def test_convertToInt_deprecated():
     msg = (
-        "convertToInt is deprecated and will be removed in PyPDF2 3.0.0. "
+        "convertToInt is deprecated and was removed in PyPDF2 3.0.0. "
         "Use convert_to_int instead."
     )
-    with pytest.warns(
-        PendingDeprecationWarning,
+    with pytest.raises(
+        DeprecationError,
         match=msg,
     ):
         assert convertToInt(b"\x01", 8) == 1

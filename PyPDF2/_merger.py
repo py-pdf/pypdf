@@ -46,8 +46,8 @@ from ._page import PageObject
 from ._reader import PdfReader
 from ._utils import (
     StrByteType,
-    deprecate_bookmark,
-    deprecate_with_replacement,
+    deprecation_bookmark,
+    deprecation_with_replacement,
     str_,
 )
 from ._writer import PdfWriter
@@ -102,7 +102,7 @@ class PdfMerger:
             file-like object.
     """
 
-    @deprecate_bookmark(bookmarks="outline")
+    @deprecation_bookmark(bookmarks="outline")
     def __init__(
         self, strict: bool = False, fileobj: Union[Path, StrByteType] = ""
     ) -> None:
@@ -130,7 +130,7 @@ class PdfMerger:
             self.write(self.fileobj)
         self.close()
 
-    @deprecate_bookmark(bookmark="outline_item", import_bookmarks="import_outline")
+    @deprecation_bookmark(bookmark="outline_item", import_bookmarks="import_outline")
     def merge(
         self,
         page_number: Optional[int] = None,
@@ -171,9 +171,11 @@ class PdfMerger:
                 old_term = "position"
                 new_term = "page_number"
                 warnings.warn(
-                    message=(
-                        f"{old_term} is deprecated as an argument. Use {new_term} instead"
-                    )
+                    (
+                        f"{old_term} is deprecated as an argument and will be "
+                        f"removed in PyPDF2=4.0.0. Use {new_term} instead"
+                    ),
+                    DeprecationWarning,
                 )
             else:
                 raise ValueError(
@@ -281,7 +283,7 @@ class PdfMerger:
             )
         return stream, encryption_obj
 
-    @deprecate_bookmark(bookmark="outline_item", import_bookmarks="import_outline")
+    @deprecation_bookmark(bookmark="outline_item", import_bookmarks="import_outline")
     def append(
         self,
         fileobj: Union[StrByteType, PdfReader, Path],
@@ -375,7 +377,7 @@ class PdfMerger:
 
             Use :meth:`add_metadata` instead.
         """
-        deprecate_with_replacement("addMetadata", "add_metadata")
+        deprecation_with_replacement("addMetadata", "add_metadata")
         self.add_metadata(infos)
 
     def setPageLayout(self, layout: LayoutType) -> None:  # pragma: no cover
@@ -384,7 +386,7 @@ class PdfMerger:
 
             Use :meth:`set_page_layout` instead.
         """
-        deprecate_with_replacement("setPageLayout", "set_page_layout")
+        deprecation_with_replacement("setPageLayout", "set_page_layout")
         self.set_page_layout(layout)
 
     def set_page_layout(self, layout: LayoutType) -> None:
@@ -421,7 +423,7 @@ class PdfMerger:
 
             Use :meth:`set_page_mode` instead.
         """
-        deprecate_with_replacement("setPageMode", "set_page_mode")
+        deprecation_with_replacement("setPageMode", "set_page_mode", "3.0.0")
         self.set_page_mode(mode)
 
     def set_page_mode(self, mode: PagemodeType) -> None:
@@ -513,7 +515,7 @@ class PdfMerger:
             if pageno is not None:
                 self.output.add_named_destination_object(named_dest)
 
-    @deprecate_bookmark(bookmarks="outline")
+    @deprecation_bookmark(bookmarks="outline")
     def _write_outline(
         self,
         outline: Optional[Iterable[OutlineItem]] = None,
@@ -541,7 +543,7 @@ class PdfMerger:
                 del outline_item["/Page"], outline_item["/Type"]
                 last_added = self.output.add_outline_item_dict(outline_item, parent)
 
-    @deprecate_bookmark(bookmark="outline_item")
+    @deprecation_bookmark(bookmark="outline_item")
     def _write_outline_item_on_page(
         self, outline_item: Union[OutlineItem, Destination], page: _MergedPage
     ) -> None:
@@ -594,7 +596,7 @@ class PdfMerger:
                 )
             named_dest[NameObject("/Page")] = NumberObject(pageno)
 
-    @deprecate_bookmark(bookmarks="outline")
+    @deprecation_bookmark(bookmarks="outline")
     def _associate_outline_items_to_pages(
         self, pages: List[_MergedPage], outline: Optional[Iterable[OutlineItem]] = None
     ) -> None:
@@ -619,7 +621,7 @@ class PdfMerger:
             if pageno is not None:
                 outline_item[NameObject("/Page")] = NumberObject(pageno)
 
-    @deprecate_bookmark(bookmark="outline_item")
+    @deprecation_bookmark(bookmark="outline_item")
     def find_outline_item(
         self,
         outline_item: Dict[str, Any],
@@ -644,7 +646,7 @@ class PdfMerger:
 
         return None
 
-    @deprecate_bookmark(bookmark="outline_item")
+    @deprecation_bookmark(bookmark="outline_item")
     def find_bookmark(
         self,
         outline_item: Dict[str, Any],
@@ -688,9 +690,11 @@ class PdfMerger:
             old_term = "pagenum"
             new_term = "page_number"
             warnings.warn(
-                message=(
-                    f"{old_term} is deprecated as an argument. Use {new_term} instead"
-                )
+                (
+                    f"{old_term} is deprecated as an argument and will be "
+                    f"removed in PyPDF2==4.0.0. Use {new_term} instead"
+                ),
+                DeprecationWarning,
             )
             page_number = pagenum
         if page_number is None:
@@ -724,7 +728,7 @@ class PdfMerger:
         .. deprecated:: 1.28.0
             Use :meth:`add_outline_item` instead.
         """
-        deprecate_with_replacement("addBookmark", "add_outline_item")
+        deprecation_with_replacement("addBookmark", "add_outline_item", "3.0.0")
         return self.add_outline_item(
             title,
             pagenum,
@@ -750,7 +754,7 @@ class PdfMerger:
         .. deprecated:: 2.9.0
             Use :meth:`add_outline_item` instead.
         """
-        deprecate_with_replacement("addBookmark", "add_outline_item")
+        deprecation_with_replacement("addBookmark", "add_outline_item", "3.0.0")
         return self.add_outline_item(
             title,
             pagenum,
@@ -766,7 +770,9 @@ class PdfMerger:
         .. deprecated:: 1.28.0
             Use :meth:`add_named_destination` instead.
         """
-        deprecate_with_replacement("addNamedDestination", "add_named_destination")
+        deprecation_with_replacement(
+            "addNamedDestination", "add_named_destination", "3.0.0"
+        )
         return self.add_named_destination(title, pagenum)
 
     def add_named_destination(
@@ -789,9 +795,11 @@ class PdfMerger:
             old_term = "pagenum"
             new_term = "page_number"
             warnings.warn(
-                message=(
-                    f"{old_term} is deprecated as an argument. Use {new_term} instead"
-                )
+                (
+                    f"{old_term} is deprecated as an argument and will be "
+                    f"removed in PyPDF2==4.0.0. Use {new_term} instead"
+                ),
+                DeprecationWarning,
             )
             page_number = pagenum
         if page_number is None:
@@ -806,7 +814,7 @@ class PdfMerger:
 
 class PdfFileMerger(PdfMerger):  # pragma: no cover
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        deprecate_with_replacement("PdfFileMerger", "PdfMerger")
+        deprecation_with_replacement("PdfFileMerger", "PdfMerger", "3.0.0")
 
         if "strict" not in kwargs and len(args) < 1:
             kwargs["strict"] = True  # maintain the default
