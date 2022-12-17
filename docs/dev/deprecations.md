@@ -29,14 +29,14 @@ we do it:
    and when it will happen.
    The docs let users know about the deprecation and when it will happen and the new function.
    The CHANGELOG informs about it.
-2. `(x+1).0.0`: Remove / change the code in the breaking way,
-   but keep/add DeprecationWarnings messages.
+2. `(x+1).0.0`: Remove / change the code in the breaking way by replacing
+   DeprecationWarnings by DeprecationErrors.
    We do this to help people who didn't look at the warnings before.
    The CHANGELOG informs about it.
-3. `(x+2).0.0`: The DeprecationWarnings are removed.
+3. `(x+2).0.0`: The DeprecationErrors are removed.
 
-This means the users have 3 warnings in the CHANGELOG, a PendingDeprecationWarning
-until the next major release and a DeprecationWarning until the major release
+This means the users have 3 warnings in the CHANGELOG, a DeprecationWarning
+until the next major release and a DeprecationError until the major release
 after that.
 
 Please note that adding warnings can be a breaking change for some users; most

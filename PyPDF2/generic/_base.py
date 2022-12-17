@@ -37,7 +37,7 @@ from .._protocols import PdfObjectProtocol, PdfWriterProtocol
 from .._utils import (
     StreamType,
     b_,
-    deprecate_with_replacement,
+    deprecation_with_replacement,
     hex_str,
     hexencode,
     logger_warning,
@@ -119,7 +119,7 @@ class PdfObject(PdfObjectProtocol):
         return self
 
     def getObject(self) -> Optional["PdfObject"]:  # pragma: no cover
-        deprecate_with_replacement("getObject", "get_object")
+        deprecation_with_replacement("getObject", "get_object", "3.0.0")
         return self.get_object()
 
     def write_to_stream(
@@ -153,7 +153,7 @@ class NullObject(PdfObject):
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:  # pragma: no cover
-        deprecate_with_replacement("writeToStream", "write_to_stream")
+        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
         self.write_to_stream(stream, encryption_key)
 
     def __repr__(self) -> str:
@@ -161,7 +161,7 @@ class NullObject(PdfObject):
 
     @staticmethod
     def readFromStream(stream: StreamType) -> "NullObject":  # pragma: no cover
-        deprecate_with_replacement("readFromStream", "read_from_stream")
+        deprecation_with_replacement("readFromStream", "read_from_stream", "3.0.0")
         return NullObject.read_from_stream(stream)
 
 
@@ -202,7 +202,7 @@ class BooleanObject(PdfObject):
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:  # pragma: no cover
-        deprecate_with_replacement("writeToStream", "write_to_stream")
+        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
         self.write_to_stream(stream, encryption_key)
 
     @staticmethod
@@ -218,7 +218,7 @@ class BooleanObject(PdfObject):
 
     @staticmethod
     def readFromStream(stream: StreamType) -> "BooleanObject":  # pragma: no cover
-        deprecate_with_replacement("readFromStream", "read_from_stream")
+        deprecation_with_replacement("readFromStream", "read_from_stream", "3.0.0")
         return BooleanObject.read_from_stream(stream)
 
 
@@ -284,7 +284,7 @@ class IndirectObject(PdfObject):
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:  # pragma: no cover
-        deprecate_with_replacement("writeToStream", "write_to_stream")
+        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
         self.write_to_stream(stream, encryption_key)
 
     @staticmethod
@@ -318,7 +318,7 @@ class IndirectObject(PdfObject):
     def readFromStream(
         stream: StreamType, pdf: Any  # PdfReader
     ) -> "IndirectObject":  # pragma: no cover
-        deprecate_with_replacement("readFromStream", "read_from_stream")
+        deprecation_with_replacement("readFromStream", "read_from_stream", "3.0.0")
         return IndirectObject.read_from_stream(stream, pdf)
 
 
@@ -363,7 +363,7 @@ class FloatObject(decimal.Decimal, PdfObject):
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:  # pragma: no cover
-        deprecate_with_replacement("writeToStream", "write_to_stream")
+        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
         self.write_to_stream(stream, encryption_key)
 
 
@@ -397,7 +397,7 @@ class NumberObject(int, PdfObject):
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:  # pragma: no cover
-        deprecate_with_replacement("writeToStream", "write_to_stream")
+        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
         self.write_to_stream(stream, encryption_key)
 
     @staticmethod
@@ -411,7 +411,7 @@ class NumberObject(int, PdfObject):
     def readFromStream(
         stream: StreamType,
     ) -> Union["NumberObject", "FloatObject"]:  # pragma: no cover
-        deprecate_with_replacement("readFromStream", "read_from_stream")
+        deprecation_with_replacement("readFromStream", "read_from_stream", "3.0.0")
         return NumberObject.read_from_stream(stream)
 
 
@@ -455,7 +455,7 @@ class ByteStringObject(bytes, PdfObject):
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:  # pragma: no cover
-        deprecate_with_replacement("writeToStream", "write_to_stream")
+        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
         self.write_to_stream(stream, encryption_key)
 
 
@@ -537,7 +537,7 @@ class TextStringObject(str, PdfObject):
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:  # pragma: no cover
-        deprecate_with_replacement("writeToStream", "write_to_stream")
+        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
         self.write_to_stream(stream, encryption_key)
 
 
@@ -569,7 +569,7 @@ class NameObject(str, PdfObject):
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:  # pragma: no cover
-        deprecate_with_replacement("writeToStream", "write_to_stream")
+        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
         self.write_to_stream(stream, encryption_key)
 
     def renumber(self) -> bytes:
@@ -632,7 +632,7 @@ class NameObject(str, PdfObject):
     def readFromStream(
         stream: StreamType, pdf: Any  # PdfReader
     ) -> "NameObject":  # pragma: no cover
-        deprecate_with_replacement("readFromStream", "read_from_stream")
+        deprecation_with_replacement("readFromStream", "read_from_stream", "3.0.0")
         return NameObject.read_from_stream(stream, pdf)
 
 
