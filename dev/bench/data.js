@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1671252900491,
+  "lastUpdate": 1671262827744,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -20358,6 +20358,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.000349688590525383",
             "extra": "mean: 103.07340510000813 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "73716252+mbromet@users.noreply.github.com",
+            "name": "Max Bromet",
+            "username": "mbromet"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9b23a39b987c9003ef48b5015faf957e2bd02849",
+          "message": "DOC: Make MyST parse all links as simple hyperlinks (#1506)\n\nSee https://myst-parser.readthedocs.io/en/latest/configuration.html\r\n\r\nCloses #1492",
+          "timestamp": "2022-12-17T08:39:09+01:00",
+          "tree_id": "501e055cc69730ab7ee5b68f31099d4a48fad3c3",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/9b23a39b987c9003ef48b5015faf957e2bd02849"
+        },
+        "date": 1671262826064,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9121135375990104,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011656167563365728",
+            "extra": "mean: 1.0963547396000024 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.75918273236241,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007497078965955216",
+            "extra": "mean: 92.9438624545443 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21788910714060217,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03486637998467363",
+            "extra": "mean: 4.589490558400001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.424568619987927,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0024981863051904783",
+            "extra": "mean: 95.92723079999814 msec\nrounds: 10"
           }
         ]
       }
