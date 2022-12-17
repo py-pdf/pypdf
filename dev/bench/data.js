@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1671141777969,
+  "lastUpdate": 1671252900491,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -20306,6 +20306,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.002776272309064529",
             "extra": "mean: 96.17367259999696 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a4629d3dbdef2759ff6059446fcffd13ecf6a396",
+          "message": "MAINT: Deprecate features with PyPDF2==3.0.0 (#1489)\n\nDeprecate features, but keep helpful exceptions. That means that the names still need to be there.\r\n\r\nThe deprecated names will stay until 4.0.0 to help the community transition to the new names.",
+          "timestamp": "2022-12-17T05:53:39+01:00",
+          "tree_id": "58ba96b299b77c648a46ae8acd08ce0b61e9bb59",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/a4629d3dbdef2759ff6059446fcffd13ecf6a396"
+        },
+        "date": 1671252898813,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8532129784462246,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013279559215872703",
+            "extra": "mean: 1.1720403056000008 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.050617486274238,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009391748512028635",
+            "extra": "mean: 99.49637436363125 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.20148400397237923,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02182655221334684",
+            "extra": "mean: 4.963173156599998 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.701823656933994,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000349688590525383",
+            "extra": "mean: 103.07340510000813 msec\nrounds: 10"
           }
         ]
       }
