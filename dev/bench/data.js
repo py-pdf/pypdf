@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1671263683464,
+  "lastUpdate": 1671576095217,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -20462,6 +20462,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0016412807772505078",
             "extra": "mean: 96.9489335999981 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3fb9b690fe326c806a126b2af20c222045d4f987",
+          "message": "DOC: How to read PDFs from S3 (#1509)",
+          "timestamp": "2022-12-20T23:40:25+01:00",
+          "tree_id": "72e1e5f265a63cae1f56888631624687513cee66",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/3fb9b690fe326c806a126b2af20c222045d4f987"
+        },
+        "date": 1671576094154,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0222049114046672,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005809854238223143",
+            "extra": "mean: 978.2774361999941 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.706986136660209,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005343897034935368",
+            "extra": "mean: 85.41908124999982 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2455478415395366,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02182731456351284",
+            "extra": "mean: 4.0725261266000015 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.535837814756375,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00043480486539296015",
+            "extra": "mean: 79.77129369230231 msec\nrounds: 13"
           }
         ]
       }
