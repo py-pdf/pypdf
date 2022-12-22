@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1671576095217,
+  "lastUpdate": 1671749073783,
   "repoUrl": "https://github.com/py-pdf/PyPDF2",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -20514,6 +20514,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00043480486539296015",
             "extra": "mean: 79.77129369230231 msec\nrounds: 13"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "3214dde1d2c0f7c9071ba4157d82cdb796dd73d4",
+          "message": "REL: 3.0.0\n\nBREAKING CHANGES:\n-  Deprecate features with PyPDF2==3.0.0 (#1489)\n-  Refactor Fit / Zoom parameters (#1437)\n\nNew Features (ENH):\n-  Add Cloning  (#1371)\n-  Allow int for indirect_reference in PdfWriter.get_object (#1490)\n\nDocumentation (DOC):\n-  How to read PDFs from S3 (#1509)\n-  Make MyST parse all links as simple hyperlinks (#1506)\n-  Changed 'latest' for 'stable' generated docs (#1495)\n-  Adjust deprecation procedure (#1487)\n\nMaintenance (MAINT):\n-  Use typing.IO for file streams (#1498)\n\n[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/2.12.1...3.0.0)",
+          "timestamp": "2022-12-22T23:42:14+01:00",
+          "tree_id": "4be43e1c91d4b31e9596addd3347830cdf58ad02",
+          "url": "https://github.com/py-pdf/PyPDF2/commit/3214dde1d2c0f7c9071ba4157d82cdb796dd73d4"
+        },
+        "date": 1671749072428,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0298578636932278,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0055921208172132145",
+            "extra": "mean: 971.007781999981 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.738275348632468,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005513583170654399",
+            "extra": "mean: 85.19139058332807 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24770233131888217,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017937906072290708",
+            "extra": "mean: 4.037103706999995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.905979961789734,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007105356066002302",
+            "extra": "mean: 77.48346138461889 msec\nrounds: 13"
           }
         ]
       }
