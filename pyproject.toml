@@ -1,0 +1,99 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "PyPDF2"
+authors = [{ name = "Mathieu Fenniak", email = "biziqe@mathieu.fenniak.net" }]
+maintainers = [{ name = "Martin Thoma", email = "info@martin-thoma.de" }]
+description = "A pure-python PDF library capable of splitting, merging, cropping, and transforming PDF files"
+readme = "README.md"
+dynamic = ["version"]
+license = { file = "LICENSE" }
+requires-python = ">=3.6"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+dependencies = [
+    "typing_extensions >= 3.10.0.0; python_version < '3.10'",
+    "dataclasses; python_version < '3.7'",
+]
+
+[project.urls]
+Documentation = "https://pypdf2.readthedocs.io/en/latest/"
+Source = "https://github.com/py-pdf/PyPDF2"
+"Bug Reports" = "https://github.com/py-pdf/PyPDF2/issues"
+Changelog = "https://pypdf2.readthedocs.io/en/latest/meta/CHANGELOG.html"
+
+[project.optional-dependencies]
+full = ["PyCryptodome", "Pillow"]
+crypto = ["PyCryptodome"]
+image = ["Pillow"]
+dev = ["black", "pip-tools", "pre-commit<2.18.0", "pytest-cov", "flit", "wheel"]
+docs = ["sphinx", "sphinx_rtd_theme", "myst_parser"]
+
+[tool.mutmut]
+backup = false
+runner = "./mutmut-test.sh"
+tests_dir = "tests/"
+
+[tool.check-wheel-contents]
+package = "./PyPDF2"
+
+[tool.flit.sdist]
+exclude = [".github/*", "docs/*", "resources/*", "sample-files/*", "sample-files/.github/*", "sample-files/.gitignore", "sample-files/.pre-commit-config.yaml",  "requirements/*", "tests/*", ".flake8", ".gitignore", ".gitmodules", ".pylintrc", "tox.ini", "make_changelog.py", "mutmut-test.sh", ".pre-commit-config.yaml", ".gitblame-ignore-revs", "Makefile", "mutmut_config.py"]
+
+[tool.pytest.ini_options]
+filterwarnings = ["error"]
+markers = [
+    "slow: Test which require more than a second",
+    "samples: Tests which use files from https://github.com/py-pdf/sample-files",
+    "external: Tests which need to download files"
+]
+testpaths = ["tests"]
+norecursedirs = ["tests/pdf_cache"]
+
+[tool.isort]
+line_length = 79
+indent = '    '
+multi_line_output = 3
+include_trailing_comma = true
+known_third_party = ["pytest", "setuptools"]
+
+[tool.coverage.run]
+source = ["PyPDF2"]
+branch = true
+
+[tool.coverage.report]
+# Regexes for lines to exclude from consideration
+exclude_lines = [
+    # Have to re-enable the standard pragma
+    "pragma: no cover",
+    "@overload",
+    "deprecated",
+
+    # Don't complain about missing debug-only code:
+    "def __repr__",
+    "def __str__",
+    "if self\\.debug",
+
+    # Don't complain if tests don't hit defensive assertion code:
+    "raise AssertionError",
+    "raise NotImplementedError",
+
+    # Don't complain if non-runnable code isn't run:
+    "if 0:",
+    "if __name__ == .__main__.:",
+]

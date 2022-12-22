@@ -34,15 +34,10 @@ import logging
 import warnings
 from codecs import getencoder
 from dataclasses import dataclass
-from io import (
-    DEFAULT_BUFFER_SIZE,
-    BufferedReader,
-    BufferedWriter,
-    BytesIO,
-    FileIO,
-)
+from io import DEFAULT_BUFFER_SIZE
 from os import SEEK_CUR
 from typing import (
+    IO,
     Any,
     Callable,
     Dict,
@@ -59,7 +54,11 @@ try:
 except ImportError:
     from typing_extensions import TypeAlias
 
-from .errors import STREAM_TRUNCATED_PREMATURELY, PdfStreamError
+from .errors import (
+    STREAM_TRUNCATED_PREMATURELY,
+    DeprecationError,
+    PdfStreamError,
+)
 
 TransformationMatrixType: TypeAlias = Tuple[
     Tuple[float, float, float], Tuple[float, float, float], Tuple[float, float, float]
@@ -68,11 +67,13 @@ CompressedTransformationMatrix: TypeAlias = Tuple[
     float, float, float, float, float, float
 ]
 
-StreamType = Union[BytesIO, BufferedReader, BufferedWriter, FileIO]
+StreamType = IO
 StrByteType = Union[str, StreamType]
 
 DEPR_MSG_NO_REPLACEMENT = "{} is deprecated and will be removed in PyPDF2 {}."
+DEPR_MSG_NO_REPLACEMENT_HAPPENED = "{} is deprecated and was removed in PyPDF2 {}."
 DEPR_MSG = "{} is deprecated and will be removed in PyPDF2 3.0.0. Use {} instead."
+DEPR_MSG_HAPPENED = "{} is deprecated and was removed in PyPDF2 {}. Use {} instead."
 
 
 def _get_max_pdf_version_header(header1: bytes, header2: bytes) -> bytes:
@@ -343,17 +344,43 @@ def paeth_predictor(left: int, up: int, up_left: int) -> int:
 
 
 def deprecate(msg: str, stacklevel: int = 3) -> None:
-    warnings.warn(msg, PendingDeprecationWarning, stacklevel=stacklevel)
+    warnings.warn(msg, DeprecationWarning, stacklevel=stacklevel)
+
+
+def deprecation(msg: str) -> None:
+    raise DeprecationError(msg)
 
 
 def deprecate_with_replacement(
     old_name: str, new_name: str, removed_in: str = "3.0.0"
 ) -> None:
+    """
+    Raise an exception that a feature will be removed, but has a replacement.
+    """
     deprecate(DEPR_MSG.format(old_name, new_name, removed_in), 4)
 
 
+def deprecation_with_replacement(
+    old_name: str, new_name: str, removed_in: str = "3.0.0"
+) -> None:
+    """
+    Raise an exception that a feature was already removed, but has a replacement.
+    """
+    deprecation(DEPR_MSG_HAPPENED.format(old_name, removed_in, new_name))
+
+
 def deprecate_no_replacement(name: str, removed_in: str = "3.0.0") -> None:
+    """
+    Raise an exception that a feature will be removed without replacement.
+    """
     deprecate(DEPR_MSG_NO_REPLACEMENT.format(name, removed_in), 4)
+
+
+def deprecation_no_replacement(name: str, removed_in: str = "3.0.0") -> None:
+    """
+    Raise an exception that a feature was already removed without replacement.
+    """
+    deprecation(DEPR_MSG_NO_REPLACEMENT_HAPPENED.format(name, removed_in))
 
 
 def logger_warning(msg: str, src: str) -> None:
@@ -375,7 +402,7 @@ def logger_warning(msg: str, src: str) -> None:
     logging.getLogger(src).warning(msg)
 
 
-def deprecate_bookmark(**aliases: str) -> Callable:
+def deprecation_bookmark(**aliases: str) -> Callable:
     """
     Decorator for deprecated term "bookmark"
     To be used for methods and function arguments
@@ -386,7 +413,7 @@ def deprecate_bookmark(**aliases: str) -> Callable:
     def decoration(func: Callable):  # type: ignore
         @functools.wraps(func)
         def wrapper(*args, **kwargs):  # type: ignore
-            rename_kwargs(func.__name__, kwargs, aliases)
+            rename_kwargs(func.__name__, kwargs, aliases, fail=True)
             return func(*args, **kwargs)
 
         return wrapper
@@ -395,7 +422,7 @@ def deprecate_bookmark(**aliases: str) -> Callable:
 
 
 def rename_kwargs(  # type: ignore
-    func_name: str, kwargs: Dict[str, Any], aliases: Dict[str, str]
+    func_name: str, kwargs: Dict[str, Any], aliases: Dict[str, str], fail: bool = False
 ):
     """
     Helper function to deprecate arguments.
@@ -403,6 +430,10 @@ def rename_kwargs(  # type: ignore
 
     for old_term, new_term in aliases.items():
         if old_term in kwargs:
+            if fail:
+                raise DeprecationError(
+                    f"{old_term} is deprecated as an argument. Use {new_term} instead"
+                )
             if new_term in kwargs:
                 raise TypeError(
                     f"{func_name} received both {old_term} and {new_term} as an argument. "
@@ -412,7 +443,8 @@ def rename_kwargs(  # type: ignore
             warnings.warn(
                 message=(
                     f"{old_term} is deprecated as an argument. Use {new_term} instead"
-                )
+                ),
+                category=DeprecationWarning,
             )
 
 

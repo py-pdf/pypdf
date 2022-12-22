@@ -5,20 +5,27 @@ from io import BytesIO
 from pathlib import Path
 
 import pytest
-from PIL import Image
 
 from PyPDF2 import PdfReader
 from PyPDF2._reader import convert_to_int, convertToInt
 from PyPDF2.constants import ImageAttributes as IA
 from PyPDF2.constants import PageAttributes as PG
 from PyPDF2.errors import (
+    DeprecationError,
     EmptyFileError,
     FileNotDecryptedError,
     PdfReadError,
     PdfReadWarning,
     WrongPasswordError,
 )
-from PyPDF2.generic import Destination
+from PyPDF2.generic import (
+    ArrayObject,
+    Destination,
+    DictionaryObject,
+    NameObject,
+    NumberObject,
+    TextStringObject,
+)
 
 from . import get_pdf_from_url, normalize_warnings
 
@@ -32,7 +39,7 @@ except ImportError:
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
-EXTERNAL_ROOT = PROJECT_ROOT / "sample-files"
+SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 
 
 @pytest.mark.parametrize(
@@ -103,8 +110,9 @@ def test_read_metadata(pdf_path, expected):
             assert metadict["/Title"] == docinfo.title
 
 
+@pytest.mark.samples
 @pytest.mark.parametrize(
-    "pdf_path", [EXTERNAL_ROOT / "017-unreadable-meta-data/unreadablemetadata.pdf"]
+    "pdf_path", [SAMPLE_ROOT / "017-unreadable-meta-data/unreadablemetadata.pdf"]
 )
 def test_broken_meta_data(pdf_path):
     with open(pdf_path, "rb") as f:
@@ -135,13 +143,13 @@ def test_get_annotations(src):
 
 
 @pytest.mark.parametrize(
-    "src",
+    ("src", "nb_attachments"),
     [
-        RESOURCE_ROOT / "attachment.pdf",
-        RESOURCE_ROOT / "crazyones.pdf",
+        (RESOURCE_ROOT / "attachment.pdf", 1),
+        (RESOURCE_ROOT / "crazyones.pdf", 0),
     ],
 )
-def test_get_attachments(src):
+def test_get_attachments(src, nb_attachments):
     reader = PdfReader(src)
 
     attachments = {}
@@ -152,7 +160,7 @@ def test_get_attachments(src):
                 if annotobj[IA.SUBTYPE] == "/FileAttachment":
                     fileobj = annotobj["/FS"]
                     attachments[fileobj["/F"]] = fileobj["/EF"]["/F"].get_data()
-    return attachments
+    assert len(attachments) == nb_attachments
 
 
 @pytest.mark.parametrize(
@@ -185,9 +193,12 @@ def test_get_outline(src, outline_elements):
             marks=pytest.mark.xfail(reason="broken image extraction"),
         ),
         ("imagemagick-CCITTFaxDecode.pdf", ["Im0.tiff"]),
+        (SAMPLE_ROOT / "019-grayscale-image/grayscale-image.pdf", ["X0.png"]),
     ],
 )
 def test_get_images(src, expected_images):
+    from PIL import Image
+
     src_abs = RESOURCE_ROOT / src
     reader = PdfReader(src_abs)
 
@@ -201,12 +212,19 @@ def test_get_images(src, expected_images):
     assert len(images_extracted) == len(expected_images)
     for image, expected_image in zip(images_extracted, expected_images):
         assert image.name == expected_image
-        with open(f"test-out-{src}-{image.name}", "wb") as fp:
-            fp.write(image.data)
-        assert (
-            image.name.split(".")[-1].upper()
-            == Image.open(io.BytesIO(image.data)).format
-        )
+        try:
+            fn = f"{src}-test-out-{image.name}"
+            with open(fn, "wb") as fp:
+                fp.write(image.data)
+                assert (
+                    image.name.split(".")[-1].upper()
+                    == Image.open(io.BytesIO(image.data)).format
+                )
+        finally:
+            try:
+                os.remove(fn)
+            except Exception:
+                pass
 
 
 @pytest.mark.parametrize(
@@ -399,17 +417,17 @@ def test_get_form(src, expected, expected_get_fields):
 
 
 @pytest.mark.parametrize(
-    ("src", "page_nb"),
+    ("src", "page_number"),
     [
         ("form.pdf", 0),
         ("pdflatex-outline.pdf", 2),
     ],
 )
-def test_get_page_number(src, page_nb):
+def test_get_page_number(src, page_number):
     src = RESOURCE_ROOT / src
     reader = PdfReader(src)
-    page = reader.pages[page_nb]
-    assert reader.get_page_number(page) == page_nb
+    page = reader.pages[page_number]
+    assert reader.get_page_number(page) == page_number
 
 
 @pytest.mark.parametrize(
@@ -609,6 +627,7 @@ def test_do_not_get_stuck_on_large_files_without_start_xref():
     assert parse_duration < 60
 
 
+@pytest.mark.external
 def test_decrypt_when_no_id():
     """
     Decrypt an encrypted file that's missing the 'ID' value in its
@@ -721,16 +740,17 @@ def test_convert_to_int_error():
 
 def test_convertToInt_deprecated():
     msg = (
-        "convertToInt is deprecated and will be removed in PyPDF2 3.0.0. "
+        "convertToInt is deprecated and was removed in PyPDF2 3.0.0. "
         "Use convert_to_int instead."
     )
-    with pytest.warns(
-        PendingDeprecationWarning,
+    with pytest.raises(
+        DeprecationError,
         match=msg,
     ):
         assert convertToInt(b"\x01", 8) == 1
 
 
+@pytest.mark.external
 def test_iss925():
     url = "https://github.com/py-pdf/PyPDF2/files/8796328/1.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name="iss925.pdf")))
@@ -744,7 +764,12 @@ def test_iss925():
                 annot.get_object()
 
 
-@pytest.mark.xfail(reason="#591")
+def test_get_object():
+    reader = PdfReader(RESOURCE_ROOT / "hello-world.pdf")
+    assert reader.get_object(22)["/Type"] == "/Catalog"
+    assert reader._get_indirect_object(22, 0)["/Type"] == "/Catalog"
+
+
 def test_extract_text_hello_world():
     reader = PdfReader(RESOURCE_ROOT / "hello-world.pdf")
     text = reader.pages[0].extract_text().split("\n")
@@ -778,6 +803,7 @@ def test_read_not_binary_mode(caplog):
     assert normalize_warnings(caplog.text) == [msg]
 
 
+@pytest.mark.external
 @pytest.mark.skipif(not HAS_PYCRYPTODOME, reason="No pycryptodome")
 def test_read_form_416():
     url = (
@@ -788,6 +814,7 @@ def test_read_form_416():
     assert len(fields) > 0
 
 
+@pytest.mark.external
 def test_extract_text_xref_issue_2(caplog):
     # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/981/981961.pdf"
@@ -798,6 +825,8 @@ def test_extract_text_xref_issue_2(caplog):
     assert normalize_warnings(caplog.text) == [msg]
 
 
+@pytest.mark.external
+@pytest.mark.slow
 def test_extract_text_xref_issue_3(caplog):
     # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/977/977774.pdf"
@@ -808,6 +837,7 @@ def test_extract_text_xref_issue_3(caplog):
     assert normalize_warnings(caplog.text) == [msg]
 
 
+@pytest.mark.external
 def test_extract_text_pdf15():
     # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/976/976030.pdf"
@@ -816,6 +846,7 @@ def test_extract_text_pdf15():
         page.extract_text()
 
 
+@pytest.mark.external
 def test_extract_text_xref_table_21_bytes_clrf():
     # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/956/956939.pdf"
@@ -824,6 +855,7 @@ def test_extract_text_xref_table_21_bytes_clrf():
         page.extract_text()
 
 
+@pytest.mark.external
 def test_get_fields():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/972/972486.pdf"
     name = "tika-972486.pdf"
@@ -834,14 +866,16 @@ def test_get_fields():
     assert dict(fields["c1-1"]) == ({"/FT": "/Btn", "/T": "c1-1"})
 
 
-# covers also issue 1089
+@pytest.mark.external
 @pytest.mark.filterwarnings("ignore::PyPDF2.errors.PdfReadWarning")
 def test_get_fields_read_else_block():
+    # covers also issue 1089
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/934/934771.pdf"
     name = "tika-934771.pdf"
     PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
 
 
+@pytest.mark.external
 def test_get_fields_read_else_block2():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/914/914902.pdf"
     name = "tika-914902.pdf"
@@ -850,6 +884,7 @@ def test_get_fields_read_else_block2():
     assert fields is None
 
 
+@pytest.mark.external
 @pytest.mark.filterwarnings("ignore::PyPDF2.errors.PdfReadWarning")
 def test_get_fields_read_else_block3():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/957/957721.pdf"
@@ -857,6 +892,7 @@ def test_get_fields_read_else_block3():
     PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
 
 
+@pytest.mark.external
 def test_metadata_is_none():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/963/963692.pdf"
     name = "tika-963692.pdf"
@@ -864,6 +900,7 @@ def test_metadata_is_none():
     assert reader.metadata is None
 
 
+@pytest.mark.external
 def test_get_fields_read_write_report():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/909/909655.pdf"
     name = "tika-909655.pdf"
@@ -888,6 +925,7 @@ def test_xfa(src):
     assert reader.xfa is None
 
 
+@pytest.mark.external
 def test_xfa_non_empty():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/942/942050.pdf"
     name = "tika-942050.pdf"
@@ -915,6 +953,7 @@ def test_header(src, pdf_header):
     assert reader.pdf_header == pdf_header
 
 
+@pytest.mark.external
 def test_outline_color():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
     name = "tika-924546.pdf"
@@ -922,6 +961,7 @@ def test_outline_color():
     assert reader.outline[0].color == [0, 0, 1]
 
 
+@pytest.mark.external
 def test_outline_font_format():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
     name = "tika-924546.pdf"
@@ -942,8 +982,9 @@ def get_outline_property(outline, attribute_name: str):
     return results
 
 
+@pytest.mark.samples
 def test_outline_title_issue_1121():
-    reader = PdfReader(EXTERNAL_ROOT / "014-outlines/mistitled_outlines_example.pdf")
+    reader = PdfReader(SAMPLE_ROOT / "014-outlines/mistitled_outlines_example.pdf")
 
     assert get_outline_property(reader.outline, "title") == [
         "First",
@@ -988,8 +1029,9 @@ def test_outline_title_issue_1121():
     ]
 
 
+@pytest.mark.samples
 def test_outline_count():
-    reader = PdfReader(EXTERNAL_ROOT / "014-outlines/mistitled_outlines_example.pdf")
+    reader = PdfReader(SAMPLE_ROOT / "014-outlines/mistitled_outlines_example.pdf")
 
     assert get_outline_property(reader.outline, "outline_count") == [
         5,
@@ -1034,20 +1076,19 @@ def test_outline_count():
     ]
 
 
-def test_outline_missing_title():
+def test_outline_missing_title(caplog):
     # Strict
     reader = PdfReader(RESOURCE_ROOT / "outline-without-title.pdf", strict=True)
     with pytest.raises(PdfReadError) as exc:
         reader.outline
     assert exc.value.args[0].startswith("Outline Entry Missing /Title attribute:")
 
-    # Non-strict
-    with pytest.raises(ValueError) as exc:
-        reader = PdfReader(RESOURCE_ROOT / "outline-without-title.pdf", strict=False)
-        reader.outline
-    assert exc.value.args[0] == "value must be PdfObject"
+    # Non-strict : no errors
+    reader = PdfReader(RESOURCE_ROOT / "outline-without-title.pdf", strict=False)
+    assert reader.outline[0]["/Title"] == ""
 
 
+@pytest.mark.external
 def test_named_destination():
     # 1st case : the named_dest are stored directly as a dictionnary, PDF1.1 style
     url = "https://github.com/py-pdf/PyPDF2/files/9197028/lorem_ipsum.pdf"
@@ -1063,6 +1104,7 @@ def test_named_destination():
     # TODO : case to be added
 
 
+@pytest.mark.external
 def test_outline_with_missing_named_destination():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/913/913678.pdf"
     name = "tika-913678.pdf"
@@ -1071,6 +1113,7 @@ def test_outline_with_missing_named_destination():
     assert reader.outline[1][0].title.startswith("Report for 2002AZ3B: Microbial")
 
 
+@pytest.mark.external
 def test_outline_with_empty_action():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
     name = "tika-924546.pdf"
@@ -1086,6 +1129,7 @@ def test_outline_with_invalid_destinations():
     assert len(reader.outline) == 9
 
 
+@pytest.mark.external
 def test_PdfReaderMultipleDefinitions(caplog):
     # iss325
     url = "https://github.com/py-pdf/PyPDF2/files/9176644/multipledefs.pdf"
@@ -1111,6 +1155,7 @@ def test_get_page_number_by_indirect():
     reader._get_page_number_by_indirect(1)
 
 
+@pytest.mark.external
 def test_corrupted_xref_table():
     # issue #1292
     url = "https://github.com/py-pdf/PyPDF2/files/9444747/BreezeManual.orig.pdf"
@@ -1123,6 +1168,7 @@ def test_corrupted_xref_table():
     reader.pages[0].extract_text()
 
 
+@pytest.mark.external
 def test_reader(caplog):
     # iss #1273
     url = "https://github.com/py-pdf/PyPDF2/files/9464742/shiv_resume.pdf"
@@ -1140,9 +1186,49 @@ def test_reader(caplog):
     assert caplog.text == ""
 
 
+@pytest.mark.external
 def test_zeroing_xref():
     # iss #328
     url = "https://github.com/py-pdf/PyPDF2/files/9066120/UTA_OSHA_3115_Fall_Protection_Training_09162021_.pdf"
     name = "UTA_OSHA.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     len(reader.pages)
+
+
+def test_thread():
+    url = "https://github.com/py-pdf/PyPDF2/files/9066120/UTA_OSHA_3115_Fall_Protection_Training_09162021_.pdf"
+    name = "UTA_OSHA.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    assert reader.threads is None
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
+    name = "tika-924666.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    assert isinstance(reader.threads, ArrayObject)
+    assert len(reader.threads) >= 1
+
+
+def test_build_outline_item(caplog):
+    url = "https://github.com/py-pdf/PyPDF2/files/9464742/shiv_resume.pdf"
+    name = "shiv_resume.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    outline = reader._build_outline_item(
+        DictionaryObject(
+            {
+                NameObject("/Title"): TextStringObject("Toto"),
+                NameObject("/Dest"): NumberObject(2),
+            }
+        )
+    )
+    assert "Removed unexpected destination 2 from destination" in caplog.text
+    assert outline["/Title"] == "Toto"
+    reader.strict = True
+    with pytest.raises(PdfReadError) as exc:
+        reader._build_outline_item(
+            DictionaryObject(
+                {
+                    NameObject("/Title"): TextStringObject("Toto"),
+                    NameObject("/Dest"): NumberObject(2),
+                }
+            )
+        )
+    assert "Unexpected destination 2" in exc.value.args[0]

@@ -1,7 +1,7 @@
 # Migration Guide: 1.x to 2.x
 
 `PyPDF2<2.0.0` ([docs](https://pypdf2.readthedocs.io/en/1.27.12/meta/history.html))
-is very different from `PyPDF2>=2.0.0` ([docs](https://pypdf2.readthedocs.io/en/latest/meta/history.html)).
+is very different from `PyPDF2>=2.0.0` ([docs](../meta/history.md)).
 
 Luckily, most changes are simple naming adjustments. This guide helps you to
 make the step from `PyPDF2 1.x` (or even the original PyPpdf) to `PyPDF2>=2.0.0`.
@@ -163,6 +163,12 @@ utils.py:
 * `PdfWriter.get_page`: `pageNumber` ➔ `page_number`
 * `PyPDF2.filters` (all classes): `decodeParms` ➔ `decode_parms`
 * `PyPDF2.filters` (all classes): `decodeStreamData` ➔ `decode_stream_data`
+* `pagenum` ➔ `page_number`
+* `PdfMerger.merge`: `position` ➔ `page_number`
+* `PdfWriter.add_outline_item_destination`: `dest` ➔ `page_destination`
+* `PdfWriter.add_named_destination_object`: `dest` ➔ `page_destination`
+* `PdfWriter.encrypt`: `user_pwd` ➔ `user_password`
+* `PdfWriter.encrypt`: `owner_pwd` ➔ `owner_password`
 
 ## Deprecations
 

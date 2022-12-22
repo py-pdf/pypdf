@@ -1,16 +1,21 @@
 import os
+import re
 from io import BytesIO
 from pathlib import Path
 
 import pytest
 
 from PyPDF2 import PageObject, PdfMerger, PdfReader, PdfWriter
-from PyPDF2.errors import PageSizeNotDefinedError
+from PyPDF2.errors import DeprecationError, PageSizeNotDefinedError
 from PyPDF2.generic import (
+    ArrayObject,
+    Fit,
     IndirectObject,
     NameObject,
+    NumberObject,
     RectangleObject,
     StreamObject,
+    TextStringObject,
 )
 
 from . import get_pdf_from_url
@@ -18,7 +23,7 @@ from . import get_pdf_from_url
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
-EXTERNAL_ROOT = Path(PROJECT_ROOT) / "sample-files"
+SAMPLE_ROOT = Path(PROJECT_ROOT) / "sample-files"
 
 
 def test_writer_exception_non_binary(tmp_path, caplog):
@@ -65,30 +70,50 @@ def writer_operate(writer):
     writer.remove_links()
     writer.add_outline_item_destination(page)
     oi = writer.add_outline_item(
-        "An outline item", 0, None, (255, 0, 15), True, True, "/FitBV", 10
+        "An outline item", 0, None, (255, 0, 15), True, True, Fit.fit_box_vertically(10)
     )
     writer.add_outline_item(
-        "The XYZ fit", 0, oi, (255, 0, 15), True, True, "/XYZ", 10, 20, 3
+        "The XYZ fit", 0, oi, (255, 0, 15), True, True, Fit.xyz(left=10, top=20, zoom=3)
     )
     writer.add_outline_item(
-        "The FitH fit", 0, oi, (255, 0, 15), True, True, "/FitH", 10
+        "The FitH fit", 0, oi, (255, 0, 15), True, True, Fit.fit_horizontally(top=10)
     )
     writer.add_outline_item(
-        "The FitV fit", 0, oi, (255, 0, 15), True, True, "/FitV", 10
+        "The FitV fit", 0, oi, (255, 0, 15), True, True, Fit.fit_vertically(left=10)
     )
     writer.add_outline_item(
-        "The FitR fit", 0, oi, (255, 0, 15), True, True, "/FitR", 10, 20, 30, 40
+        "The FitR fit",
+        0,
+        oi,
+        (255, 0, 15),
+        True,
+        True,
+        Fit.fit_rectangle(left=10, bottom=20, right=30, top=40),
     )
-    writer.add_outline_item("The FitB fit", 0, oi, (255, 0, 15), True, True, "/FitB")
     writer.add_outline_item(
-        "The FitBH fit", 0, oi, (255, 0, 15), True, True, "/FitBH", 10
+        "The FitB fit", 0, oi, (255, 0, 15), True, True, Fit.fit_box()
     )
     writer.add_outline_item(
-        "The FitBV fit", 0, oi, (255, 0, 15), True, True, "/FitBV", 10
+        "The FitBH fit",
+        0,
+        oi,
+        (255, 0, 15),
+        True,
+        True,
+        Fit.fit_box_horizontally(top=10),
+    )
+    writer.add_outline_item(
+        "The FitBV fit",
+        0,
+        oi,
+        (255, 0, 15),
+        True,
+        True,
+        Fit.fit_box_vertically(left=10),
     )
     writer.add_blank_page()
     writer.add_uri(2, "https://example.com", RectangleObject([0, 0, 100, 100]))
-    with pytest.warns(PendingDeprecationWarning):
+    with pytest.raises(DeprecationError):
         writer.add_link(2, 1, RectangleObject([0, 0, 100, 100]))
     assert writer._get_page_layout() is None
     writer.page_layout = "broken"
@@ -341,6 +366,7 @@ def test_write_metadata():
     reader = PdfReader(pdf_path)
     writer = PdfWriter()
 
+    writer.add_page(reader.pages[0])
     for page in reader.pages:
         writer.add_page(page)
 
@@ -394,10 +420,10 @@ def test_fill_form():
 
 
 @pytest.mark.parametrize(
-    ("use_128bit", "user_pwd", "owner_pwd"),
+    ("use_128bit", "user_password", "owner_password"),
     [(True, "userpwd", "ownerpwd"), (False, "userpwd", "ownerpwd")],
 )
-def test_encrypt(use_128bit, user_pwd, owner_pwd):
+def test_encrypt(use_128bit, user_password, owner_password):
     reader = PdfReader(RESOURCE_ROOT / "form.pdf")
     writer = PdfWriter()
 
@@ -405,7 +431,11 @@ def test_encrypt(use_128bit, user_pwd, owner_pwd):
     orig_text = page.extract_text()
 
     writer.add_page(page)
-    writer.encrypt(user_pwd=user_pwd, owner_pwd=owner_pwd, use_128bit=use_128bit)
+    writer.encrypt(
+        user_password=user_password,
+        owner_password=owner_password,
+        use_128bit=use_128bit,
+    )
 
     # write "output" to PyPDF2-output.pdf
     tmp_filename = "dont_commit_encrypted.pdf"
@@ -453,11 +483,9 @@ def test_add_outline_item():
         writer.add_page(page)
 
     outline_item = writer.add_outline_item(
-        "An outline item", 1, None, (255, 0, 15), True, True, "/Fit", 200, 0, None
+        "An outline item", 1, None, (255, 0, 15), True, True, Fit.fit()
     )
-    writer.add_outline_item(
-        "Another", 2, outline_item, None, False, False, "/Fit", 0, 0, None
-    )
+    writer.add_outline_item("Another", 2, outline_item, None, False, False, Fit.fit())
 
     # write "output" to PyPDF2-output.pdf
     tmp_filename = "dont_commit_outline_item.pdf"
@@ -478,15 +506,25 @@ def test_add_named_destination():
 
     assert writer.get_named_dest_root() == []
 
-    writer.add_named_destination(NameObject("A named dest"), 2)
-    writer.add_named_destination(NameObject("A named dest2"), 2)
+    writer.add_named_destination(TextStringObject("A named dest"), 2)
+    writer.add_named_destination(TextStringObject("A named dest2"), 2)
 
-    assert writer.get_named_dest_root() == [
-        "A named dest",
-        IndirectObject(9, 0, writer),
-        "A named dest2",
-        IndirectObject(10, 0, writer),
-    ]
+    root = writer.get_named_dest_root()
+    assert root[0] == "A named dest"
+    assert root[1].pdf == writer
+    assert root[1].get_object()["/S"] == NameObject("/GoTo")
+    assert root[1].get_object()["/D"][0] == writer.pages[2].indirect_reference
+    assert root[2] == "A named dest2"
+    assert root[3].pdf == writer
+    assert root[3].get_object()["/S"] == NameObject("/GoTo")
+    assert root[3].get_object()["/D"][0] == writer.pages[2].indirect_reference
+
+    # test get_object
+
+    assert writer.get_object(root[1].idnum) == writer.get_object(root[1])
+    with pytest.raises(ValueError) as exc:
+        writer.get_object(reader.pages[0].indirect_reference)
+    assert exc.value.args[0] == "pdf must be self"
 
     # write "output" to PyPDF2-output.pdf
     tmp_filename = "dont_commit_named_destination.pdf"
@@ -545,9 +583,14 @@ def test_add_link():
     for page in reader.pages:
         writer.add_page(page)
 
-    with pytest.warns(
-        PendingDeprecationWarning,
-        match="add_link is deprecated and will be removed in PyPDF2",
+    with pytest.raises(
+        DeprecationError,
+        match=(
+            re.escape(
+                "add_link is deprecated and was removed in PyPDF2 3.0.0. "
+                "Use add_annotation(AnnotationBuilder.link(...)) instead."
+            )
+        ),
     ):
         writer.add_link(
             1,
@@ -638,6 +681,8 @@ def test_append_pages_from_reader_append():
         writer.write(o)
 
 
+@pytest.mark.external
+@pytest.mark.slow
 def test_sweep_indirect_references_nullobject_exception():
     # TODO: Check this more closely... this looks weird
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
@@ -651,6 +696,8 @@ def test_sweep_indirect_references_nullobject_exception():
     os.remove("tmp-merger-do-not-commit.pdf")
 
 
+@pytest.mark.external
+@pytest.mark.slow
 def test_write_outline_item_on_page_fitv():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/922/922840.pdf"
     name = "tika-922840.pdf"
@@ -698,14 +745,7 @@ def test_write_dict_stream_object():
     # Writer will replace this stream object with indirect object
     page_object[NameObject("/Test")] = stream_object
 
-    writer.add_page(page_object)
-
-    for k, v in page_object.items():
-        if k == "/Test":
-            assert str(v) == str(stream_object)
-            break
-    else:
-        assert False, "/Test not found"
+    page_object = writer.add_page(page_object)
 
     with open("tmp-writer-do-not-commit.pdf", "wb") as fp:
         writer.write(fp)
@@ -757,30 +797,31 @@ def test_add_single_annotation():
         writer.write(fp)
 
     # Cleanup
-    os.remove(target)  # remove for testing
+    os.remove(target)  # comment out for testing
 
 
-def test_deprecate_bookmark_decorator():
+def test_deprecation_bookmark_decorator():
     reader = PdfReader(RESOURCE_ROOT / "outlines-with-invalid-destinations.pdf")
     page = reader.pages[0]
     outline_item = reader.outline[0]
     writer = PdfWriter()
     writer.add_page(page)
-    with pytest.warns(
-        UserWarning,
+    with pytest.raises(
+        DeprecationError,
         match="bookmark is deprecated as an argument. Use outline_item instead",
     ):
         writer.add_outline_item_dict(bookmark=outline_item)
 
 
+@pytest.mark.samples
 def test_colors_in_outline_item():
-    reader = PdfReader(EXTERNAL_ROOT / "004-pdflatex-4-pages/pdflatex-4-pages.pdf")
+    reader = PdfReader(SAMPLE_ROOT / "004-pdflatex-4-pages/pdflatex-4-pages.pdf")
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
     purple_rgb = (0.50196, 0, 0.50196)
-    writer.add_outline_item("First Outline Item", pagenum=2, color="800080")
-    writer.add_outline_item("Second Outline Item", pagenum=3, color="#800080")
-    writer.add_outline_item("Third Outline Item", pagenum=4, color=purple_rgb)
+    writer.add_outline_item("First Outline Item", page_number=2, color="800080")
+    writer.add_outline_item("Second Outline Item", page_number=3, color="#800080")
+    writer.add_outline_item("Third Outline Item", page_number=4, color=purple_rgb)
 
     target = "tmp-named-color-outline.pdf"
     with open(target, "wb") as f:
@@ -792,14 +833,133 @@ def test_colors_in_outline_item():
         assert [str(c) for c in outline_item.color] == [str(p) for p in purple_rgb]
 
     # Cleanup
-    os.remove(target)  # remove for testing
+    os.remove(target)  # comment out for testing
 
 
+@pytest.mark.samples
 def test_write_empty_stream():
-    reader = PdfReader(EXTERNAL_ROOT / "004-pdflatex-4-pages/pdflatex-4-pages.pdf")
+    reader = PdfReader(SAMPLE_ROOT / "004-pdflatex-4-pages/pdflatex-4-pages.pdf")
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
 
     with pytest.raises(ValueError) as exc:
         writer.write("")
     assert exc.value.args[0] == "Output(stream=) is empty."
+
+
+def test_startup_dest():
+    pdf_file_writer = PdfWriter()
+    pdf_file_writer.append_pages_from_reader(PdfReader(RESOURCE_ROOT / "issue-604.pdf"))
+
+    assert pdf_file_writer.open_destination is None
+    pdf_file_writer.open_destination = pdf_file_writer.pages[9]
+    # checked also using Acrobrat to verify the good page is opened
+    op = pdf_file_writer._root_object["/OpenAction"]
+    assert op[0] == pdf_file_writer.pages[9].indirect_reference
+    assert op[1] == "/Fit"
+    op = pdf_file_writer.open_destination
+    assert op.raw_get("/Page") == pdf_file_writer.pages[9].indirect_reference
+    assert op["/Type"] == "/Fit"
+    pdf_file_writer.open_destination = op
+    assert pdf_file_writer.open_destination == op
+
+    # irrelevant, just for coverage
+    pdf_file_writer._root_object[NameObject("/OpenAction")][0] = NumberObject(0)
+    pdf_file_writer.open_destination
+    with pytest.raises(Exception) as exc:
+        del pdf_file_writer._root_object[NameObject("/OpenAction")][0]
+        pdf_file_writer.open_destination
+    assert "Invalid Destination" in str(exc.value)
+
+    pdf_file_writer.open_destination = "Test"
+    # checked also using Acrobrat to verify open_destination
+    op = pdf_file_writer._root_object["/OpenAction"]
+    assert isinstance(op, TextStringObject)
+    assert op == "Test"
+    op = pdf_file_writer.open_destination
+    assert isinstance(op, TextStringObject)
+    assert op == "Test"
+
+    # irrelevant, this is just for coverage
+    pdf_file_writer._root_object[NameObject("/OpenAction")] = NumberObject(0)
+    assert pdf_file_writer.open_destination is None
+    pdf_file_writer.open_destination = None
+    assert "/OpenAction" not in pdf_file_writer._root_object
+    pdf_file_writer.open_destination = None
+
+
+def test_iss471():
+    url = "https://github.com/py-pdf/PyPDF2/files/9139245/book.pdf"
+    name = "book_471.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+
+    writer = PdfWriter()
+    writer.append(reader, excluded_fields=[])
+    assert isinstance(
+        writer.pages[0]["/Annots"][0].get_object()["/Dest"], TextStringObject
+    )
+
+
+def test_reset_translation():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
+    name = "tika-924666.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    writer = PdfWriter()
+    writer.append(reader, (0, 10))
+    nb = len(writer._objects)
+    writer.append(reader, (0, 10))
+    assert (
+        len(writer._objects) == nb + 11
+    )  # +10 (pages) +1 because of the added outline
+    nb += 1
+    writer.reset_translation(reader)
+    writer.append(reader, (0, 10))
+    assert len(writer._objects) >= nb + 200
+    nb = len(writer._objects)
+    writer.reset_translation(reader.pages[0].indirect_reference)
+    writer.append(reader, (0, 10))
+    assert len(writer._objects) >= nb + 200
+    nb = len(writer._objects)
+    writer.reset_translation()
+    writer.append(reader, (0, 10))
+    assert len(writer._objects) >= nb + 200
+    nb = len(writer._objects)
+
+
+def test_threads_empty():
+    writer = PdfWriter()
+    thr = writer.threads
+    assert isinstance(thr, ArrayObject)
+    assert len(thr) == 0
+    thr2 = writer.threads
+    assert thr == thr2
+
+
+def test_append_without_annots_and_articles():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
+    name = "tika-924666.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    writer = PdfWriter()
+    writer.append(reader, None, (0, 10), True, ["/B"])
+    assert writer.threads == []
+    writer = PdfWriter()
+    writer.append(reader, None, (0, 10), True, ["/Annots"])
+    assert "/Annots" not in writer.pages[5]
+    writer = PdfWriter()
+    writer.append(reader, None, (0, 10), True, [])
+    assert "/Annots" in writer.pages[5]
+    assert len(writer.threads) >= 1
+
+
+def test_append_multiple():
+    url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
+    name = "tika-924666.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    writer = PdfWriter()
+    writer.append(
+        reader, [0, 0, 0]
+    )  # to demonstre multiple insertion of same page at once
+    writer.append(reader, [0, 0, 0])  # second pack
+    pages = writer._root_object["/Pages"]["/Kids"]
+    assert pages[0] not in pages[1:]  # page not repeated
+    assert pages[-1] not in pages[0:-1]  # page not repeated

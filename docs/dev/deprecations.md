@@ -21,21 +21,22 @@ If you are using [Poetry](https://pypi.org/project/poetry/) it is done with the
 ## How PyPDF2 deprecates features
 
 Assume the current version of PyPDF2 is `x.y.z`. After a discussion (e.g. via
-Github issues) we decided to remove a class / function / method. This is how
+GitHub issues) we decided to remove a class / function / method. This is how
 we do it:
 
-1. `x.y.(z+1)`: Add a PendingDeprecationWarning. If there is a replacement,
+1. `x.y.(z+1)`: Add a DeprecationWarning. If there is a replacement,
    the replacement is also introduced and the warning informs about the change
    and when it will happen.
    The docs let users know about the deprecation and when it will happen and the new function.
    The CHANGELOG informs about it.
-2. `(x+1).0.0`: The PendingDeprecationWarning is changed to a DeprecationWarning.
+2. `(x+1).0.0`: Remove / change the code in the breaking way by replacing
+   DeprecationWarnings by DeprecationErrors.
+   We do this to help people who didn't look at the warnings before.
    The CHANGELOG informs about it.
-3. `(x+2).0.0`: The code and the DeprecationWarnings are removed.
-   The CHANGELOG informs about it.
+3. `(x+2).0.0`: The DeprecationErrors are removed.
 
-This means the users have 3 warnings in the CHANGELOG, a PendingDeprecationWarning
-until the next major release and a DeprecationWarning until the major release
+This means the users have 3 warnings in the CHANGELOG, a DeprecationWarning
+until the next major release and a DeprecationError until the major release
 after that.
 
 Please note that adding warnings can be a breaking change for some users; most

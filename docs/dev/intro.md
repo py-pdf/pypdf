@@ -11,15 +11,7 @@ pip install -r requirements/dev.txt
 
 ## Running Tests
 
-```
-pytest .
-```
-
-We have the following pytest markers defined:
-
-* `external`: Tests which use files from [the `sample-files` git submodule](https://github.com/py-pdf/sample-files)
-
-You can locally choose not to run those via `pytest -m "not external"`.
+See [testing PyPDF2 with pytest](testing.md)
 
 ## The sample-files git submodule
 The reason for having the submodule `sample-files` is that we want to keep
@@ -42,8 +34,8 @@ git submodule update --init
 Git is a command line application for version control. If you don't know it,
 you can [play ohmygit](https://ohmygit.org/) to learn it.
 
-Github is the service where the PyPDF2 project is hosted. While git is free and
-open source, Github is a paid service by Microsoft - but for free in lot of
+GitHub is the service where the PyPDF2 project is hosted. While git is free and
+open source, GitHub is a paid service by Microsoft - but for free in lot of
 cases.
 
 [pre-commit](https://pypi.org/project/pre-commit/) is a command line application
@@ -67,7 +59,7 @@ BODY
 The `PREFIX` can be:
 
 * `BUG`: A bug was fixed. Likely there is one or multiple issues. Then write in
-   the `BODY`: `Closes #123` where 123 is the issue number on Github.
+   the `BODY`: `Closes #123` where 123 is the issue number on GitHub.
    It would be absolutely amazing if you could write a regression test in those
    cases. That is a test that would fail without the fix.
 * `ENH`: A new feature! Describe in the body what it can be used for.

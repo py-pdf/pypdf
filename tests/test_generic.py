@@ -1,5 +1,4 @@
 import os
-import time
 from io import BytesIO
 from pathlib import Path
 from unittest.mock import patch
@@ -8,7 +7,6 @@ import pytest
 
 from PyPDF2 import PdfMerger, PdfReader, PdfWriter
 from PyPDF2.constants import CheckboxRadioButtonAttributes
-from PyPDF2.constants import TypFitArguments as TF
 from PyPDF2.errors import PdfReadError, PdfStreamError
 from PyPDF2.generic import (
     AnnotationBuilder,
@@ -17,13 +15,16 @@ from PyPDF2.generic import (
     ByteStringObject,
     Destination,
     DictionaryObject,
+    Fit,
     FloatObject,
     IndirectObject,
     NameObject,
     NullObject,
     NumberObject,
     OutlineItem,
+    PdfObject,
     RectangleObject,
+    StreamObject,
     TextStringObject,
     TreeObject,
     create_string_object,
@@ -38,6 +39,12 @@ from . import ReaderDummy, get_pdf_from_url
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
+
+
+class ChildDummy(DictionaryObject):
+    @property
+    def indirect_reference(self):
+        return self
 
 
 def test_float_object_exception(caplog):
@@ -171,19 +178,6 @@ def test_readStringFromStream_excape_digit2():
     assert read_string_from_stream(stream) == "hello \x01\x02\x03\x04"
 
 
-def test_readStringFromStream_performance():
-    """
-    This test simulates reading an embedded base64 image of 256kb.
-    It should be faster than a second, even on ancient machines.
-    Runs < 100ms on a 2019 notebook. Takes 10 seconds prior to #1350.
-    """
-    stream = BytesIO(b"(" + b"".join([b"x"] * 1024 * 256) + b")")
-    start = time.time()
-    assert read_string_from_stream(stream)
-    end = time.time()
-    assert end - start < 2, test_readStringFromStream_performance.__doc__
-
-
 def test_NameObject(caplog):
     stream = BytesIO(b"x")
     with pytest.raises(PdfReadError) as exc:
@@ -242,13 +236,7 @@ def test_NameObject(caplog):
 
 def test_destination_fit_r():
     d = Destination(
-        TextStringObject("title"),
-        NullObject(),
-        NameObject(TF.FIT_R),
-        FloatObject(0),
-        FloatObject(0),
-        FloatObject(0),
-        FloatObject(0),
+        TextStringObject("title"), NullObject(), Fit.fit_rectangle(0, 0, 0, 0)
     )
     assert d.title == NameObject("title")
     assert d.typ == "/FitR"
@@ -262,28 +250,18 @@ def test_destination_fit_r():
 
 
 def test_destination_fit_v():
-    Destination(NameObject("title"), NullObject(), NameObject(TF.FIT_V), FloatObject(0))
+    Destination(NameObject("title"), NullObject(), Fit.fit_vertically(left=0))
 
     # Trigger Exception
-    Destination(NameObject("title"), NullObject(), NameObject(TF.FIT_V), None)
-
-
-def test_destination_exception():
-    with pytest.raises(PdfReadError) as exc:
-        Destination(
-            NameObject("title"), NullObject(), NameObject("foo"), FloatObject(0)
-        )
-    assert exc.value.args[0] == "Unknown Destination Type: 'foo'"
+    Destination(NameObject("title"), NullObject(), Fit.fit_vertically(left=None))
 
 
 def test_outline_item_write_to_stream():
     stream = BytesIO()
-    oi = OutlineItem(
-        NameObject("title"), NullObject(), NameObject(TF.FIT_V), FloatObject(0)
-    )
+    oi = OutlineItem(NameObject("title"), NullObject(), Fit.fit_vertically(left=0))
     oi.write_to_stream(stream, None)
     stream.seek(0, 0)
-    assert stream.read() == b"<<\n/Title title\n/Dest [ null /FitV 0 ]\n>>"
+    assert stream.read() == b"<<\n/Title (title)\n/Dest [ null /FitV 0 ]\n>>"
 
 
 def test_encode_pdfdocencoding_keyerror():
@@ -298,6 +276,20 @@ def test_read_object_comment_exception():
     with pytest.raises(PdfStreamError) as exc:
         read_object(stream, pdf)
     assert exc.value.args[0] == "File ended unexpectedly."
+
+
+def test_read_object_empty():
+    stream = BytesIO(b"endobj")
+    pdf = None
+    assert isinstance(read_object(stream, pdf), NullObject)
+
+
+def test_read_object_invalid():
+    stream = BytesIO(b"hello")
+    pdf = None
+    with pytest.raises(PdfReadError) as exc:
+        read_object(stream, pdf)
+    assert "hello" in exc.value.args[0]
 
 
 def test_read_object_comment():
@@ -472,24 +464,22 @@ def test_TextStringObject_autodetect_utf16():
 
 
 def test_remove_child_not_in_tree():
+
     tree = TreeObject()
     with pytest.raises(ValueError) as exc:
-        tree.remove_child(NameObject("foo"))
+        tree.remove_child(ChildDummy())
     assert exc.value.args[0] == "Removed child does not appear to be a tree item"
 
 
 def test_remove_child_not_in_that_tree():
-    class ChildDummy:
-        def __init__(self, parent):
-            self.parent = parent
-
-        def get_object(self):
-            tree = DictionaryObject()
-            tree[NameObject("/Parent")] = self.parent
-            return tree
 
     tree = TreeObject()
-    child = ChildDummy(TreeObject())
+    tree.indirect_reference = NullObject()
+    child = TreeObject()
+    child.indirect_reference = NullObject()
+    with pytest.raises(ValueError) as exc:
+        child.remove_from_tree()
+    assert exc.value.args[0] == "Removed child does not appear to be a tree item"
     tree.add_child(child, ReaderDummy())
     with pytest.raises(ValueError) as exc:
         tree.remove_child(child)
@@ -497,20 +487,19 @@ def test_remove_child_not_in_that_tree():
 
 
 def test_remove_child_not_found_in_tree():
-    class ChildDummy:
-        def __init__(self, parent):
-            self.parent = parent
-
-        def get_object(self):
-            tree = DictionaryObject()
-            tree[NameObject("/Parent")] = self.parent
-            return tree
+    class ChildDummy(DictionaryObject):
+        @property
+        def indirect_reference(self):
+            return self
 
     tree = TreeObject()
-    child = ChildDummy(tree)
+    tree.indirect_reference = NullObject()
+    child = ChildDummy(TreeObject())
     tree.add_child(child, ReaderDummy())
+    child2 = ChildDummy(TreeObject())
+    child2[NameObject("/Parent")] = tree
     with pytest.raises(ValueError) as exc:
-        tree.remove_child(child)
+        tree.remove_child(child2)
     assert exc.value.args[0] == "Removal couldn't find item in tree"
 
 
@@ -540,7 +529,7 @@ def test_remove_child_found_in_tree():
     assert len([el for el in tree.children()]) == 2
 
     # Remove last child
-    tree.remove_child(child2)
+    tree.remove_child(child2_ref)
     assert tree[NameObject("/Count")] == 1
     assert len([el for el in tree.children()]) == 1
 
@@ -573,7 +562,8 @@ def test_remove_child_found_in_tree():
     assert len([el for el in tree.children()]) == 3
 
     # Remove middle child
-    tree.remove_child(child4)
+    # tree.remove_child(child4)
+    child4.remove_from_tree()
     assert tree[NameObject("/Count")] == 2
     assert len([el for el in tree.children()]) == 2
 
@@ -586,8 +576,9 @@ def test_remove_child_in_tree():
     tree = TreeObject()
     reader = PdfReader(pdf)
     writer = PdfWriter()
+    writer._add_object(tree)
     writer.add_page(reader.pages[0])
-    writer.add_outline_item("foo", pagenum=0)
+    writer.add_outline_item("foo", page_number=0)
     obj = writer._objects[-1]
     tree.add_child(obj, writer)
     tree.remove_child(obj)
@@ -595,6 +586,7 @@ def test_remove_child_in_tree():
     tree.empty_tree()
 
 
+@pytest.mark.external
 def test_dict_read_from_stream(caplog):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/984/984877.pdf"
     name = "tika-984877.pdf"
@@ -608,6 +600,7 @@ def test_dict_read_from_stream(caplog):
     )
 
 
+@pytest.mark.external
 def test_parse_content_stream_peek_percentage():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/985/985770.pdf"
     name = "tika-985770.pdf"
@@ -617,6 +610,7 @@ def test_parse_content_stream_peek_percentage():
         page.extract_text()
 
 
+@pytest.mark.external
 def test_read_inline_image_no_has_q():
     # pdf/df7e1add3156af17a372bc165e47a244.pdf
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/998/998719.pdf"
@@ -627,6 +621,7 @@ def test_read_inline_image_no_has_q():
         page.extract_text()
 
 
+@pytest.mark.external
 def test_read_inline_image_loc_neg_1():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/935/935066.pdf"
     name = "tika-935066.pdf"
@@ -636,6 +631,8 @@ def test_read_inline_image_loc_neg_1():
         page.extract_text()
 
 
+@pytest.mark.slow
+@pytest.mark.external
 def test_text_string_write_to_stream():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924562.pdf"
     name = "tika-924562.pdf"
@@ -645,6 +642,7 @@ def test_text_string_write_to_stream():
         page.compress_content_streams()
 
 
+@pytest.mark.external
 def test_name_object_read_from_stream_unicode_error():  # L588
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/974/974966.pdf"
     name = "tika-974966.pdf"
@@ -654,6 +652,7 @@ def test_name_object_read_from_stream_unicode_error():  # L588
         page.extract_text()
 
 
+@pytest.mark.external
 def test_bool_repr(tmp_path):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/932/932449.pdf"
     name = "tika-932449.pdf"
@@ -673,6 +672,7 @@ def test_bool_repr(tmp_path):
     )
 
 
+@pytest.mark.external
 @patch("PyPDF2._reader.logger_warning")
 def test_issue_997(mock_logger_warning):
     url = "https://github.com/py-pdf/PyPDF2/files/8908874/Exhibit_A-2_930_Enterprise_Zone_Tax_Credits_final.pdf"
@@ -766,7 +766,34 @@ def test_annotation_builder_line():
     writer.add_annotation(0, line_annotation)
 
     # Assert: You need to inspect the file manually
-    target = "annotated-pdf.pd"
+    target = "annotated-pdf.pdf"
+    with open(target, "wb") as fp:
+        writer.write(fp)
+
+    os.remove(target)  # comment this out for manual inspection
+
+
+def test_annotation_builder_square():
+    # Arrange
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    writer = PdfWriter()
+    writer.add_page(page)
+
+    # Act
+    square_annotation = AnnotationBuilder.rectangle(
+        rect=(50, 550, 200, 650), interiour_color="ff0000"
+    )
+    writer.add_annotation(0, square_annotation)
+
+    square_annotation = AnnotationBuilder.rectangle(
+        rect=(40, 400, 150, 450),
+    )
+    writer.add_annotation(0, square_annotation)
+
+    # Assert: You need to inspect the file manually
+    target = "annotated-pdf-square.pdf"
     with open(target, "wb") as fp:
         writer.write(fp)
 
@@ -918,3 +945,51 @@ def test_create_string_object_force():
 )
 def test_float_object_decimal_to_string(value, expected):
     assert repr(FloatObject(value)) == expected
+
+
+def test_cloning(caplog):
+    # pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    # reader = PdfReader(pdf_path)
+    # page = reader.pages[0]
+    writer = PdfWriter()
+    with pytest.raises(Exception) as exc:
+        PdfObject().clone(writer)
+    assert "clone PdfObject" in exc.value.args[0]
+
+    obj1 = DictionaryObject()
+    obj1.indirect_reference = None
+    n = len(writer._objects)
+    obj2 = obj1.clone(writer)
+    assert len(writer._objects) == n + 1
+    obj3 = obj2.clone(writer)
+    assert len(writer._objects) == n + 1
+    assert obj2.indirect_reference == obj3.indirect_reference
+    obj3 = obj2.indirect_reference.clone(writer)
+    assert len(writer._objects) == n + 1
+    assert obj2.indirect_reference == obj3.indirect_reference
+    assert (
+        obj2.indirect_reference
+        == obj2._reference_clone(obj2, writer).indirect_reference
+    )
+    assert len(writer._objects) == n + 1
+    assert obj2.indirect_reference == obj3.indirect_reference
+
+    obj3 = obj2.indirect_reference.clone(writer, True)
+    assert len(writer._objects) == n + 2
+    assert obj2.indirect_reference != obj3.indirect_reference
+
+    arr1 = ArrayObject([obj2])
+    arr2 = arr1.clone(writer)
+    arr3 = arr2.clone(writer)
+    assert arr2 == arr3
+    obj10 = StreamObject()
+    arr1 = ArrayObject([obj10])
+    obj11 = obj10.clone(writer)
+    assert arr1[0] == obj11
+
+    obj20 = DictionaryObject(
+        {NameObject("/Test"): NumberObject(1), NameObject("/Test2"): StreamObject()}
+    )
+    obj21 = obj20.clone(writer, ignore_fields=None)
+    assert "/Test" in obj21
+    assert isinstance(obj21.get("/Test2"), IndirectObject)

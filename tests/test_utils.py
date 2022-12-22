@@ -10,7 +10,7 @@ from PyPDF2._utils import (
     File,
     _get_max_pdf_version_header,
     _human_readable_bytes,
-    deprecate_bookmark,
+    deprecation_bookmark,
     mark_location,
     matrix_multiply,
     read_block_backwards,
@@ -20,7 +20,7 @@ from PyPDF2._utils import (
     skip_over_comment,
     skip_over_whitespace,
 )
-from PyPDF2.errors import PdfReadError, PdfStreamError
+from PyPDF2.errors import DeprecationError, PdfReadError, PdfStreamError
 
 from . import get_pdf_from_url
 
@@ -109,7 +109,7 @@ def test_b():
 
 
 def test_deprecate_no_replacement():
-    with pytest.warns(PendingDeprecationWarning) as warn:
+    with pytest.warns(DeprecationWarning) as warn:
         PyPDF2._utils.deprecate_no_replacement("foo")
     error_msg = "foo is deprecated and will be removed in PyPDF2 3.0.0."
     assert warn[0].message.args[0] == error_msg
@@ -236,20 +236,18 @@ def test_read_block_backwards_exception():
     assert exc.value.args[0] == "Could not read malformed PDF file"
 
 
-def test_deprecate_bookmark():
-    @deprecate_bookmark(old_param="new_param")
+def test_deprecation_bookmark():
+    @deprecation_bookmark(old_param="new_param")
     def foo(old_param=1, baz=2):
         return old_param * baz
 
-    with pytest.raises(TypeError) as exc:
+    with pytest.raises(DeprecationError) as exc:
         foo(old_param=12, new_param=13)
-    expected_msg = (
-        "foo received both old_param and new_param as an argument. "
-        "old_param is deprecated. Use new_param instead."
-    )
+    expected_msg = "old_param is deprecated as an argument. Use new_param instead"
     assert exc.value.args[0] == expected_msg
 
 
+@pytest.mark.external
 def test_escapedcode_followed_by_int():
     # iss #1294
     url = "https://github.com/timedegree/playground_files/raw/main/%E8%AE%BA%E6%96%87/AN%20EXACT%20ANALYTICAL%20SOLUTION%20OF%20KEPLER'S%20EQUATION.pdf"

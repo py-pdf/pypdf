@@ -89,6 +89,36 @@ with open("annotated-pdf.pdf", "wb") as fp:
     writer.write(fp)
 ```
 
+## Rectangle
+
+If you want to add a rectangle like this:
+
+![](annotation-square.png)
+
+you can use the {py:class}`AnnotationBuilder <PyPDF2.generic.AnnotationBuilder>`:
+
+```python
+pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+reader = PdfReader(pdf_path)
+page = reader.pages[0]
+writer = PdfWriter()
+writer.add_page(page)
+
+# Add the line
+annotation = AnnotationBuilder.rectangle(
+    rect=(50, 550, 200, 650),
+)
+writer.add_annotation(page_number=0, annotation=annotation)
+
+# Write the annotated file to disk
+with open("annotated-pdf.pdf", "wb") as fp:
+    writer.write(fp)
+```
+
+If you want the rectangle to be filled, use the `interiour_color="ff0000"` parameter.
+
+This method uses the "square" annotation type of the PDF format.
+
 ## Link
 
 If you want to add a link, you can use

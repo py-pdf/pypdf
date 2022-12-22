@@ -4,11 +4,11 @@ from ._base import (
     BooleanObject,
     FloatObject,
     NameObject,
-    NullObject,
     NumberObject,
     TextStringObject,
 )
 from ._data_structures import ArrayObject, DictionaryObject
+from ._fit import DEFAULT_FIT, Fit
 from ._rectangle import RectangleObject
 from ._utils import hex_to_rgb
 
@@ -166,13 +166,39 @@ class AnnotationBuilder:
         return line_obj
 
     @staticmethod
+    def rectangle(
+        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        interiour_color: Optional[str] = None,
+    ) -> DictionaryObject:
+        """
+        Draw a rectangle on the PDF.
+
+        :param RectangleObject rect: or array of four
+                integers specifying the clickable rectangular area
+                ``[xLL, yLL, xUR, yUR]``
+        """
+        square_obj = DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Annot"),
+                NameObject("/Subtype"): NameObject("/Square"),
+                NameObject("/Rect"): RectangleObject(rect),
+            }
+        )
+
+        if interiour_color:
+            square_obj[NameObject("/IC")] = ArrayObject(
+                [FloatObject(n) for n in hex_to_rgb(interiour_color)]
+            )
+
+        return square_obj
+
+    @staticmethod
     def link(
         rect: Union[RectangleObject, Tuple[float, float, float, float]],
         border: Optional[ArrayObject] = None,
         url: Optional[str] = None,
         target_page_index: Optional[int] = None,
-        fit: FitType = "/Fit",
-        fit_args: Tuple[ZoomArgType, ...] = tuple(),
+        fit: Fit = DEFAULT_FIT,
     ) -> DictionaryObject:
         """
         Add a link to the document.
@@ -196,30 +222,7 @@ class AnnotationBuilder:
         :param str url: Link to a website (if you want to make an external link)
         :param int target_page_index: index of the page to which the link should go
                                 (if you want to make an internal link)
-        :param str fit: Page fit or 'zoom' option (see below). Additional arguments may need
-            to be supplied. Passing ``None`` will be read as a null value for that coordinate.
-        :param Tuple[int, ...] fit_args: Parameters for the fit argument.
-
-
-        .. list-table:: Valid ``fit`` arguments (see Table 8.2 of the PDF 1.7 reference for details)
-           :widths: 50 200
-
-           * - /Fit
-             - No additional arguments
-           * - /XYZ
-             - [left] [top] [zoomFactor]
-           * - /FitH
-             - [top]
-           * - /FitV
-             - [left]
-           * - /FitR
-             - [left] [bottom] [right] [top]
-           * - /FitB
-             - No additional arguments
-           * - /FitBH
-             - [top]
-           * - /FitBV
-             - [left]
+        :param Fit fit: Page fit or 'zoom' option.
         """
         from ..types import BorderArrayType
 
@@ -260,15 +263,12 @@ class AnnotationBuilder:
                 }
             )
         if is_internal:
-            fit_arg_ready = [
-                NullObject() if a is None else NumberObject(a) for a in fit_args
-            ]
             # This needs to be updated later!
             dest_deferred = DictionaryObject(
                 {
                     "target_page_index": NumberObject(target_page_index),
-                    "fit": NameObject(fit),
-                    "fit_args": ArrayObject(fit_arg_ready),
+                    "fit": NameObject(fit.fit_type),
+                    "fit_args": fit.fit_args,
                 }
             )
             link_obj[NameObject("/Dest")] = dest_deferred

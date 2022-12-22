@@ -564,7 +564,13 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
 
     :return: Tuple[file extension, bytes]
     """
-    from PIL import Image
+    try:
+        from PIL import Image
+    except ImportError:
+        raise ImportError(
+            "pillow is required to do image extraction. "
+            "It can be installed via 'pip install PyPDF2[image]'"
+        )
 
     size = (x_object_obj[IA.WIDTH], x_object_obj[IA.HEIGHT])
     data = x_object_obj.get_data()  # type: ignore
@@ -596,10 +602,14 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
                 from .generic import ByteStringObject
 
                 if isinstance(lookup, ByteStringObject):
+                    if base == ColorSpaces.DEVICE_GRAY and len(lookup) == hival + 1:
+                        lookup = b"".join(
+                            [lookup[i : i + 1] * 3 for i in range(len(lookup))]
+                        )
                     img.putpalette(lookup)
                 else:
                     img.putpalette(lookup.get_data())
-                img = img.convert("RGB")
+                img = img.convert("L" if base == ColorSpaces.DEVICE_GRAY else "RGB")
             if G.S_MASK in x_object_obj:  # add alpha channel
                 alpha = Image.frombytes("L", size, x_object_obj[G.S_MASK].get_data())
                 img.putalpha(alpha)

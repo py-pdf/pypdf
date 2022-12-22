@@ -11,7 +11,7 @@ import pytest
 from PyPDF2 import PdfReader, PdfWriter, Transformation
 from PyPDF2._page import PageObject, set_custom_rtl
 from PyPDF2.constants import PageAttributes as PG
-from PyPDF2.errors import PdfReadWarning
+from PyPDF2.errors import DeprecationError, PdfReadWarning
 from PyPDF2.generic import (
     ArrayObject,
     DictionaryObject,
@@ -27,11 +27,14 @@ from . import get_pdf_from_url, normalize_warnings
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
 RESOURCE_ROOT = PROJECT_ROOT / "resources"
-EXTERNAL_ROOT = PROJECT_ROOT / "sample-files"
+SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 
 
 def get_all_sample_files():
-    with open(EXTERNAL_ROOT / "files.json") as fp:
+    meta_file = SAMPLE_ROOT / "files.json"
+    if not os.path.isfile(meta_file):
+        return {"data": []}
+    with open(meta_file) as fp:
         data = fp.read()
     meta = json.loads(data)
     return meta
@@ -40,7 +43,7 @@ def get_all_sample_files():
 all_files_meta = get_all_sample_files()
 
 
-@pytest.mark.external()
+@pytest.mark.samples
 @pytest.mark.parametrize(
     "meta",
     [m for m in all_files_meta["data"] if not m["encrypted"]],
@@ -48,7 +51,7 @@ all_files_meta = get_all_sample_files()
 )
 @pytest.mark.filterwarnings("ignore::PyPDF2.errors.PdfReadWarning")
 def test_read(meta):
-    pdf_path = EXTERNAL_ROOT / meta["path"]
+    pdf_path = SAMPLE_ROOT / meta["path"]
     reader = PdfReader(pdf_path)
     try:
         reader.pages[0]
@@ -57,6 +60,8 @@ def test_read(meta):
     assert len(reader.pages) == meta["pages"]
 
 
+@pytest.mark.samples
+@pytest.mark.external
 @pytest.mark.parametrize(
     ("pdf_path", "password"),
     [
@@ -127,8 +132,10 @@ def test_transformation_equivalence():
     # Option 2: The old way
     page_box2 = deepcopy(page_box)
     page_base2 = deepcopy(page_base)
-    with pytest.warns(PendingDeprecationWarning):
+    with pytest.raises(DeprecationError):
         page_base2.mergeTransformedPage(page_box2, op, expand=False)
+    page_box2.add_transformation(op)
+    page_base2.merge_page(page_box2)
 
     # Should be the same
     assert page_base1[NameObject(PG.CONTENTS)] == page_base2[NameObject(PG.CONTENTS)]
@@ -155,26 +162,27 @@ def compare_dict_objects(d1, d2):
             assert d1[k] == d2[k]
 
 
+@pytest.mark.slow
 def test_page_transformations():
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
 
     page: PageObject = reader.pages[0]
-    with pytest.warns(PendingDeprecationWarning):
+    with pytest.raises(DeprecationError):
         page.mergeRotatedPage(page, 90, expand=True)
-    with pytest.warns(PendingDeprecationWarning):
+    with pytest.raises(DeprecationError):
         page.mergeRotatedScaledPage(page, 90, 1, expand=True)
-    with pytest.warns(PendingDeprecationWarning):
+    with pytest.raises(DeprecationError):
         page.mergeRotatedScaledTranslatedPage(
             page, 90, scale=1, tx=1, ty=1, expand=True
         )
-    with pytest.warns(PendingDeprecationWarning):
+    with pytest.raises(DeprecationError):
         page.mergeRotatedTranslatedPage(page, 90, 100, 100, expand=False)
-    with pytest.warns(PendingDeprecationWarning):
+    with pytest.raises(DeprecationError):
         page.mergeScaledPage(page, 2, expand=False)
-    with pytest.warns(PendingDeprecationWarning):
+    with pytest.raises(DeprecationError):
         page.mergeScaledTranslatedPage(page, 1, 1, 1)
-    with pytest.warns(PendingDeprecationWarning):
+    with pytest.raises(DeprecationError):
         page.mergeTranslatedPage(page, 100, 100, expand=False)
     page.add_transformation((1, 0, 0, 0, 0, 0))
 
@@ -278,6 +286,7 @@ def test_multi_language():
     set_custom_rtl(-1, -1, [])  # to prevent further errors
 
 
+@pytest.mark.external
 def test_extract_text_single_quote_op():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/964/964029.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-964029.pdf")))
@@ -285,6 +294,7 @@ def test_extract_text_single_quote_op():
         page.extract_text()
 
 
+@pytest.mark.external
 def test_no_ressources_on_text_extract():
     url = "https://github.com/py-pdf/PyPDF2/files/9428434/TelemetryTX_EM.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-964029.pdf")))
@@ -292,6 +302,7 @@ def test_no_ressources_on_text_extract():
         page.extract_text()
 
 
+@pytest.mark.external
 def test_iss_1142():
     # check fix for problem of context save/restore (q/Q)
     url = "https://github.com/py-pdf/PyPDF2/files/9150656/ST.2019.PDF"
@@ -308,6 +319,8 @@ def test_iss_1142():
     assert txt.find("郑州分公司") > 0
 
 
+@pytest.mark.external
+@pytest.mark.slow
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -339,6 +352,8 @@ def test_extract_text_page_pdf(url, name):
         page.extract_text()
 
 
+@pytest.mark.external
+@pytest.mark.slow
 def test_extract_text_page_pdf_impossible_decode_xform(caplog):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/972/972962.pdf"
     name = "tika-972962.pdf"
@@ -349,6 +364,8 @@ def test_extract_text_page_pdf_impossible_decode_xform(caplog):
     assert warn_msgs == [""]  # text extraction recognise no text
 
 
+@pytest.mark.external
+@pytest.mark.slow
 def test_extract_text_operator_t_star():  # L1266, L1267
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/967/967943.pdf"
     name = "tika-967943.pdf"
@@ -556,7 +573,7 @@ def test_extract_text_visitor_callbacks():
     )
 
     # We see ten rectangles (5 tabs, 5 boxes) but there are 64 rectangles (including some invisible ones).
-    assert 60 == len(rectangles)
+    assert len(rectangles) == 60
     rectangle2texts = {}
     for t in texts:
         for r in rectangles:
@@ -566,7 +583,7 @@ def test_extract_text_visitor_callbacks():
                     rtexts.append(t.text)
                 break
     # Five boxes and the figure-description below.
-    assert 11 == len(rectangle2texts)
+    assert len(rectangle2texts) == 11
     box_texts = [
         re.sub(" *\n", " ", "".join(texts).strip())
         for texts in rectangle2texts.values()
@@ -805,6 +822,7 @@ def test_annotation_setter():
     os.remove(target)  # remove for testing
 
 
+@pytest.mark.external
 @pytest.mark.xfail(reason="#1091")
 def test_text_extraction_issue_1091():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/966/966635.pdf"
@@ -816,6 +834,7 @@ def test_text_extraction_issue_1091():
         page.extract_text()
 
 
+@pytest.mark.external
 def test_empyt_password_1088():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/941/941536.pdf"
     name = "tika-941536.pdf"
@@ -826,12 +845,13 @@ def test_empyt_password_1088():
 
 @pytest.mark.xfail(reason="#1088 / #1126")
 def test_arab_text_extraction():
-    reader = PdfReader(EXTERNAL_ROOT / "015-arabic/habibi.pdf")
+    reader = PdfReader(SAMPLE_ROOT / "015-arabic/habibi.pdf")
     assert reader.pages[0].extract_text() == "habibi حَبيبي"
 
 
+@pytest.mark.samples
 def test_read_link_annotation():
-    reader = PdfReader(EXTERNAL_ROOT / "016-libre-office-link/libre-office-link.pdf")
+    reader = PdfReader(SAMPLE_ROOT / "016-libre-office-link/libre-office-link.pdf")
     assert len(reader.pages[0].annotations) == 1
     annot = dict(reader.pages[0].annotations[0].get_object())
     expected = {
@@ -859,6 +879,7 @@ def test_read_link_annotation():
     assert annot == expected
 
 
+@pytest.mark.external
 def test_no_resources():
     url = "https://github.com/py-pdf/PyPDF2/files/9572045/108.pdf"
     name = "108.pdf"
