@@ -53,7 +53,8 @@ from ._utils import (
     StreamType,
     b_,
     deprecate_no_replacement,
-    deprecate_with_replacement,
+    deprecation_no_replacement,
+    deprecation_with_replacement,
     logger_warning,
     read_non_whitespace,
     read_previous_line,
@@ -111,7 +112,7 @@ def convert_to_int(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:
 def convertToInt(
     d: bytes, size: int
 ) -> Union[int, Tuple[Any, ...]]:  # pragma: no cover
-    deprecate_with_replacement("convertToInt", "convert_to_int")
+    deprecation_with_replacement("convertToInt", "convert_to_int")
     return convert_to_int(d, size)
 
 
@@ -146,7 +147,7 @@ class DocumentInformation(DictionaryObject):
 
             Use the attributes (e.g. :py:attr:`title` / :py:attr:`author`).
         """
-        deprecate_no_replacement("getText")
+        deprecation_no_replacement("getText", "3.0.0")
         return self._get_text(key)
 
     @property
@@ -382,7 +383,7 @@ class PdfReader:
 
             Use the attribute :py:attr:`metadata` instead.
         """
-        deprecate_with_replacement("getDocumentInfo", "metadata")
+        deprecation_with_replacement("getDocumentInfo", "metadata", "3.0.0")
         return self.metadata
 
     @property
@@ -392,7 +393,7 @@ class PdfReader:
 
             Use the attribute :py:attr:`metadata` instead.
         """
-        deprecate_with_replacement("documentInfo", "metadata")
+        deprecation_with_replacement("documentInfo", "metadata", "3.0.0")
         return self.metadata
 
     @property
@@ -416,7 +417,7 @@ class PdfReader:
 
             Use the attribute :py:attr:`xmp_metadata` instead.
         """
-        deprecate_with_replacement("getXmpMetadata", "xmp_metadata")
+        deprecation_with_replacement("getXmpMetadata", "xmp_metadata", "3.0.0")
         return self.xmp_metadata
 
     @property
@@ -426,7 +427,7 @@ class PdfReader:
 
             Use the attribute :py:attr:`xmp_metadata` instead.
         """
-        deprecate_with_replacement("xmpMetadata", "xmp_metadata")
+        deprecation_with_replacement("xmpMetadata", "xmp_metadata", "3.0.0")
         return self.xmp_metadata
 
     def _get_num_pages(self) -> int:
@@ -453,7 +454,7 @@ class PdfReader:
 
             Use :code:`len(reader.pages)` instead.
         """
-        deprecate_with_replacement("reader.getNumPages", "len(reader.pages)")
+        deprecation_with_replacement("reader.getNumPages", "len(reader.pages)", "3.0.0")
         return self._get_num_pages()
 
     @property
@@ -463,7 +464,7 @@ class PdfReader:
 
             Use :code:`len(reader.pages)` instead.
         """
-        deprecate_with_replacement("reader.numPages", "len(reader.pages)")
+        deprecation_with_replacement("reader.numPages", "len(reader.pages)", "3.0.0")
         return self._get_num_pages()
 
     def getPage(self, pageNumber: int) -> PageObject:  # pragma: no cover
@@ -472,8 +473,8 @@ class PdfReader:
 
             Use :code:`reader.pages[page_number]` instead.
         """
-        deprecate_with_replacement(
-            "reader.getPage(pageNumber)", "reader.pages[page_number]"
+        deprecation_with_replacement(
+            "reader.getPage(pageNumber)", "reader.pages[page_number]", "3.0.0"
         )
         return self._get_page(pageNumber)
 
@@ -499,7 +500,7 @@ class PdfReader:
 
             Use :py:attr:`named_destinations` instead.
         """
-        deprecate_with_replacement("namedDestinations", "named_destinations")
+        deprecation_with_replacement("namedDestinations", "named_destinations", "3.0.0")
         return self.named_destinations
 
     @property
@@ -569,7 +570,7 @@ class PdfReader:
 
             Use :meth:`get_fields` instead.
         """
-        deprecate_with_replacement("getFields", "get_fields")
+        deprecation_with_replacement("getFields", "get_fields", "3.0.0")
         return self.get_fields(tree, retval, fileobj)
 
     def _build_field(
@@ -664,7 +665,9 @@ class PdfReader:
 
             Use :meth:`get_form_text_fields` instead.
         """
-        deprecate_with_replacement("getFormTextFields", "get_form_text_fields")
+        deprecation_with_replacement(
+            "getFormTextFields", "get_form_text_fields", "3.0.0"
+        )
         return self.get_form_text_fields()
 
     def _get_named_destinations(
@@ -726,7 +729,9 @@ class PdfReader:
 
             Use :py:attr:`named_destinations` instead.
         """
-        deprecate_with_replacement("getNamedDestinations", "named_destinations")
+        deprecation_with_replacement(
+            "getNamedDestinations", "named_destinations", "3.0.0"
+        )
         return self._get_named_destinations(tree, retval)
 
     @property
@@ -746,7 +751,7 @@ class PdfReader:
 
             Use :py:attr:`outline` instead.
         """
-        deprecate_with_replacement("outlines", "outline")
+        deprecation_with_replacement("outlines", "outline", "3.0.0")
         return self.outline
 
     def _get_outline(
@@ -798,7 +803,7 @@ class PdfReader:
 
             Use :py:attr:`outline` instead.
         """
-        deprecate_with_replacement("getOutlines", "outline")
+        deprecation_with_replacement("getOutlines", "outline", "3.0.0")
         return self._get_outline(node, outline)
 
     @property
@@ -850,7 +855,7 @@ class PdfReader:
 
             Use :meth:`get_page_number` instead.
         """
-        deprecate_with_replacement("getPageNumber", "get_page_number")
+        deprecation_with_replacement("getPageNumber", "get_page_number", "3.0.0")
         return self.get_page_number(page)
 
     def get_destination_page_number(self, destination: Destination) -> int:
@@ -870,8 +875,8 @@ class PdfReader:
 
             Use :meth:`get_destination_page_number` instead.
         """
-        deprecate_with_replacement(
-            "getDestinationPageNumber", "get_destination_page_number"
+        deprecation_with_replacement(
+            "getDestinationPageNumber", "get_destination_page_number", "3.0.0"
         )
         return self.get_destination_page_number(destination)
 
@@ -1016,7 +1021,7 @@ class PdfReader:
 
             Use :py:attr:`page_layout` instead.
         """
-        deprecate_with_replacement("getPageLayout", "page_layout")
+        deprecation_with_replacement("getPageLayout", "page_layout", "3.0.0")
         return self.page_layout
 
     @property
@@ -1026,7 +1031,7 @@ class PdfReader:
 
             Use :py:attr:`page_layout` instead.
         """
-        deprecate_with_replacement("pageLayout", "page_layout")
+        deprecation_with_replacement("pageLayout", "page_layout", "3.0.0")
         return self.page_layout
 
     @property
@@ -1063,7 +1068,7 @@ class PdfReader:
 
             Use :py:attr:`page_mode` instead.
         """
-        deprecate_with_replacement("getPageMode", "page_mode")
+        deprecation_with_replacement("getPageMode", "page_mode", "3.0.0")
         return self.page_mode
 
     @property
@@ -1073,7 +1078,7 @@ class PdfReader:
 
             Use :py:attr:`page_mode` instead.
         """
-        deprecate_with_replacement("pageMode", "page_mode")
+        deprecation_with_replacement("pageMode", "page_mode", "3.0.0")
         return self.page_mode
 
     def _flatten(
@@ -1321,7 +1326,7 @@ class PdfReader:
 
             Use :meth:`get_object` instead.
         """
-        deprecate_with_replacement("getObject", "get_object")
+        deprecation_with_replacement("getObject", "get_object", "3.0.0")
         return self.get_object(indirectReference)
 
     def read_object_header(self, stream: StreamType) -> Tuple[int, int]:
@@ -1360,7 +1365,7 @@ class PdfReader:
 
             Use :meth:`read_object_header` instead.
         """
-        deprecate_with_replacement("readObjectHeader", "read_object_header")
+        deprecation_with_replacement("readObjectHeader", "read_object_header", "3.0.0")
         return self.read_object_header(stream)
 
     def cache_get_indirect_object(
@@ -1376,8 +1381,8 @@ class PdfReader:
 
             Use :meth:`cache_get_indirect_object` instead.
         """
-        deprecate_with_replacement(
-            "cacheGetIndirectObject", "cache_get_indirect_object"
+        deprecation_with_replacement(
+            "cacheGetIndirectObject", "cache_get_indirect_object", "3.0.0"
         )
         return self.cache_get_indirect_object(generation, idnum)
 
@@ -1402,7 +1407,7 @@ class PdfReader:
 
             Use :meth:`cache_indirect_object` instead.
         """
-        deprecate_with_replacement("cacheIndirectObject", "cache_indirect_object")
+        deprecation_with_replacement("cacheIndirectObject", "cache_indirect_object")
         return self.cache_indirect_object(generation, idnum, obj)
 
     def read(self, stream: StreamType) -> None:
@@ -1873,7 +1878,7 @@ class PdfReader:
         self, stream: StreamType, limit_offset: int = 0
     ) -> bytes:  # pragma: no cover
         """.. deprecated:: 1.28.0"""
-        deprecate_no_replacement("readNextEndLine")
+        deprecation_no_replacement("readNextEndLine", "3.0.0")
         return self.read_next_end_line(stream, limit_offset)
 
     def decrypt(self, password: Union[str, bytes]) -> PasswordType:
@@ -1926,7 +1931,7 @@ class PdfReader:
 
             Use :py:attr:`is_encrypted` instead.
         """
-        deprecate_with_replacement("getIsEncrypted", "is_encrypted")
+        deprecation_with_replacement("getIsEncrypted", "is_encrypted", "3.0.0")
         return self.is_encrypted
 
     @property
@@ -1936,7 +1941,7 @@ class PdfReader:
 
             Use :py:attr:`is_encrypted` instead.
         """
-        deprecate_with_replacement("isEncrypted", "is_encrypted")
+        deprecation_with_replacement("isEncrypted", "is_encrypted", "3.0.0")
         return self.is_encrypted
 
     @property
@@ -1966,7 +1971,7 @@ class PdfReader:
 
 class PdfFileReader(PdfReader):  # pragma: no cover
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        deprecate_with_replacement("PdfFileReader", "PdfReader")
+        deprecation_with_replacement("PdfFileReader", "PdfReader", "3.0.0")
         if "strict" not in kwargs and len(args) < 2:
             kwargs["strict"] = True  # maintain the default
         super().__init__(*args, **kwargs)

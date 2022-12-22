@@ -7,6 +7,7 @@ import pytest
 
 import PyPDF2
 from PyPDF2 import PdfMerger, PdfReader, PdfWriter
+from PyPDF2.errors import DeprecationError
 from PyPDF2.generic import Destination, Fit
 
 from . import get_pdf_from_url
@@ -664,44 +665,38 @@ def test_iss1145_with_writer():
     merger.close()
 
 
-def test_deprecate_bookmark_decorator_warning():
+def test_deprecation_bookmark_decorator_deprecationexcp():
     reader = PdfReader(RESOURCE_ROOT / "outlines-with-invalid-destinations.pdf")
     merger = PdfMerger()
-    with pytest.warns(
-        UserWarning,
+    with pytest.raises(
+        DeprecationError,
         match="import_bookmarks is deprecated as an argument. Use import_outline instead",
     ):
         merger.merge(0, reader, import_bookmarks=True)
 
 
-def test_deprecate_bookmark_decorator_warning_with_writer():
+def test_deprecation_bookmark_decorator_deprecationexcp_with_writer():
     reader = PdfReader(RESOURCE_ROOT / "outlines-with-invalid-destinations.pdf")
     merger = PdfWriter()
-    with pytest.warns(
-        UserWarning,
+    with pytest.raises(
+        DeprecationError,
         match="import_bookmarks is deprecated as an argument. Use import_outline instead",
     ):
         merger.merge(0, reader, import_bookmarks=True)
 
 
-@pytest.mark.filterwarnings("ignore::UserWarning")
-def test_deprecate_bookmark_decorator_output():
+def test_deprecation_bookmark_decorator_output():
     reader = PdfReader(RESOURCE_ROOT / "outlines-with-invalid-destinations.pdf")
     merger = PdfMerger()
-    merger.merge(0, reader, import_bookmarks=True)
-    first_oi_title = 'Valid Destination: Action /GoTo Named Destination "section.1"'
-    assert merger.outline[0].title == first_oi_title
+    with pytest.raises(DeprecationError):
+        merger.merge(0, reader, import_bookmarks=True)
 
 
-@pytest.mark.filterwarnings("ignore::UserWarning")
-def test_deprecate_bookmark_decorator_output_with_writer():
+def test_deprecation_bookmark_decorator_output_with_writer():
     reader = PdfReader(RESOURCE_ROOT / "outlines-with-invalid-destinations.pdf")
     merger = PdfWriter()
-    merger.merge(0, reader, import_bookmarks=True)
-    first_oi_title = 'Valid Destination: Action /GoTo Named Destination "section.1"'
-    # TODO? :  add outline property ???
-    # assert merger.outline[0].title == first_oi_title
-    assert merger.find_outline_item(first_oi_title) == [0]
+    with pytest.raises(DeprecationError):
+        merger.merge(0, reader, import_bookmarks=True)
 
 
 @pytest.mark.external

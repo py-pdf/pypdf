@@ -1,14 +1,15 @@
 import os
+import re
 from io import BytesIO
 from pathlib import Path
 
 import pytest
 
 from PyPDF2 import PageObject, PdfMerger, PdfReader, PdfWriter
-from PyPDF2.errors import PageSizeNotDefinedError
+from PyPDF2.errors import DeprecationError, PageSizeNotDefinedError
 from PyPDF2.generic import (
-    Fit,
     ArrayObject,
+    Fit,
     IndirectObject,
     NameObject,
     NumberObject,
@@ -112,7 +113,7 @@ def writer_operate(writer):
     )
     writer.add_blank_page()
     writer.add_uri(2, "https://example.com", RectangleObject([0, 0, 100, 100]))
-    with pytest.warns(PendingDeprecationWarning):
+    with pytest.raises(DeprecationError):
         writer.add_link(2, 1, RectangleObject([0, 0, 100, 100]))
     assert writer._get_page_layout() is None
     writer.page_layout = "broken"
@@ -582,9 +583,14 @@ def test_add_link():
     for page in reader.pages:
         writer.add_page(page)
 
-    with pytest.warns(
-        PendingDeprecationWarning,
-        match="add_link is deprecated and will be removed in PyPDF2",
+    with pytest.raises(
+        DeprecationError,
+        match=(
+            re.escape(
+                "add_link is deprecated and was removed in PyPDF2 3.0.0. "
+                "Use add_annotation(AnnotationBuilder.link(...)) instead."
+            )
+        ),
     ):
         writer.add_link(
             1,
@@ -791,17 +797,17 @@ def test_add_single_annotation():
         writer.write(fp)
 
     # Cleanup
-    os.remove(target)  # remove for testing
+    os.remove(target)  # comment out for testing
 
 
-def test_deprecate_bookmark_decorator():
+def test_deprecation_bookmark_decorator():
     reader = PdfReader(RESOURCE_ROOT / "outlines-with-invalid-destinations.pdf")
     page = reader.pages[0]
     outline_item = reader.outline[0]
     writer = PdfWriter()
     writer.add_page(page)
-    with pytest.warns(
-        UserWarning,
+    with pytest.raises(
+        DeprecationError,
         match="bookmark is deprecated as an argument. Use outline_item instead",
     ):
         writer.add_outline_item_dict(bookmark=outline_item)
@@ -827,7 +833,7 @@ def test_colors_in_outline_item():
         assert [str(c) for c in outline_item.color] == [str(p) for p in purple_rgb]
 
     # Cleanup
-    os.remove(target)  # remove for testing
+    os.remove(target)  # comment out for testing
 
 
 @pytest.mark.samples

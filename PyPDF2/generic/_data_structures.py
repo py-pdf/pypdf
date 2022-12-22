@@ -40,6 +40,7 @@ from .._utils import (
     StreamType,
     b_,
     deprecate_with_replacement,
+    deprecation_with_replacement,
     hex_str,
     logger_warning,
     read_non_whitespace,
@@ -121,7 +122,7 @@ class ArrayObject(list, PdfObject):
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:  # pragma: no cover
-        deprecate_with_replacement("writeToStream", "write_to_stream")
+        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
         self.write_to_stream(stream, encryption_key)
 
     @staticmethod
@@ -153,7 +154,7 @@ class ArrayObject(list, PdfObject):
     def readFromStream(
         stream: StreamType, pdf: Any  # PdfReader
     ) -> "ArrayObject":  # pragma: no cover
-        deprecate_with_replacement("readFromStream", "read_from_stream")
+        deprecation_with_replacement("readFromStream", "read_from_stream", "3.0.0")
         return ArrayObject.read_from_stream(stream, pdf)
 
 
@@ -295,7 +296,7 @@ class DictionaryObject(dict, PdfObject):
 
             Use :meth:`xmp_metadata` instead.
         """
-        deprecate_with_replacement("getXmpMetadata", "xmp_metadata")
+        deprecation_with_replacement("getXmpMetadata", "xmp_metadata", "3.0.0")
         return self.xmp_metadata
 
     @property
@@ -305,7 +306,7 @@ class DictionaryObject(dict, PdfObject):
 
             Use :meth:`xmp_metadata` instead.
         """
-        deprecate_with_replacement("xmpMetadata", "xmp_metadata")
+        deprecation_with_replacement("xmpMetadata", "xmp_metadata", "3.0.0")
         return self.xmp_metadata
 
     def write_to_stream(
@@ -322,7 +323,7 @@ class DictionaryObject(dict, PdfObject):
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:  # pragma: no cover
-        deprecate_with_replacement("writeToStream", "write_to_stream")
+        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
         self.write_to_stream(stream, encryption_key)
 
     @staticmethod
@@ -465,7 +466,7 @@ class DictionaryObject(dict, PdfObject):
     def readFromStream(
         stream: StreamType, pdf: Any  # PdfReader
     ) -> "DictionaryObject":  # pragma: no cover
-        deprecate_with_replacement("readFromStream", "read_from_stream")
+        deprecation_with_replacement("readFromStream", "read_from_stream", "3.0.0")
         return DictionaryObject.read_from_stream(stream, pdf)
 
 
@@ -499,7 +500,7 @@ class TreeObject(DictionaryObject):
             child = child_ref.get_object()
 
     def addChild(self, child: Any, pdf: Any) -> None:  # pragma: no cover
-        deprecate_with_replacement("addChild", "add_child")
+        deprecation_with_replacement("addChild", "add_child", "3.0.0")
         self.add_child(child, pdf)
 
     def add_child(self, child: Any, pdf: PdfWriterProtocol) -> None:
@@ -561,7 +562,7 @@ class TreeObject(DictionaryObject):
         inc_parent_counter(self, child_obj.get("/Count", 1))
 
     def removeChild(self, child: Any) -> None:  # pragma: no cover
-        deprecate_with_replacement("removeChild", "remove_child")
+        deprecation_with_replacement("removeChild", "remove_child", "3.0.0")
         self.remove_child(child)
 
     def _remove_node_from_tree(
@@ -707,12 +708,12 @@ class StreamObject(DictionaryObject):
 
     @property
     def decodedSelf(self) -> Optional["DecodedStreamObject"]:  # pragma: no cover
-        deprecate_with_replacement("decodedSelf", "decoded_self")
+        deprecation_with_replacement("decodedSelf", "decoded_self", "3.0.0")
         return self.decoded_self
 
     @decodedSelf.setter
     def decodedSelf(self, value: "DecodedStreamObject") -> None:  # pragma: no cover
-        deprecate_with_replacement("decodedSelf", "decoded_self")
+        deprecation_with_replacement("decodedSelf", "decoded_self", "3.0.0")
         self.decoded_self = value
 
     @property
@@ -760,7 +761,7 @@ class StreamObject(DictionaryObject):
         return retval
 
     def flateEncode(self) -> "EncodedStreamObject":  # pragma: no cover
-        deprecate_with_replacement("flateEncode", "flate_encode")
+        deprecation_with_replacement("flateEncode", "flate_encode", "3.0.0")
         return self.flate_encode()
 
     def flate_encode(self) -> "EncodedStreamObject":
@@ -791,11 +792,11 @@ class DecodedStreamObject(StreamObject):
         self._data = data
 
     def getData(self) -> Any:  # pragma: no cover
-        deprecate_with_replacement("getData", "get_data")
+        deprecation_with_replacement("getData", "get_data", "3.0.0")
         return self._data
 
     def setData(self, data: Any) -> None:  # pragma: no cover
-        deprecate_with_replacement("setData", "set_data")
+        deprecation_with_replacement("setData", "set_data", "3.0.0")
         self.set_data(data)
 
 
@@ -805,12 +806,12 @@ class EncodedStreamObject(StreamObject):
 
     @property
     def decodedSelf(self) -> Optional["DecodedStreamObject"]:  # pragma: no cover
-        deprecate_with_replacement("decodedSelf", "decoded_self")
+        deprecation_with_replacement("decodedSelf", "decoded_self", "3.0.0")
         return self.decoded_self
 
     @decodedSelf.setter
     def decodedSelf(self, value: DecodedStreamObject) -> None:  # pragma: no cover
-        deprecate_with_replacement("decodedSelf", "decoded_self")
+        deprecation_with_replacement("decodedSelf", "decoded_self", "3.0.0")
         self.decoded_self = value
 
     def get_data(self) -> Union[None, str, bytes]:
@@ -831,14 +832,14 @@ class EncodedStreamObject(StreamObject):
             return decoded._data
 
     def getData(self) -> Union[None, str, bytes]:  # pragma: no cover
-        deprecate_with_replacement("getData", "get_data")
+        deprecation_with_replacement("getData", "get_data", "3.0.0")
         return self.get_data()
 
     def set_data(self, data: Any) -> None:  # pragma: no cover
         raise PdfReadError("Creating EncodedStreamObject is not currently supported")
 
     def setData(self, data: Any) -> None:  # pragma: no cover
-        deprecate_with_replacement("setData", "set_data")
+        deprecation_with_replacement("setData", "set_data", "3.0.0")
         return self.set_data(data)
 
 
@@ -1114,7 +1115,7 @@ class Field(TreeObject):
 
             Use :py:attr:`field_type` instead.
         """
-        deprecate_with_replacement("fieldType", "field_type")
+        deprecation_with_replacement("fieldType", "field_type", "3.0.0")
         return self.field_type
 
     @property
@@ -1144,7 +1145,7 @@ class Field(TreeObject):
 
             Use :py:attr:`alternate_name` instead.
         """
-        deprecate_with_replacement("altName", "alternate_name")
+        deprecation_with_replacement("altName", "alternate_name", "3.0.0")
         return self.alternate_name
 
     @property
@@ -1163,7 +1164,7 @@ class Field(TreeObject):
 
             Use :py:attr:`mapping_name` instead.
         """
-        deprecate_with_replacement("mappingName", "mapping_name")
+        deprecation_with_replacement("mappingName", "mapping_name", "3.0.0")
         return self.mapping_name
 
     @property
@@ -1194,7 +1195,7 @@ class Field(TreeObject):
 
             Use :py:attr:`default_value` instead.
         """
-        deprecate_with_replacement("defaultValue", "default_value")
+        deprecation_with_replacement("defaultValue", "default_value", "3.0.0")
         return self.default_value
 
     @property
@@ -1213,7 +1214,7 @@ class Field(TreeObject):
 
             Use :py:attr:`additional_actions` instead.
         """
-        deprecate_with_replacement("additionalActions", "additional_actions")
+        deprecation_with_replacement("additionalActions", "additional_actions", "3.0.0")
         return self.additional_actions
 
 
@@ -1296,7 +1297,7 @@ class Destination(TreeObject):
 
             Use :py:attr:`dest_array` instead.
         """
-        deprecate_with_replacement("getDestArray", "dest_array")
+        deprecation_with_replacement("getDestArray", "dest_array", "3.0.0")
         return self.dest_array
 
     def write_to_stream(

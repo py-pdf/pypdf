@@ -8,6 +8,10 @@ build
 dist/*
 __pycache__/
 
+# in-project virtual environments
+venv/
+.venv/
+
 #
 .mutmut-cache
 mutmut-results.*

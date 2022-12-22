@@ -14,11 +14,13 @@ history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/PyPDF2/gr
 * [DL6ER](https://github.com/DL6ER)
 * [ediamondscience](https://github.com/ediamondscience)
 * [Górny, Michał](https://github.com/mgorny)
+* [Hale, Joseph](https://github.com/thehale)
 * [JianzhengLuo](https://github.com/JianzhengLuo)
 * [Karvonen, Harry](https://github.com/Hatell/)
 * [KourFrost](https://github.com/KourFrost)
 * [Lightup1](https://github.com/Lightup1)
 * [Mérino, Antoine](https://github.com/Merinorus)
+* [Perrensen, Olsen](https://github.com/olsonperrensen)
 * [Pinheiro, Arthur](https://github.com/xilopaint)
 * [programmarchy](https://github.com/programmarchy)
 * [pubpub-zz](https://github.com/pubpub-zz): involved in community development

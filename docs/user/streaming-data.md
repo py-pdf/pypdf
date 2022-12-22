@@ -53,3 +53,24 @@ with BytesIO() as bytes_stream:
         Body=bytes_stream, RequestRoute=request_route, RequestToken=request_token
     )
 ```
+
+## Reading PDFs directly from cloud services
+
+One option is to first download the file and then pass the local file path to `PdfReader`.
+Another option is to get a byte stream.
+
+For AWS S3 it works like this:
+
+```python
+from io import BytesIO
+
+import boto3
+from PyPDF2 import PdfReader
+
+
+s3 = boto3.client("s3")
+obj = s3.get_object(Body=csv_buffer.getvalue(), Bucket="my-bucket", Key="my/doc.pdf")
+reader = PdfReader(BytesIO(obj["Body"].read()))
+```
+
+It works similarly for Google Cloud Storage ([example](https://stackoverflow.com/a/68403628/562769))

@@ -5,6 +5,12 @@ Please note that broken PDF files might cause other Exceptions.
 """
 
 
+class DeprecationError(Exception):
+    """Raised when a deprecated feature is used."""
+
+    pass
+
+
 class DependencyError(Exception):
     pass
 

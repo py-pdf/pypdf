@@ -10,7 +10,7 @@ import pytest
 from PyPDF2 import PdfReader, PdfWriter, Transformation
 from PyPDF2._page import PageObject, set_custom_rtl
 from PyPDF2.constants import PageAttributes as PG
-from PyPDF2.errors import PdfReadWarning
+from PyPDF2.errors import DeprecationError, PdfReadWarning
 from PyPDF2.generic import (
     ArrayObject,
     DictionaryObject,
@@ -131,8 +131,10 @@ def test_transformation_equivalence():
     # Option 2: The old way
     page_box2 = deepcopy(page_box)
     page_base2 = deepcopy(page_base)
-    with pytest.warns(PendingDeprecationWarning):
+    with pytest.raises(DeprecationError):
         page_base2.mergeTransformedPage(page_box2, op, expand=False)
+    page_box2.add_transformation(op)
+    page_base2.merge_page(page_box2)
 
     # Should be the same
     assert page_base1[NameObject(PG.CONTENTS)] == page_base2[NameObject(PG.CONTENTS)]
@@ -165,21 +167,21 @@ def test_page_transformations():
     reader = PdfReader(pdf_path)
 
     page: PageObject = reader.pages[0]
-    with pytest.warns(PendingDeprecationWarning):
+    with pytest.raises(DeprecationError):
         page.mergeRotatedPage(page, 90, expand=True)
-    with pytest.warns(PendingDeprecationWarning):
+    with pytest.raises(DeprecationError):
         page.mergeRotatedScaledPage(page, 90, 1, expand=True)
-    with pytest.warns(PendingDeprecationWarning):
+    with pytest.raises(DeprecationError):
         page.mergeRotatedScaledTranslatedPage(
             page, 90, scale=1, tx=1, ty=1, expand=True
         )
-    with pytest.warns(PendingDeprecationWarning):
+    with pytest.raises(DeprecationError):
         page.mergeRotatedTranslatedPage(page, 90, 100, 100, expand=False)
-    with pytest.warns(PendingDeprecationWarning):
+    with pytest.raises(DeprecationError):
         page.mergeScaledPage(page, 2, expand=False)
-    with pytest.warns(PendingDeprecationWarning):
+    with pytest.raises(DeprecationError):
         page.mergeScaledTranslatedPage(page, 1, 1, 1)
-    with pytest.warns(PendingDeprecationWarning):
+    with pytest.raises(DeprecationError):
         page.mergeTranslatedPage(page, 100, 100, expand=False)
     page.add_transformation((1, 0, 0, 0, 0, 0))
 
