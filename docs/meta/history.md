@@ -75,5 +75,3 @@ develop PyPDF3 and PyPDF4 also join us.
   [ReportLab]: https://www.reportlab.com/software/opensource/rl-toolkit/
   [pdftk]: https://www.pdflabs.com/tools/pdftk-the-pdf-toolkit/https://www.pdflabs.com/tools/pdftk-the-pdf-toolkit/
   [/r/python crowd chatted]: https://www.reddit.com/r/Python/comments/qsvfm/pypdf2_updates_pypdf_pypdf2_is_an_opensource/
-
-

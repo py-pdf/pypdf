@@ -685,9 +685,7 @@ def test_issue_997(mock_logger_warning):
         merger.write(f)
     merger.close()
 
-    mock_logger_warning.assert_called_with(
-        "Overwriting cache for 0 4", "pypdf._reader"
-    )
+    mock_logger_warning.assert_called_with("Overwriting cache for 0 4", "pypdf._reader")
 
     # Strict
     merger = PdfMerger(strict=True)
