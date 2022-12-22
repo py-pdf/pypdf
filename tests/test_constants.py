@@ -1,7 +1,7 @@
 import re
 from typing import Callable
 
-from PyPDF2.constants import PDF_KEYS
+from pypdf.constants import PDF_KEYS
 
 
 def test_slash_prefix():

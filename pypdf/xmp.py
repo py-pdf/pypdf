@@ -211,7 +211,7 @@ def _getter_single(
 class XmpInformation(PdfObject):
     """
     An object that represents Adobe XMP metadata.
-    Usually accessed by :py:attr:`xmp_metadata()<PyPDF2.PdfReader.xmp_metadata>`
+    Usually accessed by :py:attr:`xmp_metadata()<pypdf.PdfReader.xmp_metadata>`
 
     :raises PdfReadError: if XML is invalid
     """

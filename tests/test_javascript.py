@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from PyPDF2 import PdfReader, PdfWriter
+from pypdf import PdfReader, PdfWriter
 
 # Configure path environment
 TESTS_ROOT = Path(__file__).parent.resolve()

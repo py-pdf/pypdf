@@ -3,7 +3,7 @@
 ## Attachments
 
 ```python
-from PyPDF2 import PdfWriter
+from pypdf import PdfWriter
 
 writer = PdfWriter()
 writer.add_blank_page(width=200, height=200)
@@ -22,11 +22,11 @@ If you want to add text in a box like this
 
 ![](free-text-annotation.png)
 
-you can use the {py:class}`AnnotationBuilder <PyPDF2.generic.AnnotationBuilder>`:
+you can use the {py:class}`AnnotationBuilder <pypdf.generic.AnnotationBuilder>`:
 
 ```python
-from PyPDF2 import PdfReader, PdfWriter
-from PyPDF2.generic import AnnotationBuilder
+from pypdf import PdfReader, PdfWriter
+from pypdf.generic import AnnotationBuilder
 
 # Fill the writer with the pages you want
 pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
@@ -66,7 +66,7 @@ If you want to add a line like this:
 
 ![](annotation-line.png)
 
-you can use the {py:class}`AnnotationBuilder <PyPDF2.generic.AnnotationBuilder>`:
+you can use the {py:class}`AnnotationBuilder <pypdf.generic.AnnotationBuilder>`:
 
 ```python
 pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
@@ -95,7 +95,7 @@ If you want to add a rectangle like this:
 
 ![](annotation-square.png)
 
-you can use the {py:class}`AnnotationBuilder <PyPDF2.generic.AnnotationBuilder>`:
+you can use the {py:class}`AnnotationBuilder <pypdf.generic.AnnotationBuilder>`:
 
 ```python
 pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
@@ -122,7 +122,7 @@ This method uses the "square" annotation type of the PDF format.
 ## Link
 
 If you want to add a link, you can use
-the {py:class}`AnnotationBuilder <PyPDF2.generic.AnnotationBuilder>`:
+the {py:class}`AnnotationBuilder <pypdf.generic.AnnotationBuilder>`:
 
 ```python
 pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")

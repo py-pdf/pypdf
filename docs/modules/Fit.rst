@@ -1,7 +1,7 @@
 The Fit Class
 -------------
 
-.. autoclass:: PyPDF2.generic.Fit
+.. autoclass:: pypdf.generic.Fit
     :members:
     :undoc-members:
     :show-inheritance:

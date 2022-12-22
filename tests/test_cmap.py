@@ -2,8 +2,8 @@ from io import BytesIO
 
 import pytest
 
-from PyPDF2 import PdfReader
-from PyPDF2.errors import PdfReadWarning
+from pypdf import PdfReader
+from pypdf.errors import PdfReadWarning
 
 from . import get_pdf_from_url
 
@@ -82,7 +82,7 @@ def test_bfchar_on_2_chars():
 @pytest.mark.external
 def test_ascii_charset():
     # iss #1312
-    url = "https://github.com/py-pdf/PyPDF2/files/9472500/main.pdf"
+    url = "https://github.com/py-pdf/pypdf/files/9472500/main.pdf"
     name = "ascii charset.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     assert "/a" not in reader.pages[0].extract_text()
@@ -90,7 +90,7 @@ def test_ascii_charset():
 
 @pytest.mark.external
 def test_iss1370():
-    url = "https://github.com/py-pdf/PyPDF2/files/9667138/cmap1370.pdf"
+    url = "https://github.com/py-pdf/pypdf/files/9667138/cmap1370.pdf"
     name = "cmap1370.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     reader.pages[0].extract_text()
@@ -98,7 +98,7 @@ def test_iss1370():
 
 @pytest.mark.external
 def test_iss1379():
-    url = "https://github.com/py-pdf/PyPDF2/files/9712729/02voc.pdf"
+    url = "https://github.com/py-pdf/pypdf/files/9712729/02voc.pdf"
     name = "02voc.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     reader.pages[2].extract_text()

@@ -6,11 +6,11 @@ from pathlib import Path
 
 import pytest
 
-from PyPDF2 import PdfReader
-from PyPDF2._reader import convert_to_int, convertToInt
-from PyPDF2.constants import ImageAttributes as IA
-from PyPDF2.constants import PageAttributes as PG
-from PyPDF2.errors import (
+from pypdf import PdfReader
+from pypdf._reader import convert_to_int, convertToInt
+from pypdf.constants import ImageAttributes as IA
+from pypdf.constants import PageAttributes as PG
+from pypdf.errors import (
     DeprecationError,
     EmptyFileError,
     FileNotDecryptedError,
@@ -18,7 +18,7 @@ from PyPDF2.errors import (
     PdfReadWarning,
     WrongPasswordError,
 )
-from PyPDF2.generic import (
+from pypdf.generic import (
     ArrayObject,
     Destination,
     DictionaryObject,
@@ -44,7 +44,7 @@ SAMPLE_ROOT = PROJECT_ROOT / "sample-files"
 
 @pytest.mark.parametrize(
     ("src", "num_pages"),
-    [("selenium-PyPDF2-issue-177.pdf", 1), ("pdflatex-outline.pdf", 4)],
+    [("selenium-pypdf-issue-177.pdf", 1), ("pdflatex-outline.pdf", 4)],
 )
 def test_get_num_pages(src, num_pages):
     src = RESOURCE_ROOT / src
@@ -632,7 +632,7 @@ def test_decrypt_when_no_id():
     """
     Decrypt an encrypted file that's missing the 'ID' value in its
     trailer.
-    https://github.com/mstamy2/PyPDF2/issues/608
+    https://github.com/mstamy2/pypdf/issues/608
     """
 
     with open(RESOURCE_ROOT / "encrypted_doc_no_id.pdf", "rb") as inputfile:
@@ -740,7 +740,7 @@ def test_convert_to_int_error():
 
 def test_convertToInt_deprecated():
     msg = (
-        "convertToInt is deprecated and was removed in PyPDF2 3.0.0. "
+        "convertToInt is deprecated and was removed in pypdf 3.0.0. "
         "Use convert_to_int instead."
     )
     with pytest.raises(
@@ -752,7 +752,7 @@ def test_convertToInt_deprecated():
 
 @pytest.mark.external
 def test_iss925():
-    url = "https://github.com/py-pdf/PyPDF2/files/8796328/1.pdf"
+    url = "https://github.com/py-pdf/pypdf/files/8796328/1.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name="iss925.pdf")))
 
     for page_sliced in reader.pages:
@@ -867,7 +867,7 @@ def test_get_fields():
 
 
 @pytest.mark.external
-@pytest.mark.filterwarnings("ignore::PyPDF2.errors.PdfReadWarning")
+@pytest.mark.filterwarnings("ignore::pypdf.errors.PdfReadWarning")
 def test_get_fields_read_else_block():
     # covers also issue 1089
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/934/934771.pdf"
@@ -885,7 +885,7 @@ def test_get_fields_read_else_block2():
 
 
 @pytest.mark.external
-@pytest.mark.filterwarnings("ignore::PyPDF2.errors.PdfReadWarning")
+@pytest.mark.filterwarnings("ignore::pypdf.errors.PdfReadWarning")
 def test_get_fields_read_else_block3():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/957/957721.pdf"
     name = "tika-957721.pdf"
@@ -1091,7 +1091,7 @@ def test_outline_missing_title(caplog):
 @pytest.mark.external
 def test_named_destination():
     # 1st case : the named_dest are stored directly as a dictionnary, PDF1.1 style
-    url = "https://github.com/py-pdf/PyPDF2/files/9197028/lorem_ipsum.pdf"
+    url = "https://github.com/py-pdf/pypdf/files/9197028/lorem_ipsum.pdf"
     name = "lorem_ipsum.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     assert len(reader.named_destinations) > 0
@@ -1132,7 +1132,7 @@ def test_outline_with_invalid_destinations():
 @pytest.mark.external
 def test_PdfReaderMultipleDefinitions(caplog):
     # iss325
-    url = "https://github.com/py-pdf/PyPDF2/files/9176644/multipledefs.pdf"
+    url = "https://github.com/py-pdf/pypdf/files/9176644/multipledefs.pdf"
     name = "multipledefs.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     reader.pages[0].extract_text()
@@ -1158,11 +1158,11 @@ def test_get_page_number_by_indirect():
 @pytest.mark.external
 def test_corrupted_xref_table():
     # issue #1292
-    url = "https://github.com/py-pdf/PyPDF2/files/9444747/BreezeManual.orig.pdf"
+    url = "https://github.com/py-pdf/pypdf/files/9444747/BreezeManual.orig.pdf"
     name = "BreezeMan1.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     reader.pages[0].extract_text()
-    url = "https://github.com/py-pdf/PyPDF2/files/9444748/BreezeManual.failed.pdf"
+    url = "https://github.com/py-pdf/pypdf/files/9444748/BreezeManual.failed.pdf"
     name = "BreezeMan2.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     reader.pages[0].extract_text()
@@ -1171,7 +1171,7 @@ def test_corrupted_xref_table():
 @pytest.mark.external
 def test_reader(caplog):
     # iss #1273
-    url = "https://github.com/py-pdf/PyPDF2/files/9464742/shiv_resume.pdf"
+    url = "https://github.com/py-pdf/pypdf/files/9464742/shiv_resume.pdf"
     name = "shiv_resume.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     assert "Previous trailer can not be read" in caplog.text
@@ -1189,14 +1189,14 @@ def test_reader(caplog):
 @pytest.mark.external
 def test_zeroing_xref():
     # iss #328
-    url = "https://github.com/py-pdf/PyPDF2/files/9066120/UTA_OSHA_3115_Fall_Protection_Training_09162021_.pdf"
+    url = "https://github.com/py-pdf/pypdf/files/9066120/UTA_OSHA_3115_Fall_Protection_Training_09162021_.pdf"
     name = "UTA_OSHA.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     len(reader.pages)
 
 
 def test_thread():
-    url = "https://github.com/py-pdf/PyPDF2/files/9066120/UTA_OSHA_3115_Fall_Protection_Training_09162021_.pdf"
+    url = "https://github.com/py-pdf/pypdf/files/9066120/UTA_OSHA_3115_Fall_Protection_Training_09162021_.pdf"
     name = "UTA_OSHA.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     assert reader.threads is None
@@ -1208,7 +1208,7 @@ def test_thread():
 
 
 def test_build_outline_item(caplog):
-    url = "https://github.com/py-pdf/PyPDF2/files/9464742/shiv_resume.pdf"
+    url = "https://github.com/py-pdf/pypdf/files/9464742/shiv_resume.pdf"
     name = "shiv_resume.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     outline = reader._build_outline_item(

@@ -6,16 +6,16 @@ from unittest.mock import patch
 
 import pytest
 
-from PyPDF2 import PdfReader
-from PyPDF2.errors import PdfReadError, PdfStreamError
-from PyPDF2.filters import (
+from pypdf import PdfReader
+from pypdf.errors import PdfReadError, PdfStreamError
+from pypdf.filters import (
     ASCII85Decode,
     ASCIIHexDecode,
     CCITParameters,
     CCITTFaxDecode,
     FlateDecode,
 )
-from PyPDF2.generic import ArrayObject, DictionaryObject, NumberObject
+from pypdf.generic import ArrayObject, DictionaryObject, NumberObject
 
 from . import get_pdf_from_url
 
@@ -187,7 +187,7 @@ def test_CCITTFaxDecode():
         {"/K": NumberObject(-1), "/Columns": NumberObject(17)}
     )
 
-    # This was just the result PyPDF2 1.27.9 returned.
+    # This was just the result pypdf 1.27.9 returned.
     # It would be awesome if we could check if that is actually correct.
     assert CCITTFaxDecode.decode(data, parameters) == (
         b"II*\x00\x08\x00\x00\x00\x08\x00\x00\x01\x04\x00\x01\x00\x00\x00\x11\x00"
@@ -201,7 +201,7 @@ def test_CCITTFaxDecode():
 
 
 @pytest.mark.external
-@patch("PyPDF2._reader.logger_warning")
+@patch("pypdf._reader.logger_warning")
 def test_decompress_zlib_error(mock_logger_warning):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/952/952445.pdf"
     name = "tika-952445.pdf"
@@ -209,7 +209,7 @@ def test_decompress_zlib_error(mock_logger_warning):
     for page in reader.pages:
         page.extract_text()
     mock_logger_warning.assert_called_with(
-        "incorrect startxref pointer(3)", "PyPDF2._reader"
+        "incorrect startxref pointer(3)", "pypdf._reader"
     )
 
 
@@ -246,5 +246,5 @@ def test_image_without_imagemagic():
                 page.images
             assert (
                 exc.value.args[0]
-                == "pillow is required to do image extraction. It can be installed via 'pip install PyPDF2[image]'"
+                == "pillow is required to do image extraction. It can be installed via 'pip install pypdf[image]'"
             )

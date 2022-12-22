@@ -1,12 +1,13 @@
 # Frequently-Asked Questions
 
-## How is PyPDF2 related to pyPdf?
+## How is pypdf related to PyPDF2?
 
-PyPDF2 is a fork from the no-longer-maintained pyPdf approved by the
-latter's founder.
+PyPDF2 was a fork from the original pyPdf. After several years, the fork was
+merged back into `pypdf` (now all lowercase).
 
 ## Which Python versions are supported?
 
+pypdf 3.0+ supports Python 3.6 and later.
 PyPDF2 2.0+ supports Python 3.6 and later.
 PyPDF2 1.27.10 supported Python 2.7 to 3.10.
 
@@ -15,12 +16,12 @@ PyPDF2 1.27.10 supported Python 2.7 to 3.10.
   [this sort of thing]: https://github.com/py-pdf/PyPDF2/issues/24
   [GitHub issue]: https://github.com/py-pdf/PyPDF2/issues
 
-## Who uses PyPDF2?
+## Who uses pypdf?
 
 pyPdf is vendored [into](https://github.com/Buyanbat/XacCRM/tree/ee78e8df967182f661b6494a86444501e7d89c8f/report/pyPdf) [several](https://github.com/MyBook/calibre/tree/ca1efe3c21f6553e096dab745b3cdeb36244a5a9/src/pyPdf) [projects](https://github.com/Giacomo-De-Florio-Dev/Make_Your_PDF_Safe/tree/ec439f92243d12d54ae024668792470c6b40ee96/MakeYourPDFsafe_V1.3/PyPDF2). That
 means the code of pyPdf was copied into that project.
 
-Projects that depend on PyPDF2:
+Projects that depend on pypdf:
 
 * [Camelot](https://github.com/camelot-dev/camelot): A Python library to extract tabular data from PDFs
 * [edi](https://github.com/OCA/edi): Electronic Data Interchange modules
@@ -34,21 +35,21 @@ Projects that depend on PyPDF2:
   * [doc2text](https://github.com/jlsutherland/doc2text)
 * [pdfalyzer](https://pypi.org/project/pdfalyzer/): A PDF analysis tool for visualizing the inner tree-like data structure of a PDF in spectacularly large and colorful diagrams as well as scanning the binary streams embedded in the PDF for hidden potentially malicious content.
 
-## How do I cite PyPDF2?
+## How do I cite pypdf?
 
 In BibTeX format:
 
 ```
-@misc{pypdf2,
- title         = {The {PyPDF2} library},
+@misc{pypdf,
+ title         = {The {pypdf} library},
  author        = {Mathieu Fenniak and
                   Matthew Stamy and
                   pubpub-zz and
                   Martin Thoma and
                   Matthew Peveler and
-                  exiledkingcc and {PyPDF2 Contributors}},
+                  exiledkingcc and {pypdf Contributors}},
  year          = {2022},
- url           = {https://pypi.org/project/PyPDF2/}
- note          = {See https://pypdf2.readthedocs.io/en/latest/meta/CONTRIBUTORS.html for all contributors}
+ url           = {https://pypi.org/project/pypdf/}
+ note          = {See https://pypdf.readthedocs.io/en/latest/meta/CONTRIBUTORS.html for all contributors}
 }
 ```

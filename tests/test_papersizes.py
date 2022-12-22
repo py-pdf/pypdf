@@ -1,6 +1,6 @@
 import pytest
 
-from PyPDF2 import papersizes
+from pypdf import papersizes
 
 
 def test_din_a0():

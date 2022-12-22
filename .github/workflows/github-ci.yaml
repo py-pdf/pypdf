@@ -66,7 +66,7 @@ jobs:
       run: |
         pip uninstall pycryptodome -y
       if: matrix.use-cryptodome == 'false'
-    - name: Install PyPDF2
+    - name: Install pypdf
       run: |
         pip install .
     - name: Test with flake8
@@ -77,7 +77,7 @@ jobs:
         python -m coverage run --parallel-mode -m pytest tests -vv
     - name: Test with mypy
       run : |
-        mypy PyPDF2 --show-error-codes --disallow-untyped-defs --disallow-incomplete-defs
+        mypy pypdf --show-error-codes --disallow-untyped-defs --disallow-incomplete-defs
     - name: Upload coverage data
       uses: actions/upload-artifact@v3
       with:
@@ -105,7 +105,7 @@ jobs:
 
       - name: Test running installed package
         working-directory: /tmp
-        run: python -c "import PyPDF2;print(PyPDF2.__version__)"
+        run: python -c "import pypdf;print(pypdf.__version__)"
 
       # - name: Release to pypi if tagged.
       #   if: startsWith(github.ref, 'refs/tags')

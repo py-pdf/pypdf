@@ -21,7 +21,7 @@ shutil.copyfile("../CONTRIBUTORS.md", "meta/CONTRIBUTORS.md")
 
 # -- Project information -----------------------------------------------------
 
-project = "PyPDF2"
+project = "pypdf"
 copyright = "2006 - 2008, Mathieu Fenniak"
 author = "Mathieu Fenniak"
 

@@ -1,4 +1,4 @@
-# History of PyPDF2
+# History of pypdf
 
 ## The Origins: pyPdf (2005-2010)
 
@@ -49,9 +49,25 @@ It never got the user base from PyPDF2.
 
 PyPDF4 only had one release in 2018.
 
-## PyPDF2: Reborn (2022-Today)
+## PyPDF2: Reborn (2022)
 
 Martin Thoma took over maintenance of PyPDF2 in April 2022.
+
+[pubpub-zz](https://github.com/pubpub-zz) was extremely active, especially
+for text extraction.
+
+[Matthew Peveler](https://github.com/MasterOdin) helped a lot with reviews
+and general project decisions.
+
+[exiledkingcc](https://github.com/exiledkingcc) added support for modern
+encryption schemes.
+
+
+## pypdf: Back to the Roots (2023-Today)
+
+In order to make things simpler for beginners, PyPDF2 was merged back into
+pypdf. Now all lowercase, without a number. We hope that the folks who
+develop PyPDF3 and PyPDF4 also join us.
 
 
   [Mathieu Fenniak]: https://mathieu.fenniak.net/
@@ -59,3 +75,5 @@ Martin Thoma took over maintenance of PyPDF2 in April 2022.
   [ReportLab]: https://www.reportlab.com/software/opensource/rl-toolkit/
   [pdftk]: https://www.pdflabs.com/tools/pdftk-the-pdf-toolkit/https://www.pdflabs.com/tools/pdftk-the-pdf-toolkit/
   [/r/python crowd chatted]: https://www.reddit.com/r/Python/comments/qsvfm/pypdf2_updates_pypdf_pypdf2_is_an_opensource/
+
+

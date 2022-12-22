@@ -1,7 +1,7 @@
 The PageRange Class
 -------------------
 
-.. autoclass:: PyPDF2.PageRange
+.. autoclass:: pypdf.PageRange
     :members:
     :undoc-members:
     :show-inheritance:

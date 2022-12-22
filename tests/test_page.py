@@ -7,11 +7,11 @@ from typing import List, Tuple
 
 import pytest
 
-from PyPDF2 import PdfReader, PdfWriter, Transformation
-from PyPDF2._page import PageObject, set_custom_rtl
-from PyPDF2.constants import PageAttributes as PG
-from PyPDF2.errors import DeprecationError, PdfReadWarning
-from PyPDF2.generic import (
+from pypdf import PdfReader, PdfWriter, Transformation
+from pypdf._page import PageObject, set_custom_rtl
+from pypdf.constants import PageAttributes as PG
+from pypdf.errors import DeprecationError, PdfReadWarning
+from pypdf.generic import (
     ArrayObject,
     DictionaryObject,
     FloatObject,
@@ -48,7 +48,7 @@ all_files_meta = get_all_sample_files()
     [m for m in all_files_meta["data"] if not m["encrypted"]],
     ids=[m["path"] for m in all_files_meta["data"] if not m["encrypted"]],
 )
-@pytest.mark.filterwarnings("ignore::PyPDF2.errors.PdfReadWarning")
+@pytest.mark.filterwarnings("ignore::pypdf.errors.PdfReadWarning")
 def test_read(meta):
     pdf_path = SAMPLE_ROOT / meta["path"]
     reader = PdfReader(pdf_path)
@@ -295,7 +295,7 @@ def test_extract_text_single_quote_op():
 
 @pytest.mark.external
 def test_no_ressources_on_text_extract():
-    url = "https://github.com/py-pdf/PyPDF2/files/9428434/TelemetryTX_EM.pdf"
+    url = "https://github.com/py-pdf/pypdf/files/9428434/TelemetryTX_EM.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-964029.pdf")))
     for page in reader.pages:
         page.extract_text()
@@ -304,7 +304,7 @@ def test_no_ressources_on_text_extract():
 @pytest.mark.external
 def test_iss_1142():
     # check fix for problem of context save/restore (q/Q)
-    url = "https://github.com/py-pdf/PyPDF2/files/9150656/ST.2019.PDF"
+    url = "https://github.com/py-pdf/pypdf/files/9150656/ST.2019.PDF"
     name = "st2019.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     txt = reader.pages[3].extract_text()
@@ -335,12 +335,12 @@ def test_iss_1142():
         ),
         # iss 1134:
         (
-            "https://github.com/py-pdf/PyPDF2/files/9150656/ST.2019.PDF",
+            "https://github.com/py-pdf/pypdf/files/9150656/ST.2019.PDF",
             "iss_1134.pdf",
         ),
         # iss 1:
         (
-            "https://github.com/py-pdf/PyPDF2/files/9432350/Work.Flow.From.Check.to.QA.pdf",
+            "https://github.com/py-pdf/pypdf/files/9432350/Work.Flow.From.Check.to.QA.pdf",
             "WFCA.pdf",
         ),
     ],
@@ -427,7 +427,7 @@ def test_extract_text_visitor_callbacks():
         page: PageObject, rect_filter=None
     ) -> Tuple[List[PositionedText], List[Rectangle]]:
         """
-        Extracts texts and rectangles of a page of type PyPDF2._page.PageObject.
+        Extracts texts and rectangles of a page of type pypdf._page.PageObject.
 
         This function supports simple coordinate transformations only.
         The optional rect_filter-lambda can be used to filter wanted rectangles.
@@ -865,7 +865,7 @@ def test_read_link_annotation():
 
 @pytest.mark.external
 def test_no_resources():
-    url = "https://github.com/py-pdf/PyPDF2/files/9572045/108.pdf"
+    url = "https://github.com/py-pdf/pypdf/files/9572045/108.pdf"
     name = "108.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     page_one = reader.pages[0]

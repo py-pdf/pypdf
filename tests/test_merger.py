@@ -5,10 +5,10 @@ from pathlib import Path
 
 import pytest
 
-import PyPDF2
-from PyPDF2 import PdfMerger, PdfReader, PdfWriter
-from PyPDF2.errors import DeprecationError
-from PyPDF2.generic import Destination, Fit
+import pypdf
+from pypdf import PdfMerger, PdfReader, PdfWriter
+from pypdf.errors import DeprecationError
+from pypdf.generic import Destination, Fit
 
 from . import get_pdf_from_url
 
@@ -28,7 +28,7 @@ def merger_operate(merger):
     # string path:
     merger.append(pdf_path)
     merger.append(outline)
-    merger.append(pdf_path, pages=PyPDF2.pagerange.PageRange(slice(0, 0)))
+    merger.append(pdf_path, pages=pypdf.pagerange.PageRange(slice(0, 0)))
     merger.append(pdf_forms)
     merger.merge(0, pdf_path, import_outline=False)
     with pytest.raises(NotImplementedError) as exc:
@@ -41,16 +41,16 @@ def merger_operate(merger):
     )
 
     # Merging an encrypted file
-    reader = PyPDF2.PdfReader(pdf_pw)
+    reader = pypdf.PdfReader(pdf_pw)
     reader.decrypt("openpassword")
     merger.append(reader)
 
     # PdfReader object:
-    r = PyPDF2.PdfReader(pdf_path)
+    r = pypdf.PdfReader(pdf_path)
     merger.append(r, outline_item="foo", pages=list(range(len(r.pages))))
 
     # PdfReader object with List:
-    # merger.append(PyPDF2.PdfReader(pdf_path), outline_item="foo")
+    # merger.append(pypdf.PdfReader(pdf_path), outline_item="foo")
 
     # File handle
     with open(pdf_path, "rb") as fh:
@@ -138,7 +138,7 @@ def merger_operate(merger):
 
 def check_outline(tmp_path):
     # Check if outline is correct
-    reader = PyPDF2.PdfReader(tmp_path)
+    reader = pypdf.PdfReader(tmp_path)
     assert [el.title for el in reader.outline if isinstance(el, Destination)] == [
         "Foo",
         "Bar",
@@ -230,7 +230,7 @@ def test_merger_operation_by_new_usage_with_writer(tmp_path):
 
 
 def test_merge_page_exception():
-    merger = PyPDF2.PdfMerger()
+    merger = pypdf.PdfMerger()
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     with pytest.raises(TypeError) as exc:
         merger.merge(0, pdf_path, pages="a:b")
@@ -239,7 +239,7 @@ def test_merge_page_exception():
 
 
 def test_merge_page_exception_with_writer():
-    merger = PyPDF2.PdfWriter()
+    merger = pypdf.PdfWriter()
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     with pytest.raises(TypeError) as exc:
         merger.merge(0, pdf_path, pages="a:b")
@@ -251,21 +251,21 @@ def test_merge_page_exception_with_writer():
 
 
 def test_merge_page_tuple():
-    merger = PyPDF2.PdfMerger()
+    merger = pypdf.PdfMerger()
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     merger.merge(0, pdf_path, pages=(0, 1))
     merger.close()
 
 
 def test_merge_page_tuple_with_writer():
-    merger = PyPDF2.PdfWriter()
+    merger = pypdf.PdfWriter()
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     merger.merge(0, pdf_path, pages=(0, 1))
     merger.close()
 
 
 def test_merge_write_closed_fh():
-    merger = PyPDF2.PdfMerger()
+    merger = pypdf.PdfMerger()
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     merger.append(pdf_path)
 
@@ -302,7 +302,7 @@ def test_merge_write_closed_fh():
 
 
 def test_merge_write_closed_fh_with_writer():
-    merger = PyPDF2.PdfWriter()
+    merger = pypdf.PdfWriter()
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     merger.append(pdf_path)
 
@@ -648,7 +648,7 @@ def test_sweep_indirect_list_newobj_is_none_with_writer(caplog):
 @pytest.mark.external
 def test_iss1145():
     # issue with FitH destination with null param
-    url = "https://github.com/py-pdf/PyPDF2/files/9164743/file-0.pdf"
+    url = "https://github.com/py-pdf/pypdf/files/9164743/file-0.pdf"
     name = "iss1145.pdf"
     merger = PdfMerger()
     merger.append(PdfReader(BytesIO(get_pdf_from_url(url, name=name))))
@@ -658,7 +658,7 @@ def test_iss1145():
 @pytest.mark.external
 def test_iss1145_with_writer():
     # issue with FitH destination with null param
-    url = "https://github.com/py-pdf/PyPDF2/files/9164743/file-0.pdf"
+    url = "https://github.com/py-pdf/pypdf/files/9164743/file-0.pdf"
     name = "iss1145.pdf"
     merger = PdfWriter()
     merger.append(PdfReader(BytesIO(get_pdf_from_url(url, name=name))))
@@ -701,7 +701,7 @@ def test_deprecation_bookmark_decorator_output_with_writer():
 
 @pytest.mark.external
 def test_iss1344(caplog):
-    url = "https://github.com/py-pdf/PyPDF2/files/9549001/input.pdf"
+    url = "https://github.com/py-pdf/pypdf/files/9549001/input.pdf"
     name = "iss1344.pdf"
     m = PdfMerger()
     m.append(PdfReader(BytesIO(get_pdf_from_url(url, name=name))))
@@ -716,7 +716,7 @@ def test_iss1344(caplog):
 
 @pytest.mark.external
 def test_iss1344_with_writer(caplog):
-    url = "https://github.com/py-pdf/PyPDF2/files/9549001/input.pdf"
+    url = "https://github.com/py-pdf/pypdf/files/9549001/input.pdf"
     name = "iss1344.pdf"
     m = PdfWriter()
     m.append(PdfReader(BytesIO(get_pdf_from_url(url, name=name))))

@@ -3,7 +3,7 @@
 You can extract text from a PDF like this:
 
 ```python
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 
 reader = PdfReader("example.pdf")
 page = reader.pages[0]
@@ -20,7 +20,7 @@ print(page.extract_text(0))
 print(page.extract_text((0, 90)))
 ```
 
-Refer to [extract\_text](../modules/PageObject.html#PyPDF2._page.PageObject.extract_text) for more details.
+Refer to [extract\_text](../modules/PageObject.html#pypdf._page.PageObject.extract_text) for more details.
 
 ## Using a visitor
 
@@ -41,10 +41,10 @@ operand, operand-arguments, current transformation matrix and text matrix.
 
 ### Example 1: Ignore header and footer
 
-The following example reads the text of page 4 of [this PDF document](https://github.com/py-pdf/PyPDF2/blob/main/resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf), but ignores header (y < 720) and footer (y > 50).
+The following example reads the text of page 4 of [this PDF document](https://github.com/py-pdf/pypdf/blob/main/resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf), but ignores header (y < 720) and footer (y > 50).
 
 ```python
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 
 reader = PdfReader("GeoBase_NHNC1_Data_Model_UML_EN.pdf")
 page = reader.pages[3]
@@ -66,13 +66,13 @@ print(text_body)
 
 ### Example 2: Extract rectangles and texts into a SVG-file
 
-The following example converts page 3 of [this PDF document](https://github.com/py-pdf/PyPDF2/blob/main/resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf) into a
+The following example converts page 3 of [this PDF document](https://github.com/py-pdf/pypdf/blob/main/resources/GeoBase_NHNC1_Data_Model_UML_EN.pdf) into a
 [SVG file](https://en.wikipedia.org/wiki/Scalable_Vector_Graphics).
 
 Such a SVG export may help to understand whats going on in a page.
 
 ```python
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 import svgwrite
 
 reader = PdfReader("GeoBase_NHNC1_Data_Model_UML_EN.pdf")
@@ -144,11 +144,11 @@ the way PDF stores information just makes it hard to achieve that:
     instead an image. You notice that when you cannot copy the text. Then there
     are PDF files that contain an image and a text layer in the background.
     That typically happens when a document was scanned. Although the scanning
-    software (OCR) is pretty good today, it still fails once in a while. PyPDF2
-    is no OCR software; it will not be able to detect those failures. PyPDF2
+    software (OCR) is pretty good today, it still fails once in a while. pypdf
+    is no OCR software; it will not be able to detect those failures. pypdf
     will also never be able to extract text from images.
 
-And finally there are issues that PyPDF2 will deal with. If you find such a
+And finally there are issues that pypdf will deal with. If you find such a
 text extraction bug, please share the PDF with us so we can work on it!
 
 ## OCR vs Text Extraction
@@ -158,7 +158,7 @@ images. Software which does this is called *OCR software*. The
 [tesseract OCR engine](https://github.com/tesseract-ocr/tesseract) is the
 most commonly known Open Source OCR software.
 
-PyPDF2 is **not** OCR software.
+pypdf is **not** OCR software.
 
 ### Digitally-born vs Scanned PDF files
 
@@ -169,10 +169,10 @@ text on screen or print it. For this reason text extraction from PDFs is hard.
 If you scan a document, the resulting PDF typically shows the image of the scan.
 Scanners then also run OCR software and put the recognized text in the background
 of the image. This result of the scanners OCR software can be extracted by
-PyPDF2. However, in such cases it's recommended to directly use OCR software as
+pypdf. However, in such cases it's recommended to directly use OCR software as
 errors can accumulate: The OCR software is not perfect in recognizing the text.
 Then it stores the text in a format that is not meant for text extraction and
-PyPDF2 might make mistakes parsing that.
+pypdf might make mistakes parsing that.
 
 Hence I would distinguish three types of PDF documents:
 
@@ -194,15 +194,15 @@ PDF file is digitally-born, you can just render it to an image.
 
 I would recommend not to do that.
 
-Text extraction software like PyPDF2 can use more information from the
+Text extraction software like pypdf can use more information from the
 PDF than just the image. It can know about fonts, encodings, typical character
 distances and similar topics.
 
-That means PyPDF2 has a clear advantage when it
+That means pypdf has a clear advantage when it
 comes to characters which are easy to confuse such as `oO0ö`.
-**PyPDF2 will never confuse characters**. It just reads what is in the file.
+**pypdf will never confuse characters**. It just reads what is in the file.
 
-PyPDF2 also has an edge when it comes to characters which are rare, e.g.
+pypdf also has an edge when it comes to characters which are rare, e.g.
 🤰. OCR software will not be able to recognize smileys correctly.
 
 

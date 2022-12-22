@@ -3,7 +3,7 @@
 ## Basic Example
 
 ```python
-from PyPDF2 import PdfWriter
+from pypdf import PdfWriter
 
 merger = PdfWriter()
 
@@ -21,7 +21,7 @@ by Paul Rooney.
 ## Showing more merging options
 
 ```python
-from PyPDF2 import PdfWriter
+from pypdf import PdfWriter
 
 merger = PdfWriter()
 
@@ -50,7 +50,7 @@ output.close()
 ## append
 `append` has been slighlty extended in `PdfWriter`.
 
-see [pdfWriter.append](../modules/PdfWriter.html#PyPDF2.PdfWriter.append) for more details
+see [pdfWriter.append](../modules/PdfWriter.html#pypdf.PdfWriter.append) for more details
 
 **parameters:**
 

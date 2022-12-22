@@ -2,10 +2,10 @@ from pathlib import Path
 
 import pytest
 
-import PyPDF2
-from PyPDF2 import PasswordType, PdfReader
-from PyPDF2._encryption import AlgV5, CryptRC4
-from PyPDF2.errors import DependencyError, PdfReadError
+import pypdf
+from pypdf import PasswordType, PdfReader
+from pypdf._encryption import AlgV5, CryptRC4
+from pypdf.errors import DependencyError, PdfReadError
 
 try:
     from Crypto.Cipher import AES  # noqa: F401
@@ -58,13 +58,13 @@ def test_encryption(name, requres_pycryptodome):
     inputfile = RESOURCE_ROOT / "encryption" / name
     if requres_pycryptodome and not HAS_PYCRYPTODOME:
         with pytest.raises(DependencyError) as exc:
-            ipdf = PyPDF2.PdfReader(inputfile)
+            ipdf = pypdf.PdfReader(inputfile)
             ipdf.decrypt("asdfzxcv")
             dd = dict(ipdf.metadata)
         assert exc.value.args[0] == "PyCryptodome is required for AES algorithm"
         return
     else:
-        ipdf = PyPDF2.PdfReader(inputfile)
+        ipdf = pypdf.PdfReader(inputfile)
         if str(inputfile).endswith("unencrypted.pdf"):
             assert not ipdf.is_encrypted
         else:
@@ -94,7 +94,7 @@ def test_encryption(name, requres_pycryptodome):
 @pytest.mark.skipif(not HAS_PYCRYPTODOME, reason="No pycryptodome")
 def test_both_password(name, user_passwd, owner_passwd):
     inputfile = RESOURCE_ROOT / "encryption" / name
-    ipdf = PyPDF2.PdfReader(inputfile)
+    ipdf = pypdf.PdfReader(inputfile)
     assert ipdf.is_encrypted
     assert ipdf.decrypt(user_passwd) == PasswordType.USER_PASSWORD
     assert ipdf.decrypt(owner_passwd) == PasswordType.OWNER_PASSWORD
@@ -117,7 +117,7 @@ def test_get_page_of_encrypted_file_new_algorithm(pdffile, password):
     IndexError for get_page() of decrypted file
     """
     path = RESOURCE_ROOT / pdffile
-    PyPDF2.PdfReader(path, password=password).pages[0]
+    pypdf.PdfReader(path, password=password).pages[0]
 
 
 @pytest.mark.parametrize(
@@ -135,9 +135,9 @@ def test_get_page_of_encrypted_file_new_algorithm(pdffile, password):
 )
 @pytest.mark.skipif(not HAS_PYCRYPTODOME, reason="No pycryptodome")
 def test_encryption_merge(names):
-    merger = PyPDF2.PdfMerger()
+    merger = pypdf.PdfMerger()
     files = [RESOURCE_ROOT / "encryption" / x for x in names]
-    pdfs = [PyPDF2.PdfReader(x) for x in files]
+    pdfs = [pypdf.PdfReader(x) for x in files]
     for pdf in pdfs:
         if pdf.is_encrypted:
             pdf.decrypt("asdfzxcv")

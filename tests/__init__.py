@@ -3,7 +3,7 @@ import ssl
 import urllib.request
 from typing import List
 
-from PyPDF2.generic import DictionaryObject, IndirectObject
+from pypdf.generic import DictionaryObject, IndirectObject
 
 
 def get_pdf_from_url(url: str, name: str) -> bytes:
@@ -40,7 +40,7 @@ def _strip_position(line: str) -> str:
     Remove the location information.
 
     The message
-        WARNING  PyPDF2._reader:_utils.py:364 Xref table not zero-indexed.
+        WARNING  pypdf._reader:_utils.py:364 Xref table not zero-indexed.
 
     becomes
         Xref table not zero-indexed.

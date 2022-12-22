@@ -12,7 +12,7 @@ be embedded once and referenced twice.
 This can be done by reading and writing the file:
 
 ```python
-from PyPDF2 import PdfReader, PdfWriter
+from pypdf import PdfReader, PdfWriter
 
 reader = PdfReader("big-old-file.pdf")
 writer = PdfWriter()
@@ -34,7 +34,7 @@ reduction (from 5.7 MB to 0.8 MB) within a real PDF.
 
 
 ```python
-from PyPDF2 import PdfReader, PdfWriter
+from pypdf import PdfReader, PdfWriter
 
 reader = PdfReader("example.pdf")
 writer = PdfWriter()
@@ -50,14 +50,14 @@ with open("out.pdf", "wb") as f:
 
 ## Lossless Compression
 
-PyPDF2 supports the FlateDecode filter which uses the zlib/deflate compression
+pypdf supports the FlateDecode filter which uses the zlib/deflate compression
 method. It is a lossless compression, meaning the resulting PDF looks exactly
 the same.
 
-Deflate compression can be applied to a page via [`page.compress_content_streams`](https://pypdf2.readthedocs.io/en/latest/modules/PageObject.html#PyPDF2._page.PageObject.compress_content_streams):
+Deflate compression can be applied to a page via [`page.compress_content_streams`](https://pypdf.readthedocs.io/en/latest/modules/PageObject.html#pypdf._page.PageObject.compress_content_streams):
 
 ```python
-from PyPDF2 import PdfReader, PdfWriter
+from pypdf import PdfReader, PdfWriter
 
 reader = PdfReader("example.pdf")
 writer = PdfWriter()

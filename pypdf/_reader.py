@@ -119,13 +119,13 @@ def convertToInt(
 class DocumentInformation(DictionaryObject):
     """
     A class representing the basic document metadata provided in a PDF File.
-    This class is accessible through :py:class:`PdfReader.metadata<PyPDF2.PdfReader.metadata>`.
+    This class is accessible through :py:class:`PdfReader.metadata<pypdf.PdfReader.metadata>`.
 
     All text properties of the document metadata have
     *two* properties, eg. author and author_raw. The non-raw property will
     always return a ``TextStringObject``, making it ideal for a case where
     the metadata is being displayed. The raw property can sometimes return
-    a ``ByteStringObject``, if PyPDF2 was unable to decode the string's
+    a ``ByteStringObject``, if pypdf was unable to decode the string's
     text encoding; this requires additional safety in the caller and
     therefore is not as commonly accessed.
     """
@@ -325,7 +325,7 @@ class PdfReader:
             self._override_encryption = True
             # Some documents may not have a /ID, use two empty
             # byte strings instead. Solves
-            # https://github.com/mstamy2/PyPDF2/issues/608
+            # https://github.com/mstamy2/pypdf/issues/608
             id_entry = self.trailer.get(TK.ID)
             id1_entry = id_entry[0].get_object().original_bytes if id_entry else b""
             encrypt_entry = cast(
@@ -484,7 +484,7 @@ class PdfReader:
 
         :param int page_number: The page number to retrieve
             (pages begin at zero)
-        :return: a :class:`PageObject<PyPDF2._page.PageObject>` instance.
+        :return: a :class:`PageObject<pypdf._page.PageObject>` instance.
         """
         # ensure that we're not trying to access an encrypted PDF
         # assert not self.trailer.has_key(TK.ENCRYPT)
@@ -507,7 +507,7 @@ class PdfReader:
     def named_destinations(self) -> Dict[str, Any]:
         """
         A read-only dictionary which maps names to
-        :class:`Destinations<PyPDF2.generic.Destination>`
+        :class:`Destinations<pypdf.generic.Destination>`
         """
         return self._get_named_destinations()
 
@@ -528,7 +528,7 @@ class PdfReader:
         :param fileobj: A file object (usually a text file) to write
             a report to on all interactive form fields found.
         :return: A dictionary where each key is a field name, and each
-            value is a :class:`Field<PyPDF2.generic.Field>` object. By
+            value is a :class:`Field<pypdf.generic.Field>` object. By
             default, the mapping name is used for keys.
             ``None`` if form data could not be located.
         """
@@ -679,7 +679,7 @@ class PdfReader:
         Retrieve the named destinations present in the document.
 
         :return: a dictionary which maps names to
-            :class:`Destinations<PyPDF2.generic.Destination>`.
+            :class:`Destinations<pypdf.generic.Destination>`.
         """
         if retval is None:
             retval = {}
@@ -740,7 +740,7 @@ class PdfReader:
         Read-only property for the outline (i.e., a collection of 'outline items'
         which are also known as 'bookmarks') present in the document.
 
-        :return: a nested list of :class:`Destinations<PyPDF2.generic.Destination>`.
+        :return: a nested list of :class:`Destinations<pypdf.generic.Destination>`.
         """
         return self._get_outline()
 
@@ -844,7 +844,7 @@ class PdfReader:
         Retrieve page number of a given PageObject
 
         :param PageObject page: The page to get page number. Should be
-            an instance of :class:`PageObject<PyPDF2._page.PageObject>`
+            an instance of :class:`PageObject<pypdf._page.PageObject>`
         :return: the page number or -1 if page not found
         """
         return self._get_page_number_by_indirect(page.indirect_reference)
@@ -982,7 +982,7 @@ class PdfReader:
 
     @property
     def pages(self) -> List[PageObject]:
-        """Read-only property that emulates a list of :py:class:`Page<PyPDF2._page.Page>` objects."""
+        """Read-only property that emulates a list of :py:class:`Page<pypdf._page.Page>` objects."""
         return _VirtualList(self._get_num_pages, self._get_page)  # type: ignore
 
     @property
@@ -1921,7 +1921,7 @@ class PdfReader:
         """
         Read-only boolean property showing whether this PDF file is encrypted.
         Note that this property, if true, will remain true even after the
-        :meth:`decrypt()<PyPDF2.PdfReader.decrypt>` method is called.
+        :meth:`decrypt()<pypdf.PdfReader.decrypt>` method is called.
         """
         return TK.ENCRYPT in self.trailer
 

@@ -1,4 +1,4 @@
-name: Benchmarking PyPDF2
+name: Benchmarking pypdf
 on:
   push:
     branches:
@@ -27,7 +27,7 @@ jobs:
     - name: Install requirements (Python 3)
       run: |
         pip install -r requirements/ci.txt
-    - name: Install PyPDF2
+    - name: Install pypdf
       run: |
         pip install .
     - name: Run benchmark

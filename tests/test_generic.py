@@ -5,10 +5,10 @@ from unittest.mock import patch
 
 import pytest
 
-from PyPDF2 import PdfMerger, PdfReader, PdfWriter
-from PyPDF2.constants import CheckboxRadioButtonAttributes
-from PyPDF2.errors import PdfReadError, PdfStreamError
-from PyPDF2.generic import (
+from pypdf import PdfMerger, PdfReader, PdfWriter
+from pypdf.constants import CheckboxRadioButtonAttributes
+from pypdf.errors import PdfReadError, PdfStreamError
+from pypdf.generic import (
     AnnotationBuilder,
     ArrayObject,
     BooleanObject,
@@ -673,9 +673,9 @@ def test_bool_repr(tmp_path):
 
 
 @pytest.mark.external
-@patch("PyPDF2._reader.logger_warning")
+@patch("pypdf._reader.logger_warning")
 def test_issue_997(mock_logger_warning):
-    url = "https://github.com/py-pdf/PyPDF2/files/8908874/Exhibit_A-2_930_Enterprise_Zone_Tax_Credits_final.pdf"
+    url = "https://github.com/py-pdf/pypdf/files/8908874/Exhibit_A-2_930_Enterprise_Zone_Tax_Credits_final.pdf"
     name = "gh-issue-997.pdf"
 
     merger = PdfMerger()
@@ -686,7 +686,7 @@ def test_issue_997(mock_logger_warning):
     merger.close()
 
     mock_logger_warning.assert_called_with(
-        "Overwriting cache for 0 4", "PyPDF2._reader"
+        "Overwriting cache for 0 4", "pypdf._reader"
     )
 
     # Strict

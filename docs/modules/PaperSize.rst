@@ -1,7 +1,7 @@
 The PaperSize Class
 ------------------------
 
-.. autoclass:: PyPDF2.PaperSize
+.. autoclass:: pypdf.PaperSize
     :members:
     :undoc-members:
     :show-inheritance:
