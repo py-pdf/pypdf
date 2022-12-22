@@ -1668,7 +1668,7 @@ class PageObject(DictionaryObject):
                                         font_size,
                                     )
                     elif orientation == 180:
-                        if deltaY > 0.8 * f:
+                        if delta_y > 0.8 * f:
                             if (output + text)[-1] != "\n":
                                 output += text + "\n"
                                 if visitor_text is not None:
