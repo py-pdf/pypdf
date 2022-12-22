@@ -1,5 +1,27 @@
 # CHANGELOG
 
+## Version 3.0.0, 2022-12-22
+
+### BREAKING CHANGES ⚠️
+-  Deprecate features with PyPDF2==3.0.0 (#1489)
+-  Refactor Fit / Zoom parameters (#1437)
+
+### New Features (ENH)
+-  Add Cloning  (#1371)
+-  Allow int for indirect_reference in PdfWriter.get_object (#1490)
+
+### Documentation (DOC)
+-  How to read PDFs from S3 (#1509)
+-  Make MyST parse all links as simple hyperlinks (#1506)
+-  Changed 'latest' for 'stable' generated docs (#1495)
+-  Adjust deprecation procedure (#1487)
+
+### Maintenance (MAINT)
+-  Use typing.IO for file streams (#1498)
+
+
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/2.12.1...3.0.0)
+
 ## Version 2.12.1, 2022-12-10
 
 ### Documentation (DOC)

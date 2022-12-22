@@ -6,6 +6,10 @@
 
 # PyPDF2
 
+> **NOTE**: The PyPDF2 project is going back to its roots. PyPDF2==3.0.X will be
+> the last version of PyPDF2. Patches for this version will still be applied, but
+> development will continue with [`pypdf==3.0.0`](https://pypi.org/project/pyPdf/).
+
 PyPDF2 is a free and open-source pure-python PDF library capable of splitting,
 [merging](https://pypdf2.readthedocs.io/en/stable/user/merging-pdfs.html),
 [cropping, and transforming](https://pypdf2.readthedocs.io/en/stable/user/cropping-and-transforming.html)
