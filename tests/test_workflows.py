@@ -13,9 +13,9 @@ from re import findall
 
 import pytest
 
-from PyPDF2 import PdfMerger, PdfReader, PdfWriter
-from PyPDF2.constants import PageAttributes as PG
-from PyPDF2.errors import PdfReadWarning
+from pypdf import PdfMerger, PdfReader, PdfWriter
+from pypdf.constants import PageAttributes as PG
+from pypdf.errors import PdfReadWarning
 
 from . import get_pdf_from_url, normalize_warnings
 
@@ -64,8 +64,8 @@ def test_basic_features(tmp_path):
     password = "secret"
     writer.encrypt(password)
 
-    # finally, write "output" to PyPDF2-output.pdf
-    write_path = tmp_path / "PyPDF2-output.pdf"
+    # finally, write "output" to pypdf-output.pdf
+    write_path = tmp_path / "pypdf-output.pdf"
     with open(write_path, "wb") as output_stream:
         writer.write(output_stream)
 
@@ -198,11 +198,11 @@ def test_rotate_45():
         (True, "https://arxiv.org/pdf/2201.00022.pdf", [0, 1, 5, 10]),
         (True, "https://arxiv.org/pdf/2201.00029.pdf", [0, 1, 6, 10]),
         # #1145
-        (True, "https://github.com/py-pdf/PyPDF2/files/9174594/2017.pdf", [0]),
+        (True, "https://github.com/py-pdf/pypdf/files/9174594/2017.pdf", [0]),
         # #1145, remaining issue (empty arguments for FlateEncoding)
         (
             True,
-            "https://github.com/py-pdf/PyPDF2/files/9175966/2015._pb_decode_pg0.pdf",
+            "https://github.com/py-pdf/pypdf/files/9175966/2015._pb_decode_pg0.pdf",
             [0],
         ),
         # 6 instead of 5: as there is an issue in page 5 (missing objects)
@@ -210,15 +210,15 @@ def test_rotate_45():
         (True, "https://arxiv.org/pdf/1601.03642.pdf", [0, 1, 5, 7]),
         (
             True,
-            "https://github.com/py-pdf/PyPDF2/files/3796761/17343_2008_Order_09-Jan-2019.pdf",
+            "https://github.com/py-pdf/pypdf/files/3796761/17343_2008_Order_09-Jan-2019.pdf",
             [0, 1],
         ),
         (
             True,
-            "https://github.com/py-pdf/PyPDF2/files/8884471/ssi_manwaring.pdf",
+            "https://github.com/py-pdf/pypdf/files/8884471/ssi_manwaring.pdf",
             [0, 1],
         ),
-        (True, "https://github.com/py-pdf/PyPDF2/files/8884469/999092.pdf", [0, 1]),
+        (True, "https://github.com/py-pdf/pypdf/files/8884469/999092.pdf", [0, 1]),
         (
             True,
             "file://" + str(RESOURCE_ROOT / "test Orient.pdf"),
@@ -226,10 +226,10 @@ def test_rotate_45():
         ),  # TODO: preparation of text orientation validation
         (
             True,
-            "https://github.com/py-pdf/PyPDF2/files/8884470/fdocuments.in_sweet-fundamentals-of-crystallography.pdf",
+            "https://github.com/py-pdf/pypdf/files/8884470/fdocuments.in_sweet-fundamentals-of-crystallography.pdf",
             [0, 1, 34, 35, 36, 118, 119, 120, 121],
         ),
-        (True, "https://github.com/py-pdf/PyPDF2/files/8884493/998167.pdf", [0]),
+        (True, "https://github.com/py-pdf/pypdf/files/8884493/998167.pdf", [0]),
         (
             True,
             "https://corpora.tika.apache.org/base/docs/govdocs1/971/971703.pdf",
@@ -875,7 +875,7 @@ def test_get_xmp(url, name, strict):
 
 @pytest.mark.external
 def test_tounicode_is_identity():
-    url = "https://github.com/py-pdf/PyPDF2/files/9998335/FP_Thesis.pdf"
+    url = "https://github.com/py-pdf/pypdf/files/9998335/FP_Thesis.pdf"
     name = "FP_Thesis.pdf"
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data, strict=False)

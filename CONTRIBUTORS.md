@@ -1,15 +1,15 @@
 # Contributors
 
-PyPDF2 had a lot of contributors since it started with pyPdf in 2005. We are
+pypdf had a lot of contributors since it started with pyPdf in 2005. We are
 a free software project without any company affiliation. We cannot pay
 contributors, but we do value their contributions. A lot of time, effort, and
 expertise went into this project. With this list, we recognize those awesome
 people 🤗
 
 The list is definitely not complete. You can find more contributors via the git
-history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/PyPDF2/graphs/contributors).
+history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/pypdf/graphs/contributors).
 
-## Contributors to the pyPdf / PyPDF2 project
+## Contributors to the pypdf (formerly pyPdf / PyPDF2) project
 
 * [DL6ER](https://github.com/DL6ER)
 * [ediamondscience](https://github.com/ediamondscience)
@@ -27,7 +27,7 @@ history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/PyPDF2/gr
 * [Rogmann, Sascha](https://github.com/srogmann)
 * [sietzeberends](https://github.com/sietzeberends)
 * [Stüber, Timo](https://github.com/omit66)
-* [Thoma, Martin](https://github.com/MartinThoma): Maintainer of PyPDF2 since April 2022. I hope to build a great community with many awesome contributors. [LinkedIn](https://www.linkedin.com/in/martin-thoma/) | [StackOverflow](https://stackoverflow.com/users/562769/martin-thoma) | [Blog](https://martin-thoma.com/)
+* [Thoma, Martin](https://github.com/MartinThoma): Maintainer of pypdf since April 2022. I hope to build a great community with many awesome contributors. [LinkedIn](https://www.linkedin.com/in/martin-thoma/) | [StackOverflow](https://stackoverflow.com/users/562769/martin-thoma) | [Blog](https://martin-thoma.com/)
 * [WevertonGomes](https://github.com/WevertonGomesCosta)
 * ztravis
 
@@ -40,10 +40,10 @@ Contributors are:
   (1) Bugs: with complete MCVE
   (2) Well-described feature requests
   (3) Potentially some more.
-  The maintainers of PyPDF2 have the last call on that one.
-* Community work: This is exceptional. If the maintainers of PyPDF2 see people
+  The maintainers of pypdf have the last call on that one.
+* Community work: This is exceptional. If the maintainers of pypdf see people
   being super helpful in answering issues / discussions or being very active on
-  Stackoverflow, we also consider them being contributors to PyPDF2.
+  Stackoverflow, we also consider them being contributors to pypdf.
 
 Contributors can add themselves or ask via an Github Issue to be added.
 

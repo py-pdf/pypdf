@@ -1,5 +1,5 @@
 """
-All errors/exceptions PyPDF2 raises and all of the warnings it uses.
+All errors/exceptions pypdf raises and all of the warnings it uses.
 
 Please note that broken PDF files might cause other Exceptions.
 """

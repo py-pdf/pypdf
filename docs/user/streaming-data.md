@@ -1,9 +1,9 @@
-# Streaming Data with PyPDF2
+# Streaming Data with pypdf
 
 In some cases you might want to avoid saving things explicitly as a file
 to disk, e.g. when you want to store the PDF in a database or AWS S3.
 
-PyPDF2 supports streaming data to a file-like object and here is how.
+pypdf supports streaming data to a file-like object and here is how.
 
 ```python
 from io import BytesIO
@@ -31,7 +31,7 @@ and want to set `my-secret-password`:
 from io import BytesIO
 
 import boto3
-from PyPDF2 import PdfReader, PdfWriter
+from pypdf import PdfReader, PdfWriter
 
 
 reader = PdfReader(BytesIO(raw_bytes_data))
@@ -65,7 +65,7 @@ For AWS S3 it works like this:
 from io import BytesIO
 
 import boto3
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 
 
 s3 = boto3.client("s3")

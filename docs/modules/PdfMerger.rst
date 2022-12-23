@@ -1,7 +1,7 @@
 The PdfMerger Class
 -------------------
 
-.. autoclass:: PyPDF2.PdfMerger
+.. autoclass:: pypdf.PdfMerger
     :members:
     :undoc-members:
     :show-inheritance:

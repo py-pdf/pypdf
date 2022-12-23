@@ -1,7 +1,7 @@
 # Cropping and Transforming PDFs
 
 ```python
-from PyPDF2 import PdfWriter, PdfReader
+from pypdf import PdfWriter, PdfReader
 
 reader = PdfReader("example.pdf")
 writer = PdfWriter()
@@ -26,7 +26,7 @@ writer.add_page(page3)
 writer.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
 
 # write to document-output.pdf
-with open("PyPDF2-output.pdf", "wb") as fp:
+with open("pypdf-output.pdf", "wb") as fp:
     writer.write(fp)
 ```
 
@@ -34,11 +34,11 @@ with open("PyPDF2-output.pdf", "wb") as fp:
 
 The most typical rotation is a clockwise rotation of the page by multiples of
 90 degrees. That is done when the orientation of the page is wrong. You can
-do that with the [`rotate` method](https://pypdf2.readthedocs.io/en/latest/modules/PageObject.html#PyPDF2._page.PageObject.rotate)
+do that with the [`rotate` method](https://pypdf.readthedocs.io/en/latest/modules/PageObject.html#pypdf._page.PageObject.rotate)
 of the `PageObject` class:
 
 ```python
-from PyPDF2 import PdfWriter, PdfReader
+from pypdf import PdfWriter, PdfReader
 
 reader = PdfReader("input.pdf")
 writer = PdfWriter()
@@ -65,7 +65,7 @@ contents and does not change the mediabox or cropbox.
 is the result of
 
 ```python
-from PyPDF2 import PdfReader, PdfWriter, Transformation
+from pypdf import PdfReader, PdfWriter, Transformation
 
 # Get the data
 reader_base = PdfReader("labeled-edges-center-image.pdf")
@@ -88,7 +88,7 @@ with open("merged-foo.pdf", "wb") as fp:
 ![](merge-45-deg-rot.png)
 
 ```python
-from PyPDF2 import PdfReader, PdfWriter, Transformation
+from pypdf import PdfReader, PdfWriter, Transformation
 
 # Get the data
 reader_base = PdfReader("labeled-edges-center-image.pdf")
@@ -132,7 +132,7 @@ op = Transformation().rotate(45).translate(tx=50)
 
 ## Scaling
 
-PyPDF2 offers two ways to scale: The page itself and the contents on a page.
+pypdf offers two ways to scale: The page itself and the contents on a page.
 Typically, you want to combine both.
 
 ![](scaling.png)
@@ -140,7 +140,7 @@ Typically, you want to combine both.
 ### Scaling a Page (the Canvas)
 
 ```python
-from PyPDF2 import PdfReader, PdfWriter
+from pypdf import PdfReader, PdfWriter
 
 # Read the input
 reader = PdfReader("resources/side-by-side-subfig.pdf")
@@ -159,7 +159,7 @@ If you wish to have more control, you can adjust the various page boxes
 directly:
 
 ```python
-from PyPDF2.generic import RectangleObject
+from pypdf.generic import RectangleObject
 
 mb = page.mediabox
 
@@ -176,7 +176,7 @@ The content is scaled towords the origin of the coordinate system. Typically,
 that is the lower-left corner.
 
 ```python
-from PyPDF2 import PdfReader, PdfWriter, Transformation
+from pypdf import PdfReader, PdfWriter, Transformation
 
 # Read the input
 reader = PdfReader("resources/side-by-side-subfig.pdf")

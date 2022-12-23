@@ -559,7 +559,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
     """
     Users need to have the pillow package installed.
 
-    It's unclear if PyPDF2 will keep this function here, hence it's private.
+    It's unclear if pypdf will keep this function here, hence it's private.
     It might get removed at any point.
 
     :return: Tuple[file extension, bytes]
@@ -569,7 +569,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
     except ImportError:
         raise ImportError(
             "pillow is required to do image extraction. "
-            "It can be installed via 'pip install PyPDF2[image]'"
+            "It can be installed via 'pip install pypdf[image]'"
         )
 
     size = (x_object_obj[IA.WIDTH], x_object_obj[IA.HEIGHT])

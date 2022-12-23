@@ -206,7 +206,7 @@ class Transformation:
     Example
     -------
 
-    >>> from PyPDF2 import Transformation
+    >>> from pypdf import Transformation
     >>> op = Transformation().scale(sx=2, sy=3).translate(tx=10, ty=20)
     >>> page.add_transformation(op)
     """
@@ -336,10 +336,10 @@ class PageObject(DictionaryObject):
     PageObject represents a single page within a PDF file.
 
     Typically this object will be created by accessing the
-    :meth:`get_page()<PyPDF2.PdfReader.get_page>` method of the
-    :class:`PdfReader<PyPDF2.PdfReader>` class, but it is
+    :meth:`get_page()<pypdf.PdfReader.get_page>` method of the
+    :class:`PdfReader<pypdf.PdfReader>` class, but it is
     also possible to create an empty page with the
-    :meth:`create_blank_page()<PyPDF2._page.PageObject.create_blank_page>` static method.
+    :meth:`create_blank_page()<pypdf._page.PageObject.create_blank_page>` static method.
 
     Args:
         pdf: PDF file the page belongs to.
@@ -362,7 +362,7 @@ class PageObject(DictionaryObject):
             warnings.warn(
                 (
                     "indirect_ref is deprecated and will be removed in "
-                    "PyPDF2 4.0.0. Use indirect_reference instead of indirect_ref."
+                    "pypdf 4.0.0. Use indirect_reference instead of indirect_ref."
                 ),
                 DeprecationWarning,
             )
@@ -375,7 +375,7 @@ class PageObject(DictionaryObject):
     def indirect_ref(self) -> Optional[IndirectObject]:  # deprecated
         warnings.warn(
             (
-                "indirect_ref is deprecated and will be removed in PyPDF2 4.0.0"
+                "indirect_ref is deprecated and will be removed in pypdf 4.0.0"
                 "Use indirect_reference instead of indirect_ref."
             ),
             DeprecationWarning,
@@ -466,7 +466,7 @@ class PageObject(DictionaryObject):
         """
         Get a list of all images of the page.
 
-        This requires pillow. You can install it via 'pip install PyPDF2[image]'.
+        This requires pillow. You can install it via 'pip install pypdf[image]'.
 
         For the moment, this does NOT include inline images. They will be added
         in future.
@@ -1086,7 +1086,7 @@ class PageObject(DictionaryObject):
         Args:
             ctm: A 6-element tuple containing the operands of the
                 transformation matrix. Alternatively, a
-                :py:class:`Transformation<PyPDF2.Transformation>`
+                :py:class:`Transformation<pypdf.Transformation>`
                 object can be passed.
 
         See :doc:`/user/cropping-and-transforming`.
@@ -1789,8 +1789,8 @@ class PageObject(DictionaryObject):
         For example in some PDF files this can be useful to parse tables.
 
         Args:
-            Tj_sep: Deprecated. Kept for compatibility until PyPDF2 4.0.0
-            TJ_sep: Deprecated. Kept for compatibility until PyPDF2 4.0.0
+            Tj_sep: Deprecated. Kept for compatibility until pypdf 4.0.0
+            TJ_sep: Deprecated. Kept for compatibility until pypdf 4.0.0
             orientations: list of orientations text_extraction will look for
                 default = (0, 90, 180, 270)
                 note: currently only 0(Up),90(turned Left), 180(upside Down),
@@ -1841,7 +1841,7 @@ class PageObject(DictionaryObject):
                 raise TypeError(f"Invalid positional parameter {args[0]}")
         if Tj_sep is not None or TJ_sep is not None:
             warnings.warn(
-                "parameters Tj_Sep, TJ_sep depreciated, and will be removed in PyPDF2 4.0.0.",
+                "parameters Tj_Sep, TJ_sep depreciated, and will be removed in pypdf 4.0.0.",
                 DeprecationWarning,
             )
 
@@ -1913,7 +1913,7 @@ class PageObject(DictionaryObject):
 
     mediabox = _create_rectangle_accessor(PG.MEDIABOX, ())
     """
-    A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
+    A :class:`RectangleObject<pypdf.generic.RectangleObject>`, expressed in default user space units,
     defining the boundaries of the physical medium on which the page is
     intended to be displayed or printed.
     """
@@ -1940,7 +1940,7 @@ class PageObject(DictionaryObject):
 
     cropbox = _create_rectangle_accessor("/CropBox", (PG.MEDIABOX,))
     """
-    A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
+    A :class:`RectangleObject<pypdf.generic.RectangleObject>`, expressed in default user space units,
     defining the visible region of default user space.  When the page is
     displayed or printed, its contents are to be clipped (cropped) to this
     rectangle and then imposed on the output medium in some
@@ -1964,7 +1964,7 @@ class PageObject(DictionaryObject):
 
     bleedbox = _create_rectangle_accessor("/BleedBox", ("/CropBox", PG.MEDIABOX))
     """
-    A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
+    A :class:`RectangleObject<pypdf.generic.RectangleObject>`, expressed in default user space units,
     defining the region to which the contents of the page should be clipped
     when output in a production environment.
     """
@@ -1986,7 +1986,7 @@ class PageObject(DictionaryObject):
 
     trimbox = _create_rectangle_accessor("/TrimBox", ("/CropBox", PG.MEDIABOX))
     """
-    A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
+    A :class:`RectangleObject<pypdf.generic.RectangleObject>`, expressed in default user space units,
     defining the intended dimensions of the finished page after trimming.
     """
 
@@ -2007,7 +2007,7 @@ class PageObject(DictionaryObject):
 
     artbox = _create_rectangle_accessor("/ArtBox", ("/CropBox", PG.MEDIABOX))
     """
-    A :class:`RectangleObject<PyPDF2.generic.RectangleObject>`, expressed in default user space units,
+    A :class:`RectangleObject<pypdf.generic.RectangleObject>`, expressed in default user space units,
     defining the extent of the page's meaningful content as intended by the
     page's creator.
     """

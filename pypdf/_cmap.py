@@ -228,7 +228,7 @@ def prepare_cm(ft: DictionaryObject) -> bytes:
         if j >= 0:
             if j == 0:
                 # string is empty: stash a placeholder here (see below)
-                # see https://github.com/py-pdf/PyPDF2/issues/1111
+                # see https://github.com/py-pdf/pypdf/issues/1111
                 content = b"."
             else:
                 content = ll[i][:j].replace(b" ", b"")

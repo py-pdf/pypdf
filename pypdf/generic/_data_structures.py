@@ -1087,7 +1087,7 @@ class Field(TreeObject):
     A class representing a field dictionary.
 
     This class is accessed through
-    :meth:`get_fields()<PyPDF2.PdfReader.get_fields>`
+    :meth:`get_fields()<pypdf.PdfReader.get_fields>`
     """
 
     def __init__(self, data: Dict[str, Any]) -> None:
@@ -1152,8 +1152,8 @@ class Field(TreeObject):
     def mapping_name(self) -> Optional[str]:
         """
         Read-only property accessing the mapping name of this field. This
-        name is used by PyPDF2 as a key in the dictionary returned by
-        :meth:`get_fields()<PyPDF2.PdfReader.get_fields>`
+        name is used by pypdf as a key in the dictionary returned by
+        :meth:`get_fields()<pypdf.PdfReader.get_fields>`
         """
         return self.get(FieldDictionaryAttributes.TM)
 
@@ -1225,7 +1225,7 @@ class Destination(TreeObject):
 
     :param str title: Title of this destination.
     :param IndirectObject page: Reference to the page of this destination. Should
-        be an instance of :class:`IndirectObject<PyPDF2.generic.IndirectObject>`.
+        be an instance of :class:`IndirectObject<pypdf.generic.IndirectObject>`.
     :param Fit fit: How the destination is displayed.
     :raises PdfReadError: If destination type is invalid.
 

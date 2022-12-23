@@ -5,9 +5,9 @@ from pathlib import Path
 
 import pytest
 
-from PyPDF2 import PageObject, PdfMerger, PdfReader, PdfWriter
-from PyPDF2.errors import DeprecationError, PageSizeNotDefinedError
-from PyPDF2.generic import (
+from pypdf import PageObject, PdfMerger, PdfReader, PdfWriter
+from pypdf.errors import DeprecationError, PageSizeNotDefinedError
+from pypdf.generic import (
     ArrayObject,
     Fit,
     IndirectObject,
@@ -156,7 +156,7 @@ def test_writer_operations_by_traditional_usage(write_data_here, needs_cleanup):
 
     writer_operate(writer)
 
-    # finally, write "output" to PyPDF2-output.pdf
+    # finally, write "output" to pypdf-output.pdf
     if needs_cleanup:
         with open(write_data_here, "wb") as output_stream:
             writer.write(output_stream)
@@ -180,7 +180,7 @@ def test_writer_operations_by_semi_traditional_usage(write_data_here, needs_clea
     with PdfWriter() as writer:
         writer_operate(writer)
 
-        # finally, write "output" to PyPDF2-output.pdf
+        # finally, write "output" to pypdf-output.pdf
         if needs_cleanup:
             with open(write_data_here, "wb") as output_stream:
                 writer.write(output_stream)
@@ -206,7 +206,7 @@ def test_writer_operations_by_semi_new_traditional_usage(
     with PdfWriter() as writer:
         writer_operate(writer)
 
-        # finally, write "output" to PyPDF2-output.pdf
+        # finally, write "output" to pypdf-output.pdf
         writer.write(write_data_here)
 
     if needs_cleanup:
@@ -222,7 +222,7 @@ def test_writer_operations_by_semi_new_traditional_usage(
     ],
 )
 def test_writer_operation_by_new_usage(write_data_here, needs_cleanup):
-    # This includes write "output" to PyPDF2-output.pdf
+    # This includes write "output" to pypdf-output.pdf
     with PdfWriter(write_data_here) as writer:
         writer_operate(writer)
 
@@ -247,7 +247,7 @@ def test_remove_images(input_path, ignore_byte_string_object):
     writer.insert_page(page, 0)
     writer.remove_images(ignore_byte_string_object=ignore_byte_string_object)
 
-    # finally, write "output" to PyPDF2-output.pdf
+    # finally, write "output" to pypdf-output.pdf
     tmp_filename = "dont_commit_writer_removed_image.pdf"
     with open(tmp_filename, "wb") as output_stream:
         writer.write(output_stream)
@@ -281,7 +281,7 @@ def test_remove_text(input_path, ignore_byte_string_object):
     writer.insert_page(page, 0)
     writer.remove_text(ignore_byte_string_object=ignore_byte_string_object)
 
-    # finally, write "output" to PyPDF2-output.pdf
+    # finally, write "output" to pypdf-output.pdf
     tmp_filename = "dont_commit_writer_removed_text.pdf"
     with open(tmp_filename, "wb") as output_stream:
         writer.write(output_stream)
@@ -351,7 +351,7 @@ def test_remove_text_all_operators(ignore_byte_string_object):
     writer.insert_page(page, 0)
     writer.remove_text(ignore_byte_string_object=ignore_byte_string_object)
 
-    # finally, write "output" to PyPDF2-output.pdf
+    # finally, write "output" to pypdf-output.pdf
     tmp_filename = "dont_commit_writer_removed_text.pdf"
     with open(tmp_filename, "wb") as output_stream:
         writer.write(output_stream)
@@ -375,7 +375,7 @@ def test_write_metadata():
 
     writer.add_metadata({"/Title": "The Crazy Ones"})
 
-    # finally, write data to PyPDF2-output.pdf
+    # finally, write data to pypdf-output.pdf
     tmp_filename = "dont_commit_writer_added_metadata.pdf"
     with open(tmp_filename, "wb") as output_stream:
         writer.write(output_stream)
@@ -411,7 +411,7 @@ def test_fill_form():
         writer.pages[0], {"foo": "some filled in text"}
     )
 
-    # write "output" to PyPDF2-output.pdf
+    # write "output" to pypdf-output.pdf
     tmp_filename = "dont_commit_filled_pdf.pdf"
     with open(tmp_filename, "wb") as output_stream:
         writer.write(output_stream)
@@ -437,7 +437,7 @@ def test_encrypt(use_128bit, user_password, owner_password):
         use_128bit=use_128bit,
     )
 
-    # write "output" to PyPDF2-output.pdf
+    # write "output" to pypdf-output.pdf
     tmp_filename = "dont_commit_encrypted.pdf"
     with open(tmp_filename, "wb") as output_stream:
         writer.write(output_stream)
@@ -450,25 +450,25 @@ def test_encrypt(use_128bit, user_password, owner_password):
     # Test the user password (str):
     reader = PdfReader(tmp_filename, password="userpwd")
     new_text = reader.pages[0].extract_text()
-    assert reader.metadata.get("/Producer") == "PyPDF2"
+    assert reader.metadata.get("/Producer") == "pypdf"
     assert new_text == orig_text
 
     # Test the owner password (str):
     reader = PdfReader(tmp_filename, password="ownerpwd")
     new_text = reader.pages[0].extract_text()
-    assert reader.metadata.get("/Producer") == "PyPDF2"
+    assert reader.metadata.get("/Producer") == "pypdf"
     assert new_text == orig_text
 
     # Test the user password (bytes):
     reader = PdfReader(tmp_filename, password=b"userpwd")
     new_text = reader.pages[0].extract_text()
-    assert reader.metadata.get("/Producer") == "PyPDF2"
+    assert reader.metadata.get("/Producer") == "pypdf"
     assert new_text == orig_text
 
     # Test the owner password (stbytesr):
     reader = PdfReader(tmp_filename, password=b"ownerpwd")
     new_text = reader.pages[0].extract_text()
-    assert reader.metadata.get("/Producer") == "PyPDF2"
+    assert reader.metadata.get("/Producer") == "pypdf"
     assert new_text == orig_text
 
     # Cleanup
@@ -487,7 +487,7 @@ def test_add_outline_item():
     )
     writer.add_outline_item("Another", 2, outline_item, None, False, False, Fit.fit())
 
-    # write "output" to PyPDF2-output.pdf
+    # write "output" to pypdf-output.pdf
     tmp_filename = "dont_commit_outline_item.pdf"
     with open(tmp_filename, "wb") as output_stream:
         writer.write(output_stream)
@@ -526,7 +526,7 @@ def test_add_named_destination():
         writer.get_object(reader.pages[0].indirect_reference)
     assert exc.value.args[0] == "pdf must be self"
 
-    # write "output" to PyPDF2-output.pdf
+    # write "output" to pypdf-output.pdf
     tmp_filename = "dont_commit_named_destination.pdf"
     with open(tmp_filename, "wb") as output_stream:
         writer.write(output_stream)
@@ -550,24 +550,24 @@ def test_add_uri():
     )
     writer.add_uri(
         2,
-        "https://pypdf2.readthedocs.io/en/latest/",
+        "https://pypdf.readthedocs.io/en/latest/",
         RectangleObject([20, 30, 50, 80]),
         border=[1, 2, 3],
     )
     writer.add_uri(
         3,
-        "https://pypdf2.readthedocs.io/en/latest/user/adding-pdf-annotations.html",
+        "https://pypdf.readthedocs.io/en/latest/user/adding-pdf-annotations.html",
         "[ 200 300 250 350 ]",
         border=[0, 0, 0],
     )
     writer.add_uri(
         3,
-        "https://pypdf2.readthedocs.io/en/latest/user/adding-pdf-annotations.html",
+        "https://pypdf.readthedocs.io/en/latest/user/adding-pdf-annotations.html",
         [100, 200, 150, 250],
         border=[0, 0, 0],
     )
 
-    # write "output" to PyPDF2-output.pdf
+    # write "output" to pypdf-output.pdf
     tmp_filename = "dont_commit_uri.pdf"
     with open(tmp_filename, "wb") as output_stream:
         writer.write(output_stream)
@@ -587,7 +587,7 @@ def test_add_link():
         DeprecationError,
         match=(
             re.escape(
-                "add_link is deprecated and was removed in PyPDF2 3.0.0. "
+                "add_link is deprecated and was removed in pypdf 3.0.0. "
                 "Use add_annotation(AnnotationBuilder.link(...)) instead."
             )
         ),
@@ -619,7 +619,7 @@ def test_add_link():
             border=[0, 0, 0],
         )
 
-    # write "output" to PyPDF2-output.pdf
+    # write "output" to pypdf-output.pdf
     tmp_filename = "dont_commit_link.pdf"
     with open(tmp_filename, "wb") as output_stream:
         writer.write(output_stream)
@@ -889,7 +889,7 @@ def test_startup_dest():
 
 
 def test_iss471():
-    url = "https://github.com/py-pdf/PyPDF2/files/9139245/book.pdf"
+    url = "https://github.com/py-pdf/pypdf/files/9139245/book.pdf"
     name = "book_471.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
 

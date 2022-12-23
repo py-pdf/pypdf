@@ -3,7 +3,7 @@ requires = ["flit_core >=3.2,<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
-name = "PyPDF2"
+name = "pypdf"
 authors = [{ name = "Mathieu Fenniak", email = "biziqe@mathieu.fenniak.net" }]
 maintainers = [{ name = "Martin Thoma", email = "info@martin-thoma.de" }]
 description = "A pure-python PDF library capable of splitting, merging, cropping, and transforming PDF files"
@@ -32,10 +32,10 @@ dependencies = [
 ]
 
 [project.urls]
-Documentation = "https://pypdf2.readthedocs.io/en/latest/"
-Source = "https://github.com/py-pdf/PyPDF2"
-"Bug Reports" = "https://github.com/py-pdf/PyPDF2/issues"
-Changelog = "https://pypdf2.readthedocs.io/en/latest/meta/CHANGELOG.html"
+Documentation = "https://pypdf.readthedocs.io/en/latest/"
+Source = "https://github.com/py-pdf/pypdf"
+"Bug Reports" = "https://github.com/py-pdf/pypdf/issues"
+Changelog = "https://pypdf.readthedocs.io/en/latest/meta/CHANGELOG.html"
 
 [project.optional-dependencies]
 full = ["PyCryptodome", "Pillow"]
@@ -50,7 +50,7 @@ runner = "./mutmut-test.sh"
 tests_dir = "tests/"
 
 [tool.check-wheel-contents]
-package = "./PyPDF2"
+package = "./pypdf"
 
 [tool.flit.sdist]
 exclude = [".github/*", "docs/*", "resources/*", "sample-files/*", "sample-files/.github/*", "sample-files/.gitignore", "sample-files/.pre-commit-config.yaml",  "requirements/*", "tests/*", ".flake8", ".gitignore", ".gitmodules", ".pylintrc", "tox.ini", "make_changelog.py", "mutmut-test.sh", ".pre-commit-config.yaml", ".gitblame-ignore-revs", "Makefile", "mutmut_config.py"]
@@ -73,7 +73,7 @@ include_trailing_comma = true
 known_third_party = ["pytest", "setuptools"]
 
 [tool.coverage.run]
-source = ["PyPDF2"]
+source = ["pypdf"]
 branch = true
 
 [tool.coverage.report]

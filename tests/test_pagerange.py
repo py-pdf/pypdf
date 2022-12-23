@@ -1,6 +1,6 @@
 import pytest
 
-from PyPDF2.pagerange import PageRange, ParseError, parse_filename_page_ranges
+from pypdf.pagerange import PageRange, ParseError, parse_filename_page_ranges
 
 
 def test_equality():

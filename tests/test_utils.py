@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-import PyPDF2._utils
-from PyPDF2 import PdfReader
-from PyPDF2._utils import (
+import pypdf._utils
+from pypdf import PdfReader
+from pypdf._utils import (
     File,
     _get_max_pdf_version_header,
     _human_readable_bytes,
@@ -20,7 +20,7 @@ from PyPDF2._utils import (
     skip_over_comment,
     skip_over_whitespace,
 )
-from PyPDF2.errors import DeprecationError, PdfReadError, PdfStreamError
+from pypdf.errors import DeprecationError, PdfReadError, PdfStreamError
 
 from . import get_pdf_from_url
 
@@ -93,25 +93,25 @@ def test_matrix_multiply(a, b, expected):
 def test_mark_location():
     stream = io.BytesIO(b"abde" * 6000)
     mark_location(stream)
-    os.remove("PyPDF2_pdfLocation.txt")  # cleanup
+    os.remove("pypdf_pdfLocation.txt")  # cleanup
 
 
 def test_hex_str():
-    assert PyPDF2._utils.hex_str(10) == "0xa"
+    assert pypdf._utils.hex_str(10) == "0xa"
 
 
 def test_b():
-    assert PyPDF2._utils.b_("foo") == b"foo"
-    assert PyPDF2._utils.b_("😀") == "😀".encode()
-    assert PyPDF2._utils.b_("‰") == "‰".encode()
-    assert PyPDF2._utils.b_("▷") == "▷".encode()
-    assert PyPDF2._utils.b_("世") == "世".encode()
+    assert pypdf._utils.b_("foo") == b"foo"
+    assert pypdf._utils.b_("😀") == "😀".encode()
+    assert pypdf._utils.b_("‰") == "‰".encode()
+    assert pypdf._utils.b_("▷") == "▷".encode()
+    assert pypdf._utils.b_("世") == "世".encode()
 
 
 def test_deprecate_no_replacement():
     with pytest.warns(DeprecationWarning) as warn:
-        PyPDF2._utils.deprecate_no_replacement("foo")
-    error_msg = "foo is deprecated and will be removed in PyPDF2 3.0.0."
+        pypdf._utils.deprecate_no_replacement("foo")
+    error_msg = "foo is deprecated and will be removed in pypdf 3.0.0."
     assert warn[0].message.args[0] == error_msg
 
 
@@ -130,7 +130,7 @@ def test_deprecate_no_replacement():
     ],
 )
 def test_paeth_predictor(left, up, upleft, expected):
-    assert PyPDF2._utils.paeth_predictor(left, up, upleft) == expected
+    assert pypdf._utils.paeth_predictor(left, up, upleft) == expected
 
 
 @pytest.mark.parametrize(

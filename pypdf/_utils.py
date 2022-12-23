@@ -70,10 +70,10 @@ CompressedTransformationMatrix: TypeAlias = Tuple[
 StreamType = IO
 StrByteType = Union[str, StreamType]
 
-DEPR_MSG_NO_REPLACEMENT = "{} is deprecated and will be removed in PyPDF2 {}."
-DEPR_MSG_NO_REPLACEMENT_HAPPENED = "{} is deprecated and was removed in PyPDF2 {}."
-DEPR_MSG = "{} is deprecated and will be removed in PyPDF2 3.0.0. Use {} instead."
-DEPR_MSG_HAPPENED = "{} is deprecated and was removed in PyPDF2 {}. Use {} instead."
+DEPR_MSG_NO_REPLACEMENT = "{} is deprecated and will be removed in pypdf {}."
+DEPR_MSG_NO_REPLACEMENT_HAPPENED = "{} is deprecated and was removed in pypdf {}."
+DEPR_MSG = "{} is deprecated and will be removed in pypdf 3.0.0. Use {} instead."
+DEPR_MSG_HAPPENED = "{} is deprecated and was removed in pypdf {}. Use {} instead."
 
 
 def _get_max_pdf_version_header(header1: bytes, header2: bytes) -> bytes:
@@ -249,7 +249,7 @@ def mark_location(stream: StreamType) -> None:
     # Mainly for debugging
     radius = 5000
     stream.seek(-radius, 1)
-    with open("PyPDF2_pdfLocation.txt", "wb") as output_fh:
+    with open("pypdf_pdfLocation.txt", "wb") as output_fh:
         output_fh.write(stream.read(radius))
         output_fh.write(b"HERE")
         output_fh.write(stream.read(radius))
@@ -395,8 +395,8 @@ def logger_warning(msg: str, src: str) -> None:
     - warnings.warn should be used if the user needs to fix their code, e.g.
       DeprecationWarnings
     - logger_warning should be used if the user needs to know that an issue was
-      handled by PyPDF2, e.g. a non-compliant PDF being read in a way that
-      PyPDF2 could apply a robustness fix to still read it. This applies mainly
+      handled by pypdf, e.g. a non-compliant PDF being read in a way that
+      pypdf could apply a robustness fix to still read it. This applies mainly
       to strict=False mode.
     """
     logging.getLogger(src).warning(msg)

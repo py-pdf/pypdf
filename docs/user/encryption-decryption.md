@@ -8,7 +8,7 @@
 Add a password to a PDF (encrypt it):
 
 ```python
-from PyPDF2 import PdfReader, PdfWriter
+from pypdf import PdfReader, PdfWriter
 
 reader = PdfReader("example.pdf")
 writer = PdfWriter()
@@ -30,7 +30,7 @@ with open("encrypted-pdf.pdf", "wb") as f:
 Remove the password from a PDF (decrypt it):
 
 ```python
-from PyPDF2 import PdfReader, PdfWriter
+from pypdf import PdfReader, PdfWriter
 
 reader = PdfReader("encrypted-pdf.pdf")
 writer = PdfWriter()

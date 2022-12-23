@@ -25,17 +25,17 @@ Writing a parser you can go two paths: Either you try to be forgiving and try
 to figure out what the user intended, or you are strict and just tell the user
 that they should fix their stuff.
 
-PyPDF2 gives you the option to be strict or not.
+pypdf gives you the option to be strict or not.
 
-PyPDF2 has three core objects and all of them have a `strict` parameter:
+pypdf has three core objects and all of them have a `strict` parameter:
 
 * [`PdfReader`](../modules/PdfReader.md)
 * [`PdfWriter`](../modules/PdfWriter.md)
 * [`PdfMerger`](../modules/PdfMerger.md)
 
-Choosing `strict=True` means that PyPDF2 will raise an exception if a PDF does
+Choosing `strict=True` means that pypdf will raise an exception if a PDF does
 not follow the specification.
 
-Choosing `strict=False` means that PyPDF2 will try to be forgiving and do
+Choosing `strict=False` means that pypdf will try to be forgiving and do
 something reasonable, but it will log a warning message. It is a best-effort
 approach.

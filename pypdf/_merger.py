@@ -155,7 +155,7 @@ class PdfMerger:
             (previously referred to as a 'bookmark') to be applied at the
             beginning of the included file by supplying the text of the outline item.
 
-        :param pages: can be a :class:`PageRange<PyPDF2.pagerange.PageRange>`
+        :param pages: can be a :class:`PageRange<pypdf.pagerange.PageRange>`
             or a ``(start, stop[, step])`` tuple
             to merge only the specified range of pages from the source
             document into the output document.
@@ -173,7 +173,7 @@ class PdfMerger:
                 warnings.warn(
                     (
                         f"{old_term} is deprecated as an argument and will be "
-                        f"removed in PyPDF2=4.0.0. Use {new_term} instead"
+                        f"removed in pypdf=4.0.0. Use {new_term} instead"
                     ),
                     DeprecationWarning,
                 )
@@ -306,7 +306,7 @@ class PdfMerger:
             (previously referred to as a 'bookmark') to be applied at the
             beginning of the included file by supplying the text of the outline item.
 
-        :param pages: can be a :class:`PageRange<PyPDF2.pagerange.PageRange>`
+        :param pages: can be a :class:`PageRange<pypdf.pagerange.PageRange>`
             or a ``(start, stop[, step])`` tuple
             to merge only the specified range of pages from the source
             document into the output document.
@@ -692,7 +692,7 @@ class PdfMerger:
             warnings.warn(
                 (
                     f"{old_term} is deprecated as an argument and will be "
-                    f"removed in PyPDF2==4.0.0. Use {new_term} instead"
+                    f"removed in pypdf==4.0.0. Use {new_term} instead"
                 ),
                 DeprecationWarning,
             )
@@ -797,7 +797,7 @@ class PdfMerger:
             warnings.warn(
                 (
                     f"{old_term} is deprecated as an argument and will be "
-                    f"removed in PyPDF2==4.0.0. Use {new_term} instead"
+                    f"removed in pypdf==4.0.0. Use {new_term} instead"
                 ),
                 DeprecationWarning,
             )

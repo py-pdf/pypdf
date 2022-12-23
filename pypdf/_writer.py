@@ -133,7 +133,7 @@ ALL_DOCUMENT_PERMISSIONS = UserAccessPermissions((2**31 - 1) - 3)
 class PdfWriter:
     """
     This class supports writing PDF files out, given pages produced by another
-    class (typically :class:`PdfReader<PyPDF2.PdfReader>`).
+    class (typically :class:`PdfReader<pypdf.PdfReader>`).
     """
 
     def __init__(self, fileobj: StrByteType = "") -> None:
@@ -158,7 +158,7 @@ class PdfWriter:
         info.update(
             {
                 NameObject("/Producer"): create_string_object(
-                    codecs.BOM_UTF16_BE + "PyPDF2".encode("utf-16be")
+                    codecs.BOM_UTF16_BE + "pypdf".encode("utf-16be")
                 )
             }
         )
@@ -226,7 +226,7 @@ class PdfWriter:
             else:
                 indirect_reference = ido
                 warnings.warn(
-                    "The parameter 'ido' is depreciated and will be removed in PyPDF2 4.0.0.",
+                    "The parameter 'ido' is depreciated and will be removed in pypdf 4.0.0.",
                     DeprecationWarning,
                 )
         assert (
@@ -312,11 +312,11 @@ class PdfWriter:
         Add a page to this PDF file.
         Recommended for advanced usage including the adequate excluded_keys
 
-        The page is usually acquired from a :class:`PdfReader<PyPDF2.PdfReader>`
+        The page is usually acquired from a :class:`PdfReader<pypdf.PdfReader>`
         instance.
 
         :param PageObject page: The page to add to the document. Should be
-            an instance of :class:`PageObject<PyPDF2._page.PageObject>`
+            an instance of :class:`PageObject<pypdf._page.PageObject>`
         """
         return self._add_page(page, list.append, excluded_keys)
 
@@ -341,7 +341,7 @@ class PdfWriter:
     ) -> PageObject:
         """
         Insert a page in this PDF file. The page is usually acquired from a
-        :class:`PdfReader<PyPDF2.PdfReader>` instance.
+        :class:`PdfReader<pypdf.PdfReader>` instance.
 
         :param PageObject page: The page to add to the document.
         :param int index: Position at which the page will be inserted.
@@ -409,7 +409,7 @@ class PdfWriter:
 
     @property
     def pages(self) -> List[PageObject]:
-        """Property that emulates a list of :class:`PageObject<PyPDF2._page.PageObject>`."""
+        """Property that emulates a list of :class:`PageObject<pypdf._page.PageObject>`."""
         return _VirtualList(self._get_num_pages, self.get_page)  # type: ignore
 
     def add_blank_page(
@@ -492,8 +492,8 @@ class PdfWriter:
         PDF catalog).
         it returns `None` if the entry does not exist is not set.
 
-        :param destination:.
-        the property can be set to a Destination, a Page or an string(NamedDest) or
+        :param destination: the property can be set to a Destination,
+            a Page or an string(NamedDest) or
             None (to remove "/OpenAction")
 
         (value stored in "/OpenAction" entry in the Pdf Catalog)
@@ -886,7 +886,7 @@ class PdfWriter:
                 warnings.warn(
                     "Please use 'user_password' instead of 'user_pwd'. "
                     "The 'user_pwd' argument is deprecated and "
-                    "will be removed in PyPDF2 4.0.0."
+                    "will be removed in pypdf 4.0.0."
                 )
                 user_password = user_pwd
         if user_password is None:  # deprecated
@@ -904,7 +904,7 @@ class PdfWriter:
                 warnings.warn(
                     message=(
                         f"{old_term} is deprecated as an argument and will be "
-                        f"removed in PyPDF2 4.0.0. Use {new_term} instead"
+                        f"removed in pypdf 4.0.0. Use {new_term} instead"
                     ),
                     category=DeprecationWarning,
                 )
@@ -1305,7 +1305,7 @@ class PdfWriter:
             warnings.warn(
                 message=(
                     f"{old_term} is deprecated as an argument and will be "
-                    f"removed in PyPDF2 4.0.0. Use {new_term} instead"
+                    f"removed in pypdf 4.0.0. Use {new_term} instead"
                 ),
                 category=DeprecationWarning,
             )
@@ -1569,7 +1569,7 @@ class PdfWriter:
             warnings.warn(
                 message=(
                     f"{old_term} is deprecated as an argument and will be "
-                    f"removed in PyPDF2 4.0.0. Use {new_term} instead"
+                    f"removed in pypdf 4.0.0. Use {new_term} instead"
                 ),
                 category=DeprecationWarning,
             )
@@ -1613,7 +1613,7 @@ class PdfWriter:
             warnings.warn(
                 message=(
                     f"{old_term} is deprecated as an argument and will be "
-                    f"removed in PyPDF2 4.0.0. Use {new_term} instead"
+                    f"removed in pypdf 4.0.0. Use {new_term} instead"
                 ),
                 category=DeprecationWarning,
             )
@@ -1826,7 +1826,7 @@ class PdfWriter:
 
         :param int page_number: index of the page on which to place the URI action.
         :param str uri: URI of resource to link to.
-        :param Tuple[int, int, int, int] rect: :class:`RectangleObject<PyPDF2.generic.RectangleObject>` or array of four
+        :param Tuple[int, int, int, int] rect: :class:`RectangleObject<pypdf.generic.RectangleObject>` or array of four
             integers specifying the clickable rectangular area
             ``[xLL, yLL, xUR, yUR]``, or string in the form ``"[ xLL yLL xUR yUR ]"``.
         :param ArrayObject border: if provided, an array describing border-drawing
@@ -1836,7 +1836,7 @@ class PdfWriter:
         if pagenum is not None:
             warnings.warn(
                 "The 'pagenum' argument of add_uri is deprecated and will be "
-                "removed in PyPDF2 4.0.0. Use 'page_number' instead.",
+                "removed in pypdf 4.0.0. Use 'page_number' instead.",
                 category=DeprecationWarning,
             )
             page_number = pagenum
@@ -2299,7 +2299,7 @@ class PdfWriter:
             (aka 'bookmark') to identify the
             beginning of the included file.
 
-        :param pages: can be a :class:`PageRange<PyPDF2.pagerange.PageRange>`
+        :param pages: can be a :class:`PageRange<pypdf.pagerange.PageRange>`
             or a ``(start, stop[, step])`` tuple
             or a list of pages to be processed
             to merge only the specified range of pages from the source
@@ -2352,7 +2352,7 @@ class PdfWriter:
             (aka 'bookmark') to identify the
             beginning of the included file.
 
-        :param pages: can be a :class:`PageRange<PyPDF2.pagerange.PageRange>`
+        :param pages: can be a :class:`PageRange<pypdf.pagerange.PageRange>`
             or a ``(start, stop[, step])`` tuple
             or a list of pages to be processed
             to merge only the specified range of pages from the source

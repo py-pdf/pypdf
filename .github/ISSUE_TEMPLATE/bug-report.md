@@ -17,7 +17,7 @@ Which environment were you using when you encountered the problem?
 $ python -m platform
 # TODO: Your output goes here
 
-$ python -c "import PyPDF2;print(PyPDF2.__version__)"
+$ python -c "import pypdf;print(pypdf.__version__)"
 # TODO: Your output goes here
 ```
 
