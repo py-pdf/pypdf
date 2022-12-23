@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## Version 3.1.0, 2022-12-23
+
+Move PyPDF2 to pypdf (#1513). This now it's all lowercase, no number in the
+name. For installation and for import. PyPDF2 will no longer receive updates.
+The community should move back to its roots.
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.0.0...3.1.0)
+
 ## Version 3.0.0, 2022-12-22
 
 ### BREAKING CHANGES ⚠️
