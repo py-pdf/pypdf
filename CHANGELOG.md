@@ -6,6 +6,13 @@ Move PyPDF2 to pypdf (#1513). This now it's all lowercase, no number in the
 name. For installation and for import. PyPDF2 will no longer receive updates.
 The community should move back to its roots.
 
+If you were still using pyPdf or PyPDF2 < 2.0.0, I recommend reading the
+migration guide: https://pypdf.readthedocs.io/en/latest/user/migration-1-to-2.html
+
+pypdf==3.1.0 is only different from PyPDF2==3.0.0 in the package name.
+Replacing "PyPDF2" by "pypdf" should be enough if you migrate from
+`PyPDF2==3.0.0` to `pypdf==3.1.0`.
+
 [Full Changelog](https://github.com/py-pdf/pypdf/compare/3.0.0...3.1.0)
 
 ## Version 3.0.0, 2022-12-22
