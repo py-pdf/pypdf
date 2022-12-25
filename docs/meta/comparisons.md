@@ -48,21 +48,23 @@ bring the community back to one path of development. Let's see.
   [QPDF]: https://github.com/qpdf/qpdf
 
 
-## pdfrw and pdfminer
+## pdfminer
 
-I don't have experience with either of those libraries. Please add a
-comparison if you know pypdf and [`pdfrw`](https://pypi.org/project/pdfrw/) or
-[`pdfminer.six`](https://pypi.org/project/pdfminer.six/)!
+[`pdfminer.six`](https://pypi.org/project/pdfminer.six/) is capable of
+extracting the [font size](https://stackoverflow.com/a/69962459/562769)
+/ font weight (bold-ness). It has no capabilities for writing PDF files.
+
+## pdfrw / pdfminer / pdfplumber
+
+I don't have experience with any of those libraries. Please add a
+comparison if you know pypdf and [`pdfrw`](https://pypi.org/project/pdfrw/)!
 
 Please be aware that there is also
 [`pdfminer`](https://pypi.org/project/pdfminer/) which is not maintained.
 Then there is [`pdfrw2`](https://pypi.org/project/pdfrw2/) which doesn't have
 a large community behind it.
 
-And there are more:
-
-
-* [`pdfplumber`](https://pypi.org/project/pdfplumber/)
+And there is also [`pdfplumber`](https://pypi.org/project/pdfplumber/)
 
 ## Document Generation
 
