@@ -7,6 +7,8 @@ text and metadata from PDFs as well.
 You can read the full docs at https://pypdf2.readthedocs.io/.
 """
 
+import warnings
+
 from ._encryption import PasswordType
 from ._merger import PdfFileMerger, PdfMerger
 from ._page import PageObject, Transformation
@@ -15,6 +17,11 @@ from ._version import __version__
 from ._writer import PdfFileWriter, PdfWriter
 from .pagerange import PageRange, parse_filename_page_ranges
 from .papersizes import PaperSize
+
+warnings.warn(
+    message="PyPDF2 is deprecated. Please move to the pypdf library instead.",
+    category=DeprecationWarning,
+)
 
 __all__ = [
     "__version__",
