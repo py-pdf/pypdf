@@ -50,6 +50,27 @@ def test_writer_clone():
     assert len(writer.pages) == 4
 
 
+@pytest.mark.xfail(reason="Issue 1518")
+def test_writer_clone_bookmarks():
+    # Arrange
+    src = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(src)
+    writer = PdfWriter()
+
+    # Act
+    writer.clone_document_from_reader(reader)
+    writer.add_outline_item("Page 1", 0)
+    writer.add_outline_item("Page 2", 1)
+
+    # Assert
+    bytes_stream = BytesIO()
+    writer.write(bytes_stream)
+    bytes_stream.seek(0)
+    reader2 = PdfReader(bytes_stream)
+    assert len(reader2.pages) == 1
+    assert len(reader2.outline) == 2
+
+
 def writer_operate(writer):
     """
     To test the writer that initialized by each of the four usages.
