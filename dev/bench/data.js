@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1671989119563,
+  "lastUpdate": 1672088206561,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -20826,6 +20826,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0009606877029291949",
             "extra": "mean: 84.86450041666653 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "cfed01f502afd1af7ed331b32ee84ddd531f9e8a",
+          "message": "TST: Adding outline items after clone_document_from_reader\n\nSee #1518",
+          "timestamp": "2022-12-26T21:54:36+01:00",
+          "tree_id": "50d31243062ea86ca0f1eb165e484aa52c8faa9a",
+          "url": "https://github.com/py-pdf/pypdf/commit/cfed01f502afd1af7ed331b32ee84ddd531f9e8a"
+        },
+        "date": 1672088205321,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0290662336535452,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006461665107318816",
+            "extra": "mean: 971.7547493999973 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.719295691149073,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005484656571632618",
+            "extra": "mean: 85.32935991667519 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2482790448501626,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016826097558729092",
+            "extra": "mean: 4.027726144199983 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 13.069046017986972,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006052346623760426",
+            "extra": "mean: 76.51667907693465 msec\nrounds: 13"
           }
         ]
       }
