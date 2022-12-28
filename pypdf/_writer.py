@@ -800,7 +800,14 @@ class PdfWriter:
 
         :param reader:  PdfReader from the document root should be copied.
         """
-        self._root_object = cast(DictionaryObject, reader.trailer[TK.ROOT])
+        self._root_object = cast(DictionaryObject, reader.trailer[TK.ROOT].clone(self))
+        self._root = self._root_object.indirect_reference
+        self._pages = self._root_object.raw_get("/Pages")
+        self._flatten()
+        self._root_object[NameObject("/Pages")][
+            NameObject("/Kids")
+        ] = self.flattened_pages
+        del self.flattened_pages
 
     def cloneReaderDocumentRoot(self, reader: PdfReader) -> None:  # pragma: no cover
         """
@@ -812,6 +819,51 @@ class PdfWriter:
             "cloneReaderDocumentRoot", "clone_reader_document_root", "3.0.0"
         )
         self.clone_reader_document_root(reader)
+
+    def _flatten(
+        self,
+        pages: Union[None, DictionaryObject, PageObject] = None,
+        inherit: Optional[Dict[str, Any]] = None,
+        indirect_reference: Optional[IndirectObject] = None,
+    ) -> None:
+        inheritable_page_attributes = (
+            NameObject(PG.RESOURCES),
+            NameObject(PG.MEDIABOX),
+            NameObject(PG.CROPBOX),
+            NameObject(PG.ROTATE),
+        )
+        if inherit is None:
+            inherit = {}
+        if pages is None:
+            # Fix issue 327: set flattened_pages attribute only for
+            # decrypted file
+            pages = self._root_object["/Pages"].get_object()  # type: ignore
+            self.flattened_pages = ArrayObject()
+
+        t = "/Pages"
+        if PA.TYPE in pages:
+            t = pages[PA.TYPE]  # type: ignore
+
+        if t == "/Pages":
+            for attr in inheritable_page_attributes:
+                if attr in pages:
+                    inherit[attr] = pages[attr]
+            for page in pages[PA.KIDS]:  # type: ignore
+                addt = {}
+                if isinstance(page, IndirectObject):
+                    addt["indirect_reference"] = page
+                self._flatten(page.get_object(), inherit, **addt)
+        elif t == "/Page":
+            for attr_in, value in list(inherit.items()):
+                # if the page has it's own value, it does not inherit the
+                # parent's value:
+                if attr_in not in pages:
+                    pages[attr_in] = value
+            page_obj = PageObject(self, indirect_reference)
+            page_obj.update(pages)
+
+            # TODO: Could flattened_pages be None at this point?
+            self.flattened_pages.append(page_obj.indirect_reference)  # type: ignore
 
     def clone_document_from_reader(
         self,
@@ -829,9 +881,8 @@ class PdfWriter:
             (delegates to append_pages_from_reader). The single parameter of the
             callback is a reference to the page just appended to the document.
         """
-        # TODO : ppZZ may be limited because we do not copy all info...
         self.clone_reader_document_root(reader)
-        self.append_pages_from_reader(reader, after_page_append)
+        self._info = reader.trailer[TK.INFO].clone(self).indirect_reference
 
     def cloneDocumentFromReader(
         self,
