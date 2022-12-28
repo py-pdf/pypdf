@@ -47,6 +47,10 @@ class PdfReaderProtocol(Protocol):  # pragma: no cover
     def pages(self) -> List[Any]:
         ...
 
+    @property
+    def trailer(self) -> Dict[str, Any]:
+        ...
+
     def get_object(self, indirect_reference: Any) -> Optional[PdfObjectProtocol]:
         ...
 
