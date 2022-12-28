@@ -2,6 +2,7 @@ import pytest
 
 from pypdf._page_labels import (
     number2lowercase_letter,
+    number2lowercase_roman_numeral,
     number2uppercase_roman_numeral,
 )
 
@@ -23,6 +24,10 @@ from pypdf._page_labels import (
 )
 def test_number2uppercase_roman_numeral(number, expected):
     assert number2uppercase_roman_numeral(number) == expected
+
+
+def test_number2lowercase_roman_numeral():
+    assert number2lowercase_roman_numeral(123) == "cxxiii"
 
 
 @pytest.mark.parametrize(
