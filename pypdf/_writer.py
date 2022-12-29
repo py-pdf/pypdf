@@ -839,7 +839,7 @@ class PdfWriter:
             # decrypted file
             pages = self._root_object["/Pages"].get_object()  # type: ignore
             self.flattened_pages = ArrayObject()
-assert pages is not None  # hint for mypy
+        assert pages is not None  # hint for mypy
         t = "/Pages"
         if PA.TYPE in pages:
             t = pages[PA.TYPE]  # type: ignore
