@@ -620,7 +620,7 @@ class NameObject(str, PdfObject):
         name = stream.read(1)
         if name != NameObject.surfix:
             raise PdfReadError("name read error")
-        name += read_until_regex(stream, NameObject.delimiter_pattern, ignore_eof=True)
+        name += read_until_regex(stream, NameObject.delimiter_pattern)
         try:
             # Name objects should represent irregular characters
             # with a '#' followed by the symbol's hex number

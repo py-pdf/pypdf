@@ -62,20 +62,11 @@ def test_skip_over_comment(stream, remainder):
     assert stream.read() == remainder
 
 
-def test_read_until_regex_premature_ending_raise():
-    import re
-
-    stream = io.BytesIO(b"")
-    with pytest.raises(PdfStreamError) as exc:
-        read_until_regex(stream, re.compile(b"."))
-    assert exc.value.args[0] == "Stream has ended unexpectedly"
-
-
 def test_read_until_regex_premature_ending_name():
     import re
 
     stream = io.BytesIO(b"")
-    assert read_until_regex(stream, re.compile(b"."), ignore_eof=True) == b""
+    assert read_until_regex(stream, re.compile(b".")) == b""
 
 
 @pytest.mark.parametrize(

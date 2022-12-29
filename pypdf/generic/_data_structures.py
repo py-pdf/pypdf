@@ -969,7 +969,7 @@ class ContentStream(DecodedStreamObject):
                 break
             stream.seek(-1, 1)
             if peek.isalpha() or peek in (b"'", b'"'):
-                operator = read_until_regex(stream, NameObject.delimiter_pattern, True)
+                operator = read_until_regex(stream, NameObject.delimiter_pattern)
                 if operator == b"BI":
                     # begin inline image - a completely different parsing
                     # mechanism is required, of course... thanks buddy...

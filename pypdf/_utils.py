@@ -163,31 +163,22 @@ def skip_over_comment(stream: StreamType) -> None:
             tok = stream.read(1)
 
 
-def read_until_regex(
-    stream: StreamType, regex: Pattern[bytes], ignore_eof: bool = False
-) -> bytes:
+def read_until_regex(stream: StreamType, regex: Pattern[bytes]) -> bytes:
     """
     Read until the regular expression pattern matched (ignore the match).
+    Treats EOF on the underlying stream as the end of the token to be matched.
 
     Args:
-      ignore_eof: If true, ignore end-of-line and return immediately
       regex: re.Pattern
-      ignore_eof:  (Default value = False)
 
     Returns:
       The read bytes.
-
-    Raises:
-      PdfStreamError: on premature end-of-file
-
     """
     name = b""
     while True:
         tok = stream.read(16)
         if not tok:
-            if ignore_eof:
-                return name
-            raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
+            return name
         m = regex.search(tok)
         if m is not None:
             name += tok[: m.start()]
