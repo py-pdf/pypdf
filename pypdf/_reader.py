@@ -48,6 +48,7 @@ from typing import (
 
 from ._encryption import Encryption, PasswordType
 from ._page import PageObject, _VirtualList
+from ._page_labels import index2label as page_index2page_label
 from ._utils import (
     StrByteType,
     StreamType,
@@ -984,6 +985,16 @@ class PdfReader:
     def pages(self) -> List[PageObject]:
         """Read-only property that emulates a list of :py:class:`Page<pypdf._page.Page>` objects."""
         return _VirtualList(self._get_num_pages, self._get_page)  # type: ignore
+
+    @property
+    def page_labels(self) -> List[str]:
+        """
+        A list of labels for the pages in this document.
+
+        This property is read-only. The labels are in the order
+        that the pages appear in the document.
+        """
+        return [page_index2page_label(self, i) for i in range(len(self.pages))]
 
     @property
     def page_layout(self) -> Optional[str]:

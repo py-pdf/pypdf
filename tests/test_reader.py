@@ -1232,3 +1232,26 @@ def test_build_outline_item(caplog):
             )
         )
     assert "Unexpected destination 2" in exc.value.args[0]
+
+
+@pytest.mark.parametrize(
+    ("src", "page_labels"),
+    [
+        (RESOURCE_ROOT / "selenium-pypdf-issue-177.pdf", ["1"]),
+        (RESOURCE_ROOT / "encrypted_doc_no_id.pdf", ["1", "2", "3"]),
+        (RESOURCE_ROOT / "pdflatex-outline.pdf", ["1", "2", "3", "4"]),
+        (
+            SAMPLE_ROOT / "009-pdflatex-geotopo/GeoTopo.pdf",
+            ["i", "ii", "iii", "1", "2", "3"],
+        ),
+    ],
+    ids=[
+        "selenium-pypdf-issue-177.pdf",
+        "encrypted_doc_no_id.pdf",
+        "pdflatex-outline.pdf",
+        "GeoTopo.pdf",
+    ],
+)
+def test_page_labels(src, page_labels):
+    max_indices = 6
+    assert PdfReader(src).page_labels[:max_indices] == page_labels[:max_indices]
