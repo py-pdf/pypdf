@@ -801,10 +801,10 @@ class PdfWriter:
         :param reader:  PdfReader from the document root should be copied.
         """
         self._root_object = cast(DictionaryObject, reader.trailer[TK.ROOT].clone(self))
-        self._root = self._root_object.indirect_reference
+        self._root = self._root_object.indirect_reference  # type: ignore[assignment]
         self._pages = self._root_object.raw_get("/Pages")
         self._flatten()
-        self._root_object[NameObject("/Pages")][
+        self._root_object[NameObject("/Pages")][  # type: ignore[index]
             NameObject("/Kids")
         ] = self.flattened_pages
         del self.flattened_pages
@@ -839,7 +839,7 @@ class PdfWriter:
             # decrypted file
             pages = self._root_object["/Pages"].get_object()  # type: ignore
             self.flattened_pages = ArrayObject()
-
+assert pages is not None  # hint for mypy
         t = "/Pages"
         if PA.TYPE in pages:
             t = pages[PA.TYPE]  # type: ignore
@@ -859,8 +859,8 @@ class PdfWriter:
                 # parent's value:
                 if attr_in not in pages:
                     pages[attr_in] = value
-            page_obj = PageObject(self, indirect_reference)
-            page_obj.update(pages)
+            page_obj = PageObject(self, indirect_reference)  # type: ignore
+            page_obj.update(pages)  # type: ignore
 
             # TODO: Could flattened_pages be None at this point?
             self.flattened_pages.append(page_obj.indirect_reference)  # type: ignore
@@ -882,7 +882,7 @@ class PdfWriter:
             callback is a reference to the page just appended to the document.
         """
         self.clone_reader_document_root(reader)
-        self._info = reader.trailer[TK.INFO].clone(self).indirect_reference
+        self._info = reader.trailer[TK.INFO].clone(self).indirect_reference  # type: ignore
 
     def cloneDocumentFromReader(
         self,
