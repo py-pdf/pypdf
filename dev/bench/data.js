@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1672088206561,
+  "lastUpdate": 1672340879254,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -20878,6 +20878,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0006052346623760426",
             "extra": "mean: 76.51667907693465 msec\nrounds: 13"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8c9505cca821a0d6c74590253a4407d45810331c",
+          "message": "ENH: Add support for page labels (#1519)\n\nIntroduce a new PdfReader property `page_labels` that returns a list of strings.\r\n\r\nIn most cases, the list will just be\r\n\r\n```\r\n['1', '2', '3', '4', '5']\r\n```\r\n\r\nor similar, but sometimes it will be:\r\n\r\n```\r\n['i', 'ii', 'iii', 'iv', '1', '2', '3', '4', '5']\r\n```\r\n\r\n## Evidence for User Need\r\n\r\nStackoverflow: [Retrieve Custom page labels from document with pyPDF](https://stackoverflow.com/questions/12360999/retrieve-custom-page-labels-from-document-with-pypdf)",
+          "timestamp": "2022-12-29T20:06:43+01:00",
+          "tree_id": "b856ef5273c14fe62d07cf5612aad22a84849774",
+          "url": "https://github.com/py-pdf/pypdf/commit/8c9505cca821a0d6c74590253a4407d45810331c"
+        },
+        "date": 1672340877602,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9961433947866948,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016667336160098585",
+            "extra": "mean: 1.0038715361999977 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.877969122235914,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006654355451888696",
+            "extra": "mean: 84.18947630769388 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24025033683784333,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03205378864653725",
+            "extra": "mean: 4.162325069600001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.094546858384865,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009544717906682431",
+            "extra": "mean: 82.68189058333537 msec\nrounds: 12"
           }
         ]
       }
