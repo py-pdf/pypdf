@@ -63,20 +63,21 @@ from ._protocols import PdfReaderProtocol
 
 
 def number2uppercase_roman_numeral(num: int) -> str:
-    roman = []
-    roman.append((1000, "M"))
-    roman.append((900, "CM"))
-    roman.append((500, "D"))
-    roman.append((400, "CD"))
-    roman.append((100, "C"))
-    roman.append((90, "XC"))
-    roman.append((50, "L"))
-    roman.append((40, "XL"))
-    roman.append((10, "X"))
-    roman.append((9, "IX"))
-    roman.append((5, "V"))
-    roman.append((4, "IV"))
-    roman.append((1, "I"))
+    roman = [
+        (1000, "M"),
+        (900, "CM"),
+        (500, "D"),
+        (400, "CD"),
+        (100, "C"),
+        (90, "XC"),
+        (50, "L"),
+        (40, "XL"),
+        (10, "X"),
+        (9, "IX"),
+        (5, "V"),
+        (4, "IV"),
+        (1, "I"),
+    ]
 
     def roman_num(num: int) -> Iterator[str]:
         for decimal, roman_repr in roman:
