@@ -60,6 +60,7 @@ a       Lowercase letters (a to z for the first 26 pages,
 from typing import Iterator
 
 from ._protocols import PdfReaderProtocol
+from ._utils import logger_warning
 
 
 def number2uppercase_roman_numeral(num: int) -> str:
@@ -152,6 +153,14 @@ def index2label(reader: PdfReaderProtocol, index: int) -> str:
         if not isinstance(value, dict):
             return str(index + 1)  # Fallback
         return m[value["/S"]](index - start_index + 1)
-    # TODO: Kids
-    # TODO: Limits
+    if "/Kids" in number_tree or "/Limits" in number_tree:
+        logger_warning(
+            (
+                "/Kids or /Limits found in PageLabels. "
+                "Please share this PDF with pypdf: "
+                "https://github.com/py-pdf/pypdf/pull/1519"
+            ),
+            __name__,
+        )
+    # TODO: Implement /Kids and /Limits for number tree
     return str(index + 1)  # Fallback
