@@ -141,7 +141,7 @@ def index2label(reader: PdfReaderProtocol, index: int) -> str:
                 break
             i += 2
         m = {
-            "/D": str,
+            "/D": lambda n: str(n),
             "/R": number2uppercase_roman_numeral,
             "/r": number2lowercase_roman_numeral,
             "/A": number2uppercase_letter,
