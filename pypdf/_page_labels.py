@@ -62,10 +62,6 @@ from typing import Iterator
 from ._protocols import PdfReaderProtocol
 
 
-def number2decimal(number: int) -> str:
-    return str(number)
-
-
 def number2uppercase_roman_numeral(num: int) -> str:
     roman = []
     roman.append((1000, "M"))
@@ -144,7 +140,7 @@ def index2label(reader: PdfReaderProtocol, index: int) -> str:
                 break
             i += 2
         m = {
-            "/D": number2decimal,
+            "/D": str,
             "/R": number2uppercase_roman_numeral,
             "/r": number2lowercase_roman_numeral,
             "/A": number2uppercase_letter,
