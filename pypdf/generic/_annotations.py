@@ -83,15 +83,15 @@ class AnnotationBuilder:
         """
         font_str = "font: "
         if bold is True:
-            font_str = font_str + "bold "
+            font_str = f"{font_str}bold "
         if italic is True:
-            font_str = font_str + "italic "
-        font_str = font_str + font + " " + font_size
-        font_str = font_str + ";text-align:left;color:#" + font_color
+            font_str = f"{font_str}italic "
+        font_str = f"{font_str}{font} {font_size}"
+        font_str = f"{font_str};text-align:left;color:#{font_color}"
 
         bg_color_str = ""
         for st in hex_to_rgb(border_color):
-            bg_color_str = bg_color_str + str(st) + " "
+            bg_color_str = f"{bg_color_str}{st} "
         bg_color_str = bg_color_str + "rg"
 
         free_text = DictionaryObject()
