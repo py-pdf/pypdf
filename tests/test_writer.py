@@ -52,12 +52,20 @@ def test_writer_clone():
 
 def test_writer_clone_bookmarks():
     # Arrange
-    src = RESOURCE_ROOT / "crazyones.pdf"
+    src = RESOURCE_ROOT / "Seige_of_Vicksburg_Sample_OCR-crazyones-merged.pdf"
     reader = PdfReader(src)
     writer = PdfWriter()
 
-    # Act
-    writer.clone_document_from_reader(reader)
+    # Act + test cat
+    cat = ""
+
+    def cat1(p):
+        nonlocal cat
+        cat += p.__repr__()
+
+    writer.clone_document_from_reader(reader, cat1)
+    assert "/Page" in cat
+    assert writer.pages[0].raw_get("/Parent") == writer._pages
     writer.add_outline_item("Page 1", 0)
     writer.add_outline_item("Page 2", 1)
 
@@ -66,7 +74,7 @@ def test_writer_clone_bookmarks():
     writer.write(bytes_stream)
     bytes_stream.seek(0)
     reader2 = PdfReader(bytes_stream)
-    assert len(reader2.pages) == 1
+    assert len(reader2.pages) == len(reader.pages)
     assert len(reader2.outline) == 2
 
     # test with append
@@ -80,7 +88,7 @@ def test_writer_clone_bookmarks():
     writer.write(bytes_stream)
     bytes_stream.seek(0)
     reader2 = PdfReader(bytes_stream)
-    assert len(reader2.pages) == 1
+    assert len(reader2.pages) == len(reader.pages)
     assert len(reader2.outline) == 2
 
 
