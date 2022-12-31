@@ -92,7 +92,7 @@ class AnnotationBuilder:
         bg_color_str = ""
         for st in hex_to_rgb(border_color):
             bg_color_str = f"{bg_color_str}{st} "
-        bg_color_str = bg_color_str + "rg"
+        bg_color_str = f"{bg_color_str}rg"
 
         free_text = DictionaryObject()
         free_text.update(
