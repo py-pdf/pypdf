@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1672470651358,
+  "lastUpdate": 1672471984647,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -20982,6 +20982,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004411933573449324",
             "extra": "mean: 108.46214477776863 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "65429016+robbiebusinessacc@users.noreply.github.com",
+            "name": "Robert Walmsley",
+            "username": "robbiebusinessacc"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "82f9c1edb4e6a307508018be93d05e8d86678ed2",
+          "message": "MAINT: Minor Improvements (#1523)\n\nMAINT: Use a generator+join instead of iterative concatenation _security.py\r\nMAINT: Shortened if-statements for context.skip in mutmut_config.py\r\n\r\nDOC: Added docstrings to errors.py\r\nDOC: Added my name to CONTRIBUTORS.md",
+          "timestamp": "2022-12-31T08:31:41+01:00",
+          "tree_id": "ccd7b18dc9bb632b96e8f4ac9a4488ca97c30625",
+          "url": "https://github.com/py-pdf/pypdf/commit/82f9c1edb4e6a307508018be93d05e8d86678ed2"
+        },
+        "date": 1672471983294,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8264507110407565,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014999799049607193",
+            "extra": "mean: 1.2099935139999958 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.27428120754714,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014543023445533857",
+            "extra": "mean: 107.82506779999608 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.20422579318976472,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05840985950848642",
+            "extra": "mean: 4.896541148799992 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.065816610197896,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0037517412628796654",
+            "extra": "mean: 99.3461374000077 msec\nrounds: 10"
           }
         ]
       }
