@@ -167,7 +167,7 @@ class NullObject(PdfObject):
 
 
 class BooleanObject(PdfObject):
-    __slots__ = tuple()
+    __slots__ = ("value",)
 
     def __init__(self, value: Any) -> None:
         self.value = value
