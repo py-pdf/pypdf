@@ -991,3 +991,11 @@ def test_cloning(caplog):
     obj21 = obj20.clone(writer, ignore_fields=None)
     assert "/Test" in obj21
     assert isinstance(obj21.get("/Test2"), IndirectObject)
+
+
+def test_classes():
+    a = PdfObject()
+    assert not hasattr(a, "__dict__"), a.__dict__
+
+    b = FloatObject()
+    assert not hasattr(b, "__dict__"), b.__dict__

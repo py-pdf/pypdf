@@ -52,6 +52,7 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 
 
 class PdfObject(PdfObjectProtocol):
+    __slots__ = ()
     # function for calculating a hash value
     hash_func: Callable[..., "hashlib._Hash"] = hashlib.sha1
     indirect_reference: Optional["IndirectObject"]
@@ -166,6 +167,8 @@ class NullObject(PdfObject):
 
 
 class BooleanObject(PdfObject):
+    __slots__ = tuple()
+
     def __init__(self, value: Any) -> None:
         self.value = value
 
@@ -323,6 +326,8 @@ class IndirectObject(PdfObject):
 
 
 class FloatObject(decimal.Decimal, PdfObject):
+    __slots__ = tuple()
+
     def __new__(
         cls, value: Union[str, Any] = "0", context: Optional[Any] = None
     ) -> "FloatObject":
