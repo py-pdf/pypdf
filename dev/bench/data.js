@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1672340879254,
+  "lastUpdate": 1672470651358,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -20930,6 +20930,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0009544717906682431",
             "extra": "mean: 82.68189058333537 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "41aa58471c440d09832b1eebfee438b419ff81d3",
+          "message": "BUG : upgrade clone_document_root (#1520)\n\nDOC : Add clarifications/details in doc strings of clone_reader_document_root and clone_document_from_reader\r\nFIX : Flattening was not updating /Parent, invalid for acrobat Reader\r\nENH : Add cloning of /ID\r\n\r\nFixes #1518",
+          "timestamp": "2022-12-31T08:09:24+01:00",
+          "tree_id": "ce07abffda9aa946f888ad4a03c1640a3a547ecc",
+          "url": "https://github.com/py-pdf/pypdf/commit/41aa58471c440d09832b1eebfee438b419ff81d3"
+        },
+        "date": 1672470649615,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8217085392254929,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024806523855563912",
+            "extra": "mean: 1.2169765218000008 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.546597643340275,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012888528849186376",
+            "extra": "mean: 104.74936069999785 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.18903392392780038,
+            "unit": "iter/sec",
+            "range": "stddev: 0.3060162103049531",
+            "extra": "mean: 5.290055769999992 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.219806615929736,
+            "unit": "iter/sec",
+            "range": "stddev: 0.004411933573449324",
+            "extra": "mean: 108.46214477776863 msec\nrounds: 9"
           }
         ]
       }
