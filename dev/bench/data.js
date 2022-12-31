@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1672476330362,
+  "lastUpdate": 1672482553709,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -21086,6 +21086,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0015745938904143525",
             "extra": "mean: 96.87525759999289 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "c2c4be6be5fde84d9898f133c43ebeaef7665c56",
+          "message": "REL: 3.2.0\n\nPerformance Improvement (PI)\n-  Help the specializing adpative interpreter (#1522)\n\nNew Features (ENH):\n-  Add support for page labels (#1519)\n\nBug Fixes (BUG):\n-  upgrade clone_document_root (#1520)",
+          "timestamp": "2022-12-31T11:27:30+01:00",
+          "tree_id": "183ef19e10d2633042db6c5212e29a63e5b20985",
+          "url": "https://github.com/py-pdf/pypdf/commit/c2c4be6be5fde84d9898f133c43ebeaef7665c56"
+        },
+        "date": 1672482552084,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0007510141990594,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013340062175186542",
+            "extra": "mean: 999.2495493999968 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.88342041345409,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007429235834676825",
+            "extra": "mean: 84.15085599999699 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24115232115561372,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021935428546509216",
+            "extra": "mean: 4.1467566856000015 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.740911299457217,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0004368259791455029",
+            "extra": "mean: 85.17226427272558 msec\nrounds: 11"
           }
         ]
       }
