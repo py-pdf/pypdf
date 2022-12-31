@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1672471984647,
+  "lastUpdate": 1672476330362,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -21034,6 +21034,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0037517412628796654",
             "extra": "mean: 99.3461374000077 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6407e1dd12aa797c55465768d9e32889d01c2cb1",
+          "message": "PERF: Help the specializing adpative interpreter (#1522)\n\nThis PR aims at making minor changes that do not influence readability in a negative way and help (a tiny bit) to make pypdf faster.\r\n\r\nhttps://pypi.org/project/specialist/ was used.\r\n\r\n## Specialized instructions\r\n\r\nYou can see the specialized instructions with the `dis` module:\r\n\r\n```python\r\npython            \r\nPython 3.11.0 (main, Oct 29 2022, 16:38:13) [GCC 9.4.0] on linux\r\nType \"help\", \"copyright\", \"credits\" or \"license\" for more information.\r\n>>> import dis\r\n>>> your_function = lambda n: n * 1.5\r\n>>> dis.dis(your_function, adaptive=True)\r\n  1           0 RESUME                   0\r\n              2 LOAD_FAST                0 (n)\r\n              4 LOAD_CONST               1 (1.5)\r\n              6 BINARY_OP                5 (*)\r\n             10 RETURN_VALUE\r\n>>> your_function(1.5)\r\n2.25\r\n>>> your_function(2.5)\r\n3.75\r\n>>> your_function(3.5)\r\n5.25\r\n>>> your_function(4.5)\r\n6.75\r\n>>> your_function(5.5)\r\n8.25\r\n>>> your_function(6.5)\r\n9.75\r\n>>> your_function(7.5)\r\n11.25\r\n>>> your_function(8.5)\r\n12.75\r\n>>> your_function(9.5)\r\n14.25\r\n>>> dis.dis(your_function, adaptive=True)\r\n  1           0 RESUME_QUICK             0\r\n              2 LOAD_FAST__LOAD_CONST     0 (n)\r\n              4 LOAD_CONST               1 (1.5)\r\n              6 BINARY_OP_MULTIPLY_FLOAT     5 (*)\r\n             10 RETURN_VALUE\r\n```\r\n\r\n* `BINARY_OP_MULTIPLY_FLOAT`: Multiplying two integers\r\n* `BINARY_OP_MULTIPLY_INT`: Multiplying two floats\r\n\r\n## See also\r\n* https://peps.python.org/pep-0659/\r\n* https://talkpython.fm/episodes/show/381/python-perf-specializing-adaptive-interpreter\r\n* https://realpython.com/lessons/faster-faster-faster/\r\n* https://www.andy-pearce.com/blog/posts/2022/Dec/whats-new-in-python-311-performance-improvements/",
+          "timestamp": "2022-12-31T09:44:13+01:00",
+          "tree_id": "5bf15e333c2aa1cbf5ff28714ade63bf4a0f1521",
+          "url": "https://github.com/py-pdf/pypdf/commit/6407e1dd12aa797c55465768d9e32889d01c2cb1"
+        },
+        "date": 1672476328650,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8893535447317107,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006569952536604351",
+            "extra": "mean: 1.1244122272000028 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.39514006411735,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007420983197717666",
+            "extra": "mean: 96.19879999999884 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21125268311024065,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02563716689654043",
+            "extra": "mean: 4.733667687800005 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.322553196494141,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0015745938904143525",
+            "extra": "mean: 96.87525759999289 msec\nrounds: 10"
           }
         ]
       }
