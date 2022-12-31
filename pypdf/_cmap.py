@@ -348,7 +348,7 @@ def parse_bfchar(l: bytes, map_dict: Dict[Any, Any], int_entry: List[int]) -> No
 def compute_space_width(
     ft: DictionaryObject, space_code: int, space_width: float
 ) -> float:
-    sp_width: float = space_width * 2  # default value
+    sp_width: float = space_width * 2.0  # default value
     w = []
     w1 = {}
     st: int = 0

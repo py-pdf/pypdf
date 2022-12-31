@@ -97,7 +97,7 @@ def _converter_date(value: str) -> datetime.datetime:
     minute = int(matches.group("minute") or "0")
     second = decimal.Decimal(matches.group("second") or "0")
     seconds_dec = second.to_integral(decimal.ROUND_FLOOR)
-    milliseconds_dec = (second - seconds_dec) * 1000000
+    milliseconds_dec = (second - seconds_dec) * 1_000_000
 
     seconds = int(seconds_dec)
     milliseconds = int(milliseconds_dec)

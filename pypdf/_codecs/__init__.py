@@ -23,9 +23,7 @@ def rev_encoding(enc: List[str]) -> Dict[str, int]:
         char = enc[i]
         if char == "\u0000":
             continue
-        assert char not in rev, (
-            str(char) + " at " + str(i) + " already at " + str(rev[char])
-        )
+        assert char not in rev, f"{char} at {i} already at {rev[char]}"
         rev[char] = i
     return rev
 
