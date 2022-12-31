@@ -626,16 +626,16 @@ class PdfReader:
                         "/Sig": "Signature",
                     }
                     if field[attr] in types:
-                        fileobj.write(attr_name + ": " + types[field[attr]] + "\n")
+                        fileobj.write(f"{attr_name}: {types[field[attr]]}\n")
                 elif attr == FieldDictionaryAttributes.Parent:
                     # Let's just write the name of the parent
                     try:
                         name = field[attr][FieldDictionaryAttributes.TM]
                     except KeyError:
                         name = field[attr][FieldDictionaryAttributes.T]
-                    fileobj.write(attr_name + ": " + name + "\n")
+                    fileobj.write(f"{attr_name}: {name}\n")
                 else:
-                    fileobj.write(attr_name + ": " + str(field[attr]) + "\n")
+                    fileobj.write(f"{attr_name}: {field[attr]}\n")
             except KeyError:
                 # Field attribute is N/A or unknown, so don't write anything
                 pass

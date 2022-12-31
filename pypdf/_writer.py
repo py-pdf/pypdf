@@ -1912,7 +1912,7 @@ class PdfWriter:
                 dash_pattern = ArrayObject([NameObject(n) for n in border[3]])
                 border_arr.append(dash_pattern)
         else:
-            border_arr = [NumberObject(2)] * 3
+            border_arr = [NumberObject(2), NumberObject(2), NumberObject(2)]
 
         if isinstance(rect, str):
             rect = NameObject(rect)

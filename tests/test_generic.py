@@ -58,7 +58,7 @@ def test_number_object_exception(caplog):
 
 
 def test_number_object_no_exception():
-    NumberObject(2**100000000)
+    NumberObject(2**100_000_000)
 
 
 def test_create_string_object_exception():
