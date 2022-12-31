@@ -128,9 +128,7 @@ def _alg33(
     # iteration counter (from 1 to 19).
     if rev >= 3:
         for i in range(1, 20):
-            new_key = ""
-            for key_char in key:
-                new_key += chr(ord_(key_char) ^ i)
+            new_key = "".join(chr(ord_(key_char) ^ i) for key_char in key)
             val = RC4_encrypt(new_key, val)
     # 8. Store the output from the final invocation of the RC4 as the value of
     # the /O entry in the encryption dictionary.
