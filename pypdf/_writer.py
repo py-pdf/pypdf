@@ -679,6 +679,8 @@ class PdfWriter:
         Copy pages from reader to writer. Includes an optional callback parameter
         which is invoked after pages are appended to the writer.
 
+        `append` should be prefered.
+
         :param PdfReader reader: a PdfReader object from which to copy page
             annotations to this writer object.  The writer's annots
             will then be updated
@@ -796,11 +798,20 @@ class PdfWriter:
 
     def clone_reader_document_root(self, reader: PdfReader) -> None:
         """
-        Copy the reader document root to the writer.
+        Copy the reader document root to the writer and all sub elements,
+        including pages, threads, outlines,...
+        For partial insertion, `append` should be considered.
 
         :param reader:  PdfReader from the document root should be copied.
         """
-        self._root_object = cast(DictionaryObject, reader.trailer[TK.ROOT])
+        self._root_object = cast(DictionaryObject, reader.trailer[TK.ROOT].clone(self))
+        self._root = self._root_object.indirect_reference  # type: ignore[assignment]
+        self._pages = self._root_object.raw_get("/Pages")
+        self._flatten()
+        self._root_object[NameObject("/Pages")][  # type: ignore[index]
+            NameObject("/Kids")
+        ] = self.flattened_pages
+        del self.flattened_pages
 
     def cloneReaderDocumentRoot(self, reader: PdfReader) -> None:  # pragma: no cover
         """
@@ -813,6 +824,48 @@ class PdfWriter:
         )
         self.clone_reader_document_root(reader)
 
+    def _flatten(
+        self,
+        pages: Union[None, DictionaryObject, PageObject] = None,
+        inherit: Optional[Dict[str, Any]] = None,
+        indirect_reference: Optional[IndirectObject] = None,
+    ) -> None:
+        inheritable_page_attributes = (
+            NameObject(PG.RESOURCES),
+            NameObject(PG.MEDIABOX),
+            NameObject(PG.CROPBOX),
+            NameObject(PG.ROTATE),
+        )
+        if inherit is None:
+            inherit = {}
+        if pages is None:
+            pages = cast(DictionaryObject, self._root_object["/Pages"])
+            self.flattened_pages = ArrayObject()
+        assert pages is not None  # hint for mypy
+        t = "/Pages"
+        if PA.TYPE in pages:
+            t = cast(str, pages[PA.TYPE])
+
+        if t == "/Pages":
+            for attr in inheritable_page_attributes:
+                if attr in pages:
+                    inherit[attr] = pages[attr]
+            for page in cast(ArrayObject, cast(DictionaryObject, pages)[PA.KIDS]):
+                addt = {}
+                if isinstance(page, IndirectObject):
+                    addt["indirect_reference"] = page
+                self._flatten(page.get_object(), inherit, **addt)
+        elif t == "/Page":
+            for attr_in, value in list(inherit.items()):
+                # if the page has it's own value, it does not inherit the
+                # parent's value:
+                if attr_in not in pages:
+                    pages[attr_in] = value
+            pages[NameObject("/Parent")] = cast(
+                IndirectObject, self._root_object.raw_get("/Pages")
+            )
+            self.flattened_pages.append(indirect_reference)
+
     def clone_document_from_reader(
         self,
         reader: PdfReader,
@@ -820,6 +873,7 @@ class PdfWriter:
     ) -> None:
         """
         Create a copy (clone) of a document from a PDF file reader
+        cloning section '/Root' and '/Info' and '/ID' of the pdf
 
         :param reader: PDF file reader instance from which the clone
             should be created.
@@ -829,9 +883,17 @@ class PdfWriter:
             (delegates to append_pages_from_reader). The single parameter of the
             callback is a reference to the page just appended to the document.
         """
-        # TODO : ppZZ may be limited because we do not copy all info...
         self.clone_reader_document_root(reader)
-        self.append_pages_from_reader(reader, after_page_append)
+        self._info = reader.trailer[TK.INFO].clone(self).indirect_reference  # type: ignore
+        try:
+            self._ID = reader.trailer[TK.ID].clone(self)  # type: ignore
+        except KeyError:
+            pass
+        if callable(after_page_append):
+            for page in cast(
+                ArrayObject, cast(DictionaryObject, self._pages.get_object())["/Kids"]
+            ):
+                after_page_append(page.get_object())
 
     def cloneDocumentFromReader(
         self,
