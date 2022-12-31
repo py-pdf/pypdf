@@ -4,11 +4,10 @@
 [![GitHub last commit](https://img.shields.io/github/last-commit/py-pdf/PyPDF2)](https://github.com/py-pdf/PyPDF2)
 [![codecov](https://codecov.io/gh/py-pdf/PyPDF2/branch/main/graph/badge.svg?token=id42cGNZ5Z)](https://codecov.io/gh/py-pdf/PyPDF2)
 
+# **NOTE**: The PyPDF2 project is going back to its roots. PyPDF2==3.0.X will be  the last version of PyPDF2. Development will continue with [`pypdf==3.1.0`](https://pypi.org/project/pyPdf/).
+
 # PyPDF2
 
-> **NOTE**: The PyPDF2 project is going back to its roots. PyPDF2==3.0.X will be
-> the last version of PyPDF2. Patches for this version will still be applied, but
-> development will continue with [`pypdf==3.0.0`](https://pypi.org/project/pyPdf/).
 
 PyPDF2 is a free and open-source pure-python PDF library capable of splitting,
 [merging](https://pypdf2.readthedocs.io/en/stable/user/merging-pdfs.html),
