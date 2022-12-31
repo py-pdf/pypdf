@@ -13,7 +13,7 @@ from ._utils import StrByteType
 
 
 class PdfObjectProtocol(Protocol):
-    __slots__ = ()
+    __slots__ = ("indirect_reference",)
     indirect_reference: Any
 
     def clone(
