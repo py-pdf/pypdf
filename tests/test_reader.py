@@ -632,7 +632,7 @@ def test_decrypt_when_no_id():
     """
     Decrypt an encrypted file that's missing the 'ID' value in its
     trailer.
-    https://github.com/mstamy2/pypdf/issues/608
+    https://github.com/py-pdf/pypdf/issues/608
     """
 
     with open(RESOURCE_ROOT / "encrypted_doc_no_id.pdf", "rb") as inputfile:

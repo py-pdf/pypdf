@@ -176,8 +176,8 @@ def test_dc_subject():
 
 @pytest.mark.external
 def test_issue585():
-    url = "https://github.com/mstamy2/pypdf/files/5536984/test.pdf"
-    name = "mstamy2-5536984.pdf"
+    url = "https://github.com/py-pdf/pypdf/files/5536984/test.pdf"
+    name = "pypdf-5536984.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     with pytest.raises(PdfReadError) as exc:
         reader.xmp_metadata
