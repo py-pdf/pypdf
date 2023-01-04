@@ -574,13 +574,19 @@ class PdfReader:
         deprecation_with_replacement("getFields", "get_fields", "3.0.0")
         return self.get_fields(tree, retval, fileobj)
 
-    def _get_qualified_field_name(self, parent):
+    def _get_qualified_field_name(self, parent: DictionaryObject) -> str:
         if "/TM" in parent:
-            return parent["/TM"]
+            return cast(str, parent["/TM"])
         elif "/Parent" in parent:
-            return _get_qualified_field_name(parent["/Parent"]) + "." + parent["/T"]
+            return (
+                self._get_qualified_field_name(
+                    cast(DictionaryObject, parent["/Parent"])
+                )
+                + "."
+                + cast(str, parent["/T"])
+            )
         else:
-            return parent["/T"]
+            return cast(str, parent["/T"])
 
     def _build_field(
         self,
@@ -591,14 +597,19 @@ class PdfReader:
     ) -> None:
         self._check_kids(field, retval, fileobj)
         try:
-            key = field["/TM"]
+            key = cast(str, field["/TM"])
         except KeyError:
             try:
                 if "/Parent" in field:
-                    key = self._get_qualified_field_name(field["/Parent"]) + "."
+                    key = (
+                        self._get_qualified_field_name(
+                            cast(DictionaryObject, field["/Parent"])
+                        )
+                        + "."
+                    )
                 else:
                     key = ""
-                key += field["/T"]
+                key += cast(str, field["/T"])
             except KeyError:
                 # Ignore no-name field for now
                 return
