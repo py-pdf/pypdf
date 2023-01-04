@@ -528,7 +528,7 @@ class PdfReader:
 
         :param fileobj: A file object (usually a text file) to write
             a report to on all interactive form fields found.
-        :return: A dictionary where each key is a field name, and each
+        :return: A dictionary where each key is a field fully qualified name (including hierarchy), and each
             value is a :class:`Field<pypdf.generic.Field>` object. By
             default, the mapping name is used for keys.
             ``None`` if form data could not be located.
@@ -574,6 +574,14 @@ class PdfReader:
         deprecation_with_replacement("getFields", "get_fields", "3.0.0")
         return self.get_fields(tree, retval, fileobj)
 
+    def _get_qualified_field_name(self, parent):
+        if "/TM" in parent:
+            return parent["/TM"]
+        elif "/Parent" in parent:
+            return _get_qualified_field_name(parent["/Parent"]) + "." + parent["/T"]
+        else:
+            return parent["/T"]
+
     def _build_field(
         self,
         field: Union[TreeObject, DictionaryObject],
@@ -586,7 +594,11 @@ class PdfReader:
             key = field["/TM"]
         except KeyError:
             try:
-                key = field["/T"]
+                if "/Parent" in field:
+                    key = self._get_qualified_field_name(field["/Parent"]) + "."
+                else:
+                    key = ""
+                key += field["/T"]
             except KeyError:
                 # Ignore no-name field for now
                 return
@@ -640,7 +652,7 @@ class PdfReader:
                 # Field attribute is N/A or unknown, so don't write anything
                 pass
 
-    def get_form_text_fields(self) -> Dict[str, Any]:
+    def get_form_text_fields(self, full_qualified_name: bool = False) -> Dict[str, Any]:
         """
         Retrieve form fields from the document with textual data.
 
@@ -648,14 +660,18 @@ class PdfReader:
         field.
 
         If the document contains multiple form fields with the same name, the
-        second and following will get the suffix _2, _3, ...
+        second and following will get the suffix _2, _3, ... (TBC)
+
+        full_qualified_name should be used to get full name
         """
         # Retrieve document form fields
         formfields = self.get_fields()
         if formfields is None:
             return {}
         return {
-            formfields[field]["/T"]: formfields[field].get("/V")
+            (field if full_qualified_name else formfields[field]["/T"]): formfields[
+                field
+            ].get("/V")
             for field in formfields
             if formfields[field].get("/FT") == "/Tx"
         }
