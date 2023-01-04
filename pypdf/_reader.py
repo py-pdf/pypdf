@@ -326,7 +326,7 @@ class PdfReader:
             self._override_encryption = True
             # Some documents may not have a /ID, use two empty
             # byte strings instead. Solves
-            # https://github.com/mstamy2/pypdf/issues/608
+            # https://github.com/py-pdf/pypdf/issues/608
             id_entry = self.trailer.get(TK.ID)
             id1_entry = id_entry[0].get_object().original_bytes if id_entry else b""
             encrypt_entry = cast(

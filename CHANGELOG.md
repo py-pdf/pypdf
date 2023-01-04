@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## Version 3.2.0, 2022-12-31
+
+### Performance Improvement (PI)
+-  Help the specializing adpative interpreter (#1522)
+
+### New Features (ENH)
+-  Add support for page labels (#1519)
+
+### Bug Fixes (BUG)
+-  upgrade clone_document_root (#1520)
+
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.1.0...3.1.1)
+
 ## Version 3.1.0, 2022-12-23
 
 Move PyPDF2 to pypdf (#1513). This now it's all lowercase, no number in the
