@@ -33,7 +33,11 @@ from binascii import unhexlify
 from typing import Any, Callable, List, Optional, Tuple, Union, cast
 
 from .._codecs import _pdfdoc_encoding_rev
-from .._protocols import PdfObjectProtocol, PdfWriterProtocol
+from .._protocols import (
+    PageObjectProtocol,
+    PdfObjectProtocol,
+    PdfWriterProtocol,
+)
 from .._utils import (
     StreamType,
     b_,
@@ -52,7 +56,7 @@ __author_email__ = "biziqe@mathieu.fenniak.net"
 
 
 class PdfObject(PdfObjectProtocol):
-    __slots__ = ("indirect_reference",)
+    __slots__ = ()
     # function for calculating a hash value
     hash_func: Callable[..., "hashlib._Hash"] = hashlib.sha1
     indirect_reference: Optional["IndirectObject"]
@@ -246,7 +250,7 @@ class IndirectObject(PdfObject):
             pdf_dest._id_translated[id(self.pdf)] = {}
 
         if not force_duplicate and self.idnum in pdf_dest._id_translated[id(self.pdf)]:
-            dup = pdf_dest.get_object(pdf_dest._id_translated[id(self.pdf)][self.idnum])
+            dup: PageObjectProtocol = pdf_dest.get_object(pdf_dest._id_translated[id(self.pdf)][self.idnum])  # type: ignore
         else:
             obj = self.get_object()
             assert obj is not None

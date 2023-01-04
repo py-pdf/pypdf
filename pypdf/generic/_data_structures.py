@@ -96,7 +96,7 @@ class ArrayObject(list, PdfObject):
                 dup = data._reference_clone(
                     data.clone(pdf_dest, force_duplicate, ignore_fields), pdf_dest
                 )
-                arr.append(dup.indirect_reference)
+                arr.append(dup.indirect_reference)  # type: ignore
             elif hasattr(data, "clone"):
                 arr.append(data.clone(pdf_dest, force_duplicate, ignore_fields))
             else:

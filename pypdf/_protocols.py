@@ -13,8 +13,7 @@ from ._utils import StrByteType
 
 
 class PdfObjectProtocol(Protocol):
-    __slots__ = ("indirect_reference",)
-    indirect_reference: Any
+    __slots__ = ()
 
     def clone(
         self,
@@ -65,3 +64,7 @@ class PdfWriterProtocol(Protocol):  # pragma: no cover
 
     def write(self, stream: Union[Path, StrByteType]) -> Tuple[bool, IO]:
         ...
+
+
+class PageObjectProtocol(Protocol):  # pragma: no cover
+    indirect_reference: Any
