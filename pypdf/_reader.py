@@ -1407,7 +1407,7 @@ class PdfReader:
             logger_warning(msg, __name__)
         self.resolved_objects[(generation, idnum)] = obj
         if obj is not None:
-            obj.indirect_reference = IndirectObject(idnum, generation, self)
+            obj.indirect_reference = IndirectObject(idnum, generation, self)  # type: ignore
         return obj
 
     def cacheIndirectObject(

@@ -210,7 +210,7 @@ class PdfWriter:
         if hasattr(obj, "indirect_reference") and obj.indirect_reference.pdf == self:  # type: ignore
             return obj.indirect_reference  # type: ignore
         self._objects.append(obj)
-        obj.indirect_reference = IndirectObject(len(self._objects), 0, self)
+        obj.indirect_reference = IndirectObject(len(self._objects), 0, self)  # type: ignore
         return obj.indirect_reference
 
     def get_object(
