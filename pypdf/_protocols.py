@@ -64,7 +64,3 @@ class PdfWriterProtocol(Protocol):  # pragma: no cover
 
     def write(self, stream: Union[Path, StrByteType]) -> Tuple[bool, IO]:
         ...
-
-
-class PageObjectProtocol(Protocol):  # pragma: no cover
-    indirect_reference: Any

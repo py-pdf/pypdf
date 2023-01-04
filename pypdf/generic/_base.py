@@ -33,11 +33,7 @@ from binascii import unhexlify
 from typing import Any, Callable, List, Optional, Tuple, Union, cast
 
 from .._codecs import _pdfdoc_encoding_rev
-from .._protocols import (
-    PageObjectProtocol,
-    PdfObjectProtocol,
-    PdfWriterProtocol,
-)
+from .._protocols import PdfObjectProtocol, PdfWriterProtocol
 from .._utils import (
     StreamType,
     b_,
@@ -250,14 +246,14 @@ class IndirectObject(PdfObject):
             pdf_dest._id_translated[id(self.pdf)] = {}
 
         if not force_duplicate and self.idnum in pdf_dest._id_translated[id(self.pdf)]:
-            dup: PageObjectProtocol = pdf_dest.get_object(pdf_dest._id_translated[id(self.pdf)][self.idnum])  # type: ignore
+            dup = pdf_dest.get_object(pdf_dest._id_translated[id(self.pdf)][self.idnum])
         else:
             obj = self.get_object()
             assert obj is not None
             dup = obj.clone(pdf_dest, force_duplicate, ignore_fields)
         assert dup is not None
-        assert dup.indirect_reference is not None
-        return dup.indirect_reference
+        assert dup.indirect_reference is not None  # type: ignore
+        return dup.indirect_reference  # type: ignore
 
     @property
     def indirect_reference(self) -> "IndirectObject":  # type: ignore[override]

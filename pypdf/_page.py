@@ -46,7 +46,7 @@ from typing import (
 )
 
 from ._cmap import build_char_map, unknown_char_map
-from ._protocols import PageObjectProtocol, PdfReaderProtocol
+from ._protocols import PdfReaderProtocol
 from ._utils import (
     CompressedTransformationMatrix,
     File,
@@ -331,7 +331,7 @@ class Transformation:
         return list(pt1) if isinstance(pt, list) else pt1
 
 
-class PageObject(DictionaryObject, PageObjectProtocol):
+class PageObject(DictionaryObject):
     """
     PageObject represents a single page within a PDF file.
 
