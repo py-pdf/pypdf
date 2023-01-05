@@ -671,21 +671,46 @@ class PdfReader:
         field.
 
         If the document contains multiple form fields with the same name, the
-        second and following will get the suffix _2, _3, ... (TBC)
+        second and following will get the suffix .2, .3, ...
 
         full_qualified_name should be used to get full name
         """
+
+        def indexed_key(k: str, fields: dict) -> str:
+            if k not in fields:
+                return k
+            else:
+                return (
+                    k
+                    + "."
+                    + str(sum([1 for kk in fields if kk.startswith(k + ".")]) + 2)
+                )
+
         # Retrieve document form fields
         formfields = self.get_fields()
         if formfields is None:
             return {}
-        return {
+        if full_qualified_name:
+            ff = {
+                (field if full_qualified_name else formfields[field]["/T"]): formfields[
+                    field
+                ].get("/V")
+                for field in formfields
+                if formfields[field].get("/FT") == "/Tx"
+            }
+        else:
+            ff = {}
+            for (k, v) in formfields.items():
+                if v.get("/FT") == "/Tx":
+                    ff[indexed_key(cast(str, v["/T"]), ff)] = cast(str, v["/V"])
+        return ff
+        """return {
             (field if full_qualified_name else formfields[field]["/T"]): formfields[
                 field
             ].get("/V")
             for field in formfields
             if formfields[field].get("/FT") == "/Tx"
-        }
+        }"""
 
     def getFormTextFields(self) -> Dict[str, Any]:  # pragma: no cover
         """

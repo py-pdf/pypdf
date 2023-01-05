@@ -1098,7 +1098,7 @@ class Field(TreeObject):
         )
         for attr in field_attributes:
             try:
-                self[NameObject(attr)] = data[attr]
+                self[NameObject(attr)] = data.raw_get(attr)
             except KeyError:
                 pass
 
