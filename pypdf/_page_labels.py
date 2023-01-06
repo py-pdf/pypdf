@@ -82,7 +82,7 @@ def number2uppercase_roman_numeral(num: int) -> str:
 
     def roman_num(num: int) -> Iterator[str]:
         for decimal, roman_repr in roman:
-            x, y = divmod(num, decimal)
+            x, _ = divmod(num, decimal)
             yield roman_repr * x
             num -= decimal * x
             if num <= 0:
@@ -116,7 +116,16 @@ def number2lowercase_letter(number: int) -> str:
 
 
 def index2label(reader: PdfReaderProtocol, index: int) -> str:
-    """See 7.9.7 "Number Trees"."""
+    """
+    See 7.9.7 "Number Trees".
+
+    Args:
+        reader: The PdfReader
+        index: The index of the page
+
+    Returns:
+        The label of the page, e.g. "iv" or "4".
+    """
     root = reader.trailer["/Root"]
     if "/PageLabels" not in root:
         return str(index + 1)  # Fallback

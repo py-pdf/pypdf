@@ -288,6 +288,22 @@ class AlgV4:
            for security handlers of revision 2 but, for security handlers of
            revision 3 or greater, shall depend on the
            value of the encryption dictionary’s Length entry.
+
+        Args:
+          password: The encryption secret as a bytes-string
+          rev: The encryption revision (see PDF standard)
+          key_size: The size of the key in bytes
+          o_entry: The owner entry
+          P: A set of flags specifying which operations shall be permitted
+            when the document is opened with user access. If bit 2 is set to 1, all other
+            bits are ignored and all operations are permitted. If bit 2 is set to 0,
+            permission for operations are based on the values of the remaining flags
+            defined in Table 24.
+          id1_entry:
+          metadata_encrypted: A boolean indicating if the metadata is encrypted.
+
+        Returns:
+            The u_hash digest of length key_size
         """
         a = _padding(password)
         u_hash = hashlib.md5(a)
@@ -335,6 +351,14 @@ class AlgV4:
            of the iteration counter (from 1 to 19).
         h) Store the output from the final invocation of the RC4 function as
            the value of the O entry in the encryption dictionary.
+
+        Args:
+          owner_password:
+          rev: The encryption revision (see PDF standard)
+          key_size: The size of the key in bytes
+
+        Returns:
+          The RC4 key
         """
         a = _padding(owner_password)
         o_hash_digest = hashlib.md5(a).digest()
@@ -348,7 +372,17 @@ class AlgV4:
 
     @staticmethod
     def compute_O_value(rc4_key: bytes, user_password: bytes, rev: int) -> bytes:
-        """See :func:`compute_O_value_key`."""
+        """
+        See :func:`compute_O_value_key`.
+
+        Args:
+          rc4_key:
+          user_password:
+          rev: The encryption revision (see PDF standard)
+
+        Returns:
+          The RC4 encrypted
+        """
         a = _padding(user_password)
         rc4_enc = RC4_encrypt(rc4_key, a)
         if rev >= 3:
@@ -371,6 +405,14 @@ class AlgV4:
            function with the encryption key from the preceding step.
         c) Store the result of step (b) as the value of the U entry in the
            encryption dictionary.
+
+        Args:
+          key:
+          rev: The encryption revision (see PDF standard)
+          id1_entry:
+
+        Returns:
+          The value
         """
         if rev <= 2:
             value = RC4_encrypt(key, _PADDING)
@@ -432,6 +474,23 @@ class AlgV4:
            dictionary’s U (user password) value (Security handlers of revision 2)" or "Algorithm 5: Computing the
            encryption dictionary’s U (user password) value (Security handlers of revision 3 or greater)") shall be used
            to decrypt the document.
+
+        Args:
+          user_password: The user passwort as a bytes stream
+          rev: The encryption revision (see PDF standard)
+          key_size: The size of the key in bytes
+          o_entry: The owner entry
+          u_entry: The user entry
+          P: A set of flags specifying which operations shall be permitted
+            when the document is opened with user access. If bit 2 is set to 1, all other
+            bits are ignored and all operations are permitted. If bit 2 is set to 0,
+            permission for operations are based on the values of the remaining flags
+            defined in Table 24.
+          id1_entry:
+          metadata_encrypted: A boolean indicating if the metadata is encrypted.
+
+        Returns:
+          The key
         """
         key = AlgV4.compute_key(
             user_password, rev, key_size, o_entry, P, id1_entry, metadata_encrypted
@@ -469,6 +528,23 @@ class AlgV4:
            between each byte of the key and the single-byte value of the iteration counter (from 19 to 0).
         c) The result of step (b) purports to be the user password. Authenticate this user password using "Algorithm 6:
            Authenticating the user password". If it is correct, the password supplied is the correct owner password.
+
+        Args:
+          owner_password:
+          rev: The encryption revision (see PDF standard)
+          key_size: The size of the key in bytes
+          o_entry: The owner entry
+          u_entry: The user entry
+          P: A set of flags specifying which operations shall be permitted
+            when the document is opened with user access. If bit 2 is set to 1, all other
+            bits are ignored and all operations are permitted. If bit 2 is set to 0,
+            permission for operations are based on the values of the remaining flags
+            defined in Table 24.
+          id1_entry:
+          metadata_encrypted: A boolean indicating if the metadata is encrypted.
+
+        Returns:
+          bytes
         """
         rc4_key = AlgV4.compute_O_value_key(owner_password, rev, key_size)
 
@@ -524,6 +600,21 @@ class AlgV5:
            the file encryption key as the key. Verify that bytes 9-11 of the result are the characters ‘a’, ‘d’, ‘b’. Bytes
            0-3 of the decrypted Perms entry, treated as a little-endian integer, are the user permissions. They
            should match the value in the P key.
+
+        Args:
+          R:  A number specifying which revision of the standard security
+            handler shall be used to interpret this dictionary
+          password: The owner password
+          o_value: A 32-byte string, based on both the owner and user passwords,
+            that shall be used in computing the encryption key and in determining
+            whether a valid owner password was entered
+          oe_value:
+          u_value: A 32-byte string, based on the user password, that shall be
+            used in determining whether to prompt the user for a password and, if so,
+            whether a valid user or owner password was entered.
+
+        Returns:
+          The key
         """
         password = password[:127]
         if (
@@ -540,7 +631,21 @@ class AlgV5:
     def verify_user_password(
         R: int, password: bytes, u_value: bytes, ue_value: bytes
     ) -> bytes:
-        """See :func:`verify_owner_password`."""
+        """
+        See :func:`verify_owner_password`.
+
+        Args:
+          R:  A number specifying which revision of the standard security
+            handler shall be used to interpret this dictionary
+          password: The user password
+          u_value: A 32-byte string, based on the user password, that shall be
+            used in determining whether to prompt the user for a password and, if so,
+            whether a valid user or owner password was entered.
+          ue_value:
+
+        Returns:
+          bytes
+        """
         password = password[:127]
         if AlgV5.calculate_hash(R, password, u_value[32:40], b"") != u_value[:32]:
             return b""
@@ -573,7 +678,22 @@ class AlgV5:
     def verify_perms(
         key: bytes, perms: bytes, p: int, metadata_encrypted: bool
     ) -> bool:
-        """See :func:`verify_owner_password` and :func:`compute_Perms_value`."""
+        """
+        See :func:`verify_owner_password` and :func:`compute_perms_value`.
+
+        Args:
+          key: The owner password
+          perms:
+          p: A set of flags specifying which operations shall be permitted
+            when the document is opened with user access. If bit 2 is set to 1, all other
+            bits are ignored and all operations are permitted. If bit 2 is set to 0,
+            permission for operations are based on the values of the remaining flags
+            defined in Table 24.
+          metadata_encrypted:
+
+        Returns:
+          A boolean
+        """
         b8 = b"T" if metadata_encrypted else b"F"
         p1 = struct.pack("<I", p) + b"\xff\xff\xff\xff" + b8 + b"adb"
         p2 = AES_ECB_decrypt(key, perms)
@@ -610,6 +730,13 @@ class AlgV5:
         2. Compute the 32-byte SHA-256 hash of the password concatenated with the User Key Salt. Using this
            hash as the key, encrypt the file encryption key using AES-256 in CBC mode with no padding and an
            initialization vector of zero. The resulting 32-byte string is stored as the UE key.
+
+        Args:
+          password:
+          key:
+
+        Returns:
+          A tuple (u-value, ue value)
         """
         random_bytes = bytes(random.randrange(0, 256) for _ in range(16))
         val_salt = random_bytes[:8]
@@ -637,6 +764,16 @@ class AlgV5:
            concatenated with the 48-byte U string as generated in Algorithm 3.8. Using this hash as the key,
            encrypt the file encryption key using AES-256 in CBC mode with no padding and an initialization vector
            of zero. The resulting 32-byte string is stored as the OE key.
+
+        Args:
+          password:
+          key:
+          u_value: A 32-byte string, based on the user password, that shall be
+            used in determining whether to prompt the user for a password and, if so,
+            whether a valid user or owner password was entered.
+
+        Returns:
+          A tuple (O value, OE value)
         """
         random_bytes = bytes(random.randrange(0, 256) for _ in range(16))
         val_salt = random_bytes[:8]
@@ -664,6 +801,18 @@ class AlgV5:
         6. Encrypt the 16-byte block using AES-256 in ECB mode with an initialization vector of zero, using the file
            encryption key as the key. The result (16 bytes) is stored as the Perms string, and checked for validity
            when the file is opened.
+
+        Args:
+          key:
+          p: A set of flags specifying which operations shall be permitted
+            when the document is opened with user access. If bit 2 is set to 1, all other
+            bits are ignored and all operations are permitted. If bit 2 is set to 0,
+            permission for operations are based on the values of the remaining flags
+            defined in Table 24.
+          metadata_encrypted: A boolean indicating if the metadata is encrypted.
+
+        Returns:
+          The perms value
         """
         b8 = b"T" if metadata_encrypted else b"F"
         rr = bytes(random.randrange(0, 256) for _ in range(4))
@@ -736,6 +885,14 @@ class Encryption:
            block size parameter is set to 16 bytes, and the initialization vector is a 16-byte random number that is
            stored as the first 16 bytes of the encrypted stream or string.
            The output is the encrypted data to be stored in the PDF file.
+
+        Args:
+          obj:
+          idnum:
+          generation:
+
+        Returns:
+          The PdfObject
         """
         pack1 = struct.pack("<i", idnum)[:3]
         pack2 = struct.pack("<i", generation)[:2]

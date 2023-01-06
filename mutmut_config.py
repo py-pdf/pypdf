@@ -6,6 +6,7 @@ See https://mutmut.readthedocs.io/en/latest/
 
 
 def pre_mutation(context):
+    """Filter what to mutate."""
     line = context.current_source_line.strip()
     if (
         "_codecs" in context.filename

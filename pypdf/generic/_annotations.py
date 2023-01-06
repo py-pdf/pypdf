@@ -36,11 +36,15 @@ class AnnotationBuilder:
         """
         Add text annotation.
 
-        :param Tuple[int, int, int, int] rect:
+        Args:
+          rect:
             or array of four integers specifying the clickable rectangular area
             ``[xLL, yLL, xUR, yUR]``
-        :param bool open:
-        :param int flags:
+          open:
+          flags:
+
+        Returns:
+          A dictionary object representing the annotation.
         """
         # TABLE 8.23 Additional entries specific to a text annotation
         text_obj = DictionaryObject(
@@ -70,16 +74,20 @@ class AnnotationBuilder:
         """
         Add text in a rectangle to a page.
 
-        :param str text: Text to be added
-        :param RectangleObject rect: or array of four integers
+        Args:
+          text: Text to be added
+          rect: or array of four integers
             specifying the clickable rectangular area ``[xLL, yLL, xUR, yUR]``
-        :param str font: Name of the Font, e.g. 'Helvetica'
-        :param bool bold: Print the text in bold
-        :param bool italic: Print the text in italic
-        :param str font_size: How big the text will be, e.g. '14pt'
-        :param str font_color: Hex-string for the color
-        :param str border_color: Hex-string for the border color
-        :param str background_color: Hex-string for the background of the annotation
+          font: Name of the Font, e.g. 'Helvetica'
+          bold: Print the text in bold
+          italic: Print the text in italic
+          font_size: How big the text will be, e.g. '14pt'
+          font_color: Hex-string for the color
+          border_color: Hex-string for the border color
+          background_color: Hex-string for the background of the annotation
+
+        Returns:
+          A dictionary object representing the annotation.
         """
         font_str = "font: "
         if bold is True:
@@ -124,14 +132,18 @@ class AnnotationBuilder:
         """
         Draw a line on the PDF.
 
-        :param Tuple[float, float] p1: First point
-        :param Tuple[float, float] p2: Second point
-        :param RectangleObject rect: or array of four
-                integers specifying the clickable rectangular area
-                ``[xLL, yLL, xUR, yUR]``
-        :param str text: Text to be displayed as the line annotation
-        :param str title_bar: Text to be displayed in the title bar of the
+        Args:
+          p1: First point
+          p2: Second point
+          rect: or array of four
+            integers specifying the clickable rectangular area
+            ``[xLL, yLL, xUR, yUR]``
+          text: Text to be displayed as the line annotation
+          title_bar: Text to be displayed in the title bar of the
             annotation; by convention this is the name of the author
+
+        Returns:
+          A dictionary object representing the annotation.
         """
         line_obj = DictionaryObject(
             {
@@ -173,9 +185,15 @@ class AnnotationBuilder:
         """
         Draw a rectangle on the PDF.
 
-        :param RectangleObject rect: or array of four
-                integers specifying the clickable rectangular area
-                ``[xLL, yLL, xUR, yUR]``
+        Args:
+          rect: or array of four
+            integers specifying the clickable rectangular area
+            ``[xLL, yLL, xUR, yUR]``
+          rect:
+          interiour_color:
+
+        Returns:
+          A dictionary object representing the annotation.
         """
         square_obj = DictionaryObject(
             {
@@ -208,21 +226,24 @@ class AnnotationBuilder:
         An external link requires the URL parameter.
         An internal link requires the target_page_index, fit, and fit args.
 
-
-        :param RectangleObject rect: or array of four
+        Args:
+          rect: or array of four
             integers specifying the clickable rectangular area
             ``[xLL, yLL, xUR, yUR]``
-        :param border: if provided, an array describing border-drawing
+          border: if provided, an array describing border-drawing
             properties. See the PDF spec for details. No border will be
             drawn if this argument is omitted.
             - horizontal corner radius,
             - vertical corner radius, and
             - border width
             - Optionally: Dash
-        :param str url: Link to a website (if you want to make an external link)
-        :param int target_page_index: index of the page to which the link should go
-                                (if you want to make an internal link)
-        :param Fit fit: Page fit or 'zoom' option.
+          url: Link to a website (if you want to make an external link)
+          target_page_index: index of the page to which the link should go
+            (if you want to make an internal link)
+          fit: Page fit or 'zoom' option.
+
+        Returns:
+          A dictionary object representing the annotation.
         """
         from ..types import BorderArrayType
 

@@ -72,7 +72,7 @@ from ._utils import (
 
 def readHexStringFromStream(
     stream: StreamType,
-) -> Union["TextStringObject", "ByteStringObject"]:  # pragma: no cover
+) -> Union["TextStringObject", "ByteStringObject"]:  # deprecated
     deprecate_with_replacement(
         "readHexStringFromStream", "read_hex_string_from_stream", "4.0.0"
     )
@@ -82,7 +82,7 @@ def readHexStringFromStream(
 def readStringFromStream(
     stream: StreamType,
     forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
-) -> Union["TextStringObject", "ByteStringObject"]:  # pragma: no cover
+) -> Union["TextStringObject", "ByteStringObject"]:  # deprecated
     deprecate_with_replacement(
         "readStringFromStream", "read_string_from_stream", "4.0.0"
     )
@@ -92,7 +92,7 @@ def readStringFromStream(
 def createStringObject(
     string: Union[str, bytes],
     forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
-) -> Union[TextStringObject, ByteStringObject]:  # pragma: no cover
+) -> Union[TextStringObject, ByteStringObject]:  # deprecated
     deprecate_with_replacement("createStringObject", "create_string_object", "4.0.0")
     return create_string_object(string, forced_encoding)
 

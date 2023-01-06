@@ -117,9 +117,16 @@ def create_string_object(
     """
     Create a ByteStringObject or a TextStringObject from a string to represent the string.
 
-    :param Union[str, bytes] string: A string
+    Args:
+      string:
+      forced_encoding:
 
-    :raises TypeError: If string is not of type str or bytes.
+    Returns:
+      A ByteStringObject
+
+    Raises:
+      TypeError: If string is not of type str or bytes.
+
     """
     if isinstance(string, str):
         return TextStringObject(string)
