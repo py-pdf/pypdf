@@ -10,23 +10,18 @@ attrs==20.3.0
     #   flake8-implicit-str-concat
     #   pytest
 coverage==6.2
-    # via -r requirements/ci.in
+    # via -r ci.in
 flake8==5.0.4
     # via
-    #   -r requirements/ci.in
+    #   -r ci.in
     #   flake8-bugbear
     #   flake8-print
 flake8-bugbear==22.9.23
-    # via -r requirements/ci.in
+    # via -r ci.in
 flake8-implicit-str-concat==0.2.0
-    # via -r requirements/ci.in
+    # via -r ci.in
 flake8-print==4.0.1
-    # via -r requirements/ci.in
-importlib-metadata==4.2.0
-    # via
-    #   flake8
-    #   pluggy
-    #   pytest
+    # via -r ci.in
 iniconfig==1.1.1
     # via pytest
 mccabe==0.7.0
@@ -34,13 +29,13 @@ mccabe==0.7.0
 more-itertools==8.14.0
     # via flake8-implicit-str-concat
 mypy==0.971
-    # via -r requirements/ci.in
+    # via -r ci.in
 mypy-extensions==0.4.3
     # via mypy
 packaging==21.3
     # via pytest
-pillow==8.4.0
-    # via -r requirements/ci.in
+pillow==9.3.0
+    # via -r ci.in
 pluggy==1.0.0
     # via pytest
 py==1.11.0
@@ -52,34 +47,26 @@ pycodestyle==2.9.1
     #   flake8
     #   flake8-print
 pycryptodome==3.16.0
-    # via -r requirements/ci.in
+    # via -r ci.in
 pyflakes==2.5.0
     # via flake8
 pyparsing==3.0.9
     # via packaging
 pytest==7.0.1
     # via
-    #   -r requirements/ci.in
+    #   -r ci.in
     #   pytest-benchmark
 pytest-benchmark==3.4.1
-    # via -r requirements/ci.in
+    # via -r ci.in
 six==1.16.0
     # via flake8-print
 tomli==1.2.3
-    # via
-    #   mypy
-    #   pytest
-typed-ast==1.5.4
-    # via mypy
+    # via pytest
 typeguard==2.13.3
-    # via -r requirements/ci.in
+    # via -r ci.in
 types-dataclasses==0.6.6
-    # via -r requirements/ci.in
+    # via -r ci.in
 types-pillow==9.3.0.4
-    # via -r requirements/ci.in
+    # via -r ci.in
 typing-extensions==4.1.1
-    # via
-    #   importlib-metadata
-    #   mypy
-zipp==3.6.0
-    # via importlib-metadata
+    # via mypy

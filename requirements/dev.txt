@@ -7,7 +7,7 @@
 attrs==22.1.0
     # via pytest
 black==22.12.0
-    # via -r requirements/dev.in
+    # via -r dev.in
 build==0.9.0
     # via pip-tools
 certifi==2022.12.7
@@ -26,12 +26,10 @@ distlib==0.3.6
     # via virtualenv
 docutils==0.19
     # via flit
-exceptiongroup==1.0.4
-    # via pytest
 filelock==3.8.2
     # via virtualenv
 flit==3.8.0
-    # via -r requirements/dev.in
+    # via -r dev.in
 flit-core==3.8.0
     # via flit
 identify==2.5.9
@@ -53,9 +51,9 @@ pathspec==0.10.3
 pep517==0.13.0
     # via build
 pillow==9.3.0
-    # via -r requirements/dev.in
+    # via -r dev.in
 pip-tools==6.11.0
-    # via -r requirements/dev.in
+    # via -r dev.in
 platformdirs==2.6.0
     # via
     #   black
@@ -63,34 +61,26 @@ platformdirs==2.6.0
 pluggy==1.0.0
     # via pytest
 pre-commit==2.17.0
-    # via -r requirements/dev.in
+    # via -r dev.in
 pytest==7.2.0
     # via pytest-cov
 pytest-cov==4.0.0
-    # via -r requirements/dev.in
+    # via -r dev.in
 pyyaml==6.0
     # via pre-commit
 requests==2.28.1
     # via flit
 toml==0.10.2
     # via pre-commit
-tomli==2.0.1
-    # via
-    #   black
-    #   build
-    #   coverage
-    #   pytest
 tomli-w==1.0.0
     # via flit
-typing-extensions==4.4.0
-    # via black
 urllib3==1.26.13
     # via requests
 virtualenv==20.17.1
     # via pre-commit
 wheel==0.38.4
     # via
-    #   -r requirements/dev.in
+    #   -r dev.in
     #   pip-tools
 
 # The following packages are considered to be unsafe in a requirements file:
