@@ -204,11 +204,10 @@ class Transformation:
 
 
     Example
-    -------
 
-    >>> from pypdf import Transformation
-    >>> op = Transformation().scale(sx=2, sy=3).translate(tx=10, ty=20)
-    >>> page.add_transformation(op)
+        >>> from pypdf import Transformation
+        >>> op = Transformation().scale(sx=2, sy=3).translate(tx=10, ty=20)
+        >>> page.add_transformation(op)
     """
 
     # 9.5.4 Coordinate Systems for 3D
