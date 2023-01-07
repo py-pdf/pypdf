@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1673096182662,
+  "lastUpdate": 1673105021668,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -21398,6 +21398,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0004619225844934057",
             "extra": "mean: 81.97425484615358 msec\nrounds: 13"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "abyesilyurt@gmail.com",
+            "name": "Aziz Berkay Yesilyurt",
+            "username": "abyesilyurt"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0ba45eaf8b36c9295e1af6eb0b6e4162eca1e13c",
+          "message": "DOC: Fix linked markdown documents (#1537)\n\nInternal markdown links in docs do not work due to a bug in myst-parser.\r\nhttps://github.com/executablebooks/MyST-Parser/issues/658\r\n\r\nWe'll use an older version of myst-parser until the bug is fixed.\r\n\r\nDOC: Add abyesilyurt as a contributor",
+          "timestamp": "2023-01-07T16:22:08+01:00",
+          "tree_id": "fc4508c379868254fff4319550f48af9cdee04e9",
+          "url": "https://github.com/py-pdf/pypdf/commit/0ba45eaf8b36c9295e1af6eb0b6e4162eca1e13c"
+        },
+        "date": 1673105019468,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.722654125244436,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010797693980476746",
+            "extra": "mean: 1.3837878524000018 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 8.553516514011124,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009473842989559415",
+            "extra": "mean: 116.91098022222155 msec\nrounds: 9"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.179893743411042,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09540987392158133",
+            "extra": "mean: 5.558837016999999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 8.802255198028288,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0025220389721003983",
+            "extra": "mean: 113.60724922222214 msec\nrounds: 9"
           }
         ]
       }
