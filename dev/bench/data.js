@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1673105021668,
+  "lastUpdate": 1673114653343,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -21450,6 +21450,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0025220389721003983",
             "extra": "mean: 113.60724922222214 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5c0b11d6f6dfe8f7744565c59cf0ffef9f706608",
+          "message": "DOC: Use google style docstrings (#1534)\n\nThe Google Docstring style is way more readable than ReST style docstrings. For this reason, this PR replaces ReST style docstrings by Google Style docstrings.\r\n\r\nTools used:\r\n- pyment\r\n- pydocstyle\r\n\r\nOther changes:\r\n* DEV: Set python_use_unqualified_type_names=True\r\n* MAINT: Additionally, most instances of 'pragma: no-cover' were replaced by the more descriptive 'deprecated'.\r\n* DOC: Document how to document",
+          "timestamp": "2023-01-07T19:02:59+01:00",
+          "tree_id": "3eac71499f02cd67634c1c67e41363dd963bae1e",
+          "url": "https://github.com/py-pdf/pypdf/commit/5c0b11d6f6dfe8f7744565c59cf0ffef9f706608"
+        },
+        "date": 1673114651909,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.000109392165337,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014915205261624414",
+            "extra": "mean: 999.8906198000001 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.749609155126294,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008164065751587018",
+            "extra": "mean: 85.10921399999975 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2367378956773891,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03492928474258697",
+            "extra": "mean: 4.2240808009999995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.555233717785091,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0005204322058348787",
+            "extra": "mean: 86.54087181818423 msec\nrounds: 11"
           }
         ]
       }
