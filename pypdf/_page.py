@@ -648,7 +648,8 @@ class PageObject(DictionaryObject):
         """
         Access the page contents.
 
-        :return: the ``/Contents`` object, or ``None`` if it doesn't exist.
+        Returns:
+            The ``/Contents`` object, or ``None`` if it doesn't exist.
             ``/Contents`` is optional, as described in PDF Reference  7.7.3.3
         """
         if PG.CONTENTS in self:
@@ -1900,7 +1901,8 @@ class PageObject(DictionaryObject):
         """
         Get the names of embedded fonts and unembedded fonts.
 
-        :return: (Set of embedded fonts, set of unembedded fonts)
+        Returns:
+            A tuple (Set of embedded fonts, set of unembedded fonts)
         """
         obj = self.get_object()
         assert isinstance(obj, DictionaryObject)

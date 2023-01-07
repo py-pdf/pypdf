@@ -14,8 +14,9 @@ def get_pdf_from_url(url: str, name: str) -> bytes:
     This function is a last resort for PDF files where we are uncertain if
     we may add it for testing purposes to https://github.com/py-pdf/sample-files
 
-    :param str url: location of the PDF file
-    :param str name: unique name across all files
+    Args:
+        url: location of the PDF file
+        name: unique name across all files
     """
     if url.startswith("file://"):
         with open(url[7:].replace("\\", "/"), "rb") as fp:

@@ -74,6 +74,8 @@ autodoc_default_options = {
     "undoc-members": True,
 }
 autodoc_inherit_docstrings = False
+autodoc_typehints_format = "short"
+python_use_unqualified_type_names = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

@@ -348,6 +348,12 @@ class PdfReader:
 
     @property
     def pdf_header(self) -> str:
+        """
+        The first 8 bytes of the file.
+
+        This is typically something like ``'%PDF-1.6'`` and can be used to
+        detect if the file is actually a PDF file and which version it is.
+        """
         # TODO: Make this return a bytes object for consistency
         #       but that needs a deprecation
         loc = self.stream.tell()
@@ -363,9 +369,6 @@ class PdfReader:
         Note that some PDF files use metadata streams instead of docinfo
         dictionaries, and these metadata streams will not be accessed by this
         function.
-
-        Returns:
-          The document information of this PDF file.
         """
         if TK.INFO not in self.trailer:
             return None
@@ -399,13 +402,7 @@ class PdfReader:
 
     @property
     def xmp_metadata(self) -> Optional[XmpInformation]:
-        """
-        XMP (Extensible Metadata Platform) data
-
-        :return: a :class:`XmpInformation<xmp.XmpInformation>`
-            instance that can be used to access XMP metadata from the document.
-            or ``None`` if no metadata was found on the document root.
-        """
+        """XMP (Extensible Metadata Platform) data."""
         try:
             self._override_encryption = True
             return self.trailer[TK.ROOT].xmp_metadata  # type: ignore
@@ -760,7 +757,8 @@ class PdfReader:
         Read-only property for the outline (i.e., a collection of 'outline items'
         which are also known as 'bookmarks') present in the document.
 
-        :return: a nested list of :class:`Destinations<pypdf.generic.Destination>`.
+        Returns:
+            A nested list of :class:`Destinations<pypdf.generic.Destination>`.
         """
         return self._get_outline()
 
@@ -831,8 +829,9 @@ class PdfReader:
         """
         Read-only property for the list of threads see §8.3.2 from PDF 1.7 spec
 
-        :return: an Array of Dictionnaries with "/F" and "/I" properties
-                 or None if no articles.
+        Returns:
+            An array of dictionaries with "/F" and "/I" properties
+            or None if no articles.
         """
         catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
         if CO.THREADS in catalog:
@@ -1031,7 +1030,8 @@ class PdfReader:
         """
         Get the page layout.
 
-        :return: Page layout currently being used.
+        Returns:
+            Page layout currently being used.
 
         .. list-table:: Valid ``layout`` values
            :widths: 50 200
@@ -1080,7 +1080,8 @@ class PdfReader:
         """
         Get the page mode.
 
-        :return: Page mode currently being used.
+        Returns:
+            Page mode currently being used.
 
         .. list-table:: Valid ``mode`` values
            :widths: 50 200

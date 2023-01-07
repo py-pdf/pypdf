@@ -1315,9 +1315,10 @@ class PdfWriter:
 
     def get_threads_root(self) -> ArrayObject:
         """
-        the list of threads see §8.3.2 from PDF 1.7 spec
+        The list of threads see §8.3.2 from PDF 1.7 spec.
 
-                :return: an Array (possibly empty) of Dictionaries with ``/F`` and ``/I`` properties
+        Returns:
+            An array (possibly empty) of Dictionaries with ``/F`` and ``/I`` properties.
         """
         if CO.THREADS in self._root_object:
             # TABLE 3.25 Entries in the catalog dictionary
@@ -1332,7 +1333,8 @@ class PdfWriter:
         """
         Read-only property for the list of threads see §8.3.2 from PDF 1.7 spec
 
-        :return: an Array (possibly empty) of Dictionaries with ``/F`` and ``/I`` properties
+        Returns:
+            An Array (possibly empty) of Dictionaries with ``/F`` and ``/I`` properties.
         """
         return self.get_threads_root()
 
