@@ -756,9 +756,6 @@ class PdfReader:
         """
         Read-only property for the outline (i.e., a collection of 'outline items'
         which are also known as 'bookmarks') present in the document.
-
-        Returns:
-            A nested list of :class:`Destinations<pypdf.generic.Destination>`.
         """
         return self._get_outline()
 
