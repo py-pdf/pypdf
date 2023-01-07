@@ -11,6 +11,7 @@ history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/pypdf/gra
 
 ## Contributors to the pypdf (formerly pyPdf / PyPDF2) project
 
+* [abyesilyurt](https://github.com/abyesilyurt)
 * [DL6ER](https://github.com/DL6ER)
 * [ediamondscience](https://github.com/ediamondscience)
 * [Górny, Michał](https://github.com/mgorny)
@@ -19,6 +20,7 @@ history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/pypdf/gra
 * [Karvonen, Harry](https://github.com/Hatell/)
 * [KourFrost](https://github.com/KourFrost)
 * [Lightup1](https://github.com/Lightup1)
+* [maxbeer99](https://github.com/maxbeer99)
 * [Mérino, Antoine](https://github.com/Merinorus)
 * [Perrensen, Olsen](https://github.com/olsonperrensen)
 * [Pinheiro, Arthur](https://github.com/xilopaint)

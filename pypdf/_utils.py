@@ -100,6 +100,13 @@ def read_until_whitespace(stream: StreamType, maxchars: Optional[int] = None) ->
     Read non-whitespace characters and return them.
 
     Stops upon encountering whitespace or when maxchars is reached.
+
+    Args:
+      stream: The data stream from which was read.
+      maxchars: The maximum number of bytes returned; by default unlimited.
+
+    Returns:
+      The data which was read.
     """
     txt = b""
     while True:
@@ -113,7 +120,15 @@ def read_until_whitespace(stream: StreamType, maxchars: Optional[int] = None) ->
 
 
 def read_non_whitespace(stream: StreamType) -> bytes:
-    """Find and read the next non-whitespace character (ignores whitespace)."""
+    """
+    Find and read the next non-whitespace character (ignores whitespace).
+
+    Args:
+      stream: The data stream from which was read.
+
+    Returns:
+      The data which was read.
+    """
     tok = stream.read(1)
     while tok in WHITESPACES:
         tok = stream.read(1)
@@ -122,8 +137,15 @@ def read_non_whitespace(stream: StreamType) -> bytes:
 
 def skip_over_whitespace(stream: StreamType) -> bool:
     """
-    Similar to read_non_whitespace, but return a Boolean if more than
+    Similar to read_non_whitespace, but return a boolean if more than
     one whitespace character was read.
+
+    Args:
+      stream: The data stream from which was read.
+
+    Returns:
+      True if more than one whitespace was skipped,
+      otherwise return False.
     """
     tok = WHITESPACES[0]
     cnt = 0
@@ -147,9 +169,17 @@ def read_until_regex(
     """
     Read until the regular expression pattern matched (ignore the match).
 
-    :raises PdfStreamError: on premature end-of-file
-    :param bool ignore_eof: If true, ignore end-of-line and return immediately
-    :param regex: re.Pattern
+    Args:
+      ignore_eof: If true, ignore end-of-line and return immediately
+      regex: re.Pattern
+      ignore_eof:  (Default value = False)
+
+    Returns:
+      The read bytes.
+
+    Raises:
+      PdfStreamError: on premature end-of-file
+
     """
     name = b""
     while True:
@@ -173,6 +203,13 @@ def read_block_backwards(stream: StreamType, to_read: int) -> bytes:
 
     This changes the stream's position to the beginning of where the block was
     read.
+
+    Args:
+      stream:
+      to_read:
+
+    Returns:
+      The data which was read.
     """
     if stream.tell() < to_read:
         raise PdfStreamError("Could not read malformed PDF file")
@@ -193,6 +230,12 @@ def read_previous_line(stream: StreamType) -> bytes:
     After this call, the stream will be positioned one byte after the
     first non-CRLF character found beyond the first CR/LF byte before X,
     or, if no such byte is found, at the beginning of the stream.
+
+    Args:
+      stream: StreamType:
+
+    Returns:
+      The data which was read.
     """
     line_content = []
     found_crlf = False

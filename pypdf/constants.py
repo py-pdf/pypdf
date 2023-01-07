@@ -424,9 +424,7 @@ class CatalogDictionary:
 
 
 class OutlineFontFlag(IntFlag):
-    """
-    A class used as an enumerable flag for formatting an outline font
-    """
+    """A class used as an enumerable flag for formatting an outline font"""
 
     italic = 1
     bold = 2

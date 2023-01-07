@@ -4,6 +4,8 @@
 #
 #    pip-compile requirements/docs.in
 #
+-e .
+    # via -r requirements/docs.in
 alabaster==0.7.12
     # via sphinx
 babel==2.11.0
@@ -21,7 +23,7 @@ idna==3.4
     # via requests
 imagesize==1.4.1
     # via sphinx
-importlib-metadata==5.1.0
+importlib-metadata==6.0.0
     # via sphinx
 jinja2==3.1.2
     # via
@@ -37,13 +39,13 @@ mdit-py-plugins==0.3.3
     # via myst-parser
 mdurl==0.1.2
     # via markdown-it-py
-myst-parser==0.18.1
+myst-parser==0.16.1
     # via -r requirements/docs.in
 packaging==22.0
     # via sphinx
-pygments==2.13.0
+pygments==2.14.0
     # via sphinx
-pytz==2022.6
+pytz==2022.7
     # via babel
 pyyaml==6.0
     # via myst-parser
@@ -75,6 +77,7 @@ typing-extensions==4.4.0
     #   importlib-metadata
     #   markdown-it-py
     #   myst-parser
+    #   pypdf
 urllib3==1.26.13
     # via requests
 zipp==3.11.0

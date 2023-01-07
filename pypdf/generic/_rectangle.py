@@ -41,7 +41,7 @@ class RectangleObject(ArrayObject):
 
     def ensureIsNumber(
         self, value: Any
-    ) -> Union[FloatObject, NumberObject]:  # pragma: no cover
+    ) -> Union[FloatObject, NumberObject]:  # deprecated
         deprecation_no_replacement("ensureIsNumber", "3.0.0")
         return self._ensure_is_number(value)
 
@@ -80,35 +80,35 @@ class RectangleObject(ArrayObject):
     def top(self, f: float) -> None:
         self[3] = FloatObject(f)
 
-    def getLowerLeft_x(self) -> FloatObject:  # pragma: no cover
+    def getLowerLeft_x(self) -> FloatObject:  # deprecated
         deprecation_with_replacement("getLowerLeft_x", "left", "3.0.0")
         return self.left
 
-    def getLowerLeft_y(self) -> FloatObject:  # pragma: no cover
+    def getLowerLeft_y(self) -> FloatObject:  # deprecated
         deprecation_with_replacement("getLowerLeft_y", "bottom", "3.0.0")
         return self.bottom
 
-    def getUpperRight_x(self) -> FloatObject:  # pragma: no cover
+    def getUpperRight_x(self) -> FloatObject:  # deprecated
         deprecation_with_replacement("getUpperRight_x", "right", "3.0.0")
         return self.right
 
-    def getUpperRight_y(self) -> FloatObject:  # pragma: no cover
+    def getUpperRight_y(self) -> FloatObject:  # deprecated
         deprecation_with_replacement("getUpperRight_y", "top", "3.0.0")
         return self.top
 
-    def getUpperLeft_x(self) -> FloatObject:  # pragma: no cover
+    def getUpperLeft_x(self) -> FloatObject:  # deprecated
         deprecation_with_replacement("getUpperLeft_x", "left", "3.0.0")
         return self.left
 
-    def getUpperLeft_y(self) -> FloatObject:  # pragma: no cover
+    def getUpperLeft_y(self) -> FloatObject:  # deprecated
         deprecation_with_replacement("getUpperLeft_y", "top", "3.0.0")
         return self.top
 
-    def getLowerRight_x(self) -> FloatObject:  # pragma: no cover
+    def getLowerRight_x(self) -> FloatObject:  # deprecated
         deprecation_with_replacement("getLowerRight_x", "right", "3.0.0")
         return self.right
 
-    def getLowerRight_y(self) -> FloatObject:  # pragma: no cover
+    def getLowerRight_y(self) -> FloatObject:  # deprecated
         deprecation_with_replacement("getLowerRight_y", "bottom", "3.0.0")
         return self.bottom
 
@@ -162,41 +162,41 @@ class RectangleObject(ArrayObject):
 
     def getLowerLeft(
         self,
-    ) -> Tuple[decimal.Decimal, decimal.Decimal]:  # pragma: no cover
+    ) -> Tuple[decimal.Decimal, decimal.Decimal]:  # deprecated
         deprecation_with_replacement("getLowerLeft", "lower_left", "3.0.0")
         return self.lower_left
 
     def getLowerRight(
         self,
-    ) -> Tuple[decimal.Decimal, decimal.Decimal]:  # pragma: no cover
+    ) -> Tuple[decimal.Decimal, decimal.Decimal]:  # deprecated
         deprecation_with_replacement("getLowerRight", "lower_right", "3.0.0")
         return self.lower_right
 
     def getUpperLeft(
         self,
-    ) -> Tuple[decimal.Decimal, decimal.Decimal]:  # pragma: no cover
+    ) -> Tuple[decimal.Decimal, decimal.Decimal]:  # deprecated
         deprecation_with_replacement("getUpperLeft", "upper_left", "3.0.0")
         return self.upper_left
 
     def getUpperRight(
         self,
-    ) -> Tuple[decimal.Decimal, decimal.Decimal]:  # pragma: no cover
+    ) -> Tuple[decimal.Decimal, decimal.Decimal]:  # deprecated
         deprecation_with_replacement("getUpperRight", "upper_right", "3.0.0")
         return self.upper_right
 
-    def setLowerLeft(self, value: Tuple[float, float]) -> None:  # pragma: no cover
+    def setLowerLeft(self, value: Tuple[float, float]) -> None:  # deprecated
         deprecation_with_replacement("setLowerLeft", "lower_left", "3.0.0")
         self.lower_left = value  # type: ignore
 
-    def setLowerRight(self, value: Tuple[float, float]) -> None:  # pragma: no cover
+    def setLowerRight(self, value: Tuple[float, float]) -> None:  # deprecated
         deprecation_with_replacement("setLowerRight", "lower_right", "3.0.0")
         self[2], self[1] = (self._ensure_is_number(x) for x in value)
 
-    def setUpperLeft(self, value: Tuple[float, float]) -> None:  # pragma: no cover
+    def setUpperLeft(self, value: Tuple[float, float]) -> None:  # deprecated
         deprecation_with_replacement("setUpperLeft", "upper_left", "3.0.0")
         self[0], self[3] = (self._ensure_is_number(x) for x in value)
 
-    def setUpperRight(self, value: Tuple[float, float]) -> None:  # pragma: no cover
+    def setUpperRight(self, value: Tuple[float, float]) -> None:  # deprecated
         deprecation_with_replacement("setUpperRight", "upper_right", "3.0.0")
         self[2], self[3] = (self._ensure_is_number(x) for x in value)
 
@@ -204,7 +204,7 @@ class RectangleObject(ArrayObject):
     def width(self) -> decimal.Decimal:
         return self.right - self.left
 
-    def getWidth(self) -> decimal.Decimal:  # pragma: no cover
+    def getWidth(self) -> decimal.Decimal:  # deprecated
         deprecation_with_replacement("getWidth", "width", "3.0.0")
         return self.width
 
@@ -212,54 +212,54 @@ class RectangleObject(ArrayObject):
     def height(self) -> decimal.Decimal:
         return self.top - self.bottom
 
-    def getHeight(self) -> decimal.Decimal:  # pragma: no cover
+    def getHeight(self) -> decimal.Decimal:  # deprecated
         deprecation_with_replacement("getHeight", "height", "3.0.0")
         return self.height
 
     @property
-    def lowerLeft(self) -> Tuple[decimal.Decimal, decimal.Decimal]:  # pragma: no cover
+    def lowerLeft(self) -> Tuple[decimal.Decimal, decimal.Decimal]:  # deprecated
         deprecation_with_replacement("lowerLeft", "lower_left", "3.0.0")
         return self.lower_left
 
     @lowerLeft.setter
     def lowerLeft(
         self, value: Tuple[decimal.Decimal, decimal.Decimal]
-    ) -> None:  # pragma: no cover
+    ) -> None:  # deprecated
         deprecation_with_replacement("lowerLeft", "lower_left", "3.0.0")
         self.lower_left = value
 
     @property
-    def lowerRight(self) -> Tuple[decimal.Decimal, decimal.Decimal]:  # pragma: no cover
+    def lowerRight(self) -> Tuple[decimal.Decimal, decimal.Decimal]:  # deprecated
         deprecation_with_replacement("lowerRight", "lower_right", "3.0.0")
         return self.lower_right
 
     @lowerRight.setter
     def lowerRight(
         self, value: Tuple[decimal.Decimal, decimal.Decimal]
-    ) -> None:  # pragma: no cover
+    ) -> None:  # deprecated
         deprecation_with_replacement("lowerRight", "lower_right", "3.0.0")
         self.lower_right = value
 
     @property
-    def upperLeft(self) -> Tuple[decimal.Decimal, decimal.Decimal]:  # pragma: no cover
+    def upperLeft(self) -> Tuple[decimal.Decimal, decimal.Decimal]:  # deprecated
         deprecation_with_replacement("upperLeft", "upper_left", "3.0.0")
         return self.upper_left
 
     @upperLeft.setter
     def upperLeft(
         self, value: Tuple[decimal.Decimal, decimal.Decimal]
-    ) -> None:  # pragma: no cover
+    ) -> None:  # deprecated
         deprecation_with_replacement("upperLeft", "upper_left", "3.0.0")
         self.upper_left = value
 
     @property
-    def upperRight(self) -> Tuple[decimal.Decimal, decimal.Decimal]:  # pragma: no cover
+    def upperRight(self) -> Tuple[decimal.Decimal, decimal.Decimal]:  # deprecated
         deprecation_with_replacement("upperRight", "upper_right", "3.0.0")
         return self.upper_right
 
     @upperRight.setter
     def upperRight(
         self, value: Tuple[decimal.Decimal, decimal.Decimal]
-    ) -> None:  # pragma: no cover
+    ) -> None:  # deprecated
         deprecation_with_replacement("upperRight", "upper_right", "3.0.0")
         self.upper_right = value
