@@ -1,4 +1,4 @@
 sphinx
 sphinx_rtd_theme
-myst_parser
+myst_parser==0.16.1
 -e .
