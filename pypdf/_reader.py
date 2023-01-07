@@ -824,11 +824,9 @@ class PdfReader:
     @property
     def threads(self) -> Optional[ArrayObject]:
         """
-        Read-only property for the list of threads see §8.3.2 from PDF 1.7 spec
-
-        Returns:
-            An array of dictionaries with "/F" and "/I" properties
-            or None if no articles.
+        Read-only property for the list of threads see §8.3.2 from PDF 1.7 spec.
+        It's an array of dictionaries with "/F" and "/I" properties
+        or None if there are no articles.
         """
         catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
         if CO.THREADS in catalog:
@@ -1025,10 +1023,7 @@ class PdfReader:
     @property
     def page_layout(self) -> Optional[str]:
         """
-        Get the page layout.
-
-        Returns:
-            Page layout currently being used.
+        Get the page layout currently being used.
 
         .. list-table:: Valid ``layout`` values
            :widths: 50 200
@@ -1075,10 +1070,7 @@ class PdfReader:
     @property
     def page_mode(self) -> Optional[PagemodeType]:
         """
-        Get the page mode.
-
-        Returns:
-            Page mode currently being used.
+        Get the page mode currently being used.
 
         .. list-table:: Valid ``mode`` values
            :widths: 50 200

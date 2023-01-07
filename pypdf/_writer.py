@@ -513,13 +513,6 @@ class PdfWriter:
         Property to access the opening destination (``/OpenAction`` entry in the
         PDF catalog).
         it returns `None` if the entry does not exist is not set.
-
-        Args:
-          destination: the property can be set to a Destination,
-            a Page or an string(NamedDest) or
-            None (to remove ``/OpenAction``)
-
-        (value stored in ``/OpenAction`` entry in the Pdf Catalog)
         """
         if "/OpenAction" not in self._root_object:
             return None
@@ -1315,7 +1308,9 @@ class PdfWriter:
 
     def get_threads_root(self) -> ArrayObject:
         """
-        The list of threads see §8.3.2 from PDF 1.7 spec.
+        The list of threads.
+
+        See §8.3.2 from PDF 1.7 spec.
 
         Returns:
             An array (possibly empty) of Dictionaries with ``/F`` and ``/I`` properties.
@@ -1333,8 +1328,7 @@ class PdfWriter:
         """
         Read-only property for the list of threads see §8.3.2 from PDF 1.7 spec
 
-        Returns:
-            An Array (possibly empty) of Dictionaries with ``/F`` and ``/I`` properties.
+        Each element is a dictionaries with ``/F`` and ``/I`` keys.
         """
         return self.get_threads_root()
 

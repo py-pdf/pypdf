@@ -488,8 +488,9 @@ class PageObject(DictionaryObject):
         """
         The VISUAL rotation of the page.
 
-        This number has to be a multiple of 90 degrees: 0,90,180,270
-        This property does not affect "/Contents"
+        This number has to be a multiple of 90 degrees: 0, 90, 180, or 270 are
+        valid values.
+        This property does not affect ``/Contents``.
         """
         return int(self.get(PG.ROTATE, 0))
 
