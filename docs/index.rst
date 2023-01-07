@@ -64,6 +64,7 @@ You can contribute to `pypdf on GitHub <https://github.com/py-pdf/pypdf>`_.
    dev/pdf-format
    dev/cmaps
    dev/deprecations
+   dev/documentation
    dev/testing
 
 .. toctree::
