@@ -700,9 +700,11 @@ class PdfReader:
             }
         else:
             ff = {}
-            for (k, v) in formfields.items():
+            for (_k, v) in formfields.items():
                 if v.get("/FT") == "/Tx":
-                    ff[indexed_key(cast(str, v["/T"]), ff)] = cast(str, v["/V"])
+                    ff[indexed_key(cast(str, v["/T"]), ff)] = (
+                        cast(str, v["/V"]) if "/V" in v else None
+                    )
         return ff
         """return {
             (field if full_qualified_name else formfields[field]["/T"]): formfields[
