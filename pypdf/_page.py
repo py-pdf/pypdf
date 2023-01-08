@@ -591,7 +591,9 @@ class PageObject(DictionaryObject):
 
     @staticmethod
     def _content_stream_rename(
-        stream: ContentStream, rename: Dict[Any, Any], pdf: PdfReaderProtocol
+        stream: ContentStream,
+        rename: Dict[Any, Any],
+        pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol],
     ) -> ContentStream:
         if not rename:
             return stream
@@ -612,7 +614,9 @@ class PageObject(DictionaryObject):
         return stream
 
     @staticmethod
-    def _push_pop_gs(contents: Any, pdf: PdfReaderProtocol) -> ContentStream:
+    def _push_pop_gs(
+        contents: Any, pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol]
+    ) -> ContentStream:
         # adds a graphics state "push" and "pop" to the beginning and end
         # of a content stream.  This isolates it from changes such as
         # transformation matricies.
@@ -623,7 +627,9 @@ class PageObject(DictionaryObject):
 
     @staticmethod
     def _add_transformation_matrix(
-        contents: Any, pdf: PdfReaderProtocol, ctm: CompressedTransformationMatrix
+        contents: Any,
+        pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol],
+        ctm: CompressedTransformationMatrix,
     ) -> ContentStream:
         """
         Add transformation matrix at the beginning of the given contents stream.
@@ -1766,8 +1772,8 @@ class PageObject(DictionaryObject):
     def extract_text(
         self,
         *args: Any,
-        Tj_sep: str = None,
-        TJ_sep: str = None,
+        Tj_sep: Optional[str] = None,
+        TJ_sep: Optional[str] = None,
         orientations: Union[int, Tuple[int, ...]] = (0, 90, 180, 270),
         space_width: float = 200.0,
         visitor_operand_before: Optional[Callable[[Any, Any, Any, Any], None]] = None,

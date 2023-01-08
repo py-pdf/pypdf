@@ -73,5 +73,10 @@ class PdfWriterProtocol(Protocol):  # deprecated
     def write(self, stream: Union[Path, StrByteType]) -> Tuple[bool, IO]:
         ...
 
+    @property
     def pages(self) -> List[Any]:
+        ...
+
+    @property
+    def pdf_header(self) -> bytes:
         ...
