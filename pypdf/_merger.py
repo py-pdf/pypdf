@@ -135,7 +135,7 @@ class PdfMerger:
     def merge(
         self,
         page_number: Optional[int] = None,
-        fileobj: Union[Path, StrByteType, PdfReader] = None,
+        fileobj: Union[None, Path, StrByteType, PdfReader] = None,
         outline_item: Optional[str] = None,
         pages: Optional[PageRangeSpec] = None,
         import_outline: bool = True,
@@ -150,7 +150,8 @@ class PdfMerger:
             be inserted after the given number.
           fileobj: A File Object or an object that supports the standard
             read and seek methods similar to a File Object. Could also be a
-            string representing a path to a PDF file.
+            string representing a path to a PDF file. None as an argument is
+            deprecated.
           outline_item: Optionally, you may specify an outline item
             (previously referred to as a 'bookmark') to be applied at the
             beginning of the included file by supplying the text of the outline item.

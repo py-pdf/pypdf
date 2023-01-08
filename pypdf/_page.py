@@ -46,7 +46,7 @@ from typing import (
 )
 
 from ._cmap import build_char_map, unknown_char_map
-from ._protocols import PdfReaderProtocol
+from ._protocols import PdfReaderProtocol, PdfWriterProtocol
 from ._utils import (
     CompressedTransformationMatrix,
     File,
@@ -350,13 +350,13 @@ class PageObject(DictionaryObject):
 
     def __init__(
         self,
-        pdf: Optional[PdfReaderProtocol] = None,
+        pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol] = None,
         indirect_reference: Optional[IndirectObject] = None,
         indirect_ref: Optional[IndirectObject] = None,  # deprecated
     ) -> None:
 
         DictionaryObject.__init__(self)
-        self.pdf: Optional[PdfReaderProtocol] = pdf
+        self.pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol] = pdf
         if indirect_ref is not None:  # deprecated
             warnings.warn(
                 (
@@ -403,7 +403,7 @@ class PageObject(DictionaryObject):
 
     @staticmethod
     def create_blank_page(
-        pdf: Optional[PdfReaderProtocol] = None,
+        pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol] = None,
         width: Union[float, Decimal, None] = None,
         height: Union[float, Decimal, None] = None,
     ) -> "PageObject":

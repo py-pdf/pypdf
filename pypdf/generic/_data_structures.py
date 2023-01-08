@@ -1079,7 +1079,7 @@ class ContentStream(DecodedStreamObject):
 
 def read_object(
     stream: StreamType,
-    pdf: PdfReaderProtocol,
+    pdf: Optional[PdfReaderProtocol],
     forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
 ) -> Union[PdfObject, int, str, ContentStream]:
     tok = stream.read(1)
@@ -1090,12 +1090,13 @@ def read_object(
         # hexadecimal string OR dictionary
         peek = stream.read(2)
         stream.seek(-2, 1)  # reset to start
-
+        assert pdf is not None  # hint for mypy
         if peek == b"<<":
             return DictionaryObject.read_from_stream(stream, pdf, forced_encoding)
         else:
             return read_hex_string_from_stream(stream, forced_encoding)
     elif tok == b"[":
+        assert pdf is not None  # hint for mypy
         return ArrayObject.read_from_stream(stream, pdf, forced_encoding)
     elif tok == b"t" or tok == b"f":
         return BooleanObject.read_from_stream(stream)
@@ -1122,6 +1123,7 @@ def read_object(
         peek = stream.read(20)
         stream.seek(-len(peek), 1)  # reset to start
         if IndirectPattern.match(peek) is not None:
+            assert pdf is not None  # hint for mypy
             return IndirectObject.read_from_stream(stream, pdf)
         else:
             return NumberObject.read_from_stream(stream)
