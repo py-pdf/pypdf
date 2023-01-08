@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1673195811273,
+  "lastUpdate": 1673200108180,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -21606,6 +21606,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.003027692282863646",
             "extra": "mean: 99.67279066666714 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "e7e4ffc7e74fd3f1a191bc63527bee0d7986be1f",
+          "message": "REL: 3.2.1\n\nNew Features (ENH):\n-  Accept hierarchical fields (#1529)\n\nDocumentation (DOC):\n-  Use google style docstrings (#1534)\n-  Fix linked markdown documents (#1537)\n\nDeveloper Experience (DEV):\n-  Update docs config (#1535)\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.2.0...3.2.1)",
+          "timestamp": "2023-01-08T18:45:14+01:00",
+          "tree_id": "e00908bbebfaf009ac276e2121c6af8623c8c867",
+          "url": "https://github.com/py-pdf/pypdf/commit/e7e4ffc7e74fd3f1a191bc63527bee0d7986be1f"
+        },
+        "date": 1673200106795,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.008205160748951,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0075795489274520095",
+            "extra": "mean: 991.8616160000056 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.859544621493077,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006862210674927673",
+            "extra": "mean: 84.32026961538625 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23886595627877166,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02403460799766003",
+            "extra": "mean: 4.186448397999993 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.078804277102668,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0019667027694367186",
+            "extra": "mean: 90.26244845454751 msec\nrounds: 11"
           }
         ]
       }
