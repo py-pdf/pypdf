@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1673114653343,
+  "lastUpdate": 1673172758162,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -21502,6 +21502,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0005204322058348787",
             "extra": "mean: 86.54087181818423 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "683c130d372aafd1cfa032b3def29d44d999a88e",
+          "message": "ENH: Accept hierarchical fields (#1529)\n\nIndexed names are implemented with `.` not `_` (possible mix up with names).\r\nAn optional parameter `full_qualified_name` was added to get_form_text_fields.\r\n\r\nFixes #1468",
+          "timestamp": "2023-01-08T11:11:07+01:00",
+          "tree_id": "9cffac5bb0fa32a813644613f2340b4578e96f65",
+          "url": "https://github.com/py-pdf/pypdf/commit/683c130d372aafd1cfa032b3def29d44d999a88e"
+        },
+        "date": 1673172756130,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.7876334378384271,
+            "unit": "iter/sec",
+            "range": "stddev: 0.037387208249914435",
+            "extra": "mean: 1.2696261382000102 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 9.49992391938467,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011894374352079589",
+            "extra": "mean: 105.26400089999584 msec\nrounds: 10"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.1967377361427277,
+            "unit": "iter/sec",
+            "range": "stddev: 0.10027024833380767",
+            "extra": "mean: 5.082908950800004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.276547311895982,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005251792951696118",
+            "extra": "mean: 97.30894722222654 msec\nrounds: 9"
           }
         ]
       }
