@@ -701,21 +701,13 @@ class PdfReader:
         formfields = self.get_fields()
         if formfields is None:
             return {}
-        if full_qualified_name:
-            ff = {
-                (field if full_qualified_name else formfields[field]["/T"]): formfields[
-                    field
-                ].get("/V")
-                for field in formfields
-                if formfields[field].get("/FT") == "/Tx"
-            }
-        else:
-            ff = {}
-            for v in formfields.values():
-                if v.get("/FT") == "/Tx":
-                    ff[indexed_key(cast(str, v["/T"]), ff)] = (
-                        cast(str, v["/V"]) if "/V" in v else None
-                    )
+        ff = {}
+        for field, value in formfields.items():
+            if value.get("/FT") == "/Tx":
+                if full_qualified_name:
+                    ff[field] = value.get("/V")
+                else:
+                    ff[indexed_key(cast(str, value["/T"]), ff)] = value.get("/V")
         return ff
         """return {
             (field if full_qualified_name else formfields[field]["/T"]): formfields[
