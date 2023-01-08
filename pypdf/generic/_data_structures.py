@@ -340,7 +340,7 @@ class DictionaryObject(dict, PdfObject):
     @staticmethod
     def read_from_stream(
         stream: StreamType,
-        pdf: PdfReaderProtocol,
+        pdf: Optional[PdfReaderProtocol],
         forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
     ) -> "DictionaryObject":
         def get_next_obj_pos(
@@ -437,6 +437,7 @@ class DictionaryObject(dict, PdfObject):
             length = data[SA.LENGTH]
             if isinstance(length, IndirectObject):
                 t = stream.tell()
+                assert pdf is not None  # hint for mypy
                 length = pdf.get_object(length)
                 stream.seek(t, 0)
             pstart = stream.tell()
@@ -456,7 +457,7 @@ class DictionaryObject(dict, PdfObject):
                 if end == b"endstream":
                     # we found it by looking back one character further.
                     data["__streamdata__"] = data["__streamdata__"][:-1]
-                elif not pdf.strict:
+                elif pdf is not None and not pdf.strict:
                     stream.seek(pstart, 0)
                     data["__streamdata__"] = read_unsized_from_steam(stream, pdf)
                     pos = stream.tell()
@@ -1090,7 +1091,6 @@ def read_object(
         # hexadecimal string OR dictionary
         peek = stream.read(2)
         stream.seek(-2, 1)  # reset to start
-        assert pdf is not None  # hint for mypy
         if peek == b"<<":
             return DictionaryObject.read_from_stream(stream, pdf, forced_encoding)
         else:
