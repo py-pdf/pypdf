@@ -355,7 +355,7 @@ class PdfWriter:
         Returns:
           The added PageObject.
         """
-        return self._add_page(page, lambda l, p: l.insert(index, p))
+        return self._add_page(page, lambda kids, p: kids.insert(index, p))
 
     def insertPage(
         self,

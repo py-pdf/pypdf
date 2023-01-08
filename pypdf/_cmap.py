@@ -192,9 +192,14 @@ def parse_to_unicode(
         None, Tuple[int, int]
     ] = None  # tuple = (current_char, remaining size) ; cf #1285 for example of file
     cm = prepare_cm(ft)
-    for l in cm.split(b"\n"):
+    for line in cm.split(b"\n"):
         process_rg, process_char, multiline_rg = process_cm_line(
-            l.strip(b" "), process_rg, process_char, multiline_rg, map_dict, int_entry
+            line.strip(b" "),
+            process_rg,
+            process_char,
+            multiline_rg,
+            map_dict,
+            int_entry,
         )
 
     for a, value in map_dict.items():
@@ -243,37 +248,37 @@ def prepare_cm(ft: DictionaryObject) -> bytes:
 
 
 def process_cm_line(
-    l: bytes,
+    line: bytes,
     process_rg: bool,
     process_char: bool,
     multiline_rg: Union[None, Tuple[int, int]],
     map_dict: Dict[Any, Any],
     int_entry: List[int],
 ) -> Tuple[bool, bool, Union[None, Tuple[int, int]]]:
-    if l in (b"", b" ") or l[0] == 37:  # 37 = %
+    if line in (b"", b" ") or line[0] == 37:  # 37 = %
         return process_rg, process_char, multiline_rg
-    if b"beginbfrange" in l:
+    if b"beginbfrange" in line:
         process_rg = True
-    elif b"endbfrange" in l:
+    elif b"endbfrange" in line:
         process_rg = False
-    elif b"beginbfchar" in l:
+    elif b"beginbfchar" in line:
         process_char = True
-    elif b"endbfchar" in l:
+    elif b"endbfchar" in line:
         process_char = False
     elif process_rg:
-        multiline_rg = parse_bfrange(l, map_dict, int_entry, multiline_rg)
+        multiline_rg = parse_bfrange(line, map_dict, int_entry, multiline_rg)
     elif process_char:
-        parse_bfchar(l, map_dict, int_entry)
+        parse_bfchar(line, map_dict, int_entry)
     return process_rg, process_char, multiline_rg
 
 
 def parse_bfrange(
-    l: bytes,
+    line: bytes,
     map_dict: Dict[Any, Any],
     int_entry: List[int],
     multiline_rg: Union[None, Tuple[int, int]],
 ) -> Union[None, Tuple[int, int]]:
-    lst = [x for x in l.split(b" ") if x]
+    lst = [x for x in line.split(b" ") if x]
     closure_found = False
     nbi = max(len(lst[0]), len(lst[1]))
     map_dict[-1] = ceil(nbi / 2)
@@ -326,8 +331,8 @@ def parse_bfrange(
     return None if closure_found else (a, b)
 
 
-def parse_bfchar(l: bytes, map_dict: Dict[Any, Any], int_entry: List[int]) -> None:
-    lst = [x for x in l.split(b" ") if x]
+def parse_bfchar(line: bytes, map_dict: Dict[Any, Any], int_entry: List[int]) -> None:
+    lst = [x for x in line.split(b" ") if x]
     map_dict[-1] = len(lst[0]) // 2
     while len(lst) > 1:
         map_to = ""

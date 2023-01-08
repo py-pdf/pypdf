@@ -403,7 +403,7 @@ class PageObject(DictionaryObject):
 
     @staticmethod
     def create_blank_page(
-        pdf: Optional[Any] = None,  # PdfReader
+        pdf: Optional[PdfReaderProtocol] = None,
         width: Union[float, Decimal, None] = None,
         height: Union[float, Decimal, None] = None,
     ) -> "PageObject":
@@ -448,7 +448,7 @@ class PageObject(DictionaryObject):
 
     @staticmethod
     def createBlankPage(
-        pdf: Optional[Any] = None,  # PdfReader
+        pdf: Optional[PdfReaderProtocol] = None,
         width: Union[float, Decimal, None] = None,
         height: Union[float, Decimal, None] = None,
     ) -> "PageObject":  # deprecated
@@ -591,7 +591,7 @@ class PageObject(DictionaryObject):
 
     @staticmethod
     def _content_stream_rename(
-        stream: ContentStream, rename: Dict[Any, Any], pdf: Any  # PdfReader
+        stream: ContentStream, rename: Dict[Any, Any], pdf: PdfReaderProtocol
     ) -> ContentStream:
         if not rename:
             return stream
@@ -612,7 +612,7 @@ class PageObject(DictionaryObject):
         return stream
 
     @staticmethod
-    def _push_pop_gs(contents: Any, pdf: Any) -> ContentStream:  # PdfReader
+    def _push_pop_gs(contents: Any, pdf: PdfReaderProtocol) -> ContentStream:
         # adds a graphics state "push" and "pop" to the beginning and end
         # of a content stream.  This isolates it from changes such as
         # transformation matricies.
@@ -623,10 +623,11 @@ class PageObject(DictionaryObject):
 
     @staticmethod
     def _add_transformation_matrix(
-        contents: Any, pdf: Any, ctm: CompressedTransformationMatrix
-    ) -> ContentStream:  # PdfReader
-        # adds transformation matrix at the beginning of the given
-        # contents stream.
+        contents: Any, pdf: PdfReaderProtocol, ctm: CompressedTransformationMatrix
+    ) -> ContentStream:
+        """
+        Add transformation matrix at the beginning of the given contents stream.
+        """
         a, b, c, d, e, f = ctm
         contents = ContentStream(contents, pdf)
         contents.operations.insert(
