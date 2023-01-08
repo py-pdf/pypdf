@@ -1765,8 +1765,8 @@ class PageObject(DictionaryObject):
     def extract_text(
         self,
         *args: Any,
-        Tj_sep: str = None,
-        TJ_sep: str = None,
+        Tj_sep: Optional[str] = None,
+        TJ_sep: Optional[str] = None,
         orientations: Union[int, Tuple[int, ...]] = (0, 90, 180, 270),
         space_width: float = 200.0,
         visitor_operand_before: Optional[Callable[[Any, Any, Any, Any], None]] = None,
