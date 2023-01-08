@@ -275,10 +275,8 @@ def parse_bfrange(
 ) -> Union[None, Tuple[int, int]]:
     lst = [x for x in l.split(b" ") if x]
     closure_found = False
-    nbi = max(len(lst[0]), len(lst[1]))
-    map_dict[-1] = ceil(nbi / 2)
-    fmt = b"%%0%dX" % (map_dict[-1] * 2)
     if multiline_rg is not None:
+        fmt = b"%%0%dX" % (map_dict[-1] * 2)
         a = multiline_rg[0]  # a, b not in the current line
         b = multiline_rg[1]
         for sq in lst[1:]:
@@ -296,6 +294,9 @@ def parse_bfrange(
     else:
         a = int(lst[0], 16)
         b = int(lst[1], 16)
+        nbi = max(len(lst[0]), len(lst[1]))
+        map_dict[-1] = ceil(nbi / 2)
+        fmt = b"%%0%dX" % (map_dict[-1] * 2)
         if lst[2] == b"[":
             for sq in lst[3:]:
                 if sq == b"]":
