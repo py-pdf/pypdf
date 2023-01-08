@@ -128,7 +128,7 @@ class ArrayObject(list, PdfObject):
     @staticmethod
     def read_from_stream(
         stream: StreamType,
-        pdf: PdfReaderProtocol,
+        pdf: Optional[PdfReaderProtocol],
         forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
     ) -> "ArrayObject":
         arr = ArrayObject()
@@ -1096,7 +1096,6 @@ def read_object(
         else:
             return read_hex_string_from_stream(stream, forced_encoding)
     elif tok == b"[":
-        assert pdf is not None  # hint for mypy
         return ArrayObject.read_from_stream(stream, pdf, forced_encoding)
     elif tok == b"t" or tok == b"f":
         return BooleanObject.read_from_stream(stream)
