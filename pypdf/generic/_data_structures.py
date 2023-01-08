@@ -1138,12 +1138,13 @@ class Field(TreeObject):
     :meth:`get_fields()<pypdf.PdfReader.get_fields>`
     """
 
-    def __init__(self, data: Dict[str, Any]) -> None:
+    def __init__(self, data: DictionaryObject) -> None:
         DictionaryObject.__init__(self)
         field_attributes = (
             FieldDictionaryAttributes.attributes()
             + CheckboxRadioButtonAttributes.attributes()
         )
+        self.indirect_reference = data.indirect_reference
         for attr in field_attributes:
             try:
                 self[NameObject(attr)] = data[attr]

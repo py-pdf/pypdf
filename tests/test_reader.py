@@ -866,6 +866,25 @@ def test_get_fields():
     assert dict(fields["c1-1"]) == ({"/FT": "/Btn", "/T": "c1-1"})
 
 
+def test_get_full_qualified_fields():
+    url = "https://github.com/py-pdf/PyPDF2/files/10142389/fields_with_dots.pdf"
+    name = "fields_with_dots.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    fields = reader.get_form_text_fields(True)
+    assert fields is not None
+    assert "customer.name" in fields
+
+    fields = reader.get_form_text_fields(False)
+    assert fields is not None
+    assert "customer.name" not in fields
+    assert "name" in fields
+
+    fields = reader.get_fields(True)
+    assert fields is not None
+    assert "customer.name" in fields
+    assert fields["customer.name"]["/T"] == "name"
+
+
 @pytest.mark.external
 @pytest.mark.filterwarnings("ignore::pypdf.errors.PdfReadWarning")
 def test_get_fields_read_else_block():

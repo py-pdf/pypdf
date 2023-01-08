@@ -585,6 +585,20 @@ class PdfReader:
         deprecation_with_replacement("getFields", "get_fields", "3.0.0")
         return self.get_fields(tree, retval, fileobj)
 
+    def _get_qualified_field_name(self, parent: DictionaryObject) -> str:
+        if "/TM" in parent:
+            return cast(str, parent["/TM"])
+        elif "/Parent" in parent:
+            return (
+                self._get_qualified_field_name(
+                    cast(DictionaryObject, parent["/Parent"])
+                )
+                + "."
+                + cast(str, parent["/T"])
+            )
+        else:
+            return cast(str, parent["/T"])
+
     def _build_field(
         self,
         field: Union[TreeObject, DictionaryObject],
@@ -594,10 +608,19 @@ class PdfReader:
     ) -> None:
         self._check_kids(field, retval, fileobj)
         try:
-            key = field["/TM"]
+            key = cast(str, field["/TM"])
         except KeyError:
             try:
-                key = field["/T"]
+                if "/Parent" in field:
+                    key = (
+                        self._get_qualified_field_name(
+                            cast(DictionaryObject, field["/Parent"])
+                        )
+                        + "."
+                    )
+                else:
+                    key = ""
+                key += cast(str, field["/T"])
             except KeyError:
                 # Ignore no-name field for now
                 return
@@ -651,7 +674,7 @@ class PdfReader:
                 # Field attribute is N/A or unknown, so don't write anything
                 pass
 
-    def get_form_text_fields(self) -> Dict[str, Any]:
+    def get_form_text_fields(self, full_qualified_name: bool = False) -> Dict[str, Any]:
         """
         Retrieve form fields from the document with textual data.
 
@@ -659,17 +682,40 @@ class PdfReader:
         field.
 
         If the document contains multiple form fields with the same name, the
-        second and following will get the suffix _2, _3, ...
+        second and following will get the suffix .2, .3, ...
+
+        full_qualified_name should be used to get full name
         """
+
+        def indexed_key(k: str, fields: dict) -> str:
+            if k not in fields:
+                return k
+            else:
+                return (
+                    k
+                    + "."
+                    + str(sum([1 for kk in fields if kk.startswith(k + ".")]) + 2)
+                )
+
         # Retrieve document form fields
         formfields = self.get_fields()
         if formfields is None:
             return {}
-        return {
-            formfields[field]["/T"]: formfields[field].get("/V")
+        ff = {}
+        for field, value in formfields.items():
+            if value.get("/FT") == "/Tx":
+                if full_qualified_name:
+                    ff[field] = value.get("/V")
+                else:
+                    ff[indexed_key(cast(str, value["/T"]), ff)] = value.get("/V")
+        return ff
+        """return {
+            (field if full_qualified_name else formfields[field]["/T"]): formfields[
+                field
+            ].get("/V")
             for field in formfields
             if formfields[field].get("/FT") == "/Tx"
-        }
+        }"""
 
     def getFormTextFields(self) -> Dict[str, Any]:  # deprecated
         """
