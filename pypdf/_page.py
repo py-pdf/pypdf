@@ -576,7 +576,7 @@ class PageObject(DictionaryObject):
         new_res = DictionaryObject()
         new_res.update(res1.get(resource, DictionaryObject()).get_object())
 
-        def compute_unique_key(base_key: str) -> tuple[str, bool]:
+        def compute_unique_key(base_key: str) -> Tuple[str, bool]:
             """Find a key that either doesn't already exist or has the same
             value (indicated by the bool)"""
             value = page2res.raw_get(base_key)
