@@ -13,6 +13,7 @@ from pypdf.constants import PageAttributes as PG
 from pypdf.errors import DeprecationError, PdfReadWarning
 from pypdf.generic import (
     ArrayObject,
+    ContentStream,
     DictionaryObject,
     FloatObject,
     IndirectObject,
@@ -871,3 +872,152 @@ def test_no_resources():
     page_one = reader.pages[0]
     page_two = reader.pages[0]
     page_one.merge_page(page_two)
+
+
+@pytest.mark.parametrize(
+    ("page1", "page2", "expected_result", "expected_renames"),
+    [
+        # simple cases:
+        pytest.param({}, {}, {}, {}, id="no resources"),
+        pytest.param(
+            {"/1": "/v1"},
+            {"/2": "/v2"},
+            {"/1": "/v1", "/2": "/v2"},
+            {},
+            id="no overlap",
+        ),
+        pytest.param(
+            {"/x": "/v"}, {"/x": "/v"}, {"/x": "/v"}, {}, id="overlap, matching values"
+        ),
+        pytest.param(
+            {"/x": "/v1"},
+            {"/x": "/v2"},
+            {"/x": "/v1", "/x-0": "/v2"},
+            {"/x": "/x-0"},
+            id="overlap, different values",
+        ),
+        # carefully crafted names that match the renaming pattern:
+        pytest.param(
+            {"/x": "/v1", "/x-0": "/v1", "/x-1": "/v1"},
+            {"/x": "/v2"},
+            {
+                "/x": "/v1",
+                "/x-0": "/v1",
+                "/x-1": "/v1",
+                "/x-2": "/v2",
+            },
+            {"/x": "/x-2"},
+            id="crafted, different values",
+        ),
+        pytest.param(
+            {"/x": "/v1", "/x-0": "/v1", "/x-1": "/v"},
+            {"/x": "/v"},
+            {"/x": "/v1", "/x-0": "/v1", "/x-1": "/v"},
+            {"/x": "/x-1"},
+            id="crafted, matching value in chain",
+        ),
+        pytest.param(
+            {"/x": "/v1"},
+            {"/x": "/v2.1", "/x-0": "/v2.2"},
+            {"/x": "/v1", "/x-0": "/v2.1", "/x-0-0": "/v2.2"},
+            {"/x": "/x-0", "/x-0": "/x-0-0"},
+            id="crafted, overlaps with previous rename, different value",
+        ),
+        pytest.param(
+            {"/x": "/v1"},
+            {"/x": "/v2", "/x-0": "/v2"},
+            {"/x": "/v1", "/x-0": "/v2"},
+            {"/x": "/x-0"},
+            id="crafted, overlaps with previous rename, matching value",
+        ),
+    ],
+)
+def test_merge_resources(page1, page2, expected_result, expected_renames):
+    # Arrange
+    page1 = DictionaryObject(
+        {
+            PG.RESOURCES: DictionaryObject(
+                {NameObject(k): NameObject(v) for k, v in page1.items()}
+            )
+        }
+    )
+    page2 = DictionaryObject(
+        {
+            PG.RESOURCES: DictionaryObject(
+                {NameObject(k): NameObject(v) for k, v in page2.items()}
+            )
+        }
+    )
+
+    # Act
+    result, renames = PageObject._merge_resources(page1, page2, PG.RESOURCES)
+
+    # Assert
+    assert result == expected_result
+    assert renames == expected_renames
+
+
+def test_merge_page_resources_smoke_test():
+    # Arrange
+    page1 = PageObject.create_blank_page(width=100, height=100)
+    page2 = PageObject.create_blank_page(width=100, height=100)
+
+    NO = NameObject
+
+    # set up some dummy resources that overlap (or not) between the two pages (note, all the edge
+    # cases are tested in test_merge_resources)
+    props1 = page1[NO("/Resources")][NO("/Properties")] = DictionaryObject(
+        {
+            NO("/just1"): NO("/just1-value"),
+            NO("/overlap-matching"): NO("/overlap-matching-value"),
+            NO("/overlap-different"): NO("/overlap-different-value1"),
+        }
+    )
+    props2 = page2[NO("/Resources")][NO("/Properties")] = DictionaryObject(
+        {
+            NO("/just2"): NO("/just2-value"),
+            NO("/overlap-matching"): NO("/overlap-matching-value"),
+            NO("/overlap-different"): NO("/overlap-different-value2"),
+        }
+    )
+    # use these keys for some "operations", to validate renaming (the operand name doesn't matter)
+    contents1 = page1[NO("/Contents")] = ContentStream(None, None)
+    contents1.operations = [(ArrayObject(props1.keys()), "page1-contents")]
+    contents2 = page2[NO("/Contents")] = ContentStream(None, None)
+    contents2.operations = [(ArrayObject(props2.keys()), "page2-contents")]
+
+    expected_properties = {
+        "/just1": "/just1-value",
+        "/just2": "/just2-value",
+        "/overlap-matching": "/overlap-matching-value",
+        "/overlap-different": "/overlap-different-value1",
+        "/overlap-different-0": "/overlap-different-value2",
+    }
+    expected_operations = [
+        # no renaming
+        (ArrayObject(props1.keys()), b"page1-contents"),
+        # some renaming
+        (
+            ArrayObject(
+                [
+                    NO("/just2"),
+                    NO("/overlap-matching"),
+                    NO("/overlap-different-0"),
+                ]
+            ),
+            b"page2-contents",
+        ),
+    ]
+
+    # Act
+    page1.merge_page(page2)
+
+    # Assert
+    assert page1[NO("/Resources")][NO("/Properties")] == expected_properties
+
+    relevant_operations = [
+        (op, name)
+        for op, name in page1.get_contents().operations
+        if name in (b"page1-contents", b"page2-contents")
+    ]
+    assert relevant_operations == expected_operations
