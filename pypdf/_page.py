@@ -591,7 +591,7 @@ class PageObject(DictionaryObject):
                     # there's already a resource of this name, with the exact
                     # same value
                     return computed_key, True
-                computed_key = "%s-%d" % (key, idx)
+                computed_key = f"{key}-{idx}"
                 idx += 1
             return computed_key, False
 
