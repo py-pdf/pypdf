@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## Version 3.2.1, 2023-01-08
+
+### Bug Fixes (BUG)
+-  Accept hierarchical fields (#1529)
+
+### Documentation (DOC)
+-  Use google style docstrings (#1534)
+-  Fix linked markdown documents (#1537)
+
+### Developer Experience (DEV)
+-  Update docs config (#1535)
+
 ## Version 3.2.0, 2022-12-31
 
 ### Performance Improvement (PI)
