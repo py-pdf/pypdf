@@ -33,11 +33,6 @@ class PaperSize:
     # Envelopes
     C4 = Dimensions(649, 918)
 
-    """
-    >>> from PyPDF2 import PaperSize
-    >>> output.add_blank_page(PaperSize.A0.width, PaperSize.A0.height)
-    """
-
 _din_a = (
     PaperSize.A0,
     PaperSize.A1,
