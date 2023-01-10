@@ -105,6 +105,7 @@ def test_iss1379():
     reader.pages[2].extract_text()
 
 
+@pytest.mark.external
 def test_iss1533():
     url = "https://github.com/py-pdf/pypdf/files/10376149/iss1533.pdf"
     name = "iss1533.pdf"
