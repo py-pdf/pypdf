@@ -6,7 +6,7 @@ The PaperSize Class
     :undoc-members:
     :show-inheritance:
 
-add blank page with PaperSize
+Add blank page with PaperSize
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. code-block:: python
     :linenos:
@@ -19,7 +19,7 @@ add blank page with PaperSize
     with open("output.pdf", "wb") as output_stream:
         pdf_writer.write(output_stream)
 
-insert blank page with PaperSize
+Insert blank page with PaperSize
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. code-block:: python
     :linenos:
