@@ -2780,7 +2780,11 @@ class PdfWriter:
           A list of destination objects.
         """
         new_outline = []
+        if node is None:
+            node = NullObject()
         node = node.get_object()
+        if isinstance(node, NullObject):
+            node = DictionaryObject()
         if node.get("/Type", "") == "/Outlines" or "/Title" not in node:
             node = node.get("/First", None)
             if node is not None:
