@@ -19,19 +19,21 @@ class PaperSize:
     # The ratio is always approximately the ratio 1:2**0.5
     # Additionally, A0 is defined to have an area of 1 m**2
     # Be aware of rounding issues!
-
-    A0 = Dimensions(2384, 3370) # 841mm x 1189mm
-    A1 = Dimensions(1684, 2384) 
-    A2 = Dimensions(1191, 1684) 
-    A3 = Dimensions(842, 1191)  
-    A4 = Dimensions(595, 842)   # Printer paper, documents - this is by far the most common
-    A5 = Dimensions(420, 595)   # Paperback books
-    A6 = Dimensions(298, 420)   # Post cards
-    A7 = Dimensions(210, 298)   
-    A8 = Dimensions(147, 210)   
+    A0 = Dimensions(2384, 3370)  # 841mm x 1189mm
+    A1 = Dimensions(1684, 2384)
+    A2 = Dimensions(1191, 1684)
+    A3 = Dimensions(842, 1191)
+    A4 = Dimensions(
+        595, 842
+    )  # Printer paper, documents - this is by far the most common
+    A5 = Dimensions(420, 595)  # Paperback books
+    A6 = Dimensions(298, 420)  # Post cards
+    A7 = Dimensions(210, 298)
+    A8 = Dimensions(147, 210)
 
     # Envelopes
     C4 = Dimensions(649, 918)
+
 
 _din_a = (
     PaperSize.A0,
