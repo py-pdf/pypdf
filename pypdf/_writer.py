@@ -2391,7 +2391,6 @@ class PdfWriter:
             None, PageRange, Tuple[int, int], Tuple[int, int, int], List[int]
         ] = None,
         import_outline: bool = True,
-        form_topname: Optional[str] = None,
         excluded_fields: Optional[Union[List[str], Tuple[str, ...]]] = None,
     ) -> None:
         """
@@ -2414,9 +2413,6 @@ class PdfWriter:
           import_outline: You may prevent the source document's
             outline (collection of outline items, previously referred to as
             'bookmarks') from being imported by specifying this as ``False``.
-          form_topname: (Optional) allow to group the form fields.
-            this will allow to merge multiple forms into a same document
-            without overwriting the data at extraction using qualified_names
           excluded_fields: Provide the list of fields/keys to be ignored
             if ``/Annots`` is part of the list, the annotation will be ignored
             if ``/B`` is part of the list, the articles will be ignored
@@ -2435,7 +2431,6 @@ class PdfWriter:
                 None,
                 pages,
                 import_outline,
-                form_topname,
                 excluded_fields,
             )
         else:  # if isinstance(outline_item,str):
@@ -2445,7 +2440,6 @@ class PdfWriter:
                 outline_item,
                 pages,
                 import_outline,
-                form_topname,
                 excluded_fields,
             )
 
@@ -2457,7 +2451,6 @@ class PdfWriter:
         outline_item: Optional[str] = None,
         pages: Optional[PageRangeSpec] = None,
         import_outline: bool = True,
-        form_topname: Optional[str] = None,
         excluded_fields: Optional[Union[List[str], Tuple[str, ...]]] = (),
     ) -> None:
         """
@@ -2481,9 +2474,6 @@ class PdfWriter:
           import_outline: You may prevent the source document's
             outline (collection of outline items, previously referred to as
             'bookmarks') from being imported by specifying this as ``False``.
-          form_topname: (Optional) allow to group the form fields.
-            this will allow to merge multiple forms into a same document
-            without overwriting the data at extraction using qualified_names
           excluded_fields: provide the list of fields/keys to be ignored
             if ``/Annots`` is part of the list, the annotation will be ignored
             if ``/B`` is part of the list, the articles will be ignored
