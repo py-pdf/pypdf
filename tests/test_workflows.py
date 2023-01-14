@@ -458,6 +458,12 @@ def test_get_metadata(url, name):
             True,
             None,
         ),
+        (
+            "https://github.com/py-pdf/pypdf/files/10418158/tst_iss1541.pdf",
+            "tst_iss1541.pdf",
+            True,
+            None,
+        ),
     ],
 )
 def test_extract_text(url, name, strict, exception):
