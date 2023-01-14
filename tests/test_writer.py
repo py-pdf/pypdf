@@ -985,13 +985,13 @@ def test_append_without_annots_and_articles():
     name = "tika-924666.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     writer = PdfWriter()
-    writer.append(reader, None, (0, 10), True, ["/B"])
+    writer.append(reader, None, (0, 10), True, excluded_fields=["/B"])
     assert writer.threads == []
     writer = PdfWriter()
-    writer.append(reader, None, (0, 10), True, ["/Annots"])
+    writer.append(reader, None, (0, 10), True, excluded_fields=["/Annots"])
     assert "/Annots" not in writer.pages[5]
     writer = PdfWriter()
-    writer.append(reader, None, (0, 10), True, [])
+    writer.append(reader, None, (0, 10), True, excluded_fields=[])
     assert "/Annots" in writer.pages[5]
     assert len(writer.threads) >= 1
 
