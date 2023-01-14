@@ -2391,6 +2391,7 @@ class PdfWriter:
             None, PageRange, Tuple[int, int], Tuple[int, int, int], List[int]
         ] = None,
         import_outline: bool = True,
+        form_topname: Optional[str] = None,
         excluded_fields: Optional[Union[List[str], Tuple[str, ...]]] = None,
     ) -> None:
         """
@@ -2413,6 +2414,9 @@ class PdfWriter:
           import_outline: You may prevent the source document's
             outline (collection of outline items, previously referred to as
             'bookmarks') from being imported by specifying this as ``False``.
+          form_topname: (Optional) allow to group the form fields.
+            this will allow to merge multiple forms into a same document
+            without overwriting the data at extraction using qualified_names
           excluded_fields: Provide the list of fields/keys to be ignored
             if ``/Annots`` is part of the list, the annotation will be ignored
             if ``/B`` is part of the list, the articles will be ignored
@@ -2425,10 +2429,24 @@ class PdfWriter:
                     excluded_fields = import_outline
                 import_outline = pages
             pages = outline_item
-            self.merge(None, fileobj, None, pages, import_outline, excluded_fields)
+            self.merge(
+                None,
+                fileobj,
+                None,
+                pages,
+                import_outline,
+                form_topname,
+                excluded_fields,
+            )
         else:  # if isinstance(outline_item,str):
             self.merge(
-                None, fileobj, outline_item, pages, import_outline, excluded_fields
+                None,
+                fileobj,
+                outline_item,
+                pages,
+                import_outline,
+                form_topname,
+                excluded_fields,
             )
 
     @deprecation_bookmark(bookmark="outline_item", import_bookmarks="import_outline")
@@ -2439,6 +2457,7 @@ class PdfWriter:
         outline_item: Optional[str] = None,
         pages: Optional[PageRangeSpec] = None,
         import_outline: bool = True,
+        form_topname: Optional[str] = None,
         excluded_fields: Optional[Union[List[str], Tuple[str, ...]]] = (),
     ) -> None:
         """
@@ -2462,6 +2481,9 @@ class PdfWriter:
           import_outline: You may prevent the source document's
             outline (collection of outline items, previously referred to as
             'bookmarks') from being imported by specifying this as ``False``.
+          form_topname: (Optional) allow to group the form fields.
+            this will allow to merge multiple forms into a same document
+            without overwriting the data at extraction using qualified_names
           excluded_fields: provide the list of fields/keys to be ignored
             if ``/Annots`` is part of the list, the annotation will be ignored
             if ``/B`` is part of the list, the articles will be ignored
@@ -2551,6 +2573,26 @@ class PdfWriter:
                 if len(lst) > 0:
                     pag[NameObject("/Annots")] = lst
                 self.clean_page(pag)
+
+        if "/AcroForm" in reader.trailer["/Root"]:
+            if "/AcroForm" not in self._root_object:
+                self._root_object[NameObject("/AcroForm")] = (
+                    reader.trailer["/Root"]["/AcroForm"]
+                    .clone(self, False, ("/Fields",))
+                    .indirect_reference
+                )
+                arr = ArrayObject()
+            else:
+                arr = self._root_object[NameObject("/AcroForm")][NameObject("/Fields")]
+            lst = self._id_translated[id(reader)]
+            for f in reader.trailer["/Root"]["/AcroForm"]["/Fields"]:
+                try:
+                    ind = IndirectObject(lst[f.idnum], 0, self)
+                    if ind not in arr:
+                        arr.append(ind)
+                except KeyError:
+                    pass
+            self._root_object[NameObject("/AcroForm")][NameObject("/Fields")] = arr
 
         if "/B" not in excluded_fields:
             self.add_filtered_articles("", srcpages, reader)

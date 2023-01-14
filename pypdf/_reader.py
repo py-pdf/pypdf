@@ -2070,6 +2070,67 @@ class PdfReader:
                         retval[tag] = es
         return retval
 
+    def add_form_topname(self, name: str) -> Optional[DictionaryObject]:
+        """
+        Add an top level form that groups all form fields below it.
+
+        Args:
+            name: text string of the "/T" Attribute of the created object
+
+        Returns:
+            the created object. None is no object can be created.
+        """
+        catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
+
+        if "/AcroForm" not in catalog or not catalog["/AcroForm"]:
+            return None
+        acroform = catalog[NameObject("/AcroForm")]
+        if "/Fields" not in acroform:
+            return None
+
+        interim = DictionaryObject()
+        interim[NameObject("/T")] = TextStringObject(name)
+        interim[NameObject("/Kids")] = acroform[NameObject("/Fields")]
+        self.cache_indirect_object(
+            0,
+            max([i for (g, i) in self.resolved_objects.keys() if g == 0]) + 1,
+            interim,
+        )
+        arr = ArrayObject()
+        arr.append(interim.indirect_reference)
+        acroform[NameObject("/Fields")] = arr
+        for o in interim["/Kids"]:
+            obj = o.get_object()
+            if "/Parent" in obj:
+                logger_warning(
+                    f"Top Level Form Field {obj.indirect_reference} have a non-expected parent",
+                    __name__,
+                )
+            obj[NameObject("/Parent")] = interim.indirect_reference
+        return interim
+
+    def rename_form_topname(self, name: str) -> Optional[DictionaryObject]:
+        """
+        Rename top level form field that all form fields below it.
+
+        Args:
+            name: text string of the "/T" field of the created object
+
+        Returns:
+            the modified object. None is no object can not be modified.
+        """
+        catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
+
+        if "/AcroForm" not in catalog or not catalog["/AcroForm"]:
+            return None
+        acroform = catalog[NameObject("/AcroForm")]
+        if "/Fields" not in acroform:
+            return None
+
+        interim = acroform[NameObject("/Fields")][0].get_object()
+        interim[NameObject("/T")] = TextStringObject(name)
+        return interim
+
 
 class PdfFileReader(PdfReader):  # deprecated
     def __init__(self, *args: Any, **kwargs: Any) -> None:
