@@ -175,6 +175,8 @@ def test_get_outline(src, outline_elements):
     outline = reader.outline
     assert len(outline) == outline_elements
 
+
+
 @pytest.mark.samples
 @pytest.mark.parametrize(
     ("src", "expected_images"),
