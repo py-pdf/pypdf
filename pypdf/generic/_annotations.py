@@ -185,11 +185,11 @@ class AnnotationBuilder:
         """
         Draw a rectangle on the PDF.
 
+        This method uses the /Square annotation type of the PDF format.
+
         Args:
-          rect: or array of four
-            integers specifying the clickable rectangular area
+          rect: array of four integers specifying the clickable rectangular area
             ``[xLL, yLL, xUR, yUR]``
-          rect:
           interiour_color:
 
         Returns:
@@ -211,11 +211,25 @@ class AnnotationBuilder:
         return square_obj
 
     @staticmethod
-    def circle(
+    def ellipse(
         rect: Union[RectangleObject, Tuple[float, float, float, float]],
         interiour_color: Optional[str] = None,
     ) -> DictionaryObject:
-        circle_obj = DictionaryObject(
+        """
+        Draw a rectangle on the PDF.
+
+        This method uses the /Circle annotation type of the PDF format.
+
+        Args:
+          rect: array of four integers ``[xLL, yLL, xUR, yUR]`` specifying
+            the bounding box of the allipse
+          interiour_color: None or hex code. If None is used, the interiour
+            is transparent
+
+        Returns:
+          A dictionary object representing the annotation.
+        """
+        ellipse_obj = DictionaryObject(
             {
                 NameObject("/Type"): NameObject("/Annot"),
                 NameObject("/Subtype"): NameObject("/Circle"),
@@ -224,11 +238,11 @@ class AnnotationBuilder:
         )
 
         if interiour_color:
-            circle_obj[NameObject("/IC")] = ArrayObject(
+            ellipse_obj[NameObject("/IC")] = ArrayObject(
                 [FloatObject(n) for n in hex_to_rgb(interiour_color)]
             )
 
-        return circle_obj
+        return ellipse_obj
 
     @staticmethod
     def link(

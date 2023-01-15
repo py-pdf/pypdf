@@ -807,13 +807,13 @@ def test_annotation_builder_circle():
     writer.add_page(page)
 
     # Act
-    circle_annotation = AnnotationBuilder.circle(
+    circle_annotation = AnnotationBuilder.ellipse(
         rect=(50, 550, 200, 650), interiour_color="ff0000"
     )
     writer.add_annotation(0, circle_annotation)
 
     diameter = 100
-    circle_annotation = AnnotationBuilder.circle(
+    circle_annotation = AnnotationBuilder.ellipse(
         rect=(110, 500, 110 + diameter, 500 + diameter),
     )
     writer.add_annotation(0, circle_annotation)

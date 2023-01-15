@@ -135,7 +135,7 @@ writer = PdfWriter()
 writer.add_page(page)
 
 # Add the rectangle
-annotation = AnnotationBuilder.circle(
+annotation = AnnotationBuilder.ellipse(
     rect=(50, 550, 200, 650),
 )
 writer.add_annotation(page_number=0, annotation=annotation)
