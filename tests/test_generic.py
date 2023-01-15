@@ -755,6 +755,12 @@ def test_annotation_builder_polygon():
     writer.add_page(page)
 
     # Act
+    with pytest.raises(ValueError) as exc:
+        AnnotationBuilder.polygon(
+            vertices=[],
+        )
+    assert exc.value.args[0] == "A polygon needs at least 1 vertex with two coordinates"
+
     annotation = AnnotationBuilder.polygon(
         vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
     )
