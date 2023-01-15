@@ -33,9 +33,8 @@ def test_writer_exception_non_binary(tmp_path, caplog):
     writer = PdfWriter()
     writer.add_page(reader.pages[0])
 
-    with open(tmp_path / "out.txt", "w") as fp:
-        with pytest.raises(TypeError):
-            writer.write_stream(fp)
+    with open(tmp_path / "out.txt", "w") as fp, pytest.raises(TypeError):
+        writer.write_stream(fp)
     ending = "to write to is not in binary mode. It may not be written to correctly.\n"
     assert caplog.text.endswith(ending)
 
