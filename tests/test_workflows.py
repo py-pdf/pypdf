@@ -74,7 +74,7 @@ def test_dropdown_items():
     inputfile = RESOURCE_ROOT / "libreoffice-form.pdf"
     reader = PdfReader(inputfile)
     fields = reader.get_fields()
-    assert "/Opt" in fields["Nationality"].keys()
+    assert "/Opt" in fields["Nationality"]
 
 
 def test_PdfReaderFileLoad():
