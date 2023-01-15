@@ -83,6 +83,15 @@ will insert the pages (1), (2), with page (0) before, in the middle and after
 ## add_page / insert_page
 It is recommended to use `append` or `merge` instead
 
+## Merging forms.
+When Merging forms, some form fields may have the same names, preventing access to some data.
+
+In order to prevent that, before adding the source pdf, a grouping field should be added. The original fields will be identified with adding the group name.
+
+eg: after calling `reader.add_form_topname("form1")`, the field previously named "field1" will now identified as "form1.field1" when calling `reader.get_form_text_fields(True)` or `reader.get_fields()`.
+
+After you can append the input pdf (completely or partially) using `writer.append` or `writer.merge`. If you insert a set of pages, only thoses fields will be listed.
+
 ## reset_translation
 During the cloning, if an object has been already cloned, it will not be cloned again,
     a pointer  this previously cloned object is returned. because of that, if you add/merge a page that has
