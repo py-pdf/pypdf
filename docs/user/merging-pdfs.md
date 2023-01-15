@@ -83,7 +83,7 @@ will insert the pages (1), (2), with page (0) before, in the middle and after
 ## add_page / insert_page
 It is recommended to use `append` or `merge` instead
 
-## Merging forms.
+## Merging forms
 When Merging forms, some form fields may have the same names, preventing access to some data.
 
 In order to prevent that, before adding the source pdf, a grouping field should be added. The original fields will be identified with adding the group name.
