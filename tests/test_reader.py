@@ -176,6 +176,7 @@ def test_get_outline(src, outline_elements):
     assert len(outline) == outline_elements
 
 
+@pytest.mark.samples
 @pytest.mark.parametrize(
     ("src", "expected_images"),
     [
@@ -866,6 +867,7 @@ def test_get_fields():
     assert dict(fields["c1-1"]) == ({"/FT": "/Btn", "/T": "c1-1"})
 
 
+@pytest.mark.external
 def test_get_full_qualified_fields():
     url = "https://github.com/py-pdf/PyPDF2/files/10142389/fields_with_dots.pdf"
     name = "fields_with_dots.pdf"
@@ -1214,6 +1216,7 @@ def test_zeroing_xref():
     len(reader.pages)
 
 
+@pytest.mark.external
 def test_thread():
     url = "https://github.com/py-pdf/pypdf/files/9066120/UTA_OSHA_3115_Fall_Protection_Training_09162021_.pdf"
     name = "UTA_OSHA.pdf"
@@ -1226,6 +1229,7 @@ def test_thread():
     assert len(reader.threads) >= 1
 
 
+@pytest.mark.external
 def test_build_outline_item(caplog):
     url = "https://github.com/py-pdf/pypdf/files/9464742/shiv_resume.pdf"
     name = "shiv_resume.pdf"
@@ -1253,6 +1257,7 @@ def test_build_outline_item(caplog):
     assert "Unexpected destination 2" in exc.value.args[0]
 
 
+@pytest.mark.samples
 @pytest.mark.parametrize(
     ("src", "page_labels"),
     [
