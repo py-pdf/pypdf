@@ -55,6 +55,7 @@ from typing import (
     Type,
     Union,
     cast,
+    Literal,
 )
 
 from ._encryption import Encryption
@@ -2873,6 +2874,80 @@ class PdfWriter:
                 pass
         else:
             raise Exception("invalid parameter {reader}")
+
+    def set_page_label(
+        self,
+        page_index_from: int,
+        page_index_to: int,
+        label: Optional[Literal["/D", "/R", "/r", "/A", "/a", ""]] = None,
+        prefix: Optional[str] = None,
+        start: Optional[int] = 0,
+    ):
+        if label is None and prefix is None:
+            raise ValueError("at least one between label and prefix must be given")
+        if page_index_from < 1:
+            raise ValueError("page_index_from must be equal or greater then 1")
+        if page_index_to < page_index_from:
+            raise ValueError("page_index_to must be equal or greater then page_index_from")
+        if page_index_to > len(self.pages):
+            raise ValueError("page_index_to exceeds number of pages")
+
+        self._set_page_label(page_index_from, page_index_to, label, prefix, start)
+
+    def _set_page_label(
+        self,
+        page_index_from: int,
+        page_index_to: int,
+        label: Optional[Literal["/D", "/R", "/r", "/A", "/a", ""]] = None,
+        prefix: Optional[str] = None,
+        start: Optional[int] = 0,
+    ):
+        default_page_label = DictionaryObject()
+        default_page_label.update({
+            NameObject("/S") : NameObject("/D"),
+        })
+
+        new_page_label = DictionaryObject()
+        if label is not None:
+            new_page_label[NameObject("/S")] = NameObject(label)
+        if prefix is not None:
+            new_page_label[NameObject("/P")] = TextStringObject(prefix)
+        if start != 0:
+            new_page_label[NameObject("/St")] = NumberObject(start)
+
+        if not NameObject(CatalogDictionary.PAGE_LABELS) in self._root_object:
+            nums = ArrayObject()
+            self._nums_insert(NumberObject(0), default_page_label, nums)
+            page_labels = TreeObject()
+            page_labels[NameObject("/Nums")] = nums
+            self._root_object[NameObject(CatalogDictionary.PAGE_LABELS)] = page_labels
+
+        page_labels = self._root_object[NameObject(CatalogDictionary.PAGE_LABELS)]
+        nums = page_labels[NameObject("/Nums")]
+        self._nums_insert(NumberObject(page_index_from - 1), new_page_label, nums)
+        self._nums_insert(NumberObject(page_index_to), default_page_label, nums)
+        page_labels[NameObject("/Nums")] = nums
+        self._root_object[NameObject(CatalogDictionary.PAGE_LABELS)] = page_labels
+
+        print(page_labels)
+
+    def _nums_insert(
+        self,
+        key: NumberObject,
+        value: DictionaryObject,
+        nums: ArrayObject,
+    ):
+        start = key.as_numeric()
+        i = len(nums)
+        while i != 0 and start <= nums[i - 2]:
+            print((start,nums[i-2]))
+            i = i - 2
+        print(i)
+        if i < len(nums) and start == nums[i]:
+            nums[i + 1] = value
+        else:
+            nums.insert(i, key)
+            nums.insert(i + 1, value)
 
 
 def _pdf_objectify(obj: Union[Dict[str, Any], str, int, List[Any]]) -> PdfObject:
