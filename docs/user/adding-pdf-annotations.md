@@ -104,7 +104,7 @@ page = reader.pages[0]
 writer = PdfWriter()
 writer.add_page(page)
 
-# Add the line
+# Add the rectangle
 annotation = AnnotationBuilder.rectangle(
     rect=(50, 550, 200, 650),
 )
@@ -118,6 +118,32 @@ with open("annotated-pdf.pdf", "wb") as fp:
 If you want the rectangle to be filled, use the `interiour_color="ff0000"` parameter.
 
 This method uses the "square" annotation type of the PDF format.
+
+## Circle
+
+If you want to add a circle like this:
+
+![](annotation-circle.png)
+
+you can use the {py:class}`AnnotationBuilder <pypdf.generic.AnnotationBuilder>`:
+
+```python
+pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+reader = PdfReader(pdf_path)
+page = reader.pages[0]
+writer = PdfWriter()
+writer.add_page(page)
+
+# Add the rectangle
+annotation = AnnotationBuilder.circle(
+    rect=(50, 550, 200, 650),
+)
+writer.add_annotation(page_number=0, annotation=annotation)
+
+# Write the annotated file to disk
+with open("annotated-pdf.pdf", "wb") as fp:
+    writer.write(fp)
+```
 
 ## Link
 

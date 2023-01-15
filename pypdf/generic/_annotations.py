@@ -211,6 +211,26 @@ class AnnotationBuilder:
         return square_obj
 
     @staticmethod
+    def circle(
+        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        interiour_color: Optional[str] = None,
+    ) -> DictionaryObject:
+        circle_obj = DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Annot"),
+                NameObject("/Subtype"): NameObject("/Circle"),
+                NameObject("/Rect"): RectangleObject(rect),
+            }
+        )
+
+        if interiour_color:
+            circle_obj[NameObject("/IC")] = ArrayObject(
+                [FloatObject(n) for n in hex_to_rgb(interiour_color)]
+            )
+
+        return circle_obj
+
+    @staticmethod
     def link(
         rect: Union[RectangleObject, Tuple[float, float, float, float]],
         border: Optional[ArrayObject] = None,

@@ -798,6 +798,34 @@ def test_annotation_builder_square():
     os.remove(target)  # comment this out for manual inspection
 
 
+def test_annotation_builder_circle():
+    # Arrange
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    writer = PdfWriter()
+    writer.add_page(page)
+
+    # Act
+    circle_annotation = AnnotationBuilder.circle(
+        rect=(50, 550, 200, 650), interiour_color="ff0000"
+    )
+    writer.add_annotation(0, circle_annotation)
+
+    diameter = 100
+    circle_annotation = AnnotationBuilder.circle(
+        rect=(110, 500, 110 + diameter, 500 + diameter),
+    )
+    writer.add_annotation(0, circle_annotation)
+
+    # Assert: You need to inspect the file manually
+    target = "annotated-pdf-circle.pdf"
+    with open(target, "wb") as fp:
+        writer.write(fp)
+
+    os.remove(target)  # comment this out for manual inspection
+
+
 def test_annotation_builder_link():
     # Arrange
     pdf_path = RESOURCE_ROOT / "outline-without-title.pdf"
