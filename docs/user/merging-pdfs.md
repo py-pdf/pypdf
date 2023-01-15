@@ -88,7 +88,7 @@ When Merging forms, some form fields may have the same names, preventing access 
 
 In order to prevent that, before adding the source pdf, a grouping field should be added. The original fields will be identified with adding the group name.
 
-eg: after calling `reader.add_form_topname("form1")`, the field previously named "field1" will now identified as "form1.field1" when calling `reader.get_form_text_fields(True)` or `reader.get_fields()`.
+For example, after calling `reader.add_form_topname("form1")`, the field previously named "field1" will now identified as "form1.field1" when calling `reader.get_form_text_fields(True)` or `reader.get_fields()`.
 
 After you can append the input pdf (completely or partially) using `writer.append` or `writer.merge`. If you insert a set of pages, only thoses fields will be listed.
 
