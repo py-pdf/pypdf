@@ -2564,25 +2564,33 @@ class PdfWriter:
                     pag[NameObject("/Annots")] = lst
                 self.clean_page(pag)
 
-        if "/AcroForm" in reader.trailer["/Root"]:
+        if "/AcroForm" in cast(DictionaryObject, reader.trailer["/Root"]):
             if "/AcroForm" not in self._root_object:
                 self._root_object[NameObject("/AcroForm")] = (
-                    reader.trailer["/Root"]["/AcroForm"]
+                    cast(
+                        DictionaryObject,
+                        cast(DictionaryObject, reader.trailer["/Root"])["/AcroForm"],
+                    )
                     .clone(self, False, ("/Fields",))
                     .indirect_reference
                 )
                 arr = ArrayObject()
             else:
-                arr = self._root_object[NameObject("/AcroForm")][NameObject("/Fields")]
-            lst = self._id_translated[id(reader)]
-            for f in reader.trailer["/Root"]["/AcroForm"]["/Fields"]:
+                arr = cast(
+                    ArrayObject,
+                    cast(DictionaryObject, self._root_object["/AcroForm"])["/Fields"],
+                )
+            trslat = self._id_translated[id(reader)]
+            for f in reader.trailer["/Root"]["/AcroForm"]["/Fields"]:  # type: ignore
                 try:
-                    ind = IndirectObject(lst[f.idnum], 0, self)
+                    ind = IndirectObject(trslat[f.idnum], 0, self)
                     if ind not in arr:
                         arr.append(ind)
                 except KeyError:
                     pass
-            self._root_object[NameObject("/AcroForm")][NameObject("/Fields")] = arr
+            cast(DictionaryObject, self._root_object["/AcroForm"])[
+                NameObject("/Fields")
+            ] = arr
 
         if "/B" not in excluded_fields:
             self.add_filtered_articles("", srcpages, reader)

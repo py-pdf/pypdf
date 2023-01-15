@@ -2084,7 +2084,7 @@ class PdfReader:
 
         if "/AcroForm" not in catalog or not catalog["/AcroForm"]:
             return None
-        acroform = catalog[NameObject("/AcroForm")]
+        acroform = cast(DictionaryObject, catalog[NameObject("/AcroForm")])
         if "/Fields" not in acroform:
             return None
 
@@ -2099,7 +2099,7 @@ class PdfReader:
         arr = ArrayObject()
         arr.append(interim.indirect_reference)
         acroform[NameObject("/Fields")] = arr
-        for o in interim["/Kids"]:
+        for o in cast(ArrayObject, interim["/Kids"]):
             obj = o.get_object()
             if "/Parent" in obj:
                 logger_warning(
@@ -2123,11 +2123,14 @@ class PdfReader:
 
         if "/AcroForm" not in catalog or not catalog["/AcroForm"]:
             return None
-        acroform = catalog[NameObject("/AcroForm")]
+        acroform = cast(DictionaryObject, catalog[NameObject("/AcroForm")])
         if "/Fields" not in acroform:
             return None
 
-        interim = acroform[NameObject("/Fields")][0].get_object()
+        interim = cast(
+            DictionaryObject,
+            cast(ArrayObject, acroform[NameObject("/Fields")])[0].get_object(),
+        )
         interim[NameObject("/T")] = TextStringObject(name)
         return interim
 
