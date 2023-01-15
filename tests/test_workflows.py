@@ -882,6 +882,7 @@ def test_tounicode_is_identity():
     reader.pages[0].extract_text()
 
 
+@pytest.mark.external
 def test_append_forms():
     # from #1538
     writer = PdfWriter()
