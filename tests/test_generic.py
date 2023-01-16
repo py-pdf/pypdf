@@ -746,6 +746,34 @@ def test_annotation_builder_free_text():
     os.remove(target)  # comment this out for manual inspection
 
 
+def test_annotation_builder_polygon():
+    # Arrange
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    writer = PdfWriter()
+    writer.add_page(page)
+
+    # Act
+    with pytest.raises(ValueError) as exc:
+        AnnotationBuilder.polygon(
+            vertices=[],
+        )
+    assert exc.value.args[0] == "A polygon needs at least 1 vertex with two coordinates"
+
+    annotation = AnnotationBuilder.polygon(
+        vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
+    )
+    writer.add_annotation(0, annotation)
+
+    # Assert: You need to inspect the file manually
+    target = "annotated-pdf.pdf"
+    with open(target, "wb") as fp:
+        writer.write(fp)
+
+    os.remove(target)  # comment this out for manual inspection
+
+
 def test_annotation_builder_line():
     # Arrange
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"

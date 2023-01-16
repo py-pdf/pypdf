@@ -15,7 +15,8 @@ import pytest
 
 from pypdf import PdfMerger, PdfReader, PdfWriter
 from pypdf.constants import PageAttributes as PG
-from pypdf.errors import PdfReadWarning
+from pypdf.errors import PdfReadError, PdfReadWarning
+from pypdf.generic import ContentStream, read_object
 
 from . import get_pdf_from_url, normalize_warnings
 
@@ -880,3 +881,36 @@ def test_tounicode_is_identity():
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data, strict=False)
     reader.pages[0].extract_text()
+
+
+@pytest.mark.external
+def test_extra_test_iss1541():
+    url = "https://github.com/py-pdf/pypdf/files/10418158/tst_iss1541.pdf"
+    name = "tst_iss1541.pdf"
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data, strict=False)
+    reader.pages[0].extract_text()
+
+    cs = ContentStream(reader.pages[0]["/Contents"], None, None)
+    cs.operations.insert(-1, ([], b"EMC"))
+    bu = BytesIO()
+    cs.write_to_stream(bu, None)
+    bu.seek(0)
+    ContentStream(read_object(bu, None, None), None, None).operations
+
+    cs = ContentStream(reader.pages[0]["/Contents"], None, None)
+    cs.operations.insert(-1, ([], b"E!C"))
+    bu = BytesIO()
+    cs.write_to_stream(bu, None)
+    bu.seek(0)
+    with pytest.raises(PdfReadError) as exc:
+        ContentStream(read_object(bu, None, None), None, None).operations
+    assert exc.value.args[0] == "Unexpected end of stream"
+
+    buf2 = BytesIO(data.getbuffer())
+    reader = PdfReader(
+        BytesIO(bytes(buf2.getbuffer()).replace(b"EI \n", b"E! \n")), strict=False
+    )
+    with pytest.raises(PdfReadError) as exc:
+        reader.pages[0].extract_text()
+    assert exc.value.args[0] == "Unexpected end of stream"

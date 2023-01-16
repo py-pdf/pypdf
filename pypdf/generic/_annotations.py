@@ -1,4 +1,4 @@
-from typing import Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 from ._base import (
     BooleanObject,
@@ -243,6 +243,33 @@ class AnnotationBuilder:
             )
 
         return ellipse_obj
+
+
+    def polygon(vertices: List[Tuple[float, float]]) -> DictionaryObject:
+        if len(vertices) == 0:
+            raise ValueError("A polygon needs at least 1 vertex with two coordinates")
+        x_min, y_min = vertices[0][0], vertices[0][1]
+        x_max, y_max = vertices[0][0], vertices[0][1]
+        for x, y in vertices:
+            x_min = min(x_min, x)
+            y_min = min(y_min, y)
+            x_max = min(x_max, x)
+            y_max = min(y_max, y)
+        rect = RectangleObject((x_min, y_min, x_max, y_max))
+        coord_list = []
+        for x, y in vertices:
+            coord_list.append(NumberObject(x))
+            coord_list.append(NumberObject(y))
+        obj = DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Annot"),
+                NameObject("/Subtype"): NameObject("/Polygon"),
+                NameObject("/Vertices"): ArrayObject(coord_list),
+                NameObject("/IT"): NameObject("PolygonCloud"),
+                NameObject("/Rect"): RectangleObject(rect),
+            }
+        )
+        return obj
 
     @staticmethod
     def link(
