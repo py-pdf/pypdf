@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1673899040756,
+  "lastUpdate": 1673899737095,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -21918,6 +21918,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.004064931305559532",
             "extra": "mean: 114.4777698749948 msec\nrounds: 8"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f494e61e96bef4952ebabd1817ad6a4d7cf6eef8",
+          "message": "ENH: Add Polygon annotation (#1557)\n\nSee #107",
+          "timestamp": "2023-01-16T21:07:47+01:00",
+          "tree_id": "52db507273baa56ca859b7bf31c5ae93e4744fce",
+          "url": "https://github.com/py-pdf/pypdf/commit/f494e61e96bef4952ebabd1817ad6a4d7cf6eef8"
+        },
+        "date": 1673899735673,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0297433028585867,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005215832323168692",
+            "extra": "mean: 971.1158083999976 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.611746531040044,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005789150651313945",
+            "extra": "mean: 86.11968900000022 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24565667698567048,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0073858509910769265",
+            "extra": "mean: 4.070721839399999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.459505361624037,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00020915105748626835",
+            "extra": "mean: 80.26000800000095 msec\nrounds: 12"
           }
         ]
       }
