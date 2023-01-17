@@ -985,6 +985,8 @@ def test_append_without_annots_and_articles():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     writer = PdfWriter()
     writer.append(reader, None, (0, 10), True, ["/B"])
+    writer.reset_translation()
+    writer.append(reader, (0, 10), True, ["/B"])
     assert writer.threads == []
     writer = PdfWriter()
     writer.append(reader, None, (0, 10), True, ["/Annots"])
