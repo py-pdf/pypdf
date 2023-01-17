@@ -2082,7 +2082,9 @@ class PdfReader:
         """
         catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
 
-        if "/AcroForm" not in catalog or not catalog["/AcroForm"]:
+        if "/AcroForm" not in catalog or not isinstance(
+            catalog["/AcroForm"], DictionaryObject
+        ):
             return None
         acroform = cast(DictionaryObject, catalog[NameObject("/AcroForm")])
         if "/Fields" not in acroform:
