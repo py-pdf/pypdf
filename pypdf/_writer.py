@@ -55,7 +55,6 @@ from typing import (
     Type,
     Union,
     cast,
-    Literal,
 )
 
 from ._encryption import Encryption
@@ -123,6 +122,14 @@ from .types import (
     PagemodeType,
     ZoomArgType,
 )
+
+try:
+    from typing import Literal  # type: ignore[attr-defined]
+except ImportError:
+    # PEP 586 introduced typing.Literal with Python 3.8
+    # For older Python versions, the backport typing_extensions is necessary:
+    from typing_extensions import Literal  # type: ignore[misc]
+
 
 logger = logging.getLogger(__name__)
 
@@ -2877,39 +2884,43 @@ class PdfWriter:
 
     def set_page_label(
         self,
-        page_index_from: int,
-        page_index_to: int,
-        label: Optional[Literal["/D", "/R", "/r", "/A", "/a", ""]] = None,
+        page_number_from: int,
+        page_number_to: int,
+        style: Optional[Literal["/D", "/R", "/r", "/A", "/a"]] = None,
         prefix: Optional[str] = None,
         start: Optional[int] = 0,
     ):
-        if label is None and prefix is None:
-            raise ValueError("at least one between label and prefix must be given")
-        if page_index_from < 1:
+        if style is None and prefix is None:
+            raise ValueError("at least one between style and prefix must be given")
+        if page_number_from < 1:
             raise ValueError("page_index_from must be equal or greater then 1")
-        if page_index_to < page_index_from:
-            raise ValueError("page_index_to must be equal or greater then page_index_from")
-        if page_index_to > len(self.pages):
+        if page_number_to < page_number_from:
+            raise ValueError(
+                "page_index_to must be equal or greater then page_index_from"
+            )
+        if page_number_to > len(self.pages):
             raise ValueError("page_index_to exceeds number of pages")
+        if start != 0 and start < 1:
+            raise ValueError("start must be equal or greater than one")
 
-        self._set_page_label(page_index_from, page_index_to, label, prefix, start)
+        self._set_page_label(
+            page_number_from - 1, page_number_to - 1, style, prefix, start
+        )
 
     def _set_page_label(
         self,
         page_index_from: int,
         page_index_to: int,
-        label: Optional[Literal["/D", "/R", "/r", "/A", "/a", ""]] = None,
+        style: Optional[Literal["/D", "/R", "/r", "/A", "/a"]] = None,
         prefix: Optional[str] = None,
         start: Optional[int] = 0,
     ):
         default_page_label = DictionaryObject()
-        default_page_label.update({
-            NameObject("/S") : NameObject("/D"),
-        })
+        default_page_label[NameObject("/S")] = NameObject("/D")
 
         new_page_label = DictionaryObject()
-        if label is not None:
-            new_page_label[NameObject("/S")] = NameObject(label)
+        if style is not None:
+            new_page_label[NameObject("/S")] = NameObject(style)
         if prefix is not None:
             new_page_label[NameObject("/P")] = TextStringObject(prefix)
         if start != 0:
@@ -2924,12 +2935,15 @@ class PdfWriter:
 
         page_labels = self._root_object[NameObject(CatalogDictionary.PAGE_LABELS)]
         nums = page_labels[NameObject("/Nums")]
-        self._nums_insert(NumberObject(page_index_from - 1), new_page_label, nums)
-        self._nums_insert(NumberObject(page_index_to), default_page_label, nums)
+
+        self._nums_insert(NumberObject(page_index_from), new_page_label, nums)
+        self._nums_clear_range(NumberObject(page_index_from), page_index_to, nums)
+        next_label_pos, *_ = self._nums_next(NumberObject(page_index_from), nums)
+        if next_label_pos != page_index_to + 1 and page_index_to + 1 < len(self.pages):
+            self._nums_insert(NumberObject(page_index_to + 1), default_page_label, nums)
+
         page_labels[NameObject("/Nums")] = nums
         self._root_object[NameObject(CatalogDictionary.PAGE_LABELS)] = page_labels
-
-        print(page_labels)
 
     def _nums_insert(
         self,
@@ -2937,17 +2951,43 @@ class PdfWriter:
         value: DictionaryObject,
         nums: ArrayObject,
     ):
-        start = key.as_numeric()
+        if len(nums) % 2 != 0:
+            raise ValueError("nums must contain an even number of elements")
+
         i = len(nums)
-        while i != 0 and start <= nums[i - 2]:
-            print((start,nums[i-2]))
+        while i != 0 and key <= nums[i - 2]:
             i = i - 2
-        print(i)
-        if i < len(nums) and start == nums[i]:
+
+        if i < len(nums) and key == nums[i]:
             nums[i + 1] = value
         else:
             nums.insert(i, key)
             nums.insert(i + 1, value)
+
+    def _nums_clear_range(
+        self,
+        key: NumberObject,
+        page_index_to: int,
+        nums: ArrayObject,
+    ):
+        if page_index_to < key:
+            raise ValueError("page_index_to must be greater or equal than key")
+
+        i = nums.index(key) + 2
+        while i < len(nums) and nums[i] <= page_index_to:
+            nums.pop(i)
+            nums.pop(i)
+
+    def _nums_next(
+        self,
+        key: NumberObject,
+        nums: ArrayObject,
+    ):
+        i = nums.index(key) + 2
+        if i < len(nums):
+            return (nums[i], nums[i + 1])
+        else:
+            return (None, None)
 
 
 def _pdf_objectify(obj: Union[Dict[str, Any], str, int, List[Any]]) -> PdfObject:
