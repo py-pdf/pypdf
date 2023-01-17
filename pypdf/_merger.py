@@ -182,7 +182,7 @@ class PdfMerger:
                 )
 
         if page_number is None:  # deprecated
-            # The paremter is only marked as Optional as long as
+            # The parameter is only marked as Optional as long as
             # position is not fully deprecated
             raise ValueError("page_number may not be None")
         if fileobj is None:  # deprecated
