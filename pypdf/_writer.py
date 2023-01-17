@@ -2889,7 +2889,7 @@ class PdfWriter:
         style: Optional[Literal["/D", "/R", "/r", "/A", "/a"]] = None,
         prefix: Optional[str] = None,
         start: Optional[int] = 0,
-    ):
+    ) -> None:
         if style is None and prefix is None:
             raise ValueError("at least one between style and prefix must be given")
         if page_number_from < 1:
@@ -2914,7 +2914,7 @@ class PdfWriter:
         style: Optional[Literal["/D", "/R", "/r", "/A", "/a"]] = None,
         prefix: Optional[str] = None,
         start: Optional[int] = 0,
-    ):
+    ) -> None:
         default_page_label = DictionaryObject()
         default_page_label[NameObject("/S")] = NameObject("/D")
 
@@ -2950,7 +2950,7 @@ class PdfWriter:
         key: NumberObject,
         value: DictionaryObject,
         nums: ArrayObject,
-    ):
+    ) -> None:
         if len(nums) % 2 != 0:
             raise ValueError("nums must contain an even number of elements")
 
@@ -2969,7 +2969,7 @@ class PdfWriter:
         key: NumberObject,
         page_index_to: int,
         nums: ArrayObject,
-    ):
+    ) -> None:
         if page_index_to < key:
             raise ValueError("page_index_to must be greater or equal than key")
 
@@ -2982,7 +2982,7 @@ class PdfWriter:
         self,
         key: NumberObject,
         nums: ArrayObject,
-    ):
+    ) -> None:
         i = nums.index(key) + 2
         if i < len(nums):
             return (nums[i], nums[i + 1])
