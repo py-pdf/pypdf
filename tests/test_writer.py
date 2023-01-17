@@ -33,9 +33,8 @@ def test_writer_exception_non_binary(tmp_path, caplog):
     writer = PdfWriter()
     writer.add_page(reader.pages[0])
 
-    with open(tmp_path / "out.txt", "w") as fp:
-        with pytest.raises(TypeError):
-            writer.write_stream(fp)
+    with open(tmp_path / "out.txt", "w") as fp, pytest.raises(TypeError):
+        writer.write_stream(fp)
     ending = "to write to is not in binary mode. It may not be written to correctly.\n"
     assert caplog.text.endswith(ending)
 
@@ -1009,3 +1008,98 @@ def test_append_multiple():
     pages = writer._root_object["/Pages"]["/Kids"]
     assert pages[0] not in pages[1:]  # page not repeated
     assert pages[-1] not in pages[0:-1]  # page not repeated
+
+
+@pytest.mark.samples
+def test_set_page_labels():
+    src = RESOURCE_ROOT / "GeoBase_NHNC1_Data_Model_UML_EN.pdf"  # File without labels
+    target = "pypdf-output.pdf"
+    reader = PdfReader(src)
+
+    expected = [
+        "i",
+        "ii",
+        "1",
+        "2",
+        "A",
+        "B",
+        "1",
+        "2",
+        "3",
+        "4",
+        "A",
+        "i",
+        "I",
+        "II",
+        "1",
+        "2",
+        "3",
+        "I",
+        "II",
+    ]
+
+    # Tests full lenght with labels assigned at first and last elements
+    # Tests different labels assigned to consecutive ranges
+    writer = PdfWriter()
+    writer.clone_document_from_reader(reader)
+    writer.set_page_label(1, 2, "/r")
+    writer.set_page_label(5, 6, "/A")
+    writer.set_page_label(11, 11, "/A")
+    writer.set_page_label(12, 12, "/r")
+    writer.set_page_label(13, 14, "/R")
+    writer.set_page_label(18, 19, "/R")
+    writer.write(target)
+    assert PdfReader(target).page_labels == expected
+
+    writer = PdfWriter()  # Same labels, different set order
+    writer.clone_document_from_reader(reader)
+    writer.set_page_label(18, 19, "/R")
+    writer.set_page_label(5, 6, "/A")
+    writer.set_page_label(11, 11, "/A")
+    writer.set_page_label(1, 2, "/r")
+    writer.set_page_label(13, 14, "/R")
+    writer.set_page_label(12, 12, "/r")
+    writer.write(target)
+    assert PdfReader(target).page_labels == expected
+
+    # Tests labels assigned only in the middle
+    # Tests label assigned to a range already containing labled ranges
+    expected = ["1", "2", "i", "ii", "iii", "iv", "v", "1"]
+    writer = PdfWriter()
+    writer.clone_document_from_reader(reader)
+    writer.set_page_label(4, 5, "/a")
+    writer.set_page_label(6, 6, "/A")
+    writer.set_page_label(3, 7, "/r")
+    writer.write(target)
+    assert PdfReader(target).page_labels[: len(expected)] == expected
+
+    # Tests labels assigned inside a previously existing range
+    expected = ["1", "2", "i", "a", "b", "A", "1", "1", "2"]
+    # Ones repeat because user didnt cover the entire original range
+    writer = PdfWriter()
+    writer.clone_document_from_reader(reader)
+    writer.set_page_label(3, 7, "/r")
+    writer.set_page_label(4, 5, "/a")
+    writer.set_page_label(6, 6, "/A")
+    writer.write(target)
+    assert PdfReader(target).page_labels[: len(expected)] == expected
+
+    src = SAMPLE_ROOT / "009-pdflatex-geotopo/GeoTopo.pdf"  # File with pre existing labels
+    target = "pypdf-output.pdf"
+    reader = PdfReader(src)
+
+    # Tests adding labels to existing ones
+    expected = ["i", "ii", "A", "B", "1"]
+    writer = PdfWriter()
+    writer.clone_document_from_reader(reader)
+    writer.set_page_label(3, 4, "/A")
+    writer.write(target)
+    assert PdfReader(target).page_labels[: len(expected)] == expected
+
+    # Tests replacing existing lables
+    expected = ["A", "B", "1", "1", "2"]
+    writer = PdfWriter()
+    writer.clone_document_from_reader(reader)
+    writer.set_page_label(1, 2, "/A")
+    writer.write(target)
+    assert PdfReader(target).page_labels[: len(expected)] == expected
