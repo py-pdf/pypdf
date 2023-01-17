@@ -2982,7 +2982,7 @@ class PdfWriter:
         self,
         key: NumberObject,
         nums: ArrayObject,
-    ) -> Tuple[Optional[NumberObject],Optional[DictionaryObject]]:
+    ) -> Tuple[Optional[NumberObject], Optional[DictionaryObject]]:
         i = nums.index(key) + 2
         if i < len(nums):
             return (nums[i], nums[i + 1])
