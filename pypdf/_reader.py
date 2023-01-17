@@ -2117,7 +2117,7 @@ class PdfReader:
             name: text string of the "/T" field of the created object
 
         Returns:
-            the modified object. None is no object can not be modified.
+            The modified object. ``None`` means no object can be modified.
         """
         catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
 
