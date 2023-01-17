@@ -2900,7 +2900,7 @@ class PdfWriter:
             )
         if page_number_to > len(self.pages):
             raise ValueError("page_index_to exceeds number of pages")
-        if start != 0 and start < 1:
+        if start is not None and start != 0 and start < 1:
             raise ValueError("start must be equal or greater than one")
 
         self._set_page_label(
@@ -2933,8 +2933,8 @@ class PdfWriter:
             page_labels[NameObject("/Nums")] = nums
             self._root_object[NameObject(CatalogDictionary.PAGE_LABELS)] = page_labels
 
-        page_labels = self._root_object[NameObject(CatalogDictionary.PAGE_LABELS)]
-        nums = page_labels[NameObject("/Nums")]
+        page_labels = cast(TreeObject, self._root_object[NameObject(CatalogDictionary.PAGE_LABELS)])
+        nums = cast(ArrayObject, page_labels[NameObject("/Nums")])
 
         self._nums_insert(NumberObject(page_index_from), new_page_label, nums)
         self._nums_clear_range(NumberObject(page_index_from), page_index_to, nums)
