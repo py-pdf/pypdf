@@ -192,7 +192,7 @@ def nums_insert(
 ) -> None:
     """
     Insert a key, value pair in a Nums array.
-    
+
     See 7.9.7 "Number Trees".
 
     Args:
@@ -246,7 +246,7 @@ def nums_next(
 ) -> Tuple[Optional[NumberObject], Optional[DictionaryObject]]:
     """
     Return the (key, value) pair of the entry after the given one.
-    
+
     See 7.9.7 "Number Trees".
 
     Args:
