@@ -1904,7 +1904,7 @@ class PdfReader:
         last_end = 0
         for start, size in self._pairs(idx_pairs):
             # The subsections must increase
-            assert start >= last_end
+            # assert start >= last_end
             last_end = start + size
             for num in range(start, start + size):
                 # The first entry is the type
