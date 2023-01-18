@@ -433,11 +433,11 @@ class OutlineFontFlag(IntFlag):
 class PageLabelStyle:
     """Table 8.10 in the 1.7 reference."""
 
-    D = "/D"  # Decimal arabics
-    LOWER_R = "/r"  # Lowercase roman numbers
-    UPPER_R = "/R"  # Uppercase roman numbers
-    LOWER_A = "/a"  # Lowercase letters
-    UPPER_A = "/A"  # Uppercase letters
+    DECIMAL = "/D"  # Decimal arabics
+    LOWERCASE_ROMAN = "/r"  # Lowercase roman numbers
+    UPPERCASE_ROMAN = "/R"  # Uppercase roman numbers
+    LOWERCASE_LETTER = "/a"  # Lowercase letters
+    UPPERCASE_LETTER = "/A"  # Uppercase letters
 
 
 PDF_KEYS = (
