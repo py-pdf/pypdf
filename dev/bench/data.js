@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1673899737095,
+  "lastUpdate": 1674072275598,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -21970,6 +21970,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00020915105748626835",
             "extra": "mean: 80.26000800000095 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c293b954e6f589ecfd6671df80144b83259a7fe4",
+          "message": "BUG: Fix dictionary access of optional page label keys (#1562)\n\nFixes #1560\r\n\r\nCo-authored-by: jonahmajumder <jmajumder9@gmail.com>",
+          "timestamp": "2023-01-18T21:03:17+01:00",
+          "tree_id": "9480e0169b63c9c3cd7c07f7d96ee645297fea31",
+          "url": "https://github.com/py-pdf/pypdf/commit/c293b954e6f589ecfd6671df80144b83259a7fe4"
+        },
+        "date": 1674072273838,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0278124182082378,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006848143335812768",
+            "extra": "mean: 972.940180799992 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.726052296006579,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005457211864170612",
+            "extra": "mean: 85.2801927499982 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24789444230449695,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009790446760620663",
+            "extra": "mean: 4.033975069000002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.846060061401566,
+            "unit": "iter/sec",
+            "range": "stddev: 0.000678942332819358",
+            "extra": "mean: 77.84487969231051 msec\nrounds: 13"
           }
         ]
       }
