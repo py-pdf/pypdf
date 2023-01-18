@@ -59,6 +59,7 @@ from typing import (
 
 from ._encryption import Encryption
 from ._page import PageObject, _VirtualList
+from ._page_labels import nums_insert, nums_clear_range, nums_next
 from ._reader import PdfReader
 from ._security import _alg33, _alg34, _alg35
 from ._utils import (
@@ -2901,7 +2902,7 @@ class PdfWriter:
         if page_number_to > len(self.pages):
             raise ValueError("page_index_to exceeds number of pages")
         if start is not None and start != 0 and start < 1:
-            raise ValueError("start must be equal or greater than one")
+            raise ValueError("if given start must be equal or greater than one")
 
         self._set_page_label(
             page_number_from - 1, page_number_to - 1, style, prefix, start
@@ -2928,66 +2929,24 @@ class PdfWriter:
 
         if not NameObject(CatalogDictionary.PAGE_LABELS) in self._root_object:
             nums = ArrayObject()
-            self._nums_insert(NumberObject(0), default_page_label, nums)
+            nums_insert(NumberObject(0), default_page_label, nums)
             page_labels = TreeObject()
             page_labels[NameObject("/Nums")] = nums
             self._root_object[NameObject(CatalogDictionary.PAGE_LABELS)] = page_labels
 
-        page_labels = cast(TreeObject, self._root_object[NameObject(CatalogDictionary.PAGE_LABELS)])
+        page_labels = cast(
+            TreeObject, self._root_object[NameObject(CatalogDictionary.PAGE_LABELS)]
+        )
         nums = cast(ArrayObject, page_labels[NameObject("/Nums")])
 
-        self._nums_insert(NumberObject(page_index_from), new_page_label, nums)
-        self._nums_clear_range(NumberObject(page_index_from), page_index_to, nums)
-        next_label_pos, *_ = self._nums_next(NumberObject(page_index_from), nums)
+        nums_insert(NumberObject(page_index_from), new_page_label, nums)
+        nums_clear_range(NumberObject(page_index_from), page_index_to, nums)
+        next_label_pos, *_ = nums_next(NumberObject(page_index_from), nums)
         if next_label_pos != page_index_to + 1 and page_index_to + 1 < len(self.pages):
-            self._nums_insert(NumberObject(page_index_to + 1), default_page_label, nums)
+            nums_insert(NumberObject(page_index_to + 1), default_page_label, nums)
 
         page_labels[NameObject("/Nums")] = nums
         self._root_object[NameObject(CatalogDictionary.PAGE_LABELS)] = page_labels
-
-    def _nums_insert(
-        self,
-        key: NumberObject,
-        value: DictionaryObject,
-        nums: ArrayObject,
-    ) -> None:
-        if len(nums) % 2 != 0:
-            raise ValueError("nums must contain an even number of elements")
-
-        i = len(nums)
-        while i != 0 and key <= nums[i - 2]:
-            i = i - 2
-
-        if i < len(nums) and key == nums[i]:
-            nums[i + 1] = value
-        else:
-            nums.insert(i, key)
-            nums.insert(i + 1, value)
-
-    def _nums_clear_range(
-        self,
-        key: NumberObject,
-        page_index_to: int,
-        nums: ArrayObject,
-    ) -> None:
-        if page_index_to < key:
-            raise ValueError("page_index_to must be greater or equal than key")
-
-        i = nums.index(key) + 2
-        while i < len(nums) and nums[i] <= page_index_to:
-            nums.pop(i)
-            nums.pop(i)
-
-    def _nums_next(
-        self,
-        key: NumberObject,
-        nums: ArrayObject,
-    ) -> Tuple[Optional[NumberObject], Optional[DictionaryObject]]:
-        i = nums.index(key) + 2
-        if i < len(nums):
-            return (nums[i], nums[i + 1])
-        else:
-            return (None, None)
 
 
 def _pdf_objectify(obj: Union[Dict[str, Any], str, int, List[Any]]) -> PdfObject:
