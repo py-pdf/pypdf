@@ -261,7 +261,7 @@ def test_outline_item_write_to_stream():
     oi = OutlineItem(NameObject("title"), NullObject(), Fit.fit_vertically(left=0))
     oi.write_to_stream(stream, None)
     stream.seek(0, 0)
-    assert stream.read() == b"<<\n/Title (title)\n/Dest [ null /FitV 0 ]\n>>"
+    assert stream.read() == b"<<\n/Title (title)\n/Dest [ null /FitV 0.0 ]\n>>"
 
 
 def test_encode_pdfdocencoding_keyerror():
@@ -941,18 +941,18 @@ def test_create_string_object_force():
 @pytest.mark.parametrize(
     ("value", "expected"),
     [
-        ("0.000000", "0"),
-        ("0.0", "0"),
+        ("0.000000", "0.0"),
+        ("0.0", "0.0"),
         ("1.0", "1"),
         ("0.123000", "0.123"),
         ("0.000123000", "0.000123"),
-        ("0.0", "0"),
-        ("0", "0"),
+        ("0.0", "0.0"),
+        ("0", "0.0"),
         ("1", "1"),
         ("1.0", "1"),
         ("1.01", "1.01"),
         ("1.010", "1.01"),
-        ("0000.0000", "0"),
+        ("0000.0000", "0.0"),
         ("0.10101010", "0.1010101"),
         ("50000000000", "50000000000"),
         ("99900000000000000123", "99900000000000000000"),

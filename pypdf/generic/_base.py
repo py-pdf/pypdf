@@ -339,7 +339,7 @@ class IndirectObject(PdfObject):
 
 class FloatObject(float, PdfObject):
     def __new__(
-        cls, value: Union[str, Any] = "0", context: Optional[Any] = None
+        cls, value: Union[str, Any] = "0.0", context: Optional[Any] = None
     ) -> "FloatObject":
         try:
             if isinstance(value, bytes):
@@ -367,9 +367,13 @@ class FloatObject(float, PdfObject):
 
     def myrepr(self) -> str:
         if float(self) == 0:
-            return "0"
+            return "0.0"
         nb = int(log10(abs(self)))
-        return f"{self:.{max(1,16-nb)}f}".rstrip("0").rstrip(".")
+        s = f"{self:.{max(1,16-nb)}f}".rstrip("0").rstrip(".")
+        if s == "0":
+            return "0.0"
+        else:
+            return s
 
     def __repr__(self) -> str:
         return self.myrepr()  # repr(float(self))
