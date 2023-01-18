@@ -151,6 +151,7 @@ def index2label(reader: PdfReaderProtocol, index: int) -> str:
                 break
             i += 2
         m = {
+            None: lambda n: "",
             "/D": lambda n: str(n),
             "/R": number2uppercase_roman_numeral,
             "/r": number2lowercase_roman_numeral,
@@ -161,7 +162,9 @@ def index2label(reader: PdfReaderProtocol, index: int) -> str:
             value = reader.get_object(value)
         if not isinstance(value, dict):
             return str(index + 1)  # Fallback
-        return m[value["/S"]](index - start_index + 1)
+        start = value.get("/St", 1)
+        prefix = value.get("/P", "")
+        return prefix + m[value.get("/S")](index - start_index + start)
     if "/Kids" in number_tree or "/Limits" in number_tree:
         logger_warning(
             (
