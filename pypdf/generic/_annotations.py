@@ -37,9 +37,9 @@ class AnnotationBuilder:
         Add text annotation.
 
         Args:
-          rect:
-            or array of four integers specifying the clickable rectangular area
-            ``[xLL, yLL, xUR, yUR]``
+          rect: array of four integers ``[xLL, yLL, xUR, yUR]``
+            specifying the clickable rectangular area
+          text: The text that is added to the document
           open:
           flags:
 
@@ -76,15 +76,15 @@ class AnnotationBuilder:
 
         Args:
           text: Text to be added
-          rect: or array of four integers
-            specifying the clickable rectangular area ``[xLL, yLL, xUR, yUR]``
+          rect: array of four integers ``[xLL, yLL, xUR, yUR]``
+            specifying the clickable rectangular area
           font: Name of the Font, e.g. 'Helvetica'
           bold: Print the text in bold
           italic: Print the text in italic
           font_size: How big the text will be, e.g. '14pt'
-          font_color: Hex-string for the color
-          border_color: Hex-string for the border color
-          background_color: Hex-string for the background of the annotation
+          font_color: Hex-string for the color, e.g. cdcdcd
+          border_color: Hex-string for the border color, e.g. cdcdcd
+          background_color: Hex-string for the background of the annotation, e.g. cdcdcd
 
         Returns:
           A dictionary object representing the annotation.
@@ -135,9 +135,8 @@ class AnnotationBuilder:
         Args:
           p1: First point
           p2: Second point
-          rect: or array of four
-            integers specifying the clickable rectangular area
-            ``[xLL, yLL, xUR, yUR]``
+          rect: array of four integers ``[xLL, yLL, xUR, yUR]``
+            specifying the clickable rectangular area
           text: Text to be displayed as the line annotation
           title_bar: Text to be displayed in the title bar of the
             annotation; by convention this is the name of the author
@@ -185,12 +184,13 @@ class AnnotationBuilder:
         """
         Draw a rectangle on the PDF.
 
+        This method uses the /Square annotation type of the PDF format.
+
         Args:
-          rect: or array of four
-            integers specifying the clickable rectangular area
-            ``[xLL, yLL, xUR, yUR]``
-          rect:
-          interiour_color:
+          rect: array of four integers ``[xLL, yLL, xUR, yUR]``
+            specifying the clickable rectangular area
+          interiour_color: None or hex-string for the color, e.g. cdcdcd
+            If None is used, the interiour is transparent.
 
         Returns:
           A dictionary object representing the annotation.
@@ -209,6 +209,40 @@ class AnnotationBuilder:
             )
 
         return square_obj
+
+    @staticmethod
+    def ellipse(
+        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        interiour_color: Optional[str] = None,
+    ) -> DictionaryObject:
+        """
+        Draw a rectangle on the PDF.
+
+        This method uses the /Circle annotation type of the PDF format.
+
+        Args:
+          rect: array of four integers ``[xLL, yLL, xUR, yUR]`` specifying
+            the bounding box of the ellipse
+          interiour_color: None or hex-string for the color, e.g. cdcdcd
+            If None is used, the interiour is transparent.
+
+        Returns:
+          A dictionary object representing the annotation.
+        """
+        ellipse_obj = DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Annot"),
+                NameObject("/Subtype"): NameObject("/Circle"),
+                NameObject("/Rect"): RectangleObject(rect),
+            }
+        )
+
+        if interiour_color:
+            ellipse_obj[NameObject("/IC")] = ArrayObject(
+                [FloatObject(n) for n in hex_to_rgb(interiour_color)]
+            )
+
+        return ellipse_obj
 
     @staticmethod
     def polygon(vertices: List[Tuple[float, float]]) -> DictionaryObject:
@@ -254,9 +288,8 @@ class AnnotationBuilder:
         An internal link requires the target_page_index, fit, and fit args.
 
         Args:
-          rect: or array of four
-            integers specifying the clickable rectangular area
-            ``[xLL, yLL, xUR, yUR]``
+          rect: array of four integers ``[xLL, yLL, xUR, yUR]``
+            specifying the clickable rectangular area
           border: if provided, an array describing border-drawing
             properties. See the PDF spec for details. No border will be
             drawn if this argument is omitted.
