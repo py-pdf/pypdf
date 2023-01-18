@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1674073858703,
+  "lastUpdate": 1674086030529,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -22074,6 +22074,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00046891415062963053",
             "extra": "mean: 78.46468974999965 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3560550eeef7a6e55a05c8d656d88b1dc05a1a2e",
+          "message": "ENH: Add circle annotation support (#1556)\n\nSee #107",
+          "timestamp": "2023-01-19T00:52:33+01:00",
+          "tree_id": "7017531ec35953408458e1330ae28d75c356c23f",
+          "url": "https://github.com/py-pdf/pypdf/commit/3560550eeef7a6e55a05c8d656d88b1dc05a1a2e"
+        },
+        "date": 1674086029447,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0195862543939154,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00591674999819075",
+            "extra": "mean: 980.7899975999987 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.642868434984456,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005495479731079681",
+            "extra": "mean: 85.88948724999786 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2462756135224465,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006497465283149053",
+            "extra": "mean: 4.060491356399996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.71595464715247,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00034793659831170153",
+            "extra": "mean: 78.64136258333805 msec\nrounds: 12"
           }
         ]
       }
