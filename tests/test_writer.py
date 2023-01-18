@@ -1011,7 +1011,7 @@ def test_append_multiple():
 
 
 @pytest.mark.samples
-def test_set_page_labels():
+def test_set_page_label():
     src = RESOURCE_ROOT / "GeoBase_NHNC1_Data_Model_UML_EN.pdf"  # File without labels
     target = "pypdf-output.pdf"
     reader = PdfReader(src)
@@ -1042,23 +1042,23 @@ def test_set_page_labels():
     # Tests different labels assigned to consecutive ranges
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
-    writer.set_page_label(1, 2, "/r")
-    writer.set_page_label(5, 6, "/A")
-    writer.set_page_label(11, 11, "/A")
-    writer.set_page_label(12, 12, "/r")
-    writer.set_page_label(13, 14, "/R")
-    writer.set_page_label(18, 19, "/R")
+    writer.set_page_label(0, 1, "/r")
+    writer.set_page_label(4, 5, "/A")
+    writer.set_page_label(10, 10, "/A")
+    writer.set_page_label(11, 11, "/r")
+    writer.set_page_label(12, 13, "/R")
+    writer.set_page_label(17, 18, "/R")
     writer.write(target)
     assert PdfReader(target).page_labels == expected
 
     writer = PdfWriter()  # Same labels, different set order
     writer.clone_document_from_reader(reader)
-    writer.set_page_label(18, 19, "/R")
-    writer.set_page_label(5, 6, "/A")
-    writer.set_page_label(11, 11, "/A")
-    writer.set_page_label(1, 2, "/r")
-    writer.set_page_label(13, 14, "/R")
-    writer.set_page_label(12, 12, "/r")
+    writer.set_page_label(17, 18, "/R")
+    writer.set_page_label(4, 5, "/A")
+    writer.set_page_label(10, 10, "/A")
+    writer.set_page_label(0, 1, "/r")
+    writer.set_page_label(12, 13, "/R")
+    writer.set_page_label(11, 11, "/r")
     writer.write(target)
     assert PdfReader(target).page_labels == expected
 
@@ -1067,9 +1067,9 @@ def test_set_page_labels():
     expected = ["1", "2", "i", "ii", "iii", "iv", "v", "1"]
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
-    writer.set_page_label(4, 5, "/a")
-    writer.set_page_label(6, 6, "/A")
-    writer.set_page_label(3, 7, "/r")
+    writer.set_page_label(3, 4, "/a")
+    writer.set_page_label(5, 5, "/A")
+    writer.set_page_label(2, 6, "/r")
     writer.write(target)
     assert PdfReader(target).page_labels[: len(expected)] == expected
 
@@ -1078,9 +1078,9 @@ def test_set_page_labels():
     # Ones repeat because user didnt cover the entire original range
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
-    writer.set_page_label(3, 7, "/r")
-    writer.set_page_label(4, 5, "/a")
-    writer.set_page_label(6, 6, "/A")
+    writer.set_page_label(2, 6, "/r")
+    writer.set_page_label(3, 4, "/a")
+    writer.set_page_label(5, 5, "/A")
     writer.write(target)
     assert PdfReader(target).page_labels[: len(expected)] == expected
 
@@ -1090,21 +1090,21 @@ def test_set_page_labels():
     with pytest.raises(
         ValueError, match="at least one between style and prefix must be given"
     ):
-        writer.set_page_label(1, 6, start=2)
+        writer.set_page_label(0, 5, start=2)
     with pytest.raises(
-        ValueError, match="page_index_from must be equal or greater then 1"
+        ValueError, match="page_index_from must be equal or greater then 0"
     ):
-        writer.set_page_label(-1, 6, "/r")
+        writer.set_page_label(-1, 5, "/r")
     with pytest.raises(
         ValueError, match="page_index_to must be equal or greater then page_index_from"
     ):
-        writer.set_page_label(6, 1, "/r")
+        writer.set_page_label(5, 0, "/r")
     with pytest.raises(ValueError, match="page_index_to exceeds number of pages"):
-        writer.set_page_label(1, 20, "/r")
+        writer.set_page_label(0, 19, "/r")
     with pytest.raises(
-        ValueError, match="if given start must be equal or greater than one"
+        ValueError, match="if given, start must be equal or greater than one"
     ):
-        writer.set_page_label(1, 6, "/r", start=-1)
+        writer.set_page_label(0, 5, "/r", start=-1)
 
     os.remove(target)
 
@@ -1118,7 +1118,7 @@ def test_set_page_labels():
     expected = ["i", "ii", "A", "B", "1"]
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
-    writer.set_page_label(3, 4, "/A")
+    writer.set_page_label(2, 3, "/A")
     writer.write(target)
     assert PdfReader(target).page_labels[: len(expected)] == expected
 
@@ -1126,7 +1126,7 @@ def test_set_page_labels():
     expected = ["A", "B", "1", "1", "2"]
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
-    writer.set_page_label(1, 2, "/A")
+    writer.set_page_label(0, 1, "/A")
     writer.write(target)
     assert PdfReader(target).page_labels[: len(expected)] == expected
 
@@ -1139,13 +1139,13 @@ def test_set_page_labels():
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
 
-    writer.set_page_label(1, 1, prefix="FRONT")
-    writer.set_page_label(2, 3, "/D", start=2)
-    writer.set_page_label(4, 7, prefix="UPDATES")
-    writer.set_page_label(8, 11, "/D", prefix="THYR-")
-    writer.set_page_label(12, 22, "/D", prefix="PAP-")
-    writer.set_page_label(23, 31, "/D", prefix="FOLL-")
-    writer.set_page_label(32, 40, "/D", prefix="HURT-")
+    writer.set_page_label(0, 0, prefix="FRONT")
+    writer.set_page_label(1, 2, "/D", start=1)
+    writer.set_page_label(3, 6, prefix="UPDATES")
+    writer.set_page_label(7, 10, "/D", prefix="THYR-")
+    writer.set_page_label(11, 21, "/D", prefix="PAP-")
+    writer.set_page_label(22, 30, "/D", prefix="FOLL-")
+    writer.set_page_label(31, 39, "/D", prefix="HURT-")
     writer.write(target)
 
-    os.remove(target)  # remove comment to see result
+    os.remove(target)  # comment to see result

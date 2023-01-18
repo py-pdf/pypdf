@@ -2879,8 +2879,8 @@ class PdfWriter:
 
     def set_page_label(
         self,
-        page_number_from: int,
-        page_number_to: int,
+        page_index_from: int,
+        page_index_to: int,
         style: Optional[PageLabelStyle] = None,
         prefix: Optional[str] = None,
         start: Optional[int] = 0,
@@ -2888,7 +2888,7 @@ class PdfWriter:
         """
         Set a page label to a range of pages.
 
-        Page numbers must be given starting from 1.
+        Page indexes must be given starting from 0.
         Labels must have a style, a prefix or both.
         If to a range is not assigned any page label a decimal label starting from 1 is applied.
 
@@ -2907,20 +2907,18 @@ class PdfWriter:
         """
         if style is None and prefix is None:
             raise ValueError("at least one between style and prefix must be given")
-        if page_number_from < 1:
-            raise ValueError("page_index_from must be equal or greater then 1")
-        if page_number_to < page_number_from:
+        if page_index_from < 0:
+            raise ValueError("page_index_from must be equal or greater then 0")
+        if page_index_to < page_index_from:
             raise ValueError(
                 "page_index_to must be equal or greater then page_index_from"
             )
-        if page_number_to > len(self.pages):
+        if page_index_to >= len(self.pages):
             raise ValueError("page_index_to exceeds number of pages")
         if start is not None and start != 0 and start < 1:
-            raise ValueError("if given start must be equal or greater than one")
+            raise ValueError("if given, start must be equal or greater than one")
 
-        self._set_page_label(
-            page_number_from - 1, page_number_to - 1, style, prefix, start
-        )
+        self._set_page_label(page_index_from, page_index_to, style, prefix, start)
 
     def _set_page_label(
         self,
