@@ -190,6 +190,15 @@ def nums_insert(
     value: DictionaryObject,
     nums: ArrayObject,
 ) -> None:
+    """
+    See 7.9.7 "Number Trees".
+    Insert a key, value pair in a Nums array.
+
+    Args:
+        key: number key of the entry
+        value: value of the entry
+        nums: Nums array to modify
+    """
     if len(nums) % 2 != 0:
         raise ValueError("a nums like array must have an even number of elements")
 
@@ -209,6 +218,15 @@ def nums_clear_range(
     page_index_to: int,
     nums: ArrayObject,
 ) -> None:
+    """
+    See 7.9.7 "Number Trees".
+    Removes all entries in a number tree in a range after an entry.
+
+    Args:
+        key: number key of the entry before the range
+        page_index_to: The page index of the upper limit of the range
+        nums: Nums array to modify
+    """
     if len(nums) % 2 != 0:
         raise ValueError("a nums like array must have an even number of elements")
     if page_index_to < key:
@@ -224,6 +242,14 @@ def nums_next(
     key: NumberObject,
     nums: ArrayObject,
 ) -> Tuple[Optional[NumberObject], Optional[DictionaryObject]]:
+    """
+    See 7.9.7 "Number Trees".
+    Returns the key, value pair of the entry after the one given.
+
+    Args:
+        key: number key of the entry
+        nums: Nums array
+    """
     if len(nums) % 2 != 0:
         raise ValueError("a nums like array must have an even number of elements")
 
