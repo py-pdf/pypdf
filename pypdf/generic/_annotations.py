@@ -244,6 +244,7 @@ class AnnotationBuilder:
 
         return ellipse_obj
 
+    @staticmethod
     def polygon(vertices: List[Tuple[float, float]]) -> DictionaryObject:
         if len(vertices) == 0:
             raise ValueError("A polygon needs at least 1 vertex with two coordinates")
