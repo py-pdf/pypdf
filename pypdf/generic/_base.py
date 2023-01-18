@@ -26,7 +26,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import codecs
-import decimal
 import hashlib
 import re
 from binascii import unhexlify
