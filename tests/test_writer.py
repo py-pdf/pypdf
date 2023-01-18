@@ -1084,7 +1084,33 @@ def test_set_page_labels():
     writer.write(target)
     assert PdfReader(target).page_labels[: len(expected)] == expected
 
-    src = SAMPLE_ROOT / "009-pdflatex-geotopo/GeoTopo.pdf"  # File with pre existing labels
+    # Tests invalid user input
+    writer = PdfWriter()
+    writer.clone_document_from_reader(reader)
+    with pytest.raises(
+        ValueError, match="at least one between style and prefix must be given"
+    ):
+        writer.set_page_label(1, 6, start=2)
+    with pytest.raises(
+        ValueError, match="page_index_from must be equal or greater then 1"
+    ):
+        writer.set_page_label(-1, 6, "/r")
+    with pytest.raises(
+        ValueError, match="page_index_to must be equal or greater then page_index_from"
+    ):
+        writer.set_page_label(6, 1, "/r")
+    with pytest.raises(ValueError, match="page_index_to exceeds number of pages"):
+        writer.set_page_label(1, 20, "/r")
+    with pytest.raises(
+        ValueError, match="if given start must be equal or greater than one"
+    ):
+        writer.set_page_label(1, 6, "/r", start=-1)
+
+    os.remove(target)
+
+    src = (
+        SAMPLE_ROOT / "009-pdflatex-geotopo/GeoTopo.pdf"
+    )  # File with pre existing labels
     target = "pypdf-output.pdf"
     reader = PdfReader(src)
 
@@ -1103,3 +1129,23 @@ def test_set_page_labels():
     writer.set_page_label(1, 2, "/A")
     writer.write(target)
     assert PdfReader(target).page_labels[: len(expected)] == expected
+
+    os.remove(target)
+
+    # Tests prefix and start.
+    src = RESOURCE_ROOT / "issue-604.pdf"  # File without page labels
+    target = "page_labels_test.pdf"
+    reader = PdfReader(src)
+    writer = PdfWriter()
+    writer.clone_document_from_reader(reader)
+
+    writer.set_page_label(1, 1, prefix="FRONT")
+    writer.set_page_label(2, 3, "/D", start=2)
+    writer.set_page_label(4, 7, prefix="UPDATES")
+    writer.set_page_label(8, 11, "/D", prefix="THYR-")
+    writer.set_page_label(12, 22, "/D", prefix="PAP-")
+    writer.set_page_label(23, 31, "/D", prefix="FOLL-")
+    writer.set_page_label(32, 40, "/D", prefix="HURT-")
+    writer.write(target)
+
+    os.remove(target)  # remove comment to see result
