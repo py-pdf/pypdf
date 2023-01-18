@@ -430,6 +430,16 @@ class OutlineFontFlag(IntFlag):
     bold = 2
 
 
+class PageLabelStyle:
+    """Table 8.10 in the 1.7 reference."""
+
+    D = "/D"  # Decimal arabics
+    LOWER_R = "/r"  # Lowercase roman numbers
+    UPPER_R = "/R"  # Uppercase roman numbers
+    LOWER_A = "/a"  # Lowercase letters
+    UPPER_A = "/A"  # Uppercase letters
+
+
 PDF_KEYS = (
     AnnotationDictionaryAttributes,
     CatalogAttributes,

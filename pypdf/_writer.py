@@ -89,6 +89,7 @@ from .constants import PagesAttributes as PA
 from .constants import StreamAttributes as SA
 from .constants import TrailerKeys as TK
 from .constants import TypFitArguments, UserAccessPermissions
+from .constants import PageLabelStyle
 from .generic import (
     PAGE_FIT,
     AnnotationBuilder,
@@ -123,13 +124,6 @@ from .types import (
     PagemodeType,
     ZoomArgType,
 )
-
-try:
-    from typing import Literal  # type: ignore[attr-defined]
-except ImportError:
-    # PEP 586 introduced typing.Literal with Python 3.8
-    # For older Python versions, the backport typing_extensions is necessary:
-    from typing_extensions import Literal  # type: ignore[misc]
 
 
 logger = logging.getLogger(__name__)
@@ -2887,7 +2881,7 @@ class PdfWriter:
         self,
         page_number_from: int,
         page_number_to: int,
-        style: Optional[Literal["/D", "/R", "/r", "/A", "/a"]] = None,
+        style: Optional[PageLabelStyle] = None,
         prefix: Optional[str] = None,
         start: Optional[int] = 0,
     ) -> None:
@@ -2931,7 +2925,7 @@ class PdfWriter:
         self,
         page_index_from: int,
         page_index_to: int,
-        style: Optional[Literal["/D", "/R", "/r", "/A", "/a"]] = None,
+        style: Optional[PageLabelStyle] = None,
         prefix: Optional[str] = None,
         start: Optional[int] = 0,
     ) -> None:
