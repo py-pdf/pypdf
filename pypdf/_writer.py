@@ -2887,6 +2887,7 @@ class PdfWriter:
     ) -> None:
         """
         Set a page label to a range of pages.
+
         Page numbers must be given starting from 1.
         Labels must have a style, a prefix or both.
         If to a range is not assigned any page label a decimal label starting from 1 is applied.

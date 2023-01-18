@@ -191,8 +191,9 @@ def nums_insert(
     nums: ArrayObject,
 ) -> None:
     """
-    See 7.9.7 "Number Trees".
     Insert a key, value pair in a Nums array.
+    
+    See 7.9.7 "Number Trees".
 
     Args:
         key: number key of the entry
@@ -219,8 +220,9 @@ def nums_clear_range(
     nums: ArrayObject,
 ) -> None:
     """
+    Remove all entries in a number tree in a range after an entry.
+
     See 7.9.7 "Number Trees".
-    Removes all entries in a number tree in a range after an entry.
 
     Args:
         key: number key of the entry before the range
@@ -243,8 +245,9 @@ def nums_next(
     nums: ArrayObject,
 ) -> Tuple[Optional[NumberObject], Optional[DictionaryObject]]:
     """
+    Return the (key, value) pair of the entry after the given one.
+    
     See 7.9.7 "Number Trees".
-    Returns the key, value pair of the entry after the one given.
 
     Args:
         key: number key of the entry
