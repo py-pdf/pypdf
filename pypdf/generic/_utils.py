@@ -7,6 +7,11 @@ from ..errors import STREAM_TRUNCATED_PREMATURELY, PdfStreamError
 from ._base import ByteStringObject, TextStringObject
 
 
+# This function converts a hex code to an RGB tuple. It takes a string as input,
+# and returns a tuple of floats. The string is expected to be of the form
+# "#RRGGBB", where RR, GG, and BB are two-digit hexadecimal numbers. The
+# returned tuple contains the red, green, and blue values, each normalized to
+# the range [0, 1].
 def hex_to_rgb(value: str) -> Tuple[float, float, float]:
     return tuple(int(value.lstrip("#")[i : i + 2], 16) / 255.0 for i in (0, 2, 4))  # type: ignore
 
@@ -164,6 +169,11 @@ def create_string_object(
 
 
 def decode_pdfdocencoding(byte_array: bytes) -> str:
+    """
+    Decodes the byte array using the PDFDocEncoding translation table.
+    If the byte array contains a byte that does not exist in the translation
+    table, a UnicodeDecodeError is raised.
+    """
     retval = ""
     for b in byte_array:
         c = _pdfdoc_encoding[b]
@@ -177,3 +187,4 @@ def decode_pdfdocencoding(byte_array: bytes) -> str:
             )
         retval += c
     return retval
+
