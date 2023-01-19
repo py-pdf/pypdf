@@ -124,6 +124,10 @@ def set_custom_rtl(
 
 
 def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleObject:
+    # This method is used to get a rectangle object from a PDF object.
+    # The rectangle is specified by the name parameter. If the rectangle
+    # is not present, then the method will look in the defaults list
+    # for a rectangle.
     retval: Union[None, RectangleObject, IndirectObject] = self.get(name)
     if isinstance(retval, RectangleObject):
         return retval
@@ -139,6 +143,12 @@ def _get_rectangle(self: Any, name: str, defaults: Iterable[str]) -> RectangleOb
     return retval
 
 
+# This function is used to get a rectangle object from the
+# config. The name of the rectangle is passed as a string,
+# and the defaults are passed as a list of strings.
+# The defaults are used to get the default values for the
+# rectangle from the config.
+
 def getRectangle(
     self: Any, name: str, defaults: Iterable[str]
 ) -> RectangleObject:  # deprecated
@@ -147,6 +157,13 @@ def getRectangle(
 
 
 def _set_rectangle(self: Any, name: str, value: Union[RectangleObject, float]) -> None:
+    """Set the value of a rectangle property.
+
+    Args:
+        name (str): The name of the property to set.
+        value (Union[RectangleObject, float]): The value to set.
+
+    """
     name = NameObject(name)
     self[name] = value
 
@@ -154,25 +171,42 @@ def _set_rectangle(self: Any, name: str, value: Union[RectangleObject, float]) -
 def setRectangle(
     self: Any, name: str, value: Union[RectangleObject, float]
 ) -> None:  # deprecated
+    # [DEPRECATED] Set the rectangle for the given property.
+    # DEPRECATED: Use setRectangleObject instead.
+    # ARGUMENTS:
+    #   name: The name of the property.
+    #   value: The rectangle object, or the value of the property.
     deprecation_no_replacement("setRectangle", "3.0.0")
     _set_rectangle(self, name, value)
 
 
+# Deletes the rectangle with the given name from _rectangles.
 def _delete_rectangle(self: Any, name: str) -> None:
     del self[name]
 
 
 def deleteRectangle(self: Any, name: str) -> None:  # deprecated
+    # Deletes the rectangle with the given name.
     deprecation_no_replacement("deleteRectangle", "3.0.0")
     del self[name]
 
 
+
 def _create_rectangle_accessor(name: str, fallback: Iterable[str]) -> property:
+    # Creates a property that manages a rectangle.
+    #
+    # The property is read-only, but the rectangle can be set or deleted.
+    # The rectangle is stored in a JSON object in the database.
+    #
+    # The name argument is the name of the rectangle in the database.
+    # The fallback argument is a list of names of rectangles in the database,
+    # used when the rectangle is not set.
     return property(
         lambda self: _get_rectangle(self, name, fallback),
         lambda self, value: _set_rectangle(self, name, value),
         lambda self: _delete_rectangle(self, name),
     )
+
 
 
 def createRectangleAccessor(
