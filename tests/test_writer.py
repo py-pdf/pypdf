@@ -1140,7 +1140,7 @@ def test_set_page_label():
     writer.clone_document_from_reader(reader)
 
     writer.set_page_label(0, 0, prefix="FRONT")
-    writer.set_page_label(1, 2, "/D", start=1)
+    writer.set_page_label(1, 2, "/D", start=2)
     writer.set_page_label(3, 6, prefix="UPDATES")
     writer.set_page_label(7, 10, "/D", prefix="THYR-")
     writer.set_page_label(11, 21, "/D", prefix="PAP-")
