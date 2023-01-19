@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1674153011313,
+  "lastUpdate": 1674157334916,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -22178,6 +22178,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0005225961802149609",
             "extra": "mean: 91.83164027273124 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "lorenzomanini20@gmail.com",
+            "name": "lorenzomanini",
+            "username": "lorenzomanini"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e7118462cd23226490a1907a0b22f824dd585907",
+          "message": "ENH: Add page label support to PdfWriter (#1558)\n\nAdd PageLabelStyle constants",
+          "timestamp": "2023-01-19T20:39:26+01:00",
+          "tree_id": "f8f8fbaa205535d767b2ade821bb6c39293f8c15",
+          "url": "https://github.com/py-pdf/pypdf/commit/e7118462cd23226490a1907a0b22f824dd585907"
+        },
+        "date": 1674157329756,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8669620262489903,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006758502187676763",
+            "extra": "mean: 1.1534530576000122 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.145580549372891,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00867368814992308",
+            "extra": "mean: 98.56508409090607 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.206694074493859,
+            "unit": "iter/sec",
+            "range": "stddev: 0.033711201234145144",
+            "extra": "mean: 4.83806806 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.735735114262628,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00028874782088314445",
+            "extra": "mean: 102.71438039999907 msec\nrounds: 10"
           }
         ]
       }
