@@ -2893,14 +2893,14 @@ class PdfWriter:
         If to a range is not assigned any page label a decimal label starting from 1 is applied.
 
         Args:
-            page_number_from: page number of the beginning of the range starting from 1
-            page_number_to: page number of the beginning of the range starting from 1
+            page_index_from: page index of the beginning of the range starting from 0
+            page_index_to: page index of the beginning of the range starting from 0
             style:  The numbering style to be used for the numeric portion of each page label:
-                        D Decimal arabic numerals
-                        R Uppercase roman numerals
-                        r Lowercase roman numerals
-                        A Uppercase letters (A to Z for the first 26 pages, AA to ZZ for the next 26, and so on)
-                        a Lowercase letters (a to z for the first 26 pages, aa to zz for the next 26, and so on)
+                        '/D' Decimal arabic numerals
+                        '/R' Uppercase roman numerals
+                        '/r' Lowercase roman numerals
+                        '/A' Uppercase letters (A to Z for the first 26 pages, AA to ZZ for the next 26, and so on)
+                        '/a' Lowercase letters (a to z for the first 26 pages, aa to zz for the next 26, and so on)
             prefix: The label prefix for page labels in this range.
             start:  The value of the numeric portion for the first page label in the range.
                     Subsequent pages are numbered sequentially from this value, which must be greater than or equal to 1. Default value: 1.
