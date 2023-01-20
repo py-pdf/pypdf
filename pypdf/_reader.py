@@ -1901,7 +1901,7 @@ class PdfReader:
         get_entry: Callable[[int], Union[int, Tuple[int, ...]]],
         used_before: Callable[[int, Union[int, Tuple[int, ...]]], bool],
     ) -> None:
-        last_end = 0
+        # last_end = 0
         for start, size in self._pairs(idx_pairs):
             # The subsections must increase
             # assert start >= last_end
