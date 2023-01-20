@@ -1279,3 +1279,11 @@ def test_build_outline_item(caplog):
 def test_page_labels(src, page_labels):
     max_indices = 6
     assert PdfReader(src).page_labels[:max_indices] == page_labels[:max_indices]
+
+
+def test_iss1559():
+    url = "https://github.com/py-pdf/pypdf/files/10441992/default.pdf"
+    name = "iss1559.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for p in reader.pages:
+        p.extract_text()
