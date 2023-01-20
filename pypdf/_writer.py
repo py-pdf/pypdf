@@ -59,6 +59,7 @@ from typing import (
 
 from ._encryption import Encryption
 from ._page import PageObject, _VirtualList
+from ._page_labels import nums_insert, nums_clear_range, nums_next
 from ._reader import PdfReader
 from ._security import _alg33, _alg34, _alg35
 from ._utils import (
@@ -88,6 +89,7 @@ from .constants import PagesAttributes as PA
 from .constants import StreamAttributes as SA
 from .constants import TrailerKeys as TK
 from .constants import TypFitArguments, UserAccessPermissions
+from .constants import PageLabelStyle
 from .generic import (
     PAGE_FIT,
     AnnotationBuilder,
@@ -122,6 +124,7 @@ from .types import (
     PagemodeType,
     ZoomArgType,
 )
+
 
 logger = logging.getLogger(__name__)
 
@@ -2873,6 +2876,108 @@ class PdfWriter:
                 pass
         else:
             raise Exception("invalid parameter {reader}")
+
+    def set_page_label(
+        self,
+        page_index_from: int,
+        page_index_to: int,
+        style: Optional[PageLabelStyle] = None,
+        prefix: Optional[str] = None,
+        start: Optional[int] = 0,
+    ) -> None:
+        """
+        Set a page label to a range of pages.
+
+        Page indexes must be given starting from 0.
+        Labels must have a style, a prefix or both.
+        If to a range is not assigned any page label a decimal label starting from 1 is applied.
+
+        Args:
+            page_index_from: page index of the beginning of the range starting from 0
+            page_index_to: page index of the beginning of the range starting from 0
+            style:  The numbering style to be used for the numeric portion of each page label:
+                        '/D' Decimal arabic numerals
+                        '/R' Uppercase roman numerals
+                        '/r' Lowercase roman numerals
+                        '/A' Uppercase letters (A to Z for the first 26 pages, AA to ZZ for the next 26, and so on)
+                        '/a' Lowercase letters (a to z for the first 26 pages, aa to zz for the next 26, and so on)
+            prefix: The label prefix for page labels in this range.
+            start:  The value of the numeric portion for the first page label in the range.
+                    Subsequent pages are numbered sequentially from this value, which must be greater than or equal to 1. Default value: 1.
+        """
+        if style is None and prefix is None:
+            raise ValueError("at least one between style and prefix must be given")
+        if page_index_from < 0:
+            raise ValueError("page_index_from must be equal or greater then 0")
+        if page_index_to < page_index_from:
+            raise ValueError(
+                "page_index_to must be equal or greater then page_index_from"
+            )
+        if page_index_to >= len(self.pages):
+            raise ValueError("page_index_to exceeds number of pages")
+        if start is not None and start != 0 and start < 1:
+            raise ValueError("if given, start must be equal or greater than one")
+
+        self._set_page_label(page_index_from, page_index_to, style, prefix, start)
+
+    def _set_page_label(
+        self,
+        page_index_from: int,
+        page_index_to: int,
+        style: Optional[PageLabelStyle] = None,
+        prefix: Optional[str] = None,
+        start: Optional[int] = 0,
+    ) -> None:
+        """
+        Set a page label to a range of pages.
+        Page indexes must be given starting from 0.
+        Labels must have a style, a prefix or both.
+        If to a range is not assigned any page label a decimal label starting from 1 is applied.
+
+        Args:
+            page_index_from: page index of the beginning of the range starting from 0
+            page_index_to: page index of the beginning of the range starting from 0
+            style:  The numbering style to be used for the numeric portion of each page label:
+                        /D Decimal arabic numerals
+                        /R Uppercase roman numerals
+                        /r Lowercase roman numerals
+                        /A Uppercase letters (A to Z for the first 26 pages, AA to ZZ for the next 26, and so on)
+                        /a Lowercase letters (a to z for the first 26 pages, aa to zz for the next 26, and so on)
+            prefix: The label prefix for page labels in this range.
+            start:  The value of the numeric portion for the first page label in the range.
+                    Subsequent pages are numbered sequentially from this value, which must be greater than or equal to 1. Default value: 1.
+        """
+        default_page_label = DictionaryObject()
+        default_page_label[NameObject("/S")] = NameObject("/D")
+
+        new_page_label = DictionaryObject()
+        if style is not None:
+            new_page_label[NameObject("/S")] = NameObject(style)
+        if prefix is not None:
+            new_page_label[NameObject("/P")] = TextStringObject(prefix)
+        if start != 0:
+            new_page_label[NameObject("/St")] = NumberObject(start)
+
+        if not NameObject(CatalogDictionary.PAGE_LABELS) in self._root_object:
+            nums = ArrayObject()
+            nums_insert(NumberObject(0), default_page_label, nums)
+            page_labels = TreeObject()
+            page_labels[NameObject("/Nums")] = nums
+            self._root_object[NameObject(CatalogDictionary.PAGE_LABELS)] = page_labels
+
+        page_labels = cast(
+            TreeObject, self._root_object[NameObject(CatalogDictionary.PAGE_LABELS)]
+        )
+        nums = cast(ArrayObject, page_labels[NameObject("/Nums")])
+
+        nums_insert(NumberObject(page_index_from), new_page_label, nums)
+        nums_clear_range(NumberObject(page_index_from), page_index_to, nums)
+        next_label_pos, *_ = nums_next(NumberObject(page_index_from), nums)
+        if next_label_pos != page_index_to + 1 and page_index_to + 1 < len(self.pages):
+            nums_insert(NumberObject(page_index_to + 1), default_page_label, nums)
+
+        page_labels[NameObject("/Nums")] = nums
+        self._root_object[NameObject(CatalogDictionary.PAGE_LABELS)] = page_labels
 
 
 def _pdf_objectify(obj: Union[Dict[str, Any], str, int, List[Any]]) -> PdfObject:

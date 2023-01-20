@@ -20,6 +20,8 @@ history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/pypdf/gra
 * [Karvonen, Harry](https://github.com/Hatell/)
 * [KourFrost](https://github.com/KourFrost)
 * [Lightup1](https://github.com/Lightup1)
+* [Majumder, Jonah](https://github.com/jonahmajumder)
+* [Manini, Lorenzo](https://github.com/lorenzomanini)
 * [maxbeer99](https://github.com/maxbeer99)
 * [Mérino, Antoine](https://github.com/Merinorus)
 * [Perrensen, Olsen](https://github.com/olsonperrensen)
