@@ -366,7 +366,7 @@ class FloatObject(float, PdfObject):
         return cast("FloatObject", self._reference_clone(FloatObject(self), pdf_dest))
 
     def myrepr(self) -> str:
-        if float(self) == 0:
+        if self == 0:
             return "0.0"
         nb = int(log10(abs(self)))
         s = f"{self:.{max(1,16-nb)}f}".rstrip("0").rstrip(".")
