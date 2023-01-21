@@ -29,7 +29,7 @@ class OutlineItem(Destination):
         stream.write(b">>")
 
 
-class Bookmark(OutlineItem):  # pragma: no cover
+class Bookmark(OutlineItem):  # deprecated
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         deprecation_with_replacement("Bookmark", "OutlineItem", "3.0.0")
         super().__init__(*args, **kwargs)

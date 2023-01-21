@@ -97,7 +97,7 @@ def _converter_date(value: str) -> datetime.datetime:
     minute = int(matches.group("minute") or "0")
     second = decimal.Decimal(matches.group("second") or "0")
     seconds_dec = second.to_integral(decimal.ROUND_FLOOR)
-    milliseconds_dec = (second - seconds_dec) * 1000000
+    milliseconds_dec = (second - seconds_dec) * 1_000_000
 
     seconds = int(seconds_dec)
     milliseconds = int(milliseconds_dec)
@@ -213,7 +213,9 @@ class XmpInformation(PdfObject):
     An object that represents Adobe XMP metadata.
     Usually accessed by :py:attr:`xmp_metadata()<pypdf.PdfReader.xmp_metadata>`
 
-    :raises PdfReadError: if XML is invalid
+    Raises:
+      PdfReadError: if XML is invalid
+
     """
 
     def __init__(self, stream: ContentStream) -> None:
@@ -229,7 +231,7 @@ class XmpInformation(PdfObject):
         self.cache: Dict[Any, Any] = {}
 
     @property
-    def rdfRoot(self) -> XmlElement:  # pragma: no cover
+    def rdfRoot(self) -> XmlElement:  # deprecated
         deprecate_with_replacement("rdfRoot", "rdf_root", "4.0.0")
         return self.rdf_root
 
@@ -240,7 +242,7 @@ class XmpInformation(PdfObject):
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # pragma: no cover
+    ) -> None:  # deprecated
         """
         .. deprecated:: 1.28.0
 
@@ -259,7 +261,7 @@ class XmpInformation(PdfObject):
 
     def getElement(
         self, aboutUri: str, namespace: str, name: str
-    ) -> Iterator[Any]:  # pragma: no cover
+    ) -> Iterator[Any]:  # deprecated
         """
         .. deprecated:: 1.28.0
 
@@ -281,7 +283,7 @@ class XmpInformation(PdfObject):
 
     def getNodesInNamespace(
         self, aboutUri: str, namespace: str
-    ) -> Iterator[Any]:  # pragma: no cover
+    ) -> Iterator[Any]:  # deprecated
         """
         .. deprecated:: 1.28.0
 
@@ -405,12 +407,12 @@ class XmpInformation(PdfObject):
     """
 
     @property
-    def xmp_createDate(self) -> datetime.datetime:  # pragma: no cover
+    def xmp_createDate(self) -> datetime.datetime:  # deprecated
         deprecate_with_replacement("xmp_createDate", "xmp_create_date", "4.0.0")
         return self.xmp_create_date
 
     @xmp_createDate.setter
-    def xmp_createDate(self, value: datetime.datetime) -> None:  # pragma: no cover
+    def xmp_createDate(self, value: datetime.datetime) -> None:  # deprecated
         deprecate_with_replacement("xmp_createDate", "xmp_create_date", "4.0.0")
         self.xmp_create_date = value
 
@@ -423,12 +425,12 @@ class XmpInformation(PdfObject):
     """
 
     @property
-    def xmp_modifyDate(self) -> datetime.datetime:  # pragma: no cover
+    def xmp_modifyDate(self) -> datetime.datetime:  # deprecated
         deprecate_with_replacement("xmp_modifyDate", "xmp_modify_date", "4.0.0")
         return self.xmp_modify_date
 
     @xmp_modifyDate.setter
-    def xmp_modifyDate(self, value: datetime.datetime) -> None:  # pragma: no cover
+    def xmp_modifyDate(self, value: datetime.datetime) -> None:  # deprecated
         deprecate_with_replacement("xmp_modifyDate", "xmp_modify_date", "4.0.0")
         self.xmp_modify_date = value
 
@@ -442,12 +444,12 @@ class XmpInformation(PdfObject):
     """
 
     @property
-    def xmp_metadataDate(self) -> datetime.datetime:  # pragma: no cover
+    def xmp_metadataDate(self) -> datetime.datetime:  # deprecated
         deprecate_with_replacement("xmp_metadataDate", "xmp_metadata_date", "4.0.0")
         return self.xmp_metadata_date
 
     @xmp_metadataDate.setter
-    def xmp_metadataDate(self, value: datetime.datetime) -> None:  # pragma: no cover
+    def xmp_metadataDate(self, value: datetime.datetime) -> None:  # deprecated
         deprecate_with_replacement("xmp_metadataDate", "xmp_metadata_date", "4.0.0")
         self.xmp_metadata_date = value
 
@@ -455,12 +457,12 @@ class XmpInformation(PdfObject):
     """The name of the first known tool used to create the resource."""
 
     @property
-    def xmp_creatorTool(self) -> str:  # pragma: no cover
+    def xmp_creatorTool(self) -> str:  # deprecated
         deprecation_with_replacement("xmp_creatorTool", "xmp_creator_tool", "3.0.0")
         return self.xmp_creator_tool
 
     @xmp_creatorTool.setter
-    def xmp_creatorTool(self, value: str) -> None:  # pragma: no cover
+    def xmp_creatorTool(self, value: str) -> None:  # deprecated
         deprecation_with_replacement("xmp_creatorTool", "xmp_creator_tool", "3.0.0")
         self.xmp_creator_tool = value
 
@@ -470,12 +472,12 @@ class XmpInformation(PdfObject):
     """
 
     @property
-    def xmpmm_documentId(self) -> str:  # pragma: no cover
+    def xmpmm_documentId(self) -> str:  # deprecated
         deprecation_with_replacement("xmpmm_documentId", "xmpmm_document_id", "3.0.0")
         return self.xmpmm_document_id
 
     @xmpmm_documentId.setter
-    def xmpmm_documentId(self, value: str) -> None:  # pragma: no cover
+    def xmpmm_documentId(self, value: str) -> None:  # deprecated
         deprecation_with_replacement("xmpmm_documentId", "xmpmm_document_id", "3.0.0")
         self.xmpmm_document_id = value
 
@@ -486,12 +488,12 @@ class XmpInformation(PdfObject):
     """
 
     @property
-    def xmpmm_instanceId(self) -> str:  # pragma: no cover
+    def xmpmm_instanceId(self) -> str:  # deprecated
         deprecation_with_replacement("xmpmm_instanceId", "xmpmm_instance_id", "3.0.0")
         return cast(str, self.xmpmm_instance_id)
 
     @xmpmm_instanceId.setter
-    def xmpmm_instanceId(self, value: str) -> None:  # pragma: no cover
+    def xmpmm_instanceId(self, value: str) -> None:  # deprecated
         deprecation_with_replacement("xmpmm_instanceId", "xmpmm_instance_id", "3.0.0")
         self.xmpmm_instance_id = value
 
@@ -501,7 +503,8 @@ class XmpInformation(PdfObject):
         Retrieve custom metadata properties defined in the undocumented pdfx
         metadata schema.
 
-        :return: a dictionary of key/value items for custom metadata properties.
+        Returns:
+            A dictionary of key/value items for custom metadata properties.
         """
         if not hasattr(self, "_custom_properties"):
             self._custom_properties = {}

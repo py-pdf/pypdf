@@ -29,6 +29,14 @@ class Fit:
         that the current value of that parameter is to be retained unchanged.
 
         A zoom value of 0 has the same meaning as a null value.
+
+        Args:
+          left:
+          top:
+          zoom:
+
+        Returns:
+          The created fit object.
         """
         return Fit(fit_type="/XYZ", fit_args=(left, top, zoom))
 
@@ -53,6 +61,12 @@ class Fit:
 
         A null value for `top` specifies that the current value of that
         parameter is to be retained unchanged.
+
+        Args:
+          top:
+
+        Returns:
+          The created fit object.
         """
         return Fit(fit_type="/FitH", fit_args=(top,))
 
@@ -80,6 +94,15 @@ class Fit:
 
         A null value for any of the parameters may result in unpredictable
         behavior.
+
+        Args:
+          left:
+          bottom:
+          right:
+          top:
+
+        Returns:
+          The created fit object.
         """
         return Fit(fit_type="/FitR", fit_args=(left, bottom, right, top))
 
@@ -104,6 +127,12 @@ class Fit:
 
         A null value for top specifies that the current value of that parameter
         is to be retained unchanged.
+
+        Args:
+          top:
+
+        Returns:
+          The created fit object.
         """
         return Fit(fit_type="/FitBH", fit_args=(top,))
 
@@ -117,6 +146,12 @@ class Fit:
 
         A null value for left specifies that the current value of that
         parameter is to be retained unchanged.
+
+        Args:
+          left:
+
+        Returns:
+          The created fit object.
         """
         return Fit(fit_type="/FitBV", fit_args=(left,))
 

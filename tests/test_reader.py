@@ -176,6 +176,7 @@ def test_get_outline(src, outline_elements):
     assert len(outline) == outline_elements
 
 
+@pytest.mark.samples
 @pytest.mark.parametrize(
     ("src", "expected_images"),
     [
@@ -632,7 +633,7 @@ def test_decrypt_when_no_id():
     """
     Decrypt an encrypted file that's missing the 'ID' value in its
     trailer.
-    https://github.com/mstamy2/pypdf/issues/608
+    https://github.com/py-pdf/pypdf/issues/608
     """
 
     with open(RESOURCE_ROOT / "encrypted_doc_no_id.pdf", "rb") as inputfile:
@@ -864,6 +865,26 @@ def test_get_fields():
     assert fields is not None
     assert "c1-1" in fields
     assert dict(fields["c1-1"]) == ({"/FT": "/Btn", "/T": "c1-1"})
+
+
+@pytest.mark.external
+def test_get_full_qualified_fields():
+    url = "https://github.com/py-pdf/PyPDF2/files/10142389/fields_with_dots.pdf"
+    name = "fields_with_dots.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    fields = reader.get_form_text_fields(True)
+    assert fields is not None
+    assert "customer.name" in fields
+
+    fields = reader.get_form_text_fields(False)
+    assert fields is not None
+    assert "customer.name" not in fields
+    assert "name" in fields
+
+    fields = reader.get_fields(True)
+    assert fields is not None
+    assert "customer.name" in fields
+    assert fields["customer.name"]["/T"] == "name"
 
 
 @pytest.mark.external
@@ -1195,6 +1216,7 @@ def test_zeroing_xref():
     len(reader.pages)
 
 
+@pytest.mark.external
 def test_thread():
     url = "https://github.com/py-pdf/pypdf/files/9066120/UTA_OSHA_3115_Fall_Protection_Training_09162021_.pdf"
     name = "UTA_OSHA.pdf"
@@ -1207,6 +1229,7 @@ def test_thread():
     assert len(reader.threads) >= 1
 
 
+@pytest.mark.external
 def test_build_outline_item(caplog):
     url = "https://github.com/py-pdf/pypdf/files/9464742/shiv_resume.pdf"
     name = "shiv_resume.pdf"
@@ -1232,3 +1255,27 @@ def test_build_outline_item(caplog):
             )
         )
     assert "Unexpected destination 2" in exc.value.args[0]
+
+
+@pytest.mark.samples
+@pytest.mark.parametrize(
+    ("src", "page_labels"),
+    [
+        (RESOURCE_ROOT / "selenium-pypdf-issue-177.pdf", ["1"]),
+        (RESOURCE_ROOT / "encrypted_doc_no_id.pdf", ["1", "2", "3"]),
+        (RESOURCE_ROOT / "pdflatex-outline.pdf", ["1", "2", "3", "4"]),
+        (
+            SAMPLE_ROOT / "009-pdflatex-geotopo/GeoTopo.pdf",
+            ["i", "ii", "iii", "1", "2", "3"],
+        ),
+    ],
+    ids=[
+        "selenium-pypdf-issue-177.pdf",
+        "encrypted_doc_no_id.pdf",
+        "pdflatex-outline.pdf",
+        "GeoTopo.pdf",
+    ],
+)
+def test_page_labels(src, page_labels):
+    max_indices = 6
+    assert PdfReader(src).page_labels[:max_indices] == page_labels[:max_indices]

@@ -30,7 +30,7 @@ class PdfObjectProtocol(Protocol):
         ...
 
 
-class PdfReaderProtocol(Protocol):  # pragma: no cover
+class PdfReaderProtocol(Protocol):  # deprecated
     @property
     def pdf_header(self) -> str:
         ...
@@ -47,11 +47,15 @@ class PdfReaderProtocol(Protocol):  # pragma: no cover
     def pages(self) -> List[Any]:
         ...
 
+    @property
+    def trailer(self) -> Dict[str, Any]:
+        ...
+
     def get_object(self, indirect_reference: Any) -> Optional[PdfObjectProtocol]:
         ...
 
 
-class PdfWriterProtocol(Protocol):  # pragma: no cover
+class PdfWriterProtocol(Protocol):  # deprecated
     _objects: List[Any]
     _id_translated: Dict[int, Dict[int, int]]
 

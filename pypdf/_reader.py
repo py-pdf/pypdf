@@ -48,6 +48,7 @@ from typing import (
 
 from ._encryption import Encryption, PasswordType
 from ._page import PageObject, _VirtualList
+from ._page_labels import index2label as page_index2page_label
 from ._utils import (
     StrByteType,
     StreamType,
@@ -109,9 +110,7 @@ def convert_to_int(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:
     return struct.unpack(">q", d)[0]
 
 
-def convertToInt(
-    d: bytes, size: int
-) -> Union[int, Tuple[Any, ...]]:  # pragma: no cover
+def convertToInt(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:  # deprecated
     deprecation_with_replacement("convertToInt", "convert_to_int")
     return convert_to_int(d, size)
 
@@ -139,7 +138,7 @@ class DocumentInformation(DictionaryObject):
             return retval
         return None
 
-    def getText(self, key: str) -> Optional[str]:  # pragma: no cover
+    def getText(self, key: str) -> Optional[str]:  # deprecated
         """
         The text value of the specified key or None.
 
@@ -283,13 +282,14 @@ class PdfReader:
     This operation can take some time, as the PDF stream's cross-reference
     tables are read into memory.
 
-    :param stream: A File object or an object that supports the standard read
+    Args:
+      stream: A File object or an object that supports the standard read
         and seek methods similar to a File object. Could also be a
         string representing a path to a PDF file.
-    :param bool strict: Determines whether user should be warned of all
+      strict: Determines whether user should be warned of all
         problems and also causes some correctable problems to be fatal.
         Defaults to ``False``.
-    :param None/str/bytes password: Decrypt PDF file at initialization. If the
+      password: Decrypt PDF file at initialization. If the
         password is None, the file will not be decrypted.
         Defaults to ``None``
     """
@@ -325,7 +325,7 @@ class PdfReader:
             self._override_encryption = True
             # Some documents may not have a /ID, use two empty
             # byte strings instead. Solves
-            # https://github.com/mstamy2/pypdf/issues/608
+            # https://github.com/py-pdf/pypdf/issues/608
             id_entry = self.trailer.get(TK.ID)
             id1_entry = id_entry[0].get_object().original_bytes if id_entry else b""
             encrypt_entry = cast(
@@ -348,6 +348,12 @@ class PdfReader:
 
     @property
     def pdf_header(self) -> str:
+        """
+        The first 8 bytes of the file.
+
+        This is typically something like ``'%PDF-1.6'`` and can be used to
+        detect if the file is actually a PDF file and which version it is.
+        """
         # TODO: Make this return a bytes object for consistency
         #       but that needs a deprecation
         loc = self.stream.tell()
@@ -363,8 +369,6 @@ class PdfReader:
         Note that some PDF files use metadata streams instead of docinfo
         dictionaries, and these metadata streams will not be accessed by this
         function.
-
-        :return: the document information of this PDF file
         """
         if TK.INFO not in self.trailer:
             return None
@@ -377,7 +381,7 @@ class PdfReader:
         retval.update(obj)  # type: ignore
         return retval
 
-    def getDocumentInfo(self) -> Optional[DocumentInformation]:  # pragma: no cover
+    def getDocumentInfo(self) -> Optional[DocumentInformation]:  # deprecated
         """
         .. deprecated:: 1.28.0
 
@@ -387,7 +391,7 @@ class PdfReader:
         return self.metadata
 
     @property
-    def documentInfo(self) -> Optional[DocumentInformation]:  # pragma: no cover
+    def documentInfo(self) -> Optional[DocumentInformation]:  # deprecated
         """
         .. deprecated:: 1.28.0
 
@@ -398,20 +402,14 @@ class PdfReader:
 
     @property
     def xmp_metadata(self) -> Optional[XmpInformation]:
-        """
-        XMP (Extensible Metadata Platform) data
-
-        :return: a :class:`XmpInformation<xmp.XmpInformation>`
-            instance that can be used to access XMP metadata from the document.
-            or ``None`` if no metadata was found on the document root.
-        """
+        """XMP (Extensible Metadata Platform) data."""
         try:
             self._override_encryption = True
             return self.trailer[TK.ROOT].xmp_metadata  # type: ignore
         finally:
             self._override_encryption = False
 
-    def getXmpMetadata(self) -> Optional[XmpInformation]:  # pragma: no cover
+    def getXmpMetadata(self) -> Optional[XmpInformation]:  # deprecated
         """
         .. deprecated:: 1.28.0
 
@@ -421,7 +419,7 @@ class PdfReader:
         return self.xmp_metadata
 
     @property
-    def xmpMetadata(self) -> Optional[XmpInformation]:  # pragma: no cover
+    def xmpMetadata(self) -> Optional[XmpInformation]:  # deprecated
         """
         .. deprecated:: 1.28.0
 
@@ -434,8 +432,13 @@ class PdfReader:
         """
         Calculate the number of pages in this PDF file.
 
-        :return: number of pages
-        :raises PdfReadError: if file is encrypted and restrictions prevent
+        Args:
+
+        Returns:
+          The number of pages of the parsed PDF file
+
+        Raises:
+          PdfReadError: if file is encrypted and restrictions prevent
             this action.
         """
         # Flattened pages will not work on an Encrypted PDF;
@@ -448,7 +451,7 @@ class PdfReader:
                 self._flatten()
             return len(self.flattened_pages)  # type: ignore
 
-    def getNumPages(self) -> int:  # pragma: no cover
+    def getNumPages(self) -> int:  # deprecated
         """
         .. deprecated:: 1.28.0
 
@@ -458,7 +461,7 @@ class PdfReader:
         return self._get_num_pages()
 
     @property
-    def numPages(self) -> int:  # pragma: no cover
+    def numPages(self) -> int:  # deprecated
         """
         .. deprecated:: 1.28.0
 
@@ -467,7 +470,7 @@ class PdfReader:
         deprecation_with_replacement("reader.numPages", "len(reader.pages)", "3.0.0")
         return self._get_num_pages()
 
-    def getPage(self, pageNumber: int) -> PageObject:  # pragma: no cover
+    def getPage(self, pageNumber: int) -> PageObject:  # deprecated
         """
         .. deprecated:: 1.28.0
 
@@ -482,9 +485,12 @@ class PdfReader:
         """
         Retrieve a page by number from this PDF file.
 
-        :param int page_number: The page number to retrieve
+        Args:
+          page_number: The page number to retrieve
             (pages begin at zero)
-        :return: a :class:`PageObject<pypdf._page.PageObject>` instance.
+
+        Returns:
+          A :class:`PageObject<pypdf._page.PageObject>` instance.
         """
         # ensure that we're not trying to access an encrypted PDF
         # assert not self.trailer.has_key(TK.ENCRYPT)
@@ -494,7 +500,7 @@ class PdfReader:
         return self.flattened_pages[page_number]
 
     @property
-    def namedDestinations(self) -> Dict[str, Any]:  # pragma: no cover
+    def namedDestinations(self) -> Dict[str, Any]:  # deprecated
         """
         .. deprecated:: 1.28.0
 
@@ -525,12 +531,18 @@ class PdfReader:
 
         The *tree* and *retval* parameters are for recursive use.
 
-        :param fileobj: A file object (usually a text file) to write
+        Args:
+          tree:
+          retval:
+          fileobj: A file object (usually a text file) to write
             a report to on all interactive form fields found.
-        :return: A dictionary where each key is a field name, and each
-            value is a :class:`Field<pypdf.generic.Field>` object. By
-            default, the mapping name is used for keys.
-            ``None`` if form data could not be located.
+
+        Returns:
+          A dictionary where each key is a field name, and each
+          value is a :class:`Field<pypdf.generic.Field>` object. By
+          default, the mapping name is used for keys.
+          ``None`` if form data could not be located.
+
         """
         field_attributes = FieldDictionaryAttributes.attributes_dict()
         field_attributes.update(CheckboxRadioButtonAttributes.attributes_dict())
@@ -564,7 +576,7 @@ class PdfReader:
         tree: Optional[TreeObject] = None,
         retval: Optional[Dict[Any, Any]] = None,
         fileobj: Optional[Any] = None,
-    ) -> Optional[Dict[str, Any]]:  # pragma: no cover
+    ) -> Optional[Dict[str, Any]]:  # deprecated
         """
         .. deprecated:: 1.28.0
 
@@ -572,6 +584,20 @@ class PdfReader:
         """
         deprecation_with_replacement("getFields", "get_fields", "3.0.0")
         return self.get_fields(tree, retval, fileobj)
+
+    def _get_qualified_field_name(self, parent: DictionaryObject) -> str:
+        if "/TM" in parent:
+            return cast(str, parent["/TM"])
+        elif "/Parent" in parent:
+            return (
+                self._get_qualified_field_name(
+                    cast(DictionaryObject, parent["/Parent"])
+                )
+                + "."
+                + cast(str, parent["/T"])
+            )
+        else:
+            return cast(str, parent["/T"])
 
     def _build_field(
         self,
@@ -582,10 +608,19 @@ class PdfReader:
     ) -> None:
         self._check_kids(field, retval, fileobj)
         try:
-            key = field["/TM"]
+            key = cast(str, field["/TM"])
         except KeyError:
             try:
-                key = field["/T"]
+                if "/Parent" in field:
+                    key = (
+                        self._get_qualified_field_name(
+                            cast(DictionaryObject, field["/Parent"])
+                        )
+                        + "."
+                    )
+                else:
+                    key = ""
+                key += cast(str, field["/T"])
             except KeyError:
                 # Ignore no-name field for now
                 return
@@ -625,21 +660,21 @@ class PdfReader:
                         "/Sig": "Signature",
                     }
                     if field[attr] in types:
-                        fileobj.write(attr_name + ": " + types[field[attr]] + "\n")
+                        fileobj.write(f"{attr_name}: {types[field[attr]]}\n")
                 elif attr == FieldDictionaryAttributes.Parent:
                     # Let's just write the name of the parent
                     try:
                         name = field[attr][FieldDictionaryAttributes.TM]
                     except KeyError:
                         name = field[attr][FieldDictionaryAttributes.T]
-                    fileobj.write(attr_name + ": " + name + "\n")
+                    fileobj.write(f"{attr_name}: {name}\n")
                 else:
-                    fileobj.write(attr_name + ": " + str(field[attr]) + "\n")
+                    fileobj.write(f"{attr_name}: {field[attr]}\n")
             except KeyError:
                 # Field attribute is N/A or unknown, so don't write anything
                 pass
 
-    def get_form_text_fields(self) -> Dict[str, Any]:
+    def get_form_text_fields(self, full_qualified_name: bool = False) -> Dict[str, Any]:
         """
         Retrieve form fields from the document with textual data.
 
@@ -647,19 +682,42 @@ class PdfReader:
         field.
 
         If the document contains multiple form fields with the same name, the
-        second and following will get the suffix _2, _3, ...
+        second and following will get the suffix .2, .3, ...
+
+        full_qualified_name should be used to get full name
         """
+
+        def indexed_key(k: str, fields: dict) -> str:
+            if k not in fields:
+                return k
+            else:
+                return (
+                    k
+                    + "."
+                    + str(sum([1 for kk in fields if kk.startswith(k + ".")]) + 2)
+                )
+
         # Retrieve document form fields
         formfields = self.get_fields()
         if formfields is None:
             return {}
-        return {
-            formfields[field]["/T"]: formfields[field].get("/V")
+        ff = {}
+        for field, value in formfields.items():
+            if value.get("/FT") == "/Tx":
+                if full_qualified_name:
+                    ff[field] = value.get("/V")
+                else:
+                    ff[indexed_key(cast(str, value["/T"]), ff)] = value.get("/V")
+        return ff
+        """return {
+            (field if full_qualified_name else formfields[field]["/T"]): formfields[
+                field
+            ].get("/V")
             for field in formfields
             if formfields[field].get("/FT") == "/Tx"
-        }
+        }"""
 
-    def getFormTextFields(self) -> Dict[str, Any]:  # pragma: no cover
+    def getFormTextFields(self) -> Dict[str, Any]:  # deprecated
         """
         .. deprecated:: 1.28.0
 
@@ -678,7 +736,12 @@ class PdfReader:
         """
         Retrieve the named destinations present in the document.
 
-        :return: a dictionary which maps names to
+        Args:
+          tree:
+          retval:
+
+        Returns:
+          A dictionary which maps names to
             :class:`Destinations<pypdf.generic.Destination>`.
         """
         if retval is None:
@@ -723,7 +786,7 @@ class PdfReader:
         self,
         tree: Union[TreeObject, None] = None,
         retval: Optional[Any] = None,
-    ) -> Dict[str, Any]:  # pragma: no cover
+    ) -> Dict[str, Any]:  # deprecated
         """
         .. deprecated:: 1.28.0
 
@@ -739,13 +802,11 @@ class PdfReader:
         """
         Read-only property for the outline (i.e., a collection of 'outline items'
         which are also known as 'bookmarks') present in the document.
-
-        :return: a nested list of :class:`Destinations<pypdf.generic.Destination>`.
         """
         return self._get_outline()
 
     @property
-    def outlines(self) -> OutlineType:  # pragma: no cover
+    def outlines(self) -> OutlineType:  # deprecated
         """
         .. deprecated:: 2.9.0
 
@@ -797,7 +858,7 @@ class PdfReader:
 
     def getOutlines(
         self, node: Optional[DictionaryObject] = None, outline: Optional[Any] = None
-    ) -> OutlineType:  # pragma: no cover
+    ) -> OutlineType:  # deprecated
         """
         .. deprecated:: 1.28.0
 
@@ -809,10 +870,9 @@ class PdfReader:
     @property
     def threads(self) -> Optional[ArrayObject]:
         """
-        Read-only property for the list of threads see §8.3.2 from PDF 1.7 spec
-
-        :return: an Array of Dictionnaries with "/F" and "/I" properties
-                 or None if no articles.
+        Read-only property for the list of threads see §8.3.2 from PDF 1.7 spec.
+        It's an array of dictionaries with "/F" and "/I" properties
+        or None if there are no articles.
         """
         catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
         if CO.THREADS in catalog:
@@ -823,7 +883,14 @@ class PdfReader:
     def _get_page_number_by_indirect(
         self, indirect_reference: Union[None, int, NullObject, IndirectObject]
     ) -> int:
-        """Generate _page_id2num"""
+        """Generate _page_id2num
+
+        Args:
+          indirect_reference:
+
+        Returns:
+          The page number.
+        """
         if self._page_id2num is None:
             self._page_id2num = {
                 x.indirect_reference.idnum: i for i, x in enumerate(self.pages)  # type: ignore
@@ -843,13 +910,16 @@ class PdfReader:
         """
         Retrieve page number of a given PageObject
 
-        :param PageObject page: The page to get page number. Should be
+        Args:
+          page: The page to get page number. Should be
             an instance of :class:`PageObject<pypdf._page.PageObject>`
-        :return: the page number or -1 if page not found
+
+        Returns:
+          The page number or -1 if page is not found
         """
         return self._get_page_number_by_indirect(page.indirect_reference)
 
-    def getPageNumber(self, page: PageObject) -> int:  # pragma: no cover
+    def getPageNumber(self, page: PageObject) -> int:  # deprecated
         """
         .. deprecated:: 1.28.0
 
@@ -862,14 +932,15 @@ class PdfReader:
         """
         Retrieve page number of a given Destination object.
 
-        :param Destination destination: The destination to get page number.
-        :return: the page number or -1 if page not found
+        Args:
+          destination: The destination to get page number.
+
+        Returns:
+          The page number or -1 if page is not found
         """
         return self._get_page_number_by_indirect(destination.page)
 
-    def getDestinationPageNumber(
-        self, destination: Destination
-    ) -> int:  # pragma: no cover
+    def getDestinationPageNumber(self, destination: Destination) -> int:  # deprecated
         """
         .. deprecated:: 1.28.0
 
@@ -986,11 +1057,19 @@ class PdfReader:
         return _VirtualList(self._get_num_pages, self._get_page)  # type: ignore
 
     @property
+    def page_labels(self) -> List[str]:
+        """
+        A list of labels for the pages in this document.
+
+        This property is read-only. The labels are in the order
+        that the pages appear in the document.
+        """
+        return [page_index2page_label(self, i) for i in range(len(self.pages))]
+
+    @property
     def page_layout(self) -> Optional[str]:
         """
-        Get the page layout.
-
-        :return: Page layout currently being used.
+        Get the page layout currently being used.
 
         .. list-table:: Valid ``layout`` values
            :widths: 50 200
@@ -1015,7 +1094,7 @@ class PdfReader:
             return cast(NameObject, trailer[CD.PAGE_LAYOUT])
         return None
 
-    def getPageLayout(self) -> Optional[str]:  # pragma: no cover
+    def getPageLayout(self) -> Optional[str]:  # deprecated
         """
         .. deprecated:: 1.28.0
 
@@ -1025,7 +1104,7 @@ class PdfReader:
         return self.page_layout
 
     @property
-    def pageLayout(self) -> Optional[str]:  # pragma: no cover
+    def pageLayout(self) -> Optional[str]:  # deprecated
         """
         .. deprecated:: 1.28.0
 
@@ -1037,9 +1116,7 @@ class PdfReader:
     @property
     def page_mode(self) -> Optional[PagemodeType]:
         """
-        Get the page mode.
-
-        :return: Page mode currently being used.
+        Get the page mode currently being used.
 
         .. list-table:: Valid ``mode`` values
            :widths: 50 200
@@ -1062,7 +1139,7 @@ class PdfReader:
         except KeyError:
             return None
 
-    def getPageMode(self) -> Optional[PagemodeType]:  # pragma: no cover
+    def getPageMode(self) -> Optional[PagemodeType]:  # deprecated
         """
         .. deprecated:: 1.28.0
 
@@ -1072,7 +1149,7 @@ class PdfReader:
         return self.page_mode
 
     @property
-    def pageMode(self) -> Optional[PagemodeType]:  # pragma: no cover
+    def pageMode(self) -> Optional[PagemodeType]:  # deprecated
         """
         .. deprecated:: 1.28.0
 
@@ -1183,8 +1260,15 @@ class PdfReader:
 
     def _get_indirect_object(self, num: int, gen: int) -> Optional[PdfObject]:
         """
-        used to ease development
-        equivalent to generic.IndirectObject(num,gen,self).get_object()
+        Used to ease development.
+        This is equivalent to generic.IndirectObject(num,gen,self).get_object()
+
+        Args:
+          num:
+          gen:
+
+        Returns:
+          A PdfObject
         """
         return IndirectObject(num, gen, self).get_object()
 
@@ -1320,7 +1404,7 @@ class PdfReader:
 
     def getObject(
         self, indirectReference: IndirectObject
-    ) -> Optional[PdfObject]:  # pragma: no cover
+    ) -> Optional[PdfObject]:  # deprecated
         """
         .. deprecated:: 1.28.0
 
@@ -1357,9 +1441,7 @@ class PdfReader:
             )
         return int(idnum), int(generation)
 
-    def readObjectHeader(
-        self, stream: StreamType
-    ) -> Tuple[int, int]:  # pragma: no cover
+    def readObjectHeader(self, stream: StreamType) -> Tuple[int, int]:  # deprecated
         """
         .. deprecated:: 1.28.0
 
@@ -1375,7 +1457,7 @@ class PdfReader:
 
     def cacheGetIndirectObject(
         self, generation: int, idnum: int
-    ) -> Optional[PdfObject]:  # pragma: no cover
+    ) -> Optional[PdfObject]:  # deprecated
         """
         .. deprecated:: 1.28.0
 
@@ -1401,7 +1483,7 @@ class PdfReader:
 
     def cacheIndirectObject(
         self, generation: int, idnum: int, obj: Optional[PdfObject]
-    ) -> Optional[PdfObject]:  # pragma: no cover
+    ) -> Optional[PdfObject]:  # deprecated
         """
         .. deprecated:: 1.28.0
 
@@ -1472,7 +1554,15 @@ class PdfReader:
             line = read_previous_line(stream)
 
     def _find_startxref_pos(self, stream: StreamType) -> int:
-        """Find startxref entry - the location of the xref table"""
+        """
+        Find startxref entry - the location of the xref table.
+
+        Args:
+          stream:
+
+        Returns:
+          The bytes offset
+        """
         line = read_previous_line(stream)
         try:
             startxref = int(line)
@@ -1754,7 +1844,16 @@ class PdfReader:
 
     @staticmethod
     def _get_xref_issues(stream: StreamType, startxref: int) -> int:
-        """Return an int which indicates an issue. 0 means there is no issue."""
+        """
+        Return an int which indicates an issue. 0 means there is no issue.
+
+        Args:
+          stream:
+          startxref:
+
+        Returns:
+          0 means no issue, other values represent specific issues.
+        """
         stream.seek(startxref - 1, 0)  # -1 to check character before
         line = stream.read(1)
         if line not in b"\r\n \t":
@@ -1843,7 +1942,7 @@ class PdfReader:
 
     def read_next_end_line(
         self, stream: StreamType, limit_offset: int = 0
-    ) -> bytes:  # pragma: no cover
+    ) -> bytes:  # deprecated
         """.. deprecated:: 2.1.0"""
         deprecate_no_replacement("read_next_end_line", removed_in="4.0.0")
         line_parts = []
@@ -1876,7 +1975,7 @@ class PdfReader:
 
     def readNextEndLine(
         self, stream: StreamType, limit_offset: int = 0
-    ) -> bytes:  # pragma: no cover
+    ) -> bytes:  # deprecated
         """.. deprecated:: 1.28.0"""
         deprecation_no_replacement("readNextEndLine", "3.0.0")
         return self.read_next_end_line(stream, limit_offset)
@@ -1893,8 +1992,11 @@ class PdfReader:
         the correct decryption key that will allow the document to be used with
         this library.
 
-        :param str password: The password to match.
-        :return: `PasswordType`.
+        Args:
+          password: The password to match.
+
+        Returns:
+          A `PasswordType`.
         """
         if not self._encryption:
             raise PdfReadError("Not encrypted file")
@@ -1925,7 +2027,7 @@ class PdfReader:
         """
         return TK.ENCRYPT in self.trailer
 
-    def getIsEncrypted(self) -> bool:  # pragma: no cover
+    def getIsEncrypted(self) -> bool:  # deprecated
         """
         .. deprecated:: 1.28.0
 
@@ -1935,7 +2037,7 @@ class PdfReader:
         return self.is_encrypted
 
     @property
-    def isEncrypted(self) -> bool:  # pragma: no cover
+    def isEncrypted(self) -> bool:  # deprecated
         """
         .. deprecated:: 1.28.0
 
@@ -1969,7 +2071,7 @@ class PdfReader:
         return retval
 
 
-class PdfFileReader(PdfReader):  # pragma: no cover
+class PdfFileReader(PdfReader):  # deprecated
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         deprecation_with_replacement("PdfFileReader", "PdfReader", "3.0.0")
         if "strict" not in kwargs and len(args) < 2:

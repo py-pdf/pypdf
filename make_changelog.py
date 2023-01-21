@@ -38,23 +38,27 @@ def main(changelog_path: str):
 
 
 def version_bump(git_tag: str) -> str:
+    """Increase the patch version of the git tag by one."""
     # just assume a patch version change
     major, minor, patch = git_tag.split(".")
     return f"{major}.{minor}.{int(patch) + 1}"
 
 
 def get_changelog(changelog_path: str) -> str:
+    """Read the changelog."""
     with open(changelog_path) as fh:
         changelog = fh.read()
     return changelog
 
 
 def write_changelog(new_changelog: str, changelog_path: str) -> None:
+    """Write the changelog."""
     with open(changelog_path, "w") as fh:
         fh.write(new_changelog)
 
 
 def get_formatted_changes(git_tag: str) -> str:
+    """Format the changes done since the last tag."""
     commits = get_git_commits_since_tag(git_tag)
 
     # Group by prefix
@@ -100,6 +104,7 @@ def get_formatted_changes(git_tag: str) -> str:
 
 
 def get_most_recent_git_tag():
+    """Get the git tag most recently created."""
     git_tag = str(
         subprocess.check_output(
             ["git", "describe", "--abbrev=0"], stderr=subprocess.STDOUT
@@ -109,6 +114,7 @@ def get_most_recent_git_tag():
 
 
 def get_git_commits_since_tag(git_tag) -> List[Change]:
+    """Get all commits since the last tag."""
     commits = str(
         subprocess.check_output(
             [
@@ -125,6 +131,7 @@ def get_git_commits_since_tag(git_tag) -> List[Change]:
 
 
 def parse_commit_line(line) -> Change:
+    """Parse the first line of a git commit message."""
     if "\\t" not in line:
         raise ValueError(f"Invalid commit line: {line}")
     commit_hash, rest = line.split("\\t", 1)

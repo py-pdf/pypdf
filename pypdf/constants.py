@@ -424,12 +424,20 @@ class CatalogDictionary:
 
 
 class OutlineFontFlag(IntFlag):
-    """
-    A class used as an enumerable flag for formatting an outline font
-    """
+    """A class used as an enumerable flag for formatting an outline font"""
 
     italic = 1
     bold = 2
+
+
+class PageLabelStyle:
+    """Table 8.10 in the 1.7 reference."""
+
+    DECIMAL = "/D"  # Decimal arabics
+    LOWERCASE_ROMAN = "/r"  # Lowercase roman numbers
+    UPPERCASE_ROMAN = "/R"  # Uppercase roman numbers
+    LOWERCASE_LETTER = "/a"  # Lowercase letters
+    UPPERCASE_LETTER = "/A"  # Uppercase letters
 
 
 PDF_KEYS = (

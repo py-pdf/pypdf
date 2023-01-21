@@ -80,6 +80,14 @@ class PdfObject(PdfObjectProtocol):
                          the copy is returned; when force_duplicate == True, a new copy is always performed
         ignore_fields : list/tuple of Fields names (for dictionaries that will be ignored during cloning (apply also to childs duplication)
         in standard, clone function call _reference_clone (see _reference)
+
+        Args:
+          pdf_dest:
+          force_duplicate:  (Default value = False)
+          ignore_fields:
+
+        Returns:
+          The cloned PdfObject
         """
         raise Exception("clone PdfObject")
 
@@ -91,6 +99,13 @@ class PdfObject(PdfObjectProtocol):
         indirect_reference attribute exists (which means the objects
         was already identified in xref/xobjstm)
         if object has been already referenced do nothing
+
+        Args:
+          clone:
+          pdf_dest:
+
+        Returns:
+          The clone
         """
         try:
             if clone.indirect_reference.pdf == pdf_dest:
@@ -118,7 +133,7 @@ class PdfObject(PdfObjectProtocol):
         """Resolve indirect references."""
         return self
 
-    def getObject(self) -> Optional["PdfObject"]:  # pragma: no cover
+    def getObject(self) -> Optional["PdfObject"]:  # deprecated
         deprecation_with_replacement("getObject", "get_object", "3.0.0")
         return self.get_object()
 
@@ -152,7 +167,7 @@ class NullObject(PdfObject):
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # pragma: no cover
+    ) -> None:  # deprecated
         deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
         self.write_to_stream(stream, encryption_key)
 
@@ -160,7 +175,7 @@ class NullObject(PdfObject):
         return "NullObject"
 
     @staticmethod
-    def readFromStream(stream: StreamType) -> "NullObject":  # pragma: no cover
+    def readFromStream(stream: StreamType) -> "NullObject":  # deprecated
         deprecation_with_replacement("readFromStream", "read_from_stream", "3.0.0")
         return NullObject.read_from_stream(stream)
 
@@ -201,7 +216,7 @@ class BooleanObject(PdfObject):
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # pragma: no cover
+    ) -> None:  # deprecated
         deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
         self.write_to_stream(stream, encryption_key)
 
@@ -217,7 +232,7 @@ class BooleanObject(PdfObject):
             raise PdfReadError("Could not read Boolean object")
 
     @staticmethod
-    def readFromStream(stream: StreamType) -> "BooleanObject":  # pragma: no cover
+    def readFromStream(stream: StreamType) -> "BooleanObject":  # deprecated
         deprecation_with_replacement("readFromStream", "read_from_stream", "3.0.0")
         return BooleanObject.read_from_stream(stream)
 
@@ -283,7 +298,7 @@ class IndirectObject(PdfObject):
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # pragma: no cover
+    ) -> None:  # deprecated
         deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
         self.write_to_stream(stream, encryption_key)
 
@@ -317,7 +332,7 @@ class IndirectObject(PdfObject):
     @staticmethod
     def readFromStream(
         stream: StreamType, pdf: Any  # PdfReader
-    ) -> "IndirectObject":  # pragma: no cover
+    ) -> "IndirectObject":  # deprecated
         deprecation_with_replacement("readFromStream", "read_from_stream", "3.0.0")
         return IndirectObject.read_from_stream(stream, pdf)
 
@@ -362,7 +377,7 @@ class FloatObject(decimal.Decimal, PdfObject):
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # pragma: no cover
+    ) -> None:  # deprecated
         deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
         self.write_to_stream(stream, encryption_key)
 
@@ -396,7 +411,7 @@ class NumberObject(int, PdfObject):
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # pragma: no cover
+    ) -> None:  # deprecated
         deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
         self.write_to_stream(stream, encryption_key)
 
@@ -410,7 +425,7 @@ class NumberObject(int, PdfObject):
     @staticmethod
     def readFromStream(
         stream: StreamType,
-    ) -> Union["NumberObject", "FloatObject"]:  # pragma: no cover
+    ) -> Union["NumberObject", "FloatObject"]:  # deprecated
         deprecation_with_replacement("readFromStream", "read_from_stream", "3.0.0")
         return NumberObject.read_from_stream(stream)
 
@@ -454,7 +469,7 @@ class ByteStringObject(bytes, PdfObject):
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # pragma: no cover
+    ) -> None:  # deprecated
         deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
         self.write_to_stream(stream, encryption_key)
 
@@ -536,7 +551,7 @@ class TextStringObject(str, PdfObject):
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # pragma: no cover
+    ) -> None:  # deprecated
         deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
         self.write_to_stream(stream, encryption_key)
 
@@ -568,7 +583,7 @@ class NameObject(str, PdfObject):
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # pragma: no cover
+    ) -> None:  # deprecated
         deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
         self.write_to_stream(stream, encryption_key)
 
@@ -605,7 +620,7 @@ class NameObject(str, PdfObject):
         name = stream.read(1)
         if name != NameObject.surfix:
             raise PdfReadError("name read error")
-        name += read_until_regex(stream, NameObject.delimiter_pattern, ignore_eof=True)
+        name += read_until_regex(stream, NameObject.delimiter_pattern)
         try:
             # Name objects should represent irregular characters
             # with a '#' followed by the symbol's hex number
@@ -631,7 +646,7 @@ class NameObject(str, PdfObject):
     @staticmethod
     def readFromStream(
         stream: StreamType, pdf: Any  # PdfReader
-    ) -> "NameObject":  # pragma: no cover
+    ) -> "NameObject":  # deprecated
         deprecation_with_replacement("readFromStream", "read_from_stream", "3.0.0")
         return NameObject.read_from_stream(stream, pdf)
 

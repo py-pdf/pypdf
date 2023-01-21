@@ -95,11 +95,12 @@ class PdfMerger:
     See the functions :meth:`merge()<merge>` (or :meth:`append()<append>`)
     and :meth:`write()<write>` for usage information.
 
-    :param bool strict: Determines whether user should be warned of all
-            problems and also causes some correctable problems to be fatal.
-            Defaults to ``False``.
-    :param fileobj: Output file. Can be a filename or any kind of
-            file-like object.
+    Args:
+      strict: Determines whether user should be warned of all
+         problems and also causes some correctable problems to be fatal.
+         Defaults to ``False``.
+      fileobj: Output file. Can be a filename or any kind of
+         file-like object.
     """
 
     @deprecation_bookmark(bookmarks="outline")
@@ -134,7 +135,7 @@ class PdfMerger:
     def merge(
         self,
         page_number: Optional[int] = None,
-        fileobj: Union[Path, StrByteType, PdfReader] = None,
+        fileobj: Union[None, Path, StrByteType, PdfReader] = None,
         outline_item: Optional[str] = None,
         pages: Optional[PageRangeSpec] = None,
         import_outline: bool = True,
@@ -144,24 +145,22 @@ class PdfMerger:
         Merge the pages from the given file into the output file at the
         specified page number.
 
-        :param int page_number: The *page number* to insert this file. File will
+        Args:
+          page_number: The *page number* to insert this file. File will
             be inserted after the given number.
-
-        :param fileobj: A File Object or an object that supports the standard
+          fileobj: A File Object or an object that supports the standard
             read and seek methods similar to a File Object. Could also be a
             string representing a path to a PDF file.
-
-        :param str outline_item: Optionally, you may specify an outline item
+            None as an argument is deprecated.
+          outline_item: Optionally, you may specify an outline item
             (previously referred to as a 'bookmark') to be applied at the
             beginning of the included file by supplying the text of the outline item.
-
-        :param pages: can be a :class:`PageRange<pypdf.pagerange.PageRange>`
+          pages: can be a :class:`PageRange<pypdf.pagerange.PageRange>`
             or a ``(start, stop[, step])`` tuple
             to merge only the specified range of pages from the source
             document into the output document.
             Can also be a list of pages to merge.
-
-        :param bool import_outline: You may prevent the source document's
+         import_outline: You may prevent the source document's
             outline (collection of outline items, previously referred to as
             'bookmarks') from being imported by specifying this as ``False``.
         """
@@ -298,21 +297,19 @@ class PdfMerger:
         concatenate all pages onto the end of the file instead of specifying a
         position.
 
-        :param fileobj: A File Object or an object that supports the standard
+        Args:
+          fileobj: A File Object or an object that supports the standard
             read and seek methods similar to a File Object. Could also be a
             string representing a path to a PDF file.
-
-        :param str outline_item: Optionally, you may specify an outline item
+          outline_item: Optionally, you may specify an outline item
             (previously referred to as a 'bookmark') to be applied at the
             beginning of the included file by supplying the text of the outline item.
-
-        :param pages: can be a :class:`PageRange<pypdf.pagerange.PageRange>`
+          pages: can be a :class:`PageRange<pypdf.pagerange.PageRange>`
             or a ``(start, stop[, step])`` tuple
             to merge only the specified range of pages from the source
             document into the output document.
             Can also be a list of pages to append.
-
-        :param bool import_outline: You may prevent the source document's
+          import_outline: You may prevent the source document's
             outline (collection of outline items, previously referred to as
             'bookmarks') from being imported by specifying this as ``False``.
         """
@@ -322,7 +319,8 @@ class PdfMerger:
         """
         Write all data that has been merged to the given output file.
 
-        :param fileobj: Output file. Can be a filename or any kind of
+        Args:
+          fileobj: Output file. Can be a filename or any kind of
             file-like object.
         """
         if self.output is None:
@@ -363,15 +361,16 @@ class PdfMerger:
         """
         Add custom metadata to the output.
 
-        :param dict infos: a Python dictionary where each key is a field
+        Args:
+          infos: a Python dictionary where each key is a field
             and each value is your new metadata.
-            Example: ``{u'/Title': u'My title'}``
+            An example is ``{'/Title': 'My title'}``
         """
         if self.output is None:
             raise RuntimeError(ERR_CLOSED_WRITER)
         self.output.add_metadata(infos)
 
-    def addMetadata(self, infos: Dict[str, Any]) -> None:  # pragma: no cover
+    def addMetadata(self, infos: Dict[str, Any]) -> None:  # deprecated
         """
         .. deprecated:: 1.28.0
 
@@ -380,7 +379,7 @@ class PdfMerger:
         deprecation_with_replacement("addMetadata", "add_metadata")
         self.add_metadata(infos)
 
-    def setPageLayout(self, layout: LayoutType) -> None:  # pragma: no cover
+    def setPageLayout(self, layout: LayoutType) -> None:  # deprecated
         """
         .. deprecated:: 1.28.0
 
@@ -393,7 +392,8 @@ class PdfMerger:
         """
         Set the page layout.
 
-        :param str layout: The page layout to be used
+        Args:
+          layout: The page layout to be used
 
         .. list-table:: Valid ``layout`` arguments
            :widths: 50 200
@@ -417,7 +417,7 @@ class PdfMerger:
             raise RuntimeError(ERR_CLOSED_WRITER)
         self.output._set_page_layout(layout)
 
-    def setPageMode(self, mode: PagemodeType) -> None:  # pragma: no cover
+    def setPageMode(self, mode: PagemodeType) -> None:  # deprecated
         """
         .. deprecated:: 1.28.0
 
@@ -430,7 +430,8 @@ class PdfMerger:
         """
         Set the page mode.
 
-        :param str mode: The page mode to use.
+        Args:
+          mode: The page mode to use.
 
         .. list-table:: Valid ``mode`` arguments
            :widths: 50 200
@@ -458,7 +459,14 @@ class PdfMerger:
         dests: Dict[str, Dict[str, Any]],
         pages: Union[Tuple[int, int], Tuple[int, int, int], List[int]],
     ) -> List[Dict[str, Any]]:
-        """Remove named destinations that are not a part of the specified page set."""
+        """
+        Remove named destinations that are not a part of the specified page set.
+
+        Args:
+            pdf:
+            dests:
+            pages:
+        """
         new_dests = []
         lst = pages if isinstance(pages, list) else list(range(*pages))
         for key, obj in dests.items():
@@ -476,7 +484,17 @@ class PdfMerger:
         outline: OutlineType,
         pages: Union[Tuple[int, int], Tuple[int, int, int], List[int]],
     ) -> OutlineType:
-        """Remove outline item entries that are not a part of the specified page set."""
+        """
+        Remove outline item entries that are not a part of the specified page set.
+
+        Args:
+          pdf:
+          outline:
+          pages:
+
+        Returns:
+          An outline type
+        """
         new_outline = []
         prev_header_added = True
         lst = pages if isinstance(pages, list) else list(range(*pages))
@@ -651,7 +669,7 @@ class PdfMerger:
         self,
         outline_item: Dict[str, Any],
         root: Optional[OutlineType] = None,
-    ) -> Optional[List[int]]:  # pragma: no cover
+    ) -> Optional[List[int]]:  # deprecated
         """
         .. deprecated:: 2.9.0
             Use :meth:`find_outline_item` instead.
@@ -672,15 +690,16 @@ class PdfMerger:
         """
         Add an outline item (commonly referred to as a "Bookmark") to this PDF file.
 
-        :param str title: Title to use for this outline item.
-        :param int page_number: Page number this outline item will point to.
-        :param parent: A reference to a parent outline item to create nested
+        Args:
+          title: Title to use for this outline item.
+          page_number: Page number this outline item will point to.
+          parent: A reference to a parent outline item to create nested
             outline items.
-        :param tuple color: Color of the outline item's font as a red, green, blue tuple
+          color: Color of the outline item's font as a red, green, blue tuple
             from 0.0 to 1.0
-        :param bool bold: Outline item font is bold
-        :param bool italic: Outline item font is italic
-        :param Fit fit: The fit of the destination page.
+          bold: Outline item font is bold
+          italic: Outline item font is italic
+          fit: The fit of the destination page.
         """
         if page_number is not None and pagenum is not None:
             raise ValueError(
@@ -723,7 +742,7 @@ class PdfMerger:
         italic: bool = False,
         fit: FitType = "/Fit",
         *args: ZoomArgType,
-    ) -> IndirectObject:  # pragma: no cover
+    ) -> IndirectObject:  # deprecated
         """
         .. deprecated:: 1.28.0
             Use :meth:`add_outline_item` instead.
@@ -749,7 +768,7 @@ class PdfMerger:
         italic: bool = False,
         fit: FitType = "/Fit",
         *args: ZoomArgType,
-    ) -> IndirectObject:  # pragma: no cover
+    ) -> IndirectObject:  # deprecated
         """
         .. deprecated:: 2.9.0
             Use :meth:`add_outline_item` instead.
@@ -765,7 +784,7 @@ class PdfMerger:
             Fit(fit_type=fit, fit_args=args),
         )
 
-    def addNamedDestination(self, title: str, pagenum: int) -> None:  # pragma: no cover
+    def addNamedDestination(self, title: str, pagenum: int) -> None:  # deprecated
         """
         .. deprecated:: 1.28.0
             Use :meth:`add_named_destination` instead.
@@ -784,8 +803,9 @@ class PdfMerger:
         """
         Add a destination to the output.
 
-        :param str title: Title to use
-        :param int page_number: Page number this destination points at.
+        Args:
+          title: Title to use
+          page_number: Page number this destination points at.
         """
         if page_number is not None and pagenum is not None:
             raise ValueError(
@@ -812,7 +832,7 @@ class PdfMerger:
         self.named_dests.append(dest)
 
 
-class PdfFileMerger(PdfMerger):  # pragma: no cover
+class PdfFileMerger(PdfMerger):  # deprecated
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         deprecation_with_replacement("PdfFileMerger", "PdfMerger", "3.0.0")
 
