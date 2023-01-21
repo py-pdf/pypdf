@@ -576,15 +576,25 @@ class PageObject(DictionaryObject):
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         new_res = DictionaryObject()
         new_res.update(res1.get(resource, DictionaryObject()).get_object())
+
+        def compute_unique_key(base_key: str) -> Tuple[str, bool]:
+            computed_key = base_key + str(uuid.uuid4())
+            return computed_key, False
+
         page2res = cast(
             DictionaryObject, res2.get(resource, DictionaryObject()).get_object()
         )
         rename_res = {}
-        for key in list(page2res.keys()):
+        for key in sorted(page2res.keys()):
             if key in new_res and new_res.raw_get(key) != page2res.raw_get(key):
-                newname = NameObject(key + str(uuid.uuid4()))
-                rename_res[key] = newname
-                new_res[newname] = page2res[key]
+                unique_key, same_value = compute_unique_key(key)
+                newname = NameObject(unique_key)
+                if key != unique_key:
+                    # we have to use a different name for this
+                    rename_res[key] = newname
+                if not same_value:
+                    # the value wasn't already recorded
+                    new_res[newname] = page2res[key]
             elif key not in new_res:
                 new_res[key] = page2res.raw_get(key)
         return new_res, rename_res
