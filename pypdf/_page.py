@@ -837,6 +837,35 @@ class PageObject(DictionaryObject):
         self.mediabox.lower_left = lowerleft
         self.mediabox.upper_right = upperright
 
+    def merge_transformed_page(
+        self,
+        page2: "PageObject",
+        ctm: Union[CompressedTransformationMatrix, Transformation],
+        expand: bool = False,
+    ) -> None:
+        """
+        merge_transformed_page is similar to merge_page, but a transformation
+        matrix is applied to the merged stream.
+
+        Args:
+          page2: The page to be merged into this one.
+          ctm: a 6-element tuple containing the operands of the
+                 transformation matrix
+          expand: Whether the page should be expanded to fit the dimensions
+            of the page to be merged.
+        """
+        if isinstance(ctm, Transformation):
+            ctm = ctm.ctm
+        self._merge_page(
+            page2,
+            lambda page2Content: PageObject._add_transformation_matrix(
+                page2Content, page2.pdf, cast(CompressedTransformationMatrix, ctm)
+            ),
+            ctm,
+            expand,
+        )
+        self
+
     def mergeTransformedPage(
         self,
         page2: "PageObject",
@@ -844,74 +873,73 @@ class PageObject(DictionaryObject):
         expand: bool = False,
     ) -> None:  # deprecated
         """
-        mergeTransformedPage is similar to merge_page, but a transformation
-        matrix is applied to the merged stream.
+        deprecated
 
-        :param PageObject page2: The page to be merged into this one. Should be
-            an instance of :class:`PageObject<PageObject>`.
-        :param tuple ctm: a 6-element tuple containing the operands of the
-            transformation matrix
-        :param bool expand: Whether the page should be expanded to fit the dimensions
-            of the page to be merged.
+        deprecated:: 1.28.0
 
-        .. deprecated:: 1.28.0
-
-            Use :meth:`add_transformation`  and :meth:`merge_page` instead.
+            Use :meth:`merge_transformed_page`  instead.
         """
         deprecation_with_replacement(
-            "page.mergeTransformedPage(page2, ctm)",
-            "page2.add_transformation(ctm); page.merge_page(page2)",
+            "page.mergeTransformedPage(page2, ctm,expand)",
+            "page.merge_transformed_page(page2,ctm,expand)",
             "3.0.0",
         )
-        if isinstance(ctm, Transformation):
-            ctm = ctm.ctm
-        ctm = cast(CompressedTransformationMatrix, ctm)
-        self._merge_page(
-            page2,
-            lambda page2Content: PageObject._add_transformation_matrix(
-                page2Content, page2.pdf, ctm  # type: ignore[arg-type]
-            ),
-            ctm,
-            expand,
-        )
+        self.merge_transformed_page(page2, ctm, expand)
+
+    def merge_scaled_page(
+        self, page2: "PageObject", scale: float, expand: bool = False
+    ) -> None:
+        """
+        merge_scaled_page is similar to merge_page, but the stream to be merged
+        is scaled by applying a transformation matrix.
+
+        Args:
+          page2: The page to be merged into this one.
+          scale: The scaling factor
+          expand: Whether the page should be expanded to fit the
+            dimensions of the page to be merged.
+        """
+        op = Transformation().scale(scale, scale)
+        self.merge_transformed_page(page2, op, expand)
 
     def mergeScaledPage(
         self, page2: "PageObject", scale: float, expand: bool = False
     ) -> None:  # deprecated
         """
-        mergeScaledPage is similar to merge_page, but the stream to be merged
-        is scaled by applying a transformation matrix.
-
-        :param PageObject page2: The page to be merged into this one. Should be
-            an instance of :class:`PageObject<PageObject>`.
-        :param float scale: The scaling factor
-        :param bool expand: Whether the page should be expanded to fit the
-            dimensions of the page to be merged.
+        deprecated
 
         .. deprecated:: 1.28.0
 
-            Use :meth:`add_transformation` and :meth:`merge_page` instead.
+            Use :meth:`merge_scaled_page` instead.
         """
         deprecation_with_replacement(
             "page.mergeScaledPage(page2, scale, expand)",
-            "page2.add_transformation(Transformation().scale(scale)); page.merge_page(page2, expand)",
+            "page2.merge_scaled_page(page2, scale, expand)",
             "3.0.0",
         )
-        op = Transformation().scale(scale, scale)
-        self.mergeTransformedPage(page2, op, expand)
+        self.merge_scaled_page(page2, scale, expand)
+
+    def merge_rotated_page(
+        self, page2: "PageObject", rotation: float, expand: bool = False
+    ) -> None:
+        """
+        merge_rotated_page is similar to merge_page, but the stream to be merged
+        is rotated by applying a transformation matrix.
+
+        Args:
+          page2: The page to be merged into this one.
+          rotation: The angle of the rotation, in degrees
+          expand: Whether the page should be expanded to fit the
+            dimensions of the page to be merged.
+        """
+        op = Transformation().rotate(rotation)
+        self.merge_transformed_page(page2, op, expand)
 
     def mergeRotatedPage(
         self, page2: "PageObject", rotation: float, expand: bool = False
     ) -> None:  # deprecated
         """
-        mergeRotatedPage is similar to merge_page, but the stream to be merged
-        is rotated by applying a transformation matrix.
-
-        :param PageObject page2: the page to be merged into this one. Should be
-            an instance of :class:`PageObject<PageObject>`.
-        :param float rotation: The angle of the rotation, in degrees
-        :param bool expand: Whether the page should be expanded to fit the
-            dimensions of the page to be merged.
+        deprecated
 
         .. deprecated:: 1.28.0
 
@@ -919,37 +947,44 @@ class PageObject(DictionaryObject):
         """
         deprecation_with_replacement(
             "page.mergeRotatedPage(page2, rotation, expand)",
-            "page2.add_transformation(Transformation().rotate(rotation)); page.merge_page(page2, expand)",
+            "page2.mergeotatedPage(page2, rotation, expand)",
             "3.0.0",
         )
-        op = Transformation().rotate(rotation)
-        self.mergeTransformedPage(page2, op, expand)
+        self.merge_rotated_page(page2, rotation, expand)
+
+    def merge_translated_page(
+        self, page2: "PageObject", tx: float, ty: float, expand: bool = False
+    ) -> None:
+        """
+        mergeTranslatedPage is similar to merge_page, but the stream to be
+        merged is translated by applying a transformation matrix.
+
+        Args:
+          page2: the page to be merged into this one.
+          tx: The translation on X axis
+          ty: The translation on Y axis
+          expand: Whether the page should be expanded to fit the
+            dimensions of the page to be merged.
+        """
+        op = Transformation().translate(tx, ty)
+        self.merge_transformed_page(page2, op, expand)
 
     def mergeTranslatedPage(
         self, page2: "PageObject", tx: float, ty: float, expand: bool = False
     ) -> None:  # deprecated
         """
-        mergeTranslatedPage is similar to merge_page, but the stream to be
-        merged is translated by applying a transformation matrix.
-
-        :param PageObject page2: the page to be merged into this one. Should be
-            an instance of :class:`PageObject<PageObject>`.
-        :param float tx: The translation on X axis
-        :param float ty: The translation on Y axis
-        :param bool expand: Whether the page should be expanded to fit the
-            dimensions of the page to be merged.
+        deprecated
 
         .. deprecated:: 1.28.0
 
-            Use :meth:`add_transformation` and :meth:`merge_page` instead.
+            Use :meth:`merge_translated_page` instead.
         """
         deprecation_with_replacement(
             "page.mergeTranslatedPage(page2, tx, ty, expand)",
             "page2.add_transformation(Transformation().translate(tx, ty)); page.merge_page(page2, expand)",
             "3.0.0",
         )
-        op = Transformation().translate(tx, ty)
-        self.mergeTransformedPage(page2, op, expand)
+        self.merge_translated_page(page2, tx, ty, expand)
 
     def mergeRotatedTranslatedPage(
         self,
@@ -960,50 +995,33 @@ class PageObject(DictionaryObject):
         expand: bool = False,
     ) -> None:  # deprecated
         """
-        mergeRotatedTranslatedPage is similar to merge_page, but the stream to
-        be merged is rotated and translated by applying a transformation matrix.
-
-        :param PageObject page2: the page to be merged into this one. Should be
-            an instance of :class:`PageObject<PageObject>`.
-        :param float tx: The translation on X axis
-        :param float ty: The translation on Y axis
-        :param float rotation: The angle of the rotation, in degrees
-        :param bool expand: Whether the page should be expanded to fit the
-            dimensions of the page to be merged.
+        obsolete
 
         .. deprecated:: 1.28.0
 
-            Use :meth:`add_transformation` and :meth:`merge_page` instead.
+            Use :meth:`merge_transformed_page` instead.
         """
         deprecation_with_replacement(
             "page.mergeRotatedTranslatedPage(page2, rotation, tx, ty, expand)",
-            "page2.add_transformation(Transformation().rotate(rotation).translate(tx, ty)); page.merge_page(page2, expand)",
+            "page.merge_transformed_page(page2, Transformation().rotate(rotation).translate(tx, ty), expand);",
             "3.0.0",
         )
         op = Transformation().translate(-tx, -ty).rotate(rotation).translate(tx, ty)
-        return self.mergeTransformedPage(page2, op, expand)
+        return self.merge_transformed_page(page2, op, expand)
 
     def mergeRotatedScaledPage(
         self, page2: "PageObject", rotation: float, scale: float, expand: bool = False
     ) -> None:  # deprecated
         """
-        mergeRotatedScaledPage is similar to merge_page, but the stream to be
-        merged is rotated and scaled by applying a transformation matrix.
-
-        :param PageObject page2: the page to be merged into this one. Should be
-            an instance of :class:`PageObject<PageObject>`.
-        :param float rotation: The angle of the rotation, in degrees
-        :param float scale: The scaling factor
-        :param bool expand: Whether the page should be expanded to fit the
-            dimensions of the page to be merged.
+        obsolete
 
         .. deprecated:: 1.28.0
 
-            Use :meth:`add_transformation` and :meth:`merge_page` instead.
+            Use :meth:`merge_transformed_page` instead.
         """
         deprecation_with_replacement(
             "page.mergeRotatedScaledPage(page2, rotation, scale, expand)",
-            "page2.add_transformation(Transformation().rotate(rotation).scale(scale)); page.merge_page(page2, expand)",
+            "page.merge_transformed_page(page2, Transformation().rotate(rotation).scale(scale)); page.merge_page(page2, expand)",
             "3.0.0",
         )
         op = Transformation().rotate(rotation).scale(scale, scale)
