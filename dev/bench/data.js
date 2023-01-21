@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1674157334916,
+  "lastUpdate": 1674304058986,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -22230,6 +22230,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00028874782088314445",
             "extra": "mean: 102.71438039999907 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ronuk.raval@gmail.com",
+            "name": "Ronuk Raval",
+            "username": "rraval"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "53645efd8cb5a40723c1131318ccb75c9c8726d6",
+          "message": "ROB: Set ignore_eof=True for read_until_regex (#1521)\n\nThis was initially motivated by `NumberObject.read_from_stream`, which\r\nwas calling `read_until_regex` with the default value of\r\n`ignore_eof=False` and thus raising exceptions like:\r\n\r\n```\r\nPyPDF2.errors.PdfStreamError: Stream has ended unexpectedly\r\n```\r\n\r\nhttps://github.com/py-pdf/PyPDF2/commit/431ba7092037af7d1c296f8f280aca167859ce61\r\ndemonstrates a similar fix for `NameObject.read_from_stream`.\r\n\r\nThe change to `NumberObject.read_from_stream` had now made\r\nall callers of `read_until_regex` pass `ignore_eof=True`. For this reason,\r\nit's cleaner to remove the parameter entirely and change the default behavior.",
+          "timestamp": "2023-01-21T13:26:03+01:00",
+          "tree_id": "0ba123434d5e4738d6fcfca0f5bbc9f47eecb49f",
+          "url": "https://github.com/py-pdf/pypdf/commit/53645efd8cb5a40723c1131318ccb75c9c8726d6"
+        },
+        "date": 1674304057861,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0336298966211659,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005814681712900139",
+            "extra": "mean: 967.464276399997 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.713415122794752,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005399947948247919",
+            "extra": "mean: 85.37219841666517 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24990647497581414,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026357641777361485",
+            "extra": "mean: 4.001496960400004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.92545394587425,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0004806591967949232",
+            "extra": "mean: 77.36672183333226 msec\nrounds: 12"
           }
         ]
       }
