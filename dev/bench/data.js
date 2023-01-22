@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1674373946280,
+  "lastUpdate": 1674380435506,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -22438,6 +22438,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0005626115382819689",
             "extra": "mean: 78.55979400000024 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wilson.huon@gmail.com",
+            "name": "Huon Wilson",
+            "username": "huonw"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b6b6a66651c982c1e5cc0df1c826e7aba55e2afe",
+          "message": "ENH: Rename resources deterministically in merge_page (#1543)\n\nThis fixes #1532 by adjusting the procedure used for renaming resources in `merge_page`, so that resources that have the same name (but different contents) are renamed in a deterministic/reproducible way.\r\n\r\nWhen merging pages that both have a resource of the same name (say, `/Example`) but different values, the resource from the second page will now be renamed to `/Example-0`. Previously, it would be renamed with a random UUIDv4 (e.g. `/Exampledbbbe7cb-5f34-4061-b863-41919b326b49`) which would be different on every run, even if the inputs were identical.\r\n\r\nThe renamed name may already exist if a PDF is carefully/maliciously crafted, in which case `/Example-1`, `/Example-2`, etc. are tried until an appropriate name is found. If any of these options have the same value, that name/value is reused.\r\n\r\nThe `/Example-0` pattern is short and sweet, but can easily be changed, e.g. some options off the top of my head:\r\n\r\n- `/Example-pypdf-merged-0` for explanation about where it comes from\r\n- `/Example-9c4beb01-0` where the `9c4beb01` is some marker hardcoded into pypdf's code, to reduce the chance of a \"normal\" PDF requiring `idx > 0` (only truly maliciously crafted ones)",
+          "timestamp": "2023-01-22T10:39:24+01:00",
+          "tree_id": "cbfa5d09e2b6f7f096b263ad957e8ec62cae63ff",
+          "url": "https://github.com/py-pdf/pypdf/commit/b6b6a66651c982c1e5cc0df1c826e7aba55e2afe"
+        },
+        "date": 1674380434081,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0054894101106289,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007933067936501483",
+            "extra": "mean: 994.540558999995 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.856093790617614,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006287242458258345",
+            "extra": "mean: 84.34481184615422 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2426063053468425,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0169714216418248",
+            "extra": "mean: 4.1219044104000035 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.768875687313853,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00034094658020352017",
+            "extra": "mean: 84.96988383333341 msec\nrounds: 12"
           }
         ]
       }
