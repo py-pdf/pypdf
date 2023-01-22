@@ -2073,13 +2073,13 @@ class PdfReader:
 
     def add_form_topname(self, name: str) -> Optional[DictionaryObject]:
         """
-        Add an top level form that groups all form fields below it.
+        Add a top level form that groups all form fields below it.
 
         Args:
             name: text string of the "/T" Attribute of the created object
 
         Returns:
-            the created object. None is no object can be created.
+            The created object. `None`` means no object can be created.
         """
         catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
 
