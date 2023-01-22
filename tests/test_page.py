@@ -1,5 +1,6 @@
 import json
 import os
+import random
 from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
@@ -872,6 +873,23 @@ def test_no_resources():
     page_one = reader.pages[0]
     page_two = reader.pages[0]
     page_one.merge_page(page_two)
+
+
+def test_merge_page_reproducible_with_proc_set():
+    page1 = PageObject.create_blank_page(width=100, height=100)
+    page2 = PageObject.create_blank_page(width=100, height=100)
+
+    ordered = sorted(NameObject(f"/{x}") for x in range(20))
+
+    shuffled = list(ordered)
+    random.shuffle(shuffled)
+
+    # each page has some overlap in their /ProcSet, and they're in a weird order
+    page1[NameObject("/Resources")][NameObject("/ProcSet")] = ArrayObject(shuffled[:15])
+    page2[NameObject("/Resources")][NameObject("/ProcSet")] = ArrayObject(shuffled[5:])
+    page1.merge_page(page2)
+
+    assert page1[NameObject("/Resources")][NameObject("/ProcSet")] == ordered
 
 
 @pytest.mark.parametrize(
