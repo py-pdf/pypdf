@@ -28,7 +28,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import math
-import uuid
 import warnings
 from decimal import Decimal
 from typing import (
@@ -95,17 +94,20 @@ def set_custom_rtl(
             If set to `None`, the value will not be changed.
             If set to an integer or string, it will be converted to its ASCII code.
             The default value is -1, which sets no additional range to be converted.
-        _max: The new maximum value for the range of custom characters that will be written right to left.
+        _max: The new maximum value for the range of custom characters that will
+            be written right to left.
             If set to `None`, the value will not be changed.
             If set to an integer or string, it will be converted to its ASCII code.
             The default value is -1, which sets no additional range to be converted.
-        specials: The new list of special characters to be inserted in the current insertion order.
+        specials: The new list of special characters to be inserted in the
+            current insertion order.
             If set to `None`, the current value will not be changed.
             If set to a string, it will be converted to a list of ASCII codes.
             The default value is an empty list.
 
     Returns:
-        A tuple containing the new values for `CUSTOM_RTL_MIN`, `CUSTOM_RTL_MAX`, and `CUSTOM_RTL_SPECIAL_CHARS`.
+        A tuple containing the new values for `CUSTOM_RTL_MIN`,
+        `CUSTOM_RTL_MAX`, and `CUSTOM_RTL_SPECIAL_CHARS`.
     """
     global CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
     if isinstance(_min, int):
@@ -576,17 +578,41 @@ class PageObject(DictionaryObject):
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         new_res = DictionaryObject()
         new_res.update(res1.get(resource, DictionaryObject()).get_object())
+
+        def compute_unique_key(base_key: str) -> Tuple[str, bool]:
+            """Find a key that either doesn't already exist or has the same
+            value (indicated by the bool)"""
+            value = page2res.raw_get(base_key)
+            # try the current key first (e.g. "foo"), but otherwise iterate
+            # through "foo-0", "foo-1", etc. new_res can contain only finitely
+            # many keys, thus this'll eventually end, even if it's been crafted
+            # to be maximally annoying.
+            computed_key = base_key
+            idx = 0
+            while computed_key in new_res:
+                if new_res.raw_get(computed_key) == value:
+                    # there's already a resource of this name, with the exact
+                    # same value
+                    return computed_key, True
+                computed_key = f"{base_key}-{idx}"
+                idx += 1
+            return computed_key, False
+
         page2res = cast(
             DictionaryObject, res2.get(resource, DictionaryObject()).get_object()
         )
         rename_res = {}
-        for key in list(page2res.keys()):
-            if key in new_res and new_res.raw_get(key) != page2res.raw_get(key):
-                newname = NameObject(key + str(uuid.uuid4()))
+        for key in sorted(page2res.keys()):
+            unique_key, same_value = compute_unique_key(key)
+            newname = NameObject(unique_key)
+            if key != unique_key:
+                # we have to use a different name for this
                 rename_res[key] = newname
+
+            if not same_value:
+                # the value wasn't already recorded
                 new_res[newname] = page2res[key]
-            elif key not in new_res:
-                new_res[key] = page2res.raw_get(key)
+
         return new_res, rename_res
 
     @staticmethod
@@ -740,12 +766,14 @@ class PageObject(DictionaryObject):
                 new_resources[NameObject(res)] = new
                 rename.update(newrename)
 
-        # Combine /ProcSet sets.
+        # Combine /ProcSet sets, making sure there's a consistent order
         new_resources[NameObject(RES.PROC_SET)] = ArrayObject(
-            frozenset(
-                original_resources.get(RES.PROC_SET, ArrayObject()).get_object()
-            ).union(
-                frozenset(page2resources.get(RES.PROC_SET, ArrayObject()).get_object())
+            sorted(
+                set(
+                    original_resources.get(RES.PROC_SET, ArrayObject()).get_object()
+                ).union(
+                    set(page2resources.get(RES.PROC_SET, ArrayObject()).get_object())
+                )
             )
         )
 
@@ -894,7 +922,8 @@ class PageObject(DictionaryObject):
         """
         deprecation_with_replacement(
             "page.mergeScaledPage(page2, scale, expand)",
-            "page2.add_transformation(Transformation().scale(scale)); page.merge_page(page2, expand)",
+            "page2.add_transformation(Transformation().scale(scale)); "
+            "page.merge_page(page2, expand)",
             "3.0.0",
         )
         op = Transformation().scale(scale, scale)
@@ -919,7 +948,8 @@ class PageObject(DictionaryObject):
         """
         deprecation_with_replacement(
             "page.mergeRotatedPage(page2, rotation, expand)",
-            "page2.add_transformation(Transformation().rotate(rotation)); page.merge_page(page2, expand)",
+            "page2.add_transformation(Transformation().rotate(rotation)); "
+            "page.merge_page(page2, expand)",
             "3.0.0",
         )
         op = Transformation().rotate(rotation)
@@ -945,7 +975,8 @@ class PageObject(DictionaryObject):
         """
         deprecation_with_replacement(
             "page.mergeTranslatedPage(page2, tx, ty, expand)",
-            "page2.add_transformation(Transformation().translate(tx, ty)); page.merge_page(page2, expand)",
+            "page2.add_transformation(Transformation().translate(tx, ty)); "
+            "page.merge_page(page2, expand)",
             "3.0.0",
         )
         op = Transformation().translate(tx, ty)
@@ -977,7 +1008,8 @@ class PageObject(DictionaryObject):
         """
         deprecation_with_replacement(
             "page.mergeRotatedTranslatedPage(page2, rotation, tx, ty, expand)",
-            "page2.add_transformation(Transformation().rotate(rotation).translate(tx, ty)); page.merge_page(page2, expand)",
+            "page2.add_transformation(Transformation().rotate(rotation).translate(tx, ty)); "
+            "page.merge_page(page2, expand)",
             "3.0.0",
         )
         op = Transformation().translate(-tx, -ty).rotate(rotation).translate(tx, ty)
@@ -1003,7 +1035,8 @@ class PageObject(DictionaryObject):
         """
         deprecation_with_replacement(
             "page.mergeRotatedScaledPage(page2, rotation, scale, expand)",
-            "page2.add_transformation(Transformation().rotate(rotation).scale(scale)); page.merge_page(page2, expand)",
+            "page2.add_transformation(Transformation().rotate(rotation).scale(scale)); "
+            "page.merge_page(page2, expand)",
             "3.0.0",
         )
         op = Transformation().rotate(rotation).scale(scale, scale)
@@ -1035,7 +1068,8 @@ class PageObject(DictionaryObject):
         """
         deprecation_with_replacement(
             "page.mergeScaledTranslatedPage(page2, scale, tx, ty, expand)",
-            "page2.add_transformation(Transformation().scale(scale).translate(tx, ty)); page.merge_page(page2, expand)",
+            "page2.add_transformation(Transformation().scale(scale).translate(tx, ty)); "
+            "page.merge_page(page2, expand)",
             "3.0.0",
         )
         op = Transformation().scale(scale, scale).translate(tx, ty)
@@ -1070,7 +1104,8 @@ class PageObject(DictionaryObject):
         """
         deprecation_with_replacement(
             "page.mergeRotatedScaledTranslatedPage(page2, rotation, tx, ty, expand)",
-            "page2.add_transformation(Transformation().rotate(rotation).scale(scale)); page.merge_page(page2, expand)",
+            "page2.add_transformation(Transformation().rotate(rotation).scale(scale)); "
+            "page.merge_page(page2, expand)",
             "3.0.0",
         )
         op = Transformation().rotate(rotation).scale(scale, scale).translate(tx, ty)
@@ -1334,10 +1369,13 @@ class PageObject(DictionaryObject):
             while NameObject(PG.RESOURCES) not in objr:
                 # /Resources can be inherited sometimes so we look to parents
                 objr = objr["/Parent"].get_object()
-                # if no parents we will have no /Resources will be available => an exception wil be raised
+                # if no parents we will have no /Resources will be available
+                # => an exception wil be raised
             resources_dict = cast(DictionaryObject, objr[PG.RESOURCES])
         except Exception:
-            return ""  # no resources means no text is possible (no font) we consider the file as not damaged, no need to check for TJ or Tj
+            # no resources means no text is possible (no font) we consider the
+            # file as not damaged, no need to check for TJ or Tj
+            return ""
         if "/Font" in resources_dict:
             for f in cast(DictionaryObject, resources_dict["/Font"]):
                 cmaps[f] = build_char_map(f, space_width, obj)
@@ -1403,7 +1441,9 @@ class PageObject(DictionaryObject):
             return _space_width / 1000.0
 
         def process_operation(operator: bytes, operands: List) -> None:
-            nonlocal cm_matrix, cm_stack, tm_matrix, tm_prev, output, text, char_scale, space_scale, _space_width, TL, font_size, cmap, orientations, rtl_dir, visitor_text
+            nonlocal cm_matrix, cm_stack, tm_matrix, tm_prev, output, text
+            nonlocal char_scale, space_scale, _space_width, TL, font_size, cmap
+            nonlocal orientations, rtl_dir, visitor_text
             global CUSTOM_RTL_MIN, CUSTOM_RTL_MAX, CUSTOM_RTL_SPECIAL_CHARS
 
             check_crlf_space: bool = False
@@ -1484,10 +1524,12 @@ class PageObject(DictionaryObject):
                 text = ""
                 # rtl_dir = False
                 try:
-                    # charMapTuple: font_type, float(sp_width / 2), encoding, map_dict, font-dictionary
+                    # charMapTuple: font_type, float(sp_width / 2), encoding,
+                    #               map_dict, font-dictionary
                     charMapTuple = cmaps[operands[0]]
                     _space_width = charMapTuple[1]
-                    # current cmap: encoding, map_dict, font resource name (internal name, not the real font-name),
+                    # current cmap: encoding, map_dict, font resource name
+                    #               (internal name, not the real font-name),
                     # font-dictionary. The font-dictionary describes the font.
                     cmap = (
                         charMapTuple[2],
@@ -1550,7 +1592,10 @@ class PageObject(DictionaryObject):
                                 t = tt.decode(
                                     cmap[0], "surrogatepass"
                                 )  # apply str encoding
-                            except Exception:  # the data does not match the expectation, we use the alternative ; text extraction may not be good
+                            except Exception:
+                                # the data does not match the expectation,
+                                # we use the alternative ;
+                                # text extraction may not be good
                                 t = tt.decode(
                                     "utf-16-be" if cmap[0] == "charmap" else "charmap",
                                     "surrogatepass",
@@ -1568,7 +1613,9 @@ class PageObject(DictionaryObject):
                         ):
                             xx = ord(x)
                             # fmt: off
-                            if (  # cases where the current inserting order is kept (punctuation,...)
+                            if (
+                                # cases where the current inserting order is
+                                # kept (punctuation,...)
                                 (xx <= 0x2F)                        # punctuations but...
                                 or (0x3A <= xx and xx <= 0x40)      # numbers (x30-39)
                                 or (0x2000 <= xx and xx <= 0x206F)  # upper punctuations..
@@ -1784,9 +1831,11 @@ class PageObject(DictionaryObject):
         will change if this function is made more sophisticated.
 
         Arabic, Hebrew,... are extracted in the good order.
-        If required an custom RTL range of characters can be defined; see function set_custom_rtl
+        If required an custom RTL range of characters can be defined;
+        see function set_custom_rtl
 
-        Additionally you can provide visitor-methods to get informed on all operands and all text-objects.
+        Additionally you can provide visitor-methods to get informed on all
+        operands and all text-objects.
         For example in some PDF files this can be useful to parse tables.
 
         Args:
@@ -1913,9 +1962,9 @@ class PageObject(DictionaryObject):
 
     mediabox = _create_rectangle_accessor(PG.MEDIABOX, ())
     """
-    A :class:`RectangleObject<pypdf.generic.RectangleObject>`, expressed in default user space units,
-    defining the boundaries of the physical medium on which the page is
-    intended to be displayed or printed.
+    A :class:`RectangleObject<pypdf.generic.RectangleObject>`, expressed in
+    default user space units, defining the boundaries of the physical medium on
+    which the page is intended to be displayed or printed.
     """
 
     @property
@@ -1940,10 +1989,10 @@ class PageObject(DictionaryObject):
 
     cropbox = _create_rectangle_accessor("/CropBox", (PG.MEDIABOX,))
     """
-    A :class:`RectangleObject<pypdf.generic.RectangleObject>`, expressed in default user space units,
-    defining the visible region of default user space.  When the page is
-    displayed or printed, its contents are to be clipped (cropped) to this
-    rectangle and then imposed on the output medium in some
+    A :class:`RectangleObject<pypdf.generic.RectangleObject>`, expressed in
+    default user space units, defining the visible region of default user space.
+    When the page is displayed or printed, its contents are to be clipped
+    (cropped) to this rectangle and then imposed on the output medium in some
     implementation-defined manner.  Default value: same as :attr:`mediabox<mediabox>`.
     """
 
@@ -1964,9 +2013,9 @@ class PageObject(DictionaryObject):
 
     bleedbox = _create_rectangle_accessor("/BleedBox", ("/CropBox", PG.MEDIABOX))
     """
-    A :class:`RectangleObject<pypdf.generic.RectangleObject>`, expressed in default user space units,
-    defining the region to which the contents of the page should be clipped
-    when output in a production environment.
+    A :class:`RectangleObject<pypdf.generic.RectangleObject>`, expressed in
+    default user space units, defining the region to which the contents of the
+    page should be clipped when output in a production environment.
     """
 
     @property
@@ -1986,8 +2035,9 @@ class PageObject(DictionaryObject):
 
     trimbox = _create_rectangle_accessor("/TrimBox", ("/CropBox", PG.MEDIABOX))
     """
-    A :class:`RectangleObject<pypdf.generic.RectangleObject>`, expressed in default user space units,
-    defining the intended dimensions of the finished page after trimming.
+    A :class:`RectangleObject<pypdf.generic.RectangleObject>`, expressed in
+    default user space units, defining the intended dimensions of the finished
+    page after trimming.
     """
 
     @property
@@ -2007,9 +2057,9 @@ class PageObject(DictionaryObject):
 
     artbox = _create_rectangle_accessor("/ArtBox", ("/CropBox", PG.MEDIABOX))
     """
-    A :class:`RectangleObject<pypdf.generic.RectangleObject>`, expressed in default user space units,
-    defining the extent of the page's meaningful content as intended by the
-    page's creator.
+    A :class:`RectangleObject<pypdf.generic.RectangleObject>`, expressed in
+    default user space units, defining the extent of the page's meaningful
+    content as intended by the page's creator.
     """
 
     @property

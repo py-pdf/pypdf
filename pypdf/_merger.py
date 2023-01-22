@@ -178,7 +178,8 @@ class PdfMerger:
                 )
             else:
                 raise ValueError(
-                    "The argument position of merge is deprecated. Use page_number only."
+                    "The argument position of merge is deprecated. "
+                    "Use page_number only."
                 )
 
         if page_number is None:  # deprecated
@@ -335,7 +336,8 @@ class PdfMerger:
             page.out_pagedata = self.output.get_reference(
                 pages_obj[PA.KIDS][-1].get_object()
             )
-            # idnum = self.output._objects.index(self.output._pages.get_object()[PA.KIDS][-1].get_object()) + 1
+            # key_temp = self.output._pages.get_object()[PA.KIDS][-1].get_object()
+            # idnum = self.output._objects.index(key_temp) + 1
             # page.out_pagedata = IndirectObject(idnum, 0, self.output)
 
         # Once all pages are added, create outline items to point at those pages
@@ -703,7 +705,8 @@ class PdfMerger:
         """
         if page_number is not None and pagenum is not None:
             raise ValueError(
-                "The argument pagenum of add_outline_item is deprecated. Use page_number only."
+                "The argument pagenum of add_outline_item is deprecated. "
+                "Use page_number only."
             )
         if pagenum is not None:
             old_term = "pagenum"
@@ -809,7 +812,8 @@ class PdfMerger:
         """
         if page_number is not None and pagenum is not None:
             raise ValueError(
-                "The argument pagenum of add_named_destination is deprecated. Use page_number only."
+                "The argument pagenum of add_named_destination is deprecated. "
+                "Use page_number only."
             )
         if pagenum is not None:
             old_term = "pagenum"

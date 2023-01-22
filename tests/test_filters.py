@@ -244,7 +244,7 @@ def test_image_without_imagemagic():
         for page in reader.pages:
             with pytest.raises(ImportError) as exc:
                 page.images
-            assert (
-                exc.value.args[0]
-                == "pillow is required to do image extraction. It can be installed via 'pip install pypdf[image]'"
+            assert exc.value.args[0] == (
+                "pillow is required to do image extraction. "
+                "It can be installed via 'pip install pypdf[image]'"
             )

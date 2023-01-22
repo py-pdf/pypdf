@@ -27,8 +27,10 @@ def build_char_map(
     encoding, space_code = parse_encoding(ft, space_code)
     map_dict, space_code, int_entry = parse_to_unicode(ft, space_code)
 
-    # encoding can be either a string for decode (on 1,2 or a variable number of bytes) of a char table (for 1 byte only for me)
-    # if empty string, it means it is than encoding field is not present and we have to select the good encoding from cmap input data
+    # encoding can be either a string for decode
+    # (on 1,2 or a variable number of bytes) of a char table (for 1 byte only for me)
+    # if empty string, it means it is than encoding field is not present and
+    # we have to select the good encoding from cmap input data
     if encoding == "":
         if -1 not in map_dict or map_dict[-1] == 1:
             # I have not been able to find any rule for no /Encoding nor /ToUnicode
@@ -36,7 +38,9 @@ def build_char_map(
             encoding = "charmap"
         else:
             encoding = "utf-16-be"
-    # apply rule from PDF ref 1.7 §5.9.1, 1st bullet : if cmap not empty encoding should be discarded (here transformed into identity for those characters)
+    # apply rule from PDF ref 1.7 §5.9.1, 1st bullet :
+    #   if cmap not empty encoding should be discarded
+    #   (here transformed into identity for those characters)
     # if encoding is an str it is expected to be a identity translation
     elif isinstance(encoding, dict):
         for x in int_entry:
@@ -131,7 +135,9 @@ def parse_encoding(
     enc: Union(str, DictionaryObject) = ft["/Encoding"].get_object()  # type: ignore
     if isinstance(enc, str):
         try:
-            # allready done : enc = NameObject.unnumber(enc.encode()).decode()  # for #xx decoding
+            # allready done :
+            #       enc = NameObject.unnumber(enc.encode()).decode()
+            # for #xx decoding
             if enc in charset_encoding:
                 encoding = charset_encoding[enc].copy()
             elif enc in _predefined_cmap:
@@ -214,10 +220,12 @@ def prepare_cm(ft: DictionaryObject) -> bytes:
     if isinstance(tu, StreamObject):
         cm = cast(DecodedStreamObject, ft["/ToUnicode"]).get_data()
     elif isinstance(tu, str) and tu.startswith("/Identity"):
-        cm = b"beginbfrange\n<0000> <0001> <0000>\nendbfrange"  # the full range 0000-FFFF will be processed
+        # the full range 0000-FFFF will be processed
+        cm = b"beginbfrange\n<0000> <0001> <0000>\nendbfrange"
     if isinstance(cm, str):
         cm = cm.encode()
-    # we need to prepare cm before due to missing return line in pdf printed to pdf from word
+    # we need to prepare cm before due to missing return line in pdf printed
+    # to pdf from word
     cm = (
         cm.strip()
         .replace(b"beginbfchar", b"\nbeginbfchar\n")
@@ -280,13 +288,11 @@ def parse_bfrange(
 ) -> Union[None, Tuple[int, int]]:
     lst = [x for x in line.split(b" ") if x]
     closure_found = False
-    nbi = max(len(lst[0]), len(lst[1]))
-    map_dict[-1] = ceil(nbi / 2)
-    fmt = b"%%0%dX" % (map_dict[-1] * 2)
     if multiline_rg is not None:
+        fmt = b"%%0%dX" % (map_dict[-1] * 2)
         a = multiline_rg[0]  # a, b not in the current line
         b = multiline_rg[1]
-        for sq in lst[1:]:
+        for sq in lst[0:]:
             if sq == b"]":
                 closure_found = True
                 break
@@ -301,6 +307,9 @@ def parse_bfrange(
     else:
         a = int(lst[0], 16)
         b = int(lst[1], 16)
+        nbi = max(len(lst[0]), len(lst[1]))
+        map_dict[-1] = ceil(nbi / 2)
+        fmt = b"%%0%dX" % (map_dict[-1] * 2)
         if lst[2] == b"[":
             for sq in lst[3:]:
                 if sq == b"]":
