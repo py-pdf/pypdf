@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1674397354259,
+  "lastUpdate": 1674404160723,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -22698,6 +22698,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.001571938096793587",
             "extra": "mean: 97.96726240000453 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "98c5a9f83f138483cb5ce808bd509cf076b6e83f",
+          "message": "REL: 3.3.0\n\nNew Features (ENH):\n-  Add page label support to PdfWriter (#1558)\n-  Accept inline images with space before EI (#1552)\n-  Add circle annotation support (#1556)\n-  Add polygon annotation support (#1557)\n-  Make merging pages produce a deterministic PDF (#1542, #1543)\n\nBug Fixes (BUG):\n-  Fix error in cmap extraction (#1544)\n-  Remove erroneous assertion check (#1564)\n-  Fix dictionary access of optional page label keys (#1562)\n\nRobustness (ROB):\n-  Set ignore_eof=True for read_until_regex (#1521)\n\nDocumentation (DOC):\n-  Paper size (#1550)\n\nDeveloper Experience (DEV):\n-  Fix broken combination of dependencies of docs.txt\n-  Annotate tests appropriately (#1551)\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.2.1...3.3.0)",
+          "timestamp": "2023-01-22T17:14:23+01:00",
+          "tree_id": "5b2b255ebda1d01525f754311d32ab8970192cb5",
+          "url": "https://github.com/py-pdf/pypdf/commit/98c5a9f83f138483cb5ce808bd509cf076b6e83f"
+        },
+        "date": 1674404158904,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0114065717081362,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01139382210885487",
+            "extra": "mean: 988.7220708000029 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.885573669190093,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007357065472225496",
+            "extra": "mean: 84.13561076923114 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24009851841112054,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020929219706523654",
+            "extra": "mean: 4.164956979400017 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.938337859818065,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00030381927636695524",
+            "extra": "mean: 83.7637543636447 msec\nrounds: 11"
           }
         ]
       }
