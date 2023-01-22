@@ -12,14 +12,19 @@ from .generic import DecodedStreamObject, DictionaryObject, StreamObject
 # code freely inspired from @twiggy ; see #711
 def build_char_map(
     font_name: str, space_width: float, obj: DictionaryObject
-) -> Tuple[
-    str, float, Union[str, Dict[int, str]], Dict, DictionaryObject
-]:  # font_type,space_width /2, encoding, cmap
-    """Determine information about a font.
+) -> Tuple[str, float, Union[str, Dict[int, str]], Dict, DictionaryObject]:
+    """
+    Determine information about a font.
 
-    This function returns a tuple consisting of:
-    font sub-type, space_width/2, encoding, map character-map, font-dictionary.
-    The font-dictionary itself is suitable for the curious."""
+    Args:
+        font_name:
+        space_width:
+        obj:
+
+    Returns:
+        Font sub-type, space_width/2, encoding, map character-map, font-dictionary.
+        The font-dictionary itself is suitable for the curious.
+    """
     ft: DictionaryObject = obj["/Resources"]["/Font"][font_name]  # type: ignore
     font_type: str = cast(str, ft["/Subtype"])
 

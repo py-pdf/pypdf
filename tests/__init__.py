@@ -17,6 +17,9 @@ def get_pdf_from_url(url: str, name: str) -> bytes:
     Args:
         url: location of the PDF file
         name: unique name across all files
+
+    Returns:
+        Read PDF as bytes
     """
     if url.startswith("file://"):
         with open(url[7:].replace("\\", "/"), "rb") as fp:
@@ -45,6 +48,12 @@ def _strip_position(line: str) -> str:
 
     becomes
         Xref table not zero-indexed.
+
+    Args:
+        line: the original line
+
+    Returns:
+        A line with stripped position
     """
     line = ".py".join(line.split(".py:")[1:])
     line = " ".join(line.split(" ")[1:])

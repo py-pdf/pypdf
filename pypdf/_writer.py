@@ -518,6 +518,9 @@ class PdfWriter:
         Property to access the opening destination (``/OpenAction`` entry in the
         PDF catalog).
         it returns `None` if the entry does not exist is not set.
+
+        Raises:
+            Exception: If a destination is invalid
         """
         if "/OpenAction" not in self._root_object:
             return None
