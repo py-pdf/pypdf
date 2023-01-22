@@ -8,6 +8,8 @@
     # via -r requirements/docs.in
 alabaster==0.7.13
     # via sphinx
+attrs==22.2.0
+    # via -r requirements/docs.in
 babel==2.11.0
     # via sphinx
 certifi==2022.12.7
