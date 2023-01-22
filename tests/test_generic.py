@@ -746,6 +746,34 @@ def test_annotation_builder_free_text():
     os.remove(target)  # comment this out for manual inspection
 
 
+def test_annotation_builder_polygon():
+    # Arrange
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    writer = PdfWriter()
+    writer.add_page(page)
+
+    # Act
+    with pytest.raises(ValueError) as exc:
+        AnnotationBuilder.polygon(
+            vertices=[],
+        )
+    assert exc.value.args[0] == "A polygon needs at least 1 vertex with two coordinates"
+
+    annotation = AnnotationBuilder.polygon(
+        vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
+    )
+    writer.add_annotation(0, annotation)
+
+    # Assert: You need to inspect the file manually
+    target = "annotated-pdf.pdf"
+    with open(target, "wb") as fp:
+        writer.write(fp)
+
+    os.remove(target)  # comment this out for manual inspection
+
+
 def test_annotation_builder_line():
     # Arrange
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
@@ -792,6 +820,34 @@ def test_annotation_builder_square():
 
     # Assert: You need to inspect the file manually
     target = "annotated-pdf-square.pdf"
+    with open(target, "wb") as fp:
+        writer.write(fp)
+
+    os.remove(target)  # comment this out for manual inspection
+
+
+def test_annotation_builder_circle():
+    # Arrange
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    writer = PdfWriter()
+    writer.add_page(page)
+
+    # Act
+    circle_annotation = AnnotationBuilder.ellipse(
+        rect=(50, 550, 200, 650), interiour_color="ff0000"
+    )
+    writer.add_annotation(0, circle_annotation)
+
+    diameter = 100
+    circle_annotation = AnnotationBuilder.ellipse(
+        rect=(110, 500, 110 + diameter, 500 + diameter),
+    )
+    writer.add_annotation(0, circle_annotation)
+
+    # Assert: You need to inspect the file manually
+    target = "annotated-pdf-circle.pdf"
     with open(target, "wb") as fp:
         writer.write(fp)
 

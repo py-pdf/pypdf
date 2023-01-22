@@ -3,6 +3,7 @@ from io import BytesIO
 import pytest
 
 from pypdf import PdfReader
+from pypdf._cmap import build_char_map
 from pypdf.errors import PdfReadWarning
 
 from . import get_pdf_from_url
@@ -102,3 +103,12 @@ def test_iss1379():
     name = "02voc.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     reader.pages[2].extract_text()
+
+
+@pytest.mark.external
+def test_iss1533():
+    url = "https://github.com/py-pdf/pypdf/files/10376149/iss1533.pdf"
+    name = "iss1533.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader.pages[0].extract_text()  # no error
+    assert build_char_map("/F", 200, reader.pages[0])[3]["\x01"] == "Ü"

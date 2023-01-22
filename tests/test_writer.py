@@ -33,9 +33,8 @@ def test_writer_exception_non_binary(tmp_path, caplog):
     writer = PdfWriter()
     writer.add_page(reader.pages[0])
 
-    with open(tmp_path / "out.txt", "w") as fp:
-        with pytest.raises(TypeError):
-            writer.write_stream(fp)
+    with open(tmp_path / "out.txt", "w") as fp, pytest.raises(TypeError):
+        writer.write_stream(fp)
     ending = "to write to is not in binary mode. It may not be written to correctly.\n"
     assert caplog.text.endswith(ending)
 
@@ -930,6 +929,7 @@ def test_startup_dest():
     pdf_file_writer.open_destination = None
 
 
+@pytest.mark.external
 def test_iss471():
     url = "https://github.com/py-pdf/pypdf/files/9139245/book.pdf"
     name = "book_471.pdf"
@@ -942,6 +942,7 @@ def test_iss471():
     )
 
 
+@pytest.mark.external
 def test_reset_translation():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
     name = "tika-924666.pdf"
@@ -977,6 +978,7 @@ def test_threads_empty():
     assert thr == thr2
 
 
+@pytest.mark.external
 def test_append_without_annots_and_articles():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
     name = "tika-924666.pdf"
@@ -993,6 +995,7 @@ def test_append_without_annots_and_articles():
     assert len(writer.threads) >= 1
 
 
+@pytest.mark.external
 def test_append_multiple():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
     name = "tika-924666.pdf"
@@ -1005,3 +1008,144 @@ def test_append_multiple():
     pages = writer._root_object["/Pages"]["/Kids"]
     assert pages[0] not in pages[1:]  # page not repeated
     assert pages[-1] not in pages[0:-1]  # page not repeated
+
+
+@pytest.mark.samples
+def test_set_page_label():
+    src = RESOURCE_ROOT / "GeoBase_NHNC1_Data_Model_UML_EN.pdf"  # File without labels
+    target = "pypdf-output.pdf"
+    reader = PdfReader(src)
+
+    expected = [
+        "i",
+        "ii",
+        "1",
+        "2",
+        "A",
+        "B",
+        "1",
+        "2",
+        "3",
+        "4",
+        "A",
+        "i",
+        "I",
+        "II",
+        "1",
+        "2",
+        "3",
+        "I",
+        "II",
+    ]
+
+    # Tests full lenght with labels assigned at first and last elements
+    # Tests different labels assigned to consecutive ranges
+    writer = PdfWriter()
+    writer.clone_document_from_reader(reader)
+    writer.set_page_label(0, 1, "/r")
+    writer.set_page_label(4, 5, "/A")
+    writer.set_page_label(10, 10, "/A")
+    writer.set_page_label(11, 11, "/r")
+    writer.set_page_label(12, 13, "/R")
+    writer.set_page_label(17, 18, "/R")
+    writer.write(target)
+    assert PdfReader(target).page_labels == expected
+
+    writer = PdfWriter()  # Same labels, different set order
+    writer.clone_document_from_reader(reader)
+    writer.set_page_label(17, 18, "/R")
+    writer.set_page_label(4, 5, "/A")
+    writer.set_page_label(10, 10, "/A")
+    writer.set_page_label(0, 1, "/r")
+    writer.set_page_label(12, 13, "/R")
+    writer.set_page_label(11, 11, "/r")
+    writer.write(target)
+    assert PdfReader(target).page_labels == expected
+
+    # Tests labels assigned only in the middle
+    # Tests label assigned to a range already containing labled ranges
+    expected = ["1", "2", "i", "ii", "iii", "iv", "v", "1"]
+    writer = PdfWriter()
+    writer.clone_document_from_reader(reader)
+    writer.set_page_label(3, 4, "/a")
+    writer.set_page_label(5, 5, "/A")
+    writer.set_page_label(2, 6, "/r")
+    writer.write(target)
+    assert PdfReader(target).page_labels[: len(expected)] == expected
+
+    # Tests labels assigned inside a previously existing range
+    expected = ["1", "2", "i", "a", "b", "A", "1", "1", "2"]
+    # Ones repeat because user didnt cover the entire original range
+    writer = PdfWriter()
+    writer.clone_document_from_reader(reader)
+    writer.set_page_label(2, 6, "/r")
+    writer.set_page_label(3, 4, "/a")
+    writer.set_page_label(5, 5, "/A")
+    writer.write(target)
+    assert PdfReader(target).page_labels[: len(expected)] == expected
+
+    # Tests invalid user input
+    writer = PdfWriter()
+    writer.clone_document_from_reader(reader)
+    with pytest.raises(
+        ValueError, match="at least one between style and prefix must be given"
+    ):
+        writer.set_page_label(0, 5, start=2)
+    with pytest.raises(
+        ValueError, match="page_index_from must be equal or greater then 0"
+    ):
+        writer.set_page_label(-1, 5, "/r")
+    with pytest.raises(
+        ValueError, match="page_index_to must be equal or greater then page_index_from"
+    ):
+        writer.set_page_label(5, 0, "/r")
+    with pytest.raises(ValueError, match="page_index_to exceeds number of pages"):
+        writer.set_page_label(0, 19, "/r")
+    with pytest.raises(
+        ValueError, match="if given, start must be equal or greater than one"
+    ):
+        writer.set_page_label(0, 5, "/r", start=-1)
+
+    os.remove(target)
+
+    src = (
+        SAMPLE_ROOT / "009-pdflatex-geotopo/GeoTopo.pdf"
+    )  # File with pre existing labels
+    target = "pypdf-output.pdf"
+    reader = PdfReader(src)
+
+    # Tests adding labels to existing ones
+    expected = ["i", "ii", "A", "B", "1"]
+    writer = PdfWriter()
+    writer.clone_document_from_reader(reader)
+    writer.set_page_label(2, 3, "/A")
+    writer.write(target)
+    assert PdfReader(target).page_labels[: len(expected)] == expected
+
+    # Tests replacing existing lables
+    expected = ["A", "B", "1", "1", "2"]
+    writer = PdfWriter()
+    writer.clone_document_from_reader(reader)
+    writer.set_page_label(0, 1, "/A")
+    writer.write(target)
+    assert PdfReader(target).page_labels[: len(expected)] == expected
+
+    os.remove(target)
+
+    # Tests prefix and start.
+    src = RESOURCE_ROOT / "issue-604.pdf"  # File without page labels
+    target = "page_labels_test.pdf"
+    reader = PdfReader(src)
+    writer = PdfWriter()
+    writer.clone_document_from_reader(reader)
+
+    writer.set_page_label(0, 0, prefix="FRONT")
+    writer.set_page_label(1, 2, "/D", start=2)
+    writer.set_page_label(3, 6, prefix="UPDATES")
+    writer.set_page_label(7, 10, "/D", prefix="THYR-")
+    writer.set_page_label(11, 21, "/D", prefix="PAP-")
+    writer.set_page_label(22, 30, "/D", prefix="FOLL-")
+    writer.set_page_label(31, 39, "/D", prefix="HURT-")
+    writer.write(target)
+
+    os.remove(target)  # comment to see result
