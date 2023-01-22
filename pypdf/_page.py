@@ -28,7 +28,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import math
-import uuid
 import warnings
 from decimal import Decimal
 from typing import (
@@ -578,7 +577,22 @@ class PageObject(DictionaryObject):
         new_res.update(res1.get(resource, DictionaryObject()).get_object())
 
         def compute_unique_key(base_key: str) -> Tuple[str, bool]:
-            computed_key = base_key + str(uuid.uuid4())
+            """Find a key that either doesn't already exist or has the same
+            value (indicated by the bool)"""
+            value = page2res.raw_get(base_key)
+            # try the current key first (e.g. "foo"), but otherwise iterate
+            # through "foo-0", "foo-1", etc. new_res can contain only finitely
+            # many keys, thus this'll eventually end, even if it's been crafted
+            # to be maximally annoying.
+            computed_key = base_key
+            idx = 0
+            while computed_key in new_res:
+                if new_res.raw_get(computed_key) == value:
+                    # there's already a resource of this name, with the exact
+                    # same value
+                    return computed_key, True
+                computed_key = f"{base_key}-{idx}"
+                idx += 1
             return computed_key, False
 
         page2res = cast(
@@ -586,17 +600,16 @@ class PageObject(DictionaryObject):
         )
         rename_res = {}
         for key in sorted(page2res.keys()):
-            if key in new_res and new_res.raw_get(key) != page2res.raw_get(key):
-                unique_key, same_value = compute_unique_key(key)
-                newname = NameObject(unique_key)
-                if key != unique_key:
-                    # we have to use a different name for this
-                    rename_res[key] = newname
-                if not same_value:
-                    # the value wasn't already recorded
-                    new_res[newname] = page2res[key]
-            elif key not in new_res:
-                new_res[key] = page2res.raw_get(key)
+            unique_key, same_value = compute_unique_key(key)
+            newname = NameObject(unique_key)
+            if key != unique_key:
+                # we have to use a different name for this
+                rename_res[key] = newname
+
+            if not same_value:
+                # the value wasn't already recorded
+                new_res[newname] = page2res[key]
+
         return new_res, rename_res
 
     @staticmethod
