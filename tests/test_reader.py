@@ -877,7 +877,7 @@ def test_get_fields():
 
 @pytest.mark.external
 def test_get_full_qualified_fields():
-    url = "https://github.com/py-pdf/PyPDF2/files/10142389/fields_with_dots.pdf"
+    url = "https://github.com/py-pdf/pypdf/files/10142389/fields_with_dots.pdf"
     name = "fields_with_dots.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     fields = reader.get_form_text_fields(True)
