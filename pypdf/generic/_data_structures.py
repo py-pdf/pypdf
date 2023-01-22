@@ -969,7 +969,7 @@ class ContentStream(DecodedStreamObject):
                 break
             stream.seek(-1, 1)
             if peek.isalpha() or peek in (b"'", b'"'):
-                operator = read_until_regex(stream, NameObject.delimiter_pattern, True)
+                operator = read_until_regex(stream, NameObject.delimiter_pattern)
                 if operator == b"BI":
                     # begin inline image - a completely different parsing
                     # mechanism is required, of course... thanks buddy...
@@ -1016,7 +1016,9 @@ class ContentStream(DecodedStreamObject):
             # We have reached the end of the stream, but haven't found the EI operator.
             if not buf:
                 raise PdfReadError("Unexpected end of stream")
-            loc = buf.find(b"E")
+            loc = buf.find(
+                b"E"
+            )  # we can not look straight for "EI" because it may not have been loaded in the buffer
 
             if loc == -1:
                 data.write(buf)
@@ -1026,28 +1028,44 @@ class ContentStream(DecodedStreamObject):
 
                 # Seek back in the stream to read the E next.
                 stream.seek(loc - len(buf), 1)
-                tok = stream.read(1)
+                tok = stream.read(1)  # E of "EI"
                 # Check for End Image
-                tok2 = stream.read(1)
-                if tok2 == b"I" and buf[loc - 1 : loc] in WHITESPACES:
-                    # Data can contain [\s]EI,  so check for the separator \s; 4 chars suffisent Q operator not required.
-                    tok3 = stream.read(1)
-                    info = tok + tok2
-                    # We need to find at least one whitespace after.
-                    has_q_whitespace = False
-                    while tok3 in WHITESPACES:
-                        has_q_whitespace = True
-                        info += tok3
-                        tok3 = stream.read(1)
-                    if has_q_whitespace:
-                        stream.seek(-1, 1)
-                        break
-                    else:
-                        stream.seek(-1, 1)
-                        data.write(info)
-                else:
+                tok2 = stream.read(1)  # I of "EI"
+                if tok2 != b"I":
                     stream.seek(-1, 1)
                     data.write(tok)
+                    continue
+                # for further debug : print("!!!!",buf[loc-1:loc+10])
+                info = tok + tok2
+                tok3 = stream.read(
+                    1
+                )  # possible space after "EI" may not been loaded  in buf
+                if tok3 not in WHITESPACES:
+                    stream.seek(-2, 1)  # to step back on I
+                    data.write(tok)
+                elif buf[loc - 1 : loc] in WHITESPACES:  # and tok3 in WHITESPACES:
+                    # Data can contain [\s]EI[\s]: 4 chars sufficient, checking Q operator not required.
+                    while tok3 in WHITESPACES:
+                        # needed ???? : info += tok3
+                        tok3 = stream.read(1)
+                    stream.seek(-1, 1)
+                    # we do not insert EI
+                    break
+                else:  # buf[loc - 1 : loc] not in WHITESPACES and tok3 in WHITESPACES:
+                    # Data can contain [!\s]EI[\s],  so check for Q or EMC operator is required to have 4 chars.
+                    while tok3 in WHITESPACES:
+                        info += tok3
+                        tok3 = stream.read(1)
+                    stream.seek(-1, 1)
+                    if tok3 == b"Q":
+                        break
+                    elif tok3 == b"E":
+                        ope = stream.read(3)
+                        stream.seek(-3, 1)
+                        if ope == b"EMC":
+                            break
+                    else:
+                        data.write(info)
         return {"settings": settings, "data": data.getvalue()}
 
     @property

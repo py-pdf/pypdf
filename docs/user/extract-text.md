@@ -151,6 +151,30 @@ the way PDF stores information just makes it hard to achieve that:
 And finally there are issues that pypdf will deal with. If you find such a
 text extraction bug, please share the PDF with us so we can work on it!
 
+### Whitespaces
+
+The PDF format is meant for printing. It is not designed to be read by machines.
+The text within a PDF document is absolutely positioned, meaning that every single
+character could be positioned on the page.
+
+The text
+
+> This is a test document by Ethan Nelson.
+
+can be represented as
+
+> [(This is a )9(te)-3(st)9( do)-4(cu)13(m)-4(en)12(t )-3(b)3(y)-3( )9(Et)-2(h)3(an)4( Nels)13(o)-5(n)3(.)] TJ
+
+Where the numbers are adjustments of vertical space. This representation used
+within the PDF file makes it very hard to guarantee correct whitespaces.
+
+
+More information:
+
+* [issue #1507](https://github.com/py-pdf/pypdf/issues/1507)
+* [Negative numbers in PDF content stream text object](https://stackoverflow.com/a/28203655/562769)
+* Mark Stephens: [Understanding PDF text objects](https://blog.idrsolutions.com/understanding-pdf-text-objects/), 2010.
+
 ## OCR vs Text Extraction
 
 Optical Character Recognition (OCR) is the process of extracting text from
