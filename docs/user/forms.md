@@ -19,7 +19,6 @@ reader = PdfReader("form.pdf")
 writer = PdfWriter()
 
 page = reader.pages[0]
-fields = reader.get_fields()
 
 writer.add_page(page)
 
