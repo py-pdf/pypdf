@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1674384113791,
+  "lastUpdate": 1674384816036,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -22594,6 +22594,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0009660076995695466",
             "extra": "mean: 83.94945518181305 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "962ce556592eb95a92e610305b15263e4de0d5e4",
+          "message": "DOC: Add attrs because myst-parser didn't",
+          "timestamp": "2023-01-22T11:52:20+01:00",
+          "tree_id": "8c3f1c4a8cf995d650278bcc9f83556dc0c62649",
+          "url": "https://github.com/py-pdf/pypdf/commit/962ce556592eb95a92e610305b15263e4de0d5e4"
+        },
+        "date": 1674384814613,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0099207457766746,
+            "unit": "iter/sec",
+            "range": "stddev: 0.009967117800975547",
+            "extra": "mean: 990.176708599995 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.744751963287237,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007541820001413581",
+            "extra": "mean: 85.14441200000533 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2398562894824491,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025999465694633513",
+            "extra": "mean: 4.1691631358 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.557887862608428,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00025952473669942533",
+            "extra": "mean: 86.5209986363647 msec\nrounds: 11"
           }
         ]
       }
