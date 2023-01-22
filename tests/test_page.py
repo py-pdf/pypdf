@@ -572,7 +572,8 @@ def test_extract_text_visitor_callbacks():
         page_lrs_model, rect_filter=ignore_large_rectangles
     )
 
-    # We see ten rectangles (5 tabs, 5 boxes) but there are 64 rectangles (including some invisible ones).
+    # We see ten rectangles (5 tabs, 5 boxes) but there are 64 rectangles
+    # (including some invisible ones).
     assert len(rectangles) == 60
     rectangle2texts = {}
     for t in texts:
@@ -982,8 +983,8 @@ def test_merge_page_resources_smoke_test():
 
     NO = NameObject
 
-    # set up some dummy resources that overlap (or not) between the two pages (note, all the edge
-    # cases are tested in test_merge_resources)
+    # set up some dummy resources that overlap (or not) between the two pages
+    # (note, all the edge cases are tested in test_merge_resources)
     props1 = page1[NO("/Resources")][NO("/Properties")] = DictionaryObject(
         {
             NO("/just1"): NO("/just1-value"),
@@ -998,7 +999,8 @@ def test_merge_page_resources_smoke_test():
             NO("/overlap-different"): NO("/overlap-different-value2"),
         }
     )
-    # use these keys for some "operations", to validate renaming (the operand name doesn't matter)
+    # use these keys for some "operations", to validate renaming
+    # (the operand name doesn't matter)
     contents1 = page1[NO("/Contents")] = ContentStream(None, None)
     contents1.operations = [(ArrayObject(props1.keys()), "page1-contents")]
     contents2 = page2[NO("/Contents")] = ContentStream(None, None)

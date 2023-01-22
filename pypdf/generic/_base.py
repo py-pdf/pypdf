@@ -77,8 +77,10 @@ class PdfObject(PdfObjectProtocol):
         """
         clone object into pdf_dest (PdfWriterProtocol which is an interface for PdfWriter)
         force_duplicate: in standard if the object has been already cloned and reference,
-                         the copy is returned; when force_duplicate == True, a new copy is always performed
-        ignore_fields : list/tuple of Fields names (for dictionaries that will be ignored during cloning (apply also to childs duplication)
+            the copy is returned; when force_duplicate == True,
+            a new copy is always performed
+        ignore_fields : list/tuple of Fields names (for dictionaries that will
+            be ignored during cloning (apply also to childs duplication)
         in standard, clone function call _reference_clone (see _reference)
 
         Args:
