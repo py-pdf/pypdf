@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1674380435506,
+  "lastUpdate": 1674381494262,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -22490,6 +22490,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00034094658020352017",
             "extra": "mean: 84.96988383333341 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wilson.huon@gmail.com",
+            "name": "Huon Wilson",
+            "username": "huonw"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d1233dfa5089100c3b4916ee3478300f01c6bcd1",
+          "message": "Sort computed /ProcSet in a merged page, for reproducibility (#1542)\n\nSorting the `/ProcSet` array when merging two pages makes the ProcSet deterministic across multiple runs with the same input.\r\n\r\nFixes #1531",
+          "timestamp": "2023-01-22T10:56:53+01:00",
+          "tree_id": "5a2efb67d37b9153ce812c814aae5cb4ae60ae61",
+          "url": "https://github.com/py-pdf/pypdf/commit/d1233dfa5089100c3b4916ee3478300f01c6bcd1"
+        },
+        "date": 1674381492495,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8756221044186135,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01270957631673391",
+            "extra": "mean: 1.1420451756000034 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.27775790225557,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008773766560404501",
+            "extra": "mean: 97.29748545454052 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.21051220530260217,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02287430831398683",
+            "extra": "mean: 4.750318389200015 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.076415707689057,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009922234757884457",
+            "extra": "mean: 99.24163800000088 msec\nrounds: 10"
           }
         ]
       }
