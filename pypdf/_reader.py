@@ -118,7 +118,8 @@ def convertToInt(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:  # depreca
 class DocumentInformation(DictionaryObject):
     """
     A class representing the basic document metadata provided in a PDF File.
-    This class is accessible through :py:class:`PdfReader.metadata<pypdf.PdfReader.metadata>`.
+    This class is accessible through
+    :py:class:`PdfReader.metadata<pypdf.PdfReader.metadata>`.
 
     All text properties of the document metadata have
     *two* properties, eg. author and author_raw. The non-raw property will

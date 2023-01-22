@@ -346,10 +346,10 @@ class DictionaryObject(dict, PdfObject):
         def get_next_obj_pos(
             p: int, p1: int, rem_gens: List[int], pdf: Any
         ) -> int:  # PdfReader
-            l = pdf.xref[rem_gens[0]]
-            for o in l:
-                if p1 > l[o] and p < l[o]:
-                    p1 = l[o]
+            loc = pdf.xref[rem_gens[0]]
+            for o in loc:
+                if p1 > loc[o] and p < loc[o]:
+                    p1 = loc[o]
             if len(rem_gens) == 1:
                 return p1
             else:

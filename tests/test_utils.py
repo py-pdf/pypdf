@@ -241,7 +241,10 @@ def test_deprecation_bookmark():
 @pytest.mark.external
 def test_escapedcode_followed_by_int():
     # iss #1294
-    url = "https://github.com/timedegree/playground_files/raw/main/%E8%AE%BA%E6%96%87/AN%20EXACT%20ANALYTICAL%20SOLUTION%20OF%20KEPLER'S%20EQUATION.pdf"
+    url = (
+        "https://github.com/timedegree/playground_files/raw/main/"
+        "%E8%AE%BA%E6%96%87/AN%20EXACT%20ANALYTICAL%20SOLUTION%20OF%20KEPLER'S%20EQUATION.pdf"
+    )
     name = "keppler.pdf"
 
     reader = PdfReader(io.BytesIO(get_pdf_from_url(url, name=name)))

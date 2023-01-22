@@ -379,7 +379,8 @@ def test_remove_text_all_operators(ignore_byte_string_object):
         pdf_data.find(b"4 0 obj") + startx_correction,
         pdf_data.find(b"5 0 obj") + startx_correction,
         pdf_data.find(b"6 0 obj") + startx_correction,
-        # startx_correction should be -1 due to double % at the beginning inducing an error on startxref computation
+        # startx_correction should be -1 due to double % at the beginning
+        # inducing an error on startxref computation
         pdf_data.find(b"xref"),
     )
     print(pdf_data.decode())
