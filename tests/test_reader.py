@@ -1299,6 +1299,7 @@ def test_page_labels(src, page_labels):
     assert PdfReader(src).page_labels[:max_indices] == page_labels[:max_indices]
 
 
+@pytest.mark.external
 def test_iss1559():
     url = "https://github.com/py-pdf/pypdf/files/10441992/default.pdf"
     name = "iss1559.pdf"
