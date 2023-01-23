@@ -91,9 +91,12 @@ def test_writer_clone_bookmarks():
     assert len(reader2.outline) == 2
 
 
-def writer_operate(writer):
+def writer_operate(writer: PdfWriter) -> None:
     """
     To test the writer that initialized by each of the four usages.
+
+    Args:
+        writer: A PdfWriter object
     """
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     pdf_outline_path = RESOURCE_ROOT / "pdflatex-outline.pdf"
