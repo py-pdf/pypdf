@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1674418683663,
+  "lastUpdate": 1674457621866,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -22854,6 +22854,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.001471841442514327",
             "extra": "mean: 86.66054554545481 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "bee73dc1d3afb683dd5f1f892cf201ed6c23e5ce",
+          "message": "DOC: Improve documentation by fixing darglint issues (#1574)",
+          "timestamp": "2023-01-23T08:05:46+01:00",
+          "tree_id": "a3237b673180a6d5b1f2391f4a9f338f91d171df",
+          "url": "https://github.com/py-pdf/pypdf/commit/bee73dc1d3afb683dd5f1f892cf201ed6c23e5ce"
+        },
+        "date": 1674457620676,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0152239441564603,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006540423013797493",
+            "extra": "mean: 985.0043487999983 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.565711723149208,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006481910973717798",
+            "extra": "mean: 86.46246974999923 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24349459509171725,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02375580644944919",
+            "extra": "mean: 4.106867339800004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.362150611447072,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00055270780508737",
+            "extra": "mean: 80.8920738333363 msec\nrounds: 12"
           }
         ]
       }
