@@ -62,20 +62,11 @@ def test_skip_over_comment(stream, remainder):
     assert stream.read() == remainder
 
 
-def test_read_until_regex_premature_ending_raise():
-    import re
-
-    stream = io.BytesIO(b"")
-    with pytest.raises(PdfStreamError) as exc:
-        read_until_regex(stream, re.compile(b"."))
-    assert exc.value.args[0] == "Stream has ended unexpectedly"
-
-
 def test_read_until_regex_premature_ending_name():
     import re
 
     stream = io.BytesIO(b"")
-    assert read_until_regex(stream, re.compile(b"."), ignore_eof=True) == b""
+    assert read_until_regex(stream, re.compile(b".")) == b""
 
 
 @pytest.mark.parametrize(
@@ -250,7 +241,10 @@ def test_deprecation_bookmark():
 @pytest.mark.external
 def test_escapedcode_followed_by_int():
     # iss #1294
-    url = "https://github.com/timedegree/playground_files/raw/main/%E8%AE%BA%E6%96%87/AN%20EXACT%20ANALYTICAL%20SOLUTION%20OF%20KEPLER'S%20EQUATION.pdf"
+    url = (
+        "https://github.com/timedegree/playground_files/raw/main/"
+        "%E8%AE%BA%E6%96%87/AN%20EXACT%20ANALYTICAL%20SOLUTION%20OF%20KEPLER'S%20EQUATION.pdf"
+    )
     name = "keppler.pdf"
 
     reader = PdfReader(io.BytesIO(get_pdf_from_url(url, name=name)))

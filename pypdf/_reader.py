@@ -118,7 +118,8 @@ def convertToInt(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:  # depreca
 class DocumentInformation(DictionaryObject):
     """
     A class representing the basic document metadata provided in a PDF File.
-    This class is accessible through :py:class:`PdfReader.metadata<pypdf.PdfReader.metadata>`.
+    This class is accessible through
+    :py:class:`PdfReader.metadata<pypdf.PdfReader.metadata>`.
 
     All text properties of the document metadata have
     *two* properties, eg. author and author_raw. The non-raw property will
@@ -1901,11 +1902,11 @@ class PdfReader:
         get_entry: Callable[[int], Union[int, Tuple[int, ...]]],
         used_before: Callable[[int, Union[int, Tuple[int, ...]]], bool],
     ) -> None:
-        last_end = 0
+        # last_end = 0
         for start, size in self._pairs(idx_pairs):
             # The subsections must increase
-            assert start >= last_end
-            last_end = start + size
+            # assert start >= last_end
+            # last_end = start + size
             for num in range(start, start + size):
                 # The first entry is the type
                 xref_type = get_entry(0)

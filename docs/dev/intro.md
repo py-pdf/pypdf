@@ -80,4 +80,4 @@ The `PREFIX` can be:
 
 We need to keep an eye on performance and thus we have a few benchmarks.
 
-See [py-pdf.github.io/pypdf/dev/bench](https://py-pdf.github.io/PyPDF2/dev/bench/)
+See [py-pdf.github.io/pypdf/dev/bench](https://py-pdf.github.io/pypdf/dev/bench/)

@@ -675,7 +675,10 @@ def test_bool_repr(tmp_path):
 @pytest.mark.external
 @patch("pypdf._reader.logger_warning")
 def test_issue_997(mock_logger_warning):
-    url = "https://github.com/py-pdf/pypdf/files/8908874/Exhibit_A-2_930_Enterprise_Zone_Tax_Credits_final.pdf"
+    url = (
+        "https://github.com/py-pdf/pypdf/files/8908874/"
+        "Exhibit_A-2_930_Enterprise_Zone_Tax_Credits_final.pdf"
+    )
     name = "gh-issue-997.pdf"
 
     merger = PdfMerger()
@@ -870,9 +873,9 @@ def test_annotation_builder_link():
             url="https://martin-thoma.com/",
             target_page_index=3,
         )
-    assert (
-        exc.value.args[0]
-        == "Either 'url' or 'target_page_index' have to be provided. url=https://martin-thoma.com/, target_page_index=3"
+    assert exc.value.args[0] == (
+        "Either 'url' or 'target_page_index' have to be provided. "
+        "url=https://martin-thoma.com/, target_page_index=3"
     )
 
     # Part 2: Too few args

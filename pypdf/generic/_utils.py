@@ -118,8 +118,8 @@ def create_string_object(
     Create a ByteStringObject or a TextStringObject from a string to represent the string.
 
     Args:
-      string:
-      forced_encoding:
+      string: The data being used
+      forced_encoding: Typically None, or an encoding string
 
     Returns:
       A ByteStringObject
@@ -150,10 +150,11 @@ def create_string_object(
                     retval.autodetect_utf16 = True
                     return retval
                 else:
-                    # This is probably a big performance hit here, but we need to
-                    # convert string objects into the text/unicode-aware version if
-                    # possible... and the only way to check if that's possible is
-                    # to try.  Some strings are strings, some are just byte arrays.
+                    # This is probably a big performance hit here, but we need
+                    # to convert string objects into the text/unicode-aware
+                    # version if possible... and the only way to check if that's
+                    # possible is to try.
+                    # Some strings are strings, some are just byte arrays.
                     retval = TextStringObject(decode_pdfdocencoding(string))
                     retval.autodetect_pdfdocencoding = True
                     return retval

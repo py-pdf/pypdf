@@ -23,6 +23,7 @@ history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/pypdf/gra
 * [Majumder, Jonah](https://github.com/jonahmajumder)
 * [Manini, Lorenzo](https://github.com/lorenzomanini)
 * [maxbeer99](https://github.com/maxbeer99)
+* [McNeil, Karen](https://github.com/karenlmcneil): Arabic Language Support
 * [Mérino, Antoine](https://github.com/Merinorus)
 * [Perrensen, Olsen](https://github.com/olsonperrensen)
 * [Pinheiro, Arthur](https://github.com/xilopaint)
@@ -34,6 +35,7 @@ history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/pypdf/gra
 * [Stüber, Timo](https://github.com/omit66)
 * [Thoma, Martin](https://github.com/MartinThoma): Maintainer of pypdf since April 2022. I hope to build a great community with many awesome contributors. [LinkedIn](https://www.linkedin.com/in/martin-thoma/) | [StackOverflow](https://stackoverflow.com/users/562769/martin-thoma) | [Blog](https://martin-thoma.com/)
 * [WevertonGomes](https://github.com/WevertonGomesCosta)
+* [Wilson, Huon](https://github.com/huonw)
 * ztravis
 
 ## Adding a new contributor

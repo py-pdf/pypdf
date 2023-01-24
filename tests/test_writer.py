@@ -91,9 +91,12 @@ def test_writer_clone_bookmarks():
     assert len(reader2.outline) == 2
 
 
-def writer_operate(writer):
+def writer_operate(writer: PdfWriter) -> None:
     """
     To test the writer that initialized by each of the four usages.
+
+    Args:
+        writer: A PdfWriter object
     """
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     pdf_outline_path = RESOURCE_ROOT / "pdflatex-outline.pdf"
@@ -379,7 +382,8 @@ def test_remove_text_all_operators(ignore_byte_string_object):
         pdf_data.find(b"4 0 obj") + startx_correction,
         pdf_data.find(b"5 0 obj") + startx_correction,
         pdf_data.find(b"6 0 obj") + startx_correction,
-        # startx_correction should be -1 due to double % at the beginning inducing an error on startxref computation
+        # startx_correction should be -1 due to double % at the beginning
+        # inducing an error on startxref computation
         pdf_data.find(b"xref"),
     )
     print(pdf_data.decode())
