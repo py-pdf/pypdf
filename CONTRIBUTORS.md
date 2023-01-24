@@ -23,6 +23,7 @@ history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/pypdf/gra
 * [Majumder, Jonah](https://github.com/jonahmajumder)
 * [Manini, Lorenzo](https://github.com/lorenzomanini)
 * [maxbeer99](https://github.com/maxbeer99)
+* [McNeil, Karen](https://github.com/karenlmcneil): Arabic Language Support
 * [Mérino, Antoine](https://github.com/Merinorus)
 * [Perrensen, Olsen](https://github.com/olsonperrensen)
 * [Pinheiro, Arthur](https://github.com/xilopaint)
