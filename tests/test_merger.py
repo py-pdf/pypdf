@@ -310,7 +310,7 @@ def test_merge_write_closed_fh_with_writer():
 
     merger.close()
     # with pytest.raises(RuntimeError) as exc:
-    merger.write("stream.pdf")
+    merger.write("stream1.pdf")
     # assert exc.value.args[0] == err_closed
 
     # with pytest.raises(RuntimeError) as exc:
@@ -336,6 +336,7 @@ def test_merge_write_closed_fh_with_writer():
     # with pytest.raises(RuntimeError) as exc:
     #    merger._write_dests()
     # assert exc.value.args[0] == err_closed
+    os.unlink("stream1.pdf")
 
 
 @pytest.mark.external
