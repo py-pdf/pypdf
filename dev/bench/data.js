@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1674587054279,
+  "lastUpdate": 1674716906006,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -23062,6 +23062,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00033491052905372515",
             "extra": "mean: 84.99733218181404 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dkg@fifthhorseman.net",
+            "name": "dkg",
+            "username": "dkg"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "01f4b6ff398c786aba52573a3b3379272e1419c8",
+          "message": "TST: Unlink test output once successfully written (#1579)\n\nAvoid having two tests write to the same filename \"stream.pdf\".\r\n\r\nWhen a writing test has completed and actually written a file, unlink\r\nthe destination file, so that it does not litter the filesystem after\r\nthe test.",
+          "timestamp": "2023-01-26T08:06:56+01:00",
+          "tree_id": "d1628b3f093652d525e2dc0e34ae634dd7a47a4e",
+          "url": "https://github.com/py-pdf/pypdf/commit/01f4b6ff398c786aba52573a3b3379272e1419c8"
+        },
+        "date": 1674716904152,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9232658220141454,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029840251433653948",
+            "extra": "mean: 1.0831116848000022 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.838945966187119,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007151606731842858",
+            "extra": "mean: 92.25989345454556 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2167126085492042,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07306671442406328",
+            "extra": "mean: 4.614406179200006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 10.438640537804162,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0018974398099029996",
+            "extra": "mean: 95.79791510000177 msec\nrounds: 10"
           }
         ]
       }
