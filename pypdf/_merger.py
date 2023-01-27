@@ -96,11 +96,11 @@ class PdfMerger:
     and :meth:`write()<write>` for usage information.
 
     Args:
-      strict: Determines whether user should be warned of all
-         problems and also causes some correctable problems to be fatal.
-         Defaults to ``False``.
-      fileobj: Output file. Can be a filename or any kind of
-         file-like object.
+        strict: Determines whether user should be warned of all
+            problems and also causes some correctable problems to be fatal.
+            Defaults to ``False``.
+        fileobj: Output file. Can be a filename or any kind of
+            file-like object.
     """
 
     @deprecation_bookmark(bookmarks="outline")
@@ -146,23 +146,23 @@ class PdfMerger:
         specified page number.
 
         Args:
-          page_number: The *page number* to insert this file. File will
-            be inserted after the given number.
-          fileobj: A File Object or an object that supports the standard
-            read and seek methods similar to a File Object. Could also be a
-            string representing a path to a PDF file.
-            None as an argument is deprecated.
-          outline_item: Optionally, you may specify an outline item
-            (previously referred to as a 'bookmark') to be applied at the
-            beginning of the included file by supplying the text of the outline item.
-          pages: can be a :class:`PageRange<pypdf.pagerange.PageRange>`
-            or a ``(start, stop[, step])`` tuple
-            to merge only the specified range of pages from the source
-            document into the output document.
-            Can also be a list of pages to merge.
-         import_outline: You may prevent the source document's
-            outline (collection of outline items, previously referred to as
-            'bookmarks') from being imported by specifying this as ``False``.
+            page_number: The *page number* to insert this file. File will
+                be inserted after the given number.
+            fileobj: A File Object or an object that supports the standard
+                read and seek methods similar to a File Object. Could also be a
+                string representing a path to a PDF file.
+                None as an argument is deprecated.
+            outline_item: Optionally, you may specify an outline item
+                (previously referred to as a 'bookmark') to be applied at the
+                beginning of the included file by supplying the text of the outline item.
+            pages: can be a :class:`PageRange<pypdf.pagerange.PageRange>`
+                or a ``(start, stop[, step])`` tuple
+                to merge only the specified range of pages from the source
+                document into the output document.
+                Can also be a list of pages to merge.
+           import_outline: You may prevent the source document's
+                outline (collection of outline items, previously referred to as
+                'bookmarks') from being imported by specifying this as ``False``.
         """
         if position is not None:  # deprecated
             if page_number is None:
@@ -299,20 +299,20 @@ class PdfMerger:
         position.
 
         Args:
-          fileobj: A File Object or an object that supports the standard
-            read and seek methods similar to a File Object. Could also be a
-            string representing a path to a PDF file.
-          outline_item: Optionally, you may specify an outline item
-            (previously referred to as a 'bookmark') to be applied at the
-            beginning of the included file by supplying the text of the outline item.
-          pages: can be a :class:`PageRange<pypdf.pagerange.PageRange>`
-            or a ``(start, stop[, step])`` tuple
-            to merge only the specified range of pages from the source
-            document into the output document.
-            Can also be a list of pages to append.
-          import_outline: You may prevent the source document's
-            outline (collection of outline items, previously referred to as
-            'bookmarks') from being imported by specifying this as ``False``.
+            fileobj: A File Object or an object that supports the standard
+                read and seek methods similar to a File Object. Could also be a
+                string representing a path to a PDF file.
+            outline_item: Optionally, you may specify an outline item
+                (previously referred to as a 'bookmark') to be applied at the
+                beginning of the included file by supplying the text of the outline item.
+            pages: can be a :class:`PageRange<pypdf.pagerange.PageRange>`
+                or a ``(start, stop[, step])`` tuple
+                to merge only the specified range of pages from the source
+                document into the output document.
+                Can also be a list of pages to append.
+            import_outline: You may prevent the source document's
+                outline (collection of outline items, previously referred to as
+                'bookmarks') from being imported by specifying this as ``False``.
         """
         self.merge(len(self.pages), fileobj, outline_item, pages, import_outline)
 
@@ -321,8 +321,8 @@ class PdfMerger:
         Write all data that has been merged to the given output file.
 
         Args:
-          fileobj: Output file. Can be a filename or any kind of
-            file-like object.
+            fileobj: Output file. Can be a filename or any kind of
+                file-like object.
         """
         if self.output is None:
             raise RuntimeError(ERR_CLOSED_WRITER)
@@ -364,9 +364,9 @@ class PdfMerger:
         Add custom metadata to the output.
 
         Args:
-          infos: a Python dictionary where each key is a field
-            and each value is your new metadata.
-            An example is ``{'/Title': 'My title'}``
+            infos: a Python dictionary where each key is a field
+                and each value is your new metadata.
+                An example is ``{'/Title': 'My title'}``
         """
         if self.output is None:
             raise RuntimeError(ERR_CLOSED_WRITER)
@@ -395,7 +395,7 @@ class PdfMerger:
         Set the page layout.
 
         Args:
-          layout: The page layout to be used
+            layout: The page layout to be used
 
         .. list-table:: Valid ``layout`` arguments
            :widths: 50 200
@@ -433,7 +433,7 @@ class PdfMerger:
         Set the page mode.
 
         Args:
-          mode: The page mode to use.
+            mode: The page mode to use.
 
         .. list-table:: Valid ``mode`` arguments
            :widths: 50 200
@@ -490,12 +490,12 @@ class PdfMerger:
         Remove outline item entries that are not a part of the specified page set.
 
         Args:
-          pdf:
-          outline:
-          pages:
+            pdf:
+            outline:
+            pages:
 
         Returns:
-          An outline type
+            An outline type
         """
         new_outline = []
         prev_header_added = True
@@ -693,15 +693,15 @@ class PdfMerger:
         Add an outline item (commonly referred to as a "Bookmark") to this PDF file.
 
         Args:
-          title: Title to use for this outline item.
-          page_number: Page number this outline item will point to.
-          parent: A reference to a parent outline item to create nested
-            outline items.
-          color: Color of the outline item's font as a red, green, blue tuple
-            from 0.0 to 1.0
-          bold: Outline item font is bold
-          italic: Outline item font is italic
-          fit: The fit of the destination page.
+            title: Title to use for this outline item.
+            page_number: Page number this outline item will point to.
+            parent: A reference to a parent outline item to create nested
+                outline items.
+            color: Color of the outline item's font as a red, green, blue tuple
+                from 0.0 to 1.0
+            bold: Outline item font is bold
+            italic: Outline item font is italic
+            fit: The fit of the destination page.
         """
         if page_number is not None and pagenum is not None:
             raise ValueError(
@@ -807,8 +807,8 @@ class PdfMerger:
         Add a destination to the output.
 
         Args:
-          title: Title to use
-          page_number: Page number this destination points at.
+            title: Title to use
+            page_number: Page number this destination points at.
         """
         if page_number is not None and pagenum is not None:
             raise ValueError(

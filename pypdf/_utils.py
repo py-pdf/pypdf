@@ -102,11 +102,11 @@ def read_until_whitespace(stream: StreamType, maxchars: Optional[int] = None) ->
     Stops upon encountering whitespace or when maxchars is reached.
 
     Args:
-      stream: The data stream from which was read.
-      maxchars: The maximum number of bytes returned; by default unlimited.
+        stream: The data stream from which was read.
+        maxchars: The maximum number of bytes returned; by default unlimited.
 
     Returns:
-      The data which was read.
+        The data which was read.
     """
     txt = b""
     while True:
@@ -124,10 +124,10 @@ def read_non_whitespace(stream: StreamType) -> bytes:
     Find and read the next non-whitespace character (ignores whitespace).
 
     Args:
-      stream: The data stream from which was read.
+        stream: The data stream from which was read.
 
     Returns:
-      The data which was read.
+        The data which was read.
     """
     tok = stream.read(1)
     while tok in WHITESPACES:
@@ -141,11 +141,10 @@ def skip_over_whitespace(stream: StreamType) -> bool:
     one whitespace character was read.
 
     Args:
-      stream: The data stream from which was read.
+        stream: The data stream from which was read.
 
     Returns:
-      True if more than one whitespace was skipped,
-      otherwise return False.
+        True if more than one whitespace was skipped, otherwise return False.
     """
     tok = WHITESPACES[0]
     cnt = 0
@@ -169,10 +168,10 @@ def read_until_regex(stream: StreamType, regex: Pattern[bytes]) -> bytes:
     Treats EOF on the underlying stream as the end of the token to be matched.
 
     Args:
-      regex: re.Pattern
+        regex: re.Pattern
 
     Returns:
-      The read bytes.
+        The read bytes.
     """
     name = b""
     while True:
@@ -196,11 +195,11 @@ def read_block_backwards(stream: StreamType, to_read: int) -> bytes:
     read.
 
     Args:
-      stream:
-      to_read:
+        stream:
+        to_read:
 
     Returns:
-      The data which was read.
+        The data which was read.
     """
     if stream.tell() < to_read:
         raise PdfStreamError("Could not read malformed PDF file")
@@ -223,10 +222,10 @@ def read_previous_line(stream: StreamType) -> bytes:
     or, if no such byte is found, at the beginning of the stream.
 
     Args:
-      stream: StreamType:
+        stream: StreamType:
 
     Returns:
-      The data which was read.
+        The data which was read.
     """
     line_content = []
     found_crlf = False
@@ -460,6 +459,12 @@ def rename_kwargs(  # type: ignore
 ):
     """
     Helper function to deprecate arguments.
+
+    Args:
+        func_name: Name of the function to be deprecated
+        kwargs:
+        aliases:
+        fail:
     """
 
     for old_term, new_term in aliases.items():
