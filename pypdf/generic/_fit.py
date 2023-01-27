@@ -31,12 +31,12 @@ class Fit:
         A zoom value of 0 has the same meaning as a null value.
 
         Args:
-          left:
-          top:
-          zoom:
+            left:
+            top:
+            zoom:
 
         Returns:
-          The created fit object.
+            The created fit object.
         """
         return Fit(fit_type="/XYZ", fit_args=(left, top, zoom))
 
@@ -63,10 +63,10 @@ class Fit:
         parameter is to be retained unchanged.
 
         Args:
-          top:
+            top:
 
         Returns:
-          The created fit object.
+            The created fit object.
         """
         return Fit(fit_type="/FitH", fit_args=(top,))
 
@@ -96,13 +96,13 @@ class Fit:
         behavior.
 
         Args:
-          left:
-          bottom:
-          right:
-          top:
+            left:
+            bottom:
+            right:
+            top:
 
         Returns:
-          The created fit object.
+            The created fit object.
         """
         return Fit(fit_type="/FitR", fit_args=(left, bottom, right, top))
 
@@ -129,10 +129,10 @@ class Fit:
         is to be retained unchanged.
 
         Args:
-          top:
+            top:
 
         Returns:
-          The created fit object.
+            The created fit object.
         """
         return Fit(fit_type="/FitBH", fit_args=(top,))
 
@@ -148,10 +148,10 @@ class Fit:
         parameter is to be retained unchanged.
 
         Args:
-          left:
+            left:
 
         Returns:
-          The created fit object.
+            The created fit object.
         """
         return Fit(fit_type="/FitBV", fit_args=(left,))
 

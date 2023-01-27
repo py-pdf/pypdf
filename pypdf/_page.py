@@ -540,6 +540,9 @@ class PageObject(DictionaryObject):
 
         Args:
             angle: Angle to rotate the page.  Must be an increment of 90 deg.
+
+        Returns:
+            The rotated PageObject
         """
         if angle % 90 != 0:
             raise ValueError("Rotation angle must be a multiple of 90")
@@ -580,8 +583,18 @@ class PageObject(DictionaryObject):
         new_res.update(res1.get(resource, DictionaryObject()).get_object())
 
         def compute_unique_key(base_key: str) -> Tuple[str, bool]:
-            """Find a key that either doesn't already exist or has the same
-            value (indicated by the bool)"""
+            """
+            Find a key that either doesn't already exist or has the same
+            value (indicated by the bool)
+
+            Args:
+                base_key: An index is added to this to get the computed key
+
+            Returns:
+                A tuple (computed key, bool) where the boolean indicates
+                if there is a resource of the given computed_key with the same
+                value.
+            """
             value = page2res.raw_get(base_key)
             # try the current key first (e.g. "foo"), but otherwise iterate
             # through "foo-0", "foo-1", etc. new_res can contain only finitely
@@ -1922,7 +1935,12 @@ class PageObject(DictionaryObject):
         Extract text from an XObject.
 
         Args:
+            xform:
+            orientations:
             space_width:  force default space width (if not extracted from font (default 200)
+            visitor_operand_before:
+            visitor_operand_after:
+            visitor_text:
 
         Returns:
             The extracted text
@@ -2138,6 +2156,16 @@ def _get_fonts_walk(
     emb: Optional[Set[str]] = None,
 ) -> Tuple[Set[str], Set[str]]:
     """
+    Get the set of all fonts and all embedded fonts.
+
+    Args:
+        obj: Page resources dictionary
+        fnt: font
+        emb: embedded fonts
+
+    Returns:
+        A tuple (fnt, emb)
+
     If there is a key called 'BaseFont', that is a font that is used in the document.
     If there is a key called 'FontName' and another key in the same dictionary object
     that is called 'FontFilex' (where x is null, 2, or 3), then that fontname is
