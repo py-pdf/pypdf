@@ -372,10 +372,7 @@ class FloatObject(float, PdfObject):
             return "0.0"
         nb = int(log10(abs(self)))
         s = f"{self:.{max(1,16-nb)}f}".rstrip("0").rstrip(".")
-        if s == "0":
-            return "0.0"
-        else:
-            return s
+        return s
 
     def __repr__(self) -> str:
         return self.myrepr()  # repr(float(self))
