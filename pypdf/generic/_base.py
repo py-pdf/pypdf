@@ -77,8 +77,10 @@ class PdfObject(PdfObjectProtocol):
         """
         clone object into pdf_dest (PdfWriterProtocol which is an interface for PdfWriter)
         force_duplicate: in standard if the object has been already cloned and reference,
-                         the copy is returned; when force_duplicate == True, a new copy is always performed
-        ignore_fields : list/tuple of Fields names (for dictionaries that will be ignored during cloning (apply also to childs duplication)
+            the copy is returned; when force_duplicate == True,
+            a new copy is always performed
+        ignore_fields : list/tuple of Fields names (for dictionaries that will
+            be ignored during cloning (apply also to childs duplication)
         in standard, clone function call _reference_clone (see _reference)
 
         Args:
@@ -631,7 +633,7 @@ class NameObject(str, PdfObject):
         name = stream.read(1)
         if name != NameObject.surfix:
             raise PdfReadError("name read error")
-        name += read_until_regex(stream, NameObject.delimiter_pattern, ignore_eof=True)
+        name += read_until_regex(stream, NameObject.delimiter_pattern)
         try:
             # Name objects should represent irregular characters
             # with a '#' followed by the symbol's hex number

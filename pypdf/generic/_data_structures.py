@@ -192,10 +192,10 @@ class DictionaryObject(dict, PdfObject):
         Update the object from src
 
         Args:
-          src: "DictionaryObject":
-          pdf_dest:
-          force_duplicate:
-          ignore_fields:
+            src: "DictionaryObject":
+            pdf_dest:
+            force_duplicate:
+            ignore_fields:
         """
         #  First check if this is a chain list, we need to loop to prevent recur
         if (
@@ -346,10 +346,10 @@ class DictionaryObject(dict, PdfObject):
         def get_next_obj_pos(
             p: int, p1: int, rem_gens: List[int], pdf: Any
         ) -> int:  # PdfReader
-            l = pdf.xref[rem_gens[0]]
-            for o in l:
-                if p1 > l[o] and p < l[o]:
-                    p1 = l[o]
+            loc = pdf.xref[rem_gens[0]]
+            for o in loc:
+                if p1 > loc[o] and p < loc[o]:
+                    p1 = loc[o]
             if len(rem_gens) == 1:
                 return p1
             else:
@@ -583,10 +583,10 @@ class TreeObject(DictionaryObject):
         Adjust the pointers of the linked list and tree node count.
 
         Args:
-          prev:
-          prev_ref:
-          cur:
-          last:
+            prev:
+            prev_ref:
+            cur:
+            last:
         """
         next_ref = cur.get(NameObject("/Next"), None)
         if prev is None:
@@ -689,7 +689,7 @@ def _reset_node_tree_relationship(child_obj: Any) -> None:
     This resets the nodes attributes in respect to that tree.
 
     Args:
-      child_obj:
+        child_obj:
     """
     del child_obj[NameObject("/Parent")]
     if NameObject("/Next") in child_obj:
@@ -714,10 +714,10 @@ class StreamObject(DictionaryObject):
         Update the object from src.
 
         Args:
-          src:
-          pdf_dest:
-          force_duplicate:
-          ignore_fields:
+            src:
+            pdf_dest:
+            force_duplicate:
+            ignore_fields:
         """
         self._data = cast("StreamObject", src)._data
         try:
@@ -916,12 +916,12 @@ class ContentStream(DecodedStreamObject):
         Clone object into pdf_dest.
 
         Args:
-          pdf_dest:
-          force_duplicate:
-          ignore_fields:
+            pdf_dest:
+            force_duplicate:
+            ignore_fields:
 
         Returns:
-          The cloned ContentStream
+            The cloned ContentStream
         """
         try:
             if self.indirect_reference.pdf == pdf_dest and not force_duplicate:  # type: ignore
@@ -948,10 +948,10 @@ class ContentStream(DecodedStreamObject):
         Update the object from src.
 
         Args:
-          src:
-          pdf_dest:
-          force_duplicate:
-          ignore_fields:
+            src:
+            pdf_dest:
+            force_duplicate:
+            ignore_fields:
         """
         self.pdf = pdf_dest
         self.operations = list(cast("ContentStream", src).operations)
@@ -969,7 +969,7 @@ class ContentStream(DecodedStreamObject):
                 break
             stream.seek(-1, 1)
             if peek.isalpha() or peek in (b"'", b'"'):
-                operator = read_until_regex(stream, NameObject.delimiter_pattern, True)
+                operator = read_until_regex(stream, NameObject.delimiter_pattern)
                 if operator == b"BI":
                     # begin inline image - a completely different parsing
                     # mechanism is required, of course... thanks buddy...
@@ -1291,13 +1291,13 @@ class Destination(TreeObject):
     See section 8.2.1 of the PDF 1.6 reference.
 
     Args:
-      title: Title of this destination.
-      page: Reference to the page of this destination. Should
-        be an instance of :class:`IndirectObject<pypdf.generic.IndirectObject>`.
-      fit: How the destination is displayed.
+        title: Title of this destination.
+        page: Reference to the page of this destination. Should
+            be an instance of :class:`IndirectObject<pypdf.generic.IndirectObject>`.
+        fit: How the destination is displayed.
 
     Raises:
-      PdfReadError: If destination type is invalid.
+        PdfReadError: If destination type is invalid.
 
     """
 

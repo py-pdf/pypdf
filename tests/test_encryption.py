@@ -20,43 +20,57 @@ RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 
 @pytest.mark.parametrize(
-    ("name", "requres_pycryptodome"),
+    ("name", "requires_pycryptodome"),
     [
         # unencrypted pdf
         ("unencrypted.pdf", False),
-        # created by `qpdf --encrypt "" "" 40 -- unencrypted.pdf r2-empty-password.pdf`:
+        # created by:
+        # qpdf --encrypt "" "" 40 -- unencrypted.pdf r2-empty-password.pdf
         ("r2-empty-password.pdf", False),
-        # created by `qpdf --encrypt "" "" 128 -- unencrypted.pdf r3-empty-password.pdf`:
+        # created by:
+        # qpdf --encrypt "" "" 128 -- unencrypted.pdf r3-empty-password.pdf
         ("r3-empty-password.pdf", False),
-        # created by `qpdf --encrypt "asdfzxcv" "" 40 -- unencrypted.pdf r2-user-password.pdf`:
+        # created by:
+        # qpdf --encrypt "asdfzxcv" "" 40 -- unencrypted.pdf r2-user-password.pdf
         ("r2-user-password.pdf", False),
-        # created by `qpdf --encrypt "" "asdfzxcv" 40 -- unencrypted.pdf r2-user-password.pdf`:
+        # created by:
+        # qpdf --encrypt "" "asdfzxcv" 40 -- unencrypted.pdf r2-user-password.pdf
         ("r2-owner-password.pdf", False),
-        # created by `qpdf --encrypt "asdfzxcv" "" 128 -- unencrypted.pdf r3-user-password.pdf`:
+        # created by:
+        # qpdf --encrypt "asdfzxcv" "" 128 -- unencrypted.pdf r3-user-password.pdf
         ("r3-user-password.pdf", False),
-        # created by `qpdf --encrypt "asdfzxcv" "" 128 --force-V4 -- unencrypted.pdf r4-user-password.pdf`:
+        # created by:
+        # qpdf --encrypt "asdfzxcv" "" 128 --force-V4 -- unencrypted.pdf r4-user-password.pdf
         ("r4-user-password.pdf", False),
-        # created by `qpdf --encrypt "" "asdfzxcv" 128 --force-V4 -- unencrypted.pdf r4-owner-password.pdf`:
+        # created by:
+        # qpdf --encrypt "" "asdfzxcv" 128 --force-V4 -- unencrypted.pdf r4-owner-password.pdf
         ("r4-owner-password.pdf", False),
-        # created by `qpdf --encrypt "asdfzxcv" "" 128 --use-aes=y -- unencrypted.pdf r4-aes-user-password.pdf`:
+        # created by:
+        # qpdf --encrypt "asdfzxcv" "" 128 --use-aes=y -- unencrypted.pdf r4-aes-user-password.pdf
         ("r4-aes-user-password.pdf", True),
-        # # created by `qpdf --encrypt "" "" 256 --force-R5 -- unencrypted.pdf r5-empty-password.pdf`:
+        # created by:
+        # qpdf --encrypt "" "" 256 --force-R5 -- unencrypted.pdf r5-empty-password.pdf
         ("r5-empty-password.pdf", True),
-        # # created by `qpdf --encrypt "asdfzxcv" "" 256 --force-R5 -- unencrypted.pdf r5-user-password.pdf`:
+        # created by:
+        # qpdf --encrypt "asdfzxcv" "" 256 --force-R5 -- unencrypted.pdf r5-user-password.pdf
         ("r5-user-password.pdf", True),
-        # # created by `qpdf --encrypt "" "asdfzxcv" 256 --force-R5 -- unencrypted.pdf r5-owner-password.pdf`:
+        # created by:
+        # qpdf --encrypt "" "asdfzxcv" 256 --force-R5 -- unencrypted.pdf r5-owner-password.pdf
         ("r5-owner-password.pdf", True),
-        # created by `qpdf --encrypt "" "" 256 -- unencrypted.pdf r6-empty-password.pdf`:
+        # created by:
+        # qpdf --encrypt "" "" 256 -- unencrypted.pdf r6-empty-password.pdf
         ("r6-empty-password.pdf", True),
-        # created by `qpdf --encrypt "asdfzxcv" "" 256 -- unencrypted.pdf r6-user-password.pdf`:
+        # created by:
+        # qpdf --encrypt "asdfzxcv" "" 256 -- unencrypted.pdf r6-user-password.pdf
         ("r6-user-password.pdf", True),
-        # created by `qpdf --encrypt "" "asdfzxcv" 256 -- unencrypted.pdf r6-owner-password.pdf`:
+        # created by:
+        # qpdf --encrypt "" "asdfzxcv" 256 -- unencrypted.pdf r6-owner-password.pdf
         ("r6-owner-password.pdf", True),
     ],
 )
-def test_encryption(name, requres_pycryptodome):
+def test_encryption(name, requires_pycryptodome):
     inputfile = RESOURCE_ROOT / "encryption" / name
-    if requres_pycryptodome and not HAS_PYCRYPTODOME:
+    if requires_pycryptodome and not HAS_PYCRYPTODOME:
         with pytest.raises(DependencyError) as exc:
             ipdf = pypdf.PdfReader(inputfile)
             ipdf.decrypt("asdfzxcv")
@@ -87,7 +101,8 @@ def test_encryption(name, requres_pycryptodome):
 @pytest.mark.parametrize(
     ("name", "user_passwd", "owner_passwd"),
     [
-        # created by `qpdf --encrypt "foo" "bar" 256 -- unencrypted.pdf r6-both-passwords.pdf`
+        # created by
+        # qpdf --encrypt "foo" "bar" 256 -- unencrypted.pdf r6-both-passwords.pdf
         ("r6-both-passwords.pdf", "foo", "bar"),
     ],
 )

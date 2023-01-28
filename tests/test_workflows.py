@@ -100,15 +100,17 @@ def test_PdfReaderFileLoad():
             assert expected_line == actual_line
 
         assert text == pdftext, (
-            "PDF extracted text differs from expected value.\n\nExpected:\n\n%r\n\nExtracted:\n\n%r\n\n"
-            % (pdftext, text)
+            "PDF extracted text differs from expected value.\n\n"
+            "Expected:\n\n%r\n\nExtracted:\n\n%r\n\n" % (pdftext, text)
         )
 
 
 def test_PdfReaderJpegImage():
     """
-    Test loading and parsing of a file. Extract the image of the file and compare to expected
-    textual output. Expected outcome: file loads, image matches expected.
+    Test loading and parsing of a file. Extract the image of the file and
+    compare to expected textual output.
+
+    Expected outcome: file loads, image matches expected.
     """
 
     with open(RESOURCE_ROOT / "jpeg.pdf", "rb") as inputfile:
@@ -125,7 +127,8 @@ def test_PdfReaderJpegImage():
 
         # Compare the text of the PDF to a known source
         assert binascii.hexlify(data).decode() == imagetext, (
-            "PDF extracted image differs from expected value.\n\nExpected:\n\n%r\n\nExtracted:\n\n%r\n\n"
+            "PDF extracted image differs from expected value.\n\n"
+            "Expected:\n\n%r\n\nExtracted:\n\n%r\n\n"
             % (imagetext, binascii.hexlify(data).decode())
         )
 

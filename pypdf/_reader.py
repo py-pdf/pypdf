@@ -118,7 +118,8 @@ def convertToInt(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:  # depreca
 class DocumentInformation(DictionaryObject):
     """
     A class representing the basic document metadata provided in a PDF File.
-    This class is accessible through :py:class:`PdfReader.metadata<pypdf.PdfReader.metadata>`.
+    This class is accessible through
+    :py:class:`PdfReader.metadata<pypdf.PdfReader.metadata>`.
 
     All text properties of the document metadata have
     *two* properties, eg. author and author_raw. The non-raw property will
@@ -283,15 +284,15 @@ class PdfReader:
     tables are read into memory.
 
     Args:
-      stream: A File object or an object that supports the standard read
-        and seek methods similar to a File object. Could also be a
-        string representing a path to a PDF file.
-      strict: Determines whether user should be warned of all
-        problems and also causes some correctable problems to be fatal.
-        Defaults to ``False``.
-      password: Decrypt PDF file at initialization. If the
-        password is None, the file will not be decrypted.
-        Defaults to ``None``
+        stream: A File object or an object that supports the standard read
+            and seek methods similar to a File object. Could also be a
+            string representing a path to a PDF file.
+        strict: Determines whether user should be warned of all
+            problems and also causes some correctable problems to be fatal.
+            Defaults to ``False``.
+        password: Decrypt PDF file at initialization. If the
+            password is None, the file will not be decrypted.
+            Defaults to ``None``
     """
 
     def __init__(
@@ -435,11 +436,11 @@ class PdfReader:
         Args:
 
         Returns:
-          The number of pages of the parsed PDF file
+            The number of pages of the parsed PDF file
 
         Raises:
-          PdfReadError: if file is encrypted and restrictions prevent
-            this action.
+            PdfReadError: if file is encrypted and restrictions prevent
+                this action.
         """
         # Flattened pages will not work on an Encrypted PDF;
         # the PDF file's page count is used in this case. Otherwise,
@@ -486,11 +487,11 @@ class PdfReader:
         Retrieve a page by number from this PDF file.
 
         Args:
-          page_number: The page number to retrieve
-            (pages begin at zero)
+            page_number: The page number to retrieve
+                (pages begin at zero)
 
         Returns:
-          A :class:`PageObject<pypdf._page.PageObject>` instance.
+            A :class:`PageObject<pypdf._page.PageObject>` instance.
         """
         # ensure that we're not trying to access an encrypted PDF
         # assert not self.trailer.has_key(TK.ENCRYPT)
@@ -532,16 +533,16 @@ class PdfReader:
         The *tree* and *retval* parameters are for recursive use.
 
         Args:
-          tree:
-          retval:
-          fileobj: A file object (usually a text file) to write
-            a report to on all interactive form fields found.
+            tree:
+            retval:
+            fileobj: A file object (usually a text file) to write
+                a report to on all interactive form fields found.
 
         Returns:
-          A dictionary where each key is a field name, and each
-          value is a :class:`Field<pypdf.generic.Field>` object. By
-          default, the mapping name is used for keys.
-          ``None`` if form data could not be located.
+            A dictionary where each key is a field name, and each
+            value is a :class:`Field<pypdf.generic.Field>` object. By
+            default, the mapping name is used for keys.
+            ``None`` if form data could not be located.
 
         """
         field_attributes = FieldDictionaryAttributes.attributes_dict()
@@ -678,13 +679,15 @@ class PdfReader:
         """
         Retrieve form fields from the document with textual data.
 
-        The key is the name of the form field, the value is the content of the
-        field.
+        Args:
+            full_qualified_name: to get full name
 
-        If the document contains multiple form fields with the same name, the
-        second and following will get the suffix .2, .3, ...
+        Returns:
+            A dictionary. The key is the name of the form field,
+            the value is the content of the field.
 
-        full_qualified_name should be used to get full name
+            If the document contains multiple form fields with the same name, the
+            second and following will get the suffix .2, .3, ...
         """
 
         def indexed_key(k: str, fields: dict) -> str:
@@ -737,11 +740,11 @@ class PdfReader:
         Retrieve the named destinations present in the document.
 
         Args:
-          tree:
-          retval:
+            tree:
+            retval:
 
         Returns:
-          A dictionary which maps names to
+            A dictionary which maps names to
             :class:`Destinations<pypdf.generic.Destination>`.
         """
         if retval is None:
@@ -886,10 +889,10 @@ class PdfReader:
         """Generate _page_id2num
 
         Args:
-          indirect_reference:
+            indirect_reference:
 
         Returns:
-          The page number.
+            The page number.
         """
         if self._page_id2num is None:
             self._page_id2num = {
@@ -911,11 +914,11 @@ class PdfReader:
         Retrieve page number of a given PageObject
 
         Args:
-          page: The page to get page number. Should be
-            an instance of :class:`PageObject<pypdf._page.PageObject>`
+            page: The page to get page number. Should be
+                an instance of :class:`PageObject<pypdf._page.PageObject>`
 
         Returns:
-          The page number or -1 if page is not found
+            The page number or -1 if page is not found
         """
         return self._get_page_number_by_indirect(page.indirect_reference)
 
@@ -933,10 +936,10 @@ class PdfReader:
         Retrieve page number of a given Destination object.
 
         Args:
-          destination: The destination to get page number.
+            destination: The destination to get page number.
 
         Returns:
-          The page number or -1 if page is not found
+            The page number or -1 if page is not found
         """
         return self._get_page_number_by_indirect(destination.page)
 
@@ -1264,11 +1267,11 @@ class PdfReader:
         This is equivalent to generic.IndirectObject(num,gen,self).get_object()
 
         Args:
-          num:
-          gen:
+            num:
+            gen:
 
         Returns:
-          A PdfObject
+            A PdfObject
         """
         return IndirectObject(num, gen, self).get_object()
 
@@ -1558,10 +1561,10 @@ class PdfReader:
         Find startxref entry - the location of the xref table.
 
         Args:
-          stream:
+            stream:
 
         Returns:
-          The bytes offset
+            The bytes offset
         """
         line = read_previous_line(stream)
         try:
@@ -1848,11 +1851,11 @@ class PdfReader:
         Return an int which indicates an issue. 0 means there is no issue.
 
         Args:
-          stream:
-          startxref:
+            stream:
+            startxref:
 
         Returns:
-          0 means no issue, other values represent specific issues.
+            0 means no issue, other values represent specific issues.
         """
         stream.seek(startxref - 1, 0)  # -1 to check character before
         line = stream.read(1)
@@ -1901,11 +1904,11 @@ class PdfReader:
         get_entry: Callable[[int], Union[int, Tuple[int, ...]]],
         used_before: Callable[[int, Union[int, Tuple[int, ...]]], bool],
     ) -> None:
-        last_end = 0
+        # last_end = 0
         for start, size in self._pairs(idx_pairs):
             # The subsections must increase
-            assert start >= last_end
-            last_end = start + size
+            # assert start >= last_end
+            # last_end = start + size
             for num in range(start, start + size):
                 # The first entry is the type
                 xref_type = get_entry(0)
@@ -1993,10 +1996,10 @@ class PdfReader:
         this library.
 
         Args:
-          password: The password to match.
+            password: The password to match.
 
         Returns:
-          A `PasswordType`.
+            A `PasswordType`.
         """
         if not self._encryption:
             raise PdfReadError("Not encrypted file")

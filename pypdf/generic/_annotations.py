@@ -37,14 +37,14 @@ class AnnotationBuilder:
         Add text annotation.
 
         Args:
-          rect:
-            or array of four integers specifying the clickable rectangular area
-            ``[xLL, yLL, xUR, yUR]``
-          open:
-          flags:
+            rect: array of four integers ``[xLL, yLL, xUR, yUR]``
+                specifying the clickable rectangular area
+            text: The text that is added to the document
+            open:
+            flags:
 
         Returns:
-          A dictionary object representing the annotation.
+            A dictionary object representing the annotation.
         """
         # TABLE 8.23 Additional entries specific to a text annotation
         text_obj = DictionaryObject(
@@ -75,19 +75,20 @@ class AnnotationBuilder:
         Add text in a rectangle to a page.
 
         Args:
-          text: Text to be added
-          rect: or array of four integers
-            specifying the clickable rectangular area ``[xLL, yLL, xUR, yUR]``
-          font: Name of the Font, e.g. 'Helvetica'
-          bold: Print the text in bold
-          italic: Print the text in italic
-          font_size: How big the text will be, e.g. '14pt'
-          font_color: Hex-string for the color
-          border_color: Hex-string for the border color
-          background_color: Hex-string for the background of the annotation
+            text: Text to be added
+            rect: array of four integers ``[xLL, yLL, xUR, yUR]``
+                specifying the clickable rectangular area
+            font: Name of the Font, e.g. 'Helvetica'
+            bold: Print the text in bold
+            italic: Print the text in italic
+            font_size: How big the text will be, e.g. '14pt'
+            font_color: Hex-string for the color, e.g. cdcdcd
+            border_color: Hex-string for the border color, e.g. cdcdcd
+            background_color: Hex-string for the background of the annotation,
+                e.g. cdcdcd
 
         Returns:
-          A dictionary object representing the annotation.
+            A dictionary object representing the annotation.
         """
         font_str = "font: "
         if bold is True:
@@ -133,17 +134,16 @@ class AnnotationBuilder:
         Draw a line on the PDF.
 
         Args:
-          p1: First point
-          p2: Second point
-          rect: or array of four
-            integers specifying the clickable rectangular area
-            ``[xLL, yLL, xUR, yUR]``
-          text: Text to be displayed as the line annotation
-          title_bar: Text to be displayed in the title bar of the
-            annotation; by convention this is the name of the author
+            p1: First point
+            p2: Second point
+            rect: array of four integers ``[xLL, yLL, xUR, yUR]``
+                specifying the clickable rectangular area
+            text: Text to be displayed as the line annotation
+            title_bar: Text to be displayed in the title bar of the
+                annotation; by convention this is the name of the author
 
         Returns:
-          A dictionary object representing the annotation.
+            A dictionary object representing the annotation.
         """
         line_obj = DictionaryObject(
             {
@@ -185,15 +185,16 @@ class AnnotationBuilder:
         """
         Draw a rectangle on the PDF.
 
+        This method uses the /Square annotation type of the PDF format.
+
         Args:
-          rect: or array of four
-            integers specifying the clickable rectangular area
-            ``[xLL, yLL, xUR, yUR]``
-          rect:
-          interiour_color:
+            rect: array of four integers ``[xLL, yLL, xUR, yUR]``
+                specifying the clickable rectangular area
+            interiour_color: None or hex-string for the color, e.g. cdcdcd
+                If None is used, the interiour is transparent.
 
         Returns:
-          A dictionary object representing the annotation.
+            A dictionary object representing the annotation.
         """
         square_obj = DictionaryObject(
             {
@@ -209,6 +210,40 @@ class AnnotationBuilder:
             )
 
         return square_obj
+
+    @staticmethod
+    def ellipse(
+        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        interiour_color: Optional[str] = None,
+    ) -> DictionaryObject:
+        """
+        Draw a rectangle on the PDF.
+
+        This method uses the /Circle annotation type of the PDF format.
+
+        Args:
+            rect: array of four integers ``[xLL, yLL, xUR, yUR]`` specifying
+                the bounding box of the ellipse
+            interiour_color: None or hex-string for the color, e.g. cdcdcd
+                If None is used, the interiour is transparent.
+
+        Returns:
+            A dictionary object representing the annotation.
+        """
+        ellipse_obj = DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Annot"),
+                NameObject("/Subtype"): NameObject("/Circle"),
+                NameObject("/Rect"): RectangleObject(rect),
+            }
+        )
+
+        if interiour_color:
+            ellipse_obj[NameObject("/IC")] = ArrayObject(
+                [FloatObject(n) for n in hex_to_rgb(interiour_color)]
+            )
+
+        return ellipse_obj
 
     @staticmethod
     def polygon(vertices: List[Tuple[float, float]]) -> DictionaryObject:
@@ -254,23 +289,22 @@ class AnnotationBuilder:
         An internal link requires the target_page_index, fit, and fit args.
 
         Args:
-          rect: or array of four
-            integers specifying the clickable rectangular area
-            ``[xLL, yLL, xUR, yUR]``
-          border: if provided, an array describing border-drawing
-            properties. See the PDF spec for details. No border will be
-            drawn if this argument is omitted.
-            - horizontal corner radius,
-            - vertical corner radius, and
-            - border width
-            - Optionally: Dash
-          url: Link to a website (if you want to make an external link)
-          target_page_index: index of the page to which the link should go
-            (if you want to make an internal link)
-          fit: Page fit or 'zoom' option.
+            rect: array of four integers ``[xLL, yLL, xUR, yUR]``
+                specifying the clickable rectangular area
+            border: if provided, an array describing border-drawing
+                properties. See the PDF spec for details. No border will be
+                drawn if this argument is omitted.
+                - horizontal corner radius,
+                - vertical corner radius, and
+                - border width
+                - Optionally: Dash
+            url: Link to a website (if you want to make an external link)
+            target_page_index: index of the page to which the link should go
+                (if you want to make an internal link)
+            fit: Page fit or 'zoom' option.
 
         Returns:
-          A dictionary object representing the annotation.
+            A dictionary object representing the annotation.
         """
         from ..types import BorderArrayType
 
@@ -282,7 +316,8 @@ class AnnotationBuilder:
             )
         if is_external and is_internal:
             raise ValueError(
-                f"Either 'url' or 'target_page_index' have to be provided. url={url}, target_page_index={target_page_index}"
+                "Either 'url' or 'target_page_index' have to be provided. "
+                f"url={url}, target_page_index={target_page_index}"
             )
 
         border_arr: BorderArrayType

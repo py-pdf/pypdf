@@ -56,9 +56,9 @@ def merger_operate(merger):
     with open(pdf_path, "rb") as fh:
         merger.append(fh)
 
-    merger.write(
-        BytesIO()
-    )  # to force to build outlines and ensur the add_outline_item is at end of the list
+    # to force to build outlines and ensure the add_outline_item is
+    # at end of the list
+    merger.write(BytesIO())
     outline_item = merger.add_outline_item("An outline item", 0)
     oi2 = merger.add_outline_item(
         "deeper", 0, parent=outline_item, italic=True, bold=True
@@ -310,7 +310,7 @@ def test_merge_write_closed_fh_with_writer():
 
     merger.close()
     # with pytest.raises(RuntimeError) as exc:
-    merger.write("stream.pdf")
+    merger.write("stream1.pdf")
     # assert exc.value.args[0] == err_closed
 
     # with pytest.raises(RuntimeError) as exc:
@@ -336,6 +336,7 @@ def test_merge_write_closed_fh_with_writer():
     # with pytest.raises(RuntimeError) as exc:
     #    merger._write_dests()
     # assert exc.value.args[0] == err_closed
+    os.unlink("stream1.pdf")
 
 
 @pytest.mark.external
@@ -670,7 +671,10 @@ def test_deprecation_bookmark_decorator_deprecationexcp():
     merger = PdfMerger()
     with pytest.raises(
         DeprecationError,
-        match="import_bookmarks is deprecated as an argument. Use import_outline instead",
+        match=(
+            "import_bookmarks is deprecated as an argument. "
+            "Use import_outline instead"
+        ),
     ):
         merger.merge(0, reader, import_bookmarks=True)
 
@@ -680,7 +684,10 @@ def test_deprecation_bookmark_decorator_deprecationexcp_with_writer():
     merger = PdfWriter()
     with pytest.raises(
         DeprecationError,
-        match="import_bookmarks is deprecated as an argument. Use import_outline instead",
+        match=(
+            "import_bookmarks is deprecated as an argument. "
+            "Use import_outline instead"
+        ),
     ):
         merger.merge(0, reader, import_bookmarks=True)
 
