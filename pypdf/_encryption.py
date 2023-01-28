@@ -290,17 +290,17 @@ class AlgV4:
            value of the encryption dictionary’s Length entry.
 
         Args:
-          password: The encryption secret as a bytes-string
-          rev: The encryption revision (see PDF standard)
-          key_size: The size of the key in bytes
-          o_entry: The owner entry
-          P: A set of flags specifying which operations shall be permitted
-            when the document is opened with user access. If bit 2 is set to 1,
-            all other bits are ignored and all operations are permitted.
-            If bit 2 is set to 0, permission for operations are based on the
-            values of the remaining flags defined in Table 24.
-          id1_entry:
-          metadata_encrypted: A boolean indicating if the metadata is encrypted.
+            password: The encryption secret as a bytes-string
+            rev: The encryption revision (see PDF standard)
+            key_size: The size of the key in bytes
+            o_entry: The owner entry
+            P: A set of flags specifying which operations shall be permitted
+                when the document is opened with user access. If bit 2 is set to 1,
+                all other bits are ignored and all operations are permitted.
+                If bit 2 is set to 0, permission for operations are based on the
+                values of the remaining flags defined in Table 24.
+            id1_entry:
+            metadata_encrypted: A boolean indicating if the metadata is encrypted.
 
         Returns:
             The u_hash digest of length key_size
@@ -353,12 +353,12 @@ class AlgV4:
            the value of the O entry in the encryption dictionary.
 
         Args:
-          owner_password:
-          rev: The encryption revision (see PDF standard)
-          key_size: The size of the key in bytes
+            owner_password:
+            rev: The encryption revision (see PDF standard)
+            key_size: The size of the key in bytes
 
         Returns:
-          The RC4 key
+            The RC4 key
         """
         a = _padding(owner_password)
         o_hash_digest = hashlib.md5(a).digest()
@@ -376,12 +376,12 @@ class AlgV4:
         See :func:`compute_O_value_key`.
 
         Args:
-          rc4_key:
-          user_password:
-          rev: The encryption revision (see PDF standard)
+            rc4_key:
+            user_password:
+            rev: The encryption revision (see PDF standard)
 
         Returns:
-          The RC4 encrypted
+            The RC4 encrypted
         """
         a = _padding(user_password)
         rc4_enc = RC4_encrypt(rc4_key, a)
@@ -407,12 +407,12 @@ class AlgV4:
            encryption dictionary.
 
         Args:
-          key:
-          rev: The encryption revision (see PDF standard)
-          id1_entry:
+            key:
+            rev: The encryption revision (see PDF standard)
+            id1_entry:
 
         Returns:
-          The value
+            The value
         """
         if rev <= 2:
             value = RC4_encrypt(key, _PADDING)
@@ -482,21 +482,21 @@ class AlgV4:
            to decrypt the document.
 
         Args:
-          user_password: The user passwort as a bytes stream
-          rev: The encryption revision (see PDF standard)
-          key_size: The size of the key in bytes
-          o_entry: The owner entry
-          u_entry: The user entry
-          P: A set of flags specifying which operations shall be permitted
-            when the document is opened with user access. If bit 2 is set to 1,
-            all other bits are ignored and all operations are permitted.
-            If bit 2 is set to 0, permission for operations are based on the
-            values of the remaining flags defined in Table 24.
-          id1_entry:
-          metadata_encrypted: A boolean indicating if the metadata is encrypted.
+            user_password: The user passwort as a bytes stream
+            rev: The encryption revision (see PDF standard)
+            key_size: The size of the key in bytes
+            o_entry: The owner entry
+            u_entry: The user entry
+            P: A set of flags specifying which operations shall be permitted
+                when the document is opened with user access. If bit 2 is set to 1,
+                all other bits are ignored and all operations are permitted.
+                If bit 2 is set to 0, permission for operations are based on the
+                values of the remaining flags defined in Table 24.
+            id1_entry:
+            metadata_encrypted: A boolean indicating if the metadata is encrypted.
 
         Returns:
-          The key
+            The key
         """
         key = AlgV4.compute_key(
             user_password, rev, key_size, o_entry, P, id1_entry, metadata_encrypted
@@ -544,21 +544,21 @@ class AlgV4:
            If it is correct, the password supplied is the correct owner password.
 
         Args:
-          owner_password:
-          rev: The encryption revision (see PDF standard)
-          key_size: The size of the key in bytes
-          o_entry: The owner entry
-          u_entry: The user entry
-          P: A set of flags specifying which operations shall be permitted
-            when the document is opened with user access. If bit 2 is set to 1,
-            all other bits are ignored and all operations are permitted.
-            If bit 2 is set to 0, permission for operations are based on the
-            values of the remaining flags defined in Table 24.
-          id1_entry:
-          metadata_encrypted: A boolean indicating if the metadata is encrypted.
+            owner_password:
+            rev: The encryption revision (see PDF standard)
+            key_size: The size of the key in bytes
+            o_entry: The owner entry
+            u_entry: The user entry
+            P: A set of flags specifying which operations shall be permitted
+                when the document is opened with user access. If bit 2 is set to 1,
+                all other bits are ignored and all operations are permitted.
+                If bit 2 is set to 0, permission for operations are based on the
+                values of the remaining flags defined in Table 24.
+            id1_entry:
+            metadata_encrypted: A boolean indicating if the metadata is encrypted.
 
         Returns:
-          bytes
+            bytes
         """
         rc4_key = AlgV4.compute_O_value_key(owner_password, rev, key_size)
 
@@ -629,19 +629,19 @@ class AlgV5:
            They should match the value in the P key.
 
         Args:
-          R:  A number specifying which revision of the standard security
-            handler shall be used to interpret this dictionary
-          password: The owner password
-          o_value: A 32-byte string, based on both the owner and user passwords,
-            that shall be used in computing the encryption key and in determining
-            whether a valid owner password was entered
-          oe_value:
-          u_value: A 32-byte string, based on the user password, that shall be
-            used in determining whether to prompt the user for a password and, if so,
-            whether a valid user or owner password was entered.
+            R: A number specifying which revision of the standard security
+                handler shall be used to interpret this dictionary
+            password: The owner password
+            o_value: A 32-byte string, based on both the owner and user passwords,
+                that shall be used in computing the encryption key and in
+                determining whether a valid owner password was entered
+            oe_value:
+            u_value: A 32-byte string, based on the user password, that shall be
+                used in determining whether to prompt the user for a password and,
+                if so, whether a valid user or owner password was entered.
 
         Returns:
-          The key
+            The key
         """
         password = password[:127]
         if (
@@ -662,16 +662,16 @@ class AlgV5:
         See :func:`verify_owner_password`.
 
         Args:
-          R:  A number specifying which revision of the standard security
-            handler shall be used to interpret this dictionary
-          password: The user password
-          u_value: A 32-byte string, based on the user password, that shall be
-            used in determining whether to prompt the user for a password and, if so,
-            whether a valid user or owner password was entered.
-          ue_value:
+            R: A number specifying which revision of the standard security
+                handler shall be used to interpret this dictionary
+            password: The user password
+            u_value: A 32-byte string, based on the user password, that shall be
+                used in determining whether to prompt the user for a password
+                and, if so, whether a valid user or owner password was entered.
+            ue_value:
 
         Returns:
-          bytes
+            bytes
         """
         password = password[:127]
         if AlgV5.calculate_hash(R, password, u_value[32:40], b"") != u_value[:32]:
@@ -709,17 +709,18 @@ class AlgV5:
         See :func:`verify_owner_password` and :func:`compute_perms_value`.
 
         Args:
-          key: The owner password
-          perms:
-          p: A set of flags specifying which operations shall be permitted
-            when the document is opened with user access. If bit 2 is set to 1, all other
-            bits are ignored and all operations are permitted. If bit 2 is set to 0,
-            permission for operations are based on the values of the remaining flags
-            defined in Table 24.
-          metadata_encrypted:
+            key: The owner password
+            perms:
+            p: A set of flags specifying which operations shall be permitted
+                when the document is opened with user access.
+                If bit 2 is set to 1, all other bits are ignored and all
+                operations are permitted.
+                If bit 2 is set to 0, permission for operations are based on
+                the values of the remaining flags defined in Table 24.
+            metadata_encrypted:
 
         Returns:
-          A boolean
+            A boolean
         """
         b8 = b"T" if metadata_encrypted else b"F"
         p1 = struct.pack("<I", p) + b"\xff\xff\xff\xff" + b8 + b"adb"
@@ -764,11 +765,11 @@ class AlgV5:
            as the UE key.
 
         Args:
-          password:
-          key:
+            password:
+            key:
 
         Returns:
-          A tuple (u-value, ue value)
+            A tuple (u-value, ue value)
         """
         random_bytes = bytes(random.randrange(0, 256) for _ in range(16))
         val_salt = random_bytes[:8]
@@ -804,14 +805,14 @@ class AlgV5:
            The resulting 32-byte string is stored as the OE key.
 
         Args:
-          password:
-          key:
-          u_value: A 32-byte string, based on the user password, that shall be
-            used in determining whether to prompt the user for a password and,
-            if so, whether a valid user or owner password was entered.
+            password:
+            key:
+            u_value: A 32-byte string, based on the user password, that shall be
+                used in determining whether to prompt the user for a password
+                and, if so, whether a valid user or owner password was entered.
 
         Returns:
-          A tuple (O value, OE value)
+            A tuple (O value, OE value)
         """
         random_bytes = bytes(random.randrange(0, 256) for _ in range(16))
         val_salt = random_bytes[:8]
@@ -845,16 +846,16 @@ class AlgV5:
            for validity when the file is opened.
 
         Args:
-          key:
-          p: A set of flags specifying which operations shall be permitted
-            when the document is opened with user access. If bit 2 is set to 1,
-            all other bits are ignored and all operations are permitted.
-            If bit 2 is set to 0, permission for operations are based on the
-            values of the remaining flags defined in Table 24.
-          metadata_encrypted: A boolean indicating if the metadata is encrypted.
+            key:
+            p: A set of flags specifying which operations shall be permitted
+                when the document is opened with user access. If bit 2 is set to 1,
+                all other bits are ignored and all operations are permitted.
+                If bit 2 is set to 0, permission for operations are based on the
+                values of the remaining flags defined in Table 24.
+            metadata_encrypted: A boolean indicating if the metadata is encrypted.
 
         Returns:
-          The perms value
+            The perms value
         """
         b8 = b"T" if metadata_encrypted else b"F"
         rr = bytes(random.randrange(0, 256) for _ in range(4))
@@ -939,12 +940,12 @@ class Encryption:
            The output is the encrypted data to be stored in the PDF file.
 
         Args:
-          obj:
-          idnum:
-          generation:
+            obj:
+            idnum:
+            generation:
 
         Returns:
-          The PdfObject
+            The PdfObject
         """
         pack1 = struct.pack("<i", idnum)[:3]
         pack2 = struct.pack("<i", generation)[:2]

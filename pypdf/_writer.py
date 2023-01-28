@@ -320,12 +320,12 @@ class PdfWriter:
         instance.
 
         Args:
-          page: The page to add to the document. Should be
-            an instance of :class:`PageObject<pypdf._page.PageObject>`
-          excluded_keys:
+            page: The page to add to the document. Should be
+                an instance of :class:`PageObject<pypdf._page.PageObject>`
+            excluded_keys:
 
         Returns:
-          The added PageObject.
+            The added PageObject.
         """
         return self._add_page(page, list.append, excluded_keys)
 
@@ -353,12 +353,12 @@ class PdfWriter:
         :class:`PdfReader<pypdf.PdfReader>` instance.
 
         Args:
-          page: The page to add to the document.
-          index: Position at which the page will be inserted.
-          excluded_keys:
+            page: The page to add to the document.
+            index: Position at which the page will be inserted.
+            excluded_keys:
 
         Returns:
-          The added PageObject.
+            The added PageObject.
         """
         return self._add_page(page, lambda kids, p: kids.insert(index, p))
 
@@ -383,11 +383,11 @@ class PdfWriter:
         Retrieve a page by number from this PDF file.
 
         Args:
-          page_number: The page number to retrieve
-            (pages begin at zero)
+            page_number: The page number to retrieve
+                (pages begin at zero)
 
         Returns:
-          The page at the index given by *page_number*
+            The page at the index given by *page_number*
         """
         if pageNumber is not None:  # deprecated
             if page_number is not None:
@@ -437,17 +437,17 @@ class PdfWriter:
         is specified, use the size of the last page.
 
         Args:
-          width: The width of the new page expressed in default user
-            space units.
-          height: The height of the new page expressed in default
-            user space units.
+            width: The width of the new page expressed in default user
+                space units.
+            height: The height of the new page expressed in default
+                user space units.
 
         Returns:
-          The newly appended page
+            The newly appended page
 
         Raises:
-          PageSizeNotDefinedError: if width and height are not defined
-            and previous page does not exist.
+            PageSizeNotDefinedError: if width and height are not defined
+                and previous page does not exist.
         """
         page = PageObject.create_blank_page(self, width, height)
         self.add_page(page)
@@ -475,18 +475,18 @@ class PdfWriter:
         is specified, use the size of the last page.
 
         Args:
-          width: The width of the new page expressed in default user
-            space units.
-          height: The height of the new page expressed in default
-            user space units.
-          index: Position to add the page.
+            width: The width of the new page expressed in default user
+                space units.
+            height: The height of the new page expressed in default
+                user space units.
+            index: Position to add the page.
 
         Returns:
-          The newly appended page
+            The newly appended page
 
         Raises:
-          PageSizeNotDefinedError: if width and height are not defined
-            and previous page does not exist.
+            PageSizeNotDefinedError: if width and height are not defined
+                and previous page does not exist.
         """
         if width is None or height is None and (self._get_num_pages() - 1) >= index:
             oldpage = self.pages[index]
@@ -563,7 +563,7 @@ class PdfWriter:
         Add Javascript which will launch upon opening this PDF.
 
         Args:
-          javascript: Your Javascript.
+            javascript: Your Javascript.
 
         >>> output.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
         # Example: This will launch the print window when the PDF is opened.
@@ -612,8 +612,8 @@ class PdfWriter:
         Section 7.11.3
 
         Args:
-          filename: The filename to display.
-          data: The data in the file.
+            filename: The filename to display.
+            data: The data in the file.
         """
         # We need three entries:
         # * The file's data
@@ -708,14 +708,15 @@ class PdfWriter:
         `append` should be prefered.
 
         Args:
-          reader: a PdfReader object from which to copy page
-            annotations to this writer object.  The writer's annots
-            will then be updated
-          after_page_append:
-            Callback function that is invoked after each page is appended to
-            the writer. Signature includes a reference to the appended page
-            (delegates to append_pages_from_reader). The single parameter of the
-            callback is a reference to the page just appended to the document.
+            reader: a PdfReader object from which to copy page
+                annotations to this writer object.  The writer's annots
+                will then be updated
+            after_page_append:
+                Callback function that is invoked after each page is appended to
+                the writer. Signature includes a reference to the appended page
+                (delegates to append_pages_from_reader). The single parameter of
+                the callback is a reference to the page just appended to the
+                document.
         """
         # Get page count from writer and reader
         reader_num_pages = len(reader.pages)
@@ -755,13 +756,13 @@ class PdfWriter:
         If the field links to a parent object, add the information to the parent.
 
         Args:
-          page: Page reference from PDF writer where the
-            annotations and field data will be updated.
-          fields: a Python dictionary of field names (/T) and text
-            values (/V)
-          flags: An integer (0 to 7). The first bit sets ReadOnly, the
-            second bit sets Required, the third bit sets NoExport. See
-            PDF Reference Table 8.70 for details.
+            page: Page reference from PDF writer where the
+                annotations and field data will be updated.
+            fields: a Python dictionary of field names (/T) and text
+                values (/V)
+            flags: An integer (0 to 7). The first bit sets ReadOnly, the
+                second bit sets Required, the third bit sets NoExport. See
+                PDF Reference Table 8.70 for details.
         """
         self.set_need_appearances_writer()
         # Iterate through pages, update field values
@@ -831,7 +832,7 @@ class PdfWriter:
         For partial insertion, `append` should be considered.
 
         Args:
-          reader: PdfReader from the document root should be copied.
+            reader: PdfReader from the document root should be copied.
         """
         self._root_object = cast(DictionaryObject, reader.trailer[TK.ROOT].clone(self))
         self._root = self._root_object.indirect_reference  # type: ignore[assignment]
@@ -905,13 +906,14 @@ class PdfWriter:
         cloning section '/Root' and '/Info' and '/ID' of the pdf
 
         Args:
-          reader: PDF file reader instance from which the clone
-            should be created.
-          after_page_append:
-            Callback function that is invoked after each page is appended to
-            the writer. Signature includes a reference to the appended page
-            (delegates to append_pages_from_reader). The single parameter of the
-            callback is a reference to the page just appended to the document.
+            reader: PDF file reader instance from which the clone
+                should be created.
+            after_page_append:
+                Callback function that is invoked after each page is appended to
+                the writer. Signature includes a reference to the appended page
+                (delegates to append_pages_from_reader). The single parameter of
+                the callback is a reference to the page just appended to the
+                document.
         """
         self.clone_reader_document_root(reader)
         self._info = reader.trailer[TK.INFO].clone(self).indirect_reference  # type: ignore
@@ -953,21 +955,21 @@ class PdfWriter:
         Encrypt this PDF file with the PDF Standard encryption handler.
 
         Args:
-          user_password: The password which allows for opening
-            and reading the PDF file with the restrictions provided.
-          owner_password: The password which allows for
-            opening the PDF files without any restrictions.  By default,
-            the owner password is the same as the user password.
-          use_128bit: flag as to whether to use 128bit
-            encryption.  When false, 40bit encryption will be used.  By default,
-            this flag is on.
-          permissions_flag: permissions as described in
-            TABLE 3.20 of the PDF 1.7 specification. A bit value of 1 means the
-            permission is grantend. Hence an integer value of -1 will set all
-            flags.
-            Bit position 3 is for printing, 4 is for modifying content, 5 and 6
-            control annotations, 9 for form fields, 10 for extraction of
-            text and graphics.
+            user_password: The password which allows for opening
+                and reading the PDF file with the restrictions provided.
+            owner_password: The password which allows for
+                opening the PDF files without any restrictions.  By default,
+                the owner password is the same as the user password.
+            use_128bit: flag as to whether to use 128bit
+                encryption.  When false, 40bit encryption will be used.
+                By default, this flag is on.
+            permissions_flag: permissions as described in
+                TABLE 3.20 of the PDF 1.7 specification. A bit value of 1 means
+                the permission is grantend.
+                Hence an integer value of -1 will set all flags.
+                Bit position 3 is for printing, 4 is for modifying content,
+                5 and 6 control annotations, 9 for form fields,
+                10 for extraction of text and graphics.
         """
         if user_pwd is not None:
             if user_password is not None:
@@ -1067,10 +1069,10 @@ class PdfWriter:
         Write the collection of pages added to this object out as a PDF file.
 
         Args:
-          stream: An object to write the file to.  The object can support
-            the write method and the tell method, similar to a file object, or
-            be a file path, just like the fileobj, just named it stream to keep
-            existing workflow.
+            stream: An object to write the file to.  The object can support
+                the write method and the tell method, similar to a file object, or
+                be a file path, just like the fileobj, just named it stream to keep
+                existing workflow.
 
         Returns:
             A tuple (bool, IO)
@@ -1145,8 +1147,8 @@ class PdfWriter:
         Add custom metadata to the output.
 
         Args:
-          infos: a Python dictionary where each key is a field
-            and each value is your new metadata.
+            infos: a Python dictionary where each key is a field
+                and each value is your new metadata.
         """
         args = {}
         for key, value in list(infos.items()):
@@ -1252,10 +1254,10 @@ class PdfWriter:
         and new idnum is given and generation is always 0.
 
         Args:
-          data:
+            data:
 
         Returns:
-          The resolved indirect object
+            The resolved indirect object
         """
         if hasattr(data.pdf, "stream") and data.pdf.stream.closed:
             raise ValueError(f"I/O operation on closed file: {data.pdf.stream.name}")
@@ -1530,20 +1532,19 @@ class PdfWriter:
         Add an outline item (commonly referred to as a "Bookmark") to the PDF file.
 
         Args:
-          title: Title to use for this outline item.
-          page_number: Page number this outline item will point to.
-          parent: A reference to a parent outline item to create nested
-            outline items.
-          parent: A reference to a parent outline item to create nested
-            outline items.
-          color: Color of the outline item's font as a red, green, blue tuple
-            from 0.0 to 1.0 or as a Hex String (#RRGGBB)
-          bold: Outline item font is bold
-          italic: Outline item font is italic
-          fit: The fit of the destination page.
+            title: Title to use for this outline item.
+            page_number: Page number this outline item will point to.
+            parent: A reference to a parent outline item to create nested
+                outline items.
+            before:
+            color: Color of the outline item's font as a red, green, blue tuple
+                from 0.0 to 1.0 or as a Hex String (#RRGGBB)
+            bold: Outline item font is bold
+            italic: Outline item font is italic
+            fit: The fit of the destination page.
 
         Returns:
-          The added outline item as an indirect object.
+            The added outline item as an indirect object.
         """
         page_ref: Union[None, NullObject, IndirectObject, NumberObject]
         if isinstance(italic, Fit):  # it means that we are on the old params
@@ -1792,8 +1793,8 @@ class PdfWriter:
         Remove images from this output.
 
         Args:
-          ignore_byte_string_object: optional parameter
-            to ignore ByteString Objects.
+            ignore_byte_string_object: optional parameter
+                to ignore ByteString Objects.
         """
         pg_dict = cast(DictionaryObject, self.get_object(self._pages))
         pages = cast(ArrayObject, pg_dict[PA.KIDS])
@@ -1879,7 +1880,7 @@ class PdfWriter:
         Remove text from this output.
 
         Args:
-          ignore_byte_string_object: optional parameter
+            ignore_byte_string_object: optional parameter
         """
         pg_dict = cast(DictionaryObject, self.get_object(self._pages))
         pages = cast(List[IndirectObject], pg_dict[PA.KIDS])
@@ -1940,14 +1941,15 @@ class PdfWriter:
         This uses the basic structure of :meth:`add_link`
 
         Args:
-          page_number: index of the page on which to place the URI action.
-          uri: URI of resource to link to.
-          rect: :class:`RectangleObject<pypdf.generic.RectangleObject>` or
-            array of four integers specifying the clickable rectangular area
-            ``[xLL, yLL, xUR, yUR]``, or string in the form ``"[ xLL yLL xUR yUR ]"``.
-          border: if provided, an array describing border-drawing
-            properties. See the PDF spec for details. No border will be
-            drawn if this argument is omitted.
+            page_number: index of the page on which to place the URI action.
+            uri: URI of resource to link to.
+            rect: :class:`RectangleObject<pypdf.generic.RectangleObject>` or
+                array of four integers specifying the clickable rectangular area
+                ``[xLL, yLL, xUR, yUR]``, or string in the form
+                ``"[ xLL yLL xUR yUR ]"``.
+            border: if provided, an array describing border-drawing
+                properties. See the PDF spec for details. No border will be
+                drawn if this argument is omitted.
         """
         if pagenum is not None:
             warnings.warn(
@@ -2098,7 +2100,7 @@ class PdfWriter:
         Set the page layout.
 
         Args:
-          str: layout: The page layout to be used.
+            layout: The page layout to be used.
 
         .. list-table:: Valid ``layout`` arguments
            :widths: 50 200
@@ -2132,7 +2134,7 @@ class PdfWriter:
         Set the page layout.
 
         Args:
-          layout: The page layout to be used
+            layout: The page layout to be used
 
         .. list-table:: Valid ``layout`` arguments
            :widths: 50 200
@@ -2344,10 +2346,10 @@ class PdfWriter:
         (required for names/dests list)
 
         Args:
-          page:
+            page:
 
         Returns:
-          The cleaned PageObject
+            The cleaned PageObject
         """
         page = cast("PageObject", page.get_object())
         for a in page.get("/Annots", []):
@@ -2417,23 +2419,23 @@ class PdfWriter:
         position.
 
         Args:
-          fileobj: A File Object or an object that supports the standard
-            read and seek methods similar to a File Object. Could also be a
-            string representing a path to a PDF file.
-          outline_item: Optionally, you may specify a string to build an outline
-            (aka 'bookmark') to identify the
-            beginning of the included file.
-          pages: Can be a :class:`PageRange<pypdf.pagerange.PageRange>`
-            or a ``(start, stop[, step])`` tuple
-            or a list of pages to be processed
-            to merge only the specified range of pages from the source
-            document into the output document.
-          import_outline: You may prevent the source document's
-            outline (collection of outline items, previously referred to as
-            'bookmarks') from being imported by specifying this as ``False``.
-          excluded_fields: Provide the list of fields/keys to be ignored
-            if ``/Annots`` is part of the list, the annotation will be ignored
-            if ``/B`` is part of the list, the articles will be ignored
+            fileobj: A File Object or an object that supports the standard
+                read and seek methods similar to a File Object. Could also be a
+                string representing a path to a PDF file.
+            outline_item: Optionally, you may specify a string to build an
+                outline (aka 'bookmark') to identify the beginning of the
+                included file.
+            pages: Can be a :class:`PageRange<pypdf.pagerange.PageRange>`
+                or a ``(start, stop[, step])`` tuple
+                or a list of pages to be processed
+                to merge only the specified range of pages from the source
+                document into the output document.
+            import_outline: You may prevent the source document's
+                outline (collection of outline items, previously referred to as
+                'bookmarks') from being imported by specifying this as ``False``.
+            excluded_fields: Provide the list of fields/keys to be ignored
+                if ``/Annots`` is part of the list, the annotation will be ignored
+                if ``/B`` is part of the list, the articles will be ignored
         """
         if excluded_fields is None:
             excluded_fields = ()
@@ -2464,25 +2466,28 @@ class PdfWriter:
         specified page number.
 
         Args:
-          position: The *page number* to insert this file. File will
-            be inserted after the given number.
-          fileobj: A File Object or an object that supports the standard
-            read and seek methods similar to a File Object. Could also be a
-            string representing a path to a PDF file.
-          outline_item: Optionally, you may specify a string to build an outline
-            (aka 'bookmark') to identify the
-            beginning of the included file.
-          pages: can be a :class:`PageRange<pypdf.pagerange.PageRange>`
-            or a ``(start, stop[, step])`` tuple
-            or a list of pages to be processed
-            to merge only the specified range of pages from the source
-            document into the output document.
-          import_outline: You may prevent the source document's
-            outline (collection of outline items, previously referred to as
-            'bookmarks') from being imported by specifying this as ``False``.
-          excluded_fields: provide the list of fields/keys to be ignored
-            if ``/Annots`` is part of the list, the annotation will be ignored
-            if ``/B`` is part of the list, the articles will be ignored
+            position: The *page number* to insert this file. File will
+                be inserted after the given number.
+            fileobj: A File Object or an object that supports the standard
+                read and seek methods similar to a File Object. Could also be a
+                string representing a path to a PDF file.
+            outline_item: Optionally, you may specify a string to build an outline
+                (aka 'bookmark') to identify the
+                beginning of the included file.
+            pages: can be a :class:`PageRange<pypdf.pagerange.PageRange>`
+                or a ``(start, stop[, step])`` tuple
+                or a list of pages to be processed
+                to merge only the specified range of pages from the source
+                document into the output document.
+            import_outline: You may prevent the source document's
+                outline (collection of outline items, previously referred to as
+                'bookmarks') from being imported by specifying this as ``False``.
+            excluded_fields: provide the list of fields/keys to be ignored
+                if ``/Annots`` is part of the list, the annotation will be ignored
+                if ``/B`` is part of the list, the articles will be ignored
+
+        Raises:
+            TypeError: The pages attribute is not configured properly
         """
         if isinstance(fileobj, PdfReader):
             reader = fileobj
@@ -2585,12 +2590,12 @@ class PdfWriter:
         Clone the thread with only the applicable articles
 
         Args:
-          thread:
-          pages:
-          reader:
+            thread:
+            pages:
+            reader:
 
         Returns:
-          The added thread as an indirect reference
+            The added thread as an indirect reference
         """
         nthread = thread.clone(
             self, force_duplicate=True, ignore_fields=("/F",)
@@ -2649,9 +2654,9 @@ class PdfWriter:
         Add articles matching the defined criteria
 
         Args:
-          fltr:
-          pages:
-          reader:
+            fltr:
+            pages:
+            reader:
         """
         if isinstance(fltr, str):
             fltr = re.compile(fltr)
@@ -2748,12 +2753,12 @@ class PdfWriter:
         Extract outline item entries that are part of the specified page set.
 
         Args:
-          node:
-          pages:
-          reader:
+            node:
+            pages:
+            reader:
 
         Returns:
-          A list of destination objects.
+            A list of destination objects.
         """
         new_outline = []
         node = node.get_object()
@@ -2874,8 +2879,8 @@ class PdfWriter:
         late cloning will create new independent objects
 
         Args:
-          reader: PdfReader or IndirectObject refering a PdfReader object.
-            if set to None or omitted, all tables will be reset.
+            reader: PdfReader or IndirectObject refering a PdfReader object.
+                if set to None or omitted, all tables will be reset.
         """
         if reader is None:
             self._id_translated = {}

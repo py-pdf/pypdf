@@ -863,7 +863,7 @@ def test_colors_in_outline_item():
     reader = PdfReader(SAMPLE_ROOT / "004-pdflatex-4-pages/pdflatex-4-pages.pdf")
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
-    purple_rgb = (0.50196, 0, 0.50196)
+    purple_rgb = (0.50196, 0.0, 0.50196)
     writer.add_outline_item("First Outline Item", page_number=2, color="800080")
     writer.add_outline_item("Second Outline Item", page_number=3, color="#800080")
     writer.add_outline_item("Third Outline Item", page_number=4, color=purple_rgb)

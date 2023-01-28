@@ -66,20 +66,20 @@ def _alg32(
     See section 3.5.2 of the PDF 1.6 reference.
 
     Args:
-      password: The encryption secret as a bytes-string
-      rev: The encryption revision (see PDF standard)
-      keylen:
-      owner_entry:
-      p_entry: A set of flags specifying which operations shall be permitted
+        password: The encryption secret as a bytes-string
+        rev: The encryption revision (see PDF standard)
+        keylen:
+        owner_entry:
+        p_entry: A set of flags specifying which operations shall be permitted
             when the document is opened with user access. If bit 2 is set to 1, all other
             bits are ignored and all operations are permitted. If bit 2 is set to 0,
             permission for operations are based on the values of the remaining flags
             defined in Table 24.
-      id1_entry:
-      metadata_encrypt:  (Default value = True)
+        id1_entry:
+        metadata_encrypt:  (Default value = True)
 
     Returns:
-      An MD5 hash of keylen characters.
+        An MD5 hash of keylen characters.
     """
     # 1. Pad or truncate the password string to exactly 32 bytes.  If the
     # password string is more than 32 bytes long, use only its first 32 bytes;
@@ -129,13 +129,13 @@ def _alg33(
     section 3.5.2 of the PDF 1.6 reference.
 
     Args:
-      owner_password:
-      user_password:
-      rev: The encryption revision (see PDF standard)
-      keylen:
+        owner_password:
+        user_password:
+        rev: The encryption revision (see PDF standard)
+        keylen:
 
     Returns:
-      A transformed version of the owner and the user password
+        A transformed version of the owner and the user password
     """
     # steps 1 - 4
     key = _alg33_1(owner_password, rev, keylen)
@@ -165,12 +165,12 @@ def _alg33_1(password: str, rev: Literal[2, 3, 4], keylen: int) -> bytes:
     Steps 1-4 of algorithm 3.3
 
     Args:
-      password:
-      rev: The encryption revision (see PDF standard)
-      keylen:
+        password:
+        rev: The encryption revision (see PDF standard)
+        keylen:
 
     Returns:
-      A transformed version of the password
+        A transformed version of the password
     """
     # 1. Pad or truncate the owner password string as described in step 1 of
     # algorithm 3.2.  If there is no owner password, use the user password
@@ -205,14 +205,14 @@ def _alg34(
     See section 3.5.2 of the PDF 1.6 reference.
 
     Args:
-      password:
-      owner_entry:
-      p_entry: A set of flags specifying which operations shall be permitted
+        password:
+        owner_entry:
+        p_entry: A set of flags specifying which operations shall be permitted
             when the document is opened with user access. If bit 2 is set to 1, all other
             bits are ignored and all operations are permitted. If bit 2 is set to 0,
             permission for operations are based on the values of the remaining flags
             defined in Table 24.
-      id1_entry:
+        id1_entry:
 
     Returns:
         A Tuple (u-value, key)
@@ -246,20 +246,20 @@ def _alg35(
     See section 3.5.2 of the PDF 1.6 reference.
 
     Args:
-      password:
-      rev: The encryption revision (see PDF standard)
-      keylen:
-      owner_entry:
-      p_entry: A set of flags specifying which operations shall be permitted
+        password:
+        rev: The encryption revision (see PDF standard)
+        keylen:
+        owner_entry:
+        p_entry: A set of flags specifying which operations shall be permitted
             when the document is opened with user access. If bit 2 is set to 1, all other
             bits are ignored and all operations are permitted. If bit 2 is set to 0,
             permission for operations are based on the values of the remaining flags
             defined in Table 24.
-      id1_entry:
-      metadata_encrypt: A boolean
+        id1_entry:
+        metadata_encrypt: A boolean
 
     Returns:
-      A tuple (value, key)
+        A tuple (value, key)
     """
     # 1. Create an encryption key based on the user password string, as
     # described in Algorithm 3.2.

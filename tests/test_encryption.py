@@ -20,7 +20,7 @@ RESOURCE_ROOT = PROJECT_ROOT / "resources"
 
 
 @pytest.mark.parametrize(
-    ("name", "requres_pycryptodome"),
+    ("name", "requires_pycryptodome"),
     [
         # unencrypted pdf
         ("unencrypted.pdf", False),
@@ -68,9 +68,9 @@ RESOURCE_ROOT = PROJECT_ROOT / "resources"
         ("r6-owner-password.pdf", True),
     ],
 )
-def test_encryption(name, requres_pycryptodome):
+def test_encryption(name, requires_pycryptodome):
     inputfile = RESOURCE_ROOT / "encryption" / name
-    if requres_pycryptodome and not HAS_PYCRYPTODOME:
+    if requires_pycryptodome and not HAS_PYCRYPTODOME:
         with pytest.raises(DependencyError) as exc:
             ipdf = pypdf.PdfReader(inputfile)
             ipdf.decrypt("asdfzxcv")
