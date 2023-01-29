@@ -2089,6 +2089,7 @@ class PdfReader:
             return None
         acroform = cast(DictionaryObject, catalog[NameObject("/AcroForm")])
         if "/Fields" not in acroform:
+            # No error returns but check is here for XFA Forms
             return None
 
         interim = DictionaryObject()
