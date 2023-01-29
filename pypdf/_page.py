@@ -575,12 +575,21 @@ class PageObject(DictionaryObject):
         deprecation_with_replacement("rotateCounterClockwise", "rotate", "3.0.0")
         return self.rotate(-angle)
 
-    @staticmethod
     def _merge_resources(
-        res1: DictionaryObject, res2: DictionaryObject, resource: Any
+        self,
+        res1: DictionaryObject,
+        res2: DictionaryObject,
+        resource: Any,
+        new_res1: bool = True,
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-        new_res = DictionaryObject()
-        new_res.update(res1.get(resource, DictionaryObject()).get_object())
+        try:
+            pdf = self.indirect_reference.pdf
+            is_pdf_writer = hasattr(
+                pdf, "_add_object"
+            )  # ---------- expect isinstance(pdf,PdfWriter)
+        except Exception:
+            pdf = None
+            is_pdf_writer = False
 
         def compute_unique_key(base_key: str) -> Tuple[str, bool]:
             """
@@ -611,11 +620,16 @@ class PageObject(DictionaryObject):
                 idx += 1
             return computed_key, False
 
+        if new_res1:
+            new_res = DictionaryObject()
+            new_res.update(res1.get(resource, DictionaryObject()).get_object())
+        else:
+            new_res = res1[resource]
         page2res = cast(
             DictionaryObject, res2.get(resource, DictionaryObject()).get_object()
         )
         rename_res = {}
-        for key in sorted(page2res.keys()):
+        for key in page2res.keys():
             unique_key, same_value = compute_unique_key(key)
             newname = NameObject(unique_key)
             if key != unique_key:
@@ -623,9 +637,18 @@ class PageObject(DictionaryObject):
                 rename_res[key] = newname
 
             if not same_value:
-                # the value wasn't already recorded
-                new_res[newname] = page2res[key]
-
+                if is_pdf_writer:
+                    new_res[newname] = page2res.raw_get(key).clone(pdf)
+                    try:
+                        new_res[newname] = new_res[key].indirect_reference
+                    except AttributeError:
+                        pass
+                else:
+                    new_res[newname] = page2res.raw_get(key)
+            lst = sorted(new_res.items())
+            new_res.clear()
+            for l in lst:
+                new_res[l[0]] = l[1]
         return new_res, rename_res
 
     @staticmethod
@@ -738,11 +761,21 @@ class PageObject(DictionaryObject):
         page2: "PageObject",
         page2transformation: Optional[Callable[[Any], ContentStream]] = None,
         ctm: Optional[CompressedTransformationMatrix] = None,
+        over: bool = True,
         expand: bool = False,
     ) -> None:
         # First we work on merging the resource dictionaries.  This allows us
         # to find out what symbols in the content streams we might need to
         # rename.
+        try:
+            if hasattr(
+                self.indirect_reference.pdf, "_add_object"
+            ):  # ---------- to detect PdfWriter
+                return self._merge_page_writer(
+                    page2, page2transformation, ctm, over, expand
+                )
+        except:
+            pass
 
         new_resources = DictionaryObject()
         rename = {}
@@ -772,7 +805,7 @@ class PageObject(DictionaryObject):
             RES.SHADING,
             RES.PROPERTIES,
         ):
-            new, newrename = PageObject._merge_resources(
+            new, newrename = self._merge_resources(
                 original_resources, page2resources, res
             )
             if new:
@@ -825,7 +858,10 @@ class PageObject(DictionaryObject):
                 page2content, rename, self.pdf
             )
             page2content = PageObject._push_pop_gs(page2content, self.pdf)
-            new_content_array.append(page2content)
+            if over:
+                new_content_array.append(page2content)
+            else:
+                new_content_array.insert(0, page2content)
 
         # if expanding the page to fit a new page, calculate the new media box size
         if expand:
@@ -834,6 +870,123 @@ class PageObject(DictionaryObject):
         self[NameObject(PG.CONTENTS)] = ContentStream(new_content_array, self.pdf)
         self[NameObject(PG.RESOURCES)] = new_resources
         self[NameObject(PG.ANNOTS)] = new_annots
+
+    def _merge_page_writer(
+        self,
+        page2: "PageObject",
+        page2transformation: Optional[Callable[[Any], ContentStream]] = None,
+        ctm: Optional[CompressedTransformationMatrix] = None,
+        over: bool = True,
+        expand: bool = False,
+    ) -> None:
+        # First we work on merging the resource dictionaries.  This allows us
+        # to find out what symbols in the content streams we might need to
+        # rename.
+        pdf = self.indirect_ref.pdf
+        ##        new_resources = DictionaryObject()
+
+        rename = {}
+        original_resources = cast(DictionaryObject, self[PG.RESOURCES].get_object())
+        page2resources = cast(DictionaryObject, page2[PG.RESOURCES].get_object())
+
+        for res in (
+            RES.EXT_G_STATE,
+            RES.FONT,
+            RES.XOBJECT,
+            RES.COLOR_SPACE,
+            RES.PATTERN,
+            RES.SHADING,
+            RES.PROPERTIES,
+        ):
+            if res in page2resources:
+                if res not in original_resources:
+                    original_resources[NameObject(res)] = DictionaryObject()
+                org_res = cast(DictionaryObject, original_resources[res])
+                _, newrename = self._merge_resources(
+                    original_resources, page2resources, res, False
+                )
+                rename.update(newrename)
+        # Combine /ProcSet sets.
+        if RES.PROC_SET in page2resources:
+            if RES.PROCE_SET not in original_resources:
+                original_resources[NameObject(RES.PROC_SET)] = ArrayObject()
+            arr = original_resources[RES.PROC_SET]
+            for x in page2resources[RES.PROC_SET]:
+                if x not in arr:
+                    arr.append(x)
+            arr.sort()
+
+        if PG.ANNOTS in page2:
+            if PG.ANNOTS not in self:
+                self[NameObject("/Annots")] = ArrayObject()
+            annots = pg[PG.ANNOTS].get_object()
+            for a in page2[PG.ANNOTS]:
+                aa = (
+                    a.get_object()
+                    .clone(pdf, ignore_fields=("/P", "/StructParent"))
+                    .indirect_reference
+                )
+                aa[NameObject("/P")] = self
+                # TODO : update Annotation position
+                annots.append(aa)
+
+        new_content_array = ArrayObject()
+
+        original_content = self.get_contents()
+        if original_content is not None:
+            new_content_array.append(
+                PageObject._push_pop_gs(original_content, self.pdf)
+            )
+
+        page2content = page2.get_contents()
+        if page2content is not None:
+            page2content = ContentStream(page2content, self.pdf)
+            rect = page2.trimbox
+            page2content.operations.insert(
+                0,
+                (
+                    map(
+                        FloatObject,
+                        [
+                            rect.left,
+                            rect.bottom,
+                            rect.width,
+                            rect.height,
+                        ],
+                    ),
+                    "re",
+                ),
+            )
+            page2content.operations.insert(1, ([], "W"))
+            page2content.operations.insert(2, ([], "n"))
+            if page2transformation is not None:
+                page2content = page2transformation(page2content)
+            page2content = PageObject._content_stream_rename(
+                page2content, rename, self.pdf
+            )
+            page2content = PageObject._push_pop_gs(page2content, self.pdf)
+            if over:
+                new_content_array.append(page2content)
+            else:
+                new_content_array.insert(0, page2content)
+
+        # if expanding the page to fit a new page, calculate the new media box size
+        if expand:
+            self._expand_mediabox(page2, ctm)
+
+        try:
+            ind = self.raw_get(PG.CONTENTS)
+            if not isinstance(ind, IndirectObject):
+                raise KeyError
+            pdf._replace_object(ind, ContentStream(new_content_array, pdf))
+        except KeyError:
+            self[NameObject(PG.CONTENTS)] = pdf._add_object(
+                ContentStream(new_content_array, pdf)
+            )
+
+        # self[NameObject(PG.CONTENTS)] = ContentStream(new_content_array, pdf)
+        # self[NameObject(PG.RESOURCES)] = new_resources
+        # self[NameObject(PG.ANNOTS)] = new_annots
 
     def _expand_mediabox(
         self, page2: "PageObject", ctm: Optional[CompressedTransformationMatrix]
@@ -882,6 +1035,7 @@ class PageObject(DictionaryObject):
         self,
         page2: "PageObject",
         ctm: Union[CompressedTransformationMatrix, Transformation],
+        over: bool = True,
         expand: bool = False,
     ) -> None:
         """
@@ -892,6 +1046,7 @@ class PageObject(DictionaryObject):
           page2: The page to be merged into this one.
           ctm: a 6-element tuple containing the operands of the
                  transformation matrix
+          over: set the page2 content over page1 if True(default) else under
           expand: Whether the page should be expanded to fit the dimensions
             of the page to be merged.
         """
@@ -903,9 +1058,9 @@ class PageObject(DictionaryObject):
                 page2Content, page2.pdf, cast(CompressedTransformationMatrix, ctm)
             ),
             ctm,
+            over,
             expand,
         )
-        self
 
     def mergeTransformedPage(
         self,
@@ -928,7 +1083,7 @@ class PageObject(DictionaryObject):
         self.merge_transformed_page(page2, ctm, expand)
 
     def merge_scaled_page(
-        self, page2: "PageObject", scale: float, expand: bool = False
+        self, page2: "PageObject", scale: float, over: bool = True, expand: bool = False
     ) -> None:
         """
         merge_scaled_page is similar to merge_page, but the stream to be merged
@@ -937,11 +1092,12 @@ class PageObject(DictionaryObject):
         Args:
           page2: The page to be merged into this one.
           scale: The scaling factor
+          over: set the page2 content over page1 if True(default) else under
           expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
         op = Transformation().scale(scale, scale)
-        self.merge_transformed_page(page2, op, expand)
+        self.merge_transformed_page(page2, op, over, expand)
 
     def mergeScaledPage(
         self, page2: "PageObject", scale: float, expand: bool = False
@@ -961,7 +1117,11 @@ class PageObject(DictionaryObject):
         self.merge_scaled_page(page2, scale, expand)
 
     def merge_rotated_page(
-        self, page2: "PageObject", rotation: float, expand: bool = False
+        self,
+        page2: "PageObject",
+        rotation: float,
+        over: bool = True,
+        expand: bool = False,
     ) -> None:
         """
         merge_rotated_page is similar to merge_page, but the stream to be merged
@@ -970,11 +1130,12 @@ class PageObject(DictionaryObject):
         Args:
           page2: The page to be merged into this one.
           rotation: The angle of the rotation, in degrees
+          over: set the page2 content over page1 if True(default) else under
           expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
         op = Transformation().rotate(rotation)
-        self.merge_transformed_page(page2, op, expand)
+        self.merge_transformed_page(page2, op, over, expand)
 
     def mergeRotatedPage(
         self, page2: "PageObject", rotation: float, expand: bool = False
@@ -994,7 +1155,12 @@ class PageObject(DictionaryObject):
         self.merge_rotated_page(page2, rotation, expand)
 
     def merge_translated_page(
-        self, page2: "PageObject", tx: float, ty: float, expand: bool = False
+        self,
+        page2: "PageObject",
+        tx: float,
+        ty: float,
+        over: bool = True,
+        expand: bool = False,
     ) -> None:
         """
         mergeTranslatedPage is similar to merge_page, but the stream to be
@@ -1004,11 +1170,12 @@ class PageObject(DictionaryObject):
           page2: the page to be merged into this one.
           tx: The translation on X axis
           ty: The translation on Y axis
+          over: set the page2 content over page1 if True(default) else under
           expand: Whether the page should be expanded to fit the
             dimensions of the page to be merged.
         """
         op = Transformation().translate(tx, ty)
-        self.merge_transformed_page(page2, op, expand)
+        self.merge_transformed_page(page2, op, over, expand)
 
     def mergeTranslatedPage(
         self, page2: "PageObject", tx: float, ty: float, expand: bool = False

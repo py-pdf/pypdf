@@ -148,6 +148,24 @@ def test_transformation_equivalence():
     )
 
 
+def test_transformation_equivalence2():
+    pdf_path = RESOURCE_ROOT / "labeled-edges-center-image.pdf"
+    reader_base = PdfReader(pdf_path)
+    page_base = reader_base.pages[0]
+
+    pdf_path = RESOURCE_ROOT / "box.pdf"
+    reader_add = PdfReader(pdf_path)
+
+    w = PdfWriter()
+    w.append(reader_base)
+    w.pages[0].merge_transformed_page(
+        reader_add.pages[0], Transformation().scale(2).rotate(-45), False, False
+    )
+    w.pages[0].merge_transformed_page(
+        reader_add.pages[0], Transformation().scale(2).translate(100, 100), False, False
+    )
+
+
 def test_get_user_unit_property():
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
@@ -894,7 +912,7 @@ def test_merge_page_reproducible_with_proc_set():
 
 
 @pytest.mark.parametrize(
-    ("page1", "page2", "expected_result", "expected_renames"),
+    ("apage1", "apage2", "expected_result", "expected_renames"),
     [
         # simple cases:
         pytest.param({}, {}, {}, {}, id="no resources"),
@@ -951,29 +969,25 @@ def test_merge_page_reproducible_with_proc_set():
         ),
     ],
 )
-def test_merge_resources(page1, page2, expected_result, expected_renames):
-    # Arrange
-    page1 = DictionaryObject(
-        {
-            PG.RESOURCES: DictionaryObject(
-                {NameObject(k): NameObject(v) for k, v in page1.items()}
-            )
-        }
-    )
-    page2 = DictionaryObject(
-        {
-            PG.RESOURCES: DictionaryObject(
-                {NameObject(k): NameObject(v) for k, v in page2.items()}
-            )
-        }
-    )
+def test_merge_resources(apage1, apage2, expected_result, expected_renames):
+    for new_res in (False, True):
+        # Arrange
+        page1 = PageObject()
+        page1[NameObject(PG.RESOURCES)] = DictionaryObject()
+        for k, v in apage1.items():
+            page1[PG.RESOURCES][NameObject(k)] = NameObject(v)
 
-    # Act
-    result, renames = PageObject._merge_resources(page1, page2, PG.RESOURCES)
+        page2 = PageObject()
+        page2[NameObject(PG.RESOURCES)] = DictionaryObject()
+        for k, v in apage2.items():
+            page2[PG.RESOURCES][NameObject(k)] = NameObject(v)
 
-    # Assert
-    assert result == expected_result
-    assert renames == expected_renames
+        # Act
+        result, renames = page1._merge_resources(page1, page2, PG.RESOURCES, new_res)
+
+        # Assert
+        assert result == expected_result
+        assert renames == expected_renames
 
 
 def test_merge_page_resources_smoke_test():
