@@ -52,7 +52,7 @@ page = reader.pages[3]
 parts = []
 
 
-def visitor_body(text, cm, tm, fontDict, fontSize):
+def visitor_body(text, cm, tm, font_dict, font_size):
     y = tm[5]
     if y > 50 and y < 720:
         parts.append(text)
