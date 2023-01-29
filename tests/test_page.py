@@ -161,8 +161,26 @@ def test_transformation_equivalence2():
         reader_add.pages[0], Transformation().scale(2).rotate(-45), False, False
     )
     w.pages[0].merge_transformed_page(
-        reader_add.pages[0], Transformation().scale(2).translate(100, 100), False, False
+        reader_add.pages[0], Transformation().scale(2).translate(100, 100), True, False
     )
+    # No special assert: the test should be visual in a viewer; 2 box with a arrow rotated  and translated
+
+    w = PdfWriter()
+    w.append(reader_add)
+    w.pages[0].merge_transformed_page(
+        reader_base.pages[0], Transformation(), True, True
+    )
+    # No special assert: Visual check the page has been  increased and all is visible (box+graph)
+
+    pdf_path = RESOURCE_ROOT / "commented-xmp.pdf"
+    reader_comments = PdfReader(pdf_path)
+
+    w = PdfWriter()
+    w.append(reader_base)
+    w.pages[0].merge_transformed_page(
+        reader_comments.pages[0], Transformation().rotate(-15), True, True
+    )
+    # No special assert: Visual check the overlay has its comments at the good position
 
 
 def test_get_user_unit_property():

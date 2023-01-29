@@ -314,7 +314,9 @@ class Transformation:
         return f"Transformation(ctm={self.ctm})"
 
     def apply_on(
-        self, pt: Union[Tuple[Decimal, Decimal], Tuple[float, float], List[float]]
+        self,
+        pt: Union[Tuple[Decimal, Decimal], Tuple[float, float], List[float]],
+        as_object: bool = False,
     ) -> Union[Tuple[float, float], List[float]]:
         """
         Apply the transformation matrix on the given point.
@@ -325,9 +327,10 @@ class Transformation:
         Returns:
             A tuple or list representing the transformed point in the form (x', y')
         """
+        typ = FloatObject if as_object else float
         pt1 = (
-            float(pt[0]) * self.ctm[0] + float(pt[1]) * self.ctm[2] + self.ctm[4],
-            float(pt[0]) * self.ctm[1] + float(pt[1]) * self.ctm[3] + self.ctm[5],
+            typ(float(pt[0]) * self.ctm[0] + float(pt[1]) * self.ctm[2] + self.ctm[4]),
+            typ(float(pt[0]) * self.ctm[1] + float(pt[1]) * self.ctm[3] + self.ctm[5]),
         )
         return list(pt1) if isinstance(pt, list) else pt1
 
@@ -912,24 +915,43 @@ class PageObject(DictionaryObject):
             if RES.PROC_SET not in original_resources:
                 original_resources[NameObject(RES.PROC_SET)] = ArrayObject()
             arr = cast(ArrayObject, original_resources[RES.PROC_SET])
-            for x in cast(DictionaryObject, page2resources[RES.PROC_SET]):
+            for x in cast(ArrayObject, page2resources[RES.PROC_SET]):
                 if x not in arr:
                     arr.append(x)
             arr.sort()
 
         if PG.ANNOTS in page2:
             if PG.ANNOTS not in self:
-                self[PG.ANNOTS] = ArrayObject()
+                self[NameObject(PG.ANNOTS)] = ArrayObject()
             annots = cast(ArrayObject, self[PG.ANNOTS].get_object())
+            trsf = Transformation(ctm)
             for a in cast(ArrayObject, page2[PG.ANNOTS]):
-                aa = (
-                    a.get_object()
-                    .clone(pdf, ignore_fields=("/P", "/StructParent"))
-                    .indirect_reference
+                a = a.get_object()
+                aa = a.clone(pdf, ignore_fields=("/P", "/StructParent"))
+                r = cast(ArrayObject, a["/Rect"])
+                pt1 = trsf.apply_on((r[0], r[1]), True)
+                pt2 = trsf.apply_on((r[2], r[3]), True)
+                aa[NameObject("/Rect")] = ArrayObject(
+                    (
+                        min(pt1[0], pt2[0]),
+                        min(pt1[1], pt2[1]),
+                        max(pt1[0], pt2[0]),
+                        max(pt1[1], pt2[1]),
+                    )
                 )
-                aa[NameObject("/P")] = self
-                # TODO : update Annotation position
-                annots.append(aa)
+                if "/QuadPoints" in a:
+                    q = cast(ArrayObject, a["/QuadPoints"])
+                    aa[NameObject("/QuadPoints")] = ArrayObject(
+                        trsf.apply_on((q[0], q[1]), True)
+                        + trsf.apply_on((q[2], q[3]), True)
+                        + trsf.apply_on((q[4], q[5]), True)
+                        + trsf.apply_on((q[6], q[7]), True)
+                    )
+                try:
+                    aa[NameObject("/P")] = self.indirect_reference
+                    annots.append(aa.indirect_reference)
+                except AttributeError:
+                    pass
 
         new_content_array = ArrayObject()
 
@@ -975,8 +997,8 @@ class PageObject(DictionaryObject):
         if expand:
             self._expand_mediabox(page2, ctm)
 
+        ind = self.raw_get(PG.CONTENTS)
         try:
-            ind = self.raw_get(PG.CONTENTS)
             if not isinstance(ind, IndirectObject):
                 raise KeyError
             pdf._replace_object(ind, ContentStream(new_content_array, pdf))
