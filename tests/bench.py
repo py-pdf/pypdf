@@ -137,6 +137,7 @@ def test_read_string_from_stream_performance(benchmark):
     """
     This test simulates reading an embedded base64 image of 256kb.
     It should be faster than a second, even on ancient machines.
+
     Runs < 100ms on a 2019 notebook. Takes 10 seconds prior to #1350.
     """
     benchmark(read_string_from_stream_performance)

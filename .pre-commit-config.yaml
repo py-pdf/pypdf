@@ -10,10 +10,11 @@ repos:
     -   id: check-yaml
     -   id: debug-statements
     -   id: end-of-file-fixer
-        exclude: "resources/.*"
+        exclude: "resources/.*|docs/make.bat"
     -   id: trailing-whitespace
     -   id: mixed-line-ending
         args: ['--fix=lf']
+        exclude: "docs/make.bat"
     -   id: check-added-large-files
         args: ['--maxkb=1000']
 -   repo: https://github.com/pycqa/flake8
@@ -26,7 +27,7 @@ repos:
 #     hooks:
 #     -   id: mypy
 -   repo: https://github.com/pycqa/isort
-    rev: 5.10.1
+    rev: 5.12.0
     hooks:
     -   id: isort
         name: isort (python)
@@ -37,10 +38,11 @@ repos:
     -   id: black
         args: [--target-version, py36]
 -   repo: https://github.com/asottile/blacken-docs
-    rev: v1.12.1
+    rev: 1.13.0
     hooks:
     -   id: blacken-docs
         additional_dependencies: [black==22.1.0]
+        exclude: "docs/user/robustness.md"
 -   repo: https://github.com/asottile/pyupgrade
     rev: v3.3.1
     hooks:

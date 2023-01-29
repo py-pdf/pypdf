@@ -141,11 +141,9 @@ class DocumentInformation(DictionaryObject):
 
     def getText(self, key: str) -> Optional[str]:  # deprecated
         """
-        The text value of the specified key or None.
+        Use the attributes (e.g. :py:attr:`title` / :py:attr:`author`).
 
         .. deprecated:: 1.28.0
-
-            Use the attributes (e.g. :py:attr:`title` / :py:attr:`author`).
         """
         deprecation_no_replacement("getText", "3.0.0")
         return self._get_text(key)
@@ -204,11 +202,10 @@ class DocumentInformation(DictionaryObject):
         """
         Read-only property accessing the document's creator.
 
-        If the document was converted to PDF from another format, this
-        is the name of the application (e.g. OpenOffice) that created
-        the original document from which it was converted. Returns a
-        ``TextStringObject`` or ``None`` if the creator is not
-        specified.
+        If the document was converted to PDF from another format, this is the
+        name of the application (e.g. OpenOffice) that created the original
+        document from which it was converted. Returns a ``TextStringObject`` or
+        ``None`` if the creator is not specified.
         """
         return self._get_text(DI.CREATOR)
 
@@ -222,10 +219,10 @@ class DocumentInformation(DictionaryObject):
         """
         Read-only property accessing the document's producer.
 
-        If the document was converted to PDF from another format, this
-        is the name of the application (for example, OSX Quartz) that
-        converted it to PDF. Returns a ``TextStringObject`` or ``None``
-        if the producer is not specified.
+        If the document was converted to PDF from another format, this is the
+        name of the application (for example, OSX Quartz) that converted it to
+        PDF. Returns a ``TextStringObject`` or ``None`` if the producer is not
+        specified.
         """
         return self._get_text(DI.PRODUCER)
 
@@ -247,8 +244,8 @@ class DocumentInformation(DictionaryObject):
         """
         The "raw" version of creation date; can return a ``ByteStringObject``.
 
-        Typically in the format ``D:YYYYMMDDhhmmss[+-]hh'mm`` where the
-        suffix is the offset from UTC.
+        Typically in the format ``D:YYYYMMDDhhmmss[+-]hh'mm`` where the suffix
+        is the offset from UTC.
         """
         return self.get(DI.CREATION_DATE)
 
@@ -270,8 +267,8 @@ class DocumentInformation(DictionaryObject):
         The "raw" version of modification date; can return a
         ``ByteStringObject``.
 
-        Typically in the format ``D:YYYYMMDDhhmmss[+-]hh'mm`` where the
-        suffix is the offset from UTC.
+        Typically in the format ``D:YYYYMMDDhhmmss[+-]hh'mm`` where the suffix
+        is the offset from UTC.
         """
         return self.get(DI.MOD_DATE)
 
@@ -352,9 +349,8 @@ class PdfReader:
         """
         The first 8 bytes of the file.
 
-        This is typically something like ``'%PDF-1.6'`` and can be used
-        to detect if the file is actually a PDF file and which version
-        it is.
+        This is typically something like ``'%PDF-1.6'`` and can be used to
+        detect if the file is actually a PDF file and which version it is.
         """
         # TODO: Make this return a bytes object for consistency
         #       but that needs a deprecation
@@ -370,8 +366,8 @@ class PdfReader:
         Retrieve the PDF file's document information dictionary, if it exists.
 
         Note that some PDF files use metadata streams instead of docinfo
-        dictionaries, and these metadata streams will not be accessed by
-        this function.
+        dictionaries, and these metadata streams will not be accessed by this
+        function.
         """
         if TK.INFO not in self.trailer:
             return None
@@ -713,13 +709,6 @@ class PdfReader:
                 else:
                     ff[indexed_key(cast(str, value["/T"]), ff)] = value.get("/V")
         return ff
-        """return {
-            (field if full_qualified_name else formfields[field]["/T"]): formfields[
-                field
-            ].get("/V")
-            for field in formfields
-            if formfields[field].get("/FT") == "/Tx"
-        }"""
 
     def getFormTextFields(self) -> Dict[str, Any]:  # deprecated
         """
@@ -1071,8 +1060,8 @@ class PdfReader:
         """
         A list of labels for the pages in this document.
 
-        This property is read-only. The labels are in the order that the
-        pages appear in the document.
+        This property is read-only. The labels are in the order that the pages
+        appear in the document.
         """
         return [page_index2page_label(self, i) for i in range(len(self.pages))]
 

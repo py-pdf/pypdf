@@ -82,8 +82,8 @@ def test_page_operations(pdf_path, password):
     """
     This test just checks if the operation throws an exception.
 
-    This should be done way more thoroughly: It should be checked if the
-    output is as expected.
+    This should be done way more thoroughly: It should be checked if the output
+    is as expected.
     """
     if pdf_path.startswith("http"):
         pdf_path = BytesIO(get_pdf_from_url(pdf_path, pdf_path.split("/")[-1]))
@@ -382,12 +382,12 @@ def test_extract_text_visitor_callbacks():
     This test uses GeoBase_NHNC1_Data_Model_UML_EN.pdf.
     It extracts the labels of package-boxes in Figure 2.
     It extracts the texts in table "REVISION HISTORY".
-
     """
     import logging
 
     class PositionedText:
-        """Specify a text with coordinates, font-dictionary and font-size.
+        """
+        Specify a text with coordinates, font-dictionary and font-size.
 
         The font-dictionary may be None in case of an unknown font.
         """
@@ -401,9 +401,11 @@ def test_extract_text_visitor_callbacks():
             self.font_size = font_size
 
         def get_base_font(self) -> str:
-            """Gets the base font of the text.
+            """
+            Gets the base font of the text.
 
-            Return UNKNOWN in case of an unknown font."""
+            Return UNKNOWN in case of an unknown font.
+            """
             if (self.font_dict is None) or "/BaseFont" not in self.font_dict:
                 return "UNKNOWN"
             return self.font_dict["/BaseFont"]
@@ -432,7 +434,8 @@ def test_extract_text_visitor_callbacks():
         Extracts texts and rectangles of a page of type pypdf._page.PageObject.
 
         This function supports simple coordinate transformations only.
-        The optional rect_filter-lambda can be used to filter wanted rectangles.
+        The optional rect_filter-lambda can be used to filter wanted
+        rectangles.
         rect_filter has Rectangle as argument and must return a boolean.
 
         It returns a tuple containing a list of extracted texts and
