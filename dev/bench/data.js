@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1674995297292,
+  "lastUpdate": 1675004016436,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -23270,6 +23270,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00699156043380313",
             "extra": "mean: 114.7994158888884 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8e819d1d00c758d4ccb8c8cd09c79269d0f3a3b9",
+          "message": "STY: Apply docformatter (#1584)\n\nSee https://pypi.org/project/docformatter/\r\n\r\nI tried pre-commit, but docformatter collides with black for docstrings of functions that contain a function.",
+          "timestamp": "2023-01-29T15:52:24+01:00",
+          "tree_id": "424ce3b9b12a58daead2a4fb108ff4572e126ad1",
+          "url": "https://github.com/py-pdf/pypdf/commit/8e819d1d00c758d4ccb8c8cd09c79269d0f3a3b9"
+        },
+        "date": 1675004014647,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9965974292156592,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016096391066957528",
+            "extra": "mean: 1.0034141878000014 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.75555245600806,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00769663756585856",
+            "extra": "mean: 85.0661850000012 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23955083005512712,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0351092341750306",
+            "extra": "mean: 4.174479377799997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.188004412068816,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006475397575991936",
+            "extra": "mean: 89.38144490909136 msec\nrounds: 11"
           }
         ]
       }
