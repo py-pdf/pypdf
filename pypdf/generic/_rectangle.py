@@ -8,12 +8,15 @@ from ._data_structures import ArrayObject
 
 class RectangleObject(ArrayObject):
     """
-    This class is used to represent *page boxes* in pypdf. These boxes include:
-        * :attr:`artbox <pypdf._page.PageObject.artbox>`
-        * :attr:`bleedbox <pypdf._page.PageObject.bleedbox>`
-        * :attr:`cropbox <pypdf._page.PageObject.cropbox>`
-        * :attr:`mediabox <pypdf._page.PageObject.mediabox>`
-        * :attr:`trimbox <pypdf._page.PageObject.trimbox>`
+    This class is used to represent *page boxes* in pypdf.
+
+    These boxes include:
+
+    * :attr:`artbox <pypdf._page.PageObject.artbox>`
+    * :attr:`bleedbox <pypdf._page.PageObject.bleedbox>`
+    * :attr:`cropbox <pypdf._page.PageObject.cropbox>`
+    * :attr:`mediabox <pypdf._page.PageObject.mediabox>`
+    * :attr:`trimbox <pypdf._page.PageObject.trimbox>`
     """
 
     def __init__(
@@ -114,10 +117,7 @@ class RectangleObject(ArrayObject):
 
     @property
     def lower_left(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
-        """
-        Property to read and modify the lower left coordinate of this box
-        in (x,y) form.
-        """
+        """Lower left coordinate of this box in (x,y) form."""
         return self.left, self.bottom
 
     @lower_left.setter
@@ -126,10 +126,7 @@ class RectangleObject(ArrayObject):
 
     @property
     def lower_right(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
-        """
-        Property to read and modify the lower right coordinate of this box
-        in (x,y) form.
-        """
+        """Lower right coordinate of this box in (x,y) form."""
         return self.right, self.bottom
 
     @lower_right.setter
@@ -138,10 +135,7 @@ class RectangleObject(ArrayObject):
 
     @property
     def upper_left(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
-        """
-        Property to read and modify the upper left coordinate of this box
-        in (x,y) form.
-        """
+        """Upper left coordinate of this box in (x,y) form."""
         return self.left, self.top
 
     @upper_left.setter
@@ -150,10 +144,7 @@ class RectangleObject(ArrayObject):
 
     @property
     def upper_right(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
-        """
-        Property to read and modify the upper right coordinate of this box
-        in (x,y) form.
-        """
+        """Upper right coordinate of this box in (x,y) form."""
         return self.right, self.top
 
     @upper_right.setter

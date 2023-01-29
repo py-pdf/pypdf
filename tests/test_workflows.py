@@ -80,10 +80,11 @@ def test_dropdown_items():
 
 def test_PdfReaderFileLoad():
     """
-    Test loading and parsing of a file. Extract text of the file and compare to expected
-    textual output. Expected outcome: file loads, text matches expected.
-    """
+    Test loading and parsing of a file.
 
+    Extract text of the file and compare to expected textual output. Expected
+    outcome: file loads, text matches expected.
+    """
     with open(RESOURCE_ROOT / "crazyones.pdf", "rb") as inputfile:
         # Load PDF file from file
         reader = PdfReader(inputfile)
@@ -112,7 +113,6 @@ def test_PdfReaderJpegImage():
 
     Expected outcome: file loads, image matches expected.
     """
-
     with open(RESOURCE_ROOT / "jpeg.pdf", "rb") as inputfile:
         # Load PDF file from file
         reader = PdfReader(inputfile)

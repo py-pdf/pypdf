@@ -162,7 +162,7 @@ def _alg33(
 
 def _alg33_1(password: str, rev: Literal[2, 3, 4], keylen: int) -> bytes:
     """
-    Steps 1-4 of algorithm 3.3
+    Steps 1-4 of algorithm 3.3.
 
     Args:
         password:

@@ -82,7 +82,7 @@ class ArrayObject(list, PdfObject):
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "ArrayObject":
-        """clone object into pdf_dest"""
+        """Clone object into pdf_dest."""
         try:
             if self.indirect_reference.pdf == pdf_dest and not force_duplicate:  # type: ignore
                 return self
@@ -104,10 +104,7 @@ class ArrayObject(list, PdfObject):
         return cast("ArrayObject", arr)
 
     def items(self) -> Iterable[Any]:
-        """
-        Emulate DictionaryObject.items for a list
-        (index, object)
-        """
+        """Emulate DictionaryObject.items for a list (index, object)."""
         return enumerate(self)
 
     def write_to_stream(
@@ -165,7 +162,7 @@ class DictionaryObject(dict, PdfObject):
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "DictionaryObject":
-        """clone object into pdf_dest"""
+        """Clone object into pdf_dest."""
         try:
             if self.indirect_reference.pdf == pdf_dest and not force_duplicate:  # type: ignore
                 return self
@@ -189,7 +186,7 @@ class DictionaryObject(dict, PdfObject):
         ignore_fields: Union[Tuple[str, ...], List[str]],
     ) -> None:
         """
-        Update the object from src
+        Update the object from src.
 
         Args:
             src: "DictionaryObject":
@@ -276,8 +273,8 @@ class DictionaryObject(dict, PdfObject):
     @property
     def xmp_metadata(self) -> Optional[PdfObject]:
         """
-        Retrieve XMP (Extensible Metadata Platform) data relevant to the
-        this object, if available.
+        Retrieve XMP (Extensible Metadata Platform) data relevant to the this
+        object, if available.
 
         Stability: Added in v1.12, will exist for all future v1.x releases.
 
@@ -285,7 +282,6 @@ class DictionaryObject(dict, PdfObject):
           Returns a {@link #xmp.XmpInformation XmlInformation} instance
           that can be used to access XMP metadata from the document.  Can also
           return None if no metadata was found on the document root.
-
         """
         from ..xmp import XmpInformation
 
@@ -303,9 +299,9 @@ class DictionaryObject(dict, PdfObject):
         self,
     ) -> Optional[PdfObject]:  # deprecated
         """
-        .. deprecated:: 1.28.3
+        Use :meth:`xmp_metadata` instead.
 
-            Use :meth:`xmp_metadata` instead.
+        .. deprecated:: 1.28.3
         """
         deprecation_with_replacement("getXmpMetadata", "xmp_metadata", "3.0.0")
         return self.xmp_metadata
@@ -313,9 +309,9 @@ class DictionaryObject(dict, PdfObject):
     @property
     def xmpMetadata(self) -> Optional[PdfObject]:  # deprecated
         """
-        .. deprecated:: 1.28.3
+        Use :meth:`xmp_metadata` instead.
 
-            Use :meth:`xmp_metadata` instead.
+        .. deprecated:: 1.28.3
         """
         deprecation_with_replacement("xmpMetadata", "xmp_metadata", "3.0.0")
         return self.xmp_metadata
@@ -657,9 +653,7 @@ class TreeObject(DictionaryObject):
         _reset_node_tree_relationship(child_obj)
 
     def remove_from_tree(self) -> None:
-        """
-        remove the object from the tree it is in
-        """
+        """Remove the object from the tree it is in."""
         if NameObject("/Parent") not in self:
             raise ValueError("Removed child does not appear to be a tree item")
         else:
@@ -1178,9 +1172,9 @@ class Field(TreeObject):
     @property
     def fieldType(self) -> Optional[NameObject]:  # deprecated
         """
-        .. deprecated:: 1.28.3
+        Use :py:attr:`field_type` instead.
 
-            Use :py:attr:`field_type` instead.
+        .. deprecated:: 1.28.3
         """
         deprecation_with_replacement("fieldType", "field_type", "3.0.0")
         return self.field_type
@@ -1208,9 +1202,9 @@ class Field(TreeObject):
     @property
     def altName(self) -> Optional[str]:  # deprecated
         """
-        .. deprecated:: 1.28.3
+        Use :py:attr:`alternate_name` instead.
 
-            Use :py:attr:`alternate_name` instead.
+        .. deprecated:: 1.28.3
         """
         deprecation_with_replacement("altName", "alternate_name", "3.0.0")
         return self.alternate_name
@@ -1218,8 +1212,9 @@ class Field(TreeObject):
     @property
     def mapping_name(self) -> Optional[str]:
         """
-        Read-only property accessing the mapping name of this field. This
-        name is used by pypdf as a key in the dictionary returned by
+        Read-only property accessing the mapping name of this field.
+
+        This name is used by pypdf as a key in the dictionary returned by
         :meth:`get_fields()<pypdf.PdfReader.get_fields>`
         """
         return self.get(FieldDictionaryAttributes.TM)
@@ -1227,26 +1222,25 @@ class Field(TreeObject):
     @property
     def mappingName(self) -> Optional[str]:  # deprecated
         """
-        .. deprecated:: 1.28.3
+        Use :py:attr:`mapping_name` instead.
 
-            Use :py:attr:`mapping_name` instead.
+        .. deprecated:: 1.28.3
         """
         deprecation_with_replacement("mappingName", "mapping_name", "3.0.0")
         return self.mapping_name
 
     @property
     def flags(self) -> Optional[int]:
-        """
-        Read-only property accessing the field flags, specifying various
-        characteristics of the field (see Table 8.70 of the PDF 1.7 reference).
-        """
+        """Read-only property accessing the field flags, specifying various
+        characteristics of the field (see Table 8.70 of the PDF 1.7 reference)."""
         return self.get(FieldDictionaryAttributes.Ff)
 
     @property
     def value(self) -> Optional[Any]:
         """
-        Read-only property accessing the value of this field. Format
-        varies based on field type.
+        Read-only property accessing the value of this field.
+
+        Format varies based on field type.
         """
         return self.get(FieldDictionaryAttributes.V)
 
@@ -1258,9 +1252,9 @@ class Field(TreeObject):
     @property
     def defaultValue(self) -> Optional[Any]:  # deprecated
         """
-        .. deprecated:: 1.28.3
+        Use :py:attr:`default_value` instead.
 
-            Use :py:attr:`default_value` instead.
+        .. deprecated:: 1.28.3
         """
         deprecation_with_replacement("defaultValue", "default_value", "3.0.0")
         return self.default_value
@@ -1269,17 +1263,18 @@ class Field(TreeObject):
     def additional_actions(self) -> Optional[DictionaryObject]:
         """
         Read-only property accessing the additional actions dictionary.
-        This dictionary defines the field's behavior in response to trigger events.
-        See Section 8.5.2 of the PDF 1.7 reference.
+
+        This dictionary defines the field's behavior in response to trigger
+        events. See Section 8.5.2 of the PDF 1.7 reference.
         """
         return self.get(FieldDictionaryAttributes.AA)
 
     @property
     def additionalActions(self) -> Optional[DictionaryObject]:  # deprecated
         """
-        .. deprecated:: 1.28.3
+        Use :py:attr:`additional_actions` instead.
 
-            Use :py:attr:`additional_actions` instead.
+        .. deprecated:: 1.28.3
         """
         deprecation_with_replacement("additionalActions", "additional_actions", "3.0.0")
         return self.additional_actions
@@ -1288,6 +1283,7 @@ class Field(TreeObject):
 class Destination(TreeObject):
     """
     A class representing a destination within a PDF file.
+
     See section 8.2.1 of the PDF 1.6 reference.
 
     Args:
@@ -1298,7 +1294,6 @@ class Destination(TreeObject):
 
     Raises:
         PdfReadError: If destination type is invalid.
-
     """
 
     node: Optional[
@@ -1362,9 +1357,9 @@ class Destination(TreeObject):
 
     def getDestArray(self) -> "ArrayObject":  # deprecated
         """
-        .. deprecated:: 1.28.3
+        Use :py:attr:`dest_array` instead.
 
-            Use :py:attr:`dest_array` instead.
+        .. deprecated:: 1.28.3
         """
         deprecation_with_replacement("getDestArray", "dest_array", "3.0.0")
         return self.dest_array
@@ -1430,20 +1425,25 @@ class Destination(TreeObject):
 
     @property
     def color(self) -> Optional["ArrayObject"]:
-        """Read-only property accessing the color in (R, G, B) with values 0.0-1.0"""
+        """Read-only property accessing the color in (R, G, B) with values 0.0-1.0."""
         return self.get(
             "/C", ArrayObject([FloatObject(0), FloatObject(0), FloatObject(0)])
         )
 
     @property
     def font_format(self) -> Optional[OutlineFontFlag]:
-        """Read-only property accessing the font type. 1=italic, 2=bold, 3=both"""
+        """
+        Read-only property accessing the font type.
+
+        1=italic, 2=bold, 3=both
+        """
         return self.get("/F", 0)
 
     @property
     def outline_count(self) -> Optional[int]:
         """
         Read-only property accessing the outline count.
+
         positive = expanded
         negative = collapsed
         absolute value = number of visible descendents at all levels
