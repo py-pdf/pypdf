@@ -151,7 +151,6 @@ def test_transformation_equivalence():
 def test_transformation_equivalence2():
     pdf_path = RESOURCE_ROOT / "labeled-edges-center-image.pdf"
     reader_base = PdfReader(pdf_path)
-    page_base = reader_base.pages[0]
 
     pdf_path = RESOURCE_ROOT / "box.pdf"
     reader_add = PdfReader(pdf_path)

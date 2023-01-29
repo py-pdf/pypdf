@@ -774,7 +774,7 @@ class PageObject(DictionaryObject):
                 return self._merge_page_writer(
                     page2, page2transformation, ctm, over, expand
                 )
-        except:
+        except Exception:
             pass
 
         new_resources = DictionaryObject()
@@ -883,7 +883,6 @@ class PageObject(DictionaryObject):
         # to find out what symbols in the content streams we might need to
         # rename.
         pdf = self.indirect_ref.pdf
-        ##        new_resources = DictionaryObject()
 
         rename = {}
         original_resources = cast(DictionaryObject, self[PG.RESOURCES].get_object())
@@ -901,7 +900,6 @@ class PageObject(DictionaryObject):
             if res in page2resources:
                 if res not in original_resources:
                     original_resources[NameObject(res)] = DictionaryObject()
-                org_res = cast(DictionaryObject, original_resources[res])
                 _, newrename = self._merge_resources(
                     original_resources, page2resources, res, False
                 )
@@ -918,8 +916,8 @@ class PageObject(DictionaryObject):
 
         if PG.ANNOTS in page2:
             if PG.ANNOTS not in self:
-                self[NameObject("/Annots")] = ArrayObject()
-            annots = pg[PG.ANNOTS].get_object()
+                self[PG.ANNOTS] = ArrayObject()
+            annots = self[PG.ANNOTS].get_object()
             for a in page2[PG.ANNOTS]:
                 aa = (
                     a.get_object()
