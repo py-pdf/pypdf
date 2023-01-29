@@ -583,11 +583,12 @@ class PageObject(DictionaryObject):
         new_res1: bool = True,
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         try:
+            assert isinstance(self.indirect_reference, IndirectObject)
             pdf = self.indirect_reference.pdf
             is_pdf_writer = hasattr(
                 pdf, "_add_object"
             )  # ---------- expect isinstance(pdf,PdfWriter)
-        except Exception:
+        except (AssertionError, AttributeError):
             pdf = None
             is_pdf_writer = False
 
@@ -624,7 +625,7 @@ class PageObject(DictionaryObject):
             new_res = DictionaryObject()
             new_res.update(res1.get(resource, DictionaryObject()).get_object())
         else:
-            new_res = res1[resource]
+            new_res = cast(DictionaryObject, res1[resource])
         page2res = cast(
             DictionaryObject, res2.get(resource, DictionaryObject()).get_object()
         )
@@ -768,13 +769,14 @@ class PageObject(DictionaryObject):
         # to find out what symbols in the content streams we might need to
         # rename.
         try:
+            assert isinstance(self.indirect_reference, IndirectObject)
             if hasattr(
                 self.indirect_reference.pdf, "_add_object"
             ):  # ---------- to detect PdfWriter
                 return self._merge_page_writer(
                     page2, page2transformation, ctm, over, expand
                 )
-        except Exception:
+        except (AssertionError, AttributeError):
             pass
 
         new_resources = DictionaryObject()
@@ -882,7 +884,8 @@ class PageObject(DictionaryObject):
         # First we work on merging the resource dictionaries.  This allows us
         # to find out what symbols in the content streams we might need to
         # rename.
-        pdf = self.indirect_ref.pdf
+        assert isinstance(self.indirect_reference, IndirectObject)
+        pdf = self.indirect_reference.pdf
 
         rename = {}
         original_resources = cast(DictionaryObject, self[PG.RESOURCES].get_object())
@@ -906,10 +909,10 @@ class PageObject(DictionaryObject):
                 rename.update(newrename)
         # Combine /ProcSet sets.
         if RES.PROC_SET in page2resources:
-            if RES.PROCE_SET not in original_resources:
+            if RES.PROC_SET not in original_resources:
                 original_resources[NameObject(RES.PROC_SET)] = ArrayObject()
-            arr = original_resources[RES.PROC_SET]
-            for x in page2resources[RES.PROC_SET]:
+            arr = cast(ArrayObject, original_resources[RES.PROC_SET])
+            for x in cast(DictionaryObject, page2resources[RES.PROC_SET]):
                 if x not in arr:
                     arr.append(x)
             arr.sort()
@@ -917,8 +920,8 @@ class PageObject(DictionaryObject):
         if PG.ANNOTS in page2:
             if PG.ANNOTS not in self:
                 self[PG.ANNOTS] = ArrayObject()
-            annots = self[PG.ANNOTS].get_object()
-            for a in page2[PG.ANNOTS]:
+            annots = cast(ArrayObject, self[PG.ANNOTS].get_object())
+            for a in cast(ArrayObject, page2[PG.ANNOTS]):
                 aa = (
                     a.get_object()
                     .clone(pdf, ignore_fields=("/P", "/StructParent"))
