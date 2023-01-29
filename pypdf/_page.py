@@ -925,7 +925,10 @@ class PageObject(DictionaryObject):
             if PG.ANNOTS not in self:
                 self[NameObject(PG.ANNOTS)] = ArrayObject()
             annots = cast(ArrayObject, self[PG.ANNOTS].get_object())
-            trsf = Transformation(ctm)
+            if ctm is None:
+                trsf = Transformation()
+            else:
+                trsf = Transformation(ctm)
             for a in cast(ArrayObject, page2[PG.ANNOTS]):
                 a = a.get_object()
                 aa = a.clone(pdf, ignore_fields=("/P", "/StructParent"))
@@ -943,10 +946,10 @@ class PageObject(DictionaryObject):
                 if "/QuadPoints" in a:
                     q = cast(ArrayObject, a["/QuadPoints"])
                     aa[NameObject("/QuadPoints")] = ArrayObject(
-                        trsf.apply_on((q[0], q[1]), True)
-                        + trsf.apply_on((q[2], q[3]), True)
-                        + trsf.apply_on((q[4], q[5]), True)
-                        + trsf.apply_on((q[6], q[7]), True)
+                        cast(tuple, trsf.apply_on((q[0], q[1]), True))
+                        + cast(tuple, trsf.apply_on((q[2], q[3]), True))
+                        + cast(tuple, trsf.apply_on((q[4], q[5]), True))
+                        + cast(tuple, trsf.apply_on((q[6], q[7]), True))
                     )
                 try:
                     aa[NameObject("/P")] = self.indirect_reference
