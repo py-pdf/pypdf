@@ -2079,7 +2079,7 @@ class PdfReader:
             name: text string of the "/T" Attribute of the created object
 
         Returns:
-            The created object. `None`` means no object can be created.
+            The created object. ``None`` means no object was created.
         """
         catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
 
