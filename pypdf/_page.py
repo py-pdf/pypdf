@@ -221,7 +221,8 @@ class Transformation:
     def matrix(self) -> TransformationMatrixType:
         """
         Return the transformation matrix as a tuple of tuples in the form:
-            ((a, b, 0), (c, d, 0), (e, f, 1))
+
+        ((a, b, 0), (c, d, 0), (e, f, 1))
         """
         return (
             (self.ctm[0], self.ctm[1], 0),
@@ -400,9 +401,9 @@ class PageObject(DictionaryObject):
         """
         A read-only positive number giving the size of user space units.
 
-        It is in multiples of 1/72 inch. Hence a value of 1 means a user space
-        unit is 1/72 inch, and a value of 3 means that a user space unit is
-        3/72 inch.
+        It is in multiples of 1/72 inch. Hence a value of 1 means a user
+        space unit is 1/72 inch, and a value of 3 means that a user
+        space unit is 3/72 inch.
         """
         return self.get(PG.USER_UNIT, 1)
 
@@ -458,9 +459,9 @@ class PageObject(DictionaryObject):
         height: Union[float, Decimal, None] = None,
     ) -> "PageObject":  # deprecated
         """
-        .. deprecated:: 1.28.0
+        Use :meth:`create_blank_page` instead.
 
-            Use :meth:`create_blank_page` instead.
+        .. deprecated:: 1.28.0
         """
         deprecation_with_replacement("createBlankPage", "create_blank_page", "3.0.0")
         return PageObject.create_blank_page(pdf, width, height)
@@ -494,8 +495,7 @@ class PageObject(DictionaryObject):
         The VISUAL rotation of the page.
 
         This number has to be a multiple of 90 degrees: 0, 90, 180, or 270 are
-        valid values.
-        This property does not affect ``/Contents``.
+        valid values. This property does not affect ``/Contents``.
         """
         return int(self.get(PG.ROTATE, 0))
 
@@ -505,7 +505,8 @@ class PageObject(DictionaryObject):
 
     def transfer_rotation_to_content(self) -> None:
         """
-        Apply the rotation of the page to the content and the media/crop/... boxes.
+        Apply the rotation of the page to the content and the media/crop/...
+        boxes.
 
         It's recommended to apply this function before page merging.
         """
@@ -562,18 +563,18 @@ class PageObject(DictionaryObject):
 
     def rotateClockwise(self, angle: int) -> "PageObject":  # deprecated
         """
-        .. deprecated:: 1.28.0
+        Use :meth:`rotate_clockwise` instead.
 
-            Use :meth:`rotate_clockwise` instead.
+        .. deprecated:: 1.28.0
         """
         deprecation_with_replacement("rotateClockwise", "rotate", "3.0.0")
         return self.rotate(angle)
 
     def rotateCounterClockwise(self, angle: int) -> "PageObject":  # deprecated
         """
-        .. deprecated:: 1.28.0
+        Use :meth:`rotate_clockwise` with a negative argument instead.
 
-            Use :meth:`rotate_clockwise` with a negative argument instead.
+        .. deprecated:: 1.28.0
         """
         deprecation_with_replacement("rotateCounterClockwise", "rotate", "3.0.0")
         return self.rotate(-angle)
@@ -597,8 +598,8 @@ class PageObject(DictionaryObject):
 
         def compute_unique_key(base_key: str) -> Tuple[str, bool]:
             """
-            Find a key that either doesn't already exist or has the same
-            value (indicated by the bool)
+            Find a key that either doesn't already exist or has the same value
+            (indicated by the bool)
 
             Args:
                 base_key: An index is added to this to get the computed key
@@ -726,9 +727,9 @@ class PageObject(DictionaryObject):
 
     def getContents(self) -> Optional[ContentStream]:  # deprecated
         """
-        .. deprecated:: 1.28.0
+        Use :meth:`get_contents` instead.
 
-            Use :meth:`get_contents` instead.
+        .. deprecated:: 1.28.0
         """
         deprecation_with_replacement("getContents", "get_contents", "3.0.0")
         return self.get_contents()
@@ -753,9 +754,9 @@ class PageObject(DictionaryObject):
 
     def mergePage(self, page2: "PageObject") -> None:  # deprecated
         """
-        .. deprecated:: 1.28.0
+        Use :meth:`merge_page` instead.
 
-            Use :meth:`merge_page` instead.
+        .. deprecated:: 1.28.0
         """
         deprecation_with_replacement("mergePage", "merge_page", "3.0.0")
         return self.merge_page(page2)
@@ -1227,8 +1228,6 @@ class PageObject(DictionaryObject):
         expand: bool = False,
     ) -> None:  # deprecated
         """
-        obsolete
-
         .. deprecated:: 1.28.0
 
             Use :meth:`merge_transformed_page` instead.
@@ -1268,8 +1267,8 @@ class PageObject(DictionaryObject):
         expand: bool = False,
     ) -> None:  # deprecated
         """
-        mergeScaledTranslatedPage is similar to merge_page, but the stream to be
-        merged is translated and scaled by applying a transformation matrix.
+        mergeScaledTranslatedPage is similar to merge_page, but the stream to
+        be merged is translated and scaled by applying a transformation matrix.
 
         :param PageObject page2: the page to be merged into this one. Should be
             an instance of :class:`PageObject<PageObject>`.
@@ -1389,17 +1388,17 @@ class PageObject(DictionaryObject):
         self, ctm: CompressedTransformationMatrix
     ) -> None:  # deprecated
         """
-        .. deprecated:: 1.28.0
+        Use :meth:`add_transformation` instead.
 
-            Use :meth:`add_transformation` instead.
+        .. deprecated:: 1.28.0
         """
         deprecation_with_replacement("addTransformation", "add_transformation", "3.0.0")
         self.add_transformation(ctm)
 
     def scale(self, sx: float, sy: float) -> None:
         """
-        Scale a page by the given factors by applying a transformation
-        matrix to its content and updating the page size.
+        Scale a page by the given factors by applying a transformation matrix
+        to its content and updating the page size.
 
         This updates the mediabox, the cropbox, and the contents
         of the page.
@@ -1451,8 +1450,8 @@ class PageObject(DictionaryObject):
 
     def scale_by(self, factor: float) -> None:
         """
-        Scale a page by the given factor by applying a transformation
-        matrix to its content and updating the page size.
+        Scale a page by the given factor by applying a transformation matrix to
+        its content and updating the page size.
 
         Args:
             factor: The scaling factor (for both X and Y axis).
@@ -1461,17 +1460,17 @@ class PageObject(DictionaryObject):
 
     def scaleBy(self, factor: float) -> None:  # deprecated
         """
-        .. deprecated:: 1.28.0
+        Use :meth:`scale_by` instead.
 
-            Use :meth:`scale_by` instead.
+        .. deprecated:: 1.28.0
         """
         deprecation_with_replacement("scaleBy", "scale_by", "3.0.0")
         self.scale(factor, factor)
 
     def scale_to(self, width: float, height: float) -> None:
         """
-        Scale a page to the specified dimensions by applying a
-        transformation matrix to its content and updating the page size.
+        Scale a page to the specified dimensions by applying a transformation
+        matrix to its content and updating the page size.
 
         Args:
             width: The new width.
@@ -1483,9 +1482,9 @@ class PageObject(DictionaryObject):
 
     def scaleTo(self, width: float, height: float) -> None:  # deprecated
         """
-        .. deprecated:: 1.28.0
+        Use :meth:`scale_to` instead.
 
-            Use :meth:`scale_to` instead.
+        .. deprecated:: 1.28.0
         """
         deprecation_with_replacement("scaleTo", "scale_to", "3.0.0")
         self.scale_to(width, height)
@@ -1506,9 +1505,9 @@ class PageObject(DictionaryObject):
 
     def compressContentStreams(self) -> None:  # deprecated
         """
-        .. deprecated:: 1.28.0
+        Use :meth:`compress_content_streams` instead.
 
-            Use :meth:`compress_content_streams` instead.
+        .. deprecated:: 1.28.0
         """
         deprecation_with_replacement(
             "compressContentStreams", "compress_content_streams", "3.0.0"
@@ -2162,9 +2161,9 @@ class PageObject(DictionaryObject):
 
     def extractText(self, Tj_sep: str = "", TJ_sep: str = "") -> str:  # deprecated
         """
-        .. deprecated:: 1.28.0
+        Use :meth:`extract_text` instead.
 
-            Use :meth:`extract_text` instead.
+        .. deprecated:: 1.28.0
         """
         deprecation_with_replacement("extractText", "extract_text", "3.0.0")
         return self.extract_text()
@@ -2183,18 +2182,16 @@ class PageObject(DictionaryObject):
         return embedded, unembedded
 
     mediabox = _create_rectangle_accessor(PG.MEDIABOX, ())
-    """
-    A :class:`RectangleObject<pypdf.generic.RectangleObject>`, expressed in
+    """A :class:`RectangleObject<pypdf.generic.RectangleObject>`, expressed in
     default user space units, defining the boundaries of the physical medium on
-    which the page is intended to be displayed or printed.
-    """
+    which the page is intended to be displayed or printed."""
 
     @property
     def mediaBox(self) -> RectangleObject:  # deprecated
         """
-        .. deprecated:: 1.28.0
+        Use :py:attr:`mediabox` instead.
 
-            Use :py:attr:`mediabox` instead.
+        .. deprecated:: 1.28.0
         """
         deprecation_with_replacement("mediaBox", "mediabox", "3.0.0")
         return self.mediabox
@@ -2202,9 +2199,9 @@ class PageObject(DictionaryObject):
     @mediaBox.setter
     def mediaBox(self, value: RectangleObject) -> None:  # deprecated
         """
-        .. deprecated:: 1.28.0
+        Use :py:attr:`mediabox` instead.
 
-            Use :py:attr:`mediabox` instead.
+        .. deprecated:: 1.28.0
         """
         deprecation_with_replacement("mediaBox", "mediabox", "3.0.0")
         self.mediabox = value
@@ -2212,18 +2209,21 @@ class PageObject(DictionaryObject):
     cropbox = _create_rectangle_accessor("/CropBox", (PG.MEDIABOX,))
     """
     A :class:`RectangleObject<pypdf.generic.RectangleObject>`, expressed in
-    default user space units, defining the visible region of default user space.
+    default user space units, defining the visible region of default user
+    space.
+
     When the page is displayed or printed, its contents are to be clipped
     (cropped) to this rectangle and then imposed on the output medium in some
-    implementation-defined manner.  Default value: same as :attr:`mediabox<mediabox>`.
+    implementation-defined manner.  Default value: same as
+    :attr:`mediabox<mediabox>`.
     """
 
     @property
     def cropBox(self) -> RectangleObject:  # deprecated
         """
-        .. deprecated:: 1.28.0
+        Use :py:attr:`cropbox` instead.
 
-            Use :py:attr:`cropbox` instead.
+        .. deprecated:: 1.28.0
         """
         deprecation_with_replacement("cropBox", "cropbox", "3.0.0")
         return self.cropbox
@@ -2234,18 +2234,16 @@ class PageObject(DictionaryObject):
         self.cropbox = value
 
     bleedbox = _create_rectangle_accessor("/BleedBox", ("/CropBox", PG.MEDIABOX))
-    """
-    A :class:`RectangleObject<pypdf.generic.RectangleObject>`, expressed in
+    """A :class:`RectangleObject<pypdf.generic.RectangleObject>`, expressed in
     default user space units, defining the region to which the contents of the
-    page should be clipped when output in a production environment.
-    """
+    page should be clipped when output in a production environment."""
 
     @property
     def bleedBox(self) -> RectangleObject:  # deprecated
         """
-        .. deprecated:: 1.28.0
+        Use :py:attr:`bleedbox` instead.
 
-            Use :py:attr:`bleedbox` instead.
+        .. deprecated:: 1.28.0
         """
         deprecation_with_replacement("bleedBox", "bleedbox", "3.0.0")
         return self.bleedbox
@@ -2256,18 +2254,16 @@ class PageObject(DictionaryObject):
         self.bleedbox = value
 
     trimbox = _create_rectangle_accessor("/TrimBox", ("/CropBox", PG.MEDIABOX))
-    """
-    A :class:`RectangleObject<pypdf.generic.RectangleObject>`, expressed in
+    """A :class:`RectangleObject<pypdf.generic.RectangleObject>`, expressed in
     default user space units, defining the intended dimensions of the finished
-    page after trimming.
-    """
+    page after trimming."""
 
     @property
     def trimBox(self) -> RectangleObject:  # deprecated
         """
-        .. deprecated:: 1.28.0
+        Use :py:attr:`trimbox` instead.
 
-            Use :py:attr:`trimbox` instead.
+        .. deprecated:: 1.28.0
         """
         deprecation_with_replacement("trimBox", "trimbox", "3.0.0")
         return self.trimbox
@@ -2278,18 +2274,16 @@ class PageObject(DictionaryObject):
         self.trimbox = value
 
     artbox = _create_rectangle_accessor("/ArtBox", ("/CropBox", PG.MEDIABOX))
-    """
-    A :class:`RectangleObject<pypdf.generic.RectangleObject>`, expressed in
+    """A :class:`RectangleObject<pypdf.generic.RectangleObject>`, expressed in
     default user space units, defining the extent of the page's meaningful
-    content as intended by the page's creator.
-    """
+    content as intended by the page's creator."""
 
     @property
     def artBox(self) -> RectangleObject:  # deprecated
         """
-        .. deprecated:: 1.28.0
+        Use :py:attr:`artbox` instead.
 
-            Use :py:attr:`artbox` instead.
+        .. deprecated:: 1.28.0
         """
         deprecation_with_replacement("artBox", "artbox", "3.0.0")
         return self.artbox

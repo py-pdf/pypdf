@@ -31,7 +31,6 @@ class PageRange:
       -  to_slice() gives the equivalent slice.
       -  str() and repr() allow printing.
       -  indices(n) is like slice.indices(n).
-
     """
 
     def __init__(self, arg: Union[slice, "PageRange", str]) -> None:
@@ -43,6 +42,7 @@ class PageRange:
             where the brackets indicate optional ints.
         Remember, page indices start with zero.
         Page range expression examples:
+
             :     all pages.                   -1    last page.
             22    just the 23rd page.          :-1   all but the last page.
             0:3   the first three pages.       -2    second-to-last page.
@@ -114,8 +114,8 @@ class PageRange:
 
     def indices(self, n: int) -> Tuple[int, int, int]:
         """
-        Assuming a sequence of length n, calculate the start and stop
-        indices, and the stride length of the PageRange.
+        Assuming a sequence of length n, calculate the start and stop indices,
+        and the stride length of the PageRange.
 
         See help(slice.indices).
 

@@ -215,7 +215,6 @@ class XmpInformation(PdfObject):
 
     Raises:
       PdfReadError: if XML is invalid
-
     """
 
     def __init__(self, stream: ContentStream) -> None:
@@ -244,9 +243,9 @@ class XmpInformation(PdfObject):
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:  # deprecated
         """
-        .. deprecated:: 1.28.0
+        Use :meth:`write_to_stream` instead.
 
-            Use :meth:`write_to_stream` instead.
+        .. deprecated:: 1.28.0
         """
         deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
         self.write_to_stream(stream, encryption_key)
@@ -263,9 +262,9 @@ class XmpInformation(PdfObject):
         self, aboutUri: str, namespace: str, name: str
     ) -> Iterator[Any]:  # deprecated
         """
-        .. deprecated:: 1.28.0
+        Use :meth:`get_element` instead.
 
-            Use :meth:`get_element` instead.
+        .. deprecated:: 1.28.0
         """
         deprecation_with_replacement("getElement", "get_element", "3.0.0")
         return self.get_element(aboutUri, namespace, name)
@@ -285,9 +284,9 @@ class XmpInformation(PdfObject):
         self, aboutUri: str, namespace: str
     ) -> Iterator[Any]:  # deprecated
         """
-        .. deprecated:: 1.28.0
+        Use :meth:`get_nodes_in_namespace` instead.
 
-            Use :meth:`get_nodes_in_namespace` instead.
+        .. deprecated:: 1.28.0
         """
         deprecation_with_replacement(
             "getNodesInNamespace", "get_nodes_in_namespace", "3.0.0"
@@ -303,107 +302,79 @@ class XmpInformation(PdfObject):
 
     dc_contributor = property(_getter_bag(DC_NAMESPACE, "contributor"))
     """
-    Contributors to the resource (other than the authors). An unsorted
-    array of names.
+    Contributors to the resource (other than the authors).
+
+    An unsorted array of names.
     """
 
     dc_coverage = property(_getter_single(DC_NAMESPACE, "coverage"))
-    """
-    Text describing the extent or scope of the resource.
-    """
+    """Text describing the extent or scope of the resource."""
 
     dc_creator = property(_getter_seq(DC_NAMESPACE, "creator"))
-    """
-    A sorted array of names of the authors of the resource, listed in order
-    of precedence.
-    """
+    """A sorted array of names of the authors of the resource, listed in order
+    of precedence."""
 
     dc_date = property(_getter_seq(DC_NAMESPACE, "date", _converter_date))
     """
     A sorted array of dates (datetime.datetime instances) of significance to
-    the resource.  The dates and times are in UTC.
+    the resource.
+
+    The dates and times are in UTC.
     """
 
     dc_description = property(_getter_langalt(DC_NAMESPACE, "description"))
-    """
-    A language-keyed dictionary of textual descriptions of the content of the
-    resource.
-    """
+    """A language-keyed dictionary of textual descriptions of the content of the
+    resource."""
 
     dc_format = property(_getter_single(DC_NAMESPACE, "format"))
-    """
-    The mime-type of the resource.
-    """
+    """The mime-type of the resource."""
 
     dc_identifier = property(_getter_single(DC_NAMESPACE, "identifier"))
-    """
-    Unique identifier of the resource.
-    """
+    """Unique identifier of the resource."""
 
     dc_language = property(_getter_bag(DC_NAMESPACE, "language"))
-    """
-    An unordered array specifying the languages used in the resource.
-    """
+    """An unordered array specifying the languages used in the resource."""
 
     dc_publisher = property(_getter_bag(DC_NAMESPACE, "publisher"))
-    """
-    An unordered array of publisher names.
-    """
+    """An unordered array of publisher names."""
 
     dc_relation = property(_getter_bag(DC_NAMESPACE, "relation"))
-    """
-    An unordered array of text descriptions of relationships to other
-    documents.
-    """
+    """An unordered array of text descriptions of relationships to other
+    documents."""
 
     dc_rights = property(_getter_langalt(DC_NAMESPACE, "rights"))
-    """
-    A language-keyed dictionary of textual descriptions of the rights the
-    user has to this resource.
-    """
+    """A language-keyed dictionary of textual descriptions of the rights the
+    user has to this resource."""
 
     dc_source = property(_getter_single(DC_NAMESPACE, "source"))
-    """
-    Unique identifier of the work from which this resource was derived.
-    """
+    """Unique identifier of the work from which this resource was derived."""
 
     dc_subject = property(_getter_bag(DC_NAMESPACE, "subject"))
-    """
-    An unordered array of descriptive phrases or keywrods that specify the
-    topic of the content of the resource.
-    """
+    """An unordered array of descriptive phrases or keywrods that specify the
+    topic of the content of the resource."""
 
     dc_title = property(_getter_langalt(DC_NAMESPACE, "title"))
-    """
-    A language-keyed dictionary of the title of the resource.
-    """
+    """A language-keyed dictionary of the title of the resource."""
 
     dc_type = property(_getter_bag(DC_NAMESPACE, "type"))
-    """
-    An unordered array of textual descriptions of the document type.
-    """
+    """An unordered array of textual descriptions of the document type."""
 
     pdf_keywords = property(_getter_single(PDF_NAMESPACE, "Keywords"))
-    """
-    An unformatted text string representing document keywords.
-    """
+    """An unformatted text string representing document keywords."""
 
     pdf_pdfversion = property(_getter_single(PDF_NAMESPACE, "PDFVersion"))
-    """
-    The PDF file version, for example 1.0, 1.3.
-    """
+    """The PDF file version, for example 1.0, 1.3."""
 
     pdf_producer = property(_getter_single(PDF_NAMESPACE, "Producer"))
-    """
-    The name of the tool that created the PDF document.
-    """
+    """The name of the tool that created the PDF document."""
 
     xmp_create_date = property(
         _getter_single(XMP_NAMESPACE, "CreateDate", _converter_date)
     )
     """
-    The date and time the resource was originally created.  The date and
-    time are returned as a UTC datetime.datetime object.
+    The date and time the resource was originally created.
+
+    The date and time are returned as a UTC datetime.datetime object.
     """
 
     @property
@@ -420,8 +391,9 @@ class XmpInformation(PdfObject):
         _getter_single(XMP_NAMESPACE, "ModifyDate", _converter_date)
     )
     """
-    The date and time the resource was last modified.  The date and time
-    are returned as a UTC datetime.datetime object.
+    The date and time the resource was last modified.
+
+    The date and time are returned as a UTC datetime.datetime object.
     """
 
     @property
@@ -467,9 +439,7 @@ class XmpInformation(PdfObject):
         self.xmp_creator_tool = value
 
     xmpmm_document_id = property(_getter_single(XMPMM_NAMESPACE, "DocumentID"))
-    """
-    The common identifier for all versions and renditions of this resource.
-    """
+    """The common identifier for all versions and renditions of this resource."""
 
     @property
     def xmpmm_documentId(self) -> str:  # deprecated
@@ -482,10 +452,8 @@ class XmpInformation(PdfObject):
         self.xmpmm_document_id = value
 
     xmpmm_instance_id = property(_getter_single(XMPMM_NAMESPACE, "InstanceID"))
-    """
-    An identifier for a specific incarnation of a document, updated each
-    time a file is saved.
-    """
+    """An identifier for a specific incarnation of a document, updated each
+    time a file is saved."""
 
     @property
     def xmpmm_instanceId(self) -> str:  # deprecated

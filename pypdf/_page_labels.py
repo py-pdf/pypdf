@@ -57,20 +57,11 @@ a       Lowercase letters (a to z for the first 26 pages,
                            aa to zz for the next 26, and so on)
 """
 
-from typing import (
-    Iterator,
-    Optional,
-    Tuple,
-)
+from typing import Iterator, Optional, Tuple
 
 from ._protocols import PdfReaderProtocol
 from ._utils import logger_warning
-
-from .generic import (
-    ArrayObject,
-    DictionaryObject,
-    NumberObject,
-)
+from .generic import ArrayObject, DictionaryObject, NumberObject
 
 
 def number2uppercase_roman_numeral(num: int) -> str:
