@@ -2071,6 +2071,75 @@ class PdfReader:
                         retval[tag] = es
         return retval
 
+    def add_form_topname(self, name: str) -> Optional[DictionaryObject]:
+        """
+        Add a top level form that groups all form fields below it.
+
+        Args:
+            name: text string of the "/T" Attribute of the created object
+
+        Returns:
+            The created object. ``None`` means no object was created.
+        """
+        catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
+
+        if "/AcroForm" not in catalog or not isinstance(
+            catalog["/AcroForm"], DictionaryObject
+        ):
+            return None
+        acroform = cast(DictionaryObject, catalog[NameObject("/AcroForm")])
+        if "/Fields" not in acroform:
+            # TODO: :No error returns but may be extended for XFA Forms
+            return None
+
+        interim = DictionaryObject()
+        interim[NameObject("/T")] = TextStringObject(name)
+        interim[NameObject("/Kids")] = acroform[NameObject("/Fields")]
+        self.cache_indirect_object(
+            0,
+            max([i for (g, i) in self.resolved_objects.keys() if g == 0]) + 1,
+            interim,
+        )
+        arr = ArrayObject()
+        arr.append(interim.indirect_reference)
+        acroform[NameObject("/Fields")] = arr
+        for o in cast(ArrayObject, interim["/Kids"]):
+            obj = o.get_object()
+            if "/Parent" in obj:
+                logger_warning(
+                    f"Top Level Form Field {obj.indirect_reference} have a non-expected parent",
+                    __name__,
+                )
+            obj[NameObject("/Parent")] = interim.indirect_reference
+        return interim
+
+    def rename_form_topname(self, name: str) -> Optional[DictionaryObject]:
+        """
+        Rename top level form field that all form fields below it.
+
+        Args:
+            name: text string of the "/T" field of the created object
+
+        Returns:
+            The modified object. ``None`` means no object was modified.
+        """
+        catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
+
+        if "/AcroForm" not in catalog or not isinstance(
+            catalog["/AcroForm"], DictionaryObject
+        ):
+            return None
+        acroform = cast(DictionaryObject, catalog[NameObject("/AcroForm")])
+        if "/Fields" not in acroform:
+            return None
+
+        interim = cast(
+            DictionaryObject,
+            cast(ArrayObject, acroform[NameObject("/Fields")])[0].get_object(),
+        )
+        interim[NameObject("/T")] = TextStringObject(name)
+        return interim
+
 
 class PdfFileReader(PdfReader):  # deprecated
     def __init__(self, *args: Any, **kwargs: Any) -> None:
