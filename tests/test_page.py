@@ -1081,8 +1081,8 @@ def test_merge_transformed_page_into_blank():
     url = "https://github.com/py-pdf/pypdf/files/10540507/visitcard.pdf"
     name = "visitcard.pdf"
     r = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    w = pypdf.PdfWriter()
-    w.add_blank_page(pypdf.PaperSize.A6.width, pypdf.PaperSize.A6.height)
+    w = PdfWriter()
+    w.add_blank_page(100, 100)
     for x in range(4):
         for y in range(7):
             w.pages[0].merge_translated_page(
