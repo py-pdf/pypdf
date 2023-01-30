@@ -344,11 +344,7 @@ class FloatObject(float, PdfObject):
         cls, value: Union[str, Any] = "0.0", context: Optional[Any] = None
     ) -> "FloatObject":
         try:
-            if isinstance(value, bytes):
-                value = value.decode()
-            else:
-                value = str_(value)
-            value = float(value)
+            value = float(str_(value))
             return float.__new__(cls, value)
         except Exception as e:
             # If this isn't a valid decimal (happens in malformed PDFs)
