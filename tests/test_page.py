@@ -1075,3 +1075,20 @@ def test_merge_page_resources_smoke_test():
         if name in (b"page1-contents", b"page2-contents")
     ]
     assert relevant_operations == expected_operations
+
+
+def test_merge_transformed_page_into_blank():
+    url = "https://github.com/py-pdf/pypdf/files/10540507/visitcard.pdf"
+    name = "visitcard.pdf"
+    r = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    w = pypdf.PdfWriter()
+    w.add_blank_page(pypdf.PaperSize.A6.width, pypdf.PaperSize.A6.height)
+    for x in range(4):
+        for y in range(7):
+            w.pages[0].merge_translated_page(
+                r.pages[0],
+                x * r.pages[0].trimbox[2],
+                y * r.pages[0].trimbox[3],
+                True,
+                True,
+            )

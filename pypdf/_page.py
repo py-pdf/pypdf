@@ -1001,6 +1001,8 @@ class PageObject(DictionaryObject):
         if expand:
             self._expand_mediabox(page2, ctm)
 
+        if PG.CONTENTS not in self:
+            self[NameObject(PG.CONTENTS)] = ContentStream(None, pdf)
         ind = self.raw_get(PG.CONTENTS)
         try:
             if not isinstance(ind, IndirectObject):
