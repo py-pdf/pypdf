@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1675004016436,
+  "lastUpdate": 1675116228811,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -23322,6 +23322,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0006475397575991936",
             "extra": "mean: 89.38144490909136 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5d1654059ab493d7d197d31a6b69cdb261be72b1",
+          "message": "ENH: Enable merging forms with overlapping names (#1553)\n\nAdd functions to add a top level grouping form field.\r\nFunctions to rename top level field also introduced.\r\n`PdfWriter.merge`/`PdfWriter.append` extended to merge set of fields.\r\n\r\nCloses #1538 \r\nCloses #1585",
+          "timestamp": "2023-01-30T23:02:27+01:00",
+          "tree_id": "264e07c1ad61a3a5877d8d43d8d49b5de744d7f6",
+          "url": "https://github.com/py-pdf/pypdf/commit/5d1654059ab493d7d197d31a6b69cdb261be72b1"
+        },
+        "date": 1675116226831,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.000258433170445,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015809748315479332",
+            "extra": "mean: 999.7416336000028 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.79122323364339,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007305807308906899",
+            "extra": "mean: 84.80884299999876 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23648829092410412,
+            "unit": "iter/sec",
+            "range": "stddev: 0.044028846558753734",
+            "extra": "mean: 4.228539164 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.445203824700855,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00036890220998805694",
+            "extra": "mean: 87.37284327272671 msec\nrounds: 11"
           }
         ]
       }
