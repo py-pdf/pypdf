@@ -104,6 +104,7 @@ Unfortunately in complicated PDF documents the coordinates given to the visitor-
 
 ## Why Text Extraction is hard
 
+### Unclear Objective
 Extracting text from a PDF can be pretty tricky. In several cases there is no
 clear answer what the expected result should look like:
 
@@ -150,6 +151,22 @@ the way PDF stores information just makes it hard to achieve that:
 
 And finally there are issues that pypdf will deal with. If you find such a
 text extraction bug, please share the PDF with us so we can work on it!
+
+### Missing Semantic Layer
+
+The PDF file format is all about producing the desired visual result for
+printing. It was not created for parsing the content. PDF files don't contain a
+semantic layer.
+
+Specifically, there is no information what the header, footer, page numbers,
+tables, and paragraphs are. The visual appearence is there and people might
+find heuristics to make educated guesses, but there is no way of being certain.
+
+This is a shortcomming of the PDF file format, not of pypdf.
+
+It would be possible to apply machine learning on PDF documents to make good
+heuristics, but that will not be part of pypdf. However, pypdf could be used to
+feed such a machine learning system with the relevant information.
 
 ### Whitespaces
 
