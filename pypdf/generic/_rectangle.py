@@ -7,12 +7,15 @@ from ._data_structures import ArrayObject
 
 class RectangleObject(ArrayObject):
     """
-    This class is used to represent *page boxes* in pypdf. These boxes include:
-        * :attr:`artbox <pypdf._page.PageObject.artbox>`
-        * :attr:`bleedbox <pypdf._page.PageObject.bleedbox>`
-        * :attr:`cropbox <pypdf._page.PageObject.cropbox>`
-        * :attr:`mediabox <pypdf._page.PageObject.mediabox>`
-        * :attr:`trimbox <pypdf._page.PageObject.trimbox>`
+    This class is used to represent *page boxes* in pypdf.
+
+    These boxes include:
+
+    * :attr:`artbox <pypdf._page.PageObject.artbox>`
+    * :attr:`bleedbox <pypdf._page.PageObject.bleedbox>`
+    * :attr:`cropbox <pypdf._page.PageObject.cropbox>`
+    * :attr:`mediabox <pypdf._page.PageObject.mediabox>`
+    * :attr:`trimbox <pypdf._page.PageObject.trimbox>`
     """
 
     def __init__(

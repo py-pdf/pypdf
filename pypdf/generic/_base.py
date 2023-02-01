@@ -97,10 +97,10 @@ class PdfObject(PdfObjectProtocol):
         self, clone: Any, pdf_dest: PdfWriterProtocol
     ) -> PdfObjectProtocol:
         """
-        reference the object within the _objects of pdf_dest only if
-        indirect_reference attribute exists (which means the objects
-        was already identified in xref/xobjstm)
-        if object has been already referenced do nothing
+        Reference the object within the _objects of pdf_dest only if
+        indirect_reference attribute exists (which means the objects was
+        already identified in xref/xobjstm) if object has been already
+        referenced do nothing.
 
         Args:
           clone:
@@ -152,7 +152,7 @@ class NullObject(PdfObject):
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "NullObject":
-        """clone object into pdf_dest"""
+        """Clone object into pdf_dest."""
         return cast("NullObject", self._reference_clone(NullObject(), pdf_dest))
 
     def write_to_stream(
@@ -192,7 +192,7 @@ class BooleanObject(PdfObject):
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "BooleanObject":
-        """clone object into pdf_dest"""
+        """Clone object into pdf_dest."""
         return cast(
             "BooleanObject", self._reference_clone(BooleanObject(self.value), pdf_dest)
         )
@@ -251,7 +251,7 @@ class IndirectObject(PdfObject):
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "IndirectObject":
-        """clone object into pdf_dest"""
+        """Clone object into pdf_dest."""
         if self.pdf == pdf_dest and not force_duplicate:
             # Already duplicated and no extra duplication required
             return self
@@ -360,7 +360,7 @@ class FloatObject(float, PdfObject):
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "FloatObject":
-        """clone object into pdf_dest"""
+        """Clone object into pdf_dest."""
         return cast("FloatObject", self._reference_clone(FloatObject(self), pdf_dest))
 
     def myrepr(self) -> str:
@@ -404,7 +404,7 @@ class NumberObject(int, PdfObject):
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "NumberObject":
-        """clone object into pdf_dest"""
+        """Clone object into pdf_dest."""
         return cast("NumberObject", self._reference_clone(NumberObject(self), pdf_dest))
 
     def as_numeric(self) -> int:
@@ -439,6 +439,7 @@ class NumberObject(int, PdfObject):
 class ByteStringObject(bytes, PdfObject):
     """
     Represents a string object where the text encoding could not be determined.
+
     This occurs quite often, as the PDF spec doesn't provide an alternate way to
     represent strings -- for example, the encryption data stored in files (like
     /O) is clearly not text, but is still stored in a "String" object.
@@ -450,7 +451,7 @@ class ByteStringObject(bytes, PdfObject):
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "ByteStringObject":
-        """clone object into pdf_dest"""
+        """Clone object into pdf_dest."""
         return cast(
             "ByteStringObject",
             self._reference_clone(ByteStringObject(bytes(self)), pdf_dest),
@@ -482,10 +483,11 @@ class ByteStringObject(bytes, PdfObject):
 
 class TextStringObject(str, PdfObject):
     """
-    Represents a string object that has been decoded into a real unicode string.
+    A string object that has been decoded into a real unicode string.
+
     If read from a PDF document, this string appeared to match the
-    PDFDocEncoding, or contained a UTF-16BE BOM mark to cause UTF-16 decoding to
-    occur.
+    PDFDocEncoding, or contained a UTF-16BE BOM mark to cause UTF-16 decoding
+    to occur.
     """
 
     def clone(
@@ -494,7 +496,7 @@ class TextStringObject(str, PdfObject):
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "TextStringObject":
-        """clone object into pdf_dest"""
+        """Clone object into pdf_dest."""
         obj = TextStringObject(self)
         obj.autodetect_pdfdocencoding = self.autodetect_pdfdocencoding
         obj.autodetect_utf16 = self.autodetect_utf16
@@ -505,12 +507,10 @@ class TextStringObject(str, PdfObject):
 
     @property
     def original_bytes(self) -> bytes:
-        """
-        It is occasionally possible that a text string object gets created where
+        """It is occasionally possible that a text string object gets created where
         a byte string object was expected due to the autodetection mechanism --
         if that occurs, this "original_bytes" property can be used to
-        back-calculate what the original encoded bytes were.
-        """
+        back-calculate what the original encoded bytes were."""
         return self.get_original_bytes()
 
     def get_original_bytes(self) -> bytes:
@@ -579,7 +579,7 @@ class NameObject(str, PdfObject):
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "NameObject":
-        """clone object into pdf_dest"""
+        """Clone object into pdf_dest."""
         return cast("NameObject", self._reference_clone(NameObject(self), pdf_dest))
 
     def write_to_stream(

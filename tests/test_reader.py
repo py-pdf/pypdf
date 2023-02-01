@@ -619,10 +619,8 @@ def test_get_destination_page_number():
 
 
 def test_do_not_get_stuck_on_large_files_without_start_xref():
-    """
-    Tests for the absence of a DoS bug, where a large file without an startxref
-    mark would cause the library to hang for minutes to hours
-    """
+    """Tests for the absence of a DoS bug, where a large file without an
+    startxref mark would cause the library to hang for minutes to hours."""
     start_time = time.time()
     broken_stream = BytesIO(b"\0" * 5 * 1000 * 1000)
     with pytest.raises(PdfReadError):
@@ -640,7 +638,6 @@ def test_decrypt_when_no_id():
 
     https://github.com/py-pdf/pypdf/issues/608
     """
-
     with open(RESOURCE_ROOT / "encrypted_doc_no_id.pdf", "rb") as inputfile:
         ipdf = PdfReader(inputfile)
         ipdf.decrypt("")
@@ -661,7 +658,7 @@ def test_reader_properties():
     [True, False],
 )
 def test_issue604(caplog, strict):
-    """Test with invalid destinations"""  # todo
+    """Test with invalid destinations."""  # todo
     with open(RESOURCE_ROOT / "issue-604.pdf", "rb") as f:
         pdf = None
         outline = None
@@ -821,6 +818,34 @@ def test_read_form_416():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name="issue_416.pdf")))
     fields = reader.get_form_text_fields()
     assert len(fields) > 0
+
+
+def test_form_topname_with_and_without_acroform(caplog):
+    r = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    r.add_form_topname("no")
+    r.rename_form_topname("renamed")
+    assert "/AcroForm" not in r.trailer["/Root"]
+    r.trailer["/Root"][NameObject("/AcroForm")] = DictionaryObject()
+    r.add_form_topname("toto")
+    r.rename_form_topname("renamed")
+    assert len(r.get_fields()) == 0
+
+    r = PdfReader(RESOURCE_ROOT / "form.pdf")
+    r.add_form_topname("top")
+    flds = r.get_fields()
+    assert "top" in flds
+    assert "top.foo" in flds
+    r.rename_form_topname("renamed")
+    flds = r.get_fields()
+    assert "renamed" in flds
+    assert "renamed.foo" in flds
+
+    r = PdfReader(RESOURCE_ROOT / "form.pdf")
+    r.get_fields()["foo"].indirect_reference.get_object()[
+        NameObject("/Parent")
+    ] = DictionaryObject()
+    r.add_form_topname("top")
+    assert "have a non-expected parent" in caplog.text
 
 
 @pytest.mark.external

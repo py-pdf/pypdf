@@ -374,18 +374,18 @@ class PdfMerger:
 
     def addMetadata(self, infos: Dict[str, Any]) -> None:  # deprecated
         """
-        .. deprecated:: 1.28.0
+        Use :meth:`add_metadata` instead.
 
-            Use :meth:`add_metadata` instead.
+        .. deprecated:: 1.28.0
         """
         deprecation_with_replacement("addMetadata", "add_metadata")
         self.add_metadata(infos)
 
     def setPageLayout(self, layout: LayoutType) -> None:  # deprecated
         """
-        .. deprecated:: 1.28.0
+        Use :meth:`set_page_layout` instead.
 
-            Use :meth:`set_page_layout` instead.
+        .. deprecated:: 1.28.0
         """
         deprecation_with_replacement("setPageLayout", "set_page_layout")
         self.set_page_layout(layout)
@@ -421,9 +421,9 @@ class PdfMerger:
 
     def setPageMode(self, mode: PagemodeType) -> None:  # deprecated
         """
-        .. deprecated:: 1.28.0
+        Use :meth:`set_page_mode` instead.
 
-            Use :meth:`set_page_mode` instead.
+        .. deprecated:: 1.28.0
         """
         deprecation_with_replacement("setPageMode", "set_page_mode", "3.0.0")
         self.set_page_mode(mode)

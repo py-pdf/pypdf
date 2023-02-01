@@ -80,10 +80,11 @@ def test_dropdown_items():
 
 def test_PdfReaderFileLoad():
     """
-    Test loading and parsing of a file. Extract text of the file and compare to expected
-    textual output. Expected outcome: file loads, text matches expected.
-    """
+    Test loading and parsing of a file.
 
+    Extract text of the file and compare to expected textual output. Expected
+    outcome: file loads, text matches expected.
+    """
     with open(RESOURCE_ROOT / "crazyones.pdf", "rb") as inputfile:
         # Load PDF file from file
         reader = PdfReader(inputfile)
@@ -112,7 +113,6 @@ def test_PdfReaderJpegImage():
 
     Expected outcome: file loads, image matches expected.
     """
-
     with open(RESOURCE_ROOT / "jpeg.pdf", "rb") as inputfile:
         # Load PDF file from file
         reader = PdfReader(inputfile)
@@ -887,6 +887,30 @@ def test_tounicode_is_identity():
 
 
 @pytest.mark.external
+def test_append_forms():
+    # from #1538
+    writer = PdfWriter()
+
+    url = "https://github.com/py-pdf/pypdf/files/10367412/pdfa.pdf"
+    name = "form_a.pdf"
+    reader1 = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader1.add_form_topname("form_a")
+    writer.append(reader1)
+
+    url = "https://github.com/py-pdf/pypdf/files/10367413/pdfb.pdf"
+    name = "form_b.pdf"
+    reader2 = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader2.add_form_topname("form_b")
+    writer.append(reader2)
+
+    b = BytesIO()
+    writer.write(b)
+    reader = PdfReader(b)
+    assert len(reader.get_form_text_fields()) == len(
+        reader1.get_form_text_fields()
+    ) + len(reader2.get_form_text_fields())
+
+
 def test_extra_test_iss1541():
     url = "https://github.com/py-pdf/pypdf/files/10418158/tst_iss1541.pdf"
     name = "tst_iss1541.pdf"

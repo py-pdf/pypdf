@@ -464,7 +464,6 @@ def test_TextStringObject_autodetect_utf16():
 
 
 def test_remove_child_not_in_tree():
-
     tree = TreeObject()
     with pytest.raises(ValueError) as exc:
         tree.remove_child(ChildDummy())
@@ -472,7 +471,6 @@ def test_remove_child_not_in_tree():
 
 
 def test_remove_child_not_in_that_tree():
-
     tree = TreeObject()
     tree.indirect_reference = NullObject()
     child = TreeObject()

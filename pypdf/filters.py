@@ -194,10 +194,8 @@ class FlateDecode:
 
 
 class ASCIIHexDecode:
-    """
-    The ASCIIHexDecode filter decodes data that has been encoded in ASCII
-    hexadecimal form into a base-7 ASCII format.
-    """
+    """The ASCIIHexDecode filter decodes data that has been encoded in ASCII
+    hexadecimal form into a base-7 ASCII format."""
 
     @staticmethod
     def decode(
@@ -246,8 +244,11 @@ class ASCIIHexDecode:
 
 
 class LZWDecode:
-    """Taken from:
-    http://www.java2s.com/Open-Source/Java-Document/PDF/PDF-Renderer/com/sun/pdfview/decode/LZWDecode.java.htm
+    """
+    Taken from:
+
+    http://www.java2s.com/Open-Source/Java-Document/PDF/PDF-
+    Renderer/com/sun/pdfview/decode/LZWDecode.java.htm
     """
 
     class Decoder:

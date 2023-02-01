@@ -675,7 +675,6 @@ def test_add_link():
 
 def test_io_streams():
     """This is the example from the docs ("Streaming data")."""
-
     filepath = RESOURCE_ROOT / "pdflatex-outline.pdf"
     with open(filepath, "rb") as fh:
         bytes_stream = BytesIO(fh.read())
@@ -705,9 +704,7 @@ def test_regression_issue670():
 
 
 def test_issue301():
-    """
-    Test with invalid stream length object
-    """
+    """Test with invalid stream length object."""
     with open(RESOURCE_ROOT / "issue-301.pdf", "rb") as f:
         reader = PdfReader(f)
         writer = PdfWriter()
@@ -717,7 +714,7 @@ def test_issue301():
 
 
 def test_append_pages_from_reader_append():
-    """use append_pages_from_reader with a callable"""
+    """Use append_pages_from_reader with a callable."""
     with open(RESOURCE_ROOT / "issue-301.pdf", "rb") as f:
         reader = PdfReader(f)
         writer = PdfWriter()
@@ -989,6 +986,8 @@ def test_append_without_annots_and_articles():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     writer = PdfWriter()
     writer.append(reader, None, (0, 10), True, ["/B"])
+    writer.reset_translation()
+    writer.append(reader, (0, 10), True, ["/B"])
     assert writer.threads == []
     writer = PdfWriter()
     writer.append(reader, None, (0, 10), True, ["/Annots"])

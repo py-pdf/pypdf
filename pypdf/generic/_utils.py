@@ -126,7 +126,6 @@ def create_string_object(
 
     Raises:
         TypeError: If string is not of type str or bytes.
-
     """
     if isinstance(string, str):
         return TextStringObject(string)

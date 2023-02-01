@@ -137,8 +137,8 @@ def read_non_whitespace(stream: StreamType) -> bytes:
 
 def skip_over_whitespace(stream: StreamType) -> bool:
     """
-    Similar to read_non_whitespace, but return a boolean if more than
-    one whitespace character was read.
+    Similar to read_non_whitespace, but return a boolean if more than one
+    whitespace character was read.
 
     Args:
         stream: The data stream from which was read.
@@ -349,7 +349,6 @@ def ord_(b: Union[int, str, bytes]) -> Union[int, bytes]:
 
 
 def hexencode(b: bytes) -> bytes:
-
     coder = getencoder("hex_codec")
     coded = coder(b)  # type: ignore
     return coded[0]
@@ -387,32 +386,24 @@ def deprecation(msg: str) -> None:
 def deprecate_with_replacement(
     old_name: str, new_name: str, removed_in: str = "3.0.0"
 ) -> None:
-    """
-    Raise an exception that a feature will be removed, but has a replacement.
-    """
+    """Raise an exception that a feature will be removed, but has a replacement."""
     deprecate(DEPR_MSG.format(old_name, new_name, removed_in), 4)
 
 
 def deprecation_with_replacement(
     old_name: str, new_name: str, removed_in: str = "3.0.0"
 ) -> None:
-    """
-    Raise an exception that a feature was already removed, but has a replacement.
-    """
+    """Raise an exception that a feature was already removed, but has a replacement."""
     deprecation(DEPR_MSG_HAPPENED.format(old_name, removed_in, new_name))
 
 
 def deprecate_no_replacement(name: str, removed_in: str = "3.0.0") -> None:
-    """
-    Raise an exception that a feature will be removed without replacement.
-    """
+    """Raise an exception that a feature will be removed without replacement."""
     deprecate(DEPR_MSG_NO_REPLACEMENT.format(name, removed_in), 4)
 
 
 def deprecation_no_replacement(name: str, removed_in: str = "3.0.0") -> None:
-    """
-    Raise an exception that a feature was already removed without replacement.
-    """
+    """Raise an exception that a feature was already removed without replacement."""
     deprecation(DEPR_MSG_NO_REPLACEMENT_HAPPENED.format(name, removed_in))
 
 

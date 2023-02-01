@@ -750,7 +750,7 @@ class AlgV5:
     def compute_U_value(password: bytes, key: bytes) -> Tuple[bytes, bytes]:
         """
         Algorithm 3.8 Computing the encryption dictionary’s U (user password)
-        and UE (user encryption key) values
+        and UE (user encryption key) values.
 
         1. Generate 16 random bytes of data using a strong random number generator.
            The first 8 bytes are the User Validation Salt. The second 8 bytes
@@ -829,7 +829,8 @@ class AlgV5:
     @staticmethod
     def compute_Perms_value(key: bytes, p: int, metadata_encrypted: bool) -> bytes:
         """
-        Algorithm 3.10 Computing the encryption dictionary’s Perms (permissions) value
+        Algorithm 3.10 Computing the encryption dictionary’s Perms
+        (permissions) value.
 
         1. Extend the permissions (contents of the P integer) to 64 bits by
            setting the upper 32 bits to all 1’s.
