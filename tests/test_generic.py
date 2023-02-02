@@ -560,7 +560,6 @@ def test_remove_child_found_in_tree():
     assert len([el for el in tree.children()]) == 3
 
     # Remove middle child
-    # tree.remove_child(child4)
     child4.remove_from_tree()
     assert tree[NameObject("/Count")] == 2
     assert len([el for el in tree.children()]) == 2
@@ -1003,9 +1002,6 @@ def test_float_object_decimal_to_string(value, expected):
 
 
 def test_cloning(caplog):
-    # pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    # reader = PdfReader(pdf_path)
-    # page = reader.pages[0]
     writer = PdfWriter()
     with pytest.raises(Exception) as exc:
         PdfObject().clone(writer)

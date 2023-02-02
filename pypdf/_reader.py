@@ -491,8 +491,6 @@ class PdfReader:
         Returns:
             A :class:`PageObject<pypdf._page.PageObject>` instance.
         """
-        # ensure that we're not trying to access an encrypted PDF
-        # assert not self.trailer.has_key(TK.ENCRYPT)
         if self.flattened_pages is None:
             self._flatten()
         assert self.flattened_pages is not None, "hint for mypy"
@@ -1041,11 +1039,11 @@ class PdfReader:
                 outline_item[NameObject("/C")] = ArrayObject(FloatObject(c) for c in node["/C"])  # type: ignore
             if "/F" in node:
                 # specifies style characteristics bold and/or italic
-                # 1=italic, 2=bold, 3=both
+                # with 1=italic, 2=bold, 3=both
                 outline_item[NameObject("/F")] = node["/F"]
             if "/Count" in node:
                 # absolute value = num. visible children
-                # positive = open/unfolded, negative = closed/folded
+                # with positive = open/unfolded, negative = closed/folded
                 outline_item[NameObject("/Count")] = node["/Count"]
         outline_item.node = node
         return outline_item
@@ -1869,11 +1867,6 @@ class PdfReader:
             line += stream.read(2)  # 1 char already read, +2 to check "obj"
             if line.lower() != b"obj":
                 return 3
-            # while stream.read(1) in b" \t\r\n":
-            #     pass
-            # line = stream.read(256)  # check that it is xref obj
-            # if b"/xref" not in line.lower():
-            #     return 4
         return 0
 
     def _rebuild_xref_table(self, stream: StreamType) -> None:
@@ -1901,11 +1894,8 @@ class PdfReader:
         get_entry: Callable[[int], Union[int, Tuple[int, ...]]],
         used_before: Callable[[int, Union[int, Tuple[int, ...]]], bool],
     ) -> None:
-        # last_end = 0
         for start, size in self._pairs(idx_pairs):
             # The subsections must increase
-            # assert start >= last_end
-            # last_end = start + size
             for num in range(start, start + size):
                 # The first entry is the type
                 xref_type = get_entry(0)

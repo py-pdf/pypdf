@@ -170,8 +170,7 @@ def writer_operate(writer: PdfWriter) -> None:
     writer.insert_blank_page(width=100, height=100)
     writer.insert_blank_page()  # without parameters
 
-    # TODO: This gives "KeyError: '/Contents'" - is that a bug?
-    # writer.removeImages()
+    writer.remove_images()
 
     writer.add_metadata({"author": "Martin Thoma"})
 
