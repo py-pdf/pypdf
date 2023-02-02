@@ -273,7 +273,6 @@ class PdfWriter:
         except Exception:
             pass
         page = cast("PageObject", page_org.clone(self, False, excluded_keys))
-        # page_ind = self._add_object(page)
         if page_org.pdf is not None:
             other = page_org.pdf.pdf_header
             if isinstance(other, str):
@@ -579,7 +578,6 @@ class PdfWriter:
             names[NameObject("/JavaScript")] = DictionaryObject(
                 {NameObject("/Names"): ArrayObject()}
             )
-            # cast(DictionaryObject, names[NameObject("/JavaScript")])[NameObject("/Names")] = ArrayObject()
         js_list = cast(
             ArrayObject, cast(DictionaryObject, names["/JavaScript"])["/Names"]
         )
@@ -2553,7 +2551,6 @@ class PdfWriter:
         )  # need for the outline processing below
         for dest in reader._namedDests.values():
             arr = dest.dest_array
-            # try:
             if isinstance(dest["/Page"], NullObject):
                 pass  # self.add_named_destination_array(dest["/Title"],arr)
             elif dest["/Page"].indirect_reference.idnum in srcpages:
@@ -2561,8 +2558,6 @@ class PdfWriter:
                     dest["/Page"].indirect_reference.idnum
                 ].indirect_reference
                 self.add_named_destination_array(dest["/Title"], arr)
-            # except Exception as e:
-            #    logger_warning(f"can not insert {dest} : {e.msg}",__name__)
 
         outline_item_typ: TreeObject
         if outline_item is not None:
@@ -2729,8 +2724,6 @@ class PdfWriter:
             return None
         if isinstance(page, int):
             _i = reader.pages[page].indirect_reference
-        # elif isinstance(page, PageObject):
-        #    _i = page.indirect_reference
         elif isinstance(page, DictionaryObject) and page.get("/Type", "") == "/Page":
             _i = page.indirect_reference
         elif isinstance(page, IndirectObject):
@@ -2844,10 +2837,6 @@ class PdfWriter:
         if not isinstance(dest["/Page"], NullObject):
             if dest.node is not None and "/A" in dest.node:
                 n_ol[NameObject("/A")] = dest.node["/A"].clone(self)
-            # elif "/D" in dest.node:
-            #    n_ol[NameObject("/Dest")] = dest.node["/D"].clone(self)
-            # elif "/Dest" in dest.node:
-            #    n_ol[NameObject("/Dest")] = dest.node["/Dest"].clone(self)
             else:
                 n_ol[NameObject("/Dest")] = dest.dest_array
         # TODO: /SE
@@ -2868,7 +2857,7 @@ class PdfWriter:
     ) -> None:
         for dest in outlines:
             # TODO  : can be improved to keep A and SE entries (ignored for the moment)
-            # np=self.add_outline_item_destination(dest,parent,before)
+            # with np=self.add_outline_item_destination(dest,parent,before)
             if dest.get("/Type", "") == "/Outlines" or "/Title" not in dest:
                 np = parent
             else:
