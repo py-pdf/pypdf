@@ -28,7 +28,7 @@ ZoomArgType: TypeAlias = Union[NumberObject, NullObject, float]
 ZoomArgsType: TypeAlias = List[ZoomArgType]
 
 # Recursive types like the following are not yet supported by mypy:
-#    Example: OutlineType = List[Union[Destination, "OutlineType"]]
+#    OutlineType = List[Union[Destination, "OutlineType"]]
 # See https://github.com/python/mypy/issues/731
 # Hence use this for the moment:
 OutlineType = List[Union[Destination, List[Union[Destination, List[Destination]]]]]

@@ -542,7 +542,8 @@ class TextStringObject(str, PdfObject):
             stream.write(b"(")
             for c in bytearr:
                 if not chr(c).isalnum() and c != b" ":
-                    # This: stream.write(b_(rf"\{c:0>3o}"))
+                    # This:
+                    #   stream.write(b_(rf"\{c:0>3o}"))
                     # gives
                     #   https://github.com/davidhalter/parso/issues/207
                     stream.write(b_("\\%03o" % c))
