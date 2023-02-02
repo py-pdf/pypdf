@@ -1830,6 +1830,8 @@ class PdfWriter:
         )
         for page in pages:
             page_ref = cast(DictionaryObject, self.get_object(page))
+            if "/Contents" not in page_ref:
+                return
             content = page_ref["/Contents"].get_object()
             if not isinstance(content, ContentStream):
                 content = ContentStream(content, page_ref)
