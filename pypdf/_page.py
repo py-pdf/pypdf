@@ -1691,7 +1691,7 @@ class PageObject(DictionaryObject):
                                     )
                                 text = ""
                         elif (
-                            rtl_dir == False
+                            rtl_dir is False
                             and abs(delta_y) < f * 0.3
                             and abs(delta_x) > current_spacewidth() * f * 15
                         ):
