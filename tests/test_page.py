@@ -832,11 +832,14 @@ def test_empyt_password_1088():
     reader = PdfReader(stream)
     len(reader.pages)
 
-
-@pytest.mark.xfail(reason="#1088 / #1126")
+@pytest.mark.external
+# @pytest.mark.xfail(reason="#1088 / #1126")
 def test_arab_text_extraction():
-    reader = PdfReader(SAMPLE_ROOT / "015-arabic/habibi.pdf")
-    assert reader.pages[0].extract_text() == "habibi حَبيبي"
+    # previous habibi.pdf not used anymore and can be deleted
+    url = "https://github.com/py-pdf/pypdf/files/10567398/habibi-fixed.pdf"
+    name = "habibi-fixed-020220231036.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    assert reader.pages[0].extract_text() == "habibi ﺣَﺒﯿﺒﻲ"
 
 
 @pytest.mark.samples
