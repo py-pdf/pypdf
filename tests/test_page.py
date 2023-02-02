@@ -832,6 +832,7 @@ def test_empyt_password_1088():
     reader = PdfReader(stream)
     len(reader.pages)
 
+
 @pytest.mark.external
 # @pytest.mark.xfail(reason="#1088 / #1126")
 def test_arab_text_extraction():
