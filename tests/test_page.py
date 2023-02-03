@@ -246,6 +246,14 @@ def test_page_rotation():
     )
 
 
+def test_page_indirect_rotation():
+    reader = PdfReader(RESOURCE_ROOT / "indirect-rotation.pdf")
+    page = reader.pages[0]
+
+    # test rotation
+    assert page.rotation == 0
+
+
 def test_page_scale():
     op = Transformation()
     with pytest.raises(ValueError) as exc:

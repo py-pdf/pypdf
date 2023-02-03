@@ -494,7 +494,10 @@ class PageObject(DictionaryObject):
         This number has to be a multiple of 90 degrees: 0, 90, 180, or 270 are
         valid values. This property does not affect ``/Contents``.
         """
-        return int(self.get(PG.ROTATE, 0))
+        rotate_obj = self.get(PG.ROTATE, 0)
+        return (
+            rotate_obj if isinstance(rotate_obj, int) else rotate_obj.get_object()
+        )
 
     @rotation.setter
     def rotation(self, r: Union[int, float]) -> None:
@@ -547,11 +550,7 @@ class PageObject(DictionaryObject):
         """
         if angle % 90 != 0:
             raise ValueError("Rotation angle must be a multiple of 90")
-        rotate_obj = self.get(PG.ROTATE, 0)
-        current_angle = (
-            rotate_obj if isinstance(rotate_obj, int) else rotate_obj.get_object()
-        )
-        self[NameObject(PG.ROTATE)] = NumberObject(current_angle + angle)
+        self[NameObject(PG.ROTATE)] = NumberObject(self.rotation + angle)
         return self
 
     def rotate_clockwise(self, angle: int) -> "PageObject":  # deprecated
