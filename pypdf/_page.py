@@ -316,7 +316,7 @@ class Transformation:
 
     def apply_on(
         self,
-        pt: Union[Tuple[Decimal, Decimal], Tuple[float, float], List[float]],
+        pt: Union[Tuple[float, float], List[float]],
         as_object: bool = False,
     ) -> Union[Tuple[float, float], List[float]]:
         """
