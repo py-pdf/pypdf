@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1675372588243,
+  "lastUpdate": 1675537337261,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -23634,6 +23634,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00021235512769732421",
             "extra": "mean: 101.70864820000247 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6ec88ad27f82ebc7ddffcd054cd1408226b4256e",
+          "message": "BUG: Replace decimal by float (#1563)\n\nDecimal was replaced by float in order to fix bugs.\r\n\r\nIt might also improve speed in some cases.\r\nIt is a preparation for #1567\r\n\r\nFixes #1527\r\nFixes #1376",
+          "timestamp": "2023-02-04T20:01:02+01:00",
+          "tree_id": "fd9960c1cb1f937c1eb49adf63e5b7223de9cdaf",
+          "url": "https://github.com/py-pdf/pypdf/commit/6ec88ad27f82ebc7ddffcd054cd1408226b4256e"
+        },
+        "date": 1675537335758,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.9991393982732734,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01077068480014212",
+            "extra": "mean: 1.0008613429999997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.768872020445885,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00676867738299702",
+            "extra": "mean: 84.96991030769261 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2431139817324384,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021981491267107293",
+            "extra": "mean: 4.113296951800001 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.860298889300646,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0003679094703068685",
+            "extra": "mean: 84.31490718181774 msec\nrounds: 11"
           }
         ]
       }
