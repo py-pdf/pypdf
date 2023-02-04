@@ -466,8 +466,7 @@ class PdfWriter:
                 and previous page does not exist.
         """
         page = PageObject.create_blank_page(self, width, height)
-        self.add_page(page)
-        return page
+        return self.add_page(page)
 
     def addBlankPage(
         self, width: Optional[float] = None, height: Optional[float] = None

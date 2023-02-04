@@ -5,10 +5,11 @@ from pathlib import Path
 
 import pytest
 
-from pypdf import PageObject, PdfMerger, PdfReader, PdfWriter
+from pypdf import PageObject, PdfMerger, PdfReader, PdfWriter, Transformation
 from pypdf.errors import DeprecationError, PageSizeNotDefinedError
 from pypdf.generic import (
     ArrayObject,
+    ContentStream,
     Fit,
     IndirectObject,
     NameObject,
@@ -1150,3 +1151,26 @@ def test_set_page_label():
     writer.write(target)
 
     os.remove(target)  # comment to see result
+
+
+def test_iss1601():
+    url = "https://github.com/py-pdf/pypdf/files/10579503/badges-38.pdf"
+    name = "badge-38.pdf"
+    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    out_pdf = PdfWriter()
+    page_1 = out_pdf.add_blank_page(
+        in_pdf.pages[0].mediabox[2], in_pdf.pages[0].mediabox[3]
+    )
+    page_1.merge_transformed_page(in_pdf.pages[0], Transformation())
+    assert (
+        ContentStream(in_pdf.pages[0].get_contents(), in_pdf).get_data()
+        in page_1.get_contents().get_data()
+    )
+    page_1 = out_pdf.add_blank_page(
+        in_pdf.pages[0].mediabox[2], in_pdf.pages[0].mediabox[3]
+    )
+    page_1.merge_page(in_pdf.pages[0])
+    assert (
+        ContentStream(in_pdf.pages[0].get_contents(), in_pdf).get_data()
+        in page_1.get_contents().get_data()
+    )
