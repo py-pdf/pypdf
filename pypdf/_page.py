@@ -1658,7 +1658,6 @@ class PageObject(DictionaryObject):
                 return 270
 
         def current_spacewidth() -> float:
-            # return space_scale * _space_width * char_scale
             return _space_width / 1000.0
 
         def process_operation(operator: bytes, operands: List) -> None:
@@ -1671,13 +1670,9 @@ class PageObject(DictionaryObject):
             # Table 5.4 page 405
             if operator == b"BT":
                 tm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-                # tm_prev = tm_matrix
                 output += text
                 if visitor_text is not None:
                     visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
-                # based
-                # if output != "" and output[-1]!="\n":
-                #    output += "\n"
                 text = ""
                 return None
             elif operator == b"ET":
@@ -1712,7 +1707,6 @@ class PageObject(DictionaryObject):
                     ) = cm_stack.pop()
                 except Exception:
                     cm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-                # rtl_dir = False
             elif operator == b"cm":
                 output += text
                 if visitor_text is not None:
@@ -1729,7 +1723,6 @@ class PageObject(DictionaryObject):
                     ],
                     cm_matrix,
                 )
-                # rtl_dir = False
             # Table 5.2 page 398
             elif operator == b"Tz":
                 char_scale = float(operands[0]) / 100.0
@@ -1743,7 +1736,6 @@ class PageObject(DictionaryObject):
                     if visitor_text is not None:
                         visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
                 text = ""
-                # rtl_dir = False
                 try:
                     # charMapTuple: font_type, float(sp_width / 2), encoding,
                     #               map_dict, font-dictionary
@@ -1835,8 +1827,7 @@ class PageObject(DictionaryObject):
                             xx = ord(x)
                             # fmt: off
                             if (
-                                # cases where the current inserting order is
-                                # kept (punctuation,...)
+                                # cases where the current inserting order is kept
                                 (xx <= 0x2F)                        # punctuations but...
                                 or (0x3A <= xx and xx <= 0x40)      # numbers (x30-39)
                                 or (0x2000 <= xx and xx <= 0x206F)  # upper punctuations..
@@ -1850,10 +1841,8 @@ class PageObject(DictionaryObject):
                                 or (0xFE70 <= xx and xx <= 0xFEFF)
                                 or (CUSTOM_RTL_MIN <= xx and xx <= CUSTOM_RTL_MAX)
                             ):
-                                # print("<",xx,x)
                                 if not rtl_dir:
                                     rtl_dir = True
-                                    # print("RTL",text,"*")
                                     output += text
                                     if visitor_text is not None:
                                         visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
@@ -1863,7 +1852,6 @@ class PageObject(DictionaryObject):
                                 # print(">",xx,x,end="")
                                 if rtl_dir:
                                     rtl_dir = False
-                                    # print("LTR",text,"*")
                                     output += text
                                     if visitor_text is not None:
                                         visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
@@ -2002,7 +1990,6 @@ class PageObject(DictionaryObject):
                 try:
                     xobj = resources_dict["/XObject"]
                     if xobj[operands[0]]["/Subtype"] != "/Image":  # type: ignore
-                        # output += text
                         text = self.extract_xform_text(
                             xobj[operands[0]],  # type: ignore
                             orientations,

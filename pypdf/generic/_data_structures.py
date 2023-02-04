@@ -91,8 +91,6 @@ class ArrayObject(list, PdfObject):
         arr = cast("ArrayObject", self._reference_clone(ArrayObject(), pdf_dest))
         for data in self:
             if isinstance(data, StreamObject):
-                # if not hasattr(data, "indirect_reference"):
-                #    data.indirect_reference = None
                 dup = data._reference_clone(
                     data.clone(pdf_dest, force_duplicate, ignore_fields), pdf_dest
                 )
@@ -528,7 +526,6 @@ class TreeObject(DictionaryObject):
 
         child_obj = child.get_object()
         child = child.indirect_reference  # get_reference(child_obj)
-        # assert isinstance(child, IndirectObject)
 
         prev: Optional[DictionaryObject]
         if "/First" not in self:  # no child yet
@@ -877,8 +874,8 @@ class ContentStream(DecodedStreamObject):
         self.pdf = pdf
 
         # The inner list has two elements:
-        #  [0] : List
-        #  [1] : str
+        #  Element 0: List
+        #  Element 1: str
         self.operations: List[Tuple[Any, Any]] = []
 
         # stream may be a StreamObject or an ArrayObject containing
@@ -950,8 +947,8 @@ class ContentStream(DecodedStreamObject):
         self.pdf = pdf_dest
         self.operations = list(cast("ContentStream", src).operations)
         self.forced_encoding = cast("ContentStream", src).forced_encoding
-        # no need to call DictionaryObjection or any
-        # super(DictionaryObject,self)._clone(src, pdf_dest, force_duplicate, ignore_fields)
+        # no need to call DictionaryObjection or anything
+        # like super(DictionaryObject,self)._clone(src, pdf_dest, force_duplicate, ignore_fields)
         return
 
     def __parse_content_stream(self, stream: StreamType) -> None:

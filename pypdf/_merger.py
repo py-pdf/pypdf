@@ -336,9 +336,6 @@ class PdfMerger:
             page.out_pagedata = self.output.get_reference(
                 pages_obj[PA.KIDS][-1].get_object()
             )
-            # key_temp = self.output._pages.get_object()[PA.KIDS][-1].get_object()
-            # idnum = self.output._objects.index(key_temp) + 1
-            # page.out_pagedata = IndirectObject(idnum, 0, self.output)
 
         # Once all pages are added, create outline items to point at those pages
         self._write_dests()

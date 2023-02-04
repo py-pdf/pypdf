@@ -346,7 +346,8 @@ def test_iss_1142():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     txt = reader.pages[3].extract_text()
     # The following text is contained in two different cells:
-    # assert txt.find("有限公司郑州分公司") > 0
+    assert txt.find("有限公司") > 0
+    assert txt.find("郑州分公司") > 0
     # 有限公司 = limited company
     # 郑州分公司 = branch office in Zhengzhou
     # First cell (see page 4/254):
