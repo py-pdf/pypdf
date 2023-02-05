@@ -434,9 +434,9 @@ def deprecation_bookmark(**aliases: str) -> Callable:
         outline = a collection of outline items
     """
 
-    def decoration(func: Callable):  # type: ignore
+    def decoration(func: Callable) -> Any:  # type: ignore
         @functools.wraps(func)
-        def wrapper(*args, **kwargs):  # type: ignore
+        def wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore
             rename_kwargs(func.__name__, kwargs, aliases, fail=True)
             return func(*args, **kwargs)
 
@@ -447,7 +447,7 @@ def deprecation_bookmark(**aliases: str) -> Callable:
 
 def rename_kwargs(  # type: ignore
     func_name: str, kwargs: Dict[str, Any], aliases: Dict[str, str], fail: bool = False
-):
+) -> None:
     """
     Helper function to deprecate arguments.
 

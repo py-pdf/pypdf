@@ -109,7 +109,7 @@ ignore = [
     "ANN204", # Missing return type annotation for special method `__init__`
     "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed
     # As long as we are not on Python 3.9+
-    # "UP035", # PEP 585
+    "UP035", # PEP 585
     # As long as we are not on Python 3.11+
     "UP006", "UP007",
     # for the moment, fix it later:
