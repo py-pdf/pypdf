@@ -2130,6 +2130,53 @@ class PdfReader:
         interim[NameObject("/T")] = TextStringObject(name)
         return interim
 
+    def list_attachments(self) -> list[str]:
+        """
+        Retrieves the list of filenames of file attachments.
+
+        Returns:
+            dictionary of filename:bytestring
+        """
+        catalog = self.trailer["/Root"]
+        # From the catalog get the embedded file names
+        try:
+            fileNames = catalog["/Names"]["/EmbeddedFiles"]["/Names"]
+        except KeyError:
+            return []
+        attachments_names = []
+        # Loop through attachments
+        for f in fileNames:
+            if isinstance(f, str):
+                attachments_names.append(f)
+        return attachments_names
+
+    def get_attachments(self, filename: Optional[str] = None) -> dict[str, bytes]:
+        """
+        Retrieves all or selected file attachments of the PDF as a dictionary of file names
+        and the file data as a bytestring.
+
+        Returns:
+            dictionary of filename:bytestring
+        """
+        catalog = self.trailer["/Root"]
+        # From the catalog get the embedded file names
+        try:
+            fileNames = catalog["/Names"]["/EmbeddedFiles"]["/Names"]
+        except KeyError:
+            return {}
+        attachments = {}
+        # Loop through attachments
+        for f in fileNames:
+            if isinstance(f, str):
+                if filename is not None and f != filename:
+                    continue
+                name = f
+                dataIndex = fileNames.index(f) + 1
+                fDict = fileNames[dataIndex].get_object()
+                fData = fDict["/EF"]["/F"].get_data()
+                attachments[name] = fData
+        return attachments
+
 
 class PdfFileReader(PdfReader):  # deprecated
     def __init__(self, *args: Any, **kwargs: Any) -> None:
