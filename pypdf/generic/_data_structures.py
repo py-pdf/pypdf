@@ -229,7 +229,7 @@ class DictionaryObject(dict, PdfObject):
                                     cur_obj = cast("DictionaryObject", cur_obj[k])
                             except Exception:
                                 cur_obj = None
-                        for (s, c) in objs:
+                        for s, c in objs:
                             c._clone(s, pdf_dest, force_duplicate, ignore_fields + [k])
 
         for k, v in src.items():
@@ -1231,8 +1231,10 @@ class Field(TreeObject):
 
     @property
     def flags(self) -> Optional[int]:
-        """Read-only property accessing the field flags, specifying various
-        characteristics of the field (see Table 8.70 of the PDF 1.7 reference)."""
+        """
+        Read-only property accessing the field flags, specifying various
+        characteristics of the field (see Table 8.70 of the PDF 1.7 reference).
+        """
         return self.get(FieldDictionaryAttributes.Ff)
 
     @property

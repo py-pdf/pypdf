@@ -513,7 +513,7 @@ class PdfReader:
     def named_destinations(self) -> Dict[str, Any]:
         """
         A read-only dictionary which maps names to
-        :class:`Destinations<pypdf.generic.Destination>`
+        :class:`Destinations<pypdf.generic.Destination>`.
         """
         return self._get_named_destinations()
 
@@ -967,7 +967,6 @@ class PdfReader:
             or (isinstance(array, ArrayObject) and len(array) == 0)
             or array is None
         ):
-
             page = NullObject()
             return Destination(title, page, Fit.fit())
         else:
@@ -1260,7 +1259,7 @@ class PdfReader:
 
     def _get_indirect_object(self, num: int, gen: int) -> Optional[PdfObject]:
         """
-        Used to ease development.
+        Use to ease development.
 
         This is equivalent to generic.IndirectObject(num,gen,self).get_object()
 
@@ -1936,7 +1935,11 @@ class PdfReader:
     def read_next_end_line(
         self, stream: StreamType, limit_offset: int = 0
     ) -> bytes:  # deprecated
-        """.. deprecated:: 2.1.0"""
+        """
+        Deprecated without replacement.
+
+        .. deprecated:: 2.1.0
+        """
         deprecate_no_replacement("read_next_end_line", removed_in="4.0.0")
         line_parts = []
         while True:
@@ -1969,7 +1972,11 @@ class PdfReader:
     def readNextEndLine(
         self, stream: StreamType, limit_offset: int = 0
     ) -> bytes:  # deprecated
-        """.. deprecated:: 1.28.0"""
+        """
+        Use read_next_end_line instead.
+
+        .. deprecated:: 1.28.0
+        """
         deprecation_no_replacement("readNextEndLine", "3.0.0")
         return self.read_next_end_line(stream, limit_offset)
 

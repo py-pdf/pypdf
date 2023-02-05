@@ -1,3 +1,4 @@
+"""Test the pypdf.javascript module."""
 from pathlib import Path
 
 import pytest

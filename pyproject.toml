@@ -96,13 +96,23 @@ line-length = 120
 select = ["ALL"]
 ignore = [
     "D212", "D407", "D408", "D409",
+    "D404",  # First word of the docstring should not be "This"
+    "D406", # Section name should end with a newline ("Returns")
     "I001",  # Not compatible with isort ... maybe we should drop isort
     # I would like to have it, but there are a few annoying exceptions:
+    "D401", # First line of docstring should be in imperative mood - false positives
     "ERA001",
     "UP031",
+    "D205",  # 1 blank line required between summary line and description
+    "D400",  # First line should end with a period
+    "D415",  # First line should end with a period
     # Introduces bugs
     "RUF001", "RUF002", "RUF005",
     # Personal preference
+    "D105",  # Missing docstring in magic method
+    "D106",  # Missing docstring in public nested class
+    "D107",  # Missing docstring in `__init__`
+    "D203", # one-blank-line-before-class
     "COM812",  # yes, they make the diff smaller
     "ANN101",  # annotating 'self' seems weird (at least before 3.11)
     "ANN102",  # Missing type annotation for `cls` in classmethod
@@ -113,15 +123,21 @@ ignore = [
     # As long as we are not on Python 3.11+
     "UP006", "UP007",
     # for the moment, fix it later:
-    "PTH", "PLR", "D", "FBT", "PT", "N", "ARG", "TRY", "S", "EM", "RET", "TID",
+    "D417",  # Missing argument descriptions in the docstring
+    "D101",  # Missing docstring in public class
+    "D102", # Missing docstring in public method
+    "D103",  # Missing docstring in public function
+    "SLF",
+    "PTH", "PLR", "FBT", "PT", "N", "ARG", "TRY", "S", "EM", "RET", "TID",
     "C", "PGH", "DTZ", "TCH", "B", "G", "BLE", "SIM", "E", "INP", "A", "RUF", "PLW"
 ]
 
 [tool.ruff.per-file-ignores]
-"tests/*" = ["S101", "ANN001", "ANN201"]
+"tests/*" = ["S101", "ANN001", "ANN201","D104"]
 "make_changelog.py" = ["T201"]
 "json_consistency.py" = ["T201"]
 "tests/test_workflows.py" =  ["T201"]
+"sample-files/*" = ["D100"]
 
 [tool.docformatter]
 pre-summary-newline = true

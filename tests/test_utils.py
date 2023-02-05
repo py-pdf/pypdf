@@ -1,3 +1,4 @@
+"""Test the pypdf._utils module."""
 import io
 import os
 from pathlib import Path

@@ -1,3 +1,4 @@
+"""Test the pypdf._reader module."""
 import io
 import os
 import time
@@ -620,8 +621,10 @@ def test_get_destination_page_number():
 
 
 def test_do_not_get_stuck_on_large_files_without_start_xref():
-    """Tests for the absence of a DoS bug, where a large file without an
-    startxref mark would cause the library to hang for minutes to hours."""
+    """
+    Tests for the absence of a DoS bug, where a large file without an
+    startxref mark would cause the library to hang for minutes to hours.
+    """
     start_time = time.time()
     broken_stream = BytesIO(b"\0" * 5 * 1000 * 1000)
     with pytest.raises(PdfReadError):

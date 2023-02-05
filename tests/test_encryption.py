@@ -1,3 +1,4 @@
+"""Test the pypdf.encryption module."""
 from pathlib import Path
 
 import pytest
@@ -183,7 +184,7 @@ def test_decrypt_not_decrypted_pdf():
 
 def test_generate_values():
     """
-    This test only checks if there is an exception.
+    Checks if there is an exception.
 
     It does not verify that the content is correct.
     """

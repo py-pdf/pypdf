@@ -1,3 +1,4 @@
+"""Test the pypdf.filters module."""
 import string
 import sys
 from io import BytesIO
@@ -145,6 +146,8 @@ def test_ASCII85Decode_with_overflow():
 
 def test_ASCII85Decode_five_zero_bytes():
     """
+    Test decoding zero bytes.
+
     From ISO 32000 (2008) §7.4.3:
 
     «As a special case, if all five bytes are 0, they shall be represented by

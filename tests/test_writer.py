@@ -1,3 +1,4 @@
+"""Test the pypdf._writer module."""
 import os
 import re
 from io import BytesIO
@@ -680,7 +681,7 @@ def test_add_link():
 
 
 def test_io_streams():
-    """This is the example from the docs ("Streaming data")."""
+    """Test example from the docs ("Streaming data")."""
     filepath = RESOURCE_ROOT / "pdflatex-outline.pdf"
     with open(filepath, "rb") as fh:
         bytes_stream = BytesIO(fh.read())

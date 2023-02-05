@@ -1,3 +1,4 @@
+"""Test the pypdf._merger module."""
 import os
 import sys
 from io import BytesIO

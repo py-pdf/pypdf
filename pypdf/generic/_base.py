@@ -75,18 +75,16 @@ class PdfObject(PdfObjectProtocol):
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "PdfObject":
         """
-        clone object into pdf_dest (PdfWriterProtocol which is an interface for PdfWriter)
-        force_duplicate: in standard if the object has been already cloned and reference,
-            the copy is returned; when force_duplicate == True,
-            a new copy is always performed
-        ignore_fields : list/tuple of Fields names (for dictionaries that will
-            be ignored during cloning (apply also to childs duplication)
-        in standard, clone function call _reference_clone (see _reference)
+        Clone object into pdf_dest (PdfWriterProtocol which is an interface for PdfWriter).
 
         Args:
           pdf_dest:
-          force_duplicate:  (Default value = False)
-          ignore_fields:
+          force_duplicate: in standard if the object has been already cloned and reference,
+            the copy is returned; when force_duplicate == True,
+            a new copy is always performed
+          ignore_fields : list/tuple of Fields names (for dictionaries that will
+            be ignored during cloning (apply also to childs duplication)
+            in standard, clone function call _reference_clone (see _reference).
 
         Returns:
           The cloned PdfObject
@@ -507,10 +505,12 @@ class TextStringObject(str, PdfObject):
 
     @property
     def original_bytes(self) -> bytes:
-        """It is occasionally possible that a text string object gets created where
+        """
+        It is occasionally possible that a text string object gets created where
         a byte string object was expected due to the autodetection mechanism --
         if that occurs, this "original_bytes" property can be used to
-        back-calculate what the original encoded bytes were."""
+        back-calculate what the original encoded bytes were.
+        """
         return self.get_original_bytes()
 
     def get_original_bytes(self) -> bytes:

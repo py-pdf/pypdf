@@ -159,9 +159,10 @@ class PdfMerger:
                 to merge only the specified range of pages from the source
                 document into the output document.
                 Can also be a list of pages to merge.
-           import_outline: You may prevent the source document's
+            import_outline: You may prevent the source document's
                 outline (collection of outline items, previously referred to as
                 'bookmarks') from being imported by specifying this as ``False``.
+            position: deprecated. Use page_number instead.
         """
         if position is not None:  # deprecated
             if page_number is None:
@@ -461,9 +462,9 @@ class PdfMerger:
         Remove named destinations that are not a part of the specified page set.
 
         Args:
-            pdf:
-            dests:
-            pages:
+            pdf: The PdfReader
+            dests: Destinations that
+            pages: The specified page set
         """
         new_dests = []
         lst = pages if isinstance(pages, list) else list(range(*pages))
@@ -698,6 +699,7 @@ class PdfMerger:
             bold: Outline item font is bold
             italic: Outline item font is italic
             fit: The fit of the destination page.
+            pagenum: Deprecated. Use page_number instead.
         """
         if page_number is not None and pagenum is not None:
             raise ValueError(
@@ -743,8 +745,9 @@ class PdfMerger:
         *args: ZoomArgType,
     ) -> IndirectObject:  # deprecated
         """
+        Use :meth:`add_outline_item` instead.
+
         .. deprecated:: 1.28.0
-            Use :meth:`add_outline_item` instead.
         """
         deprecation_with_replacement("addBookmark", "add_outline_item", "3.0.0")
         return self.add_outline_item(
@@ -785,8 +788,9 @@ class PdfMerger:
 
     def addNamedDestination(self, title: str, pagenum: int) -> None:  # deprecated
         """
+        Use :meth:`add_named_destination` instead.
+
         .. deprecated:: 1.28.0
-            Use :meth:`add_named_destination` instead.
         """
         deprecation_with_replacement(
             "addNamedDestination", "add_named_destination", "3.0.0"
@@ -805,6 +809,7 @@ class PdfMerger:
         Args:
             title: Title to use
             page_number: Page number this destination points at.
+            pagenum: Deprecated. Use page_number instead.
         """
         if page_number is not None and pagenum is not None:
             raise ValueError(

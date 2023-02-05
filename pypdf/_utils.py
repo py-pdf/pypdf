@@ -428,10 +428,10 @@ def logger_warning(msg: str, src: str) -> None:
 
 def deprecation_bookmark(**aliases: str) -> Callable:
     """
-    Decorator for deprecated term "bookmark"
+    Decorator for deprecated term "bookmark".
     To be used for methods and function arguments
         outline_item = a bookmark
-        outline = a collection of outline items
+        outline = a collection of outline items.
     """
 
     def decoration(func: Callable) -> Any:  # type: ignore
@@ -453,11 +453,10 @@ def rename_kwargs(  # type: ignore
 
     Args:
         func_name: Name of the function to be deprecated
-        kwargs:
-        aliases:
-        fail:
+        kwargs: Keyword arguments of the function
+        aliases: A dictionary mapping the old name to the new name
+        fail: If set to True, raise a DeprecationError
     """
-
     for old_term, new_term in aliases.items():
         if old_term in kwargs:
             if fail:

@@ -1,3 +1,4 @@
+"""Test the pypdf._page module."""
 import json
 import os
 import random
@@ -80,7 +81,7 @@ def test_read(meta):
 )
 def test_page_operations(pdf_path, password):
     """
-    This test just checks if the operation throws an exception.
+    Check if the operation throws an exception.
 
     This should be done way more thoroughly: It should be checked if the output
     is as expected.
@@ -485,7 +486,6 @@ def test_extract_text_visitor_callbacks():
         It returns a tuple containing a list of extracted texts and
         a list of extracted rectangles.
         """
-
         logger = logging.getLogger("extract_text_and_rectangles")
 
         rectangles = []

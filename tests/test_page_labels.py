@@ -1,3 +1,4 @@
+"""Test the pypdf._page_labels module."""
 import pytest
 
 from pypdf._page_labels import (

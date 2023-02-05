@@ -205,8 +205,7 @@ class Transformation:
                                  e f 1
 
 
-    Example
-
+    Example:
         >>> from pypdf import Transformation
         >>> op = Transformation().scale(sx=2, sy=3).translate(tx=10, ty=20)
         >>> page.add_transformation(op)
@@ -219,11 +218,7 @@ class Transformation:
 
     @property
     def matrix(self) -> TransformationMatrixType:
-        """
-        Return the transformation matrix as a tuple of tuples in the form:
-
-        ((a, b, 0), (c, d, 0), (e, f, 1))
-        """
+        """A transformation matrix as ((a, b, 0), (c, d, 0), (e, f, 1))."""
         return (
             (self.ctm[0], self.ctm[1], 0),
             (self.ctm[2], self.ctm[3], 0),
@@ -360,7 +355,6 @@ class PageObject(DictionaryObject):
         indirect_reference: Optional[IndirectObject] = None,
         indirect_ref: Optional[IndirectObject] = None,  # deprecated
     ) -> None:
-
         DictionaryObject.__init__(self)
         self.pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol] = pdf
         if indirect_ref is not None:  # deprecated
@@ -596,7 +590,7 @@ class PageObject(DictionaryObject):
         def compute_unique_key(base_key: str) -> Tuple[str, bool]:
             """
             Find a key that either doesn't already exist or has the same value
-            (indicated by the bool)
+            (indicated by the bool).
 
             Args:
                 base_key: An index is added to this to get the computed key
@@ -695,9 +689,7 @@ class PageObject(DictionaryObject):
         pdf: Union[None, PdfReaderProtocol, PdfWriterProtocol],
         ctm: CompressedTransformationMatrix,
     ) -> ContentStream:
-        """
-        Add transformation matrix at the beginning of the given contents stream.
-        """
+        """Add transformation matrix at the beginning of the given contents stream."""
         a, b, c, d, e, f = ctm
         contents = ContentStream(contents, pdf)
         contents.operations.insert(
@@ -1102,11 +1094,9 @@ class PageObject(DictionaryObject):
         expand: bool = False,
     ) -> None:  # deprecated
         """
-        deprecated
+        Use :meth:`merge_transformed_page`  instead.
 
         deprecated:: 1.28.0
-
-            Use :meth:`merge_transformed_page`  instead.
         """
         deprecation_with_replacement(
             "page.mergeTransformedPage(page2, ctm,expand)",
@@ -1136,11 +1126,9 @@ class PageObject(DictionaryObject):
         self, page2: "PageObject", scale: float, expand: bool = False
     ) -> None:  # deprecated
         """
-        deprecated
+        Use :meth:`merge_scaled_page` instead.
 
         .. deprecated:: 1.28.0
-
-            Use :meth:`merge_scaled_page` instead.
         """
         deprecation_with_replacement(
             "page.mergeScaledPage(page2, scale, expand)",
@@ -1174,11 +1162,9 @@ class PageObject(DictionaryObject):
         self, page2: "PageObject", rotation: float, expand: bool = False
     ) -> None:  # deprecated
         """
-        deprecated
+        Use :meth:`add_transformation` and :meth:`merge_page` instead.
 
         .. deprecated:: 1.28.0
-
-            Use :meth:`add_transformation` and :meth:`merge_page` instead.
         """
         deprecation_with_replacement(
             "page.mergeRotatedPage(page2, rotation, expand)",
@@ -1214,11 +1200,9 @@ class PageObject(DictionaryObject):
         self, page2: "PageObject", tx: float, ty: float, expand: bool = False
     ) -> None:  # deprecated
         """
-        deprecated
+        Use :meth:`merge_translated_page` instead.
 
         .. deprecated:: 1.28.0
-
-            Use :meth:`merge_translated_page` instead.
         """
         deprecation_with_replacement(
             "page.mergeTranslatedPage(page2, tx, ty, expand)",
@@ -1237,9 +1221,9 @@ class PageObject(DictionaryObject):
         expand: bool = False,
     ) -> None:  # deprecated
         """
-        .. deprecated:: 1.28.0
+        Use :meth:`merge_transformed_page` instead.
 
-            Use :meth:`merge_transformed_page` instead.
+        .. deprecated:: 1.28.0
         """
         deprecation_with_replacement(
             "page.mergeRotatedTranslatedPage(page2, rotation, tx, ty, expand)",
@@ -1253,11 +1237,9 @@ class PageObject(DictionaryObject):
         self, page2: "PageObject", rotation: float, scale: float, expand: bool = False
     ) -> None:  # deprecated
         """
-        obsolete
+        Use :meth:`merge_transformed_page` instead.
 
         .. deprecated:: 1.28.0
-
-            Use :meth:`merge_transformed_page` instead.
         """
         deprecation_with_replacement(
             "page.mergeRotatedScaledPage(page2, rotation, scale, expand)",
@@ -1350,6 +1332,7 @@ class PageObject(DictionaryObject):
                 transformation matrix. Alternatively, a
                 :py:class:`Transformation<pypdf.Transformation>`
                 object can be passed.
+            expand: Increase the page size if necessary
 
         See :doc:`/user/cropping-and-transforming`.
         """

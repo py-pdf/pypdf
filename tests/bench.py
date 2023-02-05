@@ -1,3 +1,4 @@
+"""Benchmark the speed of pypdf."""
 from io import BytesIO
 from pathlib import Path
 
@@ -135,8 +136,9 @@ def read_string_from_stream_performance():
 
 def test_read_string_from_stream_performance(benchmark):
     """
-    This test simulates reading an embedded base64 image of 256kb.
-    It should be faster than a second, even on ancient machines.
+    Simulate reading an embedded base64 image of 256kb.
+
+    This test should run faster than a second, even on ancient machines.
 
     Runs < 100ms on a 2019 notebook. Takes 10 seconds prior to #1350.
     """

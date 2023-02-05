@@ -86,15 +86,15 @@ class FlateDecode:
         Decode data which is flate-encoded.
 
         Args:
-          data: flate-encoded data.
-          decode_parms: a dictionary of values, understanding the
-            "/Predictor":<int> key only
+            data: flate-encoded data.
+            decode_parms: a dictionary of values, understanding the
+                "/Predictor":<int> key only
 
         Returns:
-          The flate-decoded data.
+            The flate-decoded data.
 
         Raises:
-          PdfReadError:
+            PdfReadError:
         """
         if "decodeParms" in kwargs:  # deprecated
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
@@ -194,8 +194,10 @@ class FlateDecode:
 
 
 class ASCIIHexDecode:
-    """The ASCIIHexDecode filter decodes data that has been encoded in ASCII
-    hexadecimal form into a base-7 ASCII format."""
+    """
+    The ASCIIHexDecode filter decodes data that has been encoded in ASCII
+    hexadecimal form into a base-7 ASCII format.
+    """
 
     @staticmethod
     def decode(
@@ -245,6 +247,8 @@ class ASCIIHexDecode:
 
 class LZWDecode:
     """
+    The LZW data compression algorith.
+
     Taken from:
 
     http://www.java2s.com/Open-Source/Java-Document/PDF/PDF-
