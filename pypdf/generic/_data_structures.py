@@ -50,9 +50,9 @@ from .._utils import (
 from ..constants import (
     CheckboxRadioButtonAttributes,
     FieldDictionaryAttributes,
+    OutlineFontFlag,
 )
 from ..constants import FilterTypes as FT
-from ..constants import OutlineFontFlag
 from ..constants import StreamAttributes as SA
 from ..constants import TypArguments as TA
 from ..constants import TypFitArguments as TF

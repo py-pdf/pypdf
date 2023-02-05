@@ -65,10 +65,13 @@ from ._utils import (
 )
 from .constants import CatalogAttributes as CA
 from .constants import CatalogDictionary as CD
-from .constants import CheckboxRadioButtonAttributes
+from .constants import (
+    CheckboxRadioButtonAttributes,
+    FieldDictionaryAttributes,
+    GoToActionArguments,
+)
 from .constants import Core as CO
 from .constants import DocumentInformationAttributes as DI
-from .constants import FieldDictionaryAttributes, GoToActionArguments
 from .constants import PageAttributes as PG
 from .constants import PagesAttributes as PA
 from .constants import TrailerKeys as TK
@@ -1902,8 +1905,8 @@ class PdfReader:
                 # The rest of the elements depend on the xref_type
                 if xref_type == 0:
                     # linked list of free objects
-                    next_free_object = get_entry(1)
-                    next_generation = get_entry(2)
+                    get_entry(1)  # next_free_object
+                    get_entry(2)  # next_generation
                 elif xref_type == 1:
                     # objects that are in use but are not compressed
                     byte_offset = get_entry(1)

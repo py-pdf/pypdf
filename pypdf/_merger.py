@@ -51,9 +51,8 @@ from ._utils import (
     str_,
 )
 from ._writer import PdfWriter
-from .constants import GoToActionArguments
+from .constants import GoToActionArguments, TypArguments, TypFitArguments
 from .constants import PagesAttributes as PA
-from .constants import TypArguments, TypFitArguments
 from .generic import (
     PAGE_FIT,
     ArrayObject,

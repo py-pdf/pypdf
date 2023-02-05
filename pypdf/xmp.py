@@ -18,9 +18,8 @@ from typing import (
     Union,
     cast,
 )
-from xml.dom.minidom import Document
+from xml.dom.minidom import Document, parseString
 from xml.dom.minidom import Element as XmlElement
-from xml.dom.minidom import parseString
 from xml.parsers.expat import ExpatError
 
 from ._utils import (

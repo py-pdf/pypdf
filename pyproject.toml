@@ -65,13 +65,6 @@ markers = [
 testpaths = ["tests"]
 norecursedirs = ["tests/pdf_cache"]
 
-[tool.isort]
-line_length = 79
-indent = '    '
-multi_line_output = 3
-include_trailing_comma = true
-known_third_party = ["pytest", "setuptools"]
-
 [tool.coverage.run]
 source = ["pypdf"]
 branch = true
@@ -100,7 +93,7 @@ exclude_lines = [
 
 [tool.ruff]
 line-length = 120
-select = ["RUF"]
+select = ["RUF", "I", "E", "W", "F"]
 ignore = ["RUF001", "RUF002", "RUF005"]
 
 [tool.docformatter]

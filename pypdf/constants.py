@@ -43,7 +43,7 @@ class EncryptionDictAttributes:
     """
 
     R = "/R"  # number, required; revision of the standard security handler
-    O = "/O"  # 32-byte string, required
+    O = "/O"  # 32-byte string, required  # noqa
     U = "/U"  # 32-byte string, required
     P = "/P"  # integer flag, required; permitted operations
     ENCRYPT_METADATA = "/EncryptMetadata"  # boolean flag, optional

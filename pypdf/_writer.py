@@ -72,24 +72,25 @@ from ._utils import (
     deprecation_with_replacement,
     logger_warning,
 )
-from .constants import AnnotationDictionaryAttributes
-from .constants import CatalogAttributes as CA
-from .constants import CatalogDictionary
-from .constants import Core as CO
-from .constants import EncryptionDictAttributes as ED
 from .constants import (
+    AnnotationDictionaryAttributes,
+    CatalogDictionary,
     FieldDictionaryAttributes,
     FieldFlag,
     FileSpecificationDictionaryEntries,
     GoToActionArguments,
     InteractiveFormDictEntries,
+    PageLabelStyle,
+    TypFitArguments,
+    UserAccessPermissions,
 )
+from .constants import CatalogAttributes as CA
+from .constants import Core as CO
+from .constants import EncryptionDictAttributes as ED
 from .constants import PageAttributes as PG
-from .constants import PageLabelStyle
 from .constants import PagesAttributes as PA
 from .constants import StreamAttributes as SA
 from .constants import TrailerKeys as TK
-from .constants import TypFitArguments, UserAccessPermissions
 from .generic import (
     PAGE_FIT,
     AnnotationBuilder,
@@ -1031,7 +1032,7 @@ class PdfWriter:
             rev = 2
             keylen = int(40 / 8)
         P = permissions_flag
-        O = ByteStringObject(_alg33(owner_password, user_password, rev, keylen))  # type: ignore[arg-type]
+        O = ByteStringObject(_alg33(owner_password, user_password, rev, keylen))  # type: ignore[arg-type]  # noqa
         ID_1 = ByteStringObject(md5((repr(time.time())).encode("utf8")).digest())
         ID_2 = ByteStringObject(md5((repr(random.random())).encode("utf8")).digest())
         self._ID = ArrayObject((ID_1, ID_2))
