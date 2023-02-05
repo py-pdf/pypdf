@@ -1175,3 +1175,28 @@ def test_iss1601():
         ContentStream(in_pdf.pages[0].get_contents(), in_pdf).get_data()
         in page_1.get_contents().get_data()
     )
+
+
+def test_attachments():
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    writer.add_attachment("foobar.gif", b"foobarcontent")
+    writer.add_attachment("foobar2.gif", b"foobarcontent2")
+
+    # Check that every key in _idnum_hash is correct
+    objects_hash = [o.hash_value() for o in writer._objects]
+    for k, v in writer._idnum_hash.items():
+        assert v.pdf == writer
+        assert k in objects_hash, f"Missing {v}"
+    b = BytesIO()
+    writer.write(b)
+    b.seek(0)
+    reader = PdfReader(b)
+    b = None
+    assert reader.list_attachments() == ["foobar.gif", "foobar2.gif"]
+    att = reader.get_attachments()
+    assert len(att) == 2
+    assert att["foobar.gif"] == b"foobarcontent"
+    att = reader.get_attachments("foobar2.gif")
+    assert len(att) == 1
+    assert att["foobar2.gif"] == b"foobarcontent2"

@@ -2137,10 +2137,16 @@ class PdfReader:
         Returns:
             dictionary of filename:bytestring
         """
-        catalog = self.trailer["/Root"]
+        catalog = cast(DictionaryObject, self.trailer["/Root"])
         # From the catalog get the embedded file names
         try:
-            fileNames = catalog["/Names"]["/EmbeddedFiles"]["/Names"]
+            fileNames = cast(
+                ArrayObject,
+                cast(
+                    DictionaryObject,
+                    cast(DictionaryObject, catalog["/Names"])["/EmbeddedFiles"],
+                )["/Names"],
+            )
         except KeyError:
             return []
         attachments_names = []
@@ -2158,10 +2164,16 @@ class PdfReader:
         Returns:
             dictionary of filename:bytestring
         """
-        catalog = self.trailer["/Root"]
+        catalog = cast(DictionaryObject, self.trailer["/Root"])
         # From the catalog get the embedded file names
         try:
-            fileNames = catalog["/Names"]["/EmbeddedFiles"]["/Names"]
+            fileNames = cast(
+                ArrayObject,
+                cast(
+                    DictionaryObject,
+                    cast(DictionaryObject, catalog["/Names"])["/EmbeddedFiles"],
+                )["/Names"],
+            )
         except KeyError:
             return {}
         attachments = {}

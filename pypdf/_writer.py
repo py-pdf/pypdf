@@ -689,18 +689,19 @@ class PdfWriter:
             self._root_object[NameObject(CA.NAMES)] = self._add_object(
                 DictionaryObject()
             )
-        if "/EmbeddedFiles" not in self._root_object[CA.NAMES]:
+        if "/EmbeddedFiles" not in cast(DictionaryObject, self._root_object[CA.NAMES]):
             embedded_files_names_dictionary = DictionaryObject(
                 {NameObject(CA.NAMES): ArrayObject()}
             )
-            self._root_object[CA.NAMES][
+            cast(DictionaryObject, self._root_object[CA.NAMES])[
                 NameObject("/EmbeddedFiles")
             ] = self._add_object(embedded_files_names_dictionary)
         else:
-            embedded_files_names_dictionary = self._root_object[CA.NAMES][
-                "/EmbeddedFiles"
-            ]
-        embedded_files_names_dictionary[CA.NAMES].extend(
+            embedded_files_names_dictionary = cast(
+                DictionaryObject,
+                cast(DictionaryObject, self._root_object[CA.NAMES])["/EmbeddedFiles"],
+            )
+        cast(ArrayObject, embedded_files_names_dictionary[CA.NAMES]).extend(
             [create_string_object(filename), filespec]
         )
 
