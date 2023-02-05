@@ -252,6 +252,20 @@ class PdfWriter:
         deprecation_with_replacement("getObject", "get_object", "3.0.0")
         return self.get_object(ido)
 
+    def _replace_object(
+        self,
+        indirect_reference: Union[int, IndirectObject],
+        obj: PdfObject,
+    ) -> PdfObject:
+        if isinstance(indirect_reference, IndirectObject):
+            assert indirect_reference.pdf == self
+            indirect_reference = indirect_reference.idnum
+        self._objects[indirect_reference - 1] = obj
+        return self._objects[indirect_reference - 1]
+        if indirect_reference.pdf != self:
+            raise ValueError("pdf must be self")
+        return self._objects[indirect_reference.idnum - 1]  # type: ignore
+
     def _add_page(
         self,
         page: PageObject,
@@ -451,8 +465,7 @@ class PdfWriter:
                 and previous page does not exist.
         """
         page = PageObject.create_blank_page(self, width, height)
-        self.add_page(page)
-        return page
+        return self.add_page(page)
 
     def addBlankPage(
         self, width: Optional[float] = None, height: Optional[float] = None
