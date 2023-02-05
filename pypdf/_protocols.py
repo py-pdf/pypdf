@@ -7,9 +7,9 @@ try:
     # Python 3.8+: https://peps.python.org/pep-0586
     from typing import Protocol  # type: ignore[attr-defined]
 except ImportError:
-    from typing_extensions import Protocol  # type: ignore[misc]
+    from typing_extensions import Protocol  # type: ignore[assignment,misc]
 
-from ._utils import StrByteType
+from ._utils import StrByteType, StreamType
 
 
 class PdfObjectProtocol(Protocol):
@@ -27,6 +27,14 @@ class PdfObjectProtocol(Protocol):
         ...
 
     def get_object(self) -> Optional["PdfObjectProtocol"]:
+        ...
+
+    def hash_value(self) -> bytes:
+        ...
+
+    def write_to_stream(
+        self, stream: StreamType, encryption_key: Union[None, str, bytes]
+    ) -> None:
         ...
 
 
@@ -63,4 +71,12 @@ class PdfWriterProtocol(Protocol):  # deprecated
         ...
 
     def write(self, stream: Union[Path, StrByteType]) -> Tuple[bool, IO]:
+        ...
+
+    @property
+    def pages(self) -> List[Any]:
+        ...
+
+    @property
+    def pdf_header(self) -> bytes:
         ...

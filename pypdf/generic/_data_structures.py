@@ -34,7 +34,7 @@ import re
 from io import BytesIO
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 
-from .._protocols import PdfWriterProtocol
+from .._protocols import PdfReaderProtocol, PdfWriterProtocol
 from .._utils import (
     WHITESPACES,
     StreamType,
@@ -123,9 +123,9 @@ class ArrayObject(list, PdfObject):
     @staticmethod
     def read_from_stream(
         stream: StreamType,
-        pdf: Any,
+        pdf: Optional[PdfReaderProtocol],
         forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
-    ) -> "ArrayObject":  # PdfReader
+    ) -> "ArrayObject":
         arr = ArrayObject()
         tmp = stream.read(1)
         if tmp != b"[":
@@ -147,7 +147,7 @@ class ArrayObject(list, PdfObject):
 
     @staticmethod
     def readFromStream(
-        stream: StreamType, pdf: Any  # PdfReader
+        stream: StreamType, pdf: PdfReaderProtocol
     ) -> "ArrayObject":  # deprecated
         deprecation_with_replacement("readFromStream", "read_from_stream", "3.0.0")
         return ArrayObject.read_from_stream(stream, pdf)
@@ -334,12 +334,12 @@ class DictionaryObject(dict, PdfObject):
     @staticmethod
     def read_from_stream(
         stream: StreamType,
-        pdf: Any,  # PdfReader
+        pdf: Optional[PdfReaderProtocol],
         forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
     ) -> "DictionaryObject":
         def get_next_obj_pos(
-            p: int, p1: int, rem_gens: List[int], pdf: Any
-        ) -> int:  # PdfReader
+            p: int, p1: int, rem_gens: List[int], pdf: PdfReaderProtocol
+        ) -> int:
             loc = pdf.xref[rem_gens[0]]
             for o in loc:
                 if p1 > loc[o] and p < loc[o]:
@@ -349,7 +349,9 @@ class DictionaryObject(dict, PdfObject):
             else:
                 return get_next_obj_pos(p, p1, rem_gens[1:], pdf)
 
-        def read_unsized_from_steam(stream: StreamType, pdf: Any) -> bytes:  # PdfReader
+        def read_unsized_from_steam(
+            stream: StreamType, pdf: PdfReaderProtocol
+        ) -> bytes:
             # we are just pointing at beginning of the stream
             eon = get_next_obj_pos(stream.tell(), 2**32, list(pdf.xref), pdf) - 1
             curr = stream.tell()
@@ -429,6 +431,7 @@ class DictionaryObject(dict, PdfObject):
             length = data[SA.LENGTH]
             if isinstance(length, IndirectObject):
                 t = stream.tell()
+                assert pdf is not None  # hint for mypy
                 length = pdf.get_object(length)
                 stream.seek(t, 0)
             pstart = stream.tell()
@@ -448,7 +451,7 @@ class DictionaryObject(dict, PdfObject):
                 if end == b"endstream":
                     # we found it by looking back one character further.
                     data["__streamdata__"] = data["__streamdata__"][:-1]
-                elif not pdf.strict:
+                elif pdf is not None and not pdf.strict:
                     stream.seek(pstart, 0)
                     data["__streamdata__"] = read_unsized_from_steam(stream, pdf)
                     pos = stream.tell()
@@ -469,7 +472,7 @@ class DictionaryObject(dict, PdfObject):
 
     @staticmethod
     def readFromStream(
-        stream: StreamType, pdf: Any  # PdfReader
+        stream: StreamType, pdf: PdfReaderProtocol
     ) -> "DictionaryObject":  # deprecated
         deprecation_with_replacement("readFromStream", "read_from_stream", "3.0.0")
         return DictionaryObject.read_from_stream(stream, pdf)
@@ -1086,7 +1089,7 @@ class ContentStream(DecodedStreamObject):
 
 def read_object(
     stream: StreamType,
-    pdf: Any,  # PdfReader
+    pdf: Optional[PdfReaderProtocol],
     forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
 ) -> Union[PdfObject, int, str, ContentStream]:
     tok = stream.read(1)
@@ -1097,7 +1100,6 @@ def read_object(
         # hexadecimal string OR dictionary
         peek = stream.read(2)
         stream.seek(-2, 1)  # reset to start
-
         if peek == b"<<":
             return DictionaryObject.read_from_stream(stream, pdf, forced_encoding)
         else:
@@ -1129,6 +1131,7 @@ def read_object(
         peek = stream.read(20)
         stream.seek(-len(peek), 1)  # reset to start
         if IndirectPattern.match(peek) is not None:
+            assert pdf is not None  # hint for mypy
             return IndirectObject.read_from_stream(stream, pdf)
         else:
             return NumberObject.read_from_stream(stream)
