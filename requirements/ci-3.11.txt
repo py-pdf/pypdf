@@ -56,6 +56,8 @@ pytest==7.2.0
     #   pytest-benchmark
 pytest-benchmark==4.0.0
     # via -r requirements/ci.in
+ruff==0.0.241
+    # via -r requirements/ci.in
 typeguard==2.13.3
     # via -r requirements/ci.in
 types-dataclasses==0.6.6
