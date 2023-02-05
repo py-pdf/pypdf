@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1675595100106,
+  "lastUpdate": 1675597242105,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -23946,6 +23946,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0017759288602832563",
             "extra": "mean: 95.95943980000072 msec\nrounds: 10"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mitch@mitchellkotler.net",
+            "name": "mitchelljkotler",
+            "username": "mitchelljkotler"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d2c3e1bf43b67848789c3ec75e758be3ba71d38b",
+          "message": "BUG: Fix getter of the PageObject.rotation property with an indirect object (#1602)\n\nThe setter worked. Now the getter for the `PageObject.rotation` works as well.\r\n\r\nFixes #337",
+          "timestamp": "2023-02-05T12:39:30+01:00",
+          "tree_id": "c041dff73040925e46de7585eae430bbda925360",
+          "url": "https://github.com/py-pdf/pypdf/commit/d2c3e1bf43b67848789c3ec75e758be3ba71d38b"
+        },
+        "date": 1675597240514,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.004234212966183,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010116971410407278",
+            "extra": "mean: 995.7836399999991 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.66917107661077,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007491602560425204",
+            "extra": "mean: 85.69588991666777 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2426706842521086,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019479498390340282",
+            "extra": "mean: 4.120810896799995 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.658340951532903,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0007716477256988419",
+            "extra": "mean: 85.77549791666665 msec\nrounds: 12"
           }
         ]
       }
