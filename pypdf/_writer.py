@@ -480,8 +480,8 @@ class PdfWriter:
 
     def insert_blank_page(
         self,
-        width: Optional[decimal.Decimal] = None,
-        height: Optional[decimal.Decimal] = None,
+        width: Optional[Union[float, decimal.Decimal]] = None,
+        height: Optional[Union[float, decimal.Decimal]] = None,
         index: int = 0,
     ) -> PageObject:
         """
@@ -513,8 +513,8 @@ class PdfWriter:
 
     def insertBlankPage(
         self,
-        width: Optional[decimal.Decimal] = None,
-        height: Optional[decimal.Decimal] = None,
+        width: Optional[Union[float, decimal.Decimal]] = None,
+        height: Optional[Union[float, decimal.Decimal]] = None,
         index: int = 0,
     ) -> PageObject:  # deprecated
         """
@@ -3112,13 +3112,8 @@ def _create_outline_item(
     if color:
         if isinstance(color, str):
             color = hex_to_rgb(color)
-        prec = decimal.Decimal("1.00000")
         outline_item.update(
-            {
-                NameObject("/C"): ArrayObject(
-                    [FloatObject(decimal.Decimal(c).quantize(prec)) for c in color]
-                )
-            }
+            {NameObject("/C"): ArrayObject([FloatObject(c) for c in color])}
         )
     if italic or bold:
         format_flag = 0
