@@ -30,7 +30,7 @@ from pypdf.generic import (
 from . import get_pdf_from_url, normalize_warnings
 
 try:
-    from Crypto.Cipher import AES  # noqa: F401
+    from Crypto.Cipher import AES
 
     HAS_PYCRYPTODOME = True
 except ImportError:

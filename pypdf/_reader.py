@@ -1428,7 +1428,7 @@ class PdfReader:
         stream.seek(-1, 1)
 
         # although it's not used, it might still be necessary to read
-        _obj = stream.read(3)  # noqa: F841
+        _obj = stream.read(3)
 
         read_non_whitespace(stream)
         stream.seek(-1, 1)
@@ -1902,8 +1902,8 @@ class PdfReader:
                 # The rest of the elements depend on the xref_type
                 if xref_type == 0:
                     # linked list of free objects
-                    next_free_object = get_entry(1)  # noqa: F841
-                    next_generation = get_entry(2)  # noqa: F841
+                    next_free_object = get_entry(1)
+                    next_generation = get_entry(2)
                 elif xref_type == 1:
                     # objects that are in use but are not compressed
                     byte_offset = get_entry(1)

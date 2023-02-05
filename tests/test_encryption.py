@@ -8,7 +8,7 @@ from pypdf._encryption import AlgV5, CryptRC4
 from pypdf.errors import DependencyError, PdfReadError
 
 try:
-    from Crypto.Cipher import AES  # noqa: F401
+    from Crypto.Cipher import AES
 
     HAS_PYCRYPTODOME = True
 except ImportError:

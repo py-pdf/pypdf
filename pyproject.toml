@@ -100,6 +100,8 @@ exclude_lines = [
 
 [tool.ruff]
 line-length = 120
+select = ["RUF"]
+ignore = ["RUF001", "RUF002", "RUF005"]
 
 [tool.docformatter]
 pre-summary-newline = true

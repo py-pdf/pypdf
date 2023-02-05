@@ -524,7 +524,7 @@ class PdfMerger:
         for named_dest in self.named_dests:
             pageno = None
             if "/Page" in named_dest:
-                for pageno, page in enumerate(self.pages):  # noqa: B007
+                for pageno, page in enumerate(self.pages):
                     if page.id == named_dest["/Page"]:
                         named_dest[NameObject("/Page")] = page.out_pagedata
                         break
@@ -552,7 +552,7 @@ class PdfMerger:
 
             page_no = None
             if "/Page" in outline_item:
-                for page_no, page in enumerate(self.pages):  # noqa: B007
+                for page_no, page in enumerate(self.pages):
                     if page.id == outline_item["/Page"]:
                         self._write_outline_item_on_page(outline_item, page)
                         break

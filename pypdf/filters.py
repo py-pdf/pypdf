@@ -200,7 +200,7 @@ class ASCIIHexDecode:
     @staticmethod
     def decode(
         data: str,
-        decode_parms: Union[None, ArrayObject, DictionaryObject] = None,  # noqa: F841
+        decode_parms: Union[None, ArrayObject, DictionaryObject] = None,
         **kwargs: Any,
     ) -> str:
         """
@@ -221,7 +221,7 @@ class ASCIIHexDecode:
         """
         if "decodeParms" in kwargs:  # deprecated
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
-            decode_parms = kwargs["decodeParms"]  # noqa: F841
+            decode_parms = kwargs["decodeParms"]
         retval = ""
         hex_pair = ""
         index = 0
@@ -348,7 +348,7 @@ class LZWDecode:
         """
         if "decodeParms" in kwargs:  # deprecated
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
-            decode_parms = kwargs["decodeParms"]  # noqa: F841
+            decode_parms = kwargs["decodeParms"]
         return LZWDecode.Decoder(data).decode()
 
 
@@ -363,7 +363,7 @@ class ASCII85Decode:
     ) -> bytes:
         if "decodeParms" in kwargs:  # deprecated
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
-            decode_parms = kwargs["decodeParms"]  # noqa: F841
+            decode_parms = kwargs["decodeParms"]
         if isinstance(data, str):
             data = data.encode("ascii")
         group_index = b = 0
@@ -396,7 +396,7 @@ class DCTDecode:
     ) -> bytes:
         if "decodeParms" in kwargs:  # deprecated
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
-            decode_parms = kwargs["decodeParms"]  # noqa: F841
+            decode_parms = kwargs["decodeParms"]
         return data
 
 
@@ -409,7 +409,7 @@ class JPXDecode:
     ) -> bytes:
         if "decodeParms" in kwargs:  # deprecated
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
-            decode_parms = kwargs["decodeParms"]  # noqa: F841
+            decode_parms = kwargs["decodeParms"]
         return data
 
 
