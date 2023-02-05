@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1675602452672,
+  "lastUpdate": 1675630216895,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -24050,6 +24050,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00018625355459473482",
             "extra": "mean: 85.70459290909453 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "1b54821e5e02ff044fd1c535262e9522b1f70c2b",
+          "message": "REL: 3.4.0\n\nNOTICE: pypdf changed the way it represents numbers parsed from PDF files.\n  pypdf<3.4.0 represented numbers as Decimal, pypdf>=3.4.0 represents them as\n  floats. Several other PDF libraries to this, as well as many PDF viewers.\n  We hope to fix issues with too high precision like this and get a speed boost.\n  In case your PDF documents rely on more than 18 decimals of precision you\n  should check if it still works as expected.\n  To clarify: This does not affect the text shown in PDF documents. It affects\n  numbers, e.g. when graphics are drawn on the PDF or very exact positions are\n  used. Typically, 5 decimals should be enough.\n\nNew Features (ENH)\n-  Enable merging forms with overlapping names (#1553)\n-  Add 'over' parameter to merge_transformend_page & co (#1567)\n\nBug Fixes (BUG)\n-  Fix getter of the PageObject.rotation property with an indirect object (#1602)\n-  Restore merge_transformed_page & co (#1567)\n-  Replace decimal by float (#1563)\n\nRobustness (ROB)\n-  PdfWriter.remove_images: /Contents might not be in page_ref (#1598)\n\nDeveloper Experience (DEV)\n-  Introduce ruff (#1586, #1609)\n\nMaintenance (MAINT)\n-  Remove decimal (#1608)\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.3.0...3.4.0)",
+          "timestamp": "2023-02-05T21:49:00+01:00",
+          "tree_id": "397084f4c3247e56ed0fc17a6c9a2660e0fe469e",
+          "url": "https://github.com/py-pdf/pypdf/commit/1b54821e5e02ff044fd1c535262e9522b1f70c2b"
+        },
+        "date": 1675630214834,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0195569287352437,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007151413494945162",
+            "extra": "mean: 980.818208200003 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.652539881493063,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0053916913258898694",
+            "extra": "mean: 85.81820016666342 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.25157654906179633,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017403258425300296",
+            "extra": "mean: 3.9749332906000063 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.701540298401133,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0003767204785115708",
+            "extra": "mean: 78.73060876922776 msec\nrounds: 13"
           }
         ]
       }
