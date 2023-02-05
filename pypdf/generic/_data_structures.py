@@ -343,7 +343,7 @@ class DictionaryObject(dict, PdfObject):
             loc = pdf.xref[rem_gens[0]]
             for o in loc:
                 if p1 > loc[o] and p < loc[o]:
-                    p1 = l[o]
+                    p1 = loc[o]
             if len(rem_gens) == 1:
                 return p1
             else:
