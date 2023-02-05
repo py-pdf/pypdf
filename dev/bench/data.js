@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1675586370320,
+  "lastUpdate": 1675592186684,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -23842,6 +23842,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0008437311586183675",
             "extra": "mean: 85.84716481818009 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "430f92f0c49bb998d0deca300458948d0820ec4e",
+          "message": "MAINT: Remove decimal (#1608)\n\nThis is a preparation to completely get rid of decimal at some point. For now, I don't want to break peoples CI.",
+          "timestamp": "2023-02-05T11:15:07+01:00",
+          "tree_id": "14f82d0e961ffa702651a6a6237ae14073c20064",
+          "url": "https://github.com/py-pdf/pypdf/commit/430f92f0c49bb998d0deca300458948d0820ec4e"
+        },
+        "date": 1675592185498,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.014477061839023,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006639722034963239",
+            "extra": "mean: 985.7295325999985 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.5969981336557,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006061781963573696",
+            "extra": "mean: 86.22921108333159 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.25132827900234544,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02901590635585814",
+            "extra": "mean: 3.9788598559999997 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.851567438692184,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00027820246270647526",
+            "extra": "mean: 77.81152024999709 msec\nrounds: 12"
           }
         ]
       }
