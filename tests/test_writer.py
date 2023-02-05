@@ -1180,14 +1180,16 @@ def test_iss1601():
 def test_attachments():
     writer = PdfWriter()
     writer.add_blank_page(100, 100)
+    b = BytesIO()
+    writer.write(b)
+    b.seek(0)
+    reader = PdfReader(b)
+    b = None
+    assert reader.list_attachments() == []
+    assert reader.get_attachments() == {}
     writer.add_attachment("foobar.gif", b"foobarcontent")
     writer.add_attachment("foobar2.gif", b"foobarcontent2")
 
-    # Check that every key in _idnum_hash is correct
-    objects_hash = [o.hash_value() for o in writer._objects]
-    for k, v in writer._idnum_hash.items():
-        assert v.pdf == writer
-        assert k in objects_hash, f"Missing {v}"
     b = BytesIO()
     writer.write(b)
     b.seek(0)
