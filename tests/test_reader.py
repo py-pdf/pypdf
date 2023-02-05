@@ -3,6 +3,7 @@ import os
 import time
 from io import BytesIO
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -677,7 +678,7 @@ def test_issue604(caplog, strict):
             ]
             assert normalize_warnings(caplog.text) == msg
 
-        def get_dest_pages(x):
+        def get_dest_pages(x) -> Any:  # type: ignore
             if isinstance(x, list):
                 r = [get_dest_pages(y) for y in x]
                 return r

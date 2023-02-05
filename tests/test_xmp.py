@@ -1,6 +1,7 @@
 from datetime import datetime
 from io import BytesIO
 from pathlib import Path
+from typing import Union
 
 import pytest
 
@@ -23,15 +24,15 @@ RESOURCE_ROOT = PROJECT_ROOT / "resources"
         (RESOURCE_ROOT / "crazyones.pdf", False),
     ],
 )
-def test_read_xmp(src, has_xmp):
+def test_read_xmp(src: Path, has_xmp: bool):
     reader = PdfReader(src)
     xmp = reader.xmp_metadata
     assert (xmp is None) == (not has_xmp)
     if has_xmp:
-        for el in xmp.get_element(
+        for _ in xmp.get_element(
             about_uri="", namespace=pypdf.xmp.RDF_NAMESPACE, name="Artist"
         ):
-            print(f"el={el}")
+            pass
 
         assert get_all_tiff(xmp) == {"tiff:Artist": ["me"]}
         assert xmp.dc_contributor == []
@@ -83,7 +84,7 @@ def test_regression_issue914():
     "x",
     ["a", 42, 3.141, False, True],
 )
-def test_identity(x):
+def test_identity(x: Union[str, int, float, bool]):
     assert pypdf.xmp._identity(x) == x
 
 
@@ -98,7 +99,7 @@ def test_identity(x):
         )
     ],
 )
-def test_xmpmm(url, name, xmpmm_instance_id):
+def test_xmpmm(url: str, name: str, xmpmm_instance_id: str):
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     xmp_metadata = reader.xmp_metadata
     assert xmp_metadata.xmpmm_instance_id == xmpmm_instance_id

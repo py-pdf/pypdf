@@ -2,6 +2,7 @@ import os
 import re
 from io import BytesIO
 from pathlib import Path
+from typing import Union
 
 import pytest
 
@@ -59,7 +60,7 @@ def test_writer_clone_bookmarks():
     # Act + test cat
     cat = ""
 
-    def cat1(p):
+    def cat1(p: str) -> None:
         nonlocal cat
         cat += p.__repr__()
 
@@ -195,21 +196,23 @@ tmp_path = "dont_commit_writer.pdf"
         (BytesIO(), False),
     ],
 )
-def test_writer_operations_by_traditional_usage(write_data_here, needs_cleanup):
+def test_writer_operations_by_traditional_usage(
+    write_data_here: Union[str, Path, BytesIO], needs_cleanup: bool
+):
     writer = PdfWriter()
 
     writer_operate(writer)
 
     # finally, write "output" to pypdf-output.pdf
     if needs_cleanup:
-        with open(write_data_here, "wb") as output_stream:
+        with open(write_data_here, "wb") as output_stream:  # type: ignore
             writer.write(output_stream)
     else:
         output_stream = write_data_here
         writer.write(output_stream)
 
     if needs_cleanup:
-        os.remove(write_data_here)
+        os.remove(write_data_here)  # type: ignore
 
 
 @pytest.mark.parametrize(
@@ -220,20 +223,22 @@ def test_writer_operations_by_traditional_usage(write_data_here, needs_cleanup):
         (BytesIO(), False),
     ],
 )
-def test_writer_operations_by_semi_traditional_usage(write_data_here, needs_cleanup):
+def test_writer_operations_by_semi_traditional_usage(
+    write_data_here: Union[str, Path, BytesIO], needs_cleanup: bool
+):
     with PdfWriter() as writer:
         writer_operate(writer)
 
         # finally, write "output" to pypdf-output.pdf
         if needs_cleanup:
-            with open(write_data_here, "wb") as output_stream:
+            with open(write_data_here, "wb") as output_stream:  # type: ignore
                 writer.write(output_stream)
         else:
             output_stream = write_data_here
             writer.write(output_stream)
 
     if needs_cleanup:
-        os.remove(write_data_here)
+        os.remove(write_data_here)  # type: ignore
 
 
 @pytest.mark.parametrize(
@@ -245,7 +250,7 @@ def test_writer_operations_by_semi_traditional_usage(write_data_here, needs_clea
     ],
 )
 def test_writer_operations_by_semi_new_traditional_usage(
-    write_data_here, needs_cleanup
+    write_data_here: Union[str, Path, BytesIO], needs_cleanup: bool
 ):
     with PdfWriter() as writer:
         writer_operate(writer)
@@ -254,7 +259,7 @@ def test_writer_operations_by_semi_new_traditional_usage(
         writer.write(write_data_here)
 
     if needs_cleanup:
-        os.remove(write_data_here)
+        os.remove(write_data_here)  # type: ignore
 
 
 @pytest.mark.parametrize(
@@ -265,7 +270,9 @@ def test_writer_operations_by_semi_new_traditional_usage(
         (BytesIO(), False),
     ],
 )
-def test_writer_operation_by_new_usage(write_data_here, needs_cleanup):
+def test_writer_operation_by_new_usage(
+    write_data_here: Union[str, Path, BytesIO], needs_cleanup: bool
+):
     # This includes write "output" to pypdf-output.pdf
     with PdfWriter(write_data_here) as writer:
         writer_operate(writer)
@@ -281,7 +288,7 @@ def test_writer_operation_by_new_usage(write_data_here, needs_cleanup):
         ("reportlab-inline-image.pdf", True),
     ],
 )
-def test_remove_images(input_path, ignore_byte_string_object):
+def test_remove_images(input_path: str, ignore_byte_string_object: bool):
     pdf_path = RESOURCE_ROOT / input_path
 
     reader = PdfReader(pdf_path)
@@ -315,7 +322,7 @@ def test_remove_images(input_path, ignore_byte_string_object):
         ("reportlab-inline-image.pdf", True),
     ],
 )
-def test_remove_text(input_path, ignore_byte_string_object):
+def test_remove_text(input_path: str, ignore_byte_string_object: bool):
     pdf_path = RESOURCE_ROOT / input_path
 
     reader = PdfReader(pdf_path)
@@ -338,7 +345,7 @@ def test_remove_text(input_path, ignore_byte_string_object):
     ("ignore_byte_string_object"),
     [False, True],
 )
-def test_remove_text_all_operators(ignore_byte_string_object):
+def test_remove_text_all_operators(ignore_byte_string_object: bool):
     stream = (
         b"BT "
         b"/F0 36 Tf "
@@ -386,7 +393,6 @@ def test_remove_text_all_operators(ignore_byte_string_object):
         # inducing an error on startxref computation
         pdf_data.find(b"xref"),
     )
-    print(pdf_data.decode())
     pdf_stream = BytesIO(pdf_data)
 
     reader = PdfReader(pdf_stream, strict=False)
@@ -468,7 +474,7 @@ def test_fill_form():
     ("use_128bit", "user_password", "owner_password"),
     [(True, "userpwd", "ownerpwd"), (False, "userpwd", "ownerpwd")],
 )
-def test_encrypt(use_128bit, user_password, owner_password):
+def test_encrypt(use_128bit: bool, user_password: str, owner_password: str):
     reader = PdfReader(RESOURCE_ROOT / "form.pdf")
     writer = PdfWriter()
 

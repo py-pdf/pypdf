@@ -487,7 +487,7 @@ def test_remove_child_not_in_that_tree():
 def test_remove_child_not_found_in_tree():
     class ChildDummy(DictionaryObject):
         @property
-        def indirect_reference(self):
+        def indirect_reference(self) -> "ChildDummy":
             return self
 
     tree = TreeObject()

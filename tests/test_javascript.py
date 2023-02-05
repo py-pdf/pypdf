@@ -30,13 +30,13 @@ def test_add_js(pdf_file_writer):
 
 
 def test_added_js(pdf_file_writer):
-    def get_javascript_name():
+    def get_javascript_name() -> str:
         assert "/Names" in pdf_file_writer._root_object
         assert "/JavaScript" in pdf_file_writer._root_object["/Names"]
         assert "/Names" in pdf_file_writer._root_object["/Names"]["/JavaScript"]
-        return pdf_file_writer._root_object["/Names"]["/JavaScript"]["/Names"][
-            -2
-        ]  # return -2 in order to get the latest javascript
+
+        # return -2 in order to get the latest javascript
+        return pdf_file_writer._root_object["/Names"]["/JavaScript"]["/Names"][-2]
 
     pdf_file_writer.add_js("this.print({bUI:true,bSilent:false,bShrinkToFit:true});")
     first_js = get_javascript_name()
