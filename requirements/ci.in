@@ -5,9 +5,9 @@ flake8-bugbear
 flake8-print
 mypy
 pillow
+pycryptodome
 pytest
 pytest-benchmark
-pycryptodome
 typeguard
-types-Pillow
 types-dataclasses
+types-Pillow

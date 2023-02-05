@@ -498,9 +498,7 @@ class PageObject(DictionaryObject):
         valid values. This property does not affect ``/Contents``.
         """
         rotate_obj = self.get(PG.ROTATE, 0)
-        return (
-            rotate_obj if isinstance(rotate_obj, int) else rotate_obj.get_object()
-        )
+        return rotate_obj if isinstance(rotate_obj, int) else rotate_obj.get_object()
 
     @rotation.setter
     def rotation(self, r: Union[int, float]) -> None:
@@ -651,8 +649,8 @@ class PageObject(DictionaryObject):
                     new_res[newname] = page2res.raw_get(key)
             lst = sorted(new_res.items())
             new_res.clear()
-            for l in lst:
-                new_res[l[0]] = l[1]
+            for el in lst:
+                new_res[el[0]] = el[1]
         return new_res, rename_res
 
     @staticmethod
@@ -1263,7 +1261,8 @@ class PageObject(DictionaryObject):
         """
         deprecation_with_replacement(
             "page.mergeRotatedScaledPage(page2, rotation, scale, expand)",
-            "page.merge_transformed_page(page2, Transformation().rotate(rotation).scale(scale)); page.merge_page(page2, expand)",
+            "page.merge_transformed_page(page2, Transformation()"
+            ".rotate(rotation).scale(scale)); page.merge_page(page2, expand)",
             "3.0.0",
         )
         op = Transformation().rotate(rotation).scale(scale, scale)

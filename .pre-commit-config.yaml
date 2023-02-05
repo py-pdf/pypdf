@@ -39,7 +39,6 @@ repos:
         additional_dependencies: [black==22.1.0]
         exclude: "docs/user/robustness.md"
 -   repo: https://github.com/charliermarsh/ruff-pre-commit
-    # Ruff version.
     rev: 'v0.0.237'
     hooks:
     -   id: ruff
