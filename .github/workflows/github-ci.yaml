@@ -111,9 +111,9 @@ jobs:
     - name: Install pypdf
       run: |
         pip install .
-    - name: Test with flake8
+    - name: Test with ruff
       run: |
-        flake8 .
+        ruff .
 
   package:
     name: Build & verify package
