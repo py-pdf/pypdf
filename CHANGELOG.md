@@ -1,5 +1,44 @@
 # CHANGELOG
 
+## Version 3.3.0, 2023-01-22
+
+### New Features (ENH)
+-  Add page label support to PdfWriter (#1558)
+-  Accept inline images with space before EI (#1552)
+-  Add circle annotation support (#1556)
+-  Add polygon annotation support (#1557)
+-  Make merging pages produce a deterministic PDF (#1542, #1543)
+
+### Bug Fixes (BUG)
+-  Fix error in cmap extraction (#1544)
+-  Remove erroneous assertion check (#1564)
+-  Fix dictionary access of optional page label keys (#1562)
+
+### Robustness (ROB)
+-  Set ignore_eof=True for read_until_regex (#1521)
+
+### Documentation (DOC)
+-  Paper size (#1550)
+
+### Developer Experience (DEV)
+-  Fix broken combination of dependencies of docs.txt
+-  Annotate tests appropriately (#1551)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.2.1...3.3.0)
+
+
+## Version 3.2.1, 2023-01-08
+
+### Bug Fixes (BUG)
+-  Accept hierarchical fields (#1529)
+
+### Documentation (DOC)
+-  Use google style docstrings (#1534)
+-  Fix linked markdown documents (#1537)
+
+### Developer Experience (DEV)
+-  Update docs config (#1535)
+
 ## Version 3.2.0, 2022-12-31
 
 ### Performance Improvement (PI)

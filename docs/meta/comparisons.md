@@ -27,7 +27,7 @@ PyPDF2 was merged back into `pypdf`. The development continues at `pypdf`.
 ## PyPDF3 and PyPDF4
 
 Developing and maintaining open source software is extremely
-time-intensive and in the case of PyPDF2 not paid at all. Having a
+time-intensive and in the case of pypdf not paid at all. Having a
 continuous support is hard.
 
 pypdf was initially released in 2012 on PyPI and received releases

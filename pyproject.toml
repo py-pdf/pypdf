@@ -97,3 +97,11 @@ exclude_lines = [
     "if 0:",
     "if __name__ == .__main__.:",
 ]
+
+[tool.ruff]
+line-length = 120
+
+[tool.docformatter]
+pre-summary-newline = true
+wrap-summaries = 0
+wrap-descriptions = 0

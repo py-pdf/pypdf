@@ -35,9 +35,7 @@ filter_inputs = (
     ("predictor", "s"), list(cartesian_product([1], filter_inputs))
 )
 def test_FlateDecode(predictor, s):
-    """
-    Tests FlateDecode decode() and encode() methods.
-    """
+    """Tests FlateDecode decode() and encode() methods."""
     codec = FlateDecode()
     s = s.encode()
     encoded = codec.encode(s)
@@ -46,9 +44,11 @@ def test_FlateDecode(predictor, s):
 
 def test_FlateDecode_unsupported_predictor():
     """
-    Inputs an unsupported predictor (outside the [10, 15] range) checking
-    that PdfReadError() is raised. Once this predictor support is updated
-    in the future, this test case may be removed.
+    Inputs an unsupported predictor (outside the [10, 15] range) checking that
+    PdfReadError() is raised.
+
+    Once this predictor support is updated in the future, this test case may be
+    removed.
     """
     codec = FlateDecode()
     predictors = (-10, -1, 0, 9, 16, 20, 100)
@@ -109,16 +109,16 @@ def test_ASCIIHexDecode(data, expected):
     """
     Feeds a bunch of values to ASCIIHexDecode.decode() and ensures the
     correct output is returned.
+
     TODO What is decode() supposed to do for such inputs as ">>", ">>>" or
     any other not terminated by ">"? (For the latter case, an exception
     is currently raised.)
     """
-
     assert ASCIIHexDecode.decode(data) == expected
 
 
 def test_ASCIIHexDecode_no_eod():
-    """Ensuring an exception is raised when no EOD character is present"""
+    """Ensuring an exception is raised when no EOD character is present."""
     with pytest.raises(PdfStreamError) as exc:
         ASCIIHexDecode.decode("")
     assert exc.value.args[0] == "Unexpected EOD in ASCIIHexDecode"
@@ -146,9 +146,10 @@ def test_ASCII85Decode_with_overflow():
 def test_ASCII85Decode_five_zero_bytes():
     """
     From ISO 32000 (2008) §7.4.3:
-    «As a special case, if all five bytes are 0, they shall be represented
-    by the character with code 122 (z) instead of by five exclamation
-    points (!!!!!).»
+
+    «As a special case, if all five bytes are 0, they shall be represented by
+    the character with code 122 (z) instead of by five exclamation points
+    (!!!!!).»
     """
     inputs = ("z", "zz", "zzz")
     exp_outputs = (
@@ -244,7 +245,7 @@ def test_image_without_imagemagic():
         for page in reader.pages:
             with pytest.raises(ImportError) as exc:
                 page.images
-            assert (
-                exc.value.args[0]
-                == "pillow is required to do image extraction. It can be installed via 'pip install pypdf[image]'"
+            assert exc.value.args[0] == (
+                "pillow is required to do image extraction. "
+                "It can be installed via 'pip install pypdf[image]'"
             )

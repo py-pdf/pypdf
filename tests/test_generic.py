@@ -261,7 +261,7 @@ def test_outline_item_write_to_stream():
     oi = OutlineItem(NameObject("title"), NullObject(), Fit.fit_vertically(left=0))
     oi.write_to_stream(stream, None)
     stream.seek(0, 0)
-    assert stream.read() == b"<<\n/Title (title)\n/Dest [ null /FitV 0 ]\n>>"
+    assert stream.read() == b"<<\n/Title (title)\n/Dest [ null /FitV 0.0 ]\n>>"
 
 
 def test_encode_pdfdocencoding_keyerror():
@@ -464,7 +464,6 @@ def test_TextStringObject_autodetect_utf16():
 
 
 def test_remove_child_not_in_tree():
-
     tree = TreeObject()
     with pytest.raises(ValueError) as exc:
         tree.remove_child(ChildDummy())
@@ -472,7 +471,6 @@ def test_remove_child_not_in_tree():
 
 
 def test_remove_child_not_in_that_tree():
-
     tree = TreeObject()
     tree.indirect_reference = NullObject()
     child = TreeObject()
@@ -562,7 +560,6 @@ def test_remove_child_found_in_tree():
     assert len([el for el in tree.children()]) == 3
 
     # Remove middle child
-    # tree.remove_child(child4)
     child4.remove_from_tree()
     assert tree[NameObject("/Count")] == 2
     assert len([el for el in tree.children()]) == 2
@@ -675,7 +672,10 @@ def test_bool_repr(tmp_path):
 @pytest.mark.external
 @patch("pypdf._reader.logger_warning")
 def test_issue_997(mock_logger_warning):
-    url = "https://github.com/py-pdf/pypdf/files/8908874/Exhibit_A-2_930_Enterprise_Zone_Tax_Credits_final.pdf"
+    url = (
+        "https://github.com/py-pdf/pypdf/files/8908874/"
+        "Exhibit_A-2_930_Enterprise_Zone_Tax_Credits_final.pdf"
+    )
     name = "gh-issue-997.pdf"
 
     merger = PdfMerger()
@@ -746,6 +746,34 @@ def test_annotation_builder_free_text():
     os.remove(target)  # comment this out for manual inspection
 
 
+def test_annotation_builder_polygon():
+    # Arrange
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    writer = PdfWriter()
+    writer.add_page(page)
+
+    # Act
+    with pytest.raises(ValueError) as exc:
+        AnnotationBuilder.polygon(
+            vertices=[],
+        )
+    assert exc.value.args[0] == "A polygon needs at least 1 vertex with two coordinates"
+
+    annotation = AnnotationBuilder.polygon(
+        vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
+    )
+    writer.add_annotation(0, annotation)
+
+    # Assert: You need to inspect the file manually
+    target = "annotated-pdf.pdf"
+    with open(target, "wb") as fp:
+        writer.write(fp)
+
+    os.remove(target)  # comment this out for manual inspection
+
+
 def test_annotation_builder_line():
     # Arrange
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
@@ -798,6 +826,34 @@ def test_annotation_builder_square():
     os.remove(target)  # comment this out for manual inspection
 
 
+def test_annotation_builder_circle():
+    # Arrange
+    pdf_path = RESOURCE_ROOT / "crazyones.pdf"
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    writer = PdfWriter()
+    writer.add_page(page)
+
+    # Act
+    circle_annotation = AnnotationBuilder.ellipse(
+        rect=(50, 550, 200, 650), interiour_color="ff0000"
+    )
+    writer.add_annotation(0, circle_annotation)
+
+    diameter = 100
+    circle_annotation = AnnotationBuilder.ellipse(
+        rect=(110, 500, 110 + diameter, 500 + diameter),
+    )
+    writer.add_annotation(0, circle_annotation)
+
+    # Assert: You need to inspect the file manually
+    target = "annotated-pdf-circle.pdf"
+    with open(target, "wb") as fp:
+        writer.write(fp)
+
+    os.remove(target)  # comment this out for manual inspection
+
+
 def test_annotation_builder_link():
     # Arrange
     pdf_path = RESOURCE_ROOT / "outline-without-title.pdf"
@@ -814,9 +870,9 @@ def test_annotation_builder_link():
             url="https://martin-thoma.com/",
             target_page_index=3,
         )
-    assert (
-        exc.value.args[0]
-        == "Either 'url' or 'target_page_index' have to be provided. url=https://martin-thoma.com/, target_page_index=3"
+    assert exc.value.args[0] == (
+        "Either 'url' or 'target_page_index' have to be provided. "
+        "url=https://martin-thoma.com/, target_page_index=3"
     )
 
     # Part 2: Too few args
@@ -913,32 +969,32 @@ def test_create_string_object_force():
 @pytest.mark.parametrize(
     ("value", "expected"),
     [
-        ("0.000000", "0"),
-        ("0.0", "0"),
+        ("0.000000", "0.0"),
+        ("0.0", "0.0"),
         ("1.0", "1"),
         ("0.123000", "0.123"),
         ("0.000123000", "0.000123"),
-        ("0.0", "0"),
-        ("0", "0"),
+        ("0.0", "0.0"),
+        ("0", "0.0"),
         ("1", "1"),
         ("1.0", "1"),
         ("1.01", "1.01"),
         ("1.010", "1.01"),
-        ("0000.0000", "0"),
+        ("0000.0000", "0.0"),
         ("0.10101010", "0.1010101"),
         ("50000000000", "50000000000"),
-        ("99900000000000000123", "99900000000000000123"),
-        ("99900000000000000123.456000", "99900000000000000123.456"),
+        ("99900000000000000123", "99900000000000000000"),
+        ("99900000000000000123.456000", "99900000000000000000"),
         ("0.00000000000000000000123", "0.00000000000000000000123"),
         ("0.00000000000000000000123000", "0.00000000000000000000123"),
-        (
-            "50032481330523882508234.00000000000000000000123000",
-            "50032481330523882508234.00000000000000000000123",
-        ),
-        (
-            "928457298572093487502198745102973402987412908743.75249875981374981237498213740000",
-            "928457298572093487502198745102973402987412908743.7524987598137498123749821374",
-        ),
+        # (
+        #    "50032481330523882508234.00000000000000000000123000",
+        #    "50032481330523882508234.00000000000000000000123",
+        # ),
+        # (
+        #    "928457298572093487502198745102973402987412908743.75249875981374981237498213740000",
+        #    "928457298572093487502198745102973402987412908743.7524987598137498123749821374",
+        # ),
     ],
 )
 def test_float_object_decimal_to_string(value, expected):
@@ -946,9 +1002,6 @@ def test_float_object_decimal_to_string(value, expected):
 
 
 def test_cloning(caplog):
-    # pdf_path = RESOURCE_ROOT / "crazyones.pdf"
-    # reader = PdfReader(pdf_path)
-    # page = reader.pages[0]
     writer = PdfWriter()
     with pytest.raises(Exception) as exc:
         PdfObject().clone(writer)

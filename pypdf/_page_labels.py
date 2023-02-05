@@ -57,10 +57,11 @@ a       Lowercase letters (a to z for the first 26 pages,
                            aa to zz for the next 26, and so on)
 """
 
-from typing import Iterator
+from typing import Iterator, Optional, Tuple
 
 from ._protocols import PdfReaderProtocol
 from ._utils import logger_warning
+from .generic import ArrayObject, DictionaryObject, NumberObject
 
 
 def number2uppercase_roman_numeral(num: int) -> str:
@@ -151,6 +152,7 @@ def index2label(reader: PdfReaderProtocol, index: int) -> str:
                 break
             i += 2
         m = {
+            None: lambda n: "",
             "/D": lambda n: str(n),
             "/R": number2uppercase_roman_numeral,
             "/r": number2lowercase_roman_numeral,
@@ -161,7 +163,9 @@ def index2label(reader: PdfReaderProtocol, index: int) -> str:
             value = reader.get_object(value)
         if not isinstance(value, dict):
             return str(index + 1)  # Fallback
-        return m[value["/S"]](index - start_index + 1)
+        start = value.get("/St", 1)
+        prefix = value.get("/P", "")
+        return prefix + m[value.get("/S")](index - start_index + start)
     if "/Kids" in number_tree or "/Limits" in number_tree:
         logger_warning(
             (
@@ -173,3 +177,81 @@ def index2label(reader: PdfReaderProtocol, index: int) -> str:
         )
     # TODO: Implement /Kids and /Limits for number tree
     return str(index + 1)  # Fallback
+
+
+def nums_insert(
+    key: NumberObject,
+    value: DictionaryObject,
+    nums: ArrayObject,
+) -> None:
+    """
+    Insert a key, value pair in a Nums array.
+
+    See 7.9.7 "Number Trees".
+
+    Args:
+        key: number key of the entry
+        value: value of the entry
+        nums: Nums array to modify
+    """
+    if len(nums) % 2 != 0:
+        raise ValueError("a nums like array must have an even number of elements")
+
+    i = len(nums)
+    while i != 0 and key <= nums[i - 2]:
+        i = i - 2
+
+    if i < len(nums) and key == nums[i]:
+        nums[i + 1] = value
+    else:
+        nums.insert(i, key)
+        nums.insert(i + 1, value)
+
+
+def nums_clear_range(
+    key: NumberObject,
+    page_index_to: int,
+    nums: ArrayObject,
+) -> None:
+    """
+    Remove all entries in a number tree in a range after an entry.
+
+    See 7.9.7 "Number Trees".
+
+    Args:
+        key: number key of the entry before the range
+        page_index_to: The page index of the upper limit of the range
+        nums: Nums array to modify
+    """
+    if len(nums) % 2 != 0:
+        raise ValueError("a nums like array must have an even number of elements")
+    if page_index_to < key:
+        raise ValueError("page_index_to must be greater or equal than key")
+
+    i = nums.index(key) + 2
+    while i < len(nums) and nums[i] <= page_index_to:
+        nums.pop(i)
+        nums.pop(i)
+
+
+def nums_next(
+    key: NumberObject,
+    nums: ArrayObject,
+) -> Tuple[Optional[NumberObject], Optional[DictionaryObject]]:
+    """
+    Return the (key, value) pair of the entry after the given one.
+
+    See 7.9.7 "Number Trees".
+
+    Args:
+        key: number key of the entry
+        nums: Nums array
+    """
+    if len(nums) % 2 != 0:
+        raise ValueError("a nums like array must have an even number of elements")
+
+    i = nums.index(key) + 2
+    if i < len(nums):
+        return (nums[i], nums[i + 1])
+    else:
+        return (None, None)

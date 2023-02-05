@@ -102,11 +102,11 @@ def read_until_whitespace(stream: StreamType, maxchars: Optional[int] = None) ->
     Stops upon encountering whitespace or when maxchars is reached.
 
     Args:
-      stream: The data stream from which was read.
-      maxchars: The maximum number of bytes returned; by default unlimited.
+        stream: The data stream from which was read.
+        maxchars: The maximum number of bytes returned; by default unlimited.
 
     Returns:
-      The data which was read.
+        The data which was read.
     """
     txt = b""
     while True:
@@ -124,10 +124,10 @@ def read_non_whitespace(stream: StreamType) -> bytes:
     Find and read the next non-whitespace character (ignores whitespace).
 
     Args:
-      stream: The data stream from which was read.
+        stream: The data stream from which was read.
 
     Returns:
-      The data which was read.
+        The data which was read.
     """
     tok = stream.read(1)
     while tok in WHITESPACES:
@@ -137,15 +137,14 @@ def read_non_whitespace(stream: StreamType) -> bytes:
 
 def skip_over_whitespace(stream: StreamType) -> bool:
     """
-    Similar to read_non_whitespace, but return a boolean if more than
-    one whitespace character was read.
+    Similar to read_non_whitespace, but return a boolean if more than one
+    whitespace character was read.
 
     Args:
-      stream: The data stream from which was read.
+        stream: The data stream from which was read.
 
     Returns:
-      True if more than one whitespace was skipped,
-      otherwise return False.
+        True if more than one whitespace was skipped, otherwise return False.
     """
     tok = WHITESPACES[0]
     cnt = 0
@@ -163,31 +162,22 @@ def skip_over_comment(stream: StreamType) -> None:
             tok = stream.read(1)
 
 
-def read_until_regex(
-    stream: StreamType, regex: Pattern[bytes], ignore_eof: bool = False
-) -> bytes:
+def read_until_regex(stream: StreamType, regex: Pattern[bytes]) -> bytes:
     """
     Read until the regular expression pattern matched (ignore the match).
+    Treats EOF on the underlying stream as the end of the token to be matched.
 
     Args:
-      ignore_eof: If true, ignore end-of-line and return immediately
-      regex: re.Pattern
-      ignore_eof:  (Default value = False)
+        regex: re.Pattern
 
     Returns:
-      The read bytes.
-
-    Raises:
-      PdfStreamError: on premature end-of-file
-
+        The read bytes.
     """
     name = b""
     while True:
         tok = stream.read(16)
         if not tok:
-            if ignore_eof:
-                return name
-            raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
+            return name
         m = regex.search(tok)
         if m is not None:
             name += tok[: m.start()]
@@ -205,11 +195,11 @@ def read_block_backwards(stream: StreamType, to_read: int) -> bytes:
     read.
 
     Args:
-      stream:
-      to_read:
+        stream:
+        to_read:
 
     Returns:
-      The data which was read.
+        The data which was read.
     """
     if stream.tell() < to_read:
         raise PdfStreamError("Could not read malformed PDF file")
@@ -232,10 +222,10 @@ def read_previous_line(stream: StreamType) -> bytes:
     or, if no such byte is found, at the beginning of the stream.
 
     Args:
-      stream: StreamType:
+        stream: StreamType:
 
     Returns:
-      The data which was read.
+        The data which was read.
     """
     line_content = []
     found_crlf = False
@@ -359,7 +349,6 @@ def ord_(b: Union[int, str, bytes]) -> Union[int, bytes]:
 
 
 def hexencode(b: bytes) -> bytes:
-
     coder = getencoder("hex_codec")
     coded = coder(b)  # type: ignore
     return coded[0]
@@ -397,32 +386,24 @@ def deprecation(msg: str) -> None:
 def deprecate_with_replacement(
     old_name: str, new_name: str, removed_in: str = "3.0.0"
 ) -> None:
-    """
-    Raise an exception that a feature will be removed, but has a replacement.
-    """
+    """Raise an exception that a feature will be removed, but has a replacement."""
     deprecate(DEPR_MSG.format(old_name, new_name, removed_in), 4)
 
 
 def deprecation_with_replacement(
     old_name: str, new_name: str, removed_in: str = "3.0.0"
 ) -> None:
-    """
-    Raise an exception that a feature was already removed, but has a replacement.
-    """
+    """Raise an exception that a feature was already removed, but has a replacement."""
     deprecation(DEPR_MSG_HAPPENED.format(old_name, removed_in, new_name))
 
 
 def deprecate_no_replacement(name: str, removed_in: str = "3.0.0") -> None:
-    """
-    Raise an exception that a feature will be removed without replacement.
-    """
+    """Raise an exception that a feature will be removed without replacement."""
     deprecate(DEPR_MSG_NO_REPLACEMENT.format(name, removed_in), 4)
 
 
 def deprecation_no_replacement(name: str, removed_in: str = "3.0.0") -> None:
-    """
-    Raise an exception that a feature was already removed without replacement.
-    """
+    """Raise an exception that a feature was already removed without replacement."""
     deprecation(DEPR_MSG_NO_REPLACEMENT_HAPPENED.format(name, removed_in))
 
 
@@ -469,6 +450,12 @@ def rename_kwargs(  # type: ignore
 ):
     """
     Helper function to deprecate arguments.
+
+    Args:
+        func_name: Name of the function to be deprecated
+        kwargs:
+        aliases:
+        fail:
     """
 
     for old_term, new_term in aliases.items():
@@ -479,8 +466,9 @@ def rename_kwargs(  # type: ignore
                 )
             if new_term in kwargs:
                 raise TypeError(
-                    f"{func_name} received both {old_term} and {new_term} as an argument. "
-                    f"{old_term} is deprecated. Use {new_term} instead."
+                    f"{func_name} received both {old_term} and {new_term} as "
+                    f"an argument. {old_term} is deprecated. "
+                    f"Use {new_term} instead."
                 )
             kwargs[new_term] = kwargs.pop(old_term)
             warnings.warn(

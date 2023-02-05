@@ -10,23 +10,19 @@ repos:
     -   id: check-yaml
     -   id: debug-statements
     -   id: end-of-file-fixer
-        exclude: "resources/.*"
+        exclude: "resources/.*|docs/make.bat"
     -   id: trailing-whitespace
     -   id: mixed-line-ending
         args: ['--fix=lf']
+        exclude: "docs/make.bat"
     -   id: check-added-large-files
         args: ['--maxkb=1000']
--   repo: https://github.com/pycqa/flake8
-    rev: 6.0.0
-    hooks:
-    -   id: flake8
-        args: ["--ignore", "E,W,F"]
 # -   repo: https://github.com/pre-commit/mirrors-mypy
 #     rev: v0.942
 #     hooks:
 #     -   id: mypy
 -   repo: https://github.com/pycqa/isort
-    rev: 5.10.1
+    rev: 5.12.0
     hooks:
     -   id: isort
         name: isort (python)
@@ -37,12 +33,23 @@ repos:
     -   id: black
         args: [--target-version, py36]
 -   repo: https://github.com/asottile/blacken-docs
-    rev: v1.12.1
+    rev: 1.13.0
     hooks:
     -   id: blacken-docs
         additional_dependencies: [black==22.1.0]
+        exclude: "docs/user/robustness.md"
+-   repo: https://github.com/charliermarsh/ruff-pre-commit
+    # Ruff version.
+    rev: 'v0.0.237'
+    hooks:
+    -   id: ruff
 -   repo: https://github.com/asottile/pyupgrade
     rev: v3.3.1
     hooks:
     -   id: pyupgrade
         args: [--py36-plus]
+-   repo: https://github.com/pycqa/flake8
+    rev: 6.0.0
+    hooks:
+    -   id: flake8
+        args: ["--ignore", "E,W,F"]

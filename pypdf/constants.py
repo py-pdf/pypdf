@@ -43,14 +43,14 @@ class EncryptionDictAttributes:
     """
 
     R = "/R"  # number, required; revision of the standard security handler
-    O = "/O"  # 32-byte string, required
+    O = "/O"  # 32-byte string, required  # noqa
     U = "/U"  # 32-byte string, required
     P = "/P"  # integer flag, required; permitted operations
     ENCRYPT_METADATA = "/EncryptMetadata"  # boolean flag, optional
 
 
 class UserAccessPermissions(IntFlag):
-    """TABLE 3.20 User access permissions"""
+    """TABLE 3.20 User access permissions."""
 
     R1 = 1
     R2 = 2
@@ -145,7 +145,7 @@ class PageAttributes:
 
 
 class FileSpecificationDictionaryEntries:
-    """TABLE 3.41 Entries in a file specification dictionary"""
+    """TABLE 3.41 Entries in a file specification dictionary."""
 
     Type = "/Type"
     FS = "/FS"  # The name of the file system to be used to interpret this file specification
@@ -261,7 +261,7 @@ class GoToActionArguments:
 
 
 class AnnotationDictionaryAttributes:
-    """TABLE 8.15 Entries common to all annotation dictionaries"""
+    """TABLE 8.15 Entries common to all annotation dictionaries."""
 
     Type = "/Type"
     Subtype = "/Subtype"
@@ -334,7 +334,7 @@ class FieldDictionaryAttributes:
 
 
 class CheckboxRadioButtonAttributes:
-    """TABLE 8.76 Field flags common to all field types"""
+    """TABLE 8.76 Field flags common to all field types."""
 
     Opt = "/Opt"  # Options, Optional
 
@@ -350,7 +350,7 @@ class CheckboxRadioButtonAttributes:
 
 
 class FieldFlag(IntFlag):
-    """TABLE 8.70 Field flags common to all field types"""
+    """TABLE 8.70 Field flags common to all field types."""
 
     READ_ONLY = 1
     REQUIRED = 2
@@ -424,10 +424,20 @@ class CatalogDictionary:
 
 
 class OutlineFontFlag(IntFlag):
-    """A class used as an enumerable flag for formatting an outline font"""
+    """A class used as an enumerable flag for formatting an outline font."""
 
     italic = 1
     bold = 2
+
+
+class PageLabelStyle:
+    """Table 8.10 in the 1.7 reference."""
+
+    DECIMAL = "/D"  # Decimal arabics
+    LOWERCASE_ROMAN = "/r"  # Lowercase roman numbers
+    UPPERCASE_ROMAN = "/R"  # Uppercase roman numbers
+    LOWERCASE_LETTER = "/a"  # Lowercase letters
+    UPPERCASE_LETTER = "/A"  # Uppercase letters
 
 
 PDF_KEYS = (

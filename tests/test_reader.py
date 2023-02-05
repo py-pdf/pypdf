@@ -119,7 +119,10 @@ def test_broken_meta_data(pdf_path):
         reader = PdfReader(f)
         with pytest.raises(
             PdfReadError,
-            match=r"trailer not found or does not point to document information directory",
+            match=(
+                "trailer not found or does not point to document "
+                "information directory"
+            ),
         ):
             reader.metadata
 
@@ -176,6 +179,7 @@ def test_get_outline(src, outline_elements):
     assert len(outline) == outline_elements
 
 
+@pytest.mark.samples
 @pytest.mark.parametrize(
     ("src", "expected_images"),
     [
@@ -615,26 +619,25 @@ def test_get_destination_page_number():
 
 
 def test_do_not_get_stuck_on_large_files_without_start_xref():
-    """Tests for the absence of a DoS bug, where a large file without an startxref mark
-    would cause the library to hang for minutes to hours"""
+    """Tests for the absence of a DoS bug, where a large file without an
+    startxref mark would cause the library to hang for minutes to hours."""
     start_time = time.time()
     broken_stream = BytesIO(b"\0" * 5 * 1000 * 1000)
     with pytest.raises(PdfReadError):
         PdfReader(broken_stream)
     parse_duration = time.time() - start_time
-    # parsing is expected take less than a second on a modern cpu, but include a large
-    # tolerance to account for busy or slow systems
+    # parsing is expected take less than a second on a modern cpu, but include
+    # a large tolerance to account for busy or slow systems
     assert parse_duration < 60
 
 
 @pytest.mark.external
 def test_decrypt_when_no_id():
     """
-    Decrypt an encrypted file that's missing the 'ID' value in its
-    trailer.
+    Decrypt an encrypted file that's missing the 'ID' value in its trailer.
+
     https://github.com/py-pdf/pypdf/issues/608
     """
-
     with open(RESOURCE_ROOT / "encrypted_doc_no_id.pdf", "rb") as inputfile:
         ipdf = PdfReader(inputfile)
         ipdf.decrypt("")
@@ -655,7 +658,7 @@ def test_reader_properties():
     [True, False],
 )
 def test_issue604(caplog, strict):
-    """Test with invalid destinations"""  # todo
+    """Test with invalid destinations."""  # todo
     with open(RESOURCE_ROOT / "issue-604.pdf", "rb") as f:
         pdf = None
         outline = None
@@ -797,7 +800,10 @@ def test_read_path():
 
 def test_read_not_binary_mode(caplog):
     with open(RESOURCE_ROOT / "crazyones.pdf") as f:
-        msg = "PdfReader stream/file object is not in binary mode. It may not be read correctly."
+        msg = (
+            "PdfReader stream/file object is not in binary mode. "
+            "It may not be read correctly."
+        )
         with pytest.raises(io.UnsupportedOperation):
             PdfReader(f)
     assert normalize_warnings(caplog.text) == [msg]
@@ -812,6 +818,34 @@ def test_read_form_416():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name="issue_416.pdf")))
     fields = reader.get_form_text_fields()
     assert len(fields) > 0
+
+
+def test_form_topname_with_and_without_acroform(caplog):
+    r = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    r.add_form_topname("no")
+    r.rename_form_topname("renamed")
+    assert "/AcroForm" not in r.trailer["/Root"]
+    r.trailer["/Root"][NameObject("/AcroForm")] = DictionaryObject()
+    r.add_form_topname("toto")
+    r.rename_form_topname("renamed")
+    assert len(r.get_fields()) == 0
+
+    r = PdfReader(RESOURCE_ROOT / "form.pdf")
+    r.add_form_topname("top")
+    flds = r.get_fields()
+    assert "top" in flds
+    assert "top.foo" in flds
+    r.rename_form_topname("renamed")
+    flds = r.get_fields()
+    assert "renamed" in flds
+    assert "renamed.foo" in flds
+
+    r = PdfReader(RESOURCE_ROOT / "form.pdf")
+    r.get_fields()["foo"].indirect_reference.get_object()[
+        NameObject("/Parent")
+    ] = DictionaryObject()
+    r.add_form_topname("top")
+    assert "have a non-expected parent" in caplog.text
 
 
 @pytest.mark.external
@@ -866,8 +900,9 @@ def test_get_fields():
     assert dict(fields["c1-1"]) == ({"/FT": "/Btn", "/T": "c1-1"})
 
 
+@pytest.mark.external
 def test_get_full_qualified_fields():
-    url = "https://github.com/py-pdf/PyPDF2/files/10142389/fields_with_dots.pdf"
+    url = "https://github.com/py-pdf/pypdf/files/10142389/fields_with_dots.pdf"
     name = "fields_with_dots.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     fields = reader.get_form_text_fields(True)
@@ -1115,7 +1150,10 @@ def test_named_destination():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     assert len(reader.named_destinations) > 0
     # 2nd case : Dest below names and with Kids...
-    url = "https://opensource.adobe.com/dc-acrobat-sdk-docs/standards/pdfstandards/pdf/PDF32000_2008.pdf"
+    url = (
+        "https://opensource.adobe.com/dc-acrobat-sdk-docs/standards/"
+        "pdfstandards/pdf/PDF32000_2008.pdf"
+    )
     name = "PDF32000_2008.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     assert len(reader.named_destinations) > 0
@@ -1144,7 +1182,8 @@ def test_outline_with_empty_action():
 
 def test_outline_with_invalid_destinations():
     reader = PdfReader(RESOURCE_ROOT / "outlines-with-invalid-destinations.pdf")
-    # contains 9 outline items, 6 with invalid destinations caused by different malformations
+    # contains 9 outline items, 6 with invalid destinations
+    # caused by different malformations
     assert len(reader.outline) == 9
 
 
@@ -1208,14 +1247,21 @@ def test_reader(caplog):
 @pytest.mark.external
 def test_zeroing_xref():
     # iss #328
-    url = "https://github.com/py-pdf/pypdf/files/9066120/UTA_OSHA_3115_Fall_Protection_Training_09162021_.pdf"
+    url = (
+        "https://github.com/py-pdf/pypdf/files/9066120/"
+        "UTA_OSHA_3115_Fall_Protection_Training_09162021_.pdf"
+    )
     name = "UTA_OSHA.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     len(reader.pages)
 
 
+@pytest.mark.external
 def test_thread():
-    url = "https://github.com/py-pdf/pypdf/files/9066120/UTA_OSHA_3115_Fall_Protection_Training_09162021_.pdf"
+    url = (
+        "https://github.com/py-pdf/pypdf/files/9066120/"
+        "UTA_OSHA_3115_Fall_Protection_Training_09162021_.pdf"
+    )
     name = "UTA_OSHA.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     assert reader.threads is None
@@ -1226,6 +1272,7 @@ def test_thread():
     assert len(reader.threads) >= 1
 
 
+@pytest.mark.external
 def test_build_outline_item(caplog):
     url = "https://github.com/py-pdf/pypdf/files/9464742/shiv_resume.pdf"
     name = "shiv_resume.pdf"
@@ -1253,6 +1300,7 @@ def test_build_outline_item(caplog):
     assert "Unexpected destination 2" in exc.value.args[0]
 
 
+@pytest.mark.samples
 @pytest.mark.parametrize(
     ("src", "page_labels"),
     [
@@ -1274,3 +1322,12 @@ def test_build_outline_item(caplog):
 def test_page_labels(src, page_labels):
     max_indices = 6
     assert PdfReader(src).page_labels[:max_indices] == page_labels[:max_indices]
+
+
+@pytest.mark.external
+def test_iss1559():
+    url = "https://github.com/py-pdf/pypdf/files/10441992/default.pdf"
+    name = "iss1559.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    for p in reader.pages:
+        p.extract_text()

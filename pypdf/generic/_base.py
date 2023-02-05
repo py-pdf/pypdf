@@ -26,10 +26,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import codecs
-import decimal
 import hashlib
 import re
 from binascii import unhexlify
+from math import log10
 from typing import Any, Callable, List, Optional, Tuple, Union, cast
 
 from .._codecs import _pdfdoc_encoding_rev
@@ -77,8 +77,10 @@ class PdfObject(PdfObjectProtocol):
         """
         clone object into pdf_dest (PdfWriterProtocol which is an interface for PdfWriter)
         force_duplicate: in standard if the object has been already cloned and reference,
-                         the copy is returned; when force_duplicate == True, a new copy is always performed
-        ignore_fields : list/tuple of Fields names (for dictionaries that will be ignored during cloning (apply also to childs duplication)
+            the copy is returned; when force_duplicate == True,
+            a new copy is always performed
+        ignore_fields : list/tuple of Fields names (for dictionaries that will
+            be ignored during cloning (apply also to childs duplication)
         in standard, clone function call _reference_clone (see _reference)
 
         Args:
@@ -95,10 +97,10 @@ class PdfObject(PdfObjectProtocol):
         self, clone: Any, pdf_dest: PdfWriterProtocol
     ) -> PdfObjectProtocol:
         """
-        reference the object within the _objects of pdf_dest only if
-        indirect_reference attribute exists (which means the objects
-        was already identified in xref/xobjstm)
-        if object has been already referenced do nothing
+        Reference the object within the _objects of pdf_dest only if
+        indirect_reference attribute exists (which means the objects was
+        already identified in xref/xobjstm) if object has been already
+        referenced do nothing.
 
         Args:
           clone:
@@ -150,7 +152,7 @@ class NullObject(PdfObject):
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "NullObject":
-        """clone object into pdf_dest"""
+        """Clone object into pdf_dest."""
         return cast("NullObject", self._reference_clone(NullObject(), pdf_dest))
 
     def write_to_stream(
@@ -190,7 +192,7 @@ class BooleanObject(PdfObject):
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "BooleanObject":
-        """clone object into pdf_dest"""
+        """Clone object into pdf_dest."""
         return cast(
             "BooleanObject", self._reference_clone(BooleanObject(self.value), pdf_dest)
         )
@@ -249,7 +251,7 @@ class IndirectObject(PdfObject):
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "IndirectObject":
-        """clone object into pdf_dest"""
+        """Clone object into pdf_dest."""
         if self.pdf == pdf_dest and not force_duplicate:
             # Already duplicated and no extra duplication required
             return self
@@ -337,17 +339,20 @@ class IndirectObject(PdfObject):
         return IndirectObject.read_from_stream(stream, pdf)
 
 
-class FloatObject(decimal.Decimal, PdfObject):
+class FloatObject(float, PdfObject):
     def __new__(
-        cls, value: Union[str, Any] = "0", context: Optional[Any] = None
+        cls, value: Union[str, Any] = "0.0", context: Optional[Any] = None
     ) -> "FloatObject":
         try:
-            return decimal.Decimal.__new__(cls, str_(value), context)
-        except Exception:
+            value = float(str_(value))
+            return float.__new__(cls, value)
+        except Exception as e:
             # If this isn't a valid decimal (happens in malformed PDFs)
             # fallback to 0
-            logger_warning(f"FloatObject ({value}) invalid; use 0.0 instead", __name__)
-            return decimal.Decimal.__new__(cls, "0.0")
+            logger_warning(
+                f"{e} : FloatObject ({value}) invalid; use 0.0 instead", __name__
+            )
+            return float.__new__(cls, 0.0)
 
     def clone(
         self,
@@ -355,25 +360,26 @@ class FloatObject(decimal.Decimal, PdfObject):
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "FloatObject":
-        """clone object into pdf_dest"""
+        """Clone object into pdf_dest."""
         return cast("FloatObject", self._reference_clone(FloatObject(self), pdf_dest))
 
+    def myrepr(self) -> str:
+        if self == 0:
+            return "0.0"
+        nb = int(log10(abs(self)))
+        s = f"{self:.{max(1,16-nb)}f}".rstrip("0").rstrip(".")
+        return s
+
     def __repr__(self) -> str:
-        if self == self.to_integral():
-            # If this is an integer, format it with no decimal place.
-            return str(self.quantize(decimal.Decimal(1)))
-        else:
-            # Otherwise, format it with a decimal place, taking care to
-            # remove any extraneous trailing zeros.
-            return f"{self:f}".rstrip("0")
+        return self.myrepr()  # repr(float(self))
 
     def as_numeric(self) -> float:
-        return float(repr(self).encode("utf8"))
+        return float(self)
 
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
-        stream.write(repr(self).encode("utf8"))
+        stream.write(self.myrepr().encode("utf8"))
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
@@ -398,7 +404,7 @@ class NumberObject(int, PdfObject):
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "NumberObject":
-        """clone object into pdf_dest"""
+        """Clone object into pdf_dest."""
         return cast("NumberObject", self._reference_clone(NumberObject(self), pdf_dest))
 
     def as_numeric(self) -> int:
@@ -433,6 +439,7 @@ class NumberObject(int, PdfObject):
 class ByteStringObject(bytes, PdfObject):
     """
     Represents a string object where the text encoding could not be determined.
+
     This occurs quite often, as the PDF spec doesn't provide an alternate way to
     represent strings -- for example, the encryption data stored in files (like
     /O) is clearly not text, but is still stored in a "String" object.
@@ -444,7 +451,7 @@ class ByteStringObject(bytes, PdfObject):
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "ByteStringObject":
-        """clone object into pdf_dest"""
+        """Clone object into pdf_dest."""
         return cast(
             "ByteStringObject",
             self._reference_clone(ByteStringObject(bytes(self)), pdf_dest),
@@ -476,10 +483,11 @@ class ByteStringObject(bytes, PdfObject):
 
 class TextStringObject(str, PdfObject):
     """
-    Represents a string object that has been decoded into a real unicode string.
+    A string object that has been decoded into a real unicode string.
+
     If read from a PDF document, this string appeared to match the
-    PDFDocEncoding, or contained a UTF-16BE BOM mark to cause UTF-16 decoding to
-    occur.
+    PDFDocEncoding, or contained a UTF-16BE BOM mark to cause UTF-16 decoding
+    to occur.
     """
 
     def clone(
@@ -488,7 +496,7 @@ class TextStringObject(str, PdfObject):
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "TextStringObject":
-        """clone object into pdf_dest"""
+        """Clone object into pdf_dest."""
         obj = TextStringObject(self)
         obj.autodetect_pdfdocencoding = self.autodetect_pdfdocencoding
         obj.autodetect_utf16 = self.autodetect_utf16
@@ -499,12 +507,10 @@ class TextStringObject(str, PdfObject):
 
     @property
     def original_bytes(self) -> bytes:
-        """
-        It is occasionally possible that a text string object gets created where
+        """It is occasionally possible that a text string object gets created where
         a byte string object was expected due to the autodetection mechanism --
         if that occurs, this "original_bytes" property can be used to
-        back-calculate what the original encoded bytes were.
-        """
+        back-calculate what the original encoded bytes were."""
         return self.get_original_bytes()
 
     def get_original_bytes(self) -> bytes:
@@ -573,7 +579,7 @@ class NameObject(str, PdfObject):
         force_duplicate: bool = False,
         ignore_fields: Union[Tuple[str, ...], List[str], None] = (),
     ) -> "NameObject":
-        """clone object into pdf_dest"""
+        """Clone object into pdf_dest."""
         return cast("NameObject", self._reference_clone(NameObject(self), pdf_dest))
 
     def write_to_stream(
@@ -620,7 +626,7 @@ class NameObject(str, PdfObject):
         name = stream.read(1)
         if name != NameObject.surfix:
             raise PdfReadError("name read error")
-        name += read_until_regex(stream, NameObject.delimiter_pattern, ignore_eof=True)
+        name += read_until_regex(stream, NameObject.delimiter_pattern)
         try:
             # Name objects should represent irregular characters
             # with a '#' followed by the symbol's hex number

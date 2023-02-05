@@ -15,7 +15,8 @@ import pytest
 
 from pypdf import PdfMerger, PdfReader, PdfWriter
 from pypdf.constants import PageAttributes as PG
-from pypdf.errors import PdfReadWarning
+from pypdf.errors import PdfReadError, PdfReadWarning
+from pypdf.generic import ContentStream, read_object
 
 from . import get_pdf_from_url, normalize_warnings
 
@@ -74,15 +75,16 @@ def test_dropdown_items():
     inputfile = RESOURCE_ROOT / "libreoffice-form.pdf"
     reader = PdfReader(inputfile)
     fields = reader.get_fields()
-    assert "/Opt" in fields["Nationality"].keys()
+    assert "/Opt" in fields["Nationality"]
 
 
 def test_PdfReaderFileLoad():
     """
-    Test loading and parsing of a file. Extract text of the file and compare to expected
-    textual output. Expected outcome: file loads, text matches expected.
-    """
+    Test loading and parsing of a file.
 
+    Extract text of the file and compare to expected textual output. Expected
+    outcome: file loads, text matches expected.
+    """
     with open(RESOURCE_ROOT / "crazyones.pdf", "rb") as inputfile:
         # Load PDF file from file
         reader = PdfReader(inputfile)
@@ -99,17 +101,18 @@ def test_PdfReaderFileLoad():
             assert expected_line == actual_line
 
         assert text == pdftext, (
-            "PDF extracted text differs from expected value.\n\nExpected:\n\n%r\n\nExtracted:\n\n%r\n\n"
-            % (pdftext, text)
+            "PDF extracted text differs from expected value.\n\n"
+            "Expected:\n\n%r\n\nExtracted:\n\n%r\n\n" % (pdftext, text)
         )
 
 
 def test_PdfReaderJpegImage():
     """
-    Test loading and parsing of a file. Extract the image of the file and compare to expected
-    textual output. Expected outcome: file loads, image matches expected.
-    """
+    Test loading and parsing of a file. Extract the image of the file and
+    compare to expected textual output.
 
+    Expected outcome: file loads, image matches expected.
+    """
     with open(RESOURCE_ROOT / "jpeg.pdf", "rb") as inputfile:
         # Load PDF file from file
         reader = PdfReader(inputfile)
@@ -124,7 +127,8 @@ def test_PdfReaderJpegImage():
 
         # Compare the text of the PDF to a known source
         assert binascii.hexlify(data).decode() == imagetext, (
-            "PDF extracted image differs from expected value.\n\nExpected:\n\n%r\n\nExtracted:\n\n%r\n\n"
+            "PDF extracted image differs from expected value.\n\n"
+            "Expected:\n\n%r\n\nExtracted:\n\n%r\n\n"
             % (imagetext, binascii.hexlify(data).decode())
         )
 
@@ -880,3 +884,60 @@ def test_tounicode_is_identity():
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data, strict=False)
     reader.pages[0].extract_text()
+
+
+@pytest.mark.external
+def test_append_forms():
+    # from #1538
+    writer = PdfWriter()
+
+    url = "https://github.com/py-pdf/pypdf/files/10367412/pdfa.pdf"
+    name = "form_a.pdf"
+    reader1 = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader1.add_form_topname("form_a")
+    writer.append(reader1)
+
+    url = "https://github.com/py-pdf/pypdf/files/10367413/pdfb.pdf"
+    name = "form_b.pdf"
+    reader2 = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader2.add_form_topname("form_b")
+    writer.append(reader2)
+
+    b = BytesIO()
+    writer.write(b)
+    reader = PdfReader(b)
+    assert len(reader.get_form_text_fields()) == len(
+        reader1.get_form_text_fields()
+    ) + len(reader2.get_form_text_fields())
+
+
+def test_extra_test_iss1541():
+    url = "https://github.com/py-pdf/pypdf/files/10418158/tst_iss1541.pdf"
+    name = "tst_iss1541.pdf"
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data, strict=False)
+    reader.pages[0].extract_text()
+
+    cs = ContentStream(reader.pages[0]["/Contents"], None, None)
+    cs.operations.insert(-1, ([], b"EMC"))
+    bu = BytesIO()
+    cs.write_to_stream(bu, None)
+    bu.seek(0)
+    ContentStream(read_object(bu, None, None), None, None).operations
+
+    cs = ContentStream(reader.pages[0]["/Contents"], None, None)
+    cs.operations.insert(-1, ([], b"E!C"))
+    bu = BytesIO()
+    cs.write_to_stream(bu, None)
+    bu.seek(0)
+    with pytest.raises(PdfReadError) as exc:
+        ContentStream(read_object(bu, None, None), None, None).operations
+    assert exc.value.args[0] == "Unexpected end of stream"
+
+    buf2 = BytesIO(data.getbuffer())
+    reader = PdfReader(
+        BytesIO(bytes(buf2.getbuffer()).replace(b"EI \n", b"E! \n")), strict=False
+    )
+    with pytest.raises(PdfReadError) as exc:
+        reader.pages[0].extract_text()
+    assert exc.value.args[0] == "Unexpected end of stream"

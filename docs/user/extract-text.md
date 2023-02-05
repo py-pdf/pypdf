@@ -52,7 +52,7 @@ page = reader.pages[3]
 parts = []
 
 
-def visitor_body(text, cm, tm, fontDict, fontSize):
+def visitor_body(text, cm, tm, font_dict, font_size):
     y = tm[5]
     if y > 50 and y < 720:
         parts.append(text)
@@ -104,6 +104,8 @@ Unfortunately in complicated PDF documents the coordinates given to the visitor-
 
 ## Why Text Extraction is hard
 
+### Unclear Objective
+
 Extracting text from a PDF can be pretty tricky. In several cases there is no
 clear answer what the expected result should look like:
 
@@ -151,6 +153,46 @@ the way PDF stores information just makes it hard to achieve that:
 And finally there are issues that pypdf will deal with. If you find such a
 text extraction bug, please share the PDF with us so we can work on it!
 
+### Missing Semantic Layer
+
+The PDF file format is all about producing the desired visual result for
+printing. It was not created for parsing the content. PDF files don't contain a
+semantic layer.
+
+Specifically, there is no information what the header, footer, page numbers,
+tables, and paragraphs are. The visual appearence is there and people might
+find heuristics to make educated guesses, but there is no way of being certain.
+
+This is a shortcoming of the PDF file format, not of pypdf.
+
+It would be possible to apply machine learning on PDF documents to make good
+heuristics, but that will not be part of pypdf. However, pypdf could be used to
+feed such a machine learning system with the relevant information.
+
+### Whitespaces
+
+The PDF format is meant for printing. It is not designed to be read by machines.
+The text within a PDF document is absolutely positioned, meaning that every single
+character could be positioned on the page.
+
+The text
+
+> This is a test document by Ethan Nelson.
+
+can be represented as
+
+> [(This is a )9(te)-3(st)9( do)-4(cu)13(m)-4(en)12(t )-3(b)3(y)-3( )9(Et)-2(h)3(an)4( Nels)13(o)-5(n)3(.)] TJ
+
+Where the numbers are adjustments of vertical space. This representation used
+within the PDF file makes it very hard to guarantee correct whitespaces.
+
+
+More information:
+
+* [issue #1507](https://github.com/py-pdf/pypdf/issues/1507)
+* [Negative numbers in PDF content stream text object](https://stackoverflow.com/a/28203655/562769)
+* Mark Stephens: [Understanding PDF text objects](https://blog.idrsolutions.com/understanding-pdf-text-objects/), 2010.
+
 ## OCR vs Text Extraction
 
 Optical Character Recognition (OCR) is the process of extracting text from
@@ -186,7 +228,6 @@ Hence I would distinguish three types of PDF documents:
   in the background of the image. Hence you can copy the text, but it still looks
   like a scan. If you zoom in enough, you can recognize pixels.
 
-
 ### Can we just always use OCR?
 
 You might now wonder if it makes sense to just always use OCR software. If the
@@ -204,8 +245,6 @@ comes to characters which are easy to confuse such as `oO0ö`.
 
 pypdf also has an edge when it comes to characters which are rare, e.g.
 🤰. OCR software will not be able to recognize smileys correctly.
-
-
 
 ## Attempts to prevent text extraction
 
