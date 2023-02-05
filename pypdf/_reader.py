@@ -491,8 +491,6 @@ class PdfReader:
         Returns:
             A :class:`PageObject<pypdf._page.PageObject>` instance.
         """
-        # ensure that we're not trying to access an encrypted PDF
-        # assert not self.trailer.has_key(TK.ENCRYPT)
         if self.flattened_pages is None:
             self._flatten()
         assert self.flattened_pages is not None, "hint for mypy"
@@ -1041,11 +1039,11 @@ class PdfReader:
                 outline_item[NameObject("/C")] = ArrayObject(FloatObject(c) for c in node["/C"])  # type: ignore
             if "/F" in node:
                 # specifies style characteristics bold and/or italic
-                # 1=italic, 2=bold, 3=both
+                # with 1=italic, 2=bold, 3=both
                 outline_item[NameObject("/F")] = node["/F"]
             if "/Count" in node:
                 # absolute value = num. visible children
-                # positive = open/unfolded, negative = closed/folded
+                # with positive = open/unfolded, negative = closed/folded
                 outline_item[NameObject("/Count")] = node["/Count"]
         outline_item.node = node
         return outline_item
@@ -1869,11 +1867,6 @@ class PdfReader:
             line += stream.read(2)  # 1 char already read, +2 to check "obj"
             if line.lower() != b"obj":
                 return 3
-            # while stream.read(1) in b" \t\r\n":
-            #     pass
-            # line = stream.read(256)  # check that it is xref obj
-            # if b"/xref" not in line.lower():
-            #     return 4
         return 0
 
     def _rebuild_xref_table(self, stream: StreamType) -> None:
@@ -1901,11 +1894,8 @@ class PdfReader:
         get_entry: Callable[[int], Union[int, Tuple[int, ...]]],
         used_before: Callable[[int, Union[int, Tuple[int, ...]]], bool],
     ) -> None:
-        # last_end = 0
         for start, size in self._pairs(idx_pairs):
             # The subsections must increase
-            # assert start >= last_end
-            # last_end = start + size
             for num in range(start, start + size):
                 # The first entry is the type
                 xref_type = get_entry(0)
@@ -2070,6 +2060,75 @@ class PdfReader:
                         es = zlib.decompress(field._data)
                         retval[tag] = es
         return retval
+
+    def add_form_topname(self, name: str) -> Optional[DictionaryObject]:
+        """
+        Add a top level form that groups all form fields below it.
+
+        Args:
+            name: text string of the "/T" Attribute of the created object
+
+        Returns:
+            The created object. ``None`` means no object was created.
+        """
+        catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
+
+        if "/AcroForm" not in catalog or not isinstance(
+            catalog["/AcroForm"], DictionaryObject
+        ):
+            return None
+        acroform = cast(DictionaryObject, catalog[NameObject("/AcroForm")])
+        if "/Fields" not in acroform:
+            # TODO: :No error returns but may be extended for XFA Forms
+            return None
+
+        interim = DictionaryObject()
+        interim[NameObject("/T")] = TextStringObject(name)
+        interim[NameObject("/Kids")] = acroform[NameObject("/Fields")]
+        self.cache_indirect_object(
+            0,
+            max([i for (g, i) in self.resolved_objects.keys() if g == 0]) + 1,
+            interim,
+        )
+        arr = ArrayObject()
+        arr.append(interim.indirect_reference)
+        acroform[NameObject("/Fields")] = arr
+        for o in cast(ArrayObject, interim["/Kids"]):
+            obj = o.get_object()
+            if "/Parent" in obj:
+                logger_warning(
+                    f"Top Level Form Field {obj.indirect_reference} have a non-expected parent",
+                    __name__,
+                )
+            obj[NameObject("/Parent")] = interim.indirect_reference
+        return interim
+
+    def rename_form_topname(self, name: str) -> Optional[DictionaryObject]:
+        """
+        Rename top level form field that all form fields below it.
+
+        Args:
+            name: text string of the "/T" field of the created object
+
+        Returns:
+            The modified object. ``None`` means no object was modified.
+        """
+        catalog = cast(DictionaryObject, self.trailer[TK.ROOT])
+
+        if "/AcroForm" not in catalog or not isinstance(
+            catalog["/AcroForm"], DictionaryObject
+        ):
+            return None
+        acroform = cast(DictionaryObject, catalog[NameObject("/AcroForm")])
+        if "/Fields" not in acroform:
+            return None
+
+        interim = cast(
+            DictionaryObject,
+            cast(ArrayObject, acroform[NameObject("/Fields")])[0].get_object(),
+        )
+        interim[NameObject("/T")] = TextStringObject(name)
+        return interim
 
 
 class PdfFileReader(PdfReader):  # deprecated

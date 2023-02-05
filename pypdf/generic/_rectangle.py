@@ -1,4 +1,3 @@
-import decimal
 from typing import Any, List, Tuple, Union
 
 from .._utils import deprecation_no_replacement, deprecation_with_replacement
@@ -116,8 +115,11 @@ class RectangleObject(ArrayObject):
         return self.bottom
 
     @property
-    def lower_left(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
-        """Lower left coordinate of this box in (x,y) form."""
+    def lower_left(self) -> Tuple[float, float]:
+        """
+        Property to read and modify the lower left coordinate of this box
+        in (x,y) form.
+        """
         return self.left, self.bottom
 
     @lower_left.setter
@@ -125,8 +127,11 @@ class RectangleObject(ArrayObject):
         self[0], self[1] = (self._ensure_is_number(x) for x in value)
 
     @property
-    def lower_right(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
-        """Lower right coordinate of this box in (x,y) form."""
+    def lower_right(self) -> Tuple[float, float]:
+        """
+        Property to read and modify the lower right coordinate of this box
+        in (x,y) form.
+        """
         return self.right, self.bottom
 
     @lower_right.setter
@@ -134,8 +139,11 @@ class RectangleObject(ArrayObject):
         self[2], self[1] = (self._ensure_is_number(x) for x in value)
 
     @property
-    def upper_left(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
-        """Upper left coordinate of this box in (x,y) form."""
+    def upper_left(self) -> Tuple[float, float]:
+        """
+        Property to read and modify the upper left coordinate of this box
+        in (x,y) form.
+        """
         return self.left, self.top
 
     @upper_left.setter
@@ -143,8 +151,11 @@ class RectangleObject(ArrayObject):
         self[0], self[3] = (self._ensure_is_number(x) for x in value)
 
     @property
-    def upper_right(self) -> Tuple[decimal.Decimal, decimal.Decimal]:
-        """Upper right coordinate of this box in (x,y) form."""
+    def upper_right(self) -> Tuple[float, float]:
+        """
+        Property to read and modify the upper right coordinate of this box
+        in (x,y) form.
+        """
         return self.right, self.top
 
     @upper_right.setter
@@ -153,25 +164,25 @@ class RectangleObject(ArrayObject):
 
     def getLowerLeft(
         self,
-    ) -> Tuple[decimal.Decimal, decimal.Decimal]:  # deprecated
+    ) -> Tuple[float, float]:  # deprecated
         deprecation_with_replacement("getLowerLeft", "lower_left", "3.0.0")
         return self.lower_left
 
     def getLowerRight(
         self,
-    ) -> Tuple[decimal.Decimal, decimal.Decimal]:  # deprecated
+    ) -> Tuple[float, float]:  # deprecated
         deprecation_with_replacement("getLowerRight", "lower_right", "3.0.0")
         return self.lower_right
 
     def getUpperLeft(
         self,
-    ) -> Tuple[decimal.Decimal, decimal.Decimal]:  # deprecated
+    ) -> Tuple[float, float]:  # deprecated
         deprecation_with_replacement("getUpperLeft", "upper_left", "3.0.0")
         return self.upper_left
 
     def getUpperRight(
         self,
-    ) -> Tuple[decimal.Decimal, decimal.Decimal]:  # deprecated
+    ) -> Tuple[float, float]:  # deprecated
         deprecation_with_replacement("getUpperRight", "upper_right", "3.0.0")
         return self.upper_right
 
@@ -192,65 +203,57 @@ class RectangleObject(ArrayObject):
         self[2], self[3] = (self._ensure_is_number(x) for x in value)
 
     @property
-    def width(self) -> decimal.Decimal:
+    def width(self) -> float:
         return self.right - self.left
 
-    def getWidth(self) -> decimal.Decimal:  # deprecated
+    def getWidth(self) -> float:  # deprecated
         deprecation_with_replacement("getWidth", "width", "3.0.0")
         return self.width
 
     @property
-    def height(self) -> decimal.Decimal:
+    def height(self) -> float:
         return self.top - self.bottom
 
-    def getHeight(self) -> decimal.Decimal:  # deprecated
+    def getHeight(self) -> float:  # deprecated
         deprecation_with_replacement("getHeight", "height", "3.0.0")
         return self.height
 
     @property
-    def lowerLeft(self) -> Tuple[decimal.Decimal, decimal.Decimal]:  # deprecated
+    def lowerLeft(self) -> Tuple[float, float]:  # deprecated
         deprecation_with_replacement("lowerLeft", "lower_left", "3.0.0")
         return self.lower_left
 
     @lowerLeft.setter
-    def lowerLeft(
-        self, value: Tuple[decimal.Decimal, decimal.Decimal]
-    ) -> None:  # deprecated
+    def lowerLeft(self, value: Tuple[float, float]) -> None:  # deprecated
         deprecation_with_replacement("lowerLeft", "lower_left", "3.0.0")
         self.lower_left = value
 
     @property
-    def lowerRight(self) -> Tuple[decimal.Decimal, decimal.Decimal]:  # deprecated
+    def lowerRight(self) -> Tuple[float, float]:  # deprecated
         deprecation_with_replacement("lowerRight", "lower_right", "3.0.0")
         return self.lower_right
 
     @lowerRight.setter
-    def lowerRight(
-        self, value: Tuple[decimal.Decimal, decimal.Decimal]
-    ) -> None:  # deprecated
+    def lowerRight(self, value: Tuple[float, float]) -> None:  # deprecated
         deprecation_with_replacement("lowerRight", "lower_right", "3.0.0")
         self.lower_right = value
 
     @property
-    def upperLeft(self) -> Tuple[decimal.Decimal, decimal.Decimal]:  # deprecated
+    def upperLeft(self) -> Tuple[float, float]:  # deprecated
         deprecation_with_replacement("upperLeft", "upper_left", "3.0.0")
         return self.upper_left
 
     @upperLeft.setter
-    def upperLeft(
-        self, value: Tuple[decimal.Decimal, decimal.Decimal]
-    ) -> None:  # deprecated
+    def upperLeft(self, value: Tuple[float, float]) -> None:  # deprecated
         deprecation_with_replacement("upperLeft", "upper_left", "3.0.0")
         self.upper_left = value
 
     @property
-    def upperRight(self) -> Tuple[decimal.Decimal, decimal.Decimal]:  # deprecated
+    def upperRight(self) -> Tuple[float, float]:  # deprecated
         deprecation_with_replacement("upperRight", "upper_right", "3.0.0")
         return self.upper_right
 
     @upperRight.setter
-    def upperRight(
-        self, value: Tuple[decimal.Decimal, decimal.Decimal]
-    ) -> None:  # deprecated
+    def upperRight(self, value: Tuple[float, float]) -> None:  # deprecated
         deprecation_with_replacement("upperRight", "upper_right", "3.0.0")
         self.upper_right = value

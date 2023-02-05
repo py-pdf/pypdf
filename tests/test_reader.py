@@ -820,6 +820,34 @@ def test_read_form_416():
     assert len(fields) > 0
 
 
+def test_form_topname_with_and_without_acroform(caplog):
+    r = PdfReader(RESOURCE_ROOT / "crazyones.pdf")
+    r.add_form_topname("no")
+    r.rename_form_topname("renamed")
+    assert "/AcroForm" not in r.trailer["/Root"]
+    r.trailer["/Root"][NameObject("/AcroForm")] = DictionaryObject()
+    r.add_form_topname("toto")
+    r.rename_form_topname("renamed")
+    assert len(r.get_fields()) == 0
+
+    r = PdfReader(RESOURCE_ROOT / "form.pdf")
+    r.add_form_topname("top")
+    flds = r.get_fields()
+    assert "top" in flds
+    assert "top.foo" in flds
+    r.rename_form_topname("renamed")
+    flds = r.get_fields()
+    assert "renamed" in flds
+    assert "renamed.foo" in flds
+
+    r = PdfReader(RESOURCE_ROOT / "form.pdf")
+    r.get_fields()["foo"].indirect_reference.get_object()[
+        NameObject("/Parent")
+    ] = DictionaryObject()
+    r.add_form_topname("top")
+    assert "have a non-expected parent" in caplog.text
+
+
 @pytest.mark.external
 def test_extract_text_xref_issue_2(caplog):
     # pdf/0264cf510015b2a4b395a15cb23c001e.pdf

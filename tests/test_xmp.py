@@ -184,23 +184,24 @@ def test_issue585():
     assert exc.value.args[0].startswith("XML in XmpInformation was invalid")
 
 
-# def test_getter_bag():
-#     f = pypdf.xmp._getter_bag("namespace", "name")
-#     class Tst:  # to replace pdf
-#         strict = False
+def test_getter_bag():
+    f = pypdf.xmp._getter_bag("namespace", "name")
 
-#     reader = PdfReader(RESOURCE_ROOT / "commented-xmp.pdf")
-#     xmp_info = reader.xmp_metadata
-#     # <?xpacket begin='ï»¿' id='W5M0MpCehiHzreSzNTczkc9d'?>
-#     # <x:xmpmeta xmlns:x='adobe:ns:meta/' x:xmptk='Image::ExifTool 11.88'>
-#     # <rdf:RDF xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'>
+    class Tst:  # to replace pdf
+        strict = False
 
-#     # <rdf:Description rdf:about=''
-#     # xmlns:tiff='http://ns.adobe.com/tiff/1.0/'>
-#     # <tiff:Artist>me</tiff:Artist>
-#     # </rdf:Description>
-#     # </rdf:RDF>
-#     # </x:xmpmeta>
+    reader = PdfReader(RESOURCE_ROOT / "commented-xmp.pdf")
+    xmp_info = reader.xmp_metadata
+    # <?xpacket begin='ï»¿' id='W5M0MpCehiHzreSzNTczkc9d'?>
+    # <x:xmpmeta xmlns:x='adobe:ns:meta/' x:xmptk='Image::ExifTool 11.88'>
+    # <rdf:RDF xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'>
 
-#     assert xmp_info is not None
-#     f(xmp_info)
+    # <rdf:Description rdf:about=''
+    # xmlns:tiff='http://ns.adobe.com/tiff/1.0/'>
+    # <tiff:Artist>me</tiff:Artist>
+    # </rdf:Description>
+    # </rdf:RDF>
+    # </x:xmpmeta>
+
+    assert xmp_info is not None
+    f(xmp_info)

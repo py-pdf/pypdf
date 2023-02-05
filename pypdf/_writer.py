@@ -252,6 +252,20 @@ class PdfWriter:
         deprecation_with_replacement("getObject", "get_object", "3.0.0")
         return self.get_object(ido)
 
+    def _replace_object(
+        self,
+        indirect_reference: Union[int, IndirectObject],
+        obj: PdfObject,
+    ) -> PdfObject:
+        if isinstance(indirect_reference, IndirectObject):
+            assert indirect_reference.pdf == self
+            indirect_reference = indirect_reference.idnum
+        self._objects[indirect_reference - 1] = obj
+        return self._objects[indirect_reference - 1]
+        if indirect_reference.pdf != self:
+            raise ValueError("pdf must be self")
+        return self._objects[indirect_reference.idnum - 1]  # type: ignore
+
     def _add_page(
         self,
         page: PageObject,
@@ -273,7 +287,6 @@ class PdfWriter:
         except Exception:
             pass
         page = cast("PageObject", page_org.clone(self, False, excluded_keys))
-        # page_ind = self._add_object(page)
         if page_org.pdf is not None:
             other = page_org.pdf.pdf_header
             if isinstance(other, str):
@@ -452,8 +465,7 @@ class PdfWriter:
                 and previous page does not exist.
         """
         page = PageObject.create_blank_page(self, width, height)
-        self.add_page(page)
-        return page
+        return self.add_page(page)
 
     def addBlankPage(
         self, width: Optional[float] = None, height: Optional[float] = None
@@ -579,7 +591,6 @@ class PdfWriter:
             names[NameObject("/JavaScript")] = DictionaryObject(
                 {NameObject("/Names"): ArrayObject()}
             )
-            # cast(DictionaryObject, names[NameObject("/JavaScript")])[NameObject("/Names")] = ArrayObject()
         js_list = cast(
             ArrayObject, cast(DictionaryObject, names["/JavaScript"])["/Names"]
         )
@@ -1832,6 +1843,8 @@ class PdfWriter:
         )
         for page in pages:
             page_ref = cast(DictionaryObject, self.get_object(page))
+            if "/Contents" not in page_ref:
+                return
             content = page_ref["/Contents"].get_object()
             if not isinstance(content, ContentStream):
                 content = ContentStream(content, page_ref)
@@ -2451,10 +2464,22 @@ class PdfWriter:
                     excluded_fields = import_outline
                 import_outline = pages
             pages = outline_item
-            self.merge(None, fileobj, None, pages, import_outline, excluded_fields)
+            self.merge(
+                None,
+                fileobj,
+                None,
+                pages,
+                import_outline,
+                excluded_fields,
+            )
         else:  # if isinstance(outline_item,str):
             self.merge(
-                None, fileobj, outline_item, pages, import_outline, excluded_fields
+                None,
+                fileobj,
+                outline_item,
+                pages,
+                import_outline,
+                excluded_fields,
             )
 
     @deprecation_bookmark(bookmark="outline_item", import_bookmarks="import_outline")
@@ -2539,7 +2564,6 @@ class PdfWriter:
         )  # need for the outline processing below
         for dest in reader._namedDests.values():
             arr = dest.dest_array
-            # try:
             if isinstance(dest["/Page"], NullObject):
                 pass  # self.add_named_destination_array(dest["/Title"],arr)
             elif dest["/Page"].indirect_reference.idnum in srcpages:
@@ -2547,8 +2571,6 @@ class PdfWriter:
                     dest["/Page"].indirect_reference.idnum
                 ].indirect_reference
                 self.add_named_destination_array(dest["/Title"], arr)
-            # except Exception as e:
-            #    logger_warning(f"can not insert {dest} : {e.msg}",__name__)
 
         outline_item_typ: TreeObject
         if outline_item is not None:
@@ -2580,6 +2602,34 @@ class PdfWriter:
                 if len(lst) > 0:
                     pag[NameObject("/Annots")] = lst
                 self.clean_page(pag)
+
+        if "/AcroForm" in cast(DictionaryObject, reader.trailer["/Root"]):
+            if "/AcroForm" not in self._root_object:
+                self._root_object[NameObject("/AcroForm")] = (
+                    cast(
+                        DictionaryObject,
+                        cast(DictionaryObject, reader.trailer["/Root"])["/AcroForm"],
+                    )
+                    .clone(self, False, ("/Fields",))
+                    .indirect_reference
+                )
+                arr = ArrayObject()
+            else:
+                arr = cast(
+                    ArrayObject,
+                    cast(DictionaryObject, self._root_object["/AcroForm"])["/Fields"],
+                )
+            trslat = self._id_translated[id(reader)]
+            for f in reader.trailer["/Root"]["/AcroForm"]["/Fields"]:  # type: ignore
+                try:
+                    ind = IndirectObject(trslat[f.idnum], 0, self)
+                    if ind not in arr:
+                        arr.append(ind)
+                except KeyError:
+                    pass
+            cast(DictionaryObject, self._root_object["/AcroForm"])[
+                NameObject("/Fields")
+            ] = arr
 
         if "/B" not in excluded_fields:
             self.add_filtered_articles("", srcpages, reader)
@@ -2687,8 +2737,6 @@ class PdfWriter:
             return None
         if isinstance(page, int):
             _i = reader.pages[page].indirect_reference
-        # elif isinstance(page, PageObject):
-        #    _i = page.indirect_reference
         elif isinstance(page, DictionaryObject) and page.get("/Type", "") == "/Page":
             _i = page.indirect_reference
         elif isinstance(page, IndirectObject):
@@ -2767,7 +2815,11 @@ class PdfWriter:
             A list of destination objects.
         """
         new_outline = []
+        if node is None:
+            node = NullObject()
         node = node.get_object()
+        if isinstance(node, NullObject):
+            node = DictionaryObject()
         if node.get("/Type", "") == "/Outlines" or "/Title" not in node:
             node = node.get("/First", None)
             if node is not None:
@@ -2798,10 +2850,6 @@ class PdfWriter:
         if not isinstance(dest["/Page"], NullObject):
             if dest.node is not None and "/A" in dest.node:
                 n_ol[NameObject("/A")] = dest.node["/A"].clone(self)
-            # elif "/D" in dest.node:
-            #    n_ol[NameObject("/Dest")] = dest.node["/D"].clone(self)
-            # elif "/Dest" in dest.node:
-            #    n_ol[NameObject("/Dest")] = dest.node["/Dest"].clone(self)
             else:
                 n_ol[NameObject("/Dest")] = dest.dest_array
         # TODO: /SE
@@ -2822,7 +2870,7 @@ class PdfWriter:
     ) -> None:
         for dest in outlines:
             # TODO  : can be improved to keep A and SE entries (ignored for the moment)
-            # np=self.add_outline_item_destination(dest,parent,before)
+            # with np=self.add_outline_item_destination(dest,parent,before)
             if dest.get("/Type", "") == "/Outlines" or "/Title" not in dest:
                 np = parent
             else:

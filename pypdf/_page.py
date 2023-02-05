@@ -315,7 +315,9 @@ class Transformation:
         return f"Transformation(ctm={self.ctm})"
 
     def apply_on(
-        self, pt: Union[Tuple[Decimal, Decimal], Tuple[float, float], List[float]]
+        self,
+        pt: Union[Tuple[float, float], List[float]],
+        as_object: bool = False,
     ) -> Union[Tuple[float, float], List[float]]:
         """
         Apply the transformation matrix on the given point.
@@ -326,9 +328,10 @@ class Transformation:
         Returns:
             A tuple or list representing the transformed point in the form (x', y')
         """
+        typ = FloatObject if as_object else float
         pt1 = (
-            float(pt[0]) * self.ctm[0] + float(pt[1]) * self.ctm[2] + self.ctm[4],
-            float(pt[0]) * self.ctm[1] + float(pt[1]) * self.ctm[3] + self.ctm[5],
+            typ(float(pt[0]) * self.ctm[0] + float(pt[1]) * self.ctm[2] + self.ctm[4]),
+            typ(float(pt[0]) * self.ctm[1] + float(pt[1]) * self.ctm[3] + self.ctm[5]),
         )
         return list(pt1) if isinstance(pt, list) else pt1
 
@@ -576,12 +579,22 @@ class PageObject(DictionaryObject):
         deprecation_with_replacement("rotateCounterClockwise", "rotate", "3.0.0")
         return self.rotate(-angle)
 
-    @staticmethod
     def _merge_resources(
-        res1: DictionaryObject, res2: DictionaryObject, resource: Any
+        self,
+        res1: DictionaryObject,
+        res2: DictionaryObject,
+        resource: Any,
+        new_res1: bool = True,
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-        new_res = DictionaryObject()
-        new_res.update(res1.get(resource, DictionaryObject()).get_object())
+        try:
+            assert isinstance(self.indirect_reference, IndirectObject)
+            pdf = self.indirect_reference.pdf
+            is_pdf_writer = hasattr(
+                pdf, "_add_object"
+            )  # ---------- expect isinstance(pdf,PdfWriter)
+        except (AssertionError, AttributeError):
+            pdf = None
+            is_pdf_writer = False
 
         def compute_unique_key(base_key: str) -> Tuple[str, bool]:
             """
@@ -612,11 +625,16 @@ class PageObject(DictionaryObject):
                 idx += 1
             return computed_key, False
 
+        if new_res1:
+            new_res = DictionaryObject()
+            new_res.update(res1.get(resource, DictionaryObject()).get_object())
+        else:
+            new_res = cast(DictionaryObject, res1[resource])
         page2res = cast(
             DictionaryObject, res2.get(resource, DictionaryObject()).get_object()
         )
         rename_res = {}
-        for key in sorted(page2res.keys()):
+        for key in page2res.keys():
             unique_key, same_value = compute_unique_key(key)
             newname = NameObject(unique_key)
             if key != unique_key:
@@ -624,9 +642,18 @@ class PageObject(DictionaryObject):
                 rename_res[key] = newname
 
             if not same_value:
-                # the value wasn't already recorded
-                new_res[newname] = page2res[key]
-
+                if is_pdf_writer:
+                    new_res[newname] = page2res.raw_get(key).clone(pdf)
+                    try:
+                        new_res[newname] = new_res[key].indirect_reference
+                    except AttributeError:
+                        pass
+                else:
+                    new_res[newname] = page2res.raw_get(key)
+            lst = sorted(new_res.items())
+            new_res.clear()
+            for l in lst:
+                new_res[l[0]] = l[1]
         return new_res, rename_res
 
     @staticmethod
@@ -739,11 +766,22 @@ class PageObject(DictionaryObject):
         page2: "PageObject",
         page2transformation: Optional[Callable[[Any], ContentStream]] = None,
         ctm: Optional[CompressedTransformationMatrix] = None,
+        over: bool = True,
         expand: bool = False,
     ) -> None:
         # First we work on merging the resource dictionaries.  This allows us
         # to find out what symbols in the content streams we might need to
         # rename.
+        try:
+            assert isinstance(self.indirect_reference, IndirectObject)
+            if hasattr(
+                self.indirect_reference.pdf, "_add_object"
+            ):  # ---------- to detect PdfWriter
+                return self._merge_page_writer(
+                    page2, page2transformation, ctm, over, expand
+                )
+        except (AssertionError, AttributeError):
+            pass
 
         new_resources = DictionaryObject()
         rename = {}
@@ -773,7 +811,7 @@ class PageObject(DictionaryObject):
             RES.SHADING,
             RES.PROPERTIES,
         ):
-            new, newrename = PageObject._merge_resources(
+            new, newrename = self._merge_resources(
                 original_resources, page2resources, res
             )
             if new:
@@ -826,7 +864,10 @@ class PageObject(DictionaryObject):
                 page2content, rename, self.pdf
             )
             page2content = PageObject._push_pop_gs(page2content, self.pdf)
-            new_content_array.append(page2content)
+            if over:
+                new_content_array.append(page2content)
+            else:
+                new_content_array.insert(0, page2content)
 
         # if expanding the page to fit a new page, calculate the new media box size
         if expand:
@@ -835,6 +876,146 @@ class PageObject(DictionaryObject):
         self[NameObject(PG.CONTENTS)] = ContentStream(new_content_array, self.pdf)
         self[NameObject(PG.RESOURCES)] = new_resources
         self[NameObject(PG.ANNOTS)] = new_annots
+
+    def _merge_page_writer(
+        self,
+        page2: "PageObject",
+        page2transformation: Optional[Callable[[Any], ContentStream]] = None,
+        ctm: Optional[CompressedTransformationMatrix] = None,
+        over: bool = True,
+        expand: bool = False,
+    ) -> None:
+        # First we work on merging the resource dictionaries.  This allows us
+        # to find out what symbols in the content streams we might need to
+        # rename.
+        assert isinstance(self.indirect_reference, IndirectObject)
+        pdf = self.indirect_reference.pdf
+
+        rename = {}
+        original_resources = cast(DictionaryObject, self[PG.RESOURCES].get_object())
+        page2resources = cast(DictionaryObject, page2[PG.RESOURCES].get_object())
+
+        for res in (
+            RES.EXT_G_STATE,
+            RES.FONT,
+            RES.XOBJECT,
+            RES.COLOR_SPACE,
+            RES.PATTERN,
+            RES.SHADING,
+            RES.PROPERTIES,
+        ):
+            if res in page2resources:
+                if res not in original_resources:
+                    original_resources[NameObject(res)] = DictionaryObject()
+                _, newrename = self._merge_resources(
+                    original_resources, page2resources, res, False
+                )
+                rename.update(newrename)
+        # Combine /ProcSet sets.
+        if RES.PROC_SET in page2resources:
+            if RES.PROC_SET not in original_resources:
+                original_resources[NameObject(RES.PROC_SET)] = ArrayObject()
+            arr = cast(ArrayObject, original_resources[RES.PROC_SET])
+            for x in cast(ArrayObject, page2resources[RES.PROC_SET]):
+                if x not in arr:
+                    arr.append(x)
+            arr.sort()
+
+        if PG.ANNOTS in page2:
+            if PG.ANNOTS not in self:
+                self[NameObject(PG.ANNOTS)] = ArrayObject()
+            annots = cast(ArrayObject, self[PG.ANNOTS].get_object())
+            if ctm is None:
+                trsf = Transformation()
+            else:
+                trsf = Transformation(ctm)
+            for a in cast(ArrayObject, page2[PG.ANNOTS]):
+                a = a.get_object()
+                aa = a.clone(pdf, ignore_fields=("/P", "/StructParent"))
+                r = cast(ArrayObject, a["/Rect"])
+                pt1 = trsf.apply_on((r[0], r[1]), True)
+                pt2 = trsf.apply_on((r[2], r[3]), True)
+                aa[NameObject("/Rect")] = ArrayObject(
+                    (
+                        min(pt1[0], pt2[0]),
+                        min(pt1[1], pt2[1]),
+                        max(pt1[0], pt2[0]),
+                        max(pt1[1], pt2[1]),
+                    )
+                )
+                if "/QuadPoints" in a:
+                    q = cast(ArrayObject, a["/QuadPoints"])
+                    aa[NameObject("/QuadPoints")] = ArrayObject(
+                        cast(tuple, trsf.apply_on((q[0], q[1]), True))
+                        + cast(tuple, trsf.apply_on((q[2], q[3]), True))
+                        + cast(tuple, trsf.apply_on((q[4], q[5]), True))
+                        + cast(tuple, trsf.apply_on((q[6], q[7]), True))
+                    )
+                try:
+                    aa[NameObject("/P")] = self.indirect_reference
+                    annots.append(aa.indirect_reference)
+                except AttributeError:
+                    pass
+
+        new_content_array = ArrayObject()
+
+        original_content = self.get_contents()
+        if original_content is not None:
+            new_content_array.append(
+                PageObject._push_pop_gs(original_content, self.pdf)
+            )
+
+        page2content = page2.get_contents()
+        if page2content is not None:
+            page2content = ContentStream(page2content, self.pdf)
+            rect = page2.trimbox
+            page2content.operations.insert(
+                0,
+                (
+                    map(
+                        FloatObject,
+                        [
+                            rect.left,
+                            rect.bottom,
+                            rect.width,
+                            rect.height,
+                        ],
+                    ),
+                    "re",
+                ),
+            )
+            page2content.operations.insert(1, ([], "W"))
+            page2content.operations.insert(2, ([], "n"))
+            if page2transformation is not None:
+                page2content = page2transformation(page2content)
+            page2content = PageObject._content_stream_rename(
+                page2content, rename, self.pdf
+            )
+            page2content = PageObject._push_pop_gs(page2content, self.pdf)
+            if over:
+                new_content_array.append(page2content)
+            else:
+                new_content_array.insert(0, page2content)
+
+        # if expanding the page to fit a new page, calculate the new media box size
+        if expand:
+            self._expand_mediabox(page2, ctm)
+
+        if PG.CONTENTS not in self:
+            self[NameObject(PG.CONTENTS)] = pdf._add_object(ContentStream(None, pdf))
+        ind = self.raw_get(PG.CONTENTS)
+        try:
+            if not isinstance(ind, IndirectObject):
+                raise KeyError
+            pdf._replace_object(ind, ContentStream(new_content_array, pdf))
+        except KeyError:
+            self[NameObject(PG.CONTENTS)] = pdf._add_object(
+                ContentStream(new_content_array, pdf)
+            )
+
+        # self[NameObject(PG.CONTENTS)] = ContentStream(new_content_array, pdf)
+        # self[NameObject(PG.RESOURCES)] = new_resources
+        # self[NameObject(PG.ANNOTS)] = new_annots
 
     def _expand_mediabox(
         self, page2: "PageObject", ctm: Optional[CompressedTransformationMatrix]
@@ -879,6 +1060,37 @@ class PageObject(DictionaryObject):
         self.mediabox.lower_left = lowerleft
         self.mediabox.upper_right = upperright
 
+    def merge_transformed_page(
+        self,
+        page2: "PageObject",
+        ctm: Union[CompressedTransformationMatrix, Transformation],
+        over: bool = True,
+        expand: bool = False,
+    ) -> None:
+        """
+        merge_transformed_page is similar to merge_page, but a transformation
+        matrix is applied to the merged stream.
+
+        Args:
+          page2: The page to be merged into this one.
+          ctm: a 6-element tuple containing the operands of the
+                 transformation matrix
+          over: set the page2 content over page1 if True(default) else under
+          expand: Whether the page should be expanded to fit the dimensions
+            of the page to be merged.
+        """
+        if isinstance(ctm, Transformation):
+            ctm = ctm.ctm
+        self._merge_page(
+            page2,
+            lambda page2Content: PageObject._add_transformation_matrix(
+                page2Content, page2.pdf, cast(CompressedTransformationMatrix, ctm)
+            ),
+            ctm,
+            over,
+            expand,
+        )
+
     def mergeTransformedPage(
         self,
         page2: "PageObject",
@@ -886,75 +1098,79 @@ class PageObject(DictionaryObject):
         expand: bool = False,
     ) -> None:  # deprecated
         """
-        mergeTransformedPage is similar to merge_page, but a transformation
-        matrix is applied to the merged stream.
+        deprecated
 
-        :param PageObject page2: The page to be merged into this one. Should be
-            an instance of :class:`PageObject<PageObject>`.
-        :param tuple ctm: a 6-element tuple containing the operands of the
-            transformation matrix
-        :param bool expand: Whether the page should be expanded to fit the dimensions
-            of the page to be merged.
+        deprecated:: 1.28.0
 
-        .. deprecated:: 1.28.0
-
-            Use :meth:`add_transformation`  and :meth:`merge_page` instead.
+            Use :meth:`merge_transformed_page`  instead.
         """
         deprecation_with_replacement(
-            "page.mergeTransformedPage(page2, ctm)",
-            "page2.add_transformation(ctm); page.merge_page(page2)",
+            "page.mergeTransformedPage(page2, ctm,expand)",
+            "page.merge_transformed_page(page2,ctm,expand)",
             "3.0.0",
         )
-        if isinstance(ctm, Transformation):
-            ctm = ctm.ctm
-        ctm = cast(CompressedTransformationMatrix, ctm)
-        self._merge_page(
-            page2,
-            lambda page2Content: PageObject._add_transformation_matrix(
-                page2Content, page2.pdf, ctm  # type: ignore[arg-type]
-            ),
-            ctm,
-            expand,
-        )
+        self.merge_transformed_page(page2, ctm, expand)
+
+    def merge_scaled_page(
+        self, page2: "PageObject", scale: float, over: bool = True, expand: bool = False
+    ) -> None:
+        """
+        merge_scaled_page is similar to merge_page, but the stream to be merged
+        is scaled by applying a transformation matrix.
+
+        Args:
+          page2: The page to be merged into this one.
+          scale: The scaling factor
+          over: set the page2 content over page1 if True(default) else under
+          expand: Whether the page should be expanded to fit the
+            dimensions of the page to be merged.
+        """
+        op = Transformation().scale(scale, scale)
+        self.merge_transformed_page(page2, op, over, expand)
 
     def mergeScaledPage(
         self, page2: "PageObject", scale: float, expand: bool = False
     ) -> None:  # deprecated
         """
-        mergeScaledPage is similar to merge_page, but the stream to be merged
-        is scaled by applying a transformation matrix.
-
-        :param PageObject page2: The page to be merged into this one. Should be
-            an instance of :class:`PageObject<PageObject>`.
-        :param float scale: The scaling factor
-        :param bool expand: Whether the page should be expanded to fit the
-            dimensions of the page to be merged.
+        deprecated
 
         .. deprecated:: 1.28.0
 
-            Use :meth:`add_transformation` and :meth:`merge_page` instead.
+            Use :meth:`merge_scaled_page` instead.
         """
         deprecation_with_replacement(
             "page.mergeScaledPage(page2, scale, expand)",
-            "page2.add_transformation(Transformation().scale(scale)); "
-            "page.merge_page(page2, expand)",
+            "page2.merge_scaled_page(page2, scale, expand)",
             "3.0.0",
         )
-        op = Transformation().scale(scale, scale)
-        self.mergeTransformedPage(page2, op, expand)
+        self.merge_scaled_page(page2, scale, expand)
+
+    def merge_rotated_page(
+        self,
+        page2: "PageObject",
+        rotation: float,
+        over: bool = True,
+        expand: bool = False,
+    ) -> None:
+        """
+        merge_rotated_page is similar to merge_page, but the stream to be merged
+        is rotated by applying a transformation matrix.
+
+        Args:
+          page2: The page to be merged into this one.
+          rotation: The angle of the rotation, in degrees
+          over: set the page2 content over page1 if True(default) else under
+          expand: Whether the page should be expanded to fit the
+            dimensions of the page to be merged.
+        """
+        op = Transformation().rotate(rotation)
+        self.merge_transformed_page(page2, op, over, expand)
 
     def mergeRotatedPage(
         self, page2: "PageObject", rotation: float, expand: bool = False
     ) -> None:  # deprecated
         """
-        mergeRotatedPage is similar to merge_page, but the stream to be merged
-        is rotated by applying a transformation matrix.
-
-        :param PageObject page2: the page to be merged into this one. Should be
-            an instance of :class:`PageObject<PageObject>`.
-        :param float rotation: The angle of the rotation, in degrees
-        :param bool expand: Whether the page should be expanded to fit the
-            dimensions of the page to be merged.
+        deprecated
 
         .. deprecated:: 1.28.0
 
@@ -962,30 +1178,43 @@ class PageObject(DictionaryObject):
         """
         deprecation_with_replacement(
             "page.mergeRotatedPage(page2, rotation, expand)",
-            "page2.add_transformation(Transformation().rotate(rotation)); "
-            "page.merge_page(page2, expand)",
+            "page2.mergeotatedPage(page2, rotation, expand)",
             "3.0.0",
         )
-        op = Transformation().rotate(rotation)
-        self.mergeTransformedPage(page2, op, expand)
+        self.merge_rotated_page(page2, rotation, expand)
+
+    def merge_translated_page(
+        self,
+        page2: "PageObject",
+        tx: float,
+        ty: float,
+        over: bool = True,
+        expand: bool = False,
+    ) -> None:
+        """
+        mergeTranslatedPage is similar to merge_page, but the stream to be
+        merged is translated by applying a transformation matrix.
+
+        Args:
+          page2: the page to be merged into this one.
+          tx: The translation on X axis
+          ty: The translation on Y axis
+          over: set the page2 content over page1 if True(default) else under
+          expand: Whether the page should be expanded to fit the
+            dimensions of the page to be merged.
+        """
+        op = Transformation().translate(tx, ty)
+        self.merge_transformed_page(page2, op, over, expand)
 
     def mergeTranslatedPage(
         self, page2: "PageObject", tx: float, ty: float, expand: bool = False
     ) -> None:  # deprecated
         """
-        mergeTranslatedPage is similar to merge_page, but the stream to be
-        merged is translated by applying a transformation matrix.
-
-        :param PageObject page2: the page to be merged into this one. Should be
-            an instance of :class:`PageObject<PageObject>`.
-        :param float tx: The translation on X axis
-        :param float ty: The translation on Y axis
-        :param bool expand: Whether the page should be expanded to fit the
-            dimensions of the page to be merged.
+        deprecated
 
         .. deprecated:: 1.28.0
 
-            Use :meth:`add_transformation` and :meth:`merge_page` instead.
+            Use :meth:`merge_translated_page` instead.
         """
         deprecation_with_replacement(
             "page.mergeTranslatedPage(page2, tx, ty, expand)",
@@ -993,8 +1222,7 @@ class PageObject(DictionaryObject):
             "page.merge_page(page2, expand)",
             "3.0.0",
         )
-        op = Transformation().translate(tx, ty)
-        self.mergeTransformedPage(page2, op, expand)
+        self.merge_translated_page(page2, tx, ty, expand)
 
     def mergeRotatedTranslatedPage(
         self,
@@ -1005,53 +1233,31 @@ class PageObject(DictionaryObject):
         expand: bool = False,
     ) -> None:  # deprecated
         """
-        mergeRotatedTranslatedPage is similar to merge_page, but the stream to
-        be merged is rotated and translated by applying a transformation
-        matrix.
-
-        :param PageObject page2: the page to be merged into this one. Should be
-            an instance of :class:`PageObject<PageObject>`.
-        :param float tx: The translation on X axis
-        :param float ty: The translation on Y axis
-        :param float rotation: The angle of the rotation, in degrees
-        :param bool expand: Whether the page should be expanded to fit the
-            dimensions of the page to be merged.
-
         .. deprecated:: 1.28.0
 
-            Use :meth:`add_transformation` and :meth:`merge_page` instead.
+            Use :meth:`merge_transformed_page` instead.
         """
         deprecation_with_replacement(
             "page.mergeRotatedTranslatedPage(page2, rotation, tx, ty, expand)",
-            "page2.add_transformation(Transformation().rotate(rotation).translate(tx, ty)); "
-            "page.merge_page(page2, expand)",
+            "page.merge_transformed_page(page2, Transformation().rotate(rotation).translate(tx, ty), expand);",
             "3.0.0",
         )
         op = Transformation().translate(-tx, -ty).rotate(rotation).translate(tx, ty)
-        return self.mergeTransformedPage(page2, op, expand)
+        return self.merge_transformed_page(page2, op, expand)
 
     def mergeRotatedScaledPage(
         self, page2: "PageObject", rotation: float, scale: float, expand: bool = False
     ) -> None:  # deprecated
         """
-        mergeRotatedScaledPage is similar to merge_page, but the stream to be
-        merged is rotated and scaled by applying a transformation matrix.
-
-        :param PageObject page2: the page to be merged into this one. Should be
-            an instance of :class:`PageObject<PageObject>`.
-        :param float rotation: The angle of the rotation, in degrees
-        :param float scale: The scaling factor
-        :param bool expand: Whether the page should be expanded to fit the
-            dimensions of the page to be merged.
+        obsolete
 
         .. deprecated:: 1.28.0
 
-            Use :meth:`add_transformation` and :meth:`merge_page` instead.
+            Use :meth:`merge_transformed_page` instead.
         """
         deprecation_with_replacement(
             "page.mergeRotatedScaledPage(page2, rotation, scale, expand)",
-            "page2.add_transformation(Transformation().rotate(rotation).scale(scale)); "
-            "page.merge_page(page2, expand)",
+            "page.merge_transformed_page(page2, Transformation().rotate(rotation).scale(scale)); page.merge_page(page2, expand)",
             "3.0.0",
         )
         op = Transformation().rotate(rotation).scale(scale, scale)
@@ -1452,7 +1658,6 @@ class PageObject(DictionaryObject):
                 return 270
 
         def current_spacewidth() -> float:
-            # return space_scale * _space_width * char_scale
             return _space_width / 1000.0
 
         def process_operation(operator: bytes, operands: List) -> None:
@@ -1465,13 +1670,9 @@ class PageObject(DictionaryObject):
             # Table 5.4 page 405
             if operator == b"BT":
                 tm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-                # tm_prev = tm_matrix
                 output += text
                 if visitor_text is not None:
                     visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
-                # based
-                # if output != "" and output[-1]!="\n":
-                #    output += "\n"
                 text = ""
                 return None
             elif operator == b"ET":
@@ -1506,7 +1707,6 @@ class PageObject(DictionaryObject):
                     ) = cm_stack.pop()
                 except Exception:
                     cm_matrix = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-                # rtl_dir = False
             elif operator == b"cm":
                 output += text
                 if visitor_text is not None:
@@ -1523,7 +1723,6 @@ class PageObject(DictionaryObject):
                     ],
                     cm_matrix,
                 )
-                # rtl_dir = False
             # Table 5.2 page 398
             elif operator == b"Tz":
                 char_scale = float(operands[0]) / 100.0
@@ -1537,7 +1736,6 @@ class PageObject(DictionaryObject):
                     if visitor_text is not None:
                         visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
                 text = ""
-                # rtl_dir = False
                 try:
                     # charMapTuple: font_type, float(sp_width / 2), encoding,
                     #               map_dict, font-dictionary
@@ -1629,8 +1827,7 @@ class PageObject(DictionaryObject):
                             xx = ord(x)
                             # fmt: off
                             if (
-                                # cases where the current inserting order is
-                                # kept (punctuation,...)
+                                # cases where the current inserting order is kept
                                 (xx <= 0x2F)                        # punctuations but...
                                 or (0x3A <= xx and xx <= 0x40)      # numbers (x30-39)
                                 or (0x2000 <= xx and xx <= 0x206F)  # upper punctuations..
@@ -1644,10 +1841,8 @@ class PageObject(DictionaryObject):
                                 or (0xFE70 <= xx and xx <= 0xFEFF)
                                 or (CUSTOM_RTL_MIN <= xx and xx <= CUSTOM_RTL_MAX)
                             ):
-                                # print("<",xx,x)
                                 if not rtl_dir:
                                     rtl_dir = True
-                                    # print("RTL",text,"*")
                                     output += text
                                     if visitor_text is not None:
                                         visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
@@ -1657,7 +1852,6 @@ class PageObject(DictionaryObject):
                                 # print(">",xx,x,end="")
                                 if rtl_dir:
                                     rtl_dir = False
-                                    # print("LTR",text,"*")
                                     output += text
                                     if visitor_text is not None:
                                         visitor_text(text, cm_matrix, tm_matrix, cmap[3], font_size)
@@ -1796,7 +1990,6 @@ class PageObject(DictionaryObject):
                 try:
                     xobj = resources_dict["/XObject"]
                     if xobj[operands[0]]["/Subtype"] != "/Image":  # type: ignore
-                        # output += text
                         text = self.extract_xform_text(
                             xobj[operands[0]],  # type: ignore
                             orientations,

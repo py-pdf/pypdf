@@ -140,8 +140,7 @@ def parse_encoding(
     enc: Union(str, DictionaryObject) = ft["/Encoding"].get_object()  # type: ignore
     if isinstance(enc, str):
         try:
-            # allready done :
-            #       enc = NameObject.unnumber(enc.encode()).decode()
+            # allready done : enc = NameObject.unnumber(enc.encode()).decode()
             # for #xx decoding
             if enc in charset_encoding:
                 encoding = charset_encoding[enc].copy()
