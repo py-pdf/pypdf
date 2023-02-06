@@ -2140,7 +2140,7 @@ class PdfReader:
         catalog = cast(DictionaryObject, self.trailer["/Root"])
         # From the catalog get the embedded file names
         try:
-            fileNames = cast(
+            filenames = cast(
                 ArrayObject,
                 cast(
                     DictionaryObject,
