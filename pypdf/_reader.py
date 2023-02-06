@@ -2135,7 +2135,7 @@ class PdfReader:
         Retrieves the list of filenames of file attachments.
 
         Returns:
-            dictionary of filename:bytestring
+            list of filenames
         """
         catalog = cast(DictionaryObject, self.trailer["/Root"])
         # From the catalog get the embedded file names
