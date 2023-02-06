@@ -2178,15 +2178,15 @@ class PdfReader:
             return {}
         attachments = {}
         # Loop through attachments
-        for f in fileNames:
+        for f in filenames:
             if isinstance(f, str):
                 if filename is not None and f != filename:
                     continue
                 name = f
-                dataIndex = fileNames.index(f) + 1
-                fDict = fileNames[dataIndex].get_object()
-                fData = fDict["/EF"]["/F"].get_data()
-                attachments[name] = fData
+                data_index = filenames.index(f) + 1
+                f_dict = filenames[data_index].get_object()
+                f_data = f_dict["/EF"]["/F"].get_data()
+                attachments[name] = f_data
         return attachments
 
 
