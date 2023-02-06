@@ -852,6 +852,11 @@ class PdfWriter:
         self._root = self._root_object.indirect_reference  # type: ignore[assignment]
         self._pages = self._root_object.raw_get("/Pages")
         self._flatten()
+        for p in self.flattened_pages:
+            o = self._objects[p.idnum - 1].get_object()
+            self._objects[p.idnum - 1] = PageObject(self, p)
+            for k, v in o.items():
+                self._objects[p.idnum - 1][k] = v
         self._root_object[NameObject("/Pages")][  # type: ignore[index]
             NameObject("/Kids")
         ] = self.flattened_pages
