@@ -48,6 +48,7 @@ def test_writer_clone():
 
     writer.clone_document_from_reader(reader)
     assert len(writer.pages) == 4
+    assert "PageObject" in str(type(writer.pages[0]))
 
 
 def test_writer_clone_bookmarks():
