@@ -2151,7 +2151,7 @@ class PdfReader:
             return []
         attachments_names = []
         # Loop through attachments
-        for f in fileNames:
+        for f in filenames:
             if isinstance(f, str):
                 attachments_names.append(f)
         return attachments_names
