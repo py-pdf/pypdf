@@ -1,4 +1,35 @@
 # CHANGELOG
+## Version 3.4.0, 2023-02-05
+
+NOTICE: pypdf changed the way it represents numbers parsed from PDF files.
+  pypdf<3.4.0 represented numbers as Decimal, pypdf>=3.4.0 represents them as
+  floats. Several other PDF libraries to this, as well as many PDF viewers.
+  We hope to fix issues with too high precision like this and get a speed boost.
+  In case your PDF documents rely on more than 18 decimals of precision you
+  should check if it still works as expected.
+  To clarify: This does not affect the text shown in PDF documents. It affects
+  numbers, e.g. when graphics are drawn on the PDF or very exact positions are
+  used. Typically, 5 decimals should be enough.
+
+### New Features (ENH)
+-  Enable merging forms with overlapping names (#1553)
+-  Add 'over' parameter to merge_transformend_page & co (#1567)
+
+### Bug Fixes (BUG)
+-  Fix getter of the PageObject.rotation property with an indirect object (#1602)
+-  Restore merge_transformed_page & co (#1567)
+-  Replace decimal by float (#1563)
+
+### Robustness (ROB)
+-  PdfWriter.remove_images: /Contents might not be in page_ref (#1598)
+
+### Developer Experience (DEV)
+-  Introduce ruff (#1586, #1609)
+
+### Maintenance (MAINT)
+-  Remove decimal (#1608)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.3.0...3.4.0)
 
 ## Version 3.3.0, 2023-01-22
 
