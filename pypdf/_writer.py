@@ -2765,7 +2765,7 @@ class PdfWriter:
                 or "/Dest" in ano
             ):
                 if "/Dest" not in ano:
-                    outlist.append(ano.clone(self).indirect_reference)
+                    outlist.append(self._add_object(ano.clone(self)))
                 else:
                     d = ano["/Dest"]
                     if isinstance(d, str):

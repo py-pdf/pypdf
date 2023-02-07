@@ -1175,3 +1175,12 @@ def test_iss1601():
         ContentStream(in_pdf.pages[0].get_contents(), in_pdf).get_data()
         in page_1.get_contents().get_data()
     )
+
+
+def test_iss1614():
+    # test of an annotation(link) directly stored in the /Annots in the page
+    url = "https://github.com/py-pdf/pypdf/files/10669995/broke.pdf"
+    name = "iss1614.pdf"
+    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    out_pdf = PdfWriter()
+    out_pdf.append(in_pdf)
