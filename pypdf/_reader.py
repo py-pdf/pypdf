@@ -2161,6 +2161,12 @@ class PdfReader:
         Retrieves all or selected file attachments of the PDF as a dictionary of file names
         and the file data as a bytestring.
 
+        Args:
+            filename: If filename is None, then a dictionary of all attachments
+                will be returned, where the key is the filename and the value
+                is the content. Otherwise, a dictionary with just a single key
+                - the filename - and its content will be returned.
+
         Returns:
             dictionary of filename:bytestring
         """
