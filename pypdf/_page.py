@@ -1826,10 +1826,12 @@ class PageObject(DictionaryObject):
                                 ]
                             )
                         # "\u0590 - \u08FF \uFB50 - \uFDFF"
-                        for x in "".join(
-                            [cmap[1][x] if x in cmap[1] else x for x in t]
-                        ):
-                            xx = ord(x)
+                        for x in [cmap[1][x] if x in cmap[1] else x for x in t]:
+                            # x can be a sequence of bytes ; ex: habibi.pdf
+                            if len(x) == 1:
+                                xx = ord(x)
+                            else:
+                                xx = 1
                             # fmt: off
                             if (
                                 # cases where the current inserting order is kept

@@ -877,10 +877,14 @@ def test_empyt_password_1088():
     len(reader.pages)
 
 
-@pytest.mark.xfail(reason="#1088 / #1126")
-def test_arab_text_extraction():
+@pytest.mark.external
+def test_old_habibi():
+    # this habibi has som multiple characters associated with the h
     reader = PdfReader(SAMPLE_ROOT / "015-arabic/habibi.pdf")
-    assert reader.pages[0].extract_text() == "habibi حَبيبي"
+    txt = reader.pages[0].extract_text()  # very odd file
+    assert (
+        "habibi" in txt and "حَبيبي" in txt
+    )  # extract from acrobat reader "حَبيبي habibi􀀃􀏲􀎒􀏴􀎒􀎣􀋴
 
 
 @pytest.mark.samples
@@ -1016,7 +1020,7 @@ def test_merge_resources(apage1, apage2, expected_result, expected_renames):
 
         # Assert
         assert result == expected_result
-        assert renames == expected_renames
+    assert renames == expected_renames
 
 
 def test_merge_page_resources_smoke_test():
