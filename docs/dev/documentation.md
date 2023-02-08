@@ -33,7 +33,7 @@ def example(param1: int, param2: str) -> bool:
 ```
 
 * The order of sections is (1) Args (2) Returns (3) Raises (4) Examples
-* If there is no return value, remove the
+* If there is no return value, remove the 'Returns' block
 * Properties should not have any sections
 
 
