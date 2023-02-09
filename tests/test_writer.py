@@ -1184,3 +1184,8 @@ def test_iss1614():
     in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     out_pdf = PdfWriter()
     out_pdf.append(in_pdf)
+    # test for 2nd error case reported in #1614
+    url = "https://github.com/py-pdf/pypdf/files/10696390/broken.pdf"
+    name = "iss1614.2.pdf"
+    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    out_pdf.append(in_pdf)
