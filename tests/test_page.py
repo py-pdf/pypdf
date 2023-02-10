@@ -834,13 +834,32 @@ def test_empyt_password_1088():
 
 
 @pytest.mark.external
-# @pytest.mark.xfail(reason="#1088 / #1126")
-def test_arab_text_extraction():
-    # previous habibi.pdf not used anymore and can be deleted
+def test_minimal_arab_text_extraction():
     url = "https://github.com/py-pdf/pypdf/files/10567398/habibi-fixed.pdf"
     name = "habibi-fixed-020220231036.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    assert reader.pages[0].extract_text() == "habibi ﺣَﺒﯿﺒﻲ"
+    assert reader.pages[0].extract_text() == "habibi ﺣَﺒﯿﺒﻲ "
+
+
+@pytest.mark.external
+def test_ligature_arab_text_extraction():
+    url = "https://github.com/py-pdf/pypdf/files/10707635/arabic-ligature.pdf"
+    name = "habibi-fixed-021020131458.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    assert reader.pages[0].extract_text() == "ﻟﻴﺴﺖ اﻟﺒﻘﺮة اﻷﻗﻮى ﺧﻮاراً، ﻫﻲ اﻟﺒﻘﺮة اﻷﻛﺜﺮ ﻣﺪراراً "
+
+
+@pytest.mark.external
+@pytest.mark.xfail(reason="#1188 / #1126")  # https://github.com/py-pdf/pypdf/pull/1597#discussion_r1099985305
+def test_legacy_arab_text_extraction():
+    reader = PdfReader(SAMPLE_ROOT / "015-arabic/habibi.pdf")  # very odd file with "h" mapped to "حَبيبي h"
+    text = reader.pages[0].extract_text()
+    assert text == "حَبيبي habibi حَبيبي"
+
+    url = "https://drive.google.com/uc?export=download&id=1srIn4wN9rsw2NBWuQYg4jHSGPat46RqX"  # isolated "h" glyph (a ligature with bidi text???)
+    name = "habibi-odd-h-glyph-only-020820231113.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    assert reader.pages[0].extract_text() == "حَبيبي h"
 
 
 @pytest.mark.samples

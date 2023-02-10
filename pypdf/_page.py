@@ -1455,6 +1455,27 @@ class PageObject(DictionaryObject):
             # return space_scale * _space_width * char_scale
             return _space_width / 1000.0
 
+        def is_rtl_char(uc: int) -> bool:
+            return (
+                (0x0590 <= uc and uc <= 0x08FF)
+                or (0xFB1D <= uc and uc <= 0xFDFF)
+                or (0xFE70 <= uc and uc <= 0xFEFF)
+                or (CUSTOM_RTL_MIN <= uc and uc <= CUSTOM_RTL_MAX)
+            )
+
+        def is_rtl_ligature(x: str) -> bool:
+            for c in (x):
+                print(c)
+                if not is_rtl_char(ord(c)):
+                    return False
+            return True
+
+        def reverse_rtl_ligatures(d: Dict[Any, Any]) -> dict:
+            return {
+                k: v[::-1] if (len(str(v)) > 1 and is_rtl_ligature(str(v))) else v
+                for k, v in d.items()
+            }
+
         def process_operation(operator: bytes, operands: List) -> None:
             nonlocal cm_matrix, cm_stack, tm_matrix, tm_prev, output, text
             nonlocal char_scale, space_scale, _space_width, TL, font_size, cmap
@@ -1560,6 +1581,7 @@ class PageObject(DictionaryObject):
                         "???" + operands[0],
                         None,
                     )
+                cmap = (cmap[0], reverse_rtl_ligatures(cmap[1]), *cmap[2:])
                 try:
                     font_size = float(operands[1])
                 except Exception:
@@ -1638,12 +1660,7 @@ class PageObject(DictionaryObject):
                                 or xx in CUSTOM_RTL_SPECIAL_CHARS   # customized....
                             ):
                                 text = x + text if rtl_dir else text + x
-                            elif (  # right-to-left characters set
-                                (0x0590 <= xx and xx <= 0x08FF)
-                                or (0xFB1D <= xx and xx <= 0xFDFF)
-                                or (0xFE70 <= xx and xx <= 0xFEFF)
-                                or (CUSTOM_RTL_MIN <= xx and xx <= CUSTOM_RTL_MAX)
-                            ):
+                            elif is_rtl_char(xx):
                                 # print("<",xx,x)
                                 if not rtl_dir:
                                     rtl_dir = True
@@ -1691,8 +1708,7 @@ class PageObject(DictionaryObject):
                                     )
                                 text = ""
                         elif (
-                            rtl_dir is False
-                            and abs(delta_y) < f * 0.3
+                            abs(delta_y) < f * 0.3
                             and abs(delta_x) > current_spacewidth() * f * 15
                         ):
                             if (output + text)[-1] != " ":
