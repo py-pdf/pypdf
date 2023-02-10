@@ -18,6 +18,7 @@ history and [GitHubs 'Contributors' feature](https://github.com/py-pdf/pypdf/gra
 * [Hale, Joseph](https://github.com/thehale)
 * [JianzhengLuo](https://github.com/JianzhengLuo)
 * [Karvonen, Harry](https://github.com/Hatell/)
+* [Kotler, Mitchell](https://github.com/mitchelljkotler)
 * [KourFrost](https://github.com/KourFrost)
 * [Lightup1](https://github.com/Lightup1)
 * [Majumder, Jonah](https://github.com/jonahmajumder)

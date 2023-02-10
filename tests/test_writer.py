@@ -5,10 +5,11 @@ from pathlib import Path
 
 import pytest
 
-from pypdf import PageObject, PdfMerger, PdfReader, PdfWriter
+from pypdf import PageObject, PdfMerger, PdfReader, PdfWriter, Transformation
 from pypdf.errors import DeprecationError, PageSizeNotDefinedError
 from pypdf.generic import (
     ArrayObject,
+    ContentStream,
     Fit,
     IndirectObject,
     NameObject,
@@ -170,8 +171,7 @@ def writer_operate(writer: PdfWriter) -> None:
     writer.insert_blank_page(width=100, height=100)
     writer.insert_blank_page()  # without parameters
 
-    # TODO: This gives "KeyError: '/Contents'" - is that a bug?
-    # writer.removeImages()
+    writer.remove_images()
 
     writer.add_metadata({"author": "Martin Thoma"})
 
@@ -860,7 +860,7 @@ def test_colors_in_outline_item():
     reader = PdfReader(SAMPLE_ROOT / "004-pdflatex-4-pages/pdflatex-4-pages.pdf")
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
-    purple_rgb = (0.50196, 0, 0.50196)
+    purple_rgb = (0.5019607843137255, 0.0, 0.5019607843137255)
     writer.add_outline_item("First Outline Item", page_number=2, color="800080")
     writer.add_outline_item("Second Outline Item", page_number=3, color="#800080")
     writer.add_outline_item("Third Outline Item", page_number=4, color=purple_rgb)
@@ -1152,3 +1152,26 @@ def test_set_page_label():
     writer.write(target)
 
     os.remove(target)  # comment to see result
+
+
+def test_iss1601():
+    url = "https://github.com/py-pdf/pypdf/files/10579503/badges-38.pdf"
+    name = "badge-38.pdf"
+    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    out_pdf = PdfWriter()
+    page_1 = out_pdf.add_blank_page(
+        in_pdf.pages[0].mediabox[2], in_pdf.pages[0].mediabox[3]
+    )
+    page_1.merge_transformed_page(in_pdf.pages[0], Transformation())
+    assert (
+        ContentStream(in_pdf.pages[0].get_contents(), in_pdf).get_data()
+        in page_1.get_contents().get_data()
+    )
+    page_1 = out_pdf.add_blank_page(
+        in_pdf.pages[0].mediabox[2], in_pdf.pages[0].mediabox[3]
+    )
+    page_1.merge_page(in_pdf.pages[0])
+    assert (
+        ContentStream(in_pdf.pages[0].get_contents(), in_pdf).get_data()
+        in page_1.get_contents().get_data()
+    )

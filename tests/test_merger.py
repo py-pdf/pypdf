@@ -49,9 +49,6 @@ def merger_operate(merger):
     r = pypdf.PdfReader(pdf_path)
     merger.append(r, outline_item="foo", pages=list(range(len(r.pages))))
 
-    # PdfReader object with List:
-    # merger.append(pypdf.PdfReader(pdf_path), outline_item="foo")
-
     # File handle
     with open(pdf_path, "rb") as fh:
         merger.append(fh)
@@ -306,36 +303,13 @@ def test_merge_write_closed_fh_with_writer():
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     merger.append(pdf_path)
 
-    # err_closed = "close() was called and thus the writer cannot be used anymore"
-
     merger.close()
-    # with pytest.raises(RuntimeError) as exc:
     merger.write("stream1.pdf")
-    # assert exc.value.args[0] == err_closed
-
-    # with pytest.raises(RuntimeError) as exc:
     merger.add_metadata({"author": "Martin Thoma"})
-    # assert exc.value.args[0] == err_closed
-
-    # with pytest.raises(RuntimeError) as exc:
     merger.set_page_layout("/SinglePage")
-    # assert exc.value.args[0] == err_closed
-
-    # with pytest.raises(RuntimeError) as exc:
     merger.set_page_mode("/UseNone")
-    # assert exc.value.args[0] == err_closed
-
-    # with pytest.raises(RuntimeError) as exc:
-    #    merger._write_outline()
-    # assert exc.value.args[0] == err_closed
-
-    # with pytest.raises(RuntimeError) as exc:
     merger.add_outline_item("An outline item", 0)
-    # assert exc.value.args[0] == err_closed
 
-    # with pytest.raises(RuntimeError) as exc:
-    #    merger._write_dests()
-    # assert exc.value.args[0] == err_closed
     os.unlink("stream1.pdf")
 
 

@@ -148,6 +148,41 @@ def test_transformation_equivalence():
     )
 
 
+def test_transformation_equivalence2():
+    pdf_path = RESOURCE_ROOT / "labeled-edges-center-image.pdf"
+    reader_base = PdfReader(pdf_path)
+
+    pdf_path = RESOURCE_ROOT / "box.pdf"
+    reader_add = PdfReader(pdf_path)
+
+    w = PdfWriter()
+    w.append(reader_base)
+    w.pages[0].merge_transformed_page(
+        reader_add.pages[0], Transformation().scale(2).rotate(-45), False, False
+    )
+    w.pages[0].merge_transformed_page(
+        reader_add.pages[0], Transformation().scale(2).translate(100, 100), True, False
+    )
+    # No special assert: the test should be visual in a viewer; 2 box with a arrow rotated  and translated
+
+    w = PdfWriter()
+    w.append(reader_add)
+    w.pages[0].merge_transformed_page(
+        reader_base.pages[0], Transformation(), True, True
+    )
+    # No special assert: Visual check the page has been  increased and all is visible (box+graph)
+
+    pdf_path = RESOURCE_ROOT / "commented-xmp.pdf"
+    reader_comments = PdfReader(pdf_path)
+
+    w = PdfWriter()
+    w.append(reader_base)
+    w.pages[0].merge_transformed_page(
+        reader_comments.pages[0], Transformation().rotate(-15), True, True
+    )
+    # No special assert: Visual check the overlay has its comments at the good position
+
+
 def test_get_user_unit_property():
     pdf_path = RESOURCE_ROOT / "crazyones.pdf"
     reader = PdfReader(pdf_path)
@@ -246,6 +281,14 @@ def test_page_rotation():
     )
 
 
+def test_page_indirect_rotation():
+    reader = PdfReader(RESOURCE_ROOT / "indirect-rotation.pdf")
+    page = reader.pages[0]
+
+    # test rotation
+    assert page.rotation == 0
+
+
 def test_page_scale():
     op = Transformation()
     with pytest.raises(ValueError) as exc:
@@ -311,7 +354,8 @@ def test_iss_1142():
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     txt = reader.pages[3].extract_text()
     # The following text is contained in two different cells:
-    # assert txt.find("有限公司郑州分公司") > 0
+    assert txt.find("有限公司") > 0
+    assert txt.find("郑州分公司") > 0
     # 有限公司 = limited company
     # 郑州分公司 = branch office in Zhengzhou
     # First cell (see page 4/254):
@@ -920,7 +964,7 @@ def test_merge_page_reproducible_with_proc_set():
 
 
 @pytest.mark.parametrize(
-    ("page1", "page2", "expected_result", "expected_renames"),
+    ("apage1", "apage2", "expected_result", "expected_renames"),
     [
         # simple cases:
         pytest.param({}, {}, {}, {}, id="no resources"),
@@ -977,28 +1021,24 @@ def test_merge_page_reproducible_with_proc_set():
         ),
     ],
 )
-def test_merge_resources(page1, page2, expected_result, expected_renames):
-    # Arrange
-    page1 = DictionaryObject(
-        {
-            PG.RESOURCES: DictionaryObject(
-                {NameObject(k): NameObject(v) for k, v in page1.items()}
-            )
-        }
-    )
-    page2 = DictionaryObject(
-        {
-            PG.RESOURCES: DictionaryObject(
-                {NameObject(k): NameObject(v) for k, v in page2.items()}
-            )
-        }
-    )
+def test_merge_resources(apage1, apage2, expected_result, expected_renames):
+    for new_res in (False, True):
+        # Arrange
+        page1 = PageObject()
+        page1[NameObject(PG.RESOURCES)] = DictionaryObject()
+        for k, v in apage1.items():
+            page1[PG.RESOURCES][NameObject(k)] = NameObject(v)
 
-    # Act
-    result, renames = PageObject._merge_resources(page1, page2, PG.RESOURCES)
+        page2 = PageObject()
+        page2[NameObject(PG.RESOURCES)] = DictionaryObject()
+        for k, v in apage2.items():
+            page2[PG.RESOURCES][NameObject(k)] = NameObject(v)
 
-    # Assert
-    assert result == expected_result
+        # Act
+        result, renames = page1._merge_resources(page1, page2, PG.RESOURCES, new_res)
+
+        # Assert
+        assert result == expected_result
     assert renames == expected_renames
 
 
@@ -1067,3 +1107,20 @@ def test_merge_page_resources_smoke_test():
         if name in (b"page1-contents", b"page2-contents")
     ]
     assert relevant_operations == expected_operations
+
+
+def test_merge_transformed_page_into_blank():
+    url = "https://github.com/py-pdf/pypdf/files/10540507/visitcard.pdf"
+    name = "visitcard.pdf"
+    r = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    w = PdfWriter()
+    w.add_blank_page(100, 100)
+    for x in range(4):
+        for y in range(7):
+            w.pages[0].merge_translated_page(
+                r.pages[0],
+                x * r.pages[0].trimbox[2],
+                y * r.pages[0].trimbox[3],
+                True,
+                True,
+            )

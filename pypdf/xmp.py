@@ -37,26 +37,24 @@ XMP_NAMESPACE = "http://ns.adobe.com/xap/1.0/"
 PDF_NAMESPACE = "http://ns.adobe.com/pdf/1.3/"
 XMPMM_NAMESPACE = "http://ns.adobe.com/xap/1.0/mm/"
 
-# What is the PDFX namespace, you might ask?  I might ask that too.  It's
-# a completely undocumented namespace used to place "custom metadata"
+# What is the PDFX namespace, you might ask?
+# It's documented here: https://github.com/adobe/xmp-docs/raw/master/XMPSpecifications/XMPSpecificationPart3.pdf
+# This namespace is used to place "custom metadata"
 # properties, which are arbitrary metadata properties with no semantic or
-# documented meaning.  Elements in the namespace are key/value-style storage,
+# documented meaning.
+#
+# Elements in the namespace are key/value-style storage,
 # where the element name is the key and the content is the value.  The keys
 # are transformed into valid XML identifiers by substituting an invalid
 # identifier character with \u2182 followed by the unicode hex ID of the
 # original character.  A key like "my car" is therefore "my\u21820020car".
 #
-# \u2182, in case you're wondering, is the unicode character
-# \u{ROMAN NUMERAL TEN THOUSAND}, a straightforward and obvious choice for
-# escaping characters.
+# \u2182 is the unicode character \u{ROMAN NUMERAL TEN THOUSAND}
 #
-# Intentional users of the pdfx namespace should be shot on sight.  A
+# The pdfx namespace should be avoided.  A
 # custom data schema and sensical XML elements could be used instead, as is
-# suggested by Adobe's own documentation on XMP (under "Extensibility of
-# Schemas").
-#
-# Information presented here on the /pdfx/ schema is a result of limited
-# reverse engineering, and does not constitute a full specification.
+# suggested by Adobe's own documentation on XMP under "Extensibility of
+# Schemas".
 PDFX_NAMESPACE = "http://ns.adobe.com/pdfx/1.3/"
 
 iso8601 = re.compile(

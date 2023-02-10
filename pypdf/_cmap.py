@@ -140,8 +140,7 @@ def parse_encoding(
     enc: Union(str, DictionaryObject) = ft["/Encoding"].get_object()  # type: ignore
     if isinstance(enc, str):
         try:
-            # allready done :
-            #       enc = NameObject.unnumber(enc.encode()).decode()
+            # allready done : enc = NameObject.unnumber(enc.encode()).decode()
             # for #xx decoding
             if enc in charset_encoding:
                 encoding = charset_encoding[enc].copy()
@@ -345,8 +344,8 @@ def parse_bfrange(
     return None if closure_found else (a, b)
 
 
-def parse_bfchar(l: bytes, map_dict: Dict[Any, Any], int_entry: List[int]) -> None:
-    lst = [x for x in l.split(b" ") if x]
+def parse_bfchar(line: bytes, map_dict: Dict[Any, Any], int_entry: List[int]) -> None:
+    lst = [x for x in line.split(b" ") if x]
     map_dict[-1] = len(lst[0]) // 2
     while len(lst) > 1:
         map_to = ""

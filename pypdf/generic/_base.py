@@ -26,10 +26,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import codecs
-import decimal
 import hashlib
 import re
 from binascii import unhexlify
+from math import log10
 from typing import Any, Callable, List, Optional, Tuple, Union, cast
 
 from .._codecs import _pdfdoc_encoding_rev
@@ -339,17 +339,20 @@ class IndirectObject(PdfObject):
         return IndirectObject.read_from_stream(stream, pdf)
 
 
-class FloatObject(decimal.Decimal, PdfObject):
+class FloatObject(float, PdfObject):
     def __new__(
-        cls, value: Union[str, Any] = "0", context: Optional[Any] = None
+        cls, value: Union[str, Any] = "0.0", context: Optional[Any] = None
     ) -> "FloatObject":
         try:
-            return decimal.Decimal.__new__(cls, str_(value), context)
-        except Exception:
+            value = float(str_(value))
+            return float.__new__(cls, value)
+        except Exception as e:
             # If this isn't a valid decimal (happens in malformed PDFs)
             # fallback to 0
-            logger_warning(f"FloatObject ({value}) invalid; use 0.0 instead", __name__)
-            return decimal.Decimal.__new__(cls, "0.0")
+            logger_warning(
+                f"{e} : FloatObject ({value}) invalid; use 0.0 instead", __name__
+            )
+            return float.__new__(cls, 0.0)
 
     def clone(
         self,
@@ -360,22 +363,23 @@ class FloatObject(decimal.Decimal, PdfObject):
         """Clone object into pdf_dest."""
         return cast("FloatObject", self._reference_clone(FloatObject(self), pdf_dest))
 
+    def myrepr(self) -> str:
+        if self == 0:
+            return "0.0"
+        nb = int(log10(abs(self)))
+        s = f"{self:.{max(1,16-nb)}f}".rstrip("0").rstrip(".")
+        return s
+
     def __repr__(self) -> str:
-        if self == self.to_integral():
-            # If this is an integer, format it with no decimal place.
-            return str(self.quantize(decimal.Decimal(1)))
-        else:
-            # Otherwise, format it with a decimal place, taking care to
-            # remove any extraneous trailing zeros.
-            return f"{self:f}".rstrip("0")
+        return self.myrepr()  # repr(float(self))
 
     def as_numeric(self) -> float:
-        return float(repr(self).encode("utf8"))
+        return float(self)
 
     def write_to_stream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
     ) -> None:
-        stream.write(repr(self).encode("utf8"))
+        stream.write(self.myrepr().encode("utf8"))
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]

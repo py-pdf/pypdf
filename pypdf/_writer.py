@@ -252,6 +252,20 @@ class PdfWriter:
         deprecation_with_replacement("getObject", "get_object", "3.0.0")
         return self.get_object(ido)
 
+    def _replace_object(
+        self,
+        indirect_reference: Union[int, IndirectObject],
+        obj: PdfObject,
+    ) -> PdfObject:
+        if isinstance(indirect_reference, IndirectObject):
+            assert indirect_reference.pdf == self
+            indirect_reference = indirect_reference.idnum
+        self._objects[indirect_reference - 1] = obj
+        return self._objects[indirect_reference - 1]
+        if indirect_reference.pdf != self:
+            raise ValueError("pdf must be self")
+        return self._objects[indirect_reference.idnum - 1]  # type: ignore
+
     def _add_page(
         self,
         page: PageObject,
@@ -273,7 +287,6 @@ class PdfWriter:
         except Exception:
             pass
         page = cast("PageObject", page_org.clone(self, False, excluded_keys))
-        # page_ind = self._add_object(page)
         if page_org.pdf is not None:
             other = page_org.pdf.pdf_header
             if isinstance(other, str):
@@ -452,8 +465,7 @@ class PdfWriter:
                 and previous page does not exist.
         """
         page = PageObject.create_blank_page(self, width, height)
-        self.add_page(page)
-        return page
+        return self.add_page(page)
 
     def addBlankPage(
         self, width: Optional[float] = None, height: Optional[float] = None
@@ -468,8 +480,8 @@ class PdfWriter:
 
     def insert_blank_page(
         self,
-        width: Optional[decimal.Decimal] = None,
-        height: Optional[decimal.Decimal] = None,
+        width: Optional[Union[float, decimal.Decimal]] = None,
+        height: Optional[Union[float, decimal.Decimal]] = None,
         index: int = 0,
     ) -> PageObject:
         """
@@ -501,8 +513,8 @@ class PdfWriter:
 
     def insertBlankPage(
         self,
-        width: Optional[decimal.Decimal] = None,
-        height: Optional[decimal.Decimal] = None,
+        width: Optional[Union[float, decimal.Decimal]] = None,
+        height: Optional[Union[float, decimal.Decimal]] = None,
         index: int = 0,
     ) -> PageObject:  # deprecated
         """
@@ -579,7 +591,6 @@ class PdfWriter:
             names[NameObject("/JavaScript")] = DictionaryObject(
                 {NameObject("/Names"): ArrayObject()}
             )
-            # cast(DictionaryObject, names[NameObject("/JavaScript")])[NameObject("/Names")] = ArrayObject()
         js_list = cast(
             ArrayObject, cast(DictionaryObject, names["/JavaScript"])["/Names"]
         )
@@ -1020,7 +1031,7 @@ class PdfWriter:
             rev = 2
             keylen = int(40 / 8)
         P = permissions_flag
-        O = ByteStringObject(_alg33(owner_password, user_password, rev, keylen))  # type: ignore[arg-type]
+        O = ByteStringObject(_alg33(owner_password, user_password, rev, keylen))  # type: ignore[arg-type]  # noqa
         ID_1 = ByteStringObject(md5((repr(time.time())).encode("utf8")).digest())
         ID_2 = ByteStringObject(md5((repr(random.random())).encode("utf8")).digest())
         self._ID = ArrayObject((ID_1, ID_2))
@@ -1832,6 +1843,8 @@ class PdfWriter:
         )
         for page in pages:
             page_ref = cast(DictionaryObject, self.get_object(page))
+            if "/Contents" not in page_ref:
+                return
             content = page_ref["/Contents"].get_object()
             if not isinstance(content, ContentStream):
                 content = ContentStream(content, page_ref)
@@ -2551,7 +2564,6 @@ class PdfWriter:
         )  # need for the outline processing below
         for dest in reader._namedDests.values():
             arr = dest.dest_array
-            # try:
             if isinstance(dest["/Page"], NullObject):
                 pass  # self.add_named_destination_array(dest["/Title"],arr)
             elif dest["/Page"].indirect_reference.idnum in srcpages:
@@ -2559,8 +2571,6 @@ class PdfWriter:
                     dest["/Page"].indirect_reference.idnum
                 ].indirect_reference
                 self.add_named_destination_array(dest["/Title"], arr)
-            # except Exception as e:
-            #    logger_warning(f"can not insert {dest} : {e.msg}",__name__)
 
         outline_item_typ: TreeObject
         if outline_item is not None:
@@ -2727,8 +2737,6 @@ class PdfWriter:
             return None
         if isinstance(page, int):
             _i = reader.pages[page].indirect_reference
-        # elif isinstance(page, PageObject):
-        #    _i = page.indirect_reference
         elif isinstance(page, DictionaryObject) and page.get("/Type", "") == "/Page":
             _i = page.indirect_reference
         elif isinstance(page, IndirectObject):
@@ -2842,10 +2850,6 @@ class PdfWriter:
         if not isinstance(dest["/Page"], NullObject):
             if dest.node is not None and "/A" in dest.node:
                 n_ol[NameObject("/A")] = dest.node["/A"].clone(self)
-            # elif "/D" in dest.node:
-            #    n_ol[NameObject("/Dest")] = dest.node["/D"].clone(self)
-            # elif "/Dest" in dest.node:
-            #    n_ol[NameObject("/Dest")] = dest.node["/Dest"].clone(self)
             else:
                 n_ol[NameObject("/Dest")] = dest.dest_array
         # TODO: /SE
@@ -2866,7 +2870,7 @@ class PdfWriter:
     ) -> None:
         for dest in outlines:
             # TODO  : can be improved to keep A and SE entries (ignored for the moment)
-            # np=self.add_outline_item_destination(dest,parent,before)
+            # with np=self.add_outline_item_destination(dest,parent,before)
             if dest.get("/Type", "") == "/Outlines" or "/Title" not in dest:
                 np = parent
             else:
@@ -3108,13 +3112,8 @@ def _create_outline_item(
     if color:
         if isinstance(color, str):
             color = hex_to_rgb(color)
-        prec = decimal.Decimal("1.00000")
         outline_item.update(
-            {
-                NameObject("/C"): ArrayObject(
-                    [FloatObject(decimal.Decimal(c).quantize(prec)) for c in color]
-                )
-            }
+            {NameObject("/C"): ArrayObject([FloatObject(c) for c in color])}
         )
     if italic or bold:
         format_flag = 0
