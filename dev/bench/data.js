@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1675850984830,
+  "lastUpdate": 1676012255007,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -24206,6 +24206,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0006653919761452756",
             "extra": "mean: 80.20194449999234 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f5ac79bb552f2e55579854565a31a67fdfdee275",
+          "message": "BUG: Text extraction not working with one glyph to char sequence (#1620)\n\nFixes #1619",
+          "timestamp": "2023-02-10T07:56:16+01:00",
+          "tree_id": "b77786aa3accb6f85c0eb385e50cd84750f3e2b7",
+          "url": "https://github.com/py-pdf/pypdf/commit/f5ac79bb552f2e55579854565a31a67fdfdee275"
+        },
+        "date": 1676012252611,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0181165037349225,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0071567098288351895",
+            "extra": "mean: 982.2058638000044 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.703996187001415,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005478633327895534",
+            "extra": "mean: 85.44090275000353 msec\nrounds: 12"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2523151686971185,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019129638759724628",
+            "extra": "mean: 3.963297193599999 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.812798352347752,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00032681026524704636",
+            "extra": "mean: 78.04696308334276 msec\nrounds: 12"
           }
         ]
       }
