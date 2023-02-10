@@ -1784,7 +1784,7 @@ class PageObject(DictionaryObject):
                         "???" + operands[0],
                         None,
                     )
-                cmap = (cmap[0], reverse_rtl_ligatures(cmap[1]), *cmap[2:])
+                cmap = (cmap[0], reverse_rtl_ligatures(cmap[1]), *cmap[2:])  # no need for this anymore since it was fixed in lest release
                 try:
                     font_size = float(operands[1])
                 except Exception:
