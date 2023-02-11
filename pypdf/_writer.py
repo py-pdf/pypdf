@@ -2605,13 +2605,11 @@ class PdfWriter:
 
         if "/AcroForm" in cast(DictionaryObject, reader.trailer["/Root"]):
             if "/AcroForm" not in self._root_object:
-                self._root_object[NameObject("/AcroForm")] = (
+                self._root_object[NameObject("/AcroForm")] = self._add_object(
                     cast(
                         DictionaryObject,
                         cast(DictionaryObject, reader.trailer["/Root"])["/AcroForm"],
-                    )
-                    .clone(self, False, ("/Fields",))
-                    .indirect_reference
+                    ).clone(self, False, ("/Fields",))
                 )
                 arr = ArrayObject()
             else:
@@ -2765,7 +2763,7 @@ class PdfWriter:
                 or "/Dest" in ano
             ):
                 if "/Dest" not in ano:
-                    outlist.append(ano.clone(self).indirect_reference)
+                    outlist.append(self._add_object(ano.clone(self)))
                 else:
                     d = ano["/Dest"]
                     if isinstance(d, str):
