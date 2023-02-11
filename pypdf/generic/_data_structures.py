@@ -88,11 +88,16 @@ class ArrayObject(list, PdfObject):
                 return self
         except Exception:
             pass
-        arr = cast("ArrayObject", self._reference_clone(ArrayObject(), pdf_dest))
+        arr = cast(
+            "ArrayObject",
+            self._reference_clone(ArrayObject(), pdf_dest, force_duplicate),
+        )
         for data in self:
             if isinstance(data, StreamObject):
                 dup = data._reference_clone(
-                    data.clone(pdf_dest, force_duplicate, ignore_fields), pdf_dest
+                    data.clone(pdf_dest, force_duplicate, ignore_fields),
+                    pdf_dest,
+                    force_duplicate,
                 )
                 arr.append(dup.indirect_reference)
             elif hasattr(data, "clone"):
@@ -168,7 +173,8 @@ class DictionaryObject(dict, PdfObject):
             pass
 
         d__ = cast(
-            "DictionaryObject", self._reference_clone(self.__class__(), pdf_dest)
+            "DictionaryObject",
+            self._reference_clone(self.__class__(), pdf_dest, force_duplicate),
         )
         if ignore_fields is None:
             ignore_fields = []
@@ -216,7 +222,9 @@ class DictionaryObject(dict, PdfObject):
                         while cur_obj is not None:
                             clon = cast(
                                 "DictionaryObject",
-                                cur_obj._reference_clone(cur_obj.__class__(), pdf_dest),
+                                cur_obj._reference_clone(
+                                    cur_obj.__class__(), pdf_dest, force_duplicate
+                                ),
                             )
                             objs.append((cur_obj, clon))
                             assert prev_obj is not None
@@ -924,7 +932,10 @@ class ContentStream(DecodedStreamObject):
             pass
 
         d__ = cast(
-            "ContentStream", self._reference_clone(self.__class__(None, None), pdf_dest)
+            "ContentStream",
+            self._reference_clone(
+                self.__class__(None, None), pdf_dest, force_duplicate
+            ),
         )
         if ignore_fields is None:
             ignore_fields = []
