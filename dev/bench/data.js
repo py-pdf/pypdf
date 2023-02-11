@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1676012255007,
+  "lastUpdate": 1676122543820,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -24258,6 +24258,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00032681026524704636",
             "extra": "mean: 78.04696308334276 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c70dcd05a6d1cbfbe2298149ba1892aed3f1f508",
+          "message": "BUG: Switch from trimbox to cropbox when merging pages (#1622)\n\nWhile the old behavior can be considered a bug, people might rely on trimbox being used.\r\nTo allow them to switch back from cropbox to trimbox, they can set\r\n\r\n    pypdf._page.MERGE_CROP_BOX = \"trimbox\"\r\n\r\nSee discussions in #879 and #1426",
+          "timestamp": "2023-02-11T14:34:38+01:00",
+          "tree_id": "a0f5551776a0c87626d75791d7aa0c0fdd33fed3",
+          "url": "https://github.com/py-pdf/pypdf/commit/c70dcd05a6d1cbfbe2298149ba1892aed3f1f508"
+        },
+        "date": 1676122542718,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0140966916054,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0067640204650309095",
+            "extra": "mean: 986.0992627999963 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.968569373112864,
+            "unit": "iter/sec",
+            "range": "stddev: 0.005773474493178291",
+            "extra": "mean: 83.5521747692317 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.2433443673206661,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04286293759441606",
+            "extra": "mean: 4.109402699600002 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.555104990498767,
+            "unit": "iter/sec",
+            "range": "stddev: 0.002561930936415628",
+            "extra": "mean: 86.54183590908556 msec\nrounds: 11"
           }
         ]
       }
