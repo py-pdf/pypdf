@@ -191,3 +191,17 @@ writer = PdfWriter()
 writer.add_page(page)
 writer.write("out-pg-transform.pdf")
 ```
+
+### pypdf._page.MERGE_CROP_BOX
+
+`pypdf<=3.4.0` used to merge the other page with `trimbox`.
+
+`pypdf>3.4.0` changes this behavior to `cropbox`.
+
+In case anybody has good reasons to use/expect `trimbox`, please let me know via
+info@martin-thoma.de or via https://github.com/py-pdf/pypdf/pull/1622
+In the mean time, you can add the following code to get the old behavior:
+
+```python
+pypdf._page.MERGE_CROP_BOX = "trimbox"
+```
