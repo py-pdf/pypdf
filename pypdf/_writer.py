@@ -2620,12 +2620,9 @@ class PdfWriter:
             trslat = self._id_translated[id(reader)]
             try:
                 for f in reader.trailer["/Root"]["/AcroForm"]["/Fields"]:  # type: ignore
-                    try:
-                        ind = IndirectObject(trslat[f.idnum], 0, self)
-                        if ind not in arr:
-                            arr.append(ind)
-                    except KeyError:
-                        pass
+                    ind = IndirectObject(trslat[f.idnum], 0, self)
+                    if ind not in arr:
+                        arr.append(ind)
             except KeyError:
                 arr = self._add_object(ArrayObject())
             cast(DictionaryObject, self._root_object["/AcroForm"])[
