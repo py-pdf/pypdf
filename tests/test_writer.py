@@ -740,14 +740,21 @@ def test_sweep_indirect_references_nullobject_exception():
 
 @pytest.mark.external
 @pytest.mark.slow
-def test_write_outline_item_on_page_fitv():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/922/922840.pdf"
-    name = "tika-922840.pdf"
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/922/922840.pdf",
+            "tika-922840.pdf",
+        ),
+        ("https://github.com/py-pdf/pypdf/files/10715624/test.pdf", "iss1627.pdf"),
+    ],
+)
+def test_write_outline_item_on_page_fitv(url, name):
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     merger = PdfMerger()
     merger.append(reader)
     merger.write("tmp-merger-do-not-commit.pdf")
-
     # cleanup
     os.remove("tmp-merger-do-not-commit.pdf")
 
