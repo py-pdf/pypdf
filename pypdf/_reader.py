@@ -2156,7 +2156,9 @@ class PdfReader:
                 attachments_names.append(f)
         return attachments_names
 
-    def get_attachments(self, filename: Optional[str] = None) -> Dict[str, bytes]:
+    def get_attachments(
+        self, filename: Optional[str] = None
+    ) -> Dict[str, Union[bytes, List[bytes]]]:
         """
         Retrieves all or selected file attachments of the PDF as a dictionary of file names
         and the file data as a bytestring.
@@ -2168,7 +2170,8 @@ class PdfReader:
                 - the filename - and its content will be returned.
 
         Returns:
-            dictionary of filename:bytestring
+            dictionary of filename -> Union[bytestring or List[ByteString]]
+            if the filename exists multiple times a List of the different version will be provided
         """
         catalog = cast(DictionaryObject, self.trailer["/Root"])
         # From the catalog get the embedded file names
@@ -2184,15 +2187,20 @@ class PdfReader:
             return {}
         attachments = {}
         # Loop through attachments
-        for f in filenames:
+        for i in range(len(filenames)):
+            f = filenames[i]
             if isinstance(f, str):
                 if filename is not None and f != filename:
                     continue
                 name = f
-                data_index = filenames.index(f) + 1
-                f_dict = filenames[data_index].get_object()
+                f_dict = filenames[i + 1].get_object()
                 f_data = f_dict["/EF"]["/F"].get_data()
-                attachments[name] = f_data
+                if name in attachments:
+                    if not isinstance(attachments[name], list):
+                        attachments[name] = [attachments[name]]
+                    attachments[name].append(f_data)
+                else:
+                    attachments[name] = f_data
         return attachments
 
 
