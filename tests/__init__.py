@@ -2,6 +2,7 @@ import os
 import ssl
 import urllib.request
 from typing import List
+from urllib.error import HTTPError
 
 from pypdf.generic import DictionaryObject, IndirectObject
 
@@ -30,10 +31,18 @@ def get_pdf_from_url(url: str, name: str) -> bytes:
     cache_path = os.path.join(cache_dir, name)
     if not os.path.exists(cache_path):
         ssl._create_default_https_context = ssl._create_unverified_context
-        with urllib.request.urlopen(url) as response, open(
-            cache_path, "wb"
-        ) as out_file:
-            out_file.write(response.read())
+        cpt = 3
+        while cpt > 0:
+            try:
+                with urllib.request.urlopen(url) as response, open(
+                    cache_path, "wb"
+                ) as out_file:
+                    out_file.write(response.read())
+            except HTTPError as e:
+                if cpt > 0:
+                    cpt -= 1
+                else:
+                    raise e
     with open(cache_path, "rb") as fp:
         data = fp.read()
     return data
