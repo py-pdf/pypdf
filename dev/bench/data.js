@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1676200888313,
+  "lastUpdate": 1676235969687,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -24414,6 +24414,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00027441581438282487",
             "extra": "mean: 77.77905075000054 msec\nrounds: 12"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "committer": {
+            "email": "info@martin-thoma.de",
+            "name": "Martin Thoma",
+            "username": "MartinThoma"
+          },
+          "distinct": true,
+          "id": "4e276b28a37561a58d42027f28d1bcf475b03d0f",
+          "message": "REL: 3.4.1\n\nBug Fixes (BUG):\n-  Switch from trimbox to cropbox when merging pages (#1622)\n-  Text extraction not working with one glyph to char sequence (#1620)\n\nRobustness (ROB):\n-  Fix 2 cases of \"object has no attribute \\'indirect_reference\\'\" (#1616)\n\nTesting (TST):\n-  Add multiple retry on get_url for external PDF downloads (#1626)\n\n[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.4.0...3.4.1)",
+          "timestamp": "2023-02-12T22:04:21+01:00",
+          "tree_id": "684db52040fdf8bac7439e898f5ad4e961b97599",
+          "url": "https://github.com/py-pdf/pypdf/commit/4e276b28a37561a58d42027f28d1bcf475b03d0f"
+        },
+        "date": 1676235967595,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0129313621485923,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011491394304233755",
+            "extra": "mean: 987.2337231999978 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.944839455435568,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006344496995160448",
+            "extra": "mean: 83.71816161538649 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24385942449396547,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03591664790626774",
+            "extra": "mean: 4.100723201800003 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 12.131650928923138,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0009948096170512206",
+            "extra": "mean: 82.42901199999864 msec\nrounds: 12"
           }
         ]
       }
