@@ -2185,7 +2185,7 @@ class PdfReader:
             )
         except KeyError:
             return {}
-        attachments = {}
+        attachments: Dict[str, Union[bytes, List[bytes]]] = {}
         # Loop through attachments
         for i in range(len(filenames)):
             f = filenames[i]
@@ -2197,8 +2197,8 @@ class PdfReader:
                 f_data = f_dict["/EF"]["/F"].get_data()
                 if name in attachments:
                     if not isinstance(attachments[name], list):
-                        attachments[name] = [attachments[name]]
-                    attachments[name].append(f_data)
+                        attachments[name] = [attachments[name]]  # type:ignore
+                    attachments[name].append(f_data)  # type:ignore
                 else:
                     attachments[name] = f_data
         return attachments
