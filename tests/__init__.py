@@ -38,6 +38,7 @@ def get_pdf_from_url(url: str, name: str) -> bytes:
                     cache_path, "wb"
                 ) as out_file:
                     out_file.write(response.read())
+                cpt = 0
             except HTTPError as e:
                 if cpt > 0:
                     cpt -= 1
