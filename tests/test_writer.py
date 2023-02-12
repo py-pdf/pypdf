@@ -744,15 +744,24 @@ def test_sweep_indirect_references_nullobject_exception():
     ("url", "name"),
     [
         (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf",
+            "test_sweep_indirect_references_nullobject_exception.pdf",
+        ),
+        (
             "https://corpora.tika.apache.org/base/docs/govdocs1/922/922840.pdf",
-            "tika-922840.pdf",
+            "test_write_outline_item_on_page_fitv.pdf",
         ),
         ("https://github.com/py-pdf/pypdf/files/10715624/test.pdf", "iss1627.pdf"),
     ],
 )
-def test_write_outline_item_on_page_fitv(url, name):
+def test_some_appends(url, name):
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    # PdfMerger
     merger = PdfMerger()
+    merger.append(reader)
+    merger.write("tmp-merger-do-not-commit.pdf")
+    # PdfWriter
+    merger = PdfWriter()
     merger.append(reader)
     merger.write("tmp-merger-do-not-commit.pdf")
     # cleanup
