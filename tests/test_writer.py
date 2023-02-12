@@ -1203,3 +1203,17 @@ def test_attachments():
     att = reader.get_attachments("foobar2.txt")
     assert len(att) == 1
     assert att["foobar2.txt"] == [b"foobarcontent2", b"2nd_foobarcontent"]
+
+
+def test_iss1614():
+    # test of an annotation(link) directly stored in the /Annots in the page
+    url = "https://github.com/py-pdf/pypdf/files/10669995/broke.pdf"
+    name = "iss1614.pdf"
+    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    out_pdf = PdfWriter()
+    out_pdf.append(in_pdf)
+    # test for 2nd error case reported in #1614
+    url = "https://github.com/py-pdf/pypdf/files/10696390/broken.pdf"
+    name = "iss1614.2.pdf"
+    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    out_pdf.append(in_pdf)
