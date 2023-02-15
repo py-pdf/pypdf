@@ -1044,3 +1044,18 @@ def test_cloning(caplog):
     obj21 = obj20.clone(writer, ignore_fields=None)
     assert "/Test" in obj21
     assert isinstance(obj21.get("/Test2"), IndirectObject)
+
+
+@pytest.mark.external
+def test_append_with_indirectobject_not_pointing(caplog):
+    """
+    reported in #1631
+    the object 43 0 is not invalid
+    """
+    url = "https://github.com/py-pdf/pypdf/files/10729142/document.pdf"
+    name = "tst_iss1631.pdf"
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data, strict=False)
+    writer = PdfWriter()
+    writer.append(reader)
+    assert "Object 43 0 not defined." in caplog.text
