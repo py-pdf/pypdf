@@ -1162,6 +1162,10 @@ class Field(TreeObject):
                 self[NameObject(attr)] = data[attr]
             except KeyError:
                 pass
+        if isinstance(self.get("/V"), EncodedStreamObject):
+            self[NameObject("/V")] = TextStringObject(
+                self[NameObject("/V")].get_data().decode()
+            )
 
     # TABLE 8.69 Entries common to all field dictionaries
     @property

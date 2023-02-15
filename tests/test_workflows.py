@@ -941,3 +941,15 @@ def test_extra_test_iss1541():
     with pytest.raises(PdfReadError) as exc:
         reader.pages[0].extract_text()
     assert exc.value.args[0] == "Unexpected end of stream"
+
+
+@pytest.mark.external
+def test_fields_returning_stream():
+    """
+    problem reported in #424
+    """
+    url = "https://github.com/mstamy2/PyPDF2/files/1948267/Simple.form.pdf"
+    name = "tst_iss424.pdf"
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data, strict=False)
+    assert "BtchIssQATit_time" in reader.get_form_text_fields()["TimeStampData"]
