@@ -1044,3 +1044,21 @@ def test_cloning(caplog):
     obj21 = obj20.clone(writer, ignore_fields=None)
     assert "/Test" in obj21
     assert isinstance(obj21.get("/Test2"), IndirectObject)
+
+
+@pytest.mark.external
+def test_iss1615():
+    """
+    test cases where /N is not indicating chains of objects
+    """
+    url = "https://github.com/py-pdf/pypdf/files/10671366/graph_letter.pdf"
+    name = "graph_letter.pdf"
+    reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    writer = PdfWriter()
+    writer.append(reader)
+    assert (
+        "/N"
+        in writer.pages[0]["/Annots"][0]
+        .get_object()["/AP"]["/N"]["/Resources"]["/ColorSpace"]["/Cs1"][1]
+        .get_object()
+    )

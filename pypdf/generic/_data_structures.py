@@ -194,11 +194,27 @@ class DictionaryObject(dict, PdfObject):
         """
         #  First check if this is a chain list, we need to loop to prevent recur
         if (
-            ("/Next" not in ignore_fields and "/Next" in src)
-            or ("/Prev" not in ignore_fields and "/Prev" in src)
+            (
+                "/Next" not in ignore_fields
+                and "/Next" in src
+                and isinstance(src.raw_get("/Next"), IndirectObject)
+            )
+            or (
+                "/Prev" not in ignore_fields
+                and "/Prev" in src
+                and isinstance(src.raw_get("/Prev"), IndirectObject)
+            )
         ) or (
-            ("/N" not in ignore_fields and "/N" in src)
-            or ("/V" not in ignore_fields and "/V" in src)
+            (
+                "/N" not in ignore_fields
+                and "/N" in src
+                and isinstance(src.raw_get("/N"), IndirectObject)
+            )
+            or (
+                "/V" not in ignore_fields
+                and "/V" in src
+                and isinstance(src.raw_get("/V"), IndirectObject)
+            )
         ):
             ignore_fields = list(ignore_fields)
             for lst in (("/Next", "/Prev"), ("/N", "/V")):
@@ -230,7 +246,7 @@ class DictionaryObject(dict, PdfObject):
                             except Exception:
                                 cur_obj = None
                         for (s, c) in objs:
-                            c._clone(s, pdf_dest, force_duplicate, ignore_fields + [k])
+                            c._clone(s, pdf_dest, force_duplicate, ignore_fields)
 
         for k, v in src.items():
             if k not in ignore_fields:
