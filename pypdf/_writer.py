@@ -304,16 +304,9 @@ class PdfWriter:
         # See 12.7.2 and 7.7.2 for more information:
         # http://www.adobe.com/content/dam/acom/en/devnet/acrobat/pdfs/PDF32000_2008.pdf
         try:
-            catalog = self._root_object
             # get the AcroForm tree
-            if CatalogDictionary.ACRO_FORM not in catalog:
-                self._root_object.update(
-                    {
-                        NameObject(CatalogDictionary.ACRO_FORM): IndirectObject(
-                            len(self._objects), 0, self
-                        )
-                    }
-                )
+            if CatalogDictionary.ACRO_FORM not in self._root_object:
+                self._root_object[NameObject(CatalogDictionary.ACRO_FORM)] = self._add_object(DictionaryObject())
 
             need_appearances = NameObject(InteractiveFormDictEntries.NeedAppearances)
             self._root_object[CatalogDictionary.ACRO_FORM][need_appearances] = BooleanObject(True)  # type: ignore
