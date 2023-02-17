@@ -1164,7 +1164,7 @@ class Field(TreeObject):
                 pass
         if isinstance(self.get("/V"), EncodedStreamObject):
             self[NameObject("/V")] = TextStringObject(
-                self[NameObject("/V")].get_data().decode()
+                cast(EncodedStreamObject, self[NameObject("/V")]).get_data().decode()
             )
 
     # TABLE 8.69 Entries common to all field dictionaries
