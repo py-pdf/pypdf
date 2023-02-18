@@ -9,8 +9,16 @@ from pypdf._page_labels import (
     number2lowercase_roman_numeral,
     number2uppercase_letter,
     number2uppercase_roman_numeral,
+    nums_clear_range,
+    nums_insert,
+    nums_next,
 )
-from pypdf.generic import NullObject
+from pypdf.generic import (
+    DictionaryObject,
+    NameObject,
+    NullObject,
+    NumberObject,
+)
 
 from . import get_pdf_from_url
 
@@ -59,7 +67,7 @@ def test_number2uppercase_letter():
         number2uppercase_letter(-1)
 
 
-def test_index2label():
+def test_index2label(caplog):
     url = "https://github.com/py-pdf/pypdf/files/10773829/waarom-meisjes-het-beter-doen-op-HAVO-en-VWO-ROA.pdf"
     name = "waarom-meisjes-het-beter-doen-op-HAVO-en-VWO-ROA.pdf"
     r = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
@@ -69,5 +77,23 @@ def test_index2label():
     r.trailer["/Root"]["/PageLabels"]["/Nums"].append(8)
     r.trailer["/Root"]["/PageLabels"]["/Nums"].append(NullObject())
     assert index2label(r, 9) == "10"
+    r.trailer["/Root"]["/PageLabels"]["/Nums"].append(8)
+    with pytest.raises(ValueError):
+        nums_next(NumberObject(10), r.trailer["/Root"]["/PageLabels"]["/Nums"])
+    with pytest.raises(ValueError):
+        nums_clear_range(
+            NumberObject(10), 8, r.trailer["/Root"]["/PageLabels"]["/Nums"]
+        )
+    with pytest.raises(ValueError):
+        nums_insert(
+            NumberObject(10),
+            DictionaryObject(),
+            r.trailer["/Root"]["/PageLabels"]["/Nums"],
+        )
+
     del r.trailer["/Root"]["/PageLabels"]["/Nums"]
     assert index2label(r, 1) == "2"
+    caplog.clear()
+    r.trailer["/Root"]["/PageLabels"][NameObject("/Kids")] = NullObject()
+    assert index2label(r, 1) == "2"
+    assert caplog.text != ""
