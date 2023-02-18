@@ -77,6 +77,11 @@ def test_index2label(caplog):
     r.trailer["/Root"]["/PageLabels"]["/Nums"].append(8)
     r.trailer["/Root"]["/PageLabels"]["/Nums"].append(NullObject())
     assert index2label(r, 9) == "10"
+
+    with pytest.raises(ValueError):
+        nums_clear_range(
+            NumberObject(10), 8, r.trailer["/Root"]["/PageLabels"]["/Nums"]
+        )
     r.trailer["/Root"]["/PageLabels"]["/Nums"].append(8)
     with pytest.raises(ValueError):
         nums_next(NumberObject(10), r.trailer["/Root"]["/PageLabels"]["/Nums"])
