@@ -145,7 +145,7 @@ def index2label(reader: PdfReaderProtocol, index: int) -> str:
         start_index = 0
         while i < len(nums):
             start_index = nums[i]
-            value = nums[i + 1]
+            value = nums[i + 1].get_object()
             if i + 2 == len(nums):
                 break
             if nums[i + 2] > index:
@@ -159,8 +159,7 @@ def index2label(reader: PdfReaderProtocol, index: int) -> str:
             "/A": number2uppercase_letter,
             "/a": number2lowercase_letter,
         }
-        if not isinstance(value, dict):
-            value = reader.get_object(value)
+        # if Nums array not iaw standards and if Nums is empty
         if not isinstance(value, dict):
             return str(index + 1)  # Fallback
         start = value.get("/St", 1)
@@ -176,7 +175,7 @@ def index2label(reader: PdfReaderProtocol, index: int) -> str:
             __name__,
         )
     # TODO: Implement /Kids and /Limits for number tree
-    return str(index + 1)  # Fallback
+    return str(index + 1)  # Fallback (if Kids or no Nums
 
 
 def nums_insert(
