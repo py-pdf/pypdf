@@ -205,3 +205,82 @@ In the mean time, you can add the following code to get the old behavior:
 ```python
 pypdf._page.MERGE_CROP_BOX = "trimbox"
 ```
+
+# Transforming several copies of the same page
+
+We have designed the following business card (A8 format) to advertize our new startup.
+
+![](nup-source.png)
+
+We would like to copy this card sixteen times on an A4 page, to print it, cut it, and give it to all our friends. Having learned about the ``Transformation`` class, we run the following code. We notice that we had to tweak the media box of the source page to extend it, which is already a dirty hack (in this case).
+
+```python
+from pypdf import PdfReader, PdfWriter, Transformation, PaperSize
+
+# Read source file
+reader = PdfReader("nup-source.pdf")
+sourcepage = reader.pages[0]
+
+# Create a destination file, and add a blank page to it
+writer = PdfWriter()
+destpage = writer.add_blank_page(width=PaperSize.A4.height, height=PaperSize.A4.width)
+
+# Extend source page mediabox
+sourcepage.mediabox = destpage.mediabox
+
+# Copy source page to destination page, several times
+for x in range(4):
+    for y in range(4):
+        sourcepage.add_transformation(
+            Transformation().translate(
+                x * PaperSize.A8.height,
+                y * PaperSize.A8.width,
+            )
+        )
+        destpage.merge_page(sourcepage)
+
+# Write file
+with open("nup-dest1.pdf", "wb") as fp:
+    writer.write(fp)
+```
+
+And the result is… unexpected.
+
+![](nup-dest1.png)
+
+The problem is that, having run several times ``add.transformation()`` on the *same* source page, those transformations add up: for instance, the sixteen transformations are applied to the last copy of the source page.
+
+We need a way to merge a transformed page, *without* modifying the source page. Here comes ``merge_transformed_page()``. With this method:
+- we no longer need the media box hack of our first try;
+- and transformations are only applied *once*.
+
+```python
+from pypdf import PdfReader, PdfWriter, Transformation, PaperSize
+
+# Read source file
+reader = PdfReader("nup-source.pdf")
+sourcepage = reader.pages[0]
+
+# Create a destination file, and add a blank page to it
+writer = PdfWriter()
+destpage = writer.add_blank_page(width=PaperSize.A4.height, height=PaperSize.A4.width)
+
+# Copy source page to destination page, several times
+for x in range(4):
+    for y in range(4):
+        destpage.merge_transformed_page(
+            sourcepage,
+            Transformation().translate(
+                x * sourcepage.mediabox.width,
+                y * sourcepage.mediabox.height,
+            ),
+        )
+
+# Write file
+with open("nup-dest2.pdf", "wb") as fp:
+    writer.write(fp)
+```
+
+We get the expected result.
+
+![](nup-dest2.png)
