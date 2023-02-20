@@ -1935,7 +1935,7 @@ class PdfWriter:
                             ):
                                 operands[0][i] = TextStringObject()
 
-            page_ref.__setitem__(NameObject("/Contents"), content)
+            page_ref[NameObject("/Contents")] = self._add_object(content)
 
     def removeText(self, ignoreByteStringObject: bool = False) -> None:  # deprecated
         """
