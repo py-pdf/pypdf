@@ -1900,6 +1900,38 @@ class PdfWriter:
         Args:
             ignore_byte_string_object: optional parameter
         """
+
+        def wipe_text(operands, operator):
+            if operator in [b"Tj", b"'"]:
+                text = operands[0]
+                if not ignore_byte_string_object:
+                    if isinstance(text, TextStringObject):
+                        operands[0] = TextStringObject("")
+                else:
+                    if isinstance(text, (TextStringObject, ByteStringObject)):
+                        operands[0] = TextStringObject("")
+            elif operator == b'"':
+                text = operands[2]
+                if not ignore_byte_string_object:
+                    if isinstance(text, TextStringObject):
+                        operands[2] = TextStringObject("")
+                else:
+                    if isinstance(text, (TextStringObject, ByteStringObject)):
+                        operands[2] = TextStringObject("")
+            elif operator == b"TJ":
+                for i in range(len(operands[0])):
+                    if not ignore_byte_string_object:
+                        if isinstance(operands[0][i], TextStringObject):
+                            operands[0][i] = TextStringObject("")
+                    else:
+                        if isinstance(
+                            operands[0][i], (TextStringObject, ByteStringObject)
+                        ):
+                            operands[0][i] = TextStringObject("")
+            else:
+                return None
+            return operands
+
         pg_dict = cast(DictionaryObject, self.get_object(self._pages))
         pages = cast(List[IndirectObject], pg_dict[PA.KIDS])
         for page in pages:
@@ -1907,35 +1939,38 @@ class PdfWriter:
             content = page_ref["/Contents"].get_object()
             if not isinstance(content, ContentStream):
                 content = ContentStream(content, page_ref)
-            for operands, operator in content.operations:
-                if operator in [b"Tj", b"'"]:
-                    text = operands[0]
-                    if not ignore_byte_string_object:
-                        if isinstance(text, TextStringObject):
-                            operands[0] = TextStringObject()
-                    else:
-                        if isinstance(text, (TextStringObject, ByteStringObject)):
-                            operands[0] = TextStringObject()
-                elif operator == b'"':
-                    text = operands[2]
-                    if not ignore_byte_string_object:
-                        if isinstance(text, TextStringObject):
-                            operands[2] = TextStringObject()
-                    else:
-                        if isinstance(text, (TextStringObject, ByteStringObject)):
-                            operands[2] = TextStringObject()
-                elif operator == b"TJ":
-                    for i in range(len(operands[0])):
-                        if not ignore_byte_string_object:
-                            if isinstance(operands[0][i], TextStringObject):
-                                operands[0][i] = TextStringObject()
-                        else:
-                            if isinstance(
-                                operands[0][i], (TextStringObject, ByteStringObject)
-                            ):
-                                operands[0][i] = TextStringObject()
-
+            for i in range(len(content.operations)):
+                operands, operator = content.operations[i]
+                operands = wipe_text(operands, operator)
+                if operands is not None:
+                    content.operations[i] = (operands, operator)
             page_ref[NameObject("/Contents")] = self._add_object(content)
+            try:
+                d = page_ref["/Resources"]["/XObject"]
+            except KeyError:
+                d = {}
+            for k, v in d.items():
+                o = v.get_object()
+                if "/Subtype" in o and o["/Subtype"] == "/Form":
+                    if isinstance(o, ContentStream):
+                        content = o
+                    else:
+                        content = ContentStream(o, self)
+                        for k1, v1 in o.items():
+                            if k1 not in ["/Length", "/Filter", "/DecodeParms"]:
+                                content[k1] = v1
+                    b = False
+                    for i in range(len(content.operations)):
+                        operands, operator = content.operations[i]
+                        operands = wipe_text(operands, operator)
+                        if operands is not None:
+                            content.operations[i] = (operands, operator)
+                            b = True
+                    if b:
+                        if isinstance(v, IndirectObject):
+                            self._objects[v.indirect_reference.idnum - 1] = content
+                        else:
+                            d[k] = self._add_object(content)
 
     def removeText(self, ignoreByteStringObject: bool = False) -> None:  # deprecated
         """
