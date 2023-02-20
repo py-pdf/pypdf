@@ -1901,33 +1901,33 @@ class PdfWriter:
             ignore_byte_string_object: optional parameter
         """
 
-        def wipe_text(operands, operator):
+        def wipe_text(operands: Any, operator: str) -> Any:
             if operator in [b"Tj", b"'"]:
                 text = operands[0]
                 if not ignore_byte_string_object:
                     if isinstance(text, TextStringObject):
-                        operands[0] = TextStringObject("")
+                        operands[0] = TextStringObject()
                 else:
                     if isinstance(text, (TextStringObject, ByteStringObject)):
-                        operands[0] = TextStringObject("")
+                        operands[0] = TextStringObject()
             elif operator == b'"':
                 text = operands[2]
                 if not ignore_byte_string_object:
                     if isinstance(text, TextStringObject):
-                        operands[2] = TextStringObject("")
+                        operands[2] = TextStringObject()
                 else:
                     if isinstance(text, (TextStringObject, ByteStringObject)):
-                        operands[2] = TextStringObject("")
+                        operands[2] = TextStringObject()
             elif operator == b"TJ":
                 for i in range(len(operands[0])):
                     if not ignore_byte_string_object:
                         if isinstance(operands[0][i], TextStringObject):
-                            operands[0][i] = TextStringObject("")
+                            operands[0][i] = TextStringObject()
                     else:
                         if isinstance(
                             operands[0][i], (TextStringObject, ByteStringObject)
                         ):
-                            operands[0][i] = TextStringObject("")
+                            operands[0][i] = TextStringObject()
             else:
                 return None
             return operands
@@ -1946,7 +1946,9 @@ class PdfWriter:
                     content.operations[i] = (operands, operator)
             page_ref[NameObject("/Contents")] = self._add_object(content)
             try:
-                d = page_ref["/Resources"]["/XObject"]
+                d = cast(
+                    dict, cast(DictionaryObject, page_ref["/Resources"])["/XObject"]
+                )
             except KeyError:
                 d = {}
             for k, v in d.items():
