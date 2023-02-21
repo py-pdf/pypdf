@@ -1804,85 +1804,78 @@ class PdfWriter:
         deprecation_with_replacement("removeLinks", "remove_links", "3.0.0")
         return self.remove_links()
 
+    def remove_img_or_text(
+        self, page: Union[PageObject, DictionaryObject], del_image: bool
+    ) -> None:
+        """
+        remove Images or Text iaw del_image from page
+        """
+        if del_image:
+            jump_operators = (
+                [b"w", b"J", b"j", b"M", b"d", b"ri", b"i", b"gs"]
+                + [b"W", b"W*"]
+                + [b"b", b"b*", b"B", b"B*", b"S", b"s", b"f", b"f*", b"F", b"n"]
+                + [b"m", b"l", b"c", b"v", b"y", b"h", b"re"]
+                + [b"Do"]
+                + [b"sh"]
+            )
+        else:  # del text
+            jump_operators = [b"Tj", b"TJ", b"'", b'"']
+
+        def clean(content: ContentStream) -> None:
+            i = 0
+            while i < len(content.operations):
+                operands, operator = content.operations[i]
+                if operator in jump_operators:
+                    del content.operations[i]
+                else:
+                    i += 1
+
+        if "/Contents" in page:
+            content = page["/Contents"].get_object()
+            if not isinstance(content, (ContentStream, ArrayObject)):
+                content = ContentStream(content, page)
+            clean(cast(ContentStream, content))
+            page[NameObject("/Contents")] = self._add_object(content)
+        try:
+            d = cast(dict, cast(DictionaryObject, page["/Resources"])["/XObject"])
+        except KeyError:
+            d = {}
+        for k, v in d.items():
+            o = v.get_object()
+            try:
+                content = None
+                if del_image and o["/Subtype"] == "/Image":
+                    content = NullObject()
+                if o["/Subtype"] == "/Form":
+                    if isinstance(o, ContentStream):
+                        content = o
+                    else:
+                        content = ContentStream(o, self)
+                        content.update(o.items())
+                        for k1 in ["/Length", "/Filter", "/DecodeParms"]:
+                            try:
+                                del content[k1]
+                            except KeyError:
+                                pass
+                    clean(content)
+                if content is not None:
+                    if isinstance(v, IndirectObject):
+                        self._objects[v.idnum - 1] = content
+                    else:
+                        d[k] = self._add_object(content)
+            except (TypeError, KeyError):
+                pass
+
     def remove_images(self, ignore_byte_string_object: bool = False) -> None:
         """
         Remove images from this output.
 
         Args:
-            ignore_byte_string_object: optional parameter
-                to ignore ByteString Objects.
+            ignore_byte_string_object: obsolete
         """
-        pg_dict = cast(DictionaryObject, self.get_object(self._pages))
-        pages = cast(ArrayObject, pg_dict[PA.KIDS])
-        jump_operators = (
-            b"cm",
-            b"w",
-            b"J",
-            b"j",
-            b"M",
-            b"d",
-            b"ri",
-            b"i",
-            b"gs",
-            b"W",
-            b"b",
-            b"s",
-            b"S",
-            b"f",
-            b"F",
-            b"n",
-            b"m",
-            b"l",
-            b"c",
-            b"v",
-            b"y",
-            b"h",
-            b"B",
-            b"Do",
-            b"sh",
-        )
-        for page in pages:
-            page_ref = cast(DictionaryObject, self.get_object(page))
-            if "/Contents" not in page_ref:
-                return
-            content = page_ref["/Contents"].get_object()
-            if not isinstance(content, ContentStream):
-                content = ContentStream(content, page_ref)
-
-            _operations = []
-            seq_graphics = False
-            for operands, operator in content.operations:
-                if operator in [b"Tj", b"'"]:
-                    text = operands[0]
-                    if ignore_byte_string_object and not isinstance(
-                        text, TextStringObject
-                    ):
-                        operands[0] = TextStringObject()
-                elif operator == b'"':
-                    text = operands[2]
-                    if ignore_byte_string_object and not isinstance(
-                        text, TextStringObject
-                    ):
-                        operands[2] = TextStringObject()
-                elif operator == b"TJ":
-                    for i in range(len(operands[0])):
-                        if ignore_byte_string_object and not isinstance(
-                            operands[0][i], TextStringObject
-                        ):
-                            operands[0][i] = TextStringObject()
-
-                if operator == b"q":
-                    seq_graphics = True
-                if operator == b"Q":
-                    seq_graphics = False
-                if seq_graphics and operator in jump_operators:
-                    continue
-                if operator == b"re":
-                    continue
-                _operations.append((operands, operator))
-
-            content.operations = _operations
-            page_ref.__setitem__(NameObject("/Contents"), content)
+        for page in self.pages:
+            self.remove_img_or_text(page, True)
 
     def removeImages(self, ignoreByteStringObject: bool = False) -> None:  # deprecated
         """
@@ -1898,81 +1891,10 @@ class PdfWriter:
         Remove text from this output.
 
         Args:
-            ignore_byte_string_object: optional parameter
+            ignore_byte_string_object: obsolete
         """
-
-        def wipe_text(operands: Any, operator: str) -> Any:
-            if operator in [b"Tj", b"'"]:
-                text = operands[0]
-                if not ignore_byte_string_object:
-                    if isinstance(text, TextStringObject):
-                        operands[0] = TextStringObject()
-                else:
-                    if isinstance(text, (TextStringObject, ByteStringObject)):
-                        operands[0] = TextStringObject()
-            elif operator == b'"':
-                text = operands[2]
-                if not ignore_byte_string_object:
-                    if isinstance(text, TextStringObject):
-                        operands[2] = TextStringObject()
-                else:
-                    if isinstance(text, (TextStringObject, ByteStringObject)):
-                        operands[2] = TextStringObject()
-            elif operator == b"TJ":
-                for i in range(len(operands[0])):
-                    if not ignore_byte_string_object:
-                        if isinstance(operands[0][i], TextStringObject):
-                            operands[0][i] = TextStringObject()
-                    else:
-                        if isinstance(
-                            operands[0][i], (TextStringObject, ByteStringObject)
-                        ):
-                            operands[0][i] = TextStringObject()
-            else:
-                return None
-            return operands
-
-        pg_dict = cast(DictionaryObject, self.get_object(self._pages))
-        pages = cast(List[IndirectObject], pg_dict[PA.KIDS])
-        for page in pages:
-            page_ref = cast(PageObject, self.get_object(page))
-            content = page_ref["/Contents"].get_object()
-            if not isinstance(content, ContentStream):
-                content = ContentStream(content, page_ref)
-            for i in range(len(content.operations)):
-                operands, operator = content.operations[i]
-                operands = wipe_text(operands, operator)
-                if operands is not None:
-                    content.operations[i] = (operands, operator)
-            page_ref[NameObject("/Contents")] = self._add_object(content)
-            try:
-                d = cast(
-                    dict, cast(DictionaryObject, page_ref["/Resources"])["/XObject"]
-                )
-            except KeyError:
-                d = {}
-            for k, v in d.items():
-                o = v.get_object()
-                if "/Subtype" in o and o["/Subtype"] == "/Form":
-                    if isinstance(o, ContentStream):
-                        content = o
-                    else:
-                        content = ContentStream(o, self)
-                        for k1, v1 in o.items():
-                            if k1 not in ["/Length", "/Filter", "/DecodeParms"]:
-                                content[k1] = v1
-                    b = False
-                    for i in range(len(content.operations)):
-                        operands, operator = content.operations[i]
-                        operands = wipe_text(operands, operator)
-                        if operands is not None:
-                            content.operations[i] = (operands, operator)
-                            b = True
-                    if b:
-                        if isinstance(v, IndirectObject):
-                            self._objects[v.indirect_reference.idnum - 1] = content
-                        else:
-                            d[k] = self._add_object(content)
+        for page in self.pages:
+            self.remove_img_or_text(page, False)
 
     def removeText(self, ignoreByteStringObject: bool = False) -> None:  # deprecated
         """
