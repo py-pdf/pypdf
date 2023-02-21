@@ -1833,7 +1833,7 @@ class PdfWriter:
 
         if "/Contents" in page:
             content = page["/Contents"].get_object()
-            if not isinstance(content, (ContentStream, ArrayObject)):
+            if not isinstance(content, ContentStream):
                 content = ContentStream(content, page)
             clean(cast(ContentStream, content))
             page[NameObject("/Contents")] = self._add_object(content)
