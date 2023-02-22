@@ -1812,31 +1812,37 @@ class PdfWriter:
         """
         if del_image:
             jump_operators = (
-                [b"w", b"J", b"j", b"M", b"d", b"ri", b"i", b"gs"]
+                [b"w", b"J", b"j", b"M", b"d", b"i"]
                 + [b"W", b"W*"]
                 + [b"b", b"b*", b"B", b"B*", b"S", b"s", b"f", b"f*", b"F", b"n"]
                 + [b"m", b"l", b"c", b"v", b"y", b"h", b"re"]
-                + [b"Do"]
                 + [b"sh"]
             )
         else:  # del text
             jump_operators = [b"Tj", b"TJ", b"'", b'"']
 
+        images = []
+        forms = []
+
         def clean(content: ContentStream) -> None:
+            nonlocal images, forms, del_image
             i = 0
             while i < len(content.operations):
                 operands, operator = content.operations[i]
                 if operator in jump_operators:
                     del content.operations[i]
+                elif operator == b"Do":
+                    if (
+                        del_image
+                        and operands[0] in images
+                        or not del_image
+                        and operands[0] in forms
+                    ):
+                        del content.operations[i]
+                    i += 1
                 else:
                     i += 1
 
-        if "/Contents" in page:
-            content = page["/Contents"].get_object()
-            if not isinstance(content, ContentStream):
-                content = ContentStream(content, page)
-            clean(cast(ContentStream, content))
-            page[NameObject("/Contents")] = self._add_object(content)
         try:
             d = cast(dict, cast(DictionaryObject, page["/Resources"])["/XObject"])
         except KeyError:
@@ -1847,7 +1853,9 @@ class PdfWriter:
                 content = None
                 if del_image and o["/Subtype"] == "/Image":
                     content = NullObject()
+                    images.append(k)
                 if o["/Subtype"] == "/Form":
+                    forms.append(k)
                     if isinstance(o, ContentStream):
                         content = o
                     else:
@@ -1866,6 +1874,21 @@ class PdfWriter:
                         d[k] = self._add_object(content)
             except (TypeError, KeyError):
                 pass
+        if "/Contents" in page:
+            content = page["/Contents"].get_object()
+            if not isinstance(content, ContentStream):
+                content = ContentStream(content, page)
+            clean(cast(ContentStream, content))
+            if isinstance(page["/Contents"], ArrayObject):
+                for o in cast(ArrayObject, page["/Contents"]):
+                    self._objects[o.idnum - 1] = NullObject()
+            try:
+                self._objects[
+                    page["/Contents"].indirect_reference.idnum - 1
+                ] = NullObject()
+            except AttributeError:
+                pass
+            page[NameObject("/Contents")] = self._add_object(content)
 
     def remove_images(self, ignore_byte_string_object: bool = False) -> None:
         """

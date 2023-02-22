@@ -1189,3 +1189,30 @@ def test_iss1614():
     name = "iss1614.2.pdf"
     in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     out_pdf.append(in_pdf)
+
+
+def test_new_removes():
+    # test of an annotation(link) directly stored in the /Annots in the page
+    url = "https://github.com/py-pdf/pypdf/files/10807951/tt.pdf"
+    name = "iss1650.pdf"
+    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+
+    out_pdf = PdfWriter()
+    out_pdf.clone_document_from_reader(in_pdf)
+    out_pdf.remove_images()
+    b = BytesIO()
+    out_pdf.write(b)
+    bb = bytes(b.getbuffer())
+    assert b"/Im0 Do" not in bb
+    assert b"/Fm0 Do" in bb
+    assert b" TJ" in bb
+
+    out_pdf = PdfWriter()
+    out_pdf.clone_document_from_reader(in_pdf)
+    out_pdf.remove_text()
+    b = BytesIO()
+    out_pdf.write(b)
+    bb = bytes(b.getbuffer())
+    assert b"/Im0" in bb
+    assert b"Chap" not in bb
+    assert b" TJ" not in bb
