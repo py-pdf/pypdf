@@ -1850,7 +1850,7 @@ class PdfWriter:
         for k, v in d.items():
             o = v.get_object()
             try:
-                content = None
+                content: Any = None
                 if del_image and o["/Subtype"] == "/Image":
                     content = NullObject()
                     images.append(k)
@@ -1884,7 +1884,7 @@ class PdfWriter:
                     self._objects[o.idnum - 1] = NullObject()
             try:
                 self._objects[
-                    page["/Contents"].indirect_reference.idnum - 1
+                    cast(IndirectObject, page["/Contents"].indirect_reference).idnum - 1
                 ] = NullObject()
             except AttributeError:
                 pass
