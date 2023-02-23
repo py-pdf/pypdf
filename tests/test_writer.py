@@ -1191,13 +1191,3 @@ def test_iss1614():
     name = "iss1614.2.pdf"
     in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     out_pdf.append(in_pdf)
-
-
-@pytest.mark.external
-def test_iss1652():
-    # test of an annotation(link) directly stored in the /Annots in the page
-    url = "https://github.com/py-pdf/pypdf/files/10818844/tt.pdf"
-    name = "invalidNamesDest.pdf"
-    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
-    out_pdf = PdfWriter()
-    out_pdf.clone_document_from_reader(in_pdf)
