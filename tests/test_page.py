@@ -1090,6 +1090,7 @@ def test_merge_page_resources_smoke_test():
     assert relevant_operations == expected_operations
 
 
+@pytest.mark.external
 def test_merge_transformed_page_into_blank():
     url = "https://github.com/py-pdf/pypdf/files/10540507/visitcard.pdf"
     name = "visitcard.pdf"
