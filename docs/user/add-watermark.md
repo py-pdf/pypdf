@@ -13,7 +13,7 @@ content stays the same.
 from pathlib import Path
 from typing import Union, Literal, List
 
-from PyPDF2 import PdfWriter, PdfReader
+from pypdf import PdfWriter, PdfReader
 
 
 def stamp(
@@ -49,7 +49,7 @@ def stamp(
 from pathlib import Path
 from typing import Union, Literal, List
 
-from PyPDF2 import PdfWriter, PdfReader
+from pypdf import PdfWriter, PdfReader
 
 
 def watermark(

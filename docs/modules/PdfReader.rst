@@ -1,7 +1,7 @@
 The PdfReader Class
 -------------------
 
-.. autoclass:: PyPDF2.PdfReader
+.. autoclass:: pypdf.PdfReader
     :members:
     :undoc-members:
     :show-inheritance:

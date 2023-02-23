@@ -1,9 +1,9 @@
 from io import BytesIO
 from pathlib import Path
 
-import PyPDF2
-from PyPDF2 import PdfReader, Transformation
-from PyPDF2.generic import Destination, read_string_from_stream
+import pypdf
+from pypdf import PdfReader, Transformation
+from pypdf.generic import Destination, read_string_from_stream
 
 TESTS_ROOT = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent
@@ -56,21 +56,21 @@ def merge():
     pdf_forms = RESOURCE_ROOT / "pdflatex-forms.pdf"
     pdf_pw = RESOURCE_ROOT / "libreoffice-writer-password.pdf"
 
-    merger = PyPDF2.PdfMerger()
+    merger = pypdf.PdfMerger()
 
     # string path:
     merger.append(pdf_path)
     merger.append(outline)
-    merger.append(pdf_path, pages=PyPDF2.pagerange.PageRange(slice(0, 0)))
+    merger.append(pdf_path, pages=pypdf.pagerange.PageRange(slice(0, 0)))
     merger.append(pdf_forms)
 
     # Merging an encrypted file
-    reader = PyPDF2.PdfReader(pdf_pw)
+    reader = pypdf.PdfReader(pdf_pw)
     reader.decrypt("openpassword")
     merger.append(reader)
 
     # PdfReader object:
-    merger.append(PyPDF2.PdfReader(pdf_path, "rb"), outline_item=True)
+    merger.append(pypdf.PdfReader(pdf_path, "rb"), outline_item=True)
 
     # File handle
     with open(pdf_path, "rb") as fh:
@@ -88,7 +88,7 @@ def merge():
     merger.close()
 
     # Check if outline is correct
-    reader = PyPDF2.PdfReader(write_path)
+    reader = pypdf.PdfReader(write_path)
     assert [
         el.title for el in reader._get_outline() if isinstance(el, Destination)
     ] == [
@@ -137,6 +137,7 @@ def test_read_string_from_stream_performance(benchmark):
     """
     This test simulates reading an embedded base64 image of 256kb.
     It should be faster than a second, even on ancient machines.
+
     Runs < 100ms on a 2019 notebook. Takes 10 seconds prior to #1350.
     """
     benchmark(read_string_from_stream_performance)

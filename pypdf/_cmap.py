@@ -12,14 +12,19 @@ from .generic import DecodedStreamObject, DictionaryObject, StreamObject
 # code freely inspired from @twiggy ; see #711
 def build_char_map(
     font_name: str, space_width: float, obj: DictionaryObject
-) -> Tuple[
-    str, float, Union[str, Dict[int, str]], Dict, DictionaryObject
-]:  # font_type,space_width /2, encoding, cmap
-    """Determine information about a font.
+) -> Tuple[str, float, Union[str, Dict[int, str]], Dict, DictionaryObject]:
+    """
+    Determine information about a font.
 
-    This function returns a tuple consisting of:
-    font sub-type, space_width/2, encoding, map character-map, font-dictionary.
-    The font-dictionary itself is suitable for the curious."""
+    Args:
+        font_name:
+        space_width:
+        obj:
+
+    Returns:
+        Font sub-type, space_width/2, encoding, map character-map, font-dictionary.
+        The font-dictionary itself is suitable for the curious.
+    """
     ft: DictionaryObject = obj["/Resources"]["/Font"][font_name]  # type: ignore
     font_type: str = cast(str, ft["/Subtype"])
 
@@ -27,8 +32,10 @@ def build_char_map(
     encoding, space_code = parse_encoding(ft, space_code)
     map_dict, space_code, int_entry = parse_to_unicode(ft, space_code)
 
-    # encoding can be either a string for decode (on 1,2 or a variable number of bytes) of a char table (for 1 byte only for me)
-    # if empty string, it means it is than encoding field is not present and we have to select the good encoding from cmap input data
+    # encoding can be either a string for decode
+    # (on 1,2 or a variable number of bytes) of a char table (for 1 byte only for me)
+    # if empty string, it means it is than encoding field is not present and
+    # we have to select the good encoding from cmap input data
     if encoding == "":
         if -1 not in map_dict or map_dict[-1] == 1:
             # I have not been able to find any rule for no /Encoding nor /ToUnicode
@@ -36,7 +43,9 @@ def build_char_map(
             encoding = "charmap"
         else:
             encoding = "utf-16-be"
-    # apply rule from PDF ref 1.7 §5.9.1, 1st bullet : if cmap not empty encoding should be discarded (here transformed into identity for those characters)
+    # apply rule from PDF ref 1.7 §5.9.1, 1st bullet :
+    #   if cmap not empty encoding should be discarded
+    #   (here transformed into identity for those characters)
     # if encoding is an str it is expected to be a identity translation
     elif isinstance(encoding, dict):
         for x in int_entry:
@@ -131,7 +140,8 @@ def parse_encoding(
     enc: Union(str, DictionaryObject) = ft["/Encoding"].get_object()  # type: ignore
     if isinstance(enc, str):
         try:
-            # allready done : enc = NameObject.unnumber(enc.encode()).decode()  # for #xx decoding
+            # allready done : enc = NameObject.unnumber(enc.encode()).decode()
+            # for #xx decoding
             if enc in charset_encoding:
                 encoding = charset_encoding[enc].copy()
             elif enc in _predefined_cmap:
@@ -192,9 +202,14 @@ def parse_to_unicode(
         None, Tuple[int, int]
     ] = None  # tuple = (current_char, remaining size) ; cf #1285 for example of file
     cm = prepare_cm(ft)
-    for l in cm.split(b"\n"):
+    for line in cm.split(b"\n"):
         process_rg, process_char, multiline_rg = process_cm_line(
-            l.strip(b" "), process_rg, process_char, multiline_rg, map_dict, int_entry
+            line.strip(b" "),
+            process_rg,
+            process_char,
+            multiline_rg,
+            map_dict,
+            int_entry,
         )
 
     for a, value in map_dict.items():
@@ -209,10 +224,12 @@ def prepare_cm(ft: DictionaryObject) -> bytes:
     if isinstance(tu, StreamObject):
         cm = cast(DecodedStreamObject, ft["/ToUnicode"]).get_data()
     elif isinstance(tu, str) and tu.startswith("/Identity"):
-        cm = b"beginbfrange\n<0000> <0001> <0000>\nendbfrange"  # the full range 0000-FFFF will be processed
+        # the full range 0000-FFFF will be processed
+        cm = b"beginbfrange\n<0000> <0001> <0000>\nendbfrange"
     if isinstance(cm, str):
         cm = cm.encode()
-    # we need to prepare cm before due to missing return line in pdf printed to pdf from word
+    # we need to prepare cm before due to missing return line in pdf printed
+    # to pdf from word
     cm = (
         cm.strip()
         .replace(b"beginbfchar", b"\nbeginbfchar\n")
@@ -228,7 +245,7 @@ def prepare_cm(ft: DictionaryObject) -> bytes:
         if j >= 0:
             if j == 0:
                 # string is empty: stash a placeholder here (see below)
-                # see https://github.com/py-pdf/PyPDF2/issues/1111
+                # see https://github.com/py-pdf/pypdf/issues/1111
                 content = b"."
             else:
                 content = ll[i][:j].replace(b" ", b"")
@@ -243,45 +260,43 @@ def prepare_cm(ft: DictionaryObject) -> bytes:
 
 
 def process_cm_line(
-    l: bytes,
+    line: bytes,
     process_rg: bool,
     process_char: bool,
     multiline_rg: Union[None, Tuple[int, int]],
     map_dict: Dict[Any, Any],
     int_entry: List[int],
 ) -> Tuple[bool, bool, Union[None, Tuple[int, int]]]:
-    if l in (b"", b" ") or l[0] == 37:  # 37 = %
+    if line in (b"", b" ") or line[0] == 37:  # 37 = %
         return process_rg, process_char, multiline_rg
-    if b"beginbfrange" in l:
+    if b"beginbfrange" in line:
         process_rg = True
-    elif b"endbfrange" in l:
+    elif b"endbfrange" in line:
         process_rg = False
-    elif b"beginbfchar" in l:
+    elif b"beginbfchar" in line:
         process_char = True
-    elif b"endbfchar" in l:
+    elif b"endbfchar" in line:
         process_char = False
     elif process_rg:
-        multiline_rg = parse_bfrange(l, map_dict, int_entry, multiline_rg)
+        multiline_rg = parse_bfrange(line, map_dict, int_entry, multiline_rg)
     elif process_char:
-        parse_bfchar(l, map_dict, int_entry)
+        parse_bfchar(line, map_dict, int_entry)
     return process_rg, process_char, multiline_rg
 
 
 def parse_bfrange(
-    l: bytes,
+    line: bytes,
     map_dict: Dict[Any, Any],
     int_entry: List[int],
     multiline_rg: Union[None, Tuple[int, int]],
 ) -> Union[None, Tuple[int, int]]:
-    lst = [x for x in l.split(b" ") if x]
+    lst = [x for x in line.split(b" ") if x]
     closure_found = False
-    nbi = max(len(lst[0]), len(lst[1]))
-    map_dict[-1] = ceil(nbi / 2)
-    fmt = b"%%0%dX" % (map_dict[-1] * 2)
     if multiline_rg is not None:
+        fmt = b"%%0%dX" % (map_dict[-1] * 2)
         a = multiline_rg[0]  # a, b not in the current line
         b = multiline_rg[1]
-        for sq in lst[1:]:
+        for sq in lst[0:]:
             if sq == b"]":
                 closure_found = True
                 break
@@ -296,6 +311,9 @@ def parse_bfrange(
     else:
         a = int(lst[0], 16)
         b = int(lst[1], 16)
+        nbi = max(len(lst[0]), len(lst[1]))
+        map_dict[-1] = ceil(nbi / 2)
+        fmt = b"%%0%dX" % (map_dict[-1] * 2)
         if lst[2] == b"[":
             for sq in lst[3:]:
                 if sq == b"]":
@@ -326,8 +344,8 @@ def parse_bfrange(
     return None if closure_found else (a, b)
 
 
-def parse_bfchar(l: bytes, map_dict: Dict[Any, Any], int_entry: List[int]) -> None:
-    lst = [x for x in l.split(b" ") if x]
+def parse_bfchar(line: bytes, map_dict: Dict[Any, Any], int_entry: List[int]) -> None:
+    lst = [x for x in line.split(b" ") if x]
     map_dict[-1] = len(lst[0]) // 2
     while len(lst) > 1:
         map_to = ""
@@ -348,7 +366,7 @@ def parse_bfchar(l: bytes, map_dict: Dict[Any, Any], int_entry: List[int]) -> No
 def compute_space_width(
     ft: DictionaryObject, space_code: int, space_width: float
 ) -> float:
-    sp_width: float = space_width * 2  # default value
+    sp_width: float = space_width * 2.0  # default value
     w = []
     w1 = {}
     st: int = 0

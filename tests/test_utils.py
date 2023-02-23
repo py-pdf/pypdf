@@ -4,13 +4,13 @@ from pathlib import Path
 
 import pytest
 
-import PyPDF2._utils
-from PyPDF2 import PdfReader
-from PyPDF2._utils import (
+import pypdf._utils
+from pypdf import PdfReader
+from pypdf._utils import (
     File,
     _get_max_pdf_version_header,
     _human_readable_bytes,
-    deprecate_bookmark,
+    deprecation_bookmark,
     mark_location,
     matrix_multiply,
     read_block_backwards,
@@ -20,7 +20,7 @@ from PyPDF2._utils import (
     skip_over_comment,
     skip_over_whitespace,
 )
-from PyPDF2.errors import PdfReadError, PdfStreamError
+from pypdf.errors import DeprecationError, PdfReadError, PdfStreamError
 
 from . import get_pdf_from_url
 
@@ -62,20 +62,11 @@ def test_skip_over_comment(stream, remainder):
     assert stream.read() == remainder
 
 
-def test_read_until_regex_premature_ending_raise():
-    import re
-
-    stream = io.BytesIO(b"")
-    with pytest.raises(PdfStreamError) as exc:
-        read_until_regex(stream, re.compile(b"."))
-    assert exc.value.args[0] == "Stream has ended unexpectedly"
-
-
 def test_read_until_regex_premature_ending_name():
     import re
 
     stream = io.BytesIO(b"")
-    assert read_until_regex(stream, re.compile(b"."), ignore_eof=True) == b""
+    assert read_until_regex(stream, re.compile(b".")) == b""
 
 
 @pytest.mark.parametrize(
@@ -93,25 +84,25 @@ def test_matrix_multiply(a, b, expected):
 def test_mark_location():
     stream = io.BytesIO(b"abde" * 6000)
     mark_location(stream)
-    os.remove("PyPDF2_pdfLocation.txt")  # cleanup
+    os.remove("pypdf_pdfLocation.txt")  # cleanup
 
 
 def test_hex_str():
-    assert PyPDF2._utils.hex_str(10) == "0xa"
+    assert pypdf._utils.hex_str(10) == "0xa"
 
 
 def test_b():
-    assert PyPDF2._utils.b_("foo") == b"foo"
-    assert PyPDF2._utils.b_("😀") == "😀".encode()
-    assert PyPDF2._utils.b_("‰") == "‰".encode()
-    assert PyPDF2._utils.b_("▷") == "▷".encode()
-    assert PyPDF2._utils.b_("世") == "世".encode()
+    assert pypdf._utils.b_("foo") == b"foo"
+    assert pypdf._utils.b_("😀") == "😀".encode()
+    assert pypdf._utils.b_("‰") == "‰".encode()
+    assert pypdf._utils.b_("▷") == "▷".encode()
+    assert pypdf._utils.b_("世") == "世".encode()
 
 
 def test_deprecate_no_replacement():
-    with pytest.warns(PendingDeprecationWarning) as warn:
-        PyPDF2._utils.deprecate_no_replacement("foo")
-    error_msg = "foo is deprecated and will be removed in PyPDF2 3.0.0."
+    with pytest.warns(DeprecationWarning) as warn:
+        pypdf._utils.deprecate_no_replacement("foo")
+    error_msg = "foo is deprecated and will be removed in pypdf 3.0.0."
     assert warn[0].message.args[0] == error_msg
 
 
@@ -130,7 +121,7 @@ def test_deprecate_no_replacement():
     ],
 )
 def test_paeth_predictor(left, up, upleft, expected):
-    assert PyPDF2._utils.paeth_predictor(left, up, upleft) == expected
+    assert pypdf._utils.paeth_predictor(left, up, upleft) == expected
 
 
 @pytest.mark.parametrize(
@@ -236,24 +227,24 @@ def test_read_block_backwards_exception():
     assert exc.value.args[0] == "Could not read malformed PDF file"
 
 
-def test_deprecate_bookmark():
-    @deprecate_bookmark(old_param="new_param")
+def test_deprecation_bookmark():
+    @deprecation_bookmark(old_param="new_param")
     def foo(old_param=1, baz=2):
         return old_param * baz
 
-    with pytest.raises(TypeError) as exc:
+    with pytest.raises(DeprecationError) as exc:
         foo(old_param=12, new_param=13)
-    expected_msg = (
-        "foo received both old_param and new_param as an argument. "
-        "old_param is deprecated. Use new_param instead."
-    )
+    expected_msg = "old_param is deprecated as an argument. Use new_param instead"
     assert exc.value.args[0] == expected_msg
 
 
 @pytest.mark.external
 def test_escapedcode_followed_by_int():
     # iss #1294
-    url = "https://github.com/timedegree/playground_files/raw/main/%E8%AE%BA%E6%96%87/AN%20EXACT%20ANALYTICAL%20SOLUTION%20OF%20KEPLER'S%20EQUATION.pdf"
+    url = (
+        "https://github.com/timedegree/playground_files/raw/main/"
+        "%E8%AE%BA%E6%96%87/AN%20EXACT%20ANALYTICAL%20SOLUTION%20OF%20KEPLER'S%20EQUATION.pdf"
+    )
     name = "keppler.pdf"
 
     reader = PdfReader(io.BytesIO(get_pdf_from_url(url, name=name)))

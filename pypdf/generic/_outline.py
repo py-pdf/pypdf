@@ -1,6 +1,6 @@
 from typing import Any, Union
 
-from .._utils import StreamType, deprecate_with_replacement
+from .._utils import StreamType, deprecation_with_replacement
 from ._base import NameObject
 from ._data_structures import Destination
 
@@ -29,7 +29,7 @@ class OutlineItem(Destination):
         stream.write(b">>")
 
 
-class Bookmark(OutlineItem):  # pragma: no cover
+class Bookmark(OutlineItem):  # deprecated
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        deprecate_with_replacement("Bookmark", "OutlineItem")
+        deprecation_with_replacement("Bookmark", "OutlineItem", "3.0.0")
         super().__init__(*args, **kwargs)

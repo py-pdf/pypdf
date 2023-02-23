@@ -2,8 +2,9 @@ import os
 import ssl
 import urllib.request
 from typing import List
+from urllib.error import HTTPError
 
-from PyPDF2.generic import DictionaryObject, IndirectObject
+from pypdf.generic import DictionaryObject, IndirectObject
 
 
 def get_pdf_from_url(url: str, name: str) -> bytes:
@@ -14,8 +15,12 @@ def get_pdf_from_url(url: str, name: str) -> bytes:
     This function is a last resort for PDF files where we are uncertain if
     we may add it for testing purposes to https://github.com/py-pdf/sample-files
 
-    :param str url: location of the PDF file
-    :param str name: unique name across all files
+    Args:
+        url: location of the PDF file
+        name: unique name across all files
+
+    Returns:
+        Read PDF as bytes
     """
     if url.startswith("file://"):
         with open(url[7:].replace("\\", "/"), "rb") as fp:
@@ -26,10 +31,19 @@ def get_pdf_from_url(url: str, name: str) -> bytes:
     cache_path = os.path.join(cache_dir, name)
     if not os.path.exists(cache_path):
         ssl._create_default_https_context = ssl._create_unverified_context
-        with urllib.request.urlopen(url) as response, open(
-            cache_path, "wb"
-        ) as out_file:
-            out_file.write(response.read())
+        cpt = 3
+        while cpt > 0:
+            try:
+                with urllib.request.urlopen(url) as response, open(
+                    cache_path, "wb"
+                ) as out_file:
+                    out_file.write(response.read())
+                cpt = 0
+            except HTTPError as e:
+                if cpt > 0:
+                    cpt -= 1
+                else:
+                    raise e
     with open(cache_path, "rb") as fp:
         data = fp.read()
     return data
@@ -40,10 +54,16 @@ def _strip_position(line: str) -> str:
     Remove the location information.
 
     The message
-        WARNING  PyPDF2._reader:_utils.py:364 Xref table not zero-indexed.
+        WARNING  pypdf._reader:_utils.py:364 Xref table not zero-indexed.
 
     becomes
         Xref table not zero-indexed.
+
+    Args:
+        line: the original line
+
+    Returns:
+        A line with stripped position
     """
     line = ".py".join(line.split(".py:")[1:])
     line = " ".join(line.split(" ")[1:])
@@ -58,7 +78,7 @@ class ReaderDummy:
     def __init__(self, strict=False):
         self.strict = strict
 
-    def get_object(self, indirect_ref):
+    def get_object(self, indirect_reference):
         class DummyObj:
             def get_object(self):
                 return self

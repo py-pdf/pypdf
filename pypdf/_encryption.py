@@ -58,6 +58,7 @@ class CryptIdentity(CryptBase):
 
 try:
     from Crypto.Cipher import AES, ARC4  # type: ignore[import]
+    from Crypto.Util.Padding import pad  # type: ignore[import]
 
     class CryptRC4(CryptBase):
         def __init__(self, key: bytes) -> None:
@@ -84,6 +85,8 @@ try:
             iv = data[:16]
             data = data[16:]
             aes = AES.new(self.key, AES.MODE_CBC, iv)
+            if len(data) % 16:
+                data = pad(data, 16)
             d = aes.decrypt(data)
             if len(d) == 0:
                 return d
@@ -175,7 +178,7 @@ class CryptFilter:
         return NotImplemented
 
     def decrypt_object(self, obj: PdfObject) -> PdfObject:
-        if isinstance(obj, ByteStringObject) or isinstance(obj, TextStringObject):
+        if isinstance(obj, (ByteStringObject, TextStringObject)):
             data = self.strCrypt.decrypt(obj.original_bytes)
             obj = create_string_object(data)
         elif isinstance(obj, StreamObject):
@@ -254,8 +257,8 @@ class AlgV4:
                 2E 2E 00 B6 D0 68 3E 80 2F 0C A9 FE 64 53 69 7A >
            That is, if the password string is n bytes long, append
            the first 32 - n bytes of the padding string to the end
-           of the password string. If the password string is empty (zero-length),
-           meaning there is no user password,
+           of the password string. If the password string is empty
+           (zero-length), meaning there is no user password,
            substitute the entire padding string in its place.
 
         b) Initialize the MD5 hash function and pass the result of step (a)
@@ -285,6 +288,22 @@ class AlgV4:
            for security handlers of revision 2 but, for security handlers of
            revision 3 or greater, shall depend on the
            value of the encryption dictionary’s Length entry.
+
+        Args:
+            password: The encryption secret as a bytes-string
+            rev: The encryption revision (see PDF standard)
+            key_size: The size of the key in bytes
+            o_entry: The owner entry
+            P: A set of flags specifying which operations shall be permitted
+                when the document is opened with user access. If bit 2 is set to 1,
+                all other bits are ignored and all operations are permitted.
+                If bit 2 is set to 0, permission for operations are based on the
+                values of the remaining flags defined in Table 24.
+            id1_entry:
+            metadata_encrypted: A boolean indicating if the metadata is encrypted.
+
+        Returns:
+            The u_hash digest of length key_size
         """
         a = _padding(password)
         u_hash = hashlib.md5(a)
@@ -301,7 +320,7 @@ class AlgV4:
         return u_hash_digest[:length]
 
     @staticmethod
-    def compute_O_value_key(owner_pwd: bytes, rev: int, key_size: int) -> bytes:
+    def compute_O_value_key(owner_password: bytes, rev: int, key_size: int) -> bytes:
         """
         Algorithm 3: Computing the encryption dictionary’s O (owner password) value.
 
@@ -332,8 +351,16 @@ class AlgV4:
            of the iteration counter (from 1 to 19).
         h) Store the output from the final invocation of the RC4 function as
            the value of the O entry in the encryption dictionary.
+
+        Args:
+            owner_password:
+            rev: The encryption revision (see PDF standard)
+            key_size: The size of the key in bytes
+
+        Returns:
+            The RC4 key
         """
-        a = _padding(owner_pwd)
+        a = _padding(owner_password)
         o_hash_digest = hashlib.md5(a).digest()
 
         if rev >= 3:
@@ -344,9 +371,19 @@ class AlgV4:
         return rc4_key
 
     @staticmethod
-    def compute_O_value(rc4_key: bytes, user_pwd: bytes, rev: int) -> bytes:
-        """See :func:`compute_O_value_key`."""
-        a = _padding(user_pwd)
+    def compute_O_value(rc4_key: bytes, user_password: bytes, rev: int) -> bytes:
+        """
+        See :func:`compute_O_value_key`.
+
+        Args:
+            rc4_key:
+            user_password:
+            rev: The encryption revision (see PDF standard)
+
+        Returns:
+            The RC4 encrypted
+        """
+        a = _padding(user_password)
         rc4_enc = RC4_encrypt(rc4_key, a)
         if rev >= 3:
             for i in range(1, 20):
@@ -368,6 +405,14 @@ class AlgV4:
            function with the encryption key from the preceding step.
         c) Store the result of step (b) as the value of the U entry in the
            encryption dictionary.
+
+        Args:
+            key:
+            rev: The encryption revision (see PDF standard)
+            id1_entry:
+
+        Returns:
+            The value
         """
         if rev <= 2:
             value = RC4_encrypt(key, _PADDING)
@@ -408,7 +453,7 @@ class AlgV4:
 
     @staticmethod
     def verify_user_password(
-        user_pwd: bytes,
+        user_password: bytes,
         rev: int,
         key_size: int,
         o_entry: bytes,
@@ -420,18 +465,41 @@ class AlgV4:
         """
         Algorithm 6: Authenticating the user password.
 
-        a) Perform all but the last step of "Algorithm 4: Computing the encryption dictionary’s U (user password)
-           value (Security handlers of revision 2)" or "Algorithm 5: Computing the encryption dictionary’s U (user
-           password) value (Security handlers of revision 3 or greater)" using the supplied password string.
-        b) If the result of step (a) is equal to the value of the encryption dictionary’s U entry (comparing on the first 16
-           bytes in the case of security handlers of revision 3 or greater), the password supplied is the correct user
-           password. The key obtained in step (a) (that is, in the first step of "Algorithm 4: Computing the encryption
-           dictionary’s U (user password) value (Security handlers of revision 2)" or "Algorithm 5: Computing the
-           encryption dictionary’s U (user password) value (Security handlers of revision 3 or greater)") shall be used
+        a) Perform all but the last step of "Algorithm 4: Computing the
+           encryption dictionary’s U (user password) value (Security handlers of
+           revision 2)" or "Algorithm 5: Computing the encryption dictionary’s U
+           (user password) value (Security handlers of revision 3 or greater)"
+           using the supplied password string.
+        b) If the result of step (a) is equal to the value of the encryption
+           dictionary’s U entry (comparing on the first 16 bytes in the case of
+           security handlers of revision 3 or greater), the password supplied is
+           the correct user password. The key obtained in step (a) (that is, in
+           the first step of "Algorithm 4: Computing the encryption
+           dictionary’s U (user password) value
+           (Security handlers of revision 2)" or
+           "Algorithm 5: Computing the encryption dictionary’s U (user password)
+           value (Security handlers of revision 3 or greater)") shall be used
            to decrypt the document.
+
+        Args:
+            user_password: The user passwort as a bytes stream
+            rev: The encryption revision (see PDF standard)
+            key_size: The size of the key in bytes
+            o_entry: The owner entry
+            u_entry: The user entry
+            P: A set of flags specifying which operations shall be permitted
+                when the document is opened with user access. If bit 2 is set to 1,
+                all other bits are ignored and all operations are permitted.
+                If bit 2 is set to 0, permission for operations are based on the
+                values of the remaining flags defined in Table 24.
+            id1_entry:
+            metadata_encrypted: A boolean indicating if the metadata is encrypted.
+
+        Returns:
+            The key
         """
         key = AlgV4.compute_key(
-            user_pwd, rev, key_size, o_entry, P, id1_entry, metadata_encrypted
+            user_password, rev, key_size, o_entry, P, id1_entry, metadata_encrypted
         )
         u_value = AlgV4.compute_U_value(key, rev, id1_entry)
         if rev >= 3:
@@ -443,7 +511,7 @@ class AlgV4:
 
     @staticmethod
     def verify_owner_password(
-        owner_pwd: bytes,
+        owner_password: bytes,
         rev: int,
         key_size: int,
         o_entry: bytes,
@@ -455,29 +523,61 @@ class AlgV4:
         """
         Algorithm 7: Authenticating the owner password.
 
-        a) Compute an encryption key from the supplied password string, as described in steps (a) to (d) of
-           "Algorithm 3: Computing the encryption dictionary’s O (owner password) value".
-        b) (Security handlers of revision 2 only) Decrypt the value of the encryption dictionary’s O entry, using an RC4
+        a) Compute an encryption key from the supplied password string, as
+           described in steps (a) to (d) of
+           "Algorithm 3: Computing the encryption dictionary’s O (owner password)
+           value".
+        b) (Security handlers of revision 2 only) Decrypt the value of the
+           encryption dictionary’s O entry, using an RC4
            encryption function with the encryption key computed in step (a).
-           (Security handlers of revision 3 or greater) Do the following 20 times: Decrypt the value of the encryption
-           dictionary’s O entry (first iteration) or the output from the previous iteration (all subsequent iterations),
-           using an RC4 encryption function with a different encryption key at each iteration. The key shall be
-           generated by taking the original key (obtained in step (a)) and performing an XOR (exclusive or) operation
-           between each byte of the key and the single-byte value of the iteration counter (from 19 to 0).
-        c) The result of step (b) purports to be the user password. Authenticate this user password using "Algorithm 6:
-           Authenticating the user password". If it is correct, the password supplied is the correct owner password.
+           (Security handlers of revision 3 or greater) Do the following 20 times:
+           Decrypt the value of the encryption dictionary’s O entry (first iteration)
+           or the output from the previous iteration (all subsequent iterations),
+           using an RC4 encryption function with a different encryption key at
+           each iteration. The key shall be generated by taking the original key
+           (obtained in step (a)) and performing an XOR (exclusive or) operation
+           between each byte of the key and the single-byte value of the
+           iteration counter (from 19 to 0).
+        c) The result of step (b) purports to be the user password.
+           Authenticate this user password using
+           "Algorithm 6: Authenticating the user password".
+           If it is correct, the password supplied is the correct owner password.
+
+        Args:
+            owner_password:
+            rev: The encryption revision (see PDF standard)
+            key_size: The size of the key in bytes
+            o_entry: The owner entry
+            u_entry: The user entry
+            P: A set of flags specifying which operations shall be permitted
+                when the document is opened with user access. If bit 2 is set to 1,
+                all other bits are ignored and all operations are permitted.
+                If bit 2 is set to 0, permission for operations are based on the
+                values of the remaining flags defined in Table 24.
+            id1_entry:
+            metadata_encrypted: A boolean indicating if the metadata is encrypted.
+
+        Returns:
+            bytes
         """
-        rc4_key = AlgV4.compute_O_value_key(owner_pwd, rev, key_size)
+        rc4_key = AlgV4.compute_O_value_key(owner_password, rev, key_size)
 
         if rev <= 2:
-            u_pwd = RC4_decrypt(rc4_key, o_entry)
+            user_password = RC4_decrypt(rc4_key, o_entry)
         else:
-            u_pwd = o_entry
+            user_password = o_entry
             for i in range(19, -1, -1):
                 key = bytes(bytearray(x ^ i for x in rc4_key))
-                u_pwd = RC4_decrypt(key, u_pwd)
+                user_password = RC4_decrypt(key, user_password)
         return AlgV4.verify_user_password(
-            u_pwd, rev, key_size, o_entry, u_entry, P, id1_entry, metadata_encrypted
+            user_password,
+            rev,
+            key_size,
+            o_entry,
+            u_entry,
+            P,
+            id1_entry,
+            metadata_encrypted,
         )
 
 
@@ -489,31 +589,59 @@ class AlgV5:
         """
         Algorithm 3.2a Computing an encryption key.
 
-        To understand the algorithm below, it is necessary to treat the O and U strings in the Encrypt dictionary
-        as made up of three sections. The first 32 bytes are a hash value (explained below). The next 8 bytes are
-        called the Validation Salt. The final 8 bytes are called the Key Salt.
+        To understand the algorithm below, it is necessary to treat the O and U
+        strings in the Encrypt dictionary as made up of three sections.
+        The first 32 bytes are a hash value (explained below). The next 8 bytes
+        are called the Validation Salt. The final 8 bytes are called the Key Salt.
 
-        1. The password string is generated from Unicode input by processing the input string with the SASLprep
-           (IETF RFC 4013) profile of stringprep (IETF RFC 3454), and then converting to a UTF-8 representation.
-        2. Truncate the UTF-8 representation to 127 bytes if it is longer than 127 bytes.
-        3. Test the password against the owner key by computing the SHA-256 hash of the UTF-8 password
-           concatenated with the 8 bytes of owner Validation Salt, concatenated with the 48-byte U string. If the
-           32-byte result matches the first 32 bytes of the O string, this is the owner password.
-           Compute an intermediate owner key by computing the SHA-256 hash of the UTF-8 password
-           concatenated with the 8 bytes of owner Key Salt, concatenated with the 48-byte U string. The 32-byte
-           result is the key used to decrypt the 32-byte OE string using AES-256 in CBC mode with no padding and
-           an initialization vector of zero. The 32-byte result is the file encryption key.
-        4. Test the password against the user key by computing the SHA-256 hash of the UTF-8 password
-           concatenated with the 8 bytes of user Validation Salt. If the 32 byte result matches the first 32 bytes of
+        1. The password string is generated from Unicode input by processing the
+           input string with the SASLprep (IETF RFC 4013) profile of
+           stringprep (IETF RFC 3454), and then converting to a UTF-8
+           representation.
+        2. Truncate the UTF-8 representation to 127 bytes if it is longer than
+           127 bytes.
+        3. Test the password against the owner key by computing the SHA-256 hash
+           of the UTF-8 password concatenated with the 8 bytes of owner
+           Validation Salt, concatenated with the 48-byte U string. If the
+           32-byte result matches the first 32 bytes of the O string, this is
+           the owner password.
+           Compute an intermediate owner key by computing the SHA-256 hash of
+           the UTF-8 password concatenated with the 8 bytes of owner Key Salt,
+           concatenated with the 48-byte U string. The 32-byte result is the
+           key used to decrypt the 32-byte OE string using AES-256 in CBC mode
+           with no padding and an initialization vector of zero.
+           The 32-byte result is the file encryption key.
+        4. Test the password against the user key by computing the SHA-256 hash
+           of the UTF-8 password concatenated with the 8 bytes of user
+           Validation Salt. If the 32 byte result matches the first 32 bytes of
            the U string, this is the user password.
-           Compute an intermediate user key by computing the SHA-256 hash of the UTF-8 password
-           concatenated with the 8 bytes of user Key Salt. The 32-byte result is the key used to decrypt the 32-byte
-           UE string using AES-256 in CBC mode with no padding and an initialization vector of zero. The 32-byte
-           result is the file encryption key.
-        5. Decrypt the 16-byte Perms string using AES-256 in ECB mode with an initialization vector of zero and
-           the file encryption key as the key. Verify that bytes 9-11 of the result are the characters ‘a’, ‘d’, ‘b’. Bytes
-           0-3 of the decrypted Perms entry, treated as a little-endian integer, are the user permissions. They
-           should match the value in the P key.
+           Compute an intermediate user key by computing the SHA-256 hash of the
+           UTF-8 password concatenated with the 8 bytes of user Key Salt.
+           The 32-byte result is the key used to decrypt the 32-byte
+           UE string using AES-256 in CBC mode with no padding and an
+           initialization vector of zero. The 32-byte result is the file
+           encryption key.
+        5. Decrypt the 16-byte Perms string using AES-256 in ECB mode with an
+           initialization vector of zero and the file encryption key as the key.
+           Verify that bytes 9-11 of the result are the characters ‘a’, ‘d’, ‘b’.
+           Bytes 0-3 of the decrypted Perms entry, treated as a little-endian
+           integer, are the user permissions.
+           They should match the value in the P key.
+
+        Args:
+            R: A number specifying which revision of the standard security
+                handler shall be used to interpret this dictionary
+            password: The owner password
+            o_value: A 32-byte string, based on both the owner and user passwords,
+                that shall be used in computing the encryption key and in
+                determining whether a valid owner password was entered
+            oe_value:
+            u_value: A 32-byte string, based on the user password, that shall be
+                used in determining whether to prompt the user for a password and,
+                if so, whether a valid user or owner password was entered.
+
+        Returns:
+            The key
         """
         password = password[:127]
         if (
@@ -530,7 +658,21 @@ class AlgV5:
     def verify_user_password(
         R: int, password: bytes, u_value: bytes, ue_value: bytes
     ) -> bytes:
-        """See :func:`verify_owner_password`."""
+        """
+        See :func:`verify_owner_password`.
+
+        Args:
+            R: A number specifying which revision of the standard security
+                handler shall be used to interpret this dictionary
+            password: The user password
+            u_value: A 32-byte string, based on the user password, that shall be
+                used in determining whether to prompt the user for a password
+                and, if so, whether a valid user or owner password was entered.
+            ue_value:
+
+        Returns:
+            bytes
+        """
         password = password[:127]
         if AlgV5.calculate_hash(R, password, u_value[32:40], b"") != u_value[:32]:
             return b""
@@ -563,7 +705,23 @@ class AlgV5:
     def verify_perms(
         key: bytes, perms: bytes, p: int, metadata_encrypted: bool
     ) -> bool:
-        """See :func:`verify_owner_password` and :func:`compute_Perms_value`."""
+        """
+        See :func:`verify_owner_password` and :func:`compute_perms_value`.
+
+        Args:
+            key: The owner password
+            perms:
+            p: A set of flags specifying which operations shall be permitted
+                when the document is opened with user access.
+                If bit 2 is set to 1, all other bits are ignored and all
+                operations are permitted.
+                If bit 2 is set to 0, permission for operations are based on
+                the values of the remaining flags defined in Table 24.
+            metadata_encrypted:
+
+        Returns:
+            A boolean
+        """
         b8 = b"T" if metadata_encrypted else b"F"
         p1 = struct.pack("<I", p) + b"\xff\xff\xff\xff" + b8 + b"adb"
         p2 = AES_ECB_decrypt(key, perms)
@@ -571,10 +729,14 @@ class AlgV5:
 
     @staticmethod
     def generate_values(
-        user_pwd: bytes, owner_pwd: bytes, key: bytes, p: int, metadata_encrypted: bool
+        user_password: bytes,
+        owner_password: bytes,
+        key: bytes,
+        p: int,
+        metadata_encrypted: bool,
     ) -> Dict[Any, Any]:
-        u_value, ue_value = AlgV5.compute_U_value(user_pwd, key)
-        o_value, oe_value = AlgV5.compute_O_value(owner_pwd, key, u_value)
+        u_value, ue_value = AlgV5.compute_U_value(user_password, key)
+        o_value, oe_value = AlgV5.compute_O_value(owner_password, key, u_value)
         perms = AlgV5.compute_Perms_value(key, p, metadata_encrypted)
         return {
             "/U": u_value,
@@ -587,15 +749,27 @@ class AlgV5:
     @staticmethod
     def compute_U_value(password: bytes, key: bytes) -> Tuple[bytes, bytes]:
         """
-        Algorithm 3.8 Computing the encryption dictionary’s U (user password) and UE (user encryption key) values
+        Algorithm 3.8 Computing the encryption dictionary’s U (user password)
+        and UE (user encryption key) values.
 
-        1. Generate 16 random bytes of data using a strong random number generator. The first 8 bytes are the
-           User Validation Salt. The second 8 bytes are the User Key Salt. Compute the 32-byte SHA-256 hash of
-           the password concatenated with the User Validation Salt. The 48-byte string consisting of the 32-byte
-           hash followed by the User Validation Salt followed by the User Key Salt is stored as the U key.
-        2. Compute the 32-byte SHA-256 hash of the password concatenated with the User Key Salt. Using this
-           hash as the key, encrypt the file encryption key using AES-256 in CBC mode with no padding and an
-           initialization vector of zero. The resulting 32-byte string is stored as the UE key.
+        1. Generate 16 random bytes of data using a strong random number generator.
+           The first 8 bytes are the User Validation Salt. The second 8 bytes
+           are the User Key Salt. Compute the 32-byte SHA-256 hash of the
+           password concatenated with the User Validation Salt. The 48-byte
+           string consisting of the 32-byte hash followed by the User
+           Validation Salt followed by the User Key Salt is stored as the U key.
+        2. Compute the 32-byte SHA-256 hash of the password concatenated with
+           the User Key Salt. Using this hash as the key, encrypt the file
+           encryption key using AES-256 in CBC mode with no padding and an
+           initialization vector of zero. The resulting 32-byte string is stored
+           as the UE key.
+
+        Args:
+            password:
+            key:
+
+        Returns:
+            A tuple (u-value, ue value)
         """
         random_bytes = bytes(random.randrange(0, 256) for _ in range(16))
         val_salt = random_bytes[:8]
@@ -612,17 +786,33 @@ class AlgV5:
         password: bytes, key: bytes, u_value: bytes
     ) -> Tuple[bytes, bytes]:
         """
-        Algorithm 3.9 Computing the encryption dictionary’s O (owner password) and OE (owner encryption key) values.
+        Algorithm 3.9 Computing the encryption dictionary’s O (owner password)
+        and OE (owner encryption key) values.
 
-        1. Generate 16 random bytes of data using a strong random number generator. The first 8 bytes are the
-           Owner Validation Salt. The second 8 bytes are the Owner Key Salt. Compute the 32-byte SHA-256 hash
-           of the password concatenated with the Owner Validation Salt and then concatenated with the 48-byte
-           U string as generated in Algorithm 3.8. The 48-byte string consisting of the 32-byte hash followed by
-           the Owner Validation Salt followed by the Owner Key Salt is stored as the O key.
-        2. Compute the 32-byte SHA-256 hash of the password concatenated with the Owner Key Salt and then
-           concatenated with the 48-byte U string as generated in Algorithm 3.8. Using this hash as the key,
-           encrypt the file encryption key using AES-256 in CBC mode with no padding and an initialization vector
-           of zero. The resulting 32-byte string is stored as the OE key.
+        1. Generate 16 random bytes of data using a strong random number
+           generator. The first 8 bytes are the Owner Validation Salt. The
+           second 8 bytes are the Owner Key Salt. Compute the 32-byte SHA-256
+           hash of the password concatenated with the Owner Validation Salt and
+           then concatenated with the 48-byte U string as generated in
+           Algorithm 3.8. The 48-byte string consisting of the 32-byte hash
+           followed by the Owner Validation Salt followed by the Owner Key Salt
+           is stored as the O key.
+        2. Compute the 32-byte SHA-256 hash of the password concatenated with
+           the Owner Key Salt and then concatenated with the 48-byte U string as
+           generated in Algorithm 3.8. Using this hash as the key,
+           encrypt the file encryption key using AES-256 in CBC mode with
+           no padding and an initialization vector of zero.
+           The resulting 32-byte string is stored as the OE key.
+
+        Args:
+            password:
+            key:
+            u_value: A 32-byte string, based on the user password, that shall be
+                used in determining whether to prompt the user for a password
+                and, if so, whether a valid user or owner password was entered.
+
+        Returns:
+            A tuple (O value, OE value)
         """
         random_bytes = bytes(random.randrange(0, 256) for _ in range(16))
         val_salt = random_bytes[:8]
@@ -639,17 +829,34 @@ class AlgV5:
     @staticmethod
     def compute_Perms_value(key: bytes, p: int, metadata_encrypted: bool) -> bytes:
         """
-        Algorithm 3.10 Computing the encryption dictionary’s Perms (permissions) value
+        Algorithm 3.10 Computing the encryption dictionary’s Perms
+        (permissions) value.
 
-        1. Extend the permissions (contents of the P integer) to 64 bits by setting the upper 32 bits to all 1’s. (This
-           allows for future extension without changing the format.)
-        2. Record the 8 bytes of permission in the bytes 0-7 of the block, low order byte first.
-        3. Set byte 8 to the ASCII value ' T ' or ' F ' according to the EncryptMetadata Boolean.
+        1. Extend the permissions (contents of the P integer) to 64 bits by
+           setting the upper 32 bits to all 1’s.
+           (This allows for future extension without changing the format.)
+        2. Record the 8 bytes of permission in the bytes 0-7 of the block,
+           low order byte first.
+        3. Set byte 8 to the ASCII value ' T ' or ' F ' according to the
+           EncryptMetadata Boolean.
         4. Set bytes 9-11 to the ASCII characters ' a ', ' d ', ' b '.
         5. Set bytes 12-15 to 4 bytes of random data, which will be ignored.
-        6. Encrypt the 16-byte block using AES-256 in ECB mode with an initialization vector of zero, using the file
-           encryption key as the key. The result (16 bytes) is stored as the Perms string, and checked for validity
-           when the file is opened.
+        6. Encrypt the 16-byte block using AES-256 in ECB mode with an
+           initialization vector of zero, using the file encryption key as the
+           key. The result (16 bytes) is stored as the Perms string, and checked
+           for validity when the file is opened.
+
+        Args:
+            key:
+            p: A set of flags specifying which operations shall be permitted
+                when the document is opened with user access. If bit 2 is set to 1,
+                all other bits are ignored and all operations are permitted.
+                If bit 2 is set to 0, permission for operations are based on the
+                values of the remaining flags defined in Table 24.
+            metadata_encrypted: A boolean indicating if the metadata is encrypted.
+
+        Returns:
+            The perms value
         """
         b8 = b"T" if metadata_encrypted else b"F"
         rr = bytes(random.randrange(0, 256) for _ in range(4))
@@ -697,31 +904,49 @@ class Encryption:
         """
         Algorithm 1: Encryption of data using the RC4 or AES algorithms.
 
-        a) Obtain the object number and generation number from the object identifier of the string or stream to be
-           encrypted (see 7.3.10, "Indirect Objects"). If the string is a direct object, use the identifier of the indirect
-           object containing it.
-        b) For all strings and streams without crypt filter specifier; treating the object number and generation number
-           as binary integers, extend the original n-byte encryption key to n + 5 bytes by appending the low-order 3
-           bytes of the object number and the low-order 2 bytes of the generation number in that order, low-order byte
-           first. (n is 5 unless the value of V in the encryption dictionary is greater than 1, in which case n is the value
-           of Length divided by 8.)
-           If using the AES algorithm, extend the encryption key an additional 4 bytes by adding the value “sAlT”,
-           which corresponds to the hexadecimal values 0x73, 0x41, 0x6C, 0x54. (This addition is done for backward
-           compatibility and is not intended to provide additional security.)
-        c) Initialize the MD5 hash function and pass the result of step (b) as input to this function.
-        d) Use the first (n + 5) bytes, up to a maximum of 16, of the output from the MD5 hash as the key for the RC4
-           or AES symmetric key algorithms, along with the string or stream data to be encrypted.
-           If using the AES algorithm, the Cipher Block Chaining (CBC) mode, which requires an initialization vector,
-           is used. The block size parameter is set to 16 bytes, and the initialization vector is a 16-byte random
-           number that is stored as the first 16 bytes of the encrypted stream or string.
+        a) Obtain the object number and generation number from the object
+           identifier of the string or stream to be encrypted
+           (see 7.3.10, "Indirect Objects"). If the string is a direct object,
+           use the identifier of the indirect object containing it.
+        b) For all strings and streams without crypt filter specifier; treating
+           the object number and generation number as binary integers, extend
+           the original n-byte encryption key to n + 5 bytes by appending the
+           low-order 3 bytes of the object number and the low-order 2 bytes of
+           the generation number in that order, low-order byte first.
+           (n is 5 unless the value of V in the encryption dictionary is greater
+           than 1, in which case n is the value of Length divided by 8.)
+           If using the AES algorithm, extend the encryption key an additional
+           4 bytes by adding the value “sAlT”, which corresponds to the
+           hexadecimal values 0x73, 0x41, 0x6C, 0x54. (This addition is done for
+           backward compatibility and is not intended to provide additional
+           security.)
+        c) Initialize the MD5 hash function and pass the result of step (b) as
+           input to this function.
+        d) Use the first (n + 5) bytes, up to a maximum of 16, of the output
+           from the MD5 hash as the key for the RC4 or AES symmetric key
+           algorithms, along with the string or stream data to be encrypted.
+           If using the AES algorithm, the Cipher Block Chaining (CBC) mode,
+           which requires an initialization vector, is used. The block size
+           parameter is set to 16 bytes, and the initialization vector is a
+           16-byte random number that is stored as the first 16 bytes of the
+           encrypted stream or string.
 
         Algorithm 3.1a Encryption of data using the AES algorithm
-        1. Use the 32-byte file encryption key for the AES-256 symmetric key algorithm, along with the string or
-           stream data to be encrypted.
-           Use the AES algorithm in Cipher Block Chaining (CBC) mode, which requires an initialization vector. The
-           block size parameter is set to 16 bytes, and the initialization vector is a 16-byte random number that is
-           stored as the first 16 bytes of the encrypted stream or string.
+        1. Use the 32-byte file encryption key for the AES-256 symmetric key
+           algorithm, along with the string or stream data to be encrypted.
+           Use the AES algorithm in Cipher Block Chaining (CBC) mode, which
+           requires an initialization vector. The block size parameter is set to
+           16 bytes, and the initialization vector is a 16-byte random number
+           that is stored as the first 16 bytes of the encrypted stream or string.
            The output is the encrypted data to be stored in the PDF file.
+
+        Args:
+            obj:
+            idnum:
+            generation:
+
+        Returns:
+            The PdfObject
         """
         pack1 = struct.pack("<i", idnum)[:3]
         pack2 = struct.pack("<i", generation)[:2]

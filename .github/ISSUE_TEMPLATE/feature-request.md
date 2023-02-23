@@ -1,6 +1,6 @@
 ---
 name: Request a Feature
-about: What do you think is missing in PyPDF2?
+about: What do you think is missing in pypdf?
 title: ''
 labels: Feature Request
 assignees: MartinThoma
@@ -16,7 +16,7 @@ Explain briefly what you want to achive.
 How would your feature be used? (Remove this if it is not applicable.)
 
 ```python
-from PyPDF2 import PdfReader, PdfWriter
+from pypdf import PdfReader, PdfWriter
 
 ...  # your new feature in action!
 ```

@@ -6,16 +6,16 @@ from unittest.mock import patch
 
 import pytest
 
-from PyPDF2 import PdfReader
-from PyPDF2.errors import PdfReadError, PdfStreamError
-from PyPDF2.filters import (
+from pypdf import PdfReader
+from pypdf.errors import PdfReadError, PdfStreamError
+from pypdf.filters import (
     ASCII85Decode,
     ASCIIHexDecode,
     CCITParameters,
     CCITTFaxDecode,
     FlateDecode,
 )
-from PyPDF2.generic import ArrayObject, DictionaryObject, NumberObject
+from pypdf.generic import ArrayObject, DictionaryObject, NumberObject
 
 from . import get_pdf_from_url
 
@@ -35,9 +35,7 @@ filter_inputs = (
     ("predictor", "s"), list(cartesian_product([1], filter_inputs))
 )
 def test_FlateDecode(predictor, s):
-    """
-    Tests FlateDecode decode() and encode() methods.
-    """
+    """Tests FlateDecode decode() and encode() methods."""
     codec = FlateDecode()
     s = s.encode()
     encoded = codec.encode(s)
@@ -46,9 +44,11 @@ def test_FlateDecode(predictor, s):
 
 def test_FlateDecode_unsupported_predictor():
     """
-    Inputs an unsupported predictor (outside the [10, 15] range) checking
-    that PdfReadError() is raised. Once this predictor support is updated
-    in the future, this test case may be removed.
+    Inputs an unsupported predictor (outside the [10, 15] range) checking that
+    PdfReadError() is raised.
+
+    Once this predictor support is updated in the future, this test case may be
+    removed.
     """
     codec = FlateDecode()
     predictors = (-10, -1, 0, 9, 16, 20, 100)
@@ -109,16 +109,16 @@ def test_ASCIIHexDecode(data, expected):
     """
     Feeds a bunch of values to ASCIIHexDecode.decode() and ensures the
     correct output is returned.
+
     TODO What is decode() supposed to do for such inputs as ">>", ">>>" or
     any other not terminated by ">"? (For the latter case, an exception
     is currently raised.)
     """
-
     assert ASCIIHexDecode.decode(data) == expected
 
 
 def test_ASCIIHexDecode_no_eod():
-    """Ensuring an exception is raised when no EOD character is present"""
+    """Ensuring an exception is raised when no EOD character is present."""
     with pytest.raises(PdfStreamError) as exc:
         ASCIIHexDecode.decode("")
     assert exc.value.args[0] == "Unexpected EOD in ASCIIHexDecode"
@@ -146,9 +146,10 @@ def test_ASCII85Decode_with_overflow():
 def test_ASCII85Decode_five_zero_bytes():
     """
     From ISO 32000 (2008) §7.4.3:
-    «As a special case, if all five bytes are 0, they shall be represented
-    by the character with code 122 (z) instead of by five exclamation
-    points (!!!!!).»
+
+    «As a special case, if all five bytes are 0, they shall be represented by
+    the character with code 122 (z) instead of by five exclamation points
+    (!!!!!).»
     """
     inputs = ("z", "zz", "zzz")
     exp_outputs = (
@@ -187,7 +188,7 @@ def test_CCITTFaxDecode():
         {"/K": NumberObject(-1), "/Columns": NumberObject(17)}
     )
 
-    # This was just the result PyPDF2 1.27.9 returned.
+    # This was just the result pypdf 1.27.9 returned.
     # It would be awesome if we could check if that is actually correct.
     assert CCITTFaxDecode.decode(data, parameters) == (
         b"II*\x00\x08\x00\x00\x00\x08\x00\x00\x01\x04\x00\x01\x00\x00\x00\x11\x00"
@@ -201,7 +202,7 @@ def test_CCITTFaxDecode():
 
 
 @pytest.mark.external
-@patch("PyPDF2._reader.logger_warning")
+@patch("pypdf._reader.logger_warning")
 def test_decompress_zlib_error(mock_logger_warning):
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/952/952445.pdf"
     name = "tika-952445.pdf"
@@ -209,7 +210,7 @@ def test_decompress_zlib_error(mock_logger_warning):
     for page in reader.pages:
         page.extract_text()
     mock_logger_warning.assert_called_with(
-        "incorrect startxref pointer(3)", "PyPDF2._reader"
+        "incorrect startxref pointer(3)", "pypdf._reader"
     )
 
 
@@ -244,7 +245,7 @@ def test_image_without_imagemagic():
         for page in reader.pages:
             with pytest.raises(ImportError) as exc:
                 page.images
-            assert (
-                exc.value.args[0]
-                == "pillow is required to do image extraction. It can be installed via 'pip install PyPDF2[image]'"
+            assert exc.value.args[0] == (
+                "pillow is required to do image extraction. "
+                "It can be installed via 'pip install pypdf[image]'"
             )

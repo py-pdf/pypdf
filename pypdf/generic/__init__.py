@@ -58,6 +58,7 @@ from ._data_structures import (
     TreeObject,
     read_object,
 )
+from ._fit import Fit
 from ._outline import Bookmark, OutlineItem
 from ._rectangle import RectangleObject
 from ._utils import (
@@ -71,7 +72,7 @@ from ._utils import (
 
 def readHexStringFromStream(
     stream: StreamType,
-) -> Union["TextStringObject", "ByteStringObject"]:  # pragma: no cover
+) -> Union["TextStringObject", "ByteStringObject"]:  # deprecated
     deprecate_with_replacement(
         "readHexStringFromStream", "read_hex_string_from_stream", "4.0.0"
     )
@@ -81,7 +82,7 @@ def readHexStringFromStream(
 def readStringFromStream(
     stream: StreamType,
     forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
-) -> Union["TextStringObject", "ByteStringObject"]:  # pragma: no cover
+) -> Union["TextStringObject", "ByteStringObject"]:  # deprecated
     deprecate_with_replacement(
         "readStringFromStream", "read_string_from_stream", "4.0.0"
     )
@@ -91,9 +92,12 @@ def readStringFromStream(
 def createStringObject(
     string: Union[str, bytes],
     forced_encoding: Union[None, str, List[str], Dict[int, str]] = None,
-) -> Union[TextStringObject, ByteStringObject]:  # pragma: no cover
+) -> Union[TextStringObject, ByteStringObject]:  # deprecated
     deprecate_with_replacement("createStringObject", "create_string_object", "4.0.0")
     return create_string_object(string, forced_encoding)
+
+
+PAGE_FIT = Fit.fit()
 
 
 __all__ = [
@@ -109,6 +113,9 @@ __all__ = [
     "ByteStringObject",
     # Annotations
     "AnnotationBuilder",
+    # Fit
+    "Fit",
+    "PAGE_FIT",
     # Data structures
     "ArrayObject",
     "DictionaryObject",

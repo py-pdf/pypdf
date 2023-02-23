@@ -7,7 +7,7 @@ Every page of a PDF document can contain an arbitrary amount of images.
 The names of the files may not be unique.
 
 ```python
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 
 reader = PdfReader("example.pdf")
 

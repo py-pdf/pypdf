@@ -20,7 +20,7 @@ by running `python -W all your_code.py`.
 ## Classes
 
 The base classes were renamed as they also allow to operate with ByteIO streams
-instead of files. Also, the `strict` paramter changed the default value from
+instead of files. Also, the `strict` parameter changed the default value from
 `strict=True` to `strict=False`.
 
 * `PdfFileReader` ➔ `PdfReader`
@@ -163,6 +163,12 @@ utils.py:
 * `PdfWriter.get_page`: `pageNumber` ➔ `page_number`
 * `PyPDF2.filters` (all classes): `decodeParms` ➔ `decode_parms`
 * `PyPDF2.filters` (all classes): `decodeStreamData` ➔ `decode_stream_data`
+* `pagenum` ➔ `page_number`
+* `PdfMerger.merge`: `position` ➔ `page_number`
+* `PdfWriter.add_outline_item_destination`: `dest` ➔ `page_destination`
+* `PdfWriter.add_named_destination_object`: `dest` ➔ `page_destination`
+* `PdfWriter.encrypt`: `user_pwd` ➔ `user_password`
+* `PdfWriter.encrypt`: `owner_pwd` ➔ `owner_password`
 
 ## Deprecations
 

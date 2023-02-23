@@ -13,12 +13,12 @@ PDF comes in the following versions:
 * 2017: 2.0
 
 The general format didn't change, but new features got added. It can be that
-PyPDF2 can do the operations you want on PDF 2.0 files without fully supporting
+pypdf can do the operations you want on PDF 2.0 files without fully supporting
 all features of PDF 2.0.
 
-## PDF Feature Support by PyPDF2
+## PDF Feature Support by pypdf
 
-| Feature                                 | PDF-Version | PyPDF2 Support |
+| Feature                                 | PDF-Version | pypdf Support |
 | --------------------------------------- | ----------- | -------------- |
 | Transparent Graphics                    | 1.4         | ?              |
 | CMaps                                   | 1.4         | ✅             |
@@ -31,8 +31,8 @@ all features of PDF 2.0.
 See [History of PDF](https://en.wikipedia.org/wiki/History_of_PDF) for more
 features.
 
-Some PDF features are not supported by PyPDF2, but other libraries can be used
+Some PDF features are not supported by pypdf, but other libraries can be used
 for them:
 
-* [pyHanko](https://pyhanko.readthedocs.io/en/latest/index.html): Cryptographically sign a PDF ([#302](https://github.com/py-pdf/PyPDF2/issues/302))
-* [camelot-py](https://pypi.org/project/camelot-py/): Table Extraction ([#231](https://github.com/py-pdf/PyPDF2/issues/231))
+* [pyHanko](https://pyhanko.readthedocs.io/en/latest/index.html): Cryptographically sign a PDF ([#302](https://github.com/py-pdf/pypdf/issues/302))
+* [camelot-py](https://pypi.org/project/camelot-py/): Table Extraction ([#231](https://github.com/py-pdf/pypdf/issues/231))

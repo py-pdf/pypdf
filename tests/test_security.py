@@ -1,5 +1,5 @@
-from PyPDF2._security import _alg32
-from PyPDF2.generic import ByteStringObject
+from pypdf._security import _alg32
+from pypdf.generic import ByteStringObject
 
 
 def test_alg32_metadata_encrypt():

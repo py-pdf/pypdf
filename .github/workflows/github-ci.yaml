@@ -66,24 +66,54 @@ jobs:
       run: |
         pip uninstall pycryptodome -y
       if: matrix.use-cryptodome == 'false'
-    - name: Install PyPDF2
+    - name: Install pypdf
       run: |
         pip install .
-    - name: Test with flake8
-      run: |
-        flake8 .
     - name: Test with pytest
       run: |
         python -m coverage run --parallel-mode -m pytest tests -vv
     - name: Test with mypy
       run : |
-        mypy PyPDF2 --show-error-codes --disallow-untyped-defs --disallow-incomplete-defs
+        mypy pypdf --show-error-codes --disallow-untyped-defs --disallow-incomplete-defs
     - name: Upload coverage data
       uses: actions/upload-artifact@v3
       with:
         name: coverage-data
         path: .coverage.*
         if-no-files-found: ignore
+
+  codestyle:
+    name: Check code style issues
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+      with:
+        submodules: 'recursive'
+    - name: Cache Downloaded Files
+      id: cache-downloaded-files
+      uses: actions/cache@v3
+      with:
+        path: '**/tests/pdf_cache/*'
+        key: cache-downloaded-files
+    - name: Setup Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+        cache: 'pip'
+        cache-dependency-path: '**/requirements/ci-3.11.txt'
+    - name: Upgrade pip
+      run: |
+        python -m pip install --upgrade pip
+    - name: Install requirements
+      run: |
+        pip install -r requirements/ci-3.11.txt
+    - name: Install pypdf
+      run: |
+        pip install .
+    - name: Test with ruff
+      run: |
+        ruff .
 
   package:
     name: Build & verify package
@@ -105,7 +135,7 @@ jobs:
 
       - name: Test running installed package
         working-directory: /tmp
-        run: python -c "import PyPDF2;print(PyPDF2.__version__)"
+        run: python -c "import pypdf;print(pypdf.__version__)"
 
       # - name: Release to pypi if tagged.
       #   if: startsWith(github.ref, 'refs/tags')
@@ -140,7 +170,7 @@ jobs:
           python -m coverage combine
           python -m coverage xml
       - name: Upload Coverage to Codecov
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml

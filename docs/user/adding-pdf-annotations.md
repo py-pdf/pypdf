@@ -3,7 +3,7 @@
 ## Attachments
 
 ```python
-from PyPDF2 import PdfWriter
+from pypdf import PdfWriter
 
 writer = PdfWriter()
 writer.add_blank_page(width=200, height=200)
@@ -22,11 +22,11 @@ If you want to add text in a box like this
 
 ![](free-text-annotation.png)
 
-you can use the {py:class}`AnnotationBuilder <PyPDF2.generic.AnnotationBuilder>`:
+you can use the {py:class}`AnnotationBuilder <pypdf.generic.AnnotationBuilder>`:
 
 ```python
-from PyPDF2 import PdfReader, PdfWriter
-from PyPDF2.generic import AnnotationBuilder
+from pypdf import PdfReader, PdfWriter
+from pypdf.generic import AnnotationBuilder
 
 # Fill the writer with the pages you want
 pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
@@ -66,7 +66,7 @@ If you want to add a line like this:
 
 ![](annotation-line.png)
 
-you can use the {py:class}`AnnotationBuilder <PyPDF2.generic.AnnotationBuilder>`:
+you can use the {py:class}`AnnotationBuilder <pypdf.generic.AnnotationBuilder>`:
 
 ```python
 pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
@@ -95,7 +95,7 @@ If you want to add a rectangle like this:
 
 ![](annotation-square.png)
 
-you can use the {py:class}`AnnotationBuilder <PyPDF2.generic.AnnotationBuilder>`:
+you can use the {py:class}`AnnotationBuilder <pypdf.generic.AnnotationBuilder>`:
 
 ```python
 pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
@@ -104,7 +104,7 @@ page = reader.pages[0]
 writer = PdfWriter()
 writer.add_page(page)
 
-# Add the line
+# Add the rectangle
 annotation = AnnotationBuilder.rectangle(
     rect=(50, 550, 200, 650),
 )
@@ -119,10 +119,61 @@ If you want the rectangle to be filled, use the `interiour_color="ff0000"` param
 
 This method uses the "square" annotation type of the PDF format.
 
+
+## Ellipse
+
+If you want to add a circle like this:
+
+![](annotation-circle.png)
+
+```python
+pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+reader = PdfReader(pdf_path)
+page = reader.pages[0]
+writer = PdfWriter()
+writer.add_page(page)
+
+# Add the rectangle
+annotation = AnnotationBuilder.ellipse(
+    rect=(50, 550, 200, 650),
+)
+writer.add_annotation(page_number=0, annotation=annotation)
+
+# Write the annotated file to disk
+with open("annotated-pdf.pdf", "wb") as fp:
+    writer.write(fp)
+```
+
+## Polygon
+
+If you want to add a polygon like this:
+
+![](annotation-polygon.png)
+
+you can use the {py:class}`AnnotationBuilder <pypdf.generic.AnnotationBuilder>`:
+
+```python
+pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")
+reader = PdfReader(pdf_path)
+page = reader.pages[0]
+writer = PdfWriter()
+writer.add_page(page)
+
+# Add the line
+annotation = AnnotationBuilder.polygon(
+    vertices=[(50, 550), (200, 650), (70, 750), (50, 700)],
+)
+writer.add_annotation(page_number=0, annotation=annotation)
+
+# Write the annotated file to disk
+with open("annotated-pdf.pdf", "wb") as fp:
+    writer.write(fp)
+```
+
 ## Link
 
 If you want to add a link, you can use
-the {py:class}`AnnotationBuilder <PyPDF2.generic.AnnotationBuilder>`:
+the {py:class}`AnnotationBuilder <pypdf.generic.AnnotationBuilder>`:
 
 ```python
 pdf_path = os.path.join(RESOURCE_ROOT, "crazyones.pdf")

@@ -1,4 +1,187 @@
+
 # CHANGELOG
+
+## Version 3.4.1, 2023-02-12
+
+### Bug Fixes (BUG)
+-  Switch from trimbox to cropbox when merging pages (#1622)
+-  Text extraction not working with one glyph to char sequence (#1620)
+
+### Robustness (ROB)
+-  Fix 2 cases of "object has no attribute \'indirect_reference\'" (#1616)
+
+### Testing (TST)
+-  Add multiple retry on get_url for external PDF downloads (#1626)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.4.0...3.4.1)
+
+## Version 3.4.0, 2023-02-05
+
+NOTICE: pypdf changed the way it represents numbers parsed from PDF files.
+  pypdf<3.4.0 represented numbers as Decimal, pypdf>=3.4.0 represents them as
+  floats. Several other PDF libraries to this, as well as many PDF viewers.
+  We hope to fix issues with too high precision like this and get a speed boost.
+  In case your PDF documents rely on more than 18 decimals of precision you
+  should check if it still works as expected.
+  To clarify: This does not affect the text shown in PDF documents. It affects
+  numbers, e.g. when graphics are drawn on the PDF or very exact positions are
+  used. Typically, 5 decimals should be enough.
+
+### New Features (ENH)
+-  Enable merging forms with overlapping names (#1553)
+-  Add 'over' parameter to merge_transformend_page & co (#1567)
+
+### Bug Fixes (BUG)
+-  Fix getter of the PageObject.rotation property with an indirect object (#1602)
+-  Restore merge_transformed_page & co (#1567)
+-  Replace decimal by float (#1563)
+
+### Robustness (ROB)
+-  PdfWriter.remove_images: /Contents might not be in page_ref (#1598)
+
+### Developer Experience (DEV)
+-  Introduce ruff (#1586, #1609)
+
+### Maintenance (MAINT)
+-  Remove decimal (#1608)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.3.0...3.4.0)
+
+## Version 3.3.0, 2023-01-22
+
+### New Features (ENH)
+-  Add page label support to PdfWriter (#1558)
+-  Accept inline images with space before EI (#1552)
+-  Add circle annotation support (#1556)
+-  Add polygon annotation support (#1557)
+-  Make merging pages produce a deterministic PDF (#1542, #1543)
+
+### Bug Fixes (BUG)
+-  Fix error in cmap extraction (#1544)
+-  Remove erroneous assertion check (#1564)
+-  Fix dictionary access of optional page label keys (#1562)
+
+### Robustness (ROB)
+-  Set ignore_eof=True for read_until_regex (#1521)
+
+### Documentation (DOC)
+-  Paper size (#1550)
+
+### Developer Experience (DEV)
+-  Fix broken combination of dependencies of docs.txt
+-  Annotate tests appropriately (#1551)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.2.1...3.3.0)
+
+
+## Version 3.2.1, 2023-01-08
+
+### Bug Fixes (BUG)
+-  Accept hierarchical fields (#1529)
+
+### Documentation (DOC)
+-  Use google style docstrings (#1534)
+-  Fix linked markdown documents (#1537)
+
+### Developer Experience (DEV)
+-  Update docs config (#1535)
+
+## Version 3.2.0, 2022-12-31
+
+### Performance Improvement (PI)
+-  Help the specializing adpative interpreter (#1522)
+
+### New Features (ENH)
+-  Add support for page labels (#1519)
+
+### Bug Fixes (BUG)
+-  upgrade clone_document_root (#1520)
+
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.1.0...3.1.1)
+
+## Version 3.1.0, 2022-12-23
+
+Move PyPDF2 to pypdf (#1513). This now it's all lowercase, no number in the
+name. For installation and for import. PyPDF2 will no longer receive updates.
+The community should move back to its roots.
+
+If you were still using pyPdf or PyPDF2 < 2.0.0, I recommend reading the
+migration guide: https://pypdf.readthedocs.io/en/latest/user/migration-1-to-2.html
+
+pypdf==3.1.0 is only different from PyPDF2==3.0.0 in the package name.
+Replacing "PyPDF2" by "pypdf" should be enough if you migrate from
+`PyPDF2==3.0.0` to `pypdf==3.1.0`.
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.0.0...3.1.0)
+
+## Version 3.0.0, 2022-12-22
+
+### BREAKING CHANGES ⚠️
+-  Deprecate features with PyPDF2==3.0.0 (#1489)
+-  Refactor Fit / Zoom parameters (#1437)
+
+### New Features (ENH)
+-  Add Cloning  (#1371)
+-  Allow int for indirect_reference in PdfWriter.get_object (#1490)
+
+### Documentation (DOC)
+-  How to read PDFs from S3 (#1509)
+-  Make MyST parse all links as simple hyperlinks (#1506)
+-  Changed 'latest' for 'stable' generated docs (#1495)
+-  Adjust deprecation procedure (#1487)
+
+### Maintenance (MAINT)
+-  Use typing.IO for file streams (#1498)
+
+
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/2.12.1...3.0.0)
+
+## Version 2.12.1, 2022-12-10
+
+### Documentation (DOC)
+-  Deduplicate extract_text docstring (#1485)
+-  How to cite PyPDF2 (#1476)
+
+### Maintenance (MAINT)
+Consistency changes:
+  -  indirect_ref/ido ➔ indirect_reference, dest➔ page_destination (#1467)
+  -  owner_pwd/user_pwd ➔ owner_password/user_password (#1483)
+  -  position ➜ page_number in Merger.merge (#1482)
+  -  indirect_ref ➜ indirect_reference (#1484)
+
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/2.12.0...2.12.1)
+
+
+## Version 2.12.0, 2022-12-10
+
+### New Features (ENH)
+-  Add support to extract gray scale images (#1460)
+-  Add 'threads' property to PdfWriter (#1458)
+-  Add 'open_destination' property to PdfWriter (#1431)
+-  Make PdfReader.get_object accept integer arguments (#1459)
+
+### Bug Fixes (BUG)
+-  Scale PDF annotations (#1479)
+
+### Robustness (ROB)
+-  Padding issue with AES encryption (#1469)
+-  Accept empty object as null objects (#1477)
+
+### Documentation (DOC)
+-  Add module documentation the PaperSize class (#1447)
+
+### Maintenance (MAINT)
+-  Use 'page_number' instead of 'pagenum' (#1365)
+-  Add List of pages to PageRangeSpec (#1456)
+
+### Testing (TST)
+-  Cleanup temporary files (#1454)
+-  Mark test_tounicode_is_identity as external (#1449)
+-  Use Ubuntu 20.04 for running CI test suite (#1452)
+
+[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/2.11.2...2.12.0)
+
 
 ## Version 2.11.2, 2022-11-20
 

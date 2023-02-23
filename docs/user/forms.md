@@ -3,7 +3,7 @@
 ## Reading form fields
 
 ```python
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 
 reader = PdfReader("form.pdf")
 fields = reader.get_form_text_fields()
@@ -13,7 +13,7 @@ fields == {"key": "value", "key2": "value2"}
 ## Filling out forms
 
 ```python
-from PyPDF2 import PdfReader, PdfWriter
+from pypdf import PdfReader, PdfWriter
 
 reader = PdfReader("form.pdf")
 writer = PdfWriter()
@@ -27,7 +27,7 @@ writer.update_page_form_field_values(
     writer.pages[0], {"fieldname": "some filled in text"}
 )
 
-# write "output" to PyPDF2-output.pdf
+# write "output" to pypdf-output.pdf
 with open("filled-out.pdf", "wb") as output_stream:
     writer.write(output_stream)
 ```

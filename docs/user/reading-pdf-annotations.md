@@ -19,7 +19,7 @@ PDF 1.7 defines 25 different annotation types:
 In general, annotations can be read like this:
 
 ```python
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 
 reader = PdfReader("commented.pdf")
 
@@ -36,7 +36,7 @@ Reading the most common ones is described here.
 ## Text
 
 ```python
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 
 reader = PdfReader("example.pdf")
 
@@ -51,7 +51,7 @@ for page in reader.pages:
 ## Highlights
 
 ```python
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 
 reader = PdfReader("commented.pdf")
 
@@ -67,7 +67,7 @@ for page in reader.pages:
 ## Attachments
 
 ```python
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 
 reader = PdfReader("example.pdf")
 

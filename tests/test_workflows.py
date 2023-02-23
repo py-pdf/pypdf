@@ -13,9 +13,10 @@ from re import findall
 
 import pytest
 
-from PyPDF2 import PdfMerger, PdfReader, PdfWriter
-from PyPDF2.constants import PageAttributes as PG
-from PyPDF2.errors import PdfReadWarning
+from pypdf import PdfMerger, PdfReader, PdfWriter
+from pypdf.constants import PageAttributes as PG
+from pypdf.errors import PdfReadError, PdfReadWarning
+from pypdf.generic import ContentStream, read_object
 
 from . import get_pdf_from_url, normalize_warnings
 
@@ -64,8 +65,8 @@ def test_basic_features(tmp_path):
     password = "secret"
     writer.encrypt(password)
 
-    # finally, write "output" to PyPDF2-output.pdf
-    write_path = tmp_path / "PyPDF2-output.pdf"
+    # finally, write "output" to pypdf-output.pdf
+    write_path = tmp_path / "pypdf-output.pdf"
     with open(write_path, "wb") as output_stream:
         writer.write(output_stream)
 
@@ -74,15 +75,16 @@ def test_dropdown_items():
     inputfile = RESOURCE_ROOT / "libreoffice-form.pdf"
     reader = PdfReader(inputfile)
     fields = reader.get_fields()
-    assert "/Opt" in fields["Nationality"].keys()
+    assert "/Opt" in fields["Nationality"]
 
 
 def test_PdfReaderFileLoad():
     """
-    Test loading and parsing of a file. Extract text of the file and compare to expected
-    textual output. Expected outcome: file loads, text matches expected.
-    """
+    Test loading and parsing of a file.
 
+    Extract text of the file and compare to expected textual output. Expected
+    outcome: file loads, text matches expected.
+    """
     with open(RESOURCE_ROOT / "crazyones.pdf", "rb") as inputfile:
         # Load PDF file from file
         reader = PdfReader(inputfile)
@@ -99,17 +101,18 @@ def test_PdfReaderFileLoad():
             assert expected_line == actual_line
 
         assert text == pdftext, (
-            "PDF extracted text differs from expected value.\n\nExpected:\n\n%r\n\nExtracted:\n\n%r\n\n"
-            % (pdftext, text)
+            "PDF extracted text differs from expected value.\n\n"
+            "Expected:\n\n%r\n\nExtracted:\n\n%r\n\n" % (pdftext, text)
         )
 
 
 def test_PdfReaderJpegImage():
     """
-    Test loading and parsing of a file. Extract the image of the file and compare to expected
-    textual output. Expected outcome: file loads, image matches expected.
-    """
+    Test loading and parsing of a file. Extract the image of the file and
+    compare to expected textual output.
 
+    Expected outcome: file loads, image matches expected.
+    """
     with open(RESOURCE_ROOT / "jpeg.pdf", "rb") as inputfile:
         # Load PDF file from file
         reader = PdfReader(inputfile)
@@ -124,7 +127,8 @@ def test_PdfReaderJpegImage():
 
         # Compare the text of the PDF to a known source
         assert binascii.hexlify(data).decode() == imagetext, (
-            "PDF extracted image differs from expected value.\n\nExpected:\n\n%r\n\nExtracted:\n\n%r\n\n"
+            "PDF extracted image differs from expected value.\n\n"
+            "Expected:\n\n%r\n\nExtracted:\n\n%r\n\n"
             % (imagetext, binascii.hexlify(data).decode())
         )
 
@@ -198,11 +202,11 @@ def test_rotate_45():
         (True, "https://arxiv.org/pdf/2201.00022.pdf", [0, 1, 5, 10]),
         (True, "https://arxiv.org/pdf/2201.00029.pdf", [0, 1, 6, 10]),
         # #1145
-        (True, "https://github.com/py-pdf/PyPDF2/files/9174594/2017.pdf", [0]),
+        (True, "https://github.com/py-pdf/pypdf/files/9174594/2017.pdf", [0]),
         # #1145, remaining issue (empty arguments for FlateEncoding)
         (
             True,
-            "https://github.com/py-pdf/PyPDF2/files/9175966/2015._pb_decode_pg0.pdf",
+            "https://github.com/py-pdf/pypdf/files/9175966/2015._pb_decode_pg0.pdf",
             [0],
         ),
         # 6 instead of 5: as there is an issue in page 5 (missing objects)
@@ -210,15 +214,15 @@ def test_rotate_45():
         (True, "https://arxiv.org/pdf/1601.03642.pdf", [0, 1, 5, 7]),
         (
             True,
-            "https://github.com/py-pdf/PyPDF2/files/3796761/17343_2008_Order_09-Jan-2019.pdf",
+            "https://github.com/py-pdf/pypdf/files/3796761/17343_2008_Order_09-Jan-2019.pdf",
             [0, 1],
         ),
         (
             True,
-            "https://github.com/py-pdf/PyPDF2/files/8884471/ssi_manwaring.pdf",
+            "https://github.com/py-pdf/pypdf/files/8884471/ssi_manwaring.pdf",
             [0, 1],
         ),
-        (True, "https://github.com/py-pdf/PyPDF2/files/8884469/999092.pdf", [0, 1]),
+        (True, "https://github.com/py-pdf/pypdf/files/8884469/999092.pdf", [0, 1]),
         (
             True,
             "file://" + str(RESOURCE_ROOT / "test Orient.pdf"),
@@ -226,10 +230,10 @@ def test_rotate_45():
         ),  # TODO: preparation of text orientation validation
         (
             True,
-            "https://github.com/py-pdf/PyPDF2/files/8884470/fdocuments.in_sweet-fundamentals-of-crystallography.pdf",
+            "https://github.com/py-pdf/pypdf/files/8884470/fdocuments.in_sweet-fundamentals-of-crystallography.pdf",
             [0, 1, 34, 35, 36, 118, 119, 120, 121],
         ),
-        (True, "https://github.com/py-pdf/PyPDF2/files/8884493/998167.pdf", [0]),
+        (True, "https://github.com/py-pdf/pypdf/files/8884493/998167.pdf", [0]),
         (
             True,
             "https://corpora.tika.apache.org/base/docs/govdocs1/971/971703.pdf",
@@ -875,8 +879,65 @@ def test_get_xmp(url, name, strict):
 
 @pytest.mark.external
 def test_tounicode_is_identity():
-    url = "https://github.com/py-pdf/PyPDF2/files/9998335/FP_Thesis.pdf"
+    url = "https://github.com/py-pdf/pypdf/files/9998335/FP_Thesis.pdf"
     name = "FP_Thesis.pdf"
     data = BytesIO(get_pdf_from_url(url, name=name))
     reader = PdfReader(data, strict=False)
     reader.pages[0].extract_text()
+
+
+@pytest.mark.external
+def test_append_forms():
+    # from #1538
+    writer = PdfWriter()
+
+    url = "https://github.com/py-pdf/pypdf/files/10367412/pdfa.pdf"
+    name = "form_a.pdf"
+    reader1 = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader1.add_form_topname("form_a")
+    writer.append(reader1)
+
+    url = "https://github.com/py-pdf/pypdf/files/10367413/pdfb.pdf"
+    name = "form_b.pdf"
+    reader2 = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    reader2.add_form_topname("form_b")
+    writer.append(reader2)
+
+    b = BytesIO()
+    writer.write(b)
+    reader = PdfReader(b)
+    assert len(reader.get_form_text_fields()) == len(
+        reader1.get_form_text_fields()
+    ) + len(reader2.get_form_text_fields())
+
+
+def test_extra_test_iss1541():
+    url = "https://github.com/py-pdf/pypdf/files/10418158/tst_iss1541.pdf"
+    name = "tst_iss1541.pdf"
+    data = BytesIO(get_pdf_from_url(url, name=name))
+    reader = PdfReader(data, strict=False)
+    reader.pages[0].extract_text()
+
+    cs = ContentStream(reader.pages[0]["/Contents"], None, None)
+    cs.operations.insert(-1, ([], b"EMC"))
+    bu = BytesIO()
+    cs.write_to_stream(bu, None)
+    bu.seek(0)
+    ContentStream(read_object(bu, None, None), None, None).operations
+
+    cs = ContentStream(reader.pages[0]["/Contents"], None, None)
+    cs.operations.insert(-1, ([], b"E!C"))
+    bu = BytesIO()
+    cs.write_to_stream(bu, None)
+    bu.seek(0)
+    with pytest.raises(PdfReadError) as exc:
+        ContentStream(read_object(bu, None, None), None, None).operations
+    assert exc.value.args[0] == "Unexpected end of stream"
+
+    buf2 = BytesIO(data.getbuffer())
+    reader = PdfReader(
+        BytesIO(bytes(buf2.getbuffer()).replace(b"EI \n", b"E! \n")), strict=False
+    )
+    with pytest.raises(PdfReadError) as exc:
+        reader.pages[0].extract_text()
+    assert exc.value.args[0] == "Unexpected end of stream"

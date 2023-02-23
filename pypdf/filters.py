@@ -85,14 +85,18 @@ class FlateDecode:
         """
         Decode data which is flate-encoded.
 
-        :param data: flate-encoded data.
-        :param decode_parms: a dictionary of values, understanding the
+        Args:
+          data: flate-encoded data.
+          decode_parms: a dictionary of values, understanding the
             "/Predictor":<int> key only
-        :return: the flate-decoded data.
 
-        :raises PdfReadError:
+        Returns:
+          The flate-decoded data.
+
+        Raises:
+          PdfReadError:
         """
-        if "decodeParms" in kwargs:  # pragma: no cover
+        if "decodeParms" in kwargs:  # deprecated
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
             decode_parms = kwargs["decodeParms"]
         str_data = decompress(data)
@@ -190,10 +194,8 @@ class FlateDecode:
 
 
 class ASCIIHexDecode:
-    """
-    The ASCIIHexDecode filter decodes data that has been encoded in ASCII
-    hexadecimal form into a base-7 ASCII format.
-    """
+    """The ASCIIHexDecode filter decodes data that has been encoded in ASCII
+    hexadecimal form into a base-7 ASCII format."""
 
     @staticmethod
     def decode(
@@ -202,15 +204,22 @@ class ASCIIHexDecode:
         **kwargs: Any,
     ) -> str:
         """
-        :param data: a str sequence of hexadecimal-encoded values to be
+        Decode an ASCII-Hex encoded data stream.
+
+        Args:
+          data: a str sequence of hexadecimal-encoded values to be
             converted into a base-7 ASCII string
-        :param decode_parms:
-        :return: a string conversion in base-7 ASCII, where each of its values
+          decode_parms: a string conversion in base-7 ASCII, where each of its values
             v is such that 0 <= ord(v) <= 127.
 
-        :raises PdfStreamError:
+        Returns:
+          A string conversion in base-7 ASCII, where each of its values
+          v is such that 0 <= ord(v) <= 127.
+
+        Raises:
+          PdfStreamError:
         """
-        if "decodeParms" in kwargs:  # pragma: no cover
+        if "decodeParms" in kwargs:  # deprecated
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
             decode_parms = kwargs["decodeParms"]  # noqa: F841
         retval = ""
@@ -235,8 +244,11 @@ class ASCIIHexDecode:
 
 
 class LZWDecode:
-    """Taken from:
-    http://www.java2s.com/Open-Source/Java-Document/PDF/PDF-Renderer/com/sun/pdfview/decode/LZWDecode.java.htm
+    """
+    Taken from:
+
+    http://www.java2s.com/Open-Source/Java-Document/PDF/PDF-
+    Renderer/com/sun/pdfview/decode/LZWDecode.java.htm
     """
 
     class Decoder:
@@ -284,7 +296,8 @@ class LZWDecode:
             http://www.rasip.fer.hr/research/compress/algorithms/fund/lz/lzw.html
             and the PDFReference
 
-            :raises PdfReadError: If the stop code is missing
+            Raises:
+              PdfReadError: If the stop code is missing
             """
             cW = self.CLEARDICT
             baos = ""
@@ -324,11 +337,16 @@ class LZWDecode:
         **kwargs: Any,
     ) -> str:
         """
-        :param data: ``bytes`` or ``str`` text to decode.
-        :param decode_parms: a dictionary of parameter values.
-        :return: decoded data.
+        Decode an LZW encoded data stream.
+
+        Args:
+          data: bytes`` or ``str`` text to decode.
+          decode_parms: a dictionary of parameter values.
+
+        Returns:
+          decoded data.
         """
-        if "decodeParms" in kwargs:  # pragma: no cover
+        if "decodeParms" in kwargs:  # deprecated
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
             decode_parms = kwargs["decodeParms"]  # noqa: F841
         return LZWDecode.Decoder(data).decode()
@@ -343,7 +361,7 @@ class ASCII85Decode:
         decode_parms: Union[None, ArrayObject, DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
-        if "decodeParms" in kwargs:  # pragma: no cover
+        if "decodeParms" in kwargs:  # deprecated
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
             decode_parms = kwargs["decodeParms"]  # noqa: F841
         if isinstance(data, str):
@@ -376,7 +394,7 @@ class DCTDecode:
         decode_parms: Union[None, ArrayObject, DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
-        if "decodeParms" in kwargs:  # pragma: no cover
+        if "decodeParms" in kwargs:  # deprecated
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
             decode_parms = kwargs["decodeParms"]  # noqa: F841
         return data
@@ -389,7 +407,7 @@ class JPXDecode:
         decode_parms: Union[None, ArrayObject, DictionaryObject] = None,
         **kwargs: Any,
     ) -> bytes:
-        if "decodeParms" in kwargs:  # pragma: no cover
+        if "decodeParms" in kwargs:  # deprecated
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
             decode_parms = kwargs["decodeParms"]  # noqa: F841
         return data
@@ -457,7 +475,7 @@ class CCITTFaxDecode:
         height: int = 0,
         **kwargs: Any,
     ) -> bytes:
-        if "decodeParms" in kwargs:  # pragma: no cover
+        if "decodeParms" in kwargs:  # deprecated
             deprecate_with_replacement("decodeParms", "parameters", "4.0.0")
             decode_parms = kwargs["decodeParms"]
         parms = CCITTFaxDecode._get_parameters(decode_parms, height)
@@ -550,7 +568,7 @@ def decode_stream_data(stream: Any) -> Union[str, bytes]:  # utils.StreamObject
     return data
 
 
-def decodeStreamData(stream: Any) -> Union[str, bytes]:  # pragma: no cover
+def decodeStreamData(stream: Any) -> Union[str, bytes]:  # deprecated
     deprecate_with_replacement("decodeStreamData", "decode_stream_data", "4.0.0")
     return decode_stream_data(stream)
 
@@ -559,17 +577,21 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
     """
     Users need to have the pillow package installed.
 
-    It's unclear if PyPDF2 will keep this function here, hence it's private.
+    It's unclear if pypdf will keep this function here, hence it's private.
     It might get removed at any point.
 
-    :return: Tuple[file extension, bytes]
+    Args:
+      x_object_obj:
+
+    Returns:
+        Tuple[file extension, bytes]
     """
     try:
         from PIL import Image
     except ImportError:
         raise ImportError(
             "pillow is required to do image extraction. "
-            "It can be installed via 'pip install PyPDF2[image]'"
+            "It can be installed via 'pip install pypdf[image]'"
         )
 
     size = (x_object_obj[IA.WIDTH], x_object_obj[IA.HEIGHT])
@@ -602,10 +624,14 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes]:
                 from .generic import ByteStringObject
 
                 if isinstance(lookup, ByteStringObject):
+                    if base == ColorSpaces.DEVICE_GRAY and len(lookup) == hival + 1:
+                        lookup = b"".join(
+                            [lookup[i : i + 1] * 3 for i in range(len(lookup))]
+                        )
                     img.putpalette(lookup)
                 else:
                     img.putpalette(lookup.get_data())
-                img = img.convert("RGB")
+                img = img.convert("L" if base == ColorSpaces.DEVICE_GRAY else "RGB")
             if G.S_MASK in x_object_obj:  # add alpha channel
                 alpha = Image.frombytes("L", size, x_object_obj[G.S_MASK].get_data())
                 img.putalpha(alpha)

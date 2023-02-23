@@ -1,14 +1,14 @@
-from typing import Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 from ._base import (
     BooleanObject,
     FloatObject,
     NameObject,
-    NullObject,
     NumberObject,
     TextStringObject,
 )
 from ._data_structures import ArrayObject, DictionaryObject
+from ._fit import DEFAULT_FIT, Fit
 from ._rectangle import RectangleObject
 from ._utils import hex_to_rgb
 
@@ -36,11 +36,15 @@ class AnnotationBuilder:
         """
         Add text annotation.
 
-        :param Tuple[int, int, int, int] rect:
-            or array of four integers specifying the clickable rectangular area
-            ``[xLL, yLL, xUR, yUR]``
-        :param bool open:
-        :param int flags:
+        Args:
+            rect: array of four integers ``[xLL, yLL, xUR, yUR]``
+                specifying the clickable rectangular area
+            text: The text that is added to the document
+            open:
+            flags:
+
+        Returns:
+            A dictionary object representing the annotation.
         """
         # TABLE 8.23 Additional entries specific to a text annotation
         text_obj = DictionaryObject(
@@ -70,29 +74,34 @@ class AnnotationBuilder:
         """
         Add text in a rectangle to a page.
 
-        :param str text: Text to be added
-        :param RectangleObject rect: or array of four integers
-            specifying the clickable rectangular area ``[xLL, yLL, xUR, yUR]``
-        :param str font: Name of the Font, e.g. 'Helvetica'
-        :param bool bold: Print the text in bold
-        :param bool italic: Print the text in italic
-        :param str font_size: How big the text will be, e.g. '14pt'
-        :param str font_color: Hex-string for the color
-        :param str border_color: Hex-string for the border color
-        :param str background_color: Hex-string for the background of the annotation
+        Args:
+            text: Text to be added
+            rect: array of four integers ``[xLL, yLL, xUR, yUR]``
+                specifying the clickable rectangular area
+            font: Name of the Font, e.g. 'Helvetica'
+            bold: Print the text in bold
+            italic: Print the text in italic
+            font_size: How big the text will be, e.g. '14pt'
+            font_color: Hex-string for the color, e.g. cdcdcd
+            border_color: Hex-string for the border color, e.g. cdcdcd
+            background_color: Hex-string for the background of the annotation,
+                e.g. cdcdcd
+
+        Returns:
+            A dictionary object representing the annotation.
         """
         font_str = "font: "
         if bold is True:
-            font_str = font_str + "bold "
+            font_str = f"{font_str}bold "
         if italic is True:
-            font_str = font_str + "italic "
-        font_str = font_str + font + " " + font_size
-        font_str = font_str + ";text-align:left;color:#" + font_color
+            font_str = f"{font_str}italic "
+        font_str = f"{font_str}{font} {font_size}"
+        font_str = f"{font_str};text-align:left;color:#{font_color}"
 
         bg_color_str = ""
         for st in hex_to_rgb(border_color):
-            bg_color_str = bg_color_str + str(st) + " "
-        bg_color_str = bg_color_str + "rg"
+            bg_color_str = f"{bg_color_str}{st} "
+        bg_color_str = f"{bg_color_str}rg"
 
         free_text = DictionaryObject()
         free_text.update(
@@ -124,14 +133,17 @@ class AnnotationBuilder:
         """
         Draw a line on the PDF.
 
-        :param Tuple[float, float] p1: First point
-        :param Tuple[float, float] p2: Second point
-        :param RectangleObject rect: or array of four
-                integers specifying the clickable rectangular area
-                ``[xLL, yLL, xUR, yUR]``
-        :param str text: Text to be displayed as the line annotation
-        :param str title_bar: Text to be displayed in the title bar of the
-            annotation; by convention this is the name of the author
+        Args:
+            p1: First point
+            p2: Second point
+            rect: array of four integers ``[xLL, yLL, xUR, yUR]``
+                specifying the clickable rectangular area
+            text: Text to be displayed as the line annotation
+            title_bar: Text to be displayed in the title bar of the
+                annotation; by convention this is the name of the author
+
+        Returns:
+            A dictionary object representing the annotation.
         """
         line_obj = DictionaryObject(
             {
@@ -173,9 +185,16 @@ class AnnotationBuilder:
         """
         Draw a rectangle on the PDF.
 
-        :param RectangleObject rect: or array of four
-                integers specifying the clickable rectangular area
-                ``[xLL, yLL, xUR, yUR]``
+        This method uses the /Square annotation type of the PDF format.
+
+        Args:
+            rect: array of four integers ``[xLL, yLL, xUR, yUR]``
+                specifying the clickable rectangular area
+            interiour_color: None or hex-string for the color, e.g. cdcdcd
+                If None is used, the interiour is transparent.
+
+        Returns:
+            A dictionary object representing the annotation.
         """
         square_obj = DictionaryObject(
             {
@@ -193,13 +212,73 @@ class AnnotationBuilder:
         return square_obj
 
     @staticmethod
+    def ellipse(
+        rect: Union[RectangleObject, Tuple[float, float, float, float]],
+        interiour_color: Optional[str] = None,
+    ) -> DictionaryObject:
+        """
+        Draw a rectangle on the PDF.
+
+        This method uses the /Circle annotation type of the PDF format.
+
+        Args:
+            rect: array of four integers ``[xLL, yLL, xUR, yUR]`` specifying
+                the bounding box of the ellipse
+            interiour_color: None or hex-string for the color, e.g. cdcdcd
+                If None is used, the interiour is transparent.
+
+        Returns:
+            A dictionary object representing the annotation.
+        """
+        ellipse_obj = DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Annot"),
+                NameObject("/Subtype"): NameObject("/Circle"),
+                NameObject("/Rect"): RectangleObject(rect),
+            }
+        )
+
+        if interiour_color:
+            ellipse_obj[NameObject("/IC")] = ArrayObject(
+                [FloatObject(n) for n in hex_to_rgb(interiour_color)]
+            )
+
+        return ellipse_obj
+
+    @staticmethod
+    def polygon(vertices: List[Tuple[float, float]]) -> DictionaryObject:
+        if len(vertices) == 0:
+            raise ValueError("A polygon needs at least 1 vertex with two coordinates")
+        x_min, y_min = vertices[0][0], vertices[0][1]
+        x_max, y_max = vertices[0][0], vertices[0][1]
+        for x, y in vertices:
+            x_min = min(x_min, x)
+            y_min = min(y_min, y)
+            x_max = min(x_max, x)
+            y_max = min(y_max, y)
+        rect = RectangleObject((x_min, y_min, x_max, y_max))
+        coord_list = []
+        for x, y in vertices:
+            coord_list.append(NumberObject(x))
+            coord_list.append(NumberObject(y))
+        obj = DictionaryObject(
+            {
+                NameObject("/Type"): NameObject("/Annot"),
+                NameObject("/Subtype"): NameObject("/Polygon"),
+                NameObject("/Vertices"): ArrayObject(coord_list),
+                NameObject("/IT"): NameObject("PolygonCloud"),
+                NameObject("/Rect"): RectangleObject(rect),
+            }
+        )
+        return obj
+
+    @staticmethod
     def link(
         rect: Union[RectangleObject, Tuple[float, float, float, float]],
         border: Optional[ArrayObject] = None,
         url: Optional[str] = None,
         target_page_index: Optional[int] = None,
-        fit: FitType = "/Fit",
-        fit_args: Tuple[ZoomArgType, ...] = tuple(),
+        fit: Fit = DEFAULT_FIT,
     ) -> DictionaryObject:
         """
         Add a link to the document.
@@ -209,44 +288,23 @@ class AnnotationBuilder:
         An external link requires the URL parameter.
         An internal link requires the target_page_index, fit, and fit args.
 
+        Args:
+            rect: array of four integers ``[xLL, yLL, xUR, yUR]``
+                specifying the clickable rectangular area
+            border: if provided, an array describing border-drawing
+                properties. See the PDF spec for details. No border will be
+                drawn if this argument is omitted.
+                - horizontal corner radius,
+                - vertical corner radius, and
+                - border width
+                - Optionally: Dash
+            url: Link to a website (if you want to make an external link)
+            target_page_index: index of the page to which the link should go
+                (if you want to make an internal link)
+            fit: Page fit or 'zoom' option.
 
-        :param RectangleObject rect: or array of four
-            integers specifying the clickable rectangular area
-            ``[xLL, yLL, xUR, yUR]``
-        :param border: if provided, an array describing border-drawing
-            properties. See the PDF spec for details. No border will be
-            drawn if this argument is omitted.
-            - horizontal corner radius,
-            - vertical corner radius, and
-            - border width
-            - Optionally: Dash
-        :param str url: Link to a website (if you want to make an external link)
-        :param int target_page_index: index of the page to which the link should go
-                                (if you want to make an internal link)
-        :param str fit: Page fit or 'zoom' option (see below). Additional arguments may need
-            to be supplied. Passing ``None`` will be read as a null value for that coordinate.
-        :param Tuple[int, ...] fit_args: Parameters for the fit argument.
-
-
-        .. list-table:: Valid ``fit`` arguments (see Table 8.2 of the PDF 1.7 reference for details)
-           :widths: 50 200
-
-           * - /Fit
-             - No additional arguments
-           * - /XYZ
-             - [left] [top] [zoomFactor]
-           * - /FitH
-             - [top]
-           * - /FitV
-             - [left]
-           * - /FitR
-             - [left] [bottom] [right] [top]
-           * - /FitB
-             - No additional arguments
-           * - /FitBH
-             - [top]
-           * - /FitBV
-             - [left]
+        Returns:
+            A dictionary object representing the annotation.
         """
         from ..types import BorderArrayType
 
@@ -258,7 +316,8 @@ class AnnotationBuilder:
             )
         if is_external and is_internal:
             raise ValueError(
-                f"Either 'url' or 'target_page_index' have to be provided. url={url}, target_page_index={target_page_index}"
+                "Either 'url' or 'target_page_index' have to be provided. "
+                f"url={url}, target_page_index={target_page_index}"
             )
 
         border_arr: BorderArrayType
@@ -287,15 +346,12 @@ class AnnotationBuilder:
                 }
             )
         if is_internal:
-            fit_arg_ready = [
-                NullObject() if a is None else NumberObject(a) for a in fit_args
-            ]
             # This needs to be updated later!
             dest_deferred = DictionaryObject(
                 {
                     "target_page_index": NumberObject(target_page_index),
-                    "fit": NameObject(fit),
-                    "fit_args": ArrayObject(fit_arg_ready),
+                    "fit": NameObject(fit.fit_type),
+                    "fit_args": fit.fit_args,
                 }
             )
             link_obj[NameObject("/Dest")] = dest_deferred

@@ -8,12 +8,20 @@ from typing import List
 
 @dataclass(frozen=True)
 class Change:
+    """Capture the data of a git commit."""
+
     commit_hash: str
     prefix: str
     message: str
 
 
 def main(changelog_path: str):
+    """
+    Create a changelog.
+
+    Args:
+        changelog_path: The location of the CHANGELOG file
+    """
     changelog = get_changelog(changelog_path)
     git_tag = get_most_recent_git_tag()
     changes = get_formatted_changes(git_tag)
@@ -24,7 +32,8 @@ def main(changelog_path: str):
     today = datetime.now()
     header = f"Version {new_version}, {today:%Y-%m-%d}\n"
     header = header + "-" * (len(header) - 1) + "\n"
-    trailer = f"\n[Full Changelog](https://github.com/py-pdf/PyPDF2/compare/{git_tag}...{new_version})\n\n"
+    url = f"https://github.com/py-pdf/pypdf/compare/{git_tag}...{new_version}"
+    trailer = f"\n[Full Changelog]({url})\n\n"
     new_entry = header + changes + trailer
     print(new_entry)
 
@@ -35,23 +44,57 @@ def main(changelog_path: str):
 
 
 def version_bump(git_tag: str) -> str:
+    """
+    Increase the patch version of the git tag by one.
+
+    Args:
+        git_tag: Old version tag
+
+    Returns:
+        The new version where the patch version is bumped.
+    """
     # just assume a patch version change
     major, minor, patch = git_tag.split(".")
     return f"{major}.{minor}.{int(patch) + 1}"
 
 
 def get_changelog(changelog_path: str) -> str:
+    """
+    Read the changelog.
+
+    Args:
+        changelog_path: Path to the CHANGELOG file
+
+    Returns:
+        Data of the CHANGELOG
+    """
     with open(changelog_path) as fh:
         changelog = fh.read()
     return changelog
 
 
 def write_changelog(new_changelog: str, changelog_path: str) -> None:
+    """
+    Write the changelog.
+
+    Args:
+        new_changelog: Contents of the new CHANGELOG
+        changelog_path: Path where the CHANGELOG file is
+    """
     with open(changelog_path, "w") as fh:
         fh.write(new_changelog)
 
 
 def get_formatted_changes(git_tag: str) -> str:
+    """
+    Format the changes done since the last tag.
+
+    Args:
+        git_tag: the reference tag
+
+    Returns:
+        Changes done since git_tag
+    """
     commits = get_git_commits_since_tag(git_tag)
 
     # Group by prefix
@@ -96,7 +139,13 @@ def get_formatted_changes(git_tag: str) -> str:
     return output
 
 
-def get_most_recent_git_tag():
+def get_most_recent_git_tag() -> str:
+    """
+    Get the git tag most recently created.
+
+    Returns:
+        Most recently created git tag.
+    """
     git_tag = str(
         subprocess.check_output(
             ["git", "describe", "--abbrev=0"], stderr=subprocess.STDOUT
@@ -105,7 +154,17 @@ def get_most_recent_git_tag():
     return git_tag
 
 
-def get_git_commits_since_tag(git_tag) -> List[Change]:
+def get_git_commits_since_tag(git_tag: str) -> List[Change]:
+    """
+    Get all commits since the last tag.
+
+    Args:
+        git_tag: Reference tag from which the changes to the current commit are
+            fetched.
+
+    Returns:
+        List of all changes since git_tag.
+    """
     commits = str(
         subprocess.check_output(
             [
@@ -121,7 +180,19 @@ def get_git_commits_since_tag(git_tag) -> List[Change]:
     return [parse_commit_line(line) for line in commits.split("\\n")]
 
 
-def parse_commit_line(line) -> Change:
+def parse_commit_line(line: str) -> Change:
+    """
+    Parse the first line of a git commit message.
+
+    Args:
+        line: The first line of a git commit message.
+
+    Returns:
+        The parsed Change object
+
+    Raises:
+        ValueError: The commit line is not well-structured
+    """
     if "\\t" not in line:
         raise ValueError(f"Invalid commit line: {line}")
     commit_hash, rest = line.split("\\t", 1)

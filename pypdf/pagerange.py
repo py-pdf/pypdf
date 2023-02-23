@@ -3,7 +3,7 @@ Representation and utils for ranges of PDF file pages.
 
 Copyright (c) 2014, Steve Witham <switham_github@mac-guyver.com>.
 All rights reserved. This software is available under a BSD license;
-see https://github.com/py-pdf/PyPDF2/blob/main/LICENSE
+see https://github.com/py-pdf/pypdf/blob/main/LICENSE
 """
 
 import re
@@ -31,7 +31,6 @@ class PageRange:
       -  to_slice() gives the equivalent slice.
       -  str() and repr() allow printing.
       -  indices(n) is like slice.indices(n).
-
     """
 
     def __init__(self, arg: Union[slice, "PageRange", str]) -> None:
@@ -43,6 +42,7 @@ class PageRange:
             where the brackets indicate optional ints.
         Remember, page indices start with zero.
         Page range expression examples:
+
             :     all pages.                   -1    last page.
             22    just the 23rd page.          :-1   all but the last page.
             0:3   the first three pages.       -2    second-to-last page.
@@ -78,7 +78,15 @@ class PageRange:
 
     @staticmethod
     def valid(input: Any) -> bool:
-        """True if input is a valid initializer for a PageRange."""
+        """
+        True if input is a valid initializer for a PageRange.
+
+        Args:
+            input: A possible PageRange string or a PageRange object.
+
+        Returns:
+            True, if the ``input`` is a valid PageRange.
+        """
         return isinstance(input, (slice, PageRange)) or (
             isinstance(input, str) and bool(re.match(PAGE_RANGE_RE, input))
         )
@@ -106,9 +114,16 @@ class PageRange:
 
     def indices(self, n: int) -> Tuple[int, int, int]:
         """
-        n is the length of the list of pages to choose from.
+        Assuming a sequence of length n, calculate the start and stop indices,
+        and the stride length of the PageRange.
 
-        Returns arguments for range().  See help(slice.indices).
+        See help(slice.indices).
+
+        Args:
+            n:  the length of the list of pages to choose from.
+
+        Returns:
+            Arguments for range()
         """
         return self._slice.indices(n)
 
@@ -144,9 +159,13 @@ def parse_filename_page_ranges(
     """
     Given a list of filenames and page ranges, return a list of (filename, page_range) pairs.
 
-    First arg must be a filename; other ags are filenames, page-range
-    expressions, slice objects, or PageRange objects.
-    A filename not followed by a page range indicates all pages of the file.
+    Args:
+        args: A list where the first element is a filename. The other elements are
+            filenames, page-range expressions, slice objects, or PageRange objects.
+            A filename not followed by a page range indicates all pages of the file.
+
+    Returns:
+        A list of (filename, page_range) pairs.
     """
     pairs: List[Tuple[str, PageRange]] = []
     pdf_filename = None
@@ -170,4 +189,4 @@ def parse_filename_page_ranges(
     return pairs
 
 
-PageRangeSpec = Union[str, PageRange, Tuple[int, int], Tuple[int, int, int]]
+PageRangeSpec = Union[str, PageRange, Tuple[int, int], Tuple[int, int, int], List[int]]

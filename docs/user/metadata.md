@@ -3,7 +3,7 @@
 ## Reading metadata
 
 ```python
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 
 reader = PdfReader("example.pdf")
 
@@ -22,7 +22,7 @@ print(meta.title)
 ## Writing metadata
 
 ```python
-from PyPDF2 import PdfReader, PdfWriter
+from pypdf import PdfReader, PdfWriter
 
 reader = PdfReader("example.pdf")
 writer = PdfWriter()

@@ -4,10 +4,10 @@ from pathlib import Path
 
 import pytest
 
-import PyPDF2.generic
-import PyPDF2.xmp
-from PyPDF2 import PdfReader
-from PyPDF2.errors import PdfReadError
+import pypdf.generic
+import pypdf.xmp
+from pypdf import PdfReader
+from pypdf.errors import PdfReadError
 
 from . import get_pdf_from_url
 
@@ -29,7 +29,7 @@ def test_read_xmp(src, has_xmp):
     assert (xmp is None) == (not has_xmp)
     if has_xmp:
         for el in xmp.get_element(
-            about_uri="", namespace=PyPDF2.xmp.RDF_NAMESPACE, name="Artist"
+            about_uri="", namespace=pypdf.xmp.RDF_NAMESPACE, name="Artist"
         ):
             print(f"el={el}")
 
@@ -37,7 +37,7 @@ def test_read_xmp(src, has_xmp):
         assert xmp.dc_contributor == []
 
 
-def get_all_tiff(xmp: PyPDF2.xmp.XmpInformation):
+def get_all_tiff(xmp: pypdf.xmp.XmpInformation):
     data = {}
     tiff_ns = xmp.get_nodes_in_namespace(
         about_uri="", namespace="http://ns.adobe.com/tiff/1.0/"
@@ -51,7 +51,7 @@ def get_all_tiff(xmp: PyPDF2.xmp.XmpInformation):
 
 
 def test_regression_issue774():
-    date = PyPDF2.xmp._converter_date("2021-04-28T12:23:34.123Z")
+    date = pypdf.xmp._converter_date("2021-04-28T12:23:34.123Z")
     assert date.year == 2021
     assert date.month == 4
     assert date.day == 28
@@ -60,10 +60,10 @@ def test_regression_issue774():
     assert date.second == 34
     assert date.microsecond == 123000
     with pytest.raises(ValueError) as exc:
-        PyPDF2.xmp._converter_date("today")
+        pypdf.xmp._converter_date("today")
     assert exc.value.args[0].startswith("Invalid date format")
 
-    date = PyPDF2.xmp._converter_date("2021-04-28T12:23:01-03:00")
+    date = pypdf.xmp._converter_date("2021-04-28T12:23:01-03:00")
     assert date.year == 2021
     assert date.month == 4
     assert date.day == 28
@@ -84,7 +84,7 @@ def test_regression_issue914():
     ["a", 42, 3.141, False, True],
 )
 def test_identity(x):
-    assert PyPDF2.xmp._identity(x) == x
+    assert pypdf.xmp._identity(x) == x
 
 
 @pytest.mark.external
@@ -176,31 +176,32 @@ def test_dc_subject():
 
 @pytest.mark.external
 def test_issue585():
-    url = "https://github.com/mstamy2/PyPDF2/files/5536984/test.pdf"
-    name = "mstamy2-5536984.pdf"
+    url = "https://github.com/py-pdf/pypdf/files/5536984/test.pdf"
+    name = "pypdf-5536984.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     with pytest.raises(PdfReadError) as exc:
         reader.xmp_metadata
     assert exc.value.args[0].startswith("XML in XmpInformation was invalid")
 
 
-# def test_getter_bag():
-#     f = PyPDF2.xmp._getter_bag("namespace", "name")
-#     class Tst:  # to replace pdf
-#         strict = False
+def test_getter_bag():
+    f = pypdf.xmp._getter_bag("namespace", "name")
 
-#     reader = PdfReader(RESOURCE_ROOT / "commented-xmp.pdf")
-#     xmp_info = reader.xmp_metadata
-#     # <?xpacket begin='ï»¿' id='W5M0MpCehiHzreSzNTczkc9d'?>
-#     # <x:xmpmeta xmlns:x='adobe:ns:meta/' x:xmptk='Image::ExifTool 11.88'>
-#     # <rdf:RDF xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'>
+    class Tst:  # to replace pdf
+        strict = False
 
-#     # <rdf:Description rdf:about=''
-#     # xmlns:tiff='http://ns.adobe.com/tiff/1.0/'>
-#     # <tiff:Artist>me</tiff:Artist>
-#     # </rdf:Description>
-#     # </rdf:RDF>
-#     # </x:xmpmeta>
+    reader = PdfReader(RESOURCE_ROOT / "commented-xmp.pdf")
+    xmp_info = reader.xmp_metadata
+    # <?xpacket begin='ï»¿' id='W5M0MpCehiHzreSzNTczkc9d'?>
+    # <x:xmpmeta xmlns:x='adobe:ns:meta/' x:xmptk='Image::ExifTool 11.88'>
+    # <rdf:RDF xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'>
 
-#     assert xmp_info is not None
-#     f(xmp_info)
+    # <rdf:Description rdf:about=''
+    # xmlns:tiff='http://ns.adobe.com/tiff/1.0/'>
+    # <tiff:Artist>me</tiff:Artist>
+    # </rdf:Description>
+    # </rdf:RDF>
+    # </x:xmpmeta>
+
+    assert xmp_info is not None
+    f(xmp_info)

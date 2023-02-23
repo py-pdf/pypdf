@@ -34,15 +34,10 @@ import logging
 import warnings
 from codecs import getencoder
 from dataclasses import dataclass
-from io import (
-    DEFAULT_BUFFER_SIZE,
-    BufferedReader,
-    BufferedWriter,
-    BytesIO,
-    FileIO,
-)
+from io import DEFAULT_BUFFER_SIZE
 from os import SEEK_CUR
 from typing import (
+    IO,
     Any,
     Callable,
     Dict,
@@ -59,7 +54,11 @@ try:
 except ImportError:
     from typing_extensions import TypeAlias
 
-from .errors import STREAM_TRUNCATED_PREMATURELY, PdfStreamError
+from .errors import (
+    STREAM_TRUNCATED_PREMATURELY,
+    DeprecationError,
+    PdfStreamError,
+)
 
 TransformationMatrixType: TypeAlias = Tuple[
     Tuple[float, float, float], Tuple[float, float, float], Tuple[float, float, float]
@@ -68,11 +67,13 @@ CompressedTransformationMatrix: TypeAlias = Tuple[
     float, float, float, float, float, float
 ]
 
-StreamType = Union[BytesIO, BufferedReader, BufferedWriter, FileIO]
+StreamType = IO
 StrByteType = Union[str, StreamType]
 
-DEPR_MSG_NO_REPLACEMENT = "{} is deprecated and will be removed in PyPDF2 {}."
-DEPR_MSG = "{} is deprecated and will be removed in PyPDF2 3.0.0. Use {} instead."
+DEPR_MSG_NO_REPLACEMENT = "{} is deprecated and will be removed in pypdf {}."
+DEPR_MSG_NO_REPLACEMENT_HAPPENED = "{} is deprecated and was removed in pypdf {}."
+DEPR_MSG = "{} is deprecated and will be removed in pypdf 3.0.0. Use {} instead."
+DEPR_MSG_HAPPENED = "{} is deprecated and was removed in pypdf {}. Use {} instead."
 
 
 def _get_max_pdf_version_header(header1: bytes, header2: bytes) -> bytes:
@@ -99,6 +100,13 @@ def read_until_whitespace(stream: StreamType, maxchars: Optional[int] = None) ->
     Read non-whitespace characters and return them.
 
     Stops upon encountering whitespace or when maxchars is reached.
+
+    Args:
+        stream: The data stream from which was read.
+        maxchars: The maximum number of bytes returned; by default unlimited.
+
+    Returns:
+        The data which was read.
     """
     txt = b""
     while True:
@@ -112,7 +120,15 @@ def read_until_whitespace(stream: StreamType, maxchars: Optional[int] = None) ->
 
 
 def read_non_whitespace(stream: StreamType) -> bytes:
-    """Find and read the next non-whitespace character (ignores whitespace)."""
+    """
+    Find and read the next non-whitespace character (ignores whitespace).
+
+    Args:
+        stream: The data stream from which was read.
+
+    Returns:
+        The data which was read.
+    """
     tok = stream.read(1)
     while tok in WHITESPACES:
         tok = stream.read(1)
@@ -121,8 +137,14 @@ def read_non_whitespace(stream: StreamType) -> bytes:
 
 def skip_over_whitespace(stream: StreamType) -> bool:
     """
-    Similar to read_non_whitespace, but return a Boolean if more than
-    one whitespace character was read.
+    Similar to read_non_whitespace, but return a boolean if more than one
+    whitespace character was read.
+
+    Args:
+        stream: The data stream from which was read.
+
+    Returns:
+        True if more than one whitespace was skipped, otherwise return False.
     """
     tok = WHITESPACES[0]
     cnt = 0
@@ -140,23 +162,22 @@ def skip_over_comment(stream: StreamType) -> None:
             tok = stream.read(1)
 
 
-def read_until_regex(
-    stream: StreamType, regex: Pattern[bytes], ignore_eof: bool = False
-) -> bytes:
+def read_until_regex(stream: StreamType, regex: Pattern[bytes]) -> bytes:
     """
     Read until the regular expression pattern matched (ignore the match).
+    Treats EOF on the underlying stream as the end of the token to be matched.
 
-    :raises PdfStreamError: on premature end-of-file
-    :param bool ignore_eof: If true, ignore end-of-line and return immediately
-    :param regex: re.Pattern
+    Args:
+        regex: re.Pattern
+
+    Returns:
+        The read bytes.
     """
     name = b""
     while True:
         tok = stream.read(16)
         if not tok:
-            if ignore_eof:
-                return name
-            raise PdfStreamError(STREAM_TRUNCATED_PREMATURELY)
+            return name
         m = regex.search(tok)
         if m is not None:
             name += tok[: m.start()]
@@ -172,6 +193,13 @@ def read_block_backwards(stream: StreamType, to_read: int) -> bytes:
 
     This changes the stream's position to the beginning of where the block was
     read.
+
+    Args:
+        stream:
+        to_read:
+
+    Returns:
+        The data which was read.
     """
     if stream.tell() < to_read:
         raise PdfStreamError("Could not read malformed PDF file")
@@ -192,6 +220,12 @@ def read_previous_line(stream: StreamType) -> bytes:
     After this call, the stream will be positioned one byte after the
     first non-CRLF character found beyond the first CR/LF byte before X,
     or, if no such byte is found, at the beginning of the stream.
+
+    Args:
+        stream: StreamType:
+
+    Returns:
+        The data which was read.
     """
     line_content = []
     found_crlf = False
@@ -248,7 +282,7 @@ def mark_location(stream: StreamType) -> None:
     # Mainly for debugging
     radius = 5000
     stream.seek(-radius, 1)
-    with open("PyPDF2_pdfLocation.txt", "wb") as output_fh:
+    with open("pypdf_pdfLocation.txt", "wb") as output_fh:
         output_fh.write(stream.read(radius))
         output_fh.write(b"HERE")
         output_fh.write(stream.read(radius))
@@ -315,7 +349,6 @@ def ord_(b: Union[int, str, bytes]) -> Union[int, bytes]:
 
 
 def hexencode(b: bytes) -> bytes:
-
     coder = getencoder("hex_codec")
     coded = coder(b)  # type: ignore
     return coded[0]
@@ -343,17 +376,35 @@ def paeth_predictor(left: int, up: int, up_left: int) -> int:
 
 
 def deprecate(msg: str, stacklevel: int = 3) -> None:
-    warnings.warn(msg, PendingDeprecationWarning, stacklevel=stacklevel)
+    warnings.warn(msg, DeprecationWarning, stacklevel=stacklevel)
+
+
+def deprecation(msg: str) -> None:
+    raise DeprecationError(msg)
 
 
 def deprecate_with_replacement(
     old_name: str, new_name: str, removed_in: str = "3.0.0"
 ) -> None:
+    """Raise an exception that a feature will be removed, but has a replacement."""
     deprecate(DEPR_MSG.format(old_name, new_name, removed_in), 4)
 
 
+def deprecation_with_replacement(
+    old_name: str, new_name: str, removed_in: str = "3.0.0"
+) -> None:
+    """Raise an exception that a feature was already removed, but has a replacement."""
+    deprecation(DEPR_MSG_HAPPENED.format(old_name, removed_in, new_name))
+
+
 def deprecate_no_replacement(name: str, removed_in: str = "3.0.0") -> None:
+    """Raise an exception that a feature will be removed without replacement."""
     deprecate(DEPR_MSG_NO_REPLACEMENT.format(name, removed_in), 4)
+
+
+def deprecation_no_replacement(name: str, removed_in: str = "3.0.0") -> None:
+    """Raise an exception that a feature was already removed without replacement."""
+    deprecation(DEPR_MSG_NO_REPLACEMENT_HAPPENED.format(name, removed_in))
 
 
 def logger_warning(msg: str, src: str) -> None:
@@ -368,14 +419,14 @@ def logger_warning(msg: str, src: str) -> None:
     - warnings.warn should be used if the user needs to fix their code, e.g.
       DeprecationWarnings
     - logger_warning should be used if the user needs to know that an issue was
-      handled by PyPDF2, e.g. a non-compliant PDF being read in a way that
-      PyPDF2 could apply a robustness fix to still read it. This applies mainly
+      handled by pypdf, e.g. a non-compliant PDF being read in a way that
+      pypdf could apply a robustness fix to still read it. This applies mainly
       to strict=False mode.
     """
     logging.getLogger(src).warning(msg)
 
 
-def deprecate_bookmark(**aliases: str) -> Callable:
+def deprecation_bookmark(**aliases: str) -> Callable:
     """
     Decorator for deprecated term "bookmark"
     To be used for methods and function arguments
@@ -386,7 +437,7 @@ def deprecate_bookmark(**aliases: str) -> Callable:
     def decoration(func: Callable):  # type: ignore
         @functools.wraps(func)
         def wrapper(*args, **kwargs):  # type: ignore
-            rename_kwargs(func.__name__, kwargs, aliases)
+            rename_kwargs(func.__name__, kwargs, aliases, fail=True)
             return func(*args, **kwargs)
 
         return wrapper
@@ -395,24 +446,36 @@ def deprecate_bookmark(**aliases: str) -> Callable:
 
 
 def rename_kwargs(  # type: ignore
-    func_name: str, kwargs: Dict[str, Any], aliases: Dict[str, str]
+    func_name: str, kwargs: Dict[str, Any], aliases: Dict[str, str], fail: bool = False
 ):
     """
     Helper function to deprecate arguments.
+
+    Args:
+        func_name: Name of the function to be deprecated
+        kwargs:
+        aliases:
+        fail:
     """
 
     for old_term, new_term in aliases.items():
         if old_term in kwargs:
+            if fail:
+                raise DeprecationError(
+                    f"{old_term} is deprecated as an argument. Use {new_term} instead"
+                )
             if new_term in kwargs:
                 raise TypeError(
-                    f"{func_name} received both {old_term} and {new_term} as an argument. "
-                    f"{old_term} is deprecated. Use {new_term} instead."
+                    f"{func_name} received both {old_term} and {new_term} as "
+                    f"an argument. {old_term} is deprecated. "
+                    f"Use {new_term} instead."
                 )
             kwargs[new_term] = kwargs.pop(old_term)
             warnings.warn(
                 message=(
                     f"{old_term} is deprecated as an argument. Use {new_term} instead"
-                )
+                ),
+                category=DeprecationWarning,
             )
 
 

@@ -1,5 +1,6 @@
 import json
 import os
+import random
 from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
@@ -7,12 +8,13 @@ from typing import List, Tuple
 
 import pytest
 
-from PyPDF2 import PdfReader, PdfWriter, Transformation
-from PyPDF2._page import PageObject, set_custom_rtl
-from PyPDF2.constants import PageAttributes as PG
-from PyPDF2.errors import PdfReadWarning
-from PyPDF2.generic import (
+from pypdf import PdfReader, PdfWriter, Transformation
+from pypdf._page import PageObject, set_custom_rtl
+from pypdf.constants import PageAttributes as PG
+from pypdf.errors import DeprecationError, PdfReadWarning
+from pypdf.generic import (
     ArrayObject,
+    ContentStream,
     DictionaryObject,
     FloatObject,
     IndirectObject,
@@ -48,7 +50,7 @@ all_files_meta = get_all_sample_files()
     [m for m in all_files_meta["data"] if not m["encrypted"]],
     ids=[m["path"] for m in all_files_meta["data"] if not m["encrypted"]],
 )
-@pytest.mark.filterwarnings("ignore::PyPDF2.errors.PdfReadWarning")
+@pytest.mark.filterwarnings("ignore::pypdf.errors.PdfReadWarning")
 def test_read(meta):
     pdf_path = SAMPLE_ROOT / meta["path"]
     reader = PdfReader(pdf_path)
@@ -80,8 +82,8 @@ def test_page_operations(pdf_path, password):
     """
     This test just checks if the operation throws an exception.
 
-    This should be done way more thoroughly: It should be checked if the
-    output is as expected.
+    This should be done way more thoroughly: It should be checked if the output
+    is as expected.
     """
     if pdf_path.startswith("http"):
         pdf_path = BytesIO(get_pdf_from_url(pdf_path, pdf_path.split("/")[-1]))
@@ -131,8 +133,10 @@ def test_transformation_equivalence():
     # Option 2: The old way
     page_box2 = deepcopy(page_box)
     page_base2 = deepcopy(page_base)
-    with pytest.warns(PendingDeprecationWarning):
+    with pytest.raises(DeprecationError):
         page_base2.mergeTransformedPage(page_box2, op, expand=False)
+    page_box2.add_transformation(op)
+    page_base2.merge_page(page_box2)
 
     # Should be the same
     assert page_base1[NameObject(PG.CONTENTS)] == page_base2[NameObject(PG.CONTENTS)]
@@ -142,6 +146,41 @@ def test_transformation_equivalence():
     compare_dict_objects(
         page_base1[NameObject(PG.RESOURCES)], page_base2[NameObject(PG.RESOURCES)]
     )
+
+
+def test_transformation_equivalence2():
+    pdf_path = RESOURCE_ROOT / "labeled-edges-center-image.pdf"
+    reader_base = PdfReader(pdf_path)
+
+    pdf_path = RESOURCE_ROOT / "box.pdf"
+    reader_add = PdfReader(pdf_path)
+
+    w = PdfWriter()
+    w.append(reader_base)
+    w.pages[0].merge_transformed_page(
+        reader_add.pages[0], Transformation().scale(2).rotate(-45), False, False
+    )
+    w.pages[0].merge_transformed_page(
+        reader_add.pages[0], Transformation().scale(2).translate(100, 100), True, False
+    )
+    # No special assert: the test should be visual in a viewer; 2 box with a arrow rotated  and translated
+
+    w = PdfWriter()
+    w.append(reader_add)
+    w.pages[0].merge_transformed_page(
+        reader_base.pages[0], Transformation(), True, True
+    )
+    # No special assert: Visual check the page has been  increased and all is visible (box+graph)
+
+    pdf_path = RESOURCE_ROOT / "commented-xmp.pdf"
+    reader_comments = PdfReader(pdf_path)
+
+    w = PdfWriter()
+    w.append(reader_base)
+    w.pages[0].merge_transformed_page(
+        reader_comments.pages[0], Transformation().rotate(-15), True, True
+    )
+    # No special assert: Visual check the overlay has its comments at the good position
 
 
 def test_get_user_unit_property():
@@ -165,21 +204,21 @@ def test_page_transformations():
     reader = PdfReader(pdf_path)
 
     page: PageObject = reader.pages[0]
-    with pytest.warns(PendingDeprecationWarning):
+    with pytest.raises(DeprecationError):
         page.mergeRotatedPage(page, 90, expand=True)
-    with pytest.warns(PendingDeprecationWarning):
+    with pytest.raises(DeprecationError):
         page.mergeRotatedScaledPage(page, 90, 1, expand=True)
-    with pytest.warns(PendingDeprecationWarning):
+    with pytest.raises(DeprecationError):
         page.mergeRotatedScaledTranslatedPage(
             page, 90, scale=1, tx=1, ty=1, expand=True
         )
-    with pytest.warns(PendingDeprecationWarning):
+    with pytest.raises(DeprecationError):
         page.mergeRotatedTranslatedPage(page, 90, 100, 100, expand=False)
-    with pytest.warns(PendingDeprecationWarning):
+    with pytest.raises(DeprecationError):
         page.mergeScaledPage(page, 2, expand=False)
-    with pytest.warns(PendingDeprecationWarning):
+    with pytest.raises(DeprecationError):
         page.mergeScaledTranslatedPage(page, 1, 1, 1)
-    with pytest.warns(PendingDeprecationWarning):
+    with pytest.raises(DeprecationError):
         page.mergeTranslatedPage(page, 100, 100, expand=False)
     page.add_transformation((1, 0, 0, 0, 0, 0))
 
@@ -242,6 +281,14 @@ def test_page_rotation():
     )
 
 
+def test_page_indirect_rotation():
+    reader = PdfReader(RESOURCE_ROOT / "indirect-rotation.pdf")
+    page = reader.pages[0]
+
+    # test rotation
+    assert page.rotation == 0
+
+
 def test_page_scale():
     op = Transformation()
     with pytest.raises(ValueError) as exc:
@@ -293,7 +340,7 @@ def test_extract_text_single_quote_op():
 
 @pytest.mark.external
 def test_no_ressources_on_text_extract():
-    url = "https://github.com/py-pdf/PyPDF2/files/9428434/TelemetryTX_EM.pdf"
+    url = "https://github.com/py-pdf/pypdf/files/9428434/TelemetryTX_EM.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name="tika-964029.pdf")))
     for page in reader.pages:
         page.extract_text()
@@ -302,12 +349,13 @@ def test_no_ressources_on_text_extract():
 @pytest.mark.external
 def test_iss_1142():
     # check fix for problem of context save/restore (q/Q)
-    url = "https://github.com/py-pdf/PyPDF2/files/9150656/ST.2019.PDF"
+    url = "https://github.com/py-pdf/pypdf/files/9150656/ST.2019.PDF"
     name = "st2019.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     txt = reader.pages[3].extract_text()
     # The following text is contained in two different cells:
-    # assert txt.find("有限公司郑州分公司") > 0
+    assert txt.find("有限公司") > 0
+    assert txt.find("郑州分公司") > 0
     # 有限公司 = limited company
     # 郑州分公司 = branch office in Zhengzhou
     # First cell (see page 4/254):
@@ -333,12 +381,12 @@ def test_iss_1142():
         ),
         # iss 1134:
         (
-            "https://github.com/py-pdf/PyPDF2/files/9150656/ST.2019.PDF",
+            "https://github.com/py-pdf/pypdf/files/9150656/ST.2019.PDF",
             "iss_1134.pdf",
         ),
         # iss 1:
         (
-            "https://github.com/py-pdf/PyPDF2/files/9432350/Work.Flow.From.Check.to.QA.pdf",
+            "https://github.com/py-pdf/pypdf/files/9432350/Work.Flow.From.Check.to.QA.pdf",
             "WFCA.pdf",
         ),
     ],
@@ -378,12 +426,12 @@ def test_extract_text_visitor_callbacks():
     This test uses GeoBase_NHNC1_Data_Model_UML_EN.pdf.
     It extracts the labels of package-boxes in Figure 2.
     It extracts the texts in table "REVISION HISTORY".
-
     """
     import logging
 
     class PositionedText:
-        """Specify a text with coordinates, font-dictionary and font-size.
+        """
+        Specify a text with coordinates, font-dictionary and font-size.
 
         The font-dictionary may be None in case of an unknown font.
         """
@@ -397,9 +445,11 @@ def test_extract_text_visitor_callbacks():
             self.font_size = font_size
 
         def get_base_font(self) -> str:
-            """Gets the base font of the text.
+            """
+            Gets the base font of the text.
 
-            Return UNKNOWN in case of an unknown font."""
+            Return UNKNOWN in case of an unknown font.
+            """
             if (self.font_dict is None) or "/BaseFont" not in self.font_dict:
                 return "UNKNOWN"
             return self.font_dict["/BaseFont"]
@@ -425,10 +475,11 @@ def test_extract_text_visitor_callbacks():
         page: PageObject, rect_filter=None
     ) -> Tuple[List[PositionedText], List[Rectangle]]:
         """
-        Extracts texts and rectangles of a page of type PyPDF2._page.PageObject.
+        Extracts texts and rectangles of a page of type pypdf._page.PageObject.
 
         This function supports simple coordinate transformations only.
-        The optional rect_filter-lambda can be used to filter wanted rectangles.
+        The optional rect_filter-lambda can be used to filter wanted
+        rectangles.
         rect_filter has Rectangle as argument and must return a boolean.
 
         It returns a tuple containing a list of extracted texts and
@@ -568,8 +619,9 @@ def test_extract_text_visitor_callbacks():
         page_lrs_model, rect_filter=ignore_large_rectangles
     )
 
-    # We see ten rectangles (5 tabs, 5 boxes) but there are 64 rectangles (including some invisible ones).
-    assert 60 == len(rectangles)
+    # We see ten rectangles (5 tabs, 5 boxes) but there are 64 rectangles
+    # (including some invisible ones).
+    assert len(rectangles) == 60
     rectangle2texts = {}
     for t in texts:
         for r in rectangles:
@@ -578,7 +630,7 @@ def test_extract_text_visitor_callbacks():
                 texts.append(t.text.strip())
                 break
     # Five boxes and the figure-description below.
-    assert 6 == len(rectangle2texts)
+    assert len(rectangle2texts) == 6
     box_texts = [" ".join(texts) for texts in rectangle2texts.values()]
     assert "Hydro Network" in box_texts
     assert "Hydro Events" in box_texts
@@ -825,10 +877,14 @@ def test_empyt_password_1088():
     len(reader.pages)
 
 
-@pytest.mark.xfail(reason="#1088 / #1126")
-def test_arab_text_extraction():
+@pytest.mark.external
+def test_old_habibi():
+    # this habibi has som multiple characters associated with the h
     reader = PdfReader(SAMPLE_ROOT / "015-arabic/habibi.pdf")
-    assert reader.pages[0].extract_text() == "habibi حَبيبي"
+    txt = reader.pages[0].extract_text()  # very odd file
+    assert (
+        "habibi" in txt and "حَبيبي" in txt
+    )  # extract from acrobat reader "حَبيبي habibi􀀃􀏲􀎒􀏴􀎒􀎣􀋴
 
 
 @pytest.mark.samples
@@ -863,9 +919,189 @@ def test_read_link_annotation():
 
 @pytest.mark.external
 def test_no_resources():
-    url = "https://github.com/py-pdf/PyPDF2/files/9572045/108.pdf"
+    url = "https://github.com/py-pdf/pypdf/files/9572045/108.pdf"
     name = "108.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     page_one = reader.pages[0]
     page_two = reader.pages[0]
     page_one.merge_page(page_two)
+
+
+def test_merge_page_reproducible_with_proc_set():
+    page1 = PageObject.create_blank_page(width=100, height=100)
+    page2 = PageObject.create_blank_page(width=100, height=100)
+
+    ordered = sorted(NameObject(f"/{x}") for x in range(20))
+
+    shuffled = list(ordered)
+    random.shuffle(shuffled)
+
+    # each page has some overlap in their /ProcSet, and they're in a weird order
+    page1[NameObject("/Resources")][NameObject("/ProcSet")] = ArrayObject(shuffled[:15])
+    page2[NameObject("/Resources")][NameObject("/ProcSet")] = ArrayObject(shuffled[5:])
+    page1.merge_page(page2)
+
+    assert page1[NameObject("/Resources")][NameObject("/ProcSet")] == ordered
+
+
+@pytest.mark.parametrize(
+    ("apage1", "apage2", "expected_result", "expected_renames"),
+    [
+        # simple cases:
+        pytest.param({}, {}, {}, {}, id="no resources"),
+        pytest.param(
+            {"/1": "/v1"},
+            {"/2": "/v2"},
+            {"/1": "/v1", "/2": "/v2"},
+            {},
+            id="no overlap",
+        ),
+        pytest.param(
+            {"/x": "/v"}, {"/x": "/v"}, {"/x": "/v"}, {}, id="overlap, matching values"
+        ),
+        pytest.param(
+            {"/x": "/v1"},
+            {"/x": "/v2"},
+            {"/x": "/v1", "/x-0": "/v2"},
+            {"/x": "/x-0"},
+            id="overlap, different values",
+        ),
+        # carefully crafted names that match the renaming pattern:
+        pytest.param(
+            {"/x": "/v1", "/x-0": "/v1", "/x-1": "/v1"},
+            {"/x": "/v2"},
+            {
+                "/x": "/v1",
+                "/x-0": "/v1",
+                "/x-1": "/v1",
+                "/x-2": "/v2",
+            },
+            {"/x": "/x-2"},
+            id="crafted, different values",
+        ),
+        pytest.param(
+            {"/x": "/v1", "/x-0": "/v1", "/x-1": "/v"},
+            {"/x": "/v"},
+            {"/x": "/v1", "/x-0": "/v1", "/x-1": "/v"},
+            {"/x": "/x-1"},
+            id="crafted, matching value in chain",
+        ),
+        pytest.param(
+            {"/x": "/v1"},
+            {"/x": "/v2.1", "/x-0": "/v2.2"},
+            {"/x": "/v1", "/x-0": "/v2.1", "/x-0-0": "/v2.2"},
+            {"/x": "/x-0", "/x-0": "/x-0-0"},
+            id="crafted, overlaps with previous rename, different value",
+        ),
+        pytest.param(
+            {"/x": "/v1"},
+            {"/x": "/v2", "/x-0": "/v2"},
+            {"/x": "/v1", "/x-0": "/v2"},
+            {"/x": "/x-0"},
+            id="crafted, overlaps with previous rename, matching value",
+        ),
+    ],
+)
+def test_merge_resources(apage1, apage2, expected_result, expected_renames):
+    for new_res in (False, True):
+        # Arrange
+        page1 = PageObject()
+        page1[NameObject(PG.RESOURCES)] = DictionaryObject()
+        for k, v in apage1.items():
+            page1[PG.RESOURCES][NameObject(k)] = NameObject(v)
+
+        page2 = PageObject()
+        page2[NameObject(PG.RESOURCES)] = DictionaryObject()
+        for k, v in apage2.items():
+            page2[PG.RESOURCES][NameObject(k)] = NameObject(v)
+
+        # Act
+        result, renames = page1._merge_resources(page1, page2, PG.RESOURCES, new_res)
+
+        # Assert
+        assert result == expected_result
+    assert renames == expected_renames
+
+
+def test_merge_page_resources_smoke_test():
+    # Arrange
+    page1 = PageObject.create_blank_page(width=100, height=100)
+    page2 = PageObject.create_blank_page(width=100, height=100)
+
+    NO = NameObject
+
+    # set up some dummy resources that overlap (or not) between the two pages
+    # (note, all the edge cases are tested in test_merge_resources)
+    props1 = page1[NO("/Resources")][NO("/Properties")] = DictionaryObject(
+        {
+            NO("/just1"): NO("/just1-value"),
+            NO("/overlap-matching"): NO("/overlap-matching-value"),
+            NO("/overlap-different"): NO("/overlap-different-value1"),
+        }
+    )
+    props2 = page2[NO("/Resources")][NO("/Properties")] = DictionaryObject(
+        {
+            NO("/just2"): NO("/just2-value"),
+            NO("/overlap-matching"): NO("/overlap-matching-value"),
+            NO("/overlap-different"): NO("/overlap-different-value2"),
+        }
+    )
+    # use these keys for some "operations", to validate renaming
+    # (the operand name doesn't matter)
+    contents1 = page1[NO("/Contents")] = ContentStream(None, None)
+    contents1.operations = [(ArrayObject(props1.keys()), "page1-contents")]
+    contents2 = page2[NO("/Contents")] = ContentStream(None, None)
+    contents2.operations = [(ArrayObject(props2.keys()), "page2-contents")]
+
+    expected_properties = {
+        "/just1": "/just1-value",
+        "/just2": "/just2-value",
+        "/overlap-matching": "/overlap-matching-value",
+        "/overlap-different": "/overlap-different-value1",
+        "/overlap-different-0": "/overlap-different-value2",
+    }
+    expected_operations = [
+        # no renaming
+        (ArrayObject(props1.keys()), b"page1-contents"),
+        # some renaming
+        (
+            ArrayObject(
+                [
+                    NO("/just2"),
+                    NO("/overlap-matching"),
+                    NO("/overlap-different-0"),
+                ]
+            ),
+            b"page2-contents",
+        ),
+    ]
+
+    # Act
+    page1.merge_page(page2)
+
+    # Assert
+    assert page1[NO("/Resources")][NO("/Properties")] == expected_properties
+
+    relevant_operations = [
+        (op, name)
+        for op, name in page1.get_contents().operations
+        if name in (b"page1-contents", b"page2-contents")
+    ]
+    assert relevant_operations == expected_operations
+
+
+def test_merge_transformed_page_into_blank():
+    url = "https://github.com/py-pdf/pypdf/files/10540507/visitcard.pdf"
+    name = "visitcard.pdf"
+    r = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    w = PdfWriter()
+    w.add_blank_page(100, 100)
+    for x in range(4):
+        for y in range(7):
+            w.pages[0].merge_translated_page(
+                r.pages[0],
+                x * r.pages[0].trimbox[2],
+                y * r.pages[0].trimbox[3],
+                True,
+                True,
+            )

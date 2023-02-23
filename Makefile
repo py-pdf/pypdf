@@ -1,7 +1,10 @@
 maint:
+	pyenv local 3.6.15
 	pre-commit autoupdate
 	pip-compile -U requirements/ci.in
+	pyenv local 3.7.15
 	pip-compile -U requirements/dev.in
+	pyenv local 3.7.9
 	pip-compile -U requirements/docs.in
 
 changelog:
@@ -13,13 +16,13 @@ upload:
 
 clean:
 	pyclean .
-	rm -rf tests/__pycache__ PyPDF2/__pycache__ Image9.png htmlcov docs/_build dist dont_commit_merged.pdf dont_commit_writer.pdf PyPDF2.egg-info PyPDF2_pdfLocation.txt .pytest_cache .mypy_cache .benchmarks
+	rm -rf tests/__pycache__ pypdf/__pycache__ Image9.png htmlcov docs/_build dist dont_commit_merged.pdf dont_commit_writer.pdf pypdf.egg-info pypdf_pdfLocation.txt .pytest_cache .mypy_cache .benchmarks
 
 test:
-	pytest tests --cov --cov-report term-missing -vv --cov-report html --durations=3 --timeout=60 PyPDF2
+	pytest tests --cov --cov-report term-missing -vv --cov-report html --durations=3 --timeout=60 pypdf
 
 testtype:
-	pytest tests --cov --cov-report term-missing -vv --cov-report html --durations=3 --timeout=30 --typeguard-packages=PyPDF2
+	pytest tests --cov --cov-report term-missing -vv --cov-report html --durations=3 --timeout=30 --typeguard-packages=pypdf
 
 mutation-test:
 	mutmut run
@@ -32,7 +35,7 @@ benchmark:
 	pytest tests/bench.py
 
 mypy:
-	mypy PyPDF2 --ignore-missing-imports --check-untyped --strict
+	mypy pypdf --ignore-missing-imports --check-untyped --strict
 
 pylint:
-	pylint PyPDF2
+	pylint pypdf

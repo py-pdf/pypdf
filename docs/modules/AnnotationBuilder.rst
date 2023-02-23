@@ -1,7 +1,7 @@
 The AnnotationBuilder Class
 ---------------------------
 
-.. autoclass:: PyPDF2.generic.AnnotationBuilder
+.. autoclass:: pypdf.generic.AnnotationBuilder
     :members:
     :no-undoc-members:
     :show-inheritance:

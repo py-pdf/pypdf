@@ -23,7 +23,11 @@ from xml.dom.minidom import Element as XmlElement
 from xml.dom.minidom import parseString
 from xml.parsers.expat import ExpatError
 
-from ._utils import StreamType, deprecate_with_replacement
+from ._utils import (
+    StreamType,
+    deprecate_with_replacement,
+    deprecation_with_replacement,
+)
 from .errors import PdfReadError
 from .generic import ContentStream, PdfObject
 
@@ -33,26 +37,24 @@ XMP_NAMESPACE = "http://ns.adobe.com/xap/1.0/"
 PDF_NAMESPACE = "http://ns.adobe.com/pdf/1.3/"
 XMPMM_NAMESPACE = "http://ns.adobe.com/xap/1.0/mm/"
 
-# What is the PDFX namespace, you might ask?  I might ask that too.  It's
-# a completely undocumented namespace used to place "custom metadata"
+# What is the PDFX namespace, you might ask?
+# It's documented here: https://github.com/adobe/xmp-docs/raw/master/XMPSpecifications/XMPSpecificationPart3.pdf
+# This namespace is used to place "custom metadata"
 # properties, which are arbitrary metadata properties with no semantic or
-# documented meaning.  Elements in the namespace are key/value-style storage,
+# documented meaning.
+#
+# Elements in the namespace are key/value-style storage,
 # where the element name is the key and the content is the value.  The keys
 # are transformed into valid XML identifiers by substituting an invalid
 # identifier character with \u2182 followed by the unicode hex ID of the
 # original character.  A key like "my car" is therefore "my\u21820020car".
 #
-# \u2182, in case you're wondering, is the unicode character
-# \u{ROMAN NUMERAL TEN THOUSAND}, a straightforward and obvious choice for
-# escaping characters.
+# \u2182 is the unicode character \u{ROMAN NUMERAL TEN THOUSAND}
 #
-# Intentional users of the pdfx namespace should be shot on sight.  A
+# The pdfx namespace should be avoided.  A
 # custom data schema and sensical XML elements could be used instead, as is
-# suggested by Adobe's own documentation on XMP (under "Extensibility of
-# Schemas").
-#
-# Information presented here on the /pdfx/ schema is a result of limited
-# reverse engineering, and does not constitute a full specification.
+# suggested by Adobe's own documentation on XMP under "Extensibility of
+# Schemas".
 PDFX_NAMESPACE = "http://ns.adobe.com/pdfx/1.3/"
 
 iso8601 = re.compile(
@@ -93,7 +95,7 @@ def _converter_date(value: str) -> datetime.datetime:
     minute = int(matches.group("minute") or "0")
     second = decimal.Decimal(matches.group("second") or "0")
     seconds_dec = second.to_integral(decimal.ROUND_FLOOR)
-    milliseconds_dec = (second - seconds_dec) * 1000000
+    milliseconds_dec = (second - seconds_dec) * 1_000_000
 
     seconds = int(seconds_dec)
     milliseconds = int(milliseconds_dec)
@@ -207,9 +209,10 @@ def _getter_single(
 class XmpInformation(PdfObject):
     """
     An object that represents Adobe XMP metadata.
-    Usually accessed by :py:attr:`xmp_metadata()<PyPDF2.PdfReader.xmp_metadata>`
+    Usually accessed by :py:attr:`xmp_metadata()<pypdf.PdfReader.xmp_metadata>`
 
-    :raises PdfReadError: if XML is invalid
+    Raises:
+      PdfReadError: if XML is invalid
     """
 
     def __init__(self, stream: ContentStream) -> None:
@@ -225,7 +228,7 @@ class XmpInformation(PdfObject):
         self.cache: Dict[Any, Any] = {}
 
     @property
-    def rdfRoot(self) -> XmlElement:  # pragma: no cover
+    def rdfRoot(self) -> XmlElement:  # deprecated
         deprecate_with_replacement("rdfRoot", "rdf_root", "4.0.0")
         return self.rdf_root
 
@@ -236,13 +239,13 @@ class XmpInformation(PdfObject):
 
     def writeToStream(
         self, stream: StreamType, encryption_key: Union[None, str, bytes]
-    ) -> None:  # pragma: no cover
+    ) -> None:  # deprecated
         """
-        .. deprecated:: 1.28.0
+        Use :meth:`write_to_stream` instead.
 
-            Use :meth:`write_to_stream` instead.
+        .. deprecated:: 1.28.0
         """
-        deprecate_with_replacement("writeToStream", "write_to_stream")
+        deprecation_with_replacement("writeToStream", "write_to_stream", "3.0.0")
         self.write_to_stream(stream, encryption_key)
 
     def get_element(self, about_uri: str, namespace: str, name: str) -> Iterator[Any]:
@@ -255,13 +258,13 @@ class XmpInformation(PdfObject):
 
     def getElement(
         self, aboutUri: str, namespace: str, name: str
-    ) -> Iterator[Any]:  # pragma: no cover
+    ) -> Iterator[Any]:  # deprecated
         """
-        .. deprecated:: 1.28.0
+        Use :meth:`get_element` instead.
 
-            Use :meth:`get_element` instead.
+        .. deprecated:: 1.28.0
         """
-        deprecate_with_replacement("getElement", "get_element")
+        deprecation_with_replacement("getElement", "get_element", "3.0.0")
         return self.get_element(aboutUri, namespace, name)
 
     def get_nodes_in_namespace(self, about_uri: str, namespace: str) -> Iterator[Any]:
@@ -277,13 +280,15 @@ class XmpInformation(PdfObject):
 
     def getNodesInNamespace(
         self, aboutUri: str, namespace: str
-    ) -> Iterator[Any]:  # pragma: no cover
+    ) -> Iterator[Any]:  # deprecated
         """
-        .. deprecated:: 1.28.0
+        Use :meth:`get_nodes_in_namespace` instead.
 
-            Use :meth:`get_nodes_in_namespace` instead.
+        .. deprecated:: 1.28.0
         """
-        deprecate_with_replacement("getNodesInNamespace", "get_nodes_in_namespace")
+        deprecation_with_replacement(
+            "getNodesInNamespace", "get_nodes_in_namespace", "3.0.0"
+        )
         return self.get_nodes_in_namespace(aboutUri, namespace)
 
     def _get_text(self, element: XmlElement) -> str:
@@ -295,116 +300,88 @@ class XmpInformation(PdfObject):
 
     dc_contributor = property(_getter_bag(DC_NAMESPACE, "contributor"))
     """
-    Contributors to the resource (other than the authors). An unsorted
-    array of names.
+    Contributors to the resource (other than the authors).
+
+    An unsorted array of names.
     """
 
     dc_coverage = property(_getter_single(DC_NAMESPACE, "coverage"))
-    """
-    Text describing the extent or scope of the resource.
-    """
+    """Text describing the extent or scope of the resource."""
 
     dc_creator = property(_getter_seq(DC_NAMESPACE, "creator"))
-    """
-    A sorted array of names of the authors of the resource, listed in order
-    of precedence.
-    """
+    """A sorted array of names of the authors of the resource, listed in order
+    of precedence."""
 
     dc_date = property(_getter_seq(DC_NAMESPACE, "date", _converter_date))
     """
     A sorted array of dates (datetime.datetime instances) of significance to
-    the resource.  The dates and times are in UTC.
+    the resource.
+
+    The dates and times are in UTC.
     """
 
     dc_description = property(_getter_langalt(DC_NAMESPACE, "description"))
-    """
-    A language-keyed dictionary of textual descriptions of the content of the
-    resource.
-    """
+    """A language-keyed dictionary of textual descriptions of the content of the
+    resource."""
 
     dc_format = property(_getter_single(DC_NAMESPACE, "format"))
-    """
-    The mime-type of the resource.
-    """
+    """The mime-type of the resource."""
 
     dc_identifier = property(_getter_single(DC_NAMESPACE, "identifier"))
-    """
-    Unique identifier of the resource.
-    """
+    """Unique identifier of the resource."""
 
     dc_language = property(_getter_bag(DC_NAMESPACE, "language"))
-    """
-    An unordered array specifying the languages used in the resource.
-    """
+    """An unordered array specifying the languages used in the resource."""
 
     dc_publisher = property(_getter_bag(DC_NAMESPACE, "publisher"))
-    """
-    An unordered array of publisher names.
-    """
+    """An unordered array of publisher names."""
 
     dc_relation = property(_getter_bag(DC_NAMESPACE, "relation"))
-    """
-    An unordered array of text descriptions of relationships to other
-    documents.
-    """
+    """An unordered array of text descriptions of relationships to other
+    documents."""
 
     dc_rights = property(_getter_langalt(DC_NAMESPACE, "rights"))
-    """
-    A language-keyed dictionary of textual descriptions of the rights the
-    user has to this resource.
-    """
+    """A language-keyed dictionary of textual descriptions of the rights the
+    user has to this resource."""
 
     dc_source = property(_getter_single(DC_NAMESPACE, "source"))
-    """
-    Unique identifier of the work from which this resource was derived.
-    """
+    """Unique identifier of the work from which this resource was derived."""
 
     dc_subject = property(_getter_bag(DC_NAMESPACE, "subject"))
-    """
-    An unordered array of descriptive phrases or keywrods that specify the
-    topic of the content of the resource.
-    """
+    """An unordered array of descriptive phrases or keywrods that specify the
+    topic of the content of the resource."""
 
     dc_title = property(_getter_langalt(DC_NAMESPACE, "title"))
-    """
-    A language-keyed dictionary of the title of the resource.
-    """
+    """A language-keyed dictionary of the title of the resource."""
 
     dc_type = property(_getter_bag(DC_NAMESPACE, "type"))
-    """
-    An unordered array of textual descriptions of the document type.
-    """
+    """An unordered array of textual descriptions of the document type."""
 
     pdf_keywords = property(_getter_single(PDF_NAMESPACE, "Keywords"))
-    """
-    An unformatted text string representing document keywords.
-    """
+    """An unformatted text string representing document keywords."""
 
     pdf_pdfversion = property(_getter_single(PDF_NAMESPACE, "PDFVersion"))
-    """
-    The PDF file version, for example 1.0, 1.3.
-    """
+    """The PDF file version, for example 1.0, 1.3."""
 
     pdf_producer = property(_getter_single(PDF_NAMESPACE, "Producer"))
-    """
-    The name of the tool that created the PDF document.
-    """
+    """The name of the tool that created the PDF document."""
 
     xmp_create_date = property(
         _getter_single(XMP_NAMESPACE, "CreateDate", _converter_date)
     )
     """
-    The date and time the resource was originally created.  The date and
-    time are returned as a UTC datetime.datetime object.
+    The date and time the resource was originally created.
+
+    The date and time are returned as a UTC datetime.datetime object.
     """
 
     @property
-    def xmp_createDate(self) -> datetime.datetime:  # pragma: no cover
+    def xmp_createDate(self) -> datetime.datetime:  # deprecated
         deprecate_with_replacement("xmp_createDate", "xmp_create_date", "4.0.0")
         return self.xmp_create_date
 
     @xmp_createDate.setter
-    def xmp_createDate(self, value: datetime.datetime) -> None:  # pragma: no cover
+    def xmp_createDate(self, value: datetime.datetime) -> None:  # deprecated
         deprecate_with_replacement("xmp_createDate", "xmp_create_date", "4.0.0")
         self.xmp_create_date = value
 
@@ -412,17 +389,18 @@ class XmpInformation(PdfObject):
         _getter_single(XMP_NAMESPACE, "ModifyDate", _converter_date)
     )
     """
-    The date and time the resource was last modified.  The date and time
-    are returned as a UTC datetime.datetime object.
+    The date and time the resource was last modified.
+
+    The date and time are returned as a UTC datetime.datetime object.
     """
 
     @property
-    def xmp_modifyDate(self) -> datetime.datetime:  # pragma: no cover
+    def xmp_modifyDate(self) -> datetime.datetime:  # deprecated
         deprecate_with_replacement("xmp_modifyDate", "xmp_modify_date", "4.0.0")
         return self.xmp_modify_date
 
     @xmp_modifyDate.setter
-    def xmp_modifyDate(self, value: datetime.datetime) -> None:  # pragma: no cover
+    def xmp_modifyDate(self, value: datetime.datetime) -> None:  # deprecated
         deprecate_with_replacement("xmp_modifyDate", "xmp_modify_date", "4.0.0")
         self.xmp_modify_date = value
 
@@ -436,12 +414,12 @@ class XmpInformation(PdfObject):
     """
 
     @property
-    def xmp_metadataDate(self) -> datetime.datetime:  # pragma: no cover
+    def xmp_metadataDate(self) -> datetime.datetime:  # deprecated
         deprecate_with_replacement("xmp_metadataDate", "xmp_metadata_date", "4.0.0")
         return self.xmp_metadata_date
 
     @xmp_metadataDate.setter
-    def xmp_metadataDate(self, value: datetime.datetime) -> None:  # pragma: no cover
+    def xmp_metadataDate(self, value: datetime.datetime) -> None:  # deprecated
         deprecate_with_replacement("xmp_metadataDate", "xmp_metadata_date", "4.0.0")
         self.xmp_metadata_date = value
 
@@ -449,44 +427,40 @@ class XmpInformation(PdfObject):
     """The name of the first known tool used to create the resource."""
 
     @property
-    def xmp_creatorTool(self) -> str:  # pragma: no cover
-        deprecate_with_replacement("xmp_creatorTool", "xmp_creator_tool")
+    def xmp_creatorTool(self) -> str:  # deprecated
+        deprecation_with_replacement("xmp_creatorTool", "xmp_creator_tool", "3.0.0")
         return self.xmp_creator_tool
 
     @xmp_creatorTool.setter
-    def xmp_creatorTool(self, value: str) -> None:  # pragma: no cover
-        deprecate_with_replacement("xmp_creatorTool", "xmp_creator_tool")
+    def xmp_creatorTool(self, value: str) -> None:  # deprecated
+        deprecation_with_replacement("xmp_creatorTool", "xmp_creator_tool", "3.0.0")
         self.xmp_creator_tool = value
 
     xmpmm_document_id = property(_getter_single(XMPMM_NAMESPACE, "DocumentID"))
-    """
-    The common identifier for all versions and renditions of this resource.
-    """
+    """The common identifier for all versions and renditions of this resource."""
 
     @property
-    def xmpmm_documentId(self) -> str:  # pragma: no cover
-        deprecate_with_replacement("xmpmm_documentId", "xmpmm_document_id")
+    def xmpmm_documentId(self) -> str:  # deprecated
+        deprecation_with_replacement("xmpmm_documentId", "xmpmm_document_id", "3.0.0")
         return self.xmpmm_document_id
 
     @xmpmm_documentId.setter
-    def xmpmm_documentId(self, value: str) -> None:  # pragma: no cover
-        deprecate_with_replacement("xmpmm_documentId", "xmpmm_document_id")
+    def xmpmm_documentId(self, value: str) -> None:  # deprecated
+        deprecation_with_replacement("xmpmm_documentId", "xmpmm_document_id", "3.0.0")
         self.xmpmm_document_id = value
 
     xmpmm_instance_id = property(_getter_single(XMPMM_NAMESPACE, "InstanceID"))
-    """
-    An identifier for a specific incarnation of a document, updated each
-    time a file is saved.
-    """
+    """An identifier for a specific incarnation of a document, updated each
+    time a file is saved."""
 
     @property
-    def xmpmm_instanceId(self) -> str:  # pragma: no cover
-        deprecate_with_replacement("xmpmm_instanceId", "xmpmm_instance_id")
+    def xmpmm_instanceId(self) -> str:  # deprecated
+        deprecation_with_replacement("xmpmm_instanceId", "xmpmm_instance_id", "3.0.0")
         return cast(str, self.xmpmm_instance_id)
 
     @xmpmm_instanceId.setter
-    def xmpmm_instanceId(self, value: str) -> None:  # pragma: no cover
-        deprecate_with_replacement("xmpmm_instanceId", "xmpmm_instance_id")
+    def xmpmm_instanceId(self, value: str) -> None:  # deprecated
+        deprecation_with_replacement("xmpmm_instanceId", "xmpmm_instance_id", "3.0.0")
         self.xmpmm_instance_id = value
 
     @property
@@ -495,7 +469,8 @@ class XmpInformation(PdfObject):
         Retrieve custom metadata properties defined in the undocumented pdfx
         metadata schema.
 
-        :return: a dictionary of key/value items for custom metadata properties.
+        Returns:
+            A dictionary of key/value items for custom metadata properties.
         """
         if not hasattr(self, "_custom_properties"):
             self._custom_properties = {}
