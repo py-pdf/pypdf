@@ -193,28 +193,11 @@ class DictionaryObject(dict, PdfObject):
             ignore_fields:
         """
         #  First check if this is a chain list, we need to loop to prevent recur
-        if (
-            (
-                "/Next" not in ignore_fields
-                and "/Next" in src
-                and isinstance(src.raw_get("/Next"), IndirectObject)
-            )
-            or (
-                "/Prev" not in ignore_fields
-                and "/Prev" in src
-                and isinstance(src.raw_get("/Prev"), IndirectObject)
-            )
-        ) or (
-            (
-                "/N" not in ignore_fields
-                and "/N" in src
-                and isinstance(src.raw_get("/N"), IndirectObject)
-            )
-            or (
-                "/V" not in ignore_fields
-                and "/V" in src
-                and isinstance(src.raw_get("/V"), IndirectObject)
-            )
+        if any(
+            field not in ignore_fields
+            and field in src
+            and isinstance(src.raw_get(field), IndirectObject)
+            for field in ["/Next", "/Prev", "/N", "/V"]
         ):
             ignore_fields = list(ignore_fields)
             for lst in (("/Next", "/Prev"), ("/N", "/V")):
