@@ -723,7 +723,7 @@ def test_append_pages_from_reader_append():
         writer.write(o)
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 @pytest.mark.slow
 def test_sweep_indirect_references_nullobject_exception():
     # TODO: Check this more closely... this looks weird
@@ -738,7 +738,7 @@ def test_sweep_indirect_references_nullobject_exception():
     os.remove("tmp-merger-do-not-commit.pdf")
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 @pytest.mark.slow
 def test_write_outline_item_on_page_fitv():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/922/922840.pdf"
@@ -930,7 +930,7 @@ def test_startup_dest():
     pdf_file_writer.open_destination = None
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_iss471():
     url = "https://github.com/py-pdf/pypdf/files/9139245/book.pdf"
     name = "book_471.pdf"
@@ -943,7 +943,7 @@ def test_iss471():
     )
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_reset_translation():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
     name = "tika-924666.pdf"
@@ -979,7 +979,7 @@ def test_threads_empty():
     assert thr == thr2
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_append_without_annots_and_articles():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
     name = "tika-924666.pdf"
@@ -998,7 +998,7 @@ def test_append_without_annots_and_articles():
     assert len(writer.threads) >= 1
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_append_multiple():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf"
     name = "tika-924666.pdf"
@@ -1154,7 +1154,7 @@ def test_set_page_label():
     os.remove(target)  # comment to see result
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_iss1601():
     url = "https://github.com/py-pdf/pypdf/files/10579503/badges-38.pdf"
     name = "badge-38.pdf"
@@ -1178,7 +1178,7 @@ def test_iss1601():
     )
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_iss1614():
     # test of an annotation(link) directly stored in the /Annots in the page
     url = "https://github.com/py-pdf/pypdf/files/10669995/broke.pdf"

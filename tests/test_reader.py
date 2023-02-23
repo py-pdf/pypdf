@@ -631,7 +631,7 @@ def test_do_not_get_stuck_on_large_files_without_start_xref():
     assert parse_duration < 60
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_decrypt_when_no_id():
     """
     Decrypt an encrypted file that's missing the 'ID' value in its trailer.
@@ -753,7 +753,7 @@ def test_convertToInt_deprecated():
         assert convertToInt(b"\x01", 8) == 1
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_iss925():
     url = "https://github.com/py-pdf/pypdf/files/8796328/1.pdf"
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name="iss925.pdf")))
@@ -809,7 +809,7 @@ def test_read_not_binary_mode(caplog):
     assert normalize_warnings(caplog.text) == [msg]
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 @pytest.mark.skipif(not HAS_PYCRYPTODOME, reason="No pycryptodome")
 def test_read_form_416():
     url = (
@@ -848,7 +848,7 @@ def test_form_topname_with_and_without_acroform(caplog):
     assert "have a non-expected parent" in caplog.text
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_extract_text_xref_issue_2(caplog):
     # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/981/981961.pdf"
@@ -859,7 +859,7 @@ def test_extract_text_xref_issue_2(caplog):
     assert normalize_warnings(caplog.text) == [msg]
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 @pytest.mark.slow
 def test_extract_text_xref_issue_3(caplog):
     # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
@@ -871,7 +871,7 @@ def test_extract_text_xref_issue_3(caplog):
     assert normalize_warnings(caplog.text) == [msg]
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_extract_text_pdf15():
     # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/976/976030.pdf"
@@ -880,7 +880,7 @@ def test_extract_text_pdf15():
         page.extract_text()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_extract_text_xref_table_21_bytes_clrf():
     # pdf/0264cf510015b2a4b395a15cb23c001e.pdf
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/956/956939.pdf"
@@ -889,7 +889,7 @@ def test_extract_text_xref_table_21_bytes_clrf():
         page.extract_text()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_get_fields():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/972/972486.pdf"
     name = "tika-972486.pdf"
@@ -900,7 +900,7 @@ def test_get_fields():
     assert dict(fields["c1-1"]) == ({"/FT": "/Btn", "/T": "c1-1"})
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_get_full_qualified_fields():
     url = "https://github.com/py-pdf/pypdf/files/10142389/fields_with_dots.pdf"
     name = "fields_with_dots.pdf"
@@ -920,7 +920,7 @@ def test_get_full_qualified_fields():
     assert fields["customer.name"]["/T"] == "name"
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 @pytest.mark.filterwarnings("ignore::pypdf.errors.PdfReadWarning")
 def test_get_fields_read_else_block():
     # covers also issue 1089
@@ -929,7 +929,7 @@ def test_get_fields_read_else_block():
     PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_get_fields_read_else_block2():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/914/914902.pdf"
     name = "tika-914902.pdf"
@@ -938,7 +938,7 @@ def test_get_fields_read_else_block2():
     assert fields is None
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 @pytest.mark.filterwarnings("ignore::pypdf.errors.PdfReadWarning")
 def test_get_fields_read_else_block3():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/957/957721.pdf"
@@ -946,7 +946,7 @@ def test_get_fields_read_else_block3():
     PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_metadata_is_none():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/963/963692.pdf"
     name = "tika-963692.pdf"
@@ -954,7 +954,7 @@ def test_metadata_is_none():
     assert reader.metadata is None
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_get_fields_read_write_report():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/909/909655.pdf"
     name = "tika-909655.pdf"
@@ -979,7 +979,7 @@ def test_xfa(src):
     assert reader.xfa is None
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_xfa_non_empty():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/942/942050.pdf"
     name = "tika-942050.pdf"
@@ -1007,7 +1007,7 @@ def test_header(src, pdf_header):
     assert reader.pdf_header == pdf_header
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_outline_color():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
     name = "tika-924546.pdf"
@@ -1015,7 +1015,7 @@ def test_outline_color():
     assert reader.outline[0].color == [0, 0, 1]
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_outline_font_format():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
     name = "tika-924546.pdf"
@@ -1142,7 +1142,7 @@ def test_outline_missing_title(caplog):
     assert reader.outline[0]["/Title"] == ""
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_named_destination():
     # 1st case : the named_dest are stored directly as a dictionnary, PDF1.1 style
     url = "https://github.com/py-pdf/pypdf/files/9197028/lorem_ipsum.pdf"
@@ -1161,7 +1161,7 @@ def test_named_destination():
     # TODO : case to be added
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_outline_with_missing_named_destination():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/913/913678.pdf"
     name = "tika-913678.pdf"
@@ -1170,7 +1170,7 @@ def test_outline_with_missing_named_destination():
     assert reader.outline[1][0].title.startswith("Report for 2002AZ3B: Microbial")
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_outline_with_empty_action():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/924/924546.pdf"
     name = "tika-924546.pdf"
@@ -1187,7 +1187,7 @@ def test_outline_with_invalid_destinations():
     assert len(reader.outline) == 9
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_PdfReaderMultipleDefinitions(caplog):
     # iss325
     url = "https://github.com/py-pdf/pypdf/files/9176644/multipledefs.pdf"
@@ -1213,7 +1213,7 @@ def test_get_page_number_by_indirect():
     reader._get_page_number_by_indirect(1)
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_corrupted_xref_table():
     # issue #1292
     url = "https://github.com/py-pdf/pypdf/files/9444747/BreezeManual.orig.pdf"
@@ -1226,7 +1226,7 @@ def test_corrupted_xref_table():
     reader.pages[0].extract_text()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_reader(caplog):
     # iss #1273
     url = "https://github.com/py-pdf/pypdf/files/9464742/shiv_resume.pdf"
@@ -1244,7 +1244,7 @@ def test_reader(caplog):
     assert caplog.text == ""
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_zeroing_xref():
     # iss #328
     url = (
@@ -1256,7 +1256,7 @@ def test_zeroing_xref():
     len(reader.pages)
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_thread():
     url = (
         "https://github.com/py-pdf/pypdf/files/9066120/"
@@ -1272,7 +1272,7 @@ def test_thread():
     assert len(reader.threads) >= 1
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_build_outline_item(caplog):
     url = "https://github.com/py-pdf/pypdf/files/9464742/shiv_resume.pdf"
     name = "shiv_resume.pdf"
@@ -1324,7 +1324,7 @@ def test_page_labels(src, page_labels):
     assert PdfReader(src).page_labels[:max_indices] == page_labels[:max_indices]
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_iss1559():
     url = "https://github.com/py-pdf/pypdf/files/10441992/default.pdf"
     name = "iss1559.pdf"

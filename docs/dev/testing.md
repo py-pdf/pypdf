@@ -8,7 +8,7 @@ pypdf makes use of the following pytest markers:
 
 * `slow`: Tests that require more than 5 seconds
 * `samples`: Tests that require the [the `sample-files` git submodule](https://github.com/py-pdf/sample-files) to be initialized. As of October 2022, this is about 25 MB.
-* `external`: Tests that download PDF documents. They are stored locally and thus only need to be downloaded once. As of October 2022, this is about 200 MB.
+* `enable_socket`: Tests that download PDF documents. They are stored locally and thus only need to be downloaded once. As of October 2022, this is about 200 MB.
 
 You can disable them by `pytest -m "not external"` or `pytest -m "not samples"`.
 You can even disable all of them: `pytest -m "not external" -m "not samples" -m "not slow"`.

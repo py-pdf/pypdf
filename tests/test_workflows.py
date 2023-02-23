@@ -179,7 +179,7 @@ def test_rotate_45():
         assert exc.value.args[0] == "Rotation angle must be a multiple of 90"
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 @pytest.mark.slow
 @pytest.mark.parametrize(
     ("enable", "url", "pages"),
@@ -303,7 +303,7 @@ def test_orientations():
 
 
 @pytest.mark.samples
-@pytest.mark.external
+@pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("base_path", "overlay_path"),
     [
@@ -338,7 +338,7 @@ def test_overlay(base_path, overlay_path):
     os.remove("dont_commit_overlay.pdf")  # remove for manual inspection
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 @pytest.mark.slow
 @pytest.mark.parametrize(
     ("url", "name"),
@@ -358,7 +358,7 @@ def test_merge_with_warning(tmp_path, url, name):
     merger.write(tmp_path / "tmp.merged.pdf")
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -376,7 +376,7 @@ def test_merge(tmp_path, url, name):
     merger.write(tmp_path / "tmp.merged.pdf")
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -392,7 +392,7 @@ def test_get_metadata(url, name):
     reader.metadata
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("url", "name", "strict", "exception"),
     [
@@ -478,7 +478,7 @@ def test_extract_text(url, name, strict, exception):
         assert ex_info.value.args[0] == exc_text
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -500,7 +500,7 @@ def test_compress_raised(url, name):
         page.compress_content_streams()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 @pytest.mark.slow
 @pytest.mark.parametrize(
     ("url", "name", "strict"),
@@ -531,7 +531,7 @@ def test_compress(url, name, strict):
         page.compress_content_streams()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -552,7 +552,7 @@ def test_get_fields_warns(tmp_path, caplog, url, name):
     assert normalize_warnings(caplog.text) == ["Object 2 0 not defined."]
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -572,7 +572,7 @@ def test_get_fields_no_warning(tmp_path, url, name):
     assert len(retrieved_fields) == 10
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_scale_rectangle_indirect_object():
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/999/999944.pdf"
     name = "tika-999944.pdf"
@@ -613,7 +613,7 @@ def test_merge_output(caplog):
     merger.close()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -684,7 +684,7 @@ def test_image_extraction(url, name):
                 os.remove(filepath)
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_image_extraction_strict():
     # Emits log messages
     url = "https://corpora.tika.apache.org/base/docs/govdocs1/914/914102.pdf"
@@ -712,7 +712,7 @@ def test_image_extraction_strict():
                 os.remove(filepath)
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -746,7 +746,7 @@ def test_image_extraction2(url, name):
                 os.remove(filepath)
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -766,7 +766,7 @@ def test_get_outline(url, name):
     reader.outline
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("url", "name"),
     [
@@ -786,7 +786,7 @@ def test_get_xfa(url, name):
     reader.xfa
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("url", "name", "strict"),
     [
@@ -819,7 +819,7 @@ def test_get_fonts(url, name, strict):
         page._get_fonts()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 @pytest.mark.parametrize(
     ("url", "name", "strict"),
     [
@@ -877,7 +877,7 @@ def test_get_xmp(url, name, strict):
         xmp_info.custom_properties
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_tounicode_is_identity():
     url = "https://github.com/py-pdf/pypdf/files/9998335/FP_Thesis.pdf"
     name = "FP_Thesis.pdf"
@@ -886,7 +886,7 @@ def test_tounicode_is_identity():
     reader.pages[0].extract_text()
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_append_forms():
     # from #1538
     writer = PdfWriter()
@@ -911,7 +911,7 @@ def test_append_forms():
     ) + len(reader2.get_form_text_fields())
 
 
-@pytest.mark.external
+@pytest.mark.enable_socket
 def test_extra_test_iss1541():
     url = "https://github.com/py-pdf/pypdf/files/10418158/tst_iss1541.pdf"
     name = "tst_iss1541.pdf"

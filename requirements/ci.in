@@ -8,6 +8,7 @@ pillow
 pycryptodome
 pytest
 pytest-benchmark
+pytest-socket
 typeguard
 types-dataclasses
 types-Pillow
