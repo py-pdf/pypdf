@@ -212,7 +212,7 @@ We have designed the following business card (A8 format) to advertize our new st
 
 ![](nup-source.png)
 
-We would like to copy this card sixteen times on an A4 page, to print it, cut it, and give it to all our friends. Having learned about the ``Transformation`` class, we run the following code. We notice that we had to tweak the media box of the source page to extend it, which is already a dirty hack (in this case).
+We would like to copy this card sixteen times on an A4 page, to print it, cut it, and give it to all our friends. Having learned about the ``merge_page()`` method and the ``Transformation`` class, we run the following code. Notice that we had to tweak the media box of the source page to extend it, which is already a dirty hack (in this case).
 
 ```python
 from pypdf import PdfReader, PdfWriter, Transformation, PaperSize
@@ -231,12 +231,14 @@ sourcepage.mediabox = destpage.mediabox
 # Copy source page to destination page, several times
 for x in range(4):
     for y in range(4):
+        # Translate page
         sourcepage.add_transformation(
             Transformation().translate(
                 x * PaperSize.A8.height,
                 y * PaperSize.A8.width,
             )
         )
+        # Merge translated page
         destpage.merge_page(sourcepage)
 
 # Write file
@@ -248,11 +250,11 @@ And the result is… unexpected.
 
 ![](nup-dest1.png)
 
-The problem is that, having run several times ``add.transformation()`` on the *same* source page, those transformations add up: for instance, the sixteen transformations are applied to the last copy of the source page.
+The problem is that, having run ``add.transformation()`` several times on the *same* source page, those transformations add up: for instance, the sixteen transformations are applied to the last copy of the source page, so most of the business cards are *outside* the destination page.
 
 We need a way to merge a transformed page, *without* modifying the source page. Here comes ``merge_transformed_page()``. With this method:
 - we no longer need the media box hack of our first try;
-- and transformations are only applied *once*.
+- transformations are only applied *once*.
 
 ```python
 from pypdf import PdfReader, PdfWriter, Transformation, PaperSize
@@ -284,3 +286,5 @@ with open("nup-dest2.pdf", "wb") as fp:
 We get the expected result.
 
 ![](nup-dest2.png)
+
+There is still some work to do, for instance to insert margins between and around cards, but this is left as an exercise for the reader…
