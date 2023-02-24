@@ -159,7 +159,7 @@ def index2label(reader: PdfReaderProtocol, index: int) -> str:
             "/A": number2uppercase_letter,
             "/a": number2lowercase_letter,
         }
-        # if Nums array not iaw standards and if Nums is empty
+        # if /Nums array is not following the specification or if /Nums is empty
         if not isinstance(value, dict):
             return str(index + 1)  # Fallback
         start = value.get("/St", 1)
