@@ -175,7 +175,7 @@ def index2label(reader: PdfReaderProtocol, index: int) -> str:
             __name__,
         )
     # TODO: Implement /Kids and /Limits for number tree
-    return str(index + 1)  # Fallback (if Kids or no Nums
+    return str(index + 1)  # Fallback if /Nums is not in the number_tree
 
 
 def nums_insert(
