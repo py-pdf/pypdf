@@ -1155,6 +1155,7 @@ def test_set_page_label():
     os.remove(target)  # comment to see result
 
 
+@pytest.mark.external
 def test_iss1601():
     url = "https://github.com/py-pdf/pypdf/files/10579503/badges-38.pdf"
     name = "badge-38.pdf"
@@ -1176,3 +1177,18 @@ def test_iss1601():
         ContentStream(in_pdf.pages[0].get_contents(), in_pdf).get_data()
         in page_1.get_contents().get_data()
     )
+
+
+@pytest.mark.external
+def test_iss1614():
+    # test of an annotation(link) directly stored in the /Annots in the page
+    url = "https://github.com/py-pdf/pypdf/files/10669995/broke.pdf"
+    name = "iss1614.pdf"
+    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    out_pdf = PdfWriter()
+    out_pdf.append(in_pdf)
+    # test for 2nd error case reported in #1614
+    url = "https://github.com/py-pdf/pypdf/files/10696390/broken.pdf"
+    name = "iss1614.2.pdf"
+    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    out_pdf.append(in_pdf)

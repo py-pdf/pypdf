@@ -78,6 +78,7 @@ from .generic import (
 CUSTOM_RTL_MIN: int = -1
 CUSTOM_RTL_MAX: int = -1
 CUSTOM_RTL_SPECIAL_CHARS: List[int] = []
+MERGE_CROP_BOX = "cropbox"  # pypdf<=3.4.0 used 'trimbox'
 
 
 def set_custom_rtl(
@@ -844,7 +845,7 @@ class PageObject(DictionaryObject):
         page2content = page2.get_contents()
         if page2content is not None:
             page2content = ContentStream(page2content, self.pdf)
-            rect = page2.trimbox
+            rect = getattr(page2, MERGE_CROP_BOX)
             page2content.operations.insert(
                 0,
                 (
@@ -972,7 +973,7 @@ class PageObject(DictionaryObject):
         page2content = page2.get_contents()
         if page2content is not None:
             page2content = ContentStream(page2content, self.pdf)
-            rect = page2.trimbox
+            rect = getattr(page2, MERGE_CROP_BOX)
             page2content.operations.insert(
                 0,
                 (
@@ -1826,10 +1827,12 @@ class PageObject(DictionaryObject):
                                 ]
                             )
                         # "\u0590 - \u08FF \uFB50 - \uFDFF"
-                        for x in "".join(
-                            [cmap[1][x] if x in cmap[1] else x for x in t]
-                        ):
-                            xx = ord(x)
+                        for x in [cmap[1][x] if x in cmap[1] else x for x in t]:
+                            # x can be a sequence of bytes ; ex: habibi.pdf
+                            if len(x) == 1:
+                                xx = ord(x)
+                            else:
+                                xx = 1
                             # fmt: off
                             if (
                                 # cases where the current inserting order is kept
