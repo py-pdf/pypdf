@@ -1154,6 +1154,7 @@ def test_set_page_label():
     os.remove(target)  # comment to see result
 
 
+@pytest.mark.external
 def test_iss1601():
     url = "https://github.com/py-pdf/pypdf/files/10579503/badges-38.pdf"
     name = "badge-38.pdf"
@@ -1177,6 +1178,7 @@ def test_iss1601():
     )
 
 
+@pytest.mark.external
 def test_iss1614():
     # test of an annotation(link) directly stored in the /Annots in the page
     url = "https://github.com/py-pdf/pypdf/files/10669995/broke.pdf"
