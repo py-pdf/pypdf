@@ -2618,13 +2618,16 @@ class PdfWriter:
                     cast(DictionaryObject, self._root_object["/AcroForm"])["/Fields"],
                 )
             trslat = self._id_translated[id(reader)]
-            for f in reader.trailer["/Root"]["/AcroForm"]["/Fields"]:  # type: ignore
-                try:
-                    ind = IndirectObject(trslat[f.idnum], 0, self)
-                    if ind not in arr:
-                        arr.append(ind)
-                except KeyError:
-                    pass
+            try:
+                for f in reader.trailer["/Root"]["/AcroForm"]["/Fields"]:  # type: ignore
+                    try:
+                        ind = IndirectObject(trslat[f.idnum], 0, self)
+                        if ind not in arr:
+                            arr.append(ind)
+                    except KeyError:  # for trslat[] which mean the field has not be copied through the page
+                        pass
+            except KeyError:  # for /Acroform or /Fields are not existing
+                arr = self._add_object(ArrayObject())
             cast(DictionaryObject, self._root_object["/AcroForm"])[
                 NameObject("/Fields")
             ] = arr
