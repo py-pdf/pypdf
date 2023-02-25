@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1677330441305,
+  "lastUpdate": 1677330600881,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -24986,6 +24986,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0002349283898864556",
             "extra": "mean: 87.31877581819121 msec\nrounds: 11"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a2a1275587df39883e576f2d8331b88fdcdaa492",
+          "message": "BUG: Let PdfWriter.pages return PageObject after calling `clone_document_from_reader()` (#1613)\n\nCurrently, the PdfWriter.pages attribute returns a `DictionartyObject`. With this fix, the attribute will return Iterable[PageObject].\r\n\r\nFixes #1595\r\n\r\nSee also:\r\n* #1650\r\n* #1654",
+          "timestamp": "2023-02-25T14:08:42+01:00",
+          "tree_id": "67d386aff10334781cf3da853a749634451b8cbf",
+          "url": "https://github.com/py-pdf/pypdf/commit/a2a1275587df39883e576f2d8331b88fdcdaa492"
+        },
+        "date": 1677330598417,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 0.8541013869254129,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011706024291439703",
+            "extra": "mean: 1.1708211874000014 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 10.079294755631125,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008641801727507026",
+            "extra": "mean: 99.21329063636298 msec\nrounds: 11"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.20959944709818845,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014897440764747305",
+            "extra": "mean: 4.771004951800004 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 9.687254595268389,
+            "unit": "iter/sec",
+            "range": "stddev: 0.00015456825548646616",
+            "extra": "mean: 103.22842144444483 msec\nrounds: 9"
           }
         ]
       }
