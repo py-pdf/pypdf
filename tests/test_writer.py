@@ -5,11 +5,19 @@ from pathlib import Path
 
 import pytest
 
-from pypdf import PageObject, PdfMerger, PdfReader, PdfWriter, Transformation
+from pypdf import (
+    ObjectDeletionFlag,
+    PageObject,
+    PdfMerger,
+    PdfReader,
+    PdfWriter,
+    Transformation,
+)
 from pypdf.errors import DeprecationError, PageSizeNotDefinedError
 from pypdf.generic import (
     ArrayObject,
     ContentStream,
+    DictionaryObject,
     Fit,
     IndirectObject,
     NameObject,
@@ -1218,3 +1226,29 @@ def test_new_removes():
     assert b"/Im0" in bb
     assert b"Chap" not in bb
     assert b" TJ" not in bb
+
+    url = "https://github.com/py-pdf/pypdf/files/10832029/tt2.pdf"
+    name = "GeoBaseWithComments.pdf"
+    in_pdf = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    out_pdf.append(in_pdf)
+    out_pdf.remove_objects_from_page(out_pdf.pages[0], ObjectDeletionFlag.LINKS)
+    assert "/Links" not in [
+        a.get_object()["/Subtype"] for a in out_pdf.pages[0]["/Annots"]
+    ]
+    out_pdf.remove_objects_from_page(out_pdf.pages[0], ObjectDeletionFlag.ATTACHMENTS)
+    assert "/FileAttachment" not in [
+        a.get_object()["/Subtype"] for a in out_pdf.pages[0]["/Annots"]
+    ]
+
+    out_pdf.pages[0]["/Annots"].append(
+        DictionaryObject({NameObject("/Subtype"): TextStringObject("/3D")})
+    )
+    assert "/3D" in [a.get_object()["/Subtype"] for a in out_pdf.pages[0]["/Annots"]]
+    out_pdf.remove_objects_from_page(out_pdf.pages[0], ObjectDeletionFlag.OBJ_3D)
+    assert "/3D" not in [
+        a.get_object()["/Subtype"] for a in out_pdf.pages[0]["/Annots"]
+    ]
+
+    out_pdf.remove_links()
+    assert len(out_pdf.pages[0]["/Annots"]) == 0
+    assert len(out_pdf.pages[3]["/Annots"]) == 0
