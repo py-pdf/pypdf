@@ -39,6 +39,7 @@ from typing import (
     Callable,
     Dict,
     Iterable,
+    Iterator,
     List,
     Mapping,
     Optional,
@@ -2166,7 +2167,7 @@ class PdfReader:
                 attachments_names.append(f)
         return attachments_names
 
-    def _get_attachment_list(self, name) -> List[bytes]:
+    def _get_attachment_list(self, name: str) -> List[bytes]:
         out = self._get_attachments(name)[name]
         if isinstance(out, list):
             return out
@@ -2221,17 +2222,17 @@ class PdfReader:
 
 
 class LazyDict(Mapping):
-    def __init__(self, *args, **kw):
+    def __init__(self, *args: Any, **kw: Any) -> None:
         self._raw_dict = dict(*args, **kw)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> Any:
         func, arg = self._raw_dict.__getitem__(key)
         return func(arg)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Any]:
         return iter(self._raw_dict)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._raw_dict)
 
 
