@@ -1202,8 +1202,8 @@ def test_attachments():
     b.seek(0)
     reader = PdfReader(b)
     b = None
-    assert reader.list_attachments() == []
-    assert reader.get_attachments() == {}
+    assert reader._list_attachments() == []
+    assert reader._get_attachments() == {}
     writer.add_attachment("foobar.txt", b"foobarcontent")
     writer.add_attachment("foobar2.txt", b"foobarcontent2")
     writer.add_attachment("foobar2.txt", b"2nd_foobarcontent")
@@ -1213,11 +1213,11 @@ def test_attachments():
     b.seek(0)
     reader = PdfReader(b)
     b = None
-    assert reader.list_attachments() == ["foobar.txt", "foobar2.txt", "foobar2.txt"]
-    att = reader.get_attachments()
+    assert reader._list_attachments() == ["foobar.txt", "foobar2.txt", "foobar2.txt"]
+    att = reader._get_attachments()
     assert len(att) == 2
     assert att["foobar.txt"] == b"foobarcontent"
-    att = reader.get_attachments("foobar2.txt")
+    att = reader._get_attachments("foobar2.txt")
     assert len(att) == 1
     assert att["foobar2.txt"] == [b"foobarcontent2", b"2nd_foobarcontent"]
 

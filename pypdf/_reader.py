@@ -2130,7 +2130,7 @@ class PdfReader:
         interim[NameObject("/T")] = TextStringObject(name)
         return interim
 
-    def list_attachments(self) -> List[str]:
+    def _list_attachments(self) -> List[str]:
         """
         Retrieves the list of filenames of file attachments.
 
@@ -2156,7 +2156,7 @@ class PdfReader:
                 attachments_names.append(f)
         return attachments_names
 
-    def get_attachments(
+    def _get_attachments(
         self, filename: Optional[str] = None
     ) -> Dict[str, Union[bytes, List[bytes]]]:
         """
