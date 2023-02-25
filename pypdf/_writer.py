@@ -1804,7 +1804,7 @@ class PdfWriter:
         deprecation_with_replacement("removeLinks", "remove_links", "3.0.0")
         return self.remove_links()
 
-    def remove_img_or_text(
+    def remove_images_or_text_from_page(
         self, page: Union[PageObject, DictionaryObject], del_image: bool
     ) -> None:
         """
@@ -1898,7 +1898,7 @@ class PdfWriter:
             ignore_byte_string_object: obsolete
         """
         for page in self.pages:
-            self.remove_img_or_text(page, True)
+            self.remove_images_or_text_from_page(page, True)
 
     def removeImages(self, ignoreByteStringObject: bool = False) -> None:  # deprecated
         """
@@ -1917,7 +1917,7 @@ class PdfWriter:
             ignore_byte_string_object: obsolete
         """
         for page in self.pages:
-            self.remove_img_or_text(page, False)
+            self.remove_images_or_text_from_page(page, False)
 
     def removeText(self, ignoreByteStringObject: bool = False) -> None:  # deprecated
         """
