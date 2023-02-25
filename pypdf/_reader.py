@@ -1552,10 +1552,10 @@ class PdfReader:
         the file. Hence for standard-compliant PDF documents this function will
         read only the last part (DEFAULT_BUFFER_SIZE).
         """
-        ONE_BYTE = 8  # to parse whole file
+        HEADER_SIZE = 8  # to parse whole file, Header is e.g. '%PDF-1.6'
         line = b""
         while line[:5] != b"%%EOF":
-            if stream.tell() < ONE_BYTE:
+            if stream.tell() < HEADER_SIZE:
                 raise PdfReadError("EOF marker not found")
             line = read_previous_line(stream)
 
