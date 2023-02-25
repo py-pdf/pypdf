@@ -1194,6 +1194,34 @@ def test_iss1601():
     )
 
 
+def test_attachments():
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    b = BytesIO()
+    writer.write(b)
+    b.seek(0)
+    reader = PdfReader(b)
+    b = None
+    assert reader._list_attachments() == []
+    assert reader._get_attachments() == {}
+    writer.add_attachment("foobar.txt", b"foobarcontent")
+    writer.add_attachment("foobar2.txt", b"foobarcontent2")
+    writer.add_attachment("foobar2.txt", b"2nd_foobarcontent")
+
+    b = BytesIO()
+    writer.write(b)
+    b.seek(0)
+    reader = PdfReader(b)
+    b = None
+    assert reader._list_attachments() == ["foobar.txt", "foobar2.txt", "foobar2.txt"]
+    att = reader._get_attachments()
+    assert len(att) == 2
+    assert att["foobar.txt"] == b"foobarcontent"
+    att = reader._get_attachments("foobar2.txt")
+    assert len(att) == 1
+    assert att["foobar2.txt"] == [b"foobarcontent2", b"2nd_foobarcontent"]
+
+
 @pytest.mark.external
 def test_iss1614():
     # test of an annotation(link) directly stored in the /Annots in the page
