@@ -660,7 +660,7 @@ class PdfWriter:
         # >>
 
         ef_entry = DictionaryObject()
-        ef_entry.update({NameObject("/F"): file_entry})
+        ef_entry.update({NameObject("/F"): self._add_object(file_entry)})
 
         filespec = DictionaryObject()
         filespec.update(
@@ -685,21 +685,25 @@ class PdfWriter:
         # >>
         # endobj
 
-        embedded_files_names_dictionary = DictionaryObject()
-        embedded_files_names_dictionary.update(
-            {
-                NameObject(CA.NAMES): ArrayObject(
-                    [create_string_object(filename), filespec]
-                )
-            }
+        if CA.NAMES not in self._root_object:
+            self._root_object[NameObject(CA.NAMES)] = self._add_object(
+                DictionaryObject()
+            )
+        if "/EmbeddedFiles" not in cast(DictionaryObject, self._root_object[CA.NAMES]):
+            embedded_files_names_dictionary = DictionaryObject(
+                {NameObject(CA.NAMES): ArrayObject()}
+            )
+            cast(DictionaryObject, self._root_object[CA.NAMES])[
+                NameObject("/EmbeddedFiles")
+            ] = self._add_object(embedded_files_names_dictionary)
+        else:
+            embedded_files_names_dictionary = cast(
+                DictionaryObject,
+                cast(DictionaryObject, self._root_object[CA.NAMES])["/EmbeddedFiles"],
+            )
+        cast(ArrayObject, embedded_files_names_dictionary[CA.NAMES]).extend(
+            [create_string_object(filename), filespec]
         )
-
-        embedded_files_dictionary = DictionaryObject()
-        embedded_files_dictionary.update(
-            {NameObject("/EmbeddedFiles"): embedded_files_names_dictionary}
-        )
-        # Update the root
-        self._root_object.update({NameObject(CA.NAMES): embedded_files_dictionary})
 
     def addAttachment(self, fname: str, fdata: Union[str, bytes]) -> None:  # deprecated
         """
@@ -852,6 +856,10 @@ class PdfWriter:
         self._root = self._root_object.indirect_reference  # type: ignore[assignment]
         self._pages = self._root_object.raw_get("/Pages")
         self._flatten()
+        for p in self.flattened_pages:
+            o = p.get_object()
+            self._objects[p.idnum - 1] = PageObject(self, p)
+            self._objects[p.idnum - 1].update(o.items())
         self._root_object[NameObject("/Pages")][  # type: ignore[index]
             NameObject("/Kids")
         ] = self.flattened_pages
@@ -2618,13 +2626,16 @@ class PdfWriter:
                     cast(DictionaryObject, self._root_object["/AcroForm"])["/Fields"],
                 )
             trslat = self._id_translated[id(reader)]
-            for f in reader.trailer["/Root"]["/AcroForm"]["/Fields"]:  # type: ignore
-                try:
-                    ind = IndirectObject(trslat[f.idnum], 0, self)
-                    if ind not in arr:
-                        arr.append(ind)
-                except KeyError:
-                    pass
+            try:
+                for f in reader.trailer["/Root"]["/AcroForm"]["/Fields"]:  # type: ignore
+                    try:
+                        ind = IndirectObject(trslat[f.idnum], 0, self)
+                        if ind not in arr:
+                            arr.append(ind)
+                    except KeyError:  # for trslat[] which mean the field has not be copied through the page
+                        pass
+            except KeyError:  # for /Acroform or /Fields are not existing
+                arr = self._add_object(ArrayObject())
             cast(DictionaryObject, self._root_object["/AcroForm"])[
                 NameObject("/Fields")
             ] = arr

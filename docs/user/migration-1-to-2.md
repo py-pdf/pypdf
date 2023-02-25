@@ -20,7 +20,7 @@ by running `python -W all your_code.py`.
 ## Classes
 
 The base classes were renamed as they also allow to operate with ByteIO streams
-instead of files. Also, the `strict` paramter changed the default value from
+instead of files. Also, the `strict` parameter changed the default value from
 `strict=True` to `strict=False`.
 
 * `PdfFileReader` ➔ `PdfReader`

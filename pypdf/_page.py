@@ -608,6 +608,9 @@ class PageObject(DictionaryObject):
                 value.
             """
             value = page2res.raw_get(base_key)
+            # TODO : possible improvement : in case of writer, the indirect_reference
+            # can not be found because translated : this may be improved
+
             # try the current key first (e.g. "foo"), but otherwise iterate
             # through "foo-0", "foo-1", etc. new_res can contain only finitely
             # many keys, thus this'll eventually end, even if it's been crafted
@@ -643,7 +646,7 @@ class PageObject(DictionaryObject):
                 if is_pdf_writer:
                     new_res[newname] = page2res.raw_get(key).clone(pdf)
                     try:
-                        new_res[newname] = new_res[key].indirect_reference
+                        new_res[newname] = new_res[newname].indirect_reference
                     except AttributeError:
                         pass
                 else:
