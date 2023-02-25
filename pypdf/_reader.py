@@ -757,9 +757,17 @@ class PdfReader:
         # TABLE 3.33 Entries in a name tree node dictionary (PDF 1.7 specs)
         elif CA.NAMES in tree:  # KIDS and NAMES are exclusives (PDF 1.7 specs p 162)
             names = cast(DictionaryObject, tree[CA.NAMES])
-            for i in range(0, len(names), 2):
+            i = 0
+            while i < len(names):
                 key = cast(str, names[i].get_object())
-                value = names[i + 1].get_object()
+                i += 1
+                if not isinstance(key, str):
+                    continue
+                try:
+                    value = names[i].get_object()
+                except IndexError:
+                    break
+                i += 1
                 if isinstance(value, DictionaryObject) and "/D" in value:
                     value = value["/D"]
                 dest = self._build_destination(key, value)  # type: ignore
