@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1677359846302,
+  "lastUpdate": 1677360729523,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -25142,6 +25142,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00038962232907539855",
             "extra": "mean: 106.18782577777905 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "4083478+pubpub-zz@users.noreply.github.com",
+            "name": "pubpub-zz",
+            "username": "pubpub-zz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b14dabb63c4e6aa75d52e7582bb6f840e35a3a1b",
+          "message": "ROB: Cope with invalid objects in IndirectObject.clone (#1637)\n\nCope with invalid PDF files where an object can not be found\r\n\r\nFixes #1631",
+          "timestamp": "2023-02-25T22:31:01+01:00",
+          "tree_id": "5d15c37f997cf852f1682d15ff1d3bef4659e4a7",
+          "url": "https://github.com/py-pdf/pypdf/commit/b14dabb63c4e6aa75d52e7582bb6f840e35a3a1b"
+        },
+        "date": 1677360727911,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0179112572808007,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0069346777184937985",
+            "extra": "mean: 982.4039107999965 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.889828476182013,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006983743467968596",
+            "extra": "mean: 84.10550261538455 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.24221730551083887,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08329487207837301",
+            "extra": "mean: 4.128524169200006 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.25041941819282,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0006641137139240411",
+            "extra": "mean: 88.88557509090913 msec\nrounds: 11"
           }
         ]
       }
