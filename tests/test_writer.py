@@ -1202,24 +1202,41 @@ def test_attachments():
     b.seek(0)
     reader = PdfReader(b)
     b = None
+    assert reader.attachments == {}
     assert reader._list_attachments() == []
     assert reader._get_attachments() == {}
-    writer.add_attachment("foobar.txt", b"foobarcontent")
-    writer.add_attachment("foobar2.txt", b"foobarcontent2")
-    writer.add_attachment("foobar2.txt", b"2nd_foobarcontent")
+    to_add = [
+        ("foobar.txt", b"foobarcontent"),
+        ("foobar2.txt", b"foobarcontent2"),
+        ("foobar2.txt", b"2nd_foobarcontent"),
+    ]
+    for name, content in to_add:
+        writer.add_attachment(name, content)
 
     b = BytesIO()
     writer.write(b)
     b.seek(0)
     reader = PdfReader(b)
     b = None
-    assert reader._list_attachments() == ["foobar.txt", "foobar2.txt", "foobar2.txt"]
+    assert sorted(reader.attachments.keys()) == sorted({name for name, _ in to_add})
+    assert reader._list_attachments() == [name for name, _ in to_add]
+
+    # We've added the same key twice - hence only 2 and not 3:
     att = reader._get_attachments()
-    assert len(att) == 2
+    assert len(att) == 2  # we have 2 keys, but 3 attachments!
+
+    # The content for foobar.txt is clear and just a single value:
     assert att["foobar.txt"] == b"foobarcontent"
+
+    # The content for foobar2.txt is a list!
     att = reader._get_attachments("foobar2.txt")
     assert len(att) == 1
     assert att["foobar2.txt"] == [b"foobarcontent2", b"2nd_foobarcontent"]
+
+    # Let's do both cases with the public interface:
+    assert reader.attachments["foobar.txt"].read()[0] == b"foobarcontent"
+    assert reader.attachments["foobar2.txt"].read()[0] == b"foobarcontent2"
+    assert reader.attachments["foobar2.txt"].read()[1] == b"2nd_foobarcontent"
 
 
 @pytest.mark.external

@@ -2130,6 +2130,12 @@ class PdfReader:
         interim[NameObject("/T")] = TextStringObject(name)
         return interim
 
+    @property
+    def attachments(self) -> Dict[str, "LazyAttachmentLoader"]:
+        return {
+            name: LazyAttachmentLoader(name, self) for name in self._list_attachments()
+        }
+
     def _list_attachments(self) -> List[str]:
         """
         Retrieves the list of filenames of file attachments.
@@ -2202,6 +2208,18 @@ class PdfReader:
                 else:
                     attachments[name] = f_data
         return attachments
+
+
+class LazyAttachmentLoader:
+    def __init__(self, name: str, reader: PdfReader) -> None:
+        self.name = name
+        self._reader = reader
+
+    def read(self) -> List[bytes]:
+        out = self._reader._get_attachments(self.name)[self.name]
+        if isinstance(out, list):
+            return out
+        return [out]
 
 
 class PdfFileReader(PdfReader):  # deprecated
