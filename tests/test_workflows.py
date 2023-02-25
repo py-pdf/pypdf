@@ -911,6 +911,7 @@ def test_append_forms():
     ) + len(reader2.get_form_text_fields())
 
 
+@pytest.mark.external
 def test_extra_test_iss1541():
     url = "https://github.com/py-pdf/pypdf/files/10418158/tst_iss1541.pdf"
     name = "tst_iss1541.pdf"

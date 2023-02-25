@@ -1,4 +1,20 @@
+
 # CHANGELOG
+
+## Version 3.4.1, 2023-02-12
+
+### Bug Fixes (BUG)
+-  Switch from trimbox to cropbox when merging pages (#1622)
+-  Text extraction not working with one glyph to char sequence (#1620)
+
+### Robustness (ROB)
+-  Fix 2 cases of "object has no attribute \'indirect_reference\'" (#1616)
+
+### Testing (TST)
+-  Add multiple retry on get_url for external PDF downloads (#1626)
+
+[Full Changelog](https://github.com/py-pdf/pypdf/compare/3.4.0...3.4.1)
+
 ## Version 3.4.0, 2023-02-05
 
 NOTICE: pypdf changed the way it represents numbers parsed from PDF files.
