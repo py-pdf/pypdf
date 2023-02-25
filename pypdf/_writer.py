@@ -30,6 +30,7 @@
 import codecs
 import collections
 import decimal
+import enum
 import logging
 import random
 import re
@@ -130,6 +131,15 @@ logger = logging.getLogger(__name__)
 
 OPTIONAL_READ_WRITE_FIELD = FieldFlag(0)
 ALL_DOCUMENT_PERMISSIONS = UserAccessPermissions((2**31 - 1) - 3)
+
+
+class ObjectDeletionFlag(enum.IntFlag):
+    TEXT = enum.auto()
+    IMAGES = enum.auto()
+    LINKS = enum.auto()
+    ATTACHMENTS = enum.auto()
+    _3D = enum.auto()
+    ALL_ANNOTS = enum.auto()
 
 
 class PdfWriter:
@@ -1788,12 +1798,8 @@ class PdfWriter:
 
     def remove_links(self) -> None:
         """Remove links and annotations from this output."""
-        pg_dict = cast(DictionaryObject, self.get_object(self._pages))
-        pages = cast(ArrayObject, pg_dict[PA.KIDS])
-        for page in pages:
-            page_ref = cast(DictionaryObject, self.get_object(page))
-            if PG.ANNOTS in page_ref:
-                del page_ref[PG.ANNOTS]
+        for page in self.pages:
+            self.remove_objects_from_page(page, ObjectDeletionFlag.ALL_ANNOTS)
 
     def removeLinks(self) -> None:  # deprecated
         """
@@ -1804,13 +1810,52 @@ class PdfWriter:
         deprecation_with_replacement("removeLinks", "remove_links", "3.0.0")
         return self.remove_links()
 
-    def remove_images_or_text_from_page(
-        self, page: Union[PageObject, DictionaryObject], del_image: bool
+    def _remove_annots(
+        self,
+        page: Union[IndirectObject, PageObject, DictionaryObject],
+        subtypes: Optional[Iterable[str]],
+    ) -> None:
+        page = page.get_object()
+        if PG.ANNOTS in page:
+            i = 0
+            while i < len(page[PG.ANNOTS]):
+                an = page[PG.ANNOTS][i]
+                obj = an.get_object()
+                if subtypes is None or obj["/SubType"] in subtypes:
+                    if isinstance(an, IndirectObject):
+                        self._objects[an.idnum - 1] = NullObject()  # to reduce PDF size
+                    del page[PG.ANNOTS][i]
+                else:
+                    i += 1
+
+    def remove_objects_from_page(
+        self,
+        page: Union[PageObject, DictionaryObject],
+        to_delete: Union[ObjectDeletionFlag, Iterable[ObjectDeletionFlag]],
     ) -> None:
         """
         remove Images or Text iaw del_image from page
+        args:
+            page : page object to clean up
+            to_delete: objects to be delete : See ObjectDeletionFlag or a list/tuple of ObjectDeletionFlag
         """
-        if del_image:
+        if isinstance(to_delete, Iterable):
+            for to_d in to_delete:
+                self.remove_object_from_page(page, to_d)
+            return
+
+        if to_delete == ObjectDeletionFlag.LINKS:
+            return self._remove_annots(page, ("/Link"))
+        if to_delete == ObjectDeletionFlag.ATTACHMENTS:
+            return self._remove_annots(
+                page, ("/FileAttachment", "/Sound", "/Movie", "/Screen")
+            )
+        if to_delete == ObjectDeletionFlag._3D:
+            return self._remove_annots(page, ("/3D"))
+        if to_delete == ObjectDeletionFlag.ALL_ANNOTS:
+            return self._remove_annots(page, None)
+
+        if to_delete == ObjectDeletionFlag.IMAGES:
             jump_operators = (
                 [b"w", b"J", b"j", b"M", b"d", b"i"]
                 + [b"W", b"W*"]
@@ -1825,7 +1870,7 @@ class PdfWriter:
         forms = []
 
         def clean(content: ContentStream) -> None:
-            nonlocal images, forms, del_image
+            nonlocal images, forms, to_delete
             i = 0
             while i < len(content.operations):
                 operands, operator = content.operations[i]
@@ -1833,9 +1878,9 @@ class PdfWriter:
                     del content.operations[i]
                 elif operator == b"Do":
                     if (
-                        del_image
+                        to_delete == ObjectDeletionFlag.IMAGES
                         and operands[0] in images
-                        or not del_image
+                        or to_delete == ObjectDeletionFlag.TEXT
                         and operands[0] in forms
                     ):
                         del content.operations[i]
@@ -1851,7 +1896,7 @@ class PdfWriter:
             o = v.get_object()
             try:
                 content: Any = None
-                if del_image and o["/Subtype"] == "/Image":
+                if to_delete == ObjectDeletionFlag.IMAGES and o["/Subtype"] == "/Image":
                     content = NullObject()
                     images.append(k)
                 if o["/Subtype"] == "/Form":
@@ -1898,7 +1943,7 @@ class PdfWriter:
             ignore_byte_string_object: obsolete
         """
         for page in self.pages:
-            self.remove_images_or_text_from_page(page, True)
+            self.remove_objects_from_page(page, ObjectDeletionFlag.IMAGES)
 
     def removeImages(self, ignoreByteStringObject: bool = False) -> None:  # deprecated
         """
@@ -1917,7 +1962,7 @@ class PdfWriter:
             ignore_byte_string_object: obsolete
         """
         for page in self.pages:
-            self.remove_images_or_text_from_page(page, False)
+            self.remove_objects_from_page(page, ObjectDeletionFlag.TEXT)
 
     def removeText(self, ignoreByteStringObject: bool = False) -> None:  # deprecated
         """
