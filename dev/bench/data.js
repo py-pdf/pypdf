@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1677330600881,
+  "lastUpdate": 1677332362103,
   "repoUrl": "https://github.com/py-pdf/pypdf",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
@@ -25038,6 +25038,58 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.00015456825548646616",
             "extra": "mean: 103.22842144444483 msec\nrounds: 9"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "christopher.bourez@gmail.com",
+            "name": "Christopher",
+            "username": "christopher5106"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "14b61ea75fb83b8ad6f2c3256cea100498885c54",
+          "message": "BUG: Allow decryption with empty password for AlgV5 (#1663)\n\nThe error message seen before was:\r\n\r\n    ValueError: Incorrect IV length (it must be 16 bytes long)\r\n\r\nFixes #1659",
+          "timestamp": "2023-02-25T14:38:09+01:00",
+          "tree_id": "d6cf5b178790b0b6f72d0d7a285d7d328f62a430",
+          "url": "https://github.com/py-pdf/pypdf/commit/14b61ea75fb83b8ad6f2c3256cea100498885c54"
+        },
+        "date": 1677332360567,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/bench.py::test_page_operations",
+            "value": 1.0022302238301057,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01057296190155518",
+            "extra": "mean: 997.7747390000047 msec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_merge",
+            "value": 11.858596962341966,
+            "unit": "iter/sec",
+            "range": "stddev: 0.006931896532205329",
+            "extra": "mean: 84.32700792307803 msec\nrounds: 13"
+          },
+          {
+            "name": "tests/bench.py::test_text_extraction",
+            "value": 0.23766845959251168,
+            "unit": "iter/sec",
+            "range": "stddev: 0.043828666030114725",
+            "extra": "mean: 4.207541891399996 sec\nrounds: 5"
+          },
+          {
+            "name": "tests/bench.py::test_read_string_from_stream_performance",
+            "value": 11.06297043879999,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0008562162895905134",
+            "extra": "mean: 90.39163627273244 msec\nrounds: 11"
           }
         ]
       }
