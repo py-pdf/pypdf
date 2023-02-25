@@ -138,7 +138,7 @@ class ObjectDeletionFlag(enum.IntFlag):
     IMAGES = enum.auto()
     LINKS = enum.auto()
     ATTACHMENTS = enum.auto()
-    _3D = enum.auto()
+    OBJ_3D = enum.auto()
     ALL_ANNOTS = enum.auto()
 
 
@@ -1810,7 +1810,16 @@ class PdfWriter:
         deprecation_with_replacement("removeLinks", "remove_links", "3.0.0")
         return self.remove_links()
 
-    def _remove_annots(
+    def remove_annots(self, subtypes: Optional[Union[str, Iterable[str]]]) -> None:
+        """
+        Remove annotations by Subtype
+        args:
+            subtypes : SubType or list of SubTypes to be removed. None=all
+        """
+        for page in self.pages:
+            self._remove_annots_from_page(page, subtypes)
+
+    def _remove_annots_from_page(
         self,
         page: Union[IndirectObject, PageObject, DictionaryObject],
         subtypes: Optional[Iterable[str]],
@@ -1821,7 +1830,7 @@ class PdfWriter:
             while i < len(page[PG.ANNOTS]):
                 an = page[PG.ANNOTS][i]
                 obj = an.get_object()
-                if subtypes is None or obj["/SubType"] in subtypes:
+                if subtypes is None or obj["/Subtype"] in subtypes:
                     if isinstance(an, IndirectObject):
                         self._objects[an.idnum - 1] = NullObject()  # to reduce PDF size
                     del page[PG.ANNOTS][i]
@@ -1845,15 +1854,15 @@ class PdfWriter:
             return
 
         if to_delete == ObjectDeletionFlag.LINKS:
-            return self._remove_annots(page, ("/Link"))
+            return self._remove_annots_from_page(page, ("/Link",))
         if to_delete == ObjectDeletionFlag.ATTACHMENTS:
-            return self._remove_annots(
+            return self._remove_annots_from_page(
                 page, ("/FileAttachment", "/Sound", "/Movie", "/Screen")
             )
-        if to_delete == ObjectDeletionFlag._3D:
-            return self._remove_annots(page, ("/3D"))
+        if to_delete == ObjectDeletionFlag.OBJ_3D:
+            return self._remove_annots_from_page(page, ("/3D",))
         if to_delete == ObjectDeletionFlag.ALL_ANNOTS:
-            return self._remove_annots(page, None)
+            return self._remove_annots_from_page(page, None)
 
         if to_delete == ObjectDeletionFlag.IMAGES:
             jump_operators = (
