@@ -1090,18 +1090,29 @@ def test_merge_page_resources_smoke_test():
     assert relevant_operations == expected_operations
 
 
+@pytest.mark.external
 def test_merge_transformed_page_into_blank():
-    url = "https://github.com/py-pdf/pypdf/files/10540507/visitcard.pdf"
-    name = "visitcard.pdf"
-    r = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    url = "https://github.com/py-pdf/pypdf/files/10768334/badges_3vjrh_7LXDZ_1-1.pdf"
+    name = "badges_3vjrh_7LXDZ_1.pdf"
+    r1 = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    url = "https://github.com/py-pdf/pypdf/files/10768335/badges_3vjrh_7LXDZ_2-1.pdf"
+    name = "badges_3vjrh_7LXDZ_2.pdf"
+    r2 = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
     w = PdfWriter()
+    w.add_blank_page(100, 100)
+    w.pages[0].merge_translated_page(r1.pages[0], 0, 0, True, True)
+    w.pages[0].merge_translated_page(r2.pages[0], 1000, 1000, True, True)
+    assert (
+        w.pages[0]["/Resources"]["/Font"].raw_get("/F2+0").idnum
+        != w.pages[0]["/Resources"]["/Font"].raw_get("/F2+0-0").idnum
+    )
     w.add_blank_page(100, 100)
     for x in range(4):
         for y in range(7):
-            w.pages[0].merge_translated_page(
-                r.pages[0],
-                x * r.pages[0].trimbox[2],
-                y * r.pages[0].trimbox[3],
+            w.pages[1].merge_translated_page(
+                r1.pages[0],
+                x * r1.pages[0].trimbox[2],
+                y * r1.pages[0].trimbox[3],
                 True,
                 True,
             )
