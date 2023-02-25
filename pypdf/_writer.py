@@ -1824,16 +1824,16 @@ class PdfWriter:
         page: Union[IndirectObject, PageObject, DictionaryObject],
         subtypes: Optional[Iterable[str]],
     ) -> None:
-        page = page.get_object()
+        page = cast(DictionaryObject, page.get_object())
         if PG.ANNOTS in page:
             i = 0
-            while i < len(page[PG.ANNOTS]):
-                an = page[PG.ANNOTS][i]
-                obj = an.get_object()
-                if subtypes is None or obj["/Subtype"] in subtypes:
+            while i < len(cast(ArrayObject, page[PG.ANNOTS])):
+                an = cast(ArrayObject, page[PG.ANNOTS])[i]
+                obj = cast(DictionaryObject, an.get_object())
+                if subtypes is None or cast(str, obj["/Subtype"]) in subtypes:
                     if isinstance(an, IndirectObject):
                         self._objects[an.idnum - 1] = NullObject()  # to reduce PDF size
-                    del page[PG.ANNOTS][i]
+                    del page[PG.ANNOTS][i]  # type:ignore
                 else:
                     i += 1
 
@@ -1850,7 +1850,7 @@ class PdfWriter:
         """
         if isinstance(to_delete, Iterable):
             for to_d in to_delete:
-                self.remove_object_from_page(page, to_d)
+                self.remove_objects_from_page(page, to_d)
             return
 
         if to_delete == ObjectDeletionFlag.LINKS:
