@@ -40,6 +40,7 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Mapping,
     Optional,
     Tuple,
     Union,
@@ -2131,10 +2132,13 @@ class PdfReader:
         return interim
 
     @property
-    def attachments(self) -> Dict[str, "LazyAttachmentLoader"]:
-        return {
-            name: LazyAttachmentLoader(name, self) for name in self._list_attachments()
-        }
+    def attachments(self) -> Mapping[str, List[bytes]]:
+        return LazyDict(
+            {
+                name: (self._get_attachment_list, name)
+                for name in self._list_attachments()
+            }
+        )
 
     def _list_attachments(self) -> List[str]:
         """
@@ -2161,6 +2165,12 @@ class PdfReader:
             if isinstance(f, str):
                 attachments_names.append(f)
         return attachments_names
+
+    def _get_attachment_list(self, name) -> List[bytes]:
+        out = self._get_attachments(name)[name]
+        if isinstance(out, list):
+            return out
+        return [out]
 
     def _get_attachments(
         self, filename: Optional[str] = None
@@ -2210,16 +2220,19 @@ class PdfReader:
         return attachments
 
 
-class LazyAttachmentLoader:
-    def __init__(self, name: str, reader: PdfReader) -> None:
-        self.name = name
-        self._reader = reader
+class LazyDict(Mapping):
+    def __init__(self, *args, **kw):
+        self._raw_dict = dict(*args, **kw)
 
-    def read(self) -> List[bytes]:
-        out = self._reader._get_attachments(self.name)[self.name]
-        if isinstance(out, list):
-            return out
-        return [out]
+    def __getitem__(self, key):
+        func, arg = self._raw_dict.__getitem__(key)
+        return func(arg)
+
+    def __iter__(self):
+        return iter(self._raw_dict)
+
+    def __len__(self):
+        return len(self._raw_dict)
 
 
 class PdfFileReader(PdfReader):  # deprecated

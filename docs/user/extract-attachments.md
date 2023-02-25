@@ -8,8 +8,8 @@ from pypdf import PdfReader
 
 reader = PdfReader("example.pdf")
 
-for name, attachment_loader in reader.attachments:
-    for i, content in enumerate(attachment_loader.reader()):
+for name, content_list in reader.attachments:
+    for i, content in enumerate(content_list):
         with open(f"{name}-{i}", "wb") as fp:
             fp.write(content)
 ```

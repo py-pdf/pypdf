@@ -1234,9 +1234,9 @@ def test_attachments():
     assert att["foobar2.txt"] == [b"foobarcontent2", b"2nd_foobarcontent"]
 
     # Let's do both cases with the public interface:
-    assert reader.attachments["foobar.txt"].read()[0] == b"foobarcontent"
-    assert reader.attachments["foobar2.txt"].read()[0] == b"foobarcontent2"
-    assert reader.attachments["foobar2.txt"].read()[1] == b"2nd_foobarcontent"
+    assert reader.attachments["foobar.txt"][0] == b"foobarcontent"
+    assert reader.attachments["foobar2.txt"][0] == b"foobarcontent2"
+    assert reader.attachments["foobar2.txt"][1] == b"2nd_foobarcontent"
 
 
 @pytest.mark.external
