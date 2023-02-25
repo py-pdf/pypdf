@@ -1529,6 +1529,7 @@ class PdfReader:
             stream.seek(loc, 0)  # return to where it was
 
     def _basic_validation(self, stream: StreamType) -> None:
+        """Ensure file is not empty. Read at most 5 bytes."""
         # start at the end:
         stream.seek(0, os.SEEK_END)
         if not stream.tell():
@@ -1544,10 +1545,17 @@ class PdfReader:
             stream.seek(0, os.SEEK_END)
 
     def _find_eof_marker(self, stream: StreamType) -> None:
-        last_mb = 8  # to parse whole file
+        """
+        Jump to the %%EOF marker.
+
+        According to the specs, the %%EOF marker should be at the very end of
+        the file. Hence for standard-compliant PDF documents this function will
+        read only the last part (DEFAULT_BUFFER_SIZE).
+        """
+        ONE_BYTE = 8  # to parse whole file
         line = b""
         while line[:5] != b"%%EOF":
-            if stream.tell() < last_mb:
+            if stream.tell() < ONE_BYTE:
                 raise PdfReadError("EOF marker not found")
             line = read_previous_line(stream)
 
