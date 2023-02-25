@@ -56,6 +56,7 @@ def test_writer_clone():
 
     writer.clone_document_from_reader(reader)
     assert len(writer.pages) == 4
+    assert "PageObject" in str(type(writer.pages[0]))
 
 
 def test_writer_clone_bookmarks():
@@ -748,14 +749,30 @@ def test_sweep_indirect_references_nullobject_exception():
 
 @pytest.mark.external
 @pytest.mark.slow
-def test_write_outline_item_on_page_fitv():
-    url = "https://corpora.tika.apache.org/base/docs/govdocs1/922/922840.pdf"
-    name = "tika-922840.pdf"
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/924/924666.pdf",
+            "test_sweep_indirect_references_nullobject_exception.pdf",
+        ),
+        (
+            "https://corpora.tika.apache.org/base/docs/govdocs1/922/922840.pdf",
+            "test_write_outline_item_on_page_fitv.pdf",
+        ),
+        ("https://github.com/py-pdf/pypdf/files/10715624/test.pdf", "iss1627.pdf"),
+    ],
+)
+def test_some_appends(url, name):
     reader = PdfReader(BytesIO(get_pdf_from_url(url, name=name)))
+    # PdfMerger
     merger = PdfMerger()
     merger.append(reader)
     merger.write("tmp-merger-do-not-commit.pdf")
-
+    # PdfWriter
+    merger = PdfWriter()
+    merger.append(reader)
+    merger.write("tmp-merger-do-not-commit.pdf")
     # cleanup
     os.remove("tmp-merger-do-not-commit.pdf")
 
@@ -1184,6 +1201,34 @@ def test_iss1601():
         ContentStream(in_pdf.pages[0].get_contents(), in_pdf).get_data()
         in page_1.get_contents().get_data()
     )
+
+
+def test_attachments():
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    b = BytesIO()
+    writer.write(b)
+    b.seek(0)
+    reader = PdfReader(b)
+    b = None
+    assert reader._list_attachments() == []
+    assert reader._get_attachments() == {}
+    writer.add_attachment("foobar.txt", b"foobarcontent")
+    writer.add_attachment("foobar2.txt", b"foobarcontent2")
+    writer.add_attachment("foobar2.txt", b"2nd_foobarcontent")
+
+    b = BytesIO()
+    writer.write(b)
+    b.seek(0)
+    reader = PdfReader(b)
+    b = None
+    assert reader._list_attachments() == ["foobar.txt", "foobar2.txt", "foobar2.txt"]
+    att = reader._get_attachments()
+    assert len(att) == 2
+    assert att["foobar.txt"] == b"foobarcontent"
+    att = reader._get_attachments("foobar2.txt")
+    assert len(att) == 1
+    assert att["foobar2.txt"] == [b"foobarcontent2", b"2nd_foobarcontent"]
 
 
 @pytest.mark.external

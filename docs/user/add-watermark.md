@@ -4,10 +4,9 @@ Adding stamps or watermarks are two common ways to manipulate PDF files.
 A stamp is adding something on top of the document, a watermark is in the
 background of the document.
 
-In both cases you might want to ensure that the mediabox/cropbox of the original
-content stays the same.
-
 ## Stamp (Overlay)
+
+Using the ``Transformation()`` class, one can translate, rotate, scale, etc. the stamp before merging it to the content page.
 
 ```python
 from pathlib import Path
@@ -22,8 +21,7 @@ def stamp(
     pdf_result: Path,
     page_indices: Union[Literal["ALL"], List[int]] = "ALL",
 ):
-    reader = PdfReader(stamp_pdf)
-    image_page = reader.pages[0]
+    stamp_page = PdfReader(stamp_pdf).pages[0]
 
     writer = PdfWriter()
 
@@ -32,9 +30,10 @@ def stamp(
         page_indices = list(range(0, len(reader.pages)))
     for index in page_indices:
         content_page = reader.pages[index]
-        mediabox = content_page.mediabox
-        content_page.merge_page(image_page)
-        content_page.mediabox = mediabox
+        content_page.merge_transformed_page(
+            stamp_page,
+            Transformation(),
+        )
         writer.add_page(content_page)
 
     with open(pdf_result, "wb") as fp:
@@ -45,11 +44,15 @@ def stamp(
 
 ## Watermark (Underlay)
 
+To merge the watermark *under* the content, use the argument ``over=False`` of the method ``merge_transformed_page()``.
+
+Once again, watermark size and position (and more) can be customized using the ``Transformation()`` class.
+
 ```python
 from pathlib import Path
 from typing import Union, Literal, List
 
-from pypdf import PdfWriter, PdfReader
+from pypdf import PdfWriter, PdfReader, Transformation
 
 
 def watermark(
@@ -60,20 +63,18 @@ def watermark(
 ):
     reader = PdfReader(content_pdf)
     if page_indices == "ALL":
-        page_indices = list(range(0, len(reader.pages)))
+        page_indices = range(len(reader.pages))
 
     writer = PdfWriter()
+    watermark_page = PdfReader(stamp_pdf).pages[0]
     for index in page_indices:
         content_page = reader.pages[index]
-        mediabox = content_page.mediabox
-
-        # You need to load it again, as the last time it was overwritten
-        reader_stamp = PdfReader(stamp_pdf)
-        image_page = reader_stamp.pages[0]
-
-        image_page.merge_page(content_page)
-        image_page.mediabox = mediabox
-        writer.add_page(image_page)
+        content_page.merge_transformed_page(
+            watermark_page,
+            Transformation(),
+            over=False,
+        )
+        writer.add_page(content_page)
 
     with open(pdf_result, "wb") as fp:
         writer.write(fp)

@@ -82,6 +82,8 @@ try:
             return iv + aes.encrypt(data)
 
         def decrypt(self, data: bytes) -> bytes:
+            if len(data) == 0:
+                return data
             iv = data[:16]
             data = data[16:]
             aes = AES.new(self.key, AES.MODE_CBC, iv)

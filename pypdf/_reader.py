@@ -757,9 +757,17 @@ class PdfReader:
         # TABLE 3.33 Entries in a name tree node dictionary (PDF 1.7 specs)
         elif CA.NAMES in tree:  # KIDS and NAMES are exclusives (PDF 1.7 specs p 162)
             names = cast(DictionaryObject, tree[CA.NAMES])
-            for i in range(0, len(names), 2):
+            i = 0
+            while i < len(names):
                 key = cast(str, names[i].get_object())
-                value = names[i + 1].get_object()
+                i += 1
+                if not isinstance(key, str):
+                    continue
+                try:
+                    value = names[i].get_object()
+                except IndexError:
+                    break
+                i += 1
                 if isinstance(value, DictionaryObject) and "/D" in value:
                     value = value["/D"]
                 dest = self._build_destination(key, value)  # type: ignore
@@ -1529,6 +1537,7 @@ class PdfReader:
             stream.seek(loc, 0)  # return to where it was
 
     def _basic_validation(self, stream: StreamType) -> None:
+        """Ensure file is not empty. Read at most 5 bytes."""
         # start at the end:
         stream.seek(0, os.SEEK_END)
         if not stream.tell():
@@ -1544,10 +1553,17 @@ class PdfReader:
             stream.seek(0, os.SEEK_END)
 
     def _find_eof_marker(self, stream: StreamType) -> None:
-        last_mb = 8  # to parse whole file
+        """
+        Jump to the %%EOF marker.
+
+        According to the specs, the %%EOF marker should be at the very end of
+        the file. Hence for standard-compliant PDF documents this function will
+        read only the last part (DEFAULT_BUFFER_SIZE).
+        """
+        HEADER_SIZE = 8  # to parse whole file, Header is e.g. '%PDF-1.6'
         line = b""
         while line[:5] != b"%%EOF":
-            if stream.tell() < last_mb:
+            if stream.tell() < HEADER_SIZE:
                 raise PdfReadError("EOF marker not found")
             line = read_previous_line(stream)
 
@@ -2129,6 +2145,79 @@ class PdfReader:
         )
         interim[NameObject("/T")] = TextStringObject(name)
         return interim
+
+    def _list_attachments(self) -> List[str]:
+        """
+        Retrieves the list of filenames of file attachments.
+
+        Returns:
+            list of filenames
+        """
+        catalog = cast(DictionaryObject, self.trailer["/Root"])
+        # From the catalog get the embedded file names
+        try:
+            filenames = cast(
+                ArrayObject,
+                cast(
+                    DictionaryObject,
+                    cast(DictionaryObject, catalog["/Names"])["/EmbeddedFiles"],
+                )["/Names"],
+            )
+        except KeyError:
+            return []
+        attachments_names = []
+        # Loop through attachments
+        for f in filenames:
+            if isinstance(f, str):
+                attachments_names.append(f)
+        return attachments_names
+
+    def _get_attachments(
+        self, filename: Optional[str] = None
+    ) -> Dict[str, Union[bytes, List[bytes]]]:
+        """
+        Retrieves all or selected file attachments of the PDF as a dictionary of file names
+        and the file data as a bytestring.
+
+        Args:
+            filename: If filename is None, then a dictionary of all attachments
+                will be returned, where the key is the filename and the value
+                is the content. Otherwise, a dictionary with just a single key
+                - the filename - and its content will be returned.
+
+        Returns:
+            dictionary of filename -> Union[bytestring or List[ByteString]]
+            if the filename exists multiple times a List of the different version will be provided
+        """
+        catalog = cast(DictionaryObject, self.trailer["/Root"])
+        # From the catalog get the embedded file names
+        try:
+            filenames = cast(
+                ArrayObject,
+                cast(
+                    DictionaryObject,
+                    cast(DictionaryObject, catalog["/Names"])["/EmbeddedFiles"],
+                )["/Names"],
+            )
+        except KeyError:
+            return {}
+        attachments: Dict[str, Union[bytes, List[bytes]]] = {}
+        # Loop through attachments
+        for i in range(len(filenames)):
+            f = filenames[i]
+            if isinstance(f, str):
+                if filename is not None and f != filename:
+                    continue
+                name = f
+                f_dict = filenames[i + 1].get_object()
+                f_data = f_dict["/EF"]["/F"].get_data()
+                if name in attachments:
+                    if not isinstance(attachments[name], list):
+                        attachments[name] = [attachments[name]]  # type:ignore
+                    attachments[name].append(f_data)  # type:ignore
+                else:
+                    attachments[name] = f_data
+        return attachments
 
 
 class PdfFileReader(PdfReader):  # deprecated
