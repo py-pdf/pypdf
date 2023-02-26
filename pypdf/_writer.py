@@ -138,7 +138,7 @@ class ObjectDeletionFlag(enum.IntFlag):
     IMAGES = enum.auto()
     LINKS = enum.auto()
     ATTACHMENTS = enum.auto()
-    OBJ_3D = enum.auto()
+    OBJECTS_3D = enum.auto()
     ALL_ANNOTATIONS = enum.auto()
 
 
