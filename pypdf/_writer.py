@@ -1868,7 +1868,7 @@ class PdfWriter:
             return self._remove_annots_from_page(
                 page, ("/FileAttachment", "/Sound", "/Movie", "/Screen")
             )
-        if to_delete == ObjectDeletionFlag.OBJ_3D:
+        if to_delete & ObjectDeletionFlag.OBJ_3D:
             return self._remove_annots_from_page(page, ("/3D",))
         if to_delete == ObjectDeletionFlag.ALL_ANNOTS:
             return self._remove_annots_from_page(page, None)
