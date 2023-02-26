@@ -2357,7 +2357,7 @@ class PdfWriter:
         Returns:
             the inserted object (to be used in pop-up creation argument for example)
         """
-        if pagenumber is not None:
+        if pagenumber is not None:  # deprecated
             deprecation_with_replacement(
                 "add_annotation(page_number,annotation)",
                 "add_annotation(page,annotation)",
@@ -2368,7 +2368,7 @@ class PdfWriter:
         if isinstance(page, int):
             page = self.pages[page]
         elif not isinstance(page, PageObject):
-            raise TypeError("page_number: invalid type")
+            raise TypeError("page: invalid type")
 
         to_add = cast(DictionaryObject, _pdf_objectify(annotation))
         to_add[NameObject("/P")] = page.indirect_reference
