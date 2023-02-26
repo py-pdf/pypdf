@@ -284,13 +284,13 @@ def test_writer_operation_by_new_usage(write_data_here, needs_cleanup):
 
 
 @pytest.mark.parametrize(
-    ("input_path", "ignore_byte_string_object"),
+    ("input_path",),
     [
-        ("side-by-side-subfig.pdf", False),
-        ("reportlab-inline-image.pdf", True),
+        ("side-by-side-subfig.pdf",),
+        ("reportlab-inline-image.pdf",),
     ],
 )
-def test_remove_images(input_path, ignore_byte_string_object):
+def test_remove_images(input_path):
     pdf_path = RESOURCE_ROOT / input_path
 
     reader = PdfReader(pdf_path)
@@ -298,7 +298,7 @@ def test_remove_images(input_path, ignore_byte_string_object):
 
     page = reader.pages[0]
     writer.insert_page(page, 0)
-    writer.remove_images(ignore_byte_string_object=ignore_byte_string_object)
+    writer.remove_images()
 
     # finally, write "output" to pypdf-output.pdf
     tmp_filename = "dont_commit_writer_removed_image.pdf"
