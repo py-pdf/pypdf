@@ -1870,7 +1870,7 @@ class PdfWriter:
             )
         if to_delete & ObjectDeletionFlag.OBJ_3D:
             return self._remove_annots_from_page(page, ("/3D",))
-        if to_delete == ObjectDeletionFlag.ALL_ANNOTS:
+        if to_delete & ObjectDeletionFlag.ALL_ANNOTS:
             return self._remove_annots_from_page(page, None)
 
         if to_delete & ObjectDeletionFlag.IMAGES:
