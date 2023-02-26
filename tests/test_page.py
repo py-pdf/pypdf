@@ -485,13 +485,12 @@ def test_extract_text_visitor_callbacks():
         It returns a tuple containing a list of extracted texts and
         a list of extracted rectangles.
         """
-
         logger = logging.getLogger("extract_text_and_rectangles")
 
         rectangles = []
         texts = []
 
-        def print_op_b(op, args, cm_matrix, tm_matrix):
+        def print_op_b(op, args, cm_matrix, tm_matrix) -> None:
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug(f"before: {op} at {cm_matrix}, {tm_matrix}")
             if op == b"re":
@@ -503,7 +502,7 @@ def test_extract_text_visitor_callbacks():
                 if (rect_filter is None) or rect_filter(r):
                     rectangles.append(r)
 
-        def print_visi(text, cm_matrix, tm_matrix, font_dict, font_size):
+        def print_visi(text, cm_matrix, tm_matrix, font_dict, font_size) -> None:
             if text.strip() != "":
                 if logger.isEnabledFor(logging.DEBUG):
                     logger.debug(f"at {cm_matrix}, {tm_matrix}, font size={font_size}")
@@ -598,7 +597,7 @@ def test_extract_text_visitor_callbacks():
             if r not in rectangle2texts:
                 curr_row.append("")
                 continue
-            cell_texts = [t for t in rectangle2texts[r]]
+            cell_texts = list(rectangle2texts[r])
             curr_row.append(cell_texts)
 
         return rows
@@ -612,7 +611,7 @@ def test_extract_text_visitor_callbacks():
     page_lrs_model = reader.pages[6]
 
     # We ignore the invisible large rectangles.
-    def ignore_large_rectangles(r):
+    def ignore_large_rectangles(r) -> bool:
         return r.w < 400 and r.h < 400
 
     (texts, rectangles) = extract_text_and_rectangles(
@@ -642,7 +641,7 @@ def test_extract_text_visitor_callbacks():
     page_revisions = reader.pages[2]
     # We ignore the second table, therefore: r.y > 350
 
-    def filter_first_table(r):
+    def filter_first_table(r) -> bool:
         return r.w > 1 and r.h > 1 and r.w < 400 and r.h < 400 and r.y > 350
 
     (texts, rectangles) = extract_text_and_rectangles(
@@ -685,7 +684,7 @@ def test_extract_text_visitor_callbacks():
     # We store the translations of the Td-executions.
     list_Td = []
 
-    def visitor_td(op, args, cm, tm):
+    def visitor_td(op, args, cm, tm) -> None:
         if op == b"Td":
             list_Td.append((tm[4], tm[5]))
 

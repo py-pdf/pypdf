@@ -15,7 +15,7 @@ class Change:
     message: str
 
 
-def main(changelog_path: str):
+def main(changelog_path: str) -> None:
     """
     Create a changelog.
 

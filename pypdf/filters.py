@@ -194,8 +194,10 @@ class FlateDecode:
 
 
 class ASCIIHexDecode:
-    """The ASCIIHexDecode filter decodes data that has been encoded in ASCII
-    hexadecimal form into a base-7 ASCII format."""
+    """
+    The ASCIIHexDecode filter decodes data that has been encoded in ASCII
+    hexadecimal form into a base-7 ASCII format.
+    """
 
     @staticmethod
     def decode(

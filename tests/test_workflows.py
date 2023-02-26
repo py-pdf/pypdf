@@ -288,7 +288,7 @@ def test_orientations():
     p.extract_text(0, 0)
     p.extract_text(orientations=0)
 
-    for (req, rst) in (
+    for req, rst in (
         (0, ["T"]),
         (90, ["L"]),
         (180, ["B"]),
@@ -946,9 +946,7 @@ def test_extra_test_iss1541():
 
 @pytest.mark.enable_socket
 def test_fields_returning_stream():
-    """
-    problem reported in #424
-    """
+    """This problem was reported in #424"""
     url = "https://github.com/mstamy2/PyPDF2/files/1948267/Simple.form.pdf"
     name = "tst_iss424.pdf"
     data = BytesIO(get_pdf_from_url(url, name=name))
