@@ -139,7 +139,7 @@ class ObjectDeletionFlag(enum.IntFlag):
     LINKS = enum.auto()
     ATTACHMENTS = enum.auto()
     OBJ_3D = enum.auto()
-    ALL_ANNOTS = enum.auto()
+    ALL_ANNOTATIONS = enum.auto()
 
 
 class PdfWriter:
