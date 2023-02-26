@@ -1862,7 +1862,7 @@ class PdfWriter:
                 self.remove_objects_from_page(page, to_d)
             return
 
-        if to_delete == ObjectDeletionFlag.LINKS:
+        if to_delete & ObjectDeletionFlag.LINKS:
             return self._remove_annots_from_page(page, ("/Link",))
         if to_delete == ObjectDeletionFlag.ATTACHMENTS:
             return self._remove_annots_from_page(
